@@ -124,7 +124,8 @@ are the fuel — burn them on building, not on flailing:
 | `nightshift/` | Orchestrator scripts, cron setup, role prompts. |
 | `nightshift/NIGHTLOG.md` | One entry per night: what shipped, what failed. |
 | `nightshift/HELP.md` | Escalations to the human, and human replies. |
-| `nightshift/notify.sh` | Pings the human (desktop + optional phone push). Use per the human-intervention rule. |
+| `nightshift/notify.sh` | Pings the human (desktop + email + optional phone push). Use per the human-intervention rule. |
+| `nightshift/email.sh` | Emails the human via Web3Forms. Key lives in gitignored `nightshift/.env` — never commit it. |
 | `nightshift/logs/` | Raw session logs (gitignored). |
 
 Everything else in the repo belongs to the product.

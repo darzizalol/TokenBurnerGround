@@ -32,9 +32,48 @@ if [ -e "$LOCK" ] && kill -0 "$(cat "$LOCK" 2>/dev/null)" 2>/dev/null; then
   exit 0
 fi
 echo $$ > "$LOCK"
-trap 'rm -f "$LOCK"' EXIT
+
+# --- shift start/end emails ---------------------------------------------------
+SHIFT_START="$(date '+%F %T')"
+STARTED=0
+REPORT_SENT=0
+
+send_report() {
+  [ "$STARTED" = 1 ] || return 0
+  [ "$REPORT_SENT" = 1 ] && return 0
+  REPORT_SENT=1
+  cd "$REPO" 2>/dev/null || return 0
+  local commits prs
+  commits=$(git log --since="$SHIFT_START" --pretty='- %s' 2>/dev/null | head -40)
+  prs=$(gh pr list 2>/dev/null | head -20)
+  "$DIR/email.sh" "🌅 Night shift report — $(date '+%F %H:%M')" \
+"Shift ran from $SHIFT_START to $(date '+%F %T').
+
+Commits landed on main tonight:
+${commits:-(none)}
+
+Open PRs right now:
+${prs:-(none)}
+
+Latest nightlog:
+$(tail -n 30 "$DIR/NIGHTLOG.md" 2>/dev/null)
+
+Raw session logs: nightshift/logs/ on $(hostname)." >> "$NIGHT_LOG" 2>&1
+}
+
+on_exit() { send_report; rm -f "$LOCK"; }
+trap on_exit EXIT
+trap 'exit 143' TERM INT   # ensure the EXIT trap (report + lock cleanup) runs on 07:00 kill
 
 log "=== night shift clocking in (pid $$) ==="
+"$DIR/email.sh" "🌙 Night shift clocked in — $(date +%F)" \
+"The night shift started at $SHIFT_START on $(hostname).
+
+Backlog snapshot:
+$(head -n 15 "$REPO/BACKLOG.md" 2>/dev/null || echo '(no backlog yet — Night One: the Architect will invent the project)')
+
+A progress report lands in this inbox when the shift ends (~07:00)." >> "$NIGHT_LOG" 2>&1
+STARTED=1
 
 ROLES=(architect engineer reviewer qa release)
 LIMIT_PATTERN='usage limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'

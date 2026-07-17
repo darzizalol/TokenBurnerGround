@@ -4,7 +4,8 @@
 #
 # Channels:
 #   1. Linux desktop notification (notify-send) — always attempted.
-#   2. Phone push via ntfy.sh — only if NTFY_TOPIC is set in nightshift/.env.
+#   2. Email via Web3Forms (email.sh) — if WEB3FORMS_KEY is set in nightshift/.env.
+#   3. Phone push via ntfy.sh — only if NTFY_TOPIC is set in nightshift/.env.
 #      (Install the ntfy app, subscribe to your topic, done. No account needed.)
 #
 # This script never fails the caller: notification channels are best-effort.
@@ -26,6 +27,8 @@ export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user
 if command -v notify-send >/dev/null 2>&1; then
   notify-send --urgency=critical --app-name="Night Shift" "🌙 $TITLE" "$MSG" 2>/dev/null || true
 fi
+
+"$DIR/email.sh" "⚠️ $TITLE" "$MSG" >/dev/null 2>&1 || true
 
 if [ -n "${NTFY_TOPIC:-}" ]; then
   curl -fsS -m 10 -H "Title: $TITLE" -H "Priority: high" -H "Tags: crescent_moon" \

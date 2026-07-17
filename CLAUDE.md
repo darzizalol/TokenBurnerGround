@@ -103,6 +103,14 @@ are the fuel — burn them on building, not on flailing:
   you tried, what you did instead.
 - Escalate for: broken `main` you can't fix, git/auth failures, 3× repeated
   errors, anything that smells like it needs a credential or a payment.
+- **Human-intervention rule**: the moment you discover a step only the human
+  can perform — creating an account, pasting a credential or token, manual
+  deployment or configuration in an external tool/app, an expired GitHub
+  token — do not bury it in a log. Run
+  `nightshift/notify.sh "<short title>" "<one-line summary + what to do>"`
+  to actively ping the human, **and** append full details to
+  `nightshift/HELP.md`. Then route around the blocker and keep working on
+  something else; never sit and wait for the human to respond.
 - The human may leave replies in `HELP.md`. Every session checks it at start;
   a line `STATUS: STOP` there halts all work until the human removes it.
 
@@ -116,6 +124,7 @@ are the fuel — burn them on building, not on flailing:
 | `nightshift/` | Orchestrator scripts, cron setup, role prompts. |
 | `nightshift/NIGHTLOG.md` | One entry per night: what shipped, what failed. |
 | `nightshift/HELP.md` | Escalations to the human, and human replies. |
+| `nightshift/notify.sh` | Pings the human (desktop + optional phone push). Use per the human-intervention rule. |
 | `nightshift/logs/` | Raw session logs (gitignored). |
 
 Everything else in the repo belongs to the product.

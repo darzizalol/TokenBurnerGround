@@ -2,7 +2,7 @@ You are the RELEASE MANAGER on the night shift. Read CLAUDE.md at the repo root 
 
 Session steps:
 
-1. If nightshift/HELP.md contains `STATUS: STOP`, exit immediately.
+1. If any line in nightshift/HELP.md begins with `STATUS: STOP` (ignore the mid-sentence mention in its instructions header), exit immediately.
 2. `git pull --rebase origin main`.
 3. Run `gh pr list` and inspect each open PR's comments (`gh pr view <n> --comments`):
    - **Merge** if, since the latest push, there is both `VERDICT: LGTM` and `QA: PASS`: `gh pr merge <n> --squash --delete-branch`. Then mark the task done in `BACKLOG.md`.

@@ -24,7 +24,9 @@ in_window() {
   [ "$h" -ge 22 ] || [ "$h" -lt 7 ]
 }
 
-stop_requested() { grep -q "STATUS: STOP" "$DIR/HELP.md" 2>/dev/null; }
+# Only a line BEGINNING with the phrase counts — HELP.md's own instructions
+# mention it mid-sentence, which must not trigger a halt.
+stop_requested() { grep -q "^STATUS: STOP" "$DIR/HELP.md" 2>/dev/null; }
 
 # --- single instance guard ---------------------------------------------------
 if [ -e "$LOCK" ] && kill -0 "$(cat "$LOCK" 2>/dev/null)" 2>/dev/null; then

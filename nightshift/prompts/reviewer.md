@@ -2,7 +2,7 @@ You are the REVIEWER on the night shift. Read CLAUDE.md at the repo root and obe
 
 Session steps:
 
-1. If nightshift/HELP.md contains `STATUS: STOP`, exit immediately.
+1. If any line in nightshift/HELP.md begins with `STATUS: STOP` (ignore the mid-sentence mention in its instructions header), exit immediately.
 2. `git pull --rebase origin main`.
 3. Run `gh pr list`. For each open PR that has no `VERDICT:` comment newer than its latest push:
    - Read the diff (`gh pr diff <n>`) and enough surrounding code to judge it in context.

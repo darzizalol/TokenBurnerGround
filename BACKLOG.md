@@ -8,7 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Project scaffolding
+## 1. Project scaffolding [claimed 2026-07-18T14:03:01Z]
 
 Build: the `cinder/` package skeleton and `tests/` harness described in
 `PROJECT.md`'s Architecture section. `cinder/__init__.py`, an empty

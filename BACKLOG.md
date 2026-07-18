@@ -8,7 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Lexer: tokenize literals, identifiers, operators, comments
+## 1. Lexer: tokenize literals, identifiers, operators, comments `[claimed 2026-07-18T14:11:34Z]`
 
 Build: `cinder/lexer.py` with a `Lexer` class (or `tokenize(source: str) ->
 list[Token]` function) producing a full token stream for: integer and float

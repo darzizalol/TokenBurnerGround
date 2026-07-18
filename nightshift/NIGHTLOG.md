@@ -43,3 +43,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Three for three now — every PR tonight has landed clean on the first
   pass, no review/QA friction at all so far.
+
+- **Merged**: PR #4 "Tree-walking evaluator for expressions"
+  (`night/20260718-evaluator-expressions`) — `cinder/interpreter.py` with
+  `Environment` (lexical scoping via parent pointer) and
+  `Interpreter.evaluate()` covering the full expression AST (arithmetic,
+  string concat, comparisons, short-circuit `and`/`or`, unary, grouping,
+  identifier lookup), plus `CinderRuntimeError` additions in
+  `cinder/errors.py`, with 64 tests passing. Reviewer gave `VERDICT: LGTM`,
+  QA gave `QA: PASS`, both after the sole commit — clean merge, no bounces.
+  BACKLOG.md task 1 marked done and remaining tasks renumbered; task 1 is
+  now statements (`let`, blocks, CLI wiring).
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Four for four tonight — every PR has landed clean on the first pass, no
+  review/QA friction at all so far.

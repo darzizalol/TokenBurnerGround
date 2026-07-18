@@ -32,36 +32,66 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`, `cinder/errors.py`,
 
 ---
 
-## 2. Statement parsing + tree-walking evaluator for expressions and `let`
+## 2. Tree-walking evaluator for expressions
 
-Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) and
-parser support for `let x = <expr>;`, bare expression statements, and `{
-... }` blocks. Build `cinder/interpreter.py` with an `Environment` class
-(name -> value, with a parent pointer for lexical scoping) and an
-`Interpreter` that evaluates expression ASTs (literals, arithmetic,
-comparisons, string concatenation with `+`, logical `and`/`or` with
-short-circuit, unary/grouping) plus `LetStmt` (declares in current scope)
-and `Block` (opens a child scope). Wire `cinder/cli.py`'s `run` subcommand
-to actually lex+parse+interpret a file end to end.
+Build: `cinder/interpreter.py` with an `Environment` class (name -> value,
+with a parent pointer for lexical scoping, though only the global scope is
+exercised yet) and an `Interpreter` with an `evaluate(expr, env)` entry
+point that walks the expression AST from task 1: literal values, arithmetic
+(`+ - * / %`, with `+` also doing string concatenation), comparisons,
+logical `and`/`or` with short-circuit evaluation, unary (`- not`), and
+grouping. `Identifier` evaluation looks up the name in `Environment` and
+raises a runtime `CinderError` (with line info) if undeclared — there is no
+`let` yet, so tests populate the `Environment` directly to exercise lookup.
+No statement parsing, no CLI wiring in this task — evaluation is only
+exercised by calling `Interpreter.evaluate()` on ASTs produced directly by
+`cinder/parser.py`.
 
 Acceptance criteria:
-- `python3 -m cinder.cli run <file>` on a script containing `let x = 1 + 2;
-  let y = x * 2;` runs without error (nothing to print yet — `print` is a
-  later task, so tests should call the `Interpreter` API directly, not rely
-  on stdout).
-- Unit tests cover arithmetic/string/logical evaluation results, `let`
-  declaration + lookup, block scoping (inner `let` shadows outer, outer
-  unaffected after block exits), and referencing an undeclared name raises a
-  runtime `CinderError` with line info.
+- Unit tests cover arithmetic results (including operator precedence
+  carried over correctly from the AST), string concatenation, comparison
+  results, logical short-circuit behavior (e.g. an `or` whose right side
+  would error if evaluated), and unary/grouping.
+- A test covers identifier lookup against a pre-populated `Environment` and
+  a test covers lookup of an undeclared name raising `CinderError` with
+  line info.
 - Full test suite passes.
 
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `cinder/errors.py`, `cinder/cli.py`,
+Likely files: `cinder/interpreter.py`, `cinder/errors.py`,
 `tests/test_interpreter.py`.
 
 ---
 
-## 3. Control flow: `if`/`else` and `while`
+## 3. Statements: `let`, blocks, and end-to-end CLI wiring
+
+Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) in
+`cinder/ast_nodes.py` and parser support for `let x = <expr>;`, bare
+expression statements, and `{ ... }` blocks, plus a `parse_program` (or
+similar) entry point turning a full token list into a list of statements.
+Extend the task-2 `Interpreter` with an `execute(stmt, env)` that handles
+`LetStmt` (declares in the current scope's `Environment`), `ExprStmt`
+(evaluates and discards), and `Block` (opens a child `Environment` whose
+parent is the enclosing scope, so inner `let` shadows outer without
+mutating it). Wire `cinder/cli.py`'s `run` subcommand to actually
+lex -> parse -> execute a `.cin` file end to end.
+
+Acceptance criteria:
+- `python3 -m cinder.cli run <file>` on a script containing `let x = 1 + 2;
+  let y = x * 2;` runs without error (nothing to print yet — `print` is a
+  later task, so tests should call the `Interpreter`/`Environment` API
+  directly, not rely on stdout).
+- Unit tests cover `let` declaration + lookup, block scoping (inner `let`
+  shadows outer, outer unaffected after block exits), and a CLI-level test
+  that runs a `let`-only script through `cinder.cli run` and exits zero.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `cinder/cli.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`, `tests/test_cli.py`.
+
+---
+
+## 4. Control flow: `if`/`else` and `while`
 
 Build: `IfStmt` and `WhileStmt` AST nodes, parser support, and evaluator
 support, using the truthiness rule: `false` and `nil` are falsy, everything
@@ -82,7 +112,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Functions: declarations, calls, closures, `return`
+## 5. Functions: declarations, calls, closures, `return`
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions
@@ -107,7 +137,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Data structures: lists and maps
+## 6. Data structures: lists and maps
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set
@@ -128,7 +158,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 7. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -152,11 +182,11 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 7. Error diagnostics polish
+## 8. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
-whichever of tasks 1/2/3 didn't already do this fully), and make
+whichever of tasks 1/2/3/4 didn't already do this fully), and make
 `cinder/cli.py`'s `run` subcommand catch `CinderError` and print a
 human-readable one-line diagnostic (`file:line:column: message`) to stderr
 with a non-zero exit code, instead of letting a Python traceback leak to
@@ -175,7 +205,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 8. Example programs
+## 9. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),

@@ -8,35 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Lexer: tokenize literals, identifiers, operators, comments `[claimed 2026-07-18T14:11:34Z]`
-
-Build: `cinder/lexer.py` with a `Lexer` class (or `tokenize(source: str) ->
-list[Token]` function) producing a full token stream for: integer and float
-literals, double-quoted strings (with `\n`, `\t`, `\\`, `\"` escapes),
-identifiers, keywords (`let`, `if`, `else`, `while`, `fn`, `return`, `true`,
-`false`, `nil`, `and`, `or`, `not`), operators/punctuation (`+ - * / %  ==
-!= < <= > >= = ( ) { } [ ] , ; .`), and `#`-to-end-of-line comments
-(discarded, not emitted as tokens). Every `Token` carries `line` and
-`column`. Flesh out `cinder/tokens.py`'s `TokenType` enum with every kind
-above plus `EOF`. Unterminated strings and unrecognized characters raise a
-`LexError` (add to `cinder/errors.py`) carrying line/column — do not just
-raise a bare `Exception`.
-
-Acceptance criteria:
-- Unit tests cover: each literal kind, each keyword, each operator, comment
-  stripping, and at least one multi-line source producing correct
-  line/column on tokens after the first line.
-- Unit tests cover both error cases (unterminated string, unknown
-  character) and assert the raised `LexError` has correct line/column.
-- `python3 -m unittest discover -s tests -v` passes in full (not just the
-  new tests).
-
-Likely files: `cinder/lexer.py`, `cinder/tokens.py`, `cinder/errors.py`,
-`tests/test_lexer.py`.
-
----
-
-## 2. Parser: expressions with correct precedence
+## 1. Parser: expressions with correct precedence
 
 Build: `cinder/ast_nodes.py` with dataclasses for expression nodes
 (`Literal`, `Identifier`, `Unary`, `Binary`, `Logical`, `Grouping`, `Call` —
@@ -60,7 +32,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`, `cinder/errors.py`,
 
 ---
 
-## 3. Statement parsing + tree-walking evaluator for expressions and `let`
+## 2. Statement parsing + tree-walking evaluator for expressions and `let`
 
 Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) and
 parser support for `let x = <expr>;`, bare expression statements, and `{
@@ -89,7 +61,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Control flow: `if`/`else` and `while`
+## 3. Control flow: `if`/`else` and `while`
 
 Build: `IfStmt` and `WhileStmt` AST nodes, parser support, and evaluator
 support, using the truthiness rule: `false` and `nil` are falsy, everything
@@ -110,11 +82,11 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Functions: declarations, calls, closures, `return`
+## 4. Functions: declarations, calls, closures, `return`
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions
-`name(a, b)` (the `Call` node from task 2 becomes evaluable), and evaluator
+`name(a, b)` (the `Call` node from task 1 becomes evaluable), and evaluator
 support: functions are first-class values that capture their defining
 `Environment` (closures), calling pushes a new child scope with parameters
 bound, `return` unwinds via a control-flow signal (e.g. a Python exception
@@ -135,7 +107,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Data structures: lists and maps
+## 5. Data structures: lists and maps
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set
@@ -156,7 +128,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 6. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -180,11 +152,11 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 8. Error diagnostics polish
+## 7. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
-whichever of tasks 2/3/4 didn't already do this fully), and make
+whichever of tasks 1/2/3 didn't already do this fully), and make
 `cinder/cli.py`'s `run` subcommand catch `CinderError` and print a
 human-readable one-line diagnostic (`file:line:column: message`) to stderr
 with a non-zero exit code, instead of letting a Python traceback leak to
@@ -203,7 +175,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 9. Example programs
+## 8. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -230,6 +202,10 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
   (`night/20260718-project-scaffolding`). Built `cinder/` package skeleton
   and `tests/` harness (argparse CLI stub, `TokenType.EOF` stub, passing
   test suite).
+- **Lexer: tokenize literals, identifiers, operators, comments** — merged
+  2026-07-18T14:17:28Z via PR #2 (`night/20260718-lexer`). Built
+  `cinder/lexer.py`, fleshed out `cinder/tokens.py`'s `TokenType`, and added
+  `LexError` with line/column to `cinder/errors.py`.
 
 ---
 

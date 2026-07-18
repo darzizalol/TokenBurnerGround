@@ -17,3 +17,7 @@ class CinderError(Exception):
 
 class LexError(CinderError):
     """Raised by the lexer on unterminated strings or unrecognized characters."""
+
+
+class ParseError(CinderError):
+    """Raised by the parser on malformed token sequences."""

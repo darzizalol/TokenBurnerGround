@@ -14,12 +14,17 @@ mkdir -p "$LOGS"
 # Cron provides a bare environment; make sure claude and gh are reachable.
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
+# --once: test mode — ignore the 22:00-07:00 window and run exactly one cycle.
+ONCE=0
+[ "${1:-}" = "--once" ] && ONCE=1
+
 NIGHT_LOG="$LOGS/night-$(date +%Y%m%d).log"
 log() { echo "[$(date '+%F %T')] $*" >> "$NIGHT_LOG"; }
 
-# 22:00 <= now < 07:00
+# 22:00 <= now < 07:00 (always true in --once test mode)
 in_window() {
   local h
+  [ "$ONCE" = 1 ] && return 0
   h=$(date +%-H)
   [ "$h" -ge 22 ] || [ "$h" -lt 7 ]
 }
@@ -131,6 +136,10 @@ while in_window; do
     fi
   done
 
+  if [ "$ONCE" = 1 ]; then
+    log "=== --once test cycle complete — clocking out. ==="
+    exit 0
+  fi
   sleep 60
 done
 

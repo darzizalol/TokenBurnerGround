@@ -21,7 +21,10 @@ raises a runtime `CinderError` (with line info) if undeclared — there is no
 `let` yet, so tests populate the `Environment` directly to exercise lookup.
 No statement parsing, no CLI wiring in this task — evaluation is only
 exercised by calling `Interpreter.evaluate()` on ASTs produced directly by
-`cinder/parser.py`.
+`cinder/parser.py`. `Call` nodes are explicitly out of scope here — there
+are no functions to call yet (that's task 4) — do not implement `Call`
+evaluation; leave it raising `NotImplementedError` or unhandled, tests
+should not exercise it.
 
 Acceptance criteria:
 - Unit tests cover arithmetic results (including operator precedence

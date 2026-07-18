@@ -30,3 +30,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Second PR in a row landed clean on the first pass — the night shift is on
   a roll, two-for-two with no review/QA friction so far.
+
+- **Merged**: PR #3 "Parser: expressions with correct precedence"
+  (`night/20260718-parser`) — `cinder/ast_nodes.py`, `cinder/parser.py` (a
+  recursive-descent parser with the full precedence chain and
+  parenthesized grouping/calls), and `ParseError` in `cinder/errors.py`,
+  with 34/34 tests passing. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS`, both after the sole commit — clean merge, no bounces.
+  BACKLOG.md task 1 marked done and remaining tasks renumbered; task 1 is
+  now the tree-walking evaluator for expressions.
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Three for three now — every PR tonight has landed clean on the first
+  pass, no review/QA friction at all so far.

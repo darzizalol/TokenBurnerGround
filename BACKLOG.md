@@ -8,7 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Parser: expressions with correct precedence
+## 1. Parser: expressions with correct precedence [claimed 2026-07-18T14:22:46Z]
 
 Build: `cinder/ast_nodes.py` with dataclasses for expression nodes
 (`Literal`, `Identifier`, `Unary`, `Binary`, `Logical`, `Grouping`, `Call` —

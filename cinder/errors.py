@@ -21,3 +21,7 @@ class LexError(CinderError):
 
 class ParseError(CinderError):
     """Raised by the parser on malformed token sequences."""
+
+
+class CinderRuntimeError(CinderError):
+    """Raised by the interpreter for errors detected during evaluation."""

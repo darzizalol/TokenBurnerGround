@@ -8,7 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Statements: `let`, blocks, and end-to-end CLI wiring
+## 1. Statements: `let`, blocks, and end-to-end CLI wiring [claimed 2026-07-18T14:44:04Z]
 
 Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) in
 `cinder/ast_nodes.py` and parser support for `let x = <expr>;`, bare

@@ -14,7 +14,7 @@ Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) in
 `cinder/ast_nodes.py` and parser support for `let x = <expr>;`, bare
 expression statements, and `{ ... }` blocks, plus a `parse_program` (or
 similar) entry point turning a full token list into a list of statements.
-Extend the task-1 `Interpreter` with an `execute(stmt, env)` that handles
+Extend the existing `Interpreter` with an `execute(stmt, env)` that handles
 `LetStmt` (declares in the current scope's `Environment`), `ExprStmt`
 (evaluates and discards), and `Block` (opens a child `Environment` whose
 parent is the enclosing scope, so inner `let` shadows outer without

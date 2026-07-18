@@ -8,36 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Project scaffolding [claimed 2026-07-18T14:03:01Z]
-
-Build: the `cinder/` package skeleton and `tests/` harness described in
-`PROJECT.md`'s Architecture section. `cinder/__init__.py`, an empty
-`cinder/tokens.py` with a `TokenType` enum stub (just enough to import),
-`cinder/cli.py` with an `argparse` entrypoint exposing `run <file>` and
-`repl` subcommands (both may print "not implemented yet" and exit 0 for now
-— this task is plumbing only, not the lexer/parser/interpreter), and
-`tests/` with at least one real passing test (e.g. a test that the CLI
-module imports and `--help` exits 0 via `subprocess` or argparse's own
-parser). Add a `tests/__init__.py`. Update the "How to run"/"How to test"
-snippets in `PROJECT.md` if the actual CLI interface ends up differing.
-
-Acceptance criteria:
-- `python3 -m cinder.cli --help` runs and exits 0.
-- `python3 -m unittest discover -s tests -v` runs and passes (>=1 test).
-- Package layout matches `PROJECT.md` (files may be added later tasks, but
-  the ones listed above must exist now).
-- No stub raises `NotImplementedError` inside a code path exercised by the
-  tests above — a "not implemented yet" print+exit is fine for `run`/`repl`
-  subcommands since the lexer doesn't exist yet, but nothing under test may
-  be a silent no-op pretending to work.
-
-Likely files: `cinder/__init__.py`, `cinder/tokens.py`, `cinder/cli.py`,
-`tests/__init__.py`, `tests/test_cli.py`, `PROJECT.md` (only if interface
-changes).
-
----
-
-## 2. Lexer: tokenize literals, identifiers, operators, comments
+## 1. Lexer: tokenize literals, identifiers, operators, comments
 
 Build: `cinder/lexer.py` with a `Lexer` class (or `tokenize(source: str) ->
 list[Token]` function) producing a full token stream for: integer and float
@@ -65,7 +36,7 @@ Likely files: `cinder/lexer.py`, `cinder/tokens.py`, `cinder/errors.py`,
 
 ---
 
-## 3. Parser: expressions with correct precedence
+## 2. Parser: expressions with correct precedence
 
 Build: `cinder/ast_nodes.py` with dataclasses for expression nodes
 (`Literal`, `Identifier`, `Unary`, `Binary`, `Logical`, `Grouping`, `Call` —
@@ -89,7 +60,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`, `cinder/errors.py`,
 
 ---
 
-## 4. Statement parsing + tree-walking evaluator for expressions and `let`
+## 3. Statement parsing + tree-walking evaluator for expressions and `let`
 
 Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) and
 parser support for `let x = <expr>;`, bare expression statements, and `{
@@ -118,7 +89,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Control flow: `if`/`else` and `while`
+## 4. Control flow: `if`/`else` and `while`
 
 Build: `IfStmt` and `WhileStmt` AST nodes, parser support, and evaluator
 support, using the truthiness rule: `false` and `nil` are falsy, everything
@@ -139,11 +110,11 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Functions: declarations, calls, closures, `return`
+## 5. Functions: declarations, calls, closures, `return`
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions
-`name(a, b)` (the `Call` node from task 3 becomes evaluable), and evaluator
+`name(a, b)` (the `Call` node from task 2 becomes evaluable), and evaluator
 support: functions are first-class values that capture their defining
 `Environment` (closures), calling pushes a new child scope with parameters
 bound, `return` unwinds via a control-flow signal (e.g. a Python exception
@@ -164,7 +135,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Data structures: lists and maps
+## 6. Data structures: lists and maps
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set
@@ -185,7 +156,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 7. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -209,7 +180,7 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 9. Error diagnostics polish
+## 8. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
@@ -232,7 +203,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 10. Example programs
+## 9. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -250,6 +221,15 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
+
+---
+
+## Done
+
+- **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1
+  (`night/20260718-project-scaffolding`). Built `cinder/` package skeleton
+  and `tests/` harness (argparse CLI stub, `TokenType.EOF` stub, passing
+  test suite).
 
 ---
 

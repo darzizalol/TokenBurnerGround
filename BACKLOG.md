@@ -8,7 +8,7 @@ task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Tree-walking evaluator for expressions
+## 1. Tree-walking evaluator for expressions [claimed 2026-07-18T14:33:33Z]
 
 Build: `cinder/interpreter.py` with an `Environment` class (name -> value,
 with a parent pointer for lexical scoping, though only the global scope is

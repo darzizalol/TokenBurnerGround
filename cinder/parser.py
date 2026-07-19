@@ -18,12 +18,14 @@ from cinder.ast_nodes import (
     Call,
     Expr,
     ExprStmt,
+    FnDecl,
     Grouping,
     Identifier,
     IfStmt,
     LetStmt,
     Literal,
     Logical,
+    ReturnStmt,
     Stmt,
     Unary,
     WhileStmt,
@@ -75,6 +77,10 @@ class Parser:
             return self._if_statement()
         if self._check(TokenType.WHILE):
             return self._while_statement()
+        if self._check(TokenType.FN):
+            return self._fn_declaration()
+        if self._check(TokenType.RETURN):
+            return self._return_statement()
         return self._expr_statement()
 
     def _let_statement(self) -> Stmt:
@@ -112,6 +118,35 @@ class Parser:
         self._consume(TokenType.RPAREN, "')' after while condition")
         body = self._statement()
         return WhileStmt(condition, body, while_token.line, while_token.column)
+
+    def _fn_declaration(self) -> Stmt:
+        fn_token = self._advance()
+        name_token = self._consume(TokenType.IDENTIFIER, "function name after 'fn'")
+        self._consume(TokenType.LPAREN, "'(' after function name")
+        params = []
+        if not self._check(TokenType.RPAREN):
+            params.append(self._consume(TokenType.IDENTIFIER, "parameter name").lexeme)
+            while self._check(TokenType.COMMA):
+                self._advance()
+                params.append(self._consume(TokenType.IDENTIFIER, "parameter name").lexeme)
+        self._consume(TokenType.RPAREN, "')' after parameters")
+        if not self._check(TokenType.LBRACE):
+            token = self._peek()
+            raise ParseError(
+                f"expected '{{' before function body, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        body = self._block()
+        return FnDecl(name_token.lexeme, params, body, fn_token.line, fn_token.column)
+
+    def _return_statement(self) -> Stmt:
+        return_token = self._advance()
+        value = None
+        if not self._check(TokenType.SEMICOLON):
+            value = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after return statement")
+        return ReturnStmt(value, return_token.line, return_token.column)
 
     def _expr_statement(self) -> Stmt:
         expr = self._assignment()

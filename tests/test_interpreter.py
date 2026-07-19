@@ -266,5 +266,60 @@ class TestTruthinessRule(unittest.TestCase):
             self.assertEqual(env.get("x"), 1, msg=source)
 
 
+class TestFunctions(unittest.TestCase):
+    def test_recursive_factorial(self):
+        env = run(
+            "fn factorial(n) { "
+            "  if (n <= 1) { return 1; } "
+            "  return n * factorial(n - 1); "
+            "} "
+            "let result = factorial(5);"
+        )
+        self.assertEqual(env.get("result"), 120)
+
+    def test_recursive_fibonacci(self):
+        env = run(
+            "fn fib(n) { "
+            "  if (n < 2) { return n; } "
+            "  return fib(n - 1) + fib(n - 2); "
+            "} "
+            "let result = fib(10);"
+        )
+        self.assertEqual(env.get("result"), 55)
+
+    def test_closure_captures_outer_variable_after_outer_returns(self):
+        env = run(
+            "fn make_adder(x) { "
+            "  fn adder(y) { return x + y; } "
+            "  return adder; "
+            "} "
+            "let add5 = make_adder(5); "
+            "let result = add5(10);"
+        )
+        self.assertEqual(env.get("result"), 15)
+
+    def test_function_without_return_yields_nil(self):
+        env = run("fn noop() { let x = 1; } let result = noop();")
+        self.assertIsNone(env.get("result"))
+
+    def test_return_stops_execution_early(self):
+        env = run(
+            "fn early() { return 1; return 2; } let result = early();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_wrong_argument_count_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("fn add(a, b) { return a + b; } add(1);")
+
+    def test_calling_non_function_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let x = 1; x();")
+
+    def test_function_is_first_class_value(self):
+        env = run("fn double(n) { return n * 2; } let f = double; let result = f(21);")
+        self.assertEqual(env.get("result"), 42)
+
+
 if __name__ == "__main__":
     unittest.main()

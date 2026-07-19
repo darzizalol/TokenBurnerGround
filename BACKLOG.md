@@ -9,38 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Fix: `run` leaks raw traceback for missing/unreadable script [claimed 2026-07-19T19:59:00Z]
-
-Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
-`open(path, ...)`; when the path doesn't exist (or isn't readable), Python
-raises `FileNotFoundError`/`OSError`, which isn't a `CinderError` subclass,
-so `main()`'s `except CinderError` doesn't catch it and the CLI leaks a raw
-Python traceback instead of a clean diagnostic. QA flagged this as a
-non-blocking gap when reviewing PR #10 (error diagnostics polish). Catch
-`OSError` around the file open in `run_file` (or in `main`, wherever fits
-the existing structure) and print a one-line, non-traceback message to
-stderr — e.g. `cinder: run: <path>: <reason>` — with a non-zero exit code,
-consistent in spirit with how `CinderError` is already reported. Do not
-change the exit code or message for the existing `CinderError` path.
-
-Acceptance criteria:
-- Running `cinder run <nonexistent-path>` prints a one-line diagnostic to
-  stderr (no Python traceback) and exits non-zero.
-- Running `cinder run` on a script that lexes/parses/executes fine still
-  behaves exactly as before (exit 0, stdout unaffected).
-- A `CinderError` raised during execution still produces the existing
-  `file:line:column: message` diagnostic — this task must not touch that
-  path's behavior, only add handling for the file-open failure.
-- Test drives `main()` (or the CLI as a subprocess) with a nonexistent path
-  and asserts no traceback leaks and the exit code is non-zero.
-- Full test suite passes.
-
-Likely files: `cinder/cli.py`, `tests/test_cli.py` (new, if it doesn't
-already exist).
-
----
-
-## 2. String indexing
+## 1. String indexing
 
 Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
 indexing into strings: `s[i]` returns a length-1 string for a valid `int`
@@ -64,7 +33,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 3. `for`-in loop over lists
+## 2. `for`-in loop over lists
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
@@ -92,7 +61,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: string methods
+## 3. Standard library: string methods
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
@@ -115,7 +84,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. `break` and `continue` for loops
+## 4. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for `while` and (once
 the for-in loop task lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
@@ -151,7 +120,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: math builtins
+## 5. Standard library: math builtins
 
 Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
 (both variadic — one or more numeric arguments, `int` or `float`), and
@@ -180,7 +149,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. REPL: command history via `readline`
+## 6. REPL: command history via `readline`
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End
@@ -325,6 +294,12 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
   reference semantics), plus `examples/collections.cin` exercised by the
   golden-output test harness. Reviewer noted a non-blocking nit: the module
   docstring still doesn't mention the new builtins.
+- **Fix: `run` leaks raw traceback for missing/unreadable script** — merged
+  2026-07-19T20:02:34Z via PR #15 (`fix/20260719-run-file-open`). Catches
+  `OSError` around `run_file`'s `open()` and prints a clean one-line
+  `cinder: run: <path>: <reason>` diagnostic to stderr with exit code 1,
+  instead of leaking a raw Python traceback, for missing/unreadable script
+  paths. `CinderError` handling is unchanged.
 
 ## Graveyard
 

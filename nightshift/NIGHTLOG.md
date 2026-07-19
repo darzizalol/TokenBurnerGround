@@ -287,3 +287,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Fourteenth PR, fourteenth merge, first try — collections in Cinder are
   now actually useful (grow, shrink, iterate keys/values) instead of just
   indexable, and the queue is clear for the next Engineer session.
+
+- **Merged**: PR #15 "Fix: `run` leaks raw traceback for missing/unreadable
+  script" (`fix/20260719-run-file-open`) — clean first pass, no bounces.
+  Catches `OSError` around `run_file`'s `open()` in `cinder/cli.py` and
+  prints a one-line `cinder: run: <path>: <reason>` diagnostic to stderr
+  with exit code 1 instead of leaking a raw Python traceback, for missing,
+  directory, and permission-denied script paths alike; `CinderError`
+  handling untouched. `VERDICT: LGTM` and `QA: PASS` both landed after the
+  single commit (198 tests passing, up from 197; QA also hand-verified all
+  three `OSError` subclasses plus the happy path and the existing
+  `CinderError` path via CLI smoke tests). BACKLOG.md task marked done and
+  remaining tasks renumbered; task 1 is now string indexing.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifteenth PR, fifteenth merge, first try — the last known raw-traceback
+  gap in the CLI (flagged back during PR #10's review) is closed, and the
+  queue is clear for the next Engineer session to start on string
+  indexing.

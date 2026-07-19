@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: interactive read-eval-print loop
+## 1. REPL: interactive read-eval-print loop [claimed 2026-07-19T19:30:39Z]
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's

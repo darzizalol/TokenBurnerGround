@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # run-night.sh — the Night Shift orchestrator.
 # Started by cron at 22:00. Runs role sessions in a loop until 07:00.
-# Each role is a headless `claude -p` session working in the repo root.
+# Two vendors, one constitution: Claude (claude CLI) architects, engineers,
+# and releases; Gemini (gemini CLI) reviews and QAs. Cross-vendor review is
+# deliberate — the authoring model never certifies its own work.
 
 set -u
 
@@ -11,8 +13,8 @@ LOGS="$DIR/logs"
 LOCK="$DIR/.night.lock"
 mkdir -p "$LOGS"
 
-# Cron provides a bare environment; make sure claude and gh are reachable.
-export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+# Cron provides a bare environment; make sure claude, gemini and gh are reachable.
+export PATH="$HOME/.local/bin:$HOME/.nvm/versions/node/v24.16.0/bin:/usr/local/bin:/usr/bin:/bin"
 
 # --once: test mode — ignore the 22:00-07:00 window and run exactly one cycle.
 ONCE=0
@@ -29,8 +31,6 @@ in_window() {
   [ "$h" -ge 22 ] || [ "$h" -lt 7 ]
 }
 
-# Only a line BEGINNING with the phrase counts — HELP.md's own instructions
-# mention it mid-sentence, which must not trigger a halt.
 stop_requested() { grep -q "^STATUS: STOP" "$DIR/HELP.md" 2>/dev/null; }
 
 # --- single instance guard ---------------------------------------------------
@@ -82,9 +82,15 @@ $(head -n 15 "$REPO/BACKLOG.md" 2>/dev/null || echo '(no backlog yet — Night O
 A progress report lands in this inbox when the shift ends (~07:00)." >> "$NIGHT_LOG" 2>&1
 STARTED=1
 
+# --- the crew -----------------------------------------------------------------
 ROLES=(architect engineer reviewer qa release)
-LIMIT_PATTERN='usage limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'
-AUTH_PATTERN='failed to authenticate|oauth.*(expired|revoked)|invalid authentication|invalid.*api.?key|error.*401'
+agent_for_role() { case "$1" in reviewer|qa) echo "gemini" ;; *) echo "claude" ;; esac; }
+
+CLAUDE_LIMIT_PATTERN='usage limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'
+CLAUDE_AUTH_PATTERN='failed to authenticate|oauth.*(expired|revoked)|invalid authentication|invalid.*api.?key|error.*401'
+GEMINI_LIMIT_PATTERN='429|quota.?exceeded|resource.?exhausted|rate.?limit'
+GEMINI_AUTH_PATTERN='not (logged|signed) in|please (log|sign) in|set an auth method|authenticationerror|error authenticating|authorization is required|credential.*(expired|invalid|not found)|invalid.*credential|login required|error.*40[13]'
+GEMINI_DOWN=0   # set on Gemini auth failure; its roles are skipped for the rest of the night
 
 while in_window; do
   if stop_requested; then
@@ -93,22 +99,56 @@ while in_window; do
   fi
 
   cd "$REPO" || exit 1
-  git pull --rebase origin main >> "$NIGHT_LOG" 2>&1 || log "WARN: git pull failed; continuing with local state."
+  git pull --rebase --autostash origin main >> "$NIGHT_LOG" 2>&1 || log "WARN: git pull failed; continuing with local state."
 
   for role in "${ROLES[@]}"; do
     in_window || break
     stop_requested && break
 
-    SESSION_LOG="$LOGS/$(date +%Y%m%d-%H%M%S)-$role.log"
-    log "session start: $role"
-    timeout --kill-after=60 3600 claude -p "$(cat "$DIR/prompts/$role.md")" \
-      --dangerously-skip-permissions > "$SESSION_LOG" 2>&1
-    rc=$?
-    log "session end: $role (exit $rc, log $(basename "$SESSION_LOG"))"
+    agent=$(agent_for_role "$role")
 
-    # Auth watchdog: an expired/invalid login can't be fixed by an agent.
-    # Page the human and end the shift instead of failing all night long.
-    if grep -qiE "$AUTH_PATTERN" "$SESSION_LOG"; then
+    if [ "$agent" = "gemini" ] && [ "$GEMINI_DOWN" = 1 ]; then
+      log "skip: $role — gemini marked down for tonight."
+      continue
+    fi
+
+    SESSION_LOG="$LOGS/$(date +%Y%m%d-%H%M%S)-$role.log"
+    log "session start: $role ($agent)"
+    case "$agent" in
+      claude)
+        timeout --kill-after=60 3600 claude -p "$(cat "$DIR/prompts/$role.md")" \
+          --dangerously-skip-permissions > "$SESSION_LOG" 2>&1
+        ;;
+      gemini)
+        timeout --kill-after=60 3600 gemini --yolo -p "$(cat "$DIR/prompts/$role.md")" \
+          > "$SESSION_LOG" 2>&1
+        ;;
+    esac
+    rc=$?
+    log "session end: $role ($agent, exit $rc, log $(basename "$SESSION_LOG"))"
+
+    # --- Gemini failures: skip, never fall back to the authoring model --------
+    if [ "$agent" = "gemini" ] && [ "$rc" -ne 0 ]; then
+      if grep -qiE "$GEMINI_AUTH_PATTERN" "$SESSION_LOG"; then
+        GEMINI_DOWN=1
+        log "gemini AUTH FAILURE — paging human; Reviewer/QA skipped for the rest of tonight."
+        "$DIR/notify.sh" "Night shift: Gemini auth broken" \
+          "The gemini CLI login failed, so Reviewer/QA sessions are skipped tonight and PRs wait. Run 'gemini' in a terminal and log in with Google."
+        { echo
+          echo "## $(date '+%F %T') — orchestrator"
+          echo "Gemini CLI auth failed during the $role session (see logs/$(basename "$SESSION_LOG"))."
+          echo "Reviewer/QA skipped for the night per constitution. Human: run 'gemini' and re-login."
+        } >> "$DIR/HELP.md"
+      elif grep -qiE "$GEMINI_LIMIT_PATTERN" "$SESSION_LOG"; then
+        log "gemini quota limit — $role skipped this cycle; PRs wait for its verdict."
+      else
+        log "gemini session failed (exit $rc) — $role skipped this cycle."
+      fi
+      continue
+    fi
+
+    # --- Claude auth watchdog: unfixable by agents — page human, clock out ----
+    if [ "$agent" = "claude" ] && grep -qiE "$CLAUDE_AUTH_PATTERN" "$SESSION_LOG"; then
       log "AUTH FAILURE detected — paging the human and clocking out."
       "$DIR/notify.sh" "Night shift blocked: Claude auth" \
         "The claude CLI login is expired or invalid. Open a terminal, run 'claude', and log in. The shift resumes tomorrow at 22:00."
@@ -120,14 +160,13 @@ while in_window; do
       exit 1
     fi
 
-    # Token watchdog: on a usage limit, nap in 30-min slices until the
-    # window resets or the shift ends. Limits are expected, not emergencies.
-    if grep -qiE "$LIMIT_PATTERN" "$SESSION_LOG"; then
+    # --- Claude token watchdog: nap in 30-min slices until tokens return ------
+    if [ "$agent" = "claude" ] && grep -qiE "$CLAUDE_LIMIT_PATTERN" "$SESSION_LOG"; then
       log "usage limit detected — napping until tokens return."
       while in_window && ! stop_requested; do
         sleep 1800
         probe=$(claude -p "Reply with exactly: OK" --dangerously-skip-permissions 2>&1)
-        if echo "$probe" | grep -q "OK" && ! echo "$probe" | grep -qiE "$LIMIT_PATTERN"; then
+        if echo "$probe" | grep -q "OK" && ! echo "$probe" | grep -qiE "$CLAUDE_LIMIT_PATTERN"; then
           log "tokens are back — resuming."
           break
         fi

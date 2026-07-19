@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: list/map growth and iteration helpers
+## 1. Standard library: list/map growth and iteration helpers [claimed 2026-07-19T19:50:49Z]
 
 Build: `cinder/builtins.py` currently only supports list/map access via
 `expr[expr]` get/set (from task "Data structures: lists and maps") — there

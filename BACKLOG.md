@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Fix: `run` leaks raw traceback for missing/unreadable script
+## 1. Fix: `run` leaks raw traceback for missing/unreadable script [claimed 2026-07-19T19:59:00Z]
 
 Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
 `open(path, ...)`; when the path doesn't exist (or isn't readable), Python

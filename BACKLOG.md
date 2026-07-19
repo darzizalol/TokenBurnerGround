@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Control flow: `if`/`else` and `while`
+## 1. Control flow: `if`/`else` and `while` [claimed 2026-07-19T14:11:14Z]
 
 Build: `IfStmt` and `WhileStmt` AST nodes, parser support, and evaluator
 support, using the truthiness rule: `false` and `nil` are falsy, everything

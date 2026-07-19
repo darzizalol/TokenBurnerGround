@@ -9,28 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Data structures: lists and maps [claimed 2026-07-19T14:42:29Z]
-
-Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
-nodes + parser support, index expressions `expr[expr]` for both get and set
-(`list[0] = 5`, `map["a"] = 5`), and evaluator support backed by Python
-`list`/`dict` under the hood. Out-of-range list index or missing map key
-raises a runtime `CinderError` with line info, not a raw Python
-`IndexError`/`KeyError` leaking through.
-
-Acceptance criteria:
-- Unit tests cover list/map literal construction, get/set indexing for
-  both, nested structures (list of maps, etc.), and the two error cases
-  (bad list index, missing map key) asserting a `CinderError` is raised
-  (not a bare Python exception).
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `cinder/errors.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 1. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -54,7 +33,7 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 3. Error diagnostics polish
+## 2. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
@@ -77,7 +56,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 4. Example programs
+## 3. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -98,7 +77,7 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
 
 ---
 
-## 5. REPL: interactive read-eval-print loop
+## 4. REPL: interactive read-eval-print loop
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's
@@ -174,6 +153,18 @@ Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
   `_ReturnSignal` Python traceback; fixed by tracking function-nesting
   depth in the parser and raising `ParseError` for `return` outside a
   function.
+- **Data structures: lists and maps** — merged 2026-07-19T~14:50Z via PR #8
+  (`feat/20260719-lists-maps`). Built `ListLiteral`/`MapLiteral`/`Index`/
+  `IndexAssign` AST nodes, parser support for `[1, 2, 3]` and `{"a": 1}`
+  literals plus `expr[expr]` get/set (backed by Python `list`/`dict`), and
+  a `COLON` token for map-literal syntax. Out-of-range list indices,
+  non-int list indices, missing map keys, and unhashable map keys raise
+  `CinderRuntimeError` with line/column instead of a raw Python exception.
+  Reviewer flagged a pre-existing, non-blocking grammar wrinkle: because
+  `_statement()` special-cases a leading `{` as a block, a bare
+  map-literal expression statement like `{"a": 1};` parses as a block, not
+  a `MapLiteral` — worth fixing whenever statement-level map literals are
+  needed.
 
 ---
 

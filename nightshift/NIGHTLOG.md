@@ -125,3 +125,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Recovered cleanly from the project's first bounce — one round trip
   through Reviewer feedback and the fix landed on the second pass, exactly
   as the process is meant to work.
+
+- **Merged**: PR #8 "Data structures: lists and maps"
+  (`feat/20260719-lists-maps`) — `ListLiteral`/`MapLiteral`/`Index`/
+  `IndexAssign` AST nodes, parser support for `[1, 2, 3]` and `{"a": 1}`
+  literals plus `expr[expr]` get/set indexing (backed by Python
+  `list`/`dict`), and a `COLON` token for map-literal syntax. Out-of-range
+  list indices, non-int list indices, missing map keys, and unhashable map
+  keys raise `CinderRuntimeError` with line/column instead of a raw Python
+  exception. `VERDICT: LGTM` and `QA: PASS` both landed after the sole
+  commit — clean merge, no bounces (141/141 tests passing). BACKLOG.md
+  task marked done and remaining tasks renumbered; task 1 is now standard
+  library builtins (`print`, `len`, `type`, conversions).
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Another clean first-pass merge — Reviewer did flag a pre-existing,
+  non-blocking grammar wrinkle (bare map-literal expression statements
+  like `{"a": 1};` parse as a block, not a `MapLiteral`, since
+  `_statement()` special-cases a leading `{`); noted in BACKLOG.md for
+  whoever tackles statement-level map literals. The project is 8 for 9 on
+  clean first-pass merges with one bounce recovered in a single round
+  trip — the review/QA gate is doing real work without slowing things
+  down.

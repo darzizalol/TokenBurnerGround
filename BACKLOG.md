@@ -118,7 +118,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 5. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for `while` and (once
-task 4 lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
+the for-in loop task lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
 (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for the bare
 `break;` / `continue;` keywords, restricted to loop bodies the same way
 `return` is restricted to function bodies today — track loop-nesting depth
@@ -135,7 +135,8 @@ Acceptance criteria:
   not running remaining iterations.
 - `while` loop with a `continue` inside an `if` skips the rest of that
   iteration's body but keeps looping.
-- Same two behaviors for `for`-in loops (depends on task 4 having merged).
+- Same two behaviors for `for`-in loops (depends on the for-in loop task
+  having merged).
 - `break`/`continue` used outside any loop raises `ParseError` with
   line/column, at parse time (not a runtime crash).
 - `break`/`continue` inside a function nested inside a loop body still
@@ -147,6 +148,67 @@ Acceptance criteria:
 
 Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 `cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 6. Standard library: math builtins
+
+Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
+(both variadic — one or more numeric arguments, `int` or `float`), and
+`round(n)` (rounds to the nearest integer, ties-to-even, matching Python's
+built-in `round`). Follow the existing arity/type-check style (`_len`,
+`_str`): raise `CinderRuntimeError` with line/column for a non-numeric
+argument, and for `min`/`max`, for zero arguments. `abs`/`round` are
+single-argument like `_str`/`_int`; `min`/`max` need their own arity check
+since they accept a variable number of arguments (`_require_arity` doesn't
+fit them — write a small variadic check inline, e.g. reject only zero
+arguments).
+
+Acceptance criteria:
+- `abs(-3)` is `3`, `abs(-3.5)` is `3.5`; `abs("x")` raises
+  `CinderRuntimeError` with line/column.
+- `min(3, 1, 2)` is `1`, `max(3, 1, 2)` is `3`; each works with a single
+  argument (`min(5)` is `5`) and raises `CinderRuntimeError` with zero
+  arguments or any non-numeric argument.
+- `round(2.5)` is `2`, `round(3.5)` is `4` (ties-to-even); `round("x")`
+  raises `CinderRuntimeError` with line/column.
+- Unit tests cover happy path, wrong argument type, and (for `min`/`max`)
+  wrong arity for each of the four builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. REPL: command history via `readline`
+
+Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
+REPL supports up/down arrow history navigation and left/right/Home/End
+in-line editing, matching ordinary shell REPL ergonomics (Python's own
+`python3` REPL gets this for free from `readline`; Cinder's hand-rolled
+input loop currently doesn't because it likely reads via `input()` without
+`readline` imported, or reads stdin directly). Import `readline` at REPL
+startup (guard with `try`/`except ImportError` — `readline` is unavailable
+on some platforms, e.g. stock Windows Python; the REPL must still start
+without it, just without history). Do not add persistent history-file
+save/load across sessions — in-session history only, keep this task small.
+
+Acceptance criteria:
+- Running the REPL, entering a few statements, then pressing the up arrow
+  recalls the previously entered line for editing/re-execution (verify via
+  a manual smoke test description in the PR body — arrow-key interaction
+  isn't practically unit-testable through a subprocess pipe).
+- Existing REPL behavior (multiline buffering for unterminated statements,
+  expression echoing, error reporting) is unchanged — full existing
+  `tests/test_repl.py` suite still passes since none of it depends on
+  `readline`.
+- On a platform/build without `readline` (simulate by temporarily forcing
+  the import to fail in a test, or by testing the `except ImportError`
+  branch directly), the REPL still starts and runs correctly, just without
+  history.
+- Full test suite passes.
+
+Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 

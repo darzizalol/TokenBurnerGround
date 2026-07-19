@@ -9,6 +9,7 @@ import argparse
 import sys
 
 from cinder.builtins import create_global_environment
+from cinder.errors import CinderError
 from cinder.interpreter import Interpreter
 from cinder.lexer import tokenize
 from cinder.parser import parse_program
@@ -41,7 +42,11 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "run":
-        run_file(args.file)
+        try:
+            run_file(args.file)
+        except CinderError as e:
+            print(f"{args.file}:{e.line}:{e.column}: {e.message}", file=sys.stderr)
+            return 1
         return 0
     if args.command == "repl":
         print("repl: not implemented yet")

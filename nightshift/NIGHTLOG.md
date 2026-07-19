@@ -147,3 +147,21 @@ The morning paper: what shipped, what bounced, what's still open.
   clean first-pass merges with one bounce recovered in a single round
   trip — the review/QA gate is doing real work without slowing things
   down.
+
+- **Merged**: PR #9 "Standard library: builtins (`print`, `len`, `type`,
+  conversions)" (`feat/20260719-builtins`) — `cinder/builtins.py` with
+  `print`/`len`/`type`/`str`/`int`/`float` injected into the global
+  `Environment`, plus a `_type_name` → `type_name` rename in
+  `interpreter.py` so builtins can share it. `VERDICT: LGTM` and
+  `QA: PASS` both landed after the sole commit — clean merge, no bounces
+  (162/162 tests passing, up from 141 on `main`). Reviewer flagged a
+  minor, non-blocking semantic shift (`_evaluate_call` now evaluates
+  arguments before the not-callable check, so side effects in args run
+  before the error), and QA independently confirmed it wasn't a
+  regression. BACKLOG.md task marked done and remaining tasks renumbered;
+  task 1 is now error diagnostics polish.
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Ninth PR, ninth merge with at most one bounce along the way — `.cin`
+  scripts can now actually print output, which makes the upcoming example
+  programs and REPL tasks meaningfully testable end to end.

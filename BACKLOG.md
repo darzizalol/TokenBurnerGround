@@ -9,31 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: builtins (`print`, `len`, `type`, conversions) [claimed 2026-07-19T14:53:58Z]
-
-Build: `cinder/builtins.py` exposing builtin functions injected into the
-global `Environment` at interpreter startup: `print(...)` (writes to
-stdout, space-joined, trailing newline — this is what makes `.cin` scripts
-finally produce visible output), `len(x)` (works on strings, lists, maps),
-`type(x)` (returns a type name string), `str(x)`, `int(x)`, `float(x)`.
-Wire real `.cin` example scripts using `print` so `cinder run` output
-becomes observable end to end.
-
-Acceptance criteria:
-- Unit tests for each builtin covering normal and at least one error case
-  (e.g. `len(42)` raises `CinderError`).
-- An integration-style test that runs a small script through
-  `cinder.cli run` (via `subprocess` or by capturing stdout) and asserts on
-  printed output — this is the first test exercising the full
-  lex→parse→interpret→builtin pipeline end to end.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
-`tests/test_builtins.py`.
-
----
-
-## 2. Error diagnostics polish
+## 1. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
@@ -56,7 +32,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 3. Example programs
+## 2. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -77,7 +53,7 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
 
 ---
 
-## 4. REPL: interactive read-eval-print loop
+## 3. REPL: interactive read-eval-print loop
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's
@@ -106,7 +82,7 @@ Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
 
 ---
 
-## 5. Fix: statement-level map literals parse as blocks
+## 4. Fix: statement-level map literals parse as blocks
 
 Build: fix the grammar ambiguity flagged during review of PR #8. Because
 `_statement()` special-cases any leading `{` as the start of a `Block`, a
@@ -191,6 +167,14 @@ Likely files: `cinder/parser.py`, `tests/test_parser.py`.
   map-literal expression statement like `{"a": 1};` parses as a block, not
   a `MapLiteral` — worth fixing whenever statement-level map literals are
   needed.
+- **Standard library: builtins (`print`, `len`, `type`, conversions)** —
+  merged 2026-07-19T15:03:10Z via PR #9 (`feat/20260719-builtins`). Built
+  `cinder/builtins.py` with `print`, `len`, `type`, `str`, `int`, `float`
+  injected into the global `Environment`; renamed `_type_name` to
+  `type_name` in `interpreter.py` to share it. Reviewer noted a minor,
+  non-blocking semantic shift: `_evaluate_call` now evaluates arguments
+  before the not-callable check, so side effects in args to a non-callable
+  run before the error is raised.
 
 ---
 

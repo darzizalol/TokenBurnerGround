@@ -54,6 +54,16 @@ class TestCliSubcommands(unittest.TestCase):
         with self.assertRaises(SystemExit):
             cli.main([])
 
+    def test_run_nonexistent_path_reports_diagnostic_not_traceback(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "cinder.cli", "run", "/no/such/file.cin"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("/no/such/file.cin", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

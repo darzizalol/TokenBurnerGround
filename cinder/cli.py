@@ -45,6 +45,9 @@ def main(argv=None) -> int:
     if args.command == "run":
         try:
             run_file(args.file)
+        except OSError as e:
+            print(f"cinder: run: {args.file}: {e.strerror}", file=sys.stderr)
+            return 1
         except CinderError as e:
             print(f"{args.file}:{e.line}:{e.column}: {e.message}", file=sys.stderr)
             return 1

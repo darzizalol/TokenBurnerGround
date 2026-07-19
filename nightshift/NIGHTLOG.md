@@ -201,3 +201,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Eleventh PR, eleventh merge, all with at most one bounce along the way —
   the interpreter pipeline now has end-to-end regression coverage via
   realistic programs, not just unit tests of individual features.
+
+## 2026-07-20
+
+- **Merged**: none this cycle.
+- **Bounced**: PR #12 "Fix: statement-level map literals parse as blocks"
+  (`fix/20260719-map-literal-stmt`) has one `VERDICT: CHANGES REQUESTED`
+  (the speculative parse only tries `_map_literal()`, not a full
+  expression, so postfix/binary ops on a leading map literal like
+  `{"a": 1}["a"];` still fail to parse) and no QA verdict yet — below the
+  3-strike close threshold, left open for the next Engineer session to
+  push a fix to the same branch.
+- **Still open**: PR #12, awaiting rework per the review comment above.
+- Quiet cycle — nothing to merge or close, the one open PR is mid-rework
+  and just needs the next Engineer session to broaden the speculative
+  parse to a full expression before it can go back to review.

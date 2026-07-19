@@ -65,6 +65,21 @@ class CinderFunction:
         return len(self.decl.params)
 
 
+class Builtin:
+    """A native Python function exposed as a callable Cinder value.
+
+    `fn` receives the already-evaluated argument list plus the call site's
+    line/column (for error reporting) and returns the Cinder result.
+    """
+
+    def __init__(self, name: str, fn):
+        self.name = name
+        self._fn = fn
+
+    def call(self, arguments: list, line: int, column: int) -> object:
+        return self._fn(arguments, line, column)
+
+
 class Environment:
     """Maps names to values with a parent pointer for lexical scoping."""
 
@@ -158,11 +173,13 @@ class Interpreter:
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)
+        arguments = [self.evaluate(arg, env) for arg in expr.arguments]
+        if isinstance(callee, Builtin):
+            return callee.call(arguments, expr.line, expr.column)
         if not isinstance(callee, CinderFunction):
             raise CinderRuntimeError(
-                f"{_type_name(callee)} is not callable", expr.line, expr.column
+                f"{type_name(callee)} is not callable", expr.line, expr.column
             )
-        arguments = [self.evaluate(arg, env) for arg in expr.arguments]
         if len(arguments) != callee.arity:
             raise CinderRuntimeError(
                 f"{callee.name}() expects {callee.arity} argument(s), "
@@ -185,7 +202,7 @@ class Interpreter:
             key = self.evaluate(key_expr, env)
             if not _is_valid_key(key):
                 raise CinderRuntimeError(
-                    f"{_type_name(key)} is not a valid map key",
+                    f"{type_name(key)} is not a valid map key",
                     expr.line,
                     expr.column,
                 )
@@ -198,7 +215,7 @@ class Interpreter:
         if isinstance(obj, list):
             if not isinstance(index, int) or isinstance(index, bool):
                 raise CinderRuntimeError(
-                    f"list index must be an int, got {_type_name(index)}",
+                    f"list index must be an int, got {type_name(index)}",
                     expr.line,
                     expr.column,
                 )
@@ -212,7 +229,7 @@ class Interpreter:
         if isinstance(obj, dict):
             if not _is_valid_key(index):
                 raise CinderRuntimeError(
-                    f"{_type_name(index)} is not a valid map key",
+                    f"{type_name(index)} is not a valid map key",
                     expr.line,
                     expr.column,
                 )
@@ -222,7 +239,7 @@ class Interpreter:
                 )
             return obj[index]
         raise CinderRuntimeError(
-            f"{_type_name(obj)} is not indexable", expr.line, expr.column
+            f"{type_name(obj)} is not indexable", expr.line, expr.column
         )
 
     def _evaluate_index_assign(self, expr: IndexAssign, env: Environment) -> object:
@@ -232,7 +249,7 @@ class Interpreter:
         if isinstance(obj, list):
             if not isinstance(index, int) or isinstance(index, bool):
                 raise CinderRuntimeError(
-                    f"list index must be an int, got {_type_name(index)}",
+                    f"list index must be an int, got {type_name(index)}",
                     expr.line,
                     expr.column,
                 )
@@ -247,14 +264,14 @@ class Interpreter:
         if isinstance(obj, dict):
             if not _is_valid_key(index):
                 raise CinderRuntimeError(
-                    f"{_type_name(index)} is not a valid map key",
+                    f"{type_name(index)} is not a valid map key",
                     expr.line,
                     expr.column,
                 )
             obj[index] = value
             return value
         raise CinderRuntimeError(
-            f"{_type_name(obj)} does not support item assignment",
+            f"{type_name(obj)} does not support item assignment",
             expr.line,
             expr.column,
         )
@@ -282,7 +299,7 @@ class Interpreter:
         if expr.operator.type == TokenType.MINUS:
             if not isinstance(operand, _NUMERIC) or isinstance(operand, bool):
                 raise CinderRuntimeError(
-                    f"unary '-' requires a number, got {_type_name(operand)}",
+                    f"unary '-' requires a number, got {type_name(operand)}",
                     expr.operator.line,
                     expr.operator.column,
                 )
@@ -314,7 +331,7 @@ class Interpreter:
             if isinstance(left, str) and isinstance(right, str):
                 return left + right
             raise CinderRuntimeError(
-                f"unsupported operand types for '+': {_type_name(left)} and {_type_name(right)}",
+                f"unsupported operand types for '+': {type_name(left)} and {type_name(right)}",
                 expr.operator.line,
                 expr.operator.column,
             )
@@ -340,7 +357,7 @@ class Interpreter:
         if not (_is_number(left) and _is_number(right)):
             raise CinderRuntimeError(
                 f"unsupported operand types for {expr.operator.lexeme!r}: "
-                f"{_type_name(left)} and {_type_name(right)}",
+                f"{type_name(left)} and {type_name(right)}",
                 expr.operator.line,
                 expr.operator.column,
             )
@@ -364,7 +381,7 @@ class Interpreter:
         if not comparable:
             raise CinderRuntimeError(
                 f"unsupported operand types for comparison: "
-                f"{_type_name(left)} and {_type_name(right)}",
+                f"{type_name(left)} and {type_name(right)}",
                 expr.operator.line,
                 expr.operator.column,
             )
@@ -394,7 +411,7 @@ def _values_equal(left: object, right: object) -> bool:
     return left == right
 
 
-def _type_name(value: object) -> str:
+def type_name(value: object) -> str:
     if value is None:
         return "nil"
     if isinstance(value, bool):
@@ -409,6 +426,6 @@ def _type_name(value: object) -> str:
         return "list"
     if isinstance(value, dict):
         return "map"
-    if isinstance(value, CinderFunction):
+    if isinstance(value, (CinderFunction, Builtin)):
         return "function"
     return type(value).__name__

@@ -216,3 +216,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle — nothing to merge or close, the one open PR is mid-rework
   and just needs the next Engineer session to broaden the speculative
   parse to a full expression before it can go back to review.
+
+- **Merged**: PR #12 "Fix: statement-level map literals parse as blocks"
+  (`fix/20260719-map-literal-stmt`) — after the CHANGES REQUESTED above,
+  the Engineer broadened `_brace_statement()`'s speculative parse from a
+  bare `_map_literal()` to a full `self._assignment()`, so postfix
+  indexing/calls and binary operators on a leading map literal are now
+  captured correctly, with tests for all three previously-failing cases.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the fix-up push (175
+  tests passing). BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now the REPL.
+- **Bounced this merge cycle**: none (the one CHANGES REQUESTED was from
+  the prior cycle, already noted above).
+- **Still open**: no open PRs.
+- Twelfth PR, twelfth merge — the map-literal-vs-block ambiguity flagged
+  back during PR #8's review is fully closed out, and the parser now
+  correctly disambiguates the whole leading-`{` expression grammar, not
+  just the bare-literal case.

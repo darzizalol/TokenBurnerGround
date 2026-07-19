@@ -9,33 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Fix: statement-level map literals parse as blocks [claimed 2026-07-19T19:12:13Z]
-
-Build: fix the grammar ambiguity flagged during review of PR #8. Because
-`_statement()` special-cases any leading `{` as the start of a `Block`, a
-bare map-literal expression statement like `{"a": 1};` currently parses as
-a (broken/misinterpreted) block instead of a `MapLiteral` wrapped in an
-`ExprStmt`. Give the parser enough lookahead (or a backtracking attempt) at
-a leading `{` to distinguish "block of statements" from "map literal
-expression": e.g. peek past the first `{`, and if the next tokens form
-`expr COLON` before any statement-ending token, parse a map literal
-expression statement instead of a block. Empty `{}` may stay a block (or be
-special-cased to an empty map) — pick one and document it in `PROJECT.md`
-if it's not already covered by the truthiness/grammar notes.
-
-Acceptance criteria:
-- `{"a": 1};` as a top-level or in-block statement parses as an `ExprStmt`
-  wrapping a `MapLiteral`, not a `Block`.
-- Existing block syntax (`{ let x = 1; print(x); }`) still parses as a
-  `Block` — add a regression test pinning this alongside the new map-literal
-  statement test.
-- Full test suite passes, including the new cases.
-
-Likely files: `cinder/parser.py`, `tests/test_parser.py`.
-
----
-
-## 2. REPL: interactive read-eval-print loop
+## 1. REPL: interactive read-eval-print loop
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's
@@ -70,7 +44,7 @@ Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`,
 
 ---
 
-## 3. Standard library: list/map growth and iteration helpers
+## 2. Standard library: list/map growth and iteration helpers
 
 Build: `cinder/builtins.py` currently only supports list/map access via
 `expr[expr]` get/set (from task "Data structures: lists and maps") — there
@@ -97,7 +71,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Fix: `run` leaks raw traceback for missing/unreadable script
+## 3. Fix: `run` leaks raw traceback for missing/unreadable script
 
 Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
 `open(path, ...)`; when the path doesn't exist (or isn't readable), Python
@@ -128,7 +102,7 @@ already exist).
 
 ---
 
-## 5. String indexing
+## 4. String indexing
 
 Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
 indexing into strings: `s[i]` returns a length-1 string for a valid `int`
@@ -152,7 +126,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 6. `for`-in loop over lists
+## 5. `for`-in loop over lists
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
@@ -180,7 +154,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: string methods
+## 6. Standard library: string methods
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
@@ -283,6 +257,18 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   golden-output file, plus `tests/test_examples.py` which subprocess-runs
   every `examples/*.cin` file and diffs stdout against its golden file so
   regressions anywhere in the pipeline get caught end to end.
+- **Fix: statement-level map literals parse as blocks** — merged
+  2026-07-19T19:26:49Z via PR #12 (`fix/20260719-map-literal-stmt`).
+  `_brace_statement()` now speculatively parses a full `self._assignment()`
+  (the same entry point `_expr_statement` uses) instead of just the bare
+  `_map_literal()`, so a leading `{` at statement position that turns out
+  to be a map literal — including with postfix indexing/calls or binary
+  operators applied to it — is captured as `ExprStmt(MapLiteral)` instead
+  of misfiring into a broken `Block`. Bounced once on review: the first
+  pass only covered the bare-literal case (`{"a": 1};`) and still failed
+  on `{"a": 1}["a"];`, `{"a": 1}();`, and `{"a": 1} == {"a": 1};`; fixed by
+  broadening the speculative parse to the full expression grammar.
+  Documented the disambiguation rule in `PROJECT.md`.
 
 ---
 

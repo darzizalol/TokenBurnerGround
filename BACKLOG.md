@@ -9,36 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Statements: `let`, blocks, and end-to-end CLI wiring [claimed 2026-07-18T14:44:04Z — that session was killed mid-work by the hard stop; its unreviewed WIP was rescued to branch `night/20260718-statements`. Engineer: work on it in a worktree (`git worktree add .worktrees/statements night/20260718-statements`), verify/finish the work, run the tests, then open the PR from there. Treat the WIP as untrusted. **That branch is now 6 commits behind `main`** (it predates the worktree-procedure rewrite and the Gemini onboarding/revert), so its diff against `main` shows spurious changes to `CLAUDE.md` and `nightshift/prompts/*` that aren't real — rebase onto `origin/main` first (`git rebase origin/main` inside the worktree) so the diff reduces to just the `cinder/`/`tests/` changes before evaluating or finishing the WIP.]
-
-Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) in
-`cinder/ast_nodes.py` and parser support for `let x = <expr>;`, bare
-expression statements, and `{ ... }` blocks, plus a `parse_program` (or
-similar) entry point turning a full token list into a list of statements.
-Extend the existing `Interpreter` with an `execute(stmt, env)` that handles
-`LetStmt` (declares in the current scope's `Environment`), `ExprStmt`
-(evaluates and discards), and `Block` (opens a child `Environment` whose
-parent is the enclosing scope, so inner `let` shadows outer without
-mutating it). Wire `cinder/cli.py`'s `run` subcommand to actually
-lex -> parse -> execute a `.cin` file end to end.
-
-Acceptance criteria:
-- `python3 -m cinder.cli run <file>` on a script containing `let x = 1 + 2;
-  let y = x * 2;` runs without error (nothing to print yet — `print` is a
-  later task, so tests should call the `Interpreter`/`Environment` API
-  directly, not rely on stdout).
-- Unit tests cover `let` declaration + lookup, block scoping (inner `let`
-  shadows outer, outer unaffected after block exits), and a CLI-level test
-  that runs a `let`-only script through `cinder.cli run` and exits zero.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `cinder/cli.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`, `tests/test_cli.py`.
-
----
-
-## 2. Control flow: `if`/`else` and `while`
+## 1. Control flow: `if`/`else` and `while`
 
 Build: `IfStmt` and `WhileStmt` AST nodes, parser support, and evaluator
 support, using the truthiness rule: `false` and `nil` are falsy, everything
@@ -59,7 +30,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Functions: declarations, calls, closures, `return`
+## 2. Functions: declarations, calls, closures, `return`
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions
@@ -84,7 +55,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Data structures: lists and maps
+## 3. Data structures: lists and maps
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set
@@ -105,7 +76,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 4. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -129,7 +100,7 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 6. Error diagnostics polish
+## 5. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
@@ -152,7 +123,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 7. Example programs
+## 6. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -195,6 +166,15 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
   comparisons, short-circuit logical ops, unary, grouping, identifier
   lookup); `Call` intentionally left unimplemented pending task 3 (was
   task 4 pre-renumber).
+- **Statements: `let`, blocks, and end-to-end CLI wiring** — merged
+  2026-07-19T14:07:31Z via PR #5 (`night/20260718-statements`). Built
+  `ExprStmt`/`LetStmt`/`Block` AST nodes, parser support for `let`
+  statements and `{ ... }` blocks plus `parse_program`, and
+  `Interpreter.execute(stmt, env)` handling all three; wired
+  `cinder/cli.py`'s `run` subcommand to lex→parse→execute a `.cin` file
+  end to end. Started as WIP rescued after a prior session was killed
+  mid-work by the nightly hard stop; rebased, reviewed, and verified
+  before merge.
 
 ---
 

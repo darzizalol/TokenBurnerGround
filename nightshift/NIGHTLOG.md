@@ -58,3 +58,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Four for four tonight — every PR has landed clean on the first pass, no
   review/QA friction at all so far.
+
+## 2026-07-19
+
+- **Merged**: PR #5 "Statements: let, blocks, and end-to-end CLI wiring"
+  (`night/20260718-statements`) — `ExprStmt`/`LetStmt`/`Block` AST nodes,
+  parser support for `let` and `{ ... }` blocks plus `parse_program`, and
+  `Interpreter.execute(stmt, env)`; wired `cinder/cli.py`'s `run`
+  subcommand to lex→parse→execute a `.cin` file end to end, 81 tests
+  passing. This branch started as unreviewed WIP rescued after a prior
+  session was killed mid-work by the hard stop; this cycle's Engineer
+  rebased it onto current `main`, and Reviewer/QA both signed off on the
+  rebased result (`VERDICT: LGTM`, `QA: PASS`, both after the sole commit)
+  — clean merge, no bounces. BACKLOG.md task 1 marked done and remaining
+  tasks renumbered; task 1 is now control flow (`if`/`else`, `while`).
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Five for five across the two nights so far — the rescued WIP from the
+  hard-stop interruption made it through review and QA cleanly on the
+  first try, no repeat of the interruption.

@@ -9,33 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: list/map growth and iteration helpers [claimed 2026-07-19T19:50:49Z]
-
-Build: `cinder/builtins.py` currently only supports list/map access via
-`expr[expr]` get/set (from task "Data structures: lists and maps") — there
-is no way for a Cinder script to grow a list, remove an entry, or iterate a
-map's keys. Add builtins: `push(list, value)` (appends, returns the
-mutated list), `pop(list)` (removes and returns the last element, raises
-`CinderRuntimeError` on an empty list), `keys(map)` (returns a list of the
-map's keys, insertion order), and `values(map)` (returns a list of the
-map's values, same order). Each must arity/type-check its arguments the
-same way `_len`/`_str` do and raise `CinderRuntimeError` with line/column on
-misuse (e.g. `push` on a non-list, `pop` on an empty list, `keys`/`values`
-on a non-map).
-
-Acceptance criteria:
-- Unit tests for each of the four builtins: happy path, wrong argument
-  type, wrong arity, and (for `pop`) the empty-list error case.
-- An example-worthy `.cin` snippet using at least `push` and `keys`
-  together is exercised by a test; since `examples/` already exists, add
-  one there instead of duplicating coverage.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Fix: `run` leaks raw traceback for missing/unreadable script
+## 1. Fix: `run` leaks raw traceback for missing/unreadable script
 
 Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
 `open(path, ...)`; when the path doesn't exist (or isn't readable), Python
@@ -66,7 +40,7 @@ already exist).
 
 ---
 
-## 3. String indexing
+## 2. String indexing
 
 Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
 indexing into strings: `s[i]` returns a length-1 string for a valid `int`
@@ -90,7 +64,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 4. `for`-in loop over lists
+## 3. `for`-in loop over lists
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
@@ -118,7 +92,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: string methods
+## 4. Standard library: string methods
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
@@ -141,7 +115,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. `break` and `continue` for loops
+## 5. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for `while` and (once
 task 4 lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
@@ -281,6 +255,14 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
   fall through to the normal `CinderError` report-and-continue path.
 
 ---
+
+- **Standard library: list/map growth and iteration helpers** — merged
+  2026-07-19T19:55:16Z via PR #14 (`feat/20260719-list-map-helpers`). Added
+  `push`, `pop`, `keys`, `values` builtins to `cinder/builtins.py`, mutating
+  the underlying list/dict in place (consistent with existing index-assign
+  reference semantics), plus `examples/collections.cin` exercised by the
+  golden-output test harness. Reviewer noted a non-blocking nit: the module
+  docstring still doesn't mention the new builtins.
 
 ## Graveyard
 

@@ -270,3 +270,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirteenth PR, thirteenth merge — the interpreter now has an actual
   interactive REPL with no silent-hang failure mode, and the project is
   clear to open on task 1 (list/map helpers) next cycle.
+
+- **Merged**: PR #14 "Standard library: list/map growth and iteration
+  helpers" (`feat/20260719-list-map-helpers`) — clean first pass, no
+  bounces. Added `push`/`pop`/`keys`/`values` to `cinder/builtins.py`
+  (mutating the underlying list/dict in place, consistent with existing
+  index-assign reference semantics) plus `examples/collections.cin`
+  exercised by the golden-output test harness. `VERDICT: LGTM` and
+  `QA: PASS` both landed after the single commit (197 tests passing, up
+  from 184). Reviewer's only note was a non-blocking nit: the module
+  docstring still doesn't list the new builtins. BACKLOG.md task marked
+  done and remaining tasks renumbered; task 1 is now the `run` CLI
+  traceback-leak fix for missing/unreadable script paths.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourteenth PR, fourteenth merge, first try — collections in Cinder are
+  now actually useful (grow, shrink, iterate keys/values) instead of just
+  indexable, and the queue is clear for the next Engineer session.

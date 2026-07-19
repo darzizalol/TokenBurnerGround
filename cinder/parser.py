@@ -1,18 +1,26 @@
-"""Recursive-descent parser: token list -> expression AST.
+"""Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
     or > and > comparisons (== != < <= > >=) > + - > * / % > unary (- not)
 with parenthesized grouping and call expressions binding tightest of all.
+
+Statement grammar: a program is a list of statements, each one of
+`let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block), or a bare
+`<expr>;` (ExprStmt).
 """
 
 from cinder.ast_nodes import (
     Binary,
+    Block,
     Call,
     Expr,
+    ExprStmt,
     Grouping,
     Identifier,
+    LetStmt,
     Literal,
     Logical,
+    Stmt,
     Unary,
 )
 from cinder.errors import ParseError
@@ -46,6 +54,40 @@ class Parser:
                 token.column,
             )
         return expr
+
+    def parse_program(self) -> list:
+        statements = []
+        while not self._check(TokenType.EOF):
+            statements.append(self._statement())
+        return statements
+
+    def _statement(self) -> Stmt:
+        if self._check(TokenType.LET):
+            return self._let_statement()
+        if self._check(TokenType.LBRACE):
+            return self._block()
+        return self._expr_statement()
+
+    def _let_statement(self) -> Stmt:
+        let_token = self._advance()
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
+        self._consume(TokenType.EQ, "'=' after variable name")
+        initializer = self._or()
+        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
+        return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
+
+    def _block(self) -> Stmt:
+        self._advance()  # consume '{'
+        statements = []
+        while not self._check(TokenType.RBRACE) and not self._check(TokenType.EOF):
+            statements.append(self._statement())
+        self._consume(TokenType.RBRACE, "'}' after block")
+        return Block(statements)
+
+    def _expr_statement(self) -> Stmt:
+        expr = self._or()
+        self._consume(TokenType.SEMICOLON, "';' after expression")
+        return ExprStmt(expr)
 
     def _or(self) -> Expr:
         expr = self._and()
@@ -176,3 +218,7 @@ class Parser:
 
 def parse_expression(tokens: list[Token]) -> Expr:
     return Parser(tokens).parse_expression()
+
+
+def parse_program(tokens: list[Token]) -> list:
+    return Parser(tokens).parse_program()

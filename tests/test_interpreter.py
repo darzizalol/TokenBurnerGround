@@ -5,13 +5,21 @@ import unittest
 from cinder.errors import CinderRuntimeError
 from cinder.interpreter import Environment, Interpreter
 from cinder.lexer import tokenize
-from cinder.parser import parse_expression
+from cinder.parser import parse_expression, parse_program
 
 
 def evaluate(source: str):
     interpreter = Interpreter()
     env = Environment()
     return interpreter.evaluate(parse_expression(tokenize(source)), env)
+
+
+def run(source: str, env: Environment | None = None) -> Environment:
+    interpreter = Interpreter()
+    env = env if env is not None else Environment()
+    for statement in parse_program(tokenize(source)):
+        interpreter.execute(statement, env)
+    return env
 
 
 class TestArithmetic(unittest.TestCase):
@@ -137,6 +145,40 @@ class TestIdentifiers(unittest.TestCase):
             interpreter.evaluate(parse_expression(tokenize("missing")), env)
         self.assertEqual(ctx.exception.line, 1)
         self.assertEqual(ctx.exception.column, 1)
+
+
+class TestStatements(unittest.TestCase):
+    def test_let_declares_and_lookup_works(self):
+        env = run("let x = 1 + 2;")
+        self.assertEqual(env.get("x"), 3)
+
+    def test_let_can_reference_earlier_let(self):
+        env = run("let x = 1 + 2; let y = x * 2;")
+        self.assertEqual(env.get("x"), 3)
+        self.assertEqual(env.get("y"), 6)
+
+    def test_expr_statement_is_evaluated_and_discarded(self):
+        # should not raise, and should not define anything
+        env = run("1 + 1;")
+        with self.assertRaises(KeyError):
+            env.get("anything")
+
+    def test_block_shadows_outer_without_mutating_it(self):
+        env = run("let x = 1; { let x = 2; }")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_block_can_see_outer_scope(self):
+        env = run("let x = 1; { let y = x + 1; }")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_nested_block_scoping(self):
+        env = run("let x = 1; { let x = 2; { let x = 3; } }")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_inner_let_does_not_leak_out(self):
+        env = run("{ let x = 1; }")
+        with self.assertRaises(KeyError):
+            env.get("x")
 
 
 if __name__ == "__main__":

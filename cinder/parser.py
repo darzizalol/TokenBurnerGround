@@ -9,6 +9,12 @@ Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block),
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
 `while (<expr>) <statement>` (WhileStmt), or a bare `<expr>;` (ExprStmt).
+
+A leading `{` is ambiguous between a Block and a statement-level expression
+rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
+disambiguates by attempting a speculative full-expression parse first (so
+postfix indexing/calls and binary operators on the leading map literal are
+captured too); empty `{}` is always an (empty) Block.
 """
 
 from cinder.ast_nodes import (
@@ -77,7 +83,7 @@ class Parser:
         if self._check(TokenType.LET):
             return self._let_statement()
         if self._check(TokenType.LBRACE):
-            return self._block()
+            return self._brace_statement()
         if self._check(TokenType.IF):
             return self._if_statement()
         if self._check(TokenType.WHILE):
@@ -95,6 +101,21 @@ class Parser:
         initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
+
+    def _brace_statement(self) -> Stmt:
+        # Empty `{}` is always an empty Block, never a map literal.
+        if self._peek_next().type == TokenType.RBRACE:
+            return self._block()
+        start = self.pos
+        try:
+            expr = self._assignment()
+        except ParseError:
+            expr = None
+        if expr is not None and self._check(TokenType.SEMICOLON):
+            self._advance()  # consume ';'
+            return ExprStmt(expr)
+        self.pos = start
+        return self._block()
 
     def _block(self) -> Stmt:
         self._advance()  # consume '{'
@@ -320,6 +341,10 @@ class Parser:
 
     def _peek(self) -> Token:
         return self.tokens[self.pos]
+
+    def _peek_next(self) -> Token:
+        idx = min(self.pos + 1, len(self.tokens) - 1)
+        return self.tokens[idx]
 
     def _previous(self) -> Token:
         return self.tokens[self.pos - 1]

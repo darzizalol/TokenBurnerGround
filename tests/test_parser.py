@@ -302,6 +302,91 @@ class TestStatements(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("{ let x = 1; ")
 
+    def test_map_literal_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1};')],
+            [("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))],
+        )
+
+    def test_map_literal_statement_multiple_pairs(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1, "b": 2};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "MapLiteral",
+                        [
+                            (("Literal", "a"), ("Literal", 1)),
+                            (("Literal", "b"), ("Literal", 2)),
+                        ],
+                    ),
+                )
+            ],
+        )
+
+    def test_map_literal_statement_inside_block(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{ {"a": 1}; }')],
+            [("Block", [("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))])],
+        )
+
+    def test_map_literal_statement_with_index(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1}["a"];')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "Index",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        ("Literal", "a"),
+                    ),
+                )
+            ],
+        )
+
+    def test_map_literal_statement_with_call(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1}();')],
+            [
+                (
+                    "ExprStmt",
+                    ("Call", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]), []),
+                )
+            ],
+        )
+
+    def test_map_literal_statement_with_binary_op(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1} == {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "Binary",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        TokenType.EQEQ,
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                    ),
+                )
+            ],
+        )
+
+    def test_block_still_parses_as_block(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("{ let x = 1; print(x); }")],
+            [
+                (
+                    "Block",
+                    [
+                        ("LetStmt", "x", ("Literal", 1)),
+                        ("ExprStmt", ("Call", ("Identifier", "print"), [("Identifier", "x")])),
+                    ],
+                )
+            ],
+        )
+
 
 class TestFunctions(unittest.TestCase):
     def test_fn_declaration_no_params(self):

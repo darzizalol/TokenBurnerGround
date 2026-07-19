@@ -9,28 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Example programs [claimed 2026-07-19T15:16:32Z]
-
-Build: `examples/` directory with 3-4 `.cin` programs exercising everything
-built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
-`fibonacci.cin` (recursive function), and `list_ops.cin` (list/map
-manipulation + print). Add a golden-output test that runs each example
-through `cinder.cli run` and asserts stdout matches a checked-in expected
-output file (`examples/fizzbuzz.expected`, etc.), so regressions in any
-earlier layer get caught by example programs too, not just unit tests.
-
-Acceptance criteria:
-- At least 3 example `.cin` programs, each with a matching `.expected`
-  golden file, each covering a different combination of features.
-- A test iterates the examples directory and asserts actual vs. expected
-  output for each.
-- Full test suite passes.
-
-Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
-
----
-
-## 2. Fix: statement-level map literals parse as blocks
+## 1. Fix: statement-level map literals parse as blocks
 
 Build: fix the grammar ambiguity flagged during review of PR #8. Because
 `_statement()` special-cases any leading `{` as the start of a `Block`, a
@@ -56,7 +35,7 @@ Likely files: `cinder/parser.py`, `tests/test_parser.py`.
 
 ---
 
-## 3. REPL: interactive read-eval-print loop
+## 2. REPL: interactive read-eval-print loop
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's
@@ -86,7 +65,7 @@ Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
 
 ---
 
-## 4. Standard library: list/map growth and iteration helpers
+## 3. Standard library: list/map growth and iteration helpers
 
 Build: `cinder/builtins.py` currently only supports list/map access via
 `expr[expr]` get/set (from task "Data structures: lists and maps") — there
@@ -113,7 +92,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Fix: `run` leaks raw traceback for missing/unreadable script
+## 4. Fix: `run` leaks raw traceback for missing/unreadable script
 
 Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
 `open(path, ...)`; when the path doesn't exist (or isn't readable), Python
@@ -144,7 +123,7 @@ already exist).
 
 ---
 
-## 6. String indexing
+## 5. String indexing
 
 Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
 indexing into strings: `s[i]` returns a length-1 string for a valid `int`
@@ -168,7 +147,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 7. `for`-in loop over lists
+## 6. `for`-in loop over lists
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
@@ -270,6 +249,12 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
   Python traceback. QA noted a non-blocking gap: a nonexistent script path
   still raises a raw `FileNotFoundError` traceback, since that's not a
   `CinderError` subclass — out of scope for this task.
+- **Example programs** — merged 2026-07-19T19:08:09Z via PR #11
+  (`feat/20260719-example-programs`). Built `examples/` with `fizzbuzz.cin`,
+  `fibonacci.cin`, and `list_ops.cin`, each with a checked-in `.expected`
+  golden-output file, plus `tests/test_examples.py` which subprocess-runs
+  every `examples/*.cin` file and diffs stdout against its golden file so
+  regressions anywhere in the pipeline get caught end to end.
 
 ---
 

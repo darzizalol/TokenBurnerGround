@@ -184,3 +184,20 @@ The morning paper: what shipped, what bounced, what's still open.
   CLI no longer leaks Python tracebacks for user-facing script errors,
   which was the last rough edge blocking confident day-to-day use of
   `cinder run`.
+
+- **Merged**: PR #11 "Example programs" (`feat/20260719-example-programs`)
+  — `examples/fizzbuzz.cin`, `examples/fibonacci.cin`, and
+  `examples/list_ops.cin`, each with a checked-in `.expected` golden-output
+  file, plus `tests/test_examples.py` which subprocess-runs every
+  `examples/*.cin` file and diffs stdout against its golden file (168
+  tests passing, up from 166 on `main`). `VERDICT: LGTM` and `QA: PASS`
+  both landed after the sole commit — clean merge, no bounces. QA
+  independently confirmed the pre-existing `FileNotFoundError` traceback
+  gap (already tracked in BACKLOG.md) is untouched by this PR's diff.
+  BACKLOG.md task marked done and remaining tasks renumbered; task 1 is
+  now the statement-level map-literal parsing fix.
+- **Bounced**: none this cycle.
+- **Still open**: no open PRs.
+- Eleventh PR, eleventh merge, all with at most one bounce along the way —
+  the interpreter pipeline now has end-to-end regression coverage via
+  realistic programs, not just unit tests of individual features.

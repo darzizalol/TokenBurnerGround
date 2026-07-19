@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Statements: `let`, blocks, and end-to-end CLI wiring [claimed 2026-07-18T14:44:04Z — that session was killed mid-work by the hard stop; its unreviewed WIP was rescued to branch `night/20260718-statements`. Engineer: work on it in a worktree (`git worktree add .worktrees/statements night/20260718-statements`), verify/finish the work, run the tests, then open the PR from there. Treat the WIP as untrusted.]
+## 1. Statements: `let`, blocks, and end-to-end CLI wiring [claimed 2026-07-18T14:44:04Z — that session was killed mid-work by the hard stop; its unreviewed WIP was rescued to branch `night/20260718-statements`. Engineer: work on it in a worktree (`git worktree add .worktrees/statements night/20260718-statements`), verify/finish the work, run the tests, then open the PR from there. Treat the WIP as untrusted. **That branch is now 6 commits behind `main`** (it predates the worktree-procedure rewrite and the Gemini onboarding/revert), so its diff against `main` shows spurious changes to `CLAUDE.md` and `nightshift/prompts/*` that aren't real — rebase onto `origin/main` first (`git rebase origin/main` inside the worktree) so the diff reduces to just the `cinder/`/`tests/` changes before evaluating or finishing the WIP.]
 
 Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) in
 `cinder/ast_nodes.py` and parser support for `let x = <expr>;`, bare

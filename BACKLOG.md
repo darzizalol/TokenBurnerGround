@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Data structures: lists and maps
+## 1. Data structures: lists and maps [claimed 2026-07-19T14:42:29Z]
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set

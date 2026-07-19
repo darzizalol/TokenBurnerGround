@@ -238,6 +238,20 @@ class Interpreter:
                     f"missing map key {index!r}", expr.line, expr.column
                 )
             return obj[index]
+        if isinstance(obj, str):
+            if not isinstance(index, int) or isinstance(index, bool):
+                raise CinderRuntimeError(
+                    f"string index must be an int, got {type_name(index)}",
+                    expr.line,
+                    expr.column,
+                )
+            if index < 0 or index >= len(obj):
+                raise CinderRuntimeError(
+                    f"string index {index} out of range (length {len(obj)})",
+                    expr.line,
+                    expr.column,
+                )
+            return obj[index]
         raise CinderRuntimeError(
             f"{type_name(obj)} is not indexable", expr.line, expr.column
         )
@@ -270,6 +284,12 @@ class Interpreter:
                 )
             obj[index] = value
             return value
+        if isinstance(obj, str):
+            raise CinderRuntimeError(
+                "strings are immutable and do not support item assignment",
+                expr.line,
+                expr.column,
+            )
         raise CinderRuntimeError(
             f"{type_name(obj)} does not support item assignment",
             expr.line,

@@ -36,16 +36,6 @@ Every role reads this file first, then its own state files.
 | **QA** | Checks out the PR branch, runs the full test suite and a real smoke test of the app. Posts results on the PR. | PR branch | PR comment |
 | **Release** | Merges PRs that have Reviewer verdict `VERDICT: LGTM` and QA verdict `QA: PASS`. Closes stale/broken PRs with a comment. Updates `nightshift/NIGHTLOG.md`. | open PRs | merges, `NIGHTLOG.md` |
 
-Two vendors, one constitution — cross-vendor review is deliberate:
-
-- **Claude** (`claude` CLI) runs Architect, Engineer, Release.
-- **Gemini** (`gemini` CLI) runs Reviewer and QA, so the model that writes
-  the code never certifies it. `GEMINI.md` points Gemini at this file; the
-  rules here bind both vendors equally.
-- If Gemini is unavailable (quota or auth), its sessions are **skipped** and
-  PRs wait for its verdict — Claude never takes over review duty. Quota
-  limits just wait; auth failures page the human.
-
 Rules of engagement:
 
 - **One task, one branch, one PR.** Branch names: `night/<YYYYMMDD>-<short-slug>`.
@@ -129,7 +119,6 @@ are the fuel — burn them on building, not on flailing:
 | Path | Purpose |
 |------|---------|
 | `CLAUDE.md` | This constitution. Amend only via PR like any other change. |
-| `GEMINI.md` | Gemini's onboarding pointer to this constitution. |
 | `PROJECT.md` | Product vision & spec. Architect-owned. |
 | `BACKLOG.md` | Prioritized task list. Top task = next Engineer's job. |
 | `nightshift/` | Orchestrator scripts, cron setup, role prompts. |

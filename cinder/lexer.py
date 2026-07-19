@@ -18,6 +18,7 @@ _SIMPLE_TOKENS = {
     ",": TokenType.COMMA,
     ";": TokenType.SEMICOLON,
     ".": TokenType.DOT,
+    ":": TokenType.COLON,
 }
 
 _ESCAPES = {

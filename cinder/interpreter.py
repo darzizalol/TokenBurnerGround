@@ -1,7 +1,8 @@
 """Tree-walking evaluator for Cinder expressions and statements.
 
 `Interpreter.evaluate` walks the expression AST produced by `cinder.parser`
-and returns a plain Python value (int, float, str, bool, None).
+and returns a plain Python value (int, float, str, bool, None), or a Python
+`list`/`dict` backing a Cinder list/map literal.
 `Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`,
 `IfStmt`, `WhileStmt`), mutating an `Environment` rather than returning a
 value.
@@ -23,9 +24,13 @@ from cinder.ast_nodes import (
     Grouping,
     Identifier,
     IfStmt,
+    Index,
+    IndexAssign,
     LetStmt,
+    ListLiteral,
     Literal,
     Logical,
+    MapLiteral,
     ReturnStmt,
     Stmt,
     Unary,
@@ -111,6 +116,14 @@ class Interpreter:
             return self._evaluate_assign(expr, env)
         if isinstance(expr, Call):
             return self._evaluate_call(expr, env)
+        if isinstance(expr, ListLiteral):
+            return [self.evaluate(element, env) for element in expr.elements]
+        if isinstance(expr, MapLiteral):
+            return self._evaluate_map_literal(expr, env)
+        if isinstance(expr, Index):
+            return self._evaluate_index(expr, env)
+        if isinstance(expr, IndexAssign):
+            return self._evaluate_index_assign(expr, env)
         raise TypeError(f"unhandled expression type: {type(expr)!r}")
 
     def execute(self, stmt: Stmt, env: Environment) -> None:
@@ -165,6 +178,86 @@ class Interpreter:
         except _ReturnSignal as signal:
             return signal.value
         return None
+
+    def _evaluate_map_literal(self, expr: MapLiteral, env: Environment) -> object:
+        result: dict = {}
+        for key_expr, value_expr in expr.pairs:
+            key = self.evaluate(key_expr, env)
+            if not _is_valid_key(key):
+                raise CinderRuntimeError(
+                    f"{_type_name(key)} is not a valid map key",
+                    expr.line,
+                    expr.column,
+                )
+            result[key] = self.evaluate(value_expr, env)
+        return result
+
+    def _evaluate_index(self, expr: Index, env: Environment) -> object:
+        obj = self.evaluate(expr.obj, env)
+        index = self.evaluate(expr.index, env)
+        if isinstance(obj, list):
+            if not isinstance(index, int) or isinstance(index, bool):
+                raise CinderRuntimeError(
+                    f"list index must be an int, got {_type_name(index)}",
+                    expr.line,
+                    expr.column,
+                )
+            if index < 0 or index >= len(obj):
+                raise CinderRuntimeError(
+                    f"list index {index} out of range (length {len(obj)})",
+                    expr.line,
+                    expr.column,
+                )
+            return obj[index]
+        if isinstance(obj, dict):
+            if not _is_valid_key(index):
+                raise CinderRuntimeError(
+                    f"{_type_name(index)} is not a valid map key",
+                    expr.line,
+                    expr.column,
+                )
+            if index not in obj:
+                raise CinderRuntimeError(
+                    f"missing map key {index!r}", expr.line, expr.column
+                )
+            return obj[index]
+        raise CinderRuntimeError(
+            f"{_type_name(obj)} is not indexable", expr.line, expr.column
+        )
+
+    def _evaluate_index_assign(self, expr: IndexAssign, env: Environment) -> object:
+        obj = self.evaluate(expr.obj, env)
+        index = self.evaluate(expr.index, env)
+        value = self.evaluate(expr.value, env)
+        if isinstance(obj, list):
+            if not isinstance(index, int) or isinstance(index, bool):
+                raise CinderRuntimeError(
+                    f"list index must be an int, got {_type_name(index)}",
+                    expr.line,
+                    expr.column,
+                )
+            if index < 0 or index >= len(obj):
+                raise CinderRuntimeError(
+                    f"list index {index} out of range (length {len(obj)})",
+                    expr.line,
+                    expr.column,
+                )
+            obj[index] = value
+            return value
+        if isinstance(obj, dict):
+            if not _is_valid_key(index):
+                raise CinderRuntimeError(
+                    f"{_type_name(index)} is not a valid map key",
+                    expr.line,
+                    expr.column,
+                )
+            obj[index] = value
+            return value
+        raise CinderRuntimeError(
+            f"{_type_name(obj)} does not support item assignment",
+            expr.line,
+            expr.column,
+        )
 
     def _evaluate_identifier(self, expr: Identifier, env: Environment) -> object:
         try:
@@ -288,6 +381,11 @@ def _is_number(value: object) -> bool:
     return isinstance(value, _NUMERIC) and not isinstance(value, bool)
 
 
+def _is_valid_key(value: object) -> bool:
+    """Map keys must be an immutable, hashable Cinder value."""
+    return value is None or isinstance(value, (int, float, str, bool))
+
+
 def _values_equal(left: object, right: object) -> bool:
     if _is_number(left) and _is_number(right):
         return left == right
@@ -307,6 +405,10 @@ def _type_name(value: object) -> str:
         return "float"
     if isinstance(value, str):
         return "string"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, dict):
+        return "map"
     if isinstance(value, CinderFunction):
         return "function"
     return type(value).__name__

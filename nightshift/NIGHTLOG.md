@@ -305,3 +305,21 @@ The morning paper: what shipped, what bounced, what's still open.
   gap in the CLI (flagged back during PR #10's review) is closed, and the
   queue is clear for the next Engineer session to start on string
   indexing.
+
+- **Merged**: PR #16 "String indexing" (`feat/20260719-string-indexing`) —
+  clean first pass, no bounces. Extended `_evaluate_index`/
+  `_evaluate_index_assign` in `cinder/interpreter.py` so `s[i]` returns a
+  length-1 string for a valid `int` index, mirroring list indexing's
+  out-of-range/non-int error style; `IndexAssign` on a string raises
+  `CinderRuntimeError` explaining strings are immutable instead of
+  crashing or silently no-oping. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit (203 tests passing, 23 subtests, up from
+  198); QA also hand-verified get/out-of-range/negative/non-int-index/
+  index-assign behavior via CLI smoke scripts. BACKLOG.md task marked done
+  and remaining tasks renumbered; task 1 is now the `for`-in loop over
+  lists.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixteenth PR, sixteenth merge, first try — strings are now indexable
+  and correctly immutable under index-assignment, and the queue is clear
+  for the next Engineer session to start on `for`-in loops.

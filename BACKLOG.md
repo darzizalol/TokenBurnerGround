@@ -9,31 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. String indexing [claimed 2026-07-19T20:07:11Z]
-
-Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
-indexing into strings: `s[i]` returns a length-1 string for a valid `int`
-index, mirroring list indexing's error style for out-of-range or non-int
-indices (`CinderRuntimeError` with line/column). Strings stay immutable —
-`IndexAssign` on a string (e.g. `"hi"[0] = "y"`) must raise
-`CinderRuntimeError` explaining strings can't be mutated, not crash or
-silently no-op. `len()` already handles strings (merged in the builtins
-task); no change needed there.
-
-Acceptance criteria:
-- `"hello"[0]` evaluates to `"h"`; `"hello"[4]` to `"o"`.
-- Out-of-range or non-int index on a string raises `CinderRuntimeError`
-  with line/column, in the same style as list-index errors.
-- Assigning to a string index raises `CinderRuntimeError` instead of
-  crashing or mutating anything.
-- Unit tests cover all three cases above.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. `for`-in loop over lists
+## 1. `for`-in loop over lists
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
@@ -61,7 +37,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: string methods
+## 2. Standard library: string methods
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
@@ -84,7 +60,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. `break` and `continue` for loops
+## 3. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for `while` and (once
 the for-in loop task lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
@@ -120,7 +96,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: math builtins
+## 4. Standard library: math builtins
 
 Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
 (both variadic — one or more numeric arguments, `int` or `float`), and
@@ -149,7 +125,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. REPL: command history via `readline`
+## 5. REPL: command history via `readline`
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End
@@ -181,17 +157,17 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 
-## 7. Negative indexing for lists and strings
+## 6. Negative indexing for lists and strings
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
-in `cinder/interpreter.py`, and the string-indexing code added by task 1
-(must merge first), to support Python-style negative indices: `-1` means
-the last element, `-len(obj)` the first. Normalize a negative index to
-`len(obj) + index` before bounds-checking; anything still out of range
-after normalizing raises `CinderRuntimeError` in the same style as today's
-positive-index errors. Index *assignment* with a negative index on a list
-mutates the corresponding positive slot; assigning to any string index
-(negative or not) still raises per task 1's immutability rule.
+in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
+to support Python-style negative indices: `-1` means the last element,
+`-len(obj)` the first. Normalize a negative index to `len(obj) + index`
+before bounds-checking; anything still out of range after normalizing
+raises `CinderRuntimeError` in the same style as today's positive-index
+errors. Index *assignment* with a negative index on a list mutates the
+corresponding positive slot; assigning to any string index (negative or
+not) still raises per the string-immutability rule from PR #16.
 
 Acceptance criteria:
 - `[1, 2, 3][-1]` is `3`, `[1, 2, 3][-3]` is `1`; `[1, 2, 3][-4]` raises
@@ -207,7 +183,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 8. Standard library: `contains` and `reverse`
+## 7. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -237,7 +213,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `sort`
+## 8. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 8) that
@@ -382,6 +358,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `cinder: run: <path>: <reason>` diagnostic to stderr with exit code 1,
   instead of leaking a raw Python traceback, for missing/unreadable script
   paths. `CinderError` handling is unchanged.
+- **String indexing** — merged 2026-07-19T20:11:00Z via PR #16
+  (`feat/20260719-string-indexing`). Extended `_evaluate_index`/
+  `_evaluate_index_assign` in `cinder/interpreter.py` so `s[i]` returns a
+  length-1 string for a valid `int` index, mirroring list indexing's
+  out-of-range/non-int error style; `IndexAssign` on a string raises
+  `CinderRuntimeError` explaining strings are immutable instead of
+  crashing or silently no-oping.
 
 ## Graveyard
 

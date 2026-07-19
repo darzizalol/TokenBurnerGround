@@ -181,6 +181,88 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 
+## 7. Negative indexing for lists and strings
+
+Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
+in `cinder/interpreter.py`, and the string-indexing code added by task 1
+(must merge first), to support Python-style negative indices: `-1` means
+the last element, `-len(obj)` the first. Normalize a negative index to
+`len(obj) + index` before bounds-checking; anything still out of range
+after normalizing raises `CinderRuntimeError` in the same style as today's
+positive-index errors. Index *assignment* with a negative index on a list
+mutates the corresponding positive slot; assigning to any string index
+(negative or not) still raises per task 1's immutability rule.
+
+Acceptance criteria:
+- `[1, 2, 3][-1]` is `3`, `[1, 2, 3][-3]` is `1`; `[1, 2, 3][-4]` raises
+  `CinderRuntimeError` (out of range) with line/column.
+- `"hello"[-1]` is `"o"`, `"hello"[-5]` is `"h"`; `"hello"[-6]` raises
+  `CinderRuntimeError` with line/column.
+- `[1, 2, 3][-1] = 9` sets the last element to `9`, leaving the rest
+  unchanged.
+- Existing non-negative indexing behavior is unchanged (regression tests).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
+
+---
+
+## 8. Standard library: `contains` and `reverse`
+
+Build: extend `cinder/builtins.py` with `contains(collection, item)` —
+membership check on a list (`==` against each element), a map (checks
+keys, not values), or a string (substring check) — returning a `bool`;
+and `reverse(list)`, which returns a **new** list with elements in
+reverse order and does **not** mutate its input (unlike `push`/`pop`,
+which mutate in place — `reverse` follows `split`/`join`'s
+returns-something-new style instead; note this distinction in the PR
+body so it isn't mistaken for an inconsistency). `contains` raises
+`CinderRuntimeError` for any other collection type (int/float/bool/nil);
+`reverse` raises `CinderRuntimeError` for any non-list argument. Both
+follow the existing arity/type-check style (`_len`, `_str`).
+
+Acceptance criteria:
+- `contains([1, 2, 3], 2)` is `true`; `contains([1, 2, 3], 9)` is `false`.
+- `contains({"a": 1}, "a")` is `true`; `contains({"a": 1}, "b")` is
+  `false` (checks keys, not values).
+- `contains("hello", "ell")` is `true`; `contains("hello", "xyz")` is
+  `false`.
+- `contains(5, 1)` raises `CinderRuntimeError` with line/column.
+- `reverse([1, 2, 3])` is `[3, 2, 1]`, and the original list passed in is
+  unchanged afterward (regression test proving no mutation).
+- `reverse("hi")` raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `sort`
+
+Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
+ascending-sorted list (non-mutating, matching `reverse` from task 8) that
+accepts either an all-numeric list (`int`/`float`, compared numerically)
+or an all-string list (compared lexicographically). Reject mixed
+numeric/string lists and any list containing an unsupported element type
+(list, map, bool, nil) with `CinderRuntimeError` and line/column; an empty
+list sorts to `[]`. Follow the existing arity/type-check style.
+
+Acceptance criteria:
+- `sort([3, 1, 2])` is `[1, 2, 3]`; `sort([2.5, 1.1])` is `[1.1, 2.5]`;
+  `sort(["b", "a"])` is `["a", "b"]`.
+- `sort([])` is `[]`.
+- `sort([1, "a"])` raises `CinderRuntimeError` (mixed types) with
+  line/column.
+- `sort` on a non-list argument raises `CinderRuntimeError` with
+  line/column.
+- The list passed to `sort` is unchanged afterward (regression test, same
+  non-mutation guarantee as `reverse`).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

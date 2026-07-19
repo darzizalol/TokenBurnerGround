@@ -1,0 +1,21 @@
+# collections.cin: growing a list and iterating a map's keys
+let names = [];
+push(names, "Ada");
+push(names, "Grace");
+push(names, "Alan");
+print(names);
+print(len(names));
+
+let last = pop(names);
+print(last);
+print(names);
+
+let ages = {"Ada": 36, "Grace": 85};
+let ks = keys(ages);
+let vs = values(ages);
+let i = 0;
+while (i < len(ks)) {
+    print(ks[i]);
+    print(vs[i]);
+    i = i + 1;
+}

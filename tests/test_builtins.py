@@ -120,6 +120,68 @@ class TestFloat(unittest.TestCase):
             run('float("abc");')
 
 
+class TestPush(unittest.TestCase):
+    def test_push_appends_and_returns_the_list(self):
+        env = run("let xs = [1, 2]; let result = push(xs, 3);")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_push_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('push("a", 1);')
+
+    def test_push_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("push([1]);")
+
+
+class TestPop(unittest.TestCase):
+    def test_pop_removes_and_returns_last_element(self):
+        env = run("let xs = [1, 2, 3]; let result = pop(xs);")
+        self.assertEqual(env.get("result"), 3)
+        self.assertEqual(env.get("xs"), [1, 2])
+
+    def test_pop_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pop("a");')
+
+    def test_pop_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pop([1], 2);")
+
+    def test_pop_on_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pop([]);")
+
+
+class TestKeys(unittest.TestCase):
+    def test_keys_returns_insertion_order(self):
+        env = run('let result = keys({"b": 1, "a": 2});')
+        self.assertEqual(env.get("result"), ["b", "a"])
+
+    def test_keys_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("keys([1]);")
+
+    def test_keys_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('keys({"a": 1}, 2);')
+
+
+class TestValues(unittest.TestCase):
+    def test_values_returns_insertion_order(self):
+        env = run('let result = values({"b": 1, "a": 2});')
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_values_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("values([1]);")
+
+    def test_values_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('values({"a": 1}, 2);')
+
+
 class TestEndToEndViaCli(unittest.TestCase):
     def test_run_script_prints_expected_output(self):
         with tempfile.NamedTemporaryFile("w", suffix=".cin", delete=False) as f:

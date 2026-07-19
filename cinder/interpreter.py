@@ -6,8 +6,10 @@ and returns a plain Python value (int, float, str, bool, None).
 `IfStmt`, `WhileStmt`), mutating an `Environment` rather than returning a
 value.
 
-`Call` nodes are explicitly out of scope: there are no functions to call
-yet, so evaluating one raises `NotImplementedError`.
+`Call` nodes invoke a `CinderFunction`: a new child `Environment` of the
+function's closure is pushed, parameters are bound there, and the body runs.
+`return` unwinds via `_ReturnSignal`, a Python exception internal to this
+module (never exposed as a `CinderError`), caught at the call boundary.
 """
 
 from cinder.ast_nodes import (
@@ -17,12 +19,14 @@ from cinder.ast_nodes import (
     Call,
     Expr,
     ExprStmt,
+    FnDecl,
     Grouping,
     Identifier,
     IfStmt,
     LetStmt,
     Literal,
     Logical,
+    ReturnStmt,
     Stmt,
     Unary,
     WhileStmt,
@@ -31,6 +35,29 @@ from cinder.errors import CinderRuntimeError
 from cinder.tokens import TokenType
 
 _NUMERIC = (int, float)
+
+
+class _ReturnSignal(Exception):
+    """Internal control-flow signal for `return`; never surfaced to users."""
+
+    def __init__(self, value: object):
+        self.value = value
+
+
+class CinderFunction:
+    """A first-class function value: an `FnDecl` plus the `Environment` it closed over."""
+
+    def __init__(self, decl: FnDecl, closure: "Environment"):
+        self.decl = decl
+        self.closure = closure
+
+    @property
+    def name(self) -> str:
+        return self.decl.name
+
+    @property
+    def arity(self) -> int:
+        return len(self.decl.params)
 
 
 class Environment:
@@ -83,7 +110,7 @@ class Interpreter:
         if isinstance(expr, Assign):
             return self._evaluate_assign(expr, env)
         if isinstance(expr, Call):
-            raise NotImplementedError("Call evaluation is not implemented yet")
+            return self._evaluate_call(expr, env)
         raise TypeError(f"unhandled expression type: {type(expr)!r}")
 
     def execute(self, stmt: Stmt, env: Environment) -> None:
@@ -108,7 +135,36 @@ class Interpreter:
             while is_truthy(self.evaluate(stmt.condition, env)):
                 self.execute(stmt.body, env)
             return
+        if isinstance(stmt, FnDecl):
+            env.define(stmt.name, CinderFunction(stmt, env))
+            return
+        if isinstance(stmt, ReturnStmt):
+            value = self.evaluate(stmt.value, env) if stmt.value is not None else None
+            raise _ReturnSignal(value)
         raise TypeError(f"unhandled statement type: {type(stmt)!r}")
+
+    def _evaluate_call(self, expr: Call, env: Environment) -> object:
+        callee = self.evaluate(expr.callee, env)
+        if not isinstance(callee, CinderFunction):
+            raise CinderRuntimeError(
+                f"{_type_name(callee)} is not callable", expr.line, expr.column
+            )
+        arguments = [self.evaluate(arg, env) for arg in expr.arguments]
+        if len(arguments) != callee.arity:
+            raise CinderRuntimeError(
+                f"{callee.name}() expects {callee.arity} argument(s), "
+                f"got {len(arguments)}",
+                expr.line,
+                expr.column,
+            )
+        call_env = Environment(callee.closure)
+        for param, value in zip(callee.decl.params, arguments):
+            call_env.define(param, value)
+        try:
+            self.execute(callee.decl.body, call_env)
+        except _ReturnSignal as signal:
+            return signal.value
+        return None
 
     def _evaluate_identifier(self, expr: Identifier, env: Environment) -> object:
         try:
@@ -251,4 +307,6 @@ def _type_name(value: object) -> str:
         return "float"
     if isinstance(value, str):
         return "string"
+    if isinstance(value, CinderFunction):
+        return "function"
     return type(value).__name__

@@ -7,11 +7,13 @@ from cinder.ast_nodes import (
     Block,
     Call,
     ExprStmt,
+    FnDecl,
     Grouping,
     Identifier,
     LetStmt,
     Literal,
     Logical,
+    ReturnStmt,
     Unary,
 )
 from cinder.errors import ParseError
@@ -55,6 +57,10 @@ def stmt_shape(node):
         return ("ExprStmt", shape(node.expression))
     if isinstance(node, Block):
         return ("Block", [stmt_shape(s) for s in node.statements])
+    if isinstance(node, FnDecl):
+        return ("FnDecl", node.name, node.params, stmt_shape(node.body))
+    if isinstance(node, ReturnStmt):
+        return ("ReturnStmt", shape(node.value) if node.value is not None else None)
     raise TypeError(f"unhandled statement type: {type(node)!r}")
 
 
@@ -221,6 +227,71 @@ class TestStatements(unittest.TestCase):
     def test_unclosed_block_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("{ let x = 1; ")
+
+
+class TestFunctions(unittest.TestCase):
+    def test_fn_declaration_no_params(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f() { return 1; }")],
+            [("FnDecl", "f", [], ("Block", [("ReturnStmt", ("Literal", 1))]))],
+        )
+
+    def test_fn_declaration_with_params(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn add(a, b) { return a + b; }")],
+            [
+                (
+                    "FnDecl",
+                    "add",
+                    ["a", "b"],
+                    (
+                        "Block",
+                        [
+                            (
+                                "ReturnStmt",
+                                ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Identifier", "b")),
+                            )
+                        ],
+                    ),
+                )
+            ],
+        )
+
+    def test_return_without_value(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f() { return; }")],
+            [("FnDecl", "f", [], ("Block", [("ReturnStmt", None)]))],
+        )
+
+    def test_call_expression_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("f(1, 2);")],
+            [("ExprStmt", ("Call", ("Identifier", "f"), [("Literal", 1), ("Literal", 2)]))],
+        )
+
+    def test_fn_missing_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f()")
+
+    def test_return_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f() { return 1 }")
+
+    def test_return_at_top_level_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("return 5;")
+
+    def test_return_inside_top_level_if_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("if (true) { return 5; }")
+
+    def test_return_inside_top_level_while_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { return 5; }")
+
+    def test_return_after_fn_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f() { return 1; } return 2;")
 
 
 class TestErrors(unittest.TestCase):

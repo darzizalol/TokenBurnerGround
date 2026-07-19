@@ -104,4 +104,20 @@ class WhileStmt:
     column: int
 
 
-Stmt = Union[ExprStmt, LetStmt, Block, IfStmt, WhileStmt]
+@dataclass(frozen=True)
+class FnDecl:
+    name: str
+    params: list
+    body: "Block"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class ReturnStmt:
+    value: "Expr | None"
+    line: int
+    column: int
+
+
+Stmt = Union[ExprStmt, LetStmt, Block, IfStmt, WhileStmt, FnDecl, ReturnStmt]

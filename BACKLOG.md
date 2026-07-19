@@ -59,9 +59,14 @@ Acceptance criteria:
   (e.g. undefined variable) printing a diagnostic and the loop continuing to
   accept further input afterward, and clean exit on EOF.
 - `cinder/cli.py repl` no longer prints the "not implemented yet" placeholder.
-- Full test suite passes.
+- Full test suite passes — note `tests/test_cli.py::test_repl_not_implemented_exits_zero`
+  currently asserts the old placeholder text and must be updated (not deleted;
+  replace it with an assertion appropriate to the new REPL behavior, e.g. that
+  `repl` on empty/EOF stdin exits 0) or it will fail once the placeholder is
+  removed.
 
-Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
+Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`,
+`tests/test_cli.py`.
 
 ---
 

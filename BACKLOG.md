@@ -144,6 +144,58 @@ already exist).
 
 ---
 
+## 6. String indexing
+
+Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
+indexing into strings: `s[i]` returns a length-1 string for a valid `int`
+index, mirroring list indexing's error style for out-of-range or non-int
+indices (`CinderRuntimeError` with line/column). Strings stay immutable —
+`IndexAssign` on a string (e.g. `"hi"[0] = "y"`) must raise
+`CinderRuntimeError` explaining strings can't be mutated, not crash or
+silently no-op. `len()` already handles strings (merged in the builtins
+task); no change needed there.
+
+Acceptance criteria:
+- `"hello"[0]` evaluates to `"h"`; `"hello"[4]` to `"o"`.
+- Out-of-range or non-int index on a string raises `CinderRuntimeError`
+  with line/column, in the same style as list-index errors.
+- Assigning to a string index raises `CinderRuntimeError` instead of
+  crashing or mutating anything.
+- Unit tests cover all three cases above.
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
+
+---
+
+## 7. `for`-in loop over lists
+
+Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
+node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
+`for NAME in EXPR BLOCK`, reusing existing block-statement parsing for the
+body, and evaluator support (`cinder/interpreter.py`) that evaluates EXPR
+once, raises `CinderRuntimeError` if the result isn't a list, then iterates
+its elements binding NAME in a fresh child `Environment` per iteration (so
+a closure created inside the loop body captures that iteration's value, not
+the final one — consistent with how `fn` closures already work). Do not
+implement `break`/`continue`; leave that as a future task if it's needed.
+
+Acceptance criteria:
+- `for x in [1, 2, 3] { print(x); }` prints `1`, `2`, `3` on separate
+  lines.
+- Looping over a non-list expression (e.g. `for x in 5 { }`) raises
+  `CinderRuntimeError` with line/column.
+- A function defined inside the loop body that captures the loop variable
+  retains its own iteration's value, not the final one — add a regression
+  test pinning this per-iteration scoping.
+- Full test suite passes, including new parser/interpreter tests for
+  `ForStmt`.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

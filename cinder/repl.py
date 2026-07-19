@@ -31,8 +31,8 @@ def _needs_more_input(source: str) -> bool:
     or an unterminated string, either of which more lines might complete."""
     try:
         tokens = tokenize(source)
-    except LexError:
-        return True
+    except LexError as e:
+        return e.unterminated
     depth = 0
     for token in tokens:
         if token.type in _OPENERS:

@@ -116,13 +116,20 @@ class Lexer:
         chars = []
         while True:
             if self._at_end():
-                raise LexError("unterminated string", start_line, start_col)
+                raise LexError(
+                    "unterminated string", start_line, start_col, unterminated=True
+                )
             char = self._advance()
             if char == '"':
                 break
             if char == "\\":
                 if self._at_end():
-                    raise LexError("unterminated string", start_line, start_col)
+                    raise LexError(
+                        "unterminated string",
+                        start_line,
+                        start_col,
+                        unterminated=True,
+                    )
                 escape = self._advance()
                 if escape not in _ESCAPES:
                     raise LexError(

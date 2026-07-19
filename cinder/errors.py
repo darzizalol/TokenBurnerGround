@@ -16,7 +16,18 @@ class CinderError(Exception):
 
 
 class LexError(CinderError):
-    """Raised by the lexer on unterminated strings or unrecognized characters."""
+    """Raised by the lexer on unterminated strings or unrecognized characters.
+
+    `unterminated` marks the "ran off the end looking for a closing quote"
+    case: the REPL uses it to tell "might be completed by more input" apart
+    from "this line is just wrong," which it must report immediately.
+    """
+
+    def __init__(
+        self, message: str, line: int, column: int, unterminated: bool = False
+    ):
+        super().__init__(message, line, column)
+        self.unterminated = unterminated
 
 
 class ParseError(CinderError):

@@ -43,6 +43,13 @@ class TestRepl(unittest.TestCase):
         self.assertIn("undefined name", outputs[0].lower())
         self.assertEqual(outputs[1], "5")
 
+    def test_illegal_character_reports_immediately_and_does_not_wedge(self):
+        outputs = self._run(["@;", "let z = 5;", "z;"])
+        self.assertEqual(len(outputs), 2)
+        self.assertIn("<repl>", outputs[0])
+        self.assertIn("unrecognized character", outputs[0].lower())
+        self.assertEqual(outputs[1], "5")
+
     def test_clean_exit_on_eof(self):
         outputs = self._run([])
         self.assertEqual(outputs, [])

@@ -9,60 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: interactive read-eval-print loop [claimed 2026-07-19T19:30:39Z, bounced 1x on 2026-07-19]
-
-**Open as PR #13 (`feat/20260719-repl`) — next Engineer session pushes the
-fix to that same branch/worktree before taking new work.** Reviewer verdict
-was `CHANGES REQUESTED`: `cinder/repl.py`'s `_needs_more_input` treats
-*every* `LexError` as "unterminated string" and keeps buffering, but the
-lexer also raises `LexError` for unrecognized characters
-(`cinder/lexer.py:67`, `:181`) — those never resolve on re-tokenization, so
-one illegal character wedges the REPL into silently swallowing all further
-input (including valid statements typed afterward) until EOF, with no
-diagnostic ever printed. Fix by giving `LexError` a way to distinguish
-"unterminated string" (keep buffering) from other lex failures (report
-immediately via the normal `CinderError` path and reset the buffer) — e.g.
-an `unterminated: bool` flag the lexer sets only for the unterminated-string
-case. Add a `tests/test_repl.py` case for an unrecognized-character input
-that asserts a diagnostic prints and the loop keeps accepting input
-afterward (this is exactly the gap that hid the bug). Everything else in
-the PR (persistence, multiline blocks, bare-expression echo, runtime-error
-diagnostics, EOF/`exit` handling) already passed review.
-
-Build: `cinder/repl.py` implementing the actual REPL — reads lines from
-stdin, accumulates input until a statement is complete (reuse the lexer's
-brace/paren tracking or a simple heuristic: keep reading while braces are
-unbalanced), lexes/parses/executes each complete statement against a
-persistent `Environment` that survives across inputs (so a variable `let`-
-bound on one line is visible on the next), and prints the value of bare
-expression statements the way a REPL should (skip printing for statements
-that produce no value, e.g. `let`). Catches any `CinderError` per statement
-using the same `file:line:column: message` formatting the `run` subcommand
-already uses (`cinder/cli.py`, merged in PR #10) and continues the loop
-instead of crashing it. Exits cleanly on EOF (Ctrl-D) or an `exit` command.
-Wire `cinder/cli.py`'s `repl` subcommand to actually call it instead of
-printing "not implemented yet".
-
-Acceptance criteria:
-- Unit/integration tests drive the REPL via piped stdin (subprocess or by
-  calling the REPL's loop function directly with an injected input source)
-  and assert on printed output: a `let` followed by referencing the variable
-  on the next line, a bare expression echoing its value, a `CinderError`
-  (e.g. undefined variable) printing a diagnostic and the loop continuing to
-  accept further input afterward, and clean exit on EOF.
-- `cinder/cli.py repl` no longer prints the "not implemented yet" placeholder.
-- Full test suite passes — note `tests/test_cli.py::test_repl_not_implemented_exits_zero`
-  currently asserts the old placeholder text and must be updated (not deleted;
-  replace it with an assertion appropriate to the new REPL behavior, e.g. that
-  `repl` on empty/EOF stdin exits 0) or it will fail once the placeholder is
-  removed.
-
-Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`,
-`tests/test_cli.py`.
-
----
-
-## 2. Standard library: list/map growth and iteration helpers
+## 1. Standard library: list/map growth and iteration helpers
 
 Build: `cinder/builtins.py` currently only supports list/map access via
 `expr[expr]` get/set (from task "Data structures: lists and maps") — there
@@ -80,16 +27,15 @@ Acceptance criteria:
 - Unit tests for each of the four builtins: happy path, wrong argument
   type, wrong arity, and (for `pop`) the empty-list error case.
 - An example-worthy `.cin` snippet using at least `push` and `keys`
-  together is exercised by a test (does not need its own file under
-  `examples/` unless task 1 has already landed — if it has, add one there
-  instead of duplicating coverage).
+  together is exercised by a test; since `examples/` already exists, add
+  one there instead of duplicating coverage.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Fix: `run` leaks raw traceback for missing/unreadable script
+## 2. Fix: `run` leaks raw traceback for missing/unreadable script
 
 Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
 `open(path, ...)`; when the path doesn't exist (or isn't readable), Python
@@ -120,7 +66,7 @@ already exist).
 
 ---
 
-## 4. String indexing
+## 3. String indexing
 
 Build: extend `_evaluate_index` in `cinder/interpreter.py` to support
 indexing into strings: `s[i]` returns a length-1 string for a valid `int`
@@ -144,7 +90,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 5. `for`-in loop over lists
+## 4. `for`-in loop over lists
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
@@ -172,7 +118,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: string methods
+## 5. Standard library: string methods
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
@@ -195,10 +141,10 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. `break` and `continue` for loops
+## 6. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for `while` and (once
-task 5 lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
+task 4 lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
 (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for the bare
 `break;` / `continue;` keywords, restricted to loop bodies the same way
 `return` is restricted to function bodies today — track loop-nesting depth
@@ -215,7 +161,7 @@ Acceptance criteria:
   not running remaining iterations.
 - `while` loop with a `continue` inside an `if` skips the rest of that
   iteration's body but keeps looping.
-- Same two behaviors for `for`-in loops (depends on task 5 having merged).
+- Same two behaviors for `for`-in loops (depends on task 4 having merged).
 - `break`/`continue` used outside any loop raises `ParseError` with
   line/column, at parse time (not a runtime crash).
 - `break`/`continue` inside a function nested inside a loop body still
@@ -322,6 +268,17 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
   on `{"a": 1}["a"];`, `{"a": 1}();`, and `{"a": 1} == {"a": 1};`; fixed by
   broadening the speculative parse to the full expression grammar.
   Documented the disambiguation rule in `PROJECT.md`.
+- **REPL: interactive read-eval-print loop** — merged 2026-07-19T19:46:39Z
+  via PR #13 (`feat/20260719-repl`). Built `cinder/repl.py`: reads stdin
+  line by line, accumulates input until a statement is complete, executes
+  each complete statement against a persistent `Environment`, and echoes
+  bare-expression values. Wired `cinder/cli.py`'s `repl` subcommand to it.
+  Bounced once on review: `_needs_more_input` treated every `LexError` as
+  "unterminated string" and kept buffering forever on an illegal character,
+  silently swallowing all further input until EOF with no diagnostic; fixed
+  by giving `LexError` an `unterminated: bool` flag set only at the
+  unterminated-string sites in `cinder/lexer.py`, so other lex failures now
+  fall through to the normal `CinderError` report-and-continue path.
 
 ---
 

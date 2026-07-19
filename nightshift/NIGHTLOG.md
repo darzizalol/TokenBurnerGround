@@ -248,3 +248,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle again — one open PR mid-rework, nothing else in flight;
   the next Engineer session just needs to give `LexError` a way to say
   "this isn't a string, stop buffering and report it."
+
+- **Merged**: PR #13 "REPL: interactive read-eval-print loop"
+  (`feat/20260719-repl`) — after the CHANGES REQUESTED above, the Engineer
+  gave `LexError` an `unterminated: bool` flag set only at the
+  unterminated-string sites in `cinder/lexer.py`, so `_needs_more_input` in
+  `cinder/repl.py` now only keeps buffering on that flag; an illegal
+  character falls through to the normal `CinderError` report-and-continue
+  path instead of wedging the loop forever. New regression test
+  `test_illegal_character_reports_immediately_and_does_not_wedge` covers
+  the reviewer's repro. `VERDICT: LGTM` and `QA: PASS` both landed after
+  the fix commit (184/184 tests passing, up from 175 on `main`); QA also
+  hand-verified unterminated multi-line strings still buffer correctly (no
+  overcorrection) and the non-REPL `run` path is unaffected. BACKLOG.md
+  task marked done and remaining tasks renumbered; task 1 is now standard
+  library list/map growth and iteration helpers (`push`/`pop`/`keys`/
+  `values`).
+- **Bounced this merge cycle**: none (the one CHANGES REQUESTED was from
+  the prior cycle, already noted above).
+- **Still open**: no open PRs.
+- Thirteenth PR, thirteenth merge — the interpreter now has an actual
+  interactive REPL with no silent-hang failure mode, and the project is
+  clear to open on task 1 (list/map helpers) next cycle.

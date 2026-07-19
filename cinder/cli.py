@@ -13,6 +13,7 @@ from cinder.errors import CinderError
 from cinder.interpreter import Interpreter
 from cinder.lexer import tokenize
 from cinder.parser import parse_program
+from cinder.repl import run_repl
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -49,7 +50,7 @@ def main(argv=None) -> int:
             return 1
         return 0
     if args.command == "repl":
-        print("repl: not implemented yet")
+        run_repl()
         return 0
 
     parser.print_help()

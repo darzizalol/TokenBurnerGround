@@ -10,9 +10,13 @@ from cinder.ast_nodes import (
     FnDecl,
     Grouping,
     Identifier,
+    Index,
+    IndexAssign,
     LetStmt,
+    ListLiteral,
     Literal,
     Logical,
+    MapLiteral,
     ReturnStmt,
     Unary,
 )
@@ -38,6 +42,19 @@ def shape(node):
         return ("Grouping", shape(node.expression))
     if isinstance(node, Call):
         return ("Call", shape(node.callee), [shape(a) for a in node.arguments])
+    if isinstance(node, ListLiteral):
+        return ("ListLiteral", [shape(e) for e in node.elements])
+    if isinstance(node, MapLiteral):
+        return ("MapLiteral", [(shape(k), shape(v)) for k, v in node.pairs])
+    if isinstance(node, Index):
+        return ("Index", shape(node.obj), shape(node.index))
+    if isinstance(node, IndexAssign):
+        return (
+            "IndexAssign",
+            shape(node.obj),
+            shape(node.index),
+            shape(node.value),
+        )
     raise TypeError(f"unhandled node type: {type(node)!r}")
 
 
@@ -177,6 +194,63 @@ class TestCalls(unittest.TestCase):
             shape(parse("f()()")),
             ("Call", ("Call", ("Identifier", "f"), []), []),
         )
+
+
+class TestListsAndMaps(unittest.TestCase):
+    def test_list_literal(self):
+        self.assertEqual(
+            shape(parse("[1, 2, 3]")),
+            ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+        )
+
+    def test_empty_list_literal(self):
+        self.assertEqual(shape(parse("[]")), ("ListLiteral", []))
+
+    def test_map_literal(self):
+        self.assertEqual(
+            shape(parse('{"a": 1, "b": 2}')),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "a"), ("Literal", 1)),
+                    (("Literal", "b"), ("Literal", 2)),
+                ],
+            ),
+        )
+
+    def test_empty_map_literal(self):
+        self.assertEqual(shape(parse("{}")), ("MapLiteral", []))
+
+    def test_index_get(self):
+        self.assertEqual(
+            shape(parse("xs[0]")),
+            ("Index", ("Identifier", "xs"), ("Literal", 0)),
+        )
+
+    def test_chained_index(self):
+        self.assertEqual(
+            shape(parse("xs[0][1]")),
+            ("Index", ("Index", ("Identifier", "xs"), ("Literal", 0)), ("Literal", 1)),
+        )
+
+    def test_index_assignment(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("xs[0] = 5;")],
+            [
+                (
+                    "ExprStmt",
+                    ("IndexAssign", ("Identifier", "xs"), ("Literal", 0), ("Literal", 5)),
+                )
+            ],
+        )
+
+    def test_map_literal_missing_colon_raises(self):
+        with self.assertRaises(ParseError):
+            parse('{"a" 1}')
+
+    def test_unclosed_list_literal_raises(self):
+        with self.assertRaises(ParseError):
+            parse("[1, 2")
 
 
 class TestStatements(unittest.TestCase):

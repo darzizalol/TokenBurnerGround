@@ -66,7 +66,51 @@ class Assign:
     column: int
 
 
-Expr = Union[Literal, Identifier, Unary, Binary, Logical, Grouping, Call, Assign]
+@dataclass(frozen=True)
+class ListLiteral:
+    elements: list
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class MapLiteral:
+    pairs: list  # list[tuple[Expr, Expr]] of (key, value) expressions
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class Index:
+    obj: "Expr"
+    index: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class IndexAssign:
+    obj: "Expr"
+    index: "Expr"
+    value: "Expr"
+    line: int
+    column: int
+
+
+Expr = Union[
+    Literal,
+    Identifier,
+    Unary,
+    Binary,
+    Logical,
+    Grouping,
+    Call,
+    Assign,
+    ListLiteral,
+    MapLiteral,
+    Index,
+    IndexAssign,
+]
 
 
 @dataclass(frozen=True)

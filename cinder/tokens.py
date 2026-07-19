@@ -50,6 +50,7 @@ class TokenType(Enum):
     COMMA = auto()
     SEMICOLON = auto()
     DOT = auto()
+    COLON = auto()
 
     EOF = auto()
 

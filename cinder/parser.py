@@ -22,9 +22,13 @@ from cinder.ast_nodes import (
     Grouping,
     Identifier,
     IfStmt,
+    Index,
+    IndexAssign,
     LetStmt,
+    ListLiteral,
     Literal,
     Logical,
+    MapLiteral,
     ReturnStmt,
     Stmt,
     Unary,
@@ -167,6 +171,10 @@ class Parser:
             value = self._assignment()
             if isinstance(expr, Identifier):
                 return Assign(expr.name, value, eq_token.line, eq_token.column)
+            if isinstance(expr, Index):
+                return IndexAssign(
+                    expr.obj, expr.index, value, eq_token.line, eq_token.column
+                )
             raise ParseError(
                 "invalid assignment target", eq_token.line, eq_token.column
             )
@@ -221,9 +229,14 @@ class Parser:
 
     def _call(self) -> Expr:
         expr = self._primary()
-        while self._check(TokenType.LPAREN):
-            self._advance()
-            expr = self._finish_call(expr)
+        while True:
+            if self._check(TokenType.LPAREN):
+                self._advance()
+                expr = self._finish_call(expr)
+            elif self._check(TokenType.LBRACKET):
+                expr = self._finish_index(expr)
+            else:
+                break
         return expr
 
     def _finish_call(self, callee: Expr) -> Expr:
@@ -236,6 +249,12 @@ class Parser:
                 arguments.append(self._or())
         self._consume(TokenType.RPAREN, "')' after arguments")
         return Call(callee, arguments, paren.line, paren.column)
+
+    def _finish_index(self, obj: Expr) -> Expr:
+        bracket = self._advance()  # consume '['
+        index = self._or()
+        self._consume(TokenType.RBRACKET, "']' after index")
+        return Index(obj, index, bracket.line, bracket.column)
 
     def _primary(self) -> Expr:
         token = self._peek()
@@ -260,12 +279,44 @@ class Parser:
             expr = self._assignment()
             self._consume(TokenType.RPAREN, "')' after expression")
             return Grouping(expr)
+        if token.type == TokenType.LBRACKET:
+            return self._list_literal()
+        if token.type == TokenType.LBRACE:
+            return self._map_literal()
 
         raise ParseError(
             f"expected an expression, found {self._describe(token)}",
             token.line,
             token.column,
         )
+
+    def _list_literal(self) -> Expr:
+        bracket = self._advance()  # consume '['
+        elements = []
+        if not self._check(TokenType.RBRACKET):
+            elements.append(self._or())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                elements.append(self._or())
+        self._consume(TokenType.RBRACKET, "']' after list literal")
+        return ListLiteral(elements, bracket.line, bracket.column)
+
+    def _map_literal(self) -> Expr:
+        brace = self._advance()  # consume '{'
+        pairs = []
+        if not self._check(TokenType.RBRACE):
+            pairs.append(self._map_pair())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                pairs.append(self._map_pair())
+        self._consume(TokenType.RBRACE, "'}' after map literal")
+        return MapLiteral(pairs, brace.line, brace.column)
+
+    def _map_pair(self) -> tuple:
+        key = self._or()
+        self._consume(TokenType.COLON, "':' after map key")
+        value = self._or()
+        return (key, value)
 
     def _peek(self) -> Token:
         return self.tokens[self.pos]

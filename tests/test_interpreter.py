@@ -321,5 +321,73 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(env.get("result"), 42)
 
 
+class TestListsAndMaps(unittest.TestCase):
+    def test_list_literal(self):
+        self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])
+
+    def test_empty_list_literal(self):
+        self.assertEqual(evaluate("[]"), [])
+
+    def test_map_literal(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2}'), {"a": 1, "b": 2})
+
+    def test_empty_map_literal(self):
+        self.assertEqual(evaluate("{}"), {})
+
+    def test_list_get_index(self):
+        self.assertEqual(evaluate("[10, 20, 30][1]"), 20)
+
+    def test_map_get_key(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2}["b"]'), 2)
+
+    def test_list_set_index(self):
+        env = run("let xs = [1, 2, 3]; xs[0] = 99;")
+        self.assertEqual(env.get("xs"), [99, 2, 3])
+
+    def test_map_set_key(self):
+        env = run('let m = {"a": 1}; m["a"] = 99;')
+        self.assertEqual(env.get("m"), {"a": 99})
+
+    def test_map_set_new_key_adds_entry(self):
+        env = run('let m = {"a": 1}; m["b"] = 2;')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_nested_list_of_maps(self):
+        value = evaluate('[{"a": 1}, {"a": 2}][1]["a"]')
+        self.assertEqual(value, 2)
+
+    def test_nested_map_of_lists(self):
+        value = evaluate('{"xs": [1, 2, 3]}["xs"][2]')
+        self.assertEqual(value, 3)
+
+    def test_list_index_via_variable(self):
+        env = run("let xs = [1, [2, 3], 4]; let inner = xs[1]; let result = inner[0];")
+        self.assertEqual(env.get("result"), 2)
+
+    def test_list_index_out_of_range_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("[1, 2, 3][5]")
+
+    def test_list_negative_index_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("[1, 2, 3][-1]")
+
+    def test_map_missing_key_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('{"a": 1}["missing"]')
+
+    def test_list_non_int_index_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('[1, 2, 3]["a"]')
+
+    def test_indexing_non_indexable_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1[0]")
+
+    def test_list_set_out_of_range_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let xs = [1, 2, 3]; xs[10] = 1;")
+
+
 if __name__ == "__main__":
     unittest.main()

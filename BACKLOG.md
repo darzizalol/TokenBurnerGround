@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Fix: statement-level map literals parse as blocks
+## 1. Fix: statement-level map literals parse as blocks [claimed 2026-07-19T19:12:13Z]
 
 Build: fix the grammar ambiguity flagged during review of PR #8. Because
 `_statement()` special-cases any leading `{` as the start of a `Block`, a

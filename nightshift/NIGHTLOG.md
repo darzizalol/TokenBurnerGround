@@ -165,3 +165,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Ninth PR, ninth merge with at most one bounce along the way — `.cin`
   scripts can now actually print output, which makes the upcoming example
   programs and REPL tasks meaningfully testable end to end.
+
+- **Merged**: PR #10 "Error diagnostics polish"
+  (`fix/20260719-error-diagnostics`) — `cinder/cli.py`'s `run` subcommand
+  now catches `CinderError` and prints a one-line `file:line:column:
+  message` diagnostic to stderr with a non-zero exit code, instead of
+  leaking a raw Python traceback. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the sole commit — clean merge, no bounces (166/166 tests
+  passing, up from 162 on `main`). QA flagged a non-blocking gap: running
+  `run` on a nonexistent file still raises a raw `FileNotFoundError`
+  traceback, since that's not a `CinderError` subclass — noted as a
+  possible future backlog item, out of scope for this task. BACKLOG.md
+  task marked done and remaining tasks renumbered; task 1 is now example
+  programs.
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Tenth PR, tenth merge, all with at most one bounce along the way — the
+  CLI no longer leaks Python tracebacks for user-facing script errors,
+  which was the last rough edge blocking confident day-to-day use of
+  `cinder run`.

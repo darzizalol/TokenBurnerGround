@@ -9,31 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Error diagnostics polish [claimed 2026-07-19T15:07:02Z]
-
-Build: `LexError`/`ParseError`/`CinderRuntimeError` already share a common
-`CinderError` base with `.line`/`.column`/`.message` (see `cinder/errors.py`)
-— no change needed there. What's still missing: `cinder/cli.py`'s `run_file`
-does not catch anything, so any `CinderError` raised while lexing, parsing,
-or executing a script currently leaks as a raw Python traceback. Make the
-`run` subcommand catch `CinderError` and print a human-readable one-line
-diagnostic (`file:line:column: message`) to stderr with a non-zero exit
-code instead.
-
-Acceptance criteria:
-- Unit tests assert the exact stderr format for a lex error, a parse error,
-  and a runtime error triggered via `cinder.cli run` (subprocess or
-  captured stdout/stderr), each with correct line/column.
-- Exit code is non-zero for all three error kinds, zero for a script that
-  runs cleanly.
-- Full test suite passes.
-
-Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
-`tests/test_cli.py`.
-
----
-
-## 2. Example programs
+## 1. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -54,7 +30,7 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
 
 ---
 
-## 3. REPL: interactive read-eval-print loop
+## 2. REPL: interactive read-eval-print loop
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's
@@ -83,7 +59,7 @@ Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
 
 ---
 
-## 4. Fix: statement-level map literals parse as blocks
+## 3. Fix: statement-level map literals parse as blocks
 
 Build: fix the grammar ambiguity flagged during review of PR #8. Because
 `_statement()` special-cases any leading `{` as the start of a `Block`, a
@@ -109,7 +85,7 @@ Likely files: `cinder/parser.py`, `tests/test_parser.py`.
 
 ---
 
-## 5. Standard library: list/map growth and iteration helpers
+## 4. Standard library: list/map growth and iteration helpers
 
 Build: `cinder/builtins.py` currently only supports list/map access via
 `expr[expr]` get/set (from task "Data structures: lists and maps") — there
@@ -203,6 +179,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   non-blocking semantic shift: `_evaluate_call` now evaluates arguments
   before the not-callable check, so side effects in args to a non-callable
   run before the error is raised.
+- **Error diagnostics polish** — merged 2026-07-19T15:12:10Z via PR #10
+  (`fix/20260719-error-diagnostics`). `cinder/cli.py`'s `run` subcommand now
+  catches `CinderError` and prints a one-line `file:line:column: message`
+  diagnostic to stderr with a non-zero exit code, instead of leaking a raw
+  Python traceback. QA noted a non-blocking gap: a nonexistent script path
+  still raises a raw `FileNotFoundError` traceback, since that's not a
+  `CinderError` subclass — out of scope for this task.
 
 ---
 

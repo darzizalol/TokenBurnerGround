@@ -10,9 +10,11 @@ Statement grammar: a program is a list of statements, each one of
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
 `while (<expr>) <statement>` (WhileStmt), or a bare `<expr>;` (ExprStmt).
 
-A leading `{` is ambiguous between a Block and a statement-level MapLiteral
-expression (e.g. `{"a": 1};`). `_brace_statement` disambiguates by attempting
-a speculative map-literal parse first; empty `{}` is always an (empty) Block.
+A leading `{` is ambiguous between a Block and a statement-level expression
+rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
+disambiguates by attempting a speculative full-expression parse first (so
+postfix indexing/calls and binary operators on the leading map literal are
+captured too); empty `{}` is always an (empty) Block.
 """
 
 from cinder.ast_nodes import (
@@ -106,7 +108,7 @@ class Parser:
             return self._block()
         start = self.pos
         try:
-            expr = self._map_literal()
+            expr = self._assignment()
         except ParseError:
             expr = None
         if expr is not None and self._check(TokenType.SEMICOLON):

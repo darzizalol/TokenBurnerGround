@@ -331,6 +331,48 @@ class TestStatements(unittest.TestCase):
             [("Block", [("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))])],
         )
 
+    def test_map_literal_statement_with_index(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1}["a"];')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "Index",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        ("Literal", "a"),
+                    ),
+                )
+            ],
+        )
+
+    def test_map_literal_statement_with_call(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1}();')],
+            [
+                (
+                    "ExprStmt",
+                    ("Call", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]), []),
+                )
+            ],
+        )
+
+    def test_map_literal_statement_with_binary_op(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1} == {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "Binary",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        TokenType.EQEQ,
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                    ),
+                )
+            ],
+        )
+
     def test_block_still_parses_as_block(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("{ let x = 1; print(x); }")],

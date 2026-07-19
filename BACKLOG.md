@@ -177,6 +177,41 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. `break` and `continue` for loops
+
+Build: add `break` and `continue` statement support for `while` and (once
+task 5 lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
+(`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for the bare
+`break;` / `continue;` keywords, restricted to loop bodies the same way
+`return` is restricted to function bodies today — track loop-nesting depth
+during parsing and raise `ParseError` (with line/column) if `break`/
+`continue` appears outside a loop. Evaluator support (`cinder/interpreter.py`)
+via internal control-flow signals following the existing `_ReturnSignal`
+pattern: `break` unwinds to the nearest enclosing loop's execution and stops
+it; `continue` unwinds to the nearest enclosing loop's execution and
+proceeds to its next iteration (for `while`, re-checks the condition; for
+`for`-in, advances to the next element).
+
+Acceptance criteria:
+- `while` loop with a `break` inside an `if` exits the loop immediately,
+  not running remaining iterations.
+- `while` loop with a `continue` inside an `if` skips the rest of that
+  iteration's body but keeps looping.
+- Same two behaviors for `for`-in loops (depends on task 5 having merged).
+- `break`/`continue` used outside any loop raises `ParseError` with
+  line/column, at parse time (not a runtime crash).
+- `break`/`continue` inside a function nested inside a loop body still
+  refers to that loop, not some caller's loop (regression test recommended
+  since `return` already threads through nested calls via exceptions —
+  `break`/`continue` must not accidentally unwind past a function call
+  boundary it shouldn't).
+- Full test suite passes, including new parser/interpreter tests.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

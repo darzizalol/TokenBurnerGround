@@ -93,7 +93,7 @@ while in_window; do
   fi
 
   cd "$REPO" || exit 1
-  git pull --rebase origin main >> "$NIGHT_LOG" 2>&1 || log "WARN: git pull failed; continuing with local state."
+  git pull --rebase --autostash origin main >> "$NIGHT_LOG" 2>&1 || log "WARN: git pull failed; continuing with local state."
 
   for role in "${ROLES[@]}"; do
     in_window || break

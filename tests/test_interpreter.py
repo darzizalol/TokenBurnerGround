@@ -388,6 +388,26 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run("let xs = [1, 2, 3]; xs[10] = 1;")
 
+    def test_string_get_index(self):
+        self.assertEqual(evaluate('"hello"[0]'), "h")
+        self.assertEqual(evaluate('"hello"[4]'), "o")
+
+    def test_string_index_out_of_range_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('"hello"[5]')
+
+    def test_string_negative_index_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('"hello"[-1]')
+
+    def test_string_non_int_index_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('"hello"["a"]')
+
+    def test_string_index_assign_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('let s = "hi"; s[0] = "y";')
+
 
 if __name__ == "__main__":
     unittest.main()

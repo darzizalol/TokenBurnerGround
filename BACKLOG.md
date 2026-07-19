@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Functions: declarations, calls, closures, `return`
+## 1. Functions: declarations, calls, closures, `return` [claimed 2026-07-19T14:22:33Z]
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions

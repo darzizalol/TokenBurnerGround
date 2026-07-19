@@ -180,6 +180,29 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
+## 7. Standard library: string methods
+
+Build: extend `cinder/builtins.py` with string-manipulation builtins:
+`upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
+`split(s, sep)` (returns a list of strings, splitting on the literal
+separator — no regex), and `join(list, sep)` (concatenates a list of
+strings with `sep` between elements, raising `CinderRuntimeError` if any
+element isn't a string). Each must arity/type-check its arguments the same
+way `_len`/`_str` do and raise `CinderRuntimeError` with line/column on
+misuse (e.g. `upper` on a non-string, `join` on a non-list first argument
+or a list containing a non-string element).
+
+Acceptance criteria:
+- Unit tests for each of the five builtins: happy path, wrong argument
+  type, and wrong arity.
+- `split`/`join` round-trip on a representative case (e.g.
+  `join(split("a,b,c", ","), ",")` equals the original string).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

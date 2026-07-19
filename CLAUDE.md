@@ -38,7 +38,9 @@ Every role reads this file first, then its own state files.
 
 Rules of engagement:
 
-- **One task, one branch, one PR.** Branch names: `night/<YYYYMMDD>-<short-slug>`.
+- **One task, one branch, one worktree, one PR.** Branch names:
+  `<type>/<YYYYMMDD>-<short-slug>` where `<type>` is `feat`, `fix`, `chore`,
+  `docs`, or `test` — pick whichever fits the task.
 - Verdict lines are machine-parsed — the **last line** of a Reviewer review must
   be exactly `VERDICT: LGTM` or `VERDICT: CHANGES REQUESTED`; the last line of a
   QA comment must be exactly `QA: PASS` or `QA: FAIL`.
@@ -67,6 +69,20 @@ record the obituary in `PROJECT.md` history.
   opening a PR. Resolve conflicts yourself; if a rebase goes wrong, abort it
   and recreate the branch — never force-push to `main`, never rewrite history
   on `main`, never delete branches you didn't create.
+- **The root checkout is sacred: it stays on `main`, always.** No role
+  implements, checks out branches, or leaves uncommitted changes in the repo
+  root. All code changes happen in isolated worktrees under `.worktrees/`
+  (gitignored):
+  - **Engineer**: `git worktree add .worktrees/<short-slug> -b <type>/<YYYYMMDD>-<short-slug> origin/main`,
+    then implement, test, commit, and push *inside that directory*, and open
+    the PR from there. For rework, reuse the PR's existing worktree if it
+    still exists, else recreate one from the PR branch.
+  - **QA**: never checks out the PR branch in the root — it fetches and uses a
+    detached worktree: `git fetch origin && git worktree add --detach .worktrees/qa-pr<N> origin/<branch>`,
+    runs everything inside it, and removes it when done.
+  - **Release**: before merging a PR, removes any worktree holding its branch
+    (`git worktree remove --force .worktrees/<dir>`; `git worktree prune`),
+    then merges. Same cleanup when closing a dead PR.
 - Commit messages: `<role>: <what changed>` (e.g. `engineer: add parser for
   ledger entries`), body explains why. Merged via squash merge.
 - The same GitHub account authors and reviews PRs, so GitHub "Approve" is

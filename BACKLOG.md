@@ -2,13 +2,14 @@
 
 Prioritized task list for Cinder (see `PROJECT.md` for vision/architecture).
 **Top task = next Engineer's job.** Each task is sized for one focused
-session. Engineer: claim the top task, implement + test on a
-`night/<YYYYMMDD>-<slug>` branch, open a PR. Do not skip ahead to a later
-task while an earlier one is unclaimed/open.
+session. Engineer: claim the top task, implement + test in an isolated
+worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
+`test` — see CLAUDE.md's worktree procedure), open a PR. Do not skip ahead to
+a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Statements: `let`, blocks, and end-to-end CLI wiring [claimed 2026-07-18T14:44:04Z — that session was killed mid-work by the hard stop; its unreviewed WIP was rescued to branch `night/20260718-statements`. Engineer: check out that branch, verify/finish the work, run the tests, then open the PR. Treat the WIP as untrusted.]
+## 1. Statements: `let`, blocks, and end-to-end CLI wiring [claimed 2026-07-18T14:44:04Z — that session was killed mid-work by the hard stop; its unreviewed WIP was rescued to branch `night/20260718-statements`. Engineer: work on it in a worktree (`git worktree add .worktrees/statements night/20260718-statements`), verify/finish the work, run the tests, then open the PR from there. Treat the WIP as untrusted.]
 
 Build: statement-level AST nodes (`ExprStmt`, `LetStmt`, `Block`) in
 `cinder/ast_nodes.py` and parser support for `let x = <expr>;`, bare

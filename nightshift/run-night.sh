@@ -93,7 +93,10 @@ while in_window; do
   fi
 
   cd "$REPO" || exit 1
+  # The root checkout must always be on main; code work happens in .worktrees/.
+  git checkout main >> "$NIGHT_LOG" 2>&1 || log "WARN: could not return root to main."
   git pull --rebase --autostash origin main >> "$NIGHT_LOG" 2>&1 || log "WARN: git pull failed; continuing with local state."
+  git worktree prune >> "$NIGHT_LOG" 2>&1
 
   for role in "${ROLES[@]}"; do
     in_window || break

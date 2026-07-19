@@ -58,7 +58,15 @@ class Call:
     column: int
 
 
-Expr = Union[Literal, Identifier, Unary, Binary, Logical, Grouping, Call]
+@dataclass(frozen=True)
+class Assign:
+    name: str
+    value: "Expr"
+    line: int
+    column: int
+
+
+Expr = Union[Literal, Identifier, Unary, Binary, Logical, Grouping, Call, Assign]
 
 
 @dataclass(frozen=True)
@@ -79,4 +87,21 @@ class Block:
     statements: list
 
 
-Stmt = Union[ExprStmt, LetStmt, Block]
+@dataclass(frozen=True)
+class IfStmt:
+    condition: "Expr"
+    then_branch: "Stmt"
+    else_branch: "Stmt | None"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class WhileStmt:
+    condition: "Expr"
+    body: "Stmt"
+    line: int
+    column: int
+
+
+Stmt = Union[ExprStmt, LetStmt, Block, IfStmt, WhileStmt]

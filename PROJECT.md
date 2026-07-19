@@ -69,6 +69,10 @@ Design principles:
   carry line/column; the CLI formats them for humans, tests assert on the
   structured fields.
 - **AST nodes are immutable dataclasses**, one class per grammar production.
+- **Truthiness is fixed and narrow**: `false` and `nil` are falsy; every other
+  value — including `0`, `0.0`, and `""` — is truthy. This governs `if`,
+  `while`, `and`/`or` short-circuiting, and `not`, and must not change without
+  amending this document.
 
 ## Tech stack
 

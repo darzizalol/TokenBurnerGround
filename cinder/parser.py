@@ -1,15 +1,18 @@
 """Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
-    or > and > comparisons (== != < <= > >=) > + - > * / % > unary (- not)
+    assignment (=, right-assoc) > or > and > comparisons (== != < <= > >=)
+    > + - > * / % > unary (- not)
 with parenthesized grouping and call expressions binding tightest of all.
 
 Statement grammar: a program is a list of statements, each one of
-`let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block), or a bare
-`<expr>;` (ExprStmt).
+`let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block),
+`if (<expr>) <statement> [else <statement>]` (IfStmt),
+`while (<expr>) <statement>` (WhileStmt), or a bare `<expr>;` (ExprStmt).
 """
 
 from cinder.ast_nodes import (
+    Assign,
     Binary,
     Block,
     Call,
@@ -17,11 +20,13 @@ from cinder.ast_nodes import (
     ExprStmt,
     Grouping,
     Identifier,
+    IfStmt,
     LetStmt,
     Literal,
     Logical,
     Stmt,
     Unary,
+    WhileStmt,
 )
 from cinder.errors import ParseError
 from cinder.tokens import Token, TokenType
@@ -45,7 +50,7 @@ class Parser:
         self.pos = 0
 
     def parse_expression(self) -> Expr:
-        expr = self._or()
+        expr = self._assignment()
         if not self._check(TokenType.EOF):
             token = self._peek()
             raise ParseError(
@@ -66,13 +71,17 @@ class Parser:
             return self._let_statement()
         if self._check(TokenType.LBRACE):
             return self._block()
+        if self._check(TokenType.IF):
+            return self._if_statement()
+        if self._check(TokenType.WHILE):
+            return self._while_statement()
         return self._expr_statement()
 
     def _let_statement(self) -> Stmt:
         let_token = self._advance()
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
         self._consume(TokenType.EQ, "'=' after variable name")
-        initializer = self._or()
+        initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
 
@@ -84,10 +93,42 @@ class Parser:
         self._consume(TokenType.RBRACE, "'}' after block")
         return Block(statements)
 
+    def _if_statement(self) -> Stmt:
+        if_token = self._advance()
+        self._consume(TokenType.LPAREN, "'(' after 'if'")
+        condition = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after if condition")
+        then_branch = self._statement()
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
+        return IfStmt(condition, then_branch, else_branch, if_token.line, if_token.column)
+
+    def _while_statement(self) -> Stmt:
+        while_token = self._advance()
+        self._consume(TokenType.LPAREN, "'(' after 'while'")
+        condition = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after while condition")
+        body = self._statement()
+        return WhileStmt(condition, body, while_token.line, while_token.column)
+
     def _expr_statement(self) -> Stmt:
-        expr = self._or()
+        expr = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after expression")
         return ExprStmt(expr)
+
+    def _assignment(self) -> Expr:
+        expr = self._or()
+        if self._check(TokenType.EQ):
+            eq_token = self._advance()
+            value = self._assignment()
+            if isinstance(expr, Identifier):
+                return Assign(expr.name, value, eq_token.line, eq_token.column)
+            raise ParseError(
+                "invalid assignment target", eq_token.line, eq_token.column
+            )
+        return expr
 
     def _or(self) -> Expr:
         expr = self._and()
@@ -174,7 +215,7 @@ class Parser:
             return Identifier(token.lexeme, token.line, token.column)
         if token.type == TokenType.LPAREN:
             self._advance()
-            expr = self._or()
+            expr = self._assignment()
             self._consume(TokenType.RPAREN, "')' after expression")
             return Grouping(expr)
 

@@ -2,14 +2,16 @@
 
 `Interpreter.evaluate` walks the expression AST produced by `cinder.parser`
 and returns a plain Python value (int, float, str, bool, None).
-`Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`),
-mutating an `Environment` rather than returning a value.
+`Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`,
+`IfStmt`, `WhileStmt`), mutating an `Environment` rather than returning a
+value.
 
 `Call` nodes are explicitly out of scope: there are no functions to call
 yet, so evaluating one raises `NotImplementedError`.
 """
 
 from cinder.ast_nodes import (
+    Assign,
     Binary,
     Block,
     Call,
@@ -17,11 +19,13 @@ from cinder.ast_nodes import (
     ExprStmt,
     Grouping,
     Identifier,
+    IfStmt,
     LetStmt,
     Literal,
     Logical,
     Stmt,
     Unary,
+    WhileStmt,
 )
 from cinder.errors import CinderRuntimeError
 from cinder.tokens import TokenType
@@ -47,6 +51,15 @@ class Environment:
             env = env.parent
         raise KeyError(name)
 
+    def assign(self, name: str, value: object) -> None:
+        env: Environment | None = self
+        while env is not None:
+            if name in env._values:
+                env._values[name] = value
+                return
+            env = env.parent
+        raise KeyError(name)
+
 
 def is_truthy(value: object) -> bool:
     """`false` and `nil` are falsy; everything else, including 0 and "", is truthy."""
@@ -67,6 +80,8 @@ class Interpreter:
             return self._evaluate_logical(expr, env)
         if isinstance(expr, Binary):
             return self._evaluate_binary(expr, env)
+        if isinstance(expr, Assign):
+            return self._evaluate_assign(expr, env)
         if isinstance(expr, Call):
             raise NotImplementedError("Call evaluation is not implemented yet")
         raise TypeError(f"unhandled expression type: {type(expr)!r}")
@@ -83,6 +98,16 @@ class Interpreter:
             for inner in stmt.statements:
                 self.execute(inner, block_env)
             return
+        if isinstance(stmt, IfStmt):
+            if is_truthy(self.evaluate(stmt.condition, env)):
+                self.execute(stmt.then_branch, env)
+            elif stmt.else_branch is not None:
+                self.execute(stmt.else_branch, env)
+            return
+        if isinstance(stmt, WhileStmt):
+            while is_truthy(self.evaluate(stmt.condition, env)):
+                self.execute(stmt.body, env)
+            return
         raise TypeError(f"unhandled statement type: {type(stmt)!r}")
 
     def _evaluate_identifier(self, expr: Identifier, env: Environment) -> object:
@@ -92,6 +117,16 @@ class Interpreter:
             raise CinderRuntimeError(
                 f"undefined name {expr.name!r}", expr.line, expr.column
             ) from None
+
+    def _evaluate_assign(self, expr: Assign, env: Environment) -> object:
+        value = self.evaluate(expr.value, env)
+        try:
+            env.assign(expr.name, value)
+        except KeyError:
+            raise CinderRuntimeError(
+                f"undefined name {expr.name!r}", expr.line, expr.column
+            ) from None
+        return value
 
     def _evaluate_unary(self, expr: Unary, env: Environment) -> object:
         operand = self.evaluate(expr.operand, env)

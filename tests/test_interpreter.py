@@ -181,5 +181,90 @@ class TestStatements(unittest.TestCase):
             env.get("x")
 
 
+class TestAssignment(unittest.TestCase):
+    def test_assignment_updates_existing_variable(self):
+        env = run("let x = 1; x = 2;")
+        self.assertEqual(env.get("x"), 2)
+
+    def test_assignment_expression_evaluates_to_assigned_value(self):
+        env = run("let x = 1; let y = (x = 5);")
+        self.assertEqual(env.get("x"), 5)
+        self.assertEqual(env.get("y"), 5)
+
+    def test_assignment_mutates_outer_scope_from_inner_block(self):
+        env = run("let x = 1; { x = 2; }")
+        self.assertEqual(env.get("x"), 2)
+
+    def test_assignment_to_undefined_name_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("x = 1;")
+
+    def test_invalid_assignment_target_raises_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("1 = 2;"))
+
+
+class TestIfStatement(unittest.TestCase):
+    def test_if_true_runs_then_branch(self):
+        env = run("let x = 0; if (true) { x = 1; }")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_if_false_skips_then_branch(self):
+        env = run("let x = 0; if (false) { x = 1; }")
+        self.assertEqual(env.get("x"), 0)
+
+    def test_if_else_runs_else_branch_when_condition_false(self):
+        env = run("let x = 0; if (false) { x = 1; } else { x = 2; }")
+        self.assertEqual(env.get("x"), 2)
+
+    def test_if_without_else_and_false_condition_is_noop(self):
+        env = run("let x = 0; if (false) { x = 1; }")
+        self.assertEqual(env.get("x"), 0)
+
+    def test_nested_if(self):
+        env = run(
+            "let x = 0; "
+            "if (true) { if (true) { x = 1; } else { x = 2; } } else { x = 3; }"
+        )
+        self.assertEqual(env.get("x"), 1)
+
+    def test_nested_if_inner_false(self):
+        env = run(
+            "let x = 0; "
+            "if (true) { if (false) { x = 1; } else { x = 2; } } else { x = 3; }"
+        )
+        self.assertEqual(env.get("x"), 2)
+
+
+class TestWhileStatement(unittest.TestCase):
+    def test_while_sums_one_to_ten(self):
+        env = run(
+            "let i = 1; let total = 0; "
+            "while (i <= 10) { total = total + i; i = i + 1; }"
+        )
+        self.assertEqual(env.get("total"), 55)
+        self.assertEqual(env.get("i"), 11)
+
+    def test_while_false_condition_never_runs_body(self):
+        env = run("let x = 0; while (false) { x = 1; }")
+        self.assertEqual(env.get("x"), 0)
+
+
+class TestTruthinessRule(unittest.TestCase):
+    """Pins the rule: `false`/`nil` are falsy; everything else is truthy."""
+
+    def test_falsy_values_skip_if_branch(self):
+        for source in ("false", "nil"):
+            env = run(f"let x = 0; if ({source}) {{ x = 1; }}")
+            self.assertEqual(env.get("x"), 0, msg=source)
+
+    def test_truthy_values_including_zero_and_empty_string_run_if_branch(self):
+        for source in ("true", "0", '""', "1", '"a"'):
+            env = run(f"let x = 0; if ({source}) {{ x = 1; }}")
+            self.assertEqual(env.get("x"), 1, msg=source)
+
+
 if __name__ == "__main__":
     unittest.main()

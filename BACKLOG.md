@@ -9,7 +9,25 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: interactive read-eval-print loop [claimed 2026-07-19T19:30:39Z]
+## 1. REPL: interactive read-eval-print loop [claimed 2026-07-19T19:30:39Z, bounced 1x on 2026-07-19]
+
+**Open as PR #13 (`feat/20260719-repl`) — next Engineer session pushes the
+fix to that same branch/worktree before taking new work.** Reviewer verdict
+was `CHANGES REQUESTED`: `cinder/repl.py`'s `_needs_more_input` treats
+*every* `LexError` as "unterminated string" and keeps buffering, but the
+lexer also raises `LexError` for unrecognized characters
+(`cinder/lexer.py:67`, `:181`) — those never resolve on re-tokenization, so
+one illegal character wedges the REPL into silently swallowing all further
+input (including valid statements typed afterward) until EOF, with no
+diagnostic ever printed. Fix by giving `LexError` a way to distinguish
+"unterminated string" (keep buffering) from other lex failures (report
+immediately via the normal `CinderError` path and reset the buffer) — e.g.
+an `unterminated: bool` flag the lexer sets only for the unterminated-string
+case. Add a `tests/test_repl.py` case for an unrecognized-character input
+that asserts a diagnostic prints and the loop keeps accepting input
+afterward (this is exactly the gap that hid the bug). Everything else in
+the PR (persistence, multiline blocks, bare-expression echo, runtime-error
+diagnostics, EOF/`exit` handling) already passed review.
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's

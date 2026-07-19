@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 1. Standard library: builtins (`print`, `len`, `type`, conversions) [claimed 2026-07-19T14:53:58Z]
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to

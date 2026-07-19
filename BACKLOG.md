@@ -11,13 +11,14 @@ a later task while an earlier one is unclaimed/open.
 
 ## 1. Error diagnostics polish
 
-Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
-class with consistent `.line`, `.column`, `.message` fields (adjust
-whichever of the earlier tasks didn't already do this fully), and make
-`cinder/cli.py`'s `run` subcommand catch `CinderError` and print a
-human-readable one-line diagnostic (`file:line:column: message`) to stderr
-with a non-zero exit code, instead of letting a Python traceback leak to
-the user.
+Build: `LexError`/`ParseError`/`CinderRuntimeError` already share a common
+`CinderError` base with `.line`/`.column`/`.message` (see `cinder/errors.py`)
+— no change needed there. What's still missing: `cinder/cli.py`'s `run_file`
+does not catch anything, so any `CinderError` raised while lexing, parsing,
+or executing a script currently leaks as a raw Python traceback. Make the
+`run` subcommand catch `CinderError` and print a human-readable one-line
+diagnostic (`file:line:column: message`) to stderr with a non-zero exit
+code instead.
 
 Acceptance criteria:
 - Unit tests assert the exact stderr format for a lex error, a parse error,
@@ -105,6 +106,33 @@ Acceptance criteria:
 - Full test suite passes, including the new cases.
 
 Likely files: `cinder/parser.py`, `tests/test_parser.py`.
+
+---
+
+## 5. Standard library: list/map growth and iteration helpers
+
+Build: `cinder/builtins.py` currently only supports list/map access via
+`expr[expr]` get/set (from task "Data structures: lists and maps") — there
+is no way for a Cinder script to grow a list, remove an entry, or iterate a
+map's keys. Add builtins: `push(list, value)` (appends, returns the
+mutated list), `pop(list)` (removes and returns the last element, raises
+`CinderRuntimeError` on an empty list), `keys(map)` (returns a list of the
+map's keys, insertion order), and `values(map)` (returns a list of the
+map's values, same order). Each must arity/type-check its arguments the
+same way `_len`/`_str` do and raise `CinderRuntimeError` with line/column on
+misuse (e.g. `push` on a non-list, `pop` on an empty list, `keys`/`values`
+on a non-map).
+
+Acceptance criteria:
+- Unit tests for each of the four builtins: happy path, wrong argument
+  type, wrong arity, and (for `pop`) the empty-list error case.
+- An example-worthy `.cin` snippet using at least `push` and `keys`
+  together is exercised by a test (does not need its own file under
+  `examples/` unless task 2 has already landed — if it has, add one there
+  instead of duplicating coverage).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 

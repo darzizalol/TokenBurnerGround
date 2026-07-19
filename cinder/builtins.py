@@ -102,6 +102,49 @@ def _float(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _push(arguments: list, line: int, column: int) -> object:
+    _require_arity("push", arguments, 2, line, column)
+    target, value = arguments
+    if not isinstance(target, list):
+        raise CinderRuntimeError(
+            f"push() requires a list as its first argument, got {type_name(target)}", line, column
+        )
+    target.append(value)
+    return target
+
+
+def _pop(arguments: list, line: int, column: int) -> object:
+    _require_arity("pop", arguments, 1, line, column)
+    target = arguments[0]
+    if not isinstance(target, list):
+        raise CinderRuntimeError(
+            f"pop() requires a list, got {type_name(target)}", line, column
+        )
+    if not target:
+        raise CinderRuntimeError("pop() called on an empty list", line, column)
+    return target.pop()
+
+
+def _keys(arguments: list, line: int, column: int) -> object:
+    _require_arity("keys", arguments, 1, line, column)
+    target = arguments[0]
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"keys() requires a map, got {type_name(target)}", line, column
+        )
+    return list(target.keys())
+
+
+def _values(arguments: list, line: int, column: int) -> object:
+    _require_arity("values", arguments, 1, line, column)
+    target = arguments[0]
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"values() requires a map, got {type_name(target)}", line, column
+        )
+    return list(target.values())
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -109,6 +152,10 @@ _BUILTINS = {
     "str": _str,
     "int": _int,
     "float": _float,
+    "push": _push,
+    "pop": _pop,
+    "keys": _keys,
+    "values": _values,
 }
 
 

@@ -92,3 +92,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Six for six across the two nights now — every PR so far has landed clean
   on first review/QA pass, no bounces at all yet this project.
+
+- **Merged**: none this cycle.
+- **Bounced**: PR #7 "Functions: declarations, calls, closures, return"
+  (`feat/20260719-functions`) got `VERDICT: CHANGES REQUESTED` (1 of 3) —
+  Reviewer found `return` outside a function crashes with a raw internal
+  `_ReturnSignal` Python exception instead of a clean `CinderRuntimeError`
+  (uncaught in `Interpreter.execute`, no handler in `cinder/cli.py`); no
+  QA comment posted yet either. Left on its branch for the next Engineer
+  session to fix.
+- **Still open**: PR #7, awaiting a fix push.
+- First bounce of the project — the streak of clean first-pass merges ends
+  at six, but the review process is working as designed (caught a real gap
+  in error-diagnostic coverage before it reached `main`).

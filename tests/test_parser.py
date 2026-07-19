@@ -277,6 +277,22 @@ class TestFunctions(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("fn f() { return 1 }")
 
+    def test_return_at_top_level_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("return 5;")
+
+    def test_return_inside_top_level_if_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("if (true) { return 5; }")
+
+    def test_return_inside_top_level_while_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { return 5; }")
+
+    def test_return_after_fn_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f() { return 1; } return 2;")
+
 
 class TestErrors(unittest.TestCase):
     def test_unclosed_grouping(self):

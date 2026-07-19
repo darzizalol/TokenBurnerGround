@@ -50,6 +50,7 @@ class Parser:
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
         self.pos = 0
+        self._fn_depth = 0
 
     def parse_expression(self) -> Expr:
         expr = self._assignment()
@@ -137,11 +138,17 @@ class Parser:
                 token.line,
                 token.column,
             )
+        self._fn_depth += 1
         body = self._block()
+        self._fn_depth -= 1
         return FnDecl(name_token.lexeme, params, body, fn_token.line, fn_token.column)
 
     def _return_statement(self) -> Stmt:
         return_token = self._advance()
+        if self._fn_depth == 0:
+            raise ParseError(
+                "'return' outside of a function", return_token.line, return_token.column
+            )
         value = None
         if not self._check(TokenType.SEMICOLON):
             value = self._assignment()

@@ -73,6 +73,11 @@ Design principles:
   value — including `0`, `0.0`, and `""` — is truthy. This governs `if`,
   `while`, `and`/`or` short-circuiting, and `not`, and must not change without
   amending this document.
+- **A leading `{` at statement position is disambiguated by speculative
+  parse**: the parser first attempts to parse a map literal followed by `;`
+  (e.g. `{"a": 1};`); if that fails, or isn't followed by `;`, it falls back
+  to parsing a `{ <statement>* }` block. Empty `{}` is always an empty Block,
+  never an empty map literal.
 
 ## Tech stack
 

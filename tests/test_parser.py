@@ -302,6 +302,49 @@ class TestStatements(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("{ let x = 1; ")
 
+    def test_map_literal_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1};')],
+            [("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))],
+        )
+
+    def test_map_literal_statement_multiple_pairs(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1, "b": 2};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "MapLiteral",
+                        [
+                            (("Literal", "a"), ("Literal", 1)),
+                            (("Literal", "b"), ("Literal", 2)),
+                        ],
+                    ),
+                )
+            ],
+        )
+
+    def test_map_literal_statement_inside_block(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{ {"a": 1}; }')],
+            [("Block", [("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))])],
+        )
+
+    def test_block_still_parses_as_block(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("{ let x = 1; print(x); }")],
+            [
+                (
+                    "Block",
+                    [
+                        ("LetStmt", "x", ("Literal", 1)),
+                        ("ExprStmt", ("Call", ("Identifier", "print"), [("Identifier", "x")])),
+                    ],
+                )
+            ],
+        )
+
 
 class TestFunctions(unittest.TestCase):
     def test_fn_declaration_no_params(self):

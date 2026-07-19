@@ -1,8 +1,9 @@
-"""Tree-walking evaluator for Cinder expressions.
+"""Tree-walking evaluator for Cinder expressions and statements.
 
 `Interpreter.evaluate` walks the expression AST produced by `cinder.parser`
-and returns a plain Python value (int, float, str, bool, None). There is no
-statement execution or CLI wiring here yet -- see BACKLOG.md task 2.
+and returns a plain Python value (int, float, str, bool, None).
+`Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`),
+mutating an `Environment` rather than returning a value.
 
 `Call` nodes are explicitly out of scope: there are no functions to call
 yet, so evaluating one raises `NotImplementedError`.
@@ -10,12 +11,16 @@ yet, so evaluating one raises `NotImplementedError`.
 
 from cinder.ast_nodes import (
     Binary,
+    Block,
     Call,
     Expr,
+    ExprStmt,
     Grouping,
     Identifier,
+    LetStmt,
     Literal,
     Logical,
+    Stmt,
     Unary,
 )
 from cinder.errors import CinderRuntimeError
@@ -65,6 +70,20 @@ class Interpreter:
         if isinstance(expr, Call):
             raise NotImplementedError("Call evaluation is not implemented yet")
         raise TypeError(f"unhandled expression type: {type(expr)!r}")
+
+    def execute(self, stmt: Stmt, env: Environment) -> None:
+        if isinstance(stmt, LetStmt):
+            env.define(stmt.name, self.evaluate(stmt.initializer, env))
+            return
+        if isinstance(stmt, ExprStmt):
+            self.evaluate(stmt.expression, env)
+            return
+        if isinstance(stmt, Block):
+            block_env = Environment(env)
+            for inner in stmt.statements:
+                self.execute(inner, block_env)
+            return
+        raise TypeError(f"unhandled statement type: {type(stmt)!r}")
 
     def _evaluate_identifier(self, expr: Identifier, env: Environment) -> object:
         try:

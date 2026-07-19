@@ -3,6 +3,7 @@
 import io
 import subprocess
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 
@@ -24,12 +25,23 @@ class TestCliHelp(unittest.TestCase):
 
 
 class TestCliSubcommands(unittest.TestCase):
-    def test_run_not_implemented_exits_zero(self):
-        stdout = io.StringIO()
-        with redirect_stdout(stdout):
-            exit_code = cli.main(["run", "examples/does_not_exist_yet.cin"])
+    def test_run_let_script_exits_zero(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".cin", delete=False) as f:
+            f.write("let x = 1 + 2;\nlet y = x * 2;\n")
+            path = f.name
+        exit_code = cli.main(["run", path])
         self.assertEqual(exit_code, 0)
-        self.assertIn("not implemented", stdout.getvalue().lower())
+
+    def test_run_executes_via_subprocess(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".cin", delete=False) as f:
+            f.write("let x = 1 + 2;\n")
+            path = f.name
+        result = subprocess.run(
+            [sys.executable, "-m", "cinder.cli", "run", path],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0)
 
     def test_repl_not_implemented_exits_zero(self):
         stdout = io.StringIO()

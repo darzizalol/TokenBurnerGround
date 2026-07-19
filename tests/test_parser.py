@@ -2,10 +2,22 @@
 
 import unittest
 
-from cinder.ast_nodes import Binary, Call, Grouping, Identifier, Literal, Logical, Unary
+from cinder.ast_nodes import (
+    Binary,
+    Block,
+    Call,
+    ExprStmt,
+    Grouping,
+    Identifier,
+    LetStmt,
+    Literal,
+    Logical,
+    Unary,
+)
 from cinder.errors import ParseError
 from cinder.lexer import tokenize
-from cinder.parser import parse_expression
+from cinder.parser import parse_expression, parse_program
+from cinder.tokens import TokenType
 
 
 def shape(node):
@@ -29,6 +41,21 @@ def shape(node):
 
 def parse(source: str):
     return parse_expression(tokenize(source))
+
+
+def parse_stmts(source: str):
+    return parse_program(tokenize(source))
+
+
+def stmt_shape(node):
+    """Structural view of a statement AST node, ignoring line/column noise."""
+    if isinstance(node, LetStmt):
+        return ("LetStmt", node.name, shape(node.initializer))
+    if isinstance(node, ExprStmt):
+        return ("ExprStmt", shape(node.expression))
+    if isinstance(node, Block):
+        return ("Block", [stmt_shape(s) for s in node.statements])
+    raise TypeError(f"unhandled statement type: {type(node)!r}")
 
 
 class TestPrecedence(unittest.TestCase):
@@ -144,6 +171,56 @@ class TestCalls(unittest.TestCase):
             shape(parse("f()()")),
             ("Call", ("Call", ("Identifier", "f"), []), []),
         )
+
+
+class TestStatements(unittest.TestCase):
+    def test_let_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let x = 1 + 2;")],
+            [("LetStmt", "x", ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2)))],
+        )
+
+    def test_expr_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("1 + 2;")],
+            [("ExprStmt", ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2)))],
+        )
+
+    def test_multiple_statements(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let x = 1; let y = 2;")],
+            [
+                ("LetStmt", "x", ("Literal", 1)),
+                ("LetStmt", "y", ("Literal", 2)),
+            ],
+        )
+
+    def test_block_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("{ let x = 1; x; }")],
+            [("Block", [("LetStmt", "x", ("Literal", 1)), ("ExprStmt", ("Identifier", "x"))])],
+        )
+
+    def test_empty_block(self):
+        self.assertEqual([stmt_shape(s) for s in parse_stmts("{}")], [("Block", [])])
+
+    def test_nested_block(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("{ { let x = 1; } }")],
+            [("Block", [("Block", [("LetStmt", "x", ("Literal", 1))])])],
+        )
+
+    def test_let_missing_equals_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let x 1;")
+
+    def test_let_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let x = 1")
+
+    def test_unclosed_block_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("{ let x = 1; ")
 
 
 class TestErrors(unittest.TestCase):

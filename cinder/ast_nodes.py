@@ -59,3 +59,24 @@ class Call:
 
 
 Expr = Union[Literal, Identifier, Unary, Binary, Logical, Grouping, Call]
+
+
+@dataclass(frozen=True)
+class ExprStmt:
+    expression: "Expr"
+
+
+@dataclass(frozen=True)
+class LetStmt:
+    name: str
+    initializer: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class Block:
+    statements: list
+
+
+Stmt = Union[ExprStmt, LetStmt, Block]

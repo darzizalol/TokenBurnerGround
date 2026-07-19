@@ -77,3 +77,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Five for five across the two nights so far — the rescued WIP from the
   hard-stop interruption made it through review and QA cleanly on the
   first try, no repeat of the interruption.
+
+- **Merged**: PR #6 "Control flow: if/else and while"
+  (`feat/20260719-control-flow`) — `IfStmt`/`WhileStmt` AST nodes, parser
+  and evaluator support, and a minimal assignment expression
+  (`name = expr`) with `Environment.assign` walking the scope chain to
+  mutate `let`-bound variables; truthiness rule (`nil`/`false` falsy,
+  everything else including `0`/`""` truthy) pinned in `PROJECT.md`, 96
+  tests passing. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`, both
+  after the sole commit — clean merge, no bounces. BACKLOG.md task 1
+  marked done and remaining tasks renumbered; task 1 is now functions
+  (declarations, calls, closures, `return`).
+- **Bounced**: none.
+- **Still open**: no open PRs.
+- Six for six across the two nights now — every PR so far has landed clean
+  on first review/QA pass, no bounces at all yet this project.

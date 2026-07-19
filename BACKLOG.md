@@ -9,28 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Control flow: `if`/`else` and `while` [claimed 2026-07-19T14:11:14Z]
-
-Build: `IfStmt` and `WhileStmt` AST nodes, parser support, and evaluator
-support, using the truthiness rule: `false` and `nil` are falsy, everything
-else (including `0` and `""`) is truthy — state this explicitly in
-`PROJECT.md`'s architecture notes if not already documented, since later
-tasks depend on it being fixed.
-
-Acceptance criteria:
-- Unit tests cover `if` with and without `else`, nested `if`, and a `while`
-  loop that mutates a `let`-bound counter (e.g. sum 1..10 via a loop,
-  assert the final value through the `Interpreter`/`Environment` API).
-- A test explicitly pins the truthiness rule (`nil`/`false` falsy, `0`/`""`
-  truthy).
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_interpreter.py`, `PROJECT.md`.
-
----
-
-## 2. Functions: declarations, calls, closures, `return`
+## 1. Functions: declarations, calls, closures, `return`
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions
@@ -55,7 +34,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Data structures: lists and maps
+## 2. Data structures: lists and maps
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set
@@ -76,7 +55,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 3. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -100,7 +79,7 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 5. Error diagnostics polish
+## 4. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
@@ -123,7 +102,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 6. Example programs
+## 5. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -175,6 +154,12 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
   end to end. Started as WIP rescued after a prior session was killed
   mid-work by the nightly hard stop; rebased, reviewed, and verified
   before merge.
+- **Control flow: `if`/`else` and `while`** — merged 2026-07-19T14:20:00Z
+  via PR #6 (`feat/20260719-control-flow`). Built `IfStmt`/`WhileStmt` AST
+  nodes, parser and evaluator support, and a minimal assignment expression
+  (`name = expr`) with `Environment.assign` walking the scope chain. Pinned
+  the truthiness rule (`nil`/`false` falsy, everything else truthy,
+  including `0`/`""`) in `PROJECT.md`.
 
 ---
 

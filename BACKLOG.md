@@ -30,36 +30,7 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
 
 ---
 
-## 2. REPL: interactive read-eval-print loop
-
-Build: `cinder/repl.py` implementing the actual REPL — reads lines from
-stdin, accumulates input until a statement is complete (reuse the lexer's
-brace/paren tracking or a simple heuristic: keep reading while braces are
-unbalanced), lexes/parses/executes each complete statement against a
-persistent `Environment` that survives across inputs (so a variable `let`-
-bound on one line is visible on the next), and prints the value of bare
-expression statements the way a REPL should (skip printing for statements
-that produce no value, e.g. `let`). Catches any `CinderError` per statement
-using the same formatting as the `run` subcommand (task 2) and continues the
-loop instead of crashing it. Exits cleanly on EOF (Ctrl-D) or an `exit`
-command. Wire `cinder/cli.py`'s `repl` subcommand to actually call it instead
-of printing "not implemented yet".
-
-Acceptance criteria:
-- Unit/integration tests drive the REPL via piped stdin (subprocess or by
-  calling the REPL's loop function directly with an injected input source)
-  and assert on printed output: a `let` followed by referencing the variable
-  on the next line, a bare expression echoing its value, a `CinderError`
-  (e.g. undefined variable) printing a diagnostic and the loop continuing to
-  accept further input afterward, and clean exit on EOF.
-- `cinder/cli.py repl` no longer prints the "not implemented yet" placeholder.
-- Full test suite passes.
-
-Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
-
----
-
-## 3. Fix: statement-level map literals parse as blocks
+## 2. Fix: statement-level map literals parse as blocks
 
 Build: fix the grammar ambiguity flagged during review of PR #8. Because
 `_statement()` special-cases any leading `{` as the start of a `Block`, a
@@ -85,6 +56,36 @@ Likely files: `cinder/parser.py`, `tests/test_parser.py`.
 
 ---
 
+## 3. REPL: interactive read-eval-print loop
+
+Build: `cinder/repl.py` implementing the actual REPL — reads lines from
+stdin, accumulates input until a statement is complete (reuse the lexer's
+brace/paren tracking or a simple heuristic: keep reading while braces are
+unbalanced), lexes/parses/executes each complete statement against a
+persistent `Environment` that survives across inputs (so a variable `let`-
+bound on one line is visible on the next), and prints the value of bare
+expression statements the way a REPL should (skip printing for statements
+that produce no value, e.g. `let`). Catches any `CinderError` per statement
+using the same `file:line:column: message` formatting the `run` subcommand
+already uses (`cinder/cli.py`, merged in PR #10) and continues the loop
+instead of crashing it. Exits cleanly on EOF (Ctrl-D) or an `exit` command.
+Wire `cinder/cli.py`'s `repl` subcommand to actually call it instead of
+printing "not implemented yet".
+
+Acceptance criteria:
+- Unit/integration tests drive the REPL via piped stdin (subprocess or by
+  calling the REPL's loop function directly with an injected input source)
+  and assert on printed output: a `let` followed by referencing the variable
+  on the next line, a bare expression echoing its value, a `CinderError`
+  (e.g. undefined variable) printing a diagnostic and the loop continuing to
+  accept further input afterward, and clean exit on EOF.
+- `cinder/cli.py repl` no longer prints the "not implemented yet" placeholder.
+- Full test suite passes.
+
+Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
+
+---
+
 ## 4. Standard library: list/map growth and iteration helpers
 
 Build: `cinder/builtins.py` currently only supports list/map access via
@@ -104,11 +105,42 @@ Acceptance criteria:
   type, wrong arity, and (for `pop`) the empty-list error case.
 - An example-worthy `.cin` snippet using at least `push` and `keys`
   together is exercised by a test (does not need its own file under
-  `examples/` unless task 2 has already landed — if it has, add one there
+  `examples/` unless task 1 has already landed — if it has, add one there
   instead of duplicating coverage).
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 5. Fix: `run` leaks raw traceback for missing/unreadable script
+
+Build: `cinder/cli.py`'s `run_file` opens the script path with a bare
+`open(path, ...)`; when the path doesn't exist (or isn't readable), Python
+raises `FileNotFoundError`/`OSError`, which isn't a `CinderError` subclass,
+so `main()`'s `except CinderError` doesn't catch it and the CLI leaks a raw
+Python traceback instead of a clean diagnostic. QA flagged this as a
+non-blocking gap when reviewing PR #10 (error diagnostics polish). Catch
+`OSError` around the file open in `run_file` (or in `main`, wherever fits
+the existing structure) and print a one-line, non-traceback message to
+stderr — e.g. `cinder: run: <path>: <reason>` — with a non-zero exit code,
+consistent in spirit with how `CinderError` is already reported. Do not
+change the exit code or message for the existing `CinderError` path.
+
+Acceptance criteria:
+- Running `cinder run <nonexistent-path>` prints a one-line diagnostic to
+  stderr (no Python traceback) and exits non-zero.
+- Running `cinder run` on a script that lexes/parses/executes fine still
+  behaves exactly as before (exit 0, stdout unaffected).
+- A `CinderError` raised during execution still produces the existing
+  `file:line:column: message` diagnostic — this task must not touch that
+  path's behavior, only add handling for the file-open failure.
+- Test drives `main()` (or the CLI as a subprocess) with a nonexistent path
+  and asserts no traceback leaks and the exit code is non-zero.
+- Full test suite passes.
+
+Likely files: `cinder/cli.py`, `tests/test_cli.py` (new, if it doesn't
+already exist).
 
 ---
 

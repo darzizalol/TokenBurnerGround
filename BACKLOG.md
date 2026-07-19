@@ -9,7 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Error diagnostics polish
+## 1. Error diagnostics polish [claimed 2026-07-19T15:07:02Z]
 
 Build: `LexError`/`ParseError`/`CinderRuntimeError` already share a common
 `CinderError` base with `.line`/`.column`/`.message` (see `cinder/errors.py`)

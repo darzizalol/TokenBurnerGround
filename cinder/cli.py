@@ -1,14 +1,15 @@
 """Command-line entrypoint for Cinder: `run <file>` and `repl` subcommands.
 
-`run` lexes, parses, and executes a `.cin` file end to end. `.cin` scripts
-have no `print` builtin yet (see BACKLOG.md task 5), so a successful run
-currently produces no stdout -- only a zero exit code.
+`run` lexes, parses, and executes a `.cin` file end to end against a global
+scope pre-populated with the standard library builtins (`print`, `len`,
+`type`, `str`, `int`, `float`).
 """
 
 import argparse
 import sys
 
-from cinder.interpreter import Environment, Interpreter
+from cinder.builtins import create_global_environment
+from cinder.interpreter import Interpreter
 from cinder.lexer import tokenize
 from cinder.parser import parse_program
 
@@ -30,7 +31,7 @@ def run_file(path: str) -> None:
         source = f.read()
     statements = parse_program(tokenize(source))
     interpreter = Interpreter()
-    env = Environment()
+    env = create_global_environment()
     for statement in statements:
         interpreter.execute(statement, env)
 

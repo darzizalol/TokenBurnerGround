@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from unittest.mock import patch
 
 from cinder import cli
 
@@ -43,12 +44,11 @@ class TestCliSubcommands(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
 
-    def test_repl_not_implemented_exits_zero(self):
+    def test_repl_on_empty_stdin_exits_zero(self):
         stdout = io.StringIO()
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), patch("sys.stdin", io.StringIO("")):
             exit_code = cli.main(["repl"])
         self.assertEqual(exit_code, 0)
-        self.assertIn("not implemented", stdout.getvalue().lower())
 
     def test_missing_command_requires_subcommand(self):
         with self.assertRaises(SystemExit):

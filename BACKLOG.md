@@ -87,7 +87,7 @@ persistent `Environment` that survives across inputs (so a variable `let`-
 bound on one line is visible on the next), and prints the value of bare
 expression statements the way a REPL should (skip printing for statements
 that produce no value, e.g. `let`). Catches any `CinderError` per statement
-using the same formatting as the `run` subcommand (task 4) and continues the
+using the same formatting as the `run` subcommand (task 2) and continues the
 loop instead of crashing it. Exits cleanly on EOF (Ctrl-D) or an `exit`
 command. Wire `cinder/cli.py`'s `repl` subcommand to actually call it instead
 of printing "not implemented yet".
@@ -103,6 +103,32 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
+
+---
+
+## 5. Fix: statement-level map literals parse as blocks
+
+Build: fix the grammar ambiguity flagged during review of PR #8. Because
+`_statement()` special-cases any leading `{` as the start of a `Block`, a
+bare map-literal expression statement like `{"a": 1};` currently parses as
+a (broken/misinterpreted) block instead of a `MapLiteral` wrapped in an
+`ExprStmt`. Give the parser enough lookahead (or a backtracking attempt) at
+a leading `{` to distinguish "block of statements" from "map literal
+expression": e.g. peek past the first `{`, and if the next tokens form
+`expr COLON` before any statement-ending token, parse a map literal
+expression statement instead of a block. Empty `{}` may stay a block (or be
+special-cased to an empty map) — pick one and document it in `PROJECT.md`
+if it's not already covered by the truthiness/grammar notes.
+
+Acceptance criteria:
+- `{"a": 1};` as a top-level or in-block statement parses as an `ExprStmt`
+  wrapping a `MapLiteral`, not a `Block`.
+- Existing block syntax (`{ let x = 1; print(x); }`) still parses as a
+  `Block` — add a regression test pinning this alongside the new map-literal
+  statement test.
+- Full test suite passes, including the new cases.
+
+Likely files: `cinder/parser.py`, `tests/test_parser.py`.
 
 ---
 

@@ -233,3 +233,18 @@ The morning paper: what shipped, what bounced, what's still open.
   back during PR #8's review is fully closed out, and the parser now
   correctly disambiguates the whole leading-`{` expression grammar, not
   just the bare-literal case.
+
+- **Merged**: none this cycle.
+- **Bounced**: PR #13 "REPL: interactive read-eval-print loop"
+  (`feat/20260719-repl`) has one `VERDICT: CHANGES REQUESTED` (the
+  `_needs_more_input` check treats every `LexError` as an unterminated
+  string, so an actually-illegal character wedges the REPL into
+  buffering forever with no diagnostic until EOF, silently discarding
+  everything typed — including valid statements queued after the bad
+  line) and no QA verdict yet — below the 3-strike close threshold, left
+  open for the next Engineer session to distinguish unterminated-string
+  `LexError`s from other lex failures.
+- **Still open**: PR #13, awaiting rework per the review comment above.
+- Quiet cycle again — one open PR mid-rework, nothing else in flight;
+  the next Engineer session just needs to give `LexError` a way to say
+  "this isn't a string, stop buffering and report it."

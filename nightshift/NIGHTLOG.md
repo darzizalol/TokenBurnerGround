@@ -105,3 +105,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - First bounce of the project — the streak of clean first-pass merges ends
   at six, but the review process is working as designed (caught a real gap
   in error-diagnostic coverage before it reached `main`).
+
+- **Merged**: PR #7 "Functions: declarations, calls, closures, return"
+  (`feat/20260719-functions`) — `FnDecl`/`ReturnStmt` AST nodes, parser
+  support for `fn name(a, b) { ... }` and call expressions, and evaluator
+  support for first-class functions capturing their defining `Environment`
+  (closures), arity-checked calls, recursion, and `return` unwinding via an
+  internal control-flow signal. Fix commit (584f6cf) resolved the earlier
+  bounce by tracking function-nesting depth in the parser and raising
+  `ParseError` for `return` outside a function, with new tests for
+  top-level `return`, `return` inside a top-level `if`/`while`, and depth
+  resetting after a fn body closes. Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` on the re-review, both after the fix commit — 114/114
+  tests passing. BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now data structures (lists and maps).
+- **Bounced**: none this cycle (PR #7's single bounce was from the prior
+  cycle, fixed and merged this cycle).
+- **Still open**: no open PRs.
+- Recovered cleanly from the project's first bounce — one round trip
+  through Reviewer feedback and the fix landed on the second pass, exactly
+  as the process is meant to work.

@@ -9,44 +9,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Functions: declarations, calls, closures, `return` [claimed 2026-07-19T14:22:33Z, bounced 1x on 2026-07-19]
-
-**Open as PR #7 (`feat/20260719-functions`), worktree `.worktrees/functions` still
-present — next Engineer session fixes it here before taking new work.**
-Reviewer verdict was `CHANGES REQUESTED`: `return` used outside a function
-body currently leaks the interpreter-internal `_ReturnSignal` Python
-exception all the way to the CLI instead of raising a clean
-`CinderRuntimeError`/`ParseError`. Fix by either rejecting `return` outside a
-function in the parser (track function-nesting depth) or catching
-`_ReturnSignal` at the top level of execution and converting it to a
-`CinderRuntimeError`; add a test for this case. Everything else in the PR
-(closures, recursion, arity checks, first-class functions) already passed
-review.
-
-Build: `FnDecl` (named function statement) and `return` statement AST
-nodes, parser support for `fn name(a, b) { ... }` and call expressions
-`name(a, b)` (the `Call` node from the parser task becomes evaluable), and evaluator
-support: functions are first-class values that capture their defining
-`Environment` (closures), calling pushes a new child scope with parameters
-bound, `return` unwinds via a control-flow signal (e.g. a Python exception
-internal to the interpreter, not exposed as a `CinderError`) up to the
-nearest function call boundary. Recursion must work (a function can call
-itself by name).
-
-Acceptance criteria:
-- Unit tests: recursive factorial and/or fibonacci by function call produce
-  correct values; a closure test (a function returning another function
-  that captures an outer variable, called after the outer function
-  returns, still sees the captured value); calling with the wrong argument
-  count raises a runtime `CinderError`.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `cinder/errors.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Data structures: lists and maps
+## 1. Data structures: lists and maps
 
 Build: list literals `[1, 2, 3]` and map literals `{"a": 1, "b": 2}` as AST
 nodes + parser support, index expressions `expr[expr]` for both get and set
@@ -67,7 +30,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: builtins (`print`, `len`, `type`, conversions)
+## 2. Standard library: builtins (`print`, `len`, `type`, conversions)
 
 Build: `cinder/builtins.py` exposing builtin functions injected into the
 global `Environment` at interpreter startup: `print(...)` (writes to
@@ -91,7 +54,7 @@ Likely files: `cinder/builtins.py`, `cinder/interpreter.py`,
 
 ---
 
-## 4. Error diagnostics polish
+## 3. Error diagnostics polish
 
 Build: unify `LexError`/`ParseError`/runtime `CinderError` under one base
 class with consistent `.line`, `.column`, `.message` fields (adjust
@@ -114,7 +77,7 @@ Likely files: `cinder/errors.py`, `cinder/cli.py`, `tests/test_errors.py`,
 
 ---
 
-## 5. Example programs
+## 4. Example programs
 
 Build: `examples/` directory with 3-4 `.cin` programs exercising everything
 built so far — at minimum `fizzbuzz.cin` (loop + if/else + modulo),
@@ -135,7 +98,7 @@ Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
 
 ---
 
-## 6. REPL: interactive read-eval-print loop
+## 5. REPL: interactive read-eval-print loop
 
 Build: `cinder/repl.py` implementing the actual REPL — reads lines from
 stdin, accumulates input until a statement is complete (reuse the lexer's
@@ -201,6 +164,16 @@ Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
   (`name = expr`) with `Environment.assign` walking the scope chain. Pinned
   the truthiness rule (`nil`/`false` falsy, everything else truthy,
   including `0`/`""`) in `PROJECT.md`.
+- **Functions: declarations, calls, closures, `return`** — merged
+  2026-07-19T14:38:45Z via PR #7 (`feat/20260719-functions`). Built
+  `FnDecl`/`ReturnStmt` AST nodes, parser support for `fn name(a, b) { ... }`
+  and call expressions, and evaluator support for first-class functions
+  that capture their defining `Environment` (closures), arity-checked
+  calls, and `return` unwinding via an internal control-flow signal.
+  Bounced once on review: top-level `return` originally leaked a raw
+  `_ReturnSignal` Python traceback; fixed by tracking function-nesting
+  depth in the parser and raising `ParseError` for `return` outside a
+  function.
 
 ---
 

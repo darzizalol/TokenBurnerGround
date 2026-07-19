@@ -9,7 +9,19 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Functions: declarations, calls, closures, `return` [claimed 2026-07-19T14:22:33Z]
+## 1. Functions: declarations, calls, closures, `return` [claimed 2026-07-19T14:22:33Z, bounced 1x on 2026-07-19]
+
+**Open as PR #7 (`feat/20260719-functions`), worktree `.worktrees/functions` still
+present — next Engineer session fixes it here before taking new work.**
+Reviewer verdict was `CHANGES REQUESTED`: `return` used outside a function
+body currently leaks the interpreter-internal `_ReturnSignal` Python
+exception all the way to the CLI instead of raising a clean
+`CinderRuntimeError`/`ParseError`. Fix by either rejecting `return` outside a
+function in the parser (track function-nesting depth) or catching
+`_ReturnSignal` at the top level of execution and converting it to a
+`CinderRuntimeError`; add a test for this case. Everything else in the PR
+(closures, recursion, arity checks, first-class functions) already passed
+review.
 
 Build: `FnDecl` (named function statement) and `return` statement AST
 nodes, parser support for `fn name(a, b) { ... }` and call expressions
@@ -120,6 +132,35 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `examples/*.cin`, `examples/*.expected`, `tests/test_examples.py`.
+
+---
+
+## 6. REPL: interactive read-eval-print loop
+
+Build: `cinder/repl.py` implementing the actual REPL — reads lines from
+stdin, accumulates input until a statement is complete (reuse the lexer's
+brace/paren tracking or a simple heuristic: keep reading while braces are
+unbalanced), lexes/parses/executes each complete statement against a
+persistent `Environment` that survives across inputs (so a variable `let`-
+bound on one line is visible on the next), and prints the value of bare
+expression statements the way a REPL should (skip printing for statements
+that produce no value, e.g. `let`). Catches any `CinderError` per statement
+using the same formatting as the `run` subcommand (task 4) and continues the
+loop instead of crashing it. Exits cleanly on EOF (Ctrl-D) or an `exit`
+command. Wire `cinder/cli.py`'s `repl` subcommand to actually call it instead
+of printing "not implemented yet".
+
+Acceptance criteria:
+- Unit/integration tests drive the REPL via piped stdin (subprocess or by
+  calling the REPL's loop function directly with an injected input source)
+  and assert on printed output: a `let` followed by referencing the variable
+  on the next line, a bare expression echoing its value, a `CinderError`
+  (e.g. undefined variable) printing a diagnostic and the loop continuing to
+  accept further input afterward, and clean exit on EOF.
+- `cinder/cli.py repl` no longer prints the "not implemented yet" placeholder.
+- Full test suite passes.
+
+Likely files: `cinder/repl.py`, `cinder/cli.py`, `tests/test_repl.py`.
 
 ---
 

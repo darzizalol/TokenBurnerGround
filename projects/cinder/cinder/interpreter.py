@@ -202,13 +202,17 @@ class Interpreter:
 
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
         iterable = self.evaluate(stmt.iterable, env)
-        if not isinstance(iterable, list):
+        if isinstance(iterable, dict):
+            items = list(iterable.keys())
+        elif isinstance(iterable, (list, str)):
+            items = list(iterable)
+        else:
             raise CinderRuntimeError(
-                f"'for'-in loop requires a list, got {type_name(iterable)}",
+                f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
                 stmt.line,
                 stmt.column,
             )
-        for item in iterable:
+        for item in items:
             iter_env = Environment(env)
             iter_env.define(stmt.var_name, item)
             try:

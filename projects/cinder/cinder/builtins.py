@@ -3,13 +3,21 @@
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
 `upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, `round`,
-`contains`, `reverse`, `sort`, and `range` already defined. CLI entrypoints and the REPL
-should build their global scope with this instead of a bare `Environment()`
-so `.cin` scripts can actually produce output.
+`contains`, `reverse`, `sort`, `range`, `map`, and `filter` already defined.
+CLI entrypoints and the REPL should build their global scope with this
+instead of a bare `Environment()` so `.cin` scripts can actually produce
+output.
 """
 
 from cinder.errors import CinderRuntimeError
-from cinder.interpreter import Builtin, Environment, type_name
+from cinder.interpreter import (
+    Builtin,
+    CinderFunction,
+    Environment,
+    call_value,
+    is_truthy,
+    type_name,
+)
 
 _NUMERIC = (int, float)
 
@@ -327,6 +335,42 @@ def _sort(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _is_callable(value: object) -> bool:
+    return isinstance(value, (CinderFunction, Builtin))
+
+
+def _map(arguments: list, line: int, column: int) -> object:
+    _require_arity("map", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"map() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"map() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    return [call_value(fn, [item], line, column) for item in items]
+
+
+def _filter(arguments: list, line: int, column: int) -> object:
+    _require_arity("filter", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"filter() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"filter() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    return [item for item in items if is_truthy(call_value(fn, [item], line, column))]
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -351,6 +395,8 @@ _BUILTINS = {
     "reverse": _reverse,
     "sort": _sort,
     "range": _range,
+    "map": _map,
+    "filter": _filter,
 }
 
 

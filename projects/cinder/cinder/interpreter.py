@@ -17,6 +17,13 @@ module (never exposed as a `CinderError`), caught at the call boundary.
 caught by the nearest enclosing `WhileStmt`/`ForStmt`'s own execution (the
 parser guarantees they never appear outside a loop, or outside a loop within
 the nearest enclosing function, so no other boundary needs to catch them).
+
+A `CinderFunction` wraps either a named `FnDecl` (statement position) or an
+anonymous `FnExpr` (expression position, e.g. a callback literal passed
+straight to `map`/`filter`) — both carry `params`/`body`, so `call_value`
+(the shared entry point for invoking any callable Cinder value, used by both
+`_evaluate_call` and stdlib higher-order builtins) doesn't need to
+distinguish them.
 """
 
 from cinder.ast_nodes import (
@@ -29,6 +36,7 @@ from cinder.ast_nodes import (
     Expr,
     ExprStmt,
     FnDecl,
+    FnExpr,
     ForStmt,
     Grouping,
     Identifier,
@@ -67,15 +75,16 @@ class _ContinueSignal(Exception):
 
 
 class CinderFunction:
-    """A first-class function value: an `FnDecl` plus the `Environment` it closed over."""
+    """A first-class function value: an `FnDecl`/`FnExpr` plus the `Environment`
+    it closed over. `FnExpr` (anonymous functions) have no `name`."""
 
-    def __init__(self, decl: FnDecl, closure: "Environment"):
+    def __init__(self, decl: "FnDecl | FnExpr", closure: "Environment"):
         self.decl = decl
         self.closure = closure
 
     @property
     def name(self) -> str:
-        return self.decl.name
+        return getattr(self.decl, "name", "<anonymous>")
 
     @property
     def arity(self) -> int:
@@ -156,6 +165,8 @@ class Interpreter:
             return self._evaluate_index(expr, env)
         if isinstance(expr, IndexAssign):
             return self._evaluate_index_assign(expr, env)
+        if isinstance(expr, FnExpr):
+            return CinderFunction(expr, env)
         raise TypeError(f"unhandled expression type: {type(expr)!r}")
 
     def execute(self, stmt: Stmt, env: Environment) -> None:
@@ -225,27 +236,7 @@ class Interpreter:
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)
         arguments = [self.evaluate(arg, env) for arg in expr.arguments]
-        if isinstance(callee, Builtin):
-            return callee.call(arguments, expr.line, expr.column)
-        if not isinstance(callee, CinderFunction):
-            raise CinderRuntimeError(
-                f"{type_name(callee)} is not callable", expr.line, expr.column
-            )
-        if len(arguments) != callee.arity:
-            raise CinderRuntimeError(
-                f"{callee.name}() expects {callee.arity} argument(s), "
-                f"got {len(arguments)}",
-                expr.line,
-                expr.column,
-            )
-        call_env = Environment(callee.closure)
-        for param, value in zip(callee.decl.params, arguments):
-            call_env.define(param, value)
-        try:
-            self.execute(callee.decl.body, call_env)
-        except _ReturnSignal as signal:
-            return signal.value
-        return None
+        return call_value(callee, arguments, expr.line, expr.column)
 
     def _evaluate_map_literal(self, expr: MapLiteral, env: Environment) -> object:
         result: dict = {}
@@ -466,6 +457,32 @@ class Interpreter:
         if op == TokenType.GT:
             return left > right
         return left >= right
+
+
+def call_value(callee: object, arguments: list, line: int, column: int) -> object:
+    """Invoke a callable Cinder value (`Builtin` or `CinderFunction`) with already-evaluated arguments.
+
+    Shared by `Interpreter._evaluate_call` and any builtin (e.g. `map`/`filter`)
+    that needs to invoke a Cinder function value passed to it.
+    """
+    if isinstance(callee, Builtin):
+        return callee.call(arguments, line, column)
+    if not isinstance(callee, CinderFunction):
+        raise CinderRuntimeError(f"{type_name(callee)} is not callable", line, column)
+    if len(arguments) != callee.arity:
+        raise CinderRuntimeError(
+            f"{callee.name}() expects {callee.arity} argument(s), got {len(arguments)}",
+            line,
+            column,
+        )
+    call_env = Environment(callee.closure)
+    for param, value in zip(callee.decl.params, arguments):
+        call_env.define(param, value)
+    try:
+        Interpreter().execute(callee.decl.body, call_env)
+    except _ReturnSignal as signal:
+        return signal.value
+    return None
 
 
 def _is_number(value: object) -> bool:

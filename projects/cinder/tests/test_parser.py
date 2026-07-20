@@ -10,6 +10,7 @@ from cinder.ast_nodes import (
     ContinueStmt,
     ExprStmt,
     FnDecl,
+    FnExpr,
     ForStmt,
     Grouping,
     Identifier,
@@ -58,6 +59,8 @@ def shape(node):
             shape(node.index),
             shape(node.value),
         )
+    if isinstance(node, FnExpr):
+        return ("FnExpr", node.params, stmt_shape(node.body))
     raise TypeError(f"unhandled node type: {type(node)!r}")
 
 
@@ -449,6 +452,47 @@ class TestFunctions(unittest.TestCase):
     def test_return_missing_semicolon_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("fn f() { return 1 }")
+
+    def test_fn_expression_no_params(self):
+        self.assertEqual(
+            shape(parse("fn() { return 1; }")),
+            ("FnExpr", [], ("Block", [("ReturnStmt", ("Literal", 1))])),
+        )
+
+    def test_fn_expression_with_params(self):
+        self.assertEqual(
+            shape(parse("fn(x) { return x * 2; }")),
+            (
+                "FnExpr",
+                ["x"],
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_fn_expression_as_call_argument(self):
+        self.assertEqual(
+            shape(parse("map([1], fn(x) { return x; })")),
+            (
+                "Call",
+                ("Identifier", "map"),
+                [
+                    ("ListLiteral", [("Literal", 1)]),
+                    ("FnExpr", ["x"], ("Block", [("ReturnStmt", ("Identifier", "x"))])),
+                ],
+            ),
+        )
+
+    def test_fn_expression_missing_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let f = fn();")
 
     def test_return_at_top_level_raises(self):
         with self.assertRaises(ParseError):

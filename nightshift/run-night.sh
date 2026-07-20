@@ -82,8 +82,20 @@ $(head -n 15 "$REPO/$(grep -m1 '^ACTIVE:' "$REPO/PROJECTS.md" 2>/dev/null | awk 
 A progress report lands in this inbox when the shift ends (~07:00)." >> "$NIGHT_LOG" 2>&1
 STARTED=1
 
+# Nightly token ledger: fold completed transcripts into the README burn chart.
+if python3 "$DIR/token-ledger.py" update >> "$NIGHT_LOG" 2>&1; then
+  cd "$REPO" \
+    && git add README.md nightshift/tokens.csv >> "$NIGHT_LOG" 2>&1 \
+    && { git diff --cached --quiet \
+         || { git commit -m "chore: nightly token-burn ledger update" >> "$NIGHT_LOG" 2>&1 \
+              && git push origin main >> "$NIGHT_LOG" 2>&1; }; } \
+    || log "WARN: token ledger commit/push failed."
+else
+  log "WARN: token ledger update failed."
+fi
+
 ROLES=(architect engineer reviewer qa release)
-LIMIT_PATTERN='usage limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'
+LIMIT_PATTERN='usage limit|session limit|hit your.*limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'
 AUTH_PATTERN='failed to authenticate|oauth.*(expired|revoked)|invalid authentication|invalid.*api.?key|error.*401'
 
 while in_window; do

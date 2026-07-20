@@ -171,6 +171,40 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `reduce`
+
+Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
+folding the list left-to-right into a single value: `acc = initial`, then
+for each element `acc = fn(acc, element)`, returning the final `acc`.
+Depends on task 5's `call_value` helper in `cinder/interpreter.py` for
+invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback) —
+do not attempt this task before task 5 lands, and reuse `call_value`
+rather than re-inlining call dispatch. First argument must be a `list`;
+second argument must be callable; anything else raises
+`CinderRuntimeError` with line/column, matching `map`/`filter`'s
+type-check style. An empty list returns `initial` unchanged without
+calling `fn`. Propagate the callback's own `CinderRuntimeError` (e.g.
+wrong arity — `fn` here takes exactly two arguments, not one like
+`map`/`filter`'s callback) unchanged if it raises one.
+
+Acceptance criteria:
+- `reduce([1, 2, 3], fn(acc, x) { return acc + x; }, 0)` is `6`.
+- `reduce([1, 2, 3, 4], fn(acc, x) { return acc * x; }, 1)` is `24`.
+- `reduce([], fn(acc, x) { return acc + x; }, 0)` is `0` (fn never called
+  — regression test can assert this via a side-effecting fn, e.g. one
+  that also mutates an outer list via `push`, and checking it stayed
+  empty).
+- `reduce(5, fn(acc, x) { return acc; }, 0)` raises `CinderRuntimeError`
+  (first arg not a list) with line/column.
+- `reduce([1, 2], 5, 0)` raises `CinderRuntimeError` (second arg not
+  callable) with line/column.
+- The list passed to `reduce` is unchanged afterward (regression test).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

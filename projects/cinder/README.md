@@ -39,7 +39,8 @@ while (i < 10) {
   recursion, `return`, and real closures (functions capture their defining
   environment)
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
-  indexing for get/set, plus read-only string indexing
+  indexing for get/set (negative indices supported for list/string reads
+  and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, string methods `upper`, `lower`, `trim`, `split`, `join`, and
   math builtins `abs`, `min`, `max`, `round`
@@ -79,7 +80,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (265+ tests) covers every layer — lexer, parser, interpreter,
+The suite (268+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -104,8 +105,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: math builtins
-(`abs`/`min`/`max`/`round`) and REPL command history via `readline`. Coming
-up next (see [`BACKLOG.md`](BACKLOG.md)): negative indexing,
-`contains`/`reverse`/`sort`, `for`-in over strings and maps, and a `range`
-builtin. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: REPL command history via
+`readline` and negative indexing for lists/strings. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `contains`/`reverse`, `sort`, `for`-in over
+strings and maps, a `range` builtin, and `map`/`filter`. The full vision
+and non-goals live in [`PROJECT.md`](PROJECT.md).

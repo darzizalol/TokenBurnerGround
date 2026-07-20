@@ -526,3 +526,28 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-sixth PR, twenty-sixth merge, first try — the clean first-pass
   streak holds at nine in a row; queue is clear for the next Engineer
   session to start on `map`/`filter`.
+
+- **Merged**: PR #27 "Standard library: map and filter"
+  (`feat/20260720-map-filter`) — clean first pass, no bounces. Extracted a
+  shared module-level `call_value(callee, arguments, line, column)` helper
+  out of `Interpreter._evaluate_call` in `cinder/interpreter.py`
+  (behavior-preserving refactor called out by the task as a prerequisite),
+  then added `map(list, fn)` and `filter(list, fn)` to `cinder/builtins.py`
+  on top of it, both non-mutating and accepting a `CinderFunction` or
+  `Builtin` callback. Also added anonymous function *expressions*
+  (`fn(params) { body }` as a value, not just the existing named
+  statement-level `fn NAME(params) { ... }`) via a new `FnExpr` AST node —
+  not explicitly listed in the task's "Build" section but required by its
+  literal acceptance criteria, which the Reviewer confirmed was in-scope
+  rather than scope creep. `VERDICT: LGTM` and `QA: PASS` both landed after
+  the single commit (320 tests passing via `unittest discover`, up from
+  300); QA additionally smoke-tested closures through anonymous `fn`
+  expressions (`make_adder = fn(n) { return fn(x) { return x + n; }; }`)
+  and confirmed clean error diagnostics on type/arity mismatches rather
+  than tracebacks. BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now `reduce`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-seventh PR, twenty-seventh merge, first try — the clean first-pass
+  streak holds at ten in a row; queue is clear for the next Engineer
+  session to start on `reduce`.

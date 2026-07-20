@@ -11,59 +11,13 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `map` and `filter` [claimed 2026-07-20T20:28:25Z]
-
-Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
-fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
-and accepting a Cinder function *value* as the second argument — either a
-`CinderFunction` (a `fn`-declared closure) or a `Builtin` (a stdlib function
-passed by name, e.g. `abs`). Calling a `Builtin` is already a one-liner
-(`callee.call(arguments, expr.line, expr.column)`, `cinder/interpreter.py:229`),
-but calling a `CinderFunction` is currently *inline* logic inside
-`Interpreter._evaluate_call` (`cinder/interpreter.py:225-248`: arity check,
-new `Environment(callee.closure)`, `self.execute(callee.decl.body,
-call_env)`, catch `_ReturnSignal`) — there is no reusable method for it yet.
-First refactor that block into a standalone helper both call sites share
-(e.g. a module-level `call_value(callee, arguments, line, column)` in
-`interpreter.py` handling both `Builtin` and `CinderFunction` dispatch, with
-`_evaluate_call` reduced to `return call_value(callee, arguments, expr.line,
-expr.column)`); `Interpreter` holds no instance state so this is a
-mechanical extraction, not a behavior change — the existing `_evaluate_call`
-tests must keep passing unmodified. Then have `map`/`filter` in
-`builtins.py` import and call that helper. `map`'s callback takes one
-argument (the element) and its return value becomes the output element;
-`filter`'s callback takes one argument and the element is kept iff the
-return value is truthy (reuse the existing truthiness rule — `nil`/`false`
-are falsy, everything else truthy). First argument must be a `list`; second
-argument must be callable (`CinderFunction` or `Builtin`) — anything else
-raises `CinderRuntimeError` with line/column, matching `sort`/`reverse`'s
-type-check style. Propagate the callback's own `CinderRuntimeError` (e.g.
-wrong arity) unchanged if it raises one.
-
-Acceptance criteria:
-- `map([1, 2, 3], fn(x) { return x * 2; })` is `[2, 4, 6]`.
-- `filter([1, 2, 3, 4], fn(x) { return x > 2; })` is `[3, 4]`.
-- `map([1, -2, 3], abs)` is `[1, 2, 3]` (built-in function passed by name).
-- `map(5, fn(x) { return x; })` raises `CinderRuntimeError` (first arg not a
-  list) with line/column.
-- `map([1, 2], 5)` raises `CinderRuntimeError` (second arg not callable) with
-  line/column.
-- Neither builtin mutates its input list (regression test).
-- `filter([], fn(x) { return true; })` is `[]`; same for `map` on `[]`.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `reduce`
+## 1. Standard library: `reduce`
 
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then
 for each element `acc = fn(acc, element)`, returning the final `acc`.
-Depends on task 1's `call_value` helper in `cinder/interpreter.py` for
-invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback) —
-do not attempt this task before task 1 lands, and reuse `call_value`
+Reuse the `call_value` helper in `cinder/interpreter.py` (added by PR #27)
+for invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback)
 rather than re-inlining call dispatch. First argument must be a `list`;
 second argument must be callable; anything else raises
 `CinderRuntimeError` with line/column, matching `map`/`filter`'s
@@ -90,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+## 2. Standard library: `find`, `starts_with`, `ends_with`, `replace`
 
 Build: extend `cinder/builtins.py` with four string builtins, following
 the existing two-string-argument style of `split(s, sep)`:
@@ -124,7 +78,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `slice` and `concat` for lists
+## 3. Standard library: `slice` and `concat` for lists
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`
@@ -157,7 +111,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `assert`
+## 4. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -195,7 +149,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
 
 ---
 
-## 6. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+## 5. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
 
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
@@ -232,7 +186,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `zip`
+## 6. Standard library: `zip`
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,
@@ -257,7 +211,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. String and list repetition via `*`
+## 7. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 414-415) to
@@ -485,6 +439,19 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
   (no lazy iterator type exists in Cinder), int-only arguments, and
   `stop <= start` returning `[]` rather than erroring, matching Python.
   Clean first pass, no bounces (300 tests passing, up from 289).
+
+- **Standard library: `map` and `filter`** — merged 2026-07-21T~13:52Z via
+  PR #27 (`feat/20260720-map-filter`). Extracted a shared module-level
+  `call_value(callee, arguments, line, column)` helper out of
+  `Interpreter._evaluate_call` in `cinder/interpreter.py` (behavior-preserving
+  refactor), then added `map(list, fn)` and `filter(list, fn)` to
+  `cinder/builtins.py` on top of it, both non-mutating and accepting a
+  `CinderFunction` or `Builtin` callback. Also added anonymous function
+  *expressions* (`fn(params) { body }` usable as a value, not just the
+  existing named statement-level `fn NAME(params) { ... }`) via a new
+  `FnExpr` AST node, since the task's acceptance criteria required passing a
+  bare `fn(x) { ... }` literal as a call argument. Clean first pass, no
+  bounces (320 tests passing, up from 300).
 
 ## Graveyard
 

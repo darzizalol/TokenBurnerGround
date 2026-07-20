@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: string methods [claimed 2026-07-20T14:16:40Z]
+## 1. Standard library: string methods [claimed 2026-07-20T14:16:40Z, bounced 1x on 2026-07-20]
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),

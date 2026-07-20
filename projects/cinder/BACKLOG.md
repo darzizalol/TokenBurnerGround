@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `break` and `continue` for loops
+## 1. `break` and `continue` for loops [claimed 2026-07-20T14:34:24Z]
 
 Build: add `break` and `continue` statement support for both `while` and
 `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes

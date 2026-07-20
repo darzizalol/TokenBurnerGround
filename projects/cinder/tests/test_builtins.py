@@ -1,5 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, upper, lower, trim, split, join, abs, min, max, round."""
+keys, values, upper, lower, trim, split, join, abs, min, max, round,
+contains, reverse."""
 
 import io
 import subprocess
@@ -322,6 +323,47 @@ class TestRound(unittest.TestCase):
     def test_round_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("round(1.5, 2);")
+
+
+class TestContains(unittest.TestCase):
+    def test_contains_in_list(self):
+        self.assertIs(run("let result = contains([1, 2, 3], 2);").get("result"), True)
+        self.assertIs(run("let result = contains([1, 2, 3], 9);").get("result"), False)
+
+    def test_contains_checks_map_keys_not_values(self):
+        self.assertIs(run('let result = contains({"a": 1}, "a");').get("result"), True)
+        self.assertIs(run('let result = contains({"a": 1}, "b");').get("result"), False)
+        self.assertIs(run('let result = contains({"a": 1}, 1);').get("result"), False)
+
+    def test_contains_substring(self):
+        self.assertIs(run('let result = contains("hello", "ell");').get("result"), True)
+        self.assertIs(run('let result = contains("hello", "xyz");').get("result"), False)
+
+    def test_contains_on_unsupported_collection_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("contains(5, 1);")
+
+    def test_contains_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("contains([1]);")
+
+
+class TestReverse(unittest.TestCase):
+    def test_reverse_returns_new_reversed_list(self):
+        self.assertEqual(run("let result = reverse([1, 2, 3]);").get("result"), [3, 2, 1])
+
+    def test_reverse_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; let result = reverse(xs);")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [3, 2, 1])
+
+    def test_reverse_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('reverse("hi");')
+
+    def test_reverse_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reverse([1], 2);")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

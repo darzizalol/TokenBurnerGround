@@ -149,6 +149,15 @@ class WhileStmt:
 
 
 @dataclass(frozen=True)
+class ForStmt:
+    var_name: str
+    iterable: "Expr"
+    body: "Block"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class FnDecl:
     name: str
     params: list
@@ -164,4 +173,6 @@ class ReturnStmt:
     column: int
 
 
-Stmt = Union[ExprStmt, LetStmt, Block, IfStmt, WhileStmt, FnDecl, ReturnStmt]
+Stmt = Union[
+    ExprStmt, LetStmt, Block, IfStmt, WhileStmt, ForStmt, FnDecl, ReturnStmt
+]

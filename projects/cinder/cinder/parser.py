@@ -8,7 +8,8 @@ with parenthesized grouping and call expressions binding tightest of all.
 Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block),
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
-`while (<expr>) <statement>` (WhileStmt), or a bare `<expr>;` (ExprStmt).
+`while (<expr>) <statement>` (WhileStmt), `for IDENTIFIER in <expr> { ... }`
+(ForStmt, body always a block), or a bare `<expr>;` (ExprStmt).
 
 A leading `{` is ambiguous between a Block and a statement-level expression
 rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
@@ -25,6 +26,7 @@ from cinder.ast_nodes import (
     Expr,
     ExprStmt,
     FnDecl,
+    ForStmt,
     Grouping,
     Identifier,
     IfStmt,
@@ -88,6 +90,8 @@ class Parser:
             return self._if_statement()
         if self._check(TokenType.WHILE):
             return self._while_statement()
+        if self._check(TokenType.FOR):
+            return self._for_statement()
         if self._check(TokenType.FN):
             return self._fn_declaration()
         if self._check(TokenType.RETURN):
@@ -144,6 +148,23 @@ class Parser:
         self._consume(TokenType.RPAREN, "')' after while condition")
         body = self._statement()
         return WhileStmt(condition, body, while_token.line, while_token.column)
+
+    def _for_statement(self) -> Stmt:
+        for_token = self._advance()
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'for'")
+        self._consume(TokenType.IN, "'in' after for-loop variable")
+        iterable = self._assignment()
+        if not self._check(TokenType.LBRACE):
+            token = self._peek()
+            raise ParseError(
+                f"expected '{{' before for-loop body, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        body = self._block()
+        return ForStmt(
+            name_token.lexeme, iterable, body, for_token.line, for_token.column
+        )
 
     def _fn_declaration(self) -> Stmt:
         fn_token = self._advance()

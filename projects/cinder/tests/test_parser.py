@@ -8,6 +8,7 @@ from cinder.ast_nodes import (
     Call,
     ExprStmt,
     FnDecl,
+    ForStmt,
     Grouping,
     Identifier,
     Index,
@@ -78,6 +79,13 @@ def stmt_shape(node):
         return ("FnDecl", node.name, node.params, stmt_shape(node.body))
     if isinstance(node, ReturnStmt):
         return ("ReturnStmt", shape(node.value) if node.value is not None else None)
+    if isinstance(node, ForStmt):
+        return (
+            "ForStmt",
+            node.var_name,
+            shape(node.iterable),
+            stmt_shape(node.body),
+        )
     raise TypeError(f"unhandled statement type: {type(node)!r}")
 
 
@@ -451,6 +459,51 @@ class TestFunctions(unittest.TestCase):
     def test_return_after_fn_body_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("fn f() { return 1; } return 2;")
+
+
+class TestForStatement(unittest.TestCase):
+    def test_for_in_list_literal(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("for x in [1, 2, 3] { print(x); }")],
+            [
+                (
+                    "ForStmt",
+                    "x",
+                    ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+                    (
+                        "Block",
+                        [
+                            (
+                                "ExprStmt",
+                                ("Call", ("Identifier", "print"), [("Identifier", "x")]),
+                            )
+                        ],
+                    ),
+                )
+            ],
+        )
+
+    def test_for_in_identifier(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("for x in xs { }")],
+            [("ForStmt", "x", ("Identifier", "xs"), ("Block", []))],
+        )
+
+    def test_missing_in_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for x [1, 2, 3] { }")
+
+    def test_missing_loop_variable_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for in [1, 2, 3] { }")
+
+    def test_non_block_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for x in [1, 2, 3] print(x);")
+
+    def test_return_inside_top_level_for_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for x in [1] { return 5; }")
 
 
 class TestErrors(unittest.TestCase):

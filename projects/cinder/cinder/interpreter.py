@@ -4,8 +4,10 @@
 and returns a plain Python value (int, float, str, bool, None), or a Python
 `list`/`dict` backing a Cinder list/map literal.
 `Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`,
-`IfStmt`, `WhileStmt`), mutating an `Environment` rather than returning a
-value.
+`IfStmt`, `WhileStmt`, `ForStmt`), mutating an `Environment` rather than
+returning a value. `ForStmt` binds its loop variable in a fresh child
+`Environment` per iteration, so a closure created inside the loop body
+captures that iteration's value rather than the final one.
 
 `Call` nodes invoke a `CinderFunction`: a new child `Environment` of the
 function's closure is pushed, parameters are bound there, and the body runs.
@@ -21,6 +23,7 @@ from cinder.ast_nodes import (
     Expr,
     ExprStmt,
     FnDecl,
+    ForStmt,
     Grouping,
     Identifier,
     IfStmt,
@@ -163,6 +166,9 @@ class Interpreter:
             while is_truthy(self.evaluate(stmt.condition, env)):
                 self.execute(stmt.body, env)
             return
+        if isinstance(stmt, ForStmt):
+            self._execute_for(stmt, env)
+            return
         if isinstance(stmt, FnDecl):
             env.define(stmt.name, CinderFunction(stmt, env))
             return
@@ -170,6 +176,19 @@ class Interpreter:
             value = self.evaluate(stmt.value, env) if stmt.value is not None else None
             raise _ReturnSignal(value)
         raise TypeError(f"unhandled statement type: {type(stmt)!r}")
+
+    def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
+        iterable = self.evaluate(stmt.iterable, env)
+        if not isinstance(iterable, list):
+            raise CinderRuntimeError(
+                f"'for'-in loop requires a list, got {type_name(iterable)}",
+                stmt.line,
+                stmt.column,
+            )
+        for item in iterable:
+            iter_env = Environment(env)
+            iter_env.define(stmt.var_name, item)
+            self.execute(stmt.body, iter_env)
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)

@@ -252,6 +252,54 @@ class TestWhileStatement(unittest.TestCase):
         self.assertEqual(env.get("x"), 0)
 
 
+class TestForStatement(unittest.TestCase):
+    def test_for_in_sums_list(self):
+        env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")
+        self.assertEqual(env.get("total"), 6)
+
+    def test_for_in_empty_list_never_runs_body(self):
+        env = run("let x = 0; for item in [] { x = 1; }")
+        self.assertEqual(env.get("x"), 0)
+
+    def test_for_in_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("for x in 5 { }")
+
+    def test_for_in_evaluates_iterable_once(self):
+        env = run(
+            "let calls = 0; "
+            "fn make_list() { calls = calls + 1; return [1, 2, 3]; } "
+            "let total = 0; "
+            "for x in make_list() { total = total + x; }"
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("total"), 6)
+
+    def test_closure_inside_for_body_captures_its_own_iteration_value(self):
+        # Regression test: each iteration must get a fresh binding of the
+        # loop variable, so closures made in different iterations don't all
+        # end up sharing the final value (a classic per-iteration-scoping bug).
+        env = run(
+            "let fns = [nil, nil, nil]; "
+            "let i = 0; "
+            "for x in [1, 2, 3] { "
+            "  fn make() { return x; } "
+            "  fns[i] = make; "
+            "  i = i + 1; "
+            "} "
+            "let a = fns[0](); "
+            "let b = fns[1](); "
+            "let c = fns[2]();"
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_for_loop_variable_does_not_leak_after_loop(self):
+        with self.assertRaises(KeyError):
+            run("for x in [1, 2, 3] { }").get("x")
+
+
 class TestTruthinessRule(unittest.TestCase):
     """Pins the rule: `false`/`nil` are falsy; everything else is truthy."""
 

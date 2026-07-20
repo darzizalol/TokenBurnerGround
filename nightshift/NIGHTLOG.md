@@ -424,3 +424,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twentieth PR, twentieth merge, first try — Cinder's stdlib now covers basic
   numeric operations, and the queue is clear for the next Engineer session to
   start on REPL history.
+
+## 2026-07-21
+
+- **Merged**: PR #21 "REPL: command history via readline"
+  (`feat/20260720-repl-readline`) — clean first pass, no bounces. Added
+  `_try_enable_readline()` to `cinder/repl.py`, called once at `run_repl()`
+  startup and guarded with `try`/`except ImportError` so the REPL still
+  starts without `readline` (e.g. stock Windows Python); no persistent
+  history-file save/load, in-session history only, per the task's
+  "keep it small" instruction. `VERDICT: LGTM` and `QA: PASS` both landed
+  after the single commit (265 tests passing, up from 262). QA's smoke test
+  went beyond the suite: drove a real pty with literal up-arrow escape
+  sequences and confirmed history recall actually works through `input()`,
+  not just that `readline` imports. BACKLOG.md task marked done and
+  remaining tasks renumbered; task 1 is now negative indexing for lists and
+  strings.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-first PR, twenty-first merge, first try — the streak of clean
+  first-pass merges continues, and the queue is clear for the next Engineer
+  session to start on negative indexing.

@@ -11,39 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: command history via `readline` [claimed 2026-07-20T19:29:45Z]
-
-Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
-REPL supports up/down arrow history navigation and left/right/Home/End
-in-line editing, matching ordinary shell REPL ergonomics (Python's own
-`python3` REPL gets this for free from `readline`; Cinder's hand-rolled
-input loop currently doesn't because it likely reads via `input()` without
-`readline` imported, or reads stdin directly). Import `readline` at REPL
-startup (guard with `try`/`except ImportError` — `readline` is unavailable
-on some platforms, e.g. stock Windows Python; the REPL must still start
-without it, just without history). Do not add persistent history-file
-save/load across sessions — in-session history only, keep this task small.
-
-Acceptance criteria:
-- Running the REPL, entering a few statements, then pressing the up arrow
-  recalls the previously entered line for editing/re-execution (verify via
-  a manual smoke test description in the PR body — arrow-key interaction
-  isn't practically unit-testable through a subprocess pipe).
-- Existing REPL behavior (multiline buffering for unterminated statements,
-  expression echoing, error reporting) is unchanged — full existing
-  `tests/test_repl.py` suite still passes since none of it depends on
-  `readline`.
-- On a platform/build without `readline` (simulate by temporarily forcing
-  the import to fail in a test, or by testing the `except ImportError`
-  branch directly), the REPL still starts and runs correctly, just without
-  history.
-- Full test suite passes.
-
-Likely files: `cinder/repl.py`, `tests/test_repl.py`.
-
----
-
-## 2. Negative indexing for lists and strings
+## 1. Negative indexing for lists and strings
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
 in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
@@ -69,7 +37,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 3. Standard library: `contains` and `reverse`
+## 2. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -99,10 +67,10 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `sort`
+## 3. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
-ascending-sorted list (non-mutating, matching `reverse` from task 4) that
+ascending-sorted list (non-mutating, matching `reverse` from task 2) that
 accepts either an all-numeric list (`int`/`float`, compared numerically)
 or an all-string list (compared lexicographically). Reject mixed
 numeric/string lists and any list containing an unsupported element type
@@ -125,7 +93,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. `for`-in loop over strings and maps
+## 4. `for`-in loop over strings and maps
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also
@@ -152,7 +120,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 6. Standard library: `range`
+## 5. Standard library: `range`
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`
@@ -339,6 +307,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   and `round(n)` (ties-to-even, delegating to Python's built-in `round`) to
   `cinder/builtins.py`. `min`/`max` reject zero arguments with a dedicated
   inline variadic check since `_require_arity` only handles fixed arity.
+- **REPL: command history via `readline`** — merged 2026-07-21T~00:00Z via
+  PR #21 (`feat/20260720-repl-readline`). Added `_try_enable_readline()` to
+  `cinder/repl.py`, called once at `run_repl()` startup, guarded with
+  `try`/`except ImportError` so the REPL still starts without `readline`
+  (e.g. stock Windows Python). No persistent history-file save/load —
+  in-session history only, per the task's "keep it small" instruction.
 
 ## Graveyard
 

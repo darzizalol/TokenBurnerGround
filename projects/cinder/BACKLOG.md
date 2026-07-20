@@ -11,37 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `contains` and `reverse` [claimed 2026-07-20T19:47:56Z]
-
-Build: extend `cinder/builtins.py` with `contains(collection, item)` —
-membership check on a list (`==` against each element), a map (checks
-keys, not values), or a string (substring check) — returning a `bool`;
-and `reverse(list)`, which returns a **new** list with elements in
-reverse order and does **not** mutate its input (unlike `push`/`pop`,
-which mutate in place — `reverse` follows `split`/`join`'s
-returns-something-new style instead; note this distinction in the PR
-body so it isn't mistaken for an inconsistency). `contains` raises
-`CinderRuntimeError` for any other collection type (int/float/bool/nil);
-`reverse` raises `CinderRuntimeError` for any non-list argument. Both
-follow the existing arity/type-check style (`_len`, `_str`).
-
-Acceptance criteria:
-- `contains([1, 2, 3], 2)` is `true`; `contains([1, 2, 3], 9)` is `false`.
-- `contains({"a": 1}, "a")` is `true`; `contains({"a": 1}, "b")` is
-  `false` (checks keys, not values).
-- `contains("hello", "ell")` is `true`; `contains("hello", "xyz")` is
-  `false`.
-- `contains(5, 1)` raises `CinderRuntimeError` with line/column.
-- `reverse([1, 2, 3])` is `[3, 2, 1]`, and the original list passed in is
-  unchanged afterward (regression test proving no mutation).
-- `reverse("hi")` raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `sort`
+## 1. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 2) that
@@ -67,7 +37,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. `for`-in loop over strings and maps
+## 2. `for`-in loop over strings and maps
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also
@@ -94,7 +64,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 4. Standard library: `range`
+## 3. Standard library: `range`
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`
@@ -126,7 +96,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `map` and `filter`
+## 4. Standard library: `map` and `filter`
 
 Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
 fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
@@ -171,7 +141,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `reduce`
+## 5. Standard library: `reduce`
 
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then

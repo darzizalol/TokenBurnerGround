@@ -460,3 +460,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-second PR, twenty-second merge, first try — the clean first-pass
   streak holds; queue is clear for the next Engineer session.
+
+- **Merged**: PR #23 "Standard library: contains and reverse"
+  (`feat/20260720-contains-reverse`) — clean first pass, no bounces. Added
+  `contains(collection, item)` (list `==` membership, map key check, string
+  substring check, `CinderRuntimeError` for other types) and `reverse(list)`
+  (returns a new list, non-mutating, matching `split`/`join`'s style rather
+  than `push`/`pop`'s in-place style) to `cinder/builtins.py`. `VERDICT: LGTM`
+  and `QA: PASS` both landed after the single commit (277 tests passing, up
+  from 268); QA also hand-verified the keys-not-values map semantics and the
+  no-mutation guarantee for `reverse` via smoke test. BACKLOG.md task marked
+  done and remaining tasks renumbered; task 1 is now `sort`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-third PR, twenty-third merge, first try — the clean first-pass
+  streak holds at six in a row; queue is clear for the next Engineer session
+  to start on `sort`.

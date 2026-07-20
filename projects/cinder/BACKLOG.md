@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `range`
+## 1. Standard library: `range` [claimed 2026-07-20T20:17:33Z]
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`

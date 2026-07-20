@@ -42,8 +42,8 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `contains`, `reverse`, string methods `upper`, `lower`, `trim`,
-  `split`, `join`, and math builtins `abs`, `min`, `max`, `round`
+  `values`, `contains`, `reverse`, `sort`, string methods `upper`, `lower`,
+  `trim`, `split`, `join`, and math builtins `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks
 - **Two front ends**: run `.cin` script files, or an interactive REPL with
@@ -80,7 +80,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (277+ tests) covers every layer — lexer, parser, interpreter,
+The suite (285+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -105,8 +105,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: negative indexing for
-lists/strings, and `contains`/`reverse` builtins. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `sort`, `for`-in over strings and maps, a
-`range` builtin, `map`/`filter`, and `reduce`. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `contains`/`reverse`/`sort`
+builtins. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `for`-in over
+strings and maps, a `range` builtin, `map`/`filter`, and `reduce`. The full
+vision and non-goals live in [`PROJECT.md`](PROJECT.md).

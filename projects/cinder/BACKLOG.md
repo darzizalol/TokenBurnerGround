@@ -62,8 +62,7 @@ Acceptance criteria:
 - `range()` and `range(1, 2, 3)` raise `CinderRuntimeError` with
   line/column (wrong arity).
 - `for i in range(3) { print(i); }` prints `0`, `1`, `2` on separate
-  lines (exercises task 6/PR #17's list `for`-in with this builtin's
-  output).
+  lines (exercises PR #17's list `for`-in with this builtin's output).
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
@@ -120,9 +119,9 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then
 for each element `acc = fn(acc, element)`, returning the final `acc`.
-Depends on task 5's `call_value` helper in `cinder/interpreter.py` for
+Depends on task 3's `call_value` helper in `cinder/interpreter.py` for
 invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback) —
-do not attempt this task before task 5 lands, and reuse `call_value`
+do not attempt this task before task 3 lands, and reuse `call_value`
 rather than re-inlining call dispatch. First argument must be a `list`;
 second argument must be callable; anything else raises
 `CinderRuntimeError` with line/column, matching `map`/`filter`'s

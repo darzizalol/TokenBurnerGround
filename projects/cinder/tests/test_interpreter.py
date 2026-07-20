@@ -300,6 +300,77 @@ class TestForStatement(unittest.TestCase):
             run("for x in [1, 2, 3] { }").get("x")
 
 
+class TestBreakContinue(unittest.TestCase):
+    def test_break_exits_while_loop_immediately(self):
+        env = run(
+            "let i = 0; let total = 0; "
+            "while (i < 10) { "
+            "  i = i + 1; "
+            "  if (i == 3) { break; } "
+            "  total = total + i; "
+            "}"
+        )
+        self.assertEqual(env.get("total"), 3)  # only 1 + 2 ran before break
+        self.assertEqual(env.get("i"), 3)
+
+    def test_continue_skips_rest_of_while_iteration(self):
+        env = run(
+            "let i = 0; let total = 0; "
+            "while (i < 5) { "
+            "  i = i + 1; "
+            "  if (i == 3) { continue; } "
+            "  total = total + i; "
+            "}"
+        )
+        self.assertEqual(env.get("total"), 12)  # 1 + 2 + 4 + 5, 3 skipped
+        self.assertEqual(env.get("i"), 5)
+
+    def test_break_exits_for_loop_immediately(self):
+        env = run(
+            "let total = 0; "
+            "for x in [1, 2, 3, 4, 5] { "
+            "  if (x == 3) { break; } "
+            "  total = total + x; "
+            "}"
+        )
+        self.assertEqual(env.get("total"), 3)  # only 1 + 2 ran before break
+
+    def test_continue_skips_rest_of_for_iteration(self):
+        env = run(
+            "let total = 0; "
+            "for x in [1, 2, 3, 4, 5] { "
+            "  if (x == 3) { continue; } "
+            "  total = total + x; "
+            "}"
+        )
+        self.assertEqual(env.get("total"), 12)  # 1 + 2 + 4 + 5, 3 skipped
+
+    def test_break_inside_nested_function_does_not_escape_outer_loop(self):
+        # Regression test: return already threads through nested calls via
+        # `_ReturnSignal`; break/continue must not accidentally do the same
+        # and unwind past a function-call boundary. A break inside a
+        # function's own loop must only stop that loop, even when the
+        # function is declared and called from inside another loop.
+        env = run(
+            "let outer_iterations = 0; "
+            "let inner_sum = 0; "
+            "for i in [1, 2, 3] { "
+            "  fn inner_loop() { "
+            "    let sum = 0; "
+            "    for j in [1, 2, 3] { "
+            "      if (j == 2) { break; } "
+            "      sum = sum + j; "
+            "    } "
+            "    return sum; "
+            "  } "
+            "  inner_sum = inner_sum + inner_loop(); "
+            "  outer_iterations = outer_iterations + 1; "
+            "}"
+        )
+        self.assertEqual(env.get("outer_iterations"), 3)
+        self.assertEqual(env.get("inner_sum"), 3)  # 1 (before break) x 3 calls
+
+
 class TestTruthinessRule(unittest.TestCase):
     """Pins the rule: `false`/`nil` are falsy; everything else is truthy."""
 

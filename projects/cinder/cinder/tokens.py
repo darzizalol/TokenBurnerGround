@@ -21,6 +21,8 @@ class TokenType(Enum):
     IN = auto()
     FN = auto()
     RETURN = auto()
+    BREAK = auto()
+    CONTINUE = auto()
     TRUE = auto()
     FALSE = auto()
     NIL = auto()
@@ -66,6 +68,8 @@ KEYWORDS = {
     "in": TokenType.IN,
     "fn": TokenType.FN,
     "return": TokenType.RETURN,
+    "break": TokenType.BREAK,
+    "continue": TokenType.CONTINUE,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
     "nil": TokenType.NIL,

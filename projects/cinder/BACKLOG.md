@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Negative indexing for lists and strings
+## 1. Negative indexing for lists and strings [claimed 2026-07-20T19:39:52Z]
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
 in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,

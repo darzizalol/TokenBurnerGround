@@ -13,13 +13,19 @@ captures that iteration's value rather than the final one.
 function's closure is pushed, parameters are bound there, and the body runs.
 `return` unwinds via `_ReturnSignal`, a Python exception internal to this
 module (never exposed as a `CinderError`), caught at the call boundary.
+`break`/`continue` unwind similarly via `_BreakSignal`/`_ContinueSignal`,
+caught by the nearest enclosing `WhileStmt`/`ForStmt`'s own execution (the
+parser guarantees they never appear outside a loop, or outside a loop within
+the nearest enclosing function, so no other boundary needs to catch them).
 """
 
 from cinder.ast_nodes import (
     Assign,
     Binary,
     Block,
+    BreakStmt,
     Call,
+    ContinueStmt,
     Expr,
     ExprStmt,
     FnDecl,
@@ -50,6 +56,14 @@ class _ReturnSignal(Exception):
 
     def __init__(self, value: object):
         self.value = value
+
+
+class _BreakSignal(Exception):
+    """Internal control-flow signal for `break`; never surfaced to users."""
+
+
+class _ContinueSignal(Exception):
+    """Internal control-flow signal for `continue`; never surfaced to users."""
 
 
 class CinderFunction:
@@ -164,7 +178,12 @@ class Interpreter:
             return
         if isinstance(stmt, WhileStmt):
             while is_truthy(self.evaluate(stmt.condition, env)):
-                self.execute(stmt.body, env)
+                try:
+                    self.execute(stmt.body, env)
+                except _BreakSignal:
+                    break
+                except _ContinueSignal:
+                    continue
             return
         if isinstance(stmt, ForStmt):
             self._execute_for(stmt, env)
@@ -175,6 +194,10 @@ class Interpreter:
         if isinstance(stmt, ReturnStmt):
             value = self.evaluate(stmt.value, env) if stmt.value is not None else None
             raise _ReturnSignal(value)
+        if isinstance(stmt, BreakStmt):
+            raise _BreakSignal()
+        if isinstance(stmt, ContinueStmt):
+            raise _ContinueSignal()
         raise TypeError(f"unhandled statement type: {type(stmt)!r}")
 
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
@@ -188,7 +211,12 @@ class Interpreter:
         for item in iterable:
             iter_env = Environment(env)
             iter_env.define(stmt.var_name, item)
-            self.execute(stmt.body, iter_env)
+            try:
+                self.execute(stmt.body, iter_env)
+            except _BreakSignal:
+                break
+            except _ContinueSignal:
+                continue
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)

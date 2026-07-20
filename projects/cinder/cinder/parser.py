@@ -9,20 +9,30 @@ Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block),
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
 `while (<expr>) <statement>` (WhileStmt), `for IDENTIFIER in <expr> { ... }`
-(ForStmt, body always a block), or a bare `<expr>;` (ExprStmt).
+(ForStmt, body always a block), `break;`/`continue;` (BreakStmt/ContinueStmt,
+only valid inside a loop), or a bare `<expr>;` (ExprStmt).
 
 A leading `{` is ambiguous between a Block and a statement-level expression
 rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
 disambiguates by attempting a speculative full-expression parse first (so
 postfix indexing/calls and binary operators on the leading map literal are
 captured too); empty `{}` is always an (empty) Block.
+
+`_loop_depth` tracks loop nesting the same way `_fn_depth` tracks function
+nesting for `return`: `break`/`continue` outside any loop is a `ParseError`.
+Entering a function body resets `_loop_depth` to 0 (saved/restored around the
+body) so a bare `break`/`continue` inside a function nested in a loop is
+still rejected unless that function has its own enclosing loop — mirroring
+how `return` is scoped to the nearest function, not any outer one.
 """
 
 from cinder.ast_nodes import (
     Assign,
     Binary,
     Block,
+    BreakStmt,
     Call,
+    ContinueStmt,
     Expr,
     ExprStmt,
     FnDecl,
@@ -63,6 +73,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self._fn_depth = 0
+        self._loop_depth = 0
 
     def parse_expression(self) -> Expr:
         expr = self._assignment()
@@ -96,6 +107,10 @@ class Parser:
             return self._fn_declaration()
         if self._check(TokenType.RETURN):
             return self._return_statement()
+        if self._check(TokenType.BREAK):
+            return self._break_statement()
+        if self._check(TokenType.CONTINUE):
+            return self._continue_statement()
         return self._expr_statement()
 
     def _let_statement(self) -> Stmt:
@@ -146,7 +161,9 @@ class Parser:
         self._consume(TokenType.LPAREN, "'(' after 'while'")
         condition = self._assignment()
         self._consume(TokenType.RPAREN, "')' after while condition")
+        self._loop_depth += 1
         body = self._statement()
+        self._loop_depth -= 1
         return WhileStmt(condition, body, while_token.line, while_token.column)
 
     def _for_statement(self) -> Stmt:
@@ -161,7 +178,9 @@ class Parser:
                 token.line,
                 token.column,
             )
+        self._loop_depth += 1
         body = self._block()
+        self._loop_depth -= 1
         return ForStmt(
             name_token.lexeme, iterable, body, for_token.line, for_token.column
         )
@@ -185,7 +204,10 @@ class Parser:
                 token.column,
             )
         self._fn_depth += 1
+        outer_loop_depth = self._loop_depth
+        self._loop_depth = 0
         body = self._block()
+        self._loop_depth = outer_loop_depth
         self._fn_depth -= 1
         return FnDecl(name_token.lexeme, params, body, fn_token.line, fn_token.column)
 
@@ -200,6 +222,24 @@ class Parser:
             value = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after return statement")
         return ReturnStmt(value, return_token.line, return_token.column)
+
+    def _break_statement(self) -> Stmt:
+        break_token = self._advance()
+        if self._loop_depth == 0:
+            raise ParseError(
+                "'break' outside of a loop", break_token.line, break_token.column
+            )
+        self._consume(TokenType.SEMICOLON, "';' after 'break'")
+        return BreakStmt(break_token.line, break_token.column)
+
+    def _continue_statement(self) -> Stmt:
+        continue_token = self._advance()
+        if self._loop_depth == 0:
+            raise ParseError(
+                "'continue' outside of a loop", continue_token.line, continue_token.column
+            )
+        self._consume(TokenType.SEMICOLON, "';' after 'continue'")
+        return ContinueStmt(continue_token.line, continue_token.column)
 
     def _expr_statement(self) -> Stmt:
         expr = self._assignment()

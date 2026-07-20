@@ -173,6 +173,27 @@ class ReturnStmt:
     column: int
 
 
+@dataclass(frozen=True)
+class BreakStmt:
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
+class ContinueStmt:
+    line: int
+    column: int
+
+
 Stmt = Union[
-    ExprStmt, LetStmt, Block, IfStmt, WhileStmt, ForStmt, FnDecl, ReturnStmt
+    ExprStmt,
+    LetStmt,
+    Block,
+    IfStmt,
+    WhileStmt,
+    ForStmt,
+    FnDecl,
+    ReturnStmt,
+    BreakStmt,
+    ContinueStmt,
 ]

@@ -5,7 +5,9 @@ import unittest
 from cinder.ast_nodes import (
     Binary,
     Block,
+    BreakStmt,
     Call,
+    ContinueStmt,
     ExprStmt,
     FnDecl,
     ForStmt,
@@ -86,6 +88,10 @@ def stmt_shape(node):
             shape(node.iterable),
             stmt_shape(node.body),
         )
+    if isinstance(node, BreakStmt):
+        return ("BreakStmt",)
+    if isinstance(node, ContinueStmt):
+        return ("ContinueStmt",)
     raise TypeError(f"unhandled statement type: {type(node)!r}")
 
 
@@ -504,6 +510,65 @@ class TestForStatement(unittest.TestCase):
     def test_return_inside_top_level_for_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("for x in [1] { return 5; }")
+
+
+class TestBreakContinue(unittest.TestCase):
+    def test_break_and_continue_inside_while_body(self):
+        # WhileStmt has no `stmt_shape` case (not needed elsewhere in this
+        # suite); shape its body directly instead of the statement itself.
+        stmts = parse_stmts("while (true) { break; continue; }")
+        self.assertEqual(len(stmts), 1)
+        self.assertEqual(
+            stmt_shape(stmts[0].body),
+            ("Block", [("BreakStmt",), ("ContinueStmt",)]),
+        )
+
+    def test_break_and_continue_inside_for_body(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("for x in [1] { break; continue; }")
+            ],
+            [
+                (
+                    "ForStmt",
+                    "x",
+                    ("ListLiteral", [("Literal", 1)]),
+                    ("Block", [("BreakStmt",), ("ContinueStmt",)]),
+                )
+            ],
+        )
+
+    def test_break_outside_loop_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("break;")
+
+    def test_continue_outside_loop_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("continue;")
+
+    def test_break_inside_if_outside_loop_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("if (true) { break; }")
+
+    def test_break_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { break }")
+
+    def test_continue_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { continue }")
+
+    def test_break_inside_function_nested_in_loop_without_own_loop_raises(self):
+        # A function body resets loop-nesting the same way it resets return's
+        # function-nesting: break/continue must refer to a loop inside the
+        # nearest enclosing function, not one merely lexically outside it.
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { fn f() { break; } }")
+
+    def test_break_inside_function_with_own_loop_is_valid(self):
+        stmts = parse_stmts("while (true) { fn f() { while (true) { break; } } }")
+        self.assertEqual(len(stmts), 1)
 
 
 class TestErrors(unittest.TestCase):

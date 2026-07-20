@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `map` and `filter`
+## 1. Standard library: `map` and `filter` [claimed 2026-07-20T20:28:25Z]
 
 Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
 fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)

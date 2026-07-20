@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, abs, min, max, round,
-contains, reverse, sort."""
+contains, reverse, sort, range."""
 
 import io
 import subprocess
@@ -395,6 +395,49 @@ class TestSort(unittest.TestCase):
     def test_sort_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("sort([1], 2);")
+
+
+class TestRange(unittest.TestCase):
+    def test_range_one_argument(self):
+        self.assertEqual(run("let result = range(5);").get("result"), [0, 1, 2, 3, 4])
+
+    def test_range_two_arguments(self):
+        self.assertEqual(run("let result = range(2, 5);").get("result"), [2, 3, 4])
+
+    def test_range_zero_returns_empty(self):
+        self.assertEqual(run("let result = range(0);").get("result"), [])
+
+    def test_range_equal_bounds_returns_empty(self):
+        self.assertEqual(run("let result = range(3, 3);").get("result"), [])
+
+    def test_range_descending_bounds_returns_empty(self):
+        self.assertEqual(run("let result = range(5, 2);").get("result"), [])
+
+    def test_range_non_int_stop_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('range("x");')
+
+    def test_range_non_int_start_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('range(1, "x");')
+
+    def test_range_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("range(1.5);")
+
+    def test_range_zero_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("range();")
+
+    def test_range_too_many_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("range(1, 2, 3);")
+
+    def test_for_in_range_prints_each_value(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            run("for i in range(3) { print(i); }")
+        self.assertEqual(stdout.getvalue(), "0\n1\n2\n")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

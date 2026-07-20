@@ -487,9 +487,17 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate("[1, 2, 3][5]")
 
-    def test_list_negative_index_raises_cinder_error(self):
+    def test_list_negative_index(self):
+        self.assertEqual(evaluate("[1, 2, 3][-1]"), 3)
+        self.assertEqual(evaluate("[1, 2, 3][-3]"), 1)
+
+    def test_list_negative_index_out_of_range_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):
-            evaluate("[1, 2, 3][-1]")
+            evaluate("[1, 2, 3][-4]")
+
+    def test_list_negative_index_assign(self):
+        env = run("let xs = [1, 2, 3]; xs[-1] = 9;")
+        self.assertEqual(env.get("xs"), [1, 2, 9])
 
     def test_map_missing_key_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):
@@ -515,9 +523,13 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate('"hello"[5]')
 
-    def test_string_negative_index_raises_cinder_error(self):
+    def test_string_negative_index(self):
+        self.assertEqual(evaluate('"hello"[-1]'), "o")
+        self.assertEqual(evaluate('"hello"[-5]'), "h")
+
+    def test_string_negative_index_out_of_range_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):
-            evaluate('"hello"[-1]')
+            evaluate('"hello"[-6]')
 
     def test_string_non_int_index_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):

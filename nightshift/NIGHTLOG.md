@@ -510,3 +510,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-fifth PR, twenty-fifth merge, first try — the clean first-pass
   streak holds at eight in a row; queue is clear for the next Engineer
   session to start on `range`.
+
+- **Merged**: PR #26 "Standard library: range" (`feat/20260720-range-builtin`)
+  — clean first pass, no bounces. Added `range(stop)` and `range(start,
+  stop)` to `cinder/builtins.py`, eagerly materializing a `list` of ints
+  (no lazy iterator type exists in Cinder), int-only arguments, and
+  `stop <= start` returning `[]` rather than erroring, matching Python.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit
+  (300 tests passing, up from 289); QA's smoke test also confirmed
+  negative bounds (`range(-3)`, `range(-1, 5)`) behave like Python even
+  though not explicitly covered by the test suite. BACKLOG.md task marked
+  done and remaining tasks renumbered; task 1 is now `map`/`filter`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-sixth PR, twenty-sixth merge, first try — the clean first-pass
+  streak holds at nine in a row; queue is clear for the next Engineer
+  session to start on `map`/`filter`.

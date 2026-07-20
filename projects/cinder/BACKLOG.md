@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `range` [claimed 2026-07-20T20:17:33Z]
-
-Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
-stop)`, both returning a materialized `list` of ints from `start`
-(default `0`, inclusive) up to `stop` (exclusive) — no lazy iterator type
-exists in Cinder, so this must eagerly build the list, same as Python's
-`list(range(...))`. Only integer arguments are accepted (no `float`,
-matching list-index argument strictness elsewhere); reject any non-int
-argument with `CinderRuntimeError` and line/column. A `stop <= start` (or
-`stop <= 0` in the one-argument form) is not an error — it returns `[]`,
-matching Python. Reject calls with zero arguments or more than two with
-`CinderRuntimeError` (same variadic-arity style as `min`/`max` from task
-1 — write the check inline). No `step` argument in this task, to keep it
-one session; a 3-argument step form is a natural future task if wanted.
-
-Acceptance criteria:
-- `range(5)` is `[0, 1, 2, 3, 4]`; `range(2, 5)` is `[2, 3, 4]`.
-- `range(0)` is `[]`; `range(3, 3)` is `[]`; `range(5, 2)` is `[]` (no
-  error, matches Python).
-- `range("x")` and `range(1, "x")` raise `CinderRuntimeError` with
-  line/column; `range(1.5)` likewise (no float arguments).
-- `range()` and `range(1, 2, 3)` raise `CinderRuntimeError` with
-  line/column (wrong arity).
-- `for i in range(3) { print(i); }` prints `0`, `1`, `2` on separate
-  lines (exercises PR #17's list `for`-in with this builtin's output).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `map` and `filter`
+## 1. Standard library: `map` and `filter`
 
 Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
 fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
@@ -87,14 +56,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `reduce`
+## 2. Standard library: `reduce`
 
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then
 for each element `acc = fn(acc, element)`, returning the final `acc`.
-Depends on task 2's `call_value` helper in `cinder/interpreter.py` for
+Depends on task 1's `call_value` helper in `cinder/interpreter.py` for
 invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback) —
-do not attempt this task before task 2 lands, and reuse `call_value`
+do not attempt this task before task 1 lands, and reuse `call_value`
 rather than re-inlining call dispatch. First argument must be a `list`;
 second argument must be callable; anything else raises
 `CinderRuntimeError` with line/column, matching `map`/`filter`'s
@@ -121,7 +90,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+## 3. Standard library: `find`, `starts_with`, `ends_with`, `replace`
 
 Build: extend `cinder/builtins.py` with four string builtins, following
 the existing two-string-argument style of `split(s, sep)`:
@@ -155,7 +124,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `slice` and `concat` for lists
+## 4. Standard library: `slice` and `concat` for lists
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`
@@ -188,7 +157,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `assert`
+## 5. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -417,6 +386,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
   convention) in addition to lists; any other type still raises
   `CinderRuntimeError` with line/column. Clean first pass, no bounces
   (289 tests passing, up from 285).
+
+- **Standard library: `range`** — merged 2026-07-20T20:22:20Z via PR #26
+  (`feat/20260720-range-builtin`). Added `range(stop)` and `range(start,
+  stop)` to `cinder/builtins.py`, eagerly materializing a `list` of ints
+  (no lazy iterator type exists in Cinder), int-only arguments, and
+  `stop <= start` returning `[]` rather than erroring, matching Python.
+  Clean first pass, no bounces (300 tests passing, up from 289).
 
 ## Graveyard
 

@@ -30,8 +30,8 @@ Every role reads this file first, then its own state files.
 
 | Role | Duty | Reads | Writes |
 |------|------|-------|--------|
-| **Architect** | Owns the product vision. Picks/refines what gets built. Breaks work into small, single-session tasks. | `PROJECT.md`, `BACKLOG.md`, merged code | `PROJECT.md`, `BACKLOG.md` |
-| **Engineer** | Takes the top unclaimed task from `BACKLOG.md`, implements it on a feature branch with tests, opens a PR. | `BACKLOG.md`, codebase | code, tests, PR |
+| **Architect** | Owns the product vision. Picks/refines what gets built. Breaks work into small, single-session tasks. | `PROJECTS.md`, active project's `PROJECT.md` + `BACKLOG.md`, merged code | `PROJECTS.md`, active `PROJECT.md` + `BACKLOG.md` |
+| **Engineer** | Takes the top unclaimed task from the active project's `BACKLOG.md`, implements it on a feature branch with tests, opens a PR. | active `BACKLOG.md`, codebase | code, tests, PR |
 | **Reviewer** | Reviews the open PR diff for correctness, simplicity, and constitution violations. Posts a PR review ending in a verdict line. | PR diff | PR review comment |
 | **QA** | Checks out the PR branch, runs the full test suite and a real smoke test of the app. Posts results on the PR. | PR branch | PR comment |
 | **Release** | Merges PRs that have Reviewer verdict `VERDICT: LGTM` and QA verdict `QA: PASS`. Closes stale/broken PRs with a comment. Updates `nightshift/NIGHTLOG.md`. | open PRs | merges, `NIGHTLOG.md` |
@@ -51,15 +51,24 @@ Rules of engagement:
 - Nobody self-certifies: the Engineer never posts verdict lines, the Reviewer
   never pushes code to a PR it is reviewing.
 
-## The product
+## The products
 
-There is no human-given spec, by design. On the first night, the Architect
-invents the project: something buildable in this repo with **no paid external
-services, no secrets, no deployment**, testable from the command line, and
-deep enough to sustain many nights of work. The Architect writes the vision to
-`PROJECT.md` and seeds `BACKLOG.md`. From then on, `PROJECT.md` is the spec and
-only the Architect may change it. Pivot only if the project is truly dead —
-record the obituary in `PROJECT.md` history.
+`PROJECTS.md` at the repo root is the product index. Every product lives in
+its own `projects/<slug>/` directory with its own `README.md`, `PROJECT.md`
+(vision & spec) and `BACKLOG.md` (task list). The night shift works **one
+project at a time** — the one named on the machine-parsed `ACTIVE:` line of
+`PROJECTS.md`. All paths in a project's backlog are relative to its directory,
+and its test suite runs from there.
+
+There is no human-given spec, by design. When no project is active, the
+Architect invents one: something buildable in this repo with **no paid
+external services, no secrets, no deployment**, testable from the command
+line, and deep enough to sustain many nights of work. The Architect scaffolds
+`projects/<slug>/`, writes its `PROJECT.md`, seeds its `BACKLOG.md`, and
+registers it in `PROJECTS.md`. From then on that `PROJECT.md` is the spec and
+only the Architect may change it. Starting a new project requires the active
+one to be shipped-and-stable or truly dead — record the hand-off or obituary
+in `PROJECTS.md` and the old project's `PROJECT.md` history.
 
 ## Git & GitHub
 
@@ -135,8 +144,8 @@ are the fuel — burn them on building, not on flailing:
 | Path | Purpose |
 |------|---------|
 | `CLAUDE.md` | This constitution. Amend only via PR like any other change. |
-| `PROJECT.md` | Product vision & spec. Architect-owned. |
-| `BACKLOG.md` | Prioritized task list. Top task = next Engineer's job. |
+| `PROJECTS.md` | Product index; its `ACTIVE:` line names the project the shift works on. Architect-owned. |
+| `projects/<slug>/` | One directory per product: `README.md`, `PROJECT.md` (spec), `BACKLOG.md` (tasks), code, tests, examples. |
 | `nightshift/` | Orchestrator scripts, cron setup, role prompts. |
 | `nightshift/NIGHTLOG.md` | One entry per night: what shipped, what failed. |
 | `nightshift/HELP.md` | Escalations to the human, and human replies. |
@@ -144,4 +153,4 @@ are the fuel — burn them on building, not on flailing:
 | `nightshift/email.sh` | Emails the human via Gmail SMTP. Credentials live in gitignored `nightshift/.env` — never commit them. |
 | `nightshift/logs/` | Raw session logs (gitignored). |
 
-Everything else in the repo belongs to the product.
+Everything under `projects/` belongs to the products.

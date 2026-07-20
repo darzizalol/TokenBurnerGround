@@ -77,7 +77,7 @@ log "=== night shift clocking in (pid $$) ==="
 "The night shift started at $SHIFT_START on $(hostname).
 
 Backlog snapshot:
-$(head -n 15 "$REPO/BACKLOG.md" 2>/dev/null || echo '(no backlog yet — Night One: the Architect will invent the project)')
+$(head -n 15 "$REPO/$(grep -m1 '^ACTIVE:' "$REPO/PROJECTS.md" 2>/dev/null | awk '{print $2}')/BACKLOG.md" 2>/dev/null || echo '(no active project yet — the Architect will invent one)')
 
 A progress report lands in this inbox when the shift ends (~07:00)." >> "$NIGHT_LOG" 2>&1
 STARTED=1

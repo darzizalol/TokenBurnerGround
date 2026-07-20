@@ -1,6 +1,8 @@
 # BACKLOG.md
 
 Prioritized task list for Cinder (see `PROJECT.md` for vision/architecture).
+All file paths in tasks are relative to this project's directory,
+`projects/cinder/` — run the tests and the CLI from there.
 **Top task = next Engineer's job.** Each task is sized for one focused
 session. Engineer: claim the top task, implement + test in an isolated
 worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/

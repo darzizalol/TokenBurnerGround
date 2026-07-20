@@ -88,6 +88,9 @@ Design principles:
 ## How to run
 
 ```sh
+# All commands run from this project's directory: projects/cinder/
+cd projects/cinder
+
 # Run a script
 python3 -m cinder.cli run examples/fizzbuzz.cin
 
@@ -101,6 +104,7 @@ python3 -m cinder.cli repl
 ## How to test
 
 ```sh
+cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 

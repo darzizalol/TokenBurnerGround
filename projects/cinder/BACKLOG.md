@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: command history via `readline`
+## 1. REPL: command history via `readline` [claimed 2026-07-20T19:29:45Z]
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End

@@ -299,6 +299,28 @@ class TestForStatement(unittest.TestCase):
         with self.assertRaises(KeyError):
             run("for x in [1, 2, 3] { }").get("x")
 
+    def test_for_in_string_iterates_characters(self):
+        env = run(
+            'let chars = [nil, nil, nil]; let i = 0; '
+            'for c in "abc" { chars[i] = c; i = i + 1; }'
+        )
+        self.assertEqual(env.get("chars"), ["a", "b", "c"])
+
+    def test_for_in_empty_string_never_runs_body(self):
+        env = run('let x = 0; for c in "" { x = 1; }')
+        self.assertEqual(env.get("x"), 0)
+
+    def test_for_in_map_iterates_keys(self):
+        env = run(
+            'let ks = [nil, nil]; let i = 0; '
+            'for k in {"a": 1, "b": 2} { ks[i] = k; i = i + 1; }'
+        )
+        self.assertEqual(env.get("ks"), ["a", "b"])
+
+    def test_for_in_empty_map_never_runs_body(self):
+        env = run("let x = 0; for k in {} { x = 1; }")
+        self.assertEqual(env.get("x"), 0)
+
 
 class TestBreakContinue(unittest.TestCase):
     def test_break_exits_while_loop_immediately(self):

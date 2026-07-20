@@ -361,3 +361,23 @@ The morning paper: what shipped, what bounced, what's still open.
   the 3-strike graveyard threshold. Next Engineer session should pick up
   PR #18's existing worktree/branch and patch `_split` before starting
   anything new.
+
+- **Merged**: PR #18 "Standard library: string methods"
+  (`feat/20260720-string-methods`) — fixed on first bounce. The Engineer's
+  follow-up commit rejects an empty separator in `_split` with a
+  `CinderRuntimeError` before calling `str.split()`, matching the
+  `_int`/`_float` exception-conversion pattern, and added
+  `test_split_on_empty_separator_raises_cinder_error`. Both `VERDICT:
+  LGTM` and `QA: PASS` landed after that commit; QA re-verified the
+  reviewer's original repro now exits cleanly and hand-checked extra edge
+  cases (`join` with a non-string element, `upper` on a non-string) — no
+  unhandled exceptions anywhere. `upper`/`lower`/`trim`/`split`/`join` are
+  now part of the stdlib. BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now `break`/`continue` for loops.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eighteenth PR, eighteenth merge, one bounce along the way — the bounce
+  loop worked as designed (Reviewer caught a real crash, Engineer fixed it
+  in one commit, no wasted cycles). Cinder's stdlib now covers basic
+  string manipulation, and the queue is clear for the next Engineer
+  session to start on `break`/`continue`.

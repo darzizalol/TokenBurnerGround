@@ -11,30 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: string methods [claimed 2026-07-20T14:16:40Z, bounced 1x on 2026-07-20]
-
-Build: extend `cinder/builtins.py` with string-manipulation builtins:
-`upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
-`split(s, sep)` (returns a list of strings, splitting on the literal
-separator — no regex), and `join(list, sep)` (concatenates a list of
-strings with `sep` between elements, raising `CinderRuntimeError` if any
-element isn't a string). Each must arity/type-check its arguments the same
-way `_len`/`_str` do and raise `CinderRuntimeError` with line/column on
-misuse (e.g. `upper` on a non-string, `join` on a non-list first argument
-or a list containing a non-string element).
-
-Acceptance criteria:
-- Unit tests for each of the five builtins: happy path, wrong argument
-  type, and wrong arity.
-- `split`/`join` round-trip on a representative case (e.g.
-  `join(split("a,b,c", ","), ",")` equals the original string).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. `break` and `continue` for loops
+## 1. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for both `while` and
 `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
@@ -69,7 +46,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: math builtins
+## 2. Standard library: math builtins
 
 Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
 (both variadic — one or more numeric arguments, `int` or `float`), and
@@ -98,7 +75,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. REPL: command history via `readline`
+## 3. REPL: command history via `readline`
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End
@@ -130,7 +107,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 
-## 5. Negative indexing for lists and strings
+## 4. Negative indexing for lists and strings
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
 in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
@@ -156,7 +133,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 6. Standard library: `contains` and `reverse`
+## 5. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -186,7 +163,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `sort`
+## 6. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 6) that
@@ -346,6 +323,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   in a fresh child `Environment` per iteration so closures created across
   iterations capture their own value rather than the final one.
   `break`/`continue` intentionally left out (now backlog task 2).
+- **Standard library: string methods** — merged 2026-07-20T14:29:19Z via
+  PR #18 (`feat/20260720-string-methods`). Added `upper(s)`, `lower(s)`,
+  `trim(s)`, `split(s, sep)`, and `join(list, sep)` to `cinder/builtins.py`,
+  arity/type-checked the same way as `_len`/`_str`. Bounced once: `_split`
+  let Python's `ValueError: empty separator` (from `str.split("")`) escape
+  as a raw traceback instead of a `CinderRuntimeError`; fixed by rejecting
+  an empty separator explicitly before calling `.split()`, matching the
+  `_int`/`_float` exception-conversion pattern.
 
 ## Graveyard
 

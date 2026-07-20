@@ -1,4 +1,5 @@
-"""Tests for cinder.builtins: print, len, type, str, int, float."""
+"""Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
+keys, values, upper, lower, trim, split, join."""
 
 import io
 import subprocess
@@ -180,6 +181,85 @@ class TestValues(unittest.TestCase):
     def test_values_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('values({"a": 1}, 2);')
+
+
+class TestUpper(unittest.TestCase):
+    def test_upper_of_string(self):
+        self.assertEqual(run('let result = upper("hello");').get("result"), "HELLO")
+
+    def test_upper_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("upper(1);")
+
+    def test_upper_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('upper("a", "b");')
+
+
+class TestLower(unittest.TestCase):
+    def test_lower_of_string(self):
+        self.assertEqual(run('let result = lower("HELLO");').get("result"), "hello")
+
+    def test_lower_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("lower(1);")
+
+    def test_lower_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('lower("a", "b");')
+
+
+class TestTrim(unittest.TestCase):
+    def test_trim_strips_leading_and_trailing_whitespace(self):
+        self.assertEqual(run('let result = trim("  hi  ");').get("result"), "hi")
+
+    def test_trim_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("trim(1);")
+
+    def test_trim_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('trim("a", "b");')
+
+
+class TestSplit(unittest.TestCase):
+    def test_split_on_literal_separator(self):
+        env = run('let result = split("a,b,c", ",");')
+        self.assertEqual(env.get("result"), ["a", "b", "c"])
+
+    def test_split_on_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('split(1, ",");')
+
+    def test_split_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('split("a,b");')
+
+    def test_split_on_empty_separator_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('split("a,b,c", "");')
+
+
+class TestJoin(unittest.TestCase):
+    def test_join_concatenates_with_separator(self):
+        env = run('let result = join(["a", "b", "c"], ",");')
+        self.assertEqual(env.get("result"), "a,b,c")
+
+    def test_join_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('join("a", ",");')
+
+    def test_join_on_list_with_non_string_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('join(["a", 1], ",");')
+
+    def test_join_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('join(["a"]);')
+
+    def test_split_join_round_trip(self):
+        env = run('let result = join(split("a,b,c", ","), ",");')
+        self.assertEqual(env.get("result"), "a,b,c")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

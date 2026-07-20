@@ -1,9 +1,10 @@
 """Standard library builtins injected into every Cinder program's global scope.
 
 `create_global_environment` returns a fresh `Environment` with `print`,
-`len`, `type`, `str`, `int`, and `float` already defined. CLI entrypoints and
-the REPL should build their global scope with this instead of a bare
-`Environment()` so `.cin` scripts can actually produce output.
+`len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
+`upper`, `lower`, `trim`, `split`, and `join` already defined. CLI
+entrypoints and the REPL should build their global scope with this instead
+of a bare `Environment()` so `.cin` scripts can actually produce output.
 """
 
 from cinder.errors import CinderRuntimeError
@@ -145,6 +146,73 @@ def _values(arguments: list, line: int, column: int) -> object:
     return list(target.values())
 
 
+def _upper(arguments: list, line: int, column: int) -> object:
+    _require_arity("upper", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"upper() requires a string, got {type_name(value)}", line, column
+        )
+    return value.upper()
+
+
+def _lower(arguments: list, line: int, column: int) -> object:
+    _require_arity("lower", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"lower() requires a string, got {type_name(value)}", line, column
+        )
+    return value.lower()
+
+
+def _trim(arguments: list, line: int, column: int) -> object:
+    _require_arity("trim", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"trim() requires a string, got {type_name(value)}", line, column
+        )
+    return value.strip()
+
+
+def _split(arguments: list, line: int, column: int) -> object:
+    _require_arity("split", arguments, 2, line, column)
+    value, sep = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"split() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(sep, str):
+        raise CinderRuntimeError(
+            f"split() requires a string separator, got {type_name(sep)}", line, column
+        )
+    if sep == "":
+        raise CinderRuntimeError("split() separator must not be empty", line, column)
+    return value.split(sep)
+
+
+def _join(arguments: list, line: int, column: int) -> object:
+    _require_arity("join", arguments, 2, line, column)
+    items, sep = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"join() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not isinstance(sep, str):
+        raise CinderRuntimeError(
+            f"join() requires a string separator, got {type_name(sep)}", line, column
+        )
+    for item in items:
+        if not isinstance(item, str):
+            raise CinderRuntimeError(
+                f"join() requires a list of strings, got {type_name(item)}", line, column
+            )
+    return sep.join(items)
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -156,6 +224,11 @@ _BUILTINS = {
     "pop": _pop,
     "keys": _keys,
     "values": _values,
+    "upper": _upper,
+    "lower": _lower,
+    "trim": _trim,
+    "split": _split,
+    "join": _join,
 }
 
 

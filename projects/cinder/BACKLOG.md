@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: math builtins
+## 1. Standard library: math builtins [claimed 2026-07-20T14:49:25Z]
 
 Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
 (both variadic — one or more numeric arguments, `int` or `float`), and

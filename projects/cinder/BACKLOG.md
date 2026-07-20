@@ -152,6 +152,51 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `map` and `filter`
+
+Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
+fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
+and accepting a Cinder function *value* as the second argument — either a
+`CinderFunction` (a `fn`-declared closure) or a `Builtin` (a stdlib function
+passed by name, e.g. `abs`). Calling a `Builtin` is already a one-liner
+(`callee.call(arguments, line, column)`, `cinder/interpreter.py:96`), but
+calling a `CinderFunction` is currently *inline* logic inside
+`Interpreter._evaluate_call` (`cinder/interpreter.py:221-243`: arity check,
+new `Environment(callee.closure)`, `self.execute(callee.decl.body,
+call_env)`, catch `_ReturnSignal`) — there is no reusable method for it yet.
+First refactor that block into a standalone helper both call sites share
+(e.g. a module-level `call_value(callee, arguments, line, column)` in
+`interpreter.py` handling both `Builtin` and `CinderFunction` dispatch, with
+`_evaluate_call` reduced to `return call_value(callee, arguments, expr.line,
+expr.column)`); `Interpreter` holds no instance state so this is a
+mechanical extraction, not a behavior change — the existing `_evaluate_call`
+tests must keep passing unmodified. Then have `map`/`filter` in
+`builtins.py` import and call that helper. `map`'s callback takes one
+argument (the element) and its return value becomes the output element;
+`filter`'s callback takes one argument and the element is kept iff the
+return value is truthy (reuse the existing truthiness rule — `nil`/`false`
+are falsy, everything else truthy). First argument must be a `list`; second
+argument must be callable (`CinderFunction` or `Builtin`) — anything else
+raises `CinderRuntimeError` with line/column, matching `sort`/`reverse`'s
+type-check style. Propagate the callback's own `CinderRuntimeError` (e.g.
+wrong arity) unchanged if it raises one.
+
+Acceptance criteria:
+- `map([1, 2, 3], fn(x) { return x * 2; })` is `[2, 4, 6]`.
+- `filter([1, 2, 3, 4], fn(x) { return x > 2; })` is `[3, 4]`.
+- `map([1, -2, 3], abs)` is `[1, 2, 3]` (built-in function passed by name).
+- `map(5, fn(x) { return x; })` raises `CinderRuntimeError` (first arg not a
+  list) with line/column.
+- `map([1, 2], 5)` raises `CinderRuntimeError` (second arg not callable) with
+  line/column.
+- Neither builtin mutates its input list (regression test).
+- `filter([], fn(x) { return true; })` is `[]`; same for `map` on `[]`.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

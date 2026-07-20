@@ -80,7 +80,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (268+ tests) covers every layer — lexer, parser, interpreter,
+The suite (277+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -105,8 +105,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: REPL command history via
-`readline` and negative indexing for lists/strings. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `contains`/`reverse`, `sort`, `for`-in over
-strings and maps, a `range` builtin, and `map`/`filter`. The full vision
-and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: negative indexing for
+lists/strings, and `contains`/`reverse` builtins. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `sort`, `for`-in over strings and maps, a
+`range` builtin, `map`/`filter`, and `reduce`. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

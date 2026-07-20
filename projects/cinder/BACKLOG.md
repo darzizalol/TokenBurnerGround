@@ -175,6 +175,111 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+
+Build: extend `cinder/builtins.py` with four string builtins, following
+the existing two-string-argument style of `split(s, sep)`:
+`find(s, sub)` returns the lowest index at which `sub` occurs in `s` (an
+int), or `-1` if not found (matching Python's `str.find`, not `str.index`
+— no exception for "not found"); `starts_with(s, prefix)` and
+`ends_with(s, suffix)` return a `bool`; `replace(s, old, new)` returns a
+**new** string with all non-overlapping occurrences of `old` replaced by
+`new` (Python's `str.replace(old, new)`, no count limit). All four take
+only `str` arguments — reject anything else (including a non-str `s`)
+with `CinderRuntimeError` and line/column, matching `_split`'s type-check
+style. An empty `old` in `replace` is a Python-legal no-op-per-character
+edge case (`"ab".replace("", "-")` is `"-a-b-"` in Python) — keep that
+behavior rather than special-casing it, since it matches host semantics
+and no existing builtin special-cases empty separators except `split`
+(which explicitly rejects them per PR #18 — `replace` is a different
+operation and Python's `str.replace("")` doesn't raise, so don't add a
+check here).
+
+Acceptance criteria:
+- `find("hello", "ll")` is `2`; `find("hello", "z")` is `-1`.
+- `starts_with("hello", "he")` is `true`; `starts_with("hello", "x")` is
+  `false`. Same shape for `ends_with`.
+- `replace("aaa", "a", "b")` is `"bbb"`; `replace("hello", "z", "x")` is
+  `"hello"` (no match, unchanged).
+- Each builtin raises `CinderRuntimeError` with line/column when any
+  argument isn't a `str`, and on wrong arity.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `slice` and `concat` for lists
+
+Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
+returning a **new** list containing elements from index `start`
+(inclusive) to `end` (exclusive), Python-slice-style — `start`/`end` may
+be negative (same normalization rule `_evaluate_index` already applies
+in `cinder/interpreter.py` for negative list/string indices: `index +
+len(obj)`), and out-of-range bounds clamp rather than error (matching
+Python's `list[start:end]` — `slice([1,2,3], 0, 10)` is `[1,2,3]`, not an
+error). Also add `concat(list1, list2)`, returning a **new** list that is
+`list1`'s elements followed by `list2`'s (neither input mutated, matching
+`reverse`/`sort`'s non-mutating style — this is the two-list counterpart
+to `push`'s single-element in-place append). `slice`'s `start`/`end` must
+be `int` (reject `float`/other types with `CinderRuntimeError` and
+line/column, matching `range`'s int-only rule); non-list first argument
+to either builtin is likewise a `CinderRuntimeError`.
+
+Acceptance criteria:
+- `slice([1, 2, 3, 4], 1, 3)` is `[2, 3]`; `slice([1, 2, 3], -2, -1)` (once
+  the negative-index rule linked above lands) is `[2]`.
+- `slice([1, 2, 3], 0, 100)` is `[1, 2, 3]` (out-of-range end clamps, no
+  error).
+- `concat([1, 2], [3, 4])` is `[1, 2, 3, 4]`; `concat([], [1])` is `[1]`.
+- Neither builtin mutates either input list (regression test).
+- `slice(5, 0, 1)` and `concat(5, [1])` raise `CinderRuntimeError` with
+  line/column (non-list argument); `slice([1,2], 0.5, 1)` likewise (non-int
+  bound).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `assert`
+
+Build: extend `cinder/builtins.py` with `assert(condition, message)`
+(exactly two arguments — a value checked with Cinder's existing
+truthiness rule, and a `str` message), raising `CinderRuntimeError` with
+that message and the call's line/column if `condition` is falsy
+(`nil`/`false`); returns `nil` (same as `print`) if the condition is
+truthy and has no other effect. This gives Cinder programs themselves a
+way to self-check invariants — useful for future example programs and
+for exercising other builtins/language features from *within* `.cin`
+scripts rather than only from the Python test suite. `message` must be a
+`str` (reject non-str with `CinderRuntimeError`, matching every other
+builtin's type-check style); wrong arity is likewise a
+`CinderRuntimeError`.
+
+Acceptance criteria:
+- `assert(true, "should not fire");` runs with no error and no output.
+- `assert(1 == 2, "math is broken");` raises `CinderRuntimeError` whose
+  message includes `"math is broken"`, with line/column of the `assert`
+  call.
+- `assert(0, "zero is falsy? no");` does NOT raise (Cinder's `0` is
+  truthy, per the fixed truthiness rule in `PROJECT.md` — this is a
+  regression check that `assert` reuses that rule rather than Python
+  truthiness).
+- `assert(false, 42);` (non-str message) raises `CinderRuntimeError` for
+  the bad argument type, not for the assertion itself.
+- `assert(true);` and `assert(true, "x", "y");` (wrong arity) raise
+  `CinderRuntimeError` with line/column.
+- Add one `examples/*.cin` using `assert` to demonstrate a self-checking
+  script, with its `.expected` golden file (empty stdout if all asserts
+  pass silently).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
+`examples/`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1
@@ -342,6 +447,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   index to `len(obj) + index` before bounds-checking, Python-style, for list
   read/assign and string read; string index-assignment still raises for
   immutability regardless of sign, per PR #16.
+
+- **Standard library: `contains` and `reverse`** — merged 2026-07-21T~13:30Z
+  via PR #23 (`feat/20260720-contains-reverse`). Added
+  `contains(collection, item)` (list `==` membership, map key check, string
+  substring check, `CinderRuntimeError` for other types) and `reverse(list)`
+  (returns a new list, non-mutating, matching `split`/`join`'s style rather
+  than `push`/`pop`'s in-place style) to `cinder/builtins.py`. Clean first
+  pass, no bounces (277 tests passing, up from 268).
 
 ## Graveyard
 

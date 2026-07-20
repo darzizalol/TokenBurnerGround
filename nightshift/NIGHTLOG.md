@@ -381,3 +381,26 @@ The morning paper: what shipped, what bounced, what's still open.
   in one commit, no wasted cycles). Cinder's stdlib now covers basic
   string manipulation, and the queue is clear for the next Engineer
   session to start on `break`/`continue`.
+
+- **Merged**: PR #19 "break and continue for loops"
+  (`feat/20260720-break-continue`) — clean first pass, no bounces. Added
+  `BreakStmt`/`ContinueStmt` AST nodes, parser support restricted to loop
+  bodies via a `_loop_depth` counter mirroring `_fn_depth`'s handling of
+  `return` (correctly reset across function boundaries so `break`/
+  `continue` can't leak out of a nested function to an outer loop), and
+  interpreter support via `_BreakSignal`/`_ContinueSignal` caught at each
+  loop's own execution site so nested loops are correctly isolated.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit (247
+  tests passing). Reviewer's only note was a non-blocking observation: no
+  test explicitly covers `break` in a loop nested directly inside another
+  loop (not through a function call), though the mechanism is identical to
+  the tested function-boundary case; QA's smoke test covered exactly that
+  gap by hand and confirmed inner `break` doesn't leak to the outer loop.
+  BACKLOG.md task marked done and remaining tasks renumbered; task 1 is now
+  math builtins (`abs`/`min`/`max`/`round`).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Nineteenth PR, nineteenth merge, first try — Cinder now has `break` and
+  `continue` for both loop kinds with correct function-boundary isolation,
+  and the queue is clear for the next Engineer session to start on math
+  builtins.

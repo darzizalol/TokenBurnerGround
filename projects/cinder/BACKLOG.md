@@ -11,42 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `break` and `continue` for loops [claimed 2026-07-20T14:34:24Z]
-
-Build: add `break` and `continue` statement support for both `while` and
-`for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
-(`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for the bare
-`break;` / `continue;` keywords, restricted to loop bodies the same way
-`return` is restricted to function bodies today — track loop-nesting depth
-during parsing and raise `ParseError` (with line/column) if `break`/
-`continue` appears outside a loop. Evaluator support (`cinder/interpreter.py`)
-via internal control-flow signals following the existing `_ReturnSignal`
-pattern: `break` unwinds to the nearest enclosing loop's execution and stops
-it; `continue` unwinds to the nearest enclosing loop's execution and
-proceeds to its next iteration (for `while`, re-checks the condition; for
-`for`-in, advances to the next element).
-
-Acceptance criteria:
-- `while` loop with a `break` inside an `if` exits the loop immediately,
-  not running remaining iterations.
-- `while` loop with a `continue` inside an `if` skips the rest of that
-  iteration's body but keeps looping.
-- Same two behaviors for `for`-in loops.
-- `break`/`continue` used outside any loop raises `ParseError` with
-  line/column, at parse time (not a runtime crash).
-- `break`/`continue` inside a function nested inside a loop body still
-  refers to that loop, not some caller's loop (regression test recommended
-  since `return` already threads through nested calls via exceptions —
-  `break`/`continue` must not accidentally unwind past a function call
-  boundary it shouldn't).
-- Full test suite passes, including new parser/interpreter tests.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: math builtins
+## 1. Standard library: math builtins
 
 Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
 (both variadic — one or more numeric arguments, `int` or `float`), and
@@ -75,7 +40,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. REPL: command history via `readline`
+## 2. REPL: command history via `readline`
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End
@@ -107,7 +72,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 
-## 4. Negative indexing for lists and strings
+## 3. Negative indexing for lists and strings
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
 in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
@@ -133,7 +98,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 5. Standard library: `contains` and `reverse`
+## 4. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -166,7 +131,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 6. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
-ascending-sorted list (non-mutating, matching `reverse` from task 6) that
+ascending-sorted list (non-mutating, matching `reverse` from task 4) that
 accepts either an all-numeric list (`int`/`float`, compared numerically)
 or an all-string list (compared lexicographically). Reject mixed
 numeric/string lists and any list containing an unsupported element type
@@ -349,7 +314,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
   `CinderRuntimeError` for a non-list iterable, and binds the loop variable
   in a fresh child `Environment` per iteration so closures created across
   iterations capture their own value rather than the final one.
-  `break`/`continue` intentionally left out (now backlog task 2).
+  `break`/`continue` intentionally left out (shipped separately, PR #19).
 - **Standard library: string methods** — merged 2026-07-20T14:29:19Z via
   PR #18 (`feat/20260720-string-methods`). Added `upper(s)`, `lower(s)`,
   `trim(s)`, `split(s, sep)`, and `join(list, sep)` to `cinder/builtins.py`,
@@ -358,6 +323,13 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
   as a raw traceback instead of a `CinderRuntimeError`; fixed by rejecting
   an empty separator explicitly before calling `.split()`, matching the
   `_int`/`_float` exception-conversion pattern.
+- **`break` and `continue` for loops** — merged 2026-07-20T14:44:02Z via
+  PR #19 (`feat/20260720-break-continue`). Added `BreakStmt`/`ContinueStmt`
+  AST nodes, parser support restricted to loop bodies via a `_loop_depth`
+  counter mirroring `_fn_depth`'s handling of `return` (reset across
+  function boundaries so `break`/`continue` can't leak out of a nested
+  function to an outer loop), and interpreter support via
+  `_BreakSignal`/`_ContinueSignal` caught at each loop's own execution site.
 
 ## Graveyard
 

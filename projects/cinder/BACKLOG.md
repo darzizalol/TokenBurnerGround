@@ -195,6 +195,98 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
 
 ---
 
+## 6. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+
+Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
+types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
+the same two-char lookahead pattern already used for `==`/`!=`/`<=`/`>=`
+(the `_match` helper, exercised around lines 178-198) — each is one of
+`_SIMPLE_TOKENS`'s existing single-char operators immediately followed by
+`=` with no space, so `+=` must lex as one token, not `PLUS` then `EQ`.
+In `cinder/parser.py`'s `_assignment` (line 249), after the existing
+`TokenType.EQ` branch, check for these five compound tokens; when
+matched, desugar at *parse time* into `Assign(expr.name, Binary(expr,
+<the corresponding PLUS/MINUS/STAR/SLASH/PERCENT token>, value), ...)` —
+i.e. `x += 1` parses exactly as if written `x = x + 1`, reusing the
+existing `Binary` AST node and `_evaluate_binary`'s type-checking/error
+handling rather than adding new interpreter logic. Restrict compound
+assignment to `Identifier` targets only: raise `ParseError` ("invalid
+assignment target") for an `Index` target (e.g. `list[0] += 1`),
+matching plain `=`'s existing rule — do not implement compound
+`IndexAssign` support, that's future scope, kept out to keep this task
+small.
+
+Acceptance criteria:
+- `let x = 5; x += 3;` leaves `x` as `8`; same shape for `-=`, `*=`,
+  `/=`, `%=` (e.g. `x -= 2`, `x *= 4`, `x /= 2`, `x %= 3`).
+- Compound assignment to an undefined variable raises the existing
+  "undefined variable" runtime error (via the existing `Assign` path,
+  unchanged).
+- Type errors propagate from `Binary` unchanged, e.g. `let s = "a"; s -=
+  1;` raises the same `CinderRuntimeError` as evaluating `s - 1` would.
+- `list[0] += 1;` raises `ParseError` ("invalid assignment target").
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 7. Standard library: `zip`
+
+Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
+**new** list of two-element lists pairing `list1[i]` with `list2[i]`,
+truncating to the shorter length when the inputs differ in length
+(matching Python's `zip` truncation behavior — never erroring on
+mismatched lengths). Non-mutating, matching `reverse`/`sort`/`map`/
+`filter`'s style. Both arguments must be `list`; a non-list argument
+raises `CinderRuntimeError` with line/column, matching the existing
+type-check style. No callback/`call_value` dependency — this task is
+independent of task 1 and can be done in either order.
+
+Acceptance criteria:
+- `zip([1, 2, 3], ["a", "b", "c"])` is `[[1, "a"], [2, "b"], [3, "c"]]`.
+- `zip([1, 2], [1])` is `[[1, 1]]` (truncates to the shorter list).
+- `zip([], [1, 2])` is `[]`.
+- `zip(5, [1])` and `zip([1], 5)` raise `CinderRuntimeError` with
+  line/column.
+- Neither input list is mutated (regression test).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. String and list repetition via `*`
+
+Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
+(currently delegating straight to `_numeric_op` around line 414-415) to
+also support `str * int`/`int * str` and `list * int`/`int * list`,
+returning the value repeated `n` times with Python semantics: `"ab" *
+3` is `"ababab"`, `[1, 2] * 2` is `[1, 2, 1, 2]`, and a zero or negative
+count returns an empty string/list (matching Python's `"x" * -1 ==
+""`). Check for a (`str`-or-`list`, `int`) operand pairing *before*
+falling through to `_numeric_op`, so genuinely unsupported combinations
+(e.g. `[1] * "a"`, `[1] * 1.5`) still fall through to `_numeric_op` and
+raise its existing type error. Only `int` counts are valid — a `float`
+count (even a whole number like `2.0`) is not a valid repeat count and
+must raise `CinderRuntimeError`, matching `range`/`slice`'s int-only
+rule.
+
+Acceptance criteria:
+- `"ab" * 3` is `"ababab"`; `3 * "ab"` is `"ababab"` (commutative).
+- `[1, 2] * 2` is `[1, 2, 1, 2]`; `2 * [1, 2]` is `[1, 2, 1, 2]`.
+- `"x" * 0` is `""`; `[1] * -1` is `[]` (Python-style clamp, no error).
+- `[1] * 1.5` and `"a" * 1.5` raise `CinderRuntimeError` (non-int
+  count).
+- The input list is not mutated by list repetition (regression test).
+- Existing numeric `a * b` behavior is unchanged (regression test).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sort`
+## 1. Standard library: `sort` [claimed 2026-07-20T19:58:27Z]
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 2) that

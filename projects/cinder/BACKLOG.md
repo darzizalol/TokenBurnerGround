@@ -49,9 +49,9 @@ fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
 and accepting a Cinder function *value* as the second argument — either a
 `CinderFunction` (a `fn`-declared closure) or a `Builtin` (a stdlib function
 passed by name, e.g. `abs`). Calling a `Builtin` is already a one-liner
-(`callee.call(arguments, line, column)`, `cinder/interpreter.py:96`), but
-calling a `CinderFunction` is currently *inline* logic inside
-`Interpreter._evaluate_call` (`cinder/interpreter.py:221-243`: arity check,
+(`callee.call(arguments, expr.line, expr.column)`, `cinder/interpreter.py:229`),
+but calling a `CinderFunction` is currently *inline* logic inside
+`Interpreter._evaluate_call` (`cinder/interpreter.py:225-248`: arity check,
 new `Environment(callee.closure)`, `self.execute(callee.decl.body,
 call_env)`, catch `_ReturnSignal`) — there is no reusable method for it yet.
 First refactor that block into a standalone helper both call sites share
@@ -92,9 +92,9 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then
 for each element `acc = fn(acc, element)`, returning the final `acc`.
-Depends on task 3's `call_value` helper in `cinder/interpreter.py` for
+Depends on task 2's `call_value` helper in `cinder/interpreter.py` for
 invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback) —
-do not attempt this task before task 3 lands, and reuse `call_value`
+do not attempt this task before task 2 lands, and reuse `call_value`
 rather than re-inlining call dispatch. First argument must be a `list`;
 second argument must be callable; anything else raises
 `CinderRuntimeError` with line/column, matching `map`/`filter`'s

@@ -11,35 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `for`-in loop over lists [claimed 2026-07-20T14:02:02Z]
-
-Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
-node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for
-`for NAME in EXPR BLOCK`, reusing existing block-statement parsing for the
-body, and evaluator support (`cinder/interpreter.py`) that evaluates EXPR
-once, raises `CinderRuntimeError` if the result isn't a list, then iterates
-its elements binding NAME in a fresh child `Environment` per iteration (so
-a closure created inside the loop body captures that iteration's value, not
-the final one — consistent with how `fn` closures already work). Do not
-implement `break`/`continue`; leave that as a future task if it's needed.
-
-Acceptance criteria:
-- `for x in [1, 2, 3] { print(x); }` prints `1`, `2`, `3` on separate
-  lines.
-- Looping over a non-list expression (e.g. `for x in 5 { }`) raises
-  `CinderRuntimeError` with line/column.
-- A function defined inside the loop body that captures the loop variable
-  retains its own iteration's value, not the final one — add a regression
-  test pinning this per-iteration scoping.
-- Full test suite passes, including new parser/interpreter tests for
-  `ForStmt`.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: string methods
+## 1. Standard library: string methods
 
 Build: extend `cinder/builtins.py` with string-manipulation builtins:
 `upper(s)`, `lower(s)`, `trim(s)` (strips leading/trailing whitespace),
@@ -62,7 +34,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. `break` and `continue` for loops
+## 2. `break` and `continue` for loops
 
 Build: add `break` and `continue` statement support for `while` and (once
 the for-in loop task lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
@@ -98,7 +70,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: math builtins
+## 3. Standard library: math builtins
 
 Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
 (both variadic — one or more numeric arguments, `int` or `float`), and
@@ -127,7 +99,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. REPL: command history via `readline`
+## 4. REPL: command history via `readline`
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End
@@ -159,7 +131,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 
-## 6. Negative indexing for lists and strings
+## 5. Negative indexing for lists and strings
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
 in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
@@ -185,7 +157,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 7. Standard library: `contains` and `reverse`
+## 6. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -215,7 +187,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `sort`
+## 7. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 8) that

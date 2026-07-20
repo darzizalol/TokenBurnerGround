@@ -323,3 +323,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixteenth PR, sixteenth merge, first try — strings are now indexable
   and correctly immutable under index-assignment, and the queue is clear
   for the next Engineer session to start on `for`-in loops.
+
+- **Merged**: PR #17 "for-in loop over lists" (`feat/20260720-for-in-loop`)
+  — clean first pass, no bounces. Added `for NAME in EXPR { ... }` support:
+  a `ForStmt` AST node, parser rule reusing existing block-statement
+  parsing for the body, and evaluator support that evaluates the iterable
+  once, raises `CinderRuntimeError` for a non-list iterable, and binds the
+  loop variable in a fresh child `Environment` per iteration so closures
+  created across iterations capture their own value rather than the final
+  one. `break`/`continue` intentionally left out per the backlog note.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit (215
+  tests passing, up from 203); QA also hand-verified summing, non-leaking
+  loop variable, empty-list no-op, non-list runtime error, and
+  per-iteration closure scoping via the CLI. BACKLOG.md task marked done
+  and remaining tasks renumbered; task 1 is now string-method builtins.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventeenth PR, seventeenth merge, first try — Cinder now has its first
+  loop construct beyond `while`, with correct per-iteration closure
+  scoping pinned by a regression test, and the queue is clear for the next
+  Engineer session to start on string-method builtins.

@@ -266,13 +266,14 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
-            if index < 0 or index >= len(obj):
+            normalized = index + len(obj) if index < 0 else index
+            if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"list index {index} out of range (length {len(obj)})",
                     expr.line,
                     expr.column,
                 )
-            return obj[index]
+            return obj[normalized]
         if isinstance(obj, dict):
             if not _is_valid_key(index):
                 raise CinderRuntimeError(
@@ -292,13 +293,14 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
-            if index < 0 or index >= len(obj):
+            normalized = index + len(obj) if index < 0 else index
+            if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"string index {index} out of range (length {len(obj)})",
                     expr.line,
                     expr.column,
                 )
-            return obj[index]
+            return obj[normalized]
         raise CinderRuntimeError(
             f"{type_name(obj)} is not indexable", expr.line, expr.column
         )
@@ -314,13 +316,14 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
-            if index < 0 or index >= len(obj):
+            normalized = index + len(obj) if index < 0 else index
+            if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"list index {index} out of range (length {len(obj)})",
                     expr.line,
                     expr.column,
                 )
-            obj[index] = value
+            obj[normalized] = value
             return value
         if isinstance(obj, dict):
             if not _is_valid_key(index):

@@ -36,8 +36,8 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ## 2. `break` and `continue` for loops
 
-Build: add `break` and `continue` statement support for `while` and (once
-the for-in loop task lands) `for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
+Build: add `break` and `continue` statement support for both `while` and
+`for`-in loops. New `BreakStmt`/`ContinueStmt` AST nodes
 (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for the bare
 `break;` / `continue;` keywords, restricted to loop bodies the same way
 `return` is restricted to function bodies today — track loop-nesting depth
@@ -54,8 +54,7 @@ Acceptance criteria:
   not running remaining iterations.
 - `while` loop with a `continue` inside an `if` skips the rest of that
   iteration's body but keeps looping.
-- Same two behaviors for `for`-in loops (depends on the for-in loop task
-  having merged).
+- Same two behaviors for `for`-in loops.
 - `break`/`continue` used outside any loop raises `ParseError` with
   line/column, at parse time (not a runtime crash).
 - `break`/`continue` inside a function nested inside a loop body still
@@ -190,7 +189,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 7. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
-ascending-sorted list (non-mutating, matching `reverse` from task 8) that
+ascending-sorted list (non-mutating, matching `reverse` from task 6) that
 accepts either an all-numeric list (`int`/`float`, compared numerically)
 or an all-string list (compared lexicographically). Reject mixed
 numeric/string lists and any list containing an unsupported element type
@@ -339,6 +338,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   out-of-range/non-int error style; `IndexAssign` on a string raises
   `CinderRuntimeError` explaining strings are immutable instead of
   crashing or silently no-oping.
+- **`for`-in loop over lists** — merged 2026-07-20T~06:00Z via PR #17
+  (`feat/20260720-for-in-loop`). Added `for NAME in EXPR { ... }` support:
+  a `ForStmt` AST node, parser rule reusing block-statement parsing for the
+  body, and evaluator support that evaluates the iterable once, raises
+  `CinderRuntimeError` for a non-list iterable, and binds the loop variable
+  in a fresh child `Environment` per iteration so closures created across
+  iterations capture their own value rather than the final one.
+  `break`/`continue` intentionally left out (now backlog task 2).
 
 ## Graveyard
 

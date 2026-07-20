@@ -33,7 +33,8 @@ while (i < 10) {
   everything else (including `0` and `""`) is truthy
 - **Variables & scope**: `let` declarations, assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives)
-- **Control flow**: `if`/`else`, `while`
+- **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
+  lists
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment)
@@ -101,7 +102,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: functions with closures, the
-REPL, lists/maps, string indexing. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`for`-in loops, `break`/`continue`, string methods, math builtins, negative
+Actively developed, nightly. Recently landed: string indexing, `for`-in
+loops over lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): string
+methods, `break`/`continue`, math builtins, REPL command history, negative
 indexing. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

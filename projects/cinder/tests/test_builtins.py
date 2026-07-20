@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, abs, min, max, round,
-contains, reverse."""
+contains, reverse, sort."""
 
 import io
 import subprocess
@@ -364,6 +364,37 @@ class TestReverse(unittest.TestCase):
     def test_reverse_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("reverse([1], 2);")
+
+
+class TestSort(unittest.TestCase):
+    def test_sort_of_ints(self):
+        self.assertEqual(run("let result = sort([3, 1, 2]);").get("result"), [1, 2, 3])
+
+    def test_sort_of_floats(self):
+        self.assertEqual(run("let result = sort([2.5, 1.1]);").get("result"), [1.1, 2.5])
+
+    def test_sort_of_strings(self):
+        self.assertEqual(run('let result = sort(["b", "a"]);').get("result"), ["a", "b"])
+
+    def test_sort_of_empty_list(self):
+        self.assertEqual(run("let result = sort([]);").get("result"), [])
+
+    def test_sort_of_mixed_numeric_and_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sort([1, "a"]);')
+
+    def test_sort_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sort(5);")
+
+    def test_sort_does_not_mutate_input(self):
+        env = run("let xs = [3, 1, 2]; let result = sort(xs);")
+        self.assertEqual(env.get("xs"), [3, 1, 2])
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_sort_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sort([1], 2);")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

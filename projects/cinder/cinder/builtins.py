@@ -2,15 +2,20 @@
 
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
-`upper`, `lower`, `trim`, `split`, and `join` already defined. CLI
-entrypoints and the REPL should build their global scope with this instead
-of a bare `Environment()` so `.cin` scripts can actually produce output.
+`upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, and `round`
+already defined. CLI entrypoints and the REPL should build their global
+scope with this instead of a bare `Environment()` so `.cin` scripts can
+actually produce output.
 """
 
 from cinder.errors import CinderRuntimeError
 from cinder.interpreter import Builtin, Environment, type_name
 
 _NUMERIC = (int, float)
+
+
+def _is_numeric(value: object) -> bool:
+    return isinstance(value, _NUMERIC) and not isinstance(value, bool)
 
 
 def stringify(value: object, *, quoted: bool = False) -> str:
@@ -213,6 +218,48 @@ def _join(arguments: list, line: int, column: int) -> object:
     return sep.join(items)
 
 
+def _abs(arguments: list, line: int, column: int) -> object:
+    _require_arity("abs", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"abs() requires a number, got {type_name(value)}", line, column
+        )
+    return abs(value)
+
+
+def _min(arguments: list, line: int, column: int) -> object:
+    if not arguments:
+        raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
+    for value in arguments:
+        if not _is_numeric(value):
+            raise CinderRuntimeError(
+                f"min() requires numbers, got {type_name(value)}", line, column
+            )
+    return min(arguments)
+
+
+def _max(arguments: list, line: int, column: int) -> object:
+    if not arguments:
+        raise CinderRuntimeError("max() expects at least 1 argument, got 0", line, column)
+    for value in arguments:
+        if not _is_numeric(value):
+            raise CinderRuntimeError(
+                f"max() requires numbers, got {type_name(value)}", line, column
+            )
+    return max(arguments)
+
+
+def _round(arguments: list, line: int, column: int) -> object:
+    _require_arity("round", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"round() requires a number, got {type_name(value)}", line, column
+        )
+    return round(value)
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -229,6 +276,10 @@ _BUILTINS = {
     "trim": _trim,
     "split": _split,
     "join": _join,
+    "abs": _abs,
+    "min": _min,
+    "max": _max,
+    "round": _round,
 }
 
 

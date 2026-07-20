@@ -38,14 +38,15 @@ while (i < 10) {
   `break`/`continue` in both loop kinds
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
-  environment)
+  environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
+  anywhere a value is expected (e.g. passed straight to `map`/`filter`)
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `contains`, `reverse`, `sort`, `range`, string methods `upper`,
-  `lower`, `trim`, `split`, `join`, and math builtins `abs`, `min`, `max`,
-  `round`
+  `values`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`, string
+  methods `upper`, `lower`, `trim`, `split`, `join`, and math builtins `abs`,
+  `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks
 - **Two front ends**: run `.cin` script files, or an interactive REPL with
@@ -107,8 +108,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the `range` builtin. Coming
-up next (see [`BACKLOG.md`](BACKLOG.md)): `map`/`filter`, `reduce`, more
-string builtins, list `slice`/`concat`, `assert`, compound assignment
-operators, `zip`, and string/list repetition via `*`. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `map`/`filter` and anonymous
+function expressions. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`reduce`, more string builtins (`find`/`starts_with`/`ends_with`/`replace`),
+list `slice`/`concat`, `assert`, compound assignment operators, `zip`, and
+string/list repetition via `*`. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

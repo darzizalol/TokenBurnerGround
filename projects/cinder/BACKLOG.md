@@ -241,6 +241,84 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
+## 8. `in` operator for membership tests
+
+Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
+dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
+lexed as `TokenType.IN` via the existing identifier/keyword path). In
+`cinder/parser.py`, add `expr in expr` as a new precedence tier between
+`_comparison` and `_and` (i.e. `_and` calls a new `_membership`, which
+calls `_comparison`, mirroring `_comparison`'s own one-token-lookahead-loop
+shape but only for the single `IN` token) — this makes `a in b and c in d`
+parse as expected. Reuse the existing `Binary` AST node with the `IN`
+token as the operator, no new AST node. In
+`cinder/interpreter.py`'s `_evaluate_binary`, add an `IN` case that
+implements exactly `contains`'s existing semantics (list `==` membership,
+map key check, string substring check — see `_contains` in
+`cinder/builtins.py`, factor its body into a shared helper both call rather
+than duplicating the type dispatch) and raises `CinderRuntimeError` with
+line/column for any other right-operand type.
+
+Acceptance criteria:
+- `2 in [1, 2, 3]` is `true`; `5 in [1, 2, 3]` is `false`.
+- `"a" in {"a": 1}` is `true` (key check, not value check); `"z" in {"a": 1}`
+  is `false`.
+- `"ll" in "hello"` is `true` (substring); `"z" in "hello"` is `false`.
+- `1 in 5` raises `CinderRuntimeError` with line/column (non-collection
+  right operand).
+- `1 in [1] and 2 in [2]` evaluates both membership tests then `and`s them
+  (precedence regression test).
+- `contains([1,2], 1)` and `1 in [1,2]` agree on every case above (shared
+  helper, no divergence).
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `cinder/builtins.py`, `tests/test_lexer.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 9. Runtime errors report the call stack, not just the innermost site
+
+Build: today a `CinderRuntimeError` raised deep inside nested function
+calls only reports the line/column of the failing operation itself, with
+no indication of which call chain reached it — bad ergonomics for
+debugging recursive Cinder programs. Give `CinderRuntimeError` (in
+`cinder/errors.py`) an optional `frames: list[tuple[str, int, int]]` field
+(function name, call-site line, call-site column), defaulting to `[]`.
+In `cinder/interpreter.py`'s function-call path (`call_value` and/or
+`_evaluate_call`, wherever a `CinderFunction` body actually executes),
+wrap the body execution in a `try/except CinderRuntimeError` that appends
+`(function_name, call_line, call_column)` to the exception's `frames` list
+and re-raises the *same* exception object (not a new one) — so by the time
+it reaches the CLI, `frames` holds the full chain, innermost call first.
+Update `cinder/cli.py`'s diagnostic printer: if `frames` is non-empty,
+print one `  at <name> (line:column)` line per frame after the existing
+one-line `file:line:column: message` header (most-recent-call-first order,
+matching how `frames` was built), still no raw Python traceback.
+
+Acceptance criteria:
+- A direct (non-nested) runtime error, e.g. `1 + "a";` at top level, prints
+  exactly the existing one-line diagnostic — `frames` is empty, no `at`
+  lines added (regression test, exact stdout/stderr match against current
+  behavior).
+- `fn f() { return 1 + "a"; } f();` prints the one-line diagnostic followed
+  by one `  at f (line:column)` line pointing at the `f()` call site.
+- A two-level chain (`fn a() { b(); } fn b() { return 1 + "a"; } a();`)
+  prints two `at` lines, `b`'s call site before `a`'s (innermost first).
+- A `CinderRuntimeError` raised and caught *inside* Cinder-callable Python
+  builtins (e.g. `map`'s callback raising) still gets frames appended for
+  each Cinder-level call it passes through on the way out.
+- Recursive functions that error out (e.g. blow past a manual depth check)
+  produce a `frames` list one entry per active call, not truncated
+  (regression test with 3+ levels of recursion).
+- Full test suite passes.
+
+Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
+`tests/test_errors.py`, `tests/test_interpreter.py`, `tests/test_cli.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

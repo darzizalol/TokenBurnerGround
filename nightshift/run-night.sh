@@ -85,7 +85,7 @@ STARTED=1
 # Nightly token ledger: fold completed transcripts into the README burn chart.
 if python3 "$DIR/token-ledger.py" update >> "$NIGHT_LOG" 2>&1; then
   cd "$REPO" \
-    && git add README.md nightshift/tokens.csv >> "$NIGHT_LOG" 2>&1 \
+    && git add README.md nightshift/tokens.csv nightshift/burn.svg >> "$NIGHT_LOG" 2>&1 \
     && { git diff --cached --quiet \
          || { git commit -m "chore: nightly token-burn ledger update" >> "$NIGHT_LOG" 2>&1 \
               && git push origin main >> "$NIGHT_LOG" 2>&1; }; } \

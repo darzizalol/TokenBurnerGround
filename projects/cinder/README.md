@@ -42,8 +42,8 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, string methods `upper`, `lower`, `trim`, `split`, `join`, and
-  math builtins `abs`, `min`, `max`, `round`
+  `values`, `contains`, `reverse`, string methods `upper`, `lower`, `trim`,
+  `split`, `join`, and math builtins `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks
 - **Two front ends**: run `.cin` script files, or an interactive REPL with

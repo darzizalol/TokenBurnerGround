@@ -2,10 +2,10 @@
 
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
-`upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, and `round`
-already defined. CLI entrypoints and the REPL should build their global
-scope with this instead of a bare `Environment()` so `.cin` scripts can
-actually produce output.
+`upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, `round`,
+`contains`, and `reverse` already defined. CLI entrypoints and the REPL
+should build their global scope with this instead of a bare `Environment()`
+so `.cin` scripts can actually produce output.
 """
 
 from cinder.errors import CinderRuntimeError
@@ -260,6 +260,38 @@ def _round(arguments: list, line: int, column: int) -> object:
     return round(value)
 
 
+def _contains(arguments: list, line: int, column: int) -> object:
+    _require_arity("contains", arguments, 2, line, column)
+    collection, item = arguments
+    if isinstance(collection, list):
+        return any(item == element for element in collection)
+    if isinstance(collection, dict):
+        try:
+            return item in collection
+        except TypeError:
+            return False
+    if isinstance(collection, str):
+        if not isinstance(item, str):
+            raise CinderRuntimeError(
+                f"contains() on a string requires a string to search for, got {type_name(item)}",
+                line, column,
+            )
+        return item in collection
+    raise CinderRuntimeError(
+        f"contains() requires a list, map, or string, got {type_name(collection)}", line, column
+    )
+
+
+def _reverse(arguments: list, line: int, column: int) -> object:
+    _require_arity("reverse", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"reverse() requires a list, got {type_name(value)}", line, column
+        )
+    return list(reversed(value))
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -280,6 +312,8 @@ _BUILTINS = {
     "min": _min,
     "max": _max,
     "round": _round,
+    "contains": _contains,
+    "reverse": _reverse,
 }
 
 

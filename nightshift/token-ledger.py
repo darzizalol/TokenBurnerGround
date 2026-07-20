@@ -138,49 +138,61 @@ DIGIT_W = 34          # monospace digit advance at font-size 56
 
 
 def burn_svg(total, as_of):
-    """Animated burn counter: flickering flame + odometer roll-up of the total."""
-    text = f"{total:,}"
-    # layout: flame block (~120px) + digits/commas
-    widths = [DIGIT_W if ch.isdigit() else 16 for ch in text]
-    num_w = sum(widths)
-    width = max(560, 150 + num_w + 60)
-    cx = 150  # number block start x
+    """Animated burn counter: flickering flame + odometer roll-up of the total.
 
-    cols, keyframes, x = [], [], cx
+    Robustness rules learned the hard way:
+    - no clip-path (browsers disagree on whether it follows CSS transforms);
+      each digit rolls inside its own nested <svg> viewport, which clips
+      natively everywhere.
+    - digits animate with SMIL, and the RESTING state is the final number,
+      so a renderer without animation still shows the correct total.
+    """
+    text = f"{total:,}"
+    comma_w = 18
+    widths = [DIGIT_W if ch.isdigit() else comma_w for ch in text]
+    num_w = sum(widths)
+    width = max(560, 150 + num_w + 40)
+    cx = 150  # number block start x
+    top = 84  # digit window top; baseline inside a column is 50
+
+    cols, x = [], cx
     for i, ch in enumerate(text):
         if ch.isdigit():
             d = int(ch)
+            off = d * DIGIT_H  # roll distance
+            delay = 0.12 * i
+            dur = delay + 0.9 + 0.07 * d
+            t1 = f"{delay / dur:.3f}" if dur else "0"
             strip = "".join(
-                f'<text x="{x}" y="{132 + n * DIGIT_H}" class="num">{n}</text>'
+                f'<text x="{DIGIT_W // 2}" y="{50 + n * DIGIT_H}" class="num" '
+                f'text-anchor="middle">{n}</text>'
                 for n in range(10)
             )
-            delay = 0.15 * i
-            keyframes.append(
-                f"@keyframes r{i}{{from{{transform:translateY(0)}}"
-                f"to{{transform:translateY({-d * DIGIT_H}px)}}}}"
-                f".c{i}{{animation:r{i} {0.9 + 0.08 * d:.2f}s "
-                f"cubic-bezier(.2,.7,.3,1) {delay:.2f}s forwards}}"
+            cols.append(
+                f'<svg x="{x}" y="{top}" width="{DIGIT_W}" height="{DIGIT_H}" '
+                f'viewBox="0 0 {DIGIT_W} {DIGIT_H}">'
+                f'<g transform="translate(0,{-off})"><g>'
+                f'<animateTransform attributeName="transform" type="translate" '
+                f'values="0 {off};0 {off};0 0" keyTimes="0;{t1};1" '
+                f'dur="{dur:.2f}s" begin="0s" fill="freeze" additive="sum" '
+                f'calcMode="spline" keySplines="0 0 1 1;.2 .7 .3 1"/>'
+                f"{strip}</g></g></svg>"
             )
-            cols.append(f'<g class="c{i}" clip-path="url(#w)">{strip}</g>')
         else:
-            cols.append(f'<text x="{x}" y="132" class="num comma">{ch}</text>')
+            cols.append(
+                f'<text x="{x + comma_w // 2}" y="{top + 50}" class="num comma" '
+                f'text-anchor="middle">{ch}</text>'
+            )
         x += widths[i]
 
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="200" viewBox="0 0 {width} 200" role="img" aria-label="{text} tokens burnt">
 <style>
-.num{{font:700 56px ui-monospace,'Cascadia Code',Menlo,monospace;fill:#ffd166}}
+.num{{font:700 56px ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;fill:#ffd166}}
 .comma{{fill:#8b6a2b}}
 .label{{font:600 15px -apple-system,'Segoe UI',sans-serif;fill:#e8883a;letter-spacing:4px}}
 .sub{{font:400 12px -apple-system,'Segoe UI',sans-serif;fill:#6e5a3a}}
-.flame{{transform-origin:60px 128px;animation:fl 1.6s ease-in-out infinite}}
-.flame2{{transform-origin:60px 124px;animation:fl 1.1s ease-in-out .4s infinite}}
-@keyframes fl{{0%,100%{{transform:scaleY(1) scaleX(1)}}50%{{transform:scaleY(1.12) scaleX(.94)}}}}
-.glow{{animation:gl 2.2s ease-in-out infinite}}
-@keyframes gl{{0%,100%{{opacity:.25}}50%{{opacity:.55}}}}
-{"".join(keyframes)}
 </style>
 <defs>
-<clipPath id="w"><rect x="0" y="84" width="{width}" height="{DIGIT_H}"/></clipPath>
 <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
 <stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#1c1208"/>
 </linearGradient>
@@ -190,9 +202,16 @@ def burn_svg(total, as_of):
 <radialGradient id="halo"><stop offset="0" stop-color="#ff7b00"/><stop offset="1" stop-color="#ff7b00" stop-opacity="0"/></radialGradient>
 </defs>
 <rect width="{width}" height="200" rx="16" fill="url(#bg)" stroke="#3a2a12"/>
-<circle class="glow" cx="60" cy="105" r="70" fill="url(#halo)"/>
-<g class="flame"><path d="M60 48c4 16 22 24 22 46a22 22 0 1 1-44 0c0-10 5-16 10-22 1 8 3 11 7 14-2-14 1-26 5-38z" fill="url(#fg)"/></g>
-<g class="flame2"><path d="M60 86c2 8 10 12 10 22a10 10 0 1 1-20 0c0-9 7-13 10-22z" fill="#fff3c4"/></g>
+<circle cx="60" cy="105" r="70" fill="url(#halo)" opacity=".35">
+<animate attributeName="opacity" values=".25;.55;.25" dur="2.2s" repeatCount="indefinite"/>
+</circle>
+<g transform="translate(60,128)"><g>
+<animateTransform attributeName="transform" type="scale" values="1 1;.95 1.1;1 1" dur="1.6s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1"/>
+<path d="M0 -80c4 16 22 24 22 46a22 22 0 1 1-44 0c0-10 5-16 10-22 1 8 3 11 7 14-2-14 1-26 5-38z" fill="url(#fg)"/>
+<path d="M0 -42c2 8 10 12 10 22a10 10 0 1 1-20 0c0-9 7-13 10-22z" fill="#fff3c4">
+<animateTransform attributeName="transform" type="scale" values="1 1;1.06 .92;1 1" dur="1.1s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1"/>
+</path>
+</g></g>
 <text x="{cx}" y="62" class="label">TOKENS BURNT</text>
 {"".join(cols)}
 <text x="{cx}" y="172" class="sub">by the autonomous night shift · updated nightly · as of {as_of}</text>

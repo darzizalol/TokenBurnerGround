@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `for`-in loop over lists
+## 1. `for`-in loop over lists [claimed 2026-07-20T14:02:02Z]
 
 Build: add a `for item in expr { ... }` statement — a new `ForStmt` AST
 node (`cinder/ast_nodes.py`), parser support (`cinder/parser.py`) for

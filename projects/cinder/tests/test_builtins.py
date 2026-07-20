@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, abs, min, max, round,
-contains, reverse, sort, range."""
+contains, reverse, sort, range, map, filter."""
 
 import io
 import subprocess
@@ -438,6 +438,67 @@ class TestRange(unittest.TestCase):
         with redirect_stdout(stdout):
             run("for i in range(3) { print(i); }")
         self.assertEqual(stdout.getvalue(), "0\n1\n2\n")
+
+
+class TestMap(unittest.TestCase):
+    def test_map_with_closure(self):
+        env = run("let result = map([1, 2, 3], fn(x) { return x * 2; });")
+        self.assertEqual(env.get("result"), [2, 4, 6])
+
+    def test_map_with_builtin_by_name(self):
+        env = run("let result = map([1, -2, 3], abs);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_map_of_empty_list(self):
+        env = run("let result = map([], fn(x) { return x; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_map_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; let result = map(xs, fn(x) { return x * 2; });")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [2, 4, 6])
+
+    def test_map_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("map(5, fn(x) { return x; });")
+
+    def test_map_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("map([1, 2], 5);")
+
+    def test_map_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("map([1], fn(x, y) { return x; });")
+
+
+class TestFilter(unittest.TestCase):
+    def test_filter_with_closure(self):
+        env = run("let result = filter([1, 2, 3, 4], fn(x) { return x > 2; });")
+        self.assertEqual(env.get("result"), [3, 4])
+
+    def test_filter_of_empty_list(self):
+        env = run("let result = filter([], fn(x) { return true; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_filter_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3, 4]; "
+            "let result = filter(xs, fn(x) { return x > 2; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+        self.assertEqual(env.get("result"), [3, 4])
+
+    def test_filter_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("filter(5, fn(x) { return x; });")
+
+    def test_filter_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("filter([1, 2], 5);")
+
+    def test_filter_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("filter([1], fn(x, y) { return x; });")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

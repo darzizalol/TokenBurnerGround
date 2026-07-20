@@ -461,6 +461,22 @@ class TestFunctions(unittest.TestCase):
         env = run("fn double(n) { return n * 2; } let f = double; let result = f(21);")
         self.assertEqual(env.get("result"), 42)
 
+    def test_anonymous_function_bound_with_let(self):
+        env = run("let double = fn(n) { return n * 2; }; let result = double(21);")
+        self.assertEqual(env.get("result"), 42)
+
+    def test_anonymous_function_called_immediately(self):
+        env = run("let result = fn(n) { return n + 1; }(41);")
+        self.assertEqual(env.get("result"), 42)
+
+    def test_anonymous_function_closes_over_outer_variable(self):
+        env = run(
+            "fn make_adder(x) { return fn(y) { return x + y; }; } "
+            "let add5 = make_adder(5); "
+            "let result = add5(10);"
+        )
+        self.assertEqual(env.get("result"), 15)
+
 
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):

@@ -97,6 +97,18 @@ class IndexAssign:
     column: int
 
 
+@dataclass(frozen=True)
+class FnExpr:
+    """An anonymous `fn(params) { body }` function literal, usable as a value
+    (e.g. passed directly to `map`/`filter`, or bound with `let`) — unlike
+    `FnDecl`, which only appears at statement position and requires a name."""
+
+    params: list
+    body: "Block"
+    line: int
+    column: int
+
+
 Expr = Union[
     Literal,
     Identifier,
@@ -110,6 +122,7 @@ Expr = Union[
     MapLiteral,
     Index,
     IndexAssign,
+    FnExpr,
 ]
 
 

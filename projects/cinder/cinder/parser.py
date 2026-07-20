@@ -12,6 +12,12 @@ Statement grammar: a program is a list of statements, each one of
 (ForStmt, body always a block), `break;`/`continue;` (BreakStmt/ContinueStmt,
 only valid inside a loop), or a bare `<expr>;` (ExprStmt).
 
+`fn` at statement position (`fn NAME(params) { body }`) is a named `FnDecl`;
+`fn` anywhere else in the expression grammar (`_primary`) is an anonymous
+`FnExpr` function literal usable as a value, e.g. passed straight to a
+callback-taking builtin like `map`/`filter` or bound with `let`. Both share
+parameter/body parsing via `_fn_params_and_body`.
+
 A leading `{` is ambiguous between a Block and a statement-level expression
 rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
 disambiguates by attempting a speculative full-expression parse first (so
@@ -36,6 +42,7 @@ from cinder.ast_nodes import (
     Expr,
     ExprStmt,
     FnDecl,
+    FnExpr,
     ForStmt,
     Grouping,
     Identifier,
@@ -188,7 +195,16 @@ class Parser:
     def _fn_declaration(self) -> Stmt:
         fn_token = self._advance()
         name_token = self._consume(TokenType.IDENTIFIER, "function name after 'fn'")
-        self._consume(TokenType.LPAREN, "'(' after function name")
+        params, body = self._fn_params_and_body()
+        return FnDecl(name_token.lexeme, params, body, fn_token.line, fn_token.column)
+
+    def _fn_expression(self) -> Expr:
+        fn_token = self._advance()
+        params, body = self._fn_params_and_body()
+        return FnExpr(params, body, fn_token.line, fn_token.column)
+
+    def _fn_params_and_body(self) -> tuple:
+        self._consume(TokenType.LPAREN, "'(' after 'fn'")
         params = []
         if not self._check(TokenType.RPAREN):
             params.append(self._consume(TokenType.IDENTIFIER, "parameter name").lexeme)
@@ -209,7 +225,7 @@ class Parser:
         body = self._block()
         self._loop_depth = outer_loop_depth
         self._fn_depth -= 1
-        return FnDecl(name_token.lexeme, params, body, fn_token.line, fn_token.column)
+        return params, body
 
     def _return_statement(self) -> Stmt:
         return_token = self._advance()
@@ -365,6 +381,8 @@ class Parser:
             return self._list_literal()
         if token.type == TokenType.LBRACE:
             return self._map_literal()
+        if token.type == TokenType.FN:
+            return self._fn_expression()
 
         raise ParseError(
             f"expected an expression, found {self._describe(token)}",

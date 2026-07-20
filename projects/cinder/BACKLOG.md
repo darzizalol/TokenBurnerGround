@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `contains` and `reverse`
+## 1. Standard library: `contains` and `reverse` [claimed 2026-07-20T19:47:56Z]
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks

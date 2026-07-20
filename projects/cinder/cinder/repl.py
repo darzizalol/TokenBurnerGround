@@ -26,6 +26,18 @@ _OPENERS = {TokenType.LPAREN, TokenType.LBRACE, TokenType.LBRACKET}
 _CLOSERS = {TokenType.RPAREN, TokenType.RBRACE, TokenType.RBRACKET}
 
 
+def _try_enable_readline() -> bool:
+    """Import `readline` so `input()` gets history/in-line editing for free.
+
+    Not available on every platform (e.g. stock Windows Python), so the REPL
+    must keep working without it."""
+    try:
+        import readline  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def _needs_more_input(source: str) -> bool:
     """True while `source` is an incomplete statement: unbalanced brackets
     or an unterminated string, either of which more lines might complete."""
@@ -48,6 +60,8 @@ def run_repl(
 ) -> None:
     if write is None:
         write = print
+
+    _try_enable_readline()
 
     interpreter = Interpreter()
     env = create_global_environment()

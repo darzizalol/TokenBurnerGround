@@ -41,7 +41,7 @@ while (i < 10) {
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set, plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`
+  `values`, and string methods `upper`, `lower`, `trim`, `split`, `join`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks
 - **Two front ends**: run `.cin` script files, or an interactive REPL
@@ -102,7 +102,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: string indexing, `for`-in
-loops over lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): string
-methods, `break`/`continue`, math builtins, REPL command history, negative
-indexing. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `for`-in loops over lists,
+string methods (`upper`/`lower`/`trim`/`split`/`join`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `break`/`continue`, math builtins, REPL command
+history, negative indexing, `contains`/`reverse`/`sort`. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

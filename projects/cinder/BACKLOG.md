@@ -189,6 +189,33 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. `for`-in loop over strings and maps
+
+Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
+— PR #17 — and raises `CinderRuntimeError` for anything else) to also
+accept a string, iterating character-by-character (each iteration binds the
+loop variable to a length-1 string, same value shape string indexing
+already produces), and a map, iterating over its keys (same
+"keys-not-values" convention `contains`/`keys` already use). Reuse the
+existing per-iteration fresh-`Environment` closure-scoping and evaluate-
+iterable-once behavior — this task only widens which types are accepted,
+it does not change loop mechanics. Any other type (int/float/bool/nil)
+still raises `CinderRuntimeError` with line/column, as today.
+
+Acceptance criteria:
+- `for c in "abc" { print(c); }` prints `a`, `b`, `c` on separate lines.
+- `for k in {"a": 1, "b": 2} { print(k); }` prints each key (order matches
+  Python dict insertion order, same as `keys()`).
+- `for x in [1, 2, 3] { ... }` (existing list behavior) is unchanged —
+  regression test.
+- `for x in 5 { ... }` still raises `CinderRuntimeError` with line/column.
+- Empty string and empty map both loop zero times without error.
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

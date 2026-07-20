@@ -1,5 +1,5 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, upper, lower, trim, split, join."""
+keys, values, upper, lower, trim, split, join, abs, min, max, round."""
 
 import io
 import subprocess
@@ -260,6 +260,68 @@ class TestJoin(unittest.TestCase):
     def test_split_join_round_trip(self):
         env = run('let result = join(split("a,b,c", ","), ",");')
         self.assertEqual(env.get("result"), "a,b,c")
+
+
+class TestAbs(unittest.TestCase):
+    def test_abs_of_negative_int(self):
+        self.assertEqual(run("let result = abs(-3);").get("result"), 3)
+
+    def test_abs_of_negative_float(self):
+        self.assertEqual(run("let result = abs(-3.5);").get("result"), 3.5)
+
+    def test_abs_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('abs("x");')
+
+    def test_abs_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("abs(1, 2);")
+
+
+class TestMin(unittest.TestCase):
+    def test_min_of_several_arguments(self):
+        self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)
+
+    def test_min_of_single_argument(self):
+        self.assertEqual(run("let result = min(5);").get("result"), 5)
+
+    def test_min_of_zero_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("min();")
+
+    def test_min_of_non_numeric_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('min(1, "x");')
+
+
+class TestMax(unittest.TestCase):
+    def test_max_of_several_arguments(self):
+        self.assertEqual(run("let result = max(3, 1, 2);").get("result"), 3)
+
+    def test_max_of_single_argument(self):
+        self.assertEqual(run("let result = max(5);").get("result"), 5)
+
+    def test_max_of_zero_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("max();")
+
+    def test_max_of_non_numeric_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('max(1, "x");')
+
+
+class TestRound(unittest.TestCase):
+    def test_round_ties_to_even(self):
+        self.assertEqual(run("let result = round(2.5);").get("result"), 2)
+        self.assertEqual(run("let result = round(3.5);").get("result"), 4)
+
+    def test_round_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('round("x");')
+
+    def test_round_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("round(1.5, 2);")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

@@ -188,6 +188,8 @@ def _split(arguments: list, line: int, column: int) -> object:
         raise CinderRuntimeError(
             f"split() requires a string separator, got {type_name(sep)}", line, column
         )
+    if sep == "":
+        raise CinderRuntimeError("split() separator must not be empty", line, column)
     return value.split(sep)
 
 

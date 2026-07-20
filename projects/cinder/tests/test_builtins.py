@@ -235,6 +235,10 @@ class TestSplit(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run('split("a,b");')
 
+    def test_split_on_empty_separator_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('split("a,b,c", "");')
+
 
 class TestJoin(unittest.TestCase):
     def test_join_concatenates_with_separator(self):

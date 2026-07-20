@@ -3,7 +3,7 @@
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
 `upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, `round`,
-`contains`, `reverse`, and `sort` already defined. CLI entrypoints and the REPL
+`contains`, `reverse`, `sort`, and `range` already defined. CLI entrypoints and the REPL
 should build their global scope with this instead of a bare `Environment()`
 so `.cin` scripts can actually produce output.
 """
@@ -292,6 +292,23 @@ def _reverse(arguments: list, line: int, column: int) -> object:
     return list(reversed(value))
 
 
+def _range(arguments: list, line: int, column: int) -> object:
+    if len(arguments) == 1:
+        start, stop = 0, arguments[0]
+    elif len(arguments) == 2:
+        start, stop = arguments
+    else:
+        raise CinderRuntimeError(
+            f"range() expects 1 or 2 argument(s), got {len(arguments)}", line, column
+        )
+    for value in (start, stop):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise CinderRuntimeError(
+                f"range() requires int arguments, got {type_name(value)}", line, column
+            )
+    return list(range(start, stop))
+
+
 def _sort(arguments: list, line: int, column: int) -> object:
     _require_arity("sort", arguments, 1, line, column)
     value = arguments[0]
@@ -333,6 +350,7 @@ _BUILTINS = {
     "contains": _contains,
     "reverse": _reverse,
     "sort": _sort,
+    "range": _range,
 }
 
 

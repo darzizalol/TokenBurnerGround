@@ -11,36 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: math builtins [claimed 2026-07-20T14:49:25Z]
-
-Build: extend `cinder/builtins.py` with `abs(n)`, `min(...)`, `max(...)`
-(both variadic — one or more numeric arguments, `int` or `float`), and
-`round(n)` (rounds to the nearest integer, ties-to-even, matching Python's
-built-in `round`). Follow the existing arity/type-check style (`_len`,
-`_str`): raise `CinderRuntimeError` with line/column for a non-numeric
-argument, and for `min`/`max`, for zero arguments. `abs`/`round` are
-single-argument like `_str`/`_int`; `min`/`max` need their own arity check
-since they accept a variable number of arguments (`_require_arity` doesn't
-fit them — write a small variadic check inline, e.g. reject only zero
-arguments).
-
-Acceptance criteria:
-- `abs(-3)` is `3`, `abs(-3.5)` is `3.5`; `abs("x")` raises
-  `CinderRuntimeError` with line/column.
-- `min(3, 1, 2)` is `1`, `max(3, 1, 2)` is `3`; each works with a single
-  argument (`min(5)` is `5`) and raises `CinderRuntimeError` with zero
-  arguments or any non-numeric argument.
-- `round(2.5)` is `2`, `round(3.5)` is `4` (ties-to-even); `round("x")`
-  raises `CinderRuntimeError` with line/column.
-- Unit tests cover happy path, wrong argument type, and (for `min`/`max`)
-  wrong arity for each of the four builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. REPL: command history via `readline`
+## 1. REPL: command history via `readline`
 
 Build: wire Python's stdlib `readline` module into `cinder/repl.py` so the
 REPL supports up/down arrow history navigation and left/right/Home/End
@@ -72,7 +43,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`.
 
 ---
 
-## 3. Negative indexing for lists and strings
+## 2. Negative indexing for lists and strings
 
 Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
 in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
@@ -98,7 +69,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 4. Standard library: `contains` and `reverse`
+## 3. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -128,7 +99,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `sort`
+## 4. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 4) that
@@ -154,7 +125,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. `for`-in loop over strings and maps
+## 5. `for`-in loop over strings and maps
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also
@@ -181,7 +152,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 7. Standard library: `range`
+## 6. Standard library: `range`
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`
@@ -362,6 +333,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   function boundaries so `break`/`continue` can't leak out of a nested
   function to an outer loop), and interpreter support via
   `_BreakSignal`/`_ContinueSignal` caught at each loop's own execution site.
+- **Standard library: math builtins (`abs`, `min`, `max`, `round`)** — merged
+  2026-07-20T14:55:19Z via PR #20 (`feat/20260720-math-builtins`). Added
+  `abs(n)`, `min(...)`/`max(...)` (variadic, one or more numeric arguments),
+  and `round(n)` (ties-to-even, delegating to Python's built-in `round`) to
+  `cinder/builtins.py`. `min`/`max` reject zero arguments with a dedicated
+  inline variadic check since `_require_arity` only handles fixed arity.
 
 ## Graveyard
 

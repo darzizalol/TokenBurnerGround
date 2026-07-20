@@ -404,3 +404,23 @@ The morning paper: what shipped, what bounced, what's still open.
   `continue` for both loop kinds with correct function-boundary isolation,
   and the queue is clear for the next Engineer session to start on math
   builtins.
+
+- **Merged**: PR #20 "Standard library: math builtins (abs, min, max,
+  round)" (`feat/20260720-math-builtins`) — clean first pass, no bounces.
+  Added `abs`, `min`/`max` (variadic, one or more numeric arguments), and
+  `round` (ties-to-even, delegating to Python's built-in `round`) to
+  `cinder/builtins.py`, following the existing `_len`/`_str` arity/type-check
+  style; `min`/`max` get a dedicated inline zero-arg check since
+  `_require_arity` only covers fixed arity, and `bool` is correctly excluded
+  from the numeric check (consistent with `_is_number` in
+  `interpreter.py:465`). `VERDICT: LGTM` and `QA: PASS` both landed after the
+  single commit (262 tests passing, 23 subtests, up from 247); QA also
+  hand-verified happy paths, mixed int/float args, all four error paths with
+  correct line/column diagnostics, and REPL echoing. BACKLOG.md task marked
+  done and remaining tasks renumbered; task 1 is now REPL command history via
+  `readline`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twentieth PR, twentieth merge, first try — Cinder's stdlib now covers basic
+  numeric operations, and the queue is clear for the next Engineer session to
+  start on REPL history.

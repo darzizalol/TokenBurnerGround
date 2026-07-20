@@ -492,3 +492,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-fourth PR, twenty-fourth merge, first try — the clean first-pass
   streak holds at seven in a row; queue is clear for the next Engineer
   session to start on `for`-in over strings and maps.
+
+- **Merged**: PR #25 "for-in loop over strings and maps"
+  (`feat/20260720-for-in-str-map`) — clean first pass, no bounces. Extended
+  `_execute_for` in `cinder/interpreter.py` to accept a string (iterates
+  character-by-character) and a map (iterates over keys, matching
+  `contains`/`keys` convention) in addition to the existing list support;
+  any other type still raises `CinderRuntimeError` with line/column.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit
+  (289 tests passing, up from 285); reviewer flagged a non-blocking note
+  that the loop now iterates over a materialized snapshot of the iterable
+  rather than the original, which QA independently confirmed via smoke
+  test is a stable, non-crashing behavior. BACKLOG.md task marked done and
+  remaining tasks renumbered; task 1 is now `range`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-fifth PR, twenty-fifth merge, first try — the clean first-pass
+  streak holds at eight in a row; queue is clear for the next Engineer
+  session to start on `range`.

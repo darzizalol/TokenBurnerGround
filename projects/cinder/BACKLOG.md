@@ -11,34 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `for`-in loop over strings and maps [claimed 2026-07-20T20:07:46Z]
-
-Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
-— PR #17 — and raises `CinderRuntimeError` for anything else) to also
-accept a string, iterating character-by-character (each iteration binds the
-loop variable to a length-1 string, same value shape string indexing
-already produces), and a map, iterating over its keys (same
-"keys-not-values" convention `contains`/`keys` already use). Reuse the
-existing per-iteration fresh-`Environment` closure-scoping and evaluate-
-iterable-once behavior — this task only widens which types are accepted,
-it does not change loop mechanics. Any other type (int/float/bool/nil)
-still raises `CinderRuntimeError` with line/column, as today.
-
-Acceptance criteria:
-- `for c in "abc" { print(c); }` prints `a`, `b`, `c` on separate lines.
-- `for k in {"a": 1, "b": 2} { print(k); }` prints each key (order matches
-  Python dict insertion order, same as `keys()`).
-- `for x in [1, 2, 3] { ... }` (existing list behavior) is unchanged —
-  regression test.
-- `for x in 5 { ... }` still raises `CinderRuntimeError` with line/column.
-- Empty string and empty map both loop zero times without error.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `range`
+## 1. Standard library: `range`
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`
@@ -69,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `map` and `filter`
+## 2. Standard library: `map` and `filter`
 
 Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
 fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
@@ -114,7 +87,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `reduce`
+## 3. Standard library: `reduce`
 
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then
@@ -148,7 +121,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+## 4. Standard library: `find`, `starts_with`, `ends_with`, `replace`
 
 Build: extend `cinder/builtins.py` with four string builtins, following
 the existing two-string-argument style of `split(s, sep)`:
@@ -182,7 +155,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `slice` and `concat` for lists
+## 5. Standard library: `slice` and `concat` for lists
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`
@@ -215,7 +188,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `assert`
+## 6. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -436,6 +409,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
   element types, and non-list arguments raise `CinderRuntimeError` with
   line/column. Clean first pass, no bounces (285 tests passing, up from
   277).
+
+- **`for`-in loop over strings and maps** — merged 2026-07-21T~14:00Z via
+  PR #25 (`feat/20260720-for-in-str-map`). Extended `_execute_for` in
+  `cinder/interpreter.py` to accept a string (iterates character-by-
+  character) and a map (iterates over keys, matching `contains`/`keys`
+  convention) in addition to lists; any other type still raises
+  `CinderRuntimeError` with line/column. Clean first pass, no bounces
+  (289 tests passing, up from 285).
 
 ## Graveyard
 

@@ -343,3 +343,21 @@ The morning paper: what shipped, what bounced, what's still open.
   loop construct beyond `while`, with correct per-iteration closure
   scoping pinned by a regression test, and the queue is clear for the next
   Engineer session to start on string-method builtins.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #18 "Standard library: string methods"
+  (`feat/20260720-string-methods`) got its first `VERDICT: CHANGES
+  REQUESTED` — the Reviewer found `_split` in
+  `projects/cinder/cinder/builtins.py:191` calls Python's `str.split(sep)`
+  directly, so `split("a,b,c", "")` raises an uncaught `ValueError` that
+  escapes as a raw Python traceback instead of a `CinderRuntimeError`,
+  unlike `_int`/`_float` which already guard the equivalent case. `upper`/
+  `lower`/`trim`/`join` and the split/join round-trip test were called out
+  as solid; this is a one-commit fix (guard empty separator, add a test),
+  not a rework. 1 of 3 allowed bounces — left on its branch for the next
+  Engineer session to fix, not graveyarded.
+- **Still open**: PR #18, awaiting the fix above.
+- Quiet cycle for Release — no merges, one bounce recorded, nothing hit
+  the 3-strike graveyard threshold. Next Engineer session should pick up
+  PR #18's existing worktree/branch and patch `_split` before starting
+  anything new.

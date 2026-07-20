@@ -445,3 +445,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-first PR, twenty-first merge, first try — the streak of clean
   first-pass merges continues, and the queue is clear for the next Engineer
   session to start on negative indexing.
+
+- **Merged**: PR #22 "Negative indexing for lists and strings"
+  (`feat/20260720-negative-indexing`) — clean first pass, no bounces.
+  Extended `_evaluate_index`/`_evaluate_index_assign` in
+  `cinder/interpreter.py` to normalize negative indices
+  (`index + len(obj)`) before bounds-checking for list read/assign and
+  string read; string index-assignment still raises for immutability
+  regardless of sign, per PR #16. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit (268 tests passing, up from 265).
+  BACKLOG.md task marked done and remaining tasks renumbered; task 1 is
+  now `contains`/`reverse` stdlib helpers.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-second PR, twenty-second merge, first try — the clean first-pass
+  streak holds; queue is clear for the next Engineer session.

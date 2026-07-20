@@ -11,33 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Negative indexing for lists and strings [claimed 2026-07-20T19:39:52Z]
-
-Build: extend the list branch of `_evaluate_index`/`_evaluate_index_assign`
-in `cinder/interpreter.py`, and the string-indexing code merged via PR #16,
-to support Python-style negative indices: `-1` means the last element,
-`-len(obj)` the first. Normalize a negative index to `len(obj) + index`
-before bounds-checking; anything still out of range after normalizing
-raises `CinderRuntimeError` in the same style as today's positive-index
-errors. Index *assignment* with a negative index on a list mutates the
-corresponding positive slot; assigning to any string index (negative or
-not) still raises per the string-immutability rule from PR #16.
-
-Acceptance criteria:
-- `[1, 2, 3][-1]` is `3`, `[1, 2, 3][-3]` is `1`; `[1, 2, 3][-4]` raises
-  `CinderRuntimeError` (out of range) with line/column.
-- `"hello"[-1]` is `"o"`, `"hello"[-5]` is `"h"`; `"hello"[-6]` raises
-  `CinderRuntimeError` with line/column.
-- `[1, 2, 3][-1] = 9` sets the last element to `9`, leaving the rest
-  unchanged.
-- Existing non-negative indexing behavior is unchanged (regression tests).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `contains` and `reverse`
+## 1. Standard library: `contains` and `reverse`
 
 Build: extend `cinder/builtins.py` with `contains(collection, item)` —
 membership check on a list (`==` against each element), a map (checks
@@ -67,7 +41,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `sort`
+## 2. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 2) that
@@ -93,7 +67,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. `for`-in loop over strings and maps
+## 3. `for`-in loop over strings and maps
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also
@@ -120,7 +94,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 5. Standard library: `range`
+## 4. Standard library: `range`
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`
@@ -152,7 +126,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `map` and `filter`
+## 5. Standard library: `map` and `filter`
 
 Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
 fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
@@ -358,6 +332,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `try`/`except ImportError` so the REPL still starts without `readline`
   (e.g. stock Windows Python). No persistent history-file save/load —
   in-session history only, per the task's "keep it small" instruction.
+- **Negative indexing for lists and strings** — merged 2026-07-21T~13:16Z via
+  PR #22 (`feat/20260720-negative-indexing`). Extended `_evaluate_index`/
+  `_evaluate_index_assign` in `cinder/interpreter.py` to normalize a negative
+  index to `len(obj) + index` before bounds-checking, Python-style, for list
+  read/assign and string read; string index-assignment still raises for
+  immutability regardless of sign, per PR #16.
 
 ## Graveyard
 

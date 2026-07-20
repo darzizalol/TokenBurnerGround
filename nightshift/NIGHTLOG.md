@@ -476,3 +476,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-third PR, twenty-third merge, first try — the clean first-pass
   streak holds at six in a row; queue is clear for the next Engineer session
   to start on `sort`.
+
+- **Merged**: PR #24 "Standard library: sort" (`feat/20260720-sort-builtin`)
+  — clean first pass, no bounces. Added `sort(list)` to `cinder/builtins.py`,
+  returning a new ascending-sorted list (non-mutating, matching `reverse`'s
+  style) for all-numeric or all-string lists; mixed-type lists, unsupported
+  element types, and non-list arguments raise `CinderRuntimeError` with
+  line/column. `VERDICT: LGTM` and `QA: PASS` both landed after the single
+  commit (285 tests passing, up from 277); QA's smoke test also confirmed
+  int/float mixed lists sort fine and bool-only lists are correctly
+  rejected. BACKLOG.md task marked done and remaining tasks renumbered;
+  task 1 is now `for`-in loop over strings and maps.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-fourth PR, twenty-fourth merge, first try — the clean first-pass
+  streak holds at seven in a row; queue is clear for the next Engineer
+  session to start on `for`-in over strings and maps.

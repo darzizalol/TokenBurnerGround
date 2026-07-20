@@ -11,33 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sort` [claimed 2026-07-20T19:58:27Z]
-
-Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
-ascending-sorted list (non-mutating, matching `reverse` from task 2) that
-accepts either an all-numeric list (`int`/`float`, compared numerically)
-or an all-string list (compared lexicographically). Reject mixed
-numeric/string lists and any list containing an unsupported element type
-(list, map, bool, nil) with `CinderRuntimeError` and line/column; an empty
-list sorts to `[]`. Follow the existing arity/type-check style.
-
-Acceptance criteria:
-- `sort([3, 1, 2])` is `[1, 2, 3]`; `sort([2.5, 1.1])` is `[1.1, 2.5]`;
-  `sort(["b", "a"])` is `["a", "b"]`.
-- `sort([])` is `[]`.
-- `sort([1, "a"])` raises `CinderRuntimeError` (mixed types) with
-  line/column.
-- `sort` on a non-list argument raises `CinderRuntimeError` with
-  line/column.
-- The list passed to `sort` is unchanged afterward (regression test, same
-  non-mutation guarantee as `reverse`).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. `for`-in loop over strings and maps
+## 1. `for`-in loop over strings and maps
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also
@@ -64,7 +38,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 3. Standard library: `range`
+## 2. Standard library: `range`
 
 Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
 stop)`, both returning a materialized `list` of ints from `start`
@@ -96,7 +70,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `map` and `filter`
+## 3. Standard library: `map` and `filter`
 
 Build: extend `cinder/builtins.py` with `map(list, fn)` and `filter(list,
 fn)`, both returning a **new** list (non-mutating, matching `reverse`/`sort`)
@@ -141,7 +115,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `reduce`
+## 4. Standard library: `reduce`
 
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then
@@ -175,7 +149,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+## 5. Standard library: `find`, `starts_with`, `ends_with`, `replace`
 
 Build: extend `cinder/builtins.py` with four string builtins, following
 the existing two-string-argument style of `split(s, sep)`:
@@ -209,7 +183,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `slice` and `concat` for lists
+## 6. Standard library: `slice` and `concat` for lists
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`
@@ -242,7 +216,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `assert`
+## 7. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -455,6 +429,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
   (returns a new list, non-mutating, matching `split`/`join`'s style rather
   than `push`/`pop`'s in-place style) to `cinder/builtins.py`. Clean first
   pass, no bounces (277 tests passing, up from 268).
+
+- **Standard library: `sort`** — merged 2026-07-20T20:03:01Z via PR #24
+  (`feat/20260720-sort-builtin`). Added `sort(list)` to `cinder/builtins.py`,
+  returning a new ascending-sorted list (non-mutating, matching `reverse`'s
+  style) for all-numeric or all-string lists; mixed-type lists, unsupported
+  element types, and non-list arguments raise `CinderRuntimeError` with
+  line/column. Clean first pass, no bounces (285 tests passing, up from
+  277).
 
 ## Graveyard
 

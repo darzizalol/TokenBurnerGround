@@ -1,10 +1,12 @@
 """Tests for cinder.repl: the interactive read-eval-print loop."""
 
 import io
+import sys
 import unittest
 from contextlib import redirect_stdout
+from unittest import mock
 
-from cinder.repl import run_repl
+from cinder.repl import _try_enable_readline, run_repl
 
 
 def _make_read_line(lines):
@@ -73,6 +75,21 @@ class TestRepl(unittest.TestCase):
             "add(2, 3);",
         ])
         self.assertEqual(outputs, ["5"])
+
+
+class TestReadlineIntegration(unittest.TestCase):
+    def test_try_enable_readline_succeeds_when_available(self):
+        self.assertTrue(_try_enable_readline())
+
+    def test_try_enable_readline_returns_false_without_raising_when_missing(self):
+        with mock.patch.dict(sys.modules, {"readline": None}):
+            self.assertFalse(_try_enable_readline())
+
+    def test_repl_still_works_when_readline_is_unavailable(self):
+        with mock.patch.dict(sys.modules, {"readline": None}):
+            outputs = []
+            run_repl(read_line=_make_read_line(["let x = 1 + 2;", "x;"]), write=outputs.append)
+        self.assertEqual(outputs, ["3"])
 
 
 if __name__ == "__main__":

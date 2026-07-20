@@ -128,7 +128,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `sort`
+## 5. Standard library: `sort`
 
 Build: extend `cinder/builtins.py` with `sort(list)`, returning a **new**
 ascending-sorted list (non-mutating, matching `reverse` from task 4) that
@@ -154,7 +154,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. `for`-in loop over strings and maps
+## 6. `for`-in loop over strings and maps
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also
@@ -178,6 +178,38 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
+
+---
+
+## 7. Standard library: `range`
+
+Build: extend `cinder/builtins.py` with `range(stop)` and `range(start,
+stop)`, both returning a materialized `list` of ints from `start`
+(default `0`, inclusive) up to `stop` (exclusive) — no lazy iterator type
+exists in Cinder, so this must eagerly build the list, same as Python's
+`list(range(...))`. Only integer arguments are accepted (no `float`,
+matching list-index argument strictness elsewhere); reject any non-int
+argument with `CinderRuntimeError` and line/column. A `stop <= start` (or
+`stop <= 0` in the one-argument form) is not an error — it returns `[]`,
+matching Python. Reject calls with zero arguments or more than two with
+`CinderRuntimeError` (same variadic-arity style as `min`/`max` from task
+1 — write the check inline). No `step` argument in this task, to keep it
+one session; a 3-argument step form is a natural future task if wanted.
+
+Acceptance criteria:
+- `range(5)` is `[0, 1, 2, 3, 4]`; `range(2, 5)` is `[2, 3, 4]`.
+- `range(0)` is `[]`; `range(3, 3)` is `[]`; `range(5, 2)` is `[]` (no
+  error, matches Python).
+- `range("x")` and `range(1, "x")` raise `CinderRuntimeError` with
+  line/column; `range(1.5)` likewise (no float arguments).
+- `range()` and `range(1, 2, 3)` raise `CinderRuntimeError` with
+  line/column (wrong arity).
+- `for i in range(3) { print(i); }` prints `0`, `1`, `2` on separate
+  lines (exercises task 6/PR #17's list `for`-in with this builtin's
+  output).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 

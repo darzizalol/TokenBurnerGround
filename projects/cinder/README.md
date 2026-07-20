@@ -34,7 +34,7 @@ while (i < 10) {
 - **Variables & scope**: `let` declarations, assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives)
 - **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
-  lists
+  lists, `break`/`continue` in both loop kinds
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment)
@@ -77,7 +77,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (200+ tests) covers every layer — lexer, parser, interpreter,
+The suite (247+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -102,8 +102,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `for`-in loops over lists,
-string methods (`upper`/`lower`/`trim`/`split`/`join`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `break`/`continue`, math builtins, REPL command
-history, negative indexing, `contains`/`reverse`/`sort`. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: string methods
+(`upper`/`lower`/`trim`/`split`/`join`), `break`/`continue` for both loop
+kinds. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): math builtins, REPL
+command history, negative indexing, `contains`/`reverse`/`sort`, `for`-in
+over strings and maps, and a `range` builtin. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

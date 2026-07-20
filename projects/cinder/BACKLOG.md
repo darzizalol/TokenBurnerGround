@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `for`-in loop over strings and maps
+## 1. `for`-in loop over strings and maps [claimed 2026-07-20T20:07:46Z]
 
 Build: extend `_execute_for` in `cinder/interpreter.py` (currently list-only
 — PR #17 — and raises `CinderRuntimeError` for anything else) to also

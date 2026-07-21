@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. String and list repetition via `*`
+## 1. String and list repetition via `*` [claimed 2026-07-21T19:37:20Z]
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 405) to

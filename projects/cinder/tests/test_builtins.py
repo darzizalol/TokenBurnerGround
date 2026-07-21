@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, find, starts_with, ends_with,
 replace, abs, min, max, round, contains, reverse, sort, range, map, filter,
-reduce."""
+reduce, slice, concat."""
 
 import io
 import subprocess
@@ -619,6 +619,55 @@ class TestReduce(unittest.TestCase):
         )
         self.assertEqual(env.get("xs"), [1, 2, 3])
         self.assertEqual(env.get("result"), 6)
+
+
+class TestSlice(unittest.TestCase):
+    def test_slice_basic_range(self):
+        env = run("let result = slice([1, 2, 3, 4], 1, 3);")
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_slice_negative_bounds(self):
+        env = run("let result = slice([1, 2, 3], -2, -1);")
+        self.assertEqual(env.get("result"), [2])
+
+    def test_slice_out_of_range_end_clamps(self):
+        env = run("let result = slice([1, 2, 3], 0, 100);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_slice_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3, 4]; let result = slice(xs, 1, 3);")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_slice_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("slice(5, 0, 1);")
+
+    def test_slice_non_int_bound_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("slice([1, 2], 0.5, 1);")
+
+
+class TestConcat(unittest.TestCase):
+    def test_concat_joins_lists(self):
+        env = run("let result = concat([1, 2], [3, 4]);")
+        self.assertEqual(env.get("result"), [1, 2, 3, 4])
+
+    def test_concat_with_empty_list(self):
+        env = run("let result = concat([], [1]);")
+        self.assertEqual(env.get("result"), [1])
+
+    def test_concat_does_not_mutate_inputs(self):
+        env = run("let a = [1, 2]; let b = [3, 4]; let result = concat(a, b);")
+        self.assertEqual(env.get("a"), [1, 2])
+        self.assertEqual(env.get("b"), [3, 4])
+        self.assertEqual(env.get("result"), [1, 2, 3, 4])
+
+    def test_concat_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("concat(5, [1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("concat([1], 5);")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

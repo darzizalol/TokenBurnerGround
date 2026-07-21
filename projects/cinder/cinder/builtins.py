@@ -4,7 +4,7 @@
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
 `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`,
 `replace`, `abs`, `min`, `max`, `round`, `contains`, `reverse`, `sort`,
-`range`, `map`, `filter`, and `reduce` already defined.
+`range`, `map`, `filter`, `reduce`, `slice`, and `concat` already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -400,6 +400,47 @@ def _sort(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _normalize_slice_bound(value: int, length: int) -> int:
+    if value < 0:
+        value += length
+    return max(0, min(value, length))
+
+
+def _slice(arguments: list, line: int, column: int) -> object:
+    _require_arity("slice", arguments, 3, line, column)
+    value, start, end = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"slice() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    for bound in (start, end):
+        if not isinstance(bound, int) or isinstance(bound, bool):
+            raise CinderRuntimeError(
+                f"slice() requires int bounds, got {type_name(bound)}", line, column
+            )
+    length = len(value)
+    start = _normalize_slice_bound(start, length)
+    end = _normalize_slice_bound(end, length)
+    return value[start:end]
+
+
+def _concat(arguments: list, line: int, column: int) -> object:
+    _require_arity("concat", arguments, 2, line, column)
+    list1, list2 = arguments
+    if not isinstance(list1, list):
+        raise CinderRuntimeError(
+            f"concat() requires a list as its first argument, got {type_name(list1)}",
+            line, column,
+        )
+    if not isinstance(list2, list):
+        raise CinderRuntimeError(
+            f"concat() requires a list as its second argument, got {type_name(list2)}",
+            line, column,
+        )
+    return list1 + list2
+
+
 def _is_callable(value: object) -> bool:
     return isinstance(value, (CinderFunction, Builtin))
 
@@ -486,6 +527,8 @@ _BUILTINS = {
     "map": _map,
     "filter": _filter,
     "reduce": _reduce,
+    "slice": _slice,
+    "concat": _concat,
 }
 
 

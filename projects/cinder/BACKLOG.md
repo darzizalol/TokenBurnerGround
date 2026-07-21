@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `in` operator for membership tests
+## 1. `in` operator for membership tests [claimed 2026-07-21T19:48:17Z]
 
 Build: `TokenType.IN` and the `"in"` keyword **already exist**
 (`cinder/tokens.py`) and are already lexed — they're used today only by

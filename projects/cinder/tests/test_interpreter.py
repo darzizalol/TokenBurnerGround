@@ -168,6 +168,23 @@ class TestTernary(unittest.TestCase):
         env = run('{"a": 1} ? 1 : 2;')
         self.assertIsInstance(env, Environment)
 
+    def test_ternary_as_call_argument(self):
+        # len(...) forces evaluation of a ternary passed as a call argument.
+        from cinder.builtins import create_global_environment
+
+        interpreter = Interpreter()
+        result = interpreter.evaluate(
+            parse_expression(tokenize('len(true ? "abc" : "de")')),
+            create_global_environment(),
+        )
+        self.assertEqual(result, 3)
+
+    def test_ternary_as_list_element(self):
+        self.assertEqual(evaluate("[1, true ? 2 : 3, 4]"), [1, 2, 4])
+
+    def test_ternary_as_map_value(self):
+        self.assertEqual(evaluate('{"k": true ? 1 : 2}'), {"k": 1})
+
 
 class TestMembership(unittest.TestCase):
     def test_in_list_true(self):

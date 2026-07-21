@@ -314,6 +314,43 @@ class TestTernary(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse("true ? 1 2")
 
+    def test_ternary_as_call_argument(self):
+        self.assertEqual(
+            shape(parse("f(true ? 1 : 2)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [("Ternary", ("Literal", True), ("Literal", 1), ("Literal", 2))],
+            ),
+        )
+
+    def test_ternary_as_list_element(self):
+        self.assertEqual(
+            shape(parse("[1, true ? 2 : 3, 4]")),
+            (
+                "ListLiteral",
+                [
+                    ("Literal", 1),
+                    ("Ternary", ("Literal", True), ("Literal", 2), ("Literal", 3)),
+                    ("Literal", 4),
+                ],
+            ),
+        )
+
+    def test_ternary_as_map_value(self):
+        self.assertEqual(
+            shape(parse('{"k": true ? 1 : 2}')),
+            (
+                "MapLiteral",
+                [
+                    (
+                        ("Literal", "k"),
+                        ("Ternary", ("Literal", True), ("Literal", 1), ("Literal", 2)),
+                    )
+                ],
+            ),
+        )
+
 
 class TestCalls(unittest.TestCase):
     def test_call_with_arguments(self):

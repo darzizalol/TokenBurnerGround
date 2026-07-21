@@ -390,10 +390,10 @@ class Parser:
         paren = self._previous()
         arguments = []
         if not self._check(TokenType.RPAREN):
-            arguments.append(self._or())
+            arguments.append(self._ternary())
             while self._check(TokenType.COMMA):
                 self._advance()
-                arguments.append(self._or())
+                arguments.append(self._ternary())
         self._consume(TokenType.RPAREN, "')' after arguments")
         return Call(callee, arguments, paren.line, paren.column)
 
@@ -443,10 +443,10 @@ class Parser:
         bracket = self._advance()  # consume '['
         elements = []
         if not self._check(TokenType.RBRACKET):
-            elements.append(self._or())
+            elements.append(self._ternary())
             while self._check(TokenType.COMMA):
                 self._advance()
-                elements.append(self._or())
+                elements.append(self._ternary())
         self._consume(TokenType.RBRACKET, "']' after list literal")
         return ListLiteral(elements, bracket.line, bracket.column)
 
@@ -464,7 +464,7 @@ class Parser:
     def _map_pair(self) -> tuple:
         key = self._or()
         self._consume(TokenType.COLON, "':' after map key")
-        value = self._or()
+        value = self._ternary()
         return (key, value)
 
     def _peek(self) -> Token:

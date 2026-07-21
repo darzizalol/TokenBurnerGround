@@ -140,6 +140,37 @@ class TestLogical(unittest.TestCase):
         self.assertEqual(evaluate("nil or 5"), 5)
 
 
+class TestMembership(unittest.TestCase):
+    def test_in_list_true(self):
+        self.assertEqual(evaluate("2 in [1, 2, 3]"), True)
+
+    def test_in_list_false(self):
+        self.assertEqual(evaluate("5 in [1, 2, 3]"), False)
+
+    def test_in_map_checks_keys_not_values(self):
+        self.assertEqual(evaluate('"a" in {"a": 1}'), True)
+        self.assertEqual(evaluate('"z" in {"a": 1}'), False)
+
+    def test_in_string_substring(self):
+        self.assertEqual(evaluate('"ll" in "hello"'), True)
+        self.assertEqual(evaluate('"z" in "hello"'), False)
+
+    def test_in_non_collection_right_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1 in 5")
+
+    def test_in_precedence_with_and(self):
+        # regression: `in` must bind tighter than `and` on both sides
+        self.assertEqual(evaluate("1 in [1] and 2 in [2]"), True)
+        self.assertEqual(evaluate("1 in [1] and 9 in [2]"), False)
+
+    def test_for_in_loop_still_parses_and_runs(self):
+        # regression: adding `in` as a binary operator must not affect
+        # the `for`-loop grammar's own use of the `in` keyword.
+        env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")
+        self.assertEqual(env.get("total"), 6)
+
+
 class TestUnaryAndGrouping(unittest.TestCase):
     def test_unary_minus(self):
         self.assertEqual(evaluate("-5"), -5)

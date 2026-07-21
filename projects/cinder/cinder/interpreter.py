@@ -418,6 +418,8 @@ class Interpreter:
             return not _values_equal(left, right)
         if op in (TokenType.LT, TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):
             return self._compare(expr, left, right, op)
+        if op == TokenType.IN:
+            return contains_value(right, left, expr.operator.line, expr.operator.column)
 
         raise TypeError(f"unhandled binary operator: {op!r}")
 
@@ -507,6 +509,31 @@ def _is_int(value: object) -> bool:
 def _is_valid_key(value: object) -> bool:
     """Map keys must be an immutable, hashable Cinder value."""
     return value is None or isinstance(value, (int, float, str, bool))
+
+
+def contains_value(collection: object, item: object, line: int, column: int) -> bool:
+    """Membership-test semantics shared by the `in` operator and `contains()`:
+    list `==` membership, map key check, string substring check."""
+    if isinstance(collection, list):
+        return any(item == element for element in collection)
+    if isinstance(collection, dict):
+        try:
+            return item in collection
+        except TypeError:
+            return False
+    if isinstance(collection, str):
+        if not isinstance(item, str):
+            raise CinderRuntimeError(
+                f"membership test on a string requires a string, got {type_name(item)}",
+                line,
+                column,
+            )
+        return item in collection
+    raise CinderRuntimeError(
+        f"membership test requires a list, map, or string, got {type_name(collection)}",
+        line,
+        column,
+    )
 
 
 def _values_equal(left: object, right: object) -> bool:

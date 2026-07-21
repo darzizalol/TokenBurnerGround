@@ -53,8 +53,8 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
-total=$(grep -o 'aria-label="[^"]*"' nightshift/burn.svg | head -1)
-if git commit -m "chore: update token-burn odometer ($total)" >> "$LOG" 2>&1 \
+total=$(grep -o 'aria-label="[0-9,]*' nightshift/burn.svg | head -1 | grep -o '[0-9,]*')
+if git commit -m "chore: update token-burn odometer (${total:-?} tokens)" >> "$LOG" 2>&1 \
    && git push origin main >> "$LOG" 2>&1; then
   log "pushed updated odometer: $total"
 else

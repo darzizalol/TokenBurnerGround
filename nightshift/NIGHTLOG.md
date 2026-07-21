@@ -603,3 +603,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirtieth PR, thirtieth merge, first try — the clean first-pass streak
   holds at thirteen in a row; queue is clear for the next Engineer session
   to start on `assert`.
+
+- **Merged**: PR #31 "Standard library: assert" (`feat/20260721-assert-builtin`)
+  — clean first pass, no bounces. Added `assert(condition, message)` to
+  `cinder/builtins.py`, raising `CinderRuntimeError` with the message and the
+  call's line/column when `condition` is falsy per Cinder's existing
+  truthiness rule (so `0`/`""` don't trigger it), returning `nil` otherwise;
+  `message` must be a `str`, checked before the truthiness test so a bad
+  message type is reported as a type error, not an assertion failure.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit (362
+  tests passing, up from 357); QA also exercised the CLI and REPL directly —
+  passing/failing conditions, wrong arity, non-str message — plus the new
+  `examples/self_check.cin` golden-output test. BACKLOG.md task marked done
+  and remaining tasks renumbered; task 1 is now compound assignment
+  operators (`+=`, `-=`, `*=`, `/=`, `%=`).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-first PR, thirty-first merge, first try — the clean first-pass
+  streak holds at fourteen in a row; queue is clear for the next Engineer
+  session to start on compound assignment operators.

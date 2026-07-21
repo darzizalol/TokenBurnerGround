@@ -11,45 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `assert` [claimed 2026-07-21T14:31:28Z]
-
-Build: extend `cinder/builtins.py` with `assert(condition, message)`
-(exactly two arguments — a value checked with Cinder's existing
-truthiness rule, and a `str` message), raising `CinderRuntimeError` with
-that message and the call's line/column if `condition` is falsy
-(`nil`/`false`); returns `nil` (same as `print`) if the condition is
-truthy and has no other effect. This gives Cinder programs themselves a
-way to self-check invariants — useful for future example programs and
-for exercising other builtins/language features from *within* `.cin`
-scripts rather than only from the Python test suite. `message` must be a
-`str` (reject non-str with `CinderRuntimeError`, matching every other
-builtin's type-check style); wrong arity is likewise a
-`CinderRuntimeError`.
-
-Acceptance criteria:
-- `assert(true, "should not fire");` runs with no error and no output.
-- `assert(1 == 2, "math is broken");` raises `CinderRuntimeError` whose
-  message includes `"math is broken"`, with line/column of the `assert`
-  call.
-- `assert(0, "zero is falsy? no");` does NOT raise (Cinder's `0` is
-  truthy, per the fixed truthiness rule in `PROJECT.md` — this is a
-  regression check that `assert` reuses that rule rather than Python
-  truthiness).
-- `assert(false, 42);` (non-str message) raises `CinderRuntimeError` for
-  the bad argument type, not for the assertion itself.
-- `assert(true);` and `assert(true, "x", "y");` (wrong arity) raise
-  `CinderRuntimeError` with line/column.
-- Add one `examples/*.cin` using `assert` to demonstrate a self-checking
-  script, with its `.expected` golden file (empty stdout if all asserts
-  pass silently).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
-`examples/`.
-
----
-
-## 2. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+## 1. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
 
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
@@ -86,7 +48,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `zip`
+## 2. Standard library: `zip`
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,
@@ -111,7 +73,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. String and list repetition via `*`
+## 3. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 414-415) to
@@ -141,7 +103,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 5. `in` operator for membership tests
+## 4. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -178,7 +140,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Runtime errors report the call stack, not just the innermost site
+## 5. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -219,7 +181,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 7. Standard library: `sum`, `any`, `all`
+## 6. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -251,7 +213,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Ternary conditional expression: `cond ? then : else`
+## 7. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -288,7 +250,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 9. Standard library: `items` for maps
+## 8. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -552,6 +514,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   (non-mutating list concatenation) to `cinder/builtins.py`. Non-list first
   argument raises `CinderRuntimeError` with line/column. Clean first pass,
   no bounces (357 tests passing, up from 347).
+
+- **Standard library: `assert`** — merged 2026-07-21T~14:35Z via PR #31
+  (`feat/20260721-assert-builtin`). Added `assert(condition, message)` to
+  `cinder/builtins.py`, raising `CinderRuntimeError` with the message and
+  the call's line/column when `condition` is falsy per Cinder's existing
+  truthiness rule (so `0`/`""` don't trigger it), and returning `nil`
+  otherwise; `message` must be a `str`, checked before the truthiness test.
+  Added `examples/self_check.cin` exercised by the golden-output test
+  harness. Clean first pass, no bounces (362 tests passing, up from 357).
 
 ## Graveyard
 

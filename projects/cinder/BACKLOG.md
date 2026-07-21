@@ -11,41 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find`, `starts_with`, `ends_with`, `replace` [claimed 2026-07-21T14:11:59Z]
-
-Build: extend `cinder/builtins.py` with four string builtins, following
-the existing two-string-argument style of `split(s, sep)`:
-`find(s, sub)` returns the lowest index at which `sub` occurs in `s` (an
-int), or `-1` if not found (matching Python's `str.find`, not `str.index`
-— no exception for "not found"); `starts_with(s, prefix)` and
-`ends_with(s, suffix)` return a `bool`; `replace(s, old, new)` returns a
-**new** string with all non-overlapping occurrences of `old` replaced by
-`new` (Python's `str.replace(old, new)`, no count limit). All four take
-only `str` arguments — reject anything else (including a non-str `s`)
-with `CinderRuntimeError` and line/column, matching `_split`'s type-check
-style. An empty `old` in `replace` is a Python-legal no-op-per-character
-edge case (`"ab".replace("", "-")` is `"-a-b-"` in Python) — keep that
-behavior rather than special-casing it, since it matches host semantics
-and no existing builtin special-cases empty separators except `split`
-(which explicitly rejects them per PR #18 — `replace` is a different
-operation and Python's `str.replace("")` doesn't raise, so don't add a
-check here).
-
-Acceptance criteria:
-- `find("hello", "ll")` is `2`; `find("hello", "z")` is `-1`.
-- `starts_with("hello", "he")` is `true`; `starts_with("hello", "x")` is
-  `false`. Same shape for `ends_with`.
-- `replace("aaa", "a", "b")` is `"bbb"`; `replace("hello", "z", "x")` is
-  `"hello"` (no match, unchanged).
-- Each builtin raises `CinderRuntimeError` with line/column when any
-  argument isn't a `str`, and on wrong arity.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `slice` and `concat` for lists
+## 1. Standard library: `slice` and `concat` for lists
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`
@@ -78,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `assert`
+## 2. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -116,7 +82,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
 
 ---
 
-## 4. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+## 3. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
 
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
@@ -153,7 +119,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `zip`
+## 4. Standard library: `zip`
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,
@@ -178,7 +144,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. String and list repetition via `*`
+## 5. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 414-415) to
@@ -208,7 +174,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 7. `in` operator for membership tests
+## 6. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -245,7 +211,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Runtime errors report the call stack, not just the innermost site
+## 7. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -286,7 +252,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 9. Standard library: `sum`, `any`, `all`
+## 8. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -318,7 +284,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Ternary conditional expression: `cond ? then : else`
+## 9. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -355,7 +321,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 11. Standard library: `items` for maps
+## 10. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -599,6 +565,17 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `map`/`filter`'s type-check style, and an empty list returns `initial`
   without calling `fn`. Clean first pass, no bounces (327 tests passing, up
   from 320).
+
+- **Standard library: `find`, `starts_with`, `ends_with`, `replace`** —
+  merged 2026-07-21T~14:16Z via PR #29 (`feat/20260721-string-find-replace`).
+  Added the four two-string-argument builtins to `cinder/builtins.py`
+  following `split`/`join`'s style: `find` matches Python's `str.find`
+  semantics (`-1` on no match), `starts_with`/`ends_with` return `bool`,
+  and `replace` replaces all non-overlapping occurrences, keeping Python's
+  per-character-insert behavior for an empty `old` rather than special-casing
+  it. Each rejects non-`str` arguments and wrong arity with
+  `CinderRuntimeError` and line/column. Clean first pass, no bounces
+  (347 tests passing, up from 327).
 
 ## Graveyard
 

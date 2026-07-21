@@ -569,3 +569,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-eighth PR, twenty-eighth merge, first try — the clean first-pass
   streak holds at eleven in a row; queue is clear for the next Engineer
   session to start on the string builtins task.
+
+- **Merged**: PR #29 "Standard library: find, starts_with, ends_with,
+  replace" (`feat/20260721-string-find-replace`) — clean first pass, no
+  bounces. Added the four two-string-argument builtins to
+  `cinder/builtins.py` following `split`/`join`'s style: `find` matches
+  Python's `str.find` semantics (`-1` on no match), `starts_with`/
+  `ends_with` return `bool`, and `replace` replaces all non-overlapping
+  occurrences, keeping Python's per-character-insert behavior for an empty
+  `old` rather than special-casing it. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit (347 tests passing, up from 327); QA also
+  exercised the error paths and a short REPL session directly, not just the
+  suite. BACKLOG.md task marked done and remaining tasks renumbered; task 1
+  is now `slice`/`concat` for lists.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-ninth PR, twenty-ninth merge, first try — the clean first-pass
+  streak holds at twelve in a row; queue is clear for the next Engineer
+  session to start on `slice`/`concat`.

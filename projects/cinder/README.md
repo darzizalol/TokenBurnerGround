@@ -49,9 +49,9 @@ while (i < 10) {
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
-  `reduce`, `slice`, `concat`, `zip`, `assert`, string methods `upper`, `lower`,
-  `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
-  and math builtins `abs`, `min`, `max`, `round`
+  `reduce`, `slice`, `concat`, `zip`, `assert`, `sum`, `any`, `all`, string
+  methods `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`,
+  `ends_with`, `replace`, and math builtins `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first)
@@ -90,7 +90,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (413+ tests) covers every layer — lexer, parser, interpreter,
+The suite (426+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -115,9 +115,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the `in` membership operator
-and call-stack traces for runtime errors.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `sum`/`any`/`all`, a ternary
-conditional expression, `items`/`enumerate`/`merge` for maps and lists,
-`get`/`copy`/`sort_by`, and bitwise operators.
+Actively developed, nightly. Recently landed: call-stack traces for runtime
+errors, and the `sum`/`any`/`all` aggregate builtins.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a ternary conditional
+expression, `items`/`enumerate`/`merge` for maps and lists,
+`get`/`copy`/`sort_by`, bitwise operators, and type-predicate builtins.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

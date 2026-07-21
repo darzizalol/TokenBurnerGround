@@ -1,9 +1,13 @@
 """Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
-    assignment (=, right-assoc) > or > and > comparisons (== != < <= > >=)
-    > + - > * / % > unary (- not)
+    assignment (=, +=, -=, *=, /=, %=, right-assoc) > or > and >
+    comparisons (== != < <= > >=) > + - > * / % > unary (- not)
 with parenthesized grouping and call expressions binding tightest of all.
+
+Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
+(reusing the `Binary`/`Assign` AST nodes, restricted to `Identifier` targets
+like plain `=`) rather than adding dedicated interpreter support.
 
 Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `{ <statement>* }` (Block),
@@ -73,6 +77,13 @@ _COMPARISON = {
 _TERM = {TokenType.PLUS, TokenType.MINUS}
 _FACTOR = {TokenType.STAR, TokenType.SLASH, TokenType.PERCENT}
 _UNARY = {TokenType.MINUS, TokenType.NOT}
+_COMPOUND_ASSIGN_OPS = {
+    TokenType.PLUSEQ: TokenType.PLUS,
+    TokenType.MINUSEQ: TokenType.MINUS,
+    TokenType.STAREQ: TokenType.STAR,
+    TokenType.SLASHEQ: TokenType.SLASH,
+    TokenType.PERCENTEQ: TokenType.PERCENT,
+}
 
 
 class Parser:
@@ -276,6 +287,22 @@ class Parser:
             raise ParseError(
                 "invalid assignment target", eq_token.line, eq_token.column
             )
+        if self._peek().type in _COMPOUND_ASSIGN_OPS:
+            op_token = self._advance()
+            value = self._assignment()
+            if not isinstance(expr, Identifier):
+                raise ParseError(
+                    "invalid assignment target", op_token.line, op_token.column
+                )
+            binary_operator = Token(
+                _COMPOUND_ASSIGN_OPS[op_token.type],
+                op_token.lexeme[0],
+                None,
+                op_token.line,
+                op_token.column,
+            )
+            binary = Binary(expr, binary_operator, value)
+            return Assign(expr.name, binary, op_token.line, op_token.column)
         return expr
 
     def _or(self) -> Expr:

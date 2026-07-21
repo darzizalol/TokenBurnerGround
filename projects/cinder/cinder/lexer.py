@@ -4,11 +4,6 @@ from cinder.errors import LexError
 from cinder.tokens import KEYWORDS, Token, TokenType
 
 _SIMPLE_TOKENS = {
-    "+": TokenType.PLUS,
-    "-": TokenType.MINUS,
-    "*": TokenType.STAR,
-    "/": TokenType.SLASH,
-    "%": TokenType.PERCENT,
     "(": TokenType.LPAREN,
     ")": TokenType.RPAREN,
     "{": TokenType.LBRACE,
@@ -19,6 +14,14 @@ _SIMPLE_TOKENS = {
     ";": TokenType.SEMICOLON,
     ".": TokenType.DOT,
     ":": TokenType.COLON,
+}
+
+_COMPOUND_ASSIGN_TOKENS = {
+    "+": (TokenType.PLUS, TokenType.PLUSEQ),
+    "-": (TokenType.MINUS, TokenType.MINUSEQ),
+    "*": (TokenType.STAR, TokenType.STAREQ),
+    "/": (TokenType.SLASH, TokenType.SLASHEQ),
+    "%": (TokenType.PERCENT, TokenType.PERCENTEQ),
 }
 
 _ESCAPES = {
@@ -55,6 +58,8 @@ class Lexer:
                 self.tokens.append(
                     Token(_SIMPLE_TOKENS[char], char, None, start_line, start_col)
                 )
+            elif char in _COMPOUND_ASSIGN_TOKENS:
+                self._op_or_compound_assign(char, start_line, start_col)
             elif char == "=":
                 self._equals_or(start_line, start_col)
             elif char == "!":
@@ -172,6 +177,14 @@ class Lexer:
         lexeme = "".join(chars)
         token_type = KEYWORDS.get(lexeme, TokenType.IDENTIFIER)
         self.tokens.append(Token(token_type, lexeme, None, start_line, start_col))
+
+    def _op_or_compound_assign(self, char: str, start_line: int, start_col: int):
+        simple_type, compound_type = _COMPOUND_ASSIGN_TOKENS[char]
+        if self._match("="):
+            lexeme = char + "="
+            self.tokens.append(Token(compound_type, lexeme, None, start_line, start_col))
+        else:
+            self.tokens.append(Token(simple_type, char, None, start_line, start_col))
 
     def _equals_or(self, start_line: int, start_col: int):
         if self._match("="):

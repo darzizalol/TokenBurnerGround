@@ -43,6 +43,11 @@ class TokenType(Enum):
     LTEQ = auto()
     GT = auto()
     GTEQ = auto()
+    PLUSEQ = auto()
+    MINUSEQ = auto()
+    STAREQ = auto()
+    SLASHEQ = auto()
+    PERCENTEQ = auto()
 
     # Punctuation
     LPAREN = auto()

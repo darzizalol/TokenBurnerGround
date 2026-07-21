@@ -3,9 +3,9 @@
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
 `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`,
-`replace`, `abs`, `min`, `max`, `round`, `contains`, `reverse`, `sort`,
-`range`, `map`, `filter`, `reduce`, `slice`, `concat`, `zip`, and `assert`
-already defined.
+`replace`, `abs`, `min`, `max`, `round`, `sum`, `any`, `all`, `contains`,
+`reverse`, `sort`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+`zip`, and `assert` already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -335,6 +335,43 @@ def _round(arguments: list, line: int, column: int) -> object:
     return round(value)
 
 
+def _sum(arguments: list, line: int, column: int) -> object:
+    _require_arity("sum", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"sum() requires a list, got {type_name(value)}", line, column
+        )
+    total = 0
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"sum() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        total = total + element
+    return total
+
+
+def _any(arguments: list, line: int, column: int) -> object:
+    _require_arity("any", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"any() requires a list, got {type_name(value)}", line, column
+        )
+    return any(is_truthy(element) for element in value)
+
+
+def _all(arguments: list, line: int, column: int) -> object:
+    _require_arity("all", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"all() requires a list, got {type_name(value)}", line, column
+        )
+    return all(is_truthy(element) for element in value)
+
+
 def _contains(arguments: list, line: int, column: int) -> object:
     _require_arity("contains", arguments, 2, line, column)
     collection, item = arguments
@@ -534,6 +571,9 @@ _BUILTINS = {
     "min": _min,
     "max": _max,
     "round": _round,
+    "sum": _sum,
+    "any": _any,
+    "all": _all,
     "contains": _contains,
     "reverse": _reverse,
     "sort": _sort,

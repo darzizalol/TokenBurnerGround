@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, find, starts_with, ends_with,
-replace, abs, min, max, round, contains, reverse, sort, range, map, filter,
-reduce, slice, concat, zip, assert."""
+replace, abs, min, max, round, sum, any, all, contains, reverse, sort, range,
+map, filter, reduce, slice, concat, zip, assert."""
 
 import io
 import subprocess
@@ -403,6 +403,64 @@ class TestRound(unittest.TestCase):
     def test_round_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("round(1.5, 2);")
+
+
+class TestSum(unittest.TestCase):
+    def test_sum_of_ints_is_int(self):
+        result = run("let result = sum([1, 2, 3]);").get("result")
+        self.assertEqual(result, 6)
+        self.assertIsInstance(result, int)
+
+    def test_sum_with_a_float_is_float(self):
+        result = run("let result = sum([1, 2.5]);").get("result")
+        self.assertEqual(result, 3.5)
+        self.assertIsInstance(result, float)
+
+    def test_sum_of_empty_list_is_zero(self):
+        result = run("let result = sum([]);").get("result")
+        self.assertEqual(result, 0)
+        self.assertIsInstance(result, int)
+
+    def test_sum_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sum(["a"]);')
+
+    def test_sum_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("sum(5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
+class TestAny(unittest.TestCase):
+    def test_any_true_when_an_element_is_truthy(self):
+        self.assertIs(run("let result = any([false, nil, 1]);").get("result"), True)
+
+    def test_any_false_when_all_elements_falsy(self):
+        self.assertIs(run("let result = any([false, nil]);").get("result"), False)
+
+    def test_any_of_empty_list_is_false(self):
+        self.assertIs(run("let result = any([]);").get("result"), False)
+
+    def test_any_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("any(5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
+class TestAll(unittest.TestCase):
+    def test_all_true_when_every_element_truthy(self):
+        self.assertIs(run('let result = all([1, "a", true]);').get("result"), True)
+
+    def test_all_false_when_an_element_falsy(self):
+        self.assertIs(run("let result = all([1, false]);").get("result"), False)
+
+    def test_all_of_empty_list_is_true(self):
+        self.assertIs(run("let result = all([]);").get("result"), True)
+
+    def test_all_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("all(5);")
+        self.assertEqual(ctx.exception.line, 1)
 
 
 class TestContains(unittest.TestCase):

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+## 1. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=` [claimed 2026-07-21T14:42:05Z]
 
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using

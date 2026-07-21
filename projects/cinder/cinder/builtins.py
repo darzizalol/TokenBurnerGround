@@ -3,7 +3,8 @@
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
 `upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, `round`,
-`contains`, `reverse`, `sort`, `range`, `map`, and `filter` already defined.
+`contains`, `reverse`, `sort`, `range`, `map`, `filter`, and `reduce` already
+defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -371,6 +372,25 @@ def _filter(arguments: list, line: int, column: int) -> object:
     return [item for item in items if is_truthy(call_value(fn, [item], line, column))]
 
 
+def _reduce(arguments: list, line: int, column: int) -> object:
+    _require_arity("reduce", arguments, 3, line, column)
+    items, fn, initial = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"reduce() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"reduce() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    acc = initial
+    for item in items:
+        acc = call_value(fn, [acc, item], line, column)
+    return acc
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -397,6 +417,7 @@ _BUILTINS = {
     "range": _range,
     "map": _map,
     "filter": _filter,
+    "reduce": _reduce,
 }
 
 

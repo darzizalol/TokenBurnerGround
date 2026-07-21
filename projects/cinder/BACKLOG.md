@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip`
+## 1. Standard library: `zip` [claimed 2026-07-21T19:28:47Z]
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,

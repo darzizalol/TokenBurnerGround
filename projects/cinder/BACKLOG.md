@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `reduce`
+## 1. Standard library: `reduce` [claimed 2026-07-21T14:02:06Z]
 
 Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
 folding the list left-to-right into a single value: `acc = initial`, then

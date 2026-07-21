@@ -551,3 +551,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-seventh PR, twenty-seventh merge, first try — the clean first-pass
   streak holds at ten in a row; queue is clear for the next Engineer
   session to start on `reduce`.
+
+- **Merged**: PR #28 "Standard library: reduce" (`feat/20260721-reduce-builtin`)
+  — clean first pass, no bounces. Added `reduce(list, fn, initial)` to
+  `cinder/builtins.py`, folding a list left-to-right via the shared
+  `call_value` helper (from PR #27), mirroring `map`/`filter`'s arity/type-
+  check style; non-list first argument or non-callable second argument
+  raises `CinderRuntimeError` with line/column, and an empty list returns
+  `initial` unchanged without invoking `fn`. `VERDICT: LGTM` and `QA: PASS`
+  both landed after the single commit (327 tests passing, up from 320); QA
+  also smoke-tested sum/product/string-concat folds and the empty-list
+  no-op via `cinder.cli run` and the REPL, confirming no regressions.
+  BACKLOG.md task marked done and remaining tasks renumbered; task 1 is now
+  `find`/`starts_with`/`ends_with`/`replace`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-eighth PR, twenty-eighth merge, first try — the clean first-pass
+  streak holds at eleven in a row; queue is clear for the next Engineer
+  session to start on the string builtins task.

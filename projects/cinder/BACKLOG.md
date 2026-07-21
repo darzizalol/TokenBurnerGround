@@ -11,40 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `reduce` [claimed 2026-07-21T14:02:06Z]
-
-Build: extend `cinder/builtins.py` with `reduce(list, fn, initial)`,
-folding the list left-to-right into a single value: `acc = initial`, then
-for each element `acc = fn(acc, element)`, returning the final `acc`.
-Reuse the `call_value` helper in `cinder/interpreter.py` (added by PR #27)
-for invoking `fn` (a `CinderFunction` or `Builtin`, two-argument callback)
-rather than re-inlining call dispatch. First argument must be a `list`;
-second argument must be callable; anything else raises
-`CinderRuntimeError` with line/column, matching `map`/`filter`'s
-type-check style. An empty list returns `initial` unchanged without
-calling `fn`. Propagate the callback's own `CinderRuntimeError` (e.g.
-wrong arity — `fn` here takes exactly two arguments, not one like
-`map`/`filter`'s callback) unchanged if it raises one.
-
-Acceptance criteria:
-- `reduce([1, 2, 3], fn(acc, x) { return acc + x; }, 0)` is `6`.
-- `reduce([1, 2, 3, 4], fn(acc, x) { return acc * x; }, 1)` is `24`.
-- `reduce([], fn(acc, x) { return acc + x; }, 0)` is `0` (fn never called
-  — regression test can assert this via a side-effecting fn, e.g. one
-  that also mutates an outer list via `push`, and checking it stayed
-  empty).
-- `reduce(5, fn(acc, x) { return acc; }, 0)` raises `CinderRuntimeError`
-  (first arg not a list) with line/column.
-- `reduce([1, 2], 5, 0)` raises `CinderRuntimeError` (second arg not
-  callable) with line/column.
-- The list passed to `reduce` is unchanged afterward (regression test).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+## 1. Standard library: `find`, `starts_with`, `ends_with`, `replace`
 
 Build: extend `cinder/builtins.py` with four string builtins, following
 the existing two-string-argument style of `split(s, sep)`:
@@ -78,7 +45,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `slice` and `concat` for lists
+## 2. Standard library: `slice` and `concat` for lists
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`
@@ -111,7 +78,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `assert`
+## 3. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -149,7 +116,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
 
 ---
 
-## 5. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+## 4. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
 
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
@@ -186,7 +153,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `zip`
+## 5. Standard library: `zip`
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,
@@ -195,8 +162,8 @@ truncating to the shorter length when the inputs differ in length
 mismatched lengths). Non-mutating, matching `reverse`/`sort`/`map`/
 `filter`'s style. Both arguments must be `list`; a non-list argument
 raises `CinderRuntimeError` with line/column, matching the existing
-type-check style. No callback/`call_value` dependency — this task is
-independent of task 1 and can be done in either order.
+type-check style. No callback/`call_value` dependency on `reduce`
+(PR #28) or any other task.
 
 Acceptance criteria:
 - `zip([1, 2, 3], ["a", "b", "c"])` is `[[1, "a"], [2, "b"], [3, "c"]]`.
@@ -211,7 +178,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. String and list repetition via `*`
+## 6. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 414-415) to
@@ -241,7 +208,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 8. `in` operator for membership tests
+## 7. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -278,7 +245,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Runtime errors report the call stack, not just the innermost site
+## 8. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -530,6 +497,15 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
   `FnExpr` AST node, since the task's acceptance criteria required passing a
   bare `fn(x) { ... }` literal as a call argument. Clean first pass, no
   bounces (320 tests passing, up from 300).
+
+- **Standard library: `reduce`** — merged 2026-07-21T~14:07Z via PR #28
+  (`feat/20260721-reduce-builtin`). Added `reduce(list, fn, initial)` to
+  `cinder/builtins.py`, folding a list left-to-right via the shared
+  `call_value` helper (from PR #27); non-list first argument or non-callable
+  second argument raises `CinderRuntimeError` with line/column, matching
+  `map`/`filter`'s type-check style, and an empty list returns `initial`
+  without calling `fn`. Clean first pass, no bounces (327 tests passing, up
+  from 320).
 
 ## Graveyard
 

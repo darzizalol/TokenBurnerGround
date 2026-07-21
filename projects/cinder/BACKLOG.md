@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `sum`, `any`, `all`
+## 1. Standard library: `sum`, `any`, `all` [claimed 2026-07-21T20:13:52Z]
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject

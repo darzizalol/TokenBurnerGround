@@ -11,37 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. String and list repetition via `*` [claimed 2026-07-21T19:37:20Z]
-
-Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
-(currently delegating straight to `_numeric_op` around line 405) to
-also support `str * int`/`int * str` and `list * int`/`int * list`,
-returning the value repeated `n` times with Python semantics: `"ab" *
-3` is `"ababab"`, `[1, 2] * 2` is `[1, 2, 1, 2]`, and a zero or negative
-count returns an empty string/list (matching Python's `"x" * -1 ==
-""`). Check for a (`str`-or-`list`, `int`) operand pairing *before*
-falling through to `_numeric_op`, so genuinely unsupported combinations
-(e.g. `[1] * "a"`, `[1] * 1.5`) still fall through to `_numeric_op` and
-raise its existing type error. Only `int` counts are valid — a `float`
-count (even a whole number like `2.0`) is not a valid repeat count and
-must raise `CinderRuntimeError`, matching `range`/`slice`'s int-only
-rule.
-
-Acceptance criteria:
-- `"ab" * 3` is `"ababab"`; `3 * "ab"` is `"ababab"` (commutative).
-- `[1, 2] * 2` is `[1, 2, 1, 2]`; `2 * [1, 2]` is `[1, 2, 1, 2]`.
-- `"x" * 0` is `""`; `[1] * -1` is `[]` (Python-style clamp, no error).
-- `[1] * 1.5` and `"a" * 1.5` raise `CinderRuntimeError` (non-int
-  count).
-- The input list is not mutated by list repetition (regression test).
-- Existing numeric `a * b` behavior is unchanged (regression test).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. `in` operator for membership tests
+## 1. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -78,7 +48,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Runtime errors report the call stack, not just the innermost site
+## 2. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -119,7 +89,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 4. Standard library: `sum`, `any`, `all`
+## 3. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -151,7 +121,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Ternary conditional expression: `cond ? then : else`
+## 4. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -188,7 +158,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 6. Standard library: `items` for maps
+## 5. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -212,7 +182,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `enumerate`
+## 6. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -235,7 +205,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `merge` for maps
+## 7. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -528,6 +498,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `reverse`/`sort`/`map`/`filter`'s style; non-list argument raises
   `CinderRuntimeError` with line/column. Clean first pass, no bounces
   (383 tests passing, up from 378).
+- **String and list repetition via `*`** — merged 2026-07-22T~ via PR #34
+  (`feat/20260721-star-repeat`). Extended the `STAR` binary-op case in
+  `cinder/interpreter.py` to support `str * int`/`int * str` and
+  `list * int`/`int * list` with Python repetition semantics (zero/negative
+  count clamps to empty, no error); non-int count falls through to the
+  existing `_numeric_op` type check and raises `CinderRuntimeError`. Clean
+  first pass, no bounces (393 tests passing, up from 383).
 
 ## Graveyard
 

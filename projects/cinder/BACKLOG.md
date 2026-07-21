@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Ternary conditional expression: `cond ? then : else`
+## 1. Ternary conditional expression: `cond ? then : else` [claimed 2026-07-21T20:22:46Z]
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a

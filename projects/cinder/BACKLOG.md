@@ -237,6 +237,55 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 8. Standard library: `enumerate`
+
+Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
+`list` of two-element `[index, value]` lists, one per element, pairing
+each element with its `0`-based position (same non-mutating,
+single-`list`-argument style as `zip`/`items`; reject a non-list
+argument with `CinderRuntimeError` and line/column).
+
+Acceptance criteria:
+- `enumerate(["a", "b", "c"])` is `[[0, "a"], [1, "b"], [2, "c"]]`.
+- `enumerate([])` is `[]`.
+- For any list `l`, `enumerate(l)` matches `zip(range(len(l)), l)`
+  element-for-element (regression test tying `enumerate`, `zip`, and
+  `range` together — depends on task 1's `zip` having landed).
+- `enumerate(5)` and `enumerate({"a": 1})` raise `CinderRuntimeError`
+  with line/column (non-list argument).
+- The input list is not mutated (regression test).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `merge` for maps
+
+Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
+**new** map containing every key from both inputs; when a key exists in
+both, `map2`'s value wins (matching Python's `{**map1, **map2}`
+semantics). Non-mutating — neither input map is modified. Both
+arguments must be `map`; a non-map argument raises
+`CinderRuntimeError` with line/column, matching `items`/`keys`'s
+type-check style. Key order in the result: `map1`'s keys first (in
+their existing order), then any `map2`-only keys appended in `map2`'s
+order — do not sort.
+
+Acceptance criteria:
+- `merge({"a": 1}, {"b": 2})` is `{"a": 1, "b": 2}`.
+- `merge({"a": 1}, {"a": 2})` is `{"a": 2}` (`map2` wins on conflict).
+- `merge({}, {"a": 1})` is `{"a": 1}`; `merge({"a": 1}, {})` is
+  `{"a": 1}`.
+- `merge(5, {})` and `merge({}, 5)` raise `CinderRuntimeError` with
+  line/column (non-map argument).
+- Neither input map is mutated by the call (regression test).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

@@ -37,8 +37,9 @@ while (i < 10) {
   lists, strings (character-by-character), and maps (over keys),
   `break`/`continue` in both loop kinds
 - **Operators**: full arithmetic/comparison/logical set, compound
-  assignment (`+=`, `-=`, `*=`, `/=`, `%=`), and `*` repetition for
-  `str * int`/`list * int` (Python repetition semantics)
+  assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
+  `str * int`/`list * int` (Python repetition semantics), and `in` for
+  membership tests (lists, strings, maps)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -88,7 +89,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (393+ tests) covers every layer — lexer, parser, interpreter,
+The suite (405+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -113,10 +114,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: compound assignment operators
-(`+=`, `-=`, `*=`, `/=`, `%=`), `zip`, and string/list repetition via `*`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): an `in` membership
-operator, call-stack traces for runtime errors, `sum`/`any`/`all`, a
-ternary conditional expression, `items`/`enumerate`/`merge` for maps and
-lists, `get`/`copy`/`sort_by`, and bitwise operators.
+Actively developed, nightly. Recently landed: `zip`, string/list repetition
+via `*`, and the `in` membership operator.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): call-stack traces for
+runtime errors, `sum`/`any`/`all`, a ternary conditional expression,
+`items`/`enumerate`/`merge` for maps and lists, `get`/`copy`/`sort_by`, and
+bitwise operators.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

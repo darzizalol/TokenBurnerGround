@@ -3,6 +3,7 @@
 import unittest
 
 from cinder.ast_nodes import (
+    Assign,
     Binary,
     Block,
     BreakStmt,
@@ -59,6 +60,8 @@ def shape(node):
             shape(node.index),
             shape(node.value),
         )
+    if isinstance(node, Assign):
+        return ("Assign", node.name, shape(node.value))
     if isinstance(node, FnExpr):
         return ("FnExpr", node.params, stmt_shape(node.body))
     raise TypeError(f"unhandled node type: {type(node)!r}")
@@ -268,6 +271,42 @@ class TestListsAndMaps(unittest.TestCase):
     def test_unclosed_list_literal_raises(self):
         with self.assertRaises(ParseError):
             parse("[1, 2")
+
+
+class TestCompoundAssignment(unittest.TestCase):
+    def test_plus_eq_desugars_to_binary_plus(self):
+        self.assertEqual(
+            shape(parse("x += 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.PLUS, ("Literal", 1))),
+        )
+
+    def test_minus_eq_desugars_to_binary_minus(self):
+        self.assertEqual(
+            shape(parse("x -= 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.MINUS, ("Literal", 1))),
+        )
+
+    def test_star_eq_desugars_to_binary_star(self):
+        self.assertEqual(
+            shape(parse("x *= 2")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2))),
+        )
+
+    def test_slash_eq_desugars_to_binary_slash(self):
+        self.assertEqual(
+            shape(parse("x /= 2")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.SLASH, ("Literal", 2))),
+        )
+
+    def test_percent_eq_desugars_to_binary_percent(self):
+        self.assertEqual(
+            shape(parse("x %= 3")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.PERCENT, ("Literal", 3))),
+        )
+
+    def test_index_target_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("xs[0] += 1;")
 
 
 class TestStatements(unittest.TestCase):

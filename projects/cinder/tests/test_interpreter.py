@@ -206,6 +206,42 @@ class TestAssignment(unittest.TestCase):
             parse_program(tokenize("1 = 2;"))
 
 
+class TestCompoundAssignment(unittest.TestCase):
+    def test_plus_eq(self):
+        env = run("let x = 5; x += 3;")
+        self.assertEqual(env.get("x"), 8)
+
+    def test_minus_eq(self):
+        env = run("let x = 5; x -= 2;")
+        self.assertEqual(env.get("x"), 3)
+
+    def test_star_eq(self):
+        env = run("let x = 5; x *= 4;")
+        self.assertEqual(env.get("x"), 20)
+
+    def test_slash_eq(self):
+        env = run("let x = 6; x /= 2;")
+        self.assertEqual(env.get("x"), 3)
+
+    def test_percent_eq(self):
+        env = run("let x = 5; x %= 3;")
+        self.assertEqual(env.get("x"), 2)
+
+    def test_compound_assignment_to_undefined_variable_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("x += 1;")
+
+    def test_compound_assignment_type_error_matches_binary(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('let s = "a"; s -= 1;')
+
+    def test_index_target_compound_assignment_raises_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("list[0] += 1;"))
+
+
 class TestIfStatement(unittest.TestCase):
     def test_if_true_runs_then_branch(self):
         env = run("let x = 0; if (true) { x = 1; }")

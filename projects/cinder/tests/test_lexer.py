@@ -97,6 +97,27 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertEqual(types(tokenize(source)), expected)
 
+    def test_compound_assignment_operators(self):
+        source = "+= -= *= /= %="
+        expected = [
+            TokenType.PLUSEQ,
+            TokenType.MINUSEQ,
+            TokenType.STAREQ,
+            TokenType.SLASHEQ,
+            TokenType.PERCENTEQ,
+            TokenType.EOF,
+        ]
+        self.assertEqual(types(tokenize(source)), expected)
+
+    def test_compound_assignment_lexes_as_single_token(self):
+        # `+=` must lex as one PLUSEQ token, not PLUS then EQ.
+        tokens = tokenize("x += 1")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.IDENTIFIER, TokenType.PLUSEQ, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "+=")
+
 
 class TestComments(unittest.TestCase):
     def test_comment_stripped(self):

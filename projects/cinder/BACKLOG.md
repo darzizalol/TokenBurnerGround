@@ -13,18 +13,20 @@ a later task while an earlier one is unclaimed/open.
 
 ## 1. `in` operator for membership tests
 
-Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
-dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
-lexed as `TokenType.IN` via the existing identifier/keyword path). In
-`cinder/parser.py`, add `expr in expr` as a new precedence tier between
-`_comparison` and `_and` (i.e. `_and` calls a new `_membership`, which
-calls `_comparison`, mirroring `_comparison`'s own one-token-lookahead-loop
-shape but only for the single `IN` token) — this makes `a in b and c in d`
-parse as expected. Reuse the existing `Binary` AST node with the `IN`
-token as the operator, no new AST node. In
-`cinder/interpreter.py`'s `_evaluate_binary`, add an `IN` case that
-implements exactly `contains`'s existing semantics (list `==` membership,
-map key check, string substring check — see `_contains` in
+Build: `TokenType.IN` and the `"in"` keyword **already exist**
+(`cinder/tokens.py`) and are already lexed — they're used today only by
+`for NAME in EXPR { ... }` (PR #17). This task wires the same token into
+*expression* parsing so `in` also works as a binary operator, without
+touching the `for`-loop grammar. In `cinder/parser.py`, add `expr in expr`
+as a new precedence tier between `_comparison` and `_and` (i.e. `_and`
+calls a new `_membership`, which calls `_comparison`, mirroring
+`_comparison`'s own one-token-lookahead-loop shape but only for the single
+`IN` token) — this makes `a in b and c in d` parse as expected, and must
+not break `for x in list { ... }` parsing (regression-test both). Reuse
+the existing `Binary` AST node with the `IN` token as the operator, no new
+AST node. In `cinder/interpreter.py`'s `_evaluate_binary`, add an `IN`
+case that implements exactly `contains`'s existing semantics (list `==`
+membership, map key check, string substring check — see `_contains` in
 `cinder/builtins.py`, factor its body into a shared helper both call rather
 than duplicating the type dispatch) and raises `CinderRuntimeError` with
 line/column for any other right-operand type.
@@ -40,6 +42,9 @@ Acceptance criteria:
   (precedence regression test).
 - `contains([1,2], 1)` and `1 in [1,2]` agree on every case above (shared
   helper, no divergence).
+- `for x in [1, 2, 3] { print(x); }` still parses and runs correctly
+  (regression test — the `for`-loop grammar must not be affected by adding
+  `in` as a binary operator).
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
@@ -228,6 +233,142 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `get` for safe map access
+
+Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
+`map[key]` if `key` is present, else `default` — never raising for a
+missing key (unlike `map[key]` indexing, which raises `CinderRuntimeError`
+per PR #8). First argument must be `map`; a non-map argument raises
+`CinderRuntimeError` with line/column, matching `items`/`merge`'s
+type-check style. `key` follows the same hashability rule `Index` already
+enforces for map lookups (unhashable key raises `CinderRuntimeError`, not
+a raw Python `TypeError` — see the existing map-index path in
+`cinder/interpreter.py` for the exact error it raises and reuse that
+wording/behavior rather than inventing a new one).
+
+Acceptance criteria:
+- `get({"a": 1}, "a", 0)` is `1`; `get({"a": 1}, "z", 0)` is `0`.
+- `get({}, "a", "default")` is `"default"`.
+- `get({"a": 1}, "a", 0)` does not raise even though the key exists (sanity
+  check against accidentally always returning `default`).
+- `get(5, "a", 0)` raises `CinderRuntimeError` with line/column (non-map
+  first argument).
+- `get({"a": 1}, [1, 2], 0)` raises `CinderRuntimeError` (unhashable key),
+  matching plain `{"a": 1}[[1, 2]]` indexing's existing error rather than a
+  raw Python traceback.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `copy` for lists and maps
+
+Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
+top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
+still shared with the original, matching Python's `list.copy()`/
+`dict.copy()` semantics, not a deep copy) for a `list` or `map` argument.
+This exists because Cinder's lists/maps are reference types (assignment
+aliases, `push`/`pop`/index-assign mutate in place, per PR #14/#8) with no
+way today to intentionally break aliasing. Any other argument type raises
+`CinderRuntimeError` with line/column, matching `reverse`/`sort`'s
+type-check style.
+
+Acceptance criteria:
+- `let a = [1, 2]; let b = copy(a); push(b, 3);` leaves `a` as `[1, 2]`
+  and `b` as `[1, 2, 3]` (the whole point of the builtin — regression test
+  against aliasing).
+- Same shape for maps: `let a = {"x": 1}; let b = copy(a); b["y"] = 2;`
+  leaves `a` as `{"x": 1}`.
+- `copy([1, [2, 3]])`'s inner list is still the *same* object as the
+  original's inner list (shallow-copy regression test — mutating the
+  original's nested list via `push` is visible through the copy's nested
+  list too).
+- `copy(5)` and `copy("a")` raise `CinderRuntimeError` with line/column
+  (unsupported argument type).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 10. Standard library: `sort_by` with a custom key function
+
+Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
+ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
+each element's `fn(element)` result rather than the element itself —
+complementing `sort`, which only handles all-numeric or all-string lists
+directly. Call `fn` once per element via the shared `call_value` helper
+(same pattern `map`/`filter`/`reduce` already use, imported from
+`cinder/interpreter.py`), then sort by the resulting keys using Python's
+stable `sorted(..., key=...)`; the keys themselves must be all-numeric or
+all-string (reuse `_is_numeric`/the same mixed-type rejection `_sort`
+already applies to the *key* results, not the original elements — a
+mixed-type key set raises `CinderRuntimeError`). First argument must be
+`list` and second must be callable (`CinderFunction` or `Builtin`),
+matching `map`/`filter`'s type-check style.
+
+Acceptance criteria:
+- `sort_by([3, 1, 2], fn(x) { return x; })` is `[1, 2, 3]` (identity key
+  matches plain `sort`).
+- `sort_by(["bb", "a", "ccc"], fn(x) { return len(x); })` is
+  `["a", "bb", "ccc"]` (sorts by string length, not lexicographic order).
+- `sort_by([], fn(x) { return x; })` is `[]`; `fn` is never called on an
+  empty list.
+- Sort is stable: two elements with equal keys keep their relative input
+  order (regression test with e.g. `[[1, "a"], [1, "b"]]` keyed by the
+  first element).
+- `sort_by(5, fn(x) { return x; })` and `sort_by([1, 2], 5)` raise
+  `CinderRuntimeError` with line/column (non-list / non-callable argument).
+- `sort_by([1, "a"], fn(x) { return x; })` raises `CinderRuntimeError`
+  (mixed-type keys, same rule `sort` already enforces).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 11. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+
+Build: add six token types to `cinder/tokens.py`'s `TokenType`
+(`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
+`cinder/lexer.py` — `~` is single-char, `<<`/`>>` need the same two-char
+lookahead pattern already used for `<=`/`>=`/compound-assignment (watch
+for ambiguity with the existing `LT`/`GT`/`LTEQ`/`GTEQ` tokens: `<<` must
+not be lexed as two `LT`s or collide with `<=`). Add a new precedence tier
+in `cinder/parser.py` for the five binary operators (`&`, `|`, `^`, `<<`,
+`>>`) between `_comparison` and `_factor` — pick one sub-tier per operator
+group following C's relative precedence (`|` loosest, then `^`, then `&`,
+then `<<`/`>>` tightest, all looser than `+`/`-`/`*`/`/`/`%`) — reusing
+the existing `Binary` AST node, no new node needed. `~` is unary: extend
+`_unary` (alongside the existing `-`/`not` handling) with a new `Unary`
+case, reusing the existing `Unary` AST node. In
+`cinder/interpreter.py`'s `_evaluate_binary`/`_evaluate_unary`, implement
+each operator via Python's own bitwise operators, restricted to `int`
+operands only (a `float` or any non-numeric operand on either side raises
+`CinderRuntimeError` with line/column — unlike `+`/`-`/`*`/`/`, bitwise
+ops do not auto-promote floats).
+
+Acceptance criteria:
+- `5 & 3` is `1`; `5 | 2` is `7`; `5 ^ 1` is `4`; `~5` is `-6` (Python's
+  own bitwise semantics — two's-complement `int`, matching Python `int`
+  since Cinder ints are backed by Python `int`).
+- `1 << 3` is `8`; `16 >> 2` is `4`.
+- `1 | 2 == 3` parses as `1 | (2 == 3)` or `(1 | 2) == 3` — pick one
+  consistent with the chosen precedence tier and add a parser test
+  pinning it explicitly (precedence is this task's main risk).
+- `2 + 3 << 1` is `10` (`<<` binds looser than `+`, so this is
+  `(2 + 3) << 1`, not `2 + (3 << 1)`).
+- `5.0 & 3`, `"a" | 1`, `~"a"`, `~5.0` each raise `CinderRuntimeError` with
+  line/column (no float/non-numeric operands for bitwise ops).
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
 
 ---
 

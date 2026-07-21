@@ -64,6 +64,43 @@ class TestStringConcatenation(unittest.TestCase):
         self.assertEqual(evaluate('"foo" + "bar"'), "foobar")
 
 
+class TestRepetition(unittest.TestCase):
+    def test_string_times_int(self):
+        self.assertEqual(evaluate('"ab" * 3'), "ababab")
+
+    def test_int_times_string(self):
+        self.assertEqual(evaluate('3 * "ab"'), "ababab")
+
+    def test_list_times_int(self):
+        self.assertEqual(evaluate("[1, 2] * 2"), [1, 2, 1, 2])
+
+    def test_int_times_list(self):
+        self.assertEqual(evaluate("2 * [1, 2]"), [1, 2, 1, 2])
+
+    def test_string_times_zero(self):
+        self.assertEqual(evaluate('"x" * 0'), "")
+
+    def test_list_times_negative(self):
+        self.assertEqual(evaluate("[1] * -1"), [])
+
+    def test_list_times_float_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("[1] * 1.5")
+
+    def test_string_times_float_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('"a" * 1.5')
+
+    def test_list_repetition_does_not_mutate_input(self):
+        env = run("let original = [1, 2]; let repeated = original * 2;")
+        self.assertEqual(env.get("original"), [1, 2])
+        self.assertEqual(env.get("repeated"), [1, 2, 1, 2])
+
+    def test_numeric_multiplication_unchanged(self):
+        self.assertEqual(evaluate("3 * 4"), 12)
+        self.assertEqual(evaluate("2.5 * 2"), 5.0)
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

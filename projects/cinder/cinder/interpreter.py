@@ -403,6 +403,9 @@ class Interpreter:
         if op == TokenType.MINUS:
             return self._numeric_op(expr, left, right, lambda a, b: a - b)
         if op == TokenType.STAR:
+            repeated = self._repeat_op(left, right)
+            if repeated is not None:
+                return repeated
             return self._numeric_op(expr, left, right, lambda a, b: a * b)
         if op == TokenType.SLASH:
             return self._divide_op(expr, left, right, lambda a, b: a / b)
@@ -417,6 +420,14 @@ class Interpreter:
             return self._compare(expr, left, right, op)
 
         raise TypeError(f"unhandled binary operator: {op!r}")
+
+    def _repeat_op(self, left, right):
+        """str/list * int repetition (either operand order); None if not applicable."""
+        if isinstance(left, (str, list)) and _is_int(right):
+            return left * right
+        if isinstance(right, (str, list)) and _is_int(left):
+            return right * left
+        return None
 
     def _numeric_op(self, expr: Binary, left, right, fn):
         if not (_is_number(left) and _is_number(right)):
@@ -487,6 +498,10 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
 
 def _is_number(value: object) -> bool:
     return isinstance(value, _NUMERIC) and not isinstance(value, bool)
+
+
+def _is_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 def _is_valid_key(value: object) -> bool:

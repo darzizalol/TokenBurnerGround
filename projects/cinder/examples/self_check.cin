@@ -1,0 +1,24 @@
+# self_check.cin: a script that verifies its own invariants with assert
+# instead of printing results for a human to eyeball.
+
+fn fib(n) {
+    if (n < 2) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+assert(fib(0) == 0, "fib(0) should be 0");
+assert(fib(1) == 1, "fib(1) should be 1");
+assert(fib(10) == 55, "fib(10) should be 55");
+
+let xs = [3, 1, 2];
+let sorted_xs = sort(xs);
+assert(sorted_xs[0] == 1 and sorted_xs[1] == 2 and sorted_xs[2] == 3, "sort should be ascending");
+assert(xs[0] == 3, "sort should not mutate its input");
+
+let doubled = map(xs, fn(x) { return x * 2; });
+assert(doubled[0] == 6 and doubled[1] == 2 and doubled[2] == 4, "map should double each element");
+
+assert(reverse([1, 2, 3])[0] == 3, "reverse should flip element order");
+assert(concat([1, 2], [3])[2] == 3, "concat should append the second list");

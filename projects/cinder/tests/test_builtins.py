@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, find, starts_with, ends_with,
 replace, abs, min, max, round, contains, reverse, sort, range, map, filter,
-reduce, slice, concat."""
+reduce, slice, concat, assert."""
 
 import io
 import subprocess
@@ -668,6 +668,32 @@ class TestConcat(unittest.TestCase):
             run("concat(5, [1]);")
         with self.assertRaises(CinderRuntimeError):
             run("concat([1], 5);")
+
+
+class TestAssert(unittest.TestCase):
+    def test_assert_true_does_not_raise_and_returns_nil(self):
+        env = run('let result = assert(true, "should not fire");')
+        self.assertIsNone(env.get("result"))
+
+    def test_assert_false_condition_raises_with_message_and_location(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('assert(1 == 2, "math is broken");')
+        self.assertIn("math is broken", ctx.exception.message)
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 7)
+
+    def test_assert_zero_is_truthy_and_does_not_raise(self):
+        run('assert(0, "zero is falsy? no");')
+
+    def test_assert_non_str_message_raises_regardless_of_condition(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("assert(false, 42);")
+
+    def test_assert_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("assert(true);")
+        with self.assertRaises(CinderRuntimeError):
+            run('assert(true, "x", "y");')
 
 
 class TestEndToEndViaCli(unittest.TestCase):

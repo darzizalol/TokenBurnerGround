@@ -46,7 +46,7 @@ while (i < 10) {
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
-  `reduce`, `slice`, `concat`, `assert`, string methods `upper`, `lower`,
+  `reduce`, `slice`, `concat`, `zip`, `assert`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   and math builtins `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python

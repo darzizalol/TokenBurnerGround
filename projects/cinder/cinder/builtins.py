@@ -4,8 +4,8 @@
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
 `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`,
 `replace`, `abs`, `min`, `max`, `round`, `contains`, `reverse`, `sort`,
-`range`, `map`, `filter`, `reduce`, `slice`, `concat`, and `assert` already
-defined.
+`range`, `map`, `filter`, `reduce`, `slice`, `concat`, `zip`, and `assert`
+already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -442,6 +442,22 @@ def _concat(arguments: list, line: int, column: int) -> object:
     return list1 + list2
 
 
+def _zip(arguments: list, line: int, column: int) -> object:
+    _require_arity("zip", arguments, 2, line, column)
+    list1, list2 = arguments
+    if not isinstance(list1, list):
+        raise CinderRuntimeError(
+            f"zip() requires a list as its first argument, got {type_name(list1)}",
+            line, column,
+        )
+    if not isinstance(list2, list):
+        raise CinderRuntimeError(
+            f"zip() requires a list as its second argument, got {type_name(list2)}",
+            line, column,
+        )
+    return [[a, b] for a, b in zip(list1, list2)]
+
+
 def _assert(arguments: list, line: int, column: int) -> object:
     _require_arity("assert", arguments, 2, line, column)
     condition, message = arguments
@@ -542,6 +558,7 @@ _BUILTINS = {
     "reduce": _reduce,
     "slice": _slice,
     "concat": _concat,
+    "zip": _zip,
     "assert": _assert,
 }
 

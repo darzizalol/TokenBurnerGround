@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, find, starts_with, ends_with,
 replace, abs, min, max, round, contains, reverse, sort, range, map, filter,
-reduce, slice, concat, assert."""
+reduce, slice, concat, zip, assert."""
 
 import io
 import subprocess
@@ -668,6 +668,33 @@ class TestConcat(unittest.TestCase):
             run("concat(5, [1]);")
         with self.assertRaises(CinderRuntimeError):
             run("concat([1], 5);")
+
+
+class TestZip(unittest.TestCase):
+    def test_zip_pairs_elements(self):
+        env = run('let result = zip([1, 2, 3], ["a", "b", "c"]);')
+        self.assertEqual(env.get("result"), [[1, "a"], [2, "b"], [3, "c"]])
+
+    def test_zip_truncates_to_shorter_list(self):
+        env = run("let result = zip([1, 2], [1]);")
+        self.assertEqual(env.get("result"), [[1, 1]])
+
+    def test_zip_with_empty_list(self):
+        env = run("let result = zip([], [1, 2]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_zip_does_not_mutate_inputs(self):
+        env = run("let a = [1, 2]; let b = [3, 4]; let result = zip(a, b);")
+        self.assertEqual(env.get("a"), [1, 2])
+        self.assertEqual(env.get("b"), [3, 4])
+        self.assertEqual(env.get("result"), [[1, 3], [2, 4]])
+
+    def test_zip_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("zip(5, [1]);")
+        self.assertEqual(ctx.exception.line, 1)
+        with self.assertRaises(CinderRuntimeError):
+            run("zip([1], 5);")
 
 
 class TestAssert(unittest.TestCase):

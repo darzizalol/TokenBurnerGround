@@ -427,6 +427,21 @@ class TestContains(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run("contains([1]);")
 
+    def test_contains_matches_in_operator(self):
+        cases = [
+            ("[1, 2], 1", "1 in [1, 2]"),
+            ("[1, 2], 9", "9 in [1, 2]"),
+            ('{"a": 1}, "a"', '"a" in {"a": 1}'),
+            ('{"a": 1}, "b"', '"b" in {"a": 1}'),
+            ('"hello", "ell"', '"ell" in "hello"'),
+            ('"hello", "xyz"', '"xyz" in "hello"'),
+        ]
+        for contains_args, in_expr in cases:
+            self.assertIs(
+                run(f"let result = contains({contains_args});").get("result"),
+                run(f"let result = {in_expr};").get("result"),
+            )
+
 
 class TestReverse(unittest.TestCase):
     def test_reverse_returns_new_reversed_list(self):

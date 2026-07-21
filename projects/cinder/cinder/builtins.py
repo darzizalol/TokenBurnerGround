@@ -17,6 +17,7 @@ from cinder.interpreter import (
     CinderFunction,
     Environment,
     call_value,
+    contains_value,
     is_truthy,
     type_name,
 )
@@ -337,23 +338,7 @@ def _round(arguments: list, line: int, column: int) -> object:
 def _contains(arguments: list, line: int, column: int) -> object:
     _require_arity("contains", arguments, 2, line, column)
     collection, item = arguments
-    if isinstance(collection, list):
-        return any(item == element for element in collection)
-    if isinstance(collection, dict):
-        try:
-            return item in collection
-        except TypeError:
-            return False
-    if isinstance(collection, str):
-        if not isinstance(item, str):
-            raise CinderRuntimeError(
-                f"contains() on a string requires a string to search for, got {type_name(item)}",
-                line, column,
-            )
-        return item in collection
-    raise CinderRuntimeError(
-        f"contains() requires a list, map, or string, got {type_name(collection)}", line, column
-    )
+    return contains_value(collection, item, line, column)
 
 
 def _reverse(arguments: list, line: int, column: int) -> object:

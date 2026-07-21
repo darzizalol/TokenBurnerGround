@@ -1,7 +1,7 @@
 """Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
-    assignment (=, +=, -=, *=, /=, %=, right-assoc) > or > and >
+    assignment (=, +=, -=, *=, /=, %=, right-assoc) > or > and > in >
     comparisons (== != < <= > >=) > + - > * / % > unary (- not)
 with parenthesized grouping and call expressions binding tightest of all.
 
@@ -314,11 +314,19 @@ class Parser:
         return expr
 
     def _and(self) -> Expr:
-        expr = self._comparison()
+        expr = self._membership()
         while self._check(TokenType.AND):
             operator = self._advance()
-            right = self._comparison()
+            right = self._membership()
             expr = Logical(expr, operator, right)
+        return expr
+
+    def _membership(self) -> Expr:
+        expr = self._comparison()
+        while self._check(TokenType.IN):
+            operator = self._advance()
+            right = self._comparison()
+            expr = Binary(expr, operator, right)
         return expr
 
     def _comparison(self) -> Expr:

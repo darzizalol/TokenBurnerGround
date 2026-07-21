@@ -198,6 +198,50 @@ class TestPrecedence(unittest.TestCase):
         self.assertEqual(shape(parse('"hi"')), ("Literal", "hi"))
         self.assertEqual(shape(parse("nil")), ("Literal", None))
 
+    def test_in_is_binary_op(self):
+        self.assertEqual(
+            shape(parse("2 in [1, 2, 3]")),
+            (
+                "Binary",
+                ("Literal", 2),
+                TokenType.IN,
+                ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+            ),
+        )
+
+    def test_in_binds_tighter_than_and(self):
+        self.assertEqual(
+            shape(parse("1 in [1] and 2 in [2]")),
+            (
+                "Logical",
+                ("Binary", ("Literal", 1), TokenType.IN, ("ListLiteral", [("Literal", 1)])),
+                TokenType.AND,
+                ("Binary", ("Literal", 2), TokenType.IN, ("ListLiteral", [("Literal", 2)])),
+            ),
+        )
+
+    def test_comparison_binds_tighter_than_in(self):
+        self.assertEqual(
+            shape(parse("1 < 2 in [true]")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 1), TokenType.LT, ("Literal", 2)),
+                TokenType.IN,
+                ("ListLiteral", [("Literal", True)]),
+            ),
+        )
+
+    def test_for_in_loop_parsing_unaffected_by_in_operator(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("for x in [1, 2, 3] { }")[0]),
+            (
+                "ForStmt",
+                "x",
+                ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+                ("Block", []),
+            ),
+        )
+
 
 class TestCalls(unittest.TestCase):
     def test_call_with_arguments(self):

@@ -581,6 +581,51 @@ class TestFunctions(unittest.TestCase):
         )
         self.assertEqual(env.get("result"), 15)
 
+    def test_direct_runtime_error_has_empty_frames(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('1 + "a";')
+        self.assertEqual(ctx.exception.frames, [])
+
+    def test_single_call_frame_records_function_name(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f() { return 1 + "a"; } f();')
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["f"])
+
+    def test_two_level_call_frames_innermost_first(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                "fn a() { b(); } "
+                'fn b() { return 1 + "a"; } '
+                "a();"
+            )
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["b", "a"])
+
+    def test_recursive_call_frames_one_per_active_call(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                "fn rec(n) { "
+                '  if (n <= 0) { return 1 + "a"; } '
+                "  return rec(n - 1); "
+                "} "
+                "rec(3);"
+            )
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["rec", "rec", "rec", "rec"])
+
+    def test_error_inside_builtin_callback_records_frame(self):
+        from cinder.builtins import create_global_environment
+
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                'fn bad(x) { return x + "a"; } '
+                "map([1, 2], bad);",
+                create_global_environment(),
+            )
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["bad"])
+
 
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):

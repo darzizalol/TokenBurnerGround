@@ -35,4 +35,13 @@ class ParseError(CinderError):
 
 
 class CinderRuntimeError(CinderError):
-    """Raised by the interpreter for errors detected during evaluation."""
+    """Raised by the interpreter for errors detected during evaluation.
+
+    `frames` records the call chain the error passed through on its way out,
+    one `(function_name, call_line, call_column)` tuple per call-site,
+    innermost call first. Empty for an error raised directly at top level.
+    """
+
+    def __init__(self, message: str, line: int, column: int):
+        super().__init__(message, line, column)
+        self.frames: list[tuple[str, int, int]] = []

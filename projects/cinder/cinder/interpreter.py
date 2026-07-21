@@ -495,6 +495,9 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
         Interpreter().execute(callee.decl.body, call_env)
     except _ReturnSignal as signal:
         return signal.value
+    except CinderRuntimeError as error:
+        error.frames.append((callee.name, line, column))
+        raise
     return None
 
 

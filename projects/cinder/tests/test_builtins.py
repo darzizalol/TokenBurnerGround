@@ -1,6 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, upper, lower, trim, split, join, abs, min, max, round,
-contains, reverse, sort, range, map, filter, reduce."""
+keys, values, upper, lower, trim, split, join, find, starts_with, ends_with,
+replace, abs, min, max, round, contains, reverse, sort, range, map, filter,
+reduce."""
 
 import io
 import subprocess
@@ -261,6 +262,85 @@ class TestJoin(unittest.TestCase):
     def test_split_join_round_trip(self):
         env = run('let result = join(split("a,b,c", ","), ",");')
         self.assertEqual(env.get("result"), "a,b,c")
+
+
+class TestFind(unittest.TestCase):
+    def test_find_returns_index_of_first_match(self):
+        self.assertEqual(run('let result = find("hello", "ll");').get("result"), 2)
+
+    def test_find_returns_negative_one_when_not_found(self):
+        self.assertEqual(run('let result = find("hello", "z");').get("result"), -1)
+
+    def test_find_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('find(1, "l");')
+
+    def test_find_on_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('find("hello", 1);')
+
+    def test_find_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('find("hello");')
+
+
+class TestStartsWith(unittest.TestCase):
+    def test_starts_with_true(self):
+        self.assertIs(run('let result = starts_with("hello", "he");').get("result"), True)
+
+    def test_starts_with_false(self):
+        self.assertIs(run('let result = starts_with("hello", "x");').get("result"), False)
+
+    def test_starts_with_on_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('starts_with(1, "h");')
+
+    def test_starts_with_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('starts_with("hello");')
+
+
+class TestEndsWith(unittest.TestCase):
+    def test_ends_with_true(self):
+        self.assertIs(run('let result = ends_with("hello", "lo");').get("result"), True)
+
+    def test_ends_with_false(self):
+        self.assertIs(run('let result = ends_with("hello", "x");').get("result"), False)
+
+    def test_ends_with_on_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('ends_with(1, "o");')
+
+    def test_ends_with_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('ends_with("hello");')
+
+
+class TestReplace(unittest.TestCase):
+    def test_replace_all_occurrences(self):
+        self.assertEqual(run('let result = replace("aaa", "a", "b");').get("result"), "bbb")
+
+    def test_replace_no_match_returns_unchanged(self):
+        self.assertEqual(run('let result = replace("hello", "z", "x");').get("result"), "hello")
+
+    def test_replace_empty_old_matches_python_semantics(self):
+        self.assertEqual(run('let result = replace("ab", "", "-");').get("result"), "-a-b-")
+
+    def test_replace_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('replace(1, "a", "b");')
+
+    def test_replace_on_non_string_old_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('replace("a", 1, "b");')
+
+    def test_replace_on_non_string_new_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('replace("a", "a", 1);')
+
+    def test_replace_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('replace("a", "a");')
 
 
 class TestAbs(unittest.TestCase):

@@ -2,9 +2,9 @@
 
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
-`upper`, `lower`, `trim`, `split`, `join`, `abs`, `min`, `max`, `round`,
-`contains`, `reverse`, `sort`, `range`, `map`, `filter`, and `reduce` already
-defined.
+`upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`,
+`replace`, `abs`, `min`, `max`, `round`, `contains`, `reverse`, `sort`,
+`range`, `map`, `filter`, and `reduce` already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -227,6 +227,70 @@ def _join(arguments: list, line: int, column: int) -> object:
     return sep.join(items)
 
 
+def _find(arguments: list, line: int, column: int) -> object:
+    _require_arity("find", arguments, 2, line, column)
+    value, sub = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"find() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(sub, str):
+        raise CinderRuntimeError(
+            f"find() requires a string to search for, got {type_name(sub)}", line, column
+        )
+    return value.find(sub)
+
+
+def _starts_with(arguments: list, line: int, column: int) -> object:
+    _require_arity("starts_with", arguments, 2, line, column)
+    value, prefix = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"starts_with() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(prefix, str):
+        raise CinderRuntimeError(
+            f"starts_with() requires a string prefix, got {type_name(prefix)}", line, column
+        )
+    return value.startswith(prefix)
+
+
+def _ends_with(arguments: list, line: int, column: int) -> object:
+    _require_arity("ends_with", arguments, 2, line, column)
+    value, suffix = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"ends_with() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(suffix, str):
+        raise CinderRuntimeError(
+            f"ends_with() requires a string suffix, got {type_name(suffix)}", line, column
+        )
+    return value.endswith(suffix)
+
+
+def _replace(arguments: list, line: int, column: int) -> object:
+    _require_arity("replace", arguments, 3, line, column)
+    value, old, new = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"replace() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(old, str):
+        raise CinderRuntimeError(
+            f"replace() requires a string to search for, got {type_name(old)}", line, column
+        )
+    if not isinstance(new, str):
+        raise CinderRuntimeError(
+            f"replace() requires a string replacement, got {type_name(new)}", line, column
+        )
+    return value.replace(old, new)
+
+
 def _abs(arguments: list, line: int, column: int) -> object:
     _require_arity("abs", arguments, 1, line, column)
     value = arguments[0]
@@ -407,6 +471,10 @@ _BUILTINS = {
     "trim": _trim,
     "split": _split,
     "join": _join,
+    "find": _find,
+    "starts_with": _starts_with,
+    "ends_with": _ends_with,
+    "replace": _replace,
     "abs": _abs,
     "min": _min,
     "max": _max,

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find`, `starts_with`, `ends_with`, `replace`
+## 1. Standard library: `find`, `starts_with`, `ends_with`, `replace` [claimed 2026-07-21T14:11:59Z]
 
 Build: extend `cinder/builtins.py` with four string builtins, following
 the existing two-string-argument style of `split(s, sep)`:

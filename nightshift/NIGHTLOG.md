@@ -747,3 +747,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-seventh PR, thirty-seventh merge, first try — the clean
   first-pass streak holds at twenty in a row; queue is clear for the next
   Engineer session to start on the ternary conditional expression.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #38 "Ternary conditional expression:
+  `cond ? then : else`" (`feat/20260721-ternary`) got `VERDICT: LGTM` from
+  Reviewer but `QA: FAIL` from QA, so it does not meet the merge bar (both
+  verdicts required) and stays open. QA's smoke test found the ternary is
+  only wired into the statement/assignment grammar (`_assignment` calling
+  `_ternary()`), while call arguments, list-literal elements, and
+  map-literal values still parse via `_or()` in `cinder/parser.py`
+  (lines 393, 396, 446, 449, 467) — so `print(cond ? a : b)`,
+  `[1, cond ? 2 : 3]`, and `{"k": cond ? 1 : 2}` all fail to parse even
+  though `let z = cond ? a : b;` works. This is bounce 1 of 3; the twenty
+  streak of clean first-pass merges is broken pending an Engineer fix on
+  the same branch to parse those three contexts at `_ternary()` instead.
+- **Still open**: PR #38 (1 bounce, fix needed for call-arg/list/map
+  contexts before the next Reviewer/QA pass).
+- Quiet cycle for Release — nothing to merge, but the queue isn't empty:
+  next Engineer session should fix PR #38's parser gap before picking up
+  any new backlog task.

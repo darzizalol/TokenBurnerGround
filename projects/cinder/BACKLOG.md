@@ -286,6 +286,99 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
+## 9. Standard library: `sum`, `any`, `all`
+
+Build: add three variadic-over-a-list aggregate builtins to
+`cinder/builtins.py`, each taking exactly one `list` argument (reject
+non-list with `CinderRuntimeError` and line/column, matching `_sort`'s
+type-check style). `sum(list)` requires every element be `int` or
+`float` (reuse `_is_numeric`, already defined in `builtins.py`), rejecting
+a non-numeric element with `CinderRuntimeError`; returns `0` for an empty
+list, otherwise the running total via `+` — result is `int` only if every
+element was `int`, else `float` (mirrors Python: `sum([1, 2])` is `2`,
+`sum([1, 2.0])` is `3.0`). `any(list)` and `all(list)` evaluate each
+element's Cinder truthiness via `is_truthy` (module-level in
+`cinder/interpreter.py` — import it into `builtins.py`, same pattern
+`_map`/`_filter`/`_reduce` already use for `call_value`) and return a
+`bool`; `any([])` is `false`, `all([])` is `true` (matching Python's
+identity values for empty sequences).
+
+Acceptance criteria:
+- `sum([1, 2, 3])` is `6`; `sum([1, 2.5])` is `3.5`; `sum([])` is `0`.
+- `any([false, nil, 1])` is `true`; `any([false, nil])` is `false`;
+  `any([])` is `false`.
+- `all([1, "a", true])` is `true`; `all([1, false])` is `false`;
+  `all([])` is `true`.
+- `sum(["a"])` raises `CinderRuntimeError` (non-numeric element);
+  `sum(5)`, `any(5)`, `all(5)` raise `CinderRuntimeError` (non-list
+  argument), each with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 10. Ternary conditional expression: `cond ? then : else`
+
+Build: add `QUESTION` and reuse the existing `COLON` token
+(`cinder/tokens.py` already has `COLON` for map literals) to support a
+right-associative ternary expression. In `cinder/parser.py`, add a new
+`Ternary` AST node (`condition`, `then_expr`, `else_expr`) to
+`cinder/ast_nodes.py`, and slot its parsing tier between `_assignment`
+and `_or` (i.e. after parsing an `_or`-level expression, check for a
+`?`; if present, parse a full ternary expression for the "then" branch up
+to `:`, then recurse into `_ternary` again for the "else" branch, giving
+right-associativity so `a ? b : c ? d : e` parses as `a ? b : (c ? d :
+e)`, matching C/JS convention). In `cinder/interpreter.py`, add a
+`Ternary` case to `evaluate()` that evaluates `condition`, checks it with
+the existing `is_truthy`, and evaluates *only* the taken branch (the
+other branch must not be evaluated at all — this is a short-circuit
+construct like `and`/`or`, not eager evaluation of both arms).
+
+Acceptance criteria:
+- `true ? 1 : 2` is `1`; `false ? 1 : 2` is `2`.
+- `0 ? "a" : "b"` is `"a"` (Cinder's `0` is truthy, per the fixed
+  truthiness rule — regression check against Python truthiness).
+- `let x = true ? 1 : (1 / 0);` does not raise (else-branch, containing a
+  division by zero, must not be evaluated) — short-circuit regression
+  test. Same shape with the branches swapped for the then-branch.
+- `true ? false ? 1 : 2 : 3` parses and evaluates right-associatively
+  (nested ternary in the "then" position).
+- A leading `{` map literal statement (e.g. `{"a": 1} ? 1 : 2;`) still
+  parses correctly — regression test against the existing statement-level
+  `{`-disambiguation rule in `PROJECT.md`.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
+`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 11. Standard library: `items` for maps
+
+Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
+of two-element `[key, value]` lists, one per map entry, complementing the
+existing `keys`/`values` builtins (same non-mutating, single-`map`-
+argument style; reject a non-map argument with `CinderRuntimeError` and
+line/column). Iteration order must match `keys`/`values`'s existing
+order (Python `dict` insertion order — do not sort), so
+`items(m)[i] == [keys(m)[i], values(m)[i]]` holds for every index.
+
+Acceptance criteria:
+- `items({"a": 1, "b": 2})` is `[["a", 1], ["b", 2]]`.
+- `items({})` is `[]`.
+- For any map `m`, `items(m)` matches zipping `keys(m)` with `values(m)`
+  element-for-element (regression test tying the three builtins
+  together).
+- `items(5)` and `items([1, 2])` raise `CinderRuntimeError` with
+  line/column (non-map argument).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

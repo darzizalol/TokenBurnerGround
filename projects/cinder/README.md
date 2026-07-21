@@ -44,9 +44,9 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`, string
-  methods `upper`, `lower`, `trim`, `split`, `join`, and math builtins `abs`,
-  `min`, `max`, `round`
+  `values`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
+  `reduce`, string methods `upper`, `lower`, `trim`, `split`, `join`, and
+  math builtins `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks
 - **Two front ends**: run `.cin` script files, or an interactive REPL with
@@ -83,7 +83,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (300+ tests) covers every layer — lexer, parser, interpreter,
+The suite (325+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -108,9 +108,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `map`/`filter` and anonymous
-function expressions. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`reduce`, more string builtins (`find`/`starts_with`/`ends_with`/`replace`),
-list `slice`/`concat`, `assert`, compound assignment operators, `zip`, and
-string/list repetition via `*`. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `reduce`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): more string builtins
+(`find`/`starts_with`/`ends_with`/`replace`), list `slice`/`concat`,
+`assert`, compound assignment operators, `zip`, string/list repetition via
+`*`, an `in` membership operator, call-stack traces for runtime errors,
+`sum`/`any`/`all`, a ternary conditional expression, and `items` for maps.
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

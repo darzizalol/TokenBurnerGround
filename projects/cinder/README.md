@@ -86,7 +86,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (378+ tests) covers every layer — lexer, parser, interpreter,
+The suite (383+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -111,9 +111,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `assert` and compound
-assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `zip`, string/list repetition via `*`, an `in`
+Actively developed, nightly. Recently landed: compound assignment operators
+(`+=`, `-=`, `*=`, `/=`, `%=`) and `zip`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): string/list repetition via `*`, an `in`
 membership operator, call-stack traces for runtime errors, `sum`/`any`/`all`,
-a ternary conditional expression, and `items` for maps.
+a ternary conditional expression, `items`/`enumerate`/`merge` for maps and
+lists.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

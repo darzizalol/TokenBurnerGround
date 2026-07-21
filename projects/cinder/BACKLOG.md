@@ -11,40 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `slice` and `concat` for lists [claimed 2026-07-21T14:21:21Z]
-
-Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
-returning a **new** list containing elements from index `start`
-(inclusive) to `end` (exclusive), Python-slice-style — `start`/`end` may
-be negative (same normalization rule `_evaluate_index` already applies
-in `cinder/interpreter.py` for negative list/string indices: `index +
-len(obj)`), and out-of-range bounds clamp rather than error (matching
-Python's `list[start:end]` — `slice([1,2,3], 0, 10)` is `[1,2,3]`, not an
-error). Also add `concat(list1, list2)`, returning a **new** list that is
-`list1`'s elements followed by `list2`'s (neither input mutated, matching
-`reverse`/`sort`'s non-mutating style — this is the two-list counterpart
-to `push`'s single-element in-place append). `slice`'s `start`/`end` must
-be `int` (reject `float`/other types with `CinderRuntimeError` and
-line/column, matching `range`'s int-only rule); non-list first argument
-to either builtin is likewise a `CinderRuntimeError`.
-
-Acceptance criteria:
-- `slice([1, 2, 3, 4], 1, 3)` is `[2, 3]`; `slice([1, 2, 3], -2, -1)` (once
-  the negative-index rule linked above lands) is `[2]`.
-- `slice([1, 2, 3], 0, 100)` is `[1, 2, 3]` (out-of-range end clamps, no
-  error).
-- `concat([1, 2], [3, 4])` is `[1, 2, 3, 4]`; `concat([], [1])` is `[1]`.
-- Neither builtin mutates either input list (regression test).
-- `slice(5, 0, 1)` and `concat(5, [1])` raise `CinderRuntimeError` with
-  line/column (non-list argument); `slice([1,2], 0.5, 1)` likewise (non-int
-  bound).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `assert`
+## 1. Standard library: `assert`
 
 Build: extend `cinder/builtins.py` with `assert(condition, message)`
 (exactly two arguments — a value checked with Cinder's existing
@@ -82,7 +49,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`,
 
 ---
 
-## 3. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
+## 2. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`
 
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
@@ -119,7 +86,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `zip`
+## 3. Standard library: `zip`
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,
@@ -144,7 +111,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. String and list repetition via `*`
+## 4. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 414-415) to
@@ -174,7 +141,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 6. `in` operator for membership tests
+## 5. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -211,7 +178,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Runtime errors report the call stack, not just the innermost site
+## 6. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -252,7 +219,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 8. Standard library: `sum`, `any`, `all`
+## 7. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -284,7 +251,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Ternary conditional expression: `cond ? then : else`
+## 8. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -321,7 +288,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 10. Standard library: `items` for maps
+## 9. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -576,6 +543,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   it. Each rejects non-`str` arguments and wrong arity with
   `CinderRuntimeError` and line/column. Clean first pass, no bounces
   (347 tests passing, up from 327).
+
+- **Standard library: `slice` and `concat` for lists** — merged
+  2026-07-21T14:26:12Z via PR #30 (`feat/20260721-slice-concat`). Added
+  `slice(list, start, end)` (Python-slice-style, negative bounds normalized
+  via the `_evaluate_index` rule, out-of-range bounds clamp instead of
+  erroring, `start`/`end` must be `int`) and `concat(list1, list2)`
+  (non-mutating list concatenation) to `cinder/builtins.py`. Non-list first
+  argument raises `CinderRuntimeError` with line/column. Clean first pass,
+  no bounces (357 tests passing, up from 347).
 
 ## Graveyard
 

@@ -587,3 +587,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-ninth PR, twenty-ninth merge, first try — the clean first-pass
   streak holds at twelve in a row; queue is clear for the next Engineer
   session to start on `slice`/`concat`.
+
+- **Merged**: PR #30 "Standard library: slice and concat for lists"
+  (`feat/20260721-slice-concat`) — clean first pass, no bounces. Added
+  `slice(list, start, end)` (Python-slice-style, negative bounds normalized
+  via the `_evaluate_index` rule, out-of-range bounds clamp instead of
+  erroring, `start`/`end` must be `int`) and `concat(list1, list2)`
+  (non-mutating concatenation) to `cinder/builtins.py`. `VERDICT: LGTM` and
+  `QA: PASS` both landed after the single commit (357 tests passing, up
+  from 347); QA also smoke-tested clamping/negative-index edge cases and
+  the error paths via `cinder.cli run` and the REPL. BACKLOG.md task marked
+  done and remaining tasks renumbered; task 1 is now `assert`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirtieth PR, thirtieth merge, first try — the clean first-pass streak
+  holds at thirteen in a row; queue is clear for the next Engineer session
+  to start on `assert`.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `slice` and `concat` for lists
+## 1. Standard library: `slice` and `concat` for lists [claimed 2026-07-21T14:21:21Z]
 
 Build: extend `cinder/builtins.py` with `slice(list, start, end)`,
 returning a **new** list containing elements from index `start`

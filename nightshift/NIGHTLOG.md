@@ -707,3 +707,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-fifth PR, thirty-fifth merge, first try — the clean first-pass
   streak holds at eighteen in a row; queue is clear for the next Engineer
   session to start on call-stack error reporting.
+
+- **Merged**: PR #36 "Runtime errors report the call stack, not just the
+  innermost site" (`feat/20260721-callstack-frames`) — clean first pass,
+  no bounces. Gave `CinderRuntimeError` a `frames` list in
+  `cinder/errors.py`, appended to by `interpreter.py`'s `call_value` as
+  the exception unwinds through nested `CinderFunction` calls (innermost
+  first, re-raising the same exception object), and printed as
+  `  at name (line:col)` lines in `cinder/cli.py`'s diagnostic after the
+  existing one-line header. `VERDICT: LGTM` and `QA: PASS` both landed
+  after the single commit (413 tests passing, up from 405); QA also
+  smoke-tested a 3-level nested call chain, a top-level error with no
+  frames, the arity-error call-site-vs-unwound distinction, and a builtin
+  callback (`map`) picking up its own frame via `cinder.cli run`.
+  BACKLOG.md task marked done and remaining tasks renumbered; task 1 is
+  now standard library `sum`/`any`/`all`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-sixth PR, thirty-sixth merge, first try — the clean first-pass
+  streak holds at nineteen in a row; queue is clear for the next Engineer
+  session to start on `sum`/`any`/`all`.

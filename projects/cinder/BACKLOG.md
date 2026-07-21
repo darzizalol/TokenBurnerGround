@@ -11,48 +11,8 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Runtime errors report the call stack, not just the innermost site [claimed 2026-07-21T20:00:31Z]
 
-Build: today a `CinderRuntimeError` raised deep inside nested function
-calls only reports the line/column of the failing operation itself, with
-no indication of which call chain reached it — bad ergonomics for
-debugging recursive Cinder programs. Give `CinderRuntimeError` (in
-`cinder/errors.py`) an optional `frames: list[tuple[str, int, int]]` field
-(function name, call-site line, call-site column), defaulting to `[]`.
-In `cinder/interpreter.py`'s function-call path (`call_value` and/or
-`_evaluate_call`, wherever a `CinderFunction` body actually executes),
-wrap the body execution in a `try/except CinderRuntimeError` that appends
-`(function_name, call_line, call_column)` to the exception's `frames` list
-and re-raises the *same* exception object (not a new one) — so by the time
-it reaches the CLI, `frames` holds the full chain, innermost call first.
-Update `cinder/cli.py`'s diagnostic printer: if `frames` is non-empty,
-print one `  at <name> (line:column)` line per frame after the existing
-one-line `file:line:column: message` header (most-recent-call-first order,
-matching how `frames` was built), still no raw Python traceback.
-
-Acceptance criteria:
-- A direct (non-nested) runtime error, e.g. `1 + "a";` at top level, prints
-  exactly the existing one-line diagnostic — `frames` is empty, no `at`
-  lines added (regression test, exact stdout/stderr match against current
-  behavior).
-- `fn f() { return 1 + "a"; } f();` prints the one-line diagnostic followed
-  by one `  at f (line:column)` line pointing at the `f()` call site.
-- A two-level chain (`fn a() { b(); } fn b() { return 1 + "a"; } a();`)
-  prints two `at` lines, `b`'s call site before `a`'s (innermost first).
-- A `CinderRuntimeError` raised and caught *inside* Cinder-callable Python
-  builtins (e.g. `map`'s callback raising) still gets frames appended for
-  each Cinder-level call it passes through on the way out.
-- Recursive functions that error out (e.g. blow past a manual depth check)
-  produce a `frames` list one entry per active call, not truncated
-  (regression test with 3+ levels of recursion).
-- Full test suite passes.
-
-Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
-`tests/test_errors.py`, `tests/test_interpreter.py`, `tests/test_cli.py`.
-
----
-
-## 2. Standard library: `sum`, `any`, `all`
+## 1. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -84,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Ternary conditional expression: `cond ? then : else`
+## 2. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -121,7 +81,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 4. Standard library: `items` for maps
+## 3. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -145,7 +105,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `enumerate`
+## 4. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -168,7 +128,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `merge` for maps
+## 5. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -194,7 +154,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `get` for safe map access
+## 6. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -223,7 +183,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `copy` for lists and maps
+## 7. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -253,7 +213,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `sort_by` with a custom key function
+## 8. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -289,7 +249,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 9. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -612,6 +572,14 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
   `cinder/builtins.py` into a shared `contains_value()` helper in
   `cinder/interpreter.py`, used by both `contains()` and the new `in`
   operator. Clean first pass, no bounces (405 tests passing, up from 393).
+- **Runtime errors report the call stack, not just the innermost site** —
+  merged 2026-07-22T~ via PR #36 (`feat/20260721-callstack-frames`). Gave
+  `CinderRuntimeError` a `frames` list in `cinder/errors.py`, appended to
+  by `interpreter.py`'s `call_value` as the exception unwinds through
+  nested `CinderFunction` calls (innermost first), and printed as
+  `  at name (line:col)` lines in `cinder/cli.py`'s diagnostic after the
+  existing one-line header. Clean first pass, no bounces (413 tests
+  passing, up from 405).
 
 ## Graveyard
 

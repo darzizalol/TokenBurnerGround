@@ -50,6 +50,8 @@ def main(argv=None) -> int:
             return 1
         except CinderError as e:
             print(f"{args.file}:{e.line}:{e.column}: {e.message}", file=sys.stderr)
+            for name, line, column in getattr(e, "frames", []):
+                print(f"  at {name} ({line}:{column})", file=sys.stderr)
             return 1
         return 0
     if args.command == "repl":

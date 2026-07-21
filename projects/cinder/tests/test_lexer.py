@@ -70,7 +70,7 @@ class TestKeywords(unittest.TestCase):
 
 class TestOperators(unittest.TestCase):
     def test_all_operators_and_punctuation(self):
-        source = "+ - * / % == != < <= > >= = ( ) { } [ ] , ; ."
+        source = "+ - * / % == != < <= > >= = ( ) { } [ ] , ; . : ?"
         expected = [
             TokenType.PLUS,
             TokenType.MINUS,
@@ -93,6 +93,8 @@ class TestOperators(unittest.TestCase):
             TokenType.COMMA,
             TokenType.SEMICOLON,
             TokenType.DOT,
+            TokenType.COLON,
+            TokenType.QUESTION,
             TokenType.EOF,
         ]
         self.assertEqual(types(tokenize(source)), expected)

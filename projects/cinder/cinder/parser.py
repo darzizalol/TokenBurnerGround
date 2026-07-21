@@ -1,8 +1,9 @@
 """Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
-    assignment (=, +=, -=, *=, /=, %=, right-assoc) > or > and > in >
-    comparisons (== != < <= > >=) > + - > * / % > unary (- not)
+    assignment (=, +=, -=, *=, /=, %=, right-assoc) > ternary (?:, right-assoc)
+    > or > and > in > comparisons (== != < <= > >=) > + - > * / % >
+    unary (- not)
 with parenthesized grouping and call expressions binding tightest of all.
 
 Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
@@ -60,6 +61,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     ReturnStmt,
     Stmt,
+    Ternary,
     Unary,
     WhileStmt,
 )
@@ -274,7 +276,7 @@ class Parser:
         return ExprStmt(expr)
 
     def _assignment(self) -> Expr:
-        expr = self._or()
+        expr = self._ternary()
         if self._check(TokenType.EQ):
             eq_token = self._advance()
             value = self._assignment()
@@ -303,6 +305,18 @@ class Parser:
             )
             binary = Binary(expr, binary_operator, value)
             return Assign(expr.name, binary, op_token.line, op_token.column)
+        return expr
+
+    def _ternary(self) -> Expr:
+        expr = self._or()
+        if self._check(TokenType.QUESTION):
+            question_token = self._advance()
+            then_expr = self._ternary()
+            self._consume(TokenType.COLON, "':' in ternary expression")
+            else_expr = self._ternary()
+            return Ternary(
+                expr, then_expr, else_expr, question_token.line, question_token.column
+            )
         return expr
 
     def _or(self) -> Expr:

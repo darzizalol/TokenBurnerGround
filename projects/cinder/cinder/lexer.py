@@ -14,6 +14,7 @@ _SIMPLE_TOKENS = {
     ";": TokenType.SEMICOLON,
     ".": TokenType.DOT,
     ":": TokenType.COLON,
+    "?": TokenType.QUESTION,
 }
 
 _COMPOUND_ASSIGN_TOKENS = {

@@ -50,6 +50,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     ReturnStmt,
     Stmt,
+    Ternary,
     Unary,
     WhileStmt,
 )
@@ -151,6 +152,8 @@ class Interpreter:
             return self._evaluate_unary(expr, env)
         if isinstance(expr, Logical):
             return self._evaluate_logical(expr, env)
+        if isinstance(expr, Ternary):
+            return self._evaluate_ternary(expr, env)
         if isinstance(expr, Binary):
             return self._evaluate_binary(expr, env)
         if isinstance(expr, Assign):
@@ -384,6 +387,12 @@ class Interpreter:
                 return left
             return self.evaluate(expr.right, env)
         raise TypeError(f"unhandled logical operator: {expr.operator.type!r}")
+
+    def _evaluate_ternary(self, expr: Ternary, env: Environment) -> object:
+        condition = self.evaluate(expr.condition, env)
+        if is_truthy(condition):
+            return self.evaluate(expr.then_expr, env)
+        return self.evaluate(expr.else_expr, env)
 
     def _evaluate_binary(self, expr: Binary, env: Environment) -> object:
         left = self.evaluate(expr.left, env)

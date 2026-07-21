@@ -140,6 +140,35 @@ class TestLogical(unittest.TestCase):
         self.assertEqual(evaluate("nil or 5"), 5)
 
 
+class TestTernary(unittest.TestCase):
+    def test_true_condition_takes_then_branch(self):
+        self.assertEqual(evaluate("true ? 1 : 2"), 1)
+
+    def test_false_condition_takes_else_branch(self):
+        self.assertEqual(evaluate("false ? 1 : 2"), 2)
+
+    def test_zero_is_truthy_regression(self):
+        # Cinder's `0` is truthy (unlike Python), so the then-branch is taken.
+        self.assertEqual(evaluate('0 ? "a" : "b"'), "a")
+
+    def test_else_branch_not_evaluated_when_condition_true(self):
+        # division by zero in the untaken else-branch must not raise
+        env = run("let x = true ? 1 : (1 / 0);")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_then_branch_not_evaluated_when_condition_false(self):
+        # division by zero in the untaken then-branch must not raise
+        env = run("let x = false ? (1 / 0) : 2;")
+        self.assertEqual(env.get("x"), 2)
+
+    def test_nested_ternary_right_associative(self):
+        self.assertEqual(evaluate("true ? false ? 1 : 2 : 3"), 2)
+
+    def test_map_literal_statement_still_parses_with_ternary(self):
+        env = run('{"a": 1} ? 1 : 2;')
+        self.assertIsInstance(env, Environment)
+
+
 class TestMembership(unittest.TestCase):
     def test_in_list_true(self):
         self.assertEqual(evaluate("2 in [1, 2, 3]"), True)

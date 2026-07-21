@@ -31,8 +31,9 @@ while (i < 10) {
 
 - **Values**: numbers, strings, booleans, `nil`; `nil`/`false` are falsy,
   everything else (including `0` and `""`) is truthy
-- **Variables & scope**: `let` declarations, assignment, blocks with proper
-  lexical scoping (inner `let` shadows, outer survives)
+- **Variables & scope**: `let` declarations, assignment (plain `=` and
+  compound `+=`, `-=`, `*=`, `/=`, `%=`), blocks with proper lexical scoping
+  (inner `let` shadows, outer survives)
 - **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
   lists, strings (character-by-character), and maps (over keys),
   `break`/`continue` in both loop kinds
@@ -85,7 +86,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (362+ tests) covers every layer — lexer, parser, interpreter,
+The suite (378+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -110,9 +111,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list `slice`/`concat` and
-`assert`. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): compound
-assignment operators, `zip`, string/list repetition via `*`, an `in`
+Actively developed, nightly. Recently landed: `assert` and compound
+assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `zip`, string/list repetition via `*`, an `in`
 membership operator, call-stack traces for runtime errors, `sum`/`any`/`all`,
 a ternary conditional expression, and `items` for maps.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

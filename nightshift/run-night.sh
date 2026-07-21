@@ -82,17 +82,10 @@ $(head -n 15 "$REPO/$(grep -m1 '^ACTIVE:' "$REPO/PROJECTS.md" 2>/dev/null | awk 
 A progress report lands in this inbox when the shift ends (~07:00)." >> "$NIGHT_LOG" 2>&1
 STARTED=1
 
-# Nightly token ledger: fold completed transcripts into the README burn chart.
-if python3 "$DIR/token-ledger.py" update >> "$NIGHT_LOG" 2>&1; then
-  cd "$REPO" \
-    && git add README.md nightshift/tokens.csv nightshift/burn.svg >> "$NIGHT_LOG" 2>&1 \
-    && { git diff --cached --quiet \
-         || { git commit -m "chore: nightly token-burn ledger update" >> "$NIGHT_LOG" 2>&1 \
-              && git push origin main >> "$NIGHT_LOG" 2>&1; }; } \
-    || log "WARN: token ledger commit/push failed."
-else
-  log "WARN: token ledger update failed."
-fi
+# Token-burn odometer: backup refresh at clock-in (primary is the 07:15 cron,
+# which counts the night that just finished). --force skips the lock check
+# since we own the lock. Shares one idempotent script with the cron.
+"$DIR/update-ledger.sh" --force >> "$NIGHT_LOG" 2>&1 || log "WARN: ledger update failed."
 
 ROLES=(architect engineer reviewer qa release)
 LIMIT_PATTERN='usage limit|session limit|hit your.*limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'

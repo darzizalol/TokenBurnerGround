@@ -53,7 +53,8 @@ while (i < 10) {
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   and math builtins `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
-  tracebacks
+  tracebacks; runtime errors raised inside nested function calls also report
+  the full call stack (`  at name (line:col)` per frame, innermost first)
 - **Two front ends**: run `.cin` script files, or an interactive REPL with
   `readline`-backed command history (up-arrow to recall, when available)
 
@@ -89,7 +90,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (405+ tests) covers every layer — lexer, parser, interpreter,
+The suite (413+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -114,10 +115,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `zip`, string/list repetition
-via `*`, and the `in` membership operator.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): call-stack traces for
-runtime errors, `sum`/`any`/`all`, a ternary conditional expression,
-`items`/`enumerate`/`merge` for maps and lists, `get`/`copy`/`sort_by`, and
-bitwise operators.
+Actively developed, nightly. Recently landed: the `in` membership operator
+and call-stack traces for runtime errors.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `sum`/`any`/`all`, a ternary
+conditional expression, `items`/`enumerate`/`merge` for maps and lists,
+`get`/`copy`/`sort_by`, and bitwise operators.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

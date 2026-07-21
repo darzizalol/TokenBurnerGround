@@ -290,6 +290,71 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
+## 10. Standard library: `remove` for maps
+
+Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
+`map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
+than `merge`/`copy`'s non-mutating style — this is the map counterpart to
+`pop`) and returning the removed value. First argument must be `map`,
+raising `CinderRuntimeError` with line/column for a non-map argument,
+matching `keys`/`values`'s type-check style. A missing key raises
+`CinderRuntimeError` with line/column too — same "key not found" wording
+the existing map-index path in `cinder/interpreter.py` already raises for
+`map[missing_key]` (reuse it rather than inventing new wording, same rule
+task 6 (`get`) followed for its hashability check).
+
+Acceptance criteria:
+- `let m = {"a": 1, "b": 2}; remove(m, "a");` leaves `m` as `{"b": 2}`
+  (mutates in place — regression test that the original map, not a copy,
+  changed).
+- `remove({"a": 1}, "a")` returns `1` (the removed value).
+- `remove({"a": 1}, "z")` raises `CinderRuntimeError` with line/column
+  (missing key), matching plain `{"a": 1}["z"]` indexing's existing error.
+- `remove(5, "a")` raises `CinderRuntimeError` with line/column (non-map
+  first argument).
+- `remove({"a": 1}, [1, 2])` raises `CinderRuntimeError` (unhashable key),
+  matching `get`'s (task 6) handling of the same case.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 11. Standard library: type-predicate builtins
+
+Build: add seven single-argument builtins to `cinder/builtins.py` —
+`is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
+`is_function` — each returning a `bool`, complementing the existing
+`type(value)` (which returns a type-name string) with direct predicates for
+`if`/`while` conditions. `is_number` is `true` for both `int` and `float`
+(reuse `_is_numeric`, already defined in `builtins.py`); `is_function` is
+`true` for both a `CinderFunction` and a `Builtin` (reuse `_is_callable`,
+already defined for `map`/`filter`/`sort_by`). Each takes exactly one
+argument of any type — wrong arity raises `CinderRuntimeError` via the
+existing `_require_arity` helper, but there is no "wrong type" error case
+since every Cinder value is a valid argument to every predicate.
+
+Acceptance criteria:
+- `is_list([1])` is `true`; `is_list({"a": 1})` is `false`.
+- `is_map({"a": 1})` is `true`; `is_map([1])` is `false`.
+- `is_string("a")` is `true`; `is_number(1)` is `true`; `is_number(1.5)` is
+  `true`; `is_number("1")` is `false`.
+- `is_bool(true)` is `true`; `is_bool(0)` is `false` (Cinder booleans are a
+  distinct type from `int`, not `0`/`1`).
+- `is_nil(nil)` is `true`; `is_nil(false)` is `false`.
+- `is_function(fn(x) { return x; })` is `true` for both a named `fn` and an
+  anonymous `fn(x) { ... }` expression, and for a builtin passed by
+  reference (e.g. `is_function(len)` — confirm builtins are first-class
+  values that can be looked up by name, matching how `map`/`filter` already
+  accept them); `is_function(1)` is `false`.
+- Calling any of the seven with zero or two arguments raises
+  `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

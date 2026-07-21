@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Ternary conditional expression: `cond ? then : else` [claimed 2026-07-21T20:22:46Z]
+## 1. Ternary conditional expression: `cond ? then : else` [claimed 2026-07-21T20:22:46Z, bounced 1x — QA: FAIL on PR #38]
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -29,6 +29,21 @@ the existing `is_truthy`, and evaluates *only* the taken branch (the
 other branch must not be evaluated at all — this is a short-circuit
 construct like `and`/`or`, not eager evaluation of both arms).
 
+**Known gap from PR #38's QA bounce (fix on the same branch,
+`feat/20260721-ternary`, before taking anything else):** the ternary is
+wired into the statement/assignment grammar (`_assignment` calls
+`_ternary()`) but three lower call sites in `cinder/parser.py` still
+parse their sub-expressions via `_or()` instead of `_ternary()` — call
+arguments, list-literal elements, and map-literal values (as of PR #38:
+lines 393, 396, 446, 449, 467; line numbers may have drifted since).
+Route those three contexts through `_ternary()` instead. Repro that must
+start working:
+```
+print(a > b ? "a wins" : "b wins");        # call argument
+let xs = [1, true ? 2 : 3, 4];             # list element
+let m = {"k": true ? 1 : 2};               # map value
+```
+
 Acceptance criteria:
 - `true ? 1 : 2` is `1`; `false ? 1 : 2` is `2`.
 - `0 ? "a" : "b"` is `"a"` (Cinder's `0` is truthy, per the fixed
@@ -41,6 +56,11 @@ Acceptance criteria:
 - A leading `{` map literal statement (e.g. `{"a": 1} ? 1 : 2;`) still
   parses correctly — regression test against the existing statement-level
   `{`-disambiguation rule in `PROJECT.md`.
+- A ternary as a call argument (`print(cond ? a : b)`), as a list-literal
+  element (`[1, cond ? 2 : 3]`), and as a map-literal value
+  (`{"k": cond ? 1 : 2}`) all parse and evaluate correctly — this is the
+  exact gap QA caught on PR #38's first pass; add a dedicated parser test
+  for each of the three contexts, not just an interpreter smoke test.
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,

@@ -622,3 +622,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-first PR, thirty-first merge, first try — the clean first-pass
   streak holds at fourteen in a row; queue is clear for the next Engineer
   session to start on compound assignment operators.
+
+- **Merged**: PR #32 "Compound assignment operators: +=, -=, *=, /=, %="
+  (`feat/20260721-compound-assign`) — clean first pass, no bounces. Added
+  five compound-assignment token types to `cinder/tokens.py`, lexed via the
+  existing two-char lookahead pattern in `cinder/lexer.py` (mirroring
+  `_equals_or`/`_bang`), and desugared at parse time in
+  `cinder/parser.py`'s `_assignment` into the equivalent
+  `Assign(name, Binary(...))` — no new interpreter logic, reusing
+  `_evaluate_binary`'s existing type-checking and error handling.
+  Compound assignment restricted to `Identifier` targets; `list[0] += 1`
+  raises `ParseError`, matching plain `=`'s existing rule. `VERDICT: LGTM`
+  and `QA: PASS` both landed after the single commit (378 tests passing,
+  up from 362); QA also hand-verified chained compound ops, string `+=`,
+  index-target rejection, undefined-variable and type-mismatch error
+  parity via `cinder.cli run`. BACKLOG.md task marked done and remaining
+  tasks renumbered; task 1 is now `zip`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-second PR, thirty-second merge, first try — the clean first-pass
+  streak holds at fifteen in a row; queue is clear for the next Engineer
+  session to start on `zip`.

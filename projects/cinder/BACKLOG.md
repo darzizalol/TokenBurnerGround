@@ -11,45 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=` [claimed 2026-07-21T14:42:05Z]
-
-Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
-types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
-the same two-char lookahead pattern already used for `==`/`!=`/`<=`/`>=`
-(the `_match` helper, exercised in `_equals_or`/`_bang`/`_lt`/`_gt` around
-lines 176-198) — each is one of `_SIMPLE_TOKENS`'s existing single-char
-operators immediately followed by `=` with no space, so `+=` must lex as
-one token, not `PLUS` then `EQ`.
-In `cinder/parser.py`'s `_assignment` (line 265), after the existing
-`TokenType.EQ` branch, check for these five compound tokens; when
-matched, desugar at *parse time* into `Assign(expr.name, Binary(expr,
-<the corresponding PLUS/MINUS/STAR/SLASH/PERCENT token>, value), ...)` —
-i.e. `x += 1` parses exactly as if written `x = x + 1`, reusing the
-existing `Binary` AST node and `_evaluate_binary`'s type-checking/error
-handling rather than adding new interpreter logic. Restrict compound
-assignment to `Identifier` targets only: raise `ParseError` ("invalid
-assignment target") for an `Index` target (e.g. `list[0] += 1`),
-matching plain `=`'s existing rule — do not implement compound
-`IndexAssign` support, that's future scope, kept out to keep this task
-small.
-
-Acceptance criteria:
-- `let x = 5; x += 3;` leaves `x` as `8`; same shape for `-=`, `*=`,
-  `/=`, `%=` (e.g. `x -= 2`, `x *= 4`, `x /= 2`, `x %= 3`).
-- Compound assignment to an undefined variable raises the existing
-  "undefined variable" runtime error (via the existing `Assign` path,
-  unchanged).
-- Type errors propagate from `Binary` unchanged, e.g. `let s = "a"; s -=
-  1;` raises the same `CinderRuntimeError` as evaluating `s - 1` would.
-- `list[0] += 1;` raises `ParseError` ("invalid assignment target").
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
-`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `zip`
+## 1. Standard library: `zip`
 
 Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
 **new** list of two-element lists pairing `list1[i]` with `list2[i]`,
@@ -74,7 +36,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. String and list repetition via `*`
+## 2. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 405) to
@@ -104,7 +66,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 4. `in` operator for membership tests
+## 3. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -141,7 +103,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Runtime errors report the call stack, not just the innermost site
+## 4. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -182,7 +144,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 6. Standard library: `sum`, `any`, `all`
+## 5. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -214,7 +176,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Ternary conditional expression: `cond ? then : else`
+## 6. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -251,7 +213,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 8. Standard library: `items` for maps
+## 7. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -524,6 +486,16 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   otherwise; `message` must be a `str`, checked before the truthiness test.
   Added `examples/self_check.cin` exercised by the golden-output test
   harness. Clean first pass, no bounces (362 tests passing, up from 357).
+
+- **Compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`** — merged
+  2026-07-21T14:45:45Z via PR #32 (`feat/20260721-compound-assign`). Added
+  five compound-assignment token types to `cinder/tokens.py`, lexed via the
+  existing two-char lookahead pattern in `cinder/lexer.py`, and desugared
+  at parse time in `cinder/parser.py`'s `_assignment` into the equivalent
+  `Assign(name, Binary(...))`, reusing `_evaluate_binary`'s existing
+  type-checking with no new interpreter logic. Restricted to `Identifier`
+  targets; `list[0] += 1` raises `ParseError`, matching plain `=`. Clean
+  first pass, no bounces (378 tests passing, up from 362).
 
 ## Graveyard
 

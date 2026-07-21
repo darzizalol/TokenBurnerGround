@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, upper, lower, trim, split, join, abs, min, max, round,
-contains, reverse, sort, range, map, filter."""
+contains, reverse, sort, range, map, filter, reduce."""
 
 import io
 import subprocess
@@ -499,6 +499,46 @@ class TestFilter(unittest.TestCase):
     def test_filter_propagates_callback_arity_error(self):
         with self.assertRaises(CinderRuntimeError):
             run("filter([1], fn(x, y) { return x; });")
+
+
+class TestReduce(unittest.TestCase):
+    def test_reduce_sums_list(self):
+        env = run("let result = reduce([1, 2, 3], fn(acc, x) { return acc + x; }, 0);")
+        self.assertEqual(env.get("result"), 6)
+
+    def test_reduce_products_list(self):
+        env = run(
+            "let result = reduce([1, 2, 3, 4], fn(acc, x) { return acc * x; }, 1);"
+        )
+        self.assertEqual(env.get("result"), 24)
+
+    def test_reduce_of_empty_list_returns_initial_without_calling_fn(self):
+        env = run(
+            "let touched = []; "
+            "let result = reduce([], fn(acc, x) { push(touched, x); return acc + x; }, 0); "
+        )
+        self.assertEqual(env.get("result"), 0)
+        self.assertEqual(env.get("touched"), [])
+
+    def test_reduce_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reduce(5, fn(acc, x) { return acc; }, 0);")
+
+    def test_reduce_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reduce([1, 2], 5, 0);")
+
+    def test_reduce_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reduce([1], fn(x) { return x; }, 0);")
+
+    def test_reduce_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = reduce(xs, fn(acc, x) { return acc + x; }, 0);"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), 6)
 
 
 class TestEndToEndViaCli(unittest.TestCase):

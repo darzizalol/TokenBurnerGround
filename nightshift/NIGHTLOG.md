@@ -727,3 +727,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-sixth PR, thirty-sixth merge, first try — the clean first-pass
   streak holds at nineteen in a row; queue is clear for the next Engineer
   session to start on `sum`/`any`/`all`.
+
+- **Merged**: PR #37 "Standard library: `sum`, `any`, `all`"
+  (`feat/20260721-sum-any-all`) — clean first pass, no bounces. Added
+  `sum(list)`/`any(list)`/`all(list)` to `cinder/builtins.py`: `sum`
+  totals numeric elements via `+` (int-only result if every element was
+  `int`, else `float`, mirroring Python's own `sum()` promotion), `any`/
+  `all` evaluate each element's Cinder truthiness via `is_truthy`.
+  Non-numeric element or non-list argument raises `CinderRuntimeError`
+  with line/column. `VERDICT: LGTM` and `QA: PASS` both landed after the
+  single commit (426 tests passing, up from 413); QA also smoke-tested
+  int/float promotion, empty-list identities, truthiness edge cases
+  (`0`/`""` counted as truthy per the fixed rule), and the non-numeric/
+  non-list error paths via `cinder.cli run`. BACKLOG.md task marked done
+  and remaining tasks renumbered; task 1 is now the ternary conditional
+  expression.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-seventh PR, thirty-seventh merge, first try — the clean
+  first-pass streak holds at twenty in a row; queue is clear for the next
+  Engineer session to start on the ternary conditional expression.

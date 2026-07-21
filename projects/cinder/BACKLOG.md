@@ -12,39 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `sum`, `any`, `all` [claimed 2026-07-21T20:13:52Z]
-
-Build: add three variadic-over-a-list aggregate builtins to
-`cinder/builtins.py`, each taking exactly one `list` argument (reject
-non-list with `CinderRuntimeError` and line/column, matching `_sort`'s
-type-check style). `sum(list)` requires every element be `int` or
-`float` (reuse `_is_numeric`, already defined in `builtins.py`), rejecting
-a non-numeric element with `CinderRuntimeError`; returns `0` for an empty
-list, otherwise the running total via `+` — result is `int` only if every
-element was `int`, else `float` (mirrors Python: `sum([1, 2])` is `2`,
-`sum([1, 2.0])` is `3.0`). `any(list)` and `all(list)` evaluate each
-element's Cinder truthiness via `is_truthy` (module-level in
-`cinder/interpreter.py` — import it into `builtins.py`, same pattern
-`_map`/`_filter`/`_reduce` already use for `call_value`) and return a
-`bool`; `any([])` is `false`, `all([])` is `true` (matching Python's
-identity values for empty sequences).
-
-Acceptance criteria:
-- `sum([1, 2, 3])` is `6`; `sum([1, 2.5])` is `3.5`; `sum([])` is `0`.
-- `any([false, nil, 1])` is `true`; `any([false, nil])` is `false`;
-  `any([])` is `false`.
-- `all([1, "a", true])` is `true`; `all([1, false])` is `false`;
-  `all([])` is `true`.
-- `sum(["a"])` raises `CinderRuntimeError` (non-numeric element);
-  `sum(5)`, `any(5)`, `all(5)` raise `CinderRuntimeError` (non-list
-  argument), each with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Ternary conditional expression: `cond ? then : else`
+## 1. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -81,7 +49,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 3. Standard library: `items` for maps
+## 2. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -105,7 +73,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `enumerate`
+## 3. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -128,7 +96,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `merge` for maps
+## 4. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -154,7 +122,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `get` for safe map access
+## 5. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -183,7 +151,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `copy` for lists and maps
+## 6. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -213,7 +181,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `sort_by` with a custom key function
+## 7. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -249,7 +217,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 8. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -290,7 +258,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 10. Standard library: `remove` for maps
+## 9. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -320,7 +288,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: type-predicate builtins
+## 10. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -645,6 +613,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `  at name (line:col)` lines in `cinder/cli.py`'s diagnostic after the
   existing one-line header. Clean first pass, no bounces (413 tests
   passing, up from 405).
+- **Standard library: `sum`, `any`, `all`** — merged 2026-07-21T20:18:37Z
+  via PR #37 (`feat/20260721-sum-any-all`). Added three variadic-over-a-
+  list aggregate builtins to `cinder/builtins.py`: `sum(list)` totals
+  numeric elements via `+` (int-only result if every element was `int`,
+  else `float`, mirroring Python's own `sum()` promotion), `any(list)`/
+  `all(list)` evaluate each element's Cinder truthiness via `is_truthy`.
+  Non-numeric element or non-list argument raises `CinderRuntimeError`
+  with line/column. Clean first pass, no bounces (426 tests passing, up
+  from 413).
 
 ## Graveyard
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Runtime errors report the call stack, not just the innermost site
+## 1. Runtime errors report the call stack, not just the innermost site [claimed 2026-07-21T20:00:31Z]
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with

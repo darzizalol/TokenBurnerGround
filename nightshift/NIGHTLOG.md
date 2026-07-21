@@ -653,3 +653,20 @@ The morning paper: what shipped, what bounced, what's still open.
   there was nothing for Release to act on. Next Engineer session should
   pick up `zip` (task 1 in `projects/cinder/BACKLOG.md`) so there's a PR
   for the next Reviewer/QA/Release pass.
+
+- **Merged**: PR #33 "Standard library: zip" (`feat/20260721-zip-builtin`)
+  — clean first pass, no bounces. Added `zip(list1, list2)` to
+  `cinder/builtins.py`, pairing two lists into `[[a, b], ...]` truncated to
+  the shorter length (Python `zip` truncation semantics), non-mutating,
+  matching `reverse`/`sort`/`map`/`filter`'s style; non-list argument
+  raises `CinderRuntimeError` with line/column. `VERDICT: LGTM` and
+  `QA: PASS` both landed after the single commit (383 tests passing, up
+  from 378); QA also smoke-tested pairing, both-direction truncation,
+  empty-list cases, non-mutation, and both error paths via
+  `cinder.cli run`. BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now string/list repetition via `*`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-third PR, thirty-third merge, first try — the clean first-pass
+  streak holds at sixteen in a row; queue is clear for the next Engineer
+  session to start on string/list repetition via `*`.

@@ -11,32 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip` [claimed 2026-07-21T19:28:47Z]
-
-Build: add `zip(list1, list2)` to `cinder/builtins.py`, returning a
-**new** list of two-element lists pairing `list1[i]` with `list2[i]`,
-truncating to the shorter length when the inputs differ in length
-(matching Python's `zip` truncation behavior — never erroring on
-mismatched lengths). Non-mutating, matching `reverse`/`sort`/`map`/
-`filter`'s style. Both arguments must be `list`; a non-list argument
-raises `CinderRuntimeError` with line/column, matching the existing
-type-check style. No callback/`call_value` dependency on `reduce`
-(PR #28) or any other task.
-
-Acceptance criteria:
-- `zip([1, 2, 3], ["a", "b", "c"])` is `[[1, "a"], [2, "b"], [3, "c"]]`.
-- `zip([1, 2], [1])` is `[[1, 1]]` (truncates to the shorter list).
-- `zip([], [1, 2])` is `[]`.
-- `zip(5, [1])` and `zip([1], 5)` raise `CinderRuntimeError` with
-  line/column.
-- Neither input list is mutated (regression test).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. String and list repetition via `*`
+## 1. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
 (currently delegating straight to `_numeric_op` around line 405) to
@@ -66,7 +41,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 3. `in` operator for membership tests
+## 2. `in` operator for membership tests
 
 Build: add an `IN` token to `cinder/tokens.py`'s `TokenType` and `KEYWORDS`
 dict (same pattern as `and`/`or`/`not` — a reserved word, not a symbol,
@@ -103,7 +78,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Runtime errors report the call stack, not just the innermost site
+## 3. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -144,7 +119,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 5. Standard library: `sum`, `any`, `all`
+## 4. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -176,7 +151,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Ternary conditional expression: `cond ? then : else`
+## 5. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -213,7 +188,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 7. Standard library: `items` for maps
+## 6. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -237,7 +212,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `enumerate`
+## 7. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -250,7 +225,7 @@ Acceptance criteria:
 - `enumerate([])` is `[]`.
 - For any list `l`, `enumerate(l)` matches `zip(range(len(l)), l)`
   element-for-element (regression test tying `enumerate`, `zip`, and
-  `range` together — depends on task 1's `zip` having landed).
+  `range` together — `zip` shipped via PR #33).
 - `enumerate(5)` and `enumerate({"a": 1})` raise `CinderRuntimeError`
   with line/column (non-list argument).
 - The input list is not mutated (regression test).
@@ -260,7 +235,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `merge` for maps
+## 8. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -545,6 +520,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   type-checking with no new interpreter logic. Restricted to `Identifier`
   targets; `list[0] += 1` raises `ParseError`, matching plain `=`. Clean
   first pass, no bounces (378 tests passing, up from 362).
+
+- **Standard library: `zip`** — merged 2026-07-22T~ via PR #33
+  (`feat/20260721-zip-builtin`). Added `zip(list1, list2)` to
+  `cinder/builtins.py`, pairing two lists into `[[a, b], ...]` truncated to
+  the shorter length (Python `zip` semantics), non-mutating, matching
+  `reverse`/`sort`/`map`/`filter`'s style; non-list argument raises
+  `CinderRuntimeError` with line/column. Clean first pass, no bounces
+  (383 tests passing, up from 378).
 
 ## Graveyard
 

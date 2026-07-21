@@ -11,49 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `in` operator for membership tests [claimed 2026-07-21T19:48:17Z]
-
-Build: `TokenType.IN` and the `"in"` keyword **already exist**
-(`cinder/tokens.py`) and are already lexed — they're used today only by
-`for NAME in EXPR { ... }` (PR #17). This task wires the same token into
-*expression* parsing so `in` also works as a binary operator, without
-touching the `for`-loop grammar. In `cinder/parser.py`, add `expr in expr`
-as a new precedence tier between `_comparison` and `_and` (i.e. `_and`
-calls a new `_membership`, which calls `_comparison`, mirroring
-`_comparison`'s own one-token-lookahead-loop shape but only for the single
-`IN` token) — this makes `a in b and c in d` parse as expected, and must
-not break `for x in list { ... }` parsing (regression-test both). Reuse
-the existing `Binary` AST node with the `IN` token as the operator, no new
-AST node. In `cinder/interpreter.py`'s `_evaluate_binary`, add an `IN`
-case that implements exactly `contains`'s existing semantics (list `==`
-membership, map key check, string substring check — see `_contains` in
-`cinder/builtins.py`, factor its body into a shared helper both call rather
-than duplicating the type dispatch) and raises `CinderRuntimeError` with
-line/column for any other right-operand type.
-
-Acceptance criteria:
-- `2 in [1, 2, 3]` is `true`; `5 in [1, 2, 3]` is `false`.
-- `"a" in {"a": 1}` is `true` (key check, not value check); `"z" in {"a": 1}`
-  is `false`.
-- `"ll" in "hello"` is `true` (substring); `"z" in "hello"` is `false`.
-- `1 in 5` raises `CinderRuntimeError` with line/column (non-collection
-  right operand).
-- `1 in [1] and 2 in [2]` evaluates both membership tests then `and`s them
-  (precedence regression test).
-- `contains([1,2], 1)` and `1 in [1,2]` agree on every case above (shared
-  helper, no divergence).
-- `for x in [1, 2, 3] { print(x); }` still parses and runs correctly
-  (regression test — the `for`-loop grammar must not be affected by adding
-  `in` as a binary operator).
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `cinder/builtins.py`, `tests/test_lexer.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Runtime errors report the call stack, not just the innermost site
+## 1. Runtime errors report the call stack, not just the innermost site
 
 Build: today a `CinderRuntimeError` raised deep inside nested function
 calls only reports the line/column of the failing operation itself, with
@@ -94,7 +52,7 @@ Likely files: `cinder/errors.py`, `cinder/interpreter.py`, `cinder/cli.py`,
 
 ---
 
-## 3. Standard library: `sum`, `any`, `all`
+## 2. Standard library: `sum`, `any`, `all`
 
 Build: add three variadic-over-a-list aggregate builtins to
 `cinder/builtins.py`, each taking exactly one `list` argument (reject
@@ -126,7 +84,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Ternary conditional expression: `cond ? then : else`
+## 3. Ternary conditional expression: `cond ? then : else`
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -163,7 +121,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 5. Standard library: `items` for maps
+## 4. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -187,7 +145,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `enumerate`
+## 5. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -210,7 +168,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `merge` for maps
+## 6. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -236,7 +194,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `get` for safe map access
+## 7. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -265,7 +223,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `copy` for lists and maps
+## 8. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -295,7 +253,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `sort_by` with a custom key function
+## 9. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -331,7 +289,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 10. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -646,6 +604,14 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
   count clamps to empty, no error); non-int count falls through to the
   existing `_numeric_op` type check and raises `CinderRuntimeError`. Clean
   first pass, no bounces (393 tests passing, up from 383).
+- **`in` operator for membership tests** — merged 2026-07-22T~ via PR #35
+  (`feat/20260721-in-operator`). Added a new precedence tier in
+  `cinder/parser.py` between `_and` and `_comparison` wiring the existing
+  `IN` token into expression parsing as `expr in expr`, without touching
+  `for`-loop grammar. Factored `_contains`'s type dispatch out of
+  `cinder/builtins.py` into a shared `contains_value()` helper in
+  `cinder/interpreter.py`, used by both `contains()` and the new `in`
+  operator. Clean first pass, no bounces (405 tests passing, up from 393).
 
 ## Graveyard
 

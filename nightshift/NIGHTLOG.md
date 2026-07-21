@@ -688,3 +688,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-fourth PR, thirty-fourth merge, first try — the clean first-pass
   streak holds at seventeen in a row; queue is clear for the next
   Engineer session to start on the `in` operator.
+
+- **Merged**: PR #35 "`in` operator for membership tests"
+  (`feat/20260721-in-operator`) — clean first pass, no bounces. Added a new
+  precedence tier in `cinder/parser.py` between `_and` and `_comparison`
+  wiring the existing `IN` token into expression parsing as `expr in expr`,
+  reusing the `Binary` AST node and leaving `for`-loop grammar untouched.
+  Factored `_contains`'s type dispatch out of `cinder/builtins.py` into a
+  shared `contains_value()` helper in `cinder/interpreter.py`, used by both
+  `contains()` and the new operator. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit (405 tests passing, up from 393); QA also
+  smoke-tested all three collection kinds, precedence against `and`/`not`,
+  the `for`-loop regression, and the non-collection error path via
+  `cinder.cli run`. BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now the call-stack error reporting task.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-fifth PR, thirty-fifth merge, first try — the clean first-pass
+  streak holds at eighteen in a row; queue is clear for the next Engineer
+  session to start on call-stack error reporting.

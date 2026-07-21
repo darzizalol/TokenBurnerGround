@@ -16,10 +16,11 @@ a later task while an earlier one is unclaimed/open.
 Build: add `PLUSEQ`, `MINUSEQ`, `STAREQ`, `SLASHEQ`, `PERCENTEQ` token
 types to `cinder/tokens.py`, and tokenize them in `cinder/lexer.py` using
 the same two-char lookahead pattern already used for `==`/`!=`/`<=`/`>=`
-(the `_match` helper, exercised around lines 178-198) — each is one of
-`_SIMPLE_TOKENS`'s existing single-char operators immediately followed by
-`=` with no space, so `+=` must lex as one token, not `PLUS` then `EQ`.
-In `cinder/parser.py`'s `_assignment` (line 249), after the existing
+(the `_match` helper, exercised in `_equals_or`/`_bang`/`_lt`/`_gt` around
+lines 176-198) — each is one of `_SIMPLE_TOKENS`'s existing single-char
+operators immediately followed by `=` with no space, so `+=` must lex as
+one token, not `PLUS` then `EQ`.
+In `cinder/parser.py`'s `_assignment` (line 265), after the existing
 `TokenType.EQ` branch, check for these five compound tokens; when
 matched, desugar at *parse time* into `Assign(expr.name, Binary(expr,
 <the corresponding PLUS/MINUS/STAR/SLASH/PERCENT token>, value), ...)` —
@@ -76,7 +77,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 3. String and list repetition via `*`
 
 Build: extend `cinder/interpreter.py`'s `_evaluate_binary` `STAR` case
-(currently delegating straight to `_numeric_op` around line 414-415) to
+(currently delegating straight to `_numeric_op` around line 405) to
 also support `str * int`/`int * str` and `list * int`/`int * list`,
 returning the value repeated `n` times with Python semantics: `"ab" *
 3` is `"ababab"`, `[1, 2] * 2` is `[1, 2, 1, 2]`, and a zero or negative

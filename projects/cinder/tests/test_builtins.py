@@ -1,9 +1,9 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, items, get, remove, merge, upper, lower, trim, split, join,
-find, starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
-contains, copy, reverse, sort, sort_by, range, map, filter, reduce, slice,
-concat, zip, enumerate, assert, is_list, is_map, is_string, is_number,
-is_bool, is_nil, is_function."""
+find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
+pow, sqrt, sum, any, all, contains, copy, reverse, sort, sort_by, range, map,
+filter, reduce, slice, concat, zip, enumerate, assert, is_list, is_map,
+is_string, is_number, is_bool, is_nil, is_function."""
 
 import io
 import subprocess
@@ -536,6 +536,87 @@ class TestRound(unittest.TestCase):
     def test_round_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("round(1.5, 2);")
+
+
+class TestFloor(unittest.TestCase):
+    def test_floor_of_positive_float(self):
+        self.assertEqual(run("let result = floor(1.5);").get("result"), 1)
+
+    def test_floor_of_negative_float(self):
+        self.assertEqual(run("let result = floor(-1.5);").get("result"), -2)
+
+    def test_floor_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('floor("a");')
+
+    def test_floor_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("floor();")
+
+
+class TestCeil(unittest.TestCase):
+    def test_ceil_of_positive_float(self):
+        self.assertEqual(run("let result = ceil(1.1);").get("result"), 2)
+
+    def test_ceil_of_negative_float(self):
+        self.assertEqual(run("let result = ceil(-1.1);").get("result"), -1)
+
+    def test_ceil_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("ceil(nil);")
+
+    def test_ceil_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("ceil();")
+
+
+class TestPow(unittest.TestCase):
+    def test_pow_of_two_ints_is_int(self):
+        result = run("let result = pow(2, 10);").get("result")
+        self.assertEqual(result, 1024)
+        self.assertIsInstance(result, int)
+
+    def test_pow_with_fractional_exponent_is_float(self):
+        result = run("let result = pow(2, 0.5);").get("result")
+        self.assertAlmostEqual(result, 1.4142135623730951)
+        self.assertIsInstance(result, float)
+
+    def test_pow_with_negative_exponent_is_float(self):
+        self.assertEqual(run("let result = pow(2, -1);").get("result"), 0.5)
+
+    def test_pow_of_non_numeric_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pow("a", 2);')
+
+    def test_pow_of_non_numeric_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pow(2, "a");')
+
+    def test_pow_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pow(2);")
+
+
+class TestSqrt(unittest.TestCase):
+    def test_sqrt_of_perfect_square_is_float(self):
+        result = run("let result = sqrt(9);").get("result")
+        self.assertEqual(result, 3.0)
+        self.assertIsInstance(result, float)
+
+    def test_sqrt_of_non_perfect_square(self):
+        self.assertAlmostEqual(run("let result = sqrt(2);").get("result"), 1.4142135623730951)
+
+    def test_sqrt_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sqrt(-1);")
+
+    def test_sqrt_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sqrt("a");')
+
+    def test_sqrt_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sqrt();")
 
 
 class TestSum(unittest.TestCase):

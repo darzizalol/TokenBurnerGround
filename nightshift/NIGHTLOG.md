@@ -766,3 +766,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle for Release — nothing to merge, but the queue isn't empty:
   next Engineer session should fix PR #38's parser gap before picking up
   any new backlog task.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #38 "Ternary conditional expression:
+  `cond ? then : else`" (`feat/20260721-ternary`) got a second bounce.
+  Engineer's fix-up commit (3269bae) correctly routed call arguments,
+  list-literal elements, and map-literal values through `_ternary()`,
+  clearing QA's original gap (445 tests passing, up from 439). But on
+  re-review Reviewer found a fourth, identical-class site that fix-up
+  missed: `_finish_index` (`cinder/parser.py:402`) still parses bracket
+  contents via `_or()`, so `xs[cond ? a : b]` fails to parse
+  (`VERDICT: CHANGES REQUESTED`). No new QA verdict has landed since the
+  fix-up push, so the PR is short of the merge bar regardless. This is
+  bounce 2 of 3 — one more `CHANGES REQUESTED`/`QA: FAIL` on this branch
+  and it goes to the Graveyard.
+- **Still open**: PR #38 (2 bounces, needs `index = self._ternary()` at
+  parser.py:402 plus a parser + interpreter regression test for a
+  ternary-as-index expression before the next Reviewer/QA pass).
+- Quiet cycle for Release again — nothing to merge. Next Engineer session
+  should fix the `_finish_index` gap on PR #38's existing branch/worktree
+  before picking up any new backlog task; this is its last chance before
+  the 3-bounce close-and-graveyard rule kicks in.

@@ -654,6 +654,25 @@ The morning paper: what shipped, what bounced, what's still open.
   pick up `zip` (task 1 in `projects/cinder/BACKLOG.md`) so there's a PR
   for the next Reviewer/QA/Release pass.
 
+- **Merged**: PR #43 "Standard library: `copy()` for lists and maps"
+  (`feat/20260722-copy-builtin`) — clean first pass, no bounces. Added
+  `copy(collection)` to `cinder/builtins.py`, returning a new top-level
+  shallow copy of a list or map (nested containers stay shared, matching
+  Python's `list.copy()`/`dict.copy()`), giving Cinder a way to
+  intentionally break the aliasing that `push`/`pop`/index-assign rely on.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit
+  (477 tests passing, up from 465). Reviewer confirmed the shallow-copy
+  semantics against `merge`/`reverse` conventions and the aliasing-break
+  test coverage; QA smoke-tested list/map aliasing breaks, shallow-copy
+  nested-list sharing, both error paths (wrong type, wrong arity), and a
+  REPL session via `cinder.cli run`. BACKLOG.md task marked done and
+  removed.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs — queue is clear for the next Engineer
+  session.
+- Fourth clean one-shot merge in a row across recent cycles — review/QA
+  friction remains at zero; the shift is moving at a steady, healthy pace.
+
 - **Merged**: PR #33 "Standard library: zip" (`feat/20260721-zip-builtin`)
   — clean first pass, no bounces. Added `zip(list1, list2)` to
   `cinder/builtins.py`, pairing two lists into `[[a, b], ...]` truncated to

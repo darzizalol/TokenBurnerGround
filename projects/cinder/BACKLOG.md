@@ -12,36 +12,6 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `copy` for lists and maps [claimed 2026-07-22T19:30:16Z]
-
-Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
-top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
-still shared with the original, matching Python's `list.copy()`/
-`dict.copy()` semantics, not a deep copy) for a `list` or `map` argument.
-This exists because Cinder's lists/maps are reference types (assignment
-aliases, `push`/`pop`/index-assign mutate in place, per PR #14/#8) with no
-way today to intentionally break aliasing. Any other argument type raises
-`CinderRuntimeError` with line/column, matching `reverse`/`sort`'s
-type-check style.
-
-Acceptance criteria:
-- `let a = [1, 2]; let b = copy(a); push(b, 3);` leaves `a` as `[1, 2]`
-  and `b` as `[1, 2, 3]` (the whole point of the builtin — regression test
-  against aliasing).
-- Same shape for maps: `let a = {"x": 1}; let b = copy(a); b["y"] = 2;`
-  leaves `a` as `{"x": 1}`.
-- `copy([1, [2, 3]])`'s inner list is still the *same* object as the
-  original's inner list (shallow-copy regression test — mutating the
-  original's nested list via `push` is visible through the copy's nested
-  list too).
-- `copy(5)` and `copy("a")` raise `CinderRuntimeError` with line/column
-  (unsupported argument type).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
 ## 3. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new

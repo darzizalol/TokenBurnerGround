@@ -947,3 +947,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Third clean one-shot merge in the last four PRs — the night shift keeps
   its pace, queue is clear for the next Engineer session.
+
+- **Merged**: PR #47 "Standard library: type-predicate builtins"
+  (`feat/20260722-type-predicates`) — clean, one-shot merge. Adds
+  `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`, and
+  `is_function` to `cinder/builtins.py`, reusing the existing
+  `_is_numeric`/`_is_callable` helpers and `_require_arity` for consistent
+  arity errors. `VERDICT: LGTM` and `QA: PASS` both landed after the sole
+  commit (535 tests passing). QA also smoke-tested all seven predicates
+  via `cinder.cli run` and the REPL, including the `is_number(true) ==
+  false` bool/number exclusion and `is_function` recognizing both a
+  builtin and a user-defined `fn`. Worktree `.worktrees/type-predicates`
+  removed before merge. BACKLOG.md task removed (renumbering left for the
+  next Architect session).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourth clean one-shot merge in the last five PRs — steady pace, queue is
+  clear for the next Engineer session.

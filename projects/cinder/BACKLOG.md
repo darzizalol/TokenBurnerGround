@@ -11,41 +11,6 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: type-predicate builtins [claimed 2026-07-22T20:21:50Z]
-
-Build: add seven single-argument builtins to `cinder/builtins.py` —
-`is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
-`is_function` — each returning a `bool`, complementing the existing
-`type(value)` (which returns a type-name string) with direct predicates for
-`if`/`while` conditions. `is_number` is `true` for both `int` and `float`
-(reuse `_is_numeric`, already defined in `builtins.py`); `is_function` is
-`true` for both a `CinderFunction` and a `Builtin` (reuse `_is_callable`,
-already defined for `map`/`filter`/`sort_by`). Each takes exactly one
-argument of any type — wrong arity raises `CinderRuntimeError` via the
-existing `_require_arity` helper, but there is no "wrong type" error case
-since every Cinder value is a valid argument to every predicate.
-
-Acceptance criteria:
-- `is_list([1])` is `true`; `is_list({"a": 1})` is `false`.
-- `is_map({"a": 1})` is `true`; `is_map([1])` is `false`.
-- `is_string("a")` is `true`; `is_number(1)` is `true`; `is_number(1.5)` is
-  `true`; `is_number("1")` is `false`.
-- `is_bool(true)` is `true`; `is_bool(0)` is `false` (Cinder booleans are a
-  distinct type from `int`, not `0`/`1`).
-- `is_nil(nil)` is `true`; `is_nil(false)` is `false`.
-- `is_function(fn(x) { return x; })` is `true` for both a named `fn` and an
-  anonymous `fn(x) { ... }` expression, and for a builtin passed by
-  reference (e.g. `is_function(len)` — confirm builtins are first-class
-  values that can be looked up by name, matching how `map`/`filter` already
-  accept them); `is_function(1)` is `false`.
-- Calling any of the seven with zero or two arguments raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
 ## 2. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the

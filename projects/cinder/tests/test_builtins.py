@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, items, upper, lower, trim, split, join, find, starts_with,
 ends_with, replace, abs, min, max, round, sum, any, all, contains, reverse,
-sort, range, map, filter, reduce, slice, concat, zip, assert."""
+sort, range, map, filter, reduce, slice, concat, zip, enumerate, assert."""
 
 import io
 import subprocess
@@ -800,6 +800,41 @@ class TestZip(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
         with self.assertRaises(CinderRuntimeError):
             run("zip([1], 5);")
+
+
+class TestEnumerate(unittest.TestCase):
+    def test_enumerate_pairs_index_and_value(self):
+        env = run('let result = enumerate(["a", "b", "c"]);')
+        self.assertEqual(env.get("result"), [[0, "a"], [1, "b"], [2, "c"]])
+
+    def test_enumerate_of_empty_list_is_empty_list(self):
+        env = run("let result = enumerate([]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_enumerate_matches_zip_of_range_and_list(self):
+        env = run(
+            'let l = ["x", "y", "z"];'
+            "let en = enumerate(l);"
+            "let zr = zip(range(len(l)), l);"
+        )
+        en, zr = env.get("en"), env.get("zr")
+        self.assertEqual(en, zr)
+
+    def test_enumerate_does_not_mutate_input(self):
+        env = run('let a = ["a", "b"]; let result = enumerate(a);')
+        self.assertEqual(env.get("a"), ["a", "b"])
+        self.assertEqual(env.get("result"), [[0, "a"], [1, "b"]])
+
+    def test_enumerate_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("enumerate(5);")
+        self.assertEqual(ctx.exception.line, 1)
+        with self.assertRaises(CinderRuntimeError):
+            run('enumerate({"a": 1});')
+
+    def test_enumerate_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('enumerate(["a"], 2);')
 
 
 class TestAssert(unittest.TestCase):

@@ -48,7 +48,7 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
+  `values`, `items`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
   `reduce`, `slice`, `concat`, `zip`, `assert`, `sum`, `any`, `all`, string
   methods `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`,
   `ends_with`, `replace`, and math builtins `abs`, `min`, `max`, `round`
@@ -90,7 +90,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (447+ tests) covers every layer — lexer, parser, interpreter,
+The suite (452+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -115,10 +115,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the `sum`/`any`/`all` aggregate
-builtins and a right-associative ternary conditional (`cond ? then : else`)
-wired through every expression grammar tier.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `items`/`enumerate`/`merge`
-for maps and lists, `get`/`copy`/`sort_by`, bitwise operators, and
+Actively developed, nightly. Recently landed: a right-associative ternary
+conditional (`cond ? then : else`) wired through every expression grammar
+tier, and `items(map)` for map iteration.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `enumerate`/`merge` for
+maps and lists, `get`/`copy`/`sort_by`, bitwise operators, and
 type-predicate builtins.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

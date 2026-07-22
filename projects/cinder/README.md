@@ -39,8 +39,9 @@ while (i < 10) {
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
   `str * int`/`list * int` (Python repetition semantics), `in` for
-  membership tests (lists, strings, maps), and the ternary conditional
-  `cond ? then : else`
+  membership tests (lists, strings, maps), the ternary conditional
+  `cond ? then : else`, and bitwise operators `&`, `|`, `^`, `~`, `<<`, `>>`
+  (int-only, with a clean runtime error on a negative shift count)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -92,7 +93,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (486+ tests) covers every layer — lexer, parser, interpreter,
+The suite (505+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -117,10 +118,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `enumerate(list)` for
-index/value pairs, `merge(map1, map2)` for combining maps, and
-`sort_by(list, fn)` for sorting by a custom key function. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): bitwise operators, `remove` for maps,
-type-predicate builtins, `floor`/`ceil`/`pow`/`sqrt`, and
-`index_of`/`unique`/`count` for lists.
+Actively developed, nightly. Recently landed: `copy(collection)` for
+shallow-copying lists/maps, `sort_by(list, fn)` for sorting by a custom key
+function, and bitwise operators `&`, `|`, `^`, `~`, `<<`, `>>`. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `remove` for maps, type-predicate
+builtins, `floor`/`ceil`/`pow`/`sqrt`, `index_of`/`unique`/`count`/`flatten`
+for lists.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

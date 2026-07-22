@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `remove` for maps
+## 1. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -41,7 +41,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: type-predicate builtins
+## 2. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -76,7 +76,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 3. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
@@ -111,7 +111,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `index_of` for lists
+## 4. Standard library: `index_of` for lists
 
 Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
 `int` index of the first element equal to `item` (Cinder `==` equality,
@@ -139,7 +139,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `unique` for lists
+## 5. Standard library: `unique` for lists
 
 Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
 with duplicate elements removed, keeping only the first occurrence of
@@ -172,7 +172,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `count` for lists
+## 6. Standard library: `count` for lists
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` (Cinder `==` value equality, the
@@ -193,6 +193,37 @@ Acceptance criteria:
   first argument).
 - Wrong arity (e.g. `count([1])`, `count([1], 2, 3)`) raises
   `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `flatten` for lists
+
+Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
+level of list-of-lists nesting into a single new list (non-mutating,
+matching `sort`/`reverse`/`concat`'s style) — a non-list element at the top
+level is kept as-is (not iterated into), so `flatten` never recurses past
+one level. First argument must be `list`; a non-list argument raises
+`CinderRuntimeError` with line/column, matching `concat`/`slice`'s
+type-check style. Complements the existing `concat` (two lists into one)
+by handling an arbitrary number of nested lists at once.
+
+Acceptance criteria:
+- `flatten([[1, 2], [3, 4]])` is `[1, 2, 3, 4]`.
+- `flatten([[1], [2, [3, 4]]])` is `[1, 2, [3, 4]]` (only one level deep —
+  the nested `[3, 4]` inside the second element stays a list, not flattened
+  further).
+- `flatten([1, [2, 3], 4])` is `[1, 2, 3, 4]` (non-list elements at the top
+  level pass through unchanged, mixed with flattened list elements).
+- `flatten([])` is `[]`; `flatten([[], []])` is `[]`.
+- `flatten([1, 2, 3])` is `[1, 2, 3]` (no nesting to flatten, still returns
+  a new list, not the same object — regression test that mutating the
+  result doesn't affect the input).
+- `flatten(5)` raises `CinderRuntimeError` with line/column (non-list
+  argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.

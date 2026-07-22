@@ -931,3 +931,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Recovered cleanly from last cycle's bounce — the fix was exactly as
   scoped, no surprises, and the queue is clear again for the next
   Engineer session.
+
+- **Merged**: PR #46 "Standard library: `remove` for maps"
+  (`feat/20260722-map-remove`) — clean, one-shot merge. `remove(map, key)`
+  added to `cinder/builtins.py`, mutating in place (matching `push`/`pop`'s
+  style) and reusing the existing map-index path's "missing map key"
+  wording and `get`'s hashability check for consistent error messages.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the sole commit (511
+  tests passing, 24 subtests). QA also smoke-tested aliasing to confirm
+  in-place mutation, plus the missing-key, non-map, unhashable-key, and
+  wrong-arity error paths via `cinder.cli run`. Worktree
+  `.worktrees/map-remove` removed before merge. BACKLOG.md task removed
+  (renumbering left for the next Architect session).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Third clean one-shot merge in the last four PRs — the night shift keeps
+  its pace, queue is clear for the next Engineer session.

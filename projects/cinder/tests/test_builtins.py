@@ -1,8 +1,8 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, items, get, merge, upper, lower, trim, split, join, find,
 starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
-contains, copy, reverse, sort, range, map, filter, reduce, slice, concat, zip,
-enumerate, assert."""
+contains, copy, reverse, sort, sort_by, range, map, filter, reduce, slice,
+concat, zip, enumerate, assert."""
 
 import io
 import subprocess
@@ -681,6 +681,47 @@ class TestSort(unittest.TestCase):
     def test_sort_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("sort([1], 2);")
+
+
+class TestSortBy(unittest.TestCase):
+    def test_sort_by_identity_key_matches_plain_sort(self):
+        env = run("let result = sort_by([3, 1, 2], fn(x) { return x; });")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_sort_by_string_length(self):
+        env = run('let result = sort_by(["bb", "a", "ccc"], fn(x) { return len(x); });')
+        self.assertEqual(env.get("result"), ["a", "bb", "ccc"])
+
+    def test_sort_by_empty_list_never_calls_fn(self):
+        env = run("let result = sort_by([], fn(x) { return x / 0; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_sort_by_is_stable(self):
+        env = run(
+            "let result = sort_by([[1, \"a\"], [1, \"b\"]], fn(x) { return x[0]; });"
+        )
+        self.assertEqual(env.get("result"), [[1, "a"], [1, "b"]])
+
+    def test_sort_by_does_not_mutate_input(self):
+        env = run("let xs = [3, 1, 2]; let result = sort_by(xs, fn(x) { return x; });")
+        self.assertEqual(env.get("xs"), [3, 1, 2])
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_sort_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sort_by(5, fn(x) { return x; });")
+
+    def test_sort_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sort_by([1, 2], 5);")
+
+    def test_sort_by_mixed_type_keys_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sort_by([1, "a"], fn(x) { return x; });')
+
+    def test_sort_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sort_by([1]);")
 
 
 class TestRange(unittest.TestCase):

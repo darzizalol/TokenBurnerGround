@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 2. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 1. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -53,7 +53,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `remove` for maps
+## 2. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -83,7 +83,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: type-predicate builtins
+## 3. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -118,7 +118,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 4. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
@@ -153,7 +153,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `index_of` for lists
+## 5. Standard library: `index_of` for lists
 
 Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
 `int` index of the first element equal to `item` (Cinder `==` equality,
@@ -181,13 +181,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `unique` for lists
+## 6. Standard library: `unique` for lists
 
 Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
 with duplicate elements removed, keeping only the first occurrence of
 each distinct value and preserving original relative order (non-mutating,
 matching `sort`/`reverse`'s style). Equality is Cinder `==` value equality
-(same rule `index_of`, task 6, uses), so use a linear scan against
+(same rule `index_of`, task 5, uses), so use a linear scan against
 already-kept elements (or a `set` fast path when every element is
 hashable, falling back to linear comparison otherwise — lists and maps
 are unhashable in Cinder, same limitation `sort`/`contains` already have
@@ -208,6 +208,33 @@ Acceptance criteria:
 - `unique(5)` raises `CinderRuntimeError` with line/column (non-list
   argument).
 - Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `count` for lists
+
+Build: add `count(list, item)` to `cinder/builtins.py`, returning the
+`int` number of elements equal to `item` (Cinder `==` value equality, the
+same rule `index_of`/`contains` already use) — the counting counterpart to
+`index_of` (task 5), which only reports the first match. First argument
+must be `list`; a non-list argument raises `CinderRuntimeError` with
+line/column, matching `sort`/`reverse`/`index_of`'s type-check style.
+`item` may be any Cinder value, including a list or map (compared by
+value, not identity, same as `index_of`).
+
+Acceptance criteria:
+- `count([1, 2, 1, 3, 1], 1)` is `3`; `count([1, 2, 3], 9)` is `0`.
+- `count([], 1)` is `0` (empty list, never raises).
+- `count(["a", "b", "a"], "a")` is `2`.
+- `count([[1, 2], [1, 2], [3]], [1, 2])` is `2` (value equality for nested
+  lists, not identity).
+- `count(5, 1)` raises `CinderRuntimeError` with line/column (non-list
+  first argument).
+- Wrong arity (e.g. `count([1])`, `count([1], 2, 3)`) raises
+  `CinderRuntimeError` with line/column.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.

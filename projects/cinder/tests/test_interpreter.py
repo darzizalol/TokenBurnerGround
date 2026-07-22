@@ -59,6 +59,55 @@ class TestArithmetic(unittest.TestCase):
             evaluate('-"x"')
 
 
+class TestBitwise(unittest.TestCase):
+    def test_and_or_xor(self):
+        self.assertEqual(evaluate("5 & 3"), 1)
+        self.assertEqual(evaluate("5 | 2"), 7)
+        self.assertEqual(evaluate("5 ^ 1"), 4)
+
+    def test_not(self):
+        self.assertEqual(evaluate("~5"), -6)
+
+    def test_shifts(self):
+        self.assertEqual(evaluate("1 << 3"), 8)
+        self.assertEqual(evaluate("16 >> 2"), 4)
+
+    def test_shift_binds_looser_than_addition(self):
+        self.assertEqual(evaluate("2 + 3 << 1"), 10)
+
+    def test_float_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("5.0 & 3")
+
+    def test_string_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('"a" | 1')
+
+    def test_unary_not_on_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('~"a"')
+
+    def test_unary_not_on_float_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("~5.0")
+
+    def test_unary_not_on_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("~true")
+
+    def test_bool_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("true & 1")
+
+    def test_negative_left_shift_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1 << -1")
+
+    def test_negative_right_shift_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1 >> -1")
+
+
 class TestStringConcatenation(unittest.TestCase):
     def test_string_plus_string(self):
         self.assertEqual(evaluate('"foo" + "bar"'), "foobar")

@@ -99,6 +99,42 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertEqual(types(tokenize(source)), expected)
 
+    def test_bitwise_operators(self):
+        source = "& | ^ ~ << >>"
+        expected = [
+            TokenType.AMP,
+            TokenType.PIPE,
+            TokenType.CARET,
+            TokenType.TILDE,
+            TokenType.LSHIFT,
+            TokenType.RSHIFT,
+            TokenType.EOF,
+        ]
+        self.assertEqual(types(tokenize(source)), expected)
+
+    def test_lshift_does_not_collide_with_lteq_or_lt(self):
+        # "<<" must lex as one LSHIFT token, not two LT tokens.
+        tokens = tokenize("1 << 2")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.LSHIFT, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "<<")
+        # "<=" still lexes as LTEQ, not LT then EQ.
+        self.assertEqual(types(tokenize("1 <= 2")), [TokenType.INT, TokenType.LTEQ, TokenType.INT, TokenType.EOF])
+        # A lone "<" still lexes as LT.
+        self.assertEqual(types(tokenize("1 < 2")), [TokenType.INT, TokenType.LT, TokenType.INT, TokenType.EOF])
+
+    def test_rshift_does_not_collide_with_gteq_or_gt(self):
+        tokens = tokenize("1 >> 2")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.RSHIFT, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, ">>")
+        self.assertEqual(types(tokenize("1 >= 2")), [TokenType.INT, TokenType.GTEQ, TokenType.INT, TokenType.EOF])
+        self.assertEqual(types(tokenize("1 > 2")), [TokenType.INT, TokenType.GT, TokenType.INT, TokenType.EOF])
+
     def test_compound_assignment_operators(self):
         source = "+= -= *= /= %="
         expected = [

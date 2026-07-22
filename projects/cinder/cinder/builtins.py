@@ -172,6 +172,22 @@ def _items(arguments: list, line: int, column: int) -> object:
     return [[key, value] for key, value in target.items()]
 
 
+def _merge(arguments: list, line: int, column: int) -> object:
+    _require_arity("merge", arguments, 2, line, column)
+    map1, map2 = arguments
+    if not isinstance(map1, dict):
+        raise CinderRuntimeError(
+            f"merge() requires a map, got {type_name(map1)}", line, column
+        )
+    if not isinstance(map2, dict):
+        raise CinderRuntimeError(
+            f"merge() requires a map, got {type_name(map2)}", line, column
+        )
+    result = dict(map1)
+    result.update(map2)
+    return result
+
+
 def _upper(arguments: list, line: int, column: int) -> object:
     _require_arity("upper", arguments, 1, line, column)
     value = arguments[0]
@@ -579,6 +595,7 @@ _BUILTINS = {
     "keys": _keys,
     "values": _values,
     "items": _items,
+    "merge": _merge,
     "upper": _upper,
     "lower": _lower,
     "trim": _trim,

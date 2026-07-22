@@ -895,3 +895,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - Fourth clean one-shot merge in a row tonight — zero review/QA friction
   across the whole shift so far; queue is clear for the next Engineer
   session.
+
+## 2026-07-23
+
+- **Merged**: none.
+- **Bounced this cycle**: PR #45 "Bitwise operators: &, |, ^, ~, <<, >>"
+  (`feat/20260722-bitwise-ops`) — Reviewer flagged a real bug: negative
+  shift counts on `<<`/`>>` crash with a raw Python `ValueError` instead
+  of a clean `CinderRuntimeError`, the same class of guard `_divide_op`
+  already has for division by zero. `_bitwise_op` in
+  `cinder/interpreter.py` checks operand types via `_is_int` but never
+  checks the shift amount's sign. `VERDICT: CHANGES REQUESTED` (1st
+  bounce for this PR); no QA comment posted yet. Left on its branch for
+  the next Engineer session to fix and add tests for both operators.
+- **Still open**: PR #45, awaiting the fix above.
+- First bounce after four clean nights in a row — a real, well-caught bug
+  rather than review friction, and the fix is small and well-scoped for
+  the next Engineer session.

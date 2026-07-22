@@ -1,7 +1,8 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, items, merge, upper, lower, trim, split, join, find, starts_with,
-ends_with, replace, abs, min, max, round, sum, any, all, contains, reverse,
-sort, range, map, filter, reduce, slice, concat, zip, enumerate, assert."""
+keys, values, items, get, merge, upper, lower, trim, split, join, find,
+starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
+contains, reverse, sort, range, map, filter, reduce, slice, concat, zip,
+enumerate, assert."""
 
 import io
 import subprocess
@@ -215,6 +216,38 @@ class TestItems(unittest.TestCase):
     def test_items_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('items({"a": 1}, 2);')
+
+
+class TestGet(unittest.TestCase):
+    def test_get_returns_value_for_present_key(self):
+        env = run('let result = get({"a": 1}, "a", 0);')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_get_returns_default_for_missing_key(self):
+        env = run('let result = get({"a": 1}, "z", 0);')
+        self.assertEqual(env.get("result"), 0)
+
+    def test_get_returns_default_on_empty_map(self):
+        env = run('let result = get({}, "a", "default");')
+        self.assertEqual(env.get("result"), "default")
+
+    def test_get_does_not_always_return_default(self):
+        env = run('let result = get({"a": 1}, "a", 0);')
+        self.assertNotEqual(env.get("result"), 0)
+
+    def test_get_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('get(5, "a", 0);')
+
+    def test_get_with_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('get({"a": 1}, [1, 2], 0);')
+
+    def test_get_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('get({"a": 1}, "a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('get({"a": 1}, "a", 0, 1);')
 
 
 class TestMerge(unittest.TestCase):

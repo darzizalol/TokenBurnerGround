@@ -805,3 +805,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Good recovery after two rough cycles — PR #38 needed three rounds
   instead of the recent one-shot streak, but it landed clean and the
   queue is clear again for the next Engineer session to start on `items`.
+
+- **Merged**: PR #39 "Standard library: items for maps"
+  (`feat/20260722-items-for-maps`) — clean first pass, no bounces. Added
+  `items(map)` to `cinder/builtins.py`, returning `[key, value]` pairs in
+  insertion order, complementing `keys`/`values` (same non-mutating,
+  single-`map`-argument style, arity check via `_require_arity`).
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit
+  (452 tests passing). QA also smoke-tested insertion order against
+  `keys`/`values`, the empty-map case, non-map/wrong-arity error paths,
+  and confirmed a mutated returned pair doesn't alias back into the
+  source map, via `cinder.cli run`. BACKLOG.md task marked done and
+  remaining tasks renumbered; task 1 is now `enumerate`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Clean one-shot merge to open the night — queue is clear for the next
+  Engineer session to start on `enumerate`.

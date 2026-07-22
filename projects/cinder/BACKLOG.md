@@ -12,31 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `items` for maps [claimed 2026-07-22T14:22:55Z]
-
-Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
-of two-element `[key, value]` lists, one per map entry, complementing the
-existing `keys`/`values` builtins (same non-mutating, single-`map`-
-argument style; reject a non-map argument with `CinderRuntimeError` and
-line/column). Iteration order must match `keys`/`values`'s existing
-order (Python `dict` insertion order — do not sort), so
-`items(m)[i] == [keys(m)[i], values(m)[i]]` holds for every index.
-
-Acceptance criteria:
-- `items({"a": 1, "b": 2})` is `[["a", 1], ["b", 2]]`.
-- `items({})` is `[]`.
-- For any map `m`, `items(m)` matches zipping `keys(m)` with `values(m)`
-  element-for-element (regression test tying the three builtins
-  together).
-- `items(5)` and `items([1, 2])` raise `CinderRuntimeError` with
-  line/column (non-map argument).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `enumerate`
+## 1. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -59,7 +35,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `merge` for maps
+## 2. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -85,7 +61,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `get` for safe map access
+## 3. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -114,7 +90,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `copy` for lists and maps
+## 4. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -144,7 +120,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `sort_by` with a custom key function
+## 5. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -180,7 +156,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 6. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -221,7 +197,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: `remove` for maps
+## 7. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -232,7 +208,7 @@ matching `keys`/`values`'s type-check style. A missing key raises
 `CinderRuntimeError` with line/column too — same "key not found" wording
 the existing map-index path in `cinder/interpreter.py` already raises for
 `map[missing_key]` (reuse it rather than inventing new wording, same rule
-task 4 (`get`) followed for its hashability check).
+task 3 (`get`) followed for its hashability check).
 
 Acceptance criteria:
 - `let m = {"a": 1, "b": 2}; remove(m, "a");` leaves `m` as `{"b": 2}`
@@ -244,14 +220,14 @@ Acceptance criteria:
 - `remove(5, "a")` raises `CinderRuntimeError` with line/column (non-map
   first argument).
 - `remove({"a": 1}, [1, 2])` raises `CinderRuntimeError` (unhashable key),
-  matching `get`'s (task 4) handling of the same case.
+  matching `get`'s (task 3) handling of the same case.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: type-predicate builtins
+## 8. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -585,6 +561,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   Non-numeric element or non-list argument raises `CinderRuntimeError`
   with line/column. Clean first pass, no bounces (426 tests passing, up
   from 413).
+
+- **Standard library: `items` for maps** — merged 2026-07-22T~ via PR #39
+  (`feat/20260722-items-for-maps`). Added `items(map)` to
+  `cinder/builtins.py`, returning `[key, value]` pairs in insertion order,
+  complementing `keys`/`values` (same non-mutating, single-`map`-argument
+  style). Clean first pass, no bounces (452 tests passing).
 
 ## Graveyard
 

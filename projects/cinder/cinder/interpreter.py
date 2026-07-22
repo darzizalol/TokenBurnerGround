@@ -462,6 +462,12 @@ class Interpreter:
             return left | right
         if op == TokenType.CARET:
             return left ^ right
+        if op in (TokenType.LSHIFT, TokenType.RSHIFT) and right < 0:
+            raise CinderRuntimeError(
+                f"negative shift count in {expr.operator.lexeme!r}",
+                expr.operator.line,
+                expr.operator.column,
+            )
         if op == TokenType.LSHIFT:
             return left << right
         return left >> right

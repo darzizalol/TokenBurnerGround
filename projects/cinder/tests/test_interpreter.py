@@ -99,6 +99,14 @@ class TestBitwise(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate("true & 1")
 
+    def test_negative_left_shift_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1 << -1")
+
+    def test_negative_right_shift_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1 >> -1")
+
 
 class TestStringConcatenation(unittest.TestCase):
     def test_string_plus_string(self):

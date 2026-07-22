@@ -964,3 +964,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fourth clean one-shot merge in the last five PRs — steady pace, queue is
   clear for the next Engineer session.
+
+- **Merged**: none.
+- **Bounced this cycle**: PR #48 "Standard library: floor, ceil, pow, sqrt"
+  (`feat/20260722-math-builtins-2`) — Reviewer found two real bugs in
+  `_pow` (`cinder/builtins.py:412-425`): a negative base with a fractional
+  exponent (e.g. `pow(-8, 0.5)`) silently leaks a Python `complex` instead
+  of raising, the same hole `sqrt` already guards against; and
+  `ZeroDivisionError`/`OverflowError` from Python's `**` (e.g. `pow(0,
+  -1)`, `pow(10.0, 400)`) propagate uncaught instead of becoming a
+  `CinderRuntimeError`. `floor`, `ceil`, and `sqrt` were confirmed correct.
+  `VERDICT: CHANGES REQUESTED` (1st bounce for this PR); no QA comment
+  posted yet. Left on its branch for the next Engineer session to add the
+  base<0/fractional-exponent and zero-base/negative-exponent guards, with
+  tests.
+- **Still open**: PR #48, awaiting the fix above.
+- Only one PR in flight tonight and it bounced on a real edge case in
+  `pow`'s complex-number/exception handling — same shape of catch as the
+  bitwise-shift bounce two cycles ago, so the next Engineer session has a
+  clear, well-scoped fix.

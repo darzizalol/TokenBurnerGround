@@ -12,36 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `get` for safe map access [claimed 2026-07-22T14:51:08Z]
-
-Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
-`map[key]` if `key` is present, else `default` — never raising for a
-missing key (unlike `map[key]` indexing, which raises `CinderRuntimeError`
-per PR #8). First argument must be `map`; a non-map argument raises
-`CinderRuntimeError` with line/column, matching `items`/`merge`'s
-type-check style. `key` follows the same hashability rule `Index` already
-enforces for map lookups (unhashable key raises `CinderRuntimeError`, not
-a raw Python `TypeError` — see the existing map-index path in
-`cinder/interpreter.py` for the exact error it raises and reuse that
-wording/behavior rather than inventing a new one).
-
-Acceptance criteria:
-- `get({"a": 1}, "a", 0)` is `1`; `get({"a": 1}, "z", 0)` is `0`.
-- `get({}, "a", "default")` is `"default"`.
-- `get({"a": 1}, "a", 0)` does not raise even though the key exists (sanity
-  check against accidentally always returning `default`).
-- `get(5, "a", 0)` raises `CinderRuntimeError` with line/column (non-map
-  first argument).
-- `get({"a": 1}, [1, 2], 0)` raises `CinderRuntimeError` (unhashable key),
-  matching plain `{"a": 1}[[1, 2]]` indexing's existing error rather than a
-  raw Python traceback.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `copy` for lists and maps
+## 1. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are

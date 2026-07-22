@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, items, get, merge, upper, lower, trim, split, join, find,
 starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
-contains, reverse, sort, range, map, filter, reduce, slice, concat, zip,
+contains, copy, reverse, sort, range, map, filter, reduce, slice, concat, zip,
 enumerate, assert."""
 
 import io
@@ -603,6 +603,35 @@ class TestContains(unittest.TestCase):
                 run(f"let result = contains({contains_args});").get("result"),
                 run(f"let result = {in_expr};").get("result"),
             )
+
+
+class TestCopy(unittest.TestCase):
+    def test_copy_list_breaks_aliasing(self):
+        env = run("let a = [1, 2]; let b = copy(a); push(b, 3);")
+        self.assertEqual(env.get("a"), [1, 2])
+        self.assertEqual(env.get("b"), [1, 2, 3])
+
+    def test_copy_map_breaks_aliasing(self):
+        env = run('let a = {"x": 1}; let b = copy(a); b["y"] = 2;')
+        self.assertEqual(env.get("a"), {"x": 1})
+        self.assertEqual(env.get("b"), {"x": 1, "y": 2})
+
+    def test_copy_is_shallow(self):
+        env = run(
+            "let a = [1, [2, 3]]; let b = copy(a); push(b[1], 4);"
+        )
+        self.assertEqual(env.get("a"), [1, [2, 3, 4]])
+        self.assertEqual(env.get("b"), [1, [2, 3, 4]])
+
+    def test_copy_on_unsupported_type_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("copy(5);")
+        with self.assertRaises(CinderRuntimeError):
+            run('copy("a");')
+
+    def test_copy_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("copy([1], [2]);")
 
 
 class TestReverse(unittest.TestCase):

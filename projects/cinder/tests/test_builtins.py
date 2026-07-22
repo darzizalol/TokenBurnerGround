@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, upper, lower, trim, split, join, find, starts_with, ends_with,
-replace, abs, min, max, round, sum, any, all, contains, reverse, sort, range,
-map, filter, reduce, slice, concat, zip, assert."""
+keys, values, items, upper, lower, trim, split, join, find, starts_with,
+ends_with, replace, abs, min, max, round, sum, any, all, contains, reverse,
+sort, range, map, filter, reduce, slice, concat, zip, assert."""
 
 import io
 import subprocess
@@ -183,6 +183,38 @@ class TestValues(unittest.TestCase):
     def test_values_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('values({"a": 1}, 2);')
+
+
+class TestItems(unittest.TestCase):
+    def test_items_returns_key_value_pairs_in_insertion_order(self):
+        env = run('let result = items({"a": 1, "b": 2});')
+        self.assertEqual(env.get("result"), [["a", 1], ["b", 2]])
+
+    def test_items_of_empty_map_is_empty_list(self):
+        env = run("let result = items({});")
+        self.assertEqual(env.get("result"), [])
+
+    def test_items_matches_zipped_keys_and_values(self):
+        env = run(
+            'let m = {"x": 10, "y": 20, "z": 30};'
+            "let its = items(m);"
+            "let ks = keys(m);"
+            "let vs = values(m);"
+        )
+        its, ks, vs = env.get("its"), env.get("ks"), env.get("vs")
+        self.assertEqual(len(its), len(ks))
+        for i in range(len(its)):
+            self.assertEqual(its[i], [ks[i], vs[i]])
+
+    def test_items_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("items(5);")
+        with self.assertRaises(CinderRuntimeError):
+            run("items([1, 2]);")
+
+    def test_items_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('items({"a": 1}, 2);')
 
 
 class TestUpper(unittest.TestCase):

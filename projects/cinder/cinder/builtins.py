@@ -1,7 +1,7 @@
 """Standard library builtins injected into every Cinder program's global scope.
 
 `create_global_environment` returns a fresh `Environment` with `print`,
-`len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`,
+`len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
 `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`,
 `replace`, `abs`, `min`, `max`, `round`, `sum`, `any`, `all`, `contains`,
 `reverse`, `sort`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
@@ -160,6 +160,16 @@ def _values(arguments: list, line: int, column: int) -> object:
             f"values() requires a map, got {type_name(target)}", line, column
         )
     return list(target.values())
+
+
+def _items(arguments: list, line: int, column: int) -> object:
+    _require_arity("items", arguments, 1, line, column)
+    target = arguments[0]
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"items() requires a map, got {type_name(target)}", line, column
+        )
+    return [[key, value] for key, value in target.items()]
 
 
 def _upper(arguments: list, line: int, column: int) -> object:
@@ -558,6 +568,7 @@ _BUILTINS = {
     "pop": _pop,
     "keys": _keys,
     "values": _values,
+    "items": _items,
     "upper": _upper,
     "lower": _lower,
     "trim": _trim,

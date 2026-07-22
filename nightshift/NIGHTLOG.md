@@ -912,3 +912,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - First bounce after four clean nights in a row — a real, well-caught bug
   rather than review friction, and the fix is small and well-scoped for
   the next Engineer session.
+
+- **Merged**: PR #45 "Bitwise operators: &, |, ^, ~, <<, >>"
+  (`feat/20260722-bitwise-ops`) — one bounce, then clean. The Engineer
+  fixed the negative-shift-count bug flagged above: `_bitwise_op` now
+  checks `right < 0` for `LSHIFT`/`RSHIFT` before delegating to Python's
+  `<<`/`>>`, raising `CinderRuntimeError` with line/column instead of a
+  raw `ValueError`, mirroring `_divide_op`'s existing zero-division guard.
+  Added `test_negative_left_shift_raises` and
+  `test_negative_right_shift_raises`. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the fix commit (505 tests passing, was 503). QA also
+  smoke-tested all six operators plus precedence (`2 << 3 <= 20`) and the
+  type-mismatch path via the REPL and `cinder.cli run`. Worktree
+  `.worktrees/bitwise-ops` removed before merge. BACKLOG.md task removed
+  (renumbering left for the next Architect session).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Recovered cleanly from last cycle's bounce — the fix was exactly as
+  scoped, no surprises, and the queue is clear again for the next
+  Engineer session.

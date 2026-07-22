@@ -11,48 +11,6 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-
-## 1. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>` [claimed 2026-07-22T19:51:56Z]
-
-Build: add six token types to `cinder/tokens.py`'s `TokenType`
-(`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
-`cinder/lexer.py` — `~` is single-char, `<<`/`>>` need the same two-char
-lookahead pattern already used for `<=`/`>=`/compound-assignment (watch
-for ambiguity with the existing `LT`/`GT`/`LTEQ`/`GTEQ` tokens: `<<` must
-not be lexed as two `LT`s or collide with `<=`). Add a new precedence tier
-in `cinder/parser.py` for the five binary operators (`&`, `|`, `^`, `<<`,
-`>>`) between `_comparison` and `_factor` — pick one sub-tier per operator
-group following C's relative precedence (`|` loosest, then `^`, then `&`,
-then `<<`/`>>` tightest, all looser than `+`/`-`/`*`/`/`/`%`) — reusing
-the existing `Binary` AST node, no new node needed. `~` is unary: extend
-`_unary` (alongside the existing `-`/`not` handling) with a new `Unary`
-case, reusing the existing `Unary` AST node. In
-`cinder/interpreter.py`'s `_evaluate_binary`/`_evaluate_unary`, implement
-each operator via Python's own bitwise operators, restricted to `int`
-operands only (a `float` or any non-numeric operand on either side raises
-`CinderRuntimeError` with line/column — unlike `+`/`-`/`*`/`/`, bitwise
-ops do not auto-promote floats).
-
-Acceptance criteria:
-- `5 & 3` is `1`; `5 | 2` is `7`; `5 ^ 1` is `4`; `~5` is `-6` (Python's
-  own bitwise semantics — two's-complement `int`, matching Python `int`
-  since Cinder ints are backed by Python `int`).
-- `1 << 3` is `8`; `16 >> 2` is `4`.
-- `1 | 2 == 3` parses as `1 | (2 == 3)` or `(1 | 2) == 3` — pick one
-  consistent with the chosen precedence tier and add a parser test
-  pinning it explicitly (precedence is this task's main risk).
-- `2 + 3 << 1` is `10` (`<<` binds looser than `+`, so this is
-  `(2 + 3) << 1`, not `2 + (3 << 1)`).
-- `5.0 & 3`, `"a" | 1`, `~"a"`, `~5.0` each raise `CinderRuntimeError` with
-  line/column (no float/non-numeric operands for bitwise ops).
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
 ## 2. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from

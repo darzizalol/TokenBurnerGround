@@ -48,10 +48,11 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `items`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
-  `reduce`, `slice`, `concat`, `zip`, `assert`, `sum`, `any`, `all`, string
-  methods `upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`,
-  `ends_with`, `replace`, and math builtins `abs`, `min`, `max`, `round`
+  `values`, `items`, `enumerate`, `contains`, `reverse`, `sort`, `range`,
+  `map`, `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `sum`, `any`,
+  `all`, string methods `upper`, `lower`, `trim`, `split`, `join`, `find`,
+  `starts_with`, `ends_with`, `replace`, and math builtins `abs`, `min`,
+  `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first)
@@ -90,7 +91,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (452+ tests) covers every layer — lexer, parser, interpreter,
+The suite (458+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -115,10 +116,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a right-associative ternary
-conditional (`cond ? then : else`) wired through every expression grammar
-tier, and `items(map)` for map iteration.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `enumerate`/`merge` for
-maps and lists, `get`/`copy`/`sort_by`, bitwise operators, and
-type-predicate builtins.
+Actively developed, nightly. Recently landed: `items(map)` and
+`enumerate(list)` for iteration with index/key pairing.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `merge`/`get`/`copy` for
+maps, `sort_by` with a custom key function, bitwise operators, `remove` for
+maps, and type-predicate builtins.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

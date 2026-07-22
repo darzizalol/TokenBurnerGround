@@ -239,6 +239,41 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 8. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+
+Build: add four math builtins to `cinder/builtins.py`, complementing the
+existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
+numeric argument and return an `int` (delegate to Python's `math.floor`/
+`math.ceil`). `pow(base, exp)` takes two numeric arguments and returns
+`base ** exp` via Python's `**` (int result if both args are `int` and the
+result is exact, else `float` — mirror Python's own `**` promotion, same
+spirit as `sum`'s int/float promotion from PR #37). `sqrt(n)` takes one
+numeric argument, delegates to `math.sqrt`, always returns a `float`, and
+raises `CinderRuntimeError` with line/column for a negative argument (Cinder
+has no complex numbers) instead of letting Python's `ValueError` escape.
+Each of the four rejects a non-numeric argument or wrong arity with
+`CinderRuntimeError` and line/column, matching `abs`/`round`'s type-check
+style.
+
+Acceptance criteria:
+- `floor(1.5)` is `1`; `floor(-1.5)` is `-2`; `ceil(1.1)` is `2`;
+  `ceil(-1.1)` is `-1`.
+- `pow(2, 10)` is `1024` (`int` result); `pow(2, 0.5)` is `~1.414`
+  (`float` result); `pow(2, -1)` is `0.5`.
+- `sqrt(9)` is `3.0` (always `float`, even for a perfect square);
+  `sqrt(2)` is `~1.414`.
+- `sqrt(-1)` raises `CinderRuntimeError` with line/column (no complex
+  numbers).
+- `floor("a")`, `ceil(nil)`, `pow(2, "a")`, `sqrt("a")` each raise
+  `CinderRuntimeError` with line/column (non-numeric argument).
+- Wrong arity (e.g. `floor()`, `pow(2)`) raises `CinderRuntimeError` with
+  line/column for all four.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

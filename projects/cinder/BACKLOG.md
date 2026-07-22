@@ -12,42 +12,6 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `sort_by` with a custom key function [claimed 2026-07-22T19:41:38Z]
-
-Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
-ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
-each element's `fn(element)` result rather than the element itself —
-complementing `sort`, which only handles all-numeric or all-string lists
-directly. Call `fn` once per element via the shared `call_value` helper
-(same pattern `map`/`filter`/`reduce` already use, imported from
-`cinder/interpreter.py`), then sort by the resulting keys using Python's
-stable `sorted(..., key=...)`; the keys themselves must be all-numeric or
-all-string (reuse `_is_numeric`/the same mixed-type rejection `_sort`
-already applies to the *key* results, not the original elements — a
-mixed-type key set raises `CinderRuntimeError`). First argument must be
-`list` and second must be callable (`CinderFunction` or `Builtin`),
-matching `map`/`filter`'s type-check style.
-
-Acceptance criteria:
-- `sort_by([3, 1, 2], fn(x) { return x; })` is `[1, 2, 3]` (identity key
-  matches plain `sort`).
-- `sort_by(["bb", "a", "ccc"], fn(x) { return len(x); })` is
-  `["a", "bb", "ccc"]` (sorts by string length, not lexicographic order).
-- `sort_by([], fn(x) { return x; })` is `[]`; `fn` is never called on an
-  empty list.
-- Sort is stable: two elements with equal keys keep their relative input
-  order (regression test with e.g. `[[1, "a"], [1, "b"]]` keyed by the
-  first element).
-- `sort_by(5, fn(x) { return x; })` and `sort_by([1, 2], 5)` raise
-  `CinderRuntimeError` with line/column (non-list / non-callable argument).
-- `sort_by([1, "a"], fn(x) { return x; })` raises `CinderRuntimeError`
-  (mixed-type keys, same rule `sort` already enforces).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
 ## 2. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`

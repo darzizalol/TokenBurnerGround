@@ -874,3 +874,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Third clean one-shot merge in a row tonight — the backlog is moving fast
   with zero review/QA friction; queue is clear for the next Engineer
   session.
+
+- **Merged**: PR #44 "Standard library: `sort_by` with a custom key
+  function" (`feat/20260722-sort-by`) — clean first pass, no bounces.
+  Added `sort_by(list, fn)` to `cinder/builtins.py`, calling `fn` once per
+  element via the shared `call_value` helper and sorting by the resulting
+  keys with Python's stable `sorted(..., key=...)`, rejecting mixed-type
+  keys the same way `sort` rejects mixed-type elements. `VERDICT: LGTM`
+  and `QA: PASS` both landed after the single commit (486 tests passing).
+  Reviewer confirmed stability holds because the sort key is the decorated
+  key only (never falling back to comparing unorderable elements) and that
+  the empty-list case short-circuits without calling `fn`; QA smoke-tested
+  a custom-key sort, non-mutation, the empty-list case, and all three error
+  paths (non-list, non-callable, mixed-type keys) via `cinder.cli run`.
+  Worktree `.worktrees/sort-by` removed before merge. BACKLOG.md task
+  removed (renumbering left for the next Architect session, per the usual
+  split of duties).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourth clean one-shot merge in a row tonight — zero review/QA friction
+  across the whole shift so far; queue is clear for the next Engineer
+  session.

@@ -2,7 +2,8 @@
 keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
 contains, copy, reverse, sort, sort_by, range, map, filter, reduce, slice,
-concat, zip, enumerate, assert."""
+concat, zip, enumerate, assert, is_list, is_map, is_string, is_number,
+is_bool, is_nil, is_function."""
 
 import io
 import subprocess
@@ -1031,6 +1032,117 @@ class TestAssert(unittest.TestCase):
             run("assert(true);")
         with self.assertRaises(CinderRuntimeError):
             run('assert(true, "x", "y");')
+
+
+class TestIsList(unittest.TestCase):
+    def test_is_list_true_for_list(self):
+        self.assertIs(run("let result = is_list([1]);").get("result"), True)
+
+    def test_is_list_false_for_map(self):
+        self.assertIs(run('let result = is_list({"a": 1});').get("result"), False)
+
+    def test_is_list_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_list();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_list([1], [2]);")
+
+
+class TestIsMap(unittest.TestCase):
+    def test_is_map_true_for_map(self):
+        self.assertIs(run('let result = is_map({"a": 1});').get("result"), True)
+
+    def test_is_map_false_for_list(self):
+        self.assertIs(run("let result = is_map([1]);").get("result"), False)
+
+    def test_is_map_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_map();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_map({"a": 1}, {"b": 2});')
+
+
+class TestIsString(unittest.TestCase):
+    def test_is_string_true_for_string(self):
+        self.assertIs(run('let result = is_string("a");').get("result"), True)
+
+    def test_is_string_false_for_number(self):
+        self.assertIs(run("let result = is_string(1);").get("result"), False)
+
+    def test_is_string_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_string();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_string("a", "b");')
+
+
+class TestIsNumber(unittest.TestCase):
+    def test_is_number_true_for_int(self):
+        self.assertIs(run("let result = is_number(1);").get("result"), True)
+
+    def test_is_number_true_for_float(self):
+        self.assertIs(run("let result = is_number(1.5);").get("result"), True)
+
+    def test_is_number_false_for_string(self):
+        self.assertIs(run('let result = is_number("1");').get("result"), False)
+
+    def test_is_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_number();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_number(1, 2);")
+
+
+class TestIsBool(unittest.TestCase):
+    def test_is_bool_true_for_bool(self):
+        self.assertIs(run("let result = is_bool(true);").get("result"), True)
+
+    def test_is_bool_false_for_int(self):
+        self.assertIs(run("let result = is_bool(0);").get("result"), False)
+
+    def test_is_bool_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_bool();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_bool(true, false);")
+
+
+class TestIsNil(unittest.TestCase):
+    def test_is_nil_true_for_nil(self):
+        self.assertIs(run("let result = is_nil(nil);").get("result"), True)
+
+    def test_is_nil_false_for_false(self):
+        self.assertIs(run("let result = is_nil(false);").get("result"), False)
+
+    def test_is_nil_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_nil();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_nil(nil, nil);")
+
+
+class TestIsFunction(unittest.TestCase):
+    def test_is_function_true_for_named_fn(self):
+        env = run("fn f(x) { return x; } let result = is_function(f);")
+        self.assertIs(env.get("result"), True)
+
+    def test_is_function_true_for_anonymous_fn(self):
+        env = run("let result = is_function(fn(x) { return x; });")
+        self.assertIs(env.get("result"), True)
+
+    def test_is_function_true_for_builtin_by_name(self):
+        env = run("let result = is_function(len);")
+        self.assertIs(env.get("result"), True)
+
+    def test_is_function_false_for_non_function(self):
+        env = run("let result = is_function(1);")
+        self.assertIs(env.get("result"), False)
+
+    def test_is_function_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_function();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_function(len, len);")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

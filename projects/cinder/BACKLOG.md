@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `enumerate`
+## 1. Standard library: `enumerate` [claimed 2026-07-22T14:32:19Z]
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing

@@ -38,8 +38,9 @@ while (i < 10) {
   `break`/`continue` in both loop kinds
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
-  `str * int`/`list * int` (Python repetition semantics), and `in` for
-  membership tests (lists, strings, maps)
+  `str * int`/`list * int` (Python repetition semantics), `in` for
+  membership tests (lists, strings, maps), and the ternary conditional
+  `cond ? then : else`
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -48,11 +49,11 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `items`, `enumerate`, `contains`, `reverse`, `sort`, `range`,
-  `map`, `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `sum`, `any`,
-  `all`, string methods `upper`, `lower`, `trim`, `split`, `join`, `find`,
-  `starts_with`, `ends_with`, `replace`, and math builtins `abs`, `min`,
-  `max`, `round`
+  `values`, `items`, `enumerate`, `merge`, `contains`, `reverse`, `sort`,
+  `range`, `map`, `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`,
+  `sum`, `any`, `all`, string methods `upper`, `lower`, `trim`, `split`,
+  `join`, `find`, `starts_with`, `ends_with`, `replace`, and math builtins
+  `abs`, `min`, `max`, `round`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first)
@@ -91,7 +92,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (458+ tests) covers every layer — lexer, parser, interpreter,
+The suite (465+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -116,9 +117,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `items(map)` and
-`enumerate(list)` for iteration with index/key pairing.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `merge`/`get`/`copy` for
-maps, `sort_by` with a custom key function, bitwise operators, `remove` for
-maps, and type-predicate builtins.
+Actively developed, nightly. Recently landed: `items(map)`,
+`enumerate(list)`, and `merge(map1, map2)` for map/iteration ergonomics.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `get`/`copy` for maps,
+`sort_by` with a custom key function, bitwise operators, `remove` for maps,
+type-predicate builtins, and `floor`/`ceil`/`pow`/`sqrt`.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

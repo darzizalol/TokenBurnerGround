@@ -4,8 +4,8 @@
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
 `get`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `sum`,
-`any`, `all`, `contains`, `copy`, `reverse`, `sort`, `range`, `map`, `filter`,
-`reduce`, `slice`, `concat`, `zip`, and `assert` already defined.
+`any`, `all`, `contains`, `copy`, `reverse`, `sort`, `sort_by`, `range`, `map`,
+`filter`, `reduce`, `slice`, `concat`, `zip`, and `assert` already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -478,6 +478,29 @@ def _sort(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _sort_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("sort_by", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"sort_by() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"sort_by() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    if not items:
+        return []
+    keys = [call_value(fn, [item], line, column) for item in items]
+    if not (all(_is_numeric(key) for key in keys) or all(isinstance(key, str) for key in keys)):
+        raise CinderRuntimeError(
+            "sort_by() requires a function returning all numbers or all strings", line, column
+        )
+    return [item for _, item in sorted(zip(keys, items), key=lambda pair: pair[0])]
+
+
 def _normalize_slice_bound(value: int, length: int) -> int:
     if value < 0:
         value += length
@@ -646,6 +669,7 @@ _BUILTINS = {
     "copy": _copy,
     "reverse": _reverse,
     "sort": _sort,
+    "sort_by": _sort_by,
     "range": _range,
     "map": _map,
     "filter": _filter,

@@ -50,7 +50,7 @@ while (i < 10) {
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `copy`, `contains`,
-  `reverse`, `sort`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+  `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   and math builtins `abs`, `min`, `max`, `round`
@@ -117,9 +117,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `get(map, key, default)` for
-safe map access and `copy(collection)` for shallow-copying lists/maps.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `sort_by` with a custom
-key function, bitwise operators, `remove` for maps, type-predicate
-builtins, `floor`/`ceil`/`pow`/`sqrt`, and `index_of`/`unique` for lists.
+Actively developed, nightly. Recently landed: `copy(collection)` for
+shallow-copying lists/maps and `sort_by(list, fn)` for sorting by a custom
+key function. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): bitwise
+operators, `remove` for maps, type-predicate builtins,
+`floor`/`ceil`/`pow`/`sqrt`, and `index_of`/`unique` for lists.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

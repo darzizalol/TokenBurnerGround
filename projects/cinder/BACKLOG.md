@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 1. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>` [claimed 2026-07-22T19:51:56Z]
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in

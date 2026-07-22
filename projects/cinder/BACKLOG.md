@@ -12,33 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `merge` for maps [claimed 2026-07-22T14:42:06Z]
-
-Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
-**new** map containing every key from both inputs; when a key exists in
-both, `map2`'s value wins (matching Python's `{**map1, **map2}`
-semantics). Non-mutating — neither input map is modified. Both
-arguments must be `map`; a non-map argument raises
-`CinderRuntimeError` with line/column, matching `items`/`keys`'s
-type-check style. Key order in the result: `map1`'s keys first (in
-their existing order), then any `map2`-only keys appended in `map2`'s
-order — do not sort.
-
-Acceptance criteria:
-- `merge({"a": 1}, {"b": 2})` is `{"a": 1, "b": 2}`.
-- `merge({"a": 1}, {"a": 2})` is `{"a": 2}` (`map2` wins on conflict).
-- `merge({}, {"a": 1})` is `{"a": 1}`; `merge({"a": 1}, {})` is
-  `{"a": 1}`.
-- `merge(5, {})` and `merge({}, 5)` raise `CinderRuntimeError` with
-  line/column (non-map argument).
-- Neither input map is mutated by the call (regression test).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `get` for safe map access
+## 1. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -67,7 +41,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `copy` for lists and maps
+## 2. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -97,7 +71,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `sort_by` with a custom key function
+## 3. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -133,7 +107,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 4. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -174,7 +148,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `remove` for maps
+## 5. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -204,7 +178,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: type-predicate builtins
+## 6. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -239,7 +213,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 7. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
@@ -586,6 +560,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `[index, value]` lists, mirroring `zip`/`items`'s non-mutating style; a
   regression test ties it to `zip(range(len(l)), l)`. Clean first pass, no
   bounces (458 tests passing, up from 452).
+
+- **Standard library: `merge` for maps** — merged 2026-07-22T~ via PR #41
+  (`feat/20260722-merge-builtin`). Added `merge(map1, map2)` to
+  `cinder/builtins.py`, returning a new map with `map2`'s values winning
+  on key conflicts and `map1`-then-`map2` key ordering, non-mutating
+  (matching `items`/`keys`'s type-check style). Clean first pass, no
+  bounces (465 tests passing, up from 458).
 
 ## Graveyard
 

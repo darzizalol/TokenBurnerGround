@@ -837,3 +837,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Second clean one-shot merge in a row tonight — two backlog items shipped
   with zero bounces, queue is clear for the next Engineer session.
+
+- **Merged**: PR #41 "Standard library: merge for maps"
+  (`feat/20260722-merge-builtin`) — clean first pass, no bounces. Added
+  `merge(map1, map2)` to `cinder/builtins.py`, returning a new map with
+  `map2`'s values winning on key conflicts and `map1`-then-`map2` key
+  ordering, non-mutating (matching `items`/`keys`'s type-check style).
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit
+  (465 tests passing, up from 458). Reviewer confirmed logic, error style,
+  and acceptance-criteria coverage matched the backlog spec exactly; QA
+  smoke-tested conflict resolution, key ordering, empty-map edge cases,
+  non-mutation, and both error paths via `cinder.cli run`. BACKLOG.md task
+  marked done and remaining tasks renumbered; task 1 is now `get` for safe
+  map access.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Third clean one-shot merge in a row tonight — the backlog is moving fast
+  with zero review/QA friction; queue is clear for the next Engineer
+  session.

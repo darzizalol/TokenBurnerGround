@@ -1,5 +1,5 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, items, upper, lower, trim, split, join, find, starts_with,
+keys, values, items, merge, upper, lower, trim, split, join, find, starts_with,
 ends_with, replace, abs, min, max, round, sum, any, all, contains, reverse,
 sort, range, map, filter, reduce, slice, concat, zip, enumerate, assert."""
 
@@ -215,6 +215,45 @@ class TestItems(unittest.TestCase):
     def test_items_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('items({"a": 1}, 2);')
+
+
+class TestMerge(unittest.TestCase):
+    def test_merge_combines_disjoint_keys(self):
+        env = run('let result = merge({"a": 1}, {"b": 2});')
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2})
+
+    def test_merge_map2_wins_on_conflict(self):
+        env = run('let result = merge({"a": 1}, {"a": 2});')
+        self.assertEqual(env.get("result"), {"a": 2})
+
+    def test_merge_with_empty_map(self):
+        self.assertEqual(run('let result = merge({}, {"a": 1});').get("result"), {"a": 1})
+        self.assertEqual(run('let result = merge({"a": 1}, {});').get("result"), {"a": 1})
+
+    def test_merge_key_order_map1_then_map2_only_keys(self):
+        env = run('let result = merge({"a": 1, "b": 2}, {"b": 3, "c": 4});')
+        self.assertEqual(list(env.get("result").keys()), ["a", "b", "c"])
+
+    def test_merge_does_not_mutate_inputs(self):
+        env = run(
+            'let m1 = {"a": 1};'
+            'let m2 = {"b": 2};'
+            "let result = merge(m1, m2);"
+        )
+        self.assertEqual(env.get("m1"), {"a": 1})
+        self.assertEqual(env.get("m2"), {"b": 2})
+
+    def test_merge_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("merge(5, {});")
+        with self.assertRaises(CinderRuntimeError):
+            run("merge({}, 5);")
+
+    def test_merge_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('merge({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('merge({"a": 1}, {}, {});')
 
 
 class TestUpper(unittest.TestCase):

@@ -232,7 +232,7 @@ matching `keys`/`values`'s type-check style. A missing key raises
 `CinderRuntimeError` with line/column too — same "key not found" wording
 the existing map-index path in `cinder/interpreter.py` already raises for
 `map[missing_key]` (reuse it rather than inventing new wording, same rule
-task 5 (`get`) followed for its hashability check).
+task 4 (`get`) followed for its hashability check).
 
 Acceptance criteria:
 - `let m = {"a": 1, "b": 2}; remove(m, "a");` leaves `m` as `{"b": 2}`
@@ -244,7 +244,7 @@ Acceptance criteria:
 - `remove(5, "a")` raises `CinderRuntimeError` with line/column (non-map
   first argument).
 - `remove({"a": 1}, [1, 2])` raises `CinderRuntimeError` (unhashable key),
-  matching `get`'s (task 5) handling of the same case.
+  matching `get`'s (task 4) handling of the same case.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.

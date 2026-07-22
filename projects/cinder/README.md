@@ -90,7 +90,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (426+ tests) covers every layer — lexer, parser, interpreter,
+The suite (447+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -115,9 +115,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: call-stack traces for runtime
-errors, and the `sum`/`any`/`all` aggregate builtins.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a ternary conditional
-expression, `items`/`enumerate`/`merge` for maps and lists,
-`get`/`copy`/`sort_by`, bitwise operators, and type-predicate builtins.
+Actively developed, nightly. Recently landed: the `sum`/`any`/`all` aggregate
+builtins and a right-associative ternary conditional (`cond ? then : else`)
+wired through every expression grammar tier.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `items`/`enumerate`/`merge`
+for maps and lists, `get`/`copy`/`sort_by`, bitwise operators, and
+type-predicate builtins.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

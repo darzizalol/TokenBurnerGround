@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `sort_by` with a custom key function
+## 1. Standard library: `sort_by` with a custom key function [claimed 2026-07-22T19:41:38Z]
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by

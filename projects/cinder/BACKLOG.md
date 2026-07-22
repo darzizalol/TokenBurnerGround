@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 3. Standard library: `sort_by` with a custom key function
+## 1. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -48,7 +48,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 2. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -89,7 +89,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `remove` for maps
+## 3. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -100,7 +100,7 @@ matching `keys`/`values`'s type-check style. A missing key raises
 `CinderRuntimeError` with line/column too — same "key not found" wording
 the existing map-index path in `cinder/interpreter.py` already raises for
 `map[missing_key]` (reuse it rather than inventing new wording, same rule
-task 3 (`get`) followed for its hashability check).
+the existing `get` builtin follows for its hashability check).
 
 Acceptance criteria:
 - `let m = {"a": 1, "b": 2}; remove(m, "a");` leaves `m` as `{"b": 2}`
@@ -112,14 +112,14 @@ Acceptance criteria:
 - `remove(5, "a")` raises `CinderRuntimeError` with line/column (non-map
   first argument).
 - `remove({"a": 1}, [1, 2])` raises `CinderRuntimeError` (unhashable key),
-  matching `get`'s (task 3) handling of the same case.
+  matching `get`'s handling of the same case.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: type-predicate builtins
+## 4. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -154,7 +154,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 5. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
@@ -183,6 +183,67 @@ Acceptance criteria:
   `CinderRuntimeError` with line/column (non-numeric argument).
 - Wrong arity (e.g. `floor()`, `pow(2)`) raises `CinderRuntimeError` with
   line/column for all four.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 6. Standard library: `index_of` for lists
+
+Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
+`int` index of the first element equal to `item` (Cinder `==` equality,
+i.e. Python `==` on the underlying values), or `-1` if not found —
+the list counterpart to the existing `find` for strings (see PR #29),
+matching its "-1 on no match" convention rather than raising. First
+argument must be `list`; a non-list argument raises `CinderRuntimeError`
+with line/column, matching `sort`/`reverse`'s type-check style. `item`
+may be any Cinder value, including a list or map (compared by value, not
+identity — matching how `contains` and `==` already work).
+
+Acceptance criteria:
+- `index_of([1, 2, 3], 2)` is `1`; `index_of([1, 2, 3], 9)` is `-1`.
+- `index_of([], 1)` is `-1` (empty list, never raises).
+- `index_of(["a", "b", "a"], "a")` is `0` (first match, not last).
+- `index_of([[1, 2], [3, 4]], [3, 4])` is `1` (value equality for nested
+  lists, not identity).
+- `index_of(5, 1)` raises `CinderRuntimeError` with line/column (non-list
+  first argument).
+- Wrong arity (e.g. `index_of([1])`, `index_of([1], 2, 3)`) raises
+  `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `unique` for lists
+
+Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
+with duplicate elements removed, keeping only the first occurrence of
+each distinct value and preserving original relative order (non-mutating,
+matching `sort`/`reverse`'s style). Equality is Cinder `==` value equality
+(same rule `index_of`, task 6, uses), so use a linear scan against
+already-kept elements (or a `set` fast path when every element is
+hashable, falling back to linear comparison otherwise — lists and maps
+are unhashable in Cinder, same limitation `sort`/`contains` already have
+for nested collections) rather than assuming all elements are hashable.
+First argument must be `list`; a non-list argument raises
+`CinderRuntimeError` with line/column, matching `sort`/`reverse`'s
+type-check style.
+
+Acceptance criteria:
+- `unique([1, 2, 2, 3, 1])` is `[1, 2, 3]` (first occurrence kept, order
+  preserved).
+- `unique([])` is `[]`.
+- `unique(["a", "a", "b"])` is `["a", "b"]`.
+- `unique([[1], [1], [2]])` is `[[1], [2]]` (value equality works even
+  though inner lists are unhashable).
+- `unique([1, 2, 3])` is a new list, not the same object as the input
+  (regression test that mutating the result doesn't affect the original).
+- `unique(5)` raises `CinderRuntimeError` with line/column (non-list
+  argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
@@ -508,6 +569,22 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   on key conflicts and `map1`-then-`map2` key ordering, non-mutating
   (matching `items`/`keys`'s type-check style). Clean first pass, no
   bounces (465 tests passing, up from 458).
+
+- **Standard library: `get` for safe map access** — merged 2026-07-22T~ via
+  PR #42 (`feat/20260722-get-builtin`). Added `get(map, key, default)` to
+  `cinder/builtins.py`, returning `map[key]` if present else `default`,
+  never raising for a missing key (unlike `map[key]` indexing); non-map
+  first argument and unhashable-key second argument raise
+  `CinderRuntimeError` with line/column, reusing the existing map-index
+  path's wording.
+
+- **Standard library: `copy` for lists and maps** — merged 2026-07-22T~ via
+  PR #43 (`feat/20260722-copy-builtin`). Added `copy(collection)` to
+  `cinder/builtins.py`, returning a new top-level shallow copy of a list
+  or map (nested containers stay shared, matching Python's
+  `list.copy()`/`dict.copy()`), giving Cinder a way to intentionally break
+  the aliasing `push`/`pop`/index-assign rely on. Clean first pass, no
+  bounces (477 tests passing, up from 465).
 
 ## Graveyard
 

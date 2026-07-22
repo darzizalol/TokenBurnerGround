@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `merge` for maps
+## 1. Standard library: `merge` for maps [claimed 2026-07-22T14:42:06Z]
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in

@@ -12,30 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `enumerate` [claimed 2026-07-22T14:32:19Z]
-
-Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
-`list` of two-element `[index, value]` lists, one per element, pairing
-each element with its `0`-based position (same non-mutating,
-single-`list`-argument style as `zip`/`items`; reject a non-list
-argument with `CinderRuntimeError` and line/column).
-
-Acceptance criteria:
-- `enumerate(["a", "b", "c"])` is `[[0, "a"], [1, "b"], [2, "c"]]`.
-- `enumerate([])` is `[]`.
-- For any list `l`, `enumerate(l)` matches `zip(range(len(l)), l)`
-  element-for-element (regression test tying `enumerate`, `zip`, and
-  `range` together — `zip` shipped via PR #33).
-- `enumerate(5)` and `enumerate({"a": 1})` raise `CinderRuntimeError`
-  with line/column (non-list argument).
-- The input list is not mutated (regression test).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `merge` for maps
+## 1. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -61,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `get` for safe map access
+## 2. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -90,7 +67,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `copy` for lists and maps
+## 3. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -120,7 +97,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `sort_by` with a custom key function
+## 4. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -156,7 +133,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 5. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -197,7 +174,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `remove` for maps
+## 6. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -227,7 +204,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: type-predicate builtins
+## 7. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -567,6 +544,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `cinder/builtins.py`, returning `[key, value]` pairs in insertion order,
   complementing `keys`/`values` (same non-mutating, single-`map`-argument
   style). Clean first pass, no bounces (452 tests passing).
+
+- **Standard library: `enumerate`** — merged 2026-07-22T14:37:25Z via PR #40
+  (`feat/20260722-enumerate-builtin`). Added `enumerate(list)` to
+  `cinder/builtins.py`, pairing each element with its `0`-based index as
+  `[index, value]` lists, mirroring `zip`/`items`'s non-mutating style; a
+  regression test ties it to `zip(range(len(l)), l)`. Clean first pass, no
+  bounces (458 tests passing, up from 452).
 
 ## Graveyard
 

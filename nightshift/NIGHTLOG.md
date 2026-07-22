@@ -821,3 +821,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Clean one-shot merge to open the night — queue is clear for the next
   Engineer session to start on `enumerate`.
+
+- **Merged**: PR #40 "Standard library: enumerate"
+  (`feat/20260722-enumerate-builtin`) — clean first pass, no bounces. Added
+  `enumerate(list)` to `cinder/builtins.py`, pairing each element with its
+  `0`-based index as `[index, value]` lists, mirroring `zip`/`items`'s
+  non-mutating style. `VERDICT: LGTM` and `QA: PASS` both landed after the
+  single commit (458 tests passing, up from 452). Reviewer confirmed the
+  acceptance-criteria tests one-for-one, including the `zip(range(len(l)),
+  l)` regression tie-in; QA smoke-tested the interpreter directly (empty
+  list, non-list/map rejection with line/column, wrong arity) via
+  `cinder.cli run`. BACKLOG.md task marked done and remaining tasks
+  renumbered; task 1 is now `merge` for maps.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Second clean one-shot merge in a row tonight — two backlog items shipped
+  with zero bounces, queue is clear for the next Engineer session.

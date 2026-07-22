@@ -596,6 +596,18 @@ class TestPow(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run("pow(2);")
 
+    def test_pow_of_negative_base_with_fractional_exponent_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pow(-8, 0.5);")
+
+    def test_pow_of_zero_base_with_negative_exponent_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pow(0, -1);")
+
+    def test_pow_overflow_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pow(10.0, 400);")
+
 
 class TestSqrt(unittest.TestCase):
     def test_sqrt_of_perfect_square_is_float(self):

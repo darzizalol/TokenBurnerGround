@@ -431,7 +431,21 @@ def _pow(arguments: list, line: int, column: int) -> object:
             f"pow() requires a number as its second argument, got {type_name(exp)}",
             line, column,
         )
-    return base ** exp
+    try:
+        result = base ** exp
+    except ZeroDivisionError:
+        raise CinderRuntimeError(
+            "pow() cannot raise zero to a negative power", line, column
+        ) from None
+    except OverflowError:
+        raise CinderRuntimeError("pow() result is too large", line, column) from None
+    if isinstance(result, complex):
+        raise CinderRuntimeError(
+            "pow() requires a non-negative base for fractional exponents, "
+            "no complex numbers",
+            line, column,
+        )
+    return result
 
 
 def _sqrt(arguments: list, line: int, column: int) -> object:

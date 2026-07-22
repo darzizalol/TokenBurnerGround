@@ -490,6 +490,16 @@ def _zip(arguments: list, line: int, column: int) -> object:
     return [[a, b] for a, b in zip(list1, list2)]
 
 
+def _enumerate(arguments: list, line: int, column: int) -> object:
+    _require_arity("enumerate", arguments, 1, line, column)
+    target = arguments[0]
+    if not isinstance(target, list):
+        raise CinderRuntimeError(
+            f"enumerate() requires a list, got {type_name(target)}", line, column
+        )
+    return [[index, value] for index, value in enumerate(target)]
+
+
 def _assert(arguments: list, line: int, column: int) -> object:
     _require_arity("assert", arguments, 2, line, column)
     condition, message = arguments
@@ -595,6 +605,7 @@ _BUILTINS = {
     "slice": _slice,
     "concat": _concat,
     "zip": _zip,
+    "enumerate": _enumerate,
     "assert": _assert,
 }
 

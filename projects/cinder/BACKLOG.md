@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Ternary conditional expression: `cond ? then : else` [claimed 2026-07-21T20:22:46Z, bounced 1x — QA: FAIL on PR #38]
+## 1. Ternary conditional expression: `cond ? then : else` [claimed 2026-07-21T20:22:46Z, bounced 2x — QA: FAIL then CHANGES REQUESTED on PR #38]
 
 Build: add `QUESTION` and reuse the existing `COLON` token
 (`cinder/tokens.py` already has `COLON` for map literals) to support a
@@ -29,20 +29,32 @@ the existing `is_truthy`, and evaluates *only* the taken branch (the
 other branch must not be evaluated at all — this is a short-circuit
 construct like `and`/`or`, not eager evaluation of both arms).
 
-**Known gap from PR #38's QA bounce (fix on the same branch,
-`feat/20260721-ternary`, before taking anything else):** the ternary is
-wired into the statement/assignment grammar (`_assignment` calls
-`_ternary()`) but three lower call sites in `cinder/parser.py` still
-parse their sub-expressions via `_or()` instead of `_ternary()` — call
-arguments, list-literal elements, and map-literal values (as of PR #38:
-lines 393, 396, 446, 449, 467; line numbers may have drifted since).
-Route those three contexts through `_ternary()` instead. Repro that must
-start working:
+**Bounce 1 (QA: FAIL), already fixed on the branch:** call arguments,
+list-literal elements, and map-literal values originally parsed via
+`_or()` instead of `_ternary()`. Fix-up commit `3269bae` routed
+`_finish_call` (parser.py:393,396), `_list_literal` (parser.py:446,449),
+and the value half of `_map_pair` (parser.py:467) through `_ternary()`
+instead, with dedicated parser + interpreter tests. This part is done —
+don't redo it.
+
+**Bounce 2 (CHANGES REQUESTED), still open — fix this next, on the same
+branch/worktree (`feat/20260721-ternary`, `.worktrees/ternary`), before
+taking anything else:** Reviewer found a fourth, identical-class site the
+fix-up commit missed. `_finish_index` at `cinder/parser.py:402` still
+parses bracket contents via `self._or()`:
+```python
+def _finish_index(self, obj: Expr) -> Expr:
+    bracket = self._advance()  # consume '['
+    index = self._or()
 ```
-print(a > b ? "a wins" : "b wins");        # call argument
-let xs = [1, true ? 2 : 3, 4];             # list element
-let m = {"k": true ? 1 : 2};               # map value
+Change that line to `index = self._ternary()`. Confirmed still broken as
+of this grooming pass (checked the live branch):
 ```
+>>> parse_program(tokenize('let xs = [1,2,3]; xs[true ? 0 : 1];'))
+cinder.errors.ParseError: 1:27: expected ']' after index, found '?'
+```
+This is the PR's **3rd** bounce if it fails again — one more `CHANGES
+REQUESTED`/`QA: FAIL` closes it and moves this task to `## Graveyard`.
 
 Acceptance criteria:
 - `true ? 1 : 2` is `1`; `false ? 1 : 2` is `2`.
@@ -58,9 +70,12 @@ Acceptance criteria:
   `{`-disambiguation rule in `PROJECT.md`.
 - A ternary as a call argument (`print(cond ? a : b)`), as a list-literal
   element (`[1, cond ? 2 : 3]`), and as a map-literal value
-  (`{"k": cond ? 1 : 2}`) all parse and evaluate correctly — this is the
-  exact gap QA caught on PR #38's first pass; add a dedicated parser test
-  for each of the three contexts, not just an interpreter smoke test.
+  (`{"k": cond ? 1 : 2}`) all parse and evaluate correctly (covered by
+  bounce 1's fix-up — keep these tests passing, don't regress them).
+- A ternary as an index expression (`xs[cond ? a : b]`) parses and
+  evaluates correctly — this is bounce 2's gap; add a dedicated parser
+  test (AST shape) and an interpreter test (evaluates to the right
+  element), same shape as the three added for call/list/map.
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,

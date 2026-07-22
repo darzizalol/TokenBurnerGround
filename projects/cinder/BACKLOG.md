@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: type-predicate builtins
+## 1. Standard library: type-predicate builtins [claimed 2026-07-22T20:21:50Z]
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,

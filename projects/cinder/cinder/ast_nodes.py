@@ -98,6 +98,15 @@ class IndexAssign:
 
 
 @dataclass(frozen=True)
+class Ternary:
+    condition: "Expr"
+    then_expr: "Expr"
+    else_expr: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class FnExpr:
     """An anonymous `fn(params) { body }` function literal, usable as a value
     (e.g. passed directly to `map`/`filter`, or bound with `let`) — unlike
@@ -122,6 +131,7 @@ Expr = Union[
     MapLiteral,
     Index,
     IndexAssign,
+    Ternary,
     FnExpr,
 ]
 

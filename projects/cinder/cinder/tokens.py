@@ -60,6 +60,7 @@ class TokenType(Enum):
     SEMICOLON = auto()
     DOT = auto()
     COLON = auto()
+    QUESTION = auto()
 
     EOF = auto()
 

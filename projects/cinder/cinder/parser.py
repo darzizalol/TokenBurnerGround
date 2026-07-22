@@ -1,8 +1,9 @@
 """Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
-    assignment (=, +=, -=, *=, /=, %=, right-assoc) > or > and > in >
-    comparisons (== != < <= > >=) > + - > * / % > unary (- not)
+    assignment (=, +=, -=, *=, /=, %=, right-assoc) > ternary (?:, right-assoc)
+    > or > and > in > comparisons (== != < <= > >=) > + - > * / % >
+    unary (- not)
 with parenthesized grouping and call expressions binding tightest of all.
 
 Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
@@ -60,6 +61,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     ReturnStmt,
     Stmt,
+    Ternary,
     Unary,
     WhileStmt,
 )
@@ -274,7 +276,7 @@ class Parser:
         return ExprStmt(expr)
 
     def _assignment(self) -> Expr:
-        expr = self._or()
+        expr = self._ternary()
         if self._check(TokenType.EQ):
             eq_token = self._advance()
             value = self._assignment()
@@ -303,6 +305,18 @@ class Parser:
             )
             binary = Binary(expr, binary_operator, value)
             return Assign(expr.name, binary, op_token.line, op_token.column)
+        return expr
+
+    def _ternary(self) -> Expr:
+        expr = self._or()
+        if self._check(TokenType.QUESTION):
+            question_token = self._advance()
+            then_expr = self._ternary()
+            self._consume(TokenType.COLON, "':' in ternary expression")
+            else_expr = self._ternary()
+            return Ternary(
+                expr, then_expr, else_expr, question_token.line, question_token.column
+            )
         return expr
 
     def _or(self) -> Expr:
@@ -376,16 +390,16 @@ class Parser:
         paren = self._previous()
         arguments = []
         if not self._check(TokenType.RPAREN):
-            arguments.append(self._or())
+            arguments.append(self._ternary())
             while self._check(TokenType.COMMA):
                 self._advance()
-                arguments.append(self._or())
+                arguments.append(self._ternary())
         self._consume(TokenType.RPAREN, "')' after arguments")
         return Call(callee, arguments, paren.line, paren.column)
 
     def _finish_index(self, obj: Expr) -> Expr:
         bracket = self._advance()  # consume '['
-        index = self._or()
+        index = self._ternary()
         self._consume(TokenType.RBRACKET, "']' after index")
         return Index(obj, index, bracket.line, bracket.column)
 
@@ -429,10 +443,10 @@ class Parser:
         bracket = self._advance()  # consume '['
         elements = []
         if not self._check(TokenType.RBRACKET):
-            elements.append(self._or())
+            elements.append(self._ternary())
             while self._check(TokenType.COMMA):
                 self._advance()
-                elements.append(self._or())
+                elements.append(self._ternary())
         self._consume(TokenType.RBRACKET, "']' after list literal")
         return ListLiteral(elements, bracket.line, bracket.column)
 
@@ -450,7 +464,7 @@ class Parser:
     def _map_pair(self) -> tuple:
         key = self._or()
         self._consume(TokenType.COLON, "':' after map key")
-        value = self._or()
+        value = self._ternary()
         return (key, value)
 
     def _peek(self) -> Token:

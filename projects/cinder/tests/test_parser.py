@@ -23,6 +23,7 @@ from cinder.ast_nodes import (
     Logical,
     MapLiteral,
     ReturnStmt,
+    Ternary,
     Unary,
 )
 from cinder.errors import ParseError
@@ -62,6 +63,13 @@ def shape(node):
         )
     if isinstance(node, Assign):
         return ("Assign", node.name, shape(node.value))
+    if isinstance(node, Ternary):
+        return (
+            "Ternary",
+            shape(node.condition),
+            shape(node.then_expr),
+            shape(node.else_expr),
+        )
     if isinstance(node, FnExpr):
         return ("FnExpr", node.params, stmt_shape(node.body))
     raise TypeError(f"unhandled node type: {type(node)!r}")
@@ -239,6 +247,117 @@ class TestPrecedence(unittest.TestCase):
                 "x",
                 ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
                 ("Block", []),
+            ),
+        )
+
+
+class TestTernary(unittest.TestCase):
+    def test_basic_ternary(self):
+        self.assertEqual(
+            shape(parse("true ? 1 : 2")),
+            ("Ternary", ("Literal", True), ("Literal", 1), ("Literal", 2)),
+        )
+
+    def test_ternary_right_associative_in_else_branch(self):
+        # `a ? b : c ? d : e` parses as `a ? b : (c ? d : e)`.
+        self.assertEqual(
+            shape(parse("true ? 1 : false ? 2 : 3")),
+            (
+                "Ternary",
+                ("Literal", True),
+                ("Literal", 1),
+                ("Ternary", ("Literal", False), ("Literal", 2), ("Literal", 3)),
+            ),
+        )
+
+    def test_nested_ternary_in_then_branch(self):
+        self.assertEqual(
+            shape(parse("true ? false ? 1 : 2 : 3")),
+            (
+                "Ternary",
+                ("Literal", True),
+                ("Ternary", ("Literal", False), ("Literal", 1), ("Literal", 2)),
+                ("Literal", 3),
+            ),
+        )
+
+    def test_ternary_condition_binds_looser_than_or(self):
+        self.assertEqual(
+            shape(parse("true or false ? 1 : 2")),
+            (
+                "Ternary",
+                ("Logical", ("Literal", True), TokenType.OR, ("Literal", False)),
+                ("Literal", 1),
+                ("Literal", 2),
+            ),
+        )
+
+    def test_map_literal_statement_with_ternary(self):
+        # A leading `{` map literal statement must still parse correctly
+        # when followed by a ternary operator.
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1} ? 1 : 2;')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "Ternary",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        ("Literal", 1),
+                        ("Literal", 2),
+                    ),
+                )
+            ],
+        )
+
+    def test_ternary_missing_colon_raises(self):
+        with self.assertRaises(ParseError):
+            parse("true ? 1 2")
+
+    def test_ternary_as_call_argument(self):
+        self.assertEqual(
+            shape(parse("f(true ? 1 : 2)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [("Ternary", ("Literal", True), ("Literal", 1), ("Literal", 2))],
+            ),
+        )
+
+    def test_ternary_as_list_element(self):
+        self.assertEqual(
+            shape(parse("[1, true ? 2 : 3, 4]")),
+            (
+                "ListLiteral",
+                [
+                    ("Literal", 1),
+                    ("Ternary", ("Literal", True), ("Literal", 2), ("Literal", 3)),
+                    ("Literal", 4),
+                ],
+            ),
+        )
+
+    def test_ternary_as_map_value(self):
+        self.assertEqual(
+            shape(parse('{"k": true ? 1 : 2}')),
+            (
+                "MapLiteral",
+                [
+                    (
+                        ("Literal", "k"),
+                        ("Ternary", ("Literal", True), ("Literal", 1), ("Literal", 2)),
+                    )
+                ],
+            ),
+        )
+
+    def test_ternary_as_index(self):
+        self.assertEqual(
+            shape(parse("xs[true ? 0 : 1]")),
+            (
+                "Index",
+                ("Identifier", "xs"),
+                ("Ternary", ("Literal", True), ("Literal", 0), ("Literal", 1)),
             ),
         )
 

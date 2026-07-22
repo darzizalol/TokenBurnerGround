@@ -54,7 +54,8 @@ while (i < 10) {
   `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
-  and math builtins `abs`, `min`, `max`, `round`
+  math builtins `abs`, `min`, `max`, `round`, and type predicates `is_list`,
+  `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`, `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first)
@@ -93,7 +94,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (510+ tests) covers every layer — lexer, parser, interpreter,
+The suite (535+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -118,10 +119,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `sort_by(list, fn)` for
-sorting by a custom key function, bitwise operators `&`, `|`, `^`, `~`,
-`<<`, `>>`, and `remove(map, key)`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): type-predicate builtins, `floor`/`ceil`/`pow`/
-`sqrt`, `index_of`/`unique`/`count`/`flatten` for lists, a `format` string
-templating builtin, and persistent REPL command history.
+Actively developed, nightly. Recently landed: `remove(map, key)` and the
+type-predicate builtins (`is_list`, `is_map`, `is_string`, `is_number`,
+`is_bool`, `is_nil`, `is_function`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `floor`/`ceil`/`pow`/`sqrt`,
+`index_of`/`unique`/`count`/`flatten` for lists, a `format` string
+templating builtin, persistent REPL command history, list slicing syntax
+(`list[a:b]`), `group_by`, and `try`/`catch` error recovery.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

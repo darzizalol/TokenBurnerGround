@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 1. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
@@ -46,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `index_of` for lists
+## 2. Standard library: `index_of` for lists
 
 Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
 `int` index of the first element equal to `item` (Cinder `==` equality,
@@ -74,13 +74,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `unique` for lists
+## 3. Standard library: `unique` for lists
 
 Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
 with duplicate elements removed, keeping only the first occurrence of
 each distinct value and preserving original relative order (non-mutating,
 matching `sort`/`reverse`'s style). Equality is Cinder `==` value equality
-(same rule `index_of`, task 3, uses), so use a linear scan against
+(same rule `index_of`, task 2, uses), so use a linear scan against
 already-kept elements (or a `set` fast path when every element is
 hashable, falling back to linear comparison otherwise — lists and maps
 are unhashable in Cinder, same limitation `sort`/`contains` already have
@@ -107,12 +107,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `count` for lists
+## 4. Standard library: `count` for lists
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` (Cinder `==` value equality, the
 same rule `index_of`/`contains` already use) — the counting counterpart to
-`index_of` (task 3), which only reports the first match. First argument
+`index_of` (task 2), which only reports the first match. First argument
 must be `list`; a non-list argument raises `CinderRuntimeError` with
 line/column, matching `sort`/`reverse`/`index_of`'s type-check style.
 `item` may be any Cinder value, including a list or map (compared by
@@ -134,7 +134,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `flatten` for lists
+## 5. Standard library: `flatten` for lists
 
 Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
 level of list-of-lists nesting into a single new list (non-mutating,
@@ -165,7 +165,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `format` for string templating
+## 6. Standard library: `format` for string templating
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument
@@ -206,7 +206,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. REPL: persistent command history across sessions
+## 7. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -244,6 +244,133 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
+
+---
+
+## 8. List slicing syntax: `list[start:end]`
+
+Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
+so that a `:` inside the brackets parses as a slice rather than a single
+index — `list[a:b]` (both bounds optional, Python-style: `list[:b]`,
+`list[a:]`, `list[:]` all valid) — reusing the disambiguation pattern
+already documented in `PROJECT.md` for statement-level `{`: attempt the
+richer grammar first (parse an optional expression, then check for `COLON`),
+falling back to the existing plain-index parse when no `COLON` follows. Add
+a `SliceExpr` AST node (`obj`, `start: Expr | None`, `end: Expr | None`,
+line, column) in `cinder/ast_nodes.py`, and evaluate it in
+`cinder/interpreter.py` by reusing the same bound-normalization logic
+`_slice` (the builtin, `cinder/builtins.py`) already has — negative bounds
+normalize like `_evaluate_index`, out-of-range bounds clamp rather than
+erroring, and a missing bound defaults to `0`/`len(obj)`. Only `list` and
+`str` support slicing (mirroring plain indexing's supported types); a `map`
+or any other type raises `CinderRuntimeError` with line/column. This is
+syntax sugar over the same semantics as the existing `slice(list, start,
+end)` builtin (PR #30) — do not duplicate its bound-clamping logic, factor
+it into a shared helper both call if that keeps the diff clean. Slicing is
+read-only: `list[a:b] = x` is not part of this task and should raise
+`ParseError` same as any other invalid assignment target.
+
+Acceptance criteria:
+- `[1, 2, 3, 4, 5][1:3]` is `[2, 3]`; `"hello"[1:3]` is `"el"`.
+- `[1, 2, 3][:2]` is `[1, 2]`; `[1, 2, 3][1:]` is `[2, 3]`; `[1, 2, 3][:]` is
+  `[1, 2, 3]` (a new list, not the same object).
+- `[1, 2, 3][-2:]` is `[2, 3]` (negative bounds normalize like plain
+  indexing).
+- `[1, 2, 3][0:100]` is `[1, 2, 3]` (out-of-range end clamps, doesn't
+  raise).
+- Plain indexing is unaffected: `[1, 2, 3][1]` is still `2`, not a slice.
+- `{"a": 1}[0:1]` raises `CinderRuntimeError` with line/column (maps aren't
+  sliceable).
+- `[1, 2, 3][1:2] = [9]` raises `ParseError` (slices aren't assignable).
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 9. Standard library: `group_by` for lists
+
+Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
+`list`'s elements into a `map` keyed by `fn(element)` (called once per
+element via the shared `call_value` helper, the same one `map`/`filter`/
+`sort_by` already use), where each value is a `list` of the elements that
+produced that key, in original relative order. Keys must be valid map keys
+(same `_is_valid_key` hashability rule the map-index path and `get`/`merge`
+already enforce) — a non-hashable key returned by `fn` (e.g. a list) raises
+`CinderRuntimeError` with line/column, same wording style as `get`'s
+unhashable-key check. First argument must be `list`, second must be
+callable; both follow `map`/`filter`'s existing type-check style.
+
+Acceptance criteria:
+- `group_by([1, 2, 3, 4, 5, 6], fn(n) { n % 2 })` is
+  `{1: [1, 3, 5], 0: [2, 4, 6]}` (grouped by parity, insertion order of
+  first occurrence for key ordering, element order preserved within each
+  group).
+- `group_by([], fn(n) { n })` is `{}` (empty list, `fn` never called).
+- `group_by(["apple", "avocado", "banana"], fn(s) { s[0] })` is
+  `{"a": ["apple", "avocado"], "b": ["banana"]}`.
+- `group_by([1, 2], fn(n) { [n] })` raises `CinderRuntimeError` with
+  line/column (a list is not a valid map key).
+- `group_by(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `group_by([1, 2], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 10. `try`/`catch` for runtime error recovery
+
+Build: add `try { ... } catch (name) { ... }` as a new statement, giving
+Cinder scripts a way to recover from a runtime error instead of the whole
+program dying — the last major control-flow gap versus `if`/`while`/
+`for`-in/`break`/`continue` (see `## Done` for those). Add `TRY`/`CATCH`
+keywords to `KEYWORDS` in `cinder/tokens.py` (same pattern as `if`/`while`),
+a `TryStmt` AST node (`try_block: Block`, `catch_name: str`,
+`catch_block: Block`, line, column) in `cinder/ast_nodes.py`, and parser
+support in `cinder/parser.py` reusing the existing block-parsing helper for
+both bodies (`try { <stmt>* } catch (name) { <stmt>* }` — the parenthesized
+catch name is required, no bare `catch { ... }` form, keep the grammar
+small). In `cinder/interpreter.py`, executing a `TryStmt` runs `try_block`
+in a child `Environment`; if it raises `CinderRuntimeError`, bind the
+error's message (a `str`, matching how `cli.py` already prints
+`err.message`) to `catch_name` in a **fresh** child `Environment` and run
+`catch_block` against it, then continue after the `TryStmt` normally (the
+error does not propagate further). Only `CinderRuntimeError` is caught —
+`LexError`/`ParseError` happen before execution starts and are irrelevant
+here; `_BreakSignal`/`_ContinueSignal`/`_ReturnSignal` (Python-internal
+control-flow signals, not `CinderRuntimeError`) must NOT be caught, so
+`break`/`continue`/`return` inside a `try` block still propagate through it
+exactly as they do through `if`/blocks today — do not add a broad `except
+CinderError` or bare `except`. If `catch_block` itself raises, that
+propagates normally (no re-catch).
+
+Acceptance criteria:
+- `try { let x = 1 / 0; } catch (e) { print(e); }` prints the division's
+  error message instead of crashing the program.
+- After a caught error, execution continues past the `try`/`catch`
+  statement (a statement following it still runs).
+- `try { 1; } catch (e) { print("unreached"); }` never runs the catch block
+  when no error occurs.
+- `catch_name` (`e` above) is scoped to the catch block only — referencing
+  it after the `try`/`catch` statement raises the normal "undefined
+  variable" `CinderRuntimeError`.
+- `for x in [1] { try { break; } catch (e) {} }` still exits the loop —
+  `break` inside `try` is not swallowed as a caught error.
+- A `return` inside a function body's `try` block still returns from the
+  function, not just the `try` statement.
+- `LexError`/`ParseError` are unaffected (still uncaught, unrelated to
+  `try`/`catch`, which only runs at execution time).
+- An error raised inside `catch_block` itself is not re-caught — it
+  propagates normally.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
 
 ---
 

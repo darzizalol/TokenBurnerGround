@@ -239,6 +239,64 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_bitwise_or_binds_looser_than_comparison(self):
+        # `1 | 2 == 3` parses as `1 | (2 == 3)` or `(1 | 2) == 3`; this repo
+        # picks the latter, since bitwise ops bind tighter than comparisons.
+        self.assertEqual(
+            shape(parse("1 | 2 == 3")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 1), TokenType.PIPE, ("Literal", 2)),
+                TokenType.EQEQ,
+                ("Literal", 3),
+            ),
+        )
+
+    def test_shift_binds_looser_than_addition(self):
+        # `2 + 3 << 1` is `(2 + 3) << 1`, not `2 + (3 << 1)`.
+        self.assertEqual(
+            shape(parse("2 + 3 << 1")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 2), TokenType.PLUS, ("Literal", 3)),
+                TokenType.LSHIFT,
+                ("Literal", 1),
+            ),
+        )
+
+    def test_bitwise_precedence_or_xor_and_shift(self):
+        # `|` loosest, then `^`, then `&`, then `<<`/`>>` tightest.
+        self.assertEqual(
+            shape(parse("1 | 2 ^ 3 & 4 << 5")),
+            (
+                "Binary",
+                ("Literal", 1),
+                TokenType.PIPE,
+                (
+                    "Binary",
+                    ("Literal", 2),
+                    TokenType.CARET,
+                    (
+                        "Binary",
+                        ("Literal", 3),
+                        TokenType.AMP,
+                        ("Binary", ("Literal", 4), TokenType.LSHIFT, ("Literal", 5)),
+                    ),
+                ),
+            ),
+        )
+
+    def test_bitwise_not_binds_tighter_than_shift(self):
+        self.assertEqual(
+            shape(parse("~1 << 2")),
+            (
+                "Binary",
+                ("Unary", TokenType.TILDE, ("Literal", 1)),
+                TokenType.LSHIFT,
+                ("Literal", 2),
+            ),
+        )
+
     def test_for_in_loop_parsing_unaffected_by_in_operator(self):
         self.assertEqual(
             stmt_shape(parse_stmts("for x in [1, 2, 3] { }")[0]),

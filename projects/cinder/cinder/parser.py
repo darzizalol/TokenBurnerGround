@@ -2,8 +2,8 @@
 
 Precedence, loosest to tightest:
     assignment (=, +=, -=, *=, /=, %=, right-assoc) > ternary (?:, right-assoc)
-    > or > and > in > comparisons (== != < <= > >=) > + - > * / % >
-    unary (- not)
+    > or > and > in > comparisons (== != < <= > >=) > | > ^ > & > << >> >
+    + - > * / % > unary (- not ~)
 with parenthesized grouping and call expressions binding tightest of all.
 
 Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
@@ -78,7 +78,8 @@ _COMPARISON = {
 }
 _TERM = {TokenType.PLUS, TokenType.MINUS}
 _FACTOR = {TokenType.STAR, TokenType.SLASH, TokenType.PERCENT}
-_UNARY = {TokenType.MINUS, TokenType.NOT}
+_UNARY = {TokenType.MINUS, TokenType.NOT, TokenType.TILDE}
+_BITSHIFT = {TokenType.LSHIFT, TokenType.RSHIFT}
 _COMPOUND_ASSIGN_OPS = {
     TokenType.PLUSEQ: TokenType.PLUS,
     TokenType.MINUSEQ: TokenType.MINUS,
@@ -344,8 +345,40 @@ class Parser:
         return expr
 
     def _comparison(self) -> Expr:
-        expr = self._term()
+        expr = self._bitor()
         while self._peek().type in _COMPARISON:
+            operator = self._advance()
+            right = self._bitor()
+            expr = Binary(expr, operator, right)
+        return expr
+
+    def _bitor(self) -> Expr:
+        expr = self._bitxor()
+        while self._check(TokenType.PIPE):
+            operator = self._advance()
+            right = self._bitxor()
+            expr = Binary(expr, operator, right)
+        return expr
+
+    def _bitxor(self) -> Expr:
+        expr = self._bitand()
+        while self._check(TokenType.CARET):
+            operator = self._advance()
+            right = self._bitand()
+            expr = Binary(expr, operator, right)
+        return expr
+
+    def _bitand(self) -> Expr:
+        expr = self._bitshift()
+        while self._check(TokenType.AMP):
+            operator = self._advance()
+            right = self._bitshift()
+            expr = Binary(expr, operator, right)
+        return expr
+
+    def _bitshift(self) -> Expr:
+        expr = self._term()
+        while self._peek().type in _BITSHIFT:
             operator = self._advance()
             right = self._term()
             expr = Binary(expr, operator, right)

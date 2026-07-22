@@ -15,6 +15,10 @@ _SIMPLE_TOKENS = {
     ".": TokenType.DOT,
     ":": TokenType.COLON,
     "?": TokenType.QUESTION,
+    "&": TokenType.AMP,
+    "|": TokenType.PIPE,
+    "^": TokenType.CARET,
+    "~": TokenType.TILDE,
 }
 
 _COMPOUND_ASSIGN_TOKENS = {
@@ -204,12 +208,16 @@ class Lexer:
     def _lt(self, start_line: int, start_col: int):
         if self._match("="):
             self.tokens.append(Token(TokenType.LTEQ, "<=", None, start_line, start_col))
+        elif self._match("<"):
+            self.tokens.append(Token(TokenType.LSHIFT, "<<", None, start_line, start_col))
         else:
             self.tokens.append(Token(TokenType.LT, "<", None, start_line, start_col))
 
     def _gt(self, start_line: int, start_col: int):
         if self._match("="):
             self.tokens.append(Token(TokenType.GTEQ, ">=", None, start_line, start_col))
+        elif self._match(">"):
+            self.tokens.append(Token(TokenType.RSHIFT, ">>", None, start_line, start_col))
         else:
             self.tokens.append(Token(TokenType.GT, ">", None, start_line, start_col))
 

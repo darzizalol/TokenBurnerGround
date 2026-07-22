@@ -374,6 +374,14 @@ class Interpreter:
             return -operand
         if expr.operator.type == TokenType.NOT:
             return not is_truthy(operand)
+        if expr.operator.type == TokenType.TILDE:
+            if not _is_int(operand):
+                raise CinderRuntimeError(
+                    f"unary '~' requires an int, got {type_name(operand)}",
+                    expr.operator.line,
+                    expr.operator.column,
+                )
+            return ~operand
         raise TypeError(f"unhandled unary operator: {expr.operator.type!r}")
 
     def _evaluate_logical(self, expr: Logical, env: Environment) -> object:
@@ -429,8 +437,34 @@ class Interpreter:
             return self._compare(expr, left, right, op)
         if op == TokenType.IN:
             return contains_value(right, left, expr.operator.line, expr.operator.column)
+        if op in (
+            TokenType.AMP,
+            TokenType.PIPE,
+            TokenType.CARET,
+            TokenType.LSHIFT,
+            TokenType.RSHIFT,
+        ):
+            return self._bitwise_op(expr, left, right, op)
 
         raise TypeError(f"unhandled binary operator: {op!r}")
+
+    def _bitwise_op(self, expr: Binary, left, right, op: TokenType):
+        if not (_is_int(left) and _is_int(right)):
+            raise CinderRuntimeError(
+                f"unsupported operand types for {expr.operator.lexeme!r}: "
+                f"{type_name(left)} and {type_name(right)}",
+                expr.operator.line,
+                expr.operator.column,
+            )
+        if op == TokenType.AMP:
+            return left & right
+        if op == TokenType.PIPE:
+            return left | right
+        if op == TokenType.CARET:
+            return left ^ right
+        if op == TokenType.LSHIFT:
+            return left << right
+        return left >> right
 
     def _repeat_op(self, left, right):
         """str/list * int repetition (either operand order); None if not applicable."""

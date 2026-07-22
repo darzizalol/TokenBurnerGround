@@ -48,6 +48,12 @@ class TokenType(Enum):
     STAREQ = auto()
     SLASHEQ = auto()
     PERCENTEQ = auto()
+    AMP = auto()
+    PIPE = auto()
+    CARET = auto()
+    TILDE = auto()
+    LSHIFT = auto()
+    RSHIFT = auto()
 
     # Punctuation
     LPAREN = auto()

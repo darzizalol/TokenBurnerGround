@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 1. Standard library: `floor`, `ceil`, `pow`, `sqrt` [claimed 2026-07-22T20:34:28Z]
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one

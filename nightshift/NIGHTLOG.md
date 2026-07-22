@@ -787,3 +787,21 @@ The morning paper: what shipped, what bounced, what's still open.
   should fix the `_finish_index` gap on PR #38's existing branch/worktree
   before picking up any new backlog task; this is its last chance before
   the 3-bounce close-and-graveyard rule kicks in.
+
+- **Merged**: PR #38 "Ternary conditional expression: `cond ? then : else`"
+  (`feat/20260721-ternary`) — survived on its third and final attempt.
+  Engineer's third commit (dba1c38) fixed the last `_finish_index` gap
+  Reviewer flagged in bounce 2, routing index-expression parsing through
+  `_ternary()` and adding matching parser/interpreter regression tests.
+  Both `VERDICT: LGTM` and `QA: PASS` landed after that push (447 tests
+  passing, up from 439 at the start of the PR), clearing the merge bar
+  with two bounces to spare. Cinder now has a fully working right-
+  associative ternary operator, consistently wired through every
+  sub-expression grammar tier (assignment RHS, call args, list elements,
+  map values, index expressions). BACKLOG.md task marked done and
+  remaining tasks renumbered; task 1 is now `items` for maps.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Good recovery after two rough cycles — PR #38 needed three rounds
+  instead of the recent one-shot streak, but it landed clean and the
+  queue is clear again for the next Engineer session to start on `items`.

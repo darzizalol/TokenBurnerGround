@@ -12,79 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Ternary conditional expression: `cond ? then : else` [claimed 2026-07-21T20:22:46Z, bounced 2x — QA: FAIL then CHANGES REQUESTED on PR #38]
-
-Build: add `QUESTION` and reuse the existing `COLON` token
-(`cinder/tokens.py` already has `COLON` for map literals) to support a
-right-associative ternary expression. In `cinder/parser.py`, add a new
-`Ternary` AST node (`condition`, `then_expr`, `else_expr`) to
-`cinder/ast_nodes.py`, and slot its parsing tier between `_assignment`
-and `_or` (i.e. after parsing an `_or`-level expression, check for a
-`?`; if present, parse a full ternary expression for the "then" branch up
-to `:`, then recurse into `_ternary` again for the "else" branch, giving
-right-associativity so `a ? b : c ? d : e` parses as `a ? b : (c ? d :
-e)`, matching C/JS convention). In `cinder/interpreter.py`, add a
-`Ternary` case to `evaluate()` that evaluates `condition`, checks it with
-the existing `is_truthy`, and evaluates *only* the taken branch (the
-other branch must not be evaluated at all — this is a short-circuit
-construct like `and`/`or`, not eager evaluation of both arms).
-
-**Bounce 1 (QA: FAIL), already fixed on the branch:** call arguments,
-list-literal elements, and map-literal values originally parsed via
-`_or()` instead of `_ternary()`. Fix-up commit `3269bae` routed
-`_finish_call` (parser.py:393,396), `_list_literal` (parser.py:446,449),
-and the value half of `_map_pair` (parser.py:467) through `_ternary()`
-instead, with dedicated parser + interpreter tests. This part is done —
-don't redo it.
-
-**Bounce 2 (CHANGES REQUESTED), still open — fix this next, on the same
-branch/worktree (`feat/20260721-ternary`, `.worktrees/ternary`), before
-taking anything else:** Reviewer found a fourth, identical-class site the
-fix-up commit missed. `_finish_index` at `cinder/parser.py:402` still
-parses bracket contents via `self._or()`:
-```python
-def _finish_index(self, obj: Expr) -> Expr:
-    bracket = self._advance()  # consume '['
-    index = self._or()
-```
-Change that line to `index = self._ternary()`. Confirmed still broken as
-of this grooming pass (checked the live branch):
-```
->>> parse_program(tokenize('let xs = [1,2,3]; xs[true ? 0 : 1];'))
-cinder.errors.ParseError: 1:27: expected ']' after index, found '?'
-```
-This is the PR's **3rd** bounce if it fails again — one more `CHANGES
-REQUESTED`/`QA: FAIL` closes it and moves this task to `## Graveyard`.
-
-Acceptance criteria:
-- `true ? 1 : 2` is `1`; `false ? 1 : 2` is `2`.
-- `0 ? "a" : "b"` is `"a"` (Cinder's `0` is truthy, per the fixed
-  truthiness rule — regression check against Python truthiness).
-- `let x = true ? 1 : (1 / 0);` does not raise (else-branch, containing a
-  division by zero, must not be evaluated) — short-circuit regression
-  test. Same shape with the branches swapped for the then-branch.
-- `true ? false ? 1 : 2 : 3` parses and evaluates right-associatively
-  (nested ternary in the "then" position).
-- A leading `{` map literal statement (e.g. `{"a": 1} ? 1 : 2;`) still
-  parses correctly — regression test against the existing statement-level
-  `{`-disambiguation rule in `PROJECT.md`.
-- A ternary as a call argument (`print(cond ? a : b)`), as a list-literal
-  element (`[1, cond ? 2 : 3]`), and as a map-literal value
-  (`{"k": cond ? 1 : 2}`) all parse and evaluate correctly (covered by
-  bounce 1's fix-up — keep these tests passing, don't regress them).
-- A ternary as an index expression (`xs[cond ? a : b]`) parses and
-  evaluates correctly — this is bounce 2's gap; add a dedicated parser
-  test (AST shape) and an interpreter test (evaluates to the right
-  element), same shape as the three added for call/list/map.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
-`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `items` for maps
+## 1. Standard library: `items` for maps
 
 Build: add `items(map)` to `cinder/builtins.py`, returning a new `list`
 of two-element `[key, value]` lists, one per map entry, complementing the
@@ -108,7 +36,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `enumerate`
+## 2. Standard library: `enumerate`
 
 Build: add `enumerate(list)` to `cinder/builtins.py`, returning a new
 `list` of two-element `[index, value]` lists, one per element, pairing
@@ -131,7 +59,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `merge` for maps
+## 3. Standard library: `merge` for maps
 
 Build: add `merge(map1, map2)` to `cinder/builtins.py`, returning a
 **new** map containing every key from both inputs; when a key exists in
@@ -157,7 +85,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `get` for safe map access
+## 4. Standard library: `get` for safe map access
 
 Build: add `get(map, key, default)` to `cinder/builtins.py`, returning
 `map[key]` if `key` is present, else `default` — never raising for a
@@ -186,7 +114,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `copy` for lists and maps
+## 5. Standard library: `copy` for lists and maps
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are
@@ -216,7 +144,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `sort_by` with a custom key function
+## 6. Standard library: `sort_by` with a custom key function
 
 Build: add `sort_by(list, fn)` to `cinder/builtins.py`, returning a new
 ascending-sorted list (non-mutating, matching `sort`'s style) ordered by
@@ -252,7 +180,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
+## 7. Bitwise operators: `&`, `|`, `^`, `~`, `<<`, `>>`
 
 Build: add six token types to `cinder/tokens.py`'s `TokenType`
 (`AMP`, `PIPE`, `CARET`, `TILDE`, `LSHIFT`, `RSHIFT`) and lex them in
@@ -293,7 +221,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Standard library: `remove` for maps
+## 8. Standard library: `remove` for maps
 
 Build: add `remove(map, key)` to `cinder/builtins.py`, deleting `key` from
 `map` **in place** (mutating, matching `push`/`pop`'s in-place style rather
@@ -323,7 +251,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: type-predicate builtins
+## 9. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,

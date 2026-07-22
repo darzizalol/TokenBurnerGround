@@ -5,9 +5,10 @@
 `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `sum`,
 `any`, `all`, `contains`, `copy`, `reverse`, `sort`, `sort_by`, `range`, `map`,
-`filter`, `reduce`, `slice`, `concat`, `zip`, and `assert` already defined.
-CLI entrypoints and the REPL should build their global scope with this
-instead of a bare `Environment()` so `.cin` scripts can actually produce
+`filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `is_list`, `is_map`,
+`is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
+defined. CLI entrypoints and the REPL should build their global scope with
+this instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
 """
 
@@ -651,6 +652,41 @@ def _reduce(arguments: list, line: int, column: int) -> object:
     return acc
 
 
+def _is_list(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_list", arguments, 1, line, column)
+    return isinstance(arguments[0], list)
+
+
+def _is_map(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_map", arguments, 1, line, column)
+    return isinstance(arguments[0], dict)
+
+
+def _is_string(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_string", arguments, 1, line, column)
+    return isinstance(arguments[0], str)
+
+
+def _is_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_number", arguments, 1, line, column)
+    return _is_numeric(arguments[0])
+
+
+def _is_bool(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_bool", arguments, 1, line, column)
+    return isinstance(arguments[0], bool)
+
+
+def _is_nil(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_nil", arguments, 1, line, column)
+    return arguments[0] is None
+
+
+def _is_function(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_function", arguments, 1, line, column)
+    return _is_callable(arguments[0])
+
+
 _BUILTINS = {
     "print": _print,
     "len": _len,
@@ -696,6 +732,13 @@ _BUILTINS = {
     "zip": _zip,
     "enumerate": _enumerate,
     "assert": _assert,
+    "is_list": _is_list,
+    "is_map": _is_map,
+    "is_string": _is_string,
+    "is_number": _is_number,
+    "is_bool": _is_bool,
+    "is_nil": _is_nil,
+    "is_function": _is_function,
 }
 
 

@@ -185,6 +185,9 @@ class TestTernary(unittest.TestCase):
     def test_ternary_as_map_value(self):
         self.assertEqual(evaluate('{"k": true ? 1 : 2}'), {"k": 1})
 
+    def test_ternary_as_index(self):
+        self.assertEqual(evaluate("[10, 20][true ? 0 : 1]"), 10)
+
 
 class TestMembership(unittest.TestCase):
     def test_in_list_true(self):

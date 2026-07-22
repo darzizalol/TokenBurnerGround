@@ -351,6 +351,16 @@ class TestTernary(unittest.TestCase):
             ),
         )
 
+    def test_ternary_as_index(self):
+        self.assertEqual(
+            shape(parse("xs[true ? 0 : 1]")),
+            (
+                "Index",
+                ("Identifier", "xs"),
+                ("Ternary", ("Literal", True), ("Literal", 0), ("Literal", 1)),
+            ),
+        )
+
 
 class TestCalls(unittest.TestCase):
     def test_call_with_arguments(self):

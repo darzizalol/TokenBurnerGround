@@ -399,7 +399,7 @@ class Parser:
 
     def _finish_index(self, obj: Expr) -> Expr:
         bracket = self._advance()  # consume '['
-        index = self._or()
+        index = self._ternary()
         self._consume(TokenType.RBRACKET, "']' after index")
         return Index(obj, index, bracket.line, bracket.column)
 

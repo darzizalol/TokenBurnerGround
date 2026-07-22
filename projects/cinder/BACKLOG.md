@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: type-predicate builtins
+## 1. Standard library: type-predicate builtins
 
 Build: add seven single-argument builtins to `cinder/builtins.py` —
 `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -46,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `floor`, `ceil`, `pow`, `sqrt`
+## 2. Standard library: `floor`, `ceil`, `pow`, `sqrt`
 
 Build: add four math builtins to `cinder/builtins.py`, complementing the
 existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
@@ -81,7 +81,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `index_of` for lists
+## 3. Standard library: `index_of` for lists
 
 Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
 `int` index of the first element equal to `item` (Cinder `==` equality,
@@ -109,13 +109,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `unique` for lists
+## 4. Standard library: `unique` for lists
 
 Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
 with duplicate elements removed, keeping only the first occurrence of
 each distinct value and preserving original relative order (non-mutating,
 matching `sort`/`reverse`'s style). Equality is Cinder `==` value equality
-(same rule `index_of`, task 5, uses), so use a linear scan against
+(same rule `index_of`, task 3, uses), so use a linear scan against
 already-kept elements (or a `set` fast path when every element is
 hashable, falling back to linear comparison otherwise — lists and maps
 are unhashable in Cinder, same limitation `sort`/`contains` already have
@@ -142,12 +142,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `count` for lists
+## 5. Standard library: `count` for lists
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` (Cinder `==` value equality, the
 same rule `index_of`/`contains` already use) — the counting counterpart to
-`index_of` (task 5), which only reports the first match. First argument
+`index_of` (task 3), which only reports the first match. First argument
 must be `list`; a non-list argument raises `CinderRuntimeError` with
 line/column, matching `sort`/`reverse`/`index_of`'s type-check style.
 `item` may be any Cinder value, including a list or map (compared by
@@ -169,7 +169,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `flatten` for lists
+## 6. Standard library: `flatten` for lists
 
 Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
 level of list-of-lists nesting into a single new list (non-mutating,
@@ -197,6 +197,88 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `format` for string templating
+
+Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
+sprintf-style templating builtin, variadic like `min`/`max` (inline argument
+check rather than `_require_arity`, since arity depends on the template).
+`template` must be a `str` containing zero or more `{}` placeholders;
+replace each `{}` left-to-right with the corresponding positional extra
+argument rendered via the existing `stringify()` helper (same conversion
+`str()`/`print` already use — so a list argument renders as `[1, 2]`, a
+string argument renders unquoted, matching `print`'s style, not `str()`'s
+quoted-nested style). The number of `{}` placeholders in `template` must
+exactly match the number of extra arguments — mismatch in either direction
+raises `CinderRuntimeError` with line/column, not silent truncation or
+padding. A literal `{` not immediately followed by `}` is invalid syntax in
+the template (no field names, no format specs, no escaping — keep it small,
+this is not a full `str.format`); reject it with `CinderRuntimeError`
+instead of leaving it un-replaced or crashing on a Python `.format()` call.
+
+Acceptance criteria:
+- `format("{} + {} = {}", 1, 2, 3)` is `"1 + 2 = 3"`.
+- `format("no placeholders")` is `"no placeholders"` (zero `{}`, zero extra
+  args, no error).
+- `format("{}", [1, 2])` is `"[1, 2]"` (uses `stringify`, not Python's raw
+  `str()`); `format("{}", "hi")` is `"hi"` (unquoted).
+- `format("{} {}", 1)` raises `CinderRuntimeError` with line/column (one
+  placeholder short of arguments).
+- `format("{}", 1, 2)` raises `CinderRuntimeError` with line/column (one
+  extra argument beyond placeholders).
+- `format("{ }", 1)` raises `CinderRuntimeError` with line/column (a brace
+  pair that isn't the exact `{}` placeholder is invalid, not silently
+  passed through).
+- `format(5, 1)` raises `CinderRuntimeError` with line/column (non-`str`
+  template).
+- Calling with zero arguments raises `CinderRuntimeError` with line/column
+  (need at least the template).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. REPL: persistent command history across sessions
+
+Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
+#21, currently in-session-only per that task's "keep it small" scope) to
+load history from a file at REPL startup and save it back on clean exit,
+using `readline.read_history_file`/`write_history_file`. Store the history
+file *inside this project directory*, not the user's home directory or any
+dotfile outside the repo (CLAUDE.md forbids touching dotfiles/config
+outside the repo) — e.g. `projects/cinder/.cinder_history`, added to the
+repo's `.gitignore` alongside the existing `.worktrees/` entry. Guard both
+the load and the save with `try`/`except OSError` (covers
+`FileNotFoundError` on first run and any permission/disk issue) so the REPL
+still starts and exits cleanly with no history file, no `readline` module,
+or a read-only filesystem — matching `_try_enable_readline`'s existing
+`except ImportError` fallback style. Save on exit means wherever
+`run_repl()` currently handles `EOFError`/`KeyboardInterrupt` to end the
+loop, not just on an unreached code path.
+
+Acceptance criteria:
+- With `readline` available: run the REPL, enter a few statements, exit via
+  EOF; the history file now exists under `projects/cinder/` and contains
+  those lines (assert via `readline.get_history_item` after
+  `read_history_file`, or by reading the file's contents directly).
+- Running the REPL again after that loads the prior history (assert
+  `readline.get_current_history_length()` is nonzero immediately after
+  `_try_enable_readline()` runs, given a pre-seeded history file).
+- First run with no history file yet: REPL starts and exits cleanly, and a
+  history file is created on exit.
+- If `readline` is unavailable (simulate the existing `ImportError` path),
+  REPL still starts and exits with no traceback, exactly as before this
+  task.
+- If writing the history file raises `OSError` (e.g. monkeypatch
+  `write_history_file` to raise), the REPL still exits cleanly without a
+  traceback.
+- The history file path is added to `.gitignore` and never committed.
+- Full test suite passes.
+
+Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 

@@ -93,7 +93,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (505+ tests) covers every layer — lexer, parser, interpreter,
+The suite (510+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -118,10 +118,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `copy(collection)` for
-shallow-copying lists/maps, `sort_by(list, fn)` for sorting by a custom key
-function, and bitwise operators `&`, `|`, `^`, `~`, `<<`, `>>`. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `remove` for maps, type-predicate
-builtins, `floor`/`ceil`/`pow`/`sqrt`, `index_of`/`unique`/`count`/`flatten`
-for lists.
+Actively developed, nightly. Recently landed: `sort_by(list, fn)` for
+sorting by a custom key function, bitwise operators `&`, `|`, `^`, `~`,
+`<<`, `>>`, and `remove(map, key)`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): type-predicate builtins, `floor`/`ceil`/`pow`/
+`sqrt`, `index_of`/`unique`/`count`/`flatten` for lists, a `format` string
+templating builtin, and persistent REPL command history.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

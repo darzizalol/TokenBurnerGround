@@ -4,7 +4,7 @@
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
 `get`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `sum`,
-`any`, `all`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
+`any`, `all`, `contains`, `copy`, `reverse`, `sort`, `range`, `map`, `filter`,
 `reduce`, `slice`, `concat`, `zip`, and `assert` already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
@@ -431,6 +431,18 @@ def _reverse(arguments: list, line: int, column: int) -> object:
     return list(reversed(value))
 
 
+def _copy(arguments: list, line: int, column: int) -> object:
+    _require_arity("copy", arguments, 1, line, column)
+    value = arguments[0]
+    if isinstance(value, list):
+        return list(value)
+    if isinstance(value, dict):
+        return dict(value)
+    raise CinderRuntimeError(
+        f"copy() requires a list or map, got {type_name(value)}", line, column
+    )
+
+
 def _range(arguments: list, line: int, column: int) -> object:
     if len(arguments) == 1:
         start, stop = 0, arguments[0]
@@ -631,6 +643,7 @@ _BUILTINS = {
     "any": _any,
     "all": _all,
     "contains": _contains,
+    "copy": _copy,
     "reverse": _reverse,
     "sort": _sort,
     "range": _range,

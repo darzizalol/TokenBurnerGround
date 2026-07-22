@@ -12,7 +12,7 @@ a later task while an earlier one is unclaimed/open.
 ---
 
 
-## 1. Standard library: `copy` for lists and maps
+## 1. Standard library: `copy` for lists and maps [claimed 2026-07-22T19:30:16Z]
 
 Build: add `copy(collection)` to `cinder/builtins.py`, returning a new
 top-level `list` or `dict` (shallow copy — nested lists/maps inside it are

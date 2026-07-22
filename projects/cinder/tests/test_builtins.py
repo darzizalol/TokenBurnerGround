@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, items, get, merge, upper, lower, trim, split, join, find,
-starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
+keys, values, items, get, remove, merge, upper, lower, trim, split, join,
+find, starts_with, ends_with, replace, abs, min, max, round, sum, any, all,
 contains, copy, reverse, sort, sort_by, range, map, filter, reduce, slice,
 concat, zip, enumerate, assert."""
 
@@ -248,6 +248,34 @@ class TestGet(unittest.TestCase):
             run('get({"a": 1}, "a");')
         with self.assertRaises(CinderRuntimeError):
             run('get({"a": 1}, "a", 0, 1);')
+
+
+class TestRemove(unittest.TestCase):
+    def test_remove_mutates_original_map_in_place(self):
+        env = run('let m = {"a": 1, "b": 2}; remove(m, "a");')
+        self.assertEqual(env.get("m"), {"b": 2})
+
+    def test_remove_returns_removed_value(self):
+        env = run('let result = remove({"a": 1}, "a");')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_remove_missing_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('remove({"a": 1}, "z");')
+
+    def test_remove_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('remove(5, "a");')
+
+    def test_remove_with_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('remove({"a": 1}, [1, 2]);')
+
+    def test_remove_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('remove({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('remove({"a": 1}, "a", 1);')
 
 
 class TestMerge(unittest.TestCase):

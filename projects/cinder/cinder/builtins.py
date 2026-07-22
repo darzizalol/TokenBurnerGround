@@ -2,7 +2,7 @@
 
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
-`get`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
+`get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `sum`,
 `any`, `all`, `contains`, `copy`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `zip`, and `assert` already defined.
@@ -187,6 +187,22 @@ def _get(arguments: list, line: int, column: int) -> object:
     if key not in target:
         return default
     return target[key]
+
+
+def _remove(arguments: list, line: int, column: int) -> object:
+    _require_arity("remove", arguments, 2, line, column)
+    target, key = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"remove() requires a map, got {type_name(target)}", line, column
+        )
+    if not _is_valid_key(key):
+        raise CinderRuntimeError(
+            f"{type_name(key)} is not a valid map key", line, column
+        )
+    if key not in target:
+        raise CinderRuntimeError(f"missing map key {key!r}", line, column)
+    return target.pop(key)
 
 
 def _merge(arguments: list, line: int, column: int) -> object:
@@ -648,6 +664,7 @@ _BUILTINS = {
     "values": _values,
     "items": _items,
     "get": _get,
+    "remove": _remove,
     "merge": _merge,
     "upper": _upper,
     "lower": _lower,

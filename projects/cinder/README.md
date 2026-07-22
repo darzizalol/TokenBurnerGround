@@ -50,7 +50,7 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
-  `values`, `items`, `enumerate`, `merge`, `get`, `copy`, `contains`,
+  `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
   `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,

@@ -2,10 +2,10 @@
 
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
-`upper`, `lower`, `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`,
-`replace`, `abs`, `min`, `max`, `round`, `sum`, `any`, `all`, `contains`,
-`reverse`, `sort`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
-`zip`, and `assert` already defined.
+`get`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
+`starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `sum`,
+`any`, `all`, `contains`, `reverse`, `sort`, `range`, `map`, `filter`,
+`reduce`, `slice`, `concat`, `zip`, and `assert` already defined.
 CLI entrypoints and the REPL should build their global scope with this
 instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -16,6 +16,7 @@ from cinder.interpreter import (
     Builtin,
     CinderFunction,
     Environment,
+    _is_valid_key,
     call_value,
     contains_value,
     is_truthy,
@@ -170,6 +171,22 @@ def _items(arguments: list, line: int, column: int) -> object:
             f"items() requires a map, got {type_name(target)}", line, column
         )
     return [[key, value] for key, value in target.items()]
+
+
+def _get(arguments: list, line: int, column: int) -> object:
+    _require_arity("get", arguments, 3, line, column)
+    target, key, default = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"get() requires a map, got {type_name(target)}", line, column
+        )
+    if not _is_valid_key(key):
+        raise CinderRuntimeError(
+            f"{type_name(key)} is not a valid map key", line, column
+        )
+    if key not in target:
+        return default
+    return target[key]
 
 
 def _merge(arguments: list, line: int, column: int) -> object:
@@ -595,6 +612,7 @@ _BUILTINS = {
     "keys": _keys,
     "values": _values,
     "items": _items,
+    "get": _get,
     "merge": _merge,
     "upper": _upper,
     "lower": _lower,

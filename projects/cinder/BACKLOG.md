@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `unique` for lists
+## 1. Standard library: `unique` for lists [claimed 2026-07-23T14:14:27Z]
 
 Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
 with duplicate elements removed, keeping only the first occurrence of

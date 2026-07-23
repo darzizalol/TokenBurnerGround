@@ -23,6 +23,7 @@ from cinder.ast_nodes import (
     Logical,
     MapLiteral,
     ReturnStmt,
+    SliceExpr,
     Ternary,
     Unary,
 )
@@ -54,6 +55,13 @@ def shape(node):
         return ("MapLiteral", [(shape(k), shape(v)) for k, v in node.pairs])
     if isinstance(node, Index):
         return ("Index", shape(node.obj), shape(node.index))
+    if isinstance(node, SliceExpr):
+        return (
+            "SliceExpr",
+            shape(node.obj),
+            shape(node.start) if node.start is not None else None,
+            shape(node.end) if node.end is not None else None,
+        )
     if isinstance(node, IndexAssign):
         return (
             "IndexAssign",
@@ -492,6 +500,40 @@ class TestListsAndMaps(unittest.TestCase):
     def test_unclosed_list_literal_raises(self):
         with self.assertRaises(ParseError):
             parse("[1, 2")
+
+    def test_slice_both_bounds(self):
+        self.assertEqual(
+            shape(parse("xs[1:3]")),
+            ("SliceExpr", ("Identifier", "xs"), ("Literal", 1), ("Literal", 3)),
+        )
+
+    def test_slice_missing_start(self):
+        self.assertEqual(
+            shape(parse("xs[:3]")),
+            ("SliceExpr", ("Identifier", "xs"), None, ("Literal", 3)),
+        )
+
+    def test_slice_missing_end(self):
+        self.assertEqual(
+            shape(parse("xs[1:]")),
+            ("SliceExpr", ("Identifier", "xs"), ("Literal", 1), None),
+        )
+
+    def test_slice_both_missing(self):
+        self.assertEqual(
+            shape(parse("xs[:]")),
+            ("SliceExpr", ("Identifier", "xs"), None, None),
+        )
+
+    def test_plain_index_unaffected_by_slice_grammar(self):
+        self.assertEqual(
+            shape(parse("xs[1]")),
+            ("Index", ("Identifier", "xs"), ("Literal", 1)),
+        )
+
+    def test_slice_assignment_target_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("xs[1:2] = [9];")
 
 
 class TestCompoundAssignment(unittest.TestCase):

@@ -828,5 +828,48 @@ class TestListsAndMaps(unittest.TestCase):
             run('let s = "hi"; s[0] = "y";')
 
 
+class TestSlicing(unittest.TestCase):
+    def test_list_slice_both_bounds(self):
+        self.assertEqual(evaluate("[1, 2, 3, 4, 5][1:3]"), [2, 3])
+
+    def test_string_slice_both_bounds(self):
+        self.assertEqual(evaluate('"hello"[1:3]'), "el")
+
+    def test_slice_missing_start(self):
+        self.assertEqual(evaluate("[1, 2, 3][:2]"), [1, 2])
+
+    def test_slice_missing_end(self):
+        self.assertEqual(evaluate("[1, 2, 3][1:]"), [2, 3])
+
+    def test_slice_missing_both_returns_new_list(self):
+        env = run("let xs = [1, 2, 3]; let ys = xs[:];")
+        xs, ys = env.get("xs"), env.get("ys")
+        self.assertEqual(ys, [1, 2, 3])
+        self.assertIsNot(xs, ys)
+
+    def test_slice_negative_start_normalizes(self):
+        self.assertEqual(evaluate("[1, 2, 3][-2:]"), [2, 3])
+
+    def test_slice_out_of_range_end_clamps(self):
+        self.assertEqual(evaluate("[1, 2, 3][0:100]"), [1, 2, 3])
+
+    def test_plain_index_still_returns_element(self):
+        self.assertEqual(evaluate("[1, 2, 3][1]"), 2)
+
+    def test_slicing_map_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('{"a": 1}[0:1]')
+
+    def test_slice_non_int_bound_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('[1, 2, 3]["a":2]')
+
+    def test_slice_assignment_raises_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            run("[1, 2, 3][1:2] = [9];")
+
+
 if __name__ == "__main__":
     unittest.main()

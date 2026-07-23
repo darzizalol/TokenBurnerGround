@@ -21,6 +21,7 @@ from cinder.interpreter import (
     CinderFunction,
     Environment,
     _is_valid_key,
+    _normalize_slice_bound,
     call_value,
     contains_value,
     is_truthy,
@@ -633,12 +634,6 @@ def _sort_by(arguments: list, line: int, column: int) -> object:
             "sort_by() requires a function returning all numbers or all strings", line, column
         )
     return [item for _, item in sorted(zip(keys, items), key=lambda pair: pair[0])]
-
-
-def _normalize_slice_bound(value: int, length: int) -> int:
-    if value < 0:
-        value += length
-    return max(0, min(value, length))
 
 
 def _slice(arguments: list, line: int, column: int) -> object:

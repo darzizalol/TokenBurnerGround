@@ -98,6 +98,15 @@ class IndexAssign:
 
 
 @dataclass(frozen=True)
+class SliceExpr:
+    obj: "Expr"
+    start: "Expr | None"
+    end: "Expr | None"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Ternary:
     condition: "Expr"
     then_expr: "Expr"
@@ -131,6 +140,7 @@ Expr = Union[
     MapLiteral,
     Index,
     IndexAssign,
+    SliceExpr,
     Ternary,
     FnExpr,
 ]

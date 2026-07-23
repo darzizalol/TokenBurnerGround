@@ -60,6 +60,7 @@ from cinder.ast_nodes import (
     Logical,
     MapLiteral,
     ReturnStmt,
+    SliceExpr,
     Stmt,
     Ternary,
     Unary,
@@ -432,9 +433,18 @@ class Parser:
 
     def _finish_index(self, obj: Expr) -> Expr:
         bracket = self._advance()  # consume '['
-        index = self._ternary()
+        start = None
+        if not self._check(TokenType.COLON):
+            start = self._ternary()
+        if self._check(TokenType.COLON):
+            self._advance()
+            end = None
+            if not self._check(TokenType.RBRACKET):
+                end = self._ternary()
+            self._consume(TokenType.RBRACKET, "']' after slice")
+            return SliceExpr(obj, start, end, bracket.line, bracket.column)
         self._consume(TokenType.RBRACKET, "']' after index")
-        return Index(obj, index, bracket.line, bracket.column)
+        return Index(obj, start, bracket.line, bracket.column)
 
     def _primary(self) -> Expr:
         token = self._peek()

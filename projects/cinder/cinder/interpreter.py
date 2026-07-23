@@ -49,6 +49,7 @@ from cinder.ast_nodes import (
     Logical,
     MapLiteral,
     ReturnStmt,
+    SliceExpr,
     Stmt,
     Ternary,
     Unary,
@@ -166,6 +167,8 @@ class Interpreter:
             return self._evaluate_map_literal(expr, env)
         if isinstance(expr, Index):
             return self._evaluate_index(expr, env)
+        if isinstance(expr, SliceExpr):
+            return self._evaluate_slice(expr, env)
         if isinstance(expr, IndexAssign):
             return self._evaluate_index_assign(expr, env)
         if isinstance(expr, FnExpr):
@@ -302,6 +305,26 @@ class Interpreter:
         raise CinderRuntimeError(
             f"{type_name(obj)} is not indexable", expr.line, expr.column
         )
+
+    def _evaluate_slice(self, expr: SliceExpr, env: Environment) -> object:
+        obj = self.evaluate(expr.obj, env)
+        if not isinstance(obj, (list, str)):
+            raise CinderRuntimeError(
+                f"{type_name(obj)} is not sliceable", expr.line, expr.column
+            )
+        length = len(obj)
+        start = self.evaluate(expr.start, env) if expr.start is not None else 0
+        end = self.evaluate(expr.end, env) if expr.end is not None else length
+        for bound in (start, end):
+            if not isinstance(bound, int) or isinstance(bound, bool):
+                raise CinderRuntimeError(
+                    f"slice bound must be an int, got {type_name(bound)}",
+                    expr.line,
+                    expr.column,
+                )
+        start = _normalize_slice_bound(start, length)
+        end = _normalize_slice_bound(end, length)
+        return obj[start:end]
 
     def _evaluate_index_assign(self, expr: IndexAssign, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)
@@ -561,6 +584,14 @@ def _is_int(value: object) -> bool:
 def _is_valid_key(value: object) -> bool:
     """Map keys must be an immutable, hashable Cinder value."""
     return value is None or isinstance(value, (int, float, str, bool))
+
+
+def _normalize_slice_bound(value: int, length: int) -> int:
+    """Negative bounds count from the end (like index normalization); bounds
+    outside `[0, length]` clamp instead of raising, unlike a plain index."""
+    if value < 0:
+        value += length
+    return max(0, min(value, length))
 
 
 def contains_value(collection: object, item: object, line: int, column: int) -> bool:

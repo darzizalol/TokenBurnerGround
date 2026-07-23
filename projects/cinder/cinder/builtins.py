@@ -519,6 +519,16 @@ def _index_of(arguments: list, line: int, column: int) -> object:
     return -1
 
 
+def _count(arguments: list, line: int, column: int) -> object:
+    _require_arity("count", arguments, 2, line, column)
+    collection, item = arguments
+    if not isinstance(collection, list):
+        raise CinderRuntimeError(
+            f"count() requires a list, got {type_name(collection)}", line, column
+        )
+    return sum(1 for element in collection if values_equal(element, item))
+
+
 def _unique(arguments: list, line: int, column: int) -> object:
     _require_arity("unique", arguments, 1, line, column)
     value = arguments[0]
@@ -831,6 +841,7 @@ _BUILTINS = {
     "all": _all,
     "contains": _contains,
     "index_of": _index_of,
+    "count": _count,
     "copy": _copy,
     "unique": _unique,
     "reverse": _reverse,

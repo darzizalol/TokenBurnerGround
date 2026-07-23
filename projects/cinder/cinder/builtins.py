@@ -823,6 +823,30 @@ def _reduce(arguments: list, line: int, column: int) -> object:
     return acc
 
 
+def _group_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("group_by", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"group_by() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"group_by() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    groups: dict = {}
+    for item in items:
+        key = call_value(fn, [item], line, column)
+        if not _is_valid_key(key):
+            raise CinderRuntimeError(
+                f"{type_name(key)} is not a valid map key", line, column
+            )
+        groups.setdefault(key, []).append(item)
+    return groups
+
+
 def _is_list(arguments: list, line: int, column: int) -> object:
     _require_arity("is_list", arguments, 1, line, column)
     return isinstance(arguments[0], list)
@@ -905,6 +929,7 @@ _BUILTINS = {
     "map": _map,
     "filter": _filter,
     "reduce": _reduce,
+    "group_by": _group_by,
     "slice": _slice,
     "concat": _concat,
     "flatten": _flatten,

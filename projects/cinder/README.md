@@ -55,7 +55,7 @@ while (i < 10) {
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
-  `index_of`, `count`, `unique`, `flatten`, `reverse`, `sort`, `sort_by`, `group_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+  `index_of`, `count`, `unique`, `flatten`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `format`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   math builtins `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `sqrt`,

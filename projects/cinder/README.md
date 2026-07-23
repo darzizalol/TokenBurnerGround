@@ -122,7 +122,9 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: math builtins
 `floor`/`ceil`/`pow`/`sqrt` and `index_of` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `unique`/`count`/`flatten` for lists, a
-`format` string templating builtin, persistent REPL command history, list
-slicing syntax (`list[a:b]`), `group_by`, and `try`/`catch` error recovery.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+[`BACKLOG.md`](BACKLOG.md)): `unique`/`count`/`flatten` for lists, a fix
+for `contains`/`index_of`/`in` wrongly treating `bool` and `int` as
+equal, a `format` string templating builtin, persistent REPL command
+history, list slicing syntax (`list[a:b]`), `group_by`, and `try`/`catch`
+error recovery. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

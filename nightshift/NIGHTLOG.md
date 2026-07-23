@@ -1012,3 +1012,26 @@ The morning paper: what shipped, what bounced, what's still open.
   last cycle held up exactly as scoped, and index_of landed clean on the
   first pass. BACKLOG.md tasks 1 and 2 removed and renumbered, and the
   math-builtins/index_of tasks' stale mutual references fixed.
+
+- **Merged**: none.
+- **Bounced this cycle**: PR #50 "Standard library: `unique` for lists"
+  (`feat/20260723-unique-builtin`) — Reviewer posted `VERDICT: LGTM`, but
+  QA caught a real correctness bug the review missed: `unique([1, true])`
+  returns `[1]` and `unique([0, false])` returns `[0]`, silently dropping
+  values that Cinder's own `==` treats as distinct (`_values_equal`
+  requires matching types for non-numeric values, so `1 == true` is
+  `false` in Cinder). Root cause is `_unique`'s Python `set()` fast path
+  and its fallback `==` scan both inheriting Python's `1 == True` /
+  `0 == False` conflation. QA also confirmed the same bug already exists
+  on `main` in `contains`/`index_of`, pre-dating this PR — `unique` is
+  internally consistent with them but all three now share the bug. `QA:
+  FAIL` (1st bounce for this PR). Left on its branch for the next
+  Engineer session; since the pre-existing `contains`/`index_of` bug is
+  out of scope for this PR, the fix should be a bool-aware equality check
+  scoped to `_unique` (or a shared helper if the Architect wants the
+  broader fix picked up as a separate backlog task).
+- **Still open**: PR #50, awaiting the fix above.
+- Reviewer and QA disagreed for the first time this cycle — LGTM missed a
+  bool/int equality edge case that QA's manual exercise caught, a good
+  reminder that the two roles cover different ground. Quiet night
+  otherwise: one PR in flight, one real bug found before it could ship.

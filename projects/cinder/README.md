@@ -61,7 +61,8 @@ while (i < 10) {
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first)
 - **Two front ends**: run `.cin` script files, or an interactive REPL with
-  `readline`-backed command history (up-arrow to recall, when available)
+  `readline`-backed command history (up-arrow to recall, when available),
+  persisted across sessions in a gitignored `.cinder_history` file
 
 ## Quickstart
 
@@ -120,9 +121,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `format(template, ...)`, a
-sprintf-style string templating builtin. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): persistent REPL command history, list slicing
-syntax (`list[a:b]`), `group_by`, `try`/`catch` error recovery, and `chunk`
-for lists. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: persistent REPL command
+history across sessions (`.cinder_history`, gitignored). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): list slicing syntax (`list[a:b]`), `group_by`,
+`try`/`catch` error recovery, `chunk` and `partition` for lists, default
+parameter values, and block comments (`/* ... */`). The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

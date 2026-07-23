@@ -205,6 +205,98 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Default parameter values: `fn f(a, b = 1) { ... }`
+
+Build: let a function/lambda parameter carry a default expression, evaluated
+at call time (not definition time) when the caller omits that argument.
+`_fn_params_and_body` in `cinder/parser.py` (shared by `_fn_declaration` and
+`_fn_expression` — both `FnDecl` and `FnExpr` go through it) currently parses
+`params` as a plain `list[str]`; change each entry to a `(name: str,
+default: Expr | None)` pair, parsing an optional `= <ternary-level
+expression>` after the parameter name (same precedence tier `_map_pair`'s
+value and `_list_literal`'s elements already use — do not pull in the full
+comma-containing `_assignment()` grammar, since a bare `,` there would be
+ambiguous with the next parameter). Once any parameter has a default, every
+parameter after it must also have one — enforce this in the parser, raising
+`ParseError` at the offending parameter's token, mirroring how Python
+rejects non-default-after-default. `CinderFunction.arity` in
+`cinder/interpreter.py` (currently `len(self.decl.params)`) becomes a
+*minimum* arity — the property should return the count of parameters
+*without* a default; `call_value`'s arity check changes from `len(arguments)
+!= callee.arity` to a range check (`len(arguments) < min_arity or
+len(arguments) > len(params)`), and the call-binding loop evaluates each
+missing trailing parameter's default expression (against `call_env`, so a
+later default can reference an earlier parameter, e.g. `fn f(a, b = a) {
+}`) instead of zipping only supplied arguments. Builtins are unaffected —
+this task only touches `CinderFunction`/`FnDecl`/`FnExpr`.
+
+Acceptance criteria:
+- `fn greet(name, greeting = "hi") { return greeting + " " + name; }`:
+  `greet("Bo")` is `"hi Bo"`; `greet("Bo", "hey")` is `"hey Bo"`.
+- `fn f(a, b = a + 1) { return b; }`; `f(5)` is `6` (later default sees
+  earlier parameter's bound value).
+- Too few arguments to cover all non-default parameters still raises
+  `CinderRuntimeError` with line/column and a message stating the expected
+  range (e.g. `f() expects at least 1 argument(s), got 0`).
+- Too many arguments (more than the full parameter list) still raises
+  `CinderRuntimeError` with line/column.
+- `fn f(a = 1, b) { }` raises `ParseError` at `b` (non-default parameter
+  after a default one).
+- A default expression is re-evaluated on every call that needs it, not
+  cached — `let counter = 0; fn f(a = counter) { counter += 1; return a; }`
+  called twice returns `0` then `1` (this behavior may already fall out of
+  "evaluated at call time"; just don't special-case caching in).
+- Anonymous `fn(a, b = 2) { ... }` (an `FnExpr`, e.g. passed to `map`)
+  supports defaults identically to named `fn` declarations.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 7. Block comments: `/* ... */`
+
+Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
+(currently handles only `#`-to-end-of-line comments) to also recognize a
+`/*` prefix and skip everything up to and including the matching `*/`,
+tracking newlines inside the comment so `line`/`column` tracking for
+tokens *after* the comment stays correct (reuse whatever line-increment
+logic `_advance()`/the string-literal scanner already applies for
+embedded `\n`). Block comments do **not** nest — the first `*/` found
+closes the comment, matching C/Java/JS, not Rust. An unterminated block
+comment (`/*` with no matching `*/` before EOF) raises `LexError` with the
+line/column of the opening `/*`, mirroring the existing unterminated-string
+error (set the same `unterminated: bool` flag introduced in PR #13 so the
+REPL's multi-line continuation logic in `cinder/repl.py` treats an
+in-progress block comment as "needs more input" rather than a hard error —
+check `_needs_more_input` in `repl.py` before assuming this is free).
+Plain `/` (division) and `/=` must still lex correctly when not followed by
+`*` — this only adds one more lookahead case alongside the existing
+`SLASH`/`SLASHEQ` disambiguation.
+
+Acceptance criteria:
+- `/* comment */ print(1);` runs and prints `1`.
+- `print(1); /* trailing */` runs and prints `1`.
+- A block comment spanning multiple lines doesn't corrupt line numbers —
+  an error raised on the line *after* a multi-line block comment reports
+  the correct line, not one shifted by the comment's line count.
+- `1 /* comment */ + 2` still parses as `1 + 2` (comment acts as
+  whitespace between tokens).
+- `10 / 2` and `x /= 2` still lex correctly (division/compound-assign
+  unaffected by the new `/*` lookahead).
+- `/* unterminated` (no closing `*/`) raises `LexError` with the line/column
+  of the opening `/*`, not a silent hang or an error at EOF with no
+  location.
+- `# /* not a block comment */` — a `#` line comment containing `/*` text
+  is still just skipped to end-of-line as before (block-comment detection
+  only triggers when `/*` starts outside of another comment).
+- Full test suite passes.
+
+Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

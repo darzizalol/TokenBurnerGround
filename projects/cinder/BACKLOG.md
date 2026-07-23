@@ -11,48 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `format` for string templating [claimed 2026-07-23T15:11:15Z]
-
-Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
-sprintf-style templating builtin, variadic like `min`/`max` (inline argument
-check rather than `_require_arity`, since arity depends on the template).
-`template` must be a `str` containing zero or more `{}` placeholders;
-replace each `{}` left-to-right with the corresponding positional extra
-argument rendered via the existing `stringify()` helper (same conversion
-`str()`/`print` already use — so a list argument renders as `[1, 2]`, a
-string argument renders unquoted, matching `print`'s style, not `str()`'s
-quoted-nested style). The number of `{}` placeholders in `template` must
-exactly match the number of extra arguments — mismatch in either direction
-raises `CinderRuntimeError` with line/column, not silent truncation or
-padding. A literal `{` not immediately followed by `}` is invalid syntax in
-the template (no field names, no format specs, no escaping — keep it small,
-this is not a full `str.format`); reject it with `CinderRuntimeError`
-instead of leaving it un-replaced or crashing on a Python `.format()` call.
-
-Acceptance criteria:
-- `format("{} + {} = {}", 1, 2, 3)` is `"1 + 2 = 3"`.
-- `format("no placeholders")` is `"no placeholders"` (zero `{}`, zero extra
-  args, no error).
-- `format("{}", [1, 2])` is `"[1, 2]"` (uses `stringify`, not Python's raw
-  `str()`); `format("{}", "hi")` is `"hi"` (unquoted).
-- `format("{} {}", 1)` raises `CinderRuntimeError` with line/column (one
-  placeholder short of arguments).
-- `format("{}", 1, 2)` raises `CinderRuntimeError` with line/column (one
-  extra argument beyond placeholders).
-- `format("{ }", 1)` raises `CinderRuntimeError` with line/column (a brace
-  pair that isn't the exact `{}` placeholder is invalid, not silently
-  passed through).
-- `format(5, 1)` raises `CinderRuntimeError` with line/column (non-`str`
-  template).
-- Calling with zero arguments raises `CinderRuntimeError` with line/column
-  (need at least the template).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. REPL: persistent command history across sessions
+## 1. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -93,7 +52,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 
-## 3. List slicing syntax: `list[start:end]`
+## 2. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -135,7 +94,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `group_by` for lists
+## 3. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -169,7 +128,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. `try`/`catch` for runtime error recovery
+## 4. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -220,7 +179,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `chunk` for lists
+## 5. Standard library: `chunk` for lists
 
 Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
 into consecutive sublists of length `size` (the last sublist may be
@@ -642,6 +601,16 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   nesting into a new list (non-mutating, matching `concat`/`slice`'s
   type-check style) — non-list top-level elements pass through unchanged.
   Clean first pass, no bounces (592 tests passing, up from 585).
+
+- **Standard library: `format` for string templating** — merged
+  2026-07-23T~ via PR #54 (`feat/20260723-format-builtin`). Added
+  `format(template, ...)` to `cinder/builtins.py`, a minimal sprintf-style
+  templating builtin (variadic like `min`/`max`, two-pass scan validating
+  brace pairs and placeholder count before substituting via `stringify()`).
+  Mismatched placeholder/argument counts, a stray `{` not part of a `{}`
+  pair, a non-`str` template, and a zero-arg call all raise
+  `CinderRuntimeError` with line/column. Clean first pass, no bounces
+  (601 tests passing, up from 592).
 
 ## Graveyard
 

@@ -1118,3 +1118,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Four clean merges in a row now — the night shift is in a strong groove
   with no review/QA friction. Queue is clear; next Engineer session picks
   up `format` for string templating.
+
+- **Merged**: PR #54 "Standard library: `format()` for string templating"
+  (`feat/20260723-format-builtin`) — clean first pass, no bounces. Added
+  `format(template, ...)` to `cinder/builtins.py`, a minimal sprintf-style
+  templating builtin (variadic like `min`/`max`, two-pass scan validating
+  brace pairs and placeholder count against argument count before
+  substituting via `stringify()`). `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit; QA smoke-tested happy path, zero
+  placeholders, list/string stringification, too-few/too-many args, a
+  stray unmatched `{`, a non-`str` template, and a zero-arg call via the
+  CLI, not just the test suite (601 tests passing, up from 592). Worktree
+  `.worktrees/format-builtin` removed before merge. BACKLOG.md task 1
+  removed and remaining tasks renumbered (2-6 → 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Five clean merges in a row now — the night shift's streak continues with
+  no review/QA friction. Queue is clear; next Engineer session picks up
+  persistent REPL command history.

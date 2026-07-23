@@ -1236,6 +1236,55 @@ class TestConcat(unittest.TestCase):
             run("concat([1], 5);")
 
 
+class TestChunk(unittest.TestCase):
+    def test_chunk_uneven_remainder_gets_shorter_sublist(self):
+        env = run("let result = chunk([1, 2, 3, 4, 5], 2);")
+        self.assertEqual(env.get("result"), [[1, 2], [3, 4], [5]])
+
+    def test_chunk_evenly_divides(self):
+        env = run("let result = chunk([1, 2, 3, 4], 2);")
+        self.assertEqual(env.get("result"), [[1, 2], [3, 4]])
+
+    def test_chunk_size_one(self):
+        env = run("let result = chunk([1, 2, 3], 1);")
+        self.assertEqual(env.get("result"), [[1], [2], [3]])
+
+    def test_chunk_empty_list(self):
+        env = run("let result = chunk([], 3);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_chunk_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; let result = chunk(xs, 2);")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [[1, 2], [3]])
+
+    def test_chunk_zero_size_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chunk([1, 2, 3], 0);")
+
+    def test_chunk_negative_size_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chunk([1, 2, 3], -1);")
+
+    def test_chunk_zero_size_raises_even_for_empty_list(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chunk([], 0);")
+
+    def test_chunk_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chunk(5, 2);")
+
+    def test_chunk_non_int_size_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('chunk([1, 2, 3], "2");')
+
+    def test_chunk_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chunk([1, 2, 3]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("chunk([1, 2, 3], 2, 3);")
+
+
 class TestFlatten(unittest.TestCase):
     def test_flatten_one_level_of_nesting(self):
         env = run("let result = flatten([[1, 2], [3, 4]]);")

@@ -687,6 +687,25 @@ def _flatten(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _chunk(arguments: list, line: int, column: int) -> object:
+    _require_arity("chunk", arguments, 2, line, column)
+    value, size = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"chunk() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise CinderRuntimeError(
+            f"chunk() requires an int size, got {type_name(size)}", line, column
+        )
+    if size <= 0:
+        raise CinderRuntimeError(
+            f"chunk() requires a positive size, got {size}", line, column
+        )
+    return [value[i:i + size] for i in range(0, len(value), size)]
+
+
 def _zip(arguments: list, line: int, column: int) -> object:
     _require_arity("zip", arguments, 2, line, column)
     list1, list2 = arguments
@@ -933,6 +952,7 @@ _BUILTINS = {
     "slice": _slice,
     "concat": _concat,
     "flatten": _flatten,
+    "chunk": _chunk,
     "zip": _zip,
     "enumerate": _enumerate,
     "assert": _assert,

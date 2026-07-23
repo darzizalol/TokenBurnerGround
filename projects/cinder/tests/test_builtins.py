@@ -456,6 +456,48 @@ class TestIndexOf(unittest.TestCase):
             run('index_of([1], 2, 3);')
 
 
+class TestCount(unittest.TestCase):
+    def test_count_returns_number_of_matches(self):
+        self.assertEqual(
+            run('let result = count([1, 2, 1, 3, 1], 1);').get("result"), 3
+        )
+
+    def test_count_returns_zero_when_not_found(self):
+        self.assertEqual(run('let result = count([1, 2, 3], 9);').get("result"), 0)
+
+    def test_count_on_empty_list_returns_zero(self):
+        self.assertEqual(run('let result = count([], 1);').get("result"), 0)
+
+    def test_count_counts_all_matches_for_strings(self):
+        self.assertEqual(
+            run('let result = count(["a", "b", "a"], "a");').get("result"), 2
+        )
+
+    def test_count_uses_value_equality_for_nested_lists(self):
+        self.assertEqual(
+            run('let result = count([[1, 2], [1, 2], [3]], [1, 2]);').get("result"),
+            2,
+        )
+
+    def test_count_does_not_conflate_bool_with_int(self):
+        self.assertEqual(
+            run('let result = count([1, 2, 3], true);').get("result"), 0
+        )
+        self.assertEqual(
+            run('let result = count([true, false, true], true);').get("result"), 2
+        )
+
+    def test_count_on_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('count(5, 1);')
+
+    def test_count_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('count([1]);')
+        with self.assertRaises(CinderRuntimeError):
+            run('count([1], 2, 3);')
+
+
 class TestStartsWith(unittest.TestCase):
     def test_starts_with_true(self):
         self.assertIs(run('let result = starts_with("hello", "he");').get("result"), True)

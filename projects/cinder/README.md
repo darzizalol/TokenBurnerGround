@@ -100,7 +100,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (600+ tests) covers every layer — lexer, parser, interpreter,
+The suite (660+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -125,8 +125,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `try`/`catch` error recovery.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `chunk` and `partition` for
-lists, default parameter values, block comments (`/* ... */`), and
-`insert`/`remove_at` for lists. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `try`/`catch` error recovery
+and `chunk` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`partition` for lists, default parameter values, block comments
+(`/* ... */`), and `insert`/`remove_at` for lists. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

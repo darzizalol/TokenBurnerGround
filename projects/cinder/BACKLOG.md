@@ -248,6 +248,99 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. Standard library: `first` and `last` for lists
+
+Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
+the element at index `0` / `-1` respectively — shorthand for `list[0]` /
+`list[-1]` that reads better in pipelines built from `map`/`filter`/`reduce`
+chains where the list is itself an expression, not a bound variable.
+Non-mutating, single-argument, following `reverse`/`copy`'s style. An empty
+list has no first/last element — raise `CinderRuntimeError` rather than
+letting a Python `IndexError` escape (reuse the same wording style
+`pop`/`remove_at`-in-progress use for "empty list" errors).
+
+Acceptance criteria:
+- `first([1, 2, 3])` is `1`; `last([1, 2, 3])` is `3`.
+- `first([42])` is `42`; `last([42])` is `42` (single-element list).
+- `first([])` raises `CinderRuntimeError` with line/column (empty list).
+- `last([])` raises `CinderRuntimeError` with line/column (empty list).
+- `first(5)` / `last(5)` raise `CinderRuntimeError` with line/column
+  (non-list argument).
+- Wrong arity raises `CinderRuntimeError` with line/column for both.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `take` and `drop` for lists
+
+Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
+`take` returns a new list of the first `n` elements (or the whole list if
+`n >= len(list)`); `drop` returns a new list with the first `n` elements
+removed (or `[]` if `n >= len(list)`). Non-mutating, matching
+`slice`/`reverse`/`copy`'s copy style — in fact both are one-line special
+cases of the existing `slice()`/`_evaluate_slice` bound-clamping logic
+(`take(l, n)` is `slice(l, 0, n)`, `drop(l, n)` is `slice(l, n, len(l))`), so
+implement them by delegating to the same clamping helper `slice` already
+uses rather than duplicating the bounds arithmetic. `n` must be a
+non-negative `int`; a negative `n` raises `CinderRuntimeError` (unlike
+`slice`, which accepts negative bounds for negative-indexing — `take`/`drop`
+are deliberately simpler and count-based, not index-based).
+
+Acceptance criteria:
+- `take([1, 2, 3, 4], 2)` is `[1, 2]`; `drop([1, 2, 3, 4], 2)` is `[3, 4]`.
+- `take([1, 2], 10)` is `[1, 2]` (n exceeds length, clamps).
+- `drop([1, 2], 10)` is `[]` (n exceeds length, clamps).
+- `take([1, 2, 3], 0)` is `[]`; `drop([1, 2, 3], 0)` is `[1, 2, 3]`.
+- `take([], 3)` is `[]`; `drop([], 3)` is `[]` (empty list).
+- `take([1, 2], -1)` / `drop([1, 2], -1)` raise `CinderRuntimeError` with
+  line/column (negative n).
+- `take(5, 1)` / `drop(5, 1)` raise `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `take([1, 2], "1")` / `drop([1, 2], "1")` raise `CinderRuntimeError` with
+  line/column (non-int n).
+- Neither mutates its input list.
+- Wrong arity raises `CinderRuntimeError` with line/column for both.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `flat_map` for lists
+
+Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
+`flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
+`call_value`-based style. Calls `fn(element)` once per element via the
+shared `call_value` helper; if the result is a `list`, its elements are
+spliced into the output (one level, matching `flatten`'s existing
+one-level-only semantics), otherwise the single result value is appended
+as-is — same per-element dispatch `_flatten` already uses, just applied to
+`fn`'s return value instead of to `list`'s own elements directly. First
+argument must be `list`, second must be callable, matching `map`/`filter`'s
+type-check style.
+
+Acceptance criteria:
+- `flat_map([1, 2, 3], fn(n) { [n, n] })` is `[1, 1, 2, 2, 3, 3]`.
+- `flat_map([1, 2, 3], fn(n) { n * 2 })` is `[2, 4, 6]` (non-list results
+  pass through like `map`, matching `flatten`'s pass-through for
+  non-list elements).
+- `flat_map([], fn(n) { [n] })` is `[]` (empty list, `fn` never called).
+- `flat_map([[1, 2]], fn(x) { x })` is `[1, 2]` (only one level of
+  flattening — a nested list `fn` returns unchanged is spliced in once,
+  not recursively flattened further).
+- `flat_map(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `flat_map([1, 2], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

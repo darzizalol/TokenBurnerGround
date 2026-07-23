@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `insert` and `remove_at` for lists
+## 1. Standard library: `insert` and `remove_at` for lists [claimed 2026-07-23T20:31:28Z]
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and

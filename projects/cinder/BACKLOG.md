@@ -46,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Standard library: `index_of` for lists
+## 2. Standard library: `index_of` for lists [claimed 2026-07-23T14:03:06Z]
 
 Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
 `int` index of the first element equal to `item` (Cinder `==` equality,

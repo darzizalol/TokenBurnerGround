@@ -871,5 +871,60 @@ class TestSlicing(unittest.TestCase):
             run("[1, 2, 3][1:2] = [9];")
 
 
+class TestTryCatch(unittest.TestCase):
+    def test_catch_binds_error_message_and_recovers(self):
+        env = run("let msg = nil; try { let x = 1 / 0; } catch (e) { msg = e; }")
+        self.assertIsInstance(env.get("msg"), str)
+        self.assertIn("division by zero", env.get("msg"))
+
+    def test_execution_continues_after_caught_error(self):
+        env = run(
+            "let after = 0; "
+            "try { let x = 1 / 0; } catch (e) {} "
+            "after = 1;"
+        )
+        self.assertEqual(env.get("after"), 1)
+
+    def test_catch_block_does_not_run_when_no_error(self):
+        env = run("let ran = 0; try { 1; } catch (e) { ran = 1; }")
+        self.assertEqual(env.get("ran"), 0)
+
+    def test_catch_name_not_visible_after_try_catch(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("try { let x = 1 / 0; } catch (e) {} e;")
+
+    def test_break_inside_try_inside_for_loop_exits_loop(self):
+        env = run(
+            "let ran = 0; "
+            "for x in [1] { try { break; } catch (e) {} ran = 1; }"
+        )
+        self.assertEqual(env.get("ran"), 0)
+
+    def test_return_inside_try_inside_function_returns_from_function(self):
+        env = run(
+            "fn f() { try { return 1; } catch (e) { return 2; } return 3; } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_error_raised_inside_catch_block_is_not_re_caught(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("try { let x = 1 / 0; } catch (e) { let y = 1 / 0; }")
+
+    def test_no_error_when_try_body_succeeds(self):
+        env = run("let x = 0; try { x = 1; } catch (e) { x = 2; }")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_nested_try_catch(self):
+        env = run(
+            "let outer = nil; let inner = nil; "
+            "try { "
+            "  try { let x = 1 / 0; } catch (e) { inner = e; let y = 1 / 0; } "
+            "} catch (e) { outer = e; }"
+        )
+        self.assertIsInstance(env.get("inner"), str)
+        self.assertIsInstance(env.get("outer"), str)
+
+
 if __name__ == "__main__":
     unittest.main()

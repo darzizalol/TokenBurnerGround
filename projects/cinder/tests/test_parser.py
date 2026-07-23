@@ -25,6 +25,7 @@ from cinder.ast_nodes import (
     ReturnStmt,
     SliceExpr,
     Ternary,
+    TryStmt,
     Unary,
 )
 from cinder.errors import ParseError
@@ -114,6 +115,13 @@ def stmt_shape(node):
         return ("BreakStmt",)
     if isinstance(node, ContinueStmt):
         return ("ContinueStmt",)
+    if isinstance(node, TryStmt):
+        return (
+            "TryStmt",
+            stmt_shape(node.try_block),
+            node.catch_name,
+            stmt_shape(node.catch_block),
+        )
     raise TypeError(f"unhandled statement type: {type(node)!r}")
 
 
@@ -937,6 +945,62 @@ class TestErrors(unittest.TestCase):
         with self.assertRaises(ParseError) as ctx:
             parse("1 +\n2 +\n")
         self.assertEqual(ctx.exception.line, 3)
+
+
+class TestTryCatch(unittest.TestCase):
+    def test_try_catch_shape(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("try { let x = 1; } catch (e) { print(e); }")
+            ],
+            [
+                (
+                    "TryStmt",
+                    ("Block", [("LetStmt", "x", ("Literal", 1))]),
+                    "e",
+                    (
+                        "Block",
+                        [
+                            (
+                                "ExprStmt",
+                                ("Call", ("Identifier", "print"), [("Identifier", "e")]),
+                            )
+                        ],
+                    ),
+                )
+            ],
+        )
+
+    def test_try_catch_empty_bodies(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("try {} catch (e) {}")],
+            [("TryStmt", ("Block", []), "e", ("Block", []))],
+        )
+
+    def test_missing_catch_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("try { 1; }")
+
+    def test_bare_catch_without_name_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("try { 1; } catch { }")
+
+    def test_try_body_must_be_block(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("try 1; catch (e) { }")
+
+    def test_catch_body_must_be_block(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("try { } catch (e) 1;")
+
+    def test_missing_catch_parens_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("try { } catch e { }")
+
+    def test_break_inside_try_inside_loop_is_valid(self):
+        stmts = parse_stmts("while (true) { try { break; } catch (e) {} }")
+        self.assertEqual(len(stmts), 1)
 
 
 if __name__ == "__main__":

@@ -218,6 +218,15 @@ class ContinueStmt:
     column: int
 
 
+@dataclass(frozen=True)
+class TryStmt:
+    try_block: "Block"
+    catch_name: str
+    catch_block: "Block"
+    line: int
+    column: int
+
+
 Stmt = Union[
     ExprStmt,
     LetStmt,
@@ -229,4 +238,5 @@ Stmt = Union[
     ReturnStmt,
     BreakStmt,
     ContinueStmt,
+    TryStmt,
 ]

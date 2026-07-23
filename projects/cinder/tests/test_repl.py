@@ -1,12 +1,14 @@
 """Tests for cinder.repl: the interactive read-eval-print loop."""
 
 import io
+import os
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from unittest import mock
 
-from cinder.repl import _try_enable_readline, run_repl
+from cinder.repl import _save_history, _try_enable_readline, run_repl
 
 
 def _make_read_line(lines):
@@ -90,6 +92,66 @@ class TestReadlineIntegration(unittest.TestCase):
             outputs = []
             run_repl(read_line=_make_read_line(["let x = 1 + 2;", "x;"]), write=outputs.append)
         self.assertEqual(outputs, ["3"])
+
+
+class TestHistoryPersistence(unittest.TestCase):
+    def setUp(self):
+        self._tmpdir = tempfile.TemporaryDirectory()
+        self._history_file = os.path.join(self._tmpdir.name, ".cinder_history")
+        self._patcher = mock.patch("cinder.repl.HISTORY_FILE", self._history_file)
+        self._patcher.start()
+        import readline
+        readline.clear_history()
+
+    def tearDown(self):
+        self._patcher.stop()
+        self._tmpdir.cleanup()
+        import readline
+        readline.clear_history()
+
+    def test_history_saved_on_exit_and_loaded_next_session(self):
+        import readline
+        readline.add_history("let x = 1;")
+        readline.add_history("x;")
+
+        run_repl(read_line=_make_read_line([]), write=lambda *_: None)
+        self.assertTrue(os.path.exists(self._history_file))
+
+        readline.clear_history()
+        self.assertEqual(readline.get_current_history_length(), 0)
+
+        self.assertTrue(_try_enable_readline())
+        self.assertEqual(readline.get_current_history_length(), 2)
+        self.assertEqual(readline.get_history_item(1), "let x = 1;")
+        self.assertEqual(readline.get_history_item(2), "x;")
+
+    def test_first_run_with_no_history_file_starts_and_exits_cleanly(self):
+        self.assertFalse(os.path.exists(self._history_file))
+        outputs = self._run_helper([])
+        self.assertEqual(outputs, [])
+        self.assertTrue(os.path.exists(self._history_file))
+
+    def test_readline_unavailable_repl_still_exits_cleanly(self):
+        with mock.patch.dict(sys.modules, {"readline": None}):
+            outputs = self._run_helper(["let x = 1;"])
+        self.assertEqual(outputs, [])
+        self.assertFalse(os.path.exists(self._history_file))
+
+    def test_write_history_file_oserror_does_not_raise(self):
+        import readline
+        with mock.patch.object(readline, "write_history_file", side_effect=OSError):
+            outputs = self._run_helper(["let x = 1;"])
+        self.assertEqual(outputs, [])
+
+    def test_save_history_oserror_is_swallowed(self):
+        import readline
+        with mock.patch.object(readline, "write_history_file", side_effect=OSError):
+            _save_history()  # must not raise
+
+    def _run_helper(self, lines):
+        outputs = []
+        run_repl(read_line=_make_read_line(lines), write=outputs.append)
+        return outputs
 
 
 if __name__ == "__main__":

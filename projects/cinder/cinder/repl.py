@@ -7,6 +7,7 @@ across inputs. Bare expression statements echo their value; `CinderError`s
 are caught and reported per statement without killing the loop.
 """
 
+from pathlib import Path
 from typing import Callable, Optional
 
 from cinder.ast_nodes import ExprStmt
@@ -22,12 +23,17 @@ CONTINUATION_PROMPT = "... "
 REPL_SOURCE_NAME = "<repl>"
 EXIT_COMMAND = "exit"
 
+# Lives inside the project directory, never the user's home or a dotfile
+# outside the repo.
+HISTORY_FILE = str(Path(__file__).resolve().parent.parent / ".cinder_history")
+
 _OPENERS = {TokenType.LPAREN, TokenType.LBRACE, TokenType.LBRACKET}
 _CLOSERS = {TokenType.RPAREN, TokenType.RBRACE, TokenType.RBRACKET}
 
 
 def _try_enable_readline() -> bool:
-    """Import `readline` so `input()` gets history/in-line editing for free.
+    """Import `readline` so `input()` gets history/in-line editing for free,
+    and load any history persisted from a previous session.
 
     Not available on every platform (e.g. stock Windows Python), so the REPL
     must keep working without it."""
@@ -35,7 +41,20 @@ def _try_enable_readline() -> bool:
         import readline  # noqa: F401
     except ImportError:
         return False
+    try:
+        readline.read_history_file(HISTORY_FILE)
+    except OSError:
+        pass  # no history file yet, or it's unreadable — start fresh
     return True
+
+
+def _save_history() -> None:
+    """Persist in-session command history to `HISTORY_FILE`, best-effort."""
+    import readline
+    try:
+        readline.write_history_file(HISTORY_FILE)
+    except OSError:
+        pass  # e.g. read-only filesystem — don't let this crash the REPL
 
 
 def _needs_more_input(source: str) -> bool:
@@ -61,36 +80,40 @@ def run_repl(
     if write is None:
         write = print
 
-    _try_enable_readline()
+    has_readline = _try_enable_readline()
 
     interpreter = Interpreter()
     env = create_global_environment()
     buffered_lines: list[str] = []
 
-    while True:
-        prompt = CONTINUATION_PROMPT if buffered_lines else PRIMARY_PROMPT
-        try:
-            line = read_line(prompt)
-        except EOFError:
-            return
+    try:
+        while True:
+            prompt = CONTINUATION_PROMPT if buffered_lines else PRIMARY_PROMPT
+            try:
+                line = read_line(prompt)
+            except EOFError:
+                return
 
-        if not buffered_lines and line.strip() == EXIT_COMMAND:
-            return
+            if not buffered_lines and line.strip() == EXIT_COMMAND:
+                return
 
-        buffered_lines.append(line)
-        source = "\n".join(buffered_lines)
-        if _needs_more_input(source):
-            continue
-        buffered_lines = []
+            buffered_lines.append(line)
+            source = "\n".join(buffered_lines)
+            if _needs_more_input(source):
+                continue
+            buffered_lines = []
 
-        try:
-            statements = parse_program(tokenize(source))
-            for statement in statements:
-                if isinstance(statement, ExprStmt):
-                    value = interpreter.evaluate(statement.expression, env)
-                    if value is not None:
-                        write(stringify(value, quoted=True))
-                else:
-                    interpreter.execute(statement, env)
-        except CinderError as e:
-            write(f"{REPL_SOURCE_NAME}:{e.line}:{e.column}: {e.message}")
+            try:
+                statements = parse_program(tokenize(source))
+                for statement in statements:
+                    if isinstance(statement, ExprStmt):
+                        value = interpreter.evaluate(statement.expression, env)
+                        if value is not None:
+                            write(stringify(value, quoted=True))
+                    else:
+                        interpreter.execute(statement, env)
+            except CinderError as e:
+                write(f"{REPL_SOURCE_NAME}:{e.line}:{e.column}: {e.message}")
+    finally:
+        if has_readline:
+            _save_history()

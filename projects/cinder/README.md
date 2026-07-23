@@ -47,7 +47,9 @@ while (i < 10) {
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
-  anywhere a value is expected (e.g. passed straight to `map`/`filter`)
+  anywhere a value is expected (e.g. passed straight to `map`/`filter`); a
+  trailing parameter may carry a default value (`fn f(a, b = 1) { ... }`),
+  evaluated fresh per call when omitted by the caller
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -101,7 +103,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (670+ tests) covers every layer — lexer, parser, interpreter,
+The suite (680+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -126,8 +128,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `try`/`catch` error recovery,
-`chunk`, and `partition` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): default parameter values, block comments
-(`/* ... */`), and `insert`/`remove_at` for lists. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `chunk` and `partition` for
+lists, and default parameter values. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): block comments (`/* ... */`), and
+`insert`/`remove_at` for lists. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

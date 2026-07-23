@@ -48,7 +48,9 @@ while (i < 10) {
   anywhere a value is expected (e.g. passed straight to `map`/`filter`)
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
-  and list writes), plus read-only string indexing
+  and list writes), plus read-only string indexing, and slicing
+  `list[start:end]`/`string[start:end]` (Python-style, out-of-range bounds
+  clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
   `index_of`, `count`, `unique`, `flatten`, `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
@@ -121,9 +123,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: persistent REPL command
-history across sessions (`.cinder_history`, gitignored). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): list slicing syntax (`list[a:b]`), `group_by`,
-`try`/`catch` error recovery, `chunk` and `partition` for lists, default
-parameter values, and block comments (`/* ... */`). The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: list slicing syntax
+(`list[start:end]`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`group_by` for lists, `try`/`catch` error recovery, `chunk` and `partition`
+for lists, default parameter values, and block comments (`/* ... */`). The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

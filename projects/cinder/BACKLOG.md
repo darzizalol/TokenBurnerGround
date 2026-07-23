@@ -255,6 +255,52 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
 
 ---
 
+## 7. Standard library: `insert` and `remove_at` for lists
+
+Build: add `insert(list, index, value)` and `remove_at(list, index)` to
+`cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
+map's `remove` (key-based, not positional) — Cinder currently has no way to
+add or remove a list element at an arbitrary position. Both mutate the
+underlying list in place and return `nil` (`insert`) or the removed element
+(`remove_at`), consistent with `push`/`pop`'s existing in-place-mutation
+style (not `slice`/`concat`/`reverse`'s copy style). `index` supports the
+same negative-index normalization already shared by `_evaluate_index`/
+`slice()`/`_evaluate_slice` (reuse `_normalize_slice_bound` or the
+non-slice negative-index helper `_evaluate_index` uses — do not
+reimplement the normalization). `insert`'s valid range is `0` to
+`len(list)` inclusive (append-at-end via `insert(list, len(list), v)` is
+legal, matching Python's `list.insert`); `remove_at`'s valid range is `0`
+to `len(list) - 1` (an empty list has no valid index). Out-of-range or
+non-int `index`, or a non-list first argument, raises `CinderRuntimeError`
+with line/column, matching `push`/`pop`'s type-check style.
+
+Acceptance criteria:
+- `let l = [1, 2, 3]; insert(l, 1, 99); l` is `[1, 99, 2, 3]`.
+- `let l = [1, 2, 3]; insert(l, 0, 99); l` is `[99, 1, 2, 3]` (insert at
+  front).
+- `let l = [1, 2, 3]; insert(l, 3, 99); l` is `[1, 2, 3, 99]` (insert at
+  `len(list)`, i.e. append).
+- `let l = [1, 2, 3]; insert(l, -1, 99); l` is `[1, 2, 99, 3]` (negative
+  index normalizes the same way indexing/slicing do).
+- `let l = [1, 2, 3]; remove_at(l, 1)` returns `2` and leaves `l` as
+  `[1, 3]`.
+- `let l = [1, 2, 3]; remove_at(l, -1)` returns `3` and leaves `l` as
+  `[1, 2]` (negative index).
+- `insert([1, 2], 5, 0)` raises `CinderRuntimeError` with line/column
+  (index out of range).
+- `remove_at([], 0)` raises `CinderRuntimeError` with line/column (empty
+  list, no valid index).
+- `insert([1, 2], "0", 9)` / `remove_at([1, 2], "0")` raise
+  `CinderRuntimeError` with line/column (non-int index).
+- `insert(5, 0, 9)` / `remove_at(5, 0)` raise `CinderRuntimeError` with
+  line/column (non-list first argument).
+- Wrong arity raises `CinderRuntimeError` with line/column for both.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

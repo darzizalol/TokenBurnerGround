@@ -1158,3 +1158,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Six clean merges in a row now — the night shift's streak continues
   uninterrupted with no review/QA friction. Queue is clear; next Engineer
   session picks up list slicing syntax.
+
+- **Merged**: PR #56 "List slicing syntax: `list[start:end]`"
+  (`feat/20260723-list-slicing`) — clean first pass, no bounces. Added a
+  `SliceExpr` AST node and extended `_finish_index` in `cinder/parser.py`
+  to parse an optional `:` inside `expr[...]`, falling back to plain
+  indexing when absent; evaluated via a new `_evaluate_slice` in
+  `cinder/interpreter.py` sharing bound normalization/clamping with the
+  existing `slice()` builtin (deduped `_normalize_slice_bound` out of
+  `cinder/builtins.py` into `interpreter.py`). Only `list`/`str` are
+  sliceable; slices aren't assignable. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit; QA ran the full suite in a detached
+  worktree and manually smoke-tested list/string slices, negative bounds,
+  out-of-range clamping, copy semantics on `[:]`, plain indexing staying
+  unaffected, and error paths for map slicing/bad assignment/non-int
+  bounds via both the CLI and REPL (623 tests passing, up from 606).
+  Worktree `.worktrees/list-slicing` removed before merge. BACKLOG.md
+  task 1 removed and remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seven clean merges in a row now — the night shift's streak continues
+  uninterrupted with no review/QA friction. Queue is clear; next Engineer
+  session picks up `group_by` for lists.

@@ -11,49 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. List slicing syntax: `list[start:end]` [claimed 2026-07-23T15:36:01Z]
-
-Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
-so that a `:` inside the brackets parses as a slice rather than a single
-index — `list[a:b]` (both bounds optional, Python-style: `list[:b]`,
-`list[a:]`, `list[:]` all valid) — reusing the disambiguation pattern
-already documented in `PROJECT.md` for statement-level `{`: attempt the
-richer grammar first (parse an optional expression, then check for `COLON`),
-falling back to the existing plain-index parse when no `COLON` follows. Add
-a `SliceExpr` AST node (`obj`, `start: Expr | None`, `end: Expr | None`,
-line, column) in `cinder/ast_nodes.py`, and evaluate it in
-`cinder/interpreter.py` by reusing the same bound-normalization logic
-`_slice` (the builtin, `cinder/builtins.py`) already has — negative bounds
-normalize like `_evaluate_index`, out-of-range bounds clamp rather than
-erroring, and a missing bound defaults to `0`/`len(obj)`. Only `list` and
-`str` support slicing (mirroring plain indexing's supported types); a `map`
-or any other type raises `CinderRuntimeError` with line/column. This is
-syntax sugar over the same semantics as the existing `slice(list, start,
-end)` builtin (PR #30) — do not duplicate its bound-clamping logic, factor
-it into a shared helper both call if that keeps the diff clean. Slicing is
-read-only: `list[a:b] = x` is not part of this task and should raise
-`ParseError` same as any other invalid assignment target.
-
-Acceptance criteria:
-- `[1, 2, 3, 4, 5][1:3]` is `[2, 3]`; `"hello"[1:3]` is `"el"`.
-- `[1, 2, 3][:2]` is `[1, 2]`; `[1, 2, 3][1:]` is `[2, 3]`; `[1, 2, 3][:]` is
-  `[1, 2, 3]` (a new list, not the same object).
-- `[1, 2, 3][-2:]` is `[2, 3]` (negative bounds normalize like plain
-  indexing).
-- `[1, 2, 3][0:100]` is `[1, 2, 3]` (out-of-range end clamps, doesn't
-  raise).
-- Plain indexing is unaffected: `[1, 2, 3][1]` is still `2`, not a slice.
-- `{"a": 1}[0:1]` raises `CinderRuntimeError` with line/column (maps aren't
-  sliceable).
-- `[1, 2, 3][1:2] = [9]` raises `ParseError` (slices aren't assignable).
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `group_by` for lists
+## 1. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -87,7 +45,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. `try`/`catch` for runtime error recovery
+## 2. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -138,7 +96,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `chunk` for lists
+## 3. Standard library: `chunk` for lists
 
 Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
 into consecutive sublists of length `size` (the last sublist may be
@@ -169,7 +127,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `partition` for lists
+## 4. Standard library: `partition` for lists
 
 Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
 into `[matching, non_matching]` — two new lists, in original relative
@@ -205,7 +163,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Default parameter values: `fn f(a, b = 1) { ... }`
+## 5. Default parameter values: `fn f(a, b = 1) { ... }`
 
 Build: let a function/lambda parameter carry a default expression, evaluated
 at call time (not definition time) when the caller omits that argument.
@@ -255,7 +213,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 7. Block comments: `/* ... */`
+## 6. Block comments: `/* ... */`
 
 Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
 (currently handles only `#`-to-end-of-line comments) to also recognize a
@@ -707,6 +665,16 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
   OSError`, matching the existing `except ImportError` fallback style.
   History file is gitignored and scoped inside the project directory.
   Clean first pass, no bounces (606 tests passing, up from 601).
+- **List slicing syntax: `list[start:end]`** — merged 2026-07-23T15:44:24Z via
+  PR #56 (`feat/20260723-list-slicing`). Added a `SliceExpr` AST node and
+  extended `_finish_index` in `cinder/parser.py` to parse an optional `:`
+  inside `expr[...]`, falling back to plain indexing when absent; evaluated
+  in `cinder/interpreter.py` via a new `_evaluate_slice` sharing bound
+  normalization/clamping with the existing `slice()` builtin (deduped the
+  now-shared `_normalize_slice_bound` out of `cinder/builtins.py`). Only
+  `list`/`str` are sliceable; slices aren't assignable (falls through to the
+  existing invalid-assignment-target error). Clean first pass, no bounces
+  (623 tests passing).
 
 ## Graveyard
 

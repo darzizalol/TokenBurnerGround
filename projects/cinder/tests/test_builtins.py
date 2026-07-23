@@ -2,7 +2,7 @@
 keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
-filter, reduce, slice, concat, zip, enumerate, assert, is_list, is_map,
+filter, reduce, slice, concat, flatten, zip, enumerate, assert, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
 import io
@@ -1180,6 +1180,39 @@ class TestConcat(unittest.TestCase):
             run("concat(5, [1]);")
         with self.assertRaises(CinderRuntimeError):
             run("concat([1], 5);")
+
+
+class TestFlatten(unittest.TestCase):
+    def test_flatten_one_level_of_nesting(self):
+        env = run("let result = flatten([[1, 2], [3, 4]]);")
+        self.assertEqual(env.get("result"), [1, 2, 3, 4])
+
+    def test_flatten_only_goes_one_level_deep(self):
+        env = run("let result = flatten([[1], [2, [3, 4]]]);")
+        self.assertEqual(env.get("result"), [1, 2, [3, 4]])
+
+    def test_flatten_passes_through_non_list_elements(self):
+        env = run("let result = flatten([1, [2, 3], 4]);")
+        self.assertEqual(env.get("result"), [1, 2, 3, 4])
+
+    def test_flatten_of_empty_lists(self):
+        self.assertEqual(run("let result = flatten([]);").get("result"), [])
+        self.assertEqual(run("let result = flatten([[], []]);").get("result"), [])
+
+    def test_flatten_with_no_nesting_returns_new_list(self):
+        env = run("let a = [1, 2, 3]; let result = flatten(a);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+        self.assertIsNot(env.get("result"), env.get("a"))
+
+    def test_flatten_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("flatten(5);")
+
+    def test_flatten_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("flatten();")
+        with self.assertRaises(CinderRuntimeError):
+            run("flatten([1], [2]);")
 
 
 class TestZip(unittest.TestCase):

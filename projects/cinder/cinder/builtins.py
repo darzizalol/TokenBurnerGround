@@ -6,7 +6,7 @@
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
-`filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `is_list`, `is_map`,
+`filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
 defined. CLI entrypoints and the REPL should build their global scope with
 this instead of a bare `Environment()` so `.cin` scripts can actually produce
@@ -676,6 +676,22 @@ def _concat(arguments: list, line: int, column: int) -> object:
     return list1 + list2
 
 
+def _flatten(arguments: list, line: int, column: int) -> object:
+    _require_arity("flatten", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"flatten() requires a list, got {type_name(value)}", line, column
+        )
+    result = []
+    for element in value:
+        if isinstance(element, list):
+            result.extend(element)
+        else:
+            result.append(element)
+    return result
+
+
 def _zip(arguments: list, line: int, column: int) -> object:
     _require_arity("zip", arguments, 2, line, column)
     list1, list2 = arguments
@@ -853,6 +869,7 @@ _BUILTINS = {
     "reduce": _reduce,
     "slice": _slice,
     "concat": _concat,
+    "flatten": _flatten,
     "zip": _zip,
     "enumerate": _enumerate,
     "assert": _assert,

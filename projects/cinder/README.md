@@ -35,7 +35,9 @@ while (i < 10) {
   lexical scoping (inner `let` shadows, outer survives)
 - **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
   lists, strings (character-by-character), and maps (over keys),
-  `break`/`continue` in both loop kinds
+  `break`/`continue` in both loop kinds, `try { ... } catch (name) { ... }`
+  for recovering from runtime errors (the caught message binds to `name`;
+  `break`/`continue`/`return` still propagate through uncaught)
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
   `str * int`/`list * int` (Python repetition semantics), `in` for
@@ -123,8 +125,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `group_by` for lists. Coming
-up next (see [`BACKLOG.md`](BACKLOG.md)): `try`/`catch` error recovery,
-`chunk` and `partition` for lists, default parameter values, block comments
-(`/* ... */`), and `insert`/`remove_at` for lists. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `try`/`catch` error recovery.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `chunk` and `partition` for
+lists, default parameter values, block comments (`/* ... */`), and
+`insert`/`remove_at` for lists. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

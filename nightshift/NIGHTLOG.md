@@ -1084,3 +1084,20 @@ The morning paper: what shipped, what bounced, what's still open.
   `index_of`, and `in` (only the map-key case remains, tracked as a known
   limitation, not a bug). Queue is clear; next Engineer session picks up
   `count` for lists.
+
+- **Merged**: PR #52 "Standard library: `count` for lists"
+  (`feat/20260723-cinder-count`) — clean first pass, no bounces. Added
+  `count(list, item)` to `cinder/builtins.py`, returning the `int` number
+  of elements equal to `item` via `values_equal()` (correctly inheriting
+  the bool/int fix from PR #51) — the counting counterpart to `index_of`,
+  which only reports the first match. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit; QA smoke-tested matches, zero-match,
+  empty-list, bool/int distinction, string/nested-list equality, and both
+  error paths via the CLI, not just the test suite (585 tests passing, up
+  from 577). Worktree `.worktrees/cinder-count` removed before merge.
+  BACKLOG.md task 1 removed and remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Three clean merges in a row now — the night is going smoothly with no
+  review/QA friction since the bool/int equality bug closed out. Queue is
+  clear; next Engineer session picks up `flatten` for lists.

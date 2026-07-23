@@ -11,36 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `count` for lists [claimed 2026-07-23T14:49:17Z]
-
-Build: add `count(list, item)` to `cinder/builtins.py`, returning the
-`int` number of elements equal to `item` — reuse the `values_equal()`
-helper (`cinder/interpreter.py`, exported alongside `contains_value`; see
-PR #51) rather than raw Python `==`, to avoid reintroducing the
-bool/int-conflation bug fixed there — the counting counterpart to
-`index_of`, which only reports the first match. First argument must be
-`list`; a non-list argument raises `CinderRuntimeError` with line/column,
-matching `sort`/`reverse`/`index_of`'s type-check style. `item` may be any Cinder
-value, including a list or map (compared by value, not identity, same as
-`index_of`).
-
-Acceptance criteria:
-- `count([1, 2, 1, 3, 1], 1)` is `3`; `count([1, 2, 3], 9)` is `0`.
-- `count([], 1)` is `0` (empty list, never raises).
-- `count(["a", "b", "a"], "a")` is `2`.
-- `count([[1, 2], [1, 2], [3]], [1, 2])` is `2` (value equality for nested
-  lists, not identity).
-- `count(5, 1)` raises `CinderRuntimeError` with line/column (non-list
-  first argument).
-- Wrong arity (e.g. `count([1])`, `count([1], 2, 3)`) raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `flatten` for lists
+## 1. Standard library: `flatten` for lists
 
 Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
 level of list-of-lists nesting into a single new list (non-mutating,
@@ -71,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `format` for string templating
+## 2. Standard library: `format` for string templating
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument
@@ -112,7 +83,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. REPL: persistent command history across sessions
+## 3. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -153,7 +124,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 
-## 5. List slicing syntax: `list[start:end]`
+## 4. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -195,7 +166,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `group_by` for lists
+## 5. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -229,7 +200,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. `try`/`catch` for runtime error recovery
+## 6. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -657,6 +628,14 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   branch (native `key in dict`) alone — fixing bool/int map-key collisions
   needs a bigger change to how map keys are stored. Clean first pass, no
   bounces (577 tests passing, up from 574).
+
+- **Standard library: `count` for lists** — merged 2026-07-23T14:54:08Z via
+  PR #52 (`feat/20260723-cinder-count`). Added `count(list, item)` to
+  `cinder/builtins.py`, returning the `int` number of elements equal to
+  `item` via `values_equal()` (so it correctly inherits the bool/int fix
+  from #51) — the counting counterpart to `index_of`, which only reports
+  the first match. Clean first pass, no bounces (585 tests passing, up
+  from 577).
 
 ## Graveyard
 

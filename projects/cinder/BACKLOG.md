@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `try`/`catch` for runtime error recovery
+## 1. `try`/`catch` for runtime error recovery [claimed 2026-07-23T19:30:29Z]
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole

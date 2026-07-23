@@ -11,76 +11,13 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `floor`, `ceil`, `pow`, `sqrt` [claimed 2026-07-22T20:34:28Z]
-
-Build: add four math builtins to `cinder/builtins.py`, complementing the
-existing `abs`/`min`/`max`/`round` (see PR #20). `floor(n)`/`ceil(n)` take one
-numeric argument and return an `int` (delegate to Python's `math.floor`/
-`math.ceil`). `pow(base, exp)` takes two numeric arguments and returns
-`base ** exp` via Python's `**` (int result if both args are `int` and the
-result is exact, else `float` — mirror Python's own `**` promotion, same
-spirit as `sum`'s int/float promotion from PR #37). `sqrt(n)` takes one
-numeric argument, delegates to `math.sqrt`, always returns a `float`, and
-raises `CinderRuntimeError` with line/column for a negative argument (Cinder
-has no complex numbers) instead of letting Python's `ValueError` escape.
-Each of the four rejects a non-numeric argument or wrong arity with
-`CinderRuntimeError` and line/column, matching `abs`/`round`'s type-check
-style.
-
-Acceptance criteria:
-- `floor(1.5)` is `1`; `floor(-1.5)` is `-2`; `ceil(1.1)` is `2`;
-  `ceil(-1.1)` is `-1`.
-- `pow(2, 10)` is `1024` (`int` result); `pow(2, 0.5)` is `~1.414`
-  (`float` result); `pow(2, -1)` is `0.5`.
-- `sqrt(9)` is `3.0` (always `float`, even for a perfect square);
-  `sqrt(2)` is `~1.414`.
-- `sqrt(-1)` raises `CinderRuntimeError` with line/column (no complex
-  numbers).
-- `floor("a")`, `ceil(nil)`, `pow(2, "a")`, `sqrt("a")` each raise
-  `CinderRuntimeError` with line/column (non-numeric argument).
-- Wrong arity (e.g. `floor()`, `pow(2)`) raises `CinderRuntimeError` with
-  line/column for all four.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `index_of` for lists [claimed 2026-07-23T14:03:06Z]
-
-Build: add `index_of(list, item)` to `cinder/builtins.py`, returning the
-`int` index of the first element equal to `item` (Cinder `==` equality,
-i.e. Python `==` on the underlying values), or `-1` if not found —
-the list counterpart to the existing `find` for strings (see PR #29),
-matching its "-1 on no match" convention rather than raising. First
-argument must be `list`; a non-list argument raises `CinderRuntimeError`
-with line/column, matching `sort`/`reverse`'s type-check style. `item`
-may be any Cinder value, including a list or map (compared by value, not
-identity — matching how `contains` and `==` already work).
-
-Acceptance criteria:
-- `index_of([1, 2, 3], 2)` is `1`; `index_of([1, 2, 3], 9)` is `-1`.
-- `index_of([], 1)` is `-1` (empty list, never raises).
-- `index_of(["a", "b", "a"], "a")` is `0` (first match, not last).
-- `index_of([[1, 2], [3, 4]], [3, 4])` is `1` (value equality for nested
-  lists, not identity).
-- `index_of(5, 1)` raises `CinderRuntimeError` with line/column (non-list
-  first argument).
-- Wrong arity (e.g. `index_of([1])`, `index_of([1], 2, 3)`) raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 3. Standard library: `unique` for lists
+## 1. Standard library: `unique` for lists
 
 Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
 with duplicate elements removed, keeping only the first occurrence of
 each distinct value and preserving original relative order (non-mutating,
 matching `sort`/`reverse`'s style). Equality is Cinder `==` value equality
-(same rule `index_of`, task 2, uses), so use a linear scan against
+(same rule `index_of` uses), so use a linear scan against
 already-kept elements (or a `set` fast path when every element is
 hashable, falling back to linear comparison otherwise — lists and maps
 are unhashable in Cinder, same limitation `sort`/`contains` already have
@@ -107,12 +44,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `count` for lists
+## 2. Standard library: `count` for lists
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` (Cinder `==` value equality, the
 same rule `index_of`/`contains` already use) — the counting counterpart to
-`index_of` (task 2), which only reports the first match. First argument
+`index_of`, which only reports the first match. First argument
 must be `list`; a non-list argument raises `CinderRuntimeError` with
 line/column, matching `sort`/`reverse`/`index_of`'s type-check style.
 `item` may be any Cinder value, including a list or map (compared by
@@ -134,7 +71,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `flatten` for lists
+## 3. Standard library: `flatten` for lists
 
 Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
 level of list-of-lists nesting into a single new list (non-mutating,
@@ -165,7 +102,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `format` for string templating
+## 4. Standard library: `format` for string templating
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument
@@ -206,7 +143,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. REPL: persistent command history across sessions
+## 5. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -247,7 +184,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 
-## 8. List slicing syntax: `list[start:end]`
+## 6. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -289,7 +226,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Standard library: `group_by` for lists
+## 7. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -323,7 +260,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. `try`/`catch` for runtime error recovery
+## 8. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -709,6 +646,25 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   `list.copy()`/`dict.copy()`), giving Cinder a way to intentionally break
   the aliasing `push`/`pop`/index-assign rely on. Clean first pass, no
   bounces (477 tests passing, up from 465).
+
+- **Standard library: math builtins (`floor`, `ceil`, `pow`, `sqrt`)** —
+  merged 2026-07-23T~ via PR #48 (`feat/20260722-math-builtins-2`). Added
+  `floor(n)`/`ceil(n)` (delegate to `math.floor`/`math.ceil`), `pow(base,
+  exp)` (delegates to Python's `**` for int/float promotion), and `sqrt(n)`
+  (delegates to `math.sqrt`, raises `CinderRuntimeError` for negative input
+  since Cinder has no complex numbers) to `cinder/builtins.py`. Bounced once:
+  `_pow` let a negative base with a fractional exponent silently return a
+  Python `complex`, and let `ZeroDivisionError`/`OverflowError` from
+  `base ** exp` escape as raw Python tracebacks instead of
+  `CinderRuntimeError`; fixed with a `complex`-result guard and a
+  try/except around the exponentiation (557 tests passing, up from 542).
+
+- **Standard library: `index_of` for lists** — merged 2026-07-23T~ via
+  PR #49 (`feat/20260723-index-of`). Added `index_of(list, item)` to
+  `cinder/builtins.py`, returning the `int` index of the first element
+  equal to `item` (Cinder `==` value equality) or `-1` if not found — the
+  list counterpart to the existing `find` for strings. Clean first pass,
+  no bounces (542 tests passing).
 
 ## Graveyard
 

@@ -983,3 +983,32 @@ The morning paper: what shipped, what bounced, what's still open.
   `pow`'s complex-number/exception handling — same shape of catch as the
   bitwise-shift bounce two cycles ago, so the next Engineer session has a
   clear, well-scoped fix.
+
+- **Merged**: PR #48 "Standard library: floor, ceil, pow, sqrt"
+  (`feat/20260722-math-builtins-2`) — one bounce, then clean. The Engineer
+  fixed both bugs flagged above: `_pow` now raises `CinderRuntimeError` for
+  a negative base with a fractional exponent (`isinstance(result,
+  complex)` guard, same treatment `sqrt` already gets) and catches
+  `ZeroDivisionError`/`OverflowError` from `base ** exp`, re-raising as
+  `CinderRuntimeError` with line/column. Added regression tests for
+  `pow(-8, 0.5)`, `pow(0, -1)`, and `pow(10.0, 400)`. `VERDICT: LGTM` and
+  `QA: PASS` both landed after the fix commit (557 tests passing, was
+  554). QA also smoke-tested `floor`/`ceil`/`pow`/`sqrt` plus all three
+  fixed edge cases and a large-but-valid `pow(2, 1000)` via
+  `cinder.cli run`. Worktree `.worktrees/math-builtins-2` removed before
+  merge.
+- **Merged**: PR #49 "Standard library: `index_of` for lists"
+  (`feat/20260723-index-of`) — clean, one-shot merge. `index_of(list,
+  item)` added to `cinder/builtins.py`, returning the index of the first
+  element equal to `item` (Cinder `==` value equality) or `-1` if not
+  found, matching `sort`/`reverse`/`contains`'s type-check style.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the sole commit (542
+  tests passing). QA also smoke-tested not-found, nested-list value
+  equality, and empty-list cases via `cinder.cli run`. Worktree
+  `.worktrees/index-of` removed before merge.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Both PRs in the queue cleared this cycle — the math-builtins fix from
+  last cycle held up exactly as scoped, and index_of landed clean on the
+  first pass. BACKLOG.md tasks 1 and 2 removed and renumbered, and the
+  math-builtins/index_of tasks' stale mutual references fixed.

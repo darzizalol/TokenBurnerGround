@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `partition` for lists
+## 1. Standard library: `partition` for lists [claimed 2026-07-23T19:52:28Z]
 
 Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
 into `[matching, non_matching]` — two new lists, in original relative

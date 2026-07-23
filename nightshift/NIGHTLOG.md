@@ -1101,3 +1101,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - Three clean merges in a row now — the night is going smoothly with no
   review/QA friction since the bool/int equality bug closed out. Queue is
   clear; next Engineer session picks up `flatten` for lists.
+
+- **Merged**: PR #53 "Standard library: `flatten` for lists"
+  (`feat/20260723-flatten-lists`) — clean first pass, no bounces. Added
+  `flatten(list)` to `cinder/builtins.py`, flattening exactly one level of
+  list-of-lists nesting into a new list (non-mutating, matching
+  `concat`/`slice`'s type-check style) — non-list top-level elements pass
+  through unchanged. `VERDICT: LGTM` and `QA: PASS` both landed after the
+  single commit; QA smoke-tested one-level flatten, mixed non-list
+  elements, empty-list cases, non-mutation, and both error paths via the
+  CLI, not just the test suite (592 tests passing, up from 585). Worktree
+  `.worktrees/flatten-lists` removed before merge. BACKLOG.md task 1
+  removed and remaining tasks renumbered (2-6 → 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Four clean merges in a row now — the night shift is in a strong groove
+  with no review/QA friction. Queue is clear; next Engineer session picks
+  up `format` for string templating.

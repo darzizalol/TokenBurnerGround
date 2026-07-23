@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `flatten` for lists [claimed 2026-07-23T14:59:26Z]
-
-Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
-level of list-of-lists nesting into a single new list (non-mutating,
-matching `sort`/`reverse`/`concat`'s style) — a non-list element at the top
-level is kept as-is (not iterated into), so `flatten` never recurses past
-one level. First argument must be `list`; a non-list argument raises
-`CinderRuntimeError` with line/column, matching `concat`/`slice`'s
-type-check style. Complements the existing `concat` (two lists into one)
-by handling an arbitrary number of nested lists at once.
-
-Acceptance criteria:
-- `flatten([[1, 2], [3, 4]])` is `[1, 2, 3, 4]`.
-- `flatten([[1], [2, [3, 4]]])` is `[1, 2, [3, 4]]` (only one level deep —
-  the nested `[3, 4]` inside the second element stays a list, not flattened
-  further).
-- `flatten([1, [2, 3], 4])` is `[1, 2, 3, 4]` (non-list elements at the top
-  level pass through unchanged, mixed with flattened list elements).
-- `flatten([])` is `[]`; `flatten([[], []])` is `[]`.
-- `flatten([1, 2, 3])` is `[1, 2, 3]` (no nesting to flatten, still returns
-  a new list, not the same object — regression test that mutating the
-  result doesn't affect the input).
-- `flatten(5)` raises `CinderRuntimeError` with line/column (non-list
-  argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `format` for string templating
+## 1. Standard library: `format` for string templating
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument
@@ -83,7 +52,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. REPL: persistent command history across sessions
+## 2. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -124,7 +93,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 
-## 4. List slicing syntax: `list[start:end]`
+## 3. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -166,7 +135,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `group_by` for lists
+## 4. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -200,7 +169,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. `try`/`catch` for runtime error recovery
+## 5. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -636,6 +605,12 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   from #51) — the counting counterpart to `index_of`, which only reports
   the first match. Clean first pass, no bounces (585 tests passing, up
   from 577).
+- **Standard library: `flatten` for lists** — merged 2026-07-23T15:05:12Z via
+  PR #53 (`feat/20260723-flatten-lists`). Added `flatten(list)` to
+  `cinder/builtins.py`, flattening exactly one level of list-of-lists
+  nesting into a new list (non-mutating, matching `concat`/`slice`'s
+  type-check style) — non-list top-level elements pass through unchanged.
+  Clean first pass, no bounces (592 tests passing, up from 585).
 
 ## Graveyard
 

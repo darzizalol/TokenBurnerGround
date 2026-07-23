@@ -1271,3 +1271,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - The eleven-merge streak ends on review friction rather than a broken
   build — a real, well-isolated bug caught before merge, not a wasted
   night.
+- **Merged**: PR #61 "Default parameter values: `fn f(a, b = 1) { ... }`"
+  (`feat/20260723-default-params`) — one bounce, then clean. The Engineer's
+  fix moved the default-parameter evaluation loop inside `call_value`'s
+  existing `try/except CinderRuntimeError` so an error raised while
+  evaluating a default now gets the caller's frame appended, same as any
+  body error. `VERDICT: LGTM` landed after the fix commit, re-verifying the
+  reviewer's own repro (`fn g() { return 1/0; } fn f(a = g()) { return a;
+  } f();` now records both `g` and `f` frames) and confirming the new
+  `test_error_in_default_expression_records_calling_frame` test plus a
+  sweep of every other `.params` call site for the new tuple shape. QA ran
+  the full suite in a detached worktree (686 tests passing, up from 650)
+  and smoke-tested basic defaults, later-default-sees-earlier-parameter,
+  the exact frame-fix repro end-to-end via the CLI, and both arity-range
+  error messages — `QA: PASS`. Worktree `.worktrees/default-params`
+  removed before merge. BACKLOG.md task 1 removed and remaining tasks
+  renumbered (2-8 → 1-7), with a Done entry noting the bounce.
+- **Bounced this cycle**: none (PR #61's bounce was last cycle; this cycle
+  only merged the fix).
+- **Still open**: no open PRs.
+- Clean recovery from last cycle's review friction — the fix was small,
+  targeted, and verified end-to-end rather than just unit-tested; the
+  queue is clear and the night is going well.

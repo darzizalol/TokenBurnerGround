@@ -11,57 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Default parameter values: `fn f(a, b = 1) { ... }` [claimed 2026-07-23T20:01:51Z]
-
-Build: let a function/lambda parameter carry a default expression, evaluated
-at call time (not definition time) when the caller omits that argument.
-`_fn_params_and_body` in `cinder/parser.py` (shared by `_fn_declaration` and
-`_fn_expression` — both `FnDecl` and `FnExpr` go through it) currently parses
-`params` as a plain `list[str]`; change each entry to a `(name: str,
-default: Expr | None)` pair, parsing an optional `= <ternary-level
-expression>` after the parameter name (same precedence tier `_map_pair`'s
-value and `_list_literal`'s elements already use — do not pull in the full
-comma-containing `_assignment()` grammar, since a bare `,` there would be
-ambiguous with the next parameter). Once any parameter has a default, every
-parameter after it must also have one — enforce this in the parser, raising
-`ParseError` at the offending parameter's token, mirroring how Python
-rejects non-default-after-default. `CinderFunction.arity` in
-`cinder/interpreter.py` (currently `len(self.decl.params)`) becomes a
-*minimum* arity — the property should return the count of parameters
-*without* a default; `call_value`'s arity check changes from `len(arguments)
-!= callee.arity` to a range check (`len(arguments) < min_arity or
-len(arguments) > len(params)`), and the call-binding loop evaluates each
-missing trailing parameter's default expression (against `call_env`, so a
-later default can reference an earlier parameter, e.g. `fn f(a, b = a) {
-}`) instead of zipping only supplied arguments. Builtins are unaffected —
-this task only touches `CinderFunction`/`FnDecl`/`FnExpr`.
-
-Acceptance criteria:
-- `fn greet(name, greeting = "hi") { return greeting + " " + name; }`:
-  `greet("Bo")` is `"hi Bo"`; `greet("Bo", "hey")` is `"hey Bo"`.
-- `fn f(a, b = a + 1) { return b; }`; `f(5)` is `6` (later default sees
-  earlier parameter's bound value).
-- Too few arguments to cover all non-default parameters still raises
-  `CinderRuntimeError` with line/column and a message stating the expected
-  range (e.g. `f() expects at least 1 argument(s), got 0`).
-- Too many arguments (more than the full parameter list) still raises
-  `CinderRuntimeError` with line/column.
-- `fn f(a = 1, b) { }` raises `ParseError` at `b` (non-default parameter
-  after a default one).
-- A default expression is re-evaluated on every call that needs it, not
-  cached — `let counter = 0; fn f(a = counter) { counter += 1; return a; }`
-  called twice returns `0` then `1` (this behavior may already fall out of
-  "evaluated at call time"; just don't special-case caching in).
-- Anonymous `fn(a, b = 2) { ... }` (an `FnExpr`, e.g. passed to `map`)
-  supports defaults identically to named `fn` declarations.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Block comments: `/* ... */`
+## 1. Block comments: `/* ... */`
 
 Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
 (currently handles only `#`-to-end-of-line comments) to also recognize a
@@ -103,7 +53,7 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
 
 ---
 
-## 3. Standard library: `insert` and `remove_at` for lists
+## 2. Standard library: `insert` and `remove_at` for lists
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
@@ -149,7 +99,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `ord` and `chr` for character/code-point conversion
+## 3. Standard library: `ord` and `chr` for character/code-point conversion
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
@@ -179,7 +129,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `pad_start` and `pad_end` for strings
+## 4. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -212,7 +162,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `first` and `last` for lists
+## 5. Standard library: `first` and `last` for lists
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /
@@ -237,7 +187,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `take` and `drop` for lists
+## 6. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -272,7 +222,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `flat_map` for lists
+## 7. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -752,6 +702,17 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   using Cinder truthiness via the shared `call_value`/`is_truthy` helpers,
   matching `map`/`filter`'s type-check style. Clean first pass, no bounces
   (672 tests passing, 11 new).
+- **Default parameter values: `fn f(a, b = 1) { ... }`** — merged
+  2026-07-24T~ via PR #61 (`feat/20260723-default-params`). Extended
+  `FnDecl`/`FnExpr.params` to `list[tuple[str, Expr | None]]`, parser support
+  for `= <expr>` per parameter (enforcing default-after-default), and
+  `CinderFunction.arity` becoming a minimum with `call_value`'s arity check
+  now a min/max range that evaluates missing trailing defaults fresh against
+  `call_env` each call. Bounced once on review: default-expression evaluation
+  ran outside the `try/except CinderRuntimeError` that appends the caller's
+  frame, so an error raised while evaluating a default was missing the
+  calling function's frame; fixed by moving the evaluation loop inside the
+  same try/except (686 tests passing, up from 650).
 
 ## Graveyard
 

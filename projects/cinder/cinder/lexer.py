@@ -118,8 +118,28 @@ class Lexer:
             elif char == "#":
                 while not self._at_end() and self._peek() != "\n":
                     self._advance()
+            elif char == "/" and self._peek_next() == "*":
+                self._block_comment()
             else:
                 break
+
+    def _block_comment(self):
+        start_line, start_col = self.line, self.column
+        self._advance()  # consume '/'
+        self._advance()  # consume '*'
+        while True:
+            if self._at_end():
+                raise LexError(
+                    "unterminated block comment",
+                    start_line,
+                    start_col,
+                    unterminated=True,
+                )
+            if self._peek() == "*" and self._peek_next() == "/":
+                self._advance()  # consume '*'
+                self._advance()  # consume '/'
+                break
+            self._advance()
 
     def _string(self, start_line: int, start_col: int):
         start_pos = self.pos - 1  # position of the opening quote

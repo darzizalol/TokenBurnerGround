@@ -788,6 +788,16 @@ class TestDefaultParameters(unittest.TestCase):
         )
         self.assertEqual(env.get("result"), 11)
 
+    def test_error_in_default_expression_records_calling_frame(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                "fn g() { return 1 + \"a\"; } "
+                "fn f(a = g()) { return a; } "
+                "f();"
+            )
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["g", "f"])
+
 
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):

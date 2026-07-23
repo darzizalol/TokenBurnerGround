@@ -587,13 +587,13 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
             column,
         )
     call_env = Environment(callee.closure)
-    for index, (param_name, default) in enumerate(callee.decl.params):
-        if index < len(arguments):
-            value = arguments[index]
-        else:
-            value = Interpreter().evaluate(default, call_env)
-        call_env.define(param_name, value)
     try:
+        for index, (param_name, default) in enumerate(callee.decl.params):
+            if index < len(arguments):
+                value = arguments[index]
+            else:
+                value = Interpreter().evaluate(default, call_env)
+            call_env.define(param_name, value)
         Interpreter().execute(callee.decl.body, call_env)
     except _ReturnSignal as signal:
         return signal.value

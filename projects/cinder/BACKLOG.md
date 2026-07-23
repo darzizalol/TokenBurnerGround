@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. List slicing syntax: `list[start:end]`
+## 1. List slicing syntax: `list[start:end]` [claimed 2026-07-23T15:36:01Z]
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single

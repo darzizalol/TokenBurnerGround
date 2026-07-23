@@ -1059,3 +1059,28 @@ The morning paper: what shipped, what bounced, what's still open.
   post-mortem suggested — the bool/int fix stayed local to `unique()` and
   didn't try to drag in the pre-existing `contains`/`index_of` bug, which
   is now top of the backlog for its own session. Queue is clear.
+
+- **Merged**: PR #51 "Fix: `contains`, `index_of`, and `in` conflate
+  `bool` with `int`" (`fix/20260723-bool-int-eq`) — clean first pass, no
+  bounces. Renamed `Interpreter`'s `_values_equal` to `values_equal`
+  (dropped the leading underscore, exported alongside `contains_value`)
+  and used it in place of raw Python `==` in `contains_value`'s list
+  branch (backs `contains()`/`in`) and `_index_of`'s scan, so both agree
+  with Cinder's own `==` operator on bool-vs-int. Correctly left the
+  dict-key branch's native `key in dict` lookup alone per the task's
+  explicit scope — fixing bool/int map-key collisions is a bigger,
+  separate change. Added regression tests for all four acceptance
+  criteria; existing numeric/string/list/map-key tests untouched. `VERDICT:
+  LGTM` and `QA: PASS` both landed after the single commit (577 tests
+  passing, up from 574). Worktree `.worktrees/fix-bool-int-eq` removed
+  before merge. BACKLOG.md task 1 removed, remaining tasks renumbered
+  (2-8 → 1-7), and the `count` task's backreference to the `values_equal`
+  helper updated to point at PR #51 instead of "task 1" (which no longer
+  exists now that the fix has shipped).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Two clean merges in a row now — the latent bool/int equality bug that
+  QA caught two cycles ago is fully closed out across `unique`, `contains`,
+  `index_of`, and `in` (only the map-key case remains, tracked as a known
+  limitation, not a bug). Queue is clear; next Engineer session picks up
+  `count` for lists.

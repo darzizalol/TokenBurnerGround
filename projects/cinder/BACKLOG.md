@@ -11,56 +11,16 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Fix: `contains`, `index_of`, and `in` conflate `bool` with `int` [claimed 2026-07-23T14:36:59Z]
-
-Build: QA caught this while testing `unique` (PR #50, bounced) — the bug
-is older and broader than that PR. `contains_value()` in
-`cinder/interpreter.py` (backs both `contains()` and the `in` operator)
-uses raw Python `==`/`in` for its list scan and dict-key check, and
-`_index_of` in `cinder/builtins.py` uses a raw Python `element == item`
-loop. Both inherit Python's `1 == True` and `0 == False`, so
-`contains([1, 2], true)` and `index_of([0, 1], false)` wrongly report a
-match, even though Cinder's own `==` operator gets this right —
-`Interpreter`'s expression evaluator already has a correct
-`_values_equal(left, right)` helper (`cinder/interpreter.py`) that
-requires `type(left) is type(right)` before falling back to `==`, used by
-the `==`/`!=` operators. Expose that helper (drop the leading underscore,
-e.g. `values_equal`, alongside the existing `contains_value` export) and
-use it in place of raw `==` in both `contains_value`'s list branch and
-`_index_of`'s scan, so `contains`/`index_of`/`in` agree with `==` on every
-input. Leave `contains_value`'s dict branch's native `key in dict` lookup
-alone — Cinder maps are backed by a real Python `dict`, so fixing
-`bool`-vs-`int` key collisions there means changing how map keys are
-stored, which is a bigger, separate change; only fix the two equality
-*scans*, and note the map-key gap stays as a known limitation (do not
-attempt the map-key fix in this task).
-
-Acceptance criteria:
-- `contains([1, 2, 3], true)` is `false`; `contains([0, false], 0)` is
-  `true` and `contains([0, false], false)` is `true` (bool and int no
-  longer cross-match, but exact matches on either type still work).
-- `true in [1, 2, 3]` is `false`, mirroring `contains`.
-- `index_of([1, 2, 3], true)` is `-1`; `index_of([true, false], true)` is
-  `0` (still finds an exact `bool` match).
-- Existing `contains`/`index_of`/`in` tests for numeric, string, list,
-  and map-key membership still pass unchanged (this is a targeted fix,
-  not a semantics rewrite).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py`, `cinder/builtins.py`,
-`tests/test_interpreter.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `count` for lists
+## 1. Standard library: `count` for lists
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` — reuse the `values_equal()`
-helper from task 1 above (do not reintroduce the raw Python `==` bug that
-task fixes) — the counting counterpart to `index_of`, which only reports
-the first match. First argument must be `list`; a non-list argument
-raises `CinderRuntimeError` with line/column, matching
-`sort`/`reverse`/`index_of`'s type-check style. `item` may be any Cinder
+helper (`cinder/interpreter.py`, exported alongside `contains_value`; see
+PR #51) rather than raw Python `==`, to avoid reintroducing the
+bool/int-conflation bug fixed there — the counting counterpart to
+`index_of`, which only reports the first match. First argument must be
+`list`; a non-list argument raises `CinderRuntimeError` with line/column,
+matching `sort`/`reverse`/`index_of`'s type-check style. `item` may be any Cinder
 value, including a list or map (compared by value, not identity, same as
 `index_of`).
 
@@ -80,7 +40,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `flatten` for lists
+## 2. Standard library: `flatten` for lists
 
 Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
 level of list-of-lists nesting into a single new list (non-mutating,
@@ -111,7 +71,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `format` for string templating
+## 3. Standard library: `format` for string templating
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument
@@ -152,7 +112,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. REPL: persistent command history across sessions
+## 4. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -193,7 +153,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 
-## 6. List slicing syntax: `list[start:end]`
+## 5. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -235,7 +195,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `group_by` for lists
+## 6. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -269,7 +229,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. `try`/`catch` for runtime error recovery
+## 7. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -684,8 +644,19 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   `int` (`1 == True`), diverging from Cinder's own `==` operator; fixed by
   keying the set on `(isinstance(element, bool), element)` and switching
   the fallback scan to `interpreter._values_equal`. Surfaced the same
-  latent bug in `contains`/`index_of`/`in`, tracked separately as task 1
-  above. 574 tests passing, up from 572.
+  latent bug in `contains`/`index_of`/`in`, tracked separately and fixed
+  below. 574 tests passing, up from 572.
+
+- **Fix: `contains`, `index_of`, and `in` conflate `bool` with `int`** —
+  merged 2026-07-23T~ via PR #51 (`fix/20260723-bool-int-eq`). Renamed
+  `Interpreter`'s `_values_equal` to `values_equal` (dropped leading
+  underscore, exported alongside `contains_value`) and used it in place of
+  raw Python `==` in `contains_value`'s list branch (`cinder/interpreter.py`,
+  backs `contains()`/`in`) and `_index_of`'s scan (`cinder/builtins.py`), so
+  both agree with `==` on bool-vs-int. Left `contains_value`'s dict-key
+  branch (native `key in dict`) alone — fixing bool/int map-key collisions
+  needs a bigger change to how map keys are stored. Clean first pass, no
+  bounces (577 tests passing, up from 574).
 
 ## Graveyard
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `chunk` for lists
+## 1. Standard library: `chunk` for lists [claimed 2026-07-23T19:42:46Z]
 
 Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
 into consecutive sublists of length `size` (the last sublist may be

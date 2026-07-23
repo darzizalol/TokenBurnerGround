@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `count` for lists
+## 1. Standard library: `count` for lists [claimed 2026-07-23T14:49:17Z]
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` — reuse the `values_equal()`

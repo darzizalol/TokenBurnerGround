@@ -3,7 +3,8 @@
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
 `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
-`starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `sum`,
+`starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
+`ceil`, `pow`, `sqrt`, `sum`,
 `any`, `all`, `contains`, `copy`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
@@ -11,6 +12,8 @@ defined. CLI entrypoints and the REPL should build their global scope with
 this instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
 """
+
+import math
 
 from cinder.errors import CinderRuntimeError
 from cinder.interpreter import (
@@ -395,6 +398,70 @@ def _round(arguments: list, line: int, column: int) -> object:
     return round(value)
 
 
+def _floor(arguments: list, line: int, column: int) -> object:
+    _require_arity("floor", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"floor() requires a number, got {type_name(value)}", line, column
+        )
+    return math.floor(value)
+
+
+def _ceil(arguments: list, line: int, column: int) -> object:
+    _require_arity("ceil", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"ceil() requires a number, got {type_name(value)}", line, column
+        )
+    return math.ceil(value)
+
+
+def _pow(arguments: list, line: int, column: int) -> object:
+    _require_arity("pow", arguments, 2, line, column)
+    base, exp = arguments
+    if not _is_numeric(base):
+        raise CinderRuntimeError(
+            f"pow() requires a number as its first argument, got {type_name(base)}",
+            line, column,
+        )
+    if not _is_numeric(exp):
+        raise CinderRuntimeError(
+            f"pow() requires a number as its second argument, got {type_name(exp)}",
+            line, column,
+        )
+    try:
+        result = base ** exp
+    except ZeroDivisionError:
+        raise CinderRuntimeError(
+            "pow() cannot raise zero to a negative power", line, column
+        ) from None
+    except OverflowError:
+        raise CinderRuntimeError("pow() result is too large", line, column) from None
+    if isinstance(result, complex):
+        raise CinderRuntimeError(
+            "pow() requires a non-negative base for fractional exponents, "
+            "no complex numbers",
+            line, column,
+        )
+    return result
+
+
+def _sqrt(arguments: list, line: int, column: int) -> object:
+    _require_arity("sqrt", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"sqrt() requires a number, got {type_name(value)}", line, column
+        )
+    if value < 0:
+        raise CinderRuntimeError(
+            "sqrt() requires a non-negative number, no complex numbers", line, column
+        )
+    return math.sqrt(value)
+
+
 def _sum(arguments: list, line: int, column: int) -> object:
     _require_arity("sum", arguments, 1, line, column)
     value = arguments[0]
@@ -728,6 +795,10 @@ _BUILTINS = {
     "min": _min,
     "max": _max,
     "round": _round,
+    "floor": _floor,
+    "ceil": _ceil,
+    "pow": _pow,
+    "sqrt": _sqrt,
     "sum": _sum,
     "any": _any,
     "all": _all,

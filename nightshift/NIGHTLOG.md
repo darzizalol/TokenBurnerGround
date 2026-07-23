@@ -1293,3 +1293,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Clean recovery from last cycle's review friction — the fix was small,
   targeted, and verified end-to-end rather than just unit-tested; the
   queue is clear and the night is going well.
+- **Merged**: PR #62 "Block comments: `/* ... */`"
+  (`feat/20260723-block-comments`) — clean first pass, no bounces. Extended
+  `Lexer._skip_whitespace_and_comments` to recognize `/*...*/`, non-nesting
+  (first `*/` wins, matching C/Java/JS), tracking embedded newlines so
+  line/column stays correct for tokens after the comment, and raising
+  `LexError(unterminated=True)` at EOF — reusing the same flag the REPL's
+  `_needs_more_input` already branches on for unterminated strings, so no
+  REPL changes were needed. `VERDICT: LGTM` and `QA: PASS` both landed
+  after the single commit; QA ran the full suite in a detached worktree
+  and smoke-tested leading/trailing/inline/multi-line comments, the
+  non-nesting `/*/` edge case, `/` and `/=` regression, a `#`-comment
+  containing literal `/*` text, and the unterminated case via both the CLI
+  and REPL (696 tests passing, up from 686, 24 new). Worktree
+  `.worktrees/block-comments` removed before merge. BACKLOG.md task 1
+  removed and remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twelve of the last thirteen PRs have landed clean — the queue is clear
+  and the night is going well; next Engineer session picks up `insert`
+  and `remove_at` for lists.

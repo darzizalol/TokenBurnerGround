@@ -11,49 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Block comments: `/* ... */` [claimed 2026-07-23T20:21:50Z]
-
-Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
-(currently handles only `#`-to-end-of-line comments) to also recognize a
-`/*` prefix and skip everything up to and including the matching `*/`,
-tracking newlines inside the comment so `line`/`column` tracking for
-tokens *after* the comment stays correct (reuse whatever line-increment
-logic `_advance()`/the string-literal scanner already applies for
-embedded `\n`). Block comments do **not** nest — the first `*/` found
-closes the comment, matching C/Java/JS, not Rust. An unterminated block
-comment (`/*` with no matching `*/` before EOF) raises `LexError` with the
-line/column of the opening `/*`, mirroring the existing unterminated-string
-error (set the same `unterminated: bool` flag introduced in PR #13 so the
-REPL's multi-line continuation logic in `cinder/repl.py` treats an
-in-progress block comment as "needs more input" rather than a hard error —
-check `_needs_more_input` in `repl.py` before assuming this is free).
-Plain `/` (division) and `/=` must still lex correctly when not followed by
-`*` — this only adds one more lookahead case alongside the existing
-`SLASH`/`SLASHEQ` disambiguation.
-
-Acceptance criteria:
-- `/* comment */ print(1);` runs and prints `1`.
-- `print(1); /* trailing */` runs and prints `1`.
-- A block comment spanning multiple lines doesn't corrupt line numbers —
-  an error raised on the line *after* a multi-line block comment reports
-  the correct line, not one shifted by the comment's line count.
-- `1 /* comment */ + 2` still parses as `1 + 2` (comment acts as
-  whitespace between tokens).
-- `10 / 2` and `x /= 2` still lex correctly (division/compound-assign
-  unaffected by the new `/*` lookahead).
-- `/* unterminated` (no closing `*/`) raises `LexError` with the line/column
-  of the opening `/*`, not a silent hang or an error at EOF with no
-  location.
-- `# /* not a block comment */` — a `#` line comment containing `/*` text
-  is still just skipped to end-of-line as before (block-comment detection
-  only triggers when `/*` starts outside of another comment).
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
-
----
-
-## 2. Standard library: `insert` and `remove_at` for lists
+## 1. Standard library: `insert` and `remove_at` for lists
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
@@ -99,7 +57,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `ord` and `chr` for character/code-point conversion
+## 2. Standard library: `ord` and `chr` for character/code-point conversion
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
@@ -129,7 +87,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `pad_start` and `pad_end` for strings
+## 3. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -162,7 +120,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `first` and `last` for lists
+## 4. Standard library: `first` and `last` for lists
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /
@@ -187,7 +145,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `take` and `drop` for lists
+## 5. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -222,7 +180,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `flat_map` for lists
+## 6. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -713,6 +671,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   frame, so an error raised while evaluating a default was missing the
   calling function's frame; fixed by moving the evaluation loop inside the
   same try/except (686 tests passing, up from 650).
+- **Block comments: `/* ... */`** — merged 2026-07-24T~ via PR #62
+  (`feat/20260723-block-comments`). Extended
+  `Lexer._skip_whitespace_and_comments` to recognize `/*...*/`, non-nesting
+  (first `*/` wins), with line/column tracking preserved across embedded
+  newlines and `LexError(unterminated=True)` on EOF reusing the same flag
+  the REPL's `_needs_more_input` already branches on for unterminated
+  strings. Clean first pass, no bounces (696 tests passing, 24 new).
 
 ## Graveyard
 

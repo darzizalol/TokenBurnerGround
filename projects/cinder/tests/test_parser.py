@@ -80,8 +80,16 @@ def shape(node):
             shape(node.else_expr),
         )
     if isinstance(node, FnExpr):
-        return ("FnExpr", node.params, stmt_shape(node.body))
+        return ("FnExpr", params_shape(node.params), stmt_shape(node.body))
     raise TypeError(f"unhandled node type: {type(node)!r}")
+
+
+def params_shape(params):
+    """Structural view of an `FnDecl`/`FnExpr` params list."""
+    return [
+        (name, shape(default) if default is not None else None)
+        for name, default in params
+    ]
 
 
 def parse(source: str):
@@ -101,7 +109,7 @@ def stmt_shape(node):
     if isinstance(node, Block):
         return ("Block", [stmt_shape(s) for s in node.statements])
     if isinstance(node, FnDecl):
-        return ("FnDecl", node.name, node.params, stmt_shape(node.body))
+        return ("FnDecl", node.name, params_shape(node.params), stmt_shape(node.body))
     if isinstance(node, ReturnStmt):
         return ("ReturnStmt", shape(node.value) if node.value is not None else None)
     if isinstance(node, ForStmt):
@@ -729,7 +737,7 @@ class TestFunctions(unittest.TestCase):
                 (
                     "FnDecl",
                     "add",
-                    ["a", "b"],
+                    [("a", None), ("b", None)],
                     (
                         "Block",
                         [
@@ -774,7 +782,7 @@ class TestFunctions(unittest.TestCase):
             shape(parse("fn(x) { return x * 2; }")),
             (
                 "FnExpr",
-                ["x"],
+                [("x", None)],
                 (
                     "Block",
                     [
@@ -795,7 +803,7 @@ class TestFunctions(unittest.TestCase):
                 ("Identifier", "map"),
                 [
                     ("ListLiteral", [("Literal", 1)]),
-                    ("FnExpr", ["x"], ("Block", [("ReturnStmt", ("Identifier", "x"))])),
+                    ("FnExpr", [("x", None)], ("Block", [("ReturnStmt", ("Identifier", "x"))])),
                 ],
             ),
         )
@@ -803,6 +811,60 @@ class TestFunctions(unittest.TestCase):
     def test_fn_expression_missing_body_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let f = fn();")
+
+    def test_fn_declaration_with_default_param(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('fn greet(name, greeting = "hi") { return greeting; }')],
+            [
+                (
+                    "FnDecl",
+                    "greet",
+                    [("name", None), ("greeting", ("Literal", "hi"))],
+                    ("Block", [("ReturnStmt", ("Identifier", "greeting"))]),
+                )
+            ],
+        )
+
+    def test_fn_declaration_default_referencing_earlier_param(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f(a, b = a + 1) { return b; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [
+                        ("a", None),
+                        (
+                            "b",
+                            ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Literal", 1)),
+                        ),
+                    ],
+                    ("Block", [("ReturnStmt", ("Identifier", "b"))]),
+                )
+            ],
+        )
+
+    def test_fn_expression_with_default_param(self):
+        self.assertEqual(
+            shape(parse("fn(a, b = 2) { return a + b; }")),
+            (
+                "FnExpr",
+                [("a", None), ("b", ("Literal", 2))],
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Identifier", "b")),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_fn_non_default_param_after_default_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f(a = 1, b) { }")
 
     def test_return_at_top_level_raises(self):
         with self.assertRaises(ParseError):

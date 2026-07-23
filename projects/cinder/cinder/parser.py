@@ -25,6 +25,14 @@ catch name is required), or a bare `<expr>;` (ExprStmt).
 callback-taking builtin like `map`/`filter` or bound with `let`. Both share
 parameter/body parsing via `_fn_params_and_body`.
 
+A parameter may carry a default value (`fn f(a, b = 1) { ... }`), parsed by
+`_fn_param` at ternary precedence (the same tier `_map_pair`'s value and
+`_list_literal`'s elements use — a bare `,` at that precedence still ends the
+parameter, so parsing the full comma-containing assignment grammar here would
+be ambiguous with the next parameter). Once one parameter has a default,
+every parameter after it must too; `_fn_param` raises `ParseError` at the
+first offending parameter otherwise.
+
 A leading `{` is ambiguous between a Block and a statement-level expression
 rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
 disambiguates by attempting a speculative full-expression parse first (so
@@ -226,11 +234,14 @@ class Parser:
     def _fn_params_and_body(self) -> tuple:
         self._consume(TokenType.LPAREN, "'(' after 'fn'")
         params = []
+        seen_default = False
         if not self._check(TokenType.RPAREN):
-            params.append(self._consume(TokenType.IDENTIFIER, "parameter name").lexeme)
+            params.append(self._fn_param(seen_default))
+            seen_default = seen_default or params[-1][1] is not None
             while self._check(TokenType.COMMA):
                 self._advance()
-                params.append(self._consume(TokenType.IDENTIFIER, "parameter name").lexeme)
+                params.append(self._fn_param(seen_default))
+                seen_default = seen_default or params[-1][1] is not None
         self._consume(TokenType.RPAREN, "')' after parameters")
         if not self._check(TokenType.LBRACE):
             token = self._peek()
@@ -246,6 +257,22 @@ class Parser:
         self._loop_depth = outer_loop_depth
         self._fn_depth -= 1
         return params, body
+
+    def _fn_param(self, seen_default: bool) -> tuple:
+        name_token = self._consume(TokenType.IDENTIFIER, "parameter name")
+        if self._check(TokenType.EQ):
+            self._advance()
+            default = self._ternary()
+        elif seen_default:
+            raise ParseError(
+                f"parameter '{name_token.lexeme}' without a default value "
+                "follows a parameter with one",
+                name_token.line,
+                name_token.column,
+            )
+        else:
+            default = None
+        return (name_token.lexeme, default)
 
     def _return_statement(self) -> Stmt:
         return_token = self._advance()

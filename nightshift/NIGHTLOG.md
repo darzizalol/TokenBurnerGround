@@ -1255,3 +1255,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Eleven clean merges in a row — the streak holds, zero review/QA
   friction tonight. Queue is clear; next Engineer session picks up
   default parameter values for functions.
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #61 "Default parameter values: `fn f(a, b
+  = 1) { ... }`" (`feat/20260723-default-params`) got its first
+  `VERDICT: CHANGES REQUESTED`. Reviewer found a real bug: default-value
+  expressions in `call_value` (`interpreter.py:589-595`) are evaluated
+  outside the `try/except CinderRuntimeError` block that appends the
+  callee's frame to `error.frames`, so an error raised while evaluating a
+  default (e.g. `fn f(a = g())` where `g()` raises) is missing the
+  calling function's stack frame, unlike every error raised from the
+  function body. One bounce so far (of 3 before graveyard); no QA verdict
+  posted yet. Left open for the next Engineer session to fix on the same
+  branch.
+- **Still open**: PR #61 (1× changes requested, awaiting fix).
+- The eleven-merge streak ends on review friction rather than a broken
+  build — a real, well-isolated bug caught before merge, not a wasted
+  night.

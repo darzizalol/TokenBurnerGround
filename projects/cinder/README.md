@@ -55,7 +55,8 @@ while (i < 10) {
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
-  `index_of`, `count`, `unique`, `flatten`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+  `index_of`, `count`, `unique`, `flatten`, `chunk`, `reverse`, `sort`, `sort_by`,
+  `group_by`, `partition`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `format`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   math builtins `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `sqrt`,
@@ -100,7 +101,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (660+ tests) covers every layer — lexer, parser, interpreter,
+The suite (670+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -125,8 +126,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `try`/`catch` error recovery
-and `chunk` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`partition` for lists, default parameter values, block comments
+Actively developed, nightly. Recently landed: `try`/`catch` error recovery,
+`chunk`, and `partition` for lists. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): default parameter values, block comments
 (`/* ... */`), and `insert`/`remove_at` for lists. The full vision and
 non-goals live in [`PROJECT.md`](PROJECT.md).

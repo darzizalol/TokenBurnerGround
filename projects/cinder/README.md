@@ -120,10 +120,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `index_of` and `unique` for
-lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a fix for
-`contains`/`index_of`/`in` wrongly treating `bool` and `int` as equal,
-`count`/`flatten` for lists, a `format` string templating builtin,
-persistent REPL command history, list slicing syntax (`list[a:b]`),
-`group_by`, and `try`/`catch` error recovery. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: a fix for
+`contains`/`index_of`/`in` wrongly treating `bool` and `int` as equal (the
+same bug `unique` had already been fixed for). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `count`/`flatten` for lists, a `format`
+string templating builtin, persistent REPL command history, list slicing
+syntax (`list[a:b]`), `group_by`, and `try`/`catch` error recovery. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

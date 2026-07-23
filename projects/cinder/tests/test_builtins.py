@@ -2,7 +2,7 @@
 keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
-filter, reduce, slice, concat, flatten, zip, enumerate, assert, is_list, is_map,
+filter, reduce, slice, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
 import io
@@ -1412,6 +1412,44 @@ class TestIsFunction(unittest.TestCase):
             run("is_function();")
         with self.assertRaises(CinderRuntimeError):
             run("is_function(len, len);")
+
+
+class TestFormat(unittest.TestCase):
+    def test_format_substitutes_placeholders_in_order(self):
+        env = run('let result = format("{} + {} = {}", 1, 2, 3);')
+        self.assertEqual(env.get("result"), "1 + 2 = 3")
+
+    def test_format_with_no_placeholders_and_no_args(self):
+        env = run('let result = format("no placeholders");')
+        self.assertEqual(env.get("result"), "no placeholders")
+
+    def test_format_uses_stringify_not_python_str(self):
+        env = run('let result = format("{}", [1, 2]);')
+        self.assertEqual(env.get("result"), "[1, 2]")
+
+    def test_format_renders_string_argument_unquoted(self):
+        env = run('let result = format("{}", "hi");')
+        self.assertEqual(env.get("result"), "hi")
+
+    def test_format_too_few_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('format("{} {}", 1);')
+
+    def test_format_too_many_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('format("{}", 1, 2);')
+
+    def test_format_invalid_brace_pair_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('format("{ }", 1);')
+
+    def test_format_non_string_template_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("format(5, 1);")
+
+    def test_format_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("format();")
 
 
 class TestEndToEndViaCli(unittest.TestCase):

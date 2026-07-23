@@ -6,7 +6,7 @@
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
-`filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `is_list`, `is_map`,
+`filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
 defined. CLI entrypoints and the REPL should build their global scope with
 this instead of a bare `Environment()` so `.cin` scripts can actually produce
@@ -730,6 +730,49 @@ def _assert(arguments: list, line: int, column: int) -> object:
     return None
 
 
+def _format(arguments: list, line: int, column: int) -> object:
+    if not arguments:
+        raise CinderRuntimeError("format() expects at least 1 argument, got 0", line, column)
+    template, extra = arguments[0], arguments[1:]
+    if not isinstance(template, str):
+        raise CinderRuntimeError(
+            f"format() requires a string template, got {type_name(template)}", line, column
+        )
+    parts: list = []
+    placeholder_count = 0
+    i = 0
+    length = len(template)
+    while i < length:
+        ch = template[i]
+        if ch == "{":
+            if i + 1 < length and template[i + 1] == "}":
+                parts.append(None)
+                placeholder_count += 1
+                i += 2
+                continue
+            raise CinderRuntimeError(
+                "format() template has a '{' that isn't a valid '{}' placeholder",
+                line, column,
+            )
+        parts.append(ch)
+        i += 1
+    if placeholder_count != len(extra):
+        raise CinderRuntimeError(
+            f"format() template has {placeholder_count} {{}} placeholder(s) but got "
+            f"{len(extra)} argument(s)",
+            line, column,
+        )
+    result = []
+    arg_index = 0
+    for part in parts:
+        if part is None:
+            result.append(stringify(extra[arg_index]))
+            arg_index += 1
+        else:
+            result.append(part)
+    return "".join(result)
+
+
 def _is_callable(value: object) -> bool:
     return isinstance(value, (CinderFunction, Builtin))
 
@@ -873,6 +916,7 @@ _BUILTINS = {
     "zip": _zip,
     "enumerate": _enumerate,
     "assert": _assert,
+    "format": _format,
     "is_list": _is_list,
     "is_map": _is_map,
     "is_string": _is_string,

@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
 keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
-pow, sqrt, sum, any, all, contains, copy, reverse, sort, sort_by, range, map,
+pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
 filter, reduce, slice, concat, zip, enumerate, assert, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
@@ -785,6 +785,45 @@ class TestCopy(unittest.TestCase):
     def test_copy_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("copy([1], [2]);")
+
+
+class TestUnique(unittest.TestCase):
+    def test_unique_keeps_first_occurrence_preserving_order(self):
+        self.assertEqual(
+            run("let result = unique([1, 2, 2, 3, 1]);").get("result"), [1, 2, 3]
+        )
+
+    def test_unique_of_empty_list(self):
+        self.assertEqual(run("let result = unique([]);").get("result"), [])
+
+    def test_unique_of_strings(self):
+        self.assertEqual(
+            run('let result = unique(["a", "a", "b"]);').get("result"), ["a", "b"]
+        )
+
+    def test_unique_uses_value_equality_for_nested_lists(self):
+        self.assertEqual(
+            run("let result = unique([[1], [1], [2]]);").get("result"), [[1], [2]]
+        )
+
+    def test_unique_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; let result = unique(xs);")
+        env.get("result").append(4)
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_unique_returns_new_list_not_same_object(self):
+        env = run("let xs = [1, 2, 3]; let result = unique(xs);")
+        self.assertIsNot(env.get("result"), env.get("xs"))
+
+    def test_unique_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("unique(5);")
+
+    def test_unique_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("unique([1], 2);")
+        with self.assertRaises(CinderRuntimeError):
+            run("unique();")
 
 
 class TestReverse(unittest.TestCase):

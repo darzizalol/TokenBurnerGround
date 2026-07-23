@@ -5,7 +5,7 @@
 `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
-`any`, `all`, `contains`, `copy`, `reverse`, `sort`, `sort_by`, `range`, `map`,
+`any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
 defined. CLI entrypoints and the REPL should build their global scope with
@@ -518,6 +518,28 @@ def _index_of(arguments: list, line: int, column: int) -> object:
     return -1
 
 
+def _unique(arguments: list, line: int, column: int) -> object:
+    _require_arity("unique", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"unique() requires a list, got {type_name(value)}", line, column
+        )
+    if all(_is_valid_key(element) for element in value):
+        seen: set = set()
+        result = []
+        for element in value:
+            if element not in seen:
+                seen.add(element)
+                result.append(element)
+        return result
+    result = []
+    for element in value:
+        if not any(element == kept for kept in result):
+            result.append(element)
+    return result
+
+
 def _reverse(arguments: list, line: int, column: int) -> object:
     _require_arity("reverse", arguments, 1, line, column)
     value = arguments[0]
@@ -805,6 +827,7 @@ _BUILTINS = {
     "contains": _contains,
     "index_of": _index_of,
     "copy": _copy,
+    "unique": _unique,
     "reverse": _reverse,
     "sort": _sort,
     "sort_by": _sort_by,

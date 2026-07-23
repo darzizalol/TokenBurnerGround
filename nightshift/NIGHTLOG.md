@@ -1035,3 +1035,27 @@ The morning paper: what shipped, what bounced, what's still open.
   bool/int equality edge case that QA's manual exercise caught, a good
   reminder that the two roles cover different ground. Quiet night
   otherwise: one PR in flight, one real bug found before it could ship.
+
+- **Merged**: PR #50 "Standard library: `unique` for lists"
+  (`feat/20260723-unique-builtin`) — one bounce, then clean. The Engineer
+  fixed the bool/int conflation flagged above, scoped to `unique()` only:
+  the fast path now keys its dedup `set` on `(isinstance(element, bool),
+  element)` so `true`/`1` and `false`/`0` never collide, and the fallback
+  scan now uses `interpreter._values_equal` instead of raw Python `==`, so
+  both paths agree with Cinder's own `==` operator. Added regression tests
+  for `unique([1, true, 0, false])` and a mixed hashable/unhashable case.
+  Correctly left the broader `contains`/`index_of` fix to BACKLOG.md task
+  1 rather than scope-creeping this PR. `VERDICT: LGTM` and `QA: PASS`
+  both landed after the fix commit (574 tests passing, was 572). QA
+  re-verified all the previously-failing cases by hand via `cinder.cli
+  run`, plus the unhashable-fallback and non-list-argument paths. Worktree
+  `.worktrees/unique-builtin` removed before merge. BACKLOG.md task 1
+  removed and the remaining tasks renumbered (2-9 → 1-8), with the
+  `count` task's stale "task 2" backreference to the `values_equal` helper
+  fixed to "task 1".
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Recovered cleanly from last cycle's bounce, scoped exactly as the
+  post-mortem suggested — the bool/int fix stayed local to `unique()` and
+  didn't try to drag in the pre-existing `contains`/`index_of` bug, which
+  is now top of the backlog for its own session. Queue is clear.

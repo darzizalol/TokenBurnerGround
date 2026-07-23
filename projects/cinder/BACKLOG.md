@@ -11,43 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `unique` for lists [claimed 2026-07-23T14:14:27Z]
-
-Build: add `unique(list)` to `cinder/builtins.py`, returning a new list
-with duplicate elements removed, keeping only the first occurrence of
-each distinct value and preserving original relative order (non-mutating,
-matching `sort`/`reverse`'s style). Equality is Cinder `==` value
-equality, which distinguishes `bool` from `int` (`1` and `true` are
-different values) — QA's review of this task's own PR found `index_of`
-doesn't currently get this right either; see task 2 below for that
-shared fix. Use a linear scan against already-kept elements (or a `set`
-fast path when every element is
-hashable, falling back to linear comparison otherwise — lists and maps
-are unhashable in Cinder, same limitation `sort`/`contains` already have
-for nested collections) rather than assuming all elements are hashable.
-First argument must be `list`; a non-list argument raises
-`CinderRuntimeError` with line/column, matching `sort`/`reverse`'s
-type-check style.
-
-Acceptance criteria:
-- `unique([1, 2, 2, 3, 1])` is `[1, 2, 3]` (first occurrence kept, order
-  preserved).
-- `unique([])` is `[]`.
-- `unique(["a", "a", "b"])` is `["a", "b"]`.
-- `unique([[1], [1], [2]])` is `[[1], [2]]` (value equality works even
-  though inner lists are unhashable).
-- `unique([1, 2, 3])` is a new list, not the same object as the input
-  (regression test that mutating the result doesn't affect the original).
-- `unique(5)` raises `CinderRuntimeError` with line/column (non-list
-  argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Fix: `contains`, `index_of`, and `in` conflate `bool` with `int`
+## 1. Fix: `contains`, `index_of`, and `in` conflate `bool` with `int`
 
 Build: QA caught this while testing `unique` (PR #50, bounced) — the bug
 is older and broader than that PR. `contains_value()` in
@@ -88,11 +52,11 @@ Likely files: `cinder/interpreter.py`, `cinder/builtins.py`,
 
 ---
 
-## 3. Standard library: `count` for lists
+## 2. Standard library: `count` for lists
 
 Build: add `count(list, item)` to `cinder/builtins.py`, returning the
 `int` number of elements equal to `item` — reuse the `values_equal()`
-helper from task 2 above (do not reintroduce the raw Python `==` bug that
+helper from task 1 above (do not reintroduce the raw Python `==` bug that
 task fixes) — the counting counterpart to `index_of`, which only reports
 the first match. First argument must be `list`; a non-list argument
 raises `CinderRuntimeError` with line/column, matching
@@ -116,7 +80,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `flatten` for lists
+## 3. Standard library: `flatten` for lists
 
 Build: add `flatten(list)` to `cinder/builtins.py`, flattening exactly one
 level of list-of-lists nesting into a single new list (non-mutating,
@@ -147,7 +111,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `format` for string templating
+## 4. Standard library: `format` for string templating
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument
@@ -188,7 +152,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. REPL: persistent command history across sessions
+## 5. REPL: persistent command history across sessions
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to
@@ -229,7 +193,7 @@ Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
 
 ---
 
-## 7. List slicing syntax: `list[start:end]`
+## 6. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -271,7 +235,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: `group_by` for lists
+## 7. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -305,7 +269,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. `try`/`catch` for runtime error recovery
+## 8. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -710,6 +674,18 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   equal to `item` (Cinder `==` value equality) or `-1` if not found — the
   list counterpart to the existing `find` for strings. Clean first pass,
   no bounces (542 tests passing).
+
+- **Standard library: `unique` for lists** — merged 2026-07-23T14:32Z via
+  PR #50 (`feat/20260723-unique-builtin`). Added `unique(list)` to
+  `cinder/builtins.py`: a `set`-backed fast path when every element is
+  hashable, falling back to a linear `==` scan otherwise (matching
+  `sort`/`contains`'s existing unhashable-element limitation). Bounced
+  once on QA: the fast path's bare Python `set()` conflated `bool` with
+  `int` (`1 == True`), diverging from Cinder's own `==` operator; fixed by
+  keying the set on `(isinstance(element, bool), element)` and switching
+  the fallback scan to `interpreter._values_equal`. Surfaced the same
+  latent bug in `contains`/`index_of`/`in`, tracked separately as task 1
+  above. 574 tests passing, up from 572.
 
 ## Graveyard
 

@@ -70,6 +70,8 @@ while (i < 10) {
 - **Two front ends**: run `.cin` script files, or an interactive REPL with
   `readline`-backed command history (up-arrow to recall, when available),
   persisted across sessions in a gitignored `.cinder_history` file
+- **Comments**: `# line comments` and `/* block comments */` (non-nesting),
+  both skipped by the lexer wherever whitespace is allowed
 
 ## Quickstart
 
@@ -103,7 +105,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (680+ tests) covers every layer — lexer, parser, interpreter,
+The suite (696+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -128,8 +130,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `chunk` and `partition` for
-lists, and default parameter values. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): block comments (`/* ... */`), and
-`insert`/`remove_at` for lists. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: default parameter values and
+block comments (`/* ... */`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `insert`/`remove_at` for lists, and `ord`/`chr`
+for character/code-point conversion. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

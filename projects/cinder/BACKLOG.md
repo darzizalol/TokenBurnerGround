@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Default parameter values: `fn f(a, b = 1) { ... }`
+## 1. Default parameter values: `fn f(a, b = 1) { ... }` [claimed 2026-07-23T20:01:51Z]
 
 Build: let a function/lambda parameter carry a default expression, evaluated
 at call time (not definition time) when the caller omits that argument.

@@ -53,7 +53,7 @@ while (i < 10) {
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
-  `index_of`, `count`, `unique`, `flatten`, `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+  `index_of`, `count`, `unique`, `flatten`, `reverse`, `sort`, `sort_by`, `group_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `format`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   math builtins `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `sqrt`,
@@ -123,8 +123,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list slicing syntax
-(`list[start:end]`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`group_by` for lists, `try`/`catch` error recovery, `chunk` and `partition`
-for lists, default parameter values, and block comments (`/* ... */`). The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `group_by` for lists. Coming
+up next (see [`BACKLOG.md`](BACKLOG.md)): `try`/`catch` error recovery,
+`chunk` and `partition` for lists, default parameter values, block comments
+(`/* ... */`), and `insert`/`remove_at` for lists. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

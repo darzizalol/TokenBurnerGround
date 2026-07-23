@@ -267,6 +267,69 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. Standard library: `ord` and `chr` for character/code-point conversion
+
+Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
+`chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
+following `_int`/`_float`'s single-argument conversion style — Cinder
+currently has no way to inspect or construct characters by code point, only
+`upper`/`lower`/indexing on whole strings. `ord` requires a `str` of exactly
+length 1 (not empty, not multi-character); `chr` requires an `int` in Python's
+valid code-point range (`0` to `0x10FFFF`), delegating to Python's own
+`chr()`/`ord()` and converting `ValueError` into `CinderRuntimeError` the same
+way `_int`/`_float` convert their string-parsing failures.
+
+Acceptance criteria:
+- `ord("A")` is `65`; `chr(65)` is `"A"`.
+- `ord(chr(97))` is `97` (round-trip).
+- `ord("")` raises `CinderRuntimeError` with line/column (empty string).
+- `ord("ab")` raises `CinderRuntimeError` with line/column (multi-character
+  string).
+- `ord(5)` raises `CinderRuntimeError` with line/column (non-`str` argument).
+- `chr(-1)` and `chr(0x110000)` raise `CinderRuntimeError` with line/column
+  (out of valid code-point range).
+- `chr("65")` raises `CinderRuntimeError` with line/column (non-`int`
+  argument).
+- Wrong arity raises `CinderRuntimeError` with line/column for both.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `pad_start` and `pad_end` for strings
+
+Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
+`cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
+reaches `width` characters — `pad_start` on the left (matching
+Python/JS's `str.rjust`/`padStart`), `pad_end` on the right (`str.ljust`/
+`padEnd`) — following `_find`/`_replace`'s multi-`str`-argument style.
+`fill` must be a length-1 `str` (no multi-character fill patterns, keeping
+this simple); if `len(s) >= width` already, return `s` unchanged (no
+truncation). `width` must be a non-negative `int`.
+
+Acceptance criteria:
+- `pad_start("7", 3, "0")` is `"007"`.
+- `pad_end("7", 3, "0")` is `"700"`.
+- `pad_start("hello", 3, " ")` is `"hello"` (already at/over width, no
+  truncation).
+- `pad_start("", 3, "x")` is `"xxx"` (empty string).
+- `pad_start("ab", 2, "0")` is `"ab"` (exactly at width).
+- `pad_start("7", 3, "ab")` raises `CinderRuntimeError` with line/column
+  (multi-character fill).
+- `pad_start("7", -1, "0")` raises `CinderRuntimeError` with line/column
+  (negative width).
+- `pad_start(5, 3, "0")` raises `CinderRuntimeError` with line/column
+  (non-`str` first argument).
+- `pad_start("7", "3", "0")` raises `CinderRuntimeError` with line/column
+  (non-`int` width).
+- Wrong arity raises `CinderRuntimeError` with line/column for both.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

@@ -21,6 +21,7 @@ from cinder.interpreter import (
     CinderFunction,
     Environment,
     _is_valid_key,
+    _values_equal,
     call_value,
     contains_value,
     is_truthy,
@@ -526,16 +527,20 @@ def _unique(arguments: list, line: int, column: int) -> object:
             f"unique() requires a list, got {type_name(value)}", line, column
         )
     if all(_is_valid_key(element) for element in value):
+        # Key on (is_bool, element) rather than element directly: Python's
+        # native hash/eq treat `1 == True`, but Cinder's `==` (`_values_equal`)
+        # does not, so a bare `set` would wrongly conflate them.
         seen: set = set()
         result = []
         for element in value:
-            if element not in seen:
-                seen.add(element)
+            key = (isinstance(element, bool), element)
+            if key not in seen:
+                seen.add(key)
                 result.append(element)
         return result
     result = []
     for element in value:
-        if not any(element == kept for kept in result):
+        if not any(_values_equal(element, kept) for kept in result):
             result.append(element)
     return result
 

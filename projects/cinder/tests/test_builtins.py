@@ -806,6 +806,18 @@ class TestUnique(unittest.TestCase):
             run("let result = unique([[1], [1], [2]]);").get("result"), [[1], [2]]
         )
 
+    def test_unique_does_not_conflate_bool_and_int(self):
+        self.assertEqual(
+            run("let result = unique([1, true, 0, false]);").get("result"),
+            [1, True, 0, False],
+        )
+
+    def test_unique_does_not_conflate_bool_and_int_alongside_unhashable_elements(self):
+        self.assertEqual(
+            run("let result = unique([1, true, [1], [1]]);").get("result"),
+            [1, True, [1]],
+        )
+
     def test_unique_does_not_mutate_input(self):
         env = run("let xs = [1, 2, 3]; let result = unique(xs);")
         env.get("result").append(4)

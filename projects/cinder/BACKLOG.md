@@ -11,41 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `group_by` for lists [claimed 2026-07-23T19:19:42Z]
-
-Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
-`list`'s elements into a `map` keyed by `fn(element)` (called once per
-element via the shared `call_value` helper, the same one `map`/`filter`/
-`sort_by` already use), where each value is a `list` of the elements that
-produced that key, in original relative order. Keys must be valid map keys
-(same `_is_valid_key` hashability rule the map-index path and `get`/`merge`
-already enforce) — a non-hashable key returned by `fn` (e.g. a list) raises
-`CinderRuntimeError` with line/column, same wording style as `get`'s
-unhashable-key check. First argument must be `list`, second must be
-callable; both follow `map`/`filter`'s existing type-check style.
-
-Acceptance criteria:
-- `group_by([1, 2, 3, 4, 5, 6], fn(n) { n % 2 })` is
-  `{1: [1, 3, 5], 0: [2, 4, 6]}` (grouped by parity, insertion order of
-  first occurrence for key ordering, element order preserved within each
-  group).
-- `group_by([], fn(n) { n })` is `{}` (empty list, `fn` never called).
-- `group_by(["apple", "avocado", "banana"], fn(s) { s[0] })` is
-  `{"a": ["apple", "avocado"], "b": ["banana"]}`.
-- `group_by([1, 2], fn(n) { [n] })` raises `CinderRuntimeError` with
-  line/column (a list is not a valid map key).
-- `group_by(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `group_by([1, 2], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. `try`/`catch` for runtime error recovery
+## 1. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -96,7 +62,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `chunk` for lists
+## 2. Standard library: `chunk` for lists
 
 Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
 into consecutive sublists of length `size` (the last sublist may be
@@ -127,7 +93,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `partition` for lists
+## 3. Standard library: `partition` for lists
 
 Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
 into `[matching, non_matching]` — two new lists, in original relative
@@ -163,7 +129,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Default parameter values: `fn f(a, b = 1) { ... }`
+## 4. Default parameter values: `fn f(a, b = 1) { ... }`
 
 Build: let a function/lambda parameter carry a default expression, evaluated
 at call time (not definition time) when the caller omits that argument.
@@ -213,7 +179,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 6. Block comments: `/* ... */`
+## 5. Block comments: `/* ... */`
 
 Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
 (currently handles only `#`-to-end-of-line comments) to also recognize a
@@ -255,7 +221,7 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
 
 ---
 
-## 7. Standard library: `insert` and `remove_at` for lists
+## 6. Standard library: `insert` and `remove_at` for lists
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
@@ -721,6 +687,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `list`/`str` are sliceable; slices aren't assignable (falls through to the
   existing invalid-assignment-target error). Clean first pass, no bounces
   (623 tests passing).
+- **Standard library: `group_by` for lists** — merged 2026-07-23T19:25:03Z via
+  PR #57 (`feat/20260723-group-by`). Added `group_by(list, fn)` to
+  `cinder/builtins.py`, partitioning elements into a `map` keyed by
+  `fn(element)`, reusing `call_value` and `_is_valid_key` from the existing
+  `map`/`filter`/`sort_by`/`get` paths; a non-hashable key raises
+  `CinderRuntimeError`. Clean first pass, no bounces (633 tests passing).
 
 ## Graveyard
 

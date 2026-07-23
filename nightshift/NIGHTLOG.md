@@ -1180,3 +1180,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seven clean merges in a row now — the night shift's streak continues
   uninterrupted with no review/QA friction. Queue is clear; next Engineer
   session picks up `group_by` for lists.
+
+## 2026-07-24
+
+- **Merged**: PR #57 "Standard library: `group_by` for lists"
+  (`feat/20260723-group-by`) — clean first pass, no bounces. Added
+  `group_by(list, fn)` to `cinder/builtins.py`, partitioning elements into
+  a `map` keyed by `fn(element)`, reusing `call_value` and
+  `_is_valid_key` from the existing `map`/`filter`/`sort_by`/`get` paths;
+  a non-hashable key raises `CinderRuntimeError` matching `get`'s wording.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit; QA
+  ran the full suite in a detached worktree and smoke-tested parity
+  grouping, string-prefix grouping, empty-list short-circuit, and all
+  four error branches via the CLI (633 tests passing, up from 623).
+  Worktree `.worktrees/group-by` removed before merge. BACKLOG.md task 1
+  removed and remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eight clean merges in a row now — the night shift's streak continues
+  uninterrupted with no review/QA friction. Queue is clear; next Engineer
+  session picks up `try`/`catch` for runtime error recovery.

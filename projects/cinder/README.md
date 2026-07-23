@@ -51,7 +51,7 @@ while (i < 10) {
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
-  `index_of`, `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+  `index_of`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   math builtins `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `sqrt`,
@@ -95,7 +95,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (560+ tests) covers every layer — lexer, parser, interpreter,
+The suite (570+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -120,11 +120,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: math builtins
-`floor`/`ceil`/`pow`/`sqrt` and `index_of` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `unique`/`count`/`flatten` for lists, a fix
-for `contains`/`index_of`/`in` wrongly treating `bool` and `int` as
-equal, a `format` string templating builtin, persistent REPL command
-history, list slicing syntax (`list[a:b]`), `group_by`, and `try`/`catch`
-error recovery. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `index_of` and `unique` for
+lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a fix for
+`contains`/`index_of`/`in` wrongly treating `bool` and `int` as equal,
+`count`/`flatten` for lists, a `format` string templating builtin,
+persistent REPL command history, list slicing syntax (`list[a:b]`),
+`group_by`, and `try`/`catch` error recovery. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

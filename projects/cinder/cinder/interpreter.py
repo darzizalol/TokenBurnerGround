@@ -96,7 +96,8 @@ class CinderFunction:
 
     @property
     def arity(self) -> int:
-        return len(self.decl.params)
+        """Minimum arity: the count of parameters with no default value."""
+        return sum(1 for _, default in self.decl.params if default is None)
 
 
 class Builtin:
@@ -571,16 +572,28 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
         return callee.call(arguments, line, column)
     if not isinstance(callee, CinderFunction):
         raise CinderRuntimeError(f"{type_name(callee)} is not callable", line, column)
-    if len(arguments) != callee.arity:
+    min_arity = callee.arity
+    max_arity = len(callee.decl.params)
+    if len(arguments) < min_arity or len(arguments) > max_arity:
+        if min_arity == max_arity:
+            expected = f"{min_arity}"
+        elif len(arguments) < min_arity:
+            expected = f"at least {min_arity}"
+        else:
+            expected = f"at most {max_arity}"
         raise CinderRuntimeError(
-            f"{callee.name}() expects {callee.arity} argument(s), got {len(arguments)}",
+            f"{callee.name}() expects {expected} argument(s), got {len(arguments)}",
             line,
             column,
         )
     call_env = Environment(callee.closure)
-    for param, value in zip(callee.decl.params, arguments):
-        call_env.define(param, value)
     try:
+        for index, (param_name, default) in enumerate(callee.decl.params):
+            if index < len(arguments):
+                value = arguments[index]
+            else:
+                value = Interpreter().evaluate(default, call_env)
+            call_env.define(param_name, value)
         Interpreter().execute(callee.decl.body, call_env)
     except _ReturnSignal as signal:
         return signal.value

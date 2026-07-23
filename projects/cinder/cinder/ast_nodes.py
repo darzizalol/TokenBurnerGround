@@ -119,7 +119,11 @@ class Ternary:
 class FnExpr:
     """An anonymous `fn(params) { body }` function literal, usable as a value
     (e.g. passed directly to `map`/`filter`, or bound with `let`) — unlike
-    `FnDecl`, which only appears at statement position and requires a name."""
+    `FnDecl`, which only appears at statement position and requires a name.
+
+    `params` is a `list[tuple[str, Expr | None]]`: each entry pairs a
+    parameter name with its default-value expression, or `None` if the
+    parameter has no default."""
 
     params: list
     body: "Block"
@@ -192,6 +196,9 @@ class ForStmt:
 
 @dataclass(frozen=True)
 class FnDecl:
+    """`params` is a `list[tuple[str, Expr | None]]`, same shape as `FnExpr`'s
+    — see its docstring."""
+
     name: str
     params: list
     body: "Block"

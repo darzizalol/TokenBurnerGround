@@ -728,6 +728,77 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(names, ["bad"])
 
 
+class TestDefaultParameters(unittest.TestCase):
+    def test_default_used_when_argument_omitted(self):
+        env = run(
+            'fn greet(name, greeting = "hi") { return greeting + " " + name; } '
+            'let result = greet("Bo");'
+        )
+        self.assertEqual(env.get("result"), "hi Bo")
+
+    def test_default_overridden_when_argument_supplied(self):
+        env = run(
+            'fn greet(name, greeting = "hi") { return greeting + " " + name; } '
+            'let result = greet("Bo", "hey");'
+        )
+        self.assertEqual(env.get("result"), "hey Bo")
+
+    def test_later_default_sees_earlier_bound_parameter(self):
+        env = run(
+            "fn f(a, b = a + 1) { return b; } let result = f(5);"
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_too_few_arguments_raises_with_range_message(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a, b = 1) { return a; } f();')
+        self.assertIn("expects at least 1 argument(s), got 0", str(ctx.exception))
+
+    def test_too_many_arguments_still_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('fn f(a, b = 1) { return a; } f(1, 2, 3);')
+
+    def test_non_default_param_after_default_is_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            run("fn f(a = 1, b) { }")
+
+    def test_default_expression_reevaluated_each_call_not_cached(self):
+        env = run(
+            "let counter = 0; "
+            "fn f(a = counter) { counter += 1; return a; } "
+            "let first = f(); "
+            "let second = f();"
+        )
+        self.assertEqual(env.get("first"), 0)
+        self.assertEqual(env.get("second"), 1)
+
+    def test_anonymous_function_supports_default_params(self):
+        env = run(
+            "let f = fn(a, b = 2) { return a + b; }; "
+            "let result = f(1);"
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_anonymous_function_default_overridden(self):
+        env = run(
+            "let f = fn(a, b = 2) { return a + b; }; "
+            "let result = f(1, 10);"
+        )
+        self.assertEqual(env.get("result"), 11)
+
+    def test_error_in_default_expression_records_calling_frame(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                "fn g() { return 1 + \"a\"; } "
+                "fn f(a = g()) { return a; } "
+                "f();"
+            )
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["g", "f"])
+
+
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):
         self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])

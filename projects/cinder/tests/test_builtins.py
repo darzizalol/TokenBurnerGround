@@ -417,6 +417,37 @@ class TestFind(unittest.TestCase):
             run('find("hello");')
 
 
+class TestIndexOf(unittest.TestCase):
+    def test_index_of_returns_index_of_first_match(self):
+        self.assertEqual(run('let result = index_of([1, 2, 3], 2);').get("result"), 1)
+
+    def test_index_of_returns_negative_one_when_not_found(self):
+        self.assertEqual(run('let result = index_of([1, 2, 3], 9);').get("result"), -1)
+
+    def test_index_of_on_empty_list_returns_negative_one(self):
+        self.assertEqual(run('let result = index_of([], 1);').get("result"), -1)
+
+    def test_index_of_returns_first_match_not_last(self):
+        self.assertEqual(
+            run('let result = index_of(["a", "b", "a"], "a");').get("result"), 0
+        )
+
+    def test_index_of_uses_value_equality_for_nested_lists(self):
+        self.assertEqual(
+            run('let result = index_of([[1, 2], [3, 4]], [3, 4]);').get("result"), 1
+        )
+
+    def test_index_of_on_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('index_of(5, 1);')
+
+    def test_index_of_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('index_of([1]);')
+        with self.assertRaises(CinderRuntimeError):
+            run('index_of([1], 2, 3);')
+
+
 class TestStartsWith(unittest.TestCase):
     def test_starts_with_true(self):
         self.assertIs(run('let result = starts_with("hello", "he");').get("result"), True)

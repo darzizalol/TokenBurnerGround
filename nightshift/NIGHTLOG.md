@@ -1220,3 +1220,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Nine clean merges in a row — the streak holds, zero review/QA friction
   tonight. Queue is clear; next Engineer session picks up `chunk` for
   lists.
+- **Merged**: PR #59 "Standard library: `chunk` for lists"
+  (`feat/20260723-chunk-lists`) — clean first pass, no bounces. Added
+  `chunk(list, size)` to `cinder/builtins.py`, splitting a list into
+  consecutive sublists of length `size` (last sublist shorter on uneven
+  remainder), non-mutating, matching `slice`/`concat`/`flatten`'s
+  type-check style; `size` must be a positive `int`, checked before
+  looking at the list's contents so it fires even for an empty list.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit; QA
+  ran the full suite in a detached worktree and smoke-tested even/uneven
+  splits, empty list, non-mutation, and all error branches via the CLI
+  (661 tests passing, up from 650, 11 new). Worktree `.worktrees/chunk-lists`
+  removed before merge. BACKLOG.md task 1 removed and remaining tasks
+  renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Ten clean merges in a row — the streak holds, zero review/QA friction
+  tonight. Queue is clear; next Engineer session picks up `partition` for
+  lists.

@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `chunk` for lists [claimed 2026-07-23T19:42:46Z]
-
-Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
-into consecutive sublists of length `size` (the last sublist may be
-shorter if `len(list)` doesn't divide evenly), non-mutating, matching
-`slice`/`concat`/`flatten`'s type-check style. `size` must be a positive
-`int`; `size <= 0` raises `CinderRuntimeError` with line/column (no
-infinite-sublists or divide-by-zero ambiguity, and this check applies
-before looking at the list's contents, so it fires even for an empty
-list). First argument must be `list`.
-
-Acceptance criteria:
-- `chunk([1, 2, 3, 4, 5], 2)` is `[[1, 2], [3, 4], [5]]` (uneven
-  remainder gets its own shorter sublist).
-- `chunk([1, 2, 3, 4], 2)` is `[[1, 2], [3, 4]]` (evenly divides).
-- `chunk([1, 2, 3], 1)` is `[[1], [2], [3]]`.
-- `chunk([], 3)` is `[]` (empty list, valid size, no error).
-- `chunk([1, 2, 3], 0)` raises `CinderRuntimeError` with line/column
-  (non-positive size).
-- `chunk([1, 2, 3], -1)` raises `CinderRuntimeError` with line/column.
-- `chunk(5, 2)` raises `CinderRuntimeError` with line/column (non-list
-  first argument).
-- `chunk([1, 2, 3], "2")` raises `CinderRuntimeError` with line/column
-  (non-int size).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `partition` for lists
+## 1. Standard library: `partition` for lists
 
 Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
 into `[matching, non_matching]` — two new lists, in original relative
@@ -78,7 +47,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Default parameter values: `fn f(a, b = 1) { ... }`
+## 2. Default parameter values: `fn f(a, b = 1) { ... }`
 
 Build: let a function/lambda parameter carry a default expression, evaluated
 at call time (not definition time) when the caller omits that argument.
@@ -128,7 +97,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 4. Block comments: `/* ... */`
+## 3. Block comments: `/* ... */`
 
 Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
 (currently handles only `#`-to-end-of-line comments) to also recognize a
@@ -170,7 +139,7 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
 
 ---
 
-## 5. Standard library: `insert` and `remove_at` for lists
+## 4. Standard library: `insert` and `remove_at` for lists
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
@@ -216,7 +185,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `ord` and `chr` for character/code-point conversion
+## 5. Standard library: `ord` and `chr` for character/code-point conversion
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
@@ -246,7 +215,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `pad_start` and `pad_end` for strings
+## 6. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -714,6 +683,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `break`/`continue`/`return` (Python-internal signals, not
   `CinderRuntimeError`) still propagate through uncaught. Clean first pass,
   no bounces (650 tests passing, 17 new).
+- **Standard library: `chunk` for lists** — merged 2026-07-24T~00:15Z via
+  PR #59 (`feat/20260723-chunk-lists`). Added `chunk(list, size)` to
+  `cinder/builtins.py`, splitting a list into consecutive sublists of
+  length `size` (last sublist shorter on uneven remainder), non-mutating,
+  matching `slice`/`concat`/`flatten`'s type-check style. Clean first pass,
+  no bounces (661 tests passing, 11 new).
 
 ## Graveyard
 

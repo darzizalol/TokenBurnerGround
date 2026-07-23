@@ -54,8 +54,9 @@ while (i < 10) {
   `index_of`, `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
-  math builtins `abs`, `min`, `max`, `round`, and type predicates `is_list`,
-  `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`, `is_function`
+  math builtins `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `sqrt`,
+  and type predicates `is_list`, `is_map`, `is_string`, `is_number`,
+  `is_bool`, `is_nil`, `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first)
@@ -94,7 +95,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (535+ tests) covers every layer — lexer, parser, interpreter,
+The suite (560+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -119,11 +120,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `remove(map, key)` and the
-type-predicate builtins (`is_list`, `is_map`, `is_string`, `is_number`,
-`is_bool`, `is_nil`, `is_function`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `floor`/`ceil`/`pow`/`sqrt`,
-`index_of`/`unique`/`count`/`flatten` for lists, a `format` string
-templating builtin, persistent REPL command history, list slicing syntax
-(`list[a:b]`), `group_by`, and `try`/`catch` error recovery.
+Actively developed, nightly. Recently landed: math builtins
+`floor`/`ceil`/`pow`/`sqrt` and `index_of` for lists. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `unique`/`count`/`flatten` for lists, a
+`format` string templating builtin, persistent REPL command history, list
+slicing syntax (`list[a:b]`), `group_by`, and `try`/`catch` error recovery.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

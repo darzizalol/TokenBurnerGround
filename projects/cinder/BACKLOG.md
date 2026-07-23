@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `format` for string templating
+## 1. Standard library: `format` for string templating [claimed 2026-07-23T15:11:15Z]
 
 Build: add `format(template, ...)` to `cinder/builtins.py` — a minimal
 sprintf-style templating builtin, variadic like `min`/`max` (inline argument

@@ -220,6 +220,37 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
+## 6. Standard library: `chunk` for lists
+
+Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
+into consecutive sublists of length `size` (the last sublist may be
+shorter if `len(list)` doesn't divide evenly), non-mutating, matching
+`slice`/`concat`/`flatten`'s type-check style. `size` must be a positive
+`int`; `size <= 0` raises `CinderRuntimeError` with line/column (no
+infinite-sublists or divide-by-zero ambiguity, and this check applies
+before looking at the list's contents, so it fires even for an empty
+list). First argument must be `list`.
+
+Acceptance criteria:
+- `chunk([1, 2, 3, 4, 5], 2)` is `[[1, 2], [3, 4], [5]]` (uneven
+  remainder gets its own shorter sublist).
+- `chunk([1, 2, 3, 4], 2)` is `[[1, 2], [3, 4]]` (evenly divides).
+- `chunk([1, 2, 3], 1)` is `[[1], [2], [3]]`.
+- `chunk([], 3)` is `[]` (empty list, valid size, no error).
+- `chunk([1, 2, 3], 0)` raises `CinderRuntimeError` with line/column
+  (non-positive size).
+- `chunk([1, 2, 3], -1)` raises `CinderRuntimeError` with line/column.
+- `chunk(5, 2)` raises `CinderRuntimeError` with line/column (non-list
+  first argument).
+- `chunk([1, 2, 3], "2")` raises `CinderRuntimeError` with line/column
+  (non-int size).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

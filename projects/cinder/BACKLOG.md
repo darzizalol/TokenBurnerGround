@@ -11,43 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `partition` for lists [claimed 2026-07-23T19:52:28Z]
-
-Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
-into `[matching, non_matching]` — two new lists, in original relative
-order — based on `fn(element)`'s Cinder truthiness (`is_truthy`, the same
-helper `filter`/`any`/`all` already use), called once per element via the
-shared `call_value` helper (`map`/`filter`/`sort_by`/`group_by`'s pattern).
-This is `group_by`'s two-bucket sibling — factor a shared helper out of
-`_group_by` and `_partition` if that keeps the diff clean, but don't block
-on `group_by` landing first; if it hasn't yet, implement `partition`
-standalone against `call_value`/`is_truthy` directly. First argument must
-be `list`, second must be callable, matching `map`/`filter`'s type-check
-style.
-
-Acceptance criteria:
-- `partition([1, 2, 3, 4, 5, 6], fn(n) { n % 2 == 0 })` is
-  `[[2, 4, 6], [1, 3, 5]]` (matching first, non-matching second, original
-  relative order preserved in each).
-- `partition([], fn(n) { n })` is `[[], []]` (empty list, `fn` never
-  called).
-- `partition([1, 2, 3], fn(n) { true })` is `[[1, 2, 3], []]`;
-  `partition([1, 2, 3], fn(n) { false })` is `[[], [1, 2, 3]]`.
-- `partition([0, "", 1, "a"], fn(x) { x })` uses Cinder truthiness, not
-  Python's — `0` and `""` are truthy in Cinder, so this is
-  `[[0, "", 1, "a"], []]`.
-- `partition(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `partition([1, 2], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Default parameter values: `fn f(a, b = 1) { ... }`
+## 1. Default parameter values: `fn f(a, b = 1) { ... }`
 
 Build: let a function/lambda parameter carry a default expression, evaluated
 at call time (not definition time) when the caller omits that argument.
@@ -97,7 +61,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 3. Block comments: `/* ... */`
+## 2. Block comments: `/* ... */`
 
 Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
 (currently handles only `#`-to-end-of-line comments) to also recognize a
@@ -139,7 +103,7 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
 
 ---
 
-## 4. Standard library: `insert` and `remove_at` for lists
+## 3. Standard library: `insert` and `remove_at` for lists
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
@@ -185,7 +149,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `ord` and `chr` for character/code-point conversion
+## 4. Standard library: `ord` and `chr` for character/code-point conversion
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
@@ -215,7 +179,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `pad_start` and `pad_end` for strings
+## 5. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -248,7 +212,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `first` and `last` for lists
+## 6. Standard library: `first` and `last` for lists
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /
@@ -273,7 +237,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `take` and `drop` for lists
+## 7. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -308,7 +272,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `flat_map` for lists
+## 8. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -782,6 +746,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   length `size` (last sublist shorter on uneven remainder), non-mutating,
   matching `slice`/`concat`/`flatten`'s type-check style. Clean first pass,
   no bounces (661 tests passing, 11 new).
+- **Standard library: `partition` for lists** — merged 2026-07-24T~ via
+  PR #60 (`feat/20260723-partition-lists`). Added `partition(list, fn)` to
+  `cinder/builtins.py`, splitting a list into `[matching, non_matching]`
+  using Cinder truthiness via the shared `call_value`/`is_truthy` helpers,
+  matching `map`/`filter`'s type-check style. Clean first pass, no bounces
+  (672 tests passing, 11 new).
 
 ## Graveyard
 

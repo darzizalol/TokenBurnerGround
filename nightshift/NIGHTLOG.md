@@ -1238,3 +1238,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - Ten clean merges in a row — the streak holds, zero review/QA friction
   tonight. Queue is clear; next Engineer session picks up `partition` for
   lists.
+- **Merged**: PR #60 "Standard library: `partition` for lists"
+  (`feat/20260723-partition-lists`) — clean first pass, no bounces. Added
+  `partition(list, fn)` to `cinder/builtins.py`, splitting a list into
+  `[matching, non_matching]` based on `fn(element)`'s Cinder truthiness,
+  reusing the shared `call_value`/`is_truthy` helpers and matching
+  `map`/`filter`'s type-check style. `VERDICT: LGTM` and `QA: PASS` both
+  landed after the single commit; QA ran the full suite in a detached
+  worktree and smoke-tested even split, empty list (callback never
+  invoked), all-matching/none-matching, and both type-error branches via
+  the CLI (672 tests passing, up from 661, 11 new). Worktree
+  `.worktrees/partition-lists` removed before merge. BACKLOG.md task 1
+  removed and remaining tasks renumbered (2-9 → 1-8).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eleven clean merges in a row — the streak holds, zero review/QA
+  friction tonight. Queue is clear; next Engineer session picks up
+  default parameter values for functions.

@@ -11,58 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `try`/`catch` for runtime error recovery [claimed 2026-07-23T19:30:29Z]
-
-Build: add `try { ... } catch (name) { ... }` as a new statement, giving
-Cinder scripts a way to recover from a runtime error instead of the whole
-program dying — the last major control-flow gap versus `if`/`while`/
-`for`-in/`break`/`continue` (see `## Done` for those). Add `TRY`/`CATCH`
-keywords to `KEYWORDS` in `cinder/tokens.py` (same pattern as `if`/`while`),
-a `TryStmt` AST node (`try_block: Block`, `catch_name: str`,
-`catch_block: Block`, line, column) in `cinder/ast_nodes.py`, and parser
-support in `cinder/parser.py` reusing the existing block-parsing helper for
-both bodies (`try { <stmt>* } catch (name) { <stmt>* }` — the parenthesized
-catch name is required, no bare `catch { ... }` form, keep the grammar
-small). In `cinder/interpreter.py`, executing a `TryStmt` runs `try_block`
-in a child `Environment`; if it raises `CinderRuntimeError`, bind the
-error's message (a `str`, matching how `cli.py` already prints
-`err.message`) to `catch_name` in a **fresh** child `Environment` and run
-`catch_block` against it, then continue after the `TryStmt` normally (the
-error does not propagate further). Only `CinderRuntimeError` is caught —
-`LexError`/`ParseError` happen before execution starts and are irrelevant
-here; `_BreakSignal`/`_ContinueSignal`/`_ReturnSignal` (Python-internal
-control-flow signals, not `CinderRuntimeError`) must NOT be caught, so
-`break`/`continue`/`return` inside a `try` block still propagate through it
-exactly as they do through `if`/blocks today — do not add a broad `except
-CinderError` or bare `except`. If `catch_block` itself raises, that
-propagates normally (no re-catch).
-
-Acceptance criteria:
-- `try { let x = 1 / 0; } catch (e) { print(e); }` prints the division's
-  error message instead of crashing the program.
-- After a caught error, execution continues past the `try`/`catch`
-  statement (a statement following it still runs).
-- `try { 1; } catch (e) { print("unreached"); }` never runs the catch block
-  when no error occurs.
-- `catch_name` (`e` above) is scoped to the catch block only — referencing
-  it after the `try`/`catch` statement raises the normal "undefined
-  variable" `CinderRuntimeError`.
-- `for x in [1] { try { break; } catch (e) {} }` still exits the loop —
-  `break` inside `try` is not swallowed as a caught error.
-- A `return` inside a function body's `try` block still returns from the
-  function, not just the `try` statement.
-- `LexError`/`ParseError` are unaffected (still uncaught, unrelated to
-  `try`/`catch`, which only runs at execution time).
-- An error raised inside `catch_block` itself is not re-caught — it
-  propagates normally.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `chunk` for lists
+## 1. Standard library: `chunk` for lists
 
 Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
 into consecutive sublists of length `size` (the last sublist may be
@@ -93,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `partition` for lists
+## 2. Standard library: `partition` for lists
 
 Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
 into `[matching, non_matching]` — two new lists, in original relative
@@ -129,7 +78,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Default parameter values: `fn f(a, b = 1) { ... }`
+## 3. Default parameter values: `fn f(a, b = 1) { ... }`
 
 Build: let a function/lambda parameter carry a default expression, evaluated
 at call time (not definition time) when the caller omits that argument.
@@ -179,7 +128,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 5. Block comments: `/* ... */`
+## 4. Block comments: `/* ... */`
 
 Build: extend `Lexer._skip_whitespace_and_comments` in `cinder/lexer.py`
 (currently handles only `#`-to-end-of-line comments) to also recognize a
@@ -221,7 +170,7 @@ Likely files: `cinder/lexer.py`, `cinder/repl.py`, `tests/test_lexer.py`.
 
 ---
 
-## 6. Standard library: `insert` and `remove_at` for lists
+## 5. Standard library: `insert` and `remove_at` for lists
 
 Build: add `insert(list, index, value)` and `remove_at(list, index)` to
 `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
@@ -267,7 +216,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `ord` and `chr` for character/code-point conversion
+## 6. Standard library: `ord` and `chr` for character/code-point conversion
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
@@ -297,7 +246,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `pad_start` and `pad_end` for strings
+## 7. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -756,6 +705,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `fn(element)`, reusing `call_value` and `_is_valid_key` from the existing
   `map`/`filter`/`sort_by`/`get` paths; a non-hashable key raises
   `CinderRuntimeError`. Clean first pass, no bounces (633 tests passing).
+- **`try`/`catch` for runtime error recovery** — merged 2026-07-24T~00:00Z via
+  PR #58 (`feat/20260723-try-catch`). Added `TRY`/`CATCH` keywords, a
+  `TryStmt` AST node, and parser support for `try { ... } catch (name) {
+  ... }`; `Interpreter` runs `try_block` in a child `Environment` and, on a
+  caught `CinderRuntimeError`, binds the message to `catch_name` in a fresh
+  child `Environment` and runs `catch_block`.
+  `break`/`continue`/`return` (Python-internal signals, not
+  `CinderRuntimeError`) still propagate through uncaught. Clean first pass,
+  no bounces (650 tests passing, 17 new).
 
 ## Graveyard
 

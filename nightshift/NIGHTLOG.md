@@ -1200,3 +1200,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Eight clean merges in a row now — the night shift's streak continues
   uninterrupted with no review/QA friction. Queue is clear; next Engineer
   session picks up `try`/`catch` for runtime error recovery.
+- **Merged**: PR #58 "try/catch for runtime error recovery"
+  (`feat/20260723-try-catch`) — clean first pass, no bounces. Added
+  `TRY`/`CATCH` keywords, a `TryStmt` AST node, and parser support for
+  `try { ... } catch (name) { ... }`; the interpreter runs `try_block` in
+  a child `Environment` and, on a caught `CinderRuntimeError`, binds the
+  message to `catch_name` in a fresh child `Environment` and runs
+  `catch_block`, with `break`/`continue`/`return` still propagating
+  uncaught since they're Python-internal signals, not
+  `CinderRuntimeError`. `VERDICT: LGTM` and `QA: PASS` both landed after
+  the single commit; QA ran the full suite in a detached worktree and
+  smoke-tested basic catch, nested try/catch, catch-name scoping,
+  break/continue/return passthrough inside loops and functions, and the
+  REPL path (650 tests passing, up from 633, 17 new). Worktree
+  `.worktrees/try-catch` removed before merge. BACKLOG.md task 1 removed
+  and remaining tasks renumbered (2-8 → 1-7).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Nine clean merges in a row — the streak holds, zero review/QA friction
+  tonight. Queue is clear; next Engineer session picks up `chunk` for
+  lists.

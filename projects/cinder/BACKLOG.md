@@ -11,48 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: persistent command history across sessions [claimed 2026-07-23T15:21:13Z]
-
-Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
-#21, currently in-session-only per that task's "keep it small" scope) to
-load history from a file at REPL startup and save it back on clean exit,
-using `readline.read_history_file`/`write_history_file`. Store the history
-file *inside this project directory*, not the user's home directory or any
-dotfile outside the repo (CLAUDE.md forbids touching dotfiles/config
-outside the repo) — e.g. `projects/cinder/.cinder_history`, added to the
-repo's `.gitignore` alongside the existing `.worktrees/` entry. Guard both
-the load and the save with `try`/`except OSError` (covers
-`FileNotFoundError` on first run and any permission/disk issue) so the REPL
-still starts and exits cleanly with no history file, no `readline` module,
-or a read-only filesystem — matching `_try_enable_readline`'s existing
-`except ImportError` fallback style. Save on exit means wherever
-`run_repl()` currently handles `EOFError`/`KeyboardInterrupt` to end the
-loop, not just on an unreached code path.
-
-Acceptance criteria:
-- With `readline` available: run the REPL, enter a few statements, exit via
-  EOF; the history file now exists under `projects/cinder/` and contains
-  those lines (assert via `readline.get_history_item` after
-  `read_history_file`, or by reading the file's contents directly).
-- Running the REPL again after that loads the prior history (assert
-  `readline.get_current_history_length()` is nonzero immediately after
-  `_try_enable_readline()` runs, given a pre-seeded history file).
-- First run with no history file yet: REPL starts and exits cleanly, and a
-  history file is created on exit.
-- If `readline` is unavailable (simulate the existing `ImportError` path),
-  REPL still starts and exits with no traceback, exactly as before this
-  task.
-- If writing the history file raises `OSError` (e.g. monkeypatch
-  `write_history_file` to raise), the REPL still exits cleanly without a
-  traceback.
-- The history file path is added to `.gitignore` and never committed.
-- Full test suite passes.
-
-Likely files: `cinder/repl.py`, `tests/test_repl.py`, `.gitignore`.
-
----
-
-## 2. List slicing syntax: `list[start:end]`
+## 1. List slicing syntax: `list[start:end]`
 
 Build: extend the existing `expr[...]` postfix grammar in `cinder/parser.py`
 so that a `:` inside the brackets parses as a slice rather than a single
@@ -94,7 +53,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `group_by` for lists
+## 2. Standard library: `group_by` for lists
 
 Build: add `group_by(list, fn)` to `cinder/builtins.py`, partitioning
 `list`'s elements into a `map` keyed by `fn(element)` (called once per
@@ -128,7 +87,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. `try`/`catch` for runtime error recovery
+## 3. `try`/`catch` for runtime error recovery
 
 Build: add `try { ... } catch (name) { ... }` as a new statement, giving
 Cinder scripts a way to recover from a runtime error instead of the whole
@@ -179,7 +138,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `chunk` for lists
+## 4. Standard library: `chunk` for lists
 
 Build: add `chunk(list, size)` to `cinder/builtins.py`, splitting `list`
 into consecutive sublists of length `size` (the last sublist may be
@@ -210,7 +169,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `partition` for lists
+## 5. Standard library: `partition` for lists
 
 Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
 into `[matching, non_matching]` — two new lists, in original relative
@@ -647,6 +606,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   pair, a non-`str` template, and a zero-arg call all raise
   `CinderRuntimeError` with line/column. Clean first pass, no bounces
   (601 tests passing, up from 592).
+- **REPL: persistent command history across sessions** — merged
+  2026-07-23T15:28:03Z via PR #55 (`feat/20260723-repl-history`). Extended
+  `_try_enable_readline()` in `cinder/repl.py` to load history from
+  `projects/cinder/.cinder_history` on startup and added `_save_history()`
+  to write it back on any clean exit, wrapped in `try`/`finally` around
+  `run_repl()`'s main loop; both load and save are guarded with `except
+  OSError`, matching the existing `except ImportError` fallback style.
+  History file is gitignored and scoped inside the project directory.
+  Clean first pass, no bounces (606 tests passing, up from 601).
 
 ## Graveyard
 

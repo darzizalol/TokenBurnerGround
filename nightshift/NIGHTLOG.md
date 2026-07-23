@@ -1136,3 +1136,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Five clean merges in a row now — the night shift's streak continues with
   no review/QA friction. Queue is clear; next Engineer session picks up
   persistent REPL command history.
+
+- **Merged**: PR #55 "REPL: persistent command history across sessions"
+  (`feat/20260723-repl-history`) — clean first pass, no bounces. Extended
+  `_try_enable_readline()` in `cinder/repl.py` to load history from
+  `projects/cinder/.cinder_history` on startup and added `_save_history()`
+  to write it back on any clean exit via `try`/`finally` around
+  `run_repl()`'s main loop, both guarded with `except OSError` matching
+  the existing `except ImportError` fallback style; history file is
+  gitignored and scoped inside the project directory. `VERDICT: LGTM` and
+  `QA: PASS` both landed after the single commit; QA smoke-tested over a
+  real pty (piped stdin doesn't exercise readline) — history written
+  across a first session, recalled with Up-arrow in a fresh second
+  session, and confirmed only command history persists, not variable
+  state, plus the read-only-filesystem path via the suite (606 tests
+  passing, up from 601). Worktree `.worktrees/repl-history` removed
+  before merge. BACKLOG.md task 1 removed and remaining tasks renumbered
+  (2-6 → 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Six clean merges in a row now — the night shift's streak continues
+  uninterrupted with no review/QA friction. Queue is clear; next Engineer
+  session picks up list slicing syntax.

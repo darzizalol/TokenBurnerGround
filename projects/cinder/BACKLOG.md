@@ -210,6 +210,42 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `partition` for lists
+
+Build: add `partition(list, fn)` to `cinder/builtins.py`, splitting `list`
+into `[matching, non_matching]` — two new lists, in original relative
+order — based on `fn(element)`'s Cinder truthiness (`is_truthy`, the same
+helper `filter`/`any`/`all` already use), called once per element via the
+shared `call_value` helper (`map`/`filter`/`sort_by`/`group_by`'s pattern).
+This is `group_by`'s two-bucket sibling — factor a shared helper out of
+`_group_by` and `_partition` if that keeps the diff clean, but don't block
+on `group_by` landing first; if it hasn't yet, implement `partition`
+standalone against `call_value`/`is_truthy` directly. First argument must
+be `list`, second must be callable, matching `map`/`filter`'s type-check
+style.
+
+Acceptance criteria:
+- `partition([1, 2, 3, 4, 5, 6], fn(n) { n % 2 == 0 })` is
+  `[[2, 4, 6], [1, 3, 5]]` (matching first, non-matching second, original
+  relative order preserved in each).
+- `partition([], fn(n) { n })` is `[[], []]` (empty list, `fn` never
+  called).
+- `partition([1, 2, 3], fn(n) { true })` is `[[1, 2, 3], []]`;
+  `partition([1, 2, 3], fn(n) { false })` is `[[], [1, 2, 3]]`.
+- `partition([0, "", 1, "a"], fn(x) { x })` uses Cinder truthiness, not
+  Python's — `0` and `""` are truthy in Cinder, so this is
+  `[[0, "", 1, "a"], []]`.
+- `partition(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `partition([1, 2], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

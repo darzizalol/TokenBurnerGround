@@ -430,9 +430,9 @@ class Interpreter:
             return self._divide_op(expr, left, right, lambda a, b: a % b)
 
         if op == TokenType.EQEQ:
-            return _values_equal(left, right)
+            return values_equal(left, right)
         if op == TokenType.BANGEQ:
-            return not _values_equal(left, right)
+            return not values_equal(left, right)
         if op in (TokenType.LT, TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):
             return self._compare(expr, left, right, op)
         if op == TokenType.IN:
@@ -567,7 +567,7 @@ def contains_value(collection: object, item: object, line: int, column: int) -> 
     """Membership-test semantics shared by the `in` operator and `contains()`:
     list `==` membership, map key check, string substring check."""
     if isinstance(collection, list):
-        return any(item == element for element in collection)
+        return any(values_equal(item, element) for element in collection)
     if isinstance(collection, dict):
         try:
             return item in collection
@@ -588,7 +588,7 @@ def contains_value(collection: object, item: object, line: int, column: int) -> 
     )
 
 
-def _values_equal(left: object, right: object) -> bool:
+def values_equal(left: object, right: object) -> bool:
     if _is_number(left) and _is_number(right):
         return left == right
     if type(left) is not type(right):

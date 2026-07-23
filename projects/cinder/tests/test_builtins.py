@@ -437,6 +437,14 @@ class TestIndexOf(unittest.TestCase):
             run('let result = index_of([[1, 2], [3, 4]], [3, 4]);').get("result"), 1
         )
 
+    def test_index_of_does_not_conflate_bool_with_int(self):
+        self.assertEqual(
+            run('let result = index_of([1, 2, 3], true);').get("result"), -1
+        )
+        self.assertEqual(
+            run('let result = index_of([true, false], true);').get("result"), 0
+        )
+
     def test_index_of_on_non_list_first_argument_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('index_of(5, 1);')
@@ -724,6 +732,17 @@ class TestContains(unittest.TestCase):
     def test_contains_in_list(self):
         self.assertIs(run("let result = contains([1, 2, 3], 2);").get("result"), True)
         self.assertIs(run("let result = contains([1, 2, 3], 9);").get("result"), False)
+
+    def test_contains_does_not_conflate_bool_with_int(self):
+        self.assertIs(
+            run("let result = contains([1, 2, 3], true);").get("result"), False
+        )
+        self.assertIs(
+            run("let result = contains([0, false], 0);").get("result"), True
+        )
+        self.assertIs(
+            run("let result = contains([0, false], false);").get("result"), True
+        )
 
     def test_contains_checks_map_keys_not_values(self):
         self.assertIs(run('let result = contains({"a": 1}, "a");').get("result"), True)

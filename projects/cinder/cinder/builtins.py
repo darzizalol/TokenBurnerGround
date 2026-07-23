@@ -21,11 +21,11 @@ from cinder.interpreter import (
     CinderFunction,
     Environment,
     _is_valid_key,
-    _values_equal,
     call_value,
     contains_value,
     is_truthy,
     type_name,
+    values_equal,
 )
 
 _NUMERIC = (int, float)
@@ -514,7 +514,7 @@ def _index_of(arguments: list, line: int, column: int) -> object:
             f"index_of() requires a list, got {type_name(collection)}", line, column
         )
     for index, element in enumerate(collection):
-        if element == item:
+        if values_equal(element, item):
             return index
     return -1
 
@@ -528,7 +528,7 @@ def _unique(arguments: list, line: int, column: int) -> object:
         )
     if all(_is_valid_key(element) for element in value):
         # Key on (is_bool, element) rather than element directly: Python's
-        # native hash/eq treat `1 == True`, but Cinder's `==` (`_values_equal`)
+        # native hash/eq treat `1 == True`, but Cinder's `==` (`values_equal`)
         # does not, so a bare `set` would wrongly conflate them.
         seen: set = set()
         result = []
@@ -540,7 +540,7 @@ def _unique(arguments: list, line: int, column: int) -> object:
         return result
     result = []
     for element in value:
-        if not any(_values_equal(element, kept) for kept in result):
+        if not any(values_equal(element, kept) for kept in result):
             result.append(element)
     return result
 

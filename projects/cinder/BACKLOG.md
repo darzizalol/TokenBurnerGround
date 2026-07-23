@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Fix: `contains`, `index_of`, and `in` conflate `bool` with `int`
+## 1. Fix: `contains`, `index_of`, and `in` conflate `bool` with `int` [claimed 2026-07-23T14:36:59Z]
 
 Build: QA caught this while testing `unique` (PR #50, bounced) — the bug
 is older and broader than that PR. `contains_value()` in

@@ -51,7 +51,7 @@ while (i < 10) {
   and list writes), plus read-only string indexing
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `keys`,
   `values`, `items`, `enumerate`, `merge`, `get`, `remove`, `copy`, `contains`,
-  `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
+  `index_of`, `reverse`, `sort`, `sort_by`, `range`, `map`, `filter`, `reduce`, `slice`, `concat`,
   `zip`, `assert`, `sum`, `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   math builtins `abs`, `min`, `max`, `round`, and type predicates `is_list`,

@@ -438,6 +438,19 @@ def _contains(arguments: list, line: int, column: int) -> object:
     return contains_value(collection, item, line, column)
 
 
+def _index_of(arguments: list, line: int, column: int) -> object:
+    _require_arity("index_of", arguments, 2, line, column)
+    collection, item = arguments
+    if not isinstance(collection, list):
+        raise CinderRuntimeError(
+            f"index_of() requires a list, got {type_name(collection)}", line, column
+        )
+    for index, element in enumerate(collection):
+        if element == item:
+            return index
+    return -1
+
+
 def _reverse(arguments: list, line: int, column: int) -> object:
     _require_arity("reverse", arguments, 1, line, column)
     value = arguments[0]
@@ -719,6 +732,7 @@ _BUILTINS = {
     "any": _any,
     "all": _all,
     "contains": _contains,
+    "index_of": _index_of,
     "copy": _copy,
     "reverse": _reverse,
     "sort": _sort,

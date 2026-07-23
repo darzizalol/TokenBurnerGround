@@ -245,6 +245,9 @@ class TestMembership(unittest.TestCase):
     def test_in_list_false(self):
         self.assertEqual(evaluate("5 in [1, 2, 3]"), False)
 
+    def test_in_list_does_not_conflate_bool_with_int(self):
+        self.assertEqual(evaluate("true in [1, 2, 3]"), False)
+
     def test_in_map_checks_keys_not_values(self):
         self.assertEqual(evaluate('"a" in {"a": 1}'), True)
         self.assertEqual(evaluate('"z" in {"a": 1}'), False)

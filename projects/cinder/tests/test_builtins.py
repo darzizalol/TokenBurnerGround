@@ -1133,6 +1133,60 @@ class TestReduce(unittest.TestCase):
         self.assertEqual(env.get("result"), 6)
 
 
+class TestGroupBy(unittest.TestCase):
+    def test_group_by_parity(self):
+        env = run(
+            "let result = group_by([1, 2, 3, 4, 5, 6], fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("result"), {1: [1, 3, 5], 0: [2, 4, 6]})
+
+    def test_group_by_empty_list_never_calls_fn(self):
+        env = run("let result = group_by([], fn(n) { return n / 0; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_group_by_string_first_letter(self):
+        env = run(
+            'let result = group_by(["apple", "avocado", "banana"], '
+            "fn(s) { return s[0]; });"
+        )
+        self.assertEqual(
+            env.get("result"), {"a": ["apple", "avocado"], "b": ["banana"]}
+        )
+
+    def test_group_by_preserves_element_order_within_group(self):
+        env = run(
+            "let result = group_by([3, 1, 4, 1, 5], fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("result"), {1: [3, 1, 1, 5], 0: [4]})
+
+    def test_group_by_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = group_by(xs, fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_group_by_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_by([1, 2], fn(n) { return [n]; });")
+
+    def test_group_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_by(5, fn(n) { return n; });")
+
+    def test_group_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_by([1, 2], 5);")
+
+    def test_group_by_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_by([1], fn(x, y) { return x; });")
+
+    def test_group_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_by([1]);")
+
+
 class TestSlice(unittest.TestCase):
     def test_slice_basic_range(self):
         env = run("let result = slice([1, 2, 3, 4], 1, 3);")

@@ -4,10 +4,15 @@
 and returns a plain Python value (int, float, str, bool, None), or a Python
 `list`/`dict` backing a Cinder list/map literal.
 `Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`,
-`IfStmt`, `WhileStmt`, `ForStmt`), mutating an `Environment` rather than
-returning a value. `ForStmt` binds its loop variable in a fresh child
+`IfStmt`, `WhileStmt`, `ForStmt`, `TryStmt`), mutating an `Environment` rather
+than returning a value. `ForStmt` binds its loop variable in a fresh child
 `Environment` per iteration, so a closure created inside the loop body
-captures that iteration's value rather than the final one.
+captures that iteration's value rather than the final one. `TryStmt` runs its
+try block and, if it raises `CinderRuntimeError`, binds the error's message
+to the catch name in a fresh child `Environment` and runs the catch block;
+`_BreakSignal`/`_ContinueSignal`/`_ReturnSignal` are Python-internal
+control-flow signals, not `CinderRuntimeError`, so `break`/`continue`/
+`return` inside a `try` block still propagate through it uncaught.
 
 `Call` nodes invoke a `CinderFunction`: a new child `Environment` of the
 function's closure is pushed, parameters are bound there, and the body runs.
@@ -52,6 +57,7 @@ from cinder.ast_nodes import (
     SliceExpr,
     Stmt,
     Ternary,
+    TryStmt,
     Unary,
     WhileStmt,
 )
@@ -215,7 +221,18 @@ class Interpreter:
             raise _BreakSignal()
         if isinstance(stmt, ContinueStmt):
             raise _ContinueSignal()
+        if isinstance(stmt, TryStmt):
+            self._execute_try(stmt, env)
+            return
         raise TypeError(f"unhandled statement type: {type(stmt)!r}")
+
+    def _execute_try(self, stmt: TryStmt, env: Environment) -> None:
+        try:
+            self.execute(stmt.try_block, env)
+        except CinderRuntimeError as error:
+            catch_env = Environment(env)
+            catch_env.define(stmt.catch_name, error.message)
+            self.execute(stmt.catch_block, catch_env)
 
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
         iterable = self.evaluate(stmt.iterable, env)

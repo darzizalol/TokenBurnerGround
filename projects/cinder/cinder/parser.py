@@ -15,7 +15,9 @@ Statement grammar: a program is a list of statements, each one of
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
 `while (<expr>) <statement>` (WhileStmt), `for IDENTIFIER in <expr> { ... }`
 (ForStmt, body always a block), `break;`/`continue;` (BreakStmt/ContinueStmt,
-only valid inside a loop), or a bare `<expr>;` (ExprStmt).
+only valid inside a loop), `try { <statement>* } catch (IDENTIFIER)
+{ <statement>* }` (TryStmt, both bodies always blocks, the parenthesized
+catch name is required), or a bare `<expr>;` (ExprStmt).
 
 `fn` at statement position (`fn NAME(params) { body }`) is a named `FnDecl`;
 `fn` anywhere else in the expression grammar (`_primary`) is an anonymous
@@ -63,6 +65,7 @@ from cinder.ast_nodes import (
     SliceExpr,
     Stmt,
     Ternary,
+    TryStmt,
     Unary,
     WhileStmt,
 )
@@ -133,6 +136,8 @@ class Parser:
             return self._break_statement()
         if self._check(TokenType.CONTINUE):
             return self._continue_statement()
+        if self._check(TokenType.TRY):
+            return self._try_statement()
         return self._expr_statement()
 
     def _let_statement(self) -> Stmt:
@@ -271,6 +276,32 @@ class Parser:
             )
         self._consume(TokenType.SEMICOLON, "';' after 'continue'")
         return ContinueStmt(continue_token.line, continue_token.column)
+
+    def _try_statement(self) -> Stmt:
+        try_token = self._advance()
+        if not self._check(TokenType.LBRACE):
+            token = self._peek()
+            raise ParseError(
+                f"expected '{{' before try body, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        try_block = self._block()
+        self._consume(TokenType.CATCH, "'catch' after try block")
+        self._consume(TokenType.LPAREN, "'(' after 'catch'")
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
+        self._consume(TokenType.RPAREN, "')' after catch name")
+        if not self._check(TokenType.LBRACE):
+            token = self._peek()
+            raise ParseError(
+                f"expected '{{' before catch body, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        catch_block = self._block()
+        return TryStmt(
+            try_block, name_token.lexeme, catch_block, try_token.line, try_token.column
+        )
 
     def _expr_statement(self) -> Stmt:
         expr = self._assignment()

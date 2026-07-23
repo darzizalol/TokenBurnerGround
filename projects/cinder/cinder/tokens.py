@@ -23,6 +23,8 @@ class TokenType(Enum):
     RETURN = auto()
     BREAK = auto()
     CONTINUE = auto()
+    TRY = auto()
+    CATCH = auto()
     TRUE = auto()
     FALSE = auto()
     NIL = auto()
@@ -82,6 +84,8 @@ KEYWORDS = {
     "return": TokenType.RETURN,
     "break": TokenType.BREAK,
     "continue": TokenType.CONTINUE,
+    "try": TokenType.TRY,
+    "catch": TokenType.CATCH,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
     "nil": TokenType.NIL,

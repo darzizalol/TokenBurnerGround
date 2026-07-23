@@ -168,6 +168,60 @@ class TestComments(unittest.TestCase):
         tokens = tokenize("42 # trailing comment with no newline")
         self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
 
+    def test_block_comment_leading(self):
+        tokens = tokenize("/* comment */ 1")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+
+    def test_block_comment_trailing(self):
+        tokens = tokenize("1 /* trailing */")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+
+    def test_block_comment_between_tokens_acts_as_whitespace(self):
+        tokens = tokenize("1 /* comment */ + 2")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.PLUS, TokenType.INT, TokenType.EOF],
+        )
+
+    def test_block_comment_does_not_nest(self):
+        # The first `*/` closes the comment, so the trailing `*/` lexes as
+        # normal tokens (STAR then SLASH), matching C/Java/JS semantics.
+        tokens = tokenize("/* outer /* inner */ 1 */")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.INT,
+                TokenType.STAR,
+                TokenType.SLASH,
+                TokenType.EOF,
+            ],
+        )
+
+    def test_line_comment_containing_block_comment_markers(self):
+        tokens = tokenize("# /* not a block comment */\n1")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+
+    def test_division_still_lexes(self):
+        tokens = tokenize("10 / 2")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.SLASH, TokenType.INT, TokenType.EOF],
+        )
+
+    def test_compound_divide_assign_still_lexes(self):
+        tokens = tokenize("x /= 2")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.IDENTIFIER, TokenType.SLASHEQ, TokenType.INT, TokenType.EOF],
+        )
+
+    def test_multiline_block_comment_preserves_line_numbers(self):
+        source = "1;\n/* line 2\nline 3\nline 4 */\n@"
+        with self.assertRaises(LexError) as ctx:
+            tokenize(source)
+        self.assertEqual(ctx.exception.line, 5)
+        self.assertEqual(ctx.exception.column, 1)
+
 
 class TestLineColumn(unittest.TestCase):
     def test_multiline_line_and_column(self):
@@ -205,6 +259,20 @@ class TestErrors(unittest.TestCase):
             tokenize("let x = 1; @")
         self.assertEqual(ctx.exception.line, 1)
         self.assertEqual(ctx.exception.column, 12)
+
+    def test_unterminated_block_comment(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("1 /* unterminated")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 3)
+        self.assertTrue(ctx.exception.unterminated)
+
+    def test_unterminated_block_comment_multiline(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("1;\n/* opened here\nstill open")
+        self.assertEqual(ctx.exception.line, 2)
+        self.assertEqual(ctx.exception.column, 1)
+        self.assertTrue(ctx.exception.unterminated)
 
 
 if __name__ == "__main__":

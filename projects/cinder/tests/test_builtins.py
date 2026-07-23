@@ -1187,6 +1187,62 @@ class TestGroupBy(unittest.TestCase):
             run("group_by([1]);")
 
 
+class TestPartition(unittest.TestCase):
+    def test_partition_splits_matching_and_non_matching(self):
+        env = run(
+            "let result = partition([1, 2, 3, 4, 5, 6], "
+            "fn(n) { return n % 2 == 0; });"
+        )
+        self.assertEqual(env.get("result"), [[2, 4, 6], [1, 3, 5]])
+
+    def test_partition_of_empty_list_never_calls_fn(self):
+        env = run("let result = partition([], fn(n) { return n / 0; });")
+        self.assertEqual(env.get("result"), [[], []])
+
+    def test_partition_all_matching(self):
+        env = run("let result = partition([1, 2, 3], fn(n) { return true; });")
+        self.assertEqual(env.get("result"), [[1, 2, 3], []])
+
+    def test_partition_none_matching(self):
+        env = run("let result = partition([1, 2, 3], fn(n) { return false; });")
+        self.assertEqual(env.get("result"), [[], [1, 2, 3]])
+
+    def test_partition_uses_cinder_truthiness(self):
+        env = run(
+            'let result = partition([0, "", 1, "a"], fn(x) { return x; });'
+        )
+        self.assertEqual(env.get("result"), [[0, "", 1, "a"], []])
+
+    def test_partition_preserves_relative_order(self):
+        env = run(
+            "let result = partition([3, 1, 4, 1, 5], fn(n) { return n % 2 == 1; });"
+        )
+        self.assertEqual(env.get("result"), [[3, 1, 1, 5], [4]])
+
+    def test_partition_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = partition(xs, fn(n) { return n % 2 == 0; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_partition_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("partition(5, fn(n) { return n; });")
+
+    def test_partition_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("partition([1, 2], 5);")
+
+    def test_partition_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("partition([1], fn(x, y) { return x; });")
+
+    def test_partition_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("partition([1]);")
+
+
 class TestSlice(unittest.TestCase):
     def test_slice_basic_range(self):
         env = run("let result = slice([1, 2, 3, 4], 1, 3);")

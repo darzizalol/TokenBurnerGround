@@ -866,6 +866,29 @@ def _group_by(arguments: list, line: int, column: int) -> object:
     return groups
 
 
+def _partition(arguments: list, line: int, column: int) -> object:
+    _require_arity("partition", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"partition() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"partition() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    matching: list = []
+    non_matching: list = []
+    for item in items:
+        if is_truthy(call_value(fn, [item], line, column)):
+            matching.append(item)
+        else:
+            non_matching.append(item)
+    return [matching, non_matching]
+
+
 def _is_list(arguments: list, line: int, column: int) -> object:
     _require_arity("is_list", arguments, 1, line, column)
     return isinstance(arguments[0], list)
@@ -949,6 +972,7 @@ _BUILTINS = {
     "filter": _filter,
     "reduce": _reduce,
     "group_by": _group_by,
+    "partition": _partition,
     "slice": _slice,
     "concat": _concat,
     "flatten": _flatten,

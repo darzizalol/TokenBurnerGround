@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL: persistent command history across sessions
+## 1. REPL: persistent command history across sessions [claimed 2026-07-23T15:21:13Z]
 
 Build: extend `_try_enable_readline()` in `cinder/repl.py` (added in PR
 #21, currently in-session-only per that task's "keep it small" scope) to

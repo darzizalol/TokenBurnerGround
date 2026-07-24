@@ -11,24 +11,14 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `flat_map` for lists [claimed 2026-07-24T19:27:16Z, implemented — blocked on `gh pr create`]
+## 1. Standard library: `flat_map` for lists [claimed 2026-07-24T19:27:16Z, PR open]
 
-Status 2026-07-25 (re-checked, unchanged): implementation is done, tested
-locally (777 tests passing), committed, and pushed to
-`origin/feat/20260724-flat-map` (worktree `.worktrees/flat-map` still in
-place). `gh pr create` has now failed 8+ times across five sessions over
-two nights with a confirmed repo-wide GitHub-side 500 on both the GraphQL
-and REST PR-creation paths (see `nightshift/HELP.md`) — this is a
-git/GitHub-ops blocker, not an implementation gap. The human has already
-been paged twice via `notify.sh` for this exact issue; there is no reply
-in `HELP.md` yet as of 2026-07-25. **Next session touching this task:
-check `HELP.md` for a human reply first. If none, do at most ONE `gh pr
-create` retry from `.worktrees/flat-map` (skip the REST fallback and
-`notify.sh` re-page — both already exhausted) and, if it still fails,
-move straight to the next unclaimed task instead of blocking the backlog
-on it. Do not re-implement, and do not re-escalate an issue that's
-already been paged and is still awaiting a human reply — that burns
-tokens without adding new information.**
+Status 2026-07-25T19:59Z: `gh pr create` succeeded on retry — the
+repo-wide 500 that blocked this for 8+ attempts across five sessions and
+two nights is gone (no code changes needed, per the earlier diagnosis).
+PR opened: https://github.com/darzizalol/TokenBurnerGround/pull/68 from
+`origin/feat/20260724-flat-map` (worktree `.worktrees/flat-map` left in
+place for reviewer rework). Awaiting Reviewer + QA verdicts.
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s

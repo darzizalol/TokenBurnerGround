@@ -241,12 +241,64 @@ class TestLineColumn(unittest.TestCase):
         self.assertEqual(y_token.column, 5)
 
 
+class TestStringInterpolation(unittest.TestCase):
+    def test_plain_string_has_no_interpolation(self):
+        tokens = tokenize('"plain"')
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, "plain")
+
+    def test_single_placeholder(self):
+        tokens = tokenize('"hello, ${name}!"')
+        self.assertEqual(types(tokens), [TokenType.INTERP_STRING, TokenType.EOF])
+        self.assertEqual(
+            tokens[0].literal, ["hello, ", ("expr", "name", 1, 11), "!"]
+        )
+
+    def test_multiple_placeholders(self):
+        tokens = tokenize('"a${1}b${2}c"')
+        self.assertEqual(
+            tokens[0].literal,
+            ["a", ("expr", "1", 1, 5), "b", ("expr", "2", 1, 10), "c"],
+        )
+
+    def test_leading_and_trailing_placeholders_keep_empty_literal_segments(self):
+        # The lexer itself doesn't drop empty literal segments — the parser
+        # does, when building the `InterpString` AST node.
+        tokens = tokenize('"${1}${2}"')
+        parts = tokens[0].literal
+        self.assertEqual([p for p in parts if isinstance(p, str)], ["", "", ""])
+
+    def test_nested_braces_not_truncated(self):
+        tokens = tokenize('"${ {"a": 1} }"')
+        self.assertEqual(types(tokens), [TokenType.INTERP_STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, ["", ("expr", ' {"a": 1} ', 1, 4), ""])
+
+    def test_escapes_still_work_alongside_interpolation(self):
+        tokens = tokenize(r'"a\nb${1}"')
+        self.assertEqual(tokens[0].literal[0], "a\nb")
+
+    def test_placeholder_raw_source_and_position(self):
+        # Position is of the first character *inside* the placeholder (after
+        # the opening quote, `$`, and `{`), not the string's opening quote.
+        tokens = tokenize('"${1/0}"')
+        _, raw, line, col = tokens[0].literal[1]
+        self.assertEqual(raw, "1/0")
+        self.assertEqual((line, col), (1, 4))
+
+
 class TestErrors(unittest.TestCase):
     def test_unterminated_string(self):
         with self.assertRaises(LexError) as ctx:
             tokenize('"unterminated')
         self.assertEqual(ctx.exception.line, 1)
         self.assertEqual(ctx.exception.column, 1)
+
+    def test_unterminated_placeholder(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize('"unterminated ${1 + 1"')
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+        self.assertTrue(ctx.exception.unterminated)
 
     def test_unterminated_string_multiline(self):
         with self.assertRaises(LexError) as ctx:

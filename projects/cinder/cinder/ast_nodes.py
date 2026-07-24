@@ -116,6 +116,17 @@ class Ternary:
 
 
 @dataclass(frozen=True)
+class InterpString:
+    """`"...${expr}..."` — `parts` interleaves literal `str` segments with
+    parsed sub-expressions in source order (an all-`str` list never occurs;
+    a plain string with no `${` lexes as a regular `Literal` instead)."""
+
+    parts: list
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class FnExpr:
     """An anonymous `fn(params) { body }` function literal, usable as a value
     (e.g. passed directly to `map`/`filter`, or bound with `let`) — unlike
@@ -147,6 +158,7 @@ Expr = Union[
     SliceExpr,
     Ternary,
     FnExpr,
+    InterpString,
 ]
 
 

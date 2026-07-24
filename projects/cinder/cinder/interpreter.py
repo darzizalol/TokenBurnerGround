@@ -48,6 +48,7 @@ from cinder.ast_nodes import (
     IfStmt,
     Index,
     IndexAssign,
+    InterpString,
     LetStmt,
     ListLiteral,
     Literal,
@@ -180,6 +181,8 @@ class Interpreter:
             return self._evaluate_index_assign(expr, env)
         if isinstance(expr, FnExpr):
             return CinderFunction(expr, env)
+        if isinstance(expr, InterpString):
+            return self._evaluate_interp_string(expr, env)
         raise TypeError(f"unhandled expression type: {type(expr)!r}")
 
     def execute(self, stmt: Stmt, env: Environment) -> None:
@@ -274,6 +277,15 @@ class Interpreter:
                 )
             result[key] = self.evaluate(value_expr, env)
         return result
+
+    def _evaluate_interp_string(self, expr: InterpString, env: Environment) -> object:
+        pieces = []
+        for part in expr.parts:
+            if isinstance(part, str):
+                pieces.append(part)
+            else:
+                pieces.append(stringify(self.evaluate(part, env)))
+        return "".join(pieces)
 
     def _evaluate_index(self, expr: Index, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)
@@ -681,3 +693,22 @@ def type_name(value: object) -> str:
     if isinstance(value, (CinderFunction, Builtin)):
         return "function"
     return type(value).__name__
+
+
+def stringify(value: object, *, quoted: bool = False) -> str:
+    """Render a Cinder value as text, matching `print`/`str()` output. Lives
+    here (rather than in `builtins.py`, which imports plenty from this module
+    already) so `InterpString` evaluation can call it without a cycle;
+    `builtins.py` re-exports it for `print`/`str`/`format`."""
+    if isinstance(value, str):
+        return f'"{value}"' if quoted else value
+    if value is None:
+        return "nil"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, list):
+        return "[" + ", ".join(stringify(v, quoted=True) for v in value) + "]"
+    if isinstance(value, dict):
+        pairs = (f"{stringify(k, quoted=True)}: {stringify(v, quoted=True)}" for k, v in value.items())
+        return "{" + ", ".join(pairs) + "}"
+    return str(value)

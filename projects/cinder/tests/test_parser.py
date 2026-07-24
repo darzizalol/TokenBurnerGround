@@ -17,6 +17,7 @@ from cinder.ast_nodes import (
     Identifier,
     Index,
     IndexAssign,
+    InterpString,
     LetStmt,
     ListLiteral,
     Literal,
@@ -28,7 +29,7 @@ from cinder.ast_nodes import (
     TryStmt,
     Unary,
 )
-from cinder.errors import ParseError
+from cinder.errors import LexError, ParseError
 from cinder.lexer import tokenize
 from cinder.parser import parse_expression, parse_program
 from cinder.tokens import TokenType
@@ -81,6 +82,11 @@ def shape(node):
         )
     if isinstance(node, FnExpr):
         return ("FnExpr", params_shape(node.params), stmt_shape(node.body))
+    if isinstance(node, InterpString):
+        return (
+            "InterpString",
+            [part if isinstance(part, str) else shape(part) for part in node.parts],
+        )
     raise TypeError(f"unhandled node type: {type(node)!r}")
 
 
@@ -550,6 +556,79 @@ class TestListsAndMaps(unittest.TestCase):
     def test_slice_assignment_target_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse_stmts("xs[1:2] = [9];")
+
+
+class TestStringInterpolation(unittest.TestCase):
+    def test_plain_string_stays_a_literal(self):
+        self.assertEqual(shape(parse('"plain"')), ("Literal", "plain"))
+
+    def test_identifier_placeholder(self):
+        self.assertEqual(
+            shape(parse('"hello, ${name}!"')),
+            ("InterpString", ["hello, ", ("Identifier", "name"), "!"]),
+        )
+
+    def test_arbitrary_expression_placeholder(self):
+        self.assertEqual(
+            shape(parse('"${1 + 2}"')),
+            (
+                "InterpString",
+                [("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2))],
+            ),
+        )
+
+    def test_multiple_placeholders(self):
+        self.assertEqual(
+            shape(parse('"a${1}b${2}c"')),
+            ("InterpString", ["a", ("Literal", 1), "b", ("Literal", 2), "c"]),
+        )
+
+    def test_leading_and_trailing_placeholders_drop_empty_literals(self):
+        self.assertEqual(
+            shape(parse('"${1}${2}"')),
+            ("InterpString", [("Literal", 1), ("Literal", 2)]),
+        )
+
+    def test_nested_braces_in_placeholder_not_truncated(self):
+        self.assertEqual(
+            shape(parse('"${ {"a": 1}["a"] }"')),
+            (
+                "InterpString",
+                [
+                    (
+                        "Index",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        ("Literal", "a"),
+                    )
+                ],
+            ),
+        )
+
+    def test_list_placeholder(self):
+        self.assertEqual(
+            shape(parse('"${[1, 2, 3]}"')),
+            (
+                "InterpString",
+                [("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)])],
+            ),
+        )
+
+    def test_placeholder_expression_position_matches_source(self):
+        # The `/` in the placeholder is at line 1, column 5 (after `"`, `$`,
+        # `{`, `1`) — not the string literal's opening-quote position.
+        node = parse('"${1/0}"')
+        placeholder = node.parts[0]
+        self.assertEqual(
+            (placeholder.operator.line, placeholder.operator.column), (1, 5)
+        )
+
+    def test_unterminated_placeholder_raises_lex_error(self):
+        with self.assertRaises(LexError):
+            parse('"unterminated ${1 + 1"')
+
+    def test_malformed_placeholder_expression_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse('"${)}"')
 
 
 class TestCompoundAssignment(unittest.TestCase):

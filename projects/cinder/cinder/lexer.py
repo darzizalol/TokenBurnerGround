@@ -38,11 +38,15 @@ _ESCAPES = {
 
 
 class Lexer:
-    def __init__(self, source: str):
+    def __init__(self, source: str, start_line: int = 1, start_column: int = 1):
+        """`start_line`/`start_column` let a `${expr}` placeholder's raw source
+        be re-lexed by a fresh `Lexer` whose positions still match the
+        original file, so errors inside the placeholder report the right
+        line/column instead of restarting at 1:1 (see `Parser._build_interp_string`)."""
         self.source = source
         self.pos = 0
-        self.line = 1
-        self.column = 1
+        self.line = start_line
+        self.column = start_column
         self.tokens: list[Token] = []
 
     def tokenize(self) -> list[Token]:
@@ -143,15 +147,26 @@ class Lexer:
 
     def _string(self, start_line: int, start_col: int):
         start_pos = self.pos - 1  # position of the opening quote
+        parts: list = []  # str segments and ("expr", raw, line, col) placeholders
         chars = []
+        has_interp = False
         while True:
             if self._at_end():
                 raise LexError(
                     "unterminated string", start_line, start_col, unterminated=True
                 )
-            char = self._advance()
-            if char == '"':
+            if self._peek() == '"':
+                self._advance()
                 break
+            if self._peek() == "$" and self._peek_next() == "{":
+                has_interp = True
+                parts.append("".join(chars))
+                chars = []
+                self._advance()  # consume '$'
+                self._advance()  # consume '{'
+                parts.append(self._interp_placeholder(start_line, start_col))
+                continue
+            char = self._advance()
             if char == "\\":
                 if self._at_end():
                     raise LexError(
@@ -168,10 +183,48 @@ class Lexer:
                 chars.append(_ESCAPES[escape])
             else:
                 chars.append(char)
+        parts.append("".join(chars))
         lexeme = self.source[start_pos : self.pos]
-        self.tokens.append(
-            Token(TokenType.STRING, lexeme, "".join(chars), start_line, start_col)
-        )
+        if not has_interp:
+            self.tokens.append(
+                Token(TokenType.STRING, lexeme, parts[0], start_line, start_col)
+            )
+        else:
+            self.tokens.append(
+                Token(TokenType.INTERP_STRING, lexeme, parts, start_line, start_col)
+            )
+
+    def _interp_placeholder(self, str_start_line: int, str_start_col: int) -> tuple:
+        """Scan a `${...}` placeholder's raw expression text, tracking brace
+        depth so a nested `{}` (e.g. a map literal) doesn't end it early.
+        Quotes inside the expression aren't tracked specially — they're just
+        ordinary characters here, so a nested string containing `{`/`}` would
+        misparse, but that's not part of this grammar (only brace nesting is)."""
+        expr_start_line, expr_start_col = self.line, self.column
+        expr_start_pos = self.pos
+        depth = 1
+        while True:
+            if self._at_end():
+                raise LexError(
+                    "unterminated string",
+                    str_start_line,
+                    str_start_col,
+                    unterminated=True,
+                )
+            char = self._peek()
+            if char == "{":
+                depth += 1
+                self._advance()
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+                self._advance()
+            else:
+                self._advance()
+        expr_text = self.source[expr_start_pos : self.pos]
+        self._advance()  # consume closing '}'
+        return ("expr", expr_text, expr_start_line, expr_start_col)
 
     def _number(self, first: str, start_line: int, start_col: int):
         digits = [first]

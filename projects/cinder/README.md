@@ -30,7 +30,9 @@ while (i < 10) {
 ## Features (implemented and tested)
 
 - **Values**: numbers, strings, booleans, `nil`; `nil`/`false` are falsy,
-  everything else (including `0` and `""`) is truthy
+  everything else (including `0` and `""`) is truthy; strings support
+  interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
+  inside `${...}`, stringified the same way `print`/`format` render values
 - **Variables & scope**: `let` declarations, assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives)
 - **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
@@ -134,7 +136,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `take`/`drop` and `flat_map`
-for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): string
-interpolation, list destructuring in `let`, and `repeat` for lists. The full
-vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `take`/`drop`, `flat_map` for
+lists, and string interpolation (`"...${expr}..."`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): list destructuring in `let` and `repeat` for
+lists. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

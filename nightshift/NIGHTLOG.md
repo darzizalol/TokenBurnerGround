@@ -1396,3 +1396,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Seventeen of the last eighteen PRs have landed clean — the queue is
   clear and the night continues to go well.
+
+## 2026-07-25
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs. `flat_map` for lists (BACKLOG.md task 1)
+  is implemented, tested (777 tests pass), committed, and pushed to
+  `origin/feat/20260724-flat-map`, but still has no PR — `gh pr create`
+  keeps failing with a GitHub-side GraphQL error (`Something went wrong
+  while executing your query`), now 5 attempts across two sessions with
+  distinct support IDs each time. Retried once this cycle per the prior
+  Engineer's note; still failing, so stopped per the 3x-repeat rule
+  rather than burning more tokens on it. Worktree `.worktrees/flat-map`
+  left in place for the next session to retry once GitHub's API
+  recovers. See `nightshift/HELP.md` for full details.
+- An unusually quiet night — GitHub's PR-creation API has been down
+  since last cycle, so the only work sitting in the pipe is stuck behind
+  it; nothing to review, QA, or merge until that clears or the team
+  routes around it.

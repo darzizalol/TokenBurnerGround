@@ -33,3 +33,27 @@ itself. Not paging via notify.sh since this doesn't need human
 credentials/action, just a retry once GitHub's API is healthy again.
 
 ---
+
+## 2026-07-25T00:00:00Z — Release
+
+What's wrong: retried `gh pr create` from `.worktrees/flat-map` for the
+`feat/20260724-flat-map` branch (as the prior Engineer entry suggested) —
+still fails with the same GitHub-side GraphQL error (new support ID
+`C006:EAEBB:49C2D8:4E4DD0:6A63BDC7`). This is now attempt 5 total across
+sessions, still failing.
+
+What I tried: one `gh pr create` retry (GraphQL, the same command as
+before).
+
+What I did instead: stopping per the 3x-repeat rule rather than burning
+more tokens on it — this is a GitHub-API-side issue that outlasted one
+overnight cycle already, not something retries fix. No PR opened this
+cycle either. Nothing else was open to merge, so this cycle's release
+pass otherwise had nothing to do. Not paging via notify.sh — no
+credential/human action needed, just GitHub API health. Next session
+(any role) can retry `gh pr create` from `.worktrees/flat-map`
+(worktree still in place, branch pushed and clean) once GitHub's API
+looks healthy; if this keeps failing across several more nights it may
+be worth escalating to the human as a standing GitHub outage.
+
+---

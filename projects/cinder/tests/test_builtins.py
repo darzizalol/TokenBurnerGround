@@ -1,5 +1,5 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
-keys, values, items, get, remove, merge, upper, lower, trim, split, join,
+insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
 filter, reduce, slice, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
@@ -157,6 +157,72 @@ class TestPop(unittest.TestCase):
     def test_pop_on_empty_list_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("pop([]);")
+
+
+class TestInsert(unittest.TestCase):
+    def test_insert_in_middle(self):
+        env = run("let l = [1, 2, 3]; insert(l, 1, 99);")
+        self.assertEqual(env.get("l"), [1, 99, 2, 3])
+
+    def test_insert_at_front(self):
+        env = run("let l = [1, 2, 3]; insert(l, 0, 99);")
+        self.assertEqual(env.get("l"), [99, 1, 2, 3])
+
+    def test_insert_at_length_appends(self):
+        env = run("let l = [1, 2, 3]; insert(l, 3, 99);")
+        self.assertEqual(env.get("l"), [1, 2, 3, 99])
+
+    def test_insert_negative_index(self):
+        env = run("let l = [1, 2, 3]; insert(l, -1, 99);")
+        self.assertEqual(env.get("l"), [1, 2, 99, 3])
+
+    def test_insert_returns_nil(self):
+        env = run("let l = [1, 2]; let result = insert(l, 0, 9);")
+        self.assertIsNone(env.get("result"))
+
+    def test_insert_out_of_range_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("insert([1, 2], 5, 0);")
+
+    def test_insert_non_int_index_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('insert([1, 2], "0", 9);')
+
+    def test_insert_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("insert(5, 0, 9);")
+
+    def test_insert_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("insert([1, 2], 0);")
+
+
+class TestRemoveAt(unittest.TestCase):
+    def test_remove_at_returns_removed_element(self):
+        env = run("let l = [1, 2, 3]; let result = remove_at(l, 1);")
+        self.assertEqual(env.get("result"), 2)
+        self.assertEqual(env.get("l"), [1, 3])
+
+    def test_remove_at_negative_index(self):
+        env = run("let l = [1, 2, 3]; let result = remove_at(l, -1);")
+        self.assertEqual(env.get("result"), 3)
+        self.assertEqual(env.get("l"), [1, 2])
+
+    def test_remove_at_on_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("remove_at([], 0);")
+
+    def test_remove_at_non_int_index_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('remove_at([1, 2], "0");')
+
+    def test_remove_at_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("remove_at(5, 0);")
+
+    def test_remove_at_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("remove_at([1, 2]);")
 
 
 class TestKeys(unittest.TestCase):

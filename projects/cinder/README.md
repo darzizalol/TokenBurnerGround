@@ -62,8 +62,9 @@ while (i < 10) {
   `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
-  math builtins `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `sqrt`,
-  `ord`/`chr` for character/code-point conversion, and type predicates
+  `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
+  `ceil`, `pow`, `sqrt`, `ord`/`chr` for character/code-point conversion, and
+  type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -107,7 +108,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (723+ tests) covers every layer — lexer, parser, interpreter,
+The suite (741+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -132,8 +133,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `insert`/`remove_at` for lists
-and `ord`/`chr` for character/code-point conversion. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `pad_start`/`pad_end` for strings, and `first`/
-`last` for lists. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `ord`/`chr` for character/
+code-point conversion and `pad_start`/`pad_end` for strings. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `first`/`last` for lists, and `take`/`drop`
+for lists. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

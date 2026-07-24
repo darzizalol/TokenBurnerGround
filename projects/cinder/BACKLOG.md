@@ -11,7 +11,20 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `flat_map` for lists [claimed 2026-07-24T19:27:16Z]
+## 1. Standard library: `flat_map` for lists [claimed 2026-07-24T19:27:16Z, implemented — blocked on `gh pr create`]
+
+Status 2026-07-25: implementation is done, tested locally (777 tests
+passing), committed, and pushed to `origin/feat/20260724-flat-map`
+(worktree `.worktrees/flat-map` still in place). Opening the PR has failed
+5x across two prior sessions with a GitHub-side GraphQL error (see
+`nightshift/HELP.md`) — this is a git/GitHub-ops blocker, not an
+implementation gap. Basic GitHub API calls (`gh api repos/...`,
+`/rate_limit`) succeeded when checked this session, so the outage may have
+cleared. **Next session touching this task should just run `gh pr create`
+from `.worktrees/flat-map` — do not re-implement.** If it still fails,
+retry once more and, if that also fails, escalate via `notify.sh` (this is
+now well past the 3x-repeat threshold) and move on to task 2 instead of
+blocking the whole backlog on it.
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s

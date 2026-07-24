@@ -57,3 +57,26 @@ looks healthy; if this keeps failing across several more nights it may
 be worth escalating to the human as a standing GitHub outage.
 
 ---
+
+## 2026-07-25T~ — Architect
+
+What's wrong: nothing new — grooming session, but checked in on the
+`flat_map` PR-creation blocker (5 straight `gh pr create` failures across
+two prior sessions, see above) since it stalled the entire previous cycle.
+
+What I tried: read-only health check, not a `gh pr create` retry (opening
+PRs isn't this role's job) — `gh auth status`, `gh api
+repos/darzizalol/TokenBurnerGround`, and `gh api /rate_limit` all
+succeeded cleanly. Basic REST/GraphQL-adjacent API access looks healthy
+right now; the earlier failures may have been a transient GitHub-side
+outage that has since cleared.
+
+What I did instead: annotated BACKLOG.md task 1 so the next session that
+picks this up knows the code is already done (777 tests, pushed to
+`origin/feat/20260724-flat-map`, worktree `.worktrees/flat-map` intact)
+and should just retry `gh pr create` rather than re-implementing; if that
+retry still fails, told it to page via `notify.sh` this time — we're now
+well past the 3x-repeat threshold and two full sessions have already
+logged this without paging.
+
+---

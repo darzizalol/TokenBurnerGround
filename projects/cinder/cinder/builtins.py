@@ -430,6 +430,42 @@ def _replace(arguments: list, line: int, column: int) -> object:
     return value.replace(old, new)
 
 
+def _check_pad_arguments(name: str, value: object, width: object, fill: object, line: int, column: int) -> None:
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"{name}() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(width, int) or isinstance(width, bool):
+        raise CinderRuntimeError(
+            f"{name}() requires an int width, got {type_name(width)}", line, column
+        )
+    if width < 0:
+        raise CinderRuntimeError(f"{name}() width must not be negative, got {width}", line, column)
+    if not isinstance(fill, str) or len(fill) != 1:
+        raise CinderRuntimeError(
+            f"{name}() requires a single-character fill string, got {fill!r}", line, column
+        )
+
+
+def _pad_start(arguments: list, line: int, column: int) -> object:
+    _require_arity("pad_start", arguments, 3, line, column)
+    value, width, fill = arguments
+    _check_pad_arguments("pad_start", value, width, fill, line, column)
+    if len(value) >= width:
+        return value
+    return fill * (width - len(value)) + value
+
+
+def _pad_end(arguments: list, line: int, column: int) -> object:
+    _require_arity("pad_end", arguments, 3, line, column)
+    value, width, fill = arguments
+    _check_pad_arguments("pad_end", value, width, fill, line, column)
+    if len(value) >= width:
+        return value
+    return value + fill * (width - len(value))
+
+
 def _abs(arguments: list, line: int, column: int) -> object:
     _require_arity("abs", arguments, 1, line, column)
     value = arguments[0]
@@ -1024,6 +1060,8 @@ _BUILTINS = {
     "starts_with": _starts_with,
     "ends_with": _ends_with,
     "replace": _replace,
+    "pad_start": _pad_start,
+    "pad_end": _pad_end,
     "abs": _abs,
     "min": _min,
     "max": _max,

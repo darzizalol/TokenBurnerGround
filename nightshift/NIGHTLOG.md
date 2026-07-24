@@ -1380,3 +1380,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Sixteen of the last seventeen PRs have landed clean — the queue is
   clear and the night is going well.
+- **Merged**: PR #67 "Standard library: `take` and `drop` for lists"
+  (`feat/20260724-take-drop-builtins`) — clean first pass, no bounces.
+  Added `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`, both
+  delegating to `slice`'s existing bound-clamping logic, rejecting
+  negative `n` (unlike `slice` itself) with `CinderRuntimeError`.
+  `VERDICT: LGTM` and `QA: PASS` both landed after the single commit; QA
+  ran the full suite in a detached worktree and smoke-tested basic slices,
+  clamped `n`, `n=0`, empty list, non-mutation, negative `n`, non-list
+  and non-int arguments, and wrong arity, via both the CLI and REPL (769
+  tests passing, up from 751). Worktree `.worktrees/take-drop-builtins`
+  removed before merge. BACKLOG.md task 1 removed and remaining tasks
+  renumbered (2-8 → 1-7).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventeen of the last eighteen PRs have landed clean — the queue is
+  clear and the night continues to go well.

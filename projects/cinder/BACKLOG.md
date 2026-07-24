@@ -11,42 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `take` and `drop` for lists [claimed 2026-07-24T14:48:10Z]
-
-Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
-`take` returns a new list of the first `n` elements (or the whole list if
-`n >= len(list)`); `drop` returns a new list with the first `n` elements
-removed (or `[]` if `n >= len(list)`). Non-mutating, matching
-`slice`/`reverse`/`copy`'s copy style — in fact both are one-line special
-cases of the existing `slice()`/`_evaluate_slice` bound-clamping logic
-(`take(l, n)` is `slice(l, 0, n)`, `drop(l, n)` is `slice(l, n, len(l))`), so
-implement them by delegating to the same clamping helper `slice` already
-uses rather than duplicating the bounds arithmetic. `n` must be a
-non-negative `int`; a negative `n` raises `CinderRuntimeError` (unlike
-`slice`, which accepts negative bounds for negative-indexing — `take`/`drop`
-are deliberately simpler and count-based, not index-based).
-
-Acceptance criteria:
-- `take([1, 2, 3, 4], 2)` is `[1, 2]`; `drop([1, 2, 3, 4], 2)` is `[3, 4]`.
-- `take([1, 2], 10)` is `[1, 2]` (n exceeds length, clamps).
-- `drop([1, 2], 10)` is `[]` (n exceeds length, clamps).
-- `take([1, 2, 3], 0)` is `[]`; `drop([1, 2, 3], 0)` is `[1, 2, 3]`.
-- `take([], 3)` is `[]`; `drop([], 3)` is `[]` (empty list).
-- `take([1, 2], -1)` / `drop([1, 2], -1)` raise `CinderRuntimeError` with
-  line/column (negative n).
-- `take(5, 1)` / `drop(5, 1)` raise `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `take([1, 2], "1")` / `drop([1, 2], "1")` raise `CinderRuntimeError` with
-  line/column (non-int n).
-- Neither mutates its input list.
-- Wrong arity raises `CinderRuntimeError` with line/column for both.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `flat_map` for lists
+## 1. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -79,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. String interpolation: `"...${expr}..."`
+## 2. String interpolation: `"...${expr}..."`
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated
@@ -125,7 +90,7 @@ Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. List destructuring in `let`: `let [a, b] = expr;`
+## 3. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -168,7 +133,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `repeat` for lists
+## 4. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -193,7 +158,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `map_values` for maps
+## 5. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -217,7 +182,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Numeric literals: hexadecimal, binary, and octal integers
+## 6. Numeric literals: hexadecimal, binary, and octal integers
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
@@ -254,7 +219,7 @@ Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
 
 ---
 
-## 8. Standard library: `find_index` for lists
+## 7. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -775,6 +740,11 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   Added `first(list)` and `last(list)` to `cinder/builtins.py`, following
   `reverse`/`copy`'s non-mutating, single-arg style. Clean first pass, no
   bounces (751 tests passing, up from 741).
+- **Standard library: `take` and `drop` for lists** — merged
+  2026-07-24T14:53:09Z via PR #67 (`feat/20260724-take-drop-builtins`).
+  Added `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`, both
+  delegating to the same bound-clamping logic `slice` uses. Clean first
+  pass, no bounces (769 tests passing, up from 751).
 
 ## Graveyard
 

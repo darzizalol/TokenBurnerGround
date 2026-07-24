@@ -1,7 +1,7 @@
 """Standard library builtins injected into every Cinder program's global scope.
 
 `create_global_environment` returns a fresh `Environment` with `print`,
-`len`, `type`, `str`, `int`, `float`, `push`, `pop`, `insert`, `remove_at`,
+`len`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
 `keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
@@ -125,6 +125,35 @@ def _float(arguments: list, line: int, column: int) -> object:
     raise CinderRuntimeError(
         f"float() requires a number or string, got {type_name(value)}", line, column
     )
+
+
+def _ord(arguments: list, line: int, column: int) -> object:
+    _require_arity("ord", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"ord() requires a string, got {type_name(value)}", line, column
+        )
+    if len(value) != 1:
+        raise CinderRuntimeError(
+            f"ord() requires a string of length 1, got length {len(value)}", line, column
+        )
+    return ord(value)
+
+
+def _chr(arguments: list, line: int, column: int) -> object:
+    _require_arity("chr", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise CinderRuntimeError(
+            f"chr() requires an int, got {type_name(value)}", line, column
+        )
+    try:
+        return chr(value)
+    except ValueError:
+        raise CinderRuntimeError(
+            f"chr() requires a code point between 0 and 0x10FFFF, got {value}", line, column
+        ) from None
 
 
 def _push(arguments: list, line: int, column: int) -> object:
@@ -974,6 +1003,8 @@ _BUILTINS = {
     "str": _str,
     "int": _int,
     "float": _float,
+    "ord": _ord,
+    "chr": _chr,
     "push": _push,
     "pop": _pop,
     "insert": _insert,

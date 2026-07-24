@@ -1,4 +1,4 @@
-"""Tests for cinder.builtins: print, len, type, str, int, float, push, pop,
+"""Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
@@ -123,6 +123,54 @@ class TestFloat(unittest.TestCase):
     def test_float_of_non_numeric_string_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('float("abc");')
+
+
+class TestOrd(unittest.TestCase):
+    def test_ord_of_letter(self):
+        self.assertEqual(run('let result = ord("A");').get("result"), 65)
+
+    def test_ord_round_trips_with_chr(self):
+        self.assertEqual(run('let result = ord(chr(97));').get("result"), 97)
+
+    def test_ord_of_empty_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('ord("");')
+
+    def test_ord_of_multi_character_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('ord("ab");')
+
+    def test_ord_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("ord(5);")
+
+    def test_ord_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('ord("a", "b");')
+
+
+class TestChr(unittest.TestCase):
+    def test_chr_of_code_point(self):
+        self.assertEqual(run("let result = chr(65);").get("result"), "A")
+
+    def test_chr_round_trips_with_ord(self):
+        self.assertEqual(run('let result = chr(ord("z"));').get("result"), "z")
+
+    def test_chr_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chr(-1);")
+
+    def test_chr_of_out_of_range_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chr(1114112);")
+
+    def test_chr_of_non_int_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('chr("65");')
+
+    def test_chr_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chr();")
 
 
 class TestPush(unittest.TestCase):

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `first` and `last` for lists
+## 1. Standard library: `first` and `last` for lists [claimed 2026-07-24T14:37:09Z]
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /

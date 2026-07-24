@@ -196,6 +196,74 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. Standard library: `min_by` and `max_by` for lists
+
+Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
+— like `min`/`max` but selecting the element whose `fn(element)` result is
+smallest/largest, via the shared `call_value` helper (matching `sort_by`/
+`group_by`'s callback style), rather than comparing elements directly.
+Complements `sort_by` (which orders the whole list by a key) for the common
+"just give me the best one" case that otherwise requires
+`sort_by(list, fn)[0]` (wasteful full sort) or a manual `reduce` loop.
+
+Acceptance criteria:
+- `min_by([3, 1, 2], fn(n) { n })` is `1`; `max_by([3, 1, 2], fn(n) { n })`
+  is `3`.
+- `min_by(["ccc", "a", "bb"], fn(s) { len(s) })` is `"a"` (shortest string).
+- On ties (equal `fn` results), the *first* matching element wins for both
+  (stable, matching Python's `min`/`max` tie-break).
+- `min_by([], fn(n) { n })` and `max_by([], fn(n) { n })` raise
+  `CinderRuntimeError` with line/column (empty list — no well-defined
+  answer, matching `min`/`max`'s zero-argument rejection).
+- `min_by(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `min_by([1, 2], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- `fn`'s results must be comparable with `<` (numbers or strings, matching
+  `sort`'s type restriction); comparing incompatible or mixed types raises
+  `CinderRuntimeError`.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: value-based removal for lists via `remove`
+
+Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
+map-only: `remove(map, key)`) to also accept a `list` as its first
+argument, dispatching on the argument's type the same way `contains`
+already dispatches across list/map/string — for a list, `remove(list,
+value)` deletes and discards the *first* element equal to `value` (via
+the shared `values_equal` helper, so it agrees with `==`/`contains`/
+`index_of` on bool-vs-int per PR #51), mutating the list in place and
+returning the removed value, matching `pop`/`remove_at`'s in-place style
+and the existing map behavior's raise-on-missing style. Fills the last
+gap in the list-removal trio: `pop` (end), `remove_at` (by index),
+`remove` (by value) — today removing by value requires `index_of` +
+`remove_at` as two separate calls. Non-list, non-map first argument keeps
+today's `remove() requires a map, got ...` error but reworded to mention
+both accepted types.
+
+Acceptance criteria:
+- `let l = [1, 2, 3]; remove(l, 2); l` is `[1, 3]`.
+- `remove(l, value)` on a list returns the removed value (`2` above).
+- Only the *first* matching element is removed: `remove([1, 2, 1], 1)`
+  leaves `[2, 1]`.
+- `remove([1, 2], 5)` raises `CinderRuntimeError` with line/column (value
+  not found in list — no silent no-op).
+- Existing map behavior (`remove(map, key)`) is unchanged, including its
+  missing-key and invalid-key errors — add a regression test pinning this.
+- `remove(5, 1)` raises `CinderRuntimeError` with line/column (neither
+  list nor map first argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

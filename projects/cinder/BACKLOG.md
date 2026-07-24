@@ -11,47 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `flat_map` for lists [claimed 2026-07-24T19:27:16Z, PR open]
-
-Status 2026-07-25T19:59Z: `gh pr create` succeeded on retry — the
-repo-wide 500 that blocked this for 8+ attempts across five sessions and
-two nights is gone (no code changes needed, per the earlier diagnosis).
-PR opened: https://github.com/darzizalol/TokenBurnerGround/pull/68 from
-`origin/feat/20260724-flat-map` (worktree `.worktrees/flat-map` left in
-place for reviewer rework). Awaiting Reviewer + QA verdicts.
-
-Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
-`flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
-`call_value`-based style. Calls `fn(element)` once per element via the
-shared `call_value` helper; if the result is a `list`, its elements are
-spliced into the output (one level, matching `flatten`'s existing
-one-level-only semantics), otherwise the single result value is appended
-as-is — same per-element dispatch `_flatten` already uses, just applied to
-`fn`'s return value instead of to `list`'s own elements directly. First
-argument must be `list`, second must be callable, matching `map`/`filter`'s
-type-check style.
-
-Acceptance criteria:
-- `flat_map([1, 2, 3], fn(n) { [n, n] })` is `[1, 1, 2, 2, 3, 3]`.
-- `flat_map([1, 2, 3], fn(n) { n * 2 })` is `[2, 4, 6]` (non-list results
-  pass through like `map`, matching `flatten`'s pass-through for
-  non-list elements).
-- `flat_map([], fn(n) { [n] })` is `[]` (empty list, `fn` never called).
-- `flat_map([[1, 2]], fn(x) { x })` is `[1, 2]` (only one level of
-  flattening — a nested list `fn` returns unchanged is spliced in once,
-  not recursively flattened further).
-- `flat_map(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `flat_map([1, 2], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — blocked on `gh pr create`]
+## 1. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — blocked on `gh pr create`]
 
 Status 2026-07-25 (re-checked, unchanged): implementation is done, tested
 (794 tests passing, up from 769), committed, and pushed to
@@ -109,7 +69,7 @@ Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. List destructuring in `let`: `let [a, b] = expr;`
+## 2. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -152,7 +112,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `repeat` for lists
+## 3. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -177,7 +137,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `map_values` for maps
+## 4. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -201,7 +161,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Numeric literals: hexadecimal, binary, and octal integers
+## 5. Numeric literals: hexadecimal, binary, and octal integers
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
@@ -238,7 +198,7 @@ Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
 
 ---
 
-## 7. Standard library: `find_index` for lists
+## 6. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -267,7 +227,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `flatten_deep` for lists
+## 7. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -791,6 +751,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   Added `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`, both
   delegating to the same bound-clamping logic `slice` uses. Clean first
   pass, no bounces (769 tests passing, up from 751).
+- **Standard library: `flat_map` for lists** — merged 2026-07-25T20:02:51Z via
+  PR #68 (`feat/20260724-flat-map`). Added `flat_map(list, fn)` to
+  `cinder/builtins.py`, equivalent to `flatten(map(list, fn))` as a single
+  builtin via the shared `call_value` helper, following `map`/`filter`'s
+  type-check style. This was the PR blocked across five sessions and two
+  nights by a repo-wide `gh pr create` GraphQL 500 (see `nightshift/HELP.md`);
+  the 500 cleared on retry with no code changes needed. Clean first pass
+  once opened — Reviewer and QA both approved without rework (777 tests
+  passing, up from 769).
 
 ## Graveyard
 

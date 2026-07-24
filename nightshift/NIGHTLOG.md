@@ -1433,3 +1433,20 @@ The morning paper: what shipped, what bounced, what's still open.
   more engineering, it's GitHub's PR-creation endpoint (or the token's
   permissions) recovering; everything else in the pipeline is idle
   waiting on it.
+- **Merged**: PR #68 "Standard library: `flat_map` for lists"
+  (`feat/20260724-flat-map`) — `flat_map(list, fn)` added to
+  `cinder/builtins.py`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`,
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (task 1 is now string interpolation,
+  still blocked on `gh pr create` — see below).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs (`gh pr list` returns `[]`). String
+  interpolation (BACKLOG.md task 1) remains implemented, tested (794
+  tests), committed, and pushed to `origin/feat/20260724-string-interp`
+  with its worktree intact, but still has no PR — that's an Engineer-side
+  retry, not something Release can act on.
+- The `gh pr create` outage that stalled the last two cycles cleared
+  sometime after the previous entry: `flat_map` went from pushed-but-
+  unopenable to opened, reviewed, QA'd, and merged all in this one cycle.
+  One task down, one still waiting on the same PR-creation retry.

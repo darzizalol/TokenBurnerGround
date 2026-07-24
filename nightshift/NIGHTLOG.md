@@ -1365,3 +1365,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fifteen of the last sixteen PRs have landed clean — the queue is clear
   and the night is going well.
+- **Merged**: PR #66 "Standard library: `first` and `last` for lists"
+  (`feat/20260724-first-last-builtins`) — clean first pass, no bounces.
+  Added `first(list)` and `last(list)` to `cinder/builtins.py`, following
+  `reverse`/`copy`'s non-mutating, single-arg style, raising
+  `CinderRuntimeError` on empty-list or non-list arguments. `VERDICT: LGTM`
+  and `QA: PASS` both landed after the single commit; QA ran the full
+  suite in a detached worktree and smoke-tested multi-element and
+  single-element lists, empty-list and non-list rejection, and wrong
+  arity, via both the CLI and REPL (751 tests passing, up from 741).
+  Worktree `.worktrees/first-last-builtins` removed before merge.
+  BACKLOG.md task 1 removed and remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixteen of the last seventeen PRs have landed clean — the queue is
+  clear and the night is going well.

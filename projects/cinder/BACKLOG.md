@@ -11,32 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `first` and `last` for lists [claimed 2026-07-24T14:37:09Z]
-
-Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
-the element at index `0` / `-1` respectively — shorthand for `list[0]` /
-`list[-1]` that reads better in pipelines built from `map`/`filter`/`reduce`
-chains where the list is itself an expression, not a bound variable.
-Non-mutating, single-argument, following `reverse`/`copy`'s style. An empty
-list has no first/last element — raise `CinderRuntimeError` rather than
-letting a Python `IndexError` escape (reuse the same wording style
-`pop`/`remove_at`-in-progress use for "empty list" errors).
-
-Acceptance criteria:
-- `first([1, 2, 3])` is `1`; `last([1, 2, 3])` is `3`.
-- `first([42])` is `42`; `last([42])` is `42` (single-element list).
-- `first([])` raises `CinderRuntimeError` with line/column (empty list).
-- `last([])` raises `CinderRuntimeError` with line/column (empty list).
-- `first(5)` / `last(5)` raise `CinderRuntimeError` with line/column
-  (non-list argument).
-- Wrong arity raises `CinderRuntimeError` with line/column for both.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `take` and `drop` for lists
+## 1. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -71,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `flat_map` for lists
+## 2. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -104,7 +79,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. String interpolation: `"...${expr}..."`
+## 3. String interpolation: `"...${expr}..."`
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated
@@ -150,7 +125,7 @@ Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. List destructuring in `let`: `let [a, b] = expr;`
+## 4. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -193,7 +168,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `repeat` for lists
+## 5. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -218,7 +193,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `map_values` for maps
+## 6. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -729,6 +704,11 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `cinder/builtins.py`, following `_find`/`_replace`'s multi-`str`-argument
   style; shared `_check_pad_arguments` helper validates both. Clean first
   pass, no bounces (741 tests passing, up from 723).
+- **Standard library: `first` and `last` for lists** — merged
+  2026-07-24T14:41:59Z via PR #66 (`feat/20260724-first-last-builtins`).
+  Added `first(list)` and `last(list)` to `cinder/builtins.py`, following
+  `reverse`/`copy`'s non-mutating, single-arg style. Clean first pass, no
+  bounces (751 tests passing, up from 741).
 
 ## Graveyard
 

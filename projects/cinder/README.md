@@ -56,7 +56,8 @@ while (i < 10) {
   `list[start:end]`/`string[start:end]` (Python-style, out-of-range bounds
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
-  `remove_at`, `keys`, `values`, `items`, `enumerate`, `merge`, `get`, `remove`,
+  `remove_at`, `first`, `last`, `keys`, `values`, `items`, `enumerate`,
+  `merge`, `get`, `remove`,
   `copy`, `contains`, `index_of`, `count`, `unique`, `flatten`, `chunk`,
   `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `map`,
   `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `format`, `sum`,
@@ -108,7 +109,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (741+ tests) covers every layer — lexer, parser, interpreter,
+The suite (751+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -133,7 +134,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `ord`/`chr` for character/
-code-point conversion and `pad_start`/`pad_end` for strings. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `first`/`last` for lists, and `take`/`drop`
-for lists. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `pad_start`/`pad_end` for
+strings and `first`/`last` for lists. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `take`/`drop` and `flat_map` for lists.
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

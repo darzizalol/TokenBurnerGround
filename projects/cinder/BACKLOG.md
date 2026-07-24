@@ -217,6 +217,72 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. Numeric literals: hexadecimal, binary, and octal integers
+
+Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
+(hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
+addition to today's decimal-only scanning, producing an ordinary `NUMBER`
+token whose value is the parsed Python `int` (no downstream AST/parser/
+interpreter change needed — the literal node already just carries whatever
+numeric value the lexer hands it). Only apply the prefix check when a digit
+run starts with `0` followed immediately by `x`/`b`/`o` (case-insensitive); a
+bare `0` or `0` followed by more decimal digits (`0`, `07`) keeps the
+existing decimal-literal path unchanged (Cinder has no octal-by-leading-zero
+surprise, unlike C). Reject an empty digit run after the prefix (`0x` alone)
+and any digit outside the base's alphabet (`0x1G`, `0b12`, `0o8`) as a
+`LexError` with line/column pointing at the literal's start. These literals
+are integer-only — no `0x1.5` float form.
+
+Acceptance criteria:
+- `0x1F` lexes/evaluates to `31`; `0xff` to `255`.
+- `0b1010` lexes/evaluates to `10`.
+- `0o17` lexes/evaluates to `15`.
+- `0` and `007` still lex as decimal `0` and `7` respectively (unchanged, no
+  octal-by-leading-zero).
+- `0x` alone (no digits after the prefix) raises `LexError` with
+  line/column.
+- `0x1G`, `0b12`, `0o8` (digit outside the base's alphabet) raise `LexError`
+  with line/column.
+- Hex/binary/octal literals work anywhere a number literal already does:
+  arithmetic (`0xFF + 1` is `256`), comparisons, list indices, function
+  arguments.
+- Existing decimal integer/float literal tests are unaffected.
+- Full test suite passes.
+
+Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
+`tests/test_interpreter.py`.
+
+---
+
+## 8. Standard library: `find_index` for lists
+
+Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
+`int` index of the first element for which `fn(element)` is truthy (via the
+shared `call_value` helper and Cinder's truthiness rule, matching `filter`/
+`partition`'s predicate style), or `-1` if no element matches (short-
+circuits — doesn't call `fn` on elements after the first match).
+Complements the existing `index_of` (which finds by `==` equality) the same
+way `filter` complements `contains`: a predicate-based search for when
+equality isn't enough (e.g. "first even number", "first string longer than
+3 characters").
+
+Acceptance criteria:
+- `find_index([1, 2, 3, 4], fn(n) { n > 2 })` is `2` (0-based index of `3`).
+- `find_index([1, 2, 3], fn(n) { n > 10 })` is `-1` (no match).
+- `find_index([], fn(n) { n })` is `-1` (empty list, `fn` never called).
+- Short-circuits: `fn` is not called for elements after the first match
+  (verify via a counter closure or side-effecting list in a test).
+- `find_index(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `find_index([1, 2], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

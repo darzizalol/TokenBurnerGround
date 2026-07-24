@@ -1674,6 +1674,50 @@ class TestFlatten(unittest.TestCase):
             run("flatten([1], [2]);")
 
 
+class TestFlatMap(unittest.TestCase):
+    def test_flat_map_splices_list_results(self):
+        env = run("let result = flat_map([1, 2, 3], fn(n) { return [n, n]; });")
+        self.assertEqual(env.get("result"), [1, 1, 2, 2, 3, 3])
+
+    def test_flat_map_passes_through_non_list_results(self):
+        env = run("let result = flat_map([1, 2, 3], fn(n) { return n * 2; });")
+        self.assertEqual(env.get("result"), [2, 4, 6])
+
+    def test_flat_map_of_empty_list_never_calls_fn(self):
+        env = run(
+            "let calls = 0;"
+            "let counter = fn(n) { calls = calls + 1; return n; };"
+            "let result = flat_map([], counter);"
+        )
+        self.assertEqual(env.get("result"), [])
+        self.assertEqual(env.get("calls"), 0)
+
+    def test_flat_map_only_flattens_one_level(self):
+        env = run("let result = flat_map([[1, 2]], fn(x) { return x; });")
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_flat_map_does_not_mutate_input(self):
+        env = run("let xs = [1, 2]; let result = flat_map(xs, fn(x) { return [x]; });")
+        self.assertEqual(env.get("xs"), [1, 2])
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_flat_map_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("flat_map(5, fn(n) { return n; });")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_flat_map_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("flat_map([1, 2], 5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_flat_map_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("flat_map([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("flat_map([1], fn(x) { return x; }, 2);")
+
+
 class TestZip(unittest.TestCase):
     def test_zip_pairs_elements(self):
         env = run('let result = zip([1, 2, 3], ["a", "b", "c"]);')

@@ -857,6 +857,29 @@ def _flatten(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _flat_map(arguments: list, line: int, column: int) -> object:
+    _require_arity("flat_map", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"flat_map() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"flat_map() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    result = []
+    for item in items:
+        mapped = call_value(fn, [item], line, column)
+        if isinstance(mapped, list):
+            result.extend(mapped)
+        else:
+            result.append(mapped)
+    return result
+
+
 def _chunk(arguments: list, line: int, column: int) -> object:
     _require_arity("chunk", arguments, 2, line, column)
     value, size = arguments
@@ -1156,6 +1179,7 @@ _BUILTINS = {
     "drop": _drop,
     "concat": _concat,
     "flatten": _flatten,
+    "flat_map": _flat_map,
     "chunk": _chunk,
     "zip": _zip,
     "enumerate": _enumerate,

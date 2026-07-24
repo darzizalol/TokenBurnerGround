@@ -1099,6 +1099,46 @@ class TestReverse(unittest.TestCase):
             run("reverse([1], 2);")
 
 
+class TestFirst(unittest.TestCase):
+    def test_first_of_multi_element_list(self):
+        self.assertEqual(run("let result = first([1, 2, 3]);").get("result"), 1)
+
+    def test_first_of_single_element_list(self):
+        self.assertEqual(run("let result = first([42]);").get("result"), 42)
+
+    def test_first_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("first([]);")
+
+    def test_first_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("first(5);")
+
+    def test_first_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("first([1], 2);")
+
+
+class TestLast(unittest.TestCase):
+    def test_last_of_multi_element_list(self):
+        self.assertEqual(run("let result = last([1, 2, 3]);").get("result"), 3)
+
+    def test_last_of_single_element_list(self):
+        self.assertEqual(run("let result = last([42]);").get("result"), 42)
+
+    def test_last_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("last([]);")
+
+    def test_last_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("last(5);")
+
+    def test_last_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("last([1], 2);")
+
+
 class TestSort(unittest.TestCase):
     def test_sort_of_ints(self):
         self.assertEqual(run("let result = sort([3, 1, 2]);").get("result"), [1, 2, 3])

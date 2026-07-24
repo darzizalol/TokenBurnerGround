@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. List destructuring in `let`: `let [a, b] = expr;`
+## 1. List destructuring in `let`: `let [a, b] = expr;` [claimed 2026-07-24T20:21:28Z]
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s

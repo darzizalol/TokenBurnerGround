@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
-find, starts_with, ends_with, replace, abs, min, max, round, floor, ceil,
+find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
 filter, reduce, slice, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
@@ -669,6 +669,74 @@ class TestReplace(unittest.TestCase):
     def test_replace_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('replace("a", "a");')
+
+
+class TestPadStart(unittest.TestCase):
+    def test_pad_start_pads_on_the_left(self):
+        self.assertEqual(run('let result = pad_start("7", 3, "0");').get("result"), "007")
+
+    def test_pad_start_already_at_width_unchanged(self):
+        self.assertEqual(run('let result = pad_start("hello", 3, " ");').get("result"), "hello")
+
+    def test_pad_start_empty_string(self):
+        self.assertEqual(run('let result = pad_start("", 3, "x");').get("result"), "xxx")
+
+    def test_pad_start_exactly_at_width_unchanged(self):
+        self.assertEqual(run('let result = pad_start("ab", 2, "0");').get("result"), "ab")
+
+    def test_pad_start_multi_character_fill_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_start("7", 3, "ab");')
+
+    def test_pad_start_negative_width_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_start("7", -1, "0");')
+
+    def test_pad_start_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_start(5, 3, "0");')
+
+    def test_pad_start_on_non_int_width_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_start("7", "3", "0");')
+
+    def test_pad_start_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_start("7", 3);')
+
+
+class TestPadEnd(unittest.TestCase):
+    def test_pad_end_pads_on_the_right(self):
+        self.assertEqual(run('let result = pad_end("7", 3, "0");').get("result"), "700")
+
+    def test_pad_end_already_at_width_unchanged(self):
+        self.assertEqual(run('let result = pad_end("hello", 3, " ");').get("result"), "hello")
+
+    def test_pad_end_empty_string(self):
+        self.assertEqual(run('let result = pad_end("", 3, "x");').get("result"), "xxx")
+
+    def test_pad_end_exactly_at_width_unchanged(self):
+        self.assertEqual(run('let result = pad_end("ab", 2, "0");').get("result"), "ab")
+
+    def test_pad_end_multi_character_fill_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_end("7", 3, "ab");')
+
+    def test_pad_end_negative_width_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_end("7", -1, "0");')
+
+    def test_pad_end_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_end(5, 3, "0");')
+
+    def test_pad_end_on_non_int_width_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_end("7", "3", "0");')
+
+    def test_pad_end_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_end("7", 3);')
 
 
 class TestAbs(unittest.TestCase):

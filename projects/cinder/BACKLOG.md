@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `take` and `drop` for lists
+## 1. Standard library: `take` and `drop` for lists [claimed 2026-07-24T14:48:10Z]
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if

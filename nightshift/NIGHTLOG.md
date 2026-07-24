@@ -1474,3 +1474,15 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - A smooth cycle — one clean PR in, reviewed, QA'd, and merged with no
   rework, keeping the recently-unblocked cadence going.
+- **Merged**: PR #71 "Standard library: `repeat` for lists"
+  (`feat/20260725-repeat-list`) — added `repeat(value, n)` to
+  `cinder/builtins.py`, returning a new list of `n` shallow-aliased copies
+  of `value`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (824 tests
+  passing, up from 817), both posted after the sole commit — clean squash
+  merge, branch deleted, worktree removed first. BACKLOG.md task 1 marked
+  done under `## Done` and remaining tasks renumbered (1-7 → 1-6, now
+  starting at `map_values` for maps).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Another clean, unblocked cycle — the queue keeps moving with no rework
+  since the `gh pr create` outage cleared.

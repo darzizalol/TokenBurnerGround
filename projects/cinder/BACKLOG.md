@@ -11,32 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `repeat` for lists [claimed 2026-07-25T20:15:00Z]
-
-Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
-containing `n` copies of `value` — complements `range`'s "generate a
-sequence" role for non-numeric sequences. Copies are shallow: for a `list`/
-`map` value, all `n` slots alias the same object, consistent with the
-aliasing semantics `push`/`copy` already document elsewhere in the stdlib
-(no deep-copy surprise). `n` must be a non-negative `int`.
-
-Acceptance criteria:
-- `repeat("x", 3)` is `["x", "x", "x"]`.
-- `repeat(0, 0)` is `[]` (n=0, `value` unused).
-- `repeat([1], 2)` is `[[1], [1]]` and both elements are the same aliased
-  list object — mutating one (e.g. via `push`) mutates the other.
-- `repeat("x", -1)` raises `CinderRuntimeError` with line/column (negative
-  `n`).
-- `repeat("x", "3")` raises `CinderRuntimeError` with line/column (non-`int`
-  `n`).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `map_values` for maps
+## 1. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -60,7 +35,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Numeric literals: hexadecimal, binary, and octal integers
+## 2. Numeric literals: hexadecimal, binary, and octal integers
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
@@ -97,7 +72,7 @@ Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
 
 ---
 
-## 4. Standard library: `find_index` for lists
+## 3. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -126,7 +101,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `flatten_deep` for lists
+## 4. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -153,7 +128,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `min_by` and `max_by` for lists
+## 5. Standard library: `min_by` and `max_by` for lists
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is
@@ -186,7 +161,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: value-based removal for lists via `remove`
+## 6. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -743,6 +718,11 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   to the RHS, which must evaluate to a `list` of exactly the right length
   (no nesting, no rest element, no silent truncation/padding). Clean first
   pass, no bounces (817 tests passing, up from 802).
+- **Standard library: `repeat` for lists** — merged 2026-07-24T20:39:38Z via
+  PR #71 (`feat/20260725-repeat-list`). Added `repeat(value, n)` to
+  `cinder/builtins.py`, returning a new list of `n` shallow-aliased copies
+  of `value`, complementing `range`'s role for non-numeric sequences. Clean
+  first pass, no bounces (824 tests passing, up from 817).
 
 ## Graveyard
 

@@ -11,40 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pad_start` and `pad_end` for strings [claimed 2026-07-24T14:26:56Z]
-
-Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
-`cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
-reaches `width` characters — `pad_start` on the left (matching
-Python/JS's `str.rjust`/`padStart`), `pad_end` on the right (`str.ljust`/
-`padEnd`) — following `_find`/`_replace`'s multi-`str`-argument style.
-`fill` must be a length-1 `str` (no multi-character fill patterns, keeping
-this simple); if `len(s) >= width` already, return `s` unchanged (no
-truncation). `width` must be a non-negative `int`.
-
-Acceptance criteria:
-- `pad_start("7", 3, "0")` is `"007"`.
-- `pad_end("7", 3, "0")` is `"700"`.
-- `pad_start("hello", 3, " ")` is `"hello"` (already at/over width, no
-  truncation).
-- `pad_start("", 3, "x")` is `"xxx"` (empty string).
-- `pad_start("ab", 2, "0")` is `"ab"` (exactly at width).
-- `pad_start("7", 3, "ab")` raises `CinderRuntimeError` with line/column
-  (multi-character fill).
-- `pad_start("7", -1, "0")` raises `CinderRuntimeError` with line/column
-  (negative width).
-- `pad_start(5, 3, "0")` raises `CinderRuntimeError` with line/column
-  (non-`str` first argument).
-- `pad_start("7", "3", "0")` raises `CinderRuntimeError` with line/column
-  (non-`int` width).
-- Wrong arity raises `CinderRuntimeError` with line/column for both.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `first` and `last` for lists
+## 1. Standard library: `first` and `last` for lists
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /
@@ -69,7 +36,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `take` and `drop` for lists
+## 2. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -104,7 +71,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `flat_map` for lists
+## 3. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -137,7 +104,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. String interpolation: `"...${expr}..."`
+## 4. String interpolation: `"...${expr}..."`
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated
@@ -183,7 +150,7 @@ Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. List destructuring in `let`: `let [a, b] = expr;`
+## 5. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -226,7 +193,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `repeat` for lists
+## 6. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -251,7 +218,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `map_values` for maps
+## 7. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -756,6 +723,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `ord()`/`chr()`, converting `ValueError` into `CinderRuntimeError` with
   line/column. Clean first pass, no bounces (723 tests passing, up from
   711).
+- **Standard library: `pad_start` and `pad_end` for strings** — merged
+  2026-07-24T14:32:04Z via PR #65 (`feat/20260724-pad-start-end`). Added
+  `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
+  `cinder/builtins.py`, following `_find`/`_replace`'s multi-`str`-argument
+  style; shared `_check_pad_arguments` helper validates both. Clean first
+  pass, no bounces (741 tests passing, up from 723).
 
 ## Graveyard
 

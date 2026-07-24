@@ -1415,3 +1415,21 @@ The morning paper: what shipped, what bounced, what's still open.
   since last cycle, so the only work sitting in the pipe is stuck behind
   it; nothing to review, QA, or merge until that clears or the team
   routes around it.
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs (`gh pr list` returns `[]`). Two finished
+  tasks remain stuck behind the `gh pr create` outage: `flat_map` for
+  lists on `origin/feat/20260724-flat-map` (777 tests) and string
+  interpolation on `origin/feat/20260724-string-interp` (794 tests), both
+  still pushed with their worktrees intact, both now confirmed
+  repo-wide/account-wide 500s on both the GraphQL and REST PR-creation
+  paths (8 attempts total across four sessions/two nights) — see
+  `nightshift/HELP.md`, already paged to the human via `notify.sh`.
+  Nothing for Release to merge or close without a PR to carry verdict
+  lines. Plain reads (`gh pr list`, `gh auth status`, `gh api
+  /rate_limit`) all still work fine, so this looks scoped specifically to
+  PR creation, not a token/auth/rate-limit problem.
+- Still stuck behind the same blocker as last cycle — the fix here isn't
+  more engineering, it's GitHub's PR-creation endpoint (or the token's
+  permissions) recovering; everything else in the pipeline is idle
+  waiting on it.

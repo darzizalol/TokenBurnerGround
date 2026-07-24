@@ -256,6 +256,55 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
+## 8. Standard library: `repeat` for lists
+
+Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
+containing `n` copies of `value` — complements `range`'s "generate a
+sequence" role for non-numeric sequences. Copies are shallow: for a `list`/
+`map` value, all `n` slots alias the same object, consistent with the
+aliasing semantics `push`/`copy` already document elsewhere in the stdlib
+(no deep-copy surprise). `n` must be a non-negative `int`.
+
+Acceptance criteria:
+- `repeat("x", 3)` is `["x", "x", "x"]`.
+- `repeat(0, 0)` is `[]` (n=0, `value` unused).
+- `repeat([1], 2)` is `[[1], [1]]` and both elements are the same aliased
+  list object — mutating one (e.g. via `push`) mutates the other.
+- `repeat("x", -1)` raises `CinderRuntimeError` with line/column (negative
+  `n`).
+- `repeat("x", "3")` raises `CinderRuntimeError` with line/column (non-`int`
+  `n`).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `map_values` for maps
+
+Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
+lists but for maps: returns a new map with the same keys and each value
+replaced by `fn(value)`, via the shared `call_value` helper (matching
+`map`/`filter`/`group_by`'s style). `items`/`keys`/`values` only let you
+*read* a map's shape today; there is no way to transform every value in one
+step without manually rebuilding the map via `items` + a loop.
+
+Acceptance criteria:
+- `map_values({"a": 1, "b": 2}, fn(v) { v * 10 })` is `{"a": 10, "b": 20}`.
+- `map_values({}, fn(v) { v })` is `{}` (empty map, `fn` never called).
+- Key order is preserved (insertion order, matching `items`).
+- `map_values(5, fn(v) { v })` raises `CinderRuntimeError` with line/column
+  (non-map first argument).
+- `map_values({"a": 1}, 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

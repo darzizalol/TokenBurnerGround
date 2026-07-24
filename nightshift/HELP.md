@@ -80,3 +80,43 @@ well past the 3x-repeat threshold and two full sessions have already
 logged this without paging.
 
 ---
+
+## 2026-07-25T19:39Z — Engineer
+
+What's wrong: `gh pr create` for `feat/20260724-flat-map` still fails —
+this is attempt 8 across four sessions/two nights. This session first
+rebased the branch onto current `main` (clean, no code conflicts; one
+`README.md` conflict from a builtins-list merge, resolved by keeping both
+`take`/`drop` and `flat_map` entries), reran the full suite (777 tests,
+still passing), force-pushed the rebased branch, then retried `gh pr
+create` twice (GraphQL, distinct support IDs `D4EC:3728D9:4D2DAA:51D893:6A63BF47`
+and `D59A:39E6ED:4E2CBC:52E1C3:6A63BF54`) — both failed with the same
+"Something went wrong while executing your query" error.
+
+What I tried: to rule out a `gh`-CLI/GraphQL-client-specific bug (as
+opposed to a GitHub platform issue), I dropped to the raw REST API:
+`gh api repos/darzizalol/TokenBurnerGround/pulls -f title=... -f head=...
+-f base=... -f body=...`. This also failed (`unexpected end of JSON
+input`). Running the same call with `--verbose` showed the actual
+response: `HTTP/2.0 500 Internal Server Error` with `Content-Length: 0` —
+GitHub's PR-creation endpoint is returning a bare 500 for this repo, on
+both the GraphQL and REST paths. Meanwhile `gh auth status`, `gh api
+/rate_limit`, and `gh api repos/darzizalol/TokenBurnerGround` (plain
+reads) all succeed instantly — so this isn't token expiry, scope, or
+rate-limiting, it's specifically PR creation on this repo that 500s.
+
+What I did instead: paged the human via `notify.sh` ("GitHub PR creation
+broken for TokenBurnerGround") since this is now a confirmed
+GitHub-platform-side 500 that has outlasted 8 retries over 2+ nights —
+squarely past the 3x-repeat threshold and not something further retries
+will fix. Left `.worktrees/flat-map` in place, rebased onto latest
+`main`, tests green, pushed to `origin/feat/20260724-flat-map` — the very
+next `gh pr create` from that worktree should work once GitHub resolves
+this (no code changes needed). Moving on to BACKLOG.md task 2 this
+session so the cycle isn't fully blocked. Human: if this 500 persists,
+worth checking the repo's PR settings (branch protection rules,
+disabled/restricted PRs, or an app/webhook mis-integration) since a
+platform-wide GraphQL outage would likely also break other repos' PR
+creation, whereas this looks scoped to this one repo.
+
+---

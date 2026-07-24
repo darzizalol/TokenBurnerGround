@@ -213,6 +213,95 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 7. String interpolation: `"...${expr}..."`
+
+Build: let a double-quoted string literal embed one or more `${expr}`
+placeholders — each containing an arbitrary Cinder expression, evaluated
+where the literal executes and substituted via the same `stringify()`
+`print`/`format` already use — instead of forcing `"x = " + str(x)`
+concatenation or `format("x = {}", x)` for every interpolated value.
+Trigger only on the two-character `${`; a lone `{` or `}` in string text
+stays literal text (existing escape sequences are unaffected). Track
+brace depth from the `${` onward so a nested `{}` inside the expression
+(e.g. a map literal, `"${m["a"]}"` needs no such tracking but `"${ {"a":
+1}["a"] }"` does) doesn't end the placeholder early — increment on `{`,
+decrement on `}`, stop at depth 0. Extract each placeholder's raw source
+text at lex time (with its own starting line/column for error reporting)
+and parse it as a full expression — recursively invoking the existing
+`Lexer`/`Parser` on that substring is simplest and avoids threading
+interpolation state through the main parser. Add a new AST node (e.g.
+`InterpString` with a `parts: list[str | Expr]` field, literal segments
+interleaved with parsed sub-expressions) and evaluate it in
+`interpreter.py` by stringifying and concatenating each part in order. A
+plain string with no `${` should still produce the existing `STRING`
+token/behavior unchanged (don't regress the common case's performance or
+error messages).
+
+Acceptance criteria:
+- `let name = "world"; "hello, ${name}!"` is `"hello, world!"`.
+- `"${1 + 2}"` is `"3"` (arbitrary expression, not just a bare identifier).
+- `"${[1, 2, 3]}"` and `"${ {"a": 1} }"` stringify a list/map the same way
+  `print`/`format` do (nested braces don't truncate the placeholder early).
+- `"a${1}b${2}c"` is `"a1b2c"` (multiple placeholders in one literal).
+- `"no placeholders here"` is unchanged, still a plain string.
+- `"unterminated ${1 + 1"` raises `LexError`/`ParseError` with line/column
+  (missing closing `}` before end of string or EOF).
+- A runtime error inside a placeholder expression (e.g. `"${1/0}"`) raises
+  `CinderRuntimeError` with the placeholder's own line/column, not the
+  string literal's opening quote position.
+- Existing plain-string tests and every string builtin (`upper`, `split`,
+  `find`, ...) still pass unchanged.
+- Full test suite passes.
+
+Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
+## 8. List destructuring in `let`: `let [a, b] = expr;`
+
+Build: extend `let` statement parsing to accept a flat list-pattern target
+— `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
+elements in the enclosing scope in one step — complementing the existing
+scalar `let name = expr;` form (`cinder/ast_nodes.py:159 LetStmt`), which
+today forces three separate `let` statements plus manual indexing to
+unpack a list. Scope this to a flat list of plain names only: no map/
+object destructuring, no nested patterns (`let [[a, b], c] = ...`), and no
+rest/spread element (`let [a, ...rest] = ...`) — keep it the simplest
+useful case. Add a new AST node (e.g. `DestructureLetStmt` with
+`names: list[str]`, `initializer: Expr`, `line`, `column`) parsed only
+when `let` is immediately followed by `[`; a bare `let [1, 2] = x;` with
+non-identifier pattern elements is a `ParseError`. At runtime, the
+right-hand side must evaluate to a `list` of exactly `len(names)`
+elements — a non-list value or a length mismatch (too few or too many)
+raises `CinderRuntimeError` with line/column (no silent truncation or
+`nil`-padding, unlike some scripting languages' destructuring).
+
+Acceptance criteria:
+- `let [a, b] = [1, 2]; a` is `1`; `b` is `2`.
+- `let [a, b, c] = [1, 2, 3];` binds all three in order.
+- `let [a] = [enumerate([1])[0]]... ` style nesting isn't required, but
+  `let [a, b] = [f(), g()]` evaluates `f()`/`g()` before binding (RHS
+  fully evaluated first, matching scalar `let`'s evaluate-then-bind order).
+- `let [a, b] = [1, 2, 3];` raises `CinderRuntimeError` with line/column
+  (too many elements).
+- `let [a, b, c] = [1, 2];` raises `CinderRuntimeError` with line/column
+  (too few elements).
+- `let [a, b] = 5;` raises `CinderRuntimeError` with line/column (RHS not
+  a list).
+- `let [1, b] = [1, 2];` raises `ParseError` (non-identifier pattern
+  element).
+- Bindings are ordinary mutable variables afterward — `a = 99;` following
+  `let [a, b] = [1, 2];` works exactly like scalar `let`.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

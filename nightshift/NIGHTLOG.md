@@ -1450,3 +1450,15 @@ The morning paper: what shipped, what bounced, what's still open.
   sometime after the previous entry: `flat_map` went from pushed-but-
   unopenable to opened, reviewed, QA'd, and merged all in this one cycle.
   One task down, one still waiting on the same PR-creation retry.
+- **Merged**: PR #69 "String interpolation: `\"...${expr}...\"`"
+  (`feat/20260724-string-interp`) — rebased onto current `main`, opened
+  cleanly (the `gh pr create` outage is confirmed fully cleared), Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS` (802 tests passing, up from
+  794), squash-merged and branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Both tasks that were stuck behind the multi-night `gh pr create` outage
+  are now shipped — the backlog queue is fully clear and the night is
+  back to a clean, unblocked cadence.

@@ -11,66 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — needs rebase + PR]
-
-Status 2026-07-25: the `gh pr create` repo-wide 500 that blocked this (and
-`flat_map`) has cleared — `flat_map`'s PR #68 opened, reviewed, QA'd, and
-merged cleanly this cycle with no code changes needed, confirming the
-outage is over. This task's implementation is done and tested (794 tests
-passing at the time, up from 769), committed on
-`origin/feat/20260724-string-interp` (worktree `.worktrees/string-interp`
-still in place) — but that branch predates the `flat_map`/`take`/`drop`
-merges, so it's now behind `main`. **Next session: rebase
-`.worktrees/string-interp` onto current `main` (`git pull --rebase origin
-main` from inside the worktree), rerun the full suite, force-push, then
-open the PR normally — no special retry/escalation handling needed
-anymore, no re-implementation needed.**
-
-Build: let a double-quoted string literal embed one or more `${expr}`
-placeholders — each containing an arbitrary Cinder expression, evaluated
-where the literal executes and substituted via the same `stringify()`
-`print`/`format` already use — instead of forcing `"x = " + str(x)`
-concatenation or `format("x = {}", x)` for every interpolated value.
-Trigger only on the two-character `${`; a lone `{` or `}` in string text
-stays literal text (existing escape sequences are unaffected). Track
-brace depth from the `${` onward so a nested `{}` inside the expression
-(e.g. a map literal, `"${m["a"]}"` needs no such tracking but `"${ {"a":
-1}["a"] }"` does) doesn't end the placeholder early — increment on `{`,
-decrement on `}`, stop at depth 0. Extract each placeholder's raw source
-text at lex time (with its own starting line/column for error reporting)
-and parse it as a full expression — recursively invoking the existing
-`Lexer`/`Parser` on that substring is simplest and avoids threading
-interpolation state through the main parser. Add a new AST node (e.g.
-`InterpString` with a `parts: list[str | Expr]` field, literal segments
-interleaved with parsed sub-expressions) and evaluate it in
-`interpreter.py` by stringifying and concatenating each part in order. A
-plain string with no `${` should still produce the existing `STRING`
-token/behavior unchanged (don't regress the common case's performance or
-error messages).
-
-Acceptance criteria:
-- `let name = "world"; "hello, ${name}!"` is `"hello, world!"`.
-- `"${1 + 2}"` is `"3"` (arbitrary expression, not just a bare identifier).
-- `"${[1, 2, 3]}"` and `"${ {"a": 1} }"` stringify a list/map the same way
-  `print`/`format` do (nested braces don't truncate the placeholder early).
-- `"a${1}b${2}c"` is `"a1b2c"` (multiple placeholders in one literal).
-- `"no placeholders here"` is unchanged, still a plain string.
-- `"unterminated ${1 + 1"` raises `LexError`/`ParseError` with line/column
-  (missing closing `}` before end of string or EOF).
-- A runtime error inside a placeholder expression (e.g. `"${1/0}"`) raises
-  `CinderRuntimeError` with the placeholder's own line/column, not the
-  string literal's opening quote position.
-- Existing plain-string tests and every string builtin (`upper`, `split`,
-  `find`, ...) still pass unchanged.
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. List destructuring in `let`: `let [a, b] = expr;`
+## 1. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -113,7 +54,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `repeat` for lists
+## 2. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -138,7 +79,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `map_values` for maps
+## 3. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -162,7 +103,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Numeric literals: hexadecimal, binary, and octal integers
+## 4. Numeric literals: hexadecimal, binary, and octal integers
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
@@ -199,7 +140,7 @@ Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
 
 ---
 
-## 6. Standard library: `find_index` for lists
+## 5. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -228,7 +169,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `flatten_deep` for lists
+## 6. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -761,6 +702,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   the 500 cleared on retry with no code changes needed. Clean first pass
   once opened — Reviewer and QA both approved without rework (777 tests
   passing, up from 769).
+- **String interpolation: `"...${expr}..."`** — merged 2026-07-25T20:20Z via
+  PR #69 (`feat/20260724-string-interp`). Let double-quoted string literals
+  embed `${expr}` placeholders (brace-depth tracked so nested `{}` doesn't
+  end a placeholder early), added the `InterpString` AST node, and moved
+  `stringify()` from `builtins.py` to `interpreter.py` to avoid a circular
+  import. Also blocked for a night by the same repo-wide `gh pr create` 500
+  as `flat_map`; rebased onto `main` once the outage cleared and opened
+  cleanly. Clean first pass — Reviewer and QA both approved without rework
+  (802 tests passing, up from 794).
 
 ## Graveyard
 

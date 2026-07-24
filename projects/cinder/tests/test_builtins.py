@@ -2,7 +2,7 @@
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
-filter, reduce, slice, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
+filter, reduce, slice, take, drop, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
 import io
@@ -1490,6 +1490,84 @@ class TestSlice(unittest.TestCase):
     def test_slice_non_int_bound_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("slice([1, 2], 0.5, 1);")
+
+
+class TestTake(unittest.TestCase):
+    def test_take_basic(self):
+        env = run("let result = take([1, 2, 3, 4], 2);")
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_take_n_exceeds_length_clamps(self):
+        env = run("let result = take([1, 2], 10);")
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_take_zero(self):
+        env = run("let result = take([1, 2, 3], 0);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_take_empty_list(self):
+        env = run("let result = take([], 3);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_take_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3, 4]; let result = take(xs, 2);")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_take_negative_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take([1, 2], -1);")
+
+    def test_take_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take(5, 1);")
+
+    def test_take_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('take([1, 2], "1");')
+
+    def test_take_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take([1, 2]);")
+
+
+class TestDrop(unittest.TestCase):
+    def test_drop_basic(self):
+        env = run("let result = drop([1, 2, 3, 4], 2);")
+        self.assertEqual(env.get("result"), [3, 4])
+
+    def test_drop_n_exceeds_length_clamps(self):
+        env = run("let result = drop([1, 2], 10);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_drop_zero(self):
+        env = run("let result = drop([1, 2, 3], 0);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_drop_empty_list(self):
+        env = run("let result = drop([], 3);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_drop_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3, 4]; let result = drop(xs, 2);")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+        self.assertEqual(env.get("result"), [3, 4])
+
+    def test_drop_negative_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop([1, 2], -1);")
+
+    def test_drop_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop(5, 1);")
+
+    def test_drop_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('drop([1, 2], "1");')
+
+    def test_drop_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop([1, 2]);")
 
 
 class TestConcat(unittest.TestCase):

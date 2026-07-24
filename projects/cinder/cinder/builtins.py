@@ -787,6 +787,44 @@ def _slice(arguments: list, line: int, column: int) -> object:
     return value[start:end]
 
 
+def _take(arguments: list, line: int, column: int) -> object:
+    _require_arity("take", arguments, 2, line, column)
+    value, n = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"take() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"take() requires an int as its second argument, got {type_name(n)}",
+            line, column,
+        )
+    if n < 0:
+        raise CinderRuntimeError("take() requires a non-negative n", line, column)
+    end = _normalize_slice_bound(n, len(value))
+    return value[0:end]
+
+
+def _drop(arguments: list, line: int, column: int) -> object:
+    _require_arity("drop", arguments, 2, line, column)
+    value, n = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"drop() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"drop() requires an int as its second argument, got {type_name(n)}",
+            line, column,
+        )
+    if n < 0:
+        raise CinderRuntimeError("drop() requires a non-negative n", line, column)
+    start = _normalize_slice_bound(n, len(value))
+    return value[start:len(value)]
+
+
 def _concat(arguments: list, line: int, column: int) -> object:
     _require_arity("concat", arguments, 2, line, column)
     list1, list2 = arguments
@@ -1114,6 +1152,8 @@ _BUILTINS = {
     "group_by": _group_by,
     "partition": _partition,
     "slice": _slice,
+    "take": _take,
+    "drop": _drop,
     "concat": _concat,
     "flatten": _flatten,
     "chunk": _chunk,

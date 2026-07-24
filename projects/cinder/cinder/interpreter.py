@@ -285,7 +285,7 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
-            normalized = index + len(obj) if index < 0 else index
+            normalized = normalize_index(index, len(obj))
             if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"list index {index} out of range (length {len(obj)})",
@@ -312,7 +312,7 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
-            normalized = index + len(obj) if index < 0 else index
+            normalized = normalize_index(index, len(obj))
             if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"string index {index} out of range (length {len(obj)})",
@@ -355,7 +355,7 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
-            normalized = index + len(obj) if index < 0 else index
+            normalized = normalize_index(index, len(obj))
             if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"list index {index} out of range (length {len(obj)})",
@@ -622,6 +622,12 @@ def _normalize_slice_bound(value: int, length: int) -> int:
     if value < 0:
         value += length
     return max(0, min(value, length))
+
+
+def normalize_index(index: int, length: int) -> int:
+    """Negative indices count from the end, like Python. Does not bounds-check
+    the result — callers raise on out-of-range themselves."""
+    return index + length if index < 0 else index
 
 
 def contains_value(collection: object, item: object, line: int, column: int) -> bool:

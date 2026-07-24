@@ -1,8 +1,8 @@
 """Standard library builtins injected into every Cinder program's global scope.
 
 `create_global_environment` returns a fresh `Environment` with `print`,
-`len`, `type`, `str`, `int`, `float`, `push`, `pop`, `keys`, `values`, `items`,
-`get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
+`len`, `type`, `str`, `int`, `float`, `push`, `pop`, `insert`, `remove_at`,
+`keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
@@ -25,6 +25,7 @@ from cinder.interpreter import (
     call_value,
     contains_value,
     is_truthy,
+    normalize_index,
     type_name,
     values_equal,
 )
@@ -147,6 +148,48 @@ def _pop(arguments: list, line: int, column: int) -> object:
     if not target:
         raise CinderRuntimeError("pop() called on an empty list", line, column)
     return target.pop()
+
+
+def _insert(arguments: list, line: int, column: int) -> object:
+    _require_arity("insert", arguments, 3, line, column)
+    target, index, value = arguments
+    if not isinstance(target, list):
+        raise CinderRuntimeError(
+            f"insert() requires a list as its first argument, got {type_name(target)}",
+            line, column,
+        )
+    if not isinstance(index, int) or isinstance(index, bool):
+        raise CinderRuntimeError(
+            f"insert() requires an int index, got {type_name(index)}", line, column
+        )
+    length = len(target)
+    normalized = normalize_index(index, length)
+    if normalized < 0 or normalized > length:
+        raise CinderRuntimeError(
+            f"insert() index {index} out of range (length {length})", line, column
+        )
+    target.insert(normalized, value)
+    return None
+
+
+def _remove_at(arguments: list, line: int, column: int) -> object:
+    _require_arity("remove_at", arguments, 2, line, column)
+    target, index = arguments
+    if not isinstance(target, list):
+        raise CinderRuntimeError(
+            f"remove_at() requires a list, got {type_name(target)}", line, column
+        )
+    if not isinstance(index, int) or isinstance(index, bool):
+        raise CinderRuntimeError(
+            f"remove_at() requires an int index, got {type_name(index)}", line, column
+        )
+    length = len(target)
+    normalized = normalize_index(index, length)
+    if normalized < 0 or normalized >= length:
+        raise CinderRuntimeError(
+            f"remove_at() index {index} out of range (length {length})", line, column
+        )
+    return target.pop(normalized)
 
 
 def _keys(arguments: list, line: int, column: int) -> object:
@@ -933,6 +976,8 @@ _BUILTINS = {
     "float": _float,
     "push": _push,
     "pop": _pop,
+    "insert": _insert,
+    "remove_at": _remove_at,
     "keys": _keys,
     "values": _values,
     "items": _items,

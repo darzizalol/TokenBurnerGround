@@ -11,50 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. List destructuring in `let`: `let [a, b] = expr;` [claimed 2026-07-24T20:21:28Z]
-
-Build: extend `let` statement parsing to accept a flat list-pattern target
-— `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
-elements in the enclosing scope in one step — complementing the existing
-scalar `let name = expr;` form (`cinder/ast_nodes.py:159 LetStmt`), which
-today forces three separate `let` statements plus manual indexing to
-unpack a list. Scope this to a flat list of plain names only: no map/
-object destructuring, no nested patterns (`let [[a, b], c] = ...`), and no
-rest/spread element (`let [a, ...rest] = ...`) — keep it the simplest
-useful case. Add a new AST node (e.g. `DestructureLetStmt` with
-`names: list[str]`, `initializer: Expr`, `line`, `column`) parsed only
-when `let` is immediately followed by `[`; a bare `let [1, 2] = x;` with
-non-identifier pattern elements is a `ParseError`. At runtime, the
-right-hand side must evaluate to a `list` of exactly `len(names)`
-elements — a non-list value or a length mismatch (too few or too many)
-raises `CinderRuntimeError` with line/column (no silent truncation or
-`nil`-padding, unlike some scripting languages' destructuring).
-
-Acceptance criteria:
-- `let [a, b] = [1, 2]; a` is `1`; `b` is `2`.
-- `let [a, b, c] = [1, 2, 3];` binds all three in order.
-- `let [a] = [enumerate([1])[0]]... ` style nesting isn't required, but
-  `let [a, b] = [f(), g()]` evaluates `f()`/`g()` before binding (RHS
-  fully evaluated first, matching scalar `let`'s evaluate-then-bind order).
-- `let [a, b] = [1, 2, 3];` raises `CinderRuntimeError` with line/column
-  (too many elements).
-- `let [a, b, c] = [1, 2];` raises `CinderRuntimeError` with line/column
-  (too few elements).
-- `let [a, b] = 5;` raises `CinderRuntimeError` with line/column (RHS not
-  a list).
-- `let [1, b] = [1, 2];` raises `ParseError` (non-identifier pattern
-  element).
-- Bindings are ordinary mutable variables afterward — `a = 99;` following
-  `let [a, b] = [1, 2];` works exactly like scalar `let`.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `repeat` for lists
+## 1. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -79,7 +36,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `map_values` for maps
+## 2. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -103,7 +60,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Numeric literals: hexadecimal, binary, and octal integers
+## 3. Numeric literals: hexadecimal, binary, and octal integers
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
@@ -140,7 +97,7 @@ Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
 
 ---
 
-## 5. Standard library: `find_index` for lists
+## 4. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -169,7 +126,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `flatten_deep` for lists
+## 5. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -196,7 +153,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `min_by` and `max_by` for lists
+## 6. Standard library: `min_by` and `max_by` for lists
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is
@@ -229,7 +186,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: value-based removal for lists via `remove`
+## 7. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -779,6 +736,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   as `flat_map`; rebased onto `main` once the outage cleared and opened
   cleanly. Clean first pass — Reviewer and QA both approved without rework
   (802 tests passing, up from 794).
+- **List destructuring in `let`: `let [a, b] = expr;`** — merged
+  2026-07-25T20:29:26Z via PR #70 (`feat/20260724-list-destructure`). Added a
+  `DestructureLetStmt` AST node, parsed only when `let` is immediately
+  followed by `[`; binds a flat list of plain identifier names positionally
+  to the RHS, which must evaluate to a `list` of exactly the right length
+  (no nesting, no rest element, no silent truncation/padding). Clean first
+  pass, no bounces (817 tests passing, up from 802).
 
 ## Graveyard
 

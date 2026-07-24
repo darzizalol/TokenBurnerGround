@@ -712,6 +712,18 @@ def _range(arguments: list, line: int, column: int) -> object:
     return list(range(start, stop))
 
 
+def _repeat(arguments: list, line: int, column: int) -> object:
+    _require_arity("repeat", arguments, 2, line, column)
+    value, n = arguments
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"repeat() requires an int as its second argument, got {type_name(n)}", line, column
+        )
+    if n < 0:
+        raise CinderRuntimeError("repeat() requires a non-negative n", line, column)
+    return [value] * n
+
+
 def _sort(arguments: list, line: int, column: int) -> object:
     _require_arity("sort", arguments, 1, line, column)
     value = arguments[0]
@@ -1154,6 +1166,7 @@ _BUILTINS = {
     "sort": _sort,
     "sort_by": _sort_by,
     "range": _range,
+    "repeat": _repeat,
     "map": _map,
     "filter": _filter,
     "reduce": _reduce,

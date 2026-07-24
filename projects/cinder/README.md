@@ -62,7 +62,7 @@ while (i < 10) {
   `remove_at`, `first`, `last`, `take`, `drop`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `get`, `remove`,
   `copy`, `contains`, `index_of`, `count`, `unique`, `flatten`, `flat_map`,
-  `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `map`,
+  `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
   `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,

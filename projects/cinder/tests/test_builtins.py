@@ -1254,6 +1254,36 @@ class TestRange(unittest.TestCase):
         self.assertEqual(stdout.getvalue(), "0\n1\n2\n")
 
 
+class TestRepeat(unittest.TestCase):
+    def test_repeat_returns_n_copies(self):
+        self.assertEqual(run('let result = repeat("x", 3);').get("result"), ["x", "x", "x"])
+
+    def test_repeat_zero_returns_empty_list(self):
+        self.assertEqual(run("let result = repeat(0, 0);").get("result"), [])
+
+    def test_repeat_aliases_list_elements(self):
+        env = run("let result = repeat([1], 2); push(result[0], 2);")
+        self.assertEqual(env.get("result"), [[1, 2], [1, 2]])
+
+    def test_repeat_negative_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('repeat("x", -1);')
+
+    def test_repeat_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('repeat("x", "3");')
+
+    def test_repeat_bool_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('repeat("x", true);')
+
+    def test_repeat_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('repeat("x");')
+        with self.assertRaises(CinderRuntimeError):
+            run('repeat("x", 1, 2);')
+
+
 class TestMap(unittest.TestCase):
     def test_map_with_closure(self):
         env = run("let result = map([1, 2, 3], fn(x) { return x * 2; });")

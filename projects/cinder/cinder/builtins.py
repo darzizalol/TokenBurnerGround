@@ -686,6 +686,30 @@ def _copy(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _first(arguments: list, line: int, column: int) -> object:
+    _require_arity("first", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"first() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("first() called on an empty list", line, column)
+    return value[0]
+
+
+def _last(arguments: list, line: int, column: int) -> object:
+    _require_arity("last", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"last() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("last() called on an empty list", line, column)
+    return value[-1]
+
+
 def _range(arguments: list, line: int, column: int) -> object:
     if len(arguments) == 1:
         start, stop = 0, arguments[0]
@@ -1079,6 +1103,8 @@ _BUILTINS = {
     "copy": _copy,
     "unique": _unique,
     "reverse": _reverse,
+    "first": _first,
+    "last": _last,
     "sort": _sort,
     "sort_by": _sort_by,
     "range": _range,

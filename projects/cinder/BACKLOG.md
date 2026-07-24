@@ -57,7 +57,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. String interpolation: `"...${expr}..."`
+## 2. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z]
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated

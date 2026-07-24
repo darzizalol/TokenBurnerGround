@@ -13,18 +13,22 @@ a later task while an earlier one is unclaimed/open.
 
 ## 1. Standard library: `flat_map` for lists [claimed 2026-07-24T19:27:16Z, implemented — blocked on `gh pr create`]
 
-Status 2026-07-25: implementation is done, tested locally (777 tests
-passing), committed, and pushed to `origin/feat/20260724-flat-map`
-(worktree `.worktrees/flat-map` still in place). Opening the PR has failed
-5x across two prior sessions with a GitHub-side GraphQL error (see
-`nightshift/HELP.md`) — this is a git/GitHub-ops blocker, not an
-implementation gap. Basic GitHub API calls (`gh api repos/...`,
-`/rate_limit`) succeeded when checked this session, so the outage may have
-cleared. **Next session touching this task should just run `gh pr create`
-from `.worktrees/flat-map` — do not re-implement.** If it still fails,
-retry once more and, if that also fails, escalate via `notify.sh` (this is
-now well past the 3x-repeat threshold) and move on to task 2 instead of
-blocking the whole backlog on it.
+Status 2026-07-25 (re-checked, unchanged): implementation is done, tested
+locally (777 tests passing), committed, and pushed to
+`origin/feat/20260724-flat-map` (worktree `.worktrees/flat-map` still in
+place). `gh pr create` has now failed 8+ times across five sessions over
+two nights with a confirmed repo-wide GitHub-side 500 on both the GraphQL
+and REST PR-creation paths (see `nightshift/HELP.md`) — this is a
+git/GitHub-ops blocker, not an implementation gap. The human has already
+been paged twice via `notify.sh` for this exact issue; there is no reply
+in `HELP.md` yet as of 2026-07-25. **Next session touching this task:
+check `HELP.md` for a human reply first. If none, do at most ONE `gh pr
+create` retry from `.worktrees/flat-map` (skip the REST fallback and
+`notify.sh` re-page — both already exhausted) and, if it still fails,
+move straight to the next unclaimed task instead of blocking the backlog
+on it. Do not re-implement, and do not re-escalate an issue that's
+already been paged and is still awaiting a human reply — that burns
+tokens without adding new information.**
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -59,18 +63,17 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ## 2. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — blocked on `gh pr create`]
 
-Status 2026-07-24: implementation is done, tested (794 tests passing, up
-from 769), committed, and pushed to `origin/feat/20260724-string-interp`
-(worktree `.worktrees/string-interp` still in place). Opening the PR fails
-with the same GitHub-side 500 (both `gh pr create`'s GraphQL path and a raw
-REST `POST /repos/.../pulls` — see `nightshift/HELP.md`) already blocking
-task 1's `flat_map` PR — and this is a **different branch**, which rules
-out "something wrong with that one branch/commit" and points at a
-repo/account-wide block on PR creation (possibly the PAT's permissions;
-already paged the human via `notify.sh` once this session for the `flat_map`
-occurrence — same root cause, not paging again). **Next session should just
-run `gh pr create` from `.worktrees/string-interp` once PR creation is
-unblocked — do not re-implement.**
+Status 2026-07-25 (re-checked, unchanged): implementation is done, tested
+(794 tests passing, up from 769), committed, and pushed to
+`origin/feat/20260724-string-interp` (worktree `.worktrees/string-interp`
+still in place). Opening the PR fails with the same repo-wide GitHub-side
+500 blocking task 1's `flat_map` PR (see `nightshift/HELP.md`) — confirmed
+on a **different branch** from task 1, which rules out anything specific
+to one branch/commit. Already paged the human via `notify.sh`; no reply in
+`HELP.md` yet as of 2026-07-25. **Next session touching this task: same
+rule as task 1 — check `HELP.md` for a human reply first, at most one `gh
+pr create` retry from `.worktrees/string-interp` if none, then move on
+without re-escalating. Do not re-implement.**
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated
@@ -267,6 +270,33 @@ Acceptance criteria:
   (non-list first argument).
 - `find_index([1, 2], 5)` raises `CinderRuntimeError` with line/column
   (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `flatten_deep` for lists
+
+Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
+flattens list-of-lists nesting at every depth into a single new list, the
+fully-recursive counterpart to the existing `flatten` (which only flattens
+one level, PR #53). Reuse `flatten`'s non-list-elements-pass-through
+behavior at each level rather than duplicating it; implement recursively
+(or with an explicit stack) so an empty nested list `[[], 1]` contributes
+nothing rather than erroring. Non-mutating, matching `flatten`/`concat`'s
+type-check style.
+
+Acceptance criteria:
+- `flatten_deep([1, [2, 3], [4, [5, 6]]])` is `[1, 2, 3, 4, 5, 6]`.
+- `flatten_deep([[[1]], [[2]]])` is `[1, 2]` (arbitrary depth).
+- `flatten_deep([1, 2, 3])` is `[1, 2, 3]` (no nesting, unchanged).
+- `flatten_deep([[], 1, []])` is `[1]` (empty nested lists contribute
+  nothing).
+- `flatten_deep([])` is `[]`.
+- `flatten_deep(5)` raises `CinderRuntimeError` with line/column (non-list
+  argument).
 - Wrong arity raises `CinderRuntimeError` with line/column.
 - Full test suite passes.
 

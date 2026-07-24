@@ -9,6 +9,7 @@ from cinder.ast_nodes import (
     BreakStmt,
     Call,
     ContinueStmt,
+    DestructureLetStmt,
     ExprStmt,
     FnDecl,
     FnExpr,
@@ -110,6 +111,8 @@ def stmt_shape(node):
     """Structural view of a statement AST node, ignoring line/column noise."""
     if isinstance(node, LetStmt):
         return ("LetStmt", node.name, shape(node.initializer))
+    if isinstance(node, DestructureLetStmt):
+        return ("DestructureLetStmt", node.names, shape(node.initializer))
     if isinstance(node, ExprStmt):
         return ("ExprStmt", shape(node.expression))
     if isinstance(node, Block):
@@ -711,6 +714,40 @@ class TestStatements(unittest.TestCase):
     def test_let_missing_semicolon_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let x = 1")
+
+    def test_destructure_let_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let [a, b] = [1, 2];")],
+            [
+                (
+                    "DestructureLetStmt",
+                    ["a", "b"],
+                    ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
+                )
+            ],
+        )
+
+    def test_destructure_let_statement_single_name(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let [a] = [1];")],
+            [("DestructureLetStmt", ["a"], ("ListLiteral", [("Literal", 1)]))],
+        )
+
+    def test_destructure_let_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [1, b] = [1, 2];")
+
+    def test_destructure_let_missing_equals_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a, b] [1, 2];")
+
+    def test_destructure_let_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a, b] = [1, 2]")
+
+    def test_destructure_let_unclosed_bracket_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a, b = [1, 2];")
 
     def test_unclosed_block_raises(self):
         with self.assertRaises(ParseError):

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `repeat` for lists
+## 1. Standard library: `repeat` for lists [claimed 2026-07-25T20:15:00Z]
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a

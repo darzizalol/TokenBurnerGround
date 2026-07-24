@@ -1332,3 +1332,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirteen of the last fourteen PRs have landed clean — the queue is clear
   and the night is going well.
+- **Merged**: PR #64 "Standard library: `ord` and `chr` for character/
+  code-point conversion" (`feat/20260724-ord-chr`) — clean first pass, no
+  bounces. Added `ord(s)` and `chr(n)` to `cinder/builtins.py`, following
+  `_int`/`_float`'s single-argument conversion style and delegating to
+  Python's own `ord()`/`chr()`, converting `ValueError` into
+  `CinderRuntimeError` with line/column. `VERDICT: LGTM` and `QA: PASS`
+  both landed after the single commit; QA ran the full suite in a
+  detached worktree and smoke-tested round-trip conversion, non-ASCII
+  code points, empty/multi-character strings, out-of-range and negative
+  code points, bool-rejected-as-int, wrong arity, via both the CLI and
+  REPL (723 tests passing, up from 711). Worktree `.worktrees/ord-chr`
+  removed before merge. BACKLOG.md task 1 removed and remaining tasks
+  renumbered (2-9 → 1-8).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourteen of the last fifteen PRs have landed clean — the queue is clear
+  and the night is going well.

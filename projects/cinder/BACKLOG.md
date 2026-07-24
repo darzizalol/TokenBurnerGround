@@ -11,37 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `ord` and `chr` for character/code-point conversion [claimed 2026-07-24T14:16:51Z]
-
-Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
-`chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
-following `_int`/`_float`'s single-argument conversion style — Cinder
-currently has no way to inspect or construct characters by code point, only
-`upper`/`lower`/indexing on whole strings. `ord` requires a `str` of exactly
-length 1 (not empty, not multi-character); `chr` requires an `int` in Python's
-valid code-point range (`0` to `0x10FFFF`), delegating to Python's own
-`chr()`/`ord()` and converting `ValueError` into `CinderRuntimeError` the same
-way `_int`/`_float` convert their string-parsing failures.
-
-Acceptance criteria:
-- `ord("A")` is `65`; `chr(65)` is `"A"`.
-- `ord(chr(97))` is `97` (round-trip).
-- `ord("")` raises `CinderRuntimeError` with line/column (empty string).
-- `ord("ab")` raises `CinderRuntimeError` with line/column (multi-character
-  string).
-- `ord(5)` raises `CinderRuntimeError` with line/column (non-`str` argument).
-- `chr(-1)` and `chr(0x110000)` raise `CinderRuntimeError` with line/column
-  (out of valid code-point range).
-- `chr("65")` raises `CinderRuntimeError` with line/column (non-`int`
-  argument).
-- Wrong arity raises `CinderRuntimeError` with line/column for both.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `pad_start` and `pad_end` for strings
+## 1. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -74,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `first` and `last` for lists
+## 2. Standard library: `first` and `last` for lists
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /
@@ -99,7 +69,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `take` and `drop` for lists
+## 3. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -134,7 +104,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `flat_map` for lists
+## 4. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -167,7 +137,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. String interpolation: `"...${expr}..."`
+## 5. String interpolation: `"...${expr}..."`
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated
@@ -213,7 +183,7 @@ Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. List destructuring in `let`: `let [a, b] = expr;`
+## 6. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -256,7 +226,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: `repeat` for lists
+## 7. Standard library: `repeat` for lists
 
 Build: add `repeat(value, n)` to `cinder/builtins.py`, returning a new list
 containing `n` copies of `value` — complements `range`'s "generate a
@@ -281,7 +251,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `map_values` for maps
+## 8. Standard library: `map_values` for maps
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value
@@ -779,6 +749,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   normalization that had been inlined three times, and pointed all four
   call sites at it. Clean first pass, no bounces (711 tests passing, 24
   subtests, up from 696).
+- **Standard library: `ord` and `chr` for character/code-point conversion**
+  — merged 2026-07-24T~ via PR #64 (`feat/20260724-ord-chr`). Added
+  `ord(s)` and `chr(n)` to `cinder/builtins.py`, following `_int`/`_float`'s
+  single-argument conversion style and delegating to Python's own
+  `ord()`/`chr()`, converting `ValueError` into `CinderRuntimeError` with
+  line/column. Clean first pass, no bounces (723 tests passing, up from
+  711).
 
 ## Graveyard
 

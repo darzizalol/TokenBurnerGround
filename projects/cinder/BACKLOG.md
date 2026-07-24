@@ -11,53 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `insert` and `remove_at` for lists [claimed 2026-07-23T20:31:28Z]
-
-Build: add `insert(list, index, value)` and `remove_at(list, index)` to
-`cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
-map's `remove` (key-based, not positional) — Cinder currently has no way to
-add or remove a list element at an arbitrary position. Both mutate the
-underlying list in place and return `nil` (`insert`) or the removed element
-(`remove_at`), consistent with `push`/`pop`'s existing in-place-mutation
-style (not `slice`/`concat`/`reverse`'s copy style). `index` supports the
-same negative-index normalization already shared by `_evaluate_index`/
-`slice()`/`_evaluate_slice` (reuse `_normalize_slice_bound` or the
-non-slice negative-index helper `_evaluate_index` uses — do not
-reimplement the normalization). `insert`'s valid range is `0` to
-`len(list)` inclusive (append-at-end via `insert(list, len(list), v)` is
-legal, matching Python's `list.insert`); `remove_at`'s valid range is `0`
-to `len(list) - 1` (an empty list has no valid index). Out-of-range or
-non-int `index`, or a non-list first argument, raises `CinderRuntimeError`
-with line/column, matching `push`/`pop`'s type-check style.
-
-Acceptance criteria:
-- `let l = [1, 2, 3]; insert(l, 1, 99); l` is `[1, 99, 2, 3]`.
-- `let l = [1, 2, 3]; insert(l, 0, 99); l` is `[99, 1, 2, 3]` (insert at
-  front).
-- `let l = [1, 2, 3]; insert(l, 3, 99); l` is `[1, 2, 3, 99]` (insert at
-  `len(list)`, i.e. append).
-- `let l = [1, 2, 3]; insert(l, -1, 99); l` is `[1, 2, 99, 3]` (negative
-  index normalizes the same way indexing/slicing do).
-- `let l = [1, 2, 3]; remove_at(l, 1)` returns `2` and leaves `l` as
-  `[1, 3]`.
-- `let l = [1, 2, 3]; remove_at(l, -1)` returns `3` and leaves `l` as
-  `[1, 2]` (negative index).
-- `insert([1, 2], 5, 0)` raises `CinderRuntimeError` with line/column
-  (index out of range).
-- `remove_at([], 0)` raises `CinderRuntimeError` with line/column (empty
-  list, no valid index).
-- `insert([1, 2], "0", 9)` / `remove_at([1, 2], "0")` raise
-  `CinderRuntimeError` with line/column (non-int index).
-- `insert(5, 0, 9)` / `remove_at(5, 0)` raise `CinderRuntimeError` with
-  line/column (non-list first argument).
-- Wrong arity raises `CinderRuntimeError` with line/column for both.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `ord` and `chr` for character/code-point conversion
+## 1. Standard library: `ord` and `chr` for character/code-point conversion
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,
@@ -87,7 +41,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `pad_start` and `pad_end` for strings
+## 2. Standard library: `pad_start` and `pad_end` for strings
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it
@@ -120,7 +74,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `first` and `last` for lists
+## 3. Standard library: `first` and `last` for lists
 
 Build: add `first(list)` and `last(list)` to `cinder/builtins.py`, returning
 the element at index `0` / `-1` respectively — shorthand for `list[0]` /
@@ -145,7 +99,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `take` and `drop` for lists
+## 4. Standard library: `take` and `drop` for lists
 
 Build: add `take(list, n)` and `drop(list, n)` to `cinder/builtins.py`.
 `take` returns a new list of the first `n` elements (or the whole list if
@@ -180,7 +134,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `flat_map` for lists
+## 5. Standard library: `flat_map` for lists
 
 Build: add `flat_map(list, fn)` to `cinder/builtins.py` — equivalent to
 `flatten(map(list, fn))` but as a single builtin, following `map`/`filter`'s
@@ -213,7 +167,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. String interpolation: `"...${expr}..."`
+## 6. String interpolation: `"...${expr}..."`
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated
@@ -259,7 +213,7 @@ Likely files: `cinder/lexer.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 8. List destructuring in `let`: `let [a, b] = expr;`
+## 7. List destructuring in `let`: `let [a, b] = expr;`
 
 Build: extend `let` statement parsing to accept a flat list-pattern target
 — `let [a, b, c] = expr;` binds `a`, `b`, `c` positionally to `expr`'s
@@ -767,6 +721,15 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
   newlines and `LexError(unterminated=True)` on EOF reusing the same flag
   the REPL's `_needs_more_input` already branches on for unterminated
   strings. Clean first pass, no bounces (696 tests passing, 24 new).
+- **Standard library: `insert` and `remove_at` for lists** — merged
+  2026-07-24T14:11:10Z via PR #63 (`feat/20260723-insert-remove-at`). Added
+  `insert(list, index, value)` and `remove_at(list, index)` to
+  `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
+  map's `remove` (key-based). Extracted a shared `normalize_index(index,
+  length)` helper in `cinder/interpreter.py`, deduping the negative-index
+  normalization that had been inlined three times, and pointed all four
+  call sites at it. Clean first pass, no bounces (711 tests passing, 24
+  subtests, up from 696).
 
 ## Graveyard
 

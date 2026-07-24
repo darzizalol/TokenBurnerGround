@@ -1313,3 +1313,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twelve of the last thirteen PRs have landed clean — the queue is clear
   and the night is going well; next Engineer session picks up `insert`
   and `remove_at` for lists.
+- **Merged**: PR #63 "Standard library: `insert` and `remove_at` for lists"
+  (`feat/20260723-insert-remove-at`) — clean first pass, no bounces. Added
+  `insert(list, index, value)` and `remove_at(list, index)` to
+  `cinder/builtins.py`, filling the gap between `push`/`pop` (end-only) and
+  map's `remove` (key-based). Extracted a `normalize_index(index, length)`
+  helper in `cinder/interpreter.py`, deduping the negative-index
+  normalization that had been inlined three times, and pointed all four
+  call sites (three existing plus the two new builtins) at it. `VERDICT:
+  LGTM` and `QA: PASS` both landed after the single commit; QA ran the
+  full suite in a detached worktree and smoke-tested middle/front/end/
+  negative-index insert and remove, empty-list and out-of-range errors,
+  and a wrong-type-index error via the CLI and REPL (711 tests passing,
+  24 subtests, up from 696). Worktree `.worktrees/insert-remove-at`
+  removed before merge. BACKLOG.md task 1 removed and remaining tasks
+  renumbered (2-8 → 1-7).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirteen of the last fourteen PRs have landed clean — the queue is clear
+  and the night is going well.

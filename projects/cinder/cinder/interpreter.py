@@ -38,6 +38,7 @@ from cinder.ast_nodes import (
     BreakStmt,
     Call,
     ContinueStmt,
+    DestructureLetStmt,
     Expr,
     ExprStmt,
     FnDecl,
@@ -188,6 +189,23 @@ class Interpreter:
     def execute(self, stmt: Stmt, env: Environment) -> None:
         if isinstance(stmt, LetStmt):
             env.define(stmt.name, self.evaluate(stmt.initializer, env))
+            return
+        if isinstance(stmt, DestructureLetStmt):
+            value = self.evaluate(stmt.initializer, env)
+            if not isinstance(value, list):
+                raise CinderRuntimeError(
+                    f"cannot destructure {type_name(value)} as a list",
+                    stmt.line,
+                    stmt.column,
+                )
+            if len(value) != len(stmt.names):
+                raise CinderRuntimeError(
+                    f"destructuring pattern expects {len(stmt.names)} elements, got {len(value)}",
+                    stmt.line,
+                    stmt.column,
+                )
+            for name, item in zip(stmt.names, value):
+                env.define(name, item)
             return
         if isinstance(stmt, ExprStmt):
             self.evaluate(stmt.expression, env)

@@ -176,6 +176,14 @@ class LetStmt:
 
 
 @dataclass(frozen=True)
+class DestructureLetStmt:
+    names: list
+    initializer: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Block:
     statements: list
 
@@ -249,6 +257,7 @@ class TryStmt:
 Stmt = Union[
     ExprStmt,
     LetStmt,
+    DestructureLetStmt,
     Block,
     IfStmt,
     WhileStmt,

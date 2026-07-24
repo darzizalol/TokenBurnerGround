@@ -378,6 +378,55 @@ class TestStatements(unittest.TestCase):
             env.get("x")
 
 
+class TestDestructureLet(unittest.TestCase):
+    def test_binds_two_names(self):
+        env = run("let [a, b] = [1, 2];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_binds_three_names_in_order(self):
+        env = run("let [a, b, c] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_initializer_fully_evaluated_before_binding(self):
+        # RHS is evaluated in full against the outer `x` before any name is
+        # bound, matching scalar `let`'s evaluate-then-bind order — neither
+        # element sees the new `x` mid-destructure.
+        env = run("let x = 5; let [x, y] = [x + 1, x];")
+        self.assertEqual(env.get("x"), 6)
+        self.assertEqual(env.get("y"), 5)
+
+    def test_too_many_elements_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let [a, b] = [1, 2, 3];")
+
+    def test_too_few_elements_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let [a, b, c] = [1, 2];")
+
+    def test_non_list_rhs_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let [a, b] = 5;")
+
+    def test_error_carries_line_and_column(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let [a, b] = 5;")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_bindings_are_ordinary_mutable_variables(self):
+        env = run("let [a, b] = [1, 2]; a = 99;")
+        self.assertEqual(env.get("a"), 99)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_does_not_leak_out_of_block(self):
+        env = run("{ let [a, b] = [1, 2]; }")
+        with self.assertRaises(KeyError):
+            env.get("a")
+
+
 class TestAssignment(unittest.TestCase):
     def test_assignment_updates_existing_variable(self):
         env = run("let x = 1; x = 2;")

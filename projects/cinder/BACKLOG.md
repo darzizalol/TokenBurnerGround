@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `ord` and `chr` for character/code-point conversion
+## 1. Standard library: `ord` and `chr` for character/code-point conversion [claimed 2026-07-24T14:16:51Z]
 
 Build: add `ord(s)` (a length-1 string to its Unicode code point `int`) and
 `chr(n)` (an `int` code point to its length-1 string) to `cinder/builtins.py`,

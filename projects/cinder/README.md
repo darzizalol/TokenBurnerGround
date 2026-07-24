@@ -34,7 +34,8 @@ while (i < 10) {
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
   inside `${...}`, stringified the same way `print`/`format` render values
 - **Variables & scope**: `let` declarations, assignment, blocks with proper
-  lexical scoping (inner `let` shadows, outer survives)
+  lexical scoping (inner `let` shadows, outer survives); list destructuring
+  in `let` (`let [a, b] = expr;`, flat positional binding, no nesting/rest)
 - **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
   lists, strings (character-by-character), and maps (over keys),
   `break`/`continue` in both loop kinds, `try { ... } catch (name) { ... }`
@@ -111,7 +112,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (777+ tests) covers every layer — lexer, parser, interpreter,
+The suite (817+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -136,7 +137,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `take`/`drop`, `flat_map` for
-lists, and string interpolation (`"...${expr}..."`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): list destructuring in `let` and `repeat` for
-lists. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `flat_map` for lists, string
+interpolation (`"...${expr}..."`), and list destructuring in `let`. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `repeat` for lists and `map_values`
+for maps. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

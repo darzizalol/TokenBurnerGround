@@ -113,6 +113,34 @@ class TestStringConcatenation(unittest.TestCase):
         self.assertEqual(evaluate('"foo" + "bar"'), "foobar")
 
 
+class TestStringInterpolation(unittest.TestCase):
+    def test_identifier_placeholder(self):
+        env = run('let name = "world"; let msg = "hello, ${name}!";')
+        self.assertEqual(env.get("msg"), "hello, world!")
+
+    def test_arbitrary_expression_placeholder(self):
+        self.assertEqual(evaluate('"${1 + 2}"'), "3")
+
+    def test_non_list_result_stringifies_unquoted_like_print(self):
+        self.assertEqual(evaluate('"${[1, 2, 3]}"'), "[1, 2, 3]")
+        self.assertEqual(evaluate('"${ {"a": 1} }"'), '{"a": 1}')
+
+    def test_multiple_placeholders(self):
+        self.assertEqual(evaluate('"a${1}b${2}c"'), "a1b2c")
+
+    def test_plain_string_with_no_placeholders_is_unchanged(self):
+        self.assertEqual(evaluate('"no placeholders here"'), "no placeholders here")
+
+    def test_nested_list_result_stringifies_without_extra_flattening(self):
+        self.assertEqual(evaluate('"${[[1, 2]]}"'), "[[1, 2]]")
+
+    def test_runtime_error_in_placeholder_reports_placeholder_position(self):
+        # Not the string literal's opening-quote position (1, 1).
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('"${1/0}"')
+        self.assertEqual((ctx.exception.line, ctx.exception.column), (1, 5))
+
+
 class TestRepetition(unittest.TestCase):
     def test_string_times_int(self):
         self.assertEqual(evaluate('"ab" * 3'), "ababab")

@@ -64,6 +64,7 @@ from cinder.ast_nodes import (
     IfStmt,
     Index,
     IndexAssign,
+    InterpString,
     LetStmt,
     ListLiteral,
     Literal,
@@ -78,6 +79,7 @@ from cinder.ast_nodes import (
     WhileStmt,
 )
 from cinder.errors import ParseError
+from cinder.lexer import Lexer
 from cinder.tokens import Token, TokenType
 
 _COMPARISON = {
@@ -510,6 +512,9 @@ class Parser:
         if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
             self._advance()
             return Literal(token.literal, token.line, token.column)
+        if token.type == TokenType.INTERP_STRING:
+            self._advance()
+            return self._build_interp_string(token)
         if token.type == TokenType.TRUE:
             self._advance()
             return Literal(True, token.line, token.column)
@@ -567,6 +572,23 @@ class Parser:
         self._consume(TokenType.COLON, "':' after map key")
         value = self._ternary()
         return (key, value)
+
+    def _build_interp_string(self, token: Token) -> Expr:
+        """Each `("expr", raw, line, col)` placeholder from the lexer is
+        re-lexed/parsed as a standalone expression on the spot, seeding the
+        sub-`Lexer` with the placeholder's own source position so any
+        Lex/ParseError it raises still points at the right place in the
+        original file rather than restarting at 1:1."""
+        parts = []
+        for part in token.literal:
+            if isinstance(part, str):
+                if part:
+                    parts.append(part)
+                continue
+            _, raw_source, expr_line, expr_col = part
+            sub_tokens = Lexer(raw_source, expr_line, expr_col).tokenize()
+            parts.append(Parser(sub_tokens).parse_expression())
+        return InterpString(parts, token.line, token.column)
 
     def _peek(self) -> Token:
         return self.tokens[self.pos]

@@ -10,6 +10,10 @@ class TokenType(Enum):
     INT = auto()
     FLOAT = auto()
     STRING = auto()
+    # `"...${expr}..."`; `literal` is a list of `str` (literal segments) and
+    # `("expr", raw_source, line, column)` tuples (one per placeholder),
+    # interleaved in source order — see `Lexer._string`/`Parser._build_interp_string`.
+    INTERP_STRING = auto()
     IDENTIFIER = auto()
 
     # Keywords

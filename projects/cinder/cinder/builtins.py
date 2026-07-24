@@ -26,6 +26,7 @@ from cinder.interpreter import (
     contains_value,
     is_truthy,
     normalize_index,
+    stringify,
     type_name,
     values_equal,
 )
@@ -35,22 +36,6 @@ _NUMERIC = (int, float)
 
 def _is_numeric(value: object) -> bool:
     return isinstance(value, _NUMERIC) and not isinstance(value, bool)
-
-
-def stringify(value: object, *, quoted: bool = False) -> str:
-    """Render a Cinder value as text, matching `print`/`str()` output."""
-    if isinstance(value, str):
-        return f'"{value}"' if quoted else value
-    if value is None:
-        return "nil"
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, list):
-        return "[" + ", ".join(stringify(v, quoted=True) for v in value) + "]"
-    if isinstance(value, dict):
-        pairs = (f"{stringify(k, quoted=True)}: {stringify(v, quoted=True)}" for k, v in value.items())
-        return "{" + ", ".join(pairs) + "}"
-    return str(value)
 
 
 def _arity_error(name: str, expected: int, got: int, line: int, column: int) -> CinderRuntimeError:

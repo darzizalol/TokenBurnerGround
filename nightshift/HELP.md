@@ -120,3 +120,37 @@ platform-wide GraphQL outage would likely also break other repos' PR
 creation, whereas this looks scoped to this one repo.
 
 ---
+
+## 2026-07-24T19:50Z — Engineer
+
+What's wrong: same session, second task. Implemented BACKLOG.md task 2
+(string interpolation), tests green (794 passing, up from 769), pushed to
+`origin/feat/20260724-string-interp`. `gh pr create` failed with the same
+GraphQL 500 (support ID `E7EE:37FC5F:528E75:577BFE:6A63C1FE`); a REST
+retry (`gh api repos/.../pulls`, `--verbose`) showed the identical bare
+`HTTP/2.0 500 Internal Server Error`, `Content-Length: 0` seen on
+`flat-map` earlier this session.
+
+What I tried: one GraphQL attempt + one REST attempt (not repeating past
+that — already past the retry budget for this known issue).
+
+What I did instead: this is new evidence worth flagging even though I
+already paged via `notify.sh` once this session for the identical error —
+this failure is on a **completely different branch** (`string-interp`,
+never touched by the `flat-map` work), which rules out anything specific
+to that one branch/commit and confirms the block is repo/account-wide on
+PR creation itself. Given `X-Accepted-Github-Permissions:
+pull_requests=write` shows up in the response headers on every attempt,
+if the human is investigating: worth double-checking the fine-grained
+PAT's repository permissions include "Pull requests: write" — a
+permissions gap can sometimes surface as a 500 instead of a clean 403 on
+GitHub's API. Not re-paging via `notify.sh` (same root cause already
+flagged). Annotated BACKLOG.md task 2 the same way task 1 was annotated:
+code complete in `.worktrees/string-interp` on
+`feat/20260724-string-interp`, next session should just retry `gh pr
+create` once this is unblocked, not re-implement. Both of the two
+top backlog tasks are now in this same state — nothing else left to pick
+up productively this session, so stopping here rather than starting a
+third task that would likely hit the identical wall.
+
+---

@@ -57,7 +57,20 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z]
+## 2. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — blocked on `gh pr create`]
+
+Status 2026-07-24: implementation is done, tested (794 tests passing, up
+from 769), committed, and pushed to `origin/feat/20260724-string-interp`
+(worktree `.worktrees/string-interp` still in place). Opening the PR fails
+with the same GitHub-side 500 (both `gh pr create`'s GraphQL path and a raw
+REST `POST /repos/.../pulls` — see `nightshift/HELP.md`) already blocking
+task 1's `flat_map` PR — and this is a **different branch**, which rules
+out "something wrong with that one branch/commit" and points at a
+repo/account-wide block on PR creation (possibly the PAT's permissions;
+already paged the human via `notify.sh` once this session for the `flat_map`
+occurrence — same root cause, not paging again). **Next session should just
+run `gh pr create` from `.worktrees/string-interp` once PR creation is
+unblocked — do not re-implement.**
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated

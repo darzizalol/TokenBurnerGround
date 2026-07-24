@@ -11,19 +11,20 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — blocked on `gh pr create`]
+## 1. String interpolation: `"...${expr}..."` [claimed 2026-07-24T19:41:16Z, implemented — needs rebase + PR]
 
-Status 2026-07-25 (re-checked, unchanged): implementation is done, tested
-(794 tests passing, up from 769), committed, and pushed to
+Status 2026-07-25: the `gh pr create` repo-wide 500 that blocked this (and
+`flat_map`) has cleared — `flat_map`'s PR #68 opened, reviewed, QA'd, and
+merged cleanly this cycle with no code changes needed, confirming the
+outage is over. This task's implementation is done and tested (794 tests
+passing at the time, up from 769), committed on
 `origin/feat/20260724-string-interp` (worktree `.worktrees/string-interp`
-still in place). Opening the PR fails with the same repo-wide GitHub-side
-500 blocking task 1's `flat_map` PR (see `nightshift/HELP.md`) — confirmed
-on a **different branch** from task 1, which rules out anything specific
-to one branch/commit. Already paged the human via `notify.sh`; no reply in
-`HELP.md` yet as of 2026-07-25. **Next session touching this task: same
-rule as task 1 — check `HELP.md` for a human reply first, at most one `gh
-pr create` retry from `.worktrees/string-interp` if none, then move on
-without re-escalating. Do not re-implement.**
+still in place) — but that branch predates the `flat_map`/`take`/`drop`
+merges, so it's now behind `main`. **Next session: rebase
+`.worktrees/string-interp` onto current `main` (`git pull --rebase origin
+main` from inside the worktree), rerun the full suite, force-push, then
+open the PR normally — no special retry/escalation handling needed
+anymore, no re-implementation needed.**
 
 Build: let a double-quoted string literal embed one or more `${expr}`
 placeholders — each containing an arbitrary Cinder expression, evaluated

@@ -109,7 +109,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (769+ tests) covers every layer — lexer, parser, interpreter,
+The suite (777+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -134,7 +134,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `first`/`last` and `take`/`drop`
-for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `flat_map` for
-lists, string interpolation, and list destructuring in `let`. The full
+Actively developed, nightly. Recently landed: `take`/`drop` and `flat_map`
+for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): string
+interpolation, list destructuring in `let`, and `repeat` for lists. The full
 vision and non-goals live in [`PROJECT.md`](PROJECT.md).

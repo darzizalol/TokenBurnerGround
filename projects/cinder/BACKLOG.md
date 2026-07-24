@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pad_start` and `pad_end` for strings
+## 1. Standard library: `pad_start` and `pad_end` for strings [claimed 2026-07-24T14:26:56Z]
 
 Build: add `pad_start(s, width, fill)` and `pad_end(s, width, fill)` to
 `cinder/builtins.py`, padding `s` with repeated copies of `fill` until it

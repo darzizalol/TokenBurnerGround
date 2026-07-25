@@ -1315,6 +1315,43 @@ class TestMap(unittest.TestCase):
             run("map([1], fn(x, y) { return x; });")
 
 
+class TestMapValues(unittest.TestCase):
+    def test_map_values_with_closure(self):
+        env = run('let result = map_values({"a": 1, "b": 2}, fn(v) { return v * 10; });')
+        self.assertEqual(env.get("result"), {"a": 10, "b": 20})
+
+    def test_map_values_preserves_key_order(self):
+        env = run('let result = map_values({"b": 1, "a": 2}, fn(v) { return v; });')
+        self.assertEqual(list(env.get("result").keys()), ["b", "a"])
+
+    def test_map_values_of_empty_map(self):
+        env = run("let result = map_values({}, fn(v) { return v; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_map_values_does_not_mutate_input(self):
+        env = run(
+            'let m = {"a": 1}; let result = map_values(m, fn(v) { return v * 10; });'
+        )
+        self.assertEqual(env.get("m"), {"a": 1})
+        self.assertEqual(env.get("result"), {"a": 10})
+
+    def test_map_values_non_map_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("map_values(5, fn(v) { return v; });")
+
+    def test_map_values_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_values({"a": 1}, 5);')
+
+    def test_map_values_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_values({"a": 1});')
+
+    def test_map_values_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_values({"a": 1}, fn(x, y) { return x; });')
+
+
 class TestFilter(unittest.TestCase):
     def test_filter_with_closure(self):
         env = run("let result = filter([1, 2, 3, 4], fn(x) { return x > 2; });")

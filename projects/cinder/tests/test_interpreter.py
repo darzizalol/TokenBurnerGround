@@ -59,6 +59,30 @@ class TestArithmetic(unittest.TestCase):
             evaluate('-"x"')
 
 
+class TestPrefixedIntLiterals(unittest.TestCase):
+    def test_hex_literal_value(self):
+        self.assertEqual(evaluate("0xFF"), 255)
+
+    def test_binary_literal_value(self):
+        self.assertEqual(evaluate("0b1010"), 10)
+
+    def test_octal_literal_value(self):
+        self.assertEqual(evaluate("0o17"), 15)
+
+    def test_hex_arithmetic(self):
+        self.assertEqual(evaluate("0xFF + 1"), 256)
+
+    def test_hex_comparison(self):
+        self.assertEqual(evaluate("0x10 > 15"), True)
+
+    def test_hex_as_list_index(self):
+        self.assertEqual(evaluate("[10, 20, 30][0x1]"), 20)
+
+    def test_hex_as_function_argument(self):
+        env = run("fn double(x) { return x * 2; } let result = double(0x10);")
+        self.assertEqual(env.get("result"), 32)
+
+
 class TestBitwise(unittest.TestCase):
     def test_and_or_xor(self):
         self.assertEqual(evaluate("5 & 3"), 1)

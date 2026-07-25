@@ -32,7 +32,9 @@ while (i < 10) {
 - **Values**: numbers, strings, booleans, `nil`; `nil`/`false` are falsy,
   everything else (including `0` and `""`) is truthy; strings support
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
-  inside `${...}`, stringified the same way `print`/`format` render values
+  inside `${...}`, stringified the same way `print`/`format` render values;
+  integer literals may also be written in hex (`0x1F`), binary (`0b101`), or
+  octal (`0o17`)
 - **Variables & scope**: `let` declarations, assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting/rest)
@@ -112,7 +114,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (832+ tests) covers every layer — lexer, parser, interpreter,
+The suite (852+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -137,9 +139,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list destructuring in `let`,
-`repeat` for lists, and `map_values` for maps. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): hex/binary/octal numeric literals, and a run
-of list-focused stdlib additions (`find_index`, `flatten_deep`, `min_by`/
-`max_by`, value-based `remove`). The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `repeat` for lists,
+`map_values` for maps, and hex/binary/octal numeric literals. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): a run of list-focused stdlib
+additions (`find_index`, `flatten_deep`, `min_by`/`max_by`, value-based
+`remove`), `invert` for maps, `zip_with`, and map destructuring in `let`.
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

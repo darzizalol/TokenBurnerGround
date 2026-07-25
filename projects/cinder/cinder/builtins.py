@@ -255,9 +255,14 @@ def _get(arguments: list, line: int, column: int) -> object:
 def _remove(arguments: list, line: int, column: int) -> object:
     _require_arity("remove", arguments, 2, line, column)
     target, key = arguments
+    if isinstance(target, list):
+        for index, element in enumerate(target):
+            if values_equal(element, key):
+                return target.pop(index)
+        raise CinderRuntimeError(f"value not found in list: {key!r}", line, column)
     if not isinstance(target, dict):
         raise CinderRuntimeError(
-            f"remove() requires a map, got {type_name(target)}", line, column
+            f"remove() requires a list or map, got {type_name(target)}", line, column
         )
     if not _is_valid_key(key):
         raise CinderRuntimeError(

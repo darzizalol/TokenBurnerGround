@@ -378,7 +378,7 @@ class TestRemove(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run('remove({"a": 1}, "z");')
 
-    def test_remove_on_non_map_raises(self):
+    def test_remove_on_non_list_non_map_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('remove(5, "a");')
 
@@ -391,6 +391,28 @@ class TestRemove(unittest.TestCase):
             run('remove({"a": 1});')
         with self.assertRaises(CinderRuntimeError):
             run('remove({"a": 1}, "a", 1);')
+
+    def test_remove_on_list_mutates_in_place(self):
+        env = run('let l = [1, 2, 3]; remove(l, 2);')
+        self.assertEqual(env.get("l"), [1, 3])
+
+    def test_remove_on_list_returns_removed_value(self):
+        env = run('let result = remove([1, 2, 3], 2);')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_remove_on_list_removes_only_first_match(self):
+        env = run('let l = [1, 2, 1]; remove(l, 1);')
+        self.assertEqual(env.get("l"), [2, 1])
+
+    def test_remove_on_list_missing_value_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('remove([1, 2], 5);')
+
+    def test_remove_on_list_bool_vs_int_distinguished_by_values_equal(self):
+        # 1 and true are distinct under Cinder's `==`/values_equal (unlike
+        # Python's native equality), so `true` doesn't match the int `1`.
+        with self.assertRaises(CinderRuntimeError):
+            run('remove([1, 2, 3], true);')
 
 
 class TestMerge(unittest.TestCase):

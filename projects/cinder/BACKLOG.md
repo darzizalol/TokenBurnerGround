@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Map destructuring in `let`: `let {a, b} = expr;`
+## 1. Map destructuring in `let`: `let {a, b} = expr;` [claimed 2026-07-25T19:31:57Z]
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds

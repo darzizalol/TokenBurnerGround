@@ -137,7 +137,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `flat_map` for lists, string
-interpolation (`"...${expr}..."`), and list destructuring in `let`. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `repeat` for lists and `map_values`
-for maps. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: string interpolation
+(`"...${expr}..."`), list destructuring in `let`, and `repeat` for lists.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `map_values` for maps and
+hex/binary/octal numeric literals. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

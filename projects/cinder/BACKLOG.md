@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `deep_copy` for lists and maps
+## 1. Standard library: `deep_copy` for lists and maps [claimed 2026-07-25T19:53:30Z]
 
 Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
 existing `copy` (PR #43, shallow: only the top-level container is new,

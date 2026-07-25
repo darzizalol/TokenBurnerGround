@@ -1553,3 +1553,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Ten clean cycles in a row since the `gh pr create` outage cleared — the
   queue keeps moving with no rework.
+- **Merged**: PR #77 "Standard library: value-based removal for lists via
+  `remove`" (`feat/20260725-list-remove`) — extended the existing
+  map-only `remove` builtin to also dispatch on `list`, the same way
+  `contains` dispatches across list/map/string; `remove(list, value)`
+  deletes and returns the first element equal to `value` (via the shared
+  `values_equal` helper), mutating in place and raising on no match.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (886 tests passing,
+  up from 881), both posted after the sole commit — clean squash merge,
+  branch deleted, worktree removed first. BACKLOG.md task 1 marked done
+  under `## Done` and remaining tasks renumbered (1-7 → 1-6, now starting
+  at `invert` for maps).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eleven clean cycles in a row since the `gh pr create` outage cleared —
+  the queue keeps moving with no rework.

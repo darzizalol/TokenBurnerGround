@@ -11,42 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: value-based removal for lists via `remove` [claimed 2026-07-25T14:59:10Z]
-
-Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
-map-only: `remove(map, key)`) to also accept a `list` as its first
-argument, dispatching on the argument's type the same way `contains`
-already dispatches across list/map/string — for a list, `remove(list,
-value)` deletes and discards the *first* element equal to `value` (via
-the shared `values_equal` helper, so it agrees with `==`/`contains`/
-`index_of` on bool-vs-int per PR #51), mutating the list in place and
-returning the removed value, matching `pop`/`remove_at`'s in-place style
-and the existing map behavior's raise-on-missing style. Fills the last
-gap in the list-removal trio: `pop` (end), `remove_at` (by index),
-`remove` (by value) — today removing by value requires `index_of` +
-`remove_at` as two separate calls. Non-list, non-map first argument keeps
-today's `remove() requires a map, got ...` error but reworded to mention
-both accepted types.
-
-Acceptance criteria:
-- `let l = [1, 2, 3]; remove(l, 2); l` is `[1, 3]`.
-- `remove(l, value)` on a list returns the removed value (`2` above).
-- Only the *first* matching element is removed: `remove([1, 2, 1], 1)`
-  leaves `[2, 1]`.
-- `remove([1, 2], 5)` raises `CinderRuntimeError` with line/column (value
-  not found in list — no silent no-op).
-- Existing map behavior (`remove(map, key)`) is unchanged, including its
-  missing-key and invalid-key errors — add a regression test pinning this.
-- `remove(5, 1)` raises `CinderRuntimeError` with line/column (neither
-  list nor map first argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `invert` for maps
+## 1. Standard library: `invert` for maps
 
 Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
 each key/value pair swapped (the value becomes the key, the original key
@@ -74,7 +39,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `zip_with` for lists
+## 2. Standard library: `zip_with` for lists
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
@@ -104,7 +69,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Map destructuring in `let`: `let {a, b} = expr;`
+## 3. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -141,7 +106,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 5. Standard library: `count_by` for lists
+## 4. Standard library: `count_by` for lists
 
 Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
 (which buckets elements into `{key: [elements]}`) but tallies group sizes
@@ -172,7 +137,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `deep_copy` for lists and maps
+## 5. Standard library: `deep_copy` for lists and maps
 
 Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
 existing `copy` (PR #43, shallow: only the top-level container is new,
@@ -203,7 +168,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `distinct_by` for lists
+## 6. Standard library: `distinct_by` for lists
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on
@@ -231,7 +196,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 7. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -822,6 +787,16 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   first-match tie-break, empty-list/non-list/non-callable/wrong-arity/
   mixed-type-key errors all mirror `min`/`max`/`sort_by`. Clean first
   pass, no bounces (881 tests passing, up from 866).
+- **Standard library: value-based removal for lists via `remove`** — merged
+  2026-07-25T15:04:38Z via PR #77 (`feat/20260725-list-remove`). Extended
+  the existing map-only `remove` builtin to also dispatch on `list`, the
+  same way `contains` dispatches across list/map/string — `remove(list,
+  value)` deletes and returns the first element equal to `value` (via the
+  shared `values_equal` helper, agreeing with `==`/`contains`/`index_of`
+  on bool-vs-int), mutating in place and raising on no match. Fills the
+  last gap in the list-removal trio: `pop` (end), `remove_at` (by index),
+  `remove` (by value). Clean first pass, no bounces (886 tests passing, up
+  from 881).
 
 ## Graveyard
 

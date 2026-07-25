@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `count_by` for lists
+## 1. Standard library: `count_by` for lists [claimed 2026-07-25T19:43:05Z]
 
 Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
 (which buckets elements into `{key: [elements]}`) but tallies group sizes

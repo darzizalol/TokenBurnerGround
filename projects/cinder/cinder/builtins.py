@@ -289,6 +289,23 @@ def _merge(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _invert(arguments: list, line: int, column: int) -> object:
+    _require_arity("invert", arguments, 1, line, column)
+    target = arguments[0]
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"invert() requires a map, got {type_name(target)}", line, column
+        )
+    result: dict = {}
+    for key, value in target.items():
+        if not _is_valid_key(value):
+            raise CinderRuntimeError(
+                f"{type_name(value)} is not a valid map key", line, column
+            )
+        result[value] = key
+    return result
+
+
 def _upper(arguments: list, line: int, column: int) -> object:
     _require_arity("upper", arguments, 1, line, column)
     value = arguments[0]
@@ -1228,6 +1245,7 @@ _BUILTINS = {
     "get": _get,
     "remove": _remove,
     "merge": _merge,
+    "invert": _invert,
     "upper": _upper,
     "lower": _lower,
     "trim": _trim,

@@ -63,7 +63,7 @@ while (i < 10) {
   `list[start:end]`/`string[start:end]` (Python-style, out-of-range bounds
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
-  `remove_at`, `first`, `last`, `take`, `drop`, `keys`, `values`, `items`,
+  `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,

@@ -2,7 +2,7 @@
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, find_index, copy, unique, reverse, sort, sort_by, range, map,
-filter, reduce, slice, take, drop, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
+filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
 import io
@@ -1781,6 +1781,38 @@ class TestFlatten(unittest.TestCase):
             run("flatten();")
         with self.assertRaises(CinderRuntimeError):
             run("flatten([1], [2]);")
+
+
+class TestFlattenDeep(unittest.TestCase):
+    def test_flatten_deep_flattens_multiple_levels(self):
+        env = run("let result = flatten_deep([1, [2, 3], [4, [5, 6]]]);")
+        self.assertEqual(env.get("result"), [1, 2, 3, 4, 5, 6])
+
+    def test_flatten_deep_flattens_arbitrary_depth(self):
+        env = run("let result = flatten_deep([[[1]], [[2]]]);")
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_flatten_deep_with_no_nesting_returns_new_list(self):
+        env = run("let a = [1, 2, 3]; let result = flatten_deep(a);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+        self.assertIsNot(env.get("result"), env.get("a"))
+
+    def test_flatten_deep_empty_nested_lists_contribute_nothing(self):
+        env = run("let result = flatten_deep([[], 1, []]);")
+        self.assertEqual(env.get("result"), [1])
+
+    def test_flatten_deep_of_empty_list(self):
+        self.assertEqual(run("let result = flatten_deep([]);").get("result"), [])
+
+    def test_flatten_deep_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("flatten_deep(5);")
+
+    def test_flatten_deep_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("flatten_deep();")
+        with self.assertRaises(CinderRuntimeError):
+            run("flatten_deep([1], [2]);")
 
 
 class TestFlatMap(unittest.TestCase):

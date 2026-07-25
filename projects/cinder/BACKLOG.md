@@ -172,6 +172,92 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `deep_copy` for lists and maps
+
+Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
+existing `copy` (PR #43, shallow: only the top-level container is new,
+nested containers stay shared) but recurses through arbitrary nesting of
+lists-of-lists/maps-of-lists/lists-of-maps so every nested container in
+the result is also a fresh copy, fully breaking aliasing at every depth.
+Non-container elements (numbers, strings, bools, `nil`, functions) are
+copied by value/reference as usual — functions themselves are not cloned,
+just referenced, same as everywhere else in Cinder. `collection` must be
+a `list` or `map` at the top level, matching `copy`'s accepted types.
+
+Acceptance criteria:
+- `let a = [[1, 2], [3]]; let b = deep_copy(a); push(b[0], 99); a[0]` is
+  still `[1, 2]` (nested list independent, unlike plain `copy`).
+- `let a = {"x": [1, 2]}; let b = deep_copy(a); push(b["x"], 3); a["x"]`
+  is still `[1, 2]`.
+- Non-container elements pass through unchanged:
+  `deep_copy([1, "a", true, nil])` is `[1, "a", true, nil]`.
+- Mixed nesting works: `deep_copy({"a": [{"b": 1}]})` produces fully
+  independent copies at every level — add a regression test mutating the
+  innermost map and checking the original is untouched.
+- `deep_copy(5)` raises `CinderRuntimeError` with line/column (non-list,
+  non-map argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `distinct_by` for lists
+
+Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
+existing `unique` (PR #50) but the "have we seen this?" check keys on
+`fn(element)` (via the shared `call_value` helper) rather than the
+element itself, keeping the *first* element encountered for each distinct
+key — matching `group_by`/`count_by`'s first-occurrence key ordering.
+`fn`'s result must be a valid map key (reuse `_is_valid_key`, same
+non-hashable-key rejection as `group_by`/`count_by`).
+
+Acceptance criteria:
+- `distinct_by([1, 2, 3, 4], fn(n) { n % 2 })` is `[1, 2]` (first odd
+  element, then first even element, in that encounter order).
+- `distinct_by(["a", "bb", "c", "dd"], fn(s) { len(s) })` is `["a", "bb"]`.
+- `distinct_by([], fn(n) { n })` is `[]`.
+- A non-hashable `fn` result (e.g. returning a list) raises
+  `CinderRuntimeError` with line/column, matching `group_by`/`count_by`.
+- `distinct_by(5, fn(n) { n })` raises `CinderRuntimeError` with
+  line/column (non-list first argument).
+- `distinct_by([1], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `strip_prefix` and `strip_suffix` for strings
+
+Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
+`cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
+argument style. `strip_prefix` removes `prefix` exactly once from the
+start of `s` if present, returning `s` unchanged if it doesn't start with
+`prefix`; `strip_suffix` is the mirror image for the end. Complements
+`trim` (whitespace-only) for exact literal prefix/suffix removal, and
+`starts_with`/`ends_with` (test-only, don't modify) for the "and now
+remove it" case.
+
+Acceptance criteria:
+- `strip_prefix("hello_world", "hello_")` is `"world"`.
+- `strip_prefix("hello", "xyz")` is `"hello"` (unchanged, no match).
+- `strip_suffix("file.txt", ".txt")` is `"file"`.
+- `strip_suffix("file", ".txt")` is `"file"` (unchanged, no match).
+- Empty `prefix`/`suffix` argument returns `s` unchanged (no-op, not an
+  error) — add a regression test pinning this.
+- Non-`str` `s` or `prefix`/`suffix` argument raises `CinderRuntimeError`
+  with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

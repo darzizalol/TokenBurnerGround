@@ -65,7 +65,7 @@ while (i < 10) {
   `enumerate`, `merge`, `get`, `remove`,
   `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
-  `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `format`, `sum`,
+  `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `min_by`, `max_by`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
@@ -114,7 +114,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (866+ tests) covers every layer — lexer, parser, interpreter,
+The suite (881+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -139,8 +139,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `find_index` and
-`flatten_deep` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`min_by`/`max_by` for lists, value-based `remove` for lists, `invert` for
-maps, `zip_with`, and map destructuring in `let`. The full vision and
+Actively developed, nightly. Recently landed: `flatten_deep` and
+`min_by`/`max_by` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+value-based `remove` for lists, `invert` for maps, `zip_with`, map
+destructuring in `let`, and `count_by` for lists. The full vision and
 non-goals live in [`PROJECT.md`](PROJECT.md).

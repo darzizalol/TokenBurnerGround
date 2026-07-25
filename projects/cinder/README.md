@@ -112,7 +112,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (817+ tests) covers every layer — lexer, parser, interpreter,
+The suite (832+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -137,8 +137,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: string interpolation
-(`"...${expr}..."`), list destructuring in `let`, and `repeat` for lists.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `map_values` for maps and
-hex/binary/octal numeric literals. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: list destructuring in `let`,
+`repeat` for lists, and `map_values` for maps. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): hex/binary/octal numeric literals, and a run
+of list-focused stdlib additions (`find_index`, `flatten_deep`, `min_by`/
+`max_by`, value-based `remove`). The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

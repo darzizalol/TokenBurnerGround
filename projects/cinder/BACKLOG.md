@@ -172,6 +172,101 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `invert` for maps
+
+Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
+each key/value pair swapped (the value becomes the key, the original key
+becomes the value), reusing the existing key-validity check (`_is_valid_key`
+in `cinder/interpreter.py`, already used by map literals/`group_by`) to
+reject a non-hashable value before it's used as a key. Complements
+`keys`/`values`/`items` for the "I have a map, I need to look things up by
+value instead" case. On a collision (two original entries whose values are
+equal, so they'd invert to the same key), the entry that appears **later**
+in `map`'s iteration order wins — matching `merge`'s later-wins rule and
+Python `dict` construction semantics. Non-mutating.
+
+Acceptance criteria:
+- `invert({"a": 1, "b": 2})` is `{1: "a", 2: "b"}`.
+- Collision: `invert({"a": 1, "b": 1})` is `{1: "b"}` (later entry wins).
+- `invert({})` is `{}`.
+- `invert(5)` raises `CinderRuntimeError` with line/column (non-map
+  argument).
+- A value that isn't a valid map key (e.g. a list: `invert({"a": [1]})`)
+  raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `zip_with` for lists
+
+Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
+lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
+matching `map`/`filter`'s callback style) instead of `zip`'s bare
+`[a, b]` pairing, truncated to the shorter list's length like `zip`. The
+elementwise combinator counterpart to `zip` the same way `map` is to a bare
+identity pass — saves a `map(zip(list1, list2), fn(pair) { fn(pair[0],
+pair[1]) })` round-trip for the common case of combining two lists
+pairwise (e.g. summing two numeric lists, concatenating two string lists).
+
+Acceptance criteria:
+- `zip_with([1, 2, 3], [10, 20, 30], fn(a, b) { a + b })` is
+  `[11, 22, 33]`.
+- Truncates to the shorter list: `zip_with([1, 2], [1, 2, 3], fn(a, b) { a
+  + b })` is `[2, 4]`.
+- `zip_with([], [1, 2], fn(a, b) { a + b })` is `[]`.
+- `zip_with(5, [1], fn(a, b) { a })` raises `CinderRuntimeError` with
+  line/column (non-list first argument).
+- `zip_with([1], 5, fn(a, b) { a })` raises `CinderRuntimeError` with
+  line/column (non-list second argument).
+- `zip_with([1], [2], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable third argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Map destructuring in `let`: `let {a, b} = expr;`
+
+Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
+from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
+each named local to `expr[name]` — shorthand style, where the identifier
+in the pattern *is* the map key looked up (no renaming like `let {a: x} =
+...`, no nesting, no rest element — same "flat, minimal" restrictions as
+the list form). `expr` must evaluate to a `map`; a key named in the
+pattern but absent from the map raises `CinderRuntimeError` at the `let`
+statement's line/column (not a generic map-index error). Extra keys
+present in the map but not named in the pattern are simply ignored (unlike
+the list form's exact-length requirement — maps are looked up by name, not
+position, so there's no natural arity to enforce). Parser disambiguates
+`let {` from today's `let IDENTIFIER =` and `let [` at the token
+immediately after `let`; reuse or extend the existing `DestructureLetStmt`
+AST node (e.g. an added `is_map: bool` flag, or distinguish list-vs-map by
+whether `names` pairs come with lookup keys) rather than duplicating the
+whole node.
+
+Acceptance criteria:
+- `let {a, b} = {"a": 1, "b": 2}; a` is `1`; `b` is `2`.
+- Extra unnamed keys are ignored: `let {a} = {"a": 1, "b": 2}; a` is `1`
+  (no error about the unused `"b"`).
+- Missing named key raises `CinderRuntimeError` with line/column:
+  `let {a, b} = {"a": 1};` (pattern names `b`, map lacks it).
+- Non-map right-hand side raises `CinderRuntimeError` with line/column:
+  `let {a} = [1, 2];` and `let {a} = 5;`.
+- Existing list destructuring (`let [a, b] = expr;`) and plain `let name =
+  expr;` are unaffected — add regression tests pinning both.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

@@ -294,6 +294,36 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 11. Spread operator in list literals: `[...list1, x, ...list2]`
+
+Build: extend list-literal parsing to accept a `...expr` element (reusing the
+existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't
+exist yet, add one) interspersed among ordinary elements. At evaluation time,
+each `...expr` element must evaluate to a `list` — raising `CinderRuntimeError`
+with line/column otherwise — and splices that list's elements into the result
+in place; ordinary elements are included as-is. This is a language-level
+grammar feature (new AST handling in list-literal parsing/evaluation), not a
+builtin — a deliberate change of pace from the recent run of stdlib-only
+tasks. Map literals are explicitly out of scope for this task.
+
+Acceptance criteria:
+- `[...[1, 2], 3]` is `[1, 2, 3]`.
+- `[0, ...[1, 2], 3, ...[4, 5]]` is `[0, 1, 2, 3, 4, 5]`.
+- `[...[]]` is `[]`; a list literal with no spread elements (e.g. `[1, 2]`)
+  is unaffected — add a regression test pinning this.
+- Spreading a non-list value (e.g. `[...5]`) raises `CinderRuntimeError` with
+  line/column.
+- A bare `...` inside a map literal (e.g. `{...m}`) is out of scope — it
+  should raise `ParseError`, not silently be accepted; add a regression test
+  pinning this so a future task can't assume it already works.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/tokens.py`, `cinder/lexer.py`,
+`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

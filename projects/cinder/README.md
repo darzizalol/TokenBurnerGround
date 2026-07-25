@@ -68,7 +68,7 @@ while (i < 10) {
   `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`,
-  `any`, `all`, string methods `upper`, `lower`,
+  `any`, `all`, `deep_copy`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `ord`/`chr` for character/code-point conversion, and
@@ -116,7 +116,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (928+ tests) covers every layer — lexer, parser, interpreter,
+The suite (934+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -141,8 +141,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map destructuring in `let` and
-`count_by` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`deep_copy` for lists/maps, `distinct_by` for lists, and
-`strip_prefix`/`strip_suffix` for strings. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `count_by` for lists and
+`deep_copy` for lists/maps. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`distinct_by` for lists, `strip_prefix`/`strip_suffix` for strings, and
+`take_while`/`drop_while` for lists. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

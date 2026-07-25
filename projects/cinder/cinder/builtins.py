@@ -784,6 +784,41 @@ def _sort_by(arguments: list, line: int, column: int) -> object:
     return [item for _, item in sorted(zip(keys, items), key=lambda pair: pair[0])]
 
 
+def _min_max_by(name: str, arguments: list, line: int, column: int, *, want_min: bool) -> object:
+    _require_arity(name, arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"{name}() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"{name}() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    if not items:
+        raise CinderRuntimeError(f"{name}() requires a non-empty list", line, column)
+    keys = [call_value(fn, [item], line, column) for item in items]
+    if not (all(_is_numeric(key) for key in keys) or all(isinstance(key, str) for key in keys)):
+        raise CinderRuntimeError(
+            f"{name}() requires a function returning all numbers or all strings", line, column
+        )
+    best_item, best_key = items[0], keys[0]
+    for item, key in zip(items[1:], keys[1:]):
+        if (key < best_key) if want_min else (key > best_key):
+            best_item, best_key = item, key
+    return best_item
+
+
+def _min_by(arguments: list, line: int, column: int) -> object:
+    return _min_max_by("min_by", arguments, line, column, want_min=True)
+
+
+def _max_by(arguments: list, line: int, column: int) -> object:
+    return _min_max_by("max_by", arguments, line, column, want_min=False)
+
+
 def _slice(arguments: list, line: int, column: int) -> object:
     _require_arity("slice", arguments, 3, line, column)
     value, start, end = arguments
@@ -1221,6 +1256,8 @@ _BUILTINS = {
     "last": _last,
     "sort": _sort,
     "sort_by": _sort_by,
+    "min_by": _min_by,
+    "max_by": _max_by,
     "range": _range,
     "repeat": _repeat,
     "map": _map,

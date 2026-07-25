@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
-pow, sqrt, sum, any, all, contains, index_of, find_index, copy, unique, reverse, sort, sort_by, range, map,
+pow, sqrt, sum, any, all, contains, index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
@@ -1251,6 +1251,72 @@ class TestSortBy(unittest.TestCase):
     def test_sort_by_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("sort_by([1]);")
+
+
+class TestMinByMaxBy(unittest.TestCase):
+    def test_min_by_picks_smallest_key(self):
+        env = run("let result = min_by([3, 1, 2], fn(n) { return n; });")
+        self.assertEqual(env.get("result"), 1)
+
+    def test_max_by_picks_largest_key(self):
+        env = run("let result = max_by([3, 1, 2], fn(n) { return n; });")
+        self.assertEqual(env.get("result"), 3)
+
+    def test_min_by_string_length(self):
+        env = run('let result = min_by(["ccc", "a", "bb"], fn(s) { return len(s); });')
+        self.assertEqual(env.get("result"), "a")
+
+    def test_min_by_tie_keeps_first_match(self):
+        env = run(
+            'let result = min_by([[1, "a"], [1, "b"]], fn(x) { return x[0]; });'
+        )
+        self.assertEqual(env.get("result"), [1, "a"])
+
+    def test_max_by_tie_keeps_first_match(self):
+        env = run(
+            'let result = max_by([[1, "a"], [1, "b"]], fn(x) { return x[0]; });'
+        )
+        self.assertEqual(env.get("result"), [1, "a"])
+
+    def test_min_by_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("min_by([], fn(n) { return n; });")
+
+    def test_max_by_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("max_by([], fn(n) { return n; });")
+
+    def test_min_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("min_by(5, fn(n) { return n; });")
+
+    def test_max_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("max_by(5, fn(n) { return n; });")
+
+    def test_min_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("min_by([1, 2], 5);")
+
+    def test_max_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("max_by([1, 2], 5);")
+
+    def test_min_by_mixed_type_keys_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('min_by([1, "a"], fn(x) { return x; });')
+
+    def test_max_by_mixed_type_keys_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('max_by([1, "a"], fn(x) { return x; });')
+
+    def test_min_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("min_by([1]);")
+
+    def test_max_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("max_by([1]);")
 
 
 class TestRange(unittest.TestCase):

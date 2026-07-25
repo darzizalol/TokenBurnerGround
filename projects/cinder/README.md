@@ -65,7 +65,7 @@ while (i < 10) {
   `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
-  `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `min_by`, `max_by`, `assert`, `format`, `sum`,
+  `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,

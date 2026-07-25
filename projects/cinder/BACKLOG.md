@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 1. Standard library: `strip_prefix` and `strip_suffix` for strings [claimed 2026-07-25T20:14Z]
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-

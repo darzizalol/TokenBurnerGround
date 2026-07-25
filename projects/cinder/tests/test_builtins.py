@@ -1125,6 +1125,41 @@ class TestCopy(unittest.TestCase):
             run("copy([1], [2]);")
 
 
+class TestDeepCopy(unittest.TestCase):
+    def test_deep_copy_breaks_aliasing_at_nested_list_depth(self):
+        env = run(
+            "let a = [[1, 2], [3]]; let b = deep_copy(a); push(b[0], 99);"
+        )
+        self.assertEqual(env.get("a"), [[1, 2], [3]])
+        self.assertEqual(env.get("b"), [[1, 2, 99], [3]])
+
+    def test_deep_copy_breaks_aliasing_for_nested_list_in_map(self):
+        env = run(
+            'let a = {"x": [1, 2]}; let b = deep_copy(a); push(b["x"], 3);'
+        )
+        self.assertEqual(env.get("a"), {"x": [1, 2]})
+        self.assertEqual(env.get("b"), {"x": [1, 2, 3]})
+
+    def test_deep_copy_passes_through_non_container_elements(self):
+        env = run("let result = deep_copy([1, \"a\", true, nil]);")
+        self.assertEqual(env.get("result"), [1, "a", True, None])
+
+    def test_deep_copy_handles_mixed_nesting(self):
+        env = run(
+            'let a = {"a": [{"b": 1}]}; let b = deep_copy(a); b["a"][0]["b"] = 99;'
+        )
+        self.assertEqual(env.get("a"), {"a": [{"b": 1}]})
+        self.assertEqual(env.get("b"), {"a": [{"b": 99}]})
+
+    def test_deep_copy_on_unsupported_type_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("deep_copy(5);")
+
+    def test_deep_copy_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("deep_copy([1], [2]);")
+
+
 class TestUnique(unittest.TestCase):
     def test_unique_keeps_first_occurrence_preserving_order(self):
         self.assertEqual(

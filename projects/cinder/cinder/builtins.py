@@ -1231,6 +1231,33 @@ def _count_by(arguments: list, line: int, column: int) -> object:
     return counts
 
 
+def _distinct_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("distinct_by", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"distinct_by() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"distinct_by() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    seen: set = set()
+    result: list = []
+    for item in items:
+        key = call_value(fn, [item], line, column)
+        if not _is_valid_key(key):
+            raise CinderRuntimeError(
+                f"{type_name(key)} is not a valid map key", line, column
+            )
+        if key not in seen:
+            seen.add(key)
+            result.append(item)
+    return result
+
+
 def _partition(arguments: list, line: int, column: int) -> object:
     _require_arity("partition", arguments, 2, line, column)
     items, fn = arguments
@@ -1338,6 +1365,7 @@ _BUILTINS = {
     "copy": _copy,
     "deep_copy": _deep_copy,
     "unique": _unique,
+    "distinct_by": _distinct_by,
     "reverse": _reverse,
     "first": _first,
     "last": _last,

@@ -1724,6 +1724,52 @@ class TestCountBy(unittest.TestCase):
             run("count_by([1]);")
 
 
+class TestDistinctBy(unittest.TestCase):
+    def test_distinct_by_parity_keeps_first_of_each_key(self):
+        env = run(
+            "let result = distinct_by([1, 2, 3, 4], fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_distinct_by_string_length(self):
+        env = run(
+            'let result = distinct_by(["a", "bb", "c", "dd"], '
+            "fn(s) { return len(s); });"
+        )
+        self.assertEqual(env.get("result"), ["a", "bb"])
+
+    def test_distinct_by_empty_list_never_calls_fn(self):
+        env = run("let result = distinct_by([], fn(n) { return n / 0; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_distinct_by_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = distinct_by(xs, fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_distinct_by_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("distinct_by([1, 2], fn(n) { return [n]; });")
+
+    def test_distinct_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("distinct_by(5, fn(n) { return n; });")
+
+    def test_distinct_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("distinct_by([1], 5);")
+
+    def test_distinct_by_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("distinct_by([1], fn(x, y) { return x; });")
+
+    def test_distinct_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("distinct_by([1]);")
+
+
 class TestPartition(unittest.TestCase):
     def test_partition_splits_matching_and_non_matching(self):
         env = run(

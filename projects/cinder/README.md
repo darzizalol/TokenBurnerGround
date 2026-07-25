@@ -63,8 +63,8 @@ while (i < 10) {
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `get`, `remove`,
-  `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flat_map`,
-  `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
+  `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flatten_deep`,
+  `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
@@ -114,7 +114,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (859+ tests) covers every layer — lexer, parser, interpreter,
+The suite (866+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -139,9 +139,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: hex/binary/octal numeric
-literals and `find_index` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `flatten_deep` and value-based `remove` for
-lists, `min_by`/`max_by`, `invert` for maps, `zip_with`, and map
-destructuring in `let`. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `find_index` and
+`flatten_deep` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`min_by`/`max_by` for lists, value-based `remove` for lists, `invert` for
+maps, `zip_with`, and map destructuring in `let`. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

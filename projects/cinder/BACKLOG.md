@@ -174,6 +174,37 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
+## 6. Standard library: `count_by` for lists
+
+Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
+(which buckets elements into `{key: [elements]}`) but tallies group sizes
+instead of collecting elements, returning `{key: count}`. Reuses
+`group_by`'s `call_value`/`_is_valid_key` pattern. Saves a
+`map_values(group_by(list, fn), fn(v) { len(v) })` round-trip for the common
+"how many of each" case (e.g. counting words by length, items by category)
+without materializing the intermediate element lists.
+
+Acceptance criteria:
+- `count_by([1, 2, 3, 4], fn(n) { n % 2 })` is `{1: 2, 0: 2}`.
+- `count_by(["a", "bb", "cc", "d"], fn(s) { len(s) })` is `{1: 2, 2: 2}`.
+- `count_by([], fn(n) { n })` is `{}`.
+- Key ordering follows first-occurrence order in `list`, matching
+  `group_by`'s existing key-ordering behavior — add a regression test
+  pinning this.
+- `count_by(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- `count_by([1], 5)` raises `CinderRuntimeError` with line/column
+  (non-callable second argument).
+- A non-hashable `fn` result (e.g. returning a list) raises
+  `CinderRuntimeError` with line/column, matching `group_by`'s existing
+  unhashable-key rejection.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

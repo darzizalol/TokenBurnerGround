@@ -11,9 +11,10 @@ Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
 like plain `=`) rather than adding dedicated interpreter support.
 
 Statement grammar: a program is a list of statements, each one of
-`let IDENTIFIER = <expr>;` (LetStmt), `let [IDENTIFIER, ...] = <expr>;`
-(DestructureLetStmt, a flat positional list pattern only), `{ <statement>* }`
-(Block),
+`let IDENTIFIER = <expr>;` (LetStmt), `let [IDENTIFIER, ...] = <expr>;` or
+`let {IDENTIFIER, ...} = <expr>;` (DestructureLetStmt, a flat positional
+list pattern or a flat shorthand map pattern — `is_map` distinguishes the
+two), `{ <statement>* }` (Block),
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
 `while (<expr>) <statement>` (WhileStmt), `for IDENTIFIER in <expr> { ... }`
 (ForStmt, body always a block), `break;`/`continue;` (BreakStmt/ContinueStmt,
@@ -156,26 +157,30 @@ class Parser:
     def _let_statement(self) -> Stmt:
         let_token = self._advance()
         if self._check(TokenType.LBRACKET):
-            return self._destructure_let_statement(let_token)
+            return self._destructure_let_statement(let_token, TokenType.RBRACKET, "]", is_map=False)
+        if self._check(TokenType.LBRACE):
+            return self._destructure_let_statement(let_token, TokenType.RBRACE, "}", is_map=True)
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
         self._consume(TokenType.EQ, "'=' after variable name")
         initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
 
-    def _destructure_let_statement(self, let_token: Token) -> Stmt:
-        self._advance()  # consume '['
+    def _destructure_let_statement(
+        self, let_token: Token, close_type: TokenType, close_lexeme: str, is_map: bool
+    ) -> Stmt:
+        self._advance()  # consume '[' or '{'
         names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
         while self._check(TokenType.COMMA):
             self._advance()
             names.append(
                 self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
             )
-        self._consume(TokenType.RBRACKET, "']' after destructuring pattern")
+        self._consume(close_type, f"'{close_lexeme}' after destructuring pattern")
         self._consume(TokenType.EQ, "'=' after destructuring pattern")
         initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        return DestructureLetStmt(names, initializer, let_token.line, let_token.column)
+        return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map)
 
     def _brace_statement(self) -> Stmt:
         # Empty `{}` is always an empty Block, never a map literal.

@@ -112,7 +112,7 @@ def stmt_shape(node):
     if isinstance(node, LetStmt):
         return ("LetStmt", node.name, shape(node.initializer))
     if isinstance(node, DestructureLetStmt):
-        return ("DestructureLetStmt", node.names, shape(node.initializer))
+        return ("DestructureLetStmt", node.names, shape(node.initializer), node.is_map)
     if isinstance(node, ExprStmt):
         return ("ExprStmt", shape(node.expression))
     if isinstance(node, Block):
@@ -723,6 +723,7 @@ class TestStatements(unittest.TestCase):
                     "DestructureLetStmt",
                     ["a", "b"],
                     ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
+                    False,
                 )
             ],
         )
@@ -730,7 +731,7 @@ class TestStatements(unittest.TestCase):
     def test_destructure_let_statement_single_name(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("let [a] = [1];")],
-            [("DestructureLetStmt", ["a"], ("ListLiteral", [("Literal", 1)]))],
+            [("DestructureLetStmt", ["a"], ("ListLiteral", [("Literal", 1)]), False)],
         )
 
     def test_destructure_let_non_identifier_pattern_raises(self):
@@ -748,6 +749,54 @@ class TestStatements(unittest.TestCase):
     def test_destructure_let_unclosed_bracket_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let [a, b = [1, 2];")
+
+    def test_destructure_let_map_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {a, b} = {"a": 1, "b": 2};')],
+            [
+                (
+                    "DestructureLetStmt",
+                    ["a", "b"],
+                    (
+                        "MapLiteral",
+                        [
+                            (("Literal", "a"), ("Literal", 1)),
+                            (("Literal", "b"), ("Literal", 2)),
+                        ],
+                    ),
+                    True,
+                )
+            ],
+        )
+
+    def test_destructure_let_map_statement_single_name(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {a} = {"a": 1};')],
+            [
+                (
+                    "DestructureLetStmt",
+                    ["a"],
+                    ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                    True,
+                )
+            ],
+        )
+
+    def test_destructure_let_map_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('let {1, b} = {"a": 1, "b": 2};')
+
+    def test_destructure_let_map_missing_equals_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('let {a, b} {"a": 1, "b": 2};')
+
+    def test_destructure_let_map_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('let {a, b} = {"a": 1, "b": 2}')
+
+    def test_destructure_let_map_unclosed_brace_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('let {a, b = {"a": 1, "b": 2};')
 
     def test_unclosed_block_raises(self):
         with self.assertRaises(ParseError):

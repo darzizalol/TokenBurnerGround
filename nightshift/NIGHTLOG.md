@@ -1639,3 +1639,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Sixteen clean cycles in a row since the `gh pr create` outage cleared —
   the backlog queue keeps emptying with no rework required.
+- **Merged**: PR #83 "Standard library: `distinct_by` for lists"
+  (`feat/20260725-distinct-by`) — added `distinct_by(list, fn)` to
+  `cinder/builtins.py`, mirroring `group_by`/`count_by`'s `call_value`/
+  `_is_valid_key` pattern but keeping the first element encountered per
+  distinct `fn(element)` key. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (943 tests passing, up from 934), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-10 → 1-9, now starting at `strip_prefix`/`strip_suffix`
+  for strings).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventeen clean cycles in a row since the `gh pr create` outage cleared —
+  the night is going smoothly, nothing on fire.

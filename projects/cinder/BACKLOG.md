@@ -11,35 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `distinct_by` for lists [claimed 2026-07-25T20:04:08Z]
-
-Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
-existing `unique` (PR #50) but the "have we seen this?" check keys on
-`fn(element)` (via the shared `call_value` helper) rather than the
-element itself, keeping the *first* element encountered for each distinct
-key — matching `group_by`/`count_by`'s first-occurrence key ordering.
-`fn`'s result must be a valid map key (reuse `_is_valid_key`, same
-non-hashable-key rejection as `group_by`/`count_by`).
-
-Acceptance criteria:
-- `distinct_by([1, 2, 3, 4], fn(n) { n % 2 })` is `[1, 2]` (first odd
-  element, then first even element, in that encounter order).
-- `distinct_by(["a", "bb", "c", "dd"], fn(s) { len(s) })` is `["a", "bb"]`.
-- `distinct_by([], fn(n) { n })` is `[]`.
-- A non-hashable `fn` result (e.g. returning a list) raises
-  `CinderRuntimeError` with line/column, matching `group_by`/`count_by`.
-- `distinct_by(5, fn(n) { n })` raises `CinderRuntimeError` with
-  line/column (non-list first argument).
-- `distinct_by([1], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 1. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -66,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `take_while` and `drop_while` for lists
+## 2. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -101,7 +73,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `lines` and `words` for strings
+## 3. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -136,7 +108,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `last_index_of` for lists
+## 4. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -160,7 +132,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `capitalize` for strings
+## 5. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -186,7 +158,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `clamp` for numbers
+## 6. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -210,7 +182,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `is_empty` for lists, maps, and strings
+## 7. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -231,7 +203,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `union`, `intersection`, `difference` for lists
+## 8. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -266,7 +238,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `pluck` for lists of maps
+## 9. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -294,7 +266,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Spread operator in list literals: `[...list1, x, ...list2]`
+## 10. Spread operator in list literals: `[...list1, x, ...list2]`
 
 Build: extend list-literal parsing to accept a `...expr` element (reusing the
 existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't
@@ -931,6 +903,12 @@ Likely files: `cinder/ast_nodes.py`, `cinder/tokens.py`, `cinder/lexer.py`,
   arbitrary list/map nesting so every nested container in the result is a
   fresh copy (unlike the existing shallow `copy`). Clean first pass, no
   bounces (934 tests passing, up from 928).
+- **Standard library: `distinct_by` for lists** — merged 2026-07-25T20:08:36Z
+  via PR #83 (`feat/20260725-distinct-by`). Added `distinct_by(list, fn)` to
+  `cinder/builtins.py`, mirroring `group_by`/`count_by`'s `call_value`/
+  `_is_valid_key` pattern but keeping the first element encountered per
+  distinct `fn(element)` key instead of collecting/counting. Clean first
+  pass, no bounces (943 tests passing, up from 934).
 
 ## Graveyard
 

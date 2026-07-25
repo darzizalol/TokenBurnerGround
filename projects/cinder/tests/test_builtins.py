@@ -2005,6 +2005,50 @@ class TestZip(unittest.TestCase):
             run("zip([1], 5);")
 
 
+class TestZipWith(unittest.TestCase):
+    def test_zip_with_combines_elementwise(self):
+        env = run(
+            "let result = zip_with([1, 2, 3], [10, 20, 30], fn(a, b) { return a + b; });"
+        )
+        self.assertEqual(env.get("result"), [11, 22, 33])
+
+    def test_zip_with_truncates_to_shorter_list(self):
+        env = run(
+            "let result = zip_with([1, 2], [1, 2, 3], fn(a, b) { return a + b; });"
+        )
+        self.assertEqual(env.get("result"), [2, 4])
+
+    def test_zip_with_of_empty_list(self):
+        env = run("let result = zip_with([], [1, 2], fn(a, b) { return a + b; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_zip_with_does_not_mutate_inputs(self):
+        env = run(
+            "let a = [1, 2]; let b = [3, 4];"
+            "let result = zip_with(a, b, fn(x, y) { return x + y; });"
+        )
+        self.assertEqual(env.get("a"), [1, 2])
+        self.assertEqual(env.get("b"), [3, 4])
+        self.assertEqual(env.get("result"), [4, 6])
+
+    def test_zip_with_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("zip_with(5, [1], fn(a, b) { return a; });")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_zip_with_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_with([1], 5, fn(a, b) { return a; });")
+
+    def test_zip_with_non_callable_third_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_with([1], [2], 5);")
+
+    def test_zip_with_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_with([1], [2]);")
+
+
 class TestEnumerate(unittest.TestCase):
     def test_enumerate_pairs_index_and_value(self):
         env = run('let result = enumerate(["a", "b", "c"]);')

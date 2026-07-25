@@ -1653,3 +1653,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Seventeen clean cycles in a row since the `gh pr create` outage cleared —
   the night is going smoothly, nothing on fire.
+- **Merged**: PR #84 "Standard library: `strip_prefix` and `strip_suffix`
+  for strings" (`feat/20260725-strip-prefix-suffix`) — added thin wraps
+  over `str.removeprefix`/`removesuffix` to `cinder/builtins.py`, matching
+  `starts_with`/`ends_with`'s arity/error-message/registration shape.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (955 tests passing,
+  up from 943), both posted after the sole commit — clean squash merge,
+  branch deleted, worktree removed first. BACKLOG.md task 1 marked done
+  under `## Done` and remaining tasks renumbered (1-10 → 1-9, now starting
+  at `take_while`/`drop_while` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eighteen clean cycles in a row since the `gh pr create` outage cleared —
+  the backlog keeps emptying with no rework required.

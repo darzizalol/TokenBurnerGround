@@ -11,34 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `strip_prefix` and `strip_suffix` for strings [claimed 2026-07-25T20:14Z]
-
-Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
-`cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
-argument style. `strip_prefix` removes `prefix` exactly once from the
-start of `s` if present, returning `s` unchanged if it doesn't start with
-`prefix`; `strip_suffix` is the mirror image for the end. Complements
-`trim` (whitespace-only) for exact literal prefix/suffix removal, and
-`starts_with`/`ends_with` (test-only, don't modify) for the "and now
-remove it" case.
-
-Acceptance criteria:
-- `strip_prefix("hello_world", "hello_")` is `"world"`.
-- `strip_prefix("hello", "xyz")` is `"hello"` (unchanged, no match).
-- `strip_suffix("file.txt", ".txt")` is `"file"`.
-- `strip_suffix("file", ".txt")` is `"file"` (unchanged, no match).
-- Empty `prefix`/`suffix` argument returns `s` unchanged (no-op, not an
-  error) — add a regression test pinning this.
-- Non-`str` `s` or `prefix`/`suffix` argument raises `CinderRuntimeError`
-  with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `take_while` and `drop_while` for lists
+## 1. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -73,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Spread operator in list literals: `[...list1, x, ...list2]`
+## 2. Spread operator in list literals: `[...list1, x, ...list2]`
 
 Build: extend list-literal parsing to accept a `...expr` element (reusing the
 existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't
@@ -106,7 +79,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/tokens.py`, `cinder/lexer.py`,
 
 ---
 
-## 4. Standard library: `lines` and `words` for strings
+## 3. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -141,7 +114,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `last_index_of` for lists
+## 4. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -165,7 +138,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `capitalize` for strings
+## 5. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -191,7 +164,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `clamp` for numbers
+## 6. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -215,7 +188,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `is_empty` for lists, maps, and strings
+## 7. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -236,7 +209,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `union`, `intersection`, `difference` for lists
+## 8. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -271,7 +244,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `pluck` for lists of maps
+## 9. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -910,6 +883,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `_is_valid_key` pattern but keeping the first element encountered per
   distinct `fn(element)` key instead of collecting/counting. Clean first
   pass, no bounces (943 tests passing, up from 934).
+- **Standard library: `strip_prefix` and `strip_suffix` for strings** —
+  merged 2026-07-25T20:19:48Z via PR #84
+  (`feat/20260725-strip-prefix-suffix`). Added thin wraps over
+  `str.removeprefix`/`removesuffix` to `cinder/builtins.py`, matching
+  `starts_with`/`ends_with`'s arity/error-message/registration shape.
+  Clean first pass, no bounces (955 tests passing, up from 943).
 
 ## Graveyard
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `min_by` and `max_by` for lists
+## 1. Standard library: `min_by` and `max_by` for lists [claimed 2026-07-25T14:47:27Z]
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: value-based removal for lists via `remove`
+## 1. Standard library: value-based removal for lists via `remove` [claimed 2026-07-25T14:59:10Z]
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first

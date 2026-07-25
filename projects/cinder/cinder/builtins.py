@@ -946,6 +946,46 @@ def _drop(arguments: list, line: int, column: int) -> object:
     return value[start:len(value)]
 
 
+def _take_while(arguments: list, line: int, column: int) -> object:
+    _require_arity("take_while", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"take_while() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"take_while() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    result = []
+    for item in items:
+        if not is_truthy(call_value(fn, [item], line, column)):
+            break
+        result.append(item)
+    return result
+
+
+def _drop_while(arguments: list, line: int, column: int) -> object:
+    _require_arity("drop_while", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"drop_while() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"drop_while() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    index = 0
+    while index < len(items) and is_truthy(call_value(fn, [items[index]], line, column)):
+        index += 1
+    return items[index:]
+
+
 def _concat(arguments: list, line: int, column: int) -> object:
     _require_arity("concat", arguments, 2, line, column)
     list1, list2 = arguments
@@ -1417,6 +1457,8 @@ _BUILTINS = {
     "slice": _slice,
     "take": _take,
     "drop": _drop,
+    "take_while": _take_while,
+    "drop_while": _drop_while,
     "concat": _concat,
     "flatten": _flatten,
     "flatten_deep": _flatten_deep,

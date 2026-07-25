@@ -1990,6 +1990,86 @@ class TestDrop(unittest.TestCase):
             run("drop([1, 2]);")
 
 
+class TestTakeWhile(unittest.TestCase):
+    def test_take_while_stops_at_first_falsy(self):
+        env = run(
+            "let result = take_while([1, 2, 3, 4, 1], fn(n) { return n < 3; });"
+        )
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_take_while_none_matching_returns_empty(self):
+        env = run("let result = take_while([1, 2], fn(n) { return n > 10; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_take_while_all_matching_returns_copy(self):
+        env = run("let result = take_while([1, 2, 3], fn(n) { return n > 0; });")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_take_while_empty_list(self):
+        env = run("let result = take_while([], fn(n) { return n; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_take_while_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = take_while(xs, fn(n) { return n < 3; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_take_while_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take_while(5, fn(n) { return n; });")
+
+    def test_take_while_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take_while([1], 5);")
+
+    def test_take_while_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take_while([1]);")
+
+
+class TestDropWhile(unittest.TestCase):
+    def test_drop_while_keeps_from_first_falsy(self):
+        env = run(
+            "let result = drop_while([1, 2, 3, 4, 1], fn(n) { return n < 3; });"
+        )
+        self.assertEqual(env.get("result"), [3, 4, 1])
+
+    def test_drop_while_none_matching_returns_full_list(self):
+        env = run("let result = drop_while([1, 2], fn(n) { return n > 10; });")
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_drop_while_all_matching_returns_empty(self):
+        env = run("let result = drop_while([1, 2, 3], fn(n) { return n > 0; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_drop_while_empty_list(self):
+        env = run("let result = drop_while([], fn(n) { return n; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_drop_while_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = drop_while(xs, fn(n) { return n < 3; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [3])
+
+    def test_drop_while_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop_while(5, fn(n) { return n; });")
+
+    def test_drop_while_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop_while([1], 5);")
+
+    def test_drop_while_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop_while([1]);")
+
+
 class TestConcat(unittest.TestCase):
     def test_concat_joins_lists(self):
         env = run("let result = concat([1, 2], [3, 4]);")

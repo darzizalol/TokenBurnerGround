@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `invert` for maps
+## 1. Standard library: `invert` for maps [claimed 2026-07-25T15:10:03Z]
 
 Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
 each key/value pair swapped (the value becomes the key, the original key

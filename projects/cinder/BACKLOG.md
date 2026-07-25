@@ -11,35 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `invert` for maps [claimed 2026-07-25T15:10:03Z]
-
-Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
-each key/value pair swapped (the value becomes the key, the original key
-becomes the value), reusing the existing key-validity check (`_is_valid_key`
-in `cinder/interpreter.py`, already used by map literals/`group_by`) to
-reject a non-hashable value before it's used as a key. Complements
-`keys`/`values`/`items` for the "I have a map, I need to look things up by
-value instead" case. On a collision (two original entries whose values are
-equal, so they'd invert to the same key), the entry that appears **later**
-in `map`'s iteration order wins — matching `merge`'s later-wins rule and
-Python `dict` construction semantics. Non-mutating.
-
-Acceptance criteria:
-- `invert({"a": 1, "b": 2})` is `{1: "a", 2: "b"}`.
-- Collision: `invert({"a": 1, "b": 1})` is `{1: "b"}` (later entry wins).
-- `invert({})` is `{}`.
-- `invert(5)` raises `CinderRuntimeError` with line/column (non-map
-  argument).
-- A value that isn't a valid map key (e.g. a list: `invert({"a": [1]})`)
-  raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `zip_with` for lists
+## 1. Standard library: `zip_with` for lists
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
@@ -69,7 +41,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Map destructuring in `let`: `let {a, b} = expr;`
+## 2. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -106,7 +78,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 4. Standard library: `count_by` for lists
+## 3. Standard library: `count_by` for lists
 
 Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
 (which buckets elements into `{key: [elements]}`) but tallies group sizes
@@ -137,7 +109,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `deep_copy` for lists and maps
+## 4. Standard library: `deep_copy` for lists and maps
 
 Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
 existing `copy` (PR #43, shallow: only the top-level container is new,
@@ -168,7 +140,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `distinct_by` for lists
+## 5. Standard library: `distinct_by` for lists
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on
@@ -196,7 +168,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 6. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -223,7 +195,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `take_while` and `drop_while` for lists
+## 7. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -258,7 +230,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `lines` and `words` for strings
+## 8. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -867,6 +839,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   last gap in the list-removal trio: `pop` (end), `remove_at` (by index),
   `remove` (by value). Clean first pass, no bounces (886 tests passing, up
   from 881).
+- **Standard library: `invert` for maps** — merged 2026-07-25T~ via PR #78
+  (`feat/20260725-invert-map`). Added `invert(map)` to `cinder/builtins.py`,
+  swapping each key/value pair (reusing `_is_valid_key` to reject a
+  non-hashable value before it's used as a key), later entry wins on
+  collision, matching `merge`'s rule; non-mutating. Clean first pass, no
+  bounces (893 tests passing, up from 886).
 
 ## Graveyard
 

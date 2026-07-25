@@ -1568,3 +1568,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Eleven clean cycles in a row since the `gh pr create` outage cleared —
   the queue keeps moving with no rework.
+- **Merged**: PR #78 "Standard library: `invert()` for maps"
+  (`feat/20260725-invert-map`) — added `invert(map)` to
+  `cinder/builtins.py`, swapping each key/value pair (reusing
+  `_is_valid_key` to reject a non-hashable value before it's used as a
+  key), later entry wins on collision, matching `merge`'s rule;
+  non-mutating. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (893
+  tests passing, up from 886), both posted after the sole commit — clean
+  squash merge, branch deleted, worktree removed first. BACKLOG.md task 1
+  marked done under `## Done` and remaining tasks renumbered (1-8 → 1-7,
+  now starting at `zip_with` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twelve clean cycles in a row since the `gh pr create` outage cleared —
+  the queue keeps moving with no rework.

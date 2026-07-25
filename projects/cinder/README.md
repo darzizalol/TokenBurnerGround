@@ -114,7 +114,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (886+ tests) covers every layer — lexer, parser, interpreter,
+The suite (893+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -139,9 +139,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `min_by`/`max_by` and
-value-based `remove` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `invert` for maps, `zip_with`, map
-destructuring in `let`, `count_by` and `distinct_by` for lists, `deep_copy`,
-and `strip_prefix`/`strip_suffix` for strings. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: value-based `remove` for
+lists and `invert` for maps. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `zip_with`, map destructuring in `let`,
+`count_by` and `distinct_by` for lists, `deep_copy`, and
+`strip_prefix`/`strip_suffix` for strings. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

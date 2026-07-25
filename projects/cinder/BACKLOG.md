@@ -265,6 +265,101 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 9. Standard library: `last_index_of` for lists
+
+Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
+of the existing `index_of` (PR #49), scanning from the end and returning
+the `int` index of the *last* element equal to `item` (Cinder `==`
+value equality via the shared `values_equal` helper, so it agrees with
+`index_of`/`contains`/`in` on bool-vs-int per PR #51), or `-1` if absent.
+
+Acceptance criteria:
+- `last_index_of([1, 2, 3, 2, 1], 2)` is `3` (the later of the two `2`s).
+- `last_index_of([1, 2, 3], 9)` is `-1` (no match).
+- `last_index_of([], 1)` is `-1`.
+- `last_index_of([1, true, 0, false], true)` distinguishes bool from int
+  the same way `index_of`/`contains` do — add a regression test pinning
+  this (matching PR #51's fix).
+- `last_index_of(5, 1)` raises `CinderRuntimeError` with line/column
+  (non-list first argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 10. Standard library: `capitalize` for strings
+
+Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
+character of `s` and leaves the rest of the string unchanged (deliberately
+*not* Python's `str.capitalize()`, which also lowercases the remainder —
+keep it flat/minimal like `strip_prefix`/`strip_suffix`'s restrictions: no
+locale handling, no lowercasing side effect). Complements the existing
+`upper`/`lower` (whole-string case builtins).
+
+Acceptance criteria:
+- `capitalize("hello")` is `"Hello"`.
+- `capitalize("Hello")` is `"Hello"` (already capitalized, unchanged).
+- `capitalize("hELLO")` is `"HELLO"` (only the first character is touched,
+  rest untouched — the key difference from Python's `str.capitalize()`;
+  add a regression test pinning this).
+- `capitalize("")` is `""` (empty string, no-op, not an error).
+- `capitalize("1abc")` is `"1abc"` (non-alphabetic first character passes
+  through `str.upper()` unchanged, matching Python).
+- Non-`str` argument raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 11. Standard library: `clamp` for numbers
+
+Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
+`n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
+single-expression math-builtin style. `n`, `lo`, `hi` must each be `int`
+or `float` (mixed int/float across the three arguments is fine, matching
+`min`/`max`'s existing numeric-type handling). `lo > hi` is a caller
+error, not silently tolerated.
+
+Acceptance criteria:
+- `clamp(5, 0, 10)` is `5` (already in range, unchanged).
+- `clamp(-5, 0, 10)` is `0`; `clamp(15, 0, 10)` is `10`.
+- `clamp(2.5, 0, 2)` is `2` (mixed int/float arguments).
+- `clamp(5, 10, 0)` raises `CinderRuntimeError` with line/column (`lo > hi`
+  is invalid) — add a regression test pinning this.
+- `clamp("x", 0, 10)` raises `CinderRuntimeError` with line/column
+  (non-numeric argument), for each of the three positions.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 12. Standard library: `is_empty` for lists, maps, and strings
+
+Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
+if `len(collection)` would be `0`, else `false`, accepting the same three
+types `len()` already does (`list`, `map`, `str`). Saves the common
+`len(x) == 0` idiom seen throughout example programs and tests, and reads
+more clearly at call sites (`if (is_empty(queue)) { ... }`).
+
+Acceptance criteria:
+- `is_empty([])` is `true`; `is_empty([1])` is `false`.
+- `is_empty({})` is `true`; `is_empty({"a": 1})` is `false`.
+- `is_empty("")` is `true`; `is_empty("x")` is `false`.
+- `is_empty(5)` raises `CinderRuntimeError` with line/column (unsupported
+  type, matching `len`'s existing type-check error).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

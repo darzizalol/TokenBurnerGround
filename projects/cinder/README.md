@@ -38,6 +38,8 @@ while (i < 10) {
 - **Variables & scope**: `let` declarations, assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting/rest)
+  and map destructuring (`let {a, b} = expr;`, binds each identifier by
+  looking it up as a key, extra unnamed keys ignored)
 - **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
   lists, strings (character-by-character), and maps (over keys),
   `break`/`continue` in both loop kinds, `try { ... } catch (name) { ... }`
@@ -114,7 +116,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (901+ tests) covers every layer — lexer, parser, interpreter,
+The suite (918+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -139,8 +141,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: value-based `remove` for
-lists, `invert` for maps, and `zip_with` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): map destructuring in `let`, `count_by` and
-`distinct_by` for lists, `deep_copy`, and `strip_prefix`/`strip_suffix` for
-strings. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `zip_with` for lists and map
+destructuring in `let`. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`count_by` and `distinct_by` for lists, `deep_copy`, and
+`strip_prefix`/`strip_suffix` for strings. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

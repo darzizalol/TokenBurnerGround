@@ -1189,6 +1189,30 @@ def _group_by(arguments: list, line: int, column: int) -> object:
     return groups
 
 
+def _count_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("count_by", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"count_by() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"count_by() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    counts: dict = {}
+    for item in items:
+        key = call_value(fn, [item], line, column)
+        if not _is_valid_key(key):
+            raise CinderRuntimeError(
+                f"{type_name(key)} is not a valid map key", line, column
+            )
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
 def _partition(arguments: list, line: int, column: int) -> object:
     _require_arity("partition", arguments, 2, line, column)
     items, fn = arguments
@@ -1309,6 +1333,7 @@ _BUILTINS = {
     "filter": _filter,
     "reduce": _reduce,
     "group_by": _group_by,
+    "count_by": _count_by,
     "partition": _partition,
     "slice": _slice,
     "take": _take,

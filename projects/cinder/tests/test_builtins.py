@@ -1637,6 +1637,58 @@ class TestGroupBy(unittest.TestCase):
             run("group_by([1]);")
 
 
+class TestCountBy(unittest.TestCase):
+    def test_count_by_parity(self):
+        env = run(
+            "let result = count_by([1, 2, 3, 4], fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("result"), {1: 2, 0: 2})
+
+    def test_count_by_string_length(self):
+        env = run(
+            'let result = count_by(["a", "bb", "cc", "d"], '
+            "fn(s) { return len(s); });"
+        )
+        self.assertEqual(env.get("result"), {1: 2, 2: 2})
+
+    def test_count_by_empty_list_never_calls_fn(self):
+        env = run("let result = count_by([], fn(n) { return n / 0; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_count_by_key_order_matches_first_occurrence(self):
+        env = run(
+            "let result = count_by([3, 1, 4, 1, 5], fn(n) { return n % 2; });"
+        )
+        self.assertEqual(list(env.get("result").keys()), [1, 0])
+
+    def test_count_by_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3]; "
+            "let result = count_by(xs, fn(n) { return n % 2; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_count_by_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("count_by([1, 2], fn(n) { return [n]; });")
+
+    def test_count_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("count_by(5, fn(n) { return n; });")
+
+    def test_count_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("count_by([1], 5);")
+
+    def test_count_by_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("count_by([1], fn(x, y) { return x; });")
+
+    def test_count_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("count_by([1]);")
+
+
 class TestPartition(unittest.TestCase):
     def test_partition_splits_matching_and_non_matching(self):
         env = run(

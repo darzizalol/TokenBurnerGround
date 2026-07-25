@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
-pow, sqrt, sum, any, all, contains, copy, unique, reverse, sort, sort_by, range, map,
+pow, sqrt, sum, any, all, contains, index_of, find_index, copy, unique, reverse, sort, sort_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
@@ -568,6 +568,48 @@ class TestIndexOf(unittest.TestCase):
             run('index_of([1]);')
         with self.assertRaises(CinderRuntimeError):
             run('index_of([1], 2, 3);')
+
+
+class TestFindIndex(unittest.TestCase):
+    def test_find_index_returns_index_of_first_match(self):
+        env = run("let result = find_index([1, 2, 3, 4], fn(n) { return n > 2; });")
+        self.assertEqual(env.get("result"), 2)
+
+    def test_find_index_returns_negative_one_when_not_found(self):
+        env = run("let result = find_index([1, 2, 3], fn(n) { return n > 10; });")
+        self.assertEqual(env.get("result"), -1)
+
+    def test_find_index_on_empty_list_returns_negative_one_and_never_calls_fn(self):
+        env = run(
+            "let calls = []; "
+            "let result = find_index([], fn(n) { push(calls, n); return n; });"
+        )
+        self.assertEqual(env.get("result"), -1)
+        self.assertEqual(env.get("calls"), [])
+
+    def test_find_index_short_circuits_after_first_match(self):
+        env = run(
+            "let calls = []; "
+            "let result = find_index([1, 2, 3, 4], fn(n) { push(calls, n); return n > 2; });"
+        )
+        self.assertEqual(env.get("result"), 2)
+        self.assertEqual(env.get("calls"), [1, 2, 3])
+
+    def test_find_index_on_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("find_index(5, fn(n) { return n; });")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_find_index_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("find_index([1, 2], 5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_find_index_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("find_index([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("find_index([1], fn(n) { return n; }, 3);")
 
 
 class TestCount(unittest.TestCase):

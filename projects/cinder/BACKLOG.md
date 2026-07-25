@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find_index` for lists
+## 1. Standard library: `find_index` for lists [claimed 2026-07-25T14:25:15Z]
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the

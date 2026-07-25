@@ -873,6 +873,26 @@ def _flatten(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _flatten_deep_recurse(value: list) -> list:
+    result = []
+    for element in value:
+        if isinstance(element, list):
+            result.extend(_flatten_deep_recurse(element))
+        else:
+            result.append(element)
+    return result
+
+
+def _flatten_deep(arguments: list, line: int, column: int) -> object:
+    _require_arity("flatten_deep", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"flatten_deep() requires a list, got {type_name(value)}", line, column
+        )
+    return _flatten_deep_recurse(value)
+
+
 def _flat_map(arguments: list, line: int, column: int) -> object:
     _require_arity("flat_map", arguments, 2, line, column)
     items, fn = arguments
@@ -1214,6 +1234,7 @@ _BUILTINS = {
     "drop": _drop,
     "concat": _concat,
     "flatten": _flatten,
+    "flatten_deep": _flatten_deep,
     "flat_map": _flat_map,
     "chunk": _chunk,
     "zip": _zip,

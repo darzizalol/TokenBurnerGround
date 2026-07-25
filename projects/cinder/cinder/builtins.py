@@ -712,6 +712,24 @@ def _copy(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _deep_copy_value(value: object) -> object:
+    if isinstance(value, list):
+        return [_deep_copy_value(element) for element in value]
+    if isinstance(value, dict):
+        return {key: _deep_copy_value(val) for key, val in value.items()}
+    return value
+
+
+def _deep_copy(arguments: list, line: int, column: int) -> object:
+    _require_arity("deep_copy", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, (list, dict)):
+        raise CinderRuntimeError(
+            f"deep_copy() requires a list or map, got {type_name(value)}", line, column
+        )
+    return _deep_copy_value(value)
+
+
 def _first(arguments: list, line: int, column: int) -> object:
     _require_arity("first", arguments, 1, line, column)
     value = arguments[0]
@@ -1318,6 +1336,7 @@ _BUILTINS = {
     "find_index": _find_index,
     "count": _count,
     "copy": _copy,
+    "deep_copy": _deep_copy,
     "unique": _unique,
     "reverse": _reverse,
     "first": _first,

@@ -36,6 +36,12 @@ _ESCAPES = {
     '"': '"',
 }
 
+_PREFIXED_INT_BASES = {
+    "x": (16, "0123456789abcdef"),
+    "b": (2, "01"),
+    "o": (8, "01234567"),
+}
+
 
 class Lexer:
     def __init__(self, source: str, start_line: int = 1, start_column: int = 1):
@@ -227,6 +233,10 @@ class Lexer:
         return ("expr", expr_text, expr_start_line, expr_start_col)
 
     def _number(self, first: str, start_line: int, start_col: int):
+        if first == "0" and self._peek().lower() in _PREFIXED_INT_BASES:
+            self._prefixed_int(start_line, start_col)
+            return
+
         digits = [first]
         while self._peek().isdigit():
             digits.append(self._advance())
@@ -247,6 +257,27 @@ class Lexer:
             self.tokens.append(
                 Token(TokenType.INT, lexeme, int(lexeme), start_line, start_col)
             )
+
+    def _prefixed_int(self, start_line: int, start_col: int):
+        prefix = self._advance()  # consume 'x'/'b'/'o' (any case)
+        base, alphabet = _PREFIXED_INT_BASES[prefix.lower()]
+        digits = []
+        while self._peek().isalnum():
+            char = self._advance()
+            if char.lower() not in alphabet:
+                raise LexError(
+                    f"invalid digit {char!r} in base-{base} literal",
+                    start_line,
+                    start_col,
+                )
+            digits.append(char)
+        if not digits:
+            raise LexError(
+                f"expected digits after '0{prefix}'", start_line, start_col
+            )
+        lexeme = f"0{prefix}{''.join(digits)}"
+        value = int("".join(digits), base)
+        self.tokens.append(Token(TokenType.INT, lexeme, value, start_line, start_col))
 
     def _identifier(self, first: str, start_line: int, start_col: int):
         chars = [first]

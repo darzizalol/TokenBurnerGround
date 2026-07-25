@@ -31,6 +31,49 @@ class TestLiterals(unittest.TestCase):
             [TokenType.INT, TokenType.DOT, TokenType.IDENTIFIER, TokenType.EOF],
         )
 
+    def test_hex_integer(self):
+        tokens = tokenize("0x1F")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 31)
+        self.assertEqual(tokens[0].lexeme, "0x1F")
+
+    def test_hex_integer_lowercase(self):
+        tokens = tokenize("0xff")
+        self.assertEqual(tokens[0].literal, 255)
+
+    def test_hex_integer_uppercase_prefix(self):
+        tokens = tokenize("0X1f")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 31)
+
+    def test_binary_integer(self):
+        tokens = tokenize("0b1010")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 10)
+
+    def test_octal_integer(self):
+        tokens = tokenize("0o17")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 15)
+
+    def test_bare_zero_still_decimal(self):
+        tokens = tokenize("0")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 0)
+
+    def test_leading_zero_decimal_unaffected(self):
+        # No octal-by-leading-zero in Cinder: "007" is decimal 7.
+        tokens = tokenize("007")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 7)
+
+    def test_hex_literal_in_arithmetic(self):
+        tokens = tokenize("0xFF + 1")
+        self.assertEqual(
+            types(tokens), [TokenType.INT, TokenType.PLUS, TokenType.INT, TokenType.EOF]
+        )
+        self.assertEqual(tokens[0].literal, 255)
+
     def test_string_basic(self):
         tokens = tokenize('"hello"')
         self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
@@ -325,6 +368,36 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 2)
         self.assertEqual(ctx.exception.column, 1)
         self.assertTrue(ctx.exception.unterminated)
+
+    def test_hex_prefix_without_digits(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("0x")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_binary_prefix_without_digits(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("0b")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_hex_invalid_digit(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("0x1G")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_binary_invalid_digit(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("0b12")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_octal_invalid_digit(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("0o8")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
 
 
 if __name__ == "__main__":

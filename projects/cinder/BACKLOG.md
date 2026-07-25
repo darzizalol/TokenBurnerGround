@@ -11,31 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `map_values` for maps [claimed 2026-07-25T14:02:38Z]
-
-Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
-lists but for maps: returns a new map with the same keys and each value
-replaced by `fn(value)`, via the shared `call_value` helper (matching
-`map`/`filter`/`group_by`'s style). `items`/`keys`/`values` only let you
-*read* a map's shape today; there is no way to transform every value in one
-step without manually rebuilding the map via `items` + a loop.
-
-Acceptance criteria:
-- `map_values({"a": 1, "b": 2}, fn(v) { v * 10 })` is `{"a": 10, "b": 20}`.
-- `map_values({}, fn(v) { v })` is `{}` (empty map, `fn` never called).
-- Key order is preserved (insertion order, matching `items`).
-- `map_values(5, fn(v) { v })` raises `CinderRuntimeError` with line/column
-  (non-map first argument).
-- `map_values({"a": 1}, 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Numeric literals: hexadecimal, binary, and octal integers
+## 1. Numeric literals: hexadecimal, binary, and octal integers
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
@@ -72,7 +48,7 @@ Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
 
 ---
 
-## 3. Standard library: `find_index` for lists
+## 2. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -101,7 +77,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `flatten_deep` for lists
+## 3. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -128,7 +104,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `min_by` and `max_by` for lists
+## 4. Standard library: `min_by` and `max_by` for lists
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is
@@ -161,7 +137,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: value-based removal for lists via `remove`
+## 5. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -723,6 +699,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `cinder/builtins.py`, returning a new list of `n` shallow-aliased copies
   of `value`, complementing `range`'s role for non-numeric sequences. Clean
   first pass, no bounces (824 tests passing, up from 817).
+- **Standard library: `map_values` for maps** — merged 2026-07-25T14:07:23Z
+  via PR #72 (`feat/20260725-map-values`). Added `map_values(map, fn)` to
+  `cinder/builtins.py`, returning a new map with the same keys and each
+  value replaced by `fn(value)` via the shared `call_value` helper, matching
+  `map`/`filter`/`group_by`'s style. Clean first pass, no bounces (832 tests
+  passing, up from 824).
 
 ## Graveyard
 

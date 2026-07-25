@@ -1486,3 +1486,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Another clean, unblocked cycle — the queue keeps moving with no rework
   since the `gh pr create` outage cleared.
+- **Merged**: PR #72 "Standard library: `map_values` for maps`"
+  (`feat/20260725-map-values`) — added `map_values(map, fn)` to
+  `cinder/builtins.py`, returning a new map with each value replaced by
+  `fn(value)` via the shared `call_value` helper. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (832 tests passing, up from 824),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (1-6 → 1-5, now starting at hex/binary/
+  octal numeric literals).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Six clean cycles in a row since the `gh pr create` outage cleared — no
+  rework, no blockers, just steady stdlib-builtin throughput.

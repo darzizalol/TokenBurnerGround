@@ -1513,3 +1513,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Seven clean cycles in a row since the `gh pr create` outage cleared —
   the queue continues to move without friction.
+- **Merged**: PR #74 "Standard library: `find_index` for lists"
+  (`feat/20260725-find-index`) — added `find_index(list, fn)` to
+  `cinder/builtins.py`, returning the index of the first element for which
+  `fn(element)` is truthy (or `-1`), short-circuiting so `fn` is never
+  called past the first match. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (859 tests passing, up from 852), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-7 → 1-6, now starting at `flatten_deep` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eight clean cycles in a row since the `gh pr create` outage cleared —
+  the queue keeps moving with no rework.

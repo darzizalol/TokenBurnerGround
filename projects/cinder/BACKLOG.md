@@ -11,36 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find_index` for lists [claimed 2026-07-25T14:25:15Z]
-
-Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
-`int` index of the first element for which `fn(element)` is truthy (via the
-shared `call_value` helper and Cinder's truthiness rule, matching `filter`/
-`partition`'s predicate style), or `-1` if no element matches (short-
-circuits — doesn't call `fn` on elements after the first match).
-Complements the existing `index_of` (which finds by `==` equality) the same
-way `filter` complements `contains`: a predicate-based search for when
-equality isn't enough (e.g. "first even number", "first string longer than
-3 characters").
-
-Acceptance criteria:
-- `find_index([1, 2, 3, 4], fn(n) { n > 2 })` is `2` (0-based index of `3`).
-- `find_index([1, 2, 3], fn(n) { n > 10 })` is `-1` (no match).
-- `find_index([], fn(n) { n })` is `-1` (empty list, `fn` never called).
-- Short-circuits: `fn` is not called for elements after the first match
-  (verify via a counter closure or side-effecting list in a test).
-- `find_index(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `find_index([1, 2], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `flatten_deep` for lists
+## 1. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -67,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `min_by` and `max_by` for lists
+## 2. Standard library: `min_by` and `max_by` for lists
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is
@@ -100,7 +71,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: value-based removal for lists via `remove`
+## 3. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -135,7 +106,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `invert` for maps
+## 4. Standard library: `invert` for maps
 
 Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
 each key/value pair swapped (the value becomes the key, the original key
@@ -163,7 +134,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `zip_with` for lists
+## 5. Standard library: `zip_with` for lists
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
@@ -193,7 +164,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Map destructuring in `let`: `let {a, b} = expr;`
+## 6. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -772,6 +743,13 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
   the existing decimal path; empty digit runs and out-of-alphabet digits
   raise `LexError` at the literal's start. Clean first pass, no bounces
   (852 tests passing, up from 832).
+- **Standard library: `find_index` for lists** — merged 2026-07-25T14:30:53Z
+  via PR #74 (`feat/20260725-find-index`). Added `find_index(list, fn)` to
+  `cinder/builtins.py`, returning the index of the first element for which
+  `fn(element)` is truthy (or `-1`), short-circuiting so `fn` is never
+  called past the first match. Complements `index_of`'s equality search the
+  way `filter` complements `contains`. Clean first pass, no bounces (859
+  tests passing, up from 852).
 
 ## Graveyard
 

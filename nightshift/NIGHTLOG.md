@@ -1526,3 +1526,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Eight clean cycles in a row since the `gh pr create` outage cleared —
   the queue keeps moving with no rework.
+- **Merged**: PR #75 "Standard library: `flatten_deep` for lists"
+  (`feat/20260725-flatten-deep`) — added `flatten_deep(list)` to
+  `cinder/builtins.py`, the fully-recursive counterpart to the existing
+  one-level `flatten` (PR #53), flattening list-of-lists nesting at every
+  depth into a single new list. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (866 tests passing, up from 859), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-6 → 1-5, now starting at `min_by`/`max_by` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Nine clean cycles in a row since the `gh pr create` outage cleared —
+  the queue keeps moving with no rework.

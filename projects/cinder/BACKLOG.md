@@ -11,34 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `flatten_deep` for lists [claimed 2026-07-25T14:36:16Z]
-
-Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
-flattens list-of-lists nesting at every depth into a single new list, the
-fully-recursive counterpart to the existing `flatten` (which only flattens
-one level, PR #53). Reuse `flatten`'s non-list-elements-pass-through
-behavior at each level rather than duplicating it; implement recursively
-(or with an explicit stack) so an empty nested list `[[], 1]` contributes
-nothing rather than erroring. Non-mutating, matching `flatten`/`concat`'s
-type-check style.
-
-Acceptance criteria:
-- `flatten_deep([1, [2, 3], [4, [5, 6]]])` is `[1, 2, 3, 4, 5, 6]`.
-- `flatten_deep([[[1]], [[2]]])` is `[1, 2]` (arbitrary depth).
-- `flatten_deep([1, 2, 3])` is `[1, 2, 3]` (no nesting, unchanged).
-- `flatten_deep([[], 1, []])` is `[1]` (empty nested lists contribute
-  nothing).
-- `flatten_deep([])` is `[]`.
-- `flatten_deep(5)` raises `CinderRuntimeError` with line/column (non-list
-  argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `min_by` and `max_by` for lists
+## 1. Standard library: `min_by` and `max_by` for lists
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is
@@ -71,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: value-based removal for lists via `remove`
+## 2. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -106,7 +79,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `invert` for maps
+## 3. Standard library: `invert` for maps
 
 Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
 each key/value pair swapped (the value becomes the key, the original key
@@ -134,7 +107,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `zip_with` for lists
+## 4. Standard library: `zip_with` for lists
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
@@ -164,7 +137,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Map destructuring in `let`: `let {a, b} = expr;`
+## 5. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -750,6 +723,13 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
   called past the first match. Complements `index_of`'s equality search the
   way `filter` complements `contains`. Clean first pass, no bounces (859
   tests passing, up from 852).
+- **Standard library: `flatten_deep` for lists** — merged 2026-07-25T14:42:15Z
+  via PR #75 (`feat/20260725-flatten-deep`). Added `flatten_deep(list)` to
+  `cinder/builtins.py`, the fully-recursive counterpart to the existing
+  one-level `flatten` (PR #53), flattening list-of-lists nesting at every
+  depth into a single new list; non-mutating, matching `flatten`/`concat`'s
+  type-check style. Clean first pass, no bounces (866 tests passing, up
+  from 859).
 
 ## Graveyard
 

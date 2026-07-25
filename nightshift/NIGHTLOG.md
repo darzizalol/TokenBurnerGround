@@ -1582,3 +1582,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twelve clean cycles in a row since the `gh pr create` outage cleared —
   the queue keeps moving with no rework.
+- **Merged**: PR #79 "Standard library: `zip_with()` for lists"
+  (`feat/20260725-zip-with`) — added `zip_with(list1, list2, fn)` to
+  `cinder/builtins.py`, pairing two lists elementwise via `fn(a, b)` (the
+  shared `call_value` helper) instead of `zip`'s bare `[a, b]` pairing,
+  truncated to the shorter list's length like `zip`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (901 tests passing, up from 893),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (1-12 → 1-11, now starting at map
+  destructuring in `let`).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirteen clean cycles in a row since the `gh pr create` outage cleared —
+  the queue keeps moving with no rework.

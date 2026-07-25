@@ -11,37 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip_with` for lists [claimed 2026-07-25T19:21:15Z]
-
-Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
-lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
-matching `map`/`filter`'s callback style) instead of `zip`'s bare
-`[a, b]` pairing, truncated to the shorter list's length like `zip`. The
-elementwise combinator counterpart to `zip` the same way `map` is to a bare
-identity pass — saves a `map(zip(list1, list2), fn(pair) { fn(pair[0],
-pair[1]) })` round-trip for the common case of combining two lists
-pairwise (e.g. summing two numeric lists, concatenating two string lists).
-
-Acceptance criteria:
-- `zip_with([1, 2, 3], [10, 20, 30], fn(a, b) { a + b })` is
-  `[11, 22, 33]`.
-- Truncates to the shorter list: `zip_with([1, 2], [1, 2, 3], fn(a, b) { a
-  + b })` is `[2, 4]`.
-- `zip_with([], [1, 2], fn(a, b) { a + b })` is `[]`.
-- `zip_with(5, [1], fn(a, b) { a })` raises `CinderRuntimeError` with
-  line/column (non-list first argument).
-- `zip_with([1], 5, fn(a, b) { a })` raises `CinderRuntimeError` with
-  line/column (non-list second argument).
-- `zip_with([1], [2], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable third argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Map destructuring in `let`: `let {a, b} = expr;`
+## 1. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -78,7 +48,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 3. Standard library: `count_by` for lists
+## 2. Standard library: `count_by` for lists
 
 Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
 (which buckets elements into `{key: [elements]}`) but tallies group sizes
@@ -109,7 +79,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `deep_copy` for lists and maps
+## 3. Standard library: `deep_copy` for lists and maps
 
 Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
 existing `copy` (PR #43, shallow: only the top-level container is new,
@@ -140,7 +110,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `distinct_by` for lists
+## 4. Standard library: `distinct_by` for lists
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on
@@ -168,7 +138,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 5. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -195,7 +165,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `take_while` and `drop_while` for lists
+## 6. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -230,7 +200,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `lines` and `words` for strings
+## 7. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -265,7 +235,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `last_index_of` for lists
+## 8. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -289,7 +259,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `capitalize` for strings
+## 9. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -315,7 +285,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `clamp` for numbers
+## 10. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -339,7 +309,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `is_empty` for lists, maps, and strings
+## 11. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -940,6 +910,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   non-hashable value before it's used as a key), later entry wins on
   collision, matching `merge`'s rule; non-mutating. Clean first pass, no
   bounces (893 tests passing, up from 886).
+- **Standard library: `zip_with` for lists** — merged 2026-07-26T~ via PR #79
+  (`feat/20260725-zip-with`). Added `zip_with(list1, list2, fn)` to
+  `cinder/builtins.py`, pairing two lists elementwise via `fn(a, b)` (the
+  shared `call_value` helper) instead of `zip`'s bare `[a, b]` pairing,
+  truncated to the shorter list's length like `zip`. Clean first pass, no
+  bounces (901 tests passing, up from 893).
 
 ## Graveyard
 

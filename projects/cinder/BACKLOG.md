@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `distinct_by` for lists
+## 1. Standard library: `distinct_by` for lists [claimed 2026-07-25T20:04:08Z]
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on

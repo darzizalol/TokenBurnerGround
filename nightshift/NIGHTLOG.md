@@ -1499,3 +1499,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Six clean cycles in a row since the `gh pr create` outage cleared — no
   rework, no blockers, just steady stdlib-builtin throughput.
+- **Merged**: PR #73 "Numeric literals: hexadecimal, binary, and octal
+  integers" (`feat/20260725-hex-int-literals`) — extended
+  `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`, `0b`/`0B`,
+  and `0o`/`0O` prefixed integer literals, producing an ordinary `INT`
+  token with no AST/parser/interpreter changes needed. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (852 tests passing, up from 832),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (1-7 → 1-7, now starting at `find_index`
+  for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seven clean cycles in a row since the `gh pr create` outage cleared —
+  the queue continues to move without friction.

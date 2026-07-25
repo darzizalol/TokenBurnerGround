@@ -11,44 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Numeric literals: hexadecimal, binary, and octal integers [claimed 2026-07-25T14:13:11Z]
-
-Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
-(hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in
-addition to today's decimal-only scanning, producing an ordinary `NUMBER`
-token whose value is the parsed Python `int` (no downstream AST/parser/
-interpreter change needed — the literal node already just carries whatever
-numeric value the lexer hands it). Only apply the prefix check when a digit
-run starts with `0` followed immediately by `x`/`b`/`o` (case-insensitive); a
-bare `0` or `0` followed by more decimal digits (`0`, `07`) keeps the
-existing decimal-literal path unchanged (Cinder has no octal-by-leading-zero
-surprise, unlike C). Reject an empty digit run after the prefix (`0x` alone)
-and any digit outside the base's alphabet (`0x1G`, `0b12`, `0o8`) as a
-`LexError` with line/column pointing at the literal's start. These literals
-are integer-only — no `0x1.5` float form.
-
-Acceptance criteria:
-- `0x1F` lexes/evaluates to `31`; `0xff` to `255`.
-- `0b1010` lexes/evaluates to `10`.
-- `0o17` lexes/evaluates to `15`.
-- `0` and `007` still lex as decimal `0` and `7` respectively (unchanged, no
-  octal-by-leading-zero).
-- `0x` alone (no digits after the prefix) raises `LexError` with
-  line/column.
-- `0x1G`, `0b12`, `0o8` (digit outside the base's alphabet) raise `LexError`
-  with line/column.
-- Hex/binary/octal literals work anywhere a number literal already does:
-  arithmetic (`0xFF + 1` is `256`), comparisons, list indices, function
-  arguments.
-- Existing decimal integer/float literal tests are unaffected.
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py`, `tests/test_lexer.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `find_index` for lists
+## 1. Standard library: `find_index` for lists
 
 Build: add `find_index(list, fn)` to `cinder/builtins.py` — returns the
 `int` index of the first element for which `fn(element)` is truthy (via the
@@ -77,7 +40,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `flatten_deep` for lists
+## 2. Standard library: `flatten_deep` for lists
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the
@@ -104,7 +67,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `min_by` and `max_by` for lists
+## 3. Standard library: `min_by` and `max_by` for lists
 
 Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
 — like `min`/`max` but selecting the element whose `fn(element)` result is
@@ -137,7 +100,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: value-based removal for lists via `remove`
+## 4. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -172,7 +135,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `invert` for maps
+## 5. Standard library: `invert` for maps
 
 Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
 each key/value pair swapped (the value becomes the key, the original key
@@ -200,7 +163,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `zip_with` for lists
+## 6. Standard library: `zip_with` for lists
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
@@ -230,7 +193,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Map destructuring in `let`: `let {a, b} = expr;`
+## 7. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -800,6 +763,15 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
   value replaced by `fn(value)` via the shared `call_value` helper, matching
   `map`/`filter`/`group_by`'s style. Clean first pass, no bounces (832 tests
   passing, up from 824).
+- **Numeric literals: hexadecimal, binary, and octal integers** — merged
+  2026-07-25T14:19:09Z via PR #73 (`feat/20260725-hex-int-literals`).
+  Extended `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`,
+  `0b`/`0B`, and `0o`/`0O` prefixed integer literals, producing an ordinary
+  `INT` token whose value is the parsed Python `int` (no AST/parser/
+  interpreter change needed). Bare `0` and leading-zero decimals stay on
+  the existing decimal path; empty digit runs and out-of-alphabet digits
+  raise `LexError` at the literal's start. Clean first pass, no bounces
+  (852 tests passing, up from 832).
 
 ## Graveyard
 

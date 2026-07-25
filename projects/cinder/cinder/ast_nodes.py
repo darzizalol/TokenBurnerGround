@@ -181,6 +181,7 @@ class DestructureLetStmt:
     initializer: "Expr"
     line: int
     column: int
+    is_map: bool = False
 
 
 @dataclass(frozen=True)

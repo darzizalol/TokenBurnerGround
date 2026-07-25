@@ -451,6 +451,62 @@ class TestDestructureLet(unittest.TestCase):
             env.get("a")
 
 
+class TestDestructureLetMap(unittest.TestCase):
+    def test_binds_two_names(self):
+        env = run('let {a, b} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_extra_unnamed_keys_are_ignored(self):
+        env = run('let {a} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        with self.assertRaises(KeyError):
+            env.get("b")
+
+    def test_missing_named_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('let {a, b} = {"a": 1};')
+
+    def test_missing_named_key_error_carries_line_and_column(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('let {a, b} = {"a": 1};')
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_non_map_rhs_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let {a} = [1, 2];")
+
+    def test_non_map_rhs_scalar_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let {a} = 5;")
+
+    def test_non_map_rhs_error_carries_line_and_column(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let {a} = 5;")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_bindings_are_ordinary_mutable_variables(self):
+        env = run('let {a, b} = {"a": 1, "b": 2}; a = 99;')
+        self.assertEqual(env.get("a"), 99)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_does_not_leak_out_of_block(self):
+        env = run('{ let {a, b} = {"a": 1, "b": 2}; }')
+        with self.assertRaises(KeyError):
+            env.get("a")
+
+    def test_list_destructuring_unaffected(self):
+        env = run("let [a, b] = [1, 2];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_plain_let_unaffected(self):
+        env = run("let x = 1;")
+        self.assertEqual(env.get("x"), 1)
+
+
 class TestAssignment(unittest.TestCase):
     def test_assignment_updates_existing_variable(self):
         env = run("let x = 1; x = 2;")

@@ -192,6 +192,22 @@ class Interpreter:
             return
         if isinstance(stmt, DestructureLetStmt):
             value = self.evaluate(stmt.initializer, env)
+            if stmt.is_map:
+                if not isinstance(value, dict):
+                    raise CinderRuntimeError(
+                        f"cannot destructure {type_name(value)} as a map",
+                        stmt.line,
+                        stmt.column,
+                    )
+                for name in stmt.names:
+                    if name not in value:
+                        raise CinderRuntimeError(
+                            f"destructuring pattern expects key {name!r}, not found in map",
+                            stmt.line,
+                            stmt.column,
+                        )
+                    env.define(name, value[name])
+                return
             if not isinstance(value, list):
                 raise CinderRuntimeError(
                     f"cannot destructure {type_name(value)} as a list",

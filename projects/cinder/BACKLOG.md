@@ -262,6 +262,69 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 10. Standard library: `union`, `intersection`, `difference` for lists
+
+Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
+`difference(list1, list2)` to `cinder/builtins.py`, treating lists as
+unordered sets. Follow `unique`'s existing dual-path pattern (PR #50): a
+`set`-backed fast path keyed on `(isinstance(element, bool), element)` when
+every element of both lists is hashable, falling back to a linear
+`values_equal` scan otherwise — reuse `unique`'s helper logic rather than
+duplicating it if it can be factored out cleanly. Each result contains no
+duplicate elements (dedupe like `unique`) and preserves first-encounter
+order: `union` is `list1`'s unique elements followed by `list2`'s elements
+not already included; `intersection` is `list1`'s unique elements that also
+appear in `list2`; `difference` is `list1`'s unique elements that do *not*
+appear in `list2`.
+
+Acceptance criteria:
+- `union([1, 2, 3], [2, 3, 4])` is `[1, 2, 3, 4]`.
+- `intersection([1, 2, 3], [2, 3, 4])` is `[2, 3]`.
+- `difference([1, 2, 3], [2, 3, 4])` is `[1]`.
+- `union([1, true], [1, false])` distinguishes bool from int the same way
+  `unique`/`contains` do — add a regression test pinning this.
+- Duplicates within a single input are collapsed:
+  `union([1, 1, 2], [2])` is `[1, 2]`.
+- Empty-list edge cases: `union([], [1])` is `[1]`; `intersection([], [1])`
+  is `[]`; `difference([], [1])` is `[]`; `difference([1], [])` is `[1]`.
+- Non-list argument (either position) raises `CinderRuntimeError` with
+  line/column, for all three builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for all three
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 11. Standard library: `pluck` for lists of maps
+
+Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
+maps, returns a new list of `map[key]` for each element in order, the
+common "extract one field from a list of records" idiom (saves a
+`map(list, fn(m) { m[key] })` round-trip, the same ergonomic motivation as
+`count_by` over `group_by`+`map_values`). `key` must be a valid map key
+(reuse `_is_valid_key`, matching `get`'s key validation).
+
+Acceptance criteria:
+- `pluck([{"name": "a", "age": 1}, {"name": "b", "age": 2}], "name")` is
+  `["a", "b"]`.
+- `pluck([], "x")` is `[]`.
+- A missing key on any element raises `CinderRuntimeError` with
+  line/column (no silent `nil` fill-in — matches map-index's existing
+  missing-key error rather than `get`'s default-value behavior).
+- A non-map element raises `CinderRuntimeError` with line/column.
+- An unhashable `key` argument raises `CinderRuntimeError` with
+  line/column, matching `get`.
+- `pluck(5, "x")` raises `CinderRuntimeError` with line/column (non-list
+  first argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

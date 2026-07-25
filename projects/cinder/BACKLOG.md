@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `flatten_deep` for lists
+## 1. Standard library: `flatten_deep` for lists [claimed 2026-07-25T14:36:16Z]
 
 Build: add `flatten_deep(list)` to `cinder/builtins.py` — recursively
 flattens list-of-lists nesting at every depth into a single new list, the

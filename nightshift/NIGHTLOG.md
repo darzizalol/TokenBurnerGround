@@ -1626,3 +1626,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fifteen clean cycles in a row since the `gh pr create` outage cleared —
   the queue is moving smoothly and steadily tonight.
+- **Merged**: PR #82 "Standard library: `deep_copy` for lists and maps"
+  (`feat/20260725-deep-copy`) — added `deep_copy(collection)` to
+  `cinder/builtins.py`, recursing through arbitrary list/map nesting so
+  every nested container in the result is a fresh copy, unlike the
+  existing shallow `copy`. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (934 tests passing, up from 928), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-11 → 1-10, now starting at `distinct_by` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixteen clean cycles in a row since the `gh pr create` outage cleared —
+  the backlog queue keeps emptying with no rework required.

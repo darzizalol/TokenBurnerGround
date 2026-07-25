@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `deep_copy` for lists and maps [claimed 2026-07-25T19:53:30Z]
-
-Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
-existing `copy` (PR #43, shallow: only the top-level container is new,
-nested containers stay shared) but recurses through arbitrary nesting of
-lists-of-lists/maps-of-lists/lists-of-maps so every nested container in
-the result is also a fresh copy, fully breaking aliasing at every depth.
-Non-container elements (numbers, strings, bools, `nil`, functions) are
-copied by value/reference as usual — functions themselves are not cloned,
-just referenced, same as everywhere else in Cinder. `collection` must be
-a `list` or `map` at the top level, matching `copy`'s accepted types.
-
-Acceptance criteria:
-- `let a = [[1, 2], [3]]; let b = deep_copy(a); push(b[0], 99); a[0]` is
-  still `[1, 2]` (nested list independent, unlike plain `copy`).
-- `let a = {"x": [1, 2]}; let b = deep_copy(a); push(b["x"], 3); a["x"]`
-  is still `[1, 2]`.
-- Non-container elements pass through unchanged:
-  `deep_copy([1, "a", true, nil])` is `[1, "a", true, nil]`.
-- Mixed nesting works: `deep_copy({"a": [{"b": 1}]})` produces fully
-  independent copies at every level — add a regression test mutating the
-  innermost map and checking the original is untouched.
-- `deep_copy(5)` raises `CinderRuntimeError` with line/column (non-list,
-  non-map argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `distinct_by` for lists
+## 1. Standard library: `distinct_by` for lists
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on
@@ -70,7 +39,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 2. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -97,7 +66,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `take_while` and `drop_while` for lists
+## 3. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -132,7 +101,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `lines` and `words` for strings
+## 4. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -167,7 +136,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `last_index_of` for lists
+## 5. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -191,7 +160,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `capitalize` for strings
+## 6. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -217,7 +186,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `clamp` for numbers
+## 7. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -241,7 +210,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `is_empty` for lists, maps, and strings
+## 8. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -262,7 +231,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `union`, `intersection`, `difference` for lists
+## 9. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -297,7 +266,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `pluck` for lists of maps
+## 10. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -926,6 +895,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   pattern but tallying group sizes into `{key: count}` instead of collecting
   elements, saving a `map_values(group_by(list, fn), fn(v) { len(v) })`
   round-trip. Clean first pass, no bounces (928 tests passing, up from 918).
+- **Standard library: `deep_copy` for lists and maps** — merged
+  2026-07-26T~ via PR #82 (`feat/20260725-deep-copy`). Added
+  `deep_copy(collection)` to `cinder/builtins.py`, recursing through
+  arbitrary list/map nesting so every nested container in the result is a
+  fresh copy (unlike the existing shallow `copy`). Clean first pass, no
+  bounces (934 tests passing, up from 928).
 
 ## Graveyard
 

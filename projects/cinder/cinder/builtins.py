@@ -613,6 +613,25 @@ def _index_of(arguments: list, line: int, column: int) -> object:
     return -1
 
 
+def _find_index(arguments: list, line: int, column: int) -> object:
+    _require_arity("find_index", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"find_index() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"find_index() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    for index, item in enumerate(items):
+        if is_truthy(call_value(fn, [item], line, column)):
+            return index
+    return -1
+
+
 def _count(arguments: list, line: int, column: int) -> object:
     _require_arity("count", arguments, 2, line, column)
     collection, item = arguments
@@ -1173,6 +1192,7 @@ _BUILTINS = {
     "all": _all,
     "contains": _contains,
     "index_of": _index_of,
+    "find_index": _find_index,
     "count": _count,
     "copy": _copy,
     "unique": _unique,

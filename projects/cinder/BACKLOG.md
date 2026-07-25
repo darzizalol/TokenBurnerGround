@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `take_while` and `drop_while` for lists
+## 1. Standard library: `take_while` and `drop_while` for lists [claimed 2026-07-25T20:27:09Z]
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers

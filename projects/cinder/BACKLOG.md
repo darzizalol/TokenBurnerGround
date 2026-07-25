@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `count_by` for lists [claimed 2026-07-25T19:43:05Z]
-
-Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
-(which buckets elements into `{key: [elements]}`) but tallies group sizes
-instead of collecting elements, returning `{key: count}`. Reuses
-`group_by`'s `call_value`/`_is_valid_key` pattern. Saves a
-`map_values(group_by(list, fn), fn(v) { len(v) })` round-trip for the common
-"how many of each" case (e.g. counting words by length, items by category)
-without materializing the intermediate element lists.
-
-Acceptance criteria:
-- `count_by([1, 2, 3, 4], fn(n) { n % 2 })` is `{1: 2, 0: 2}`.
-- `count_by(["a", "bb", "cc", "d"], fn(s) { len(s) })` is `{1: 2, 2: 2}`.
-- `count_by([], fn(n) { n })` is `{}`.
-- Key ordering follows first-occurrence order in `list`, matching
-  `group_by`'s existing key-ordering behavior — add a regression test
-  pinning this.
-- `count_by(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `count_by([1], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- A non-hashable `fn` result (e.g. returning a list) raises
-  `CinderRuntimeError` with line/column, matching `group_by`'s existing
-  unhashable-key rejection.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `deep_copy` for lists and maps
+## 1. Standard library: `deep_copy` for lists and maps
 
 Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
 existing `copy` (PR #43, shallow: only the top-level container is new,
@@ -73,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `distinct_by` for lists
+## 2. Standard library: `distinct_by` for lists
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on
@@ -101,7 +70,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 3. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -128,7 +97,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `take_while` and `drop_while` for lists
+## 4. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -163,7 +132,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `lines` and `words` for strings
+## 5. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -198,7 +167,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `last_index_of` for lists
+## 6. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -222,7 +191,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `capitalize` for strings
+## 7. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -248,7 +217,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `clamp` for numbers
+## 8. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -272,7 +241,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `is_empty` for lists, maps, and strings
+## 9. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -888,6 +857,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   ignored (no positional arity check like the list form, since maps are
   looked up by name). Clean first pass, no bounces (918 tests passing, up
   from 901).
+- **Standard library: `count_by` for lists** — merged 2026-07-25T19:47:47Z
+  via PR #81 (`feat/20260725-count-by`). Added `count_by(list, fn)` to
+  `cinder/builtins.py`, mirroring `group_by`'s `call_value`/`_is_valid_key`
+  pattern but tallying group sizes into `{key: count}` instead of collecting
+  elements, saving a `map_values(group_by(list, fn), fn(v) { len(v) })`
+  round-trip. Clean first pass, no bounces (928 tests passing, up from 918).
 
 ## Graveyard
 

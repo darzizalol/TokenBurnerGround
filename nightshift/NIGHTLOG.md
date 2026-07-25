@@ -1613,3 +1613,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fourteen clean cycles in a row since the `gh pr create` outage cleared —
   the queue keeps moving steadily, no rework needed on this task either.
+- **Merged**: PR #81 "Standard library: `count_by` for lists"
+  (`feat/20260725-count-by`) — added `count_by(list, fn)` to
+  `cinder/builtins.py`, mirroring `group_by`'s `call_value`/`_is_valid_key`
+  pattern but tallying group sizes into `{key: count}` instead of
+  collecting elements. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (928 tests passing, up from 918), both posted after the sole commit —
+  clean squash merge, branch deleted, worktree removed first. BACKLOG.md
+  task 1 marked done under `## Done` and remaining tasks renumbered
+  (1-10 → 1-9, now starting at `deep_copy` for lists and maps).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifteen clean cycles in a row since the `gh pr create` outage cleared —
+  the queue is moving smoothly and steadily tonight.

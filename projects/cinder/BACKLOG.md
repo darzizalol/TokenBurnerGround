@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Numeric literals: hexadecimal, binary, and octal integers
+## 1. Numeric literals: hexadecimal, binary, and octal integers [claimed 2026-07-25T14:13:11Z]
 
 Build: extend `cinder/lexer.py`'s number-scanning to recognize `0x`/`0X`
 (hex), `0b`/`0B` (binary), and `0o`/`0O` (octal) prefixed integer literals in

@@ -138,7 +138,53 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `capitalize` for strings
+## 5. `switch` statement
+
+Build: add a `switch (expr) { case val1: { stmt* } case val2: { stmt* }
+default: { stmt* } }` statement — a language-level grammar feature (new
+`SWITCH`/`CASE`/`DEFAULT` keywords, a `SwitchStmt` AST node), the third
+non-stdlib task in the backlog after two runs of builtins-only tasks, per
+`PROJECT.md`'s "depth over breadth" principle. Evaluate the scrutinee
+`expr` exactly once; compare it against each `case` value in source order
+using the shared `values_equal` helper (agreeing with `==`/`in`/`contains`
+on bool-vs-int); run the block of the *first* matching `case` and stop —
+**no fallthrough** (unlike C/JS `switch`, deliberately, to avoid the
+classic missing-`break` bug class). If nothing matches and a `default` is
+present, run its block. If nothing matches and there is no `default`, the
+whole statement is a no-op, matching `if` with no matching branch and no
+`else`. Each case/default body is a real `{ ... }` block with its own
+child `Environment` (variables declared inside don't leak out), reusing
+existing block-execution machinery. `switch` is not a loop: `break`/
+`continue` inside a case body must still refer to an *enclosing* loop (if
+any), not the switch itself — do not give `switch` its own break-signal
+handling.
+
+Acceptance criteria:
+- `switch (2) { case 1: { print("one"); } case 2: { print("two"); }
+  default: { print("other"); } }` prints `"two"` only (first-match wins,
+  no fallthrough into `default`).
+- No case matches and there's a `default`: its block runs.
+- No case matches and there's no `default`: no-op, no error.
+- Case values compare via `values_equal`: `switch (true) { case 1: { ... }
+  case true: { ... } }` matches the `true` case, not the `1` case — add a
+  regression test pinning this (matching PR #51's bool/int fix).
+- A variable declared with `let` inside one case's block is not visible
+  outside that block or in another case's block.
+- `break` inside a `while`/`for` loop whose body contains a `switch` still
+  breaks the loop, not just falls out of the switch — add a regression
+  test nesting a `switch` with a matching `case` inside a `while` loop
+  containing a `break`.
+- `switch` not followed by `(` raises `ParseError`; a `case`/`default`
+  missing its `:` or its `{ ... }` block raises `ParseError`.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py` (keyword table),
+`cinder/ast_nodes.py`, `cinder/parser.py`, `cinder/interpreter.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 6. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -164,7 +210,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `clamp` for numbers
+## 7. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -188,7 +234,49 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `is_empty` for lists, maps, and strings
+## 8. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+
+Build: extend function declarations (`FnDecl`) and anonymous function
+expressions (`FnExpr`) to accept an optional trailing rest parameter —
+`fn f(a, b, ...rest) { ... }` — that collects every positional call
+argument beyond the named parameters into a `list` bound to `rest` inside
+the function body. This is a language-level grammar/evaluator feature (the
+second non-stdlib task in this backlog, alongside `switch` and the spread
+operator), not a builtin. If task 2 (spread operator in list literals) has
+already merged, reuse its ellipsis/spread token from `cinder/tokens.py`
+rather than adding a second one; otherwise add the token here. The rest
+parameter, if present, must be the *last* parameter; it may follow default
+parameters (PR #61) — e.g. `fn f(a, b = 1, ...rest) { ... }` is valid, and
+`rest` still collects anything beyond `a`/`b`. `call_value`'s arity check
+gains a "no upper bound" case when a rest parameter is present, while the
+existing minimum-required-arguments check (for parameters without
+defaults) is unchanged.
+
+Acceptance criteria:
+- `fn f(a, ...rest) { return rest; }` called as `f(1, 2, 3)` returns
+  `[2, 3]`.
+- Called as `f(1)`, `rest` is `[]` (not an error — zero extra arguments is
+  fine).
+- `fn f(...rest, a) { }` (rest not last) raises `ParseError`.
+- `fn f(...a, ...b) { }` (more than one rest parameter) raises
+  `ParseError`.
+- `fn f(a, b = 1, ...rest) { }` parses and works: default parameters and a
+  trailing rest parameter combine correctly — add a regression test
+  calling it with 1, 2, and 4+ arguments.
+- Works identically for anonymous `fn(...) { ... }` expressions, not just
+  named declarations.
+- Calling `fn f(a, ...rest) { }` with zero arguments still raises
+  `CinderRuntimeError` (missing required non-default, non-rest parameter
+  `a`), matching the existing arity-error behavior.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
+## 9. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -209,7 +297,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `union`, `intersection`, `difference` for lists
+## 10. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -244,7 +332,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `pluck` for lists of maps
+## 11. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the

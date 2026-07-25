@@ -70,6 +70,7 @@ while (i < 10) {
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
+  `strip_prefix`, `strip_suffix`,
   `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `ord`/`chr` for character/code-point conversion, and
   type predicates
@@ -116,7 +117,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (943+ tests) covers every layer — lexer, parser, interpreter,
+The suite (955+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -141,8 +142,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `deep_copy` for lists/maps and
-`distinct_by` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`strip_prefix`/`strip_suffix` for strings, `take_while`/`drop_while` for
-lists, and a spread operator for list literals (`[...list1, x]`). The full
-vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `distinct_by` for lists and
+`strip_prefix`/`strip_suffix` for strings. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `take_while`/`drop_while` for lists, a spread
+operator for list literals (`[...list1, x]`), and a `switch` statement. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -62,7 +62,7 @@ while (i < 10) {
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `keys`, `values`, `items`,
-  `enumerate`, `merge`, `get`, `remove` (by key for maps, by value for lists),
+  `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `min_by`, `max_by`, `assert`, `format`, `sum`,

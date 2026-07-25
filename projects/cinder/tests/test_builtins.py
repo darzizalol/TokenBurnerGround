@@ -454,6 +454,37 @@ class TestMerge(unittest.TestCase):
             run('merge({"a": 1}, {}, {});')
 
 
+class TestInvert(unittest.TestCase):
+    def test_invert_swaps_keys_and_values(self):
+        env = run('let result = invert({"a": 1, "b": 2});')
+        self.assertEqual(env.get("result"), {1: "a", 2: "b"})
+
+    def test_invert_collision_later_entry_wins(self):
+        env = run('let result = invert({"a": 1, "b": 1});')
+        self.assertEqual(env.get("result"), {1: "b"})
+
+    def test_invert_of_empty_map(self):
+        self.assertEqual(run("let result = invert({});").get("result"), {})
+
+    def test_invert_does_not_mutate_input(self):
+        env = run('let m = {"a": 1}; let result = invert(m);')
+        self.assertEqual(env.get("m"), {"a": 1})
+
+    def test_invert_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("invert(5);")
+
+    def test_invert_with_invalid_value_as_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('invert({"a": [1]});')
+
+    def test_invert_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("invert();")
+        with self.assertRaises(CinderRuntimeError):
+            run('invert({"a": 1}, {"b": 2});')
+
+
 class TestUpper(unittest.TestCase):
     def test_upper_of_string(self):
         self.assertEqual(run('let result = upper("hello");').get("result"), "HELLO")

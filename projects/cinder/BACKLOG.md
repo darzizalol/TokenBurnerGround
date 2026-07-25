@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip_with` for lists
+## 1. Standard library: `zip_with` for lists [claimed 2026-07-25T19:21:15Z]
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,

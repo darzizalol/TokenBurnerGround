@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `map_values` for maps
+## 1. Standard library: `map_values` for maps [claimed 2026-07-25T14:02:38Z]
 
 Build: add `map_values(map, fn)` to `cinder/builtins.py` — like `map` for
 lists but for maps: returns a new map with the same keys and each value

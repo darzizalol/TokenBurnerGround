@@ -11,40 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `min_by` and `max_by` for lists [claimed 2026-07-25T14:47:27Z]
-
-Build: add `min_by(list, fn)` and `max_by(list, fn)` to `cinder/builtins.py`
-— like `min`/`max` but selecting the element whose `fn(element)` result is
-smallest/largest, via the shared `call_value` helper (matching `sort_by`/
-`group_by`'s callback style), rather than comparing elements directly.
-Complements `sort_by` (which orders the whole list by a key) for the common
-"just give me the best one" case that otherwise requires
-`sort_by(list, fn)[0]` (wasteful full sort) or a manual `reduce` loop.
-
-Acceptance criteria:
-- `min_by([3, 1, 2], fn(n) { n })` is `1`; `max_by([3, 1, 2], fn(n) { n })`
-  is `3`.
-- `min_by(["ccc", "a", "bb"], fn(s) { len(s) })` is `"a"` (shortest string).
-- On ties (equal `fn` results), the *first* matching element wins for both
-  (stable, matching Python's `min`/`max` tie-break).
-- `min_by([], fn(n) { n })` and `max_by([], fn(n) { n })` raise
-  `CinderRuntimeError` with line/column (empty list — no well-defined
-  answer, matching `min`/`max`'s zero-argument rejection).
-- `min_by(5, fn(n) { n })` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- `min_by([1, 2], 5)` raises `CinderRuntimeError` with line/column
-  (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- `fn`'s results must be comparable with `<` (numbers or strings, matching
-  `sort`'s type restriction); comparing incompatible or mixed types raises
-  `CinderRuntimeError`.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: value-based removal for lists via `remove`
+## 1. Standard library: value-based removal for lists via `remove`
 
 Build: extend the existing `remove` builtin (`cinder/builtins.py`, today
 map-only: `remove(map, key)`) to also accept a `list` as its first
@@ -79,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `invert` for maps
+## 2. Standard library: `invert` for maps
 
 Build: add `invert(map)` to `cinder/builtins.py` — returns a new map with
 each key/value pair swapped (the value becomes the key, the original key
@@ -107,7 +74,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `zip_with` for lists
+## 3. Standard library: `zip_with` for lists
 
 Build: add `zip_with(list1, list2, fn)` to `cinder/builtins.py` — pairs two
 lists elementwise via `fn(a, b)` (using the shared `call_value` helper,
@@ -137,7 +104,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Map destructuring in `let`: `let {a, b} = expr;`
+## 4. Map destructuring in `let`: `let {a, b} = expr;`
 
 Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
 from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
@@ -174,7 +141,7 @@ Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 6. Standard library: `count_by` for lists
+## 5. Standard library: `count_by` for lists
 
 Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
 (which buckets elements into `{key: [elements]}`) but tallies group sizes
@@ -761,6 +728,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   depth into a single new list; non-mutating, matching `flatten`/`concat`'s
   type-check style. Clean first pass, no bounces (866 tests passing, up
   from 859).
+- **Standard library: `min_by` and `max_by` for lists** — merged
+  2026-07-25T14:53:40Z via PR #76 (`feat/20260725-min-max-by`). Added
+  `min_by(list, fn)`/`max_by(list, fn)` to `cinder/builtins.py`, selecting
+  the element whose `fn(element)` result is smallest/largest via the
+  shared `call_value` helper, matching `sort_by`'s callback style;
+  first-match tie-break, empty-list/non-list/non-callable/wrong-arity/
+  mixed-type-key errors all mirror `min`/`max`/`sort_by`. Clean first
+  pass, no bounces (881 tests passing, up from 866).
 
 ## Graveyard
 

@@ -1539,3 +1539,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Nine clean cycles in a row since the `gh pr create` outage cleared —
   the queue keeps moving with no rework.
+- **Merged**: PR #76 "Standard library: `min_by` and `max_by` for lists"
+  (`feat/20260725-min-max-by`) — added `min_by(list, fn)`/`max_by(list,
+  fn)` to `cinder/builtins.py`, selecting the element whose `fn(element)`
+  result is smallest/largest via the shared `call_value` helper, matching
+  `sort_by`'s callback style. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (881 tests passing, up from 866), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-5 → 1-4, now starting at `remove` value-based removal for
+  lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Ten clean cycles in a row since the `gh pr create` outage cleared — the
+  queue keeps moving with no rework.

@@ -223,6 +223,76 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 8. Standard library: `take_while` and `drop_while` for lists
+
+Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
+`cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
+(same pattern as `partition`/`find_index`). `take_while` returns a new list
+of the leading elements for which `fn(element)` is truthy, stopping at the
+first falsy result (does **not** scan the rest of the list looking for more
+truthy elements — a single break in the run ends it, like `itertools.takewhile`).
+`drop_while` is the mirror: returns a new list skipping that same leading
+truthy run, keeping every element from the first falsy one onward. Both
+non-mutating, complementing the existing bound `take`/`drop` (which cut by
+count, not by predicate).
+
+Acceptance criteria:
+- `take_while([1, 2, 3, 4, 1], fn(n) { n < 3 })` is `[1, 2]` (stops at the
+  first falsy element, `3`; does not resume after it even though a later
+  element, `1`, is also `< 3`).
+- `drop_while([1, 2, 3, 4, 1], fn(n) { n < 3 })` is `[3, 4, 1]` (mirror of
+  the above — the trailing `1` is kept, not dropped, since it comes after
+  the first falsy element).
+- `take_while([1, 2], fn(n) { n > 10 })` is `[]`; `drop_while([1, 2], fn(n)
+  { n > 10 })` is `[1, 2]` (no element satisfies the predicate).
+- `take_while([], fn(n) { n })` is `[]`; `drop_while([], fn(n) { n })` is
+  `[]`.
+- `take_while(5, fn(n) { n })` / `drop_while(5, fn(n) { n })` raise
+  `CinderRuntimeError` with line/column (non-list first argument).
+- `take_while([1], 5)` / `drop_while([1], 5)` raise `CinderRuntimeError`
+  with line/column (non-callable second argument).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `lines` and `words` for strings
+
+Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
+`split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
+(Python `str.splitlines()`-equivalent, but keep it simple: split on `"\n"`
+literally, do not special-case `\r\n` — Cinder source/string literals have
+no escape for `\r` today, so this is not yet a real gap) — the plain-`\n`
+counterpart to `split(s, sep)` for the common "one entry per line" case.
+`words(s)` splits `s` on runs of whitespace (space, tab, newline),
+discarding empty entries from leading/trailing/repeated whitespace (i.e.
+Python's `s.split()` with no separator, *not* `s.split(" ")`), unlike
+`split` which is delimiter-exact and would produce empty-string entries for
+repeated separators.
+
+Acceptance criteria:
+- `lines("a\nb\nc")` is `["a", "b", "c"]`.
+- `lines("a\n\nb")` is `["a", "", "b"]` (empty line preserved — `lines`
+  does not collapse repeats, matching `split`'s exactness).
+- `lines("")` is `[""]` (matches `split("", "x")`'s single-element
+  behavior, not an empty list).
+- `words("  a   b\tc\n")` is `["a", "b", "c"]` (leading/trailing/repeated
+  whitespace all collapsed, unlike `split`).
+- `words("")` is `[]` and `words("   ")` is `[]` (all-whitespace input
+  yields no words) — add a regression test pinning this, since it differs
+  from `lines("")`'s single-empty-string result.
+- Non-`str` argument raises `CinderRuntimeError` with line/column, for
+  both builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

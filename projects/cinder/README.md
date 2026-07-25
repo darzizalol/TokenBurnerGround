@@ -62,7 +62,7 @@ while (i < 10) {
   clamp, not assignable)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `keys`, `values`, `items`,
-  `enumerate`, `merge`, `get`, `remove`,
+  `enumerate`, `merge`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `min_by`, `max_by`, `assert`, `format`, `sum`,
@@ -114,7 +114,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (881+ tests) covers every layer — lexer, parser, interpreter,
+The suite (886+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -139,8 +139,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `flatten_deep` and
-`min_by`/`max_by` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-value-based `remove` for lists, `invert` for maps, `zip_with`, map
-destructuring in `let`, and `count_by` for lists. The full vision and
+Actively developed, nightly. Recently landed: `min_by`/`max_by` and
+value-based `remove` for lists. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `invert` for maps, `zip_with`, map
+destructuring in `let`, `count_by` and `distinct_by` for lists, `deep_copy`,
+and `strip_prefix`/`strip_suffix` for strings. The full vision and
 non-goals live in [`PROJECT.md`](PROJECT.md).

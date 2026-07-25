@@ -739,6 +739,65 @@ class TestEndsWith(unittest.TestCase):
             run('ends_with("hello");')
 
 
+class TestStripPrefix(unittest.TestCase):
+    def test_strip_prefix_match(self):
+        self.assertEqual(
+            run('let result = strip_prefix("hello_world", "hello_");').get("result"),
+            "world",
+        )
+
+    def test_strip_prefix_no_match_unchanged(self):
+        self.assertEqual(
+            run('let result = strip_prefix("hello", "xyz");').get("result"), "hello"
+        )
+
+    def test_strip_prefix_empty_prefix_unchanged(self):
+        self.assertEqual(
+            run('let result = strip_prefix("hello", "");').get("result"), "hello"
+        )
+
+    def test_strip_prefix_on_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('strip_prefix(1, "h");')
+
+    def test_strip_prefix_non_string_prefix_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('strip_prefix("hello", 1);')
+
+    def test_strip_prefix_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('strip_prefix("hello");')
+
+
+class TestStripSuffix(unittest.TestCase):
+    def test_strip_suffix_match(self):
+        self.assertEqual(
+            run('let result = strip_suffix("file.txt", ".txt");').get("result"), "file"
+        )
+
+    def test_strip_suffix_no_match_unchanged(self):
+        self.assertEqual(
+            run('let result = strip_suffix("file", ".txt");').get("result"), "file"
+        )
+
+    def test_strip_suffix_empty_suffix_unchanged(self):
+        self.assertEqual(
+            run('let result = strip_suffix("file", "");').get("result"), "file"
+        )
+
+    def test_strip_suffix_on_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('strip_suffix(1, ".txt");')
+
+    def test_strip_suffix_non_string_suffix_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('strip_suffix("file", 1);')
+
+    def test_strip_suffix_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('strip_suffix("file");')
+
+
 class TestReplace(unittest.TestCase):
     def test_replace_all_occurrences(self):
         self.assertEqual(run('let result = replace("aaa", "a", "b");').get("result"), "bbb")

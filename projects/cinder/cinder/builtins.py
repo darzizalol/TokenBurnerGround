@@ -418,6 +418,36 @@ def _ends_with(arguments: list, line: int, column: int) -> object:
     return value.endswith(suffix)
 
 
+def _strip_prefix(arguments: list, line: int, column: int) -> object:
+    _require_arity("strip_prefix", arguments, 2, line, column)
+    value, prefix = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"strip_prefix() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(prefix, str):
+        raise CinderRuntimeError(
+            f"strip_prefix() requires a string prefix, got {type_name(prefix)}", line, column
+        )
+    return value.removeprefix(prefix)
+
+
+def _strip_suffix(arguments: list, line: int, column: int) -> object:
+    _require_arity("strip_suffix", arguments, 2, line, column)
+    value, suffix = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"strip_suffix() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(suffix, str):
+        raise CinderRuntimeError(
+            f"strip_suffix() requires a string suffix, got {type_name(suffix)}", line, column
+        )
+    return value.removesuffix(suffix)
+
+
 def _replace(arguments: list, line: int, column: int) -> object:
     _require_arity("replace", arguments, 3, line, column)
     value, old, new = arguments
@@ -1344,6 +1374,8 @@ _BUILTINS = {
     "find": _find,
     "starts_with": _starts_with,
     "ends_with": _ends_with,
+    "strip_prefix": _strip_prefix,
+    "strip_suffix": _strip_suffix,
     "replace": _replace,
     "pad_start": _pad_start,
     "pad_end": _pad_end,

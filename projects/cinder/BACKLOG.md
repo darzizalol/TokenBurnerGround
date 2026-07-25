@@ -11,44 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Map destructuring in `let`: `let {a, b} = expr;` [claimed 2026-07-25T19:31:57Z]
-
-Build: extend `let`-destructuring (today list-only, `let [a, b] = expr;`
-from PR #70) to also accept a brace pattern: `let {a, b} = expr;` binds
-each named local to `expr[name]` — shorthand style, where the identifier
-in the pattern *is* the map key looked up (no renaming like `let {a: x} =
-...`, no nesting, no rest element — same "flat, minimal" restrictions as
-the list form). `expr` must evaluate to a `map`; a key named in the
-pattern but absent from the map raises `CinderRuntimeError` at the `let`
-statement's line/column (not a generic map-index error). Extra keys
-present in the map but not named in the pattern are simply ignored (unlike
-the list form's exact-length requirement — maps are looked up by name, not
-position, so there's no natural arity to enforce). Parser disambiguates
-`let {` from today's `let IDENTIFIER =` and `let [` at the token
-immediately after `let`; reuse or extend the existing `DestructureLetStmt`
-AST node (e.g. an added `is_map: bool` flag, or distinguish list-vs-map by
-whether `names` pairs come with lookup keys) rather than duplicating the
-whole node.
-
-Acceptance criteria:
-- `let {a, b} = {"a": 1, "b": 2}; a` is `1`; `b` is `2`.
-- Extra unnamed keys are ignored: `let {a} = {"a": 1, "b": 2}; a` is `1`
-  (no error about the unused `"b"`).
-- Missing named key raises `CinderRuntimeError` with line/column:
-  `let {a, b} = {"a": 1};` (pattern names `b`, map lacks it).
-- Non-map right-hand side raises `CinderRuntimeError` with line/column:
-  `let {a} = [1, 2];` and `let {a} = 5;`.
-- Existing list destructuring (`let [a, b] = expr;`) and plain `let name =
-  expr;` are unaffected — add regression tests pinning both.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py`, `cinder/ast_nodes.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `count_by` for lists
+## 1. Standard library: `count_by` for lists
 
 Build: add `count_by(list, fn)` to `cinder/builtins.py` — like `group_by`
 (which buckets elements into `{key: [elements]}`) but tallies group sizes
@@ -79,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `deep_copy` for lists and maps
+## 2. Standard library: `deep_copy` for lists and maps
 
 Build: add `deep_copy(collection)` to `cinder/builtins.py` — like the
 existing `copy` (PR #43, shallow: only the top-level container is new,
@@ -110,7 +73,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `distinct_by` for lists
+## 3. Standard library: `distinct_by` for lists
 
 Build: add `distinct_by(list, fn)` to `cinder/builtins.py` — like the
 existing `unique` (PR #50) but the "have we seen this?" check keys on
@@ -138,7 +101,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `strip_prefix` and `strip_suffix` for strings
+## 4. Standard library: `strip_prefix` and `strip_suffix` for strings
 
 Build: add `strip_prefix(s, prefix)` and `strip_suffix(s, suffix)` to
 `cinder/builtins.py`, following `starts_with`/`ends_with`'s two-`str`-
@@ -165,7 +128,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `take_while` and `drop_while` for lists
+## 5. Standard library: `take_while` and `drop_while` for lists
 
 Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
 `cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
@@ -200,7 +163,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `lines` and `words` for strings
+## 6. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -235,7 +198,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `last_index_of` for lists
+## 7. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -259,7 +222,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `capitalize` for strings
+## 8. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -285,7 +248,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `clamp` for numbers
+## 9. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -309,7 +272,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `is_empty` for lists, maps, and strings
+## 10. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -916,6 +879,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   shared `call_value` helper) instead of `zip`'s bare `[a, b]` pairing,
   truncated to the shorter list's length like `zip`. Clean first pass, no
   bounces (901 tests passing, up from 893).
+- **Map destructuring in `let`: `let {a, b} = expr;`** — merged
+  2026-07-26T~ via PR #80 (`feat/20260725-map-destructure`). Extended
+  `DestructureLetStmt` (from PR #70's list form) with an `is_map` flag
+  rather than a new AST node; `let {a, b} = expr;` binds each identifier by
+  looking it up as a key in a map RHS, missing keys or a non-map RHS raise
+  `CinderRuntimeError` with line/column, extra unnamed keys are silently
+  ignored (no positional arity check like the list form, since maps are
+  looked up by name). Clean first pass, no bounces (918 tests passing, up
+  from 901).
 
 ## Graveyard
 

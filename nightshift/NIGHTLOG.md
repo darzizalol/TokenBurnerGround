@@ -1596,3 +1596,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirteen clean cycles in a row since the `gh pr create` outage cleared —
   the queue keeps moving with no rework.
+
+## 2026-07-26
+
+- **Merged**: PR #80 "Map destructuring in `let`: `let {a, b} = expr;`"
+  (`feat/20260725-map-destructure`) — extended `DestructureLetStmt` (from
+  PR #70's list form) with an `is_map` flag instead of a new AST node;
+  binds each identifier by looking it up as a key in a map RHS, missing
+  keys or a non-map RHS raise `CinderRuntimeError` with line/column, extra
+  unnamed keys are silently ignored. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (918 tests passing, up from 901), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-11 → 1-10, now starting at `count_by` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourteen clean cycles in a row since the `gh pr create` outage cleared —
+  the queue keeps moving steadily, no rework needed on this task either.

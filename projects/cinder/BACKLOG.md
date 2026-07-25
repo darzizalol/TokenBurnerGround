@@ -73,7 +73,40 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `lines` and `words` for strings
+## 3. Spread operator in list literals: `[...list1, x, ...list2]`
+
+Build: extend list-literal parsing to accept a `...expr` element (reusing the
+existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't
+exist yet, add one) interspersed among ordinary elements. At evaluation time,
+each `...expr` element must evaluate to a `list` — raising `CinderRuntimeError`
+with line/column otherwise — and splices that list's elements into the result
+in place; ordinary elements are included as-is. This is a language-level
+grammar feature (new AST handling in list-literal parsing/evaluation), not a
+builtin — a deliberate change of pace after two stdlib-only tasks, so the
+queue doesn't run all the way to language-level work. Map literals are
+explicitly out of scope for this task.
+
+Acceptance criteria:
+- `[...[1, 2], 3]` is `[1, 2, 3]`.
+- `[0, ...[1, 2], 3, ...[4, 5]]` is `[0, 1, 2, 3, 4, 5]`.
+- `[...[]]` is `[]`; a list literal with no spread elements (e.g. `[1, 2]`)
+  is unaffected — add a regression test pinning this.
+- Spreading a non-list value (e.g. `[...5]`) raises `CinderRuntimeError` with
+  line/column.
+- A bare `...` inside a map literal (e.g. `{...m}`) is out of scope — it
+  should raise `ParseError`, not silently be accepted; add a regression test
+  pinning this so a future task can't assume it already works.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/tokens.py`, `cinder/lexer.py`,
+`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
+---
+
+## 4. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -108,7 +141,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `last_index_of` for lists
+## 5. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -132,7 +165,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `capitalize` for strings
+## 6. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -158,7 +191,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `clamp` for numbers
+## 7. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -182,7 +215,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `is_empty` for lists, maps, and strings
+## 8. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -203,7 +236,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `union`, `intersection`, `difference` for lists
+## 9. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -238,7 +271,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `pluck` for lists of maps
+## 10. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -263,38 +296,6 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 10. Spread operator in list literals: `[...list1, x, ...list2]`
-
-Build: extend list-literal parsing to accept a `...expr` element (reusing the
-existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't
-exist yet, add one) interspersed among ordinary elements. At evaluation time,
-each `...expr` element must evaluate to a `list` — raising `CinderRuntimeError`
-with line/column otherwise — and splices that list's elements into the result
-in place; ordinary elements are included as-is. This is a language-level
-grammar feature (new AST handling in list-literal parsing/evaluation), not a
-builtin — a deliberate change of pace from the recent run of stdlib-only
-tasks. Map literals are explicitly out of scope for this task.
-
-Acceptance criteria:
-- `[...[1, 2], 3]` is `[1, 2, 3]`.
-- `[0, ...[1, 2], 3, ...[4, 5]]` is `[0, 1, 2, 3, 4, 5]`.
-- `[...[]]` is `[]`; a list literal with no spread elements (e.g. `[1, 2]`)
-  is unaffected — add a regression test pinning this.
-- Spreading a non-list value (e.g. `[...5]`) raises `CinderRuntimeError` with
-  line/column.
-- A bare `...` inside a map literal (e.g. `{...m}`) is out of scope — it
-  should raise `ParseError`, not silently be accepted; add a regression test
-  pinning this so a future task can't assume it already works.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/tokens.py`, `cinder/lexer.py`,
-`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
 
 ## Done
 

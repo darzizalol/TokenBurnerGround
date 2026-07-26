@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+## 1. Rest parameters in function declarations: `fn f(a, ...rest) { ... }` [claimed 2026-07-26T15:13:34Z]
 
 Build: extend function declarations (`FnDecl`) and anonymous function
 expressions (`FnExpr`) to accept an optional trailing rest parameter —

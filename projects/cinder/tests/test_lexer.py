@@ -178,6 +178,14 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(types(tokenize("1 >= 2")), [TokenType.INT, TokenType.GTEQ, TokenType.INT, TokenType.EOF])
         self.assertEqual(types(tokenize("1 > 2")), [TokenType.INT, TokenType.GT, TokenType.INT, TokenType.EOF])
 
+    def test_dot_dot_dot_does_not_collide_with_dot(self):
+        # "..." must lex as one DOT_DOT_DOT token, not three DOT tokens.
+        tokens = tokenize("...")
+        self.assertEqual(types(tokens), [TokenType.DOT_DOT_DOT, TokenType.EOF])
+        self.assertEqual(tokens[0].lexeme, "...")
+        # A lone "." still lexes as DOT.
+        self.assertEqual(types(tokenize(".")), [TokenType.DOT, TokenType.EOF])
+
     def test_compound_assignment_operators(self):
         source = "+= -= *= /= %="
         expected = [

@@ -76,6 +76,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     ReturnStmt,
     SliceExpr,
+    Spread,
     Stmt,
     Ternary,
     TryStmt,
@@ -573,12 +574,18 @@ class Parser:
         bracket = self._advance()  # consume '['
         elements = []
         if not self._check(TokenType.RBRACKET):
-            elements.append(self._ternary())
+            elements.append(self._list_element())
             while self._check(TokenType.COMMA):
                 self._advance()
-                elements.append(self._ternary())
+                elements.append(self._list_element())
         self._consume(TokenType.RBRACKET, "']' after list literal")
         return ListLiteral(elements, bracket.line, bracket.column)
+
+    def _list_element(self) -> Expr:
+        if self._check(TokenType.DOT_DOT_DOT):
+            dots = self._advance()
+            return Spread(self._ternary(), dots.line, dots.column)
+        return self._ternary()
 
     def _map_literal(self) -> Expr:
         brace = self._advance()  # consume '{'

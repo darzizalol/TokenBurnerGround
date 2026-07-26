@@ -963,6 +963,21 @@ class TestListsAndMaps(unittest.TestCase):
     def test_empty_list_literal(self):
         self.assertEqual(evaluate("[]"), [])
 
+    def test_list_literal_with_spread(self):
+        self.assertEqual(evaluate("[...[1, 2], 3]"), [1, 2, 3])
+
+    def test_list_literal_multiple_spreads(self):
+        self.assertEqual(evaluate("[0, ...[1, 2], 3, ...[4, 5]]"), [0, 1, 2, 3, 4, 5])
+
+    def test_spread_of_empty_list(self):
+        self.assertEqual(evaluate("[...[]]"), [])
+
+    def test_spreading_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("[...5]")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 2)
+
     def test_map_literal(self):
         self.assertEqual(evaluate('{"a": 1, "b": 2}'), {"a": 1, "b": 2})
 

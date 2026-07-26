@@ -57,6 +57,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     ReturnStmt,
     SliceExpr,
+    Spread,
     Stmt,
     Ternary,
     TryStmt,
@@ -171,7 +172,7 @@ class Interpreter:
         if isinstance(expr, Call):
             return self._evaluate_call(expr, env)
         if isinstance(expr, ListLiteral):
-            return [self.evaluate(element, env) for element in expr.elements]
+            return self._evaluate_list_literal(expr, env)
         if isinstance(expr, MapLiteral):
             return self._evaluate_map_literal(expr, env)
         if isinstance(expr, Index):
@@ -298,6 +299,22 @@ class Interpreter:
         callee = self.evaluate(expr.callee, env)
         arguments = [self.evaluate(arg, env) for arg in expr.arguments]
         return call_value(callee, arguments, expr.line, expr.column)
+
+    def _evaluate_list_literal(self, expr: ListLiteral, env: Environment) -> list:
+        result: list = []
+        for element in expr.elements:
+            if isinstance(element, Spread):
+                value = self.evaluate(element.expression, env)
+                if not isinstance(value, list):
+                    raise CinderRuntimeError(
+                        f"cannot spread {type_name(value)} in a list literal",
+                        element.line,
+                        element.column,
+                    )
+                result.extend(value)
+            else:
+                result.append(self.evaluate(element, env))
+        return result
 
     def _evaluate_map_literal(self, expr: MapLiteral, env: Environment) -> object:
         result: dict = {}

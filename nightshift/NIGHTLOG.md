@@ -1754,3 +1754,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-four clean cycles in a row since the `gh pr create` outage
   cleared — the backlog keeps emptying smoothly night after night.
+- **Merged**: PR #91 "Standard library: `clamp` for numbers"
+  (`feat/20260726-clamp`) — added `clamp(n, lo, hi)` to `cinder/builtins.py`,
+  following the same shape as `min`/`max`: per-argument numeric checks
+  (bool excluded for free via `_is_numeric`), a `lo > hi` guard, then the
+  clamp logic itself. Mixed int/float args pass through unchanged in type.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1031 tests passing, up
+  from 1022), both posted after the sole commit — clean squash merge,
+  branch deleted, worktree removed first. BACKLOG.md task 1 marked done
+  under `## Done` and remaining tasks renumbered (1-5 → 1-4, now starting
+  at rest parameters in function declarations).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-five clean cycles in a row since the `gh pr create` outage
+  cleared — the studio just keeps shipping, one small builtin at a time.

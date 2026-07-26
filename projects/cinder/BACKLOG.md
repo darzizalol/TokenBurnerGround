@@ -11,31 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `clamp` for numbers [claimed 2026-07-26T15:02:47Z]
-
-Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
-`n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
-single-expression math-builtin style. `n`, `lo`, `hi` must each be `int`
-or `float` (mixed int/float across the three arguments is fine, matching
-`min`/`max`'s existing numeric-type handling). `lo > hi` is a caller
-error, not silently tolerated.
-
-Acceptance criteria:
-- `clamp(5, 0, 10)` is `5` (already in range, unchanged).
-- `clamp(-5, 0, 10)` is `0`; `clamp(15, 0, 10)` is `10`.
-- `clamp(2.5, 0, 2)` is `2` (mixed int/float arguments).
-- `clamp(5, 10, 0)` raises `CinderRuntimeError` with line/column (`lo > hi`
-  is invalid) — add a regression test pinning this.
-- `clamp("x", 0, 10)` raises `CinderRuntimeError` with line/column
-  (non-numeric argument), for each of the three positions.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+## 1. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
 
 Build: extend function declarations (`FnDecl`) and anonymous function
 expressions (`FnExpr`) to accept an optional trailing rest parameter —
@@ -76,7 +52,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `is_empty` for lists, maps, and strings
+## 2. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -97,7 +73,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `union`, `intersection`, `difference` for lists
+## 3. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -132,7 +108,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `pluck` for lists of maps
+## 4. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -160,7 +136,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `pick` and `omit` for maps
+## 5. Standard library: `pick` and `omit` for maps
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in
@@ -191,7 +167,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `gcd` and `lcm` for numbers
+## 6. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -879,6 +855,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `str.upper()` and leaving the rest untouched — deliberately not Python's
   `str.capitalize()`, which also lowercases the remainder. Empty string is
   a no-op. Clean first pass, no bounces (1022 tests passing, up from 1015).
+- **Standard library: `clamp` for numbers** — merged 2026-07-26T~ via PR #91
+  (`feat/20260726-clamp`). Added `clamp(n, lo, hi)` to `cinder/builtins.py`,
+  following the same shape as `min`/`max`: per-argument numeric checks, a
+  `lo > hi` guard, then the clamp logic. Mixed int/float args pass through
+  unchanged in type. Clean first pass, no bounces (1031 tests passing, up
+  from 1022).
 
 ## Graveyard
 

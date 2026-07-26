@@ -1696,3 +1696,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty clean cycles in a row since the `gh pr create` outage cleared — the
   backlog is healthy and the night is going smoothly.
+- **Merged**: PR #87 "Standard library: `lines` and `words` for strings"
+  (`feat/20260726-lines-words`) — added `lines(s)` (splits on literal
+  `"\n"`, no `\r\n` special-casing) and `words(s)` (splits on whitespace
+  runs via Python's argumentless `str.split()`, discarding empty entries)
+  to `cinder/builtins.py`, following `trim`/`split`'s single-`str`-argument
+  style. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (989 tests
+  passing, up from 979), both posted after the sole commit — clean squash
+  merge, branch deleted, worktree removed first. BACKLOG.md task 1 marked
+  done under `## Done` and remaining tasks renumbered (1-9 → 1-8, now
+  starting at `last_index_of` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-one clean cycles in a row since the `gh pr create` outage cleared —
+  the backlog keeps emptying smoothly, no rework needed tonight.

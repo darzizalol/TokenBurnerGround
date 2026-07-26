@@ -192,6 +192,114 @@ Acceptance criteria:
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
+---
+
+## 7. Standard library: `mean` and `median` for lists of numbers
+
+Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
+sums the elements (reuse `_sum`'s numeric-check style) and divides by the
+count, always returning a `float` (unlike `sum`, which stays `int` when
+every element is `int` — averages are conceptually fractional even when
+they land on a whole number). `median` sorts a *copy* of the list (reuse
+`sort`'s all-numeric check, non-mutating like `sort`/`reverse`) and returns
+the middle element for odd length, or the arithmetic mean of the two
+middle elements (always `float`) for even length.
+
+Acceptance criteria:
+- `mean([1, 2, 3])` is `2.0`; `mean([1, 2])` is `1.5`.
+- `median([1, 3, 2])` is `2`; `median([1, 2, 3, 4])` is `2.5`.
+- `median([5])` is `5`.
+- Empty list raises `CinderRuntimeError` with line/column, for both
+  builtins (no natural mean/median of zero elements).
+- A non-numeric element or non-list argument raises `CinderRuntimeError`
+  with line/column, for both builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+
+Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
+`math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
+`math.log`) to `cinder/builtins.py`, following `floor`/`ceil`/`sqrt`'s
+single-numeric-argument style (PR #48) — always return `float`, accept
+`int` or `float` input.
+
+Acceptance criteria:
+- `sin(0)` is `0.0`; `cos(0)` is `1.0`.
+- `log(1)` is `0.0`.
+- `log(0)` and `log(-1)` raise `CinderRuntimeError` with line/column
+  (domain error, matching `sqrt`'s negative-input handling) instead of
+  letting Python's `ValueError` escape.
+- A non-numeric argument raises `CinderRuntimeError` with line/column, for
+  all four builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for all four
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. Standard library: `shuffle` and `sample` for lists
+
+Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
+using Python's stdlib `random` module (no new dependency — `random` ships
+with Python). Both non-mutating, matching `reverse`/`sort`'s style:
+`shuffle` returns a new list with elements in random order (`random.sample`
+over the full length is an easy way to get a non-mutating shuffle without
+touching the input); `sample(list, n)` returns a new list of `n` distinct
+elements (by position, not by value — duplicates in the source list may
+each be chosen) in random order.
+
+Acceptance criteria:
+- `shuffle([1, 2, 3])` returns a list containing exactly `1`, `2`, `3` in
+  some order (assert via `sort`-then-compare, not exact-order, since order
+  is random); the input list is unchanged after the call.
+- `sample([1, 2, 3, 4], 2)` returns a 2-element list whose elements are
+  each in the source list; input list unchanged after the call.
+- `sample(list, n)` where `n` equals `len(list)` returns a full shuffle;
+  `n` greater than `len(list)` raises `CinderRuntimeError` with
+  line/column.
+- `n` must be a non-negative `int`; `sample(list, 0)` is `[]`.
+- Non-list first argument raises `CinderRuntimeError` with line/column,
+  for both builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 10. Nil-coalescing operator: `a ?? b`
+
+Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
+is `nil`, evaluates and returns `b`; otherwise returns `a` without
+evaluating `b` (short-circuits like `and`/`or`, not a strict function
+call). Note this checks specifically for `nil`, not general falsiness —
+`0 ?? 5` is `0` and `"" ?? "x"` is `""`, unlike `or` which would fall
+through on falsy-but-non-nil values. Add a `QUESTION_QUESTION` token
+lexed via the existing two-char lookahead pattern (alongside `&&`/`||`),
+and give it a precedence tier — bind it looser than `or` (matching the
+common "coalesce as a final fallback" convention: `a or b ?? c` parses as
+`(a or b) ?? c`) but tighter than the ternary `cond ? then : else`.
+
+Acceptance criteria:
+- `nil ?? 5` is `5`; `1 ?? 5` is `1`; `0 ?? 5` is `0`; `"" ?? "x"` is `""`.
+- Right-hand side is not evaluated when the left side is non-`nil`: e.g.
+  `1 ?? (1 / 0)` does not raise (division never runs).
+- Right-associative chaining: `nil ?? nil ?? 3` is `3`.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
+`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`.
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

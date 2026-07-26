@@ -75,8 +75,8 @@ while (i < 10) {
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
   `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
-  `ceil`, `pow`, `sqrt`, `ord`/`chr` for character/code-point conversion, and
-  type predicates
+  `ceil`, `pow`, `sqrt`, `clamp`, `ord`/`chr` for character/code-point
+  conversion, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -120,7 +120,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1022+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1031+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -145,7 +145,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a `switch` statement and
-`capitalize` for strings. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`clamp` for numbers, then rest parameters (`fn f(a, ...rest) { ... }`).
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `capitalize` and `clamp` for
+strings and numbers, respectively. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): rest parameters (`fn f(a, ...rest) { ... }`),
+then a run of standard-library additions (`is_empty`, set-like list ops,
+`pluck`, `pick`/`omit`, `gcd`/`lcm`). The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

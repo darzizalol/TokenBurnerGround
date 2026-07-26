@@ -11,33 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `capitalize` for strings [claimed 2026-07-26T14:52:40Z]
-
-Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
-character of `s` and leaves the rest of the string unchanged (deliberately
-*not* Python's `str.capitalize()`, which also lowercases the remainder —
-keep it flat/minimal like `strip_prefix`/`strip_suffix`'s restrictions: no
-locale handling, no lowercasing side effect). Complements the existing
-`upper`/`lower` (whole-string case builtins).
-
-Acceptance criteria:
-- `capitalize("hello")` is `"Hello"`.
-- `capitalize("Hello")` is `"Hello"` (already capitalized, unchanged).
-- `capitalize("hELLO")` is `"HELLO"` (only the first character is touched,
-  rest untouched — the key difference from Python's `str.capitalize()`;
-  add a regression test pinning this).
-- `capitalize("")` is `""` (empty string, no-op, not an error).
-- `capitalize("1abc")` is `"1abc"` (non-alphabetic first character passes
-  through `str.upper()` unchanged, matching Python).
-- Non-`str` argument raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `clamp` for numbers
+## 1. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -61,7 +35,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+## 2. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
 
 Build: extend function declarations (`FnDecl`) and anonymous function
 expressions (`FnExpr`) to accept an optional trailing rest parameter —
@@ -102,7 +76,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `is_empty` for lists, maps, and strings
+## 3. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -123,7 +97,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `union`, `intersection`, `difference` for lists
+## 4. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -158,7 +132,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `pluck` for lists of maps
+## 5. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -186,7 +160,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `pick` and `omit` for maps
+## 6. Standard library: `pick` and `omit` for maps
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in
@@ -217,7 +191,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `gcd` and `lcm` for numbers
+## 7. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -899,6 +873,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `switch` is not a loop, so `break`/`continue` inside a case still target
   an enclosing loop. Clean first pass, no bounces (1015 tests passing, up
   from 995).
+- **Standard library: `capitalize` for strings** — merged 2026-07-26T~ via
+  PR #90 (`feat/20260726-capitalize`). Added `capitalize(s)` to
+  `cinder/builtins.py`, uppercasing only the first character of `s` via
+  `str.upper()` and leaving the rest untouched — deliberately not Python's
+  `str.capitalize()`, which also lowercases the remainder. Empty string is
+  a no-op. Clean first pass, no bounces (1022 tests passing, up from 1015).
 
 ## Graveyard
 

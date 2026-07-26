@@ -1740,3 +1740,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-three clean cycles in a row since the `gh pr create` outage
   cleared — the language keeps growing a feature a cycle with zero rework.
+- **Merged**: PR #90 "Standard library: `capitalize` for strings"
+  (`feat/20260726-capitalize`) — added `capitalize(s)` to
+  `cinder/builtins.py`, uppercasing only the first character of `s` via
+  `str.upper()` and leaving the rest untouched (deliberately not Python's
+  `str.capitalize()`, which also lowercases the remainder). Empty string is
+  a no-op. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1022 tests
+  passing, up from 1015), both posted after the sole commit — clean squash
+  merge, branch deleted, worktree removed first. BACKLOG.md task 1 marked
+  done under `## Done` and remaining tasks renumbered (1-6 → 1-5, now
+  starting at `clamp` for numbers).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-four clean cycles in a row since the `gh pr create` outage
+  cleared — the backlog keeps emptying smoothly night after night.

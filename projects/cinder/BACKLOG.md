@@ -177,7 +177,91 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 7. Standard library: `map_keys` for maps
+## 7. Spread arguments in function calls: `f(...args)`
+
+Build: let `...expr` appear as a call argument, splicing `expr`'s list
+elements into the positional argument list at that point — the call-site
+counterpart to the existing spread support in list literals
+(`[...list1, x, ...list2]`, `cinder/interpreter.py`'s
+`_evaluate_list_literal`) and to rest parameters at the declaration side
+(`fn f(a, ...rest) { ... }`). Reuses the same `Spread` AST node and
+`DOT_DOT_DOT` token — no new lexer/token work needed. In the parser,
+`_finish_call` (`cinder/parser.py:583`) currently parses each argument via a
+bare `self._ternary()` call; check for a leading `DOT_DOT_DOT` the same way
+`_list_literal`/parameter-list parsing already does and wrap that argument
+in `Spread`. In the interpreter, `_evaluate_call` (`cinder/interpreter.py:311`)
+currently builds `arguments` with a flat list comprehension; when an
+argument expression is a `Spread`, evaluate its inner expression, require it
+to be a `list` (raising `CinderRuntimeError` otherwise, mirroring the list-
+literal spread's exact error message shape but naming "a function call"
+instead of "a list literal"), and extend the argument list with its
+elements instead of appending one value. Multiple spreads and a mix of
+plain and spread arguments in one call must all work, evaluated left to
+right in source order.
+
+Acceptance criteria:
+- `fn f(a, b, c) { return a + b + c; } f(...[1, 2, 3])` is `6`.
+- `f(1, ...[2, 3])` and `f(...[1, 2], 3)` both work the same as `f(1, 2, 3)`
+  (spread may appear first, last, or mixed with plain arguments).
+- Two spreads in one call splice both in order: with `f` taking a rest
+  parameter, `fn g(...all) { return all; } g(...[1, 2], ...[3, 4])` is
+  `[1, 2, 3, 4]`.
+- Spreading a non-list (e.g. `f(...5)`) raises `CinderRuntimeError` with
+  line/column.
+- A spread that produces the wrong total argument count still hits the
+  callee's existing arity check (e.g. `f(...[1])` on the 3-arity `f` above
+  raises the normal arity error, not something spread-specific).
+- Spread also works when calling a builtin (e.g.
+  `max(...[3, 1, 2])` is `3`) since builtins go through the same
+  `call_value` argument list.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py`, `cinder/interpreter.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 8. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+
+Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
+`/=`, `%=`, desugared in the parser via a base-operator lookup table at
+`cinder/parser.py:114` into `target = target OP value`) to cover the four
+bitwise operators and both shifts. `&`, `|`, `^` are single-char tokens
+today (`cinder/lexer.py:17-19`, no two-char lookahead at all), so lexing
+`&=`/`|=`/`^=` needs the same one-or-two-char lookahead pattern already
+used for `+`/`-`/`*`/`/`/`%` (`cinder/lexer.py:24-28`) rather than the
+dedicated hand-rolled scanning `<<`/`>>` currently use (`cinder/lexer.py:317`,
+`:335`) — extend those two spots to look ahead one more character for a
+trailing `=` and emit `LSHIFTEQ`/`RSHIFTEQ` instead of `LSHIFT`/`RSHIFT` when
+present. Add the four new token types plus `LSHIFTEQ`/`RSHIFTEQ` to
+`cinder/tokens.py`, then add all five to the parser's base-operator lookup
+table so the existing desugaring logic (and its existing lvalue restrictions
+— identifiers and index expressions only) picks them up with no interpreter
+changes beyond what the existing bitwise binary operators already support.
+
+Acceptance criteria:
+- `let a = 0b1010; a &= 0b0110; a` is `2`; `a |= 0b0001` after that is `3`;
+  `a ^= 0b0011` after that is `0`.
+- `let b = 1; b <<= 3; b` is `8`; `b >>= 2` after that is `2`.
+- Each of the five operators works on an index-expression target too (e.g.
+  `let xs = [1]; xs[0] &= 3;`), matching how `+=` already works on
+  `xs[0] += 1`.
+- A non-`int` operand to any of the five raises `CinderRuntimeError` with
+  line/column, matching the existing bitwise operators' own type-check
+  (int-only, no float support).
+- A negative right-hand shift count raises `CinderRuntimeError` with
+  line/column, matching plain `<<`/`>>`'s existing guard.
+- Existing `<<`/`>>` (non-assignment) lexing and parsing are unaffected —
+  add a regression test that `1 << 2` (no trailing `=`) still lexes as a
+  single `LSHIFT` token followed by no leftover characters.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 9. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -205,7 +289,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `title` for strings
+## 10. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -232,7 +316,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `trim_start` and `trim_end` for strings
+## 11. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -255,7 +339,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `sign` for numbers
+## 12. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -275,7 +359,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `random_int` and `random_choice`
+## 13. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)

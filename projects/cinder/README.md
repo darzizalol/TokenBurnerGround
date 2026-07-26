@@ -148,9 +148,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `union`, `intersection`, and
-`difference` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a
-run of standard-library additions (`pluck`, `pick`/`omit`, `gcd`/`lcm`,
-`mean`/`median`, more math/string builtins), then the nil-coalescing
-operator (`a ?? b`). The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `pluck` for lists of maps.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a run of standard-library
+additions (`pick`/`omit`, `gcd`/`lcm`, `mean`/`median`, more math builtins),
+then three core-language additions — the nil-coalescing operator (`a ?? b`),
+spread arguments in function calls (`f(...args)`), and bitwise/shift
+compound assignment (`&=`, `|=`, `^=`, `<<=`, `>>=`) — before more string
+builtins. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

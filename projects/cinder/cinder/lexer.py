@@ -13,7 +13,6 @@ _SIMPLE_TOKENS = {
     ",": TokenType.COMMA,
     ";": TokenType.SEMICOLON,
     ":": TokenType.COLON,
-    "?": TokenType.QUESTION,
     "&": TokenType.AMP,
     "|": TokenType.PIPE,
     "^": TokenType.CARET,
@@ -70,6 +69,8 @@ class Lexer:
                 self._identifier(char, start_line, start_col)
             elif char == ".":
                 self._dot(start_line, start_col)
+            elif char == "?":
+                self._question(start_line, start_col)
             elif char in _SIMPLE_TOKENS:
                 self.tokens.append(
                     Token(_SIMPLE_TOKENS[char], char, None, start_line, start_col)
@@ -327,6 +328,14 @@ class Lexer:
             )
         else:
             self.tokens.append(Token(TokenType.DOT, ".", None, start_line, start_col))
+
+    def _question(self, start_line: int, start_col: int):
+        if self._match("?"):
+            self.tokens.append(
+                Token(TokenType.QUESTION_QUESTION, "??", None, start_line, start_col)
+            )
+        else:
+            self.tokens.append(Token(TokenType.QUESTION, "?", None, start_line, start_col))
 
     def _gt(self, start_line: int, start_col: int):
         if self._match("="):

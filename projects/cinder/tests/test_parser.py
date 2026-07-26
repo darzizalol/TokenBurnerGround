@@ -347,6 +347,18 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_nullish_binds_looser_than_or(self):
+        # `a or b ?? c` parses as `(a or b) ?? c`.
+        self.assertEqual(
+            shape(parse("true or false ?? 1")),
+            (
+                "Logical",
+                ("Logical", ("Literal", True), TokenType.OR, ("Literal", False)),
+                TokenType.QUESTION_QUESTION,
+                ("Literal", 1),
+            ),
+        )
+
     def test_for_in_loop_parsing_unaffected_by_in_operator(self):
         self.assertEqual(
             stmt_shape(parse_stmts("for x in [1, 2, 3] { }")[0]),
@@ -466,6 +478,38 @@ class TestTernary(unittest.TestCase):
                 "Index",
                 ("Identifier", "xs"),
                 ("Ternary", ("Literal", True), ("Literal", 0), ("Literal", 1)),
+            ),
+        )
+
+
+class TestNullishCoalescing(unittest.TestCase):
+    def test_basic_nullish(self):
+        self.assertEqual(
+            shape(parse("a ?? b")),
+            ("Logical", ("Identifier", "a"), TokenType.QUESTION_QUESTION, ("Identifier", "b")),
+        )
+
+    def test_nullish_right_associative(self):
+        # `a ?? b ?? c` parses as `a ?? (b ?? c)`.
+        self.assertEqual(
+            shape(parse("a ?? b ?? c")),
+            (
+                "Logical",
+                ("Identifier", "a"),
+                TokenType.QUESTION_QUESTION,
+                ("Logical", ("Identifier", "b"), TokenType.QUESTION_QUESTION, ("Identifier", "c")),
+            ),
+        )
+
+    def test_nullish_binds_tighter_than_ternary(self):
+        # `a ?? b ? c : d` parses as `(a ?? b) ? c : d`.
+        self.assertEqual(
+            shape(parse("a ?? b ? c : d")),
+            (
+                "Ternary",
+                ("Logical", ("Identifier", "a"), TokenType.QUESTION_QUESTION, ("Identifier", "b")),
+                ("Identifier", "c"),
+                ("Identifier", "d"),
             ),
         )
 

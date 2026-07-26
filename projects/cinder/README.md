@@ -50,8 +50,11 @@ while (i < 10) {
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
   `str * int`/`list * int` (Python repetition semantics), `in` for
   membership tests (lists, strings, maps), the ternary conditional
-  `cond ? then : else`, and bitwise operators `&`, `|`, `^`, `~`, `<<`, `>>`
-  (int-only, with a clean runtime error on a negative shift count)
+  `cond ? then : else`, the nil-coalescing operator `a ?? b` (short-circuits
+  like `and`/`or`: evaluates `b` only when `a` is `nil`, unlike `or` which
+  falls through on any falsy value), and bitwise operators `&`, `|`, `^`,
+  `~`, `<<`, `>>` (int-only, with a clean runtime error on a negative shift
+  count)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable

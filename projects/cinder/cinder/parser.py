@@ -2,9 +2,14 @@
 
 Precedence, loosest to tightest:
     assignment (=, +=, -=, *=, /=, %=, right-assoc) > ternary (?:, right-assoc)
-    > or > and > in > comparisons (== != < <= > >=) > | > ^ > & > << >> >
+    > ?? (nullish-coalescing, right-assoc) > or > and > in
+    > comparisons (== != < <= > >=) > | > ^ > & > << >> >
     + - > * / % > unary (- not ~)
 with parenthesized grouping and call expressions binding tightest of all.
+
+`??` reuses the `Logical` AST node (like `and`/`or`) since it also
+short-circuits: `a ?? b` evaluates `b` only when `a` is `nil`, never for any
+other falsy value (`0`, `""`, `false`).
 
 Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
 (reusing the `Binary`/`Assign` AST nodes, restricted to `Identifier` targets
@@ -470,7 +475,7 @@ class Parser:
         return expr
 
     def _ternary(self) -> Expr:
-        expr = self._or()
+        expr = self._nullish()
         if self._check(TokenType.QUESTION):
             question_token = self._advance()
             then_expr = self._ternary()
@@ -479,6 +484,14 @@ class Parser:
             return Ternary(
                 expr, then_expr, else_expr, question_token.line, question_token.column
             )
+        return expr
+
+    def _nullish(self) -> Expr:
+        expr = self._or()
+        if self._check(TokenType.QUESTION_QUESTION):
+            operator = self._advance()
+            right = self._nullish()  # right-recursive: right-associative chaining
+            return Logical(expr, operator, right)
         return expr
 
     def _or(self) -> Expr:

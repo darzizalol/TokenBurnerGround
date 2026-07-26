@@ -142,6 +142,33 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertEqual(types(tokenize(source)), expected)
 
+    def test_question_question_is_one_token(self):
+        # "??" must lex as one QUESTION_QUESTION token, not two QUESTIONs.
+        tokens = tokenize("a ?? b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QUESTION_QUESTION,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
+    def test_question_question_does_not_collide_with_ternary_question(self):
+        tokens = tokenize("a ? b : c")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QUESTION,
+                TokenType.IDENTIFIER,
+                TokenType.COLON,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
     def test_bitwise_operators(self):
         source = "& | ^ ~ << >>"
         expected = [

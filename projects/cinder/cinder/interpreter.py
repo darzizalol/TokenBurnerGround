@@ -511,6 +511,10 @@ class Interpreter:
             if not is_truthy(left):
                 return left
             return self.evaluate(expr.right, env)
+        if expr.operator.type == TokenType.QUESTION_QUESTION:
+            if left is not None:
+                return left
+            return self.evaluate(expr.right, env)
         raise TypeError(f"unhandled logical operator: {expr.operator.type!r}")
 
     def _evaluate_ternary(self, expr: Ternary, env: Environment) -> object:

@@ -77,6 +77,7 @@ class TokenType(Enum):
     DOT_DOT_DOT = auto()
     COLON = auto()
     QUESTION = auto()
+    QUESTION_QUESTION = auto()
 
     EOF = auto()
 

@@ -241,6 +241,31 @@ class TestLogical(unittest.TestCase):
         self.assertEqual(evaluate("nil or 5"), 5)
 
 
+class TestNullishCoalescing(unittest.TestCase):
+    def test_nil_left_falls_through_to_right(self):
+        self.assertEqual(evaluate("nil ?? 5"), 5)
+
+    def test_non_nil_left_short_circuits(self):
+        self.assertEqual(evaluate("1 ?? 5"), 1)
+
+    def test_zero_is_not_nil(self):
+        self.assertEqual(evaluate("0 ?? 5"), 0)
+
+    def test_empty_string_is_not_nil(self):
+        self.assertEqual(evaluate('"" ?? "x"'), "")
+
+    def test_false_is_not_nil(self):
+        # unlike `or`, `??` only falls through on `nil`, not general falsiness
+        self.assertEqual(evaluate("false ?? 5"), False)
+
+    def test_right_not_evaluated_when_left_non_nil(self):
+        # division by zero on the right must not raise since the left short-circuits
+        self.assertEqual(evaluate("1 ?? (1 / 0)"), 1)
+
+    def test_right_associative_chaining(self):
+        self.assertEqual(evaluate("nil ?? nil ?? 3"), 3)
+
+
 class TestTernary(unittest.TestCase):
     def test_true_condition_takes_then_branch(self):
         self.assertEqual(evaluate("true ? 1 : 2"), 1)

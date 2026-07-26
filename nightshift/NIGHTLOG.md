@@ -1724,3 +1724,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-two clean cycles in a row since the `gh pr create` outage cleared —
   the backlog is healthy and the night keeps shipping without friction.
+- **Merged**: PR #89 "switch statement" (`feat/20260726-switch-stmt`) —
+  added new `SWITCH`/`CASE`/`DEFAULT` keywords, `SwitchStmt`/`SwitchCase`
+  AST nodes, parser support, and interpreter evaluation: scrutinee
+  evaluated exactly once, compared against each case value in source order
+  via `values_equal`, first match's block runs with no fallthrough, falls
+  back to `default` if present, else no-op; `switch` is not a loop, so
+  `break`/`continue` inside a case still target an enclosing loop.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1015 tests passing, up
+  from 995), both posted after the sole commit — clean squash merge,
+  branch deleted, worktree removed first. BACKLOG.md task 1 marked done
+  under `## Done` and remaining tasks renumbered (1-7 → 1-6, now starting
+  at `capitalize` for strings).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-three clean cycles in a row since the `gh pr create` outage
+  cleared — the language keeps growing a feature a cycle with zero rework.

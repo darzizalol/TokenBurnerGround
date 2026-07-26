@@ -11,53 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `switch` statement [claimed 2026-07-26T14:36:49Z]
-
-Build: add a `switch (expr) { case val1: { stmt* } case val2: { stmt* }
-default: { stmt* } }` statement — a language-level grammar feature (new
-`SWITCH`/`CASE`/`DEFAULT` keywords, a `SwitchStmt` AST node), the third
-non-stdlib task in the backlog after two runs of builtins-only tasks, per
-`PROJECT.md`'s "depth over breadth" principle. Evaluate the scrutinee
-`expr` exactly once; compare it against each `case` value in source order
-using the shared `values_equal` helper (agreeing with `==`/`in`/`contains`
-on bool-vs-int); run the block of the *first* matching `case` and stop —
-**no fallthrough** (unlike C/JS `switch`, deliberately, to avoid the
-classic missing-`break` bug class). If nothing matches and a `default` is
-present, run its block. If nothing matches and there is no `default`, the
-whole statement is a no-op, matching `if` with no matching branch and no
-`else`. Each case/default body is a real `{ ... }` block with its own
-child `Environment` (variables declared inside don't leak out), reusing
-existing block-execution machinery. `switch` is not a loop: `break`/
-`continue` inside a case body must still refer to an *enclosing* loop (if
-any), not the switch itself — do not give `switch` its own break-signal
-handling.
-
-Acceptance criteria:
-- `switch (2) { case 1: { print("one"); } case 2: { print("two"); }
-  default: { print("other"); } }` prints `"two"` only (first-match wins,
-  no fallthrough into `default`).
-- No case matches and there's a `default`: its block runs.
-- No case matches and there's no `default`: no-op, no error.
-- Case values compare via `values_equal`: `switch (true) { case 1: { ... }
-  case true: { ... } }` matches the `true` case, not the `1` case — add a
-  regression test pinning this (matching PR #51's bool/int fix).
-- A variable declared with `let` inside one case's block is not visible
-  outside that block or in another case's block.
-- `break` inside a `while`/`for` loop whose body contains a `switch` still
-  breaks the loop, not just falls out of the switch — add a regression
-  test nesting a `switch` with a matching `case` inside a `while` loop
-  containing a `break`.
-- `switch` not followed by `(` raises `ParseError`; a `case`/`default`
-  missing its `:` or its `{ ... }` block raises `ParseError`.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py` (keyword table),
-`cinder/ast_nodes.py`, `cinder/parser.py`, `cinder/interpreter.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `capitalize` for strings
+## 1. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -83,7 +37,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `clamp` for numbers
+## 2. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -107,7 +61,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+## 3. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
 
 Build: extend function declarations (`FnDecl`) and anonymous function
 expressions (`FnExpr`) to accept an optional trailing rest parameter —
@@ -149,7 +103,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `is_empty` for lists, maps, and strings
+## 4. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -170,7 +124,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `union`, `intersection`, `difference` for lists
+## 5. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -205,7 +159,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `pluck` for lists of maps
+## 6. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -878,6 +832,16 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `index_of`/`contains`/`in` on bool-vs-int per PR #51) and returning the
   `int` index of the last match or `-1`. Clean first pass, no bounces (995
   tests passing, up from 989).
+- **`switch` statement** — merged 2026-07-26T~ via PR #89
+  (`feat/20260726-switch-stmt`). Added new `SWITCH`/`CASE`/`DEFAULT`
+  keywords, `SwitchStmt`/`SwitchCase` AST nodes, parser support, and
+  interpreter evaluation: scrutinee evaluated exactly once, compared
+  against each case value in source order via `values_equal`, first match's
+  block runs with no fallthrough, falls back to `default` if present, else
+  no-op. Each case body is a real block with its own child `Environment`;
+  `switch` is not a loop, so `break`/`continue` inside a case still target
+  an enclosing loop. Clean first pass, no bounces (1015 tests passing, up
+  from 995).
 
 ## Graveyard
 

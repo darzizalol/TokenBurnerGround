@@ -144,9 +144,13 @@ class FnExpr:
 
     `params` is a `list[tuple[str, Expr | None]]`: each entry pairs a
     parameter name with its default-value expression, or `None` if the
-    parameter has no default."""
+    parameter has no default.
+
+    `rest_param` is the name of a trailing `...name` parameter, or `None` if
+    the function has none — see `fn f(a, ...rest) { ... }`."""
 
     params: list
+    rest_param: "str | None"
     body: "Block"
     line: int
     column: int
@@ -227,11 +231,12 @@ class ForStmt:
 
 @dataclass(frozen=True)
 class FnDecl:
-    """`params` is a `list[tuple[str, Expr | None]]`, same shape as `FnExpr`'s
-    — see its docstring."""
+    """`params` and `rest_param` are the same shape as `FnExpr`'s — see its
+    docstring."""
 
     name: str
     params: list
+    rest_param: "str | None"
     body: "Block"
     line: int
     column: int

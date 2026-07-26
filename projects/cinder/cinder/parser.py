@@ -38,6 +38,13 @@ be ambiguous with the next parameter). Once one parameter has a default,
 every parameter after it must too; `_fn_param` raises `ParseError` at the
 first offending parameter otherwise.
 
+A function may also declare a single trailing rest parameter
+(`fn f(a, ...rest) { ... }`), reusing the spread operator's `DOT_DOT_DOT`
+token from `cinder/tokens.py`. `_fn_params_and_body` parses it as
+`rest_param` (a bare `str | None`, separate from `params`) and requires it
+to be the last parameter — a `,` after it (another parameter or a second
+`...rest`) raises `ParseError`. It may follow default parameters.
+
 A leading `{` is ambiguous between a Block and a statement-level expression
 rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
 disambiguates by attempting a speculative full-expression parse first (so
@@ -256,25 +263,41 @@ class Parser:
     def _fn_declaration(self) -> Stmt:
         fn_token = self._advance()
         name_token = self._consume(TokenType.IDENTIFIER, "function name after 'fn'")
-        params, body = self._fn_params_and_body()
-        return FnDecl(name_token.lexeme, params, body, fn_token.line, fn_token.column)
+        params, rest_param, body = self._fn_params_and_body()
+        return FnDecl(
+            name_token.lexeme, params, rest_param, body, fn_token.line, fn_token.column
+        )
 
     def _fn_expression(self) -> Expr:
         fn_token = self._advance()
-        params, body = self._fn_params_and_body()
-        return FnExpr(params, body, fn_token.line, fn_token.column)
+        params, rest_param, body = self._fn_params_and_body()
+        return FnExpr(params, rest_param, body, fn_token.line, fn_token.column)
 
     def _fn_params_and_body(self) -> tuple:
         self._consume(TokenType.LPAREN, "'(' after 'fn'")
         params = []
+        rest_param = None
         seen_default = False
         if not self._check(TokenType.RPAREN):
-            params.append(self._fn_param(seen_default))
-            seen_default = seen_default or params[-1][1] is not None
-            while self._check(TokenType.COMMA):
-                self._advance()
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest_param = self._fn_rest_param()
+            else:
                 params.append(self._fn_param(seen_default))
                 seen_default = seen_default or params[-1][1] is not None
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if rest_param is not None:
+                    token = self._peek()
+                    raise ParseError(
+                        "rest parameter must be the last parameter",
+                        token.line,
+                        token.column,
+                    )
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest_param = self._fn_rest_param()
+                else:
+                    params.append(self._fn_param(seen_default))
+                    seen_default = seen_default or params[-1][1] is not None
         self._consume(TokenType.RPAREN, "')' after parameters")
         if not self._check(TokenType.LBRACE):
             token = self._peek()
@@ -289,7 +312,12 @@ class Parser:
         body = self._block()
         self._loop_depth = outer_loop_depth
         self._fn_depth -= 1
-        return params, body
+        return params, rest_param, body
+
+    def _fn_rest_param(self) -> str:
+        self._advance()  # DOT_DOT_DOT
+        name_token = self._consume(TokenType.IDENTIFIER, "parameter name after '...'")
+        return name_token.lexeme
 
     def _fn_param(self, seen_default: bool) -> tuple:
         name_token = self._consume(TokenType.IDENTIFIER, "parameter name")

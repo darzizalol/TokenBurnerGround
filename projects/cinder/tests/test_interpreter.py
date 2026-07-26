@@ -956,6 +956,55 @@ class TestDefaultParameters(unittest.TestCase):
         self.assertEqual(names, ["g", "f"])
 
 
+class TestRestParameters(unittest.TestCase):
+    def test_rest_param_collects_extra_arguments(self):
+        env = run(
+            "fn f(a, ...rest) { return rest; } let result = f(1, 2, 3);"
+        )
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_rest_param_empty_when_no_extra_arguments(self):
+        env = run("fn f(a, ...rest) { return rest; } let result = f(1);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_rest_param_with_no_named_params(self):
+        env = run("fn f(...rest) { return rest; } let result = f(1, 2, 3);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_rest_param_combined_with_default_one_argument(self):
+        env = run(
+            "fn f(a, b = 1, ...rest) { return [a, b, rest]; } "
+            "let result = f(10);"
+        )
+        self.assertEqual(env.get("result"), [10, 1, []])
+
+    def test_rest_param_combined_with_default_two_arguments(self):
+        env = run(
+            "fn f(a, b = 1, ...rest) { return [a, b, rest]; } "
+            "let result = f(10, 20);"
+        )
+        self.assertEqual(env.get("result"), [10, 20, []])
+
+    def test_rest_param_combined_with_default_four_arguments(self):
+        env = run(
+            "fn f(a, b = 1, ...rest) { return [a, b, rest]; } "
+            "let result = f(10, 20, 30, 40);"
+        )
+        self.assertEqual(env.get("result"), [10, 20, [30, 40]])
+
+    def test_rest_param_works_for_anonymous_functions(self):
+        env = run(
+            "let f = fn(a, ...rest) { return rest; }; "
+            "let result = f(1, 2, 3);"
+        )
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_missing_required_argument_still_raises_with_rest_param(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a, ...rest) { return rest; } f();")
+        self.assertIn("expects at least 1 argument(s), got 0", str(ctx.exception))
+
+
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):
         self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])

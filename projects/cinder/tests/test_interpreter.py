@@ -1169,5 +1169,89 @@ class TestTryCatch(unittest.TestCase):
         self.assertIsInstance(env.get("outer"), str)
 
 
+class TestSwitchStatement(unittest.TestCase):
+    def test_first_match_wins_no_fallthrough(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            run(
+                'switch (2) { case 1: { print("one"); } '
+                'case 2: { print("two"); } '
+                'default: { print("other"); } }',
+                create_global_environment(),
+            )
+        self.assertEqual(stdout.getvalue(), "two\n")
+
+    def test_no_match_runs_default(self):
+        env = run(
+            'let result = "unset"; '
+            'switch (99) { case 1: { result = "one"; } default: { result = "other"; } }'
+        )
+        self.assertEqual(env.get("result"), "other")
+
+    def test_no_match_no_default_is_noop(self):
+        env = run('let result = "unset"; switch (99) { case 1: { result = "one"; } }')
+        self.assertEqual(env.get("result"), "unset")
+
+    def test_case_values_compare_via_values_equal_bool_vs_int(self):
+        env = run(
+            'let result = "unset"; '
+            "switch (true) { case 1: { result = \"int\"; } case true: { result = \"bool\"; } }"
+        )
+        self.assertEqual(env.get("result"), "bool")
+
+    def test_case_int_does_not_match_bool_scrutinee(self):
+        env = run(
+            'let result = "unset"; '
+            "switch (1) { case true: { result = \"bool\"; } case 1: { result = \"int\"; } }"
+        )
+        self.assertEqual(env.get("result"), "int")
+
+    def test_let_inside_case_does_not_leak_outside(self):
+        with self.assertRaises(KeyError):
+            run("switch (1) { case 1: { let a = 1; } }").get("a")
+
+    def test_let_inside_one_case_not_visible_in_another_case(self):
+        with self.assertRaises(CinderRuntimeError):
+            run(
+                "switch (2) { case 1: { let a = 1; } "
+                "case 2: { a = 2; } }"
+            )
+
+    def test_break_inside_switch_inside_while_still_breaks_loop(self):
+        env = run(
+            "let i = 0; let ran_after = 0; "
+            "while (i < 3) { "
+            "  i = i + 1; "
+            "  switch (i) { case 2: { break; } } "
+            "  ran_after = i; "
+            "}"
+        )
+        self.assertEqual(env.get("i"), 2)
+        self.assertEqual(env.get("ran_after"), 1)
+
+    def test_scrutinee_evaluated_exactly_once(self):
+        env = run(
+            "let calls = 0; "
+            "fn scrutinee() { calls = calls + 1; return 2; } "
+            'let result = "unset"; '
+            'switch (scrutinee()) { case 1: { result = "one"; } case 2: { result = "two"; } }'
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("result"), "two")
+
+    def test_case_values_after_match_are_not_evaluated(self):
+        env = run(
+            "let calls = 0; "
+            "fn side_effect() { calls = calls + 1; return 99; } "
+            "switch (1) { case 1: { } case side_effect(): { } }"
+        )
+        self.assertEqual(env.get("calls"), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

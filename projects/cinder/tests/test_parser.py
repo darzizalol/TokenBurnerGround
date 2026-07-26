@@ -27,6 +27,7 @@ from cinder.ast_nodes import (
     ReturnStmt,
     SliceExpr,
     Spread,
+    SwitchStmt,
     Ternary,
     TryStmt,
     Unary,
@@ -141,6 +142,13 @@ def stmt_shape(node):
             stmt_shape(node.try_block),
             node.catch_name,
             stmt_shape(node.catch_block),
+        )
+    if isinstance(node, SwitchStmt):
+        return (
+            "SwitchStmt",
+            shape(node.scrutinee),
+            [(shape(case.value), stmt_shape(case.body)) for case in node.cases],
+            stmt_shape(node.default) if node.default is not None else None,
         )
     raise TypeError(f"unhandled statement type: {type(node)!r}")
 
@@ -1260,6 +1268,79 @@ class TestTryCatch(unittest.TestCase):
 
     def test_break_inside_try_inside_loop_is_valid(self):
         stmts = parse_stmts("while (true) { try { break; } catch (e) {} }")
+        self.assertEqual(len(stmts), 1)
+
+
+class TestSwitchStatement(unittest.TestCase):
+    def test_switch_shape(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts(
+                    "switch (x) { case 1: { let a = 1; } "
+                    "case 2: { let a = 2; } default: { let a = 3; } }"
+                )
+            ],
+            [
+                (
+                    "SwitchStmt",
+                    ("Identifier", "x"),
+                    [
+                        (
+                            ("Literal", 1),
+                            ("Block", [("LetStmt", "a", ("Literal", 1))]),
+                        ),
+                        (
+                            ("Literal", 2),
+                            ("Block", [("LetStmt", "a", ("Literal", 2))]),
+                        ),
+                    ],
+                    ("Block", [("LetStmt", "a", ("Literal", 3))]),
+                )
+            ],
+        )
+
+    def test_switch_without_default(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("switch (x) { case 1: { } }")
+            ],
+            [("SwitchStmt", ("Identifier", "x"), [(("Literal", 1), ("Block", []))], None)],
+        )
+
+    def test_switch_empty_body(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("switch (x) { }")],
+            [("SwitchStmt", ("Identifier", "x"), [], None)],
+        )
+
+    def test_switch_without_paren_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("switch x { case 1: { } }")
+
+    def test_case_missing_colon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("switch (x) { case 1 { } }")
+
+    def test_case_missing_block_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("switch (x) { case 1: print(1); }")
+
+    def test_default_missing_colon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("switch (x) { default { } }")
+
+    def test_default_missing_block_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("switch (x) { default: print(1); }")
+
+    def test_duplicate_default_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("switch (x) { default: { } default: { } }")
+
+    def test_break_inside_switch_inside_loop_is_valid(self):
+        stmts = parse_stmts("while (true) { switch (1) { case 1: { break; } } }")
         self.assertEqual(len(stmts), 1)
 
 

@@ -20,7 +20,9 @@ two), `{ <statement>* }` (Block),
 (ForStmt, body always a block), `break;`/`continue;` (BreakStmt/ContinueStmt,
 only valid inside a loop), `try { <statement>* } catch (IDENTIFIER)
 { <statement>* }` (TryStmt, both bodies always blocks, the parenthesized
-catch name is required), or a bare `<expr>;` (ExprStmt).
+catch name is required), `switch (<expr>) { case <expr>: { ... } ...
+[default: { ... }] }` (SwitchStmt, each case/default body always a block; at
+most one `default`, checked at parse time), or a bare `<expr>;` (ExprStmt).
 
 `fn` at statement position (`fn NAME(params) { body }`) is a named `FnDecl`;
 `fn` anywhere else in the expression grammar (`_primary`) is an anonymous
@@ -78,6 +80,8 @@ from cinder.ast_nodes import (
     SliceExpr,
     Spread,
     Stmt,
+    SwitchCase,
+    SwitchStmt,
     Ternary,
     TryStmt,
     Unary,
@@ -153,6 +157,8 @@ class Parser:
             return self._continue_statement()
         if self._check(TokenType.TRY):
             return self._try_statement()
+        if self._check(TokenType.SWITCH):
+            return self._switch_statement()
         return self._expr_statement()
 
     def _let_statement(self) -> Stmt:
@@ -356,6 +362,47 @@ class Parser:
         return TryStmt(
             try_block, name_token.lexeme, catch_block, try_token.line, try_token.column
         )
+
+    def _switch_statement(self) -> Stmt:
+        switch_token = self._advance()
+        self._consume(TokenType.LPAREN, "'(' after 'switch'")
+        scrutinee = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after switch expression")
+        self._consume(TokenType.LBRACE, "'{' after switch expression")
+        cases = []
+        default = None
+        while self._check(TokenType.CASE) or self._check(TokenType.DEFAULT):
+            if self._check(TokenType.CASE):
+                self._advance()
+                value = self._ternary()
+                self._consume(TokenType.COLON, "':' after case value")
+                if not self._check(TokenType.LBRACE):
+                    token = self._peek()
+                    raise ParseError(
+                        f"expected '{{' before case body, found {self._describe(token)}",
+                        token.line,
+                        token.column,
+                    )
+                cases.append(SwitchCase(value, self._block()))
+            else:
+                default_token = self._advance()
+                if default is not None:
+                    raise ParseError(
+                        "duplicate 'default' in switch statement",
+                        default_token.line,
+                        default_token.column,
+                    )
+                self._consume(TokenType.COLON, "':' after 'default'")
+                if not self._check(TokenType.LBRACE):
+                    token = self._peek()
+                    raise ParseError(
+                        f"expected '{{' before default body, found {self._describe(token)}",
+                        token.line,
+                        token.column,
+                    )
+                default = self._block()
+        self._consume(TokenType.RBRACE, "'}' after switch body")
+        return SwitchStmt(scrutinee, cases, default, switch_token.line, switch_token.column)
 
     def _expr_statement(self) -> Stmt:
         expr = self._assignment()

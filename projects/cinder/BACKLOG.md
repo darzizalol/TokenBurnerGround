@@ -300,6 +300,135 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 `cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
 `tests/test_parser.py`, `tests/test_interpreter.py`.
 
+---
+
+## 11. Standard library: `map_keys` for maps
+
+Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
+counterpart to the existing `map_values` — returns a new map with the same
+values but each key replaced by `fn(key)`, via the shared `call_value`
+helper. Reuse `_is_valid_key` to reject a non-hashable result from `fn`
+before it's used as a key (matching `invert`'s existing guard). When two
+distinct source keys transform to the same result, later insertion wins
+(matching `merge`/`invert`'s collision rule).
+
+Acceptance criteria:
+- `map_keys({"a": 1, "b": 2}, fn(k) { return upper(k); })` is
+  `{"A": 1, "B": 2}`.
+- `map_keys({"cat": 1, "car": 2}, fn(k) { return k[0]; })` is `{"c": 2}` —
+  both keys transform to `"c"`, and `"car"` (inserted after `"cat"`) wins,
+  pinning the collision rule.
+- `map_keys({}, fn(k) { return k; })` is `{}`.
+- A non-hashable result from `fn` (e.g. it returns a list) raises
+  `CinderRuntimeError` with line/column, matching `invert`'s guard.
+- Non-map first argument or non-callable second argument raises
+  `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 12. Standard library: `title` for strings
+
+Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
+alphabetic character of every whitespace-separated word in `s`, leaving
+every other character untouched and preserving original whitespace runs
+exactly (e.g. via `re.sub` on word-start positions rather than a
+split/join, which would collapse whitespace). Deliberately not Python's
+`str.title()`, which also lowercases interior letters and mishandles
+apostrophes — the same "don't touch the rest" divergence `capitalize`
+already established for the single-word case.
+
+Acceptance criteria:
+- `title("hello world")` is `"Hello World"`.
+- `title("hello   world")` is `"Hello   World"` (internal whitespace runs
+  preserved exactly).
+- `title("won't stop")` is `"Won't Stop"` — the `t` after the apostrophe is
+  untouched, unlike Python's `str.title()` — add a regression test pinning
+  this divergence.
+- `title("")` is `""`.
+- Non-`str` argument raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 13. Standard library: `trim_start` and `trim_end` for strings
+
+Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
+delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
+whitespace set the existing `trim` strips via bare `str.strip()`) — the
+one-sided counterparts to `trim`, for when only leading or only trailing
+whitespace should go.
+
+Acceptance criteria:
+- `trim_start("  hi  ")` is `"hi  "`; `trim_end("  hi  ")` is `"  hi"`.
+- `trim_start("hi")` is `"hi"`; `trim_end("hi")` is `"hi"` (no whitespace,
+  no-op).
+- `trim_start("")` is `""`; `trim_end("")` is `""`.
+- Non-`str` argument raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 14. Standard library: `sign` for numbers
+
+Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
+positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
+argument style. Always returns an `int` regardless of whether `n` is `int`
+or `float` (there's no fractional "sign").
+
+Acceptance criteria:
+- `sign(5)` is `1`; `sign(-5)` is `-1`; `sign(0)` is `0`.
+- `sign(3.5)` is `1`; `sign(-3.5)` is `-1`; `sign(0.0)` is `0`.
+- Result type is always `int` — add a regression test asserting
+  `type(sign(3.5))` is `"int"`, not `"float"`.
+- Non-numeric argument raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 15. Standard library: `random_int` and `random_choice`
+
+Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
+`random.randint`) and `random_choice(list)` (via Python's `random.choice`)
+to `cinder/builtins.py`, using the stdlib `random` module already relied
+on by the shipped `shuffle`/`sample`. Non-deterministic builtins can't be
+pinned in golden-output examples, so test both by property (result is
+within bounds / result is a member of the input list) the same way
+`shuffle`/`sample`'s tests already do, rather than exact-value assertions.
+
+Acceptance criteria:
+- `random_int(1, 1)` is always exactly `1` (degenerate single-value range —
+  a deterministic edge case worth pinning exactly).
+- `random_int(1, 10)` called many times always returns an `int` in
+  `[1, 10]` inclusive.
+- `random_int(5, 1)` (`min > max`) raises `CinderRuntimeError` with
+  line/column.
+- A non-`int` bound raises `CinderRuntimeError` with line/column.
+- `random_choice([1, 2, 3])` always returns one of `1`, `2`, `3`.
+- `random_choice([])` raises `CinderRuntimeError` with line/column (nothing
+  to choose from).
+- Non-list argument to `random_choice` raises `CinderRuntimeError` with
+  line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

@@ -511,6 +511,43 @@ class TestLower(unittest.TestCase):
             run('lower("a", "b");')
 
 
+class TestCapitalize(unittest.TestCase):
+    def test_capitalize_lowercase_word(self):
+        self.assertEqual(
+            run('let result = capitalize("hello");').get("result"), "Hello"
+        )
+
+    def test_capitalize_already_capitalized(self):
+        self.assertEqual(
+            run('let result = capitalize("Hello");').get("result"), "Hello"
+        )
+
+    def test_capitalize_only_touches_first_character(self):
+        # Deliberately not Python's str.capitalize(), which would also
+        # lowercase the remainder.
+        self.assertEqual(
+            run('let result = capitalize("hELLO");').get("result"), "HELLO"
+        )
+
+    def test_capitalize_empty_string(self):
+        self.assertEqual(run('let result = capitalize("");').get("result"), "")
+
+    def test_capitalize_non_alphabetic_first_character(self):
+        self.assertEqual(
+            run('let result = capitalize("1abc");').get("result"), "1abc"
+        )
+
+    def test_capitalize_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("capitalize(1);")
+
+    def test_capitalize_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("capitalize();")
+        with self.assertRaises(CinderRuntimeError):
+            run('capitalize("a", "b");')
+
+
 class TestTrim(unittest.TestCase):
     def test_trim_strips_leading_and_trailing_whitespace(self):
         self.assertEqual(run('let result = trim("  hi  ");').get("result"), "hi")

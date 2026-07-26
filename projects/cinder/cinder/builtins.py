@@ -341,6 +341,38 @@ def _invert(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _pick(arguments: list, line: int, column: int) -> object:
+    _require_arity("pick", arguments, 2, line, column)
+    target, keys = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"pick() requires a map, got {type_name(target)}", line, column
+        )
+    if not isinstance(keys, list):
+        raise CinderRuntimeError(
+            f"pick() requires a list of keys, got {type_name(keys)}", line, column
+        )
+    result: dict = {}
+    for key in keys:
+        if _is_valid_key(key) and key in target:
+            result[key] = target[key]
+    return result
+
+
+def _omit(arguments: list, line: int, column: int) -> object:
+    _require_arity("omit", arguments, 2, line, column)
+    target, keys = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"omit() requires a map, got {type_name(target)}", line, column
+        )
+    if not isinstance(keys, list):
+        raise CinderRuntimeError(
+            f"omit() requires a list of keys, got {type_name(keys)}", line, column
+        )
+    return {key: value for key, value in target.items() if key not in keys}
+
+
 def _upper(arguments: list, line: int, column: int) -> object:
     _require_arity("upper", arguments, 1, line, column)
     value = arguments[0]
@@ -1551,6 +1583,8 @@ _BUILTINS = {
     "remove": _remove,
     "merge": _merge,
     "invert": _invert,
+    "pick": _pick,
+    "omit": _omit,
     "upper": _upper,
     "lower": _lower,
     "capitalize": _capitalize,

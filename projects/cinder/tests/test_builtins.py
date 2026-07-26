@@ -547,6 +547,78 @@ class TestInvert(unittest.TestCase):
             run('invert({"a": 1}, {"b": 2});')
 
 
+class TestPick(unittest.TestCase):
+    def test_pick_selects_subset(self):
+        env = run('let result = pick({"a": 1, "b": 2, "c": 3}, ["a", "c"]);')
+        self.assertEqual(env.get("result"), {"a": 1, "c": 3})
+
+    def test_pick_result_order_follows_keys_argument(self):
+        env = run('let result = pick({"a": 1, "b": 2, "c": 3}, ["c", "a"]);')
+        self.assertEqual(list(env.get("result").keys()), ["c", "a"])
+
+    def test_pick_skips_key_not_in_map(self):
+        env = run('let result = pick({"a": 1}, ["a", "missing"]);')
+        self.assertEqual(env.get("result"), {"a": 1})
+
+    def test_pick_with_empty_keys_is_empty_map(self):
+        env = run('let result = pick({"a": 1}, []);')
+        self.assertEqual(env.get("result"), {})
+
+    def test_pick_does_not_mutate_input(self):
+        env = run('let m = {"a": 1, "b": 2}; let result = pick(m, ["a"]);')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_pick_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pick(5, ["a"]);')
+
+    def test_pick_with_non_list_keys_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pick({"a": 1}, "a");')
+
+    def test_pick_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pick({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('pick({"a": 1}, ["a"], 1);')
+
+
+class TestOmit(unittest.TestCase):
+    def test_omit_removes_given_keys(self):
+        env = run('let result = omit({"a": 1, "b": 2, "c": 3}, ["b"]);')
+        self.assertEqual(env.get("result"), {"a": 1, "c": 3})
+
+    def test_omit_preserves_source_key_order(self):
+        env = run('let result = omit({"a": 1, "b": 2, "c": 3}, ["b"]);')
+        self.assertEqual(list(env.get("result").keys()), ["a", "c"])
+
+    def test_omit_skips_key_not_in_map(self):
+        env = run('let result = omit({"a": 1}, ["missing"]);')
+        self.assertEqual(env.get("result"), {"a": 1})
+
+    def test_omit_with_empty_keys_is_copy_of_map(self):
+        env = run('let m = {"a": 1}; let result = omit(m, []);')
+        self.assertEqual(env.get("result"), {"a": 1})
+
+    def test_omit_does_not_mutate_input(self):
+        env = run('let m = {"a": 1, "b": 2}; let result = omit(m, ["a"]);')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_omit_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('omit(5, ["a"]);')
+
+    def test_omit_with_non_list_keys_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('omit({"a": 1}, "a");')
+
+    def test_omit_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('omit({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('omit({"a": 1}, ["a"], 1);')
+
+
 class TestUpper(unittest.TestCase):
     def test_upper_of_string(self):
         self.assertEqual(run('let result = upper("hello");').get("result"), "HELLO")

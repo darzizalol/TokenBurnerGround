@@ -119,7 +119,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (971+ tests) covers every layer — lexer, parser, interpreter,
+The suite (979+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -144,8 +144,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `strip_prefix`/`strip_suffix`
-for strings and `take_while`/`drop_while` for lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): a spread operator for list literals
-(`[...list1, x]`), `lines`/`words` for strings, and a `switch` statement. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `take_while`/`drop_while` for
+lists and the spread operator in list literals (`[...list1, x]`). Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `lines`/`words` for strings,
+`last_index_of` for lists, and a `switch` statement. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

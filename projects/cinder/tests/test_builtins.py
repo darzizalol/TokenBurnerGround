@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
-pow, sqrt, sum, any, all, contains, index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
+pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function."""
 
@@ -665,6 +665,41 @@ class TestIndexOf(unittest.TestCase):
             run('index_of([1]);')
         with self.assertRaises(CinderRuntimeError):
             run('index_of([1], 2, 3);')
+
+
+class TestLastIndexOf(unittest.TestCase):
+    def test_last_index_of_returns_index_of_last_match(self):
+        self.assertEqual(
+            run('let result = last_index_of([1, 2, 3, 2, 1], 2);').get("result"), 3
+        )
+
+    def test_last_index_of_returns_negative_one_when_not_found(self):
+        self.assertEqual(
+            run('let result = last_index_of([1, 2, 3], 9);').get("result"), -1
+        )
+
+    def test_last_index_of_on_empty_list_returns_negative_one(self):
+        self.assertEqual(run('let result = last_index_of([], 1);').get("result"), -1)
+
+    def test_last_index_of_does_not_conflate_bool_with_int(self):
+        self.assertEqual(
+            run('let result = last_index_of([1, true, 0, false], true);').get("result"),
+            1,
+        )
+        self.assertEqual(
+            run('let result = last_index_of([1, true, 0, false], false);').get("result"),
+            3,
+        )
+
+    def test_last_index_of_on_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('last_index_of(5, 1);')
+
+    def test_last_index_of_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('last_index_of([1]);')
+        with self.assertRaises(CinderRuntimeError):
+            run('last_index_of([1], 2, 3);')
 
 
 class TestFindIndex(unittest.TestCase):

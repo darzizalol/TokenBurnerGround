@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pick` and `omit` for maps
+## 1. Standard library: `pick` and `omit` for maps [claimed 2026-07-26T20:06:20Z]
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in

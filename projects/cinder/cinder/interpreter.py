@@ -4,7 +4,7 @@
 and returns a plain Python value (int, float, str, bool, None), or a Python
 `list`/`dict` backing a Cinder list/map literal.
 `Interpreter.execute` walks statements (`LetStmt`, `ExprStmt`, `Block`,
-`IfStmt`, `WhileStmt`, `ForStmt`, `TryStmt`), mutating an `Environment` rather
+`IfStmt`, `WhileStmt`, `ForStmt`, `TryStmt`, `SwitchStmt`), mutating an `Environment` rather
 than returning a value. `ForStmt` binds its loop variable in a fresh child
 `Environment` per iteration, so a closure created inside the loop body
 captures that iteration's value rather than the final one. `TryStmt` runs its
@@ -59,6 +59,7 @@ from cinder.ast_nodes import (
     SliceExpr,
     Spread,
     Stmt,
+    SwitchStmt,
     Ternary,
     TryStmt,
     Unary,
@@ -263,7 +264,19 @@ class Interpreter:
         if isinstance(stmt, TryStmt):
             self._execute_try(stmt, env)
             return
+        if isinstance(stmt, SwitchStmt):
+            self._execute_switch(stmt, env)
+            return
         raise TypeError(f"unhandled statement type: {type(stmt)!r}")
+
+    def _execute_switch(self, stmt: SwitchStmt, env: Environment) -> None:
+        scrutinee = self.evaluate(stmt.scrutinee, env)
+        for case in stmt.cases:
+            if values_equal(scrutinee, self.evaluate(case.value, env)):
+                self.execute(case.body, env)
+                return
+        if stmt.default is not None:
+            self.execute(stmt.default, env)
 
     def _execute_try(self, stmt: TryStmt, env: Environment) -> None:
         try:

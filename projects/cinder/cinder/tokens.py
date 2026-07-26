@@ -29,6 +29,9 @@ class TokenType(Enum):
     CONTINUE = auto()
     TRY = auto()
     CATCH = auto()
+    SWITCH = auto()
+    CASE = auto()
+    DEFAULT = auto()
     TRUE = auto()
     FALSE = auto()
     NIL = auto()
@@ -91,6 +94,9 @@ KEYWORDS = {
     "continue": TokenType.CONTINUE,
     "try": TokenType.TRY,
     "catch": TokenType.CATCH,
+    "switch": TokenType.SWITCH,
+    "case": TokenType.CASE,
+    "default": TokenType.DEFAULT,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
     "nil": TokenType.NIL,

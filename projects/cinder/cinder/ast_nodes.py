@@ -265,6 +265,28 @@ class TryStmt:
     column: int
 
 
+@dataclass(frozen=True)
+class SwitchCase:
+    value: "Expr"
+    body: "Block"
+
+
+@dataclass(frozen=True)
+class SwitchStmt:
+    """`switch (scrutinee) { case v1: { ... } case v2: { ... } default: { ... } }`.
+
+    `scrutinee` is evaluated exactly once; `cases` are tried in source order
+    via `values_equal` and the first match's block runs (no fallthrough).
+    `default` (or `None`) runs only if no case matched. Not a loop: `break`/
+    `continue` inside a case body still target an enclosing loop, if any."""
+
+    scrutinee: "Expr"
+    cases: list
+    default: "Block | None"
+    line: int
+    column: int
+
+
 Stmt = Union[
     ExprStmt,
     LetStmt,
@@ -278,4 +300,5 @@ Stmt = Union[
     BreakStmt,
     ContinueStmt,
     TryStmt,
+    SwitchStmt,
 ]

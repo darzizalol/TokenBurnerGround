@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Nil-coalescing operator: `a ?? b`
+## 1. Nil-coalescing operator: `a ?? b` [claimed 2026-07-26T20:18:46Z]
 
 Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
 is `nil`, evaluates and returns `b`; otherwise returns `a` without

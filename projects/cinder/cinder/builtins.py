@@ -326,6 +326,18 @@ def _lower(arguments: list, line: int, column: int) -> object:
     return value.lower()
 
 
+def _capitalize(arguments: list, line: int, column: int) -> object:
+    _require_arity("capitalize", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"capitalize() requires a string, got {type_name(value)}", line, column
+        )
+    if not value:
+        return value
+    return value[0].upper() + value[1:]
+
+
 def _trim(arguments: list, line: int, column: int) -> object:
     _require_arity("trim", arguments, 1, line, column)
     value = arguments[0]
@@ -1441,6 +1453,7 @@ _BUILTINS = {
     "invert": _invert,
     "upper": _upper,
     "lower": _lower,
+    "capitalize": _capitalize,
     "trim": _trim,
     "split": _split,
     "lines": _lines,

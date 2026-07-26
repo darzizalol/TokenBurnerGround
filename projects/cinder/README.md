@@ -57,7 +57,9 @@ while (i < 10) {
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
   anywhere a value is expected (e.g. passed straight to `map`/`filter`); a
   trailing parameter may carry a default value (`fn f(a, b = 1) { ... }`),
-  evaluated fresh per call when omitted by the caller
+  evaluated fresh per call when omitted by the caller; a trailing rest
+  parameter collects any extra positional arguments into a list
+  (`fn f(a, ...rest) { ... }`), combinable with default parameters
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -120,7 +122,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1031+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1046+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -145,9 +147,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `capitalize` and `clamp` for
-strings and numbers, respectively. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): rest parameters (`fn f(a, ...rest) { ... }`),
-then a run of standard-library additions (`is_empty`, set-like list ops,
-`pluck`, `pick`/`omit`, `gcd`/`lcm`). The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: rest parameters in function
+declarations (`fn f(a, ...rest) { ... }`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): a run of standard-library additions
+(`is_empty`, set-like list ops, `pluck`, `pick`/`omit`, `gcd`/`lcm`), then
+the nil-coalescing operator (`a ?? b`). The full vision and non-goals live
+in [`PROJECT.md`](PROJECT.md).

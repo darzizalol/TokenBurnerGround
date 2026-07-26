@@ -71,6 +71,7 @@ while (i < 10) {
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
+  `union`, `intersection`, `difference` (lists treated as unordered sets),
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`,
@@ -122,7 +123,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1054+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1072+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -147,8 +148,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_empty` for lists, maps,
-and strings. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a run of
-standard-library additions (set-like list ops, `pluck`, `pick`/`omit`,
-`gcd`/`lcm`, `mean`/`median`), then the nil-coalescing operator (`a ?? b`).
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `union`, `intersection`, and
+`difference` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a
+run of standard-library additions (`pluck`, `pick`/`omit`, `gcd`/`lcm`,
+`mean`/`median`, more math/string builtins), then the nil-coalescing
+operator (`a ?? b`). The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

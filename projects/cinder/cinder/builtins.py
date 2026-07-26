@@ -567,6 +567,26 @@ def _max(arguments: list, line: int, column: int) -> object:
     return max(arguments)
 
 
+def _clamp(arguments: list, line: int, column: int) -> object:
+    _require_arity("clamp", arguments, 3, line, column)
+    n, lo, hi = arguments
+    for position, value in (("first", n), ("second", lo), ("third", hi)):
+        if not _is_numeric(value):
+            raise CinderRuntimeError(
+                f"clamp() requires a number as its {position} argument, got {type_name(value)}",
+                line, column,
+            )
+    if lo > hi:
+        raise CinderRuntimeError(
+            f"clamp() requires lo <= hi, got lo={lo}, hi={hi}", line, column
+        )
+    if n < lo:
+        return lo
+    if n > hi:
+        return hi
+    return n
+
+
 def _round(arguments: list, line: int, column: int) -> object:
     _require_arity("round", arguments, 1, line, column)
     value = arguments[0]
@@ -1470,6 +1490,7 @@ _BUILTINS = {
     "abs": _abs,
     "min": _min,
     "max": _max,
+    "clamp": _clamp,
     "round": _round,
     "floor": _floor,
     "ceil": _ceil,

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pluck` for lists of maps
+## 1. Standard library: `pluck` for lists of maps [claimed 2026-07-26T19:54:04Z]
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the

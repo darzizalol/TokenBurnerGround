@@ -122,7 +122,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1046+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1054+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -147,9 +147,8 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: rest parameters in function
-declarations (`fn f(a, ...rest) { ... }`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): a run of standard-library additions
-(`is_empty`, set-like list ops, `pluck`, `pick`/`omit`, `gcd`/`lcm`), then
-the nil-coalescing operator (`a ?? b`). The full vision and non-goals live
-in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_empty` for lists, maps,
+and strings. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a run of
+standard-library additions (set-like list ops, `pluck`, `pick`/`omit`,
+`gcd`/`lcm`, `mean`/`median`), then the nil-coalescing operator (`a ?? b`).
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

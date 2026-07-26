@@ -649,9 +649,11 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
     if not isinstance(callee, CinderFunction):
         raise CinderRuntimeError(f"{type_name(callee)} is not callable", line, column)
     min_arity = callee.arity
-    max_arity = len(callee.decl.params)
-    if len(arguments) < min_arity or len(arguments) > max_arity:
-        if min_arity == max_arity:
+    max_arity = None if callee.decl.rest_param else len(callee.decl.params)
+    if len(arguments) < min_arity or (max_arity is not None and len(arguments) > max_arity):
+        if max_arity is None:
+            expected = f"at least {min_arity}"
+        elif min_arity == max_arity:
             expected = f"{min_arity}"
         elif len(arguments) < min_arity:
             expected = f"at least {min_arity}"
@@ -670,6 +672,8 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
             else:
                 value = Interpreter().evaluate(default, call_env)
             call_env.define(param_name, value)
+        if callee.decl.rest_param is not None:
+            call_env.define(callee.decl.rest_param, list(arguments[len(callee.decl.params) :]))
         Interpreter().execute(callee.decl.body, call_env)
     except _ReturnSignal as signal:
         return signal.value

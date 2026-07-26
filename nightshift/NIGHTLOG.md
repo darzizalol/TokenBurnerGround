@@ -1710,3 +1710,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-one clean cycles in a row since the `gh pr create` outage cleared —
   the backlog keeps emptying smoothly, no rework needed tonight.
+- **Merged**: PR #88 "Standard library: `last_index_of` for lists"
+  (`feat/20260726-last-index-of`) — added `last_index_of(list, item)` to
+  `cinder/builtins.py`, the mirror of the existing `index_of` (PR #49),
+  scanning from the end via the shared `values_equal` helper (agreeing with
+  `index_of`/`contains`/`in` on bool-vs-int per PR #51) and returning the
+  `int` index of the last match or `-1`. Reviewer gave `VERDICT: LGTM`, QA
+  gave `QA: PASS` (995 tests passing, up from 989), both posted after the
+  sole commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-8 → 1-7, now starting at the `switch` statement).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-two clean cycles in a row since the `gh pr create` outage cleared —
+  the backlog is healthy and the night keeps shipping without friction.

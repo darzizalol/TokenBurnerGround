@@ -11,31 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `last_index_of` for lists [claimed 2026-07-26T14:26:34Z]
-
-Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
-of the existing `index_of` (PR #49), scanning from the end and returning
-the `int` index of the *last* element equal to `item` (Cinder `==`
-value equality via the shared `values_equal` helper, so it agrees with
-`index_of`/`contains`/`in` on bool-vs-int per PR #51), or `-1` if absent.
-
-Acceptance criteria:
-- `last_index_of([1, 2, 3, 2, 1], 2)` is `3` (the later of the two `2`s).
-- `last_index_of([1, 2, 3], 9)` is `-1` (no match).
-- `last_index_of([], 1)` is `-1`.
-- `last_index_of([1, true, 0, false], true)` distinguishes bool from int
-  the same way `index_of`/`contains` do — add a regression test pinning
-  this (matching PR #51's fix).
-- `last_index_of(5, 1)` raises `CinderRuntimeError` with line/column
-  (non-list first argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. `switch` statement
+## 1. `switch` statement
 
 Build: add a `switch (expr) { case val1: { stmt* } case val2: { stmt* }
 default: { stmt* } }` statement — a language-level grammar feature (new
@@ -81,7 +57,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py` (keyword table),
 
 ---
 
-## 3. Standard library: `capitalize` for strings
+## 2. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -107,7 +83,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `clamp` for numbers
+## 3. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -131,7 +107,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+## 4. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
 
 Build: extend function declarations (`FnDecl`) and anonymous function
 expressions (`FnExpr`) to accept an optional trailing rest parameter —
@@ -173,7 +149,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `is_empty` for lists, maps, and strings
+## 5. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -194,7 +170,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `union`, `intersection`, `difference` for lists
+## 6. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -229,7 +205,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `pluck` for lists of maps
+## 7. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -895,6 +871,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `str.split()`, discarding empty entries) to `cinder/builtins.py`,
   following `trim`/`split`'s single-`str`-argument style. Clean first pass,
   no bounces (989 tests passing, up from 979).
+- **Standard library: `last_index_of` for lists** — merged 2026-07-26T~ via
+  PR #88 (`feat/20260726-last-index-of`). Added `last_index_of(list, item)`
+  to `cinder/builtins.py`, the mirror of the existing `index_of` (PR #49),
+  scanning from the end via the shared `values_equal` helper (agreeing with
+  `index_of`/`contains`/`in` on bool-vs-int per PR #51) and returning the
+  `int` index of the last match or `-1`. Clean first pass, no bounces (995
+  tests passing, up from 989).
 
 ## Graveyard
 

@@ -1448,6 +1448,105 @@ class TestUnique(unittest.TestCase):
             run("unique();")
 
 
+class TestUnionIntersectionDifference(unittest.TestCase):
+    def test_union_combines_and_dedupes(self):
+        self.assertEqual(
+            run("let result = union([1, 2, 3], [2, 3, 4]);").get("result"),
+            [1, 2, 3, 4],
+        )
+
+    def test_intersection_keeps_common_elements(self):
+        self.assertEqual(
+            run("let result = intersection([1, 2, 3], [2, 3, 4]);").get("result"),
+            [2, 3],
+        )
+
+    def test_difference_keeps_elements_not_in_second_list(self):
+        self.assertEqual(
+            run("let result = difference([1, 2, 3], [2, 3, 4]);").get("result"),
+            [1],
+        )
+
+    def test_union_does_not_conflate_bool_and_int(self):
+        self.assertEqual(
+            run("let result = union([1, true], [1, false]);").get("result"),
+            [1, True, False],
+        )
+
+    def test_union_collapses_duplicates_within_a_single_input(self):
+        self.assertEqual(
+            run("let result = union([1, 1, 2], [2]);").get("result"), [1, 2]
+        )
+
+    def test_union_with_empty_list(self):
+        self.assertEqual(run("let result = union([], [1]);").get("result"), [1])
+
+    def test_intersection_with_empty_list(self):
+        self.assertEqual(
+            run("let result = intersection([], [1]);").get("result"), []
+        )
+
+    def test_difference_with_empty_second_list(self):
+        self.assertEqual(
+            run("let result = difference([], [1]);").get("result"), []
+        )
+
+    def test_difference_with_empty_first_list(self):
+        self.assertEqual(
+            run("let result = difference([1], []);").get("result"), [1]
+        )
+
+    def test_union_uses_value_equality_for_nested_lists(self):
+        self.assertEqual(
+            run("let result = union([[1], [2]], [[1], [3]]);").get("result"),
+            [[1], [2], [3]],
+        )
+
+    def test_intersection_preserves_first_list_order(self):
+        self.assertEqual(
+            run("let result = intersection([3, 1, 2], [1, 2, 3]);").get("result"),
+            [3, 1, 2],
+        )
+
+    def test_union_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("union(5, [1]);")
+
+    def test_union_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("union([1], 5);")
+
+    def test_intersection_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("intersection(5, [1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("intersection([1], 5);")
+
+    def test_difference_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("difference(5, [1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("difference([1], 5);")
+
+    def test_union_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("union([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("union([1], [2], [3]);")
+
+    def test_intersection_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("intersection([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("intersection([1], [2], [3]);")
+
+    def test_difference_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("difference([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("difference([1], [2], [3]);")
+
+
 class TestReverse(unittest.TestCase):
     def test_reverse_returns_new_reversed_list(self):
         self.assertEqual(run("let result = reverse([1, 2, 3]);").get("result"), [3, 2, 1])

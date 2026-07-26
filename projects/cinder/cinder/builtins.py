@@ -769,13 +769,7 @@ def _count(arguments: list, line: int, column: int) -> object:
     return sum(1 for element in collection if values_equal(element, item))
 
 
-def _unique(arguments: list, line: int, column: int) -> object:
-    _require_arity("unique", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"unique() requires a list, got {type_name(value)}", line, column
-        )
+def _dedupe(value: list) -> list:
     if all(_is_valid_key(element) for element in value):
         # Key on (is_bool, element) rather than element directly: Python's
         # native hash/eq treat `1 == True`, but Cinder's `==` (`values_equal`)
@@ -793,6 +787,55 @@ def _unique(arguments: list, line: int, column: int) -> object:
         if not any(values_equal(element, kept) for kept in result):
             result.append(element)
     return result
+
+
+def _unique(arguments: list, line: int, column: int) -> object:
+    _require_arity("unique", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"unique() requires a list, got {type_name(value)}", line, column
+        )
+    return _dedupe(value)
+
+
+def _require_two_lists(name: str, arguments: list, line: int, column: int) -> tuple:
+    _require_arity(name, arguments, 2, line, column)
+    list1, list2 = arguments
+    if not isinstance(list1, list):
+        raise CinderRuntimeError(
+            f"{name}() requires a list as its first argument, got {type_name(list1)}",
+            line, column,
+        )
+    if not isinstance(list2, list):
+        raise CinderRuntimeError(
+            f"{name}() requires a list as its second argument, got {type_name(list2)}",
+            line, column,
+        )
+    return list1, list2
+
+
+def _contains_value(collection: list, item: object) -> bool:
+    return any(values_equal(item, element) for element in collection)
+
+
+def _union(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("union", arguments, line, column)
+    return _dedupe(list1 + list2)
+
+
+def _intersection(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("intersection", arguments, line, column)
+    return [
+        element for element in _dedupe(list1) if _contains_value(list2, element)
+    ]
+
+
+def _difference(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("difference", arguments, line, column)
+    return [
+        element for element in _dedupe(list1) if not _contains_value(list2, element)
+    ]
 
 
 def _reverse(arguments: list, line: int, column: int) -> object:
@@ -1519,6 +1562,9 @@ _BUILTINS = {
     "deep_copy": _deep_copy,
     "unique": _unique,
     "distinct_by": _distinct_by,
+    "union": _union,
+    "intersection": _intersection,
+    "difference": _difference,
     "reverse": _reverse,
     "first": _first,
     "last": _last,

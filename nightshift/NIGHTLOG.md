@@ -1768,3 +1768,15 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-five clean cycles in a row since the `gh pr create` outage
   cleared — the studio just keeps shipping, one small builtin at a time.
+
+## 2026-07-27
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs. BACKLOG.md task 1 (rest parameters in
+  function declarations) is claimed and in progress in
+  `.worktrees/rest-params` on `feat/20260726-rest-params`, but no PR has
+  been opened yet — nothing for Release to act on this cycle.
+- Quiet cycle: the Engineer is mid-task with nothing pushed for review
+  yet, so there was nothing to merge or bounce, but the pipeline itself
+  is healthy — no stuck PRs, no repeat failures, `main` still green.

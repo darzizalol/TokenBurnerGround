@@ -67,7 +67,7 @@ while (i < 10) {
   clamp, not assignable); list literals also accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place
   (map literals don't support spread)
-- **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
+- **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,

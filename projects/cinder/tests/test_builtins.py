@@ -1,4 +1,4 @@
-"""Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
+"""Tests for cinder.builtins: print, len, is_empty, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
@@ -62,6 +62,34 @@ class TestLen(unittest.TestCase):
     def test_len_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('len("a", "b");')
+
+
+class TestIsEmpty(unittest.TestCase):
+    def test_is_empty_string_true(self):
+        self.assertEqual(run('let result = is_empty("");').get("result"), True)
+
+    def test_is_empty_string_false(self):
+        self.assertEqual(run('let result = is_empty("x");').get("result"), False)
+
+    def test_is_empty_list_true(self):
+        self.assertEqual(run("let result = is_empty([]);").get("result"), True)
+
+    def test_is_empty_list_false(self):
+        self.assertEqual(run("let result = is_empty([1]);").get("result"), False)
+
+    def test_is_empty_map_true(self):
+        self.assertEqual(run("let result = is_empty({});").get("result"), True)
+
+    def test_is_empty_map_false(self):
+        self.assertEqual(run('let result = is_empty({"a": 1});').get("result"), False)
+
+    def test_is_empty_of_int_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_empty(5);")
+
+    def test_is_empty_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('is_empty("a", "b");')
 
 
 class TestType(unittest.TestCase):

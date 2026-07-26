@@ -1,7 +1,7 @@
 """Standard library builtins injected into every Cinder program's global scope.
 
 `create_global_environment` returns a fresh `Environment` with `print`,
-`len`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
+`len`, `is_empty`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
 `keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `lines`, `words`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
@@ -61,6 +61,16 @@ def _len(arguments: list, line: int, column: int) -> object:
         return len(value)
     raise CinderRuntimeError(
         f"len() requires a string, list, or map, got {type_name(value)}", line, column
+    )
+
+
+def _is_empty(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_empty", arguments, 1, line, column)
+    value = arguments[0]
+    if isinstance(value, (str, list, dict)):
+        return len(value) == 0
+    raise CinderRuntimeError(
+        f"is_empty() requires a string, list, or map, got {type_name(value)}", line, column
     )
 
 
@@ -1454,6 +1464,7 @@ def _is_function(arguments: list, line: int, column: int) -> object:
 _BUILTINS = {
     "print": _print,
     "len": _len,
+    "is_empty": _is_empty,
     "type": _type,
     "str": _str,
     "int": _int,

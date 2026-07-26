@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_empty` for lists, maps, and strings
+## 1. Standard library: `is_empty` for lists, maps, and strings [claimed 2026-07-26T19:35:29Z]
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three

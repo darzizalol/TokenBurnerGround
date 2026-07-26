@@ -11,33 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Nil-coalescing operator: `a ?? b` [claimed 2026-07-26T20:18:46Z]
-
-Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
-is `nil`, evaluates and returns `b`; otherwise returns `a` without
-evaluating `b` (short-circuits like `and`/`or`, not a strict function
-call). Note this checks specifically for `nil`, not general falsiness —
-`0 ?? 5` is `0` and `"" ?? "x"` is `""`, unlike `or` which would fall
-through on falsy-but-non-nil values. Add a `QUESTION_QUESTION` token
-lexed via the existing two-char lookahead pattern (alongside `&&`/`||`),
-and give it a precedence tier — bind it looser than `or` (matching the
-common "coalesce as a final fallback" convention: `a or b ?? c` parses as
-`(a or b) ?? c`) but tighter than the ternary `cond ? then : else`.
-
-Acceptance criteria:
-- `nil ?? 5` is `5`; `1 ?? 5` is `1`; `0 ?? 5` is `0`; `"" ?? "x"` is `""`.
-- Right-hand side is not evaluated when the left side is non-`nil`: e.g.
-  `1 ?? (1 / 0)` does not raise (division never runs).
-- Right-associative chaining: `nil ?? nil ?? 3` is `3`.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
-`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `gcd` and `lcm` for numbers
+## 1. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -64,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `mean` and `median` for lists of numbers
+## 2. Standard library: `mean` and `median` for lists of numbers
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the
@@ -91,7 +65,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Spread arguments in function calls: `f(...args)`
+## 3. Spread arguments in function calls: `f(...args)`
 
 Build: let `...expr` appear as a call argument, splicing `expr`'s list
 elements into the positional argument list at that point — the call-site
@@ -135,7 +109,7 @@ Likely files: `cinder/parser.py`, `cinder/interpreter.py`,
 
 ---
 
-## 5. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 4. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -159,7 +133,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `shuffle` and `sample` for lists
+## 5. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -190,7 +164,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+## 6. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via a base-operator lookup table at
@@ -230,7 +204,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: `map_keys` for maps
+## 7. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -258,7 +232,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `title` for strings
+## 8. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -285,7 +259,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `trim_start` and `trim_end` for strings
+## 9. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -308,7 +282,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `sign` for numbers
+## 10. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -328,7 +302,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `random_int` and `random_choice`
+## 11. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -1062,6 +1036,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   both matching `merge`/`invert`'s style and silently skipping
   keys absent from the map. Clean first pass, no bounces (1095 tests
   passing, up from 1079).
+- **Nil-coalescing operator: `a ?? b`** — merged 2026-07-26T20:26:00Z via
+  PR #97 (`feat/20260726-nil-coalescing`). Added a `QUESTION_QUESTION`
+  token via the lexer's existing two-char lookahead pattern, a new
+  `_nullish` precedence tier between `_ternary` and `_or` (binds looser
+  than `or`, tighter than the ternary), and an `is not None` check (not
+  truthiness) in `_evaluate_logical`, so `0 ?? 5` is `0` and `false ?? 5`
+  is `false`. Right-associative and short-circuiting like `and`/`or`.
+  Clean first pass, no bounces (1108 tests passing, up from 1095).
 
 ## Graveyard
 

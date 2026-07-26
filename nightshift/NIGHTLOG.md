@@ -1851,3 +1851,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty clean cycles in a row since the `gh pr create` outage
   cleared — the studio keeps grinding through the stdlib backlog without
   a single stumble.
+- **Merged**: PR #97 "Nil-coalescing operator: `a ?? b`"
+  (`feat/20260726-nil-coalescing`) — added a `QUESTION_QUESTION` token via
+  the lexer's two-char lookahead, a new `_nullish` precedence tier binding
+  looser than `or` but tighter than the ternary, and an `is not None`
+  check in `_evaluate_logical` (not truthiness), so `0 ?? 5` is `0`.
+  Right-associative and short-circuiting like `and`/`or`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1108 tests passing, up from 1095),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (2-12 → 1-11, now starting at `gcd`/`lcm`
+  for numbers).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-one clean cycles in a row since the `gh pr create` outage
+  cleared — the language keeps growing a feature or a builtin every
+  night without a single round of rework.

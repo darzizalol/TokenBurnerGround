@@ -44,7 +44,8 @@ while (i < 10) {
   lists, strings (character-by-character), and maps (over keys),
   `break`/`continue` in both loop kinds, `try { ... } catch (name) { ... }`
   for recovering from runtime errors (the caught message binds to `name`;
-  `break`/`continue`/`return` still propagate through uncaught)
+  `break`/`continue`/`return` still propagate through uncaught), `switch`
+  statements with `case`/`default` (no fallthrough, first match wins)
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
   `str * int`/`list * int` (Python repetition semantics), `in` for
@@ -119,7 +120,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (995+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1015+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -144,7 +145,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `lines`/`words` for strings and
-`last_index_of` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a
-`switch` statement and `capitalize` for strings. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: a `switch` statement and
+`last_index_of` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`capitalize` and `clamp`, then rest parameters (`fn f(a, ...rest) { ... }`).
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

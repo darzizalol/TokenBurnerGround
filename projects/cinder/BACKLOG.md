@@ -68,10 +68,9 @@ expressions (`FnExpr`) to accept an optional trailing rest parameter —
 `fn f(a, b, ...rest) { ... }` — that collects every positional call
 argument beyond the named parameters into a `list` bound to `rest` inside
 the function body. This is a language-level grammar/evaluator feature (the
-second non-stdlib task in this backlog, alongside `switch` and the spread
-operator), not a builtin. The spread-operator task (PR #86) already merged,
-so reuse its ellipsis/spread token from `cinder/tokens.py` rather than
-adding a second one. The rest
+rest are all stdlib builtins), not a builtin. The spread-operator task
+(PR #86) already merged, so reuse its ellipsis/spread token from
+`cinder/tokens.py` rather than adding a second one. The rest
 parameter, if present, must be the *last* parameter; it may follow default
 parameters (PR #61) — e.g. `fn f(a, b = 1, ...rest) { ... }` is valid, and
 `rest` still collects anything beyond `a`/`b`. `call_value`'s arity check
@@ -181,6 +180,64 @@ Acceptance criteria:
 - `pluck(5, "x")` raises `CinderRuntimeError` with line/column (non-list
   first argument).
 - Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 7. Standard library: `pick` and `omit` for maps
+
+Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
+`pick` returns a new map containing only the entries whose key appears in
+the `keys` list (in `keys`'s order, not the source map's), `omit` returns a
+new map with every entry *except* those whose key appears in `keys`
+(preserving the source map's original key order). Both non-mutating,
+matching `merge`/`invert`'s style. Complements `keys`/`values`/`items` by
+letting callers select a subset instead of everything.
+
+Acceptance criteria:
+- `pick({"a": 1, "b": 2, "c": 3}, ["a", "c"])` is `{"a": 1, "c": 3}`.
+- `pick({"a": 1, "b": 2, "c": 3}, ["c", "a"])` is `{"c": 3, "a": 1}` (keys
+  list controls result order).
+- `omit({"a": 1, "b": 2, "c": 3}, ["b"])` is `{"a": 1, "c": 3}` (source map
+  order preserved).
+- A key in `keys` that isn't in `map` is silently skipped by both (no
+  error) — add a regression test pinning this.
+- `pick(map, [])` is `{}`; `omit(map, [])` is a copy of `map` unchanged.
+- Non-map first argument raises `CinderRuntimeError` with line/column, for
+  both builtins.
+- Non-list `keys` argument raises `CinderRuntimeError` with line/column,
+  for both builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `gcd` and `lcm` for numbers
+
+Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
+to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
+single-expression math-builtin style (PR #48). Both arguments must be
+`int` (unlike `clamp`/`min`/`max`, no `float` support — `gcd`/`lcm` are
+integer-only concepts, matching Python's own `math.gcd`/`math.lcm` type
+restriction).
+
+Acceptance criteria:
+- `gcd(12, 18)` is `6`; `lcm(4, 6)` is `12`.
+- `gcd(0, 5)` is `5` (matches `math.gcd`); `gcd(0, 0)` is `0`.
+- `gcd(-12, 18)` is `6` (sign ignored, matches `math.gcd`).
+- A `float` argument (either position) raises `CinderRuntimeError` with
+  line/column, for both builtins — add a regression test pinning this,
+  since it's a deliberate divergence from `clamp`'s mixed-numeric
+  handling.
+- A non-numeric argument raises `CinderRuntimeError` with line/column, for
+  both builtins.
+- Wrong arity raises `CinderRuntimeError` with line/column, for both
+  builtins.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.

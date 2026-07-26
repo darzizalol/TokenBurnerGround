@@ -1057,6 +1057,40 @@ class TestMax(unittest.TestCase):
             run('max(1, "x");')
 
 
+class TestClamp(unittest.TestCase):
+    def test_clamp_already_in_range(self):
+        self.assertEqual(run("let result = clamp(5, 0, 10);").get("result"), 5)
+
+    def test_clamp_below_range(self):
+        self.assertEqual(run("let result = clamp(-5, 0, 10);").get("result"), 0)
+
+    def test_clamp_above_range(self):
+        self.assertEqual(run("let result = clamp(15, 0, 10);").get("result"), 10)
+
+    def test_clamp_mixed_int_and_float(self):
+        self.assertEqual(run("let result = clamp(2.5, 0, 2);").get("result"), 2)
+
+    def test_clamp_lo_greater_than_hi_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("clamp(5, 10, 0);")
+
+    def test_clamp_non_numeric_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('clamp("x", 0, 10);')
+
+    def test_clamp_non_numeric_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('clamp(5, "x", 10);')
+
+    def test_clamp_non_numeric_third_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('clamp(5, 0, "x");')
+
+    def test_clamp_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("clamp(5, 0);")
+
+
 class TestRound(unittest.TestCase):
     def test_round_ties_to_even(self):
         self.assertEqual(run("let result = round(2.5);").get("result"), 2)

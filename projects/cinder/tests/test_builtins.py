@@ -1,5 +1,5 @@
 """Tests for cinder.builtins: print, len, type, str, int, float, ord, chr, push, pop,
-insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, join,
+insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
@@ -540,6 +540,50 @@ class TestSplit(unittest.TestCase):
     def test_split_on_empty_separator_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):
             run('split("a,b,c", "");')
+
+
+class TestLines(unittest.TestCase):
+    def test_lines_splits_on_newline(self):
+        env = run('let result = lines("a\\nb\\nc");')
+        self.assertEqual(env.get("result"), ["a", "b", "c"])
+
+    def test_lines_preserves_empty_line(self):
+        env = run('let result = lines("a\\n\\nb");')
+        self.assertEqual(env.get("result"), ["a", "", "b"])
+
+    def test_lines_of_empty_string_is_single_empty_string(self):
+        env = run('let result = lines("");')
+        self.assertEqual(env.get("result"), [""])
+
+    def test_lines_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("lines(1);")
+
+    def test_lines_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('lines("a", "b");')
+
+
+class TestWords(unittest.TestCase):
+    def test_words_splits_on_whitespace_runs(self):
+        env = run('let result = words("  a   b\\tc\\n");')
+        self.assertEqual(env.get("result"), ["a", "b", "c"])
+
+    def test_words_of_empty_string_is_empty_list(self):
+        env = run('let result = words("");')
+        self.assertEqual(env.get("result"), [])
+
+    def test_words_of_all_whitespace_is_empty_list(self):
+        env = run('let result = words("   ");')
+        self.assertEqual(env.get("result"), [])
+
+    def test_words_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("words(1);")
+
+    def test_words_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('words("a", "b");')
 
 
 class TestJoin(unittest.TestCase):

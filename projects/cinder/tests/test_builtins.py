@@ -393,6 +393,40 @@ class TestGet(unittest.TestCase):
             run('get({"a": 1}, "a", 0, 1);')
 
 
+class TestPluck(unittest.TestCase):
+    def test_pluck_extracts_field_from_each_map(self):
+        env = run(
+            'let result = pluck([{"name": "a", "age": 1}, {"name": "b", "age": 2}], "name");'
+        )
+        self.assertEqual(env.get("result"), ["a", "b"])
+
+    def test_pluck_on_empty_list_returns_empty_list(self):
+        env = run('let result = pluck([], "x");')
+        self.assertEqual(env.get("result"), [])
+
+    def test_pluck_missing_key_on_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pluck([{"name": "a"}, {"age": 2}], "name");')
+
+    def test_pluck_non_map_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pluck([{"name": "a"}, 5], "name");')
+
+    def test_pluck_with_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pluck([{"name": "a"}], [1, 2]);')
+
+    def test_pluck_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pluck(5, "name");')
+
+    def test_pluck_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pluck([{"name": "a"}]);')
+        with self.assertRaises(CinderRuntimeError):
+            run('pluck([{"name": "a"}], "name", "extra");')
+
+
 class TestRemove(unittest.TestCase):
     def test_remove_mutates_original_map_in_place(self):
         env = run('let m = {"a": 1, "b": 2}; remove(m, "a");')

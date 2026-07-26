@@ -262,6 +262,31 @@ def _get(arguments: list, line: int, column: int) -> object:
     return target[key]
 
 
+def _pluck(arguments: list, line: int, column: int) -> object:
+    _require_arity("pluck", arguments, 2, line, column)
+    items, key = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"pluck() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_valid_key(key):
+        raise CinderRuntimeError(
+            f"{type_name(key)} is not a valid map key", line, column
+        )
+    result: list = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise CinderRuntimeError(
+                f"pluck() requires a list of maps, got {type_name(item)}",
+                line, column,
+            )
+        if key not in item:
+            raise CinderRuntimeError(f"missing map key {key!r}", line, column)
+        result.append(item[key])
+    return result
+
+
 def _remove(arguments: list, line: int, column: int) -> object:
     _require_arity("remove", arguments, 2, line, column)
     target, key = arguments
@@ -1522,6 +1547,7 @@ _BUILTINS = {
     "values": _values,
     "items": _items,
     "get": _get,
+    "pluck": _pluck,
     "remove": _remove,
     "merge": _merge,
     "invert": _invert,

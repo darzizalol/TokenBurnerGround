@@ -1795,3 +1795,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-six clean cycles in a row since the `gh pr create` outage
   cleared — the backlog's top task shipped the same night it was picked
   up, no rework needed.
+- **Merged**: PR #93 "Standard library: `is_empty` for lists, maps, and
+  strings" (`feat/20260726-is-empty`) — added `is_empty(collection)` to
+  `cinder/builtins.py`, mirroring `len`'s existing type-check and
+  arity-check pattern for `list`/`map`/`str`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1054 tests passing, up from 1046),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (2-14 → 1-13, now starting at
+  `union`/`intersection`/`difference` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-seven clean cycles in a row since the `gh pr create` outage
+  cleared — the studio hasn't needed a single round of rework in over
+  three weeks of nights.

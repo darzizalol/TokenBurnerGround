@@ -11,28 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_empty` for lists, maps, and strings [claimed 2026-07-26T19:35:29Z]
-
-Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
-if `len(collection)` would be `0`, else `false`, accepting the same three
-types `len()` already does (`list`, `map`, `str`). Saves the common
-`len(x) == 0` idiom seen throughout example programs and tests, and reads
-more clearly at call sites (`if (is_empty(queue)) { ... }`).
-
-Acceptance criteria:
-- `is_empty([])` is `true`; `is_empty([1])` is `false`.
-- `is_empty({})` is `true`; `is_empty({"a": 1})` is `false`.
-- `is_empty("")` is `true`; `is_empty("x")` is `false`.
-- `is_empty(5)` raises `CinderRuntimeError` with line/column (unsupported
-  type, matching `len`'s existing type-check error).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `union`, `intersection`, `difference` for lists
+## 1. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -67,7 +46,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `pluck` for lists of maps
+## 2. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -95,7 +74,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `pick` and `omit` for maps
+## 3. Standard library: `pick` and `omit` for maps
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in
@@ -126,7 +105,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `gcd` and `lcm` for numbers
+## 4. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -153,7 +132,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `mean` and `median` for lists of numbers
+## 5. Standard library: `mean` and `median` for lists of numbers
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the
@@ -180,7 +159,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 6. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -204,7 +183,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `shuffle` and `sample` for lists
+## 7. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -235,7 +214,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Nil-coalescing operator: `a ?? b`
+## 8. Nil-coalescing operator: `a ?? b`
 
 Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
 is `nil`, evaluates and returns `b`; otherwise returns `a` without
@@ -261,7 +240,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 10. Standard library: `map_keys` for maps
+## 9. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -289,7 +268,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `title` for strings
+## 10. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -316,7 +295,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `trim_start` and `trim_end` for strings
+## 11. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -339,7 +318,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 13. Standard library: `sign` for numbers
+## 12. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -359,7 +338,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 14. Standard library: `random_int` and `random_choice`
+## 13. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -1066,6 +1045,11 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   case when `rest_param` is set, extra positional args collected into a
   list. Combines with default parameters; works for anonymous `fn(...)`
   too. Clean first pass, no bounces (1046 tests passing, up from 1038).
+- **Standard library: `is_empty` for lists, maps, and strings** — merged
+  2026-07-26T19:39:42Z via PR #93 (`feat/20260726-is-empty`). Added
+  `is_empty(collection)` to `cinder/builtins.py`, mirroring `len`'s
+  type-check and arity-check pattern for `list`/`map`/`str`. Clean first
+  pass, no bounces (1054 tests passing, up from 1046).
 
 ## Graveyard
 

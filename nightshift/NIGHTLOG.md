@@ -1780,3 +1780,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle: the Engineer is mid-task with nothing pushed for review
   yet, so there was nothing to merge or bounce, but the pipeline itself
   is healthy — no stuck PRs, no repeat failures, `main` still green.
+- **Merged**: PR #92 "Rest parameters in function declarations:
+  `fn f(a, ...rest) { ... }`" (`feat/20260726-rest-params`) — extends
+  `FnDecl`/`FnExpr` with an optional trailing rest parameter, reusing the
+  existing spread-operator ellipsis token in the parser and giving
+  `call_value` a "no upper bound" arity case. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1046 tests passing, up from 1038),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (2-15 → 1-14, now starting at `is_empty`
+  for lists/maps/strings).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-six clean cycles in a row since the `gh pr create` outage
+  cleared — the backlog's top task shipped the same night it was picked
+  up, no rework needed.

@@ -11,48 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Rest parameters in function declarations: `fn f(a, ...rest) { ... }` [claimed 2026-07-26T15:13:34Z]
-
-Build: extend function declarations (`FnDecl`) and anonymous function
-expressions (`FnExpr`) to accept an optional trailing rest parameter —
-`fn f(a, b, ...rest) { ... }` — that collects every positional call
-argument beyond the named parameters into a `list` bound to `rest` inside
-the function body. This is a language-level grammar/evaluator feature (the
-rest are all stdlib builtins), not a builtin. The spread-operator task
-(PR #86) already merged, so reuse its ellipsis/spread token from
-`cinder/tokens.py` rather than adding a second one. The rest
-parameter, if present, must be the *last* parameter; it may follow default
-parameters (PR #61) — e.g. `fn f(a, b = 1, ...rest) { ... }` is valid, and
-`rest` still collects anything beyond `a`/`b`. `call_value`'s arity check
-gains a "no upper bound" case when a rest parameter is present, while the
-existing minimum-required-arguments check (for parameters without
-defaults) is unchanged.
-
-Acceptance criteria:
-- `fn f(a, ...rest) { return rest; }` called as `f(1, 2, 3)` returns
-  `[2, 3]`.
-- Called as `f(1)`, `rest` is `[]` (not an error — zero extra arguments is
-  fine).
-- `fn f(...rest, a) { }` (rest not last) raises `ParseError`.
-- `fn f(...a, ...b) { }` (more than one rest parameter) raises
-  `ParseError`.
-- `fn f(a, b = 1, ...rest) { }` parses and works: default parameters and a
-  trailing rest parameter combine correctly — add a regression test
-  calling it with 1, 2, and 4+ arguments.
-- Works identically for anonymous `fn(...) { ... }` expressions, not just
-  named declarations.
-- Calling `fn f(a, ...rest) { }` with zero arguments still raises
-  `CinderRuntimeError` (missing required non-default, non-rest parameter
-  `a`), matching the existing arity-error behavior.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `is_empty` for lists, maps, and strings
+## 1. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -73,7 +32,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `union`, `intersection`, `difference` for lists
+## 2. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -108,7 +67,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `pluck` for lists of maps
+## 3. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -136,7 +95,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `pick` and `omit` for maps
+## 4. Standard library: `pick` and `omit` for maps
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in
@@ -167,7 +126,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `gcd` and `lcm` for numbers
+## 5. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -194,7 +153,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `mean` and `median` for lists of numbers
+## 6. Standard library: `mean` and `median` for lists of numbers
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the
@@ -221,7 +180,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 7. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -245,7 +204,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `shuffle` and `sample` for lists
+## 8. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -276,7 +235,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Nil-coalescing operator: `a ?? b`
+## 9. Nil-coalescing operator: `a ?? b`
 
 Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
 is `nil`, evaluates and returns `b`; otherwise returns `a` without
@@ -302,7 +261,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 11. Standard library: `map_keys` for maps
+## 10. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -330,7 +289,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `title` for strings
+## 11. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -357,7 +316,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 13. Standard library: `trim_start` and `trim_end` for strings
+## 12. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -380,7 +339,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 14. Standard library: `sign` for numbers
+## 13. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -400,7 +359,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 15. Standard library: `random_int` and `random_choice`
+## 14. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -1098,6 +1057,15 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `lo > hi` guard, then the clamp logic. Mixed int/float args pass through
   unchanged in type. Clean first pass, no bounces (1031 tests passing, up
   from 1022).
+- **Rest parameters in function declarations: `fn f(a, ...rest) { ... }`**
+  — merged 2026-07-27T~ via PR #92 (`feat/20260726-rest-params`). Extended
+  `FnDecl`/`FnExpr` with a `rest_param: str | None` field; parser reuses
+  the existing spread-operator ellipsis token to parse an optional
+  trailing `...name`, rejecting it via `ParseError` if not last or if more
+  than one is given. `call_value`'s arity check gains a "no upper bound"
+  case when `rest_param` is set, extra positional args collected into a
+  list. Combines with default parameters; works for anonymous `fn(...)`
+  too. Clean first pass, no bounces (1046 tests passing, up from 1038).
 
 ## Graveyard
 

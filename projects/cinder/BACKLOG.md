@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `clamp` for numbers
+## 1. Standard library: `clamp` for numbers [claimed 2026-07-26T15:02:47Z]
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s

@@ -2,7 +2,7 @@
 
 `create_global_environment` returns a fresh `Environment` with `print`,
 `len`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
-`keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `join`, `find`,
+`keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `lines`, `words`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sum`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
@@ -351,6 +351,26 @@ def _split(arguments: list, line: int, column: int) -> object:
     if sep == "":
         raise CinderRuntimeError("split() separator must not be empty", line, column)
     return value.split(sep)
+
+
+def _lines(arguments: list, line: int, column: int) -> object:
+    _require_arity("lines", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"lines() requires a string, got {type_name(value)}", line, column
+        )
+    return value.split("\n")
+
+
+def _words(arguments: list, line: int, column: int) -> object:
+    _require_arity("words", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"words() requires a string, got {type_name(value)}", line, column
+        )
+    return value.split()
 
 
 def _join(arguments: list, line: int, column: int) -> object:
@@ -1410,6 +1430,8 @@ _BUILTINS = {
     "lower": _lower,
     "trim": _trim,
     "split": _split,
+    "lines": _lines,
+    "words": _words,
     "join": _join,
     "find": _find,
     "starts_with": _starts_with,

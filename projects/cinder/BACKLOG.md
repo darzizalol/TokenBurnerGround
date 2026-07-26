@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `capitalize` for strings
+## 1. Standard library: `capitalize` for strings [claimed 2026-07-26T14:52:40Z]
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately

@@ -1680,3 +1680,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Nineteen clean cycles in a row since the `gh pr create` outage cleared —
   the night shift is running like clockwork tonight.
+- **Merged**: PR #86 "Spread operator in list literals:
+  `[...list1, x, ...list2]`" (`feat/20260726-spread-list`) — added a
+  `DOT_DOT_DOT` token and extended list-literal parsing/evaluation to splice
+  `...expr` elements into the result, raising `CinderRuntimeError` with
+  line/column for a non-list spread target; map literals explicitly out of
+  scope, pinned by a regression test. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (979 tests passing, up from 971), both posted after the sole
+  commit — clean squash merge, branch deleted, worktree removed first.
+  BACKLOG.md task 1 marked done under `## Done` and remaining tasks
+  renumbered (1-10 → 1-9, now starting at `last_index_of` for lists); also
+  updated task 6 (rest parameters)'s note that the spread-operator token it
+  depends on has now actually merged.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty clean cycles in a row since the `gh pr create` outage cleared — the
+  backlog is healthy and the night is going smoothly.

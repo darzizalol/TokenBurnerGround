@@ -26,6 +26,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     ReturnStmt,
     SliceExpr,
+    Spread,
     Ternary,
     TryStmt,
     Unary,
@@ -52,6 +53,8 @@ def shape(node):
         return ("Grouping", shape(node.expression))
     if isinstance(node, Call):
         return ("Call", shape(node.callee), [shape(a) for a in node.arguments])
+    if isinstance(node, Spread):
+        return ("Spread", shape(node.expression))
     if isinstance(node, ListLiteral):
         return ("ListLiteral", [shape(e) for e in node.elements])
     if isinstance(node, MapLiteral):
@@ -479,6 +482,36 @@ class TestListsAndMaps(unittest.TestCase):
 
     def test_empty_list_literal(self):
         self.assertEqual(shape(parse("[]")), ("ListLiteral", []))
+
+    def test_list_literal_with_spread(self):
+        self.assertEqual(
+            shape(parse("[...[1, 2], 3]")),
+            (
+                "ListLiteral",
+                [
+                    ("Spread", ("ListLiteral", [("Literal", 1), ("Literal", 2)])),
+                    ("Literal", 3),
+                ],
+            ),
+        )
+
+    def test_list_literal_multiple_spreads(self):
+        self.assertEqual(
+            shape(parse("[0, ...[1, 2], 3, ...[4, 5]]")),
+            (
+                "ListLiteral",
+                [
+                    ("Literal", 0),
+                    ("Spread", ("ListLiteral", [("Literal", 1), ("Literal", 2)])),
+                    ("Literal", 3),
+                    ("Spread", ("ListLiteral", [("Literal", 4), ("Literal", 5)])),
+                ],
+            ),
+        )
+
+    def test_bare_spread_in_map_literal_raises(self):
+        with self.assertRaises(ParseError):
+            parse("{...m}")
 
     def test_map_literal(self):
         self.assertEqual(

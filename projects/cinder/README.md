@@ -61,7 +61,9 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
   `list[start:end]`/`string[start:end]` (Python-style, out-of-range bounds
-  clamp, not assignable)
+  clamp, not assignable); list literals also accept spread elements
+  (`[...list1, x, ...list2]`), splicing each spread list's elements in place
+  (map literals don't support spread)
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),

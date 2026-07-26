@@ -67,6 +67,16 @@ class Assign:
 
 
 @dataclass(frozen=True)
+class Spread:
+    """A `...expr` element inside a list literal; `ListLiteral.elements` mixes
+    these with plain `Expr`s."""
+
+    expression: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class ListLiteral:
     elements: list
     line: int

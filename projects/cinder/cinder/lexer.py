@@ -12,7 +12,6 @@ _SIMPLE_TOKENS = {
     "]": TokenType.RBRACKET,
     ",": TokenType.COMMA,
     ";": TokenType.SEMICOLON,
-    ".": TokenType.DOT,
     ":": TokenType.COLON,
     "?": TokenType.QUESTION,
     "&": TokenType.AMP,
@@ -69,6 +68,8 @@ class Lexer:
                 self._number(char, start_line, start_col)
             elif char.isalpha() or char == "_":
                 self._identifier(char, start_line, start_col)
+            elif char == ".":
+                self._dot(start_line, start_col)
             elif char in _SIMPLE_TOKENS:
                 self.tokens.append(
                     Token(_SIMPLE_TOKENS[char], char, None, start_line, start_col)
@@ -316,6 +317,16 @@ class Lexer:
             self.tokens.append(Token(TokenType.LSHIFT, "<<", None, start_line, start_col))
         else:
             self.tokens.append(Token(TokenType.LT, "<", None, start_line, start_col))
+
+    def _dot(self, start_line: int, start_col: int):
+        if self._peek() == "." and self._peek_next() == ".":
+            self._advance()
+            self._advance()
+            self.tokens.append(
+                Token(TokenType.DOT_DOT_DOT, "...", None, start_line, start_col)
+            )
+        else:
+            self.tokens.append(Token(TokenType.DOT, ".", None, start_line, start_col))
 
     def _gt(self, start_line: int, start_col: int):
         if self._match("="):

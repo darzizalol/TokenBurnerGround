@@ -71,6 +71,7 @@ class TokenType(Enum):
     COMMA = auto()
     SEMICOLON = auto()
     DOT = auto()
+    DOT_DOT_DOT = auto()
     COLON = auto()
     QUESTION = auto()
 

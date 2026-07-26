@@ -1836,3 +1836,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-nine clean cycles in a row since the `gh pr create` outage
   cleared — another small builtin shipped clean, no drama tonight.
+- **Merged**: PR #96 "Standard library: `pick` and `omit` for maps"
+  (`feat/20260726-pick-omit`) — added `pick(map, keys)`/`omit(map, keys)`
+  to `cinder/builtins.py`, `pick` iterating `keys` for order control and
+  `omit` comprehending over `target.items()` to preserve source order,
+  both matching `merge`/`invert`'s style. Reviewer gave `VERDICT: LGTM`,
+  QA gave `QA: PASS` (1095 tests passing, up from 1079), both posted
+  after the sole commit — clean squash merge, branch deleted, worktree
+  removed first. BACKLOG.md task 1 marked done under `## Done` and
+  remaining tasks renumbered (2-12 → 1-11, now starting at `gcd`/`lcm`
+  for numbers).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty clean cycles in a row since the `gh pr create` outage
+  cleared — the studio keeps grinding through the stdlib backlog without
+  a single stumble.

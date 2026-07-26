@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pick` and `omit` for maps [claimed 2026-07-26T20:06:20Z]
-
-Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
-`pick` returns a new map containing only the entries whose key appears in
-the `keys` list (in `keys`'s order, not the source map's), `omit` returns a
-new map with every entry *except* those whose key appears in `keys`
-(preserving the source map's original key order). Both non-mutating,
-matching `merge`/`invert`'s style. Complements `keys`/`values`/`items` by
-letting callers select a subset instead of everything.
-
-Acceptance criteria:
-- `pick({"a": 1, "b": 2, "c": 3}, ["a", "c"])` is `{"a": 1, "c": 3}`.
-- `pick({"a": 1, "b": 2, "c": 3}, ["c", "a"])` is `{"c": 3, "a": 1}` (keys
-  list controls result order).
-- `omit({"a": 1, "b": 2, "c": 3}, ["b"])` is `{"a": 1, "c": 3}` (source map
-  order preserved).
-- A key in `keys` that isn't in `map` is silently skipped by both (no
-  error) — add a regression test pinning this.
-- `pick(map, [])` is `{}`; `omit(map, [])` is a copy of `map` unchanged.
-- Non-map first argument raises `CinderRuntimeError` with line/column, for
-  both builtins.
-- Non-list `keys` argument raises `CinderRuntimeError` with line/column,
-  for both builtins.
-- Wrong arity raises `CinderRuntimeError` with line/column, for both
-  builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `gcd` and `lcm` for numbers
+## 1. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -69,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `mean` and `median` for lists of numbers
+## 2. Standard library: `mean` and `median` for lists of numbers
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the
@@ -96,7 +65,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 3. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -120,7 +89,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `shuffle` and `sample` for lists
+## 4. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -151,7 +120,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Nil-coalescing operator: `a ?? b`
+## 5. Nil-coalescing operator: `a ?? b`
 
 Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
 is `nil`, evaluates and returns `b`; otherwise returns `a` without
@@ -177,7 +146,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 7. Spread arguments in function calls: `f(...args)`
+## 6. Spread arguments in function calls: `f(...args)`
 
 Build: let `...expr` appear as a call argument, splicing `expr`'s list
 elements into the positional argument list at that point — the call-site
@@ -221,7 +190,7 @@ Likely files: `cinder/parser.py`, `cinder/interpreter.py`,
 
 ---
 
-## 8. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+## 7. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via a base-operator lookup table at
@@ -261,7 +230,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Standard library: `map_keys` for maps
+## 8. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -289,7 +258,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `title` for strings
+## 9. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -316,7 +285,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `trim_start` and `trim_end` for strings
+## 10. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -339,7 +308,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `sign` for numbers
+## 11. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -359,7 +328,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 13. Standard library: `random_int` and `random_choice`
+## 12. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -1085,6 +1054,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   matching map-index's raise-on-missing-key behavior (not `get`'s
   default-fill). Clean first pass, no bounces (1079 tests passing, up
   from 1072).
+- **Standard library: `pick` and `omit` for maps** — merged
+  2026-07-27T~ via PR #96 (`feat/20260726-pick-omit`). Added
+  `pick(map, keys)`/`omit(map, keys)` to `cinder/builtins.py`; `pick`
+  iterates `keys` (order-controlling, guarded by `_is_valid_key`) while
+  `omit` comprehends over `target.items()` to preserve source order,
+  both matching `merge`/`invert`'s style and silently skipping
+  keys absent from the map. Clean first pass, no bounces (1095 tests
+  passing, up from 1079).
 
 ## Graveyard
 

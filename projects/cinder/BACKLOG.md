@@ -11,35 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pluck` for lists of maps [claimed 2026-07-26T19:54:04Z]
-
-Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
-maps, returns a new list of `map[key]` for each element in order, the
-common "extract one field from a list of records" idiom (saves a
-`map(list, fn(m) { m[key] })` round-trip, the same ergonomic motivation as
-`count_by` over `group_by`+`map_values`). `key` must be a valid map key
-(reuse `_is_valid_key`, matching `get`'s key validation).
-
-Acceptance criteria:
-- `pluck([{"name": "a", "age": 1}, {"name": "b", "age": 2}], "name")` is
-  `["a", "b"]`.
-- `pluck([], "x")` is `[]`.
-- A missing key on any element raises `CinderRuntimeError` with
-  line/column (no silent `nil` fill-in — matches map-index's existing
-  missing-key error rather than `get`'s default-value behavior).
-- A non-map element raises `CinderRuntimeError` with line/column.
-- An unhashable `key` argument raises `CinderRuntimeError` with
-  line/column, matching `get`.
-- `pluck(5, "x")` raises `CinderRuntimeError` with line/column (non-list
-  first argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `pick` and `omit` for maps
+## 1. Standard library: `pick` and `omit` for maps
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in
@@ -70,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `gcd` and `lcm` for numbers
+## 2. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -97,7 +69,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `mean` and `median` for lists of numbers
+## 3. Standard library: `mean` and `median` for lists of numbers
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the
@@ -124,7 +96,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 4. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -148,7 +120,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `shuffle` and `sample` for lists
+## 5. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -179,7 +151,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Nil-coalescing operator: `a ?? b`
+## 6. Nil-coalescing operator: `a ?? b`
 
 Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
 is `nil`, evaluates and returns `b`; otherwise returns `a` without
@@ -205,7 +177,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 8. Standard library: `map_keys` for maps
+## 7. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -233,7 +205,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `title` for strings
+## 8. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -260,7 +232,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `trim_start` and `trim_end` for strings
+## 9. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -283,7 +255,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `sign` for numbers
+## 10. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -303,7 +275,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `random_int` and `random_choice`
+## 11. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -1023,6 +995,12 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   unhashable elements) reused across all three, plus a `_require_two_lists`
   helper consolidating arity/type validation. First-list order preserved.
   Clean first pass, no bounces (1072 tests passing, up from 1054).
+- **Standard library: `pluck` for lists of maps** — merged 2026-07-26T19:59:50Z
+  via PR #95 (`feat/20260726-pluck`). Added `pluck(list, key)` to
+  `cinder/builtins.py`, reusing `_is_valid_key` for key validation and
+  matching map-index's raise-on-missing-key behavior (not `get`'s
+  default-fill). Clean first pass, no bounces (1079 tests passing, up
+  from 1072).
 
 ## Graveyard
 

@@ -1823,3 +1823,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Twenty-eight clean cycles in a row since the `gh pr create` outage
   cleared — a smooth, uneventful night for the studio.
+- **Merged**: PR #95 "Standard library: `pluck` for lists of maps"
+  (`feat/20260726-pluck`) — added `pluck(list, key)` to
+  `cinder/builtins.py`, reusing `_is_valid_key` for key validation and
+  matching map-index's raise-on-missing-key behavior. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1079 tests passing, up from 1072),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (2-12 → 1-11, now starting at `pick`/
+  `omit` for maps).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-nine clean cycles in a row since the `gh pr create` outage
+  cleared — another small builtin shipped clean, no drama tonight.

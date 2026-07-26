@@ -11,42 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `take_while` and `drop_while` for lists [claimed 2026-07-25T20:27:09Z]
-
-Build: add `take_while(list, fn)` and `drop_while(list, fn)` to
-`cinder/builtins.py`, using the shared `call_value`/`is_truthy` helpers
-(same pattern as `partition`/`find_index`). `take_while` returns a new list
-of the leading elements for which `fn(element)` is truthy, stopping at the
-first falsy result (does **not** scan the rest of the list looking for more
-truthy elements — a single break in the run ends it, like `itertools.takewhile`).
-`drop_while` is the mirror: returns a new list skipping that same leading
-truthy run, keeping every element from the first falsy one onward. Both
-non-mutating, complementing the existing bound `take`/`drop` (which cut by
-count, not by predicate).
-
-Acceptance criteria:
-- `take_while([1, 2, 3, 4, 1], fn(n) { n < 3 })` is `[1, 2]` (stops at the
-  first falsy element, `3`; does not resume after it even though a later
-  element, `1`, is also `< 3`).
-- `drop_while([1, 2, 3, 4, 1], fn(n) { n < 3 })` is `[3, 4, 1]` (mirror of
-  the above — the trailing `1` is kept, not dropped, since it comes after
-  the first falsy element).
-- `take_while([1, 2], fn(n) { n > 10 })` is `[]`; `drop_while([1, 2], fn(n)
-  { n > 10 })` is `[1, 2]` (no element satisfies the predicate).
-- `take_while([], fn(n) { n })` is `[]`; `drop_while([], fn(n) { n })` is
-  `[]`.
-- `take_while(5, fn(n) { n })` / `drop_while(5, fn(n) { n })` raise
-  `CinderRuntimeError` with line/column (non-list first argument).
-- `take_while([1], 5)` / `drop_while([1], 5)` raise `CinderRuntimeError`
-  with line/column (non-callable second argument).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Spread operator in list literals: `[...list1, x, ...list2]`
+## 1. Spread operator in list literals: `[...list1, x, ...list2]`
 
 Build: extend list-literal parsing to accept a `...expr` element (reusing the
 existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't
@@ -77,9 +42,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/tokens.py`, `cinder/lexer.py`,
 
 ---
 
----
-
-## 3. Standard library: `lines` and `words` for strings
+## 2. Standard library: `lines` and `words` for strings
 
 Build: add `lines(s)` and `words(s)` to `cinder/builtins.py`, following
 `split`/`trim`'s single-`str`-argument style. `lines(s)` splits `s` on `\n`
@@ -114,7 +77,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `last_index_of` for lists
+## 3. Standard library: `last_index_of` for lists
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning
@@ -138,7 +101,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. `switch` statement
+## 4. `switch` statement
 
 Build: add a `switch (expr) { case val1: { stmt* } case val2: { stmt* }
 default: { stmt* } }` statement — a language-level grammar feature (new
@@ -184,7 +147,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py` (keyword table),
 
 ---
 
-## 6. Standard library: `capitalize` for strings
+## 5. Standard library: `capitalize` for strings
 
 Build: add `capitalize(s)` to `cinder/builtins.py` — uppercases the first
 character of `s` and leaves the rest of the string unchanged (deliberately
@@ -210,7 +173,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `clamp` for numbers
+## 6. Standard library: `clamp` for numbers
 
 Build: add `clamp(n, lo, hi)` to `cinder/builtins.py` — returns `lo` if
 `n < lo`, `hi` if `n > hi`, else `n` unchanged, following `abs`/`round`'s
@@ -234,7 +197,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
+## 7. Rest parameters in function declarations: `fn f(a, ...rest) { ... }`
 
 Build: extend function declarations (`FnDecl`) and anonymous function
 expressions (`FnExpr`) to accept an optional trailing rest parameter —
@@ -242,7 +205,7 @@ expressions (`FnExpr`) to accept an optional trailing rest parameter —
 argument beyond the named parameters into a `list` bound to `rest` inside
 the function body. This is a language-level grammar/evaluator feature (the
 second non-stdlib task in this backlog, alongside `switch` and the spread
-operator), not a builtin. If task 2 (spread operator in list literals) has
+operator), not a builtin. If task 1 (spread operator in list literals) has
 already merged, reuse its ellipsis/spread token from `cinder/tokens.py`
 rather than adding a second one; otherwise add the token here. The rest
 parameter, if present, must be the *last* parameter; it may follow default
@@ -276,7 +239,7 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Standard library: `is_empty` for lists, maps, and strings
+## 8. Standard library: `is_empty` for lists, maps, and strings
 
 Build: add `is_empty(collection)` to `cinder/builtins.py` — returns `true`
 if `len(collection)` would be `0`, else `false`, accepting the same three
@@ -297,7 +260,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `union`, `intersection`, `difference` for lists
+## 9. Standard library: `union`, `intersection`, `difference` for lists
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as
@@ -332,7 +295,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `pluck` for lists of maps
+## 10. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -977,6 +940,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `str.removeprefix`/`removesuffix` to `cinder/builtins.py`, matching
   `starts_with`/`ends_with`'s arity/error-message/registration shape.
   Clean first pass, no bounces (955 tests passing, up from 943).
+- **Standard library: `take_while` and `drop_while` for lists** — merged
+  2026-07-25T20:31:59Z via PR #85 (`feat/20260725-take-while-drop-while`).
+  Added `take_while(list, fn)`/`drop_while(list, fn)` to
+  `cinder/builtins.py`, following `partition`/`find_index`'s
+  `call_value`/`is_truthy` pattern; both stop at the first falsy result
+  rather than scanning past it, matching `itertools.takewhile`/`dropwhile`.
+  Clean first pass, no bounces (971 tests passing, up from 955).
 
 ## Graveyard
 

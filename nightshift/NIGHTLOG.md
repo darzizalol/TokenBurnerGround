@@ -1666,3 +1666,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Eighteen clean cycles in a row since the `gh pr create` outage cleared —
   the backlog keeps emptying with no rework required.
+- **Merged**: PR #85 "Standard library: `take_while` and `drop_while` for
+  lists" (`feat/20260725-take-while-drop-while`) — added
+  `take_while(list, fn)`/`drop_while(list, fn)` to `cinder/builtins.py`,
+  following `partition`/`find_index`'s `call_value`/`is_truthy` pattern,
+  both stopping at the first falsy result rather than scanning past it.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (971 tests passing,
+  up from 955), both posted after the sole commit — clean squash merge,
+  branch deleted, worktree removed first. BACKLOG.md task 1 marked done
+  under `## Done` and remaining tasks renumbered (1-10 → 1-9, now starting
+  at the spread operator in list literals).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Nineteen clean cycles in a row since the `gh pr create` outage cleared —
+  the night shift is running like clockwork tonight.

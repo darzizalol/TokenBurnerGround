@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `switch` statement
+## 1. `switch` statement [claimed 2026-07-26T14:36:49Z]
 
 Build: add a `switch (expr) { case val1: { stmt* } case val2: { stmt* }
 default: { stmt* } }` statement — a language-level grammar feature (new

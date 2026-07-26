@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `union`, `intersection`, `difference` for lists
+## 1. Standard library: `union`, `intersection`, `difference` for lists [claimed 2026-07-26T19:43:58Z]
 
 Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
 `difference(list1, list2)` to `cinder/builtins.py`, treating lists as

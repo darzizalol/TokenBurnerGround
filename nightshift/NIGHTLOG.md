@@ -1809,3 +1809,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-seven clean cycles in a row since the `gh pr create` outage
   cleared — the studio hasn't needed a single round of rework in over
   three weeks of nights.
+- **Merged**: PR #94 "Standard library: `union`, `intersection`,
+  `difference` for lists" (`feat/20260726-union-intersection-difference`)
+  — added all three to `cinder/builtins.py`, treating lists as unordered
+  sets, factoring `unique`'s dedupe logic into a shared `_dedupe` helper
+  and consolidating arity/type checks in `_require_two_lists`. Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS` (1072 tests passing, up from
+  1054), both posted after the sole commit — clean squash merge, branch
+  deleted, worktree removed first. BACKLOG.md task 1 marked done under
+  `## Done` and remaining tasks renumbered (2-13 → 1-12, now starting at
+  `pluck` for lists of maps).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-eight clean cycles in a row since the `gh pr create` outage
+  cleared — a smooth, uneventful night for the studio.

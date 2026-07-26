@@ -11,42 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `union`, `intersection`, `difference` for lists [claimed 2026-07-26T19:43:58Z]
-
-Build: add `union(list1, list2)`, `intersection(list1, list2)`, and
-`difference(list1, list2)` to `cinder/builtins.py`, treating lists as
-unordered sets. Follow `unique`'s existing dual-path pattern (PR #50): a
-`set`-backed fast path keyed on `(isinstance(element, bool), element)` when
-every element of both lists is hashable, falling back to a linear
-`values_equal` scan otherwise — reuse `unique`'s helper logic rather than
-duplicating it if it can be factored out cleanly. Each result contains no
-duplicate elements (dedupe like `unique`) and preserves first-encounter
-order: `union` is `list1`'s unique elements followed by `list2`'s elements
-not already included; `intersection` is `list1`'s unique elements that also
-appear in `list2`; `difference` is `list1`'s unique elements that do *not*
-appear in `list2`.
-
-Acceptance criteria:
-- `union([1, 2, 3], [2, 3, 4])` is `[1, 2, 3, 4]`.
-- `intersection([1, 2, 3], [2, 3, 4])` is `[2, 3]`.
-- `difference([1, 2, 3], [2, 3, 4])` is `[1]`.
-- `union([1, true], [1, false])` distinguishes bool from int the same way
-  `unique`/`contains` do — add a regression test pinning this.
-- Duplicates within a single input are collapsed:
-  `union([1, 1, 2], [2])` is `[1, 2]`.
-- Empty-list edge cases: `union([], [1])` is `[1]`; `intersection([], [1])`
-  is `[]`; `difference([], [1])` is `[]`; `difference([1], [])` is `[1]`.
-- Non-list argument (either position) raises `CinderRuntimeError` with
-  line/column, for all three builtins.
-- Wrong arity raises `CinderRuntimeError` with line/column, for all three
-  builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `pluck` for lists of maps
+## 1. Standard library: `pluck` for lists of maps
 
 Build: add `pluck(list, key)` to `cinder/builtins.py` — given a list of
 maps, returns a new list of `map[key]` for each element in order, the
@@ -74,7 +39,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `pick` and `omit` for maps
+## 2. Standard library: `pick` and `omit` for maps
 
 Build: add `pick(map, keys)` and `omit(map, keys)` to `cinder/builtins.py` —
 `pick` returns a new map containing only the entries whose key appears in
@@ -105,7 +70,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `gcd` and `lcm` for numbers
+## 3. Standard library: `gcd` and `lcm` for numbers
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -132,7 +97,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `mean` and `median` for lists of numbers
+## 4. Standard library: `mean` and `median` for lists of numbers
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the
@@ -159,7 +124,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 5. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -183,7 +148,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `shuffle` and `sample` for lists
+## 6. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -214,7 +179,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Nil-coalescing operator: `a ?? b`
+## 7. Nil-coalescing operator: `a ?? b`
 
 Build: a new binary operator `??` — `a ?? b` evaluates `a`; if the result
 is `nil`, evaluates and returns `b`; otherwise returns `a` without
@@ -240,7 +205,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
 
 ---
 
-## 9. Standard library: `map_keys` for maps
+## 8. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -268,7 +233,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `title` for strings
+## 9. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -295,7 +260,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `trim_start` and `trim_end` for strings
+## 10. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -318,7 +283,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `sign` for numbers
+## 11. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -338,7 +303,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 13. Standard library: `random_int` and `random_choice`
+## 12. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -1050,6 +1015,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `is_empty(collection)` to `cinder/builtins.py`, mirroring `len`'s
   type-check and arity-check pattern for `list`/`map`/`str`. Clean first
   pass, no bounces (1054 tests passing, up from 1046).
+- **Standard library: `union`, `intersection`, `difference` for lists** —
+  merged 2026-07-27T~ via PR #94 (`feat/20260726-union-intersection-difference`).
+  Added all three to `cinder/builtins.py`, treating lists as unordered
+  sets; factored `unique`'s dedupe logic into a shared `_dedupe` helper
+  (bool/int-safe hashable fast path with `values_equal` fallback for
+  unhashable elements) reused across all three, plus a `_require_two_lists`
+  helper consolidating arity/type validation. First-list order preserved.
+  Clean first pass, no bounces (1072 tests passing, up from 1054).
 
 ## Graveyard
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Spread operator in list literals: `[...list1, x, ...list2]`
+## 1. Spread operator in list literals: `[...list1, x, ...list2]` [claimed 2026-07-26T14:02:51Z]
 
 Build: extend list-literal parsing to accept a `...expr` element (reusing the
 existing `DOT_DOT_DOT`-style lookahead if a spread/ellipsis token doesn't

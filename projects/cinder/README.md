@@ -67,7 +67,7 @@ while (i < 10) {
 - **Builtins**: `print`, `len`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
-  `copy`, `deep_copy`, `contains`, `index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
+  `copy`, `deep_copy`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`,
   `any`, `all`, string methods `upper`, `lower`,
@@ -119,7 +119,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (989+ tests) covers every layer — lexer, parser, interpreter,
+The suite (995+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -144,7 +144,7 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the spread operator in list
-literals (`[...list1, x]`) and `lines`/`words` for strings. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `last_index_of` for lists and a `switch`
-statement. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `lines`/`words` for strings and
+`last_index_of` for lists. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a
+`switch` statement and `capitalize` for strings. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

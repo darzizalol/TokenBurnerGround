@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `last_index_of` for lists
+## 1. Standard library: `last_index_of` for lists [claimed 2026-07-26T14:26:34Z]
 
 Build: add `last_index_of(list, item)` to `cinder/builtins.py` — the mirror
 of the existing `index_of` (PR #49), scanning from the end and returning

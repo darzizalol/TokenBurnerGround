@@ -1915,6 +1915,64 @@ class TestLast(unittest.TestCase):
             run("last([1], 2);")
 
 
+class TestShuffle(unittest.TestCase):
+    def test_shuffle_contains_same_elements(self):
+        result = run("let result = shuffle([1, 2, 3]);").get("result")
+        self.assertEqual(sorted(result), [1, 2, 3])
+
+    def test_shuffle_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; let result = shuffle(xs);")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(sorted(env.get("result")), [1, 2, 3])
+
+    def test_shuffle_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('shuffle("hi");')
+
+    def test_shuffle_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("shuffle([1], 2);")
+
+
+class TestSample(unittest.TestCase):
+    def test_sample_returns_n_elements_from_source(self):
+        result = run("let result = sample([1, 2, 3, 4], 2);").get("result")
+        self.assertEqual(len(result), 2)
+        for element in result:
+            self.assertIn(element, [1, 2, 3, 4])
+
+    def test_sample_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3, 4]; let result = sample(xs, 2);")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+
+    def test_sample_n_equal_to_length_is_full_shuffle(self):
+        result = run("let result = sample([1, 2, 3], 3);").get("result")
+        self.assertEqual(sorted(result), [1, 2, 3])
+
+    def test_sample_n_zero_returns_empty_list(self):
+        self.assertEqual(run("let result = sample([1, 2, 3], 0);").get("result"), [])
+
+    def test_sample_n_greater_than_length_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sample([1, 2, 3], 4);")
+
+    def test_sample_negative_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sample([1, 2, 3], -1);")
+
+    def test_sample_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sample([1, 2, 3], "2");')
+
+    def test_sample_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sample("hi", 2);')
+
+    def test_sample_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sample([1, 2, 3]);")
+
+
 class TestSort(unittest.TestCase):
     def test_sort_of_ints(self):
         self.assertEqual(run("let result = sort([3, 1, 2]);").get("result"), [1, 2, 3])

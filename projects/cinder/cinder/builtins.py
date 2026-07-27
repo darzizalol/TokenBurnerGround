@@ -14,6 +14,7 @@ output.
 """
 
 import math
+import random
 
 from cinder.errors import CinderRuntimeError
 from cinder.interpreter import (
@@ -1097,6 +1098,36 @@ def _repeat(arguments: list, line: int, column: int) -> object:
     return [value] * n
 
 
+def _shuffle(arguments: list, line: int, column: int) -> object:
+    _require_arity("shuffle", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"shuffle() requires a list, got {type_name(value)}", line, column
+        )
+    return random.sample(value, len(value))
+
+
+def _sample(arguments: list, line: int, column: int) -> object:
+    _require_arity("sample", arguments, 2, line, column)
+    value, n = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"sample() requires a list, got {type_name(value)}", line, column
+        )
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"sample() requires an int as its second argument, got {type_name(n)}", line, column
+        )
+    if n < 0:
+        raise CinderRuntimeError("sample() requires a non-negative n", line, column)
+    if n > len(value):
+        raise CinderRuntimeError(
+            "sample() n cannot exceed the list length", line, column
+        )
+    return random.sample(value, n)
+
+
 def _sort(arguments: list, line: int, column: int) -> object:
     _require_arity("sort", arguments, 1, line, column)
     value = arguments[0]
@@ -1745,6 +1776,8 @@ _BUILTINS = {
     "reverse": _reverse,
     "first": _first,
     "last": _last,
+    "shuffle": _shuffle,
+    "sample": _sample,
     "sort": _sort,
     "sort_by": _sort_by,
     "min_by": _min_by,

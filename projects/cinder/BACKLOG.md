@@ -346,6 +346,103 @@ Acceptance criteria:
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
+---
+
+## 12. Standard library: `from_entries` for maps
+
+Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
+existing `items(map)` — takes a list of `[key, value]` pairs and returns a
+new map, matching `merge`/`pick`'s later-entry-wins collision rule (same
+rule `items` itself round-trips: `from_entries(items(m))` reproduces `m`
+for any map `m` with hashable keys, which is a good regression test).
+Reuse `_is_valid_key` for key validation, matching `map_keys`/`invert`'s
+existing guard.
+
+Acceptance criteria:
+- `from_entries([["a", 1], ["b", 2]])` is `{"a": 1, "b": 2}`.
+- `from_entries([["a", 1], ["a", 2]])` is `{"a": 2}` — later entry wins.
+- `from_entries([])` is `{}`.
+- `from_entries(items({"x": 1, "y": 2}))` is `{"x": 1, "y": 2}` — round-trip
+  regression test tying it to `items`.
+- Each element of the list must itself be a 2-element list (`[key, value]`);
+  anything else (wrong-length list, non-list element) raises
+  `CinderRuntimeError` with line/column.
+- A non-hashable key (e.g. a list) raises `CinderRuntimeError` with
+  line/column, matching `_is_valid_key`'s existing guard elsewhere.
+- Non-list top-level argument raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 13. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+
+Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
+the string-formatting counterpart to the numeric-literal-parsing side
+already shipped (`0x1F`/`0b101`/`0o17` literals, PR #73): each returns the
+lowercase, unprefixed digit string for `n` in that base (via Python's
+`format(n, 'x')`/`'b'`/`'o'`, not `hex()`/`bin()`/`oct()`, which include a
+`0x`/`0b`/`0o` prefix that isn't wanted here), following `str`/`chr`'s
+single-numeric-argument style.
+
+Acceptance criteria:
+- `to_hex(255)` is `"ff"`; `to_bin(5)` is `"101"`; `to_oct(8)` is `"10"`.
+- `to_hex(0)` is `"0"`; `to_bin(0)` is `"0"`; `to_oct(0)` is `"0"`.
+- `to_hex(-255)` is `"-ff"` (sign preserved, no two's-complement encoding —
+  matching Python's own `format(n, 'x')` behavior for negative ints).
+- A non-`int` argument (e.g. a `float` or `str`) raises
+  `CinderRuntimeError` with line/column, for all three.
+- Wrong arity raises `CinderRuntimeError` with line/column, for all three.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 14. `finally` block for `try`/`catch`
+
+Build: extend the existing `try { ... } catch (name) { ... }`
+(`TryStmt` in `cinder/ast_nodes.py:264-270`, parsed by `_try_statement` in
+`cinder/parser.py:373-397`, executed by `_execute_try` in
+`cinder/interpreter.py:281-287`) with an optional trailing
+`finally { ... }` block that always runs — whether the `try` block
+succeeded, raised a `CinderRuntimeError` caught by `catch`, or unwound via
+an uncaught Python-internal control-flow signal (`_BreakSignal`,
+`_ContinueSignal`, `_ReturnSignal`, or an uncaught `CinderRuntimeError`
+from inside `catch` itself). Add a `FINALLY` keyword token to
+`cinder/tokens.py`, give `TryStmt` a `finally_block: "Block" | None` field,
+parse an optional `finally { ... }` after the existing catch clause
+(reusing `_block()`), and implement `_execute_try` with a `try/finally`
+around the existing `try/except CinderRuntimeError` so the finally block
+runs via Python's own `finally` semantics regardless of exit path — no
+change needed to how `break`/`continue`/`return` propagate through `try`
+today, since Python's `finally` already re-raises after running.
+
+Acceptance criteria:
+- `let log = []; try { push(log, 1); } finally { push(log, 2); } log` is
+  `[1, 2]` — finally runs after a clean try with no catch triggered.
+- `let log = []; try { push(log, 1); assert(false, "x"); } catch (e) {
+  push(log, 2); } finally { push(log, 3); } log` is `[1, 2, 3]` — finally
+  runs after catch handles an error.
+- A `return` inside a function's `try` block still runs `finally` before
+  the function actually returns (test via a function that pushes to an
+  outer-scope list in `finally` then checks the list after calling the
+  function).
+- `break`/`continue` inside a loop's `try` block still run `finally` before
+  actually breaking/continuing the loop.
+- `try { ... } finally { ... }` with no `catch` clause at all is valid
+  (finally-only, matching a common pattern in other languages) — add a
+  parser test and an interpreter test for this form.
+- Omitting `finally` entirely still behaves exactly as before (regression
+  test pinning today's catch-only behavior unchanged).
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

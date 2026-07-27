@@ -155,9 +155,9 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: `sin`/`cos`/`tan`/`log` math
-builtins. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `shuffle`/`sample`
-for lists, bitwise/shift compound assignment (`&=`, `|=`, `^=`, `<<=`, `>>=`),
-and further out, increment/decrement statement operators (`++`/`--`) and
-fixed-decimal number formatting (`to_fixed`) — the backlog alternates
-language depth with stdlib breadth rather than running each in a long block.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+builtins. `shuffle`/`sample` for lists is in flight (PR #102). Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): bitwise/shift compound assignment
+(`&=`, `|=`, `^=`, `<<=`, `>>=`), increment/decrement statement operators
+(`++`/`--`), and a `finally` block for `try`/`catch` — the backlog
+alternates language depth with stdlib breadth rather than running each in a
+long block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

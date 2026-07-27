@@ -530,6 +530,39 @@ class TestCalls(unittest.TestCase):
             ("Call", ("Call", ("Identifier", "f"), []), []),
         )
 
+    def test_call_with_spread_argument(self):
+        self.assertEqual(
+            shape(parse("f(...args)")),
+            ("Call", ("Identifier", "f"), [("Spread", ("Identifier", "args"))]),
+        )
+
+    def test_call_with_mixed_spread_and_plain_arguments(self):
+        self.assertEqual(
+            shape(parse("f(1, ...xs, 2)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [
+                    ("Literal", 1),
+                    ("Spread", ("Identifier", "xs")),
+                    ("Literal", 2),
+                ],
+            ),
+        )
+
+    def test_call_with_multiple_spread_arguments(self):
+        self.assertEqual(
+            shape(parse("f(...xs, ...ys)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [
+                    ("Spread", ("Identifier", "xs")),
+                    ("Spread", ("Identifier", "ys")),
+                ],
+            ),
+        )
+
 
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):

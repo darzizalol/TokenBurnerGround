@@ -1030,6 +1030,48 @@ class TestRestParameters(unittest.TestCase):
         self.assertIn("expects at least 1 argument(s), got 0", str(ctx.exception))
 
 
+class TestSpreadCallArguments(unittest.TestCase):
+    def test_spread_all_arguments(self):
+        env = run(
+            "fn f(a, b, c) { return a + b + c; } "
+            "let result = f(...[1, 2, 3]);"
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_spread_last(self):
+        env = run(
+            "fn f(a, b, c) { return a + b + c; } "
+            "let result = f(1, ...[2, 3]);"
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_spread_first(self):
+        env = run(
+            "fn f(a, b, c) { return a + b + c; } "
+            "let result = f(...[1, 2], 3);"
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_multiple_spreads_with_rest_param(self):
+        env = run(
+            "fn g(...all) { return all; } "
+            "let result = g(...[1, 2], ...[3, 4]);"
+        )
+        self.assertEqual(env.get("result"), [1, 2, 3, 4])
+
+    def test_spreading_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a) { return a; } f(...5);")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertIn("cannot spread", str(ctx.exception))
+        self.assertIn("a function call", str(ctx.exception))
+
+    def test_spread_wrong_argument_count_hits_arity_check(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a, b, c) { return a + b + c; } f(...[1]);")
+        self.assertIn("expects 3 argument(s), got 1", str(ctx.exception))
+
+
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):
         self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])

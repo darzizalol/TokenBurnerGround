@@ -62,7 +62,9 @@ while (i < 10) {
   trailing parameter may carry a default value (`fn f(a, b = 1) { ... }`),
   evaluated fresh per call when omitted by the caller; a trailing rest
   parameter collects any extra positional arguments into a list
-  (`fn f(a, ...rest) { ... }`), combinable with default parameters
+  (`fn f(a, ...rest) { ... }`), combinable with default parameters; call
+  arguments accept the same spread syntax (`f(...args)`, `f(1, ...rest, 2)`),
+  splicing a list's elements into the positional argument list in place
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing

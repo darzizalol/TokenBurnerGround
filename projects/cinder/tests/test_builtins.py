@@ -1335,6 +1335,89 @@ class TestSqrt(unittest.TestCase):
             run("sqrt();")
 
 
+class TestSin(unittest.TestCase):
+    def test_sin_of_zero(self):
+        result = run("let result = sin(0);").get("result")
+        self.assertEqual(result, 0.0)
+        self.assertIsInstance(result, float)
+
+    def test_sin_of_int_and_float(self):
+        self.assertAlmostEqual(run("let result = sin(1);").get("result"), 0.8414709848078965)
+        self.assertAlmostEqual(run("let result = sin(1.0);").get("result"), 0.8414709848078965)
+
+    def test_sin_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sin("a");')
+
+    def test_sin_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sin();")
+
+
+class TestCos(unittest.TestCase):
+    def test_cos_of_zero(self):
+        result = run("let result = cos(0);").get("result")
+        self.assertEqual(result, 1.0)
+        self.assertIsInstance(result, float)
+
+    def test_cos_of_int_and_float(self):
+        self.assertAlmostEqual(run("let result = cos(1);").get("result"), 0.5403023058681398)
+        self.assertAlmostEqual(run("let result = cos(1.0);").get("result"), 0.5403023058681398)
+
+    def test_cos_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('cos("a");')
+
+    def test_cos_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("cos();")
+
+
+class TestTan(unittest.TestCase):
+    def test_tan_of_zero(self):
+        result = run("let result = tan(0);").get("result")
+        self.assertEqual(result, 0.0)
+        self.assertIsInstance(result, float)
+
+    def test_tan_of_int_and_float(self):
+        self.assertAlmostEqual(run("let result = tan(1);").get("result"), 1.5574077246549023)
+        self.assertAlmostEqual(run("let result = tan(1.0);").get("result"), 1.5574077246549023)
+
+    def test_tan_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('tan("a");')
+
+    def test_tan_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("tan();")
+
+
+class TestLog(unittest.TestCase):
+    def test_log_of_one(self):
+        result = run("let result = log(1);").get("result")
+        self.assertEqual(result, 0.0)
+        self.assertIsInstance(result, float)
+
+    def test_log_of_e(self):
+        self.assertAlmostEqual(run("let result = log(2.718281828459045);").get("result"), 1.0)
+
+    def test_log_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("log(0);")
+
+    def test_log_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("log(-1);")
+
+    def test_log_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('log("a");')
+
+    def test_log_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("log();")
+
+
 class TestGcd(unittest.TestCase):
     def test_gcd_of_two_positive_ints(self):
         self.assertEqual(run("let result = gcd(12, 18);").get("result"), 6)

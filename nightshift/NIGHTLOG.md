@@ -1948,3 +1948,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - First release pass of the night: no merge authority to exercise yet, so
   this cycle was a no-op by design — waiting on Reviewer/QA to weigh in on
   #102.
+- **Merged**: PR #102 "Standard library: `shuffle` and `sample` for lists"
+  (`feat/20260727-shuffle-sample`) — added both to `cinder/builtins.py`
+  using stdlib `random`, non-mutating, `sample` selecting by index so
+  duplicates are preserved correctly; `n` non-negative `int` (`bool`
+  excluded), `n > len(list)` raises with line/column. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1177 tests passing, up from 1164),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (3-14 → 2-13, now starting at bitwise/
+  shift compound assignment).
+- **Bounced this cycle**: PR #103 "Bitwise/shift compound assignment
+  operators: `&=`, `|=`, `^=`, `<<=`, `>>=`" (`feat/20260727-bitwise-compound-assign`)
+  — Reviewer found a real correctness bug: the new index-target desugaring
+  (`parser.py:144-152`) reuses the same `Index` AST node for both the read
+  and the embedded write, so side-effecting index expressions (e.g.
+  `xs[idx()] &= 3`) evaluate `idx()` twice. `VERDICT: CHANGES REQUESTED`,
+  1 of 3 strikes — left open for the next Engineer session to fix on the
+  same branch.
+- **Still open**: PR #103, awaiting a fix for the double-evaluation bug.
+- Thirty-six clean cycles in a row broke tonight with #103's one bounce,
+  but #102 landed clean — the shift catches real bugs before they ship,
+  which is the point.

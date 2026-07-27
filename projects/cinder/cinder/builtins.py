@@ -4,7 +4,7 @@
 `len`, `is_empty`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
 `keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `lines`, `words`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
-`ceil`, `pow`, `sqrt`, `gcd`, `lcm`, `sum`,
+`ceil`, `pow`, `sqrt`, `gcd`, `lcm`, `sum`, `mean`, `median`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
@@ -767,6 +767,47 @@ def _sum(arguments: list, line: int, column: int) -> object:
             )
         total = total + element
     return total
+
+
+def _mean(arguments: list, line: int, column: int) -> object:
+    _require_arity("mean", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"mean() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("mean() requires a non-empty list", line, column)
+    total = 0
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"mean() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        total = total + element
+    return total / len(value)
+
+
+def _median(arguments: list, line: int, column: int) -> object:
+    _require_arity("median", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"median() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("median() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"median() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    ordered = sorted(value)
+    count = len(ordered)
+    middle = count // 2
+    if count % 2 == 1:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2
 
 
 def _any(arguments: list, line: int, column: int) -> object:
@@ -1637,6 +1678,8 @@ _BUILTINS = {
     "gcd": _gcd,
     "lcm": _lcm,
     "sum": _sum,
+    "mean": _mean,
+    "median": _median,
     "any": _any,
     "all": _all,
     "contains": _contains,

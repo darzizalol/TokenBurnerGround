@@ -1415,6 +1415,67 @@ class TestSum(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestMean(unittest.TestCase):
+    def test_mean_of_ints_is_float(self):
+        result = run("let result = mean([1, 2, 3]);").get("result")
+        self.assertEqual(result, 2.0)
+        self.assertIsInstance(result, float)
+
+    def test_mean_of_two_ints_is_float(self):
+        result = run("let result = mean([1, 2]);").get("result")
+        self.assertEqual(result, 1.5)
+        self.assertIsInstance(result, float)
+
+    def test_mean_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("mean([]);")
+
+    def test_mean_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('mean(["a"]);')
+
+    def test_mean_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("mean(5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_mean_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("mean();")
+
+
+class TestMedian(unittest.TestCase):
+    def test_median_of_odd_length_list(self):
+        result = run("let result = median([1, 3, 2]);").get("result")
+        self.assertEqual(result, 2)
+
+    def test_median_of_even_length_list_is_float(self):
+        result = run("let result = median([1, 2, 3, 4]);").get("result")
+        self.assertEqual(result, 2.5)
+        self.assertIsInstance(result, float)
+
+    def test_median_of_single_element_list(self):
+        result = run("let result = median([5]);").get("result")
+        self.assertEqual(result, 5)
+
+    def test_median_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("median([]);")
+
+    def test_median_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('median(["a"]);')
+
+    def test_median_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("median(5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_median_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("median();")
+
+
 class TestAny(unittest.TestCase):
     def test_any_true_when_an_element_is_truthy(self):
         self.assertIs(run("let result = any([false, nil, 1]);").get("result"), True)

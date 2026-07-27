@@ -77,7 +77,7 @@ while (i < 10) {
   `union`, `intersection`, `difference` (lists treated as unordered sets),
   `pluck`, `pick`, `omit`,
   `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
-  `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`,
+  `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,

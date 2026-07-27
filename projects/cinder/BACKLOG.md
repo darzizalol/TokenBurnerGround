@@ -11,35 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `map_keys` for maps [claimed 2026-07-27T20:06:15Z]
-
-Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
-counterpart to the existing `map_values` — returns a new map with the same
-values but each key replaced by `fn(key)`, via the shared `call_value`
-helper. Reuse `_is_valid_key` to reject a non-hashable result from `fn`
-before it's used as a key (matching `invert`'s existing guard). When two
-distinct source keys transform to the same result, later insertion wins
-(matching `merge`/`invert`'s collision rule).
-
-Acceptance criteria:
-- `map_keys({"a": 1, "b": 2}, fn(k) { return upper(k); })` is
-  `{"A": 1, "B": 2}`.
-- `map_keys({"cat": 1, "car": 2}, fn(k) { return k[0]; })` is `{"c": 2}` —
-  both keys transform to `"c"`, and `"car"` (inserted after `"cat"`) wins,
-  pinning the collision rule.
-- `map_keys({}, fn(k) { return k; })` is `{}`.
-- A non-hashable result from `fn` (e.g. it returns a list) raises
-  `CinderRuntimeError` with line/column, matching `invert`'s guard.
-- Non-map first argument or non-callable second argument raises
-  `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `title` for strings
+## 1. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -66,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `trim_start` and `trim_end` for strings
+## 2. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -89,7 +61,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `sign` for numbers
+## 3. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -109,7 +81,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `random_int` and `random_choice`
+## 4. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -140,7 +112,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `round` with an optional `digits` argument
+## 5. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:657`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -177,7 +149,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `to_fixed` for fixed-decimal number formatting
+## 6. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -206,7 +178,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Increment/decrement statement operators: `++`, `--`
+## 7. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -248,7 +220,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Standard library: `interleave` for two lists
+## 8. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 924, already used by `union`/
@@ -275,7 +247,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `from_entries` for maps
+## 9. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -304,7 +276,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 10. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -328,7 +300,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. `finally` block for `try`/`catch`
+## 11. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:264-270`, parsed by `_try_statement` in
@@ -1136,6 +1108,12 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   evaluates `obj`/`index` exactly once, with `_evaluate_index`/
   `_evaluate_index_assign` split into shared `_index_get`/`_index_set`
   helpers. 1182 tests passing, up from 1177.
+- **Standard library: `map_keys` for maps** — merged 2026-07-27T20:10:49Z via
+  PR #104 (`feat/20260727-map-keys`). Added `map_keys(map, fn)` to
+  `cinder/builtins.py`, the key-side counterpart to `map_values`, reusing
+  `_is_valid_key` to reject a non-hashable transformed key and matching
+  `merge`/`invert`'s later-insertion-wins collision rule. Clean first pass,
+  no bounces (1204 tests passing, up from 1182).
 
 ## Graveyard
 

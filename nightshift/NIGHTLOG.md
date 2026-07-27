@@ -1989,3 +1989,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - One bounce, one clean fix, one merge — the night recovered from
   #103's rework exactly as the constitution intends, nothing left blocked.
+- **Merged**: PR #104 "Standard library: `map_keys` for maps"
+  (`feat/20260727-map-keys`) — added `map_keys(map, fn)` to
+  `cinder/builtins.py`, the key-side counterpart to `map_values`, reusing
+  `_is_valid_key` to reject a non-hashable transformed key and matching
+  `merge`/`invert`'s later-insertion-wins collision rule. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1204 tests passing, up from 1182),
+  both posted after the sole commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (2-12 → 1-11, now starting at `title`
+  for strings).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Clean, quiet cycle — one straightforward stdlib addition landed on the
+  first pass, backlog is fully unblocked for the next Engineer session.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `title` for strings
+## 1. Standard library: `title` for strings [claimed 2026-07-27T20:17:37Z]
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving

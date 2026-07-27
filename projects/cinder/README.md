@@ -82,7 +82,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`,
   `flat_map`, `chunk`, `reverse`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `map_keys`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
-  `any`, `all`, string methods `upper`, `lower`, `capitalize`,
+  `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
   `pad_start`, `pad_end`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,

@@ -406,6 +406,27 @@ def _capitalize(arguments: list, line: int, column: int) -> object:
     return value[0].upper() + value[1:]
 
 
+def _title(arguments: list, line: int, column: int) -> object:
+    _require_arity("title", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"title() requires a string, got {type_name(value)}", line, column
+        )
+    result = []
+    at_word_start = True
+    for ch in value:
+        if ch.isspace():
+            at_word_start = True
+            result.append(ch)
+        elif at_word_start and ch.isalpha():
+            result.append(ch.upper())
+            at_word_start = False
+        else:
+            result.append(ch)
+    return "".join(result)
+
+
 def _trim(arguments: list, line: int, column: int) -> object:
     _require_arity("trim", arguments, 1, line, column)
     value = arguments[0]
@@ -1786,6 +1807,7 @@ _BUILTINS = {
     "upper": _upper,
     "lower": _lower,
     "capitalize": _capitalize,
+    "title": _title,
     "trim": _trim,
     "trim_start": _trim_start,
     "trim_end": _trim_end,

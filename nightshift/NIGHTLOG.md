@@ -1922,3 +1922,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-four clean cycles in a row since the `gh pr create` outage
   cleared — another first-pass merge with zero rework, the backlog just
   keeps moving.
+- **Merged**: PR #101 "Standard library: `sin`, `cos`, `tan`, `log` math
+  builtins" (`feat/20260727-sin-cos-tan-log`) — added all four to
+  `cinder/builtins.py` following `floor`/`ceil`/`sqrt`'s
+  single-numeric-argument style (PR #48), always returning `float`; `log`
+  raises a domain error for `n <= 0` matching `sqrt`'s negative-input
+  handling. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1164 tests
+  passing, up from 1146), both posted after the sole commit — clean
+  squash merge, branch deleted, worktree removed first. BACKLOG.md task 1
+  marked done under `## Done` and remaining tasks renumbered (2-12 → 1-11,
+  now starting at `shuffle`/`sample` for lists).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-five clean cycles in a row since the `gh pr create` outage
+  cleared — the math builtins landed first-pass just like the last several
+  nights, no rework needed.

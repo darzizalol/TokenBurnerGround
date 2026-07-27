@@ -11,31 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sin`, `cos`, `tan`, `log` math builtins [claimed 2026-07-27T14:41:41Z]
-
-Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
-`math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
-`math.log`) to `cinder/builtins.py`, following `floor`/`ceil`/`sqrt`'s
-single-numeric-argument style (PR #48) — always return `float`, accept
-`int` or `float` input.
-
-Acceptance criteria:
-- `sin(0)` is `0.0`; `cos(0)` is `1.0`.
-- `log(1)` is `0.0`.
-- `log(0)` and `log(-1)` raise `CinderRuntimeError` with line/column
-  (domain error, matching `sqrt`'s negative-input handling) instead of
-  letting Python's `ValueError` escape.
-- A non-numeric argument raises `CinderRuntimeError` with line/column, for
-  all four builtins.
-- Wrong arity raises `CinderRuntimeError` with line/column, for all four
-  builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `shuffle` and `sample` for lists
+## 1. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -66,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+## 2. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via the `_COMPOUND_ASSIGN_OPS`
@@ -108,7 +84,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `map_keys` for maps
+## 3. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -136,7 +112,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `title` for strings
+## 4. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -163,7 +139,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `trim_start` and `trim_end` for strings
+## 5. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -186,7 +162,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `sign` for numbers
+## 6. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -206,7 +182,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `random_int` and `random_choice`
+## 7. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -237,7 +213,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `round` with an optional `digits` argument
+## 8. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:657`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -274,7 +250,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `to_fixed` for fixed-decimal number formatting
+## 9. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -303,7 +279,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Increment/decrement statement operators: `++`, `--`
+## 10. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -345,7 +321,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 12. Standard library: `interleave` for two lists
+## 11. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 924, already used by `union`/
@@ -1108,6 +1084,13 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   builtins, and rest-param callees; multiple/mixed spreads evaluated left
   to right. Clean first pass, no bounces (1146 tests passing, up from
   1136).
+- **Standard library: `sin`, `cos`, `tan`, `log` math builtins** — merged
+  2026-07-27T14:47:07Z via PR #101 (`feat/20260727-sin-cos-tan-log`). Added
+  all four to `cinder/builtins.py` following `floor`/`ceil`/`sqrt`'s
+  single-numeric-argument style (PR #48), always returning `float`; `log`
+  raises a domain error (matching `sqrt`'s negative-input handling) for
+  `n <= 0` instead of letting Python's `ValueError` escape. Clean first
+  pass, no bounces (1164 tests passing, up from 1146).
 
 ## Graveyard
 

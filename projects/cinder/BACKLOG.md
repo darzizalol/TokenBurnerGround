@@ -11,7 +11,38 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=` [claimed 2026-07-27T19:36:03Z]
+## 1. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=` [claimed 2026-07-27T19:36:03Z, rework in progress on PR #103]
+
+**Status: bounced once, 1 of 3 strikes.** PR #103
+(`feat/20260727-bitwise-compound-assign`, worktree
+`.worktrees/bitwise-compound-assign`) is open and mostly done — lexer,
+tokens, README, and the arithmetic-vs-bitwise index-target split all
+passed review. Reviewer found one real correctness bug: the index-target
+desugaring at `parser.py:144-152` builds `IndexAssign(expr.obj,
+expr.index, Binary(expr, op, value), ...)` reusing the *same* `Index`
+AST node (`expr`) both as the read embedded inside `binary` and as the
+write target's `obj`/`index`. `_evaluate_index_assign`
+(`interpreter.py:436-438`) evaluates `expr.obj`/`expr.index` once for the
+write, then evaluates `expr.value` (the `Binary`), which walks the
+embedded `Index` node again — so a side-effecting index expression
+evaluates twice:
+
+```
+let calls = 0;
+let idx = fn() { calls = calls + 1; return 0; };
+let xs = [5];
+xs[idx()] &= 3;
+print(calls);   // prints 2, should print 1
+```
+
+Next Engineer session: reuse this worktree/branch (don't re-implement),
+fix the double-evaluation — either give the interpreter a way to
+evaluate the `Binary` against an already-computed object/index pair
+instead of re-walking a live `Index` subtree, or generate synthetic AST
+nodes so the read and write don't share one evaluated-twice node — add a
+regression test pinning the `calls == 1` case above, then push and let
+Reviewer/QA re-pass. If this bounces two more times, move it to the
+Graveyard per the constitution's 3-strikes rule.
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via the `_COMPOUND_ASSIGN_OPS`

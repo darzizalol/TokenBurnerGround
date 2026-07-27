@@ -129,7 +129,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1164+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1177+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -154,10 +154,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `sin`/`cos`/`tan`/`log` math
-builtins. `shuffle`/`sample` for lists is in flight (PR #102). Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): bitwise/shift compound assignment
-(`&=`, `|=`, `^=`, `<<=`, `>>=`), increment/decrement statement operators
-(`++`/`--`), and a `finally` block for `try`/`catch` — the backlog
+Actively developed, nightly. Recently landed: `shuffle`/`sample` for lists.
+Bitwise/shift compound assignment (`&=`, `|=`, `^=`, `<<=`, `>>=`) is in
+flight (PR #103) — bounced once on a double-evaluation bug in the
+index-target desugaring, fix in progress on the same branch. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): increment/decrement statement operators
+(`++`/`--`) and a `finally` block for `try`/`catch` — the backlog
 alternates language depth with stdlib breadth rather than running each in a
 long block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

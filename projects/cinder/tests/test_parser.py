@@ -18,6 +18,7 @@ from cinder.ast_nodes import (
     Identifier,
     Index,
     IndexAssign,
+    IndexCompoundAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -74,6 +75,14 @@ def shape(node):
             "IndexAssign",
             shape(node.obj),
             shape(node.index),
+            shape(node.value),
+        )
+    if isinstance(node, IndexCompoundAssign):
+        return (
+            "IndexCompoundAssign",
+            shape(node.obj),
+            shape(node.index),
+            node.operator.type,
             shape(node.value),
         )
     if isinstance(node, Assign):
@@ -825,17 +834,20 @@ class TestCompoundAssignment(unittest.TestCase):
 
     def test_bitwise_compound_assign_allows_index_target(self):
         # Unlike the arithmetic set, the bitwise/shift ops accept an
-        # index-expression target too, desugaring into IndexAssign.
+        # index-expression target too, desugaring into IndexCompoundAssign
+        # (not IndexAssign wrapping a Binary over the same Index node, which
+        # would evaluate obj/index twice at runtime).
         stmts = parse_stmts("xs[0] &= 1;")
         self.assertEqual(
             stmt_shape(stmts[0]),
             (
                 "ExprStmt",
                 (
-                    "IndexAssign",
+                    "IndexCompoundAssign",
                     ("Identifier", "xs"),
                     ("Literal", 0),
-                    ("Binary", ("Index", ("Identifier", "xs"), ("Literal", 0)), TokenType.AMP, ("Literal", 1)),
+                    TokenType.AMP,
+                    ("Literal", 1),
                 ),
             ),
         )

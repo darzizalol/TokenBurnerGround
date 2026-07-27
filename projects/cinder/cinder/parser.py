@@ -16,9 +16,11 @@ Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
 (reusing the `Binary`/`Assign` AST nodes) rather than adding dedicated
 interpreter support. The original arithmetic set (`+=` `-=` `*=` `/=` `%=`)
 is restricted to `Identifier` targets; the bitwise/shift set (`&=` `|=` `^=`
-`<<=` `>>=`) additionally accepts an `Index` target (desugared into
-`IndexAssign`, like plain `=`), since nothing depends on the narrower
-restriction there.
+`<<=` `>>=`) additionally accepts an `Index` target, desugared into a
+dedicated `IndexCompoundAssign` node (not `IndexAssign` wrapping a `Binary`
+over the same `Index` node — that would evaluate the object/index
+sub-expressions twice) so `obj`/`index` are each evaluated exactly once at
+runtime and their values reused for both the read and the write.
 
 Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `let [IDENTIFIER, ...] = <expr>;` or
@@ -87,6 +89,7 @@ from cinder.ast_nodes import (
     IfStmt,
     Index,
     IndexAssign,
+    IndexCompoundAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -485,15 +488,26 @@ class Parser:
                 op_token.line,
                 op_token.column,
             )
-            binary = Binary(expr, binary_operator, value)
             if isinstance(expr, Identifier):
+                binary = Binary(expr, binary_operator, value)
                 return Assign(expr.name, binary, op_token.line, op_token.column)
             if (
                 isinstance(expr, Index)
                 and op_token.type in _INDEX_TARGET_COMPOUND_ASSIGN_OPS
             ):
-                return IndexAssign(
-                    expr.obj, expr.index, binary, op_token.line, op_token.column
+                # Not desugared into IndexAssign(obj, index, Binary(Index(obj,
+                # index), op, value)): that would embed `expr` (the Index node)
+                # both directly and inside the Binary's left, so the interpreter
+                # would evaluate `obj`/`index` twice — once for the read, once
+                # walking the nested Index again. IndexCompoundAssign instead
+                # carries obj/index once, evaluated a single time at runtime.
+                return IndexCompoundAssign(
+                    expr.obj,
+                    expr.index,
+                    binary_operator,
+                    value,
+                    op_token.line,
+                    op_token.column,
                 )
             raise ParseError(
                 "invalid assignment target", op_token.line, op_token.column

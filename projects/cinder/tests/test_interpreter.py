@@ -612,6 +612,32 @@ class TestCompoundAssignment(unittest.TestCase):
         env = run("let xs = [8]; xs[0] >>= 2;")
         self.assertEqual(env.get("xs"), [2])
 
+    def test_bitwise_compound_assign_evaluates_index_expression_once(self):
+        # Regression: xs[idx()] &= 3 must call idx() exactly once, not once
+        # for the read and again for the write.
+        env = run(
+            """
+            let calls = 0;
+            let idx = fn() { calls = calls + 1; return 0; };
+            let xs = [5];
+            xs[idx()] &= 3;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("xs"), [1])
+
+    def test_bitwise_compound_assign_evaluates_object_expression_once(self):
+        env = run(
+            """
+            let calls = 0;
+            let get_list = fn() { calls = calls + 1; return xs; };
+            let xs = [5];
+            get_list()[0] &= 3;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("xs"), [1])
+
     def test_bitwise_compound_assign_type_error_matches_binary(self):
         with self.assertRaises(CinderRuntimeError):
             run("let a = 1.5; a &= 1;")

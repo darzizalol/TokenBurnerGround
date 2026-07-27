@@ -49,6 +49,7 @@ from cinder.ast_nodes import (
     IfStmt,
     Index,
     IndexAssign,
+    IndexCompoundAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -66,7 +67,7 @@ from cinder.ast_nodes import (
     WhileStmt,
 )
 from cinder.errors import CinderRuntimeError
-from cinder.tokens import TokenType
+from cinder.tokens import Token, TokenType
 
 _NUMERIC = (int, float)
 
@@ -182,6 +183,8 @@ class Interpreter:
             return self._evaluate_slice(expr, env)
         if isinstance(expr, IndexAssign):
             return self._evaluate_index_assign(expr, env)
+        if isinstance(expr, IndexCompoundAssign):
+            return self._evaluate_index_compound_assign(expr, env)
         if isinstance(expr, FnExpr):
             return CinderFunction(expr, env)
         if isinstance(expr, InterpString):
@@ -366,50 +369,53 @@ class Interpreter:
     def _evaluate_index(self, expr: Index, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)
         index = self.evaluate(expr.index, env)
+        return self._index_get(obj, index, expr.line, expr.column)
+
+    def _index_get(self, obj: object, index: object, line: int, column: int) -> object:
         if isinstance(obj, list):
             if not isinstance(index, int) or isinstance(index, bool):
                 raise CinderRuntimeError(
                     f"list index must be an int, got {type_name(index)}",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             normalized = normalize_index(index, len(obj))
             if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"list index {index} out of range (length {len(obj)})",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             return obj[normalized]
         if isinstance(obj, dict):
             if not _is_valid_key(index):
                 raise CinderRuntimeError(
                     f"{type_name(index)} is not a valid map key",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             if index not in obj:
                 raise CinderRuntimeError(
-                    f"missing map key {index!r}", expr.line, expr.column
+                    f"missing map key {index!r}", line, column
                 )
             return obj[index]
         if isinstance(obj, str):
             if not isinstance(index, int) or isinstance(index, bool):
                 raise CinderRuntimeError(
                     f"string index must be an int, got {type_name(index)}",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             normalized = normalize_index(index, len(obj))
             if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"string index {index} out of range (length {len(obj)})",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             return obj[normalized]
         raise CinderRuntimeError(
-            f"{type_name(obj)} is not indexable", expr.line, expr.column
+            f"{type_name(obj)} is not indexable", line, column
         )
 
     def _evaluate_slice(self, expr: SliceExpr, env: Environment) -> object:
@@ -436,41 +442,63 @@ class Interpreter:
         obj = self.evaluate(expr.obj, env)
         index = self.evaluate(expr.index, env)
         value = self.evaluate(expr.value, env)
+        self._index_set(obj, index, value, expr.line, expr.column)
+        return value
+
+    def _evaluate_index_compound_assign(
+        self, expr: IndexCompoundAssign, env: Environment
+    ) -> object:
+        # obj/index are each evaluated exactly once here and their values
+        # reused for both the read and the write, unlike a hypothetical
+        # desugaring into IndexAssign(obj, index, Binary(Index(obj, index),
+        # op, value)) which would walk obj/index a second time evaluating
+        # the embedded Index inside the Binary.
+        obj = self.evaluate(expr.obj, env)
+        index = self.evaluate(expr.index, env)
+        current = self._index_get(obj, index, expr.line, expr.column)
+        rhs = self.evaluate(expr.value, env)
+        result = self._apply_binary_operator(expr.operator, current, rhs)
+        self._index_set(obj, index, result, expr.line, expr.column)
+        return result
+
+    def _index_set(
+        self, obj: object, index: object, value: object, line: int, column: int
+    ) -> None:
         if isinstance(obj, list):
             if not isinstance(index, int) or isinstance(index, bool):
                 raise CinderRuntimeError(
                     f"list index must be an int, got {type_name(index)}",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             normalized = normalize_index(index, len(obj))
             if normalized < 0 or normalized >= len(obj):
                 raise CinderRuntimeError(
                     f"list index {index} out of range (length {len(obj)})",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             obj[normalized] = value
-            return value
+            return
         if isinstance(obj, dict):
             if not _is_valid_key(index):
                 raise CinderRuntimeError(
                     f"{type_name(index)} is not a valid map key",
-                    expr.line,
-                    expr.column,
+                    line,
+                    column,
                 )
             obj[index] = value
-            return value
+            return
         if isinstance(obj, str):
             raise CinderRuntimeError(
                 "strings are immutable and do not support item assignment",
-                expr.line,
-                expr.column,
+                line,
+                column,
             )
         raise CinderRuntimeError(
             f"{type_name(obj)} does not support item assignment",
-            expr.line,
-            expr.column,
+            line,
+            column,
         )
 
     def _evaluate_identifier(self, expr: Identifier, env: Environment) -> object:
@@ -538,7 +566,10 @@ class Interpreter:
     def _evaluate_binary(self, expr: Binary, env: Environment) -> object:
         left = self.evaluate(expr.left, env)
         right = self.evaluate(expr.right, env)
-        op = expr.operator.type
+        return self._apply_binary_operator(expr.operator, left, right)
+
+    def _apply_binary_operator(self, operator: Token, left: object, right: object) -> object:
+        op = operator.type
 
         if op == TokenType.PLUS:
             if _is_number(left) and _is_number(right):
@@ -547,29 +578,29 @@ class Interpreter:
                 return left + right
             raise CinderRuntimeError(
                 f"unsupported operand types for '+': {type_name(left)} and {type_name(right)}",
-                expr.operator.line,
-                expr.operator.column,
+                operator.line,
+                operator.column,
             )
         if op == TokenType.MINUS:
-            return self._numeric_op(expr, left, right, lambda a, b: a - b)
+            return self._numeric_op(operator, left, right, lambda a, b: a - b)
         if op == TokenType.STAR:
             repeated = self._repeat_op(left, right)
             if repeated is not None:
                 return repeated
-            return self._numeric_op(expr, left, right, lambda a, b: a * b)
+            return self._numeric_op(operator, left, right, lambda a, b: a * b)
         if op == TokenType.SLASH:
-            return self._divide_op(expr, left, right, lambda a, b: a / b)
+            return self._divide_op(operator, left, right, lambda a, b: a / b)
         if op == TokenType.PERCENT:
-            return self._divide_op(expr, left, right, lambda a, b: a % b)
+            return self._divide_op(operator, left, right, lambda a, b: a % b)
 
         if op == TokenType.EQEQ:
             return values_equal(left, right)
         if op == TokenType.BANGEQ:
             return not values_equal(left, right)
         if op in (TokenType.LT, TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):
-            return self._compare(expr, left, right, op)
+            return self._compare(operator, left, right, op)
         if op == TokenType.IN:
-            return contains_value(right, left, expr.operator.line, expr.operator.column)
+            return contains_value(right, left, operator.line, operator.column)
         if op in (
             TokenType.AMP,
             TokenType.PIPE,
@@ -577,17 +608,17 @@ class Interpreter:
             TokenType.LSHIFT,
             TokenType.RSHIFT,
         ):
-            return self._bitwise_op(expr, left, right, op)
+            return self._bitwise_op(operator, left, right, op)
 
         raise TypeError(f"unhandled binary operator: {op!r}")
 
-    def _bitwise_op(self, expr: Binary, left, right, op: TokenType):
+    def _bitwise_op(self, operator: Token, left, right, op: TokenType):
         if not (_is_int(left) and _is_int(right)):
             raise CinderRuntimeError(
-                f"unsupported operand types for {expr.operator.lexeme!r}: "
+                f"unsupported operand types for {operator.lexeme!r}: "
                 f"{type_name(left)} and {type_name(right)}",
-                expr.operator.line,
-                expr.operator.column,
+                operator.line,
+                operator.column,
             )
         if op == TokenType.AMP:
             return left & right
@@ -597,9 +628,9 @@ class Interpreter:
             return left ^ right
         if op in (TokenType.LSHIFT, TokenType.RSHIFT) and right < 0:
             raise CinderRuntimeError(
-                f"negative shift count in {expr.operator.lexeme!r}",
-                expr.operator.line,
-                expr.operator.column,
+                f"negative shift count in {operator.lexeme!r}",
+                operator.line,
+                operator.column,
             )
         if op == TokenType.LSHIFT:
             return left << right
@@ -613,28 +644,28 @@ class Interpreter:
             return right * left
         return None
 
-    def _numeric_op(self, expr: Binary, left, right, fn):
+    def _numeric_op(self, operator: Token, left, right, fn):
         if not (_is_number(left) and _is_number(right)):
             raise CinderRuntimeError(
-                f"unsupported operand types for {expr.operator.lexeme!r}: "
+                f"unsupported operand types for {operator.lexeme!r}: "
                 f"{type_name(left)} and {type_name(right)}",
-                expr.operator.line,
-                expr.operator.column,
+                operator.line,
+                operator.column,
             )
         return fn(left, right)
 
-    def _divide_op(self, expr: Binary, left, right, fn):
+    def _divide_op(self, operator: Token, left, right, fn):
         if not (_is_number(left) and _is_number(right)):
-            return self._numeric_op(expr, left, right, fn)
+            return self._numeric_op(operator, left, right, fn)
         if right == 0:
             raise CinderRuntimeError(
-                f"division by zero in {expr.operator.lexeme!r}",
-                expr.operator.line,
-                expr.operator.column,
+                f"division by zero in {operator.lexeme!r}",
+                operator.line,
+                operator.column,
             )
         return fn(left, right)
 
-    def _compare(self, expr: Binary, left, right, op: TokenType) -> bool:
+    def _compare(self, operator: Token, left, right, op: TokenType) -> bool:
         comparable = (_is_number(left) and _is_number(right)) or (
             isinstance(left, str) and isinstance(right, str)
         )
@@ -642,8 +673,8 @@ class Interpreter:
             raise CinderRuntimeError(
                 f"unsupported operand types for comparison: "
                 f"{type_name(left)} and {type_name(right)}",
-                expr.operator.line,
-                expr.operator.column,
+                operator.line,
+                operator.column,
             )
         if op == TokenType.LT:
             return left < right

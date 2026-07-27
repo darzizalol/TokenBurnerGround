@@ -38,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Standard library: `mean` and `median` for lists of numbers
+## 2. Standard library: `mean` and `median` for lists of numbers [claimed 2026-07-27T14:05:34Z]
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the

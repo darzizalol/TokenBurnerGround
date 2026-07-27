@@ -1332,6 +1332,63 @@ class TestSqrt(unittest.TestCase):
             run("sqrt();")
 
 
+class TestGcd(unittest.TestCase):
+    def test_gcd_of_two_positive_ints(self):
+        self.assertEqual(run("let result = gcd(12, 18);").get("result"), 6)
+
+    def test_gcd_with_zero_and_nonzero(self):
+        self.assertEqual(run("let result = gcd(0, 5);").get("result"), 5)
+
+    def test_gcd_of_two_zeros(self):
+        self.assertEqual(run("let result = gcd(0, 0);").get("result"), 0)
+
+    def test_gcd_ignores_sign(self):
+        self.assertEqual(run("let result = gcd(-12, 18);").get("result"), 6)
+
+    def test_gcd_of_float_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("gcd(12.0, 18);")
+
+    def test_gcd_of_float_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("gcd(12, 18.0);")
+
+    def test_gcd_of_non_numeric_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('gcd("a", 18);')
+
+    def test_gcd_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("gcd(12);")
+
+
+class TestLcm(unittest.TestCase):
+    def test_lcm_of_two_positive_ints(self):
+        self.assertEqual(run("let result = lcm(4, 6);").get("result"), 12)
+
+    def test_lcm_with_zero_and_nonzero(self):
+        self.assertEqual(run("let result = lcm(0, 5);").get("result"), 0)
+
+    def test_lcm_ignores_sign(self):
+        self.assertEqual(run("let result = lcm(-4, 6);").get("result"), 12)
+
+    def test_lcm_of_float_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("lcm(4.0, 6);")
+
+    def test_lcm_of_float_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("lcm(4, 6.0);")
+
+    def test_lcm_of_non_numeric_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('lcm(4, "a");')
+
+    def test_lcm_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("lcm(4);")
+
+
 class TestSum(unittest.TestCase):
     def test_sum_of_ints_is_int(self):
         result = run("let result = sum([1, 2, 3]);").get("result")

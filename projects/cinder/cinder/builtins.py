@@ -4,7 +4,7 @@
 `len`, `is_empty`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
 `keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `lines`, `words`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
-`ceil`, `pow`, `sqrt`, `sum`,
+`ceil`, `pow`, `sqrt`, `gcd`, `lcm`, `sum`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
@@ -726,6 +726,30 @@ def _sqrt(arguments: list, line: int, column: int) -> object:
             "sqrt() requires a non-negative number, no complex numbers", line, column
         )
     return math.sqrt(value)
+
+
+def _gcd(arguments: list, line: int, column: int) -> object:
+    _require_arity("gcd", arguments, 2, line, column)
+    a, b = arguments
+    for position, value in (("first", a), ("second", b)):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise CinderRuntimeError(
+                f"gcd() requires an int as its {position} argument, got {type_name(value)}",
+                line, column,
+            )
+    return math.gcd(a, b)
+
+
+def _lcm(arguments: list, line: int, column: int) -> object:
+    _require_arity("lcm", arguments, 2, line, column)
+    a, b = arguments
+    for position, value in (("first", a), ("second", b)):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise CinderRuntimeError(
+                f"lcm() requires an int as its {position} argument, got {type_name(value)}",
+                line, column,
+            )
+    return math.lcm(a, b)
 
 
 def _sum(arguments: list, line: int, column: int) -> object:
@@ -1610,6 +1634,8 @@ _BUILTINS = {
     "ceil": _ceil,
     "pow": _pow,
     "sqrt": _sqrt,
+    "gcd": _gcd,
+    "lcm": _lcm,
     "sum": _sum,
     "any": _any,
     "all": _all,

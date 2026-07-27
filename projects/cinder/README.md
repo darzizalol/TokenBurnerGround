@@ -127,7 +127,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1123+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1136+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -152,12 +152,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `gcd`/`lcm` for numbers.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `mean`/`median` for lists
-of numbers, spread arguments in function calls (`f(...args)`), more math
-builtins (`sin`/`cos`/`tan`/`log`, `shuffle`/`sample`), bitwise/shift
-compound assignment (`&=`, `|=`, `^=`, `<<=`, `>>=`), and further out,
-increment/decrement statement operators (`++`/`--`) and fixed-decimal
-number formatting (`to_fixed`) — the backlog alternates language depth
-with stdlib breadth rather than running each in a long block. The full
-vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `mean`/`median` for lists of
+numbers. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): spread arguments
+in function calls (`f(...args)`), more math builtins (`sin`/`cos`/`tan`/
+`log`, `shuffle`/`sample`), bitwise/shift compound assignment (`&=`, `|=`,
+`^=`, `<<=`, `>>=`), and further out, increment/decrement statement
+operators (`++`/`--`) and fixed-decimal number formatting (`to_fixed`) —
+the backlog alternates language depth with stdlib breadth rather than
+running each in a long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

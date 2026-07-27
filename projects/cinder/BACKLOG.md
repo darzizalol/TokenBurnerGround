@@ -69,20 +69,22 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 3. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
-`/=`, `%=`, desugared in the parser via a base-operator lookup table at
-`cinder/parser.py:114` into `target = target OP value`) to cover the four
-bitwise operators and both shifts. `&`, `|`, `^` are single-char tokens
-today (`cinder/lexer.py:17-19`, no two-char lookahead at all), so lexing
-`&=`/`|=`/`^=` needs the same one-or-two-char lookahead pattern already
-used for `+`/`-`/`*`/`/`/`%` (`cinder/lexer.py:24-28`) rather than the
-dedicated hand-rolled scanning `<<`/`>>` currently use (`cinder/lexer.py:317`,
-`:335`) — extend those two spots to look ahead one more character for a
-trailing `=` and emit `LSHIFTEQ`/`RSHIFTEQ` instead of `LSHIFT`/`RSHIFT` when
-present. Add the four new token types plus `LSHIFTEQ`/`RSHIFTEQ` to
-`cinder/tokens.py`, then add all five to the parser's base-operator lookup
-table so the existing desugaring logic (and its existing lvalue restrictions
-— identifiers and index expressions only) picks them up with no interpreter
-changes beyond what the existing bitwise binary operators already support.
+`/=`, `%=`, desugared in the parser via the `_COMPOUND_ASSIGN_OPS`
+lookup table at `cinder/parser.py:118` into `target = target OP value`) to
+cover the four bitwise operators and both shifts. `&`, `|`, `^` are
+single-char tokens today (`cinder/lexer.py:17-19`, no two-char lookahead at
+all), so lexing `&=`/`|=`/`^=` needs the same one-or-two-char lookahead
+pattern already used for `+`/`-`/`*`/`/`/`%` (`_COMPOUND_ASSIGN_TOKENS`,
+`cinder/lexer.py:22-28`) rather than the dedicated hand-rolled scanning
+`<<`/`>>` currently use (the `_lt`/`_gt` methods, `cinder/lexer.py:313-319`
+and `:337-343`) — extend those two methods to look ahead one more character
+for a trailing `=` and emit `LSHIFTEQ`/`RSHIFTEQ` instead of `LSHIFT`/
+`RSHIFT` when present. Add the four new token types plus `LSHIFTEQ`/
+`RSHIFTEQ` to `cinder/tokens.py`, then add all five to the parser's
+`_COMPOUND_ASSIGN_OPS` lookup table so the existing desugaring logic (and
+its existing lvalue restrictions — identifiers and index expressions only)
+picks them up with no interpreter changes beyond what the existing bitwise
+binary operators already support.
 
 Acceptance criteria:
 - `let a = 0b1010; a &= 0b0110; a` is `2`; `a |= 0b0001` after that is `3`;
@@ -346,7 +348,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 ## 12. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
-`_require_two_lists` helper (line 859, already used by `union`/
+`_require_two_lists` helper (line 924, already used by `union`/
 `intersection`/`difference`) for argument validation. Returns a new flat
 list alternating one element from `list1`, one from `list2`, continuing
 with whichever list still has elements once the other runs out (unlike

@@ -11,51 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Spread arguments in function calls: `f(...args)` [claimed 2026-07-27T14:27:32Z]
-
-Build: let `...expr` appear as a call argument, splicing `expr`'s list
-elements into the positional argument list at that point — the call-site
-counterpart to the existing spread support in list literals
-(`[...list1, x, ...list2]`, `cinder/interpreter.py`'s
-`_evaluate_list_literal`) and to rest parameters at the declaration side
-(`fn f(a, ...rest) { ... }`). Reuses the same `Spread` AST node and
-`DOT_DOT_DOT` token — no new lexer/token work needed. In the parser,
-`_finish_call` (`cinder/parser.py:583`) currently parses each argument via a
-bare `self._ternary()` call; check for a leading `DOT_DOT_DOT` the same way
-`_list_literal`/parameter-list parsing already does and wrap that argument
-in `Spread`. In the interpreter, `_evaluate_call` (`cinder/interpreter.py:311`)
-currently builds `arguments` with a flat list comprehension; when an
-argument expression is a `Spread`, evaluate its inner expression, require it
-to be a `list` (raising `CinderRuntimeError` otherwise, mirroring the list-
-literal spread's exact error message shape but naming "a function call"
-instead of "a list literal"), and extend the argument list with its
-elements instead of appending one value. Multiple spreads and a mix of
-plain and spread arguments in one call must all work, evaluated left to
-right in source order.
-
-Acceptance criteria:
-- `fn f(a, b, c) { return a + b + c; } f(...[1, 2, 3])` is `6`.
-- `f(1, ...[2, 3])` and `f(...[1, 2], 3)` both work the same as `f(1, 2, 3)`
-  (spread may appear first, last, or mixed with plain arguments).
-- Two spreads in one call splice both in order: with `f` taking a rest
-  parameter, `fn g(...all) { return all; } g(...[1, 2], ...[3, 4])` is
-  `[1, 2, 3, 4]`.
-- Spreading a non-list (e.g. `f(...5)`) raises `CinderRuntimeError` with
-  line/column.
-- A spread that produces the wrong total argument count still hits the
-  callee's existing arity check (e.g. `f(...[1])` on the 3-arity `f` above
-  raises the normal arity error, not something spread-specific).
-- Spread also works when calling a builtin (e.g.
-  `max(...[3, 1, 2])` is `3`) since builtins go through the same
-  `call_value` argument list.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py`, `cinder/interpreter.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 1. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -79,7 +35,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `shuffle` and `sample` for lists
+## 2. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -110,7 +66,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+## 3. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via a base-operator lookup table at
@@ -150,7 +106,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `map_keys` for maps
+## 4. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -178,7 +134,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `title` for strings
+## 5. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -205,7 +161,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `trim_start` and `trim_end` for strings
+## 6. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -228,7 +184,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `sign` for numbers
+## 7. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -248,7 +204,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `random_int` and `random_choice`
+## 8. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -279,7 +235,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `round` with an optional `digits` argument
+## 9. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:657`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -316,7 +272,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `to_fixed` for fixed-decimal number formatting
+## 10. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -345,7 +301,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Increment/decrement statement operators: `++`, `--`
+## 11. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -387,7 +343,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 13. Standard library: `interleave` for two lists
+## 12. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 859, already used by `union`/
@@ -1139,6 +1095,17 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   (even length). Rebased once after PR #98 merged (docstring/README
   listing conflict only, no functional changes); re-reviewed and
   re-QA'd post-rebase (1136 tests passing, up from 1123).
+- **Spread arguments in function calls: `f(...args)`** — merged
+  2026-07-27T14:35:01Z via PR #100 (`feat/20260727-spread-call-args`). The
+  call-site counterpart to PR #86's list-literal spread and PR #92's rest
+  parameters: parser wraps a leading `...` call argument in the existing
+  `Spread` node (mirroring `_list_element`), interpreter splices its list
+  elements into the flat argument list before arity checking/`call_value`
+  (mirroring `_evaluate_list_literal`'s spread handling, non-list raises
+  `CinderRuntimeError` with line/column). Works for user functions,
+  builtins, and rest-param callees; multiple/mixed spreads evaluated left
+  to right. Clean first pass, no bounces (1146 tests passing, up from
+  1136).
 
 ## Graveyard
 

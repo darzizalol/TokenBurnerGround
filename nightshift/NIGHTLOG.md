@@ -1905,3 +1905,20 @@ The morning paper: what shipped, what bounced, what's still open.
   cleared — last cycle's conflicted PR resolved itself cleanly on the very
   next pass, exactly as expected, and the backlog keeps moving with zero
   rework.
+- **Merged**: PR #100 "Spread arguments in function calls: `f(...args)`"
+  (`feat/20260727-spread-call-args`) — the call-site counterpart to the
+  existing list-literal spread and rest-parameter support: parser wraps a
+  leading `...` call argument in the existing `Spread` node, interpreter
+  splices its list elements into the flat argument list before arity
+  checking, mirroring `_evaluate_list_literal`'s spread handling exactly.
+  Works for user functions, builtins, and rest-param callees. Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS` (1146 tests passing, up from
+  1136), both posted after the sole commit — clean squash merge, branch
+  deleted, worktree removed first. BACKLOG.md task 1 marked done under
+  `## Done` and remaining tasks renumbered (2-13 → 1-12, now starting at
+  `sin`/`cos`/`tan`/`log` math builtins).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-four clean cycles in a row since the `gh pr create` outage
+  cleared — another first-pass merge with zero rework, the backlog just
+  keeps moving.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `gcd` and `lcm` for numbers [claimed 2026-07-26T20:31:08Z]
+## 1. Standard library: `gcd` and `lcm` for numbers [done, PR #98, merged 2026-07-27T14:11:31Z]
 
 Build: add `gcd(a, b)` and `lcm(a, b)` to `cinder/builtins.py`, delegating
 to Python's `math.gcd`/`math.lcm`, following `floor`/`ceil`/`pow`/`sqrt`'s
@@ -38,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Standard library: `mean` and `median` for lists of numbers [claimed 2026-07-27T14:05:34Z]
+## 2. Standard library: `mean` and `median` for lists of numbers [claimed 2026-07-27T14:05:34Z, PR #99 has VERDICT: LGTM + QA: PASS but now conflicts with main after PR #98 merged — next Engineer session should recreate a worktree from `origin/feat/20260727-mean-median`, rebase onto main, resolve, force-push; then it's ready to merge]
 
 Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
 sums the elements (reuse `_sum`'s numeric-check style) and divides by the

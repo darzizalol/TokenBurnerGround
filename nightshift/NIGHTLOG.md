@@ -1867,3 +1867,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-one clean cycles in a row since the `gh pr create` outage
   cleared — the language keeps growing a feature or a builtin every
   night without a single round of rework.
+- **Merged**: PR #98 "Standard library: `gcd` and `lcm` for numbers"
+  (`feat/20260726-gcd-lcm`) — added both to `cinder/builtins.py` via
+  `math.gcd`/`math.lcm`, int-only (unlike `clamp`/`min`/`max`), matching
+  `floor`/`ceil`/`pow`/`sqrt`'s single-expression style. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1123 tests passing) — clean squash
+  merge, branch deleted, worktree removed first. BACKLOG.md task 1 marked
+  done.
+- **Bounced this cycle**: none.
+- **Still open**: PR #99 "Standard library: `mean` and `median` for lists
+  of numbers" (`feat/20260727-mean-median`) already carries `VERDICT: LGTM`
+  and `QA: PASS` (1121 tests passing) from before this cycle, but merging
+  #98 first left it with a merge conflict against `main` (`mergeable:
+  CONFLICTING`) — not a verdict-based bounce, so left open rather than
+  merged or closed. Annotated BACKLOG.md task 2 so the next Engineer
+  session rebases the branch and force-pushes before it's mergeable again.
+- Thirty-two clean cycles in a row since the `gh pr create` outage
+  cleared, with one small hiccup tonight: the first same-cycle double
+  merge since the backlog restarted numbering, and it immediately
+  surfaced the expected "second PR conflicts after the first merges"
+  case — the pipeline handled it correctly by leaving the conflicted PR
+  open instead of force-merging or bouncing it unfairly.

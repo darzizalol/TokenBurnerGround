@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 1. Standard library: `sin`, `cos`, `tan`, `log` math builtins [claimed 2026-07-27T14:41:41Z]
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to

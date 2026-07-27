@@ -592,6 +592,36 @@ class TestCompoundAssignment(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_program(tokenize("list[0] += 1;"))
 
+    def test_amp_eq_and_pipe_eq_and_caret_eq(self):
+        env = run("let a = 0b1010; a &= 0b0110;")
+        self.assertEqual(env.get("a"), 2)
+        env = run("let a = 2; a |= 0b0001;")
+        self.assertEqual(env.get("a"), 3)
+        env = run("let a = 3; a ^= 0b0011;")
+        self.assertEqual(env.get("a"), 0)
+
+    def test_lshift_eq_and_rshift_eq(self):
+        env = run("let b = 1; b <<= 3;")
+        self.assertEqual(env.get("b"), 8)
+        env = run("let b = 8; b >>= 2;")
+        self.assertEqual(env.get("b"), 2)
+
+    def test_bitwise_compound_assign_on_index_target(self):
+        env = run("let xs = [5]; xs[0] &= 3;")
+        self.assertEqual(env.get("xs"), [1])
+        env = run("let xs = [8]; xs[0] >>= 2;")
+        self.assertEqual(env.get("xs"), [2])
+
+    def test_bitwise_compound_assign_type_error_matches_binary(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let a = 1.5; a &= 1;")
+
+    def test_shift_compound_assign_negative_count_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let b = 1; b <<= -1;")
+        with self.assertRaises(CinderRuntimeError):
+            run("let b = 1; b >>= -1;")
+
 
 class TestIfStatement(unittest.TestCase):
     def test_if_true_runs_then_branch(self):

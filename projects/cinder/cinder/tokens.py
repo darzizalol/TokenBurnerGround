@@ -63,6 +63,11 @@ class TokenType(Enum):
     TILDE = auto()
     LSHIFT = auto()
     RSHIFT = auto()
+    AMPEQ = auto()
+    PIPEEQ = auto()
+    CARETEQ = auto()
+    LSHIFTEQ = auto()
+    RSHIFTEQ = auto()
 
     # Punctuation
     LPAREN = auto()

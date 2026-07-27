@@ -13,9 +13,6 @@ _SIMPLE_TOKENS = {
     ",": TokenType.COMMA,
     ";": TokenType.SEMICOLON,
     ":": TokenType.COLON,
-    "&": TokenType.AMP,
-    "|": TokenType.PIPE,
-    "^": TokenType.CARET,
     "~": TokenType.TILDE,
 }
 
@@ -25,6 +22,9 @@ _COMPOUND_ASSIGN_TOKENS = {
     "*": (TokenType.STAR, TokenType.STAREQ),
     "/": (TokenType.SLASH, TokenType.SLASHEQ),
     "%": (TokenType.PERCENT, TokenType.PERCENTEQ),
+    "&": (TokenType.AMP, TokenType.AMPEQ),
+    "|": (TokenType.PIPE, TokenType.PIPEEQ),
+    "^": (TokenType.CARET, TokenType.CARETEQ),
 }
 
 _ESCAPES = {
@@ -315,7 +315,14 @@ class Lexer:
         if self._match("="):
             self.tokens.append(Token(TokenType.LTEQ, "<=", None, start_line, start_col))
         elif self._match("<"):
-            self.tokens.append(Token(TokenType.LSHIFT, "<<", None, start_line, start_col))
+            if self._match("="):
+                self.tokens.append(
+                    Token(TokenType.LSHIFTEQ, "<<=", None, start_line, start_col)
+                )
+            else:
+                self.tokens.append(
+                    Token(TokenType.LSHIFT, "<<", None, start_line, start_col)
+                )
         else:
             self.tokens.append(Token(TokenType.LT, "<", None, start_line, start_col))
 
@@ -341,7 +348,14 @@ class Lexer:
         if self._match("="):
             self.tokens.append(Token(TokenType.GTEQ, ">=", None, start_line, start_col))
         elif self._match(">"):
-            self.tokens.append(Token(TokenType.RSHIFT, ">>", None, start_line, start_col))
+            if self._match("="):
+                self.tokens.append(
+                    Token(TokenType.RSHIFTEQ, ">>=", None, start_line, start_col)
+                )
+            else:
+                self.tokens.append(
+                    Token(TokenType.RSHIFT, ">>", None, start_line, start_col)
+                )
         else:
             self.tokens.append(Token(TokenType.GT, ">", None, start_line, start_col))
 

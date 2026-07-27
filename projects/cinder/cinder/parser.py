@@ -1,7 +1,8 @@
 """Recursive-descent parser: token list -> expression/statement AST.
 
 Precedence, loosest to tightest:
-    assignment (=, +=, -=, *=, /=, %=, right-assoc) > ternary (?:, right-assoc)
+    assignment (=, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=, right-assoc)
+    > ternary (?:, right-assoc)
     > ?? (nullish-coalescing, right-assoc) > or > and > in
     > comparisons (== != < <= > >=) > | > ^ > & > << >> >
     + - > * / % > unary (- not ~)
@@ -12,8 +13,12 @@ short-circuits: `a ?? b` evaluates `b` only when `a` is `nil`, never for any
 other falsy value (`0`, `""`, `false`).
 
 Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
-(reusing the `Binary`/`Assign` AST nodes, restricted to `Identifier` targets
-like plain `=`) rather than adding dedicated interpreter support.
+(reusing the `Binary`/`Assign` AST nodes) rather than adding dedicated
+interpreter support. The original arithmetic set (`+=` `-=` `*=` `/=` `%=`)
+is restricted to `Identifier` targets; the bitwise/shift set (`&=` `|=` `^=`
+`<<=` `>>=`) additionally accepts an `Index` target (desugared into
+`IndexAssign`, like plain `=`), since nothing depends on the narrower
+restriction there.
 
 Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `let [IDENTIFIER, ...] = <expr>;` or
@@ -121,6 +126,20 @@ _COMPOUND_ASSIGN_OPS = {
     TokenType.STAREQ: TokenType.STAR,
     TokenType.SLASHEQ: TokenType.SLASH,
     TokenType.PERCENTEQ: TokenType.PERCENT,
+    TokenType.AMPEQ: TokenType.AMP,
+    TokenType.PIPEEQ: TokenType.PIPE,
+    TokenType.CARETEQ: TokenType.CARET,
+    TokenType.LSHIFTEQ: TokenType.LSHIFT,
+    TokenType.RSHIFTEQ: TokenType.RSHIFT,
+}
+# Unlike the arithmetic compound-assign ops above (identifier targets only),
+# the bitwise/shift ops also accept an index-expression target.
+_INDEX_TARGET_COMPOUND_ASSIGN_OPS = {
+    TokenType.AMPEQ,
+    TokenType.PIPEEQ,
+    TokenType.CARETEQ,
+    TokenType.LSHIFTEQ,
+    TokenType.RSHIFTEQ,
 }
 
 
@@ -459,19 +478,26 @@ class Parser:
         if self._peek().type in _COMPOUND_ASSIGN_OPS:
             op_token = self._advance()
             value = self._assignment()
-            if not isinstance(expr, Identifier):
-                raise ParseError(
-                    "invalid assignment target", op_token.line, op_token.column
-                )
             binary_operator = Token(
                 _COMPOUND_ASSIGN_OPS[op_token.type],
-                op_token.lexeme[0],
+                op_token.lexeme[:-1],
                 None,
                 op_token.line,
                 op_token.column,
             )
             binary = Binary(expr, binary_operator, value)
-            return Assign(expr.name, binary, op_token.line, op_token.column)
+            if isinstance(expr, Identifier):
+                return Assign(expr.name, binary, op_token.line, op_token.column)
+            if (
+                isinstance(expr, Index)
+                and op_token.type in _INDEX_TARGET_COMPOUND_ASSIGN_OPS
+            ):
+                return IndexAssign(
+                    expr.obj, expr.index, binary, op_token.line, op_token.column
+                )
+            raise ParseError(
+                "invalid assignment target", op_token.line, op_token.column
+            )
         return expr
 
     def _ternary(self) -> Expr:

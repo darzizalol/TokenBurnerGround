@@ -331,6 +331,141 @@ Acceptance criteria:
 
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
+---
+
+## 12. Standard library: `round` with an optional `digits` argument
+
+Build: extend the existing `round(n)` (`cinder/builtins.py:657`, currently a
+strict 1-arg builtin via `_require_arity`) to also accept an optional second
+`digits` argument — `round(n, digits)` rounds to `digits` decimal places via
+Python's own `round(n, digits)`, matching Python's banker's-rounding
+behavior. Follow `min`/`max`'s manual-bounds-check style (lines 615/626,
+which don't use `_require_arity` because their arity isn't fixed) rather
+than `_require_arity`, since this builtin now accepts 1 *or* 2 arguments:
+raise the existing arity error shape (reuse `_arity_error`, called with
+whichever count fits) when called with 0 or more than 2 arguments. When
+`digits` is omitted, behavior must stay byte-for-byte identical to today
+(`round(n)` still returns `round(n)`, an `int`).
+
+Acceptance criteria:
+- `round(3.456)` is still `3` (1-arg call unchanged — add a regression test
+  pinning this since the arity check is being loosened).
+- `round(3.456, 2)` is `3.46`; `round(3.456, 0)` is `3.0` (Python's own
+  `round(n, 0)` returns a `float`, not an `int` — pin this distinction from
+  the 1-arg form).
+- `round(2.5, 0)` is `2.0` (banker's rounding to even, matching Python's
+  `round` — not "round half up").
+- A non-numeric `n` raises `CinderRuntimeError` with line/column.
+- A non-`int` `digits` (e.g. a `float` or `str`) raises `CinderRuntimeError`
+  with line/column.
+- A negative `digits` raises `CinderRuntimeError` with line/column (Python
+  allows it to round to tens/hundreds, but that's surprising here — keep
+  this builtin's domain to "decimal places", matching `clamp`'s style of
+  rejecting surprising-but-technically-valid inputs).
+- Calling with 0 or 3+ arguments raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 13. Standard library: `to_fixed` for fixed-decimal number formatting
+
+Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
+`str` with exactly `digits` digits after the decimal point (via Python's
+`f"{n:.{digits}f}"`), zero-padding where `round`/`to_fixed`'s numeric cousin
+leaves a whole number bare. This is the string-output counterpart to task
+12's `round(n, digits)`: `round` returns a number for further math,
+`to_fixed` returns a display-ready string (mirroring JS's `Number.
+toFixed`), useful anywhere Cinder scripts print formatted numbers today via
+manual `format`/string-interpolation workarounds.
+
+Acceptance criteria:
+- `to_fixed(3.14159, 2)` is `"3.14"`; `to_fixed(3, 2)` is `"3.00"` (int
+  input still zero-pads).
+- `to_fixed(3.145, 2)` is `"3.15"` (uses Python's own float-formatting
+  rounding — no custom rounding logic needed, just delegate to the format
+  spec).
+- `to_fixed(-1.5, 0)` is `"-2"` (sign preserved, no decimal point when
+  `digits` is `0`).
+- A non-numeric `n` raises `CinderRuntimeError` with line/column.
+- A non-`int` or negative `digits` raises `CinderRuntimeError` with
+  line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 14. Increment/decrement statement operators: `++`, `--`
+
+Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
+— deliberately **not** an expression form (no `y = x++;`, no pre/post-value
+distinction to design around; this is `+=`/`-=` shorthand, nothing more,
+keeping the scope tight for one session). Lexing: `+` and `-` currently
+lex via `_op_or_compound_assign` (`cinder/lexer.py:292`) using the
+`_COMPOUND_ASSIGN_TOKENS` table (`cinder/lexer.py:22-28`), which only
+distinguishes the bare char from one `=`-suffixed form; extend just the
+`+`/`-` handling (not the shared table, since `*`/`/`/`%` don't get this
+form) to also check for a doubled character (`self._match("+")` /
+`self._match("-")`) and emit new `PLUSPLUS`/`MINUSMINUS` tokens before
+falling back to the existing compound-assign check. Add both token types to
+`cinder/tokens.py`. Parsing: hook into statement parsing (not the
+expression/Pratt parser) alongside where compound assignment is desugared
+(`cinder/parser.py:459`) — after parsing a primary/postfix expression at
+statement position, if the next token is `PLUSPLUS`/`MINUSMINUS`, require
+the expression to be a valid assignment target (identifier or index
+expression, matching compound assignment's existing lvalue restriction) and
+desugar to the same `target = target OP 1` AST shape compound assignment
+already produces, with `1` as an `IntLiteral`.
+
+Acceptance criteria:
+- `let a = 5; a++; a` is `6`; `a--;` after that makes `a` `5` again.
+- Works on an index-expression target: `let xs = [1]; xs[0]++; xs[0]` is
+  `2`.
+- `a++` is a statement, not an expression — using it as a value (e.g.
+  `let b = a++;`) raises a `ParseError` with line/column (or is simply
+  unparseable per the grammar — pick whichever the implementation naturally
+  produces, but add a test pinning it either way).
+- `a++` on a non-lvalue (e.g. `5++;`) raises a `ParseError` with
+  line/column, matching compound assignment's existing lvalue check.
+- Existing `+`/`-`/`+=`/`-=` lexing and parsing are unaffected — add a
+  regression test that `1 + 2` and `a += 1` still lex/parse exactly as
+  before.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+
+---
+
+## 15. Standard library: `interleave` for two lists
+
+Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
+`_require_two_lists` helper (line 859, already used by `union`/
+`intersection`/`difference`) for argument validation. Returns a new flat
+list alternating one element from `list1`, one from `list2`, continuing
+with whichever list still has elements once the other runs out (unlike
+`zip`/`zip_with`, which truncate to the shorter length and pair elements
+instead of flattening them).
+
+Acceptance criteria:
+- `interleave([1, 3, 5], [2, 4, 6])` is `[1, 2, 3, 4, 5, 6]`.
+- `interleave([1, 2], [10, 20, 30, 40])` is `[1, 10, 2, 20, 30, 40]` (once
+  the shorter list runs out, the rest of the longer list is appended as-is
+  — this divergence from `zip`'s truncation is the point of the builtin).
+- `interleave([], [1, 2])` is `[1, 2]`; `interleave([1, 2], [])` is
+  `[1, 2]`.
+- `interleave([], [])` is `[]`.
+- A non-list argument raises `CinderRuntimeError` with line/column (reusing
+  `_require_two_lists`'s existing error shape).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
 ## Done
 
 - **Project scaffolding** — merged 2026-07-18T14:07:26Z via PR #1

@@ -157,7 +157,8 @@ Actively developed, nightly. Recently landed: the nil-coalescing operator
 Coming up next (see [`BACKLOG.md`](BACKLOG.md)): standard-library additions
 (`gcd`/`lcm`, `mean`/`median`), spread arguments in function calls
 (`f(...args)`), more math builtins (`sin`/`cos`/`tan`/`log`,
-`shuffle`/`sample`), and bitwise/shift compound assignment (`&=`, `|=`, `^=`,
-`<<=`, `>>=`) — the backlog alternates language depth with stdlib breadth
-rather than running each in a long block. The full vision and non-goals live
-in [`PROJECT.md`](PROJECT.md).
+`shuffle`/`sample`), bitwise/shift compound assignment (`&=`, `|=`, `^=`,
+`<<=`, `>>=`), and further out, increment/decrement statement operators
+(`++`/`--`) and fixed-decimal number formatting (`to_fixed`) — the backlog
+alternates language depth with stdlib breadth rather than running each in a
+long block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

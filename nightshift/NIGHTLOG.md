@@ -1937,3 +1937,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-five clean cycles in a row since the `gh pr create` outage
   cleared — the math builtins landed first-pass just like the last several
   nights, no rework needed.
+
+## 2026-07-28
+
+- **Merged**: none.
+- **Bounced this cycle**: none.
+- **Still open**: PR #102 "Standard library: `shuffle` and `sample` for
+  lists" (`feat/20260727-shuffle-sample`) — pushed 2026-07-27, but no
+  Reviewer or QA verdict posted yet, so nothing to act on this pass.
+- First release pass of the night: no merge authority to exercise yet, so
+  this cycle was a no-op by design — waiting on Reviewer/QA to weigh in on
+  #102.

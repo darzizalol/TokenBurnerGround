@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Spread arguments in function calls: `f(...args)`
+## 1. Spread arguments in function calls: `f(...args)` [claimed 2026-07-27T14:27:32Z]
 
 Build: let `...expr` appear as a call argument, splicing `expr`'s list
 elements into the positional argument list at that point — the call-site

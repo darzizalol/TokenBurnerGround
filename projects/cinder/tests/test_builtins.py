@@ -1190,6 +1190,9 @@ class TestMax(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run('max(1, "x");')
 
+    def test_max_with_spread_call_argument(self):
+        self.assertEqual(run("let result = max(...[3, 1, 2]);").get("result"), 3)
+
 
 class TestClamp(unittest.TestCase):
     def test_clamp_already_in_range(self):

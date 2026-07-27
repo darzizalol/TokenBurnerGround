@@ -597,12 +597,18 @@ class Parser:
         paren = self._previous()
         arguments = []
         if not self._check(TokenType.RPAREN):
-            arguments.append(self._ternary())
+            arguments.append(self._call_argument())
             while self._check(TokenType.COMMA):
                 self._advance()
-                arguments.append(self._ternary())
+                arguments.append(self._call_argument())
         self._consume(TokenType.RPAREN, "')' after arguments")
         return Call(callee, arguments, paren.line, paren.column)
+
+    def _call_argument(self) -> Expr:
+        if self._check(TokenType.DOT_DOT_DOT):
+            dots = self._advance()
+            return Spread(self._ternary(), dots.line, dots.column)
+        return self._ternary()
 
     def _finish_index(self, obj: Expr) -> Expr:
         bracket = self._advance()  # consume '['

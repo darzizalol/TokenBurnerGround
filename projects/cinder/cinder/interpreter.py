@@ -310,7 +310,19 @@ class Interpreter:
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)
-        arguments = [self.evaluate(arg, env) for arg in expr.arguments]
+        arguments = []
+        for arg in expr.arguments:
+            if isinstance(arg, Spread):
+                value = self.evaluate(arg.expression, env)
+                if not isinstance(value, list):
+                    raise CinderRuntimeError(
+                        f"cannot spread {type_name(value)} in a function call",
+                        arg.line,
+                        arg.column,
+                    )
+                arguments.extend(value)
+            else:
+                arguments.append(self.evaluate(arg, env))
         return call_value(callee, arguments, expr.line, expr.column)
 
     def _evaluate_list_literal(self, expr: ListLiteral, env: Environment) -> list:

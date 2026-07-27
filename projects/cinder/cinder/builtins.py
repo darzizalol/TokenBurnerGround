@@ -1533,6 +1533,30 @@ def _map_values(arguments: list, line: int, column: int) -> object:
     return {key: call_value(fn, [value], line, column) for key, value in target.items()}
 
 
+def _map_keys(arguments: list, line: int, column: int) -> object:
+    _require_arity("map_keys", arguments, 2, line, column)
+    target, fn = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"map_keys() requires a map as its first argument, got {type_name(target)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"map_keys() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    result: dict = {}
+    for key, value in target.items():
+        new_key = call_value(fn, [key], line, column)
+        if not _is_valid_key(new_key):
+            raise CinderRuntimeError(
+                f"{type_name(new_key)} is not a valid map key", line, column
+            )
+        result[new_key] = value
+    return result
+
+
 def _filter(arguments: list, line: int, column: int) -> object:
     _require_arity("filter", arguments, 2, line, column)
     items, fn = arguments
@@ -1786,6 +1810,7 @@ _BUILTINS = {
     "repeat": _repeat,
     "map": _map,
     "map_values": _map_values,
+    "map_keys": _map_keys,
     "filter": _filter,
     "reduce": _reduce,
     "group_by": _group_by,

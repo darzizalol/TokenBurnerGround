@@ -78,7 +78,7 @@ while (i < 10) {
   `copy`, `deep_copy`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
   `union`, `intersection`, `difference` (lists treated as unordered sets),
   `pluck`, `pick`, `omit`,
-  `flat_map`, `chunk`, `reverse`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
+  `flat_map`, `chunk`, `reverse`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,

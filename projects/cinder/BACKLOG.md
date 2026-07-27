@@ -42,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+## 2. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=` [claimed 2026-07-27T19:36:03Z]
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via the `_COMPOUND_ASSIGN_OPS`

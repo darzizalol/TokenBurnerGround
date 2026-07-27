@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `shuffle` and `sample` for lists
+## 1. Standard library: `shuffle` and `sample` for lists [claimed 2026-07-27T22:05:00Z]
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships

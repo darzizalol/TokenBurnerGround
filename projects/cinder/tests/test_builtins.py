@@ -2252,6 +2252,47 @@ class TestMapValues(unittest.TestCase):
             run('map_values({"a": 1}, fn(x, y) { return x; });')
 
 
+class TestMapKeys(unittest.TestCase):
+    def test_map_keys_with_closure(self):
+        env = run('let result = map_keys({"a": 1, "b": 2}, fn(k) { return upper(k); });')
+        self.assertEqual(env.get("result"), {"A": 1, "B": 2})
+
+    def test_map_keys_collision_later_entry_wins(self):
+        env = run('let result = map_keys({"cat": 1, "car": 2}, fn(k) { return k[0]; });')
+        self.assertEqual(env.get("result"), {"c": 2})
+
+    def test_map_keys_of_empty_map(self):
+        env = run("let result = map_keys({}, fn(k) { return k; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_map_keys_does_not_mutate_input(self):
+        env = run(
+            'let m = {"a": 1}; let result = map_keys(m, fn(k) { return upper(k); });'
+        )
+        self.assertEqual(env.get("m"), {"a": 1})
+        self.assertEqual(env.get("result"), {"A": 1})
+
+    def test_map_keys_with_invalid_result_as_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_keys({"a": 1}, fn(k) { return [k]; });')
+
+    def test_map_keys_non_map_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("map_keys(5, fn(k) { return k; });")
+
+    def test_map_keys_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_keys({"a": 1}, 5);')
+
+    def test_map_keys_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_keys({"a": 1});')
+
+    def test_map_keys_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('map_keys({"a": 1}, fn(x, y) { return x; });')
+
+
 class TestFilter(unittest.TestCase):
     def test_filter_with_closure(self):
         env = run("let result = filter([1, 2, 3, 4], fn(x) { return x > 2; });")

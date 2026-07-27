@@ -114,11 +114,11 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ## 5. Standard library: `round` with an optional `digits` argument
 
-Build: extend the existing `round(n)` (`cinder/builtins.py:657`, currently a
+Build: extend the existing `round(n)` (`cinder/builtins.py:658`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
 `digits` argument — `round(n, digits)` rounds to `digits` decimal places via
 Python's own `round(n, digits)`, matching Python's banker's-rounding
-behavior. Follow `min`/`max`'s manual-bounds-check style (lines 615/626,
+behavior. Follow `min`/`max`'s manual-bounds-check style (lines 616/627,
 which don't use `_require_arity` because their arity isn't fixed) rather
 than `_require_arity`, since this builtin now accepts 1 *or* 2 arguments:
 raise the existing arity error shape (reuse `_arity_error`, called with
@@ -193,7 +193,7 @@ form) to also check for a doubled character (`self._match("+")` /
 falling back to the existing compound-assign check. Add both token types to
 `cinder/tokens.py`. Parsing: hook into statement parsing (not the
 expression/Pratt parser) alongside where compound assignment is desugared
-(`cinder/parser.py:459`) — after parsing a primary/postfix expression at
+(`cinder/parser.py:481`, inside `_assignment`) — after parsing a primary/postfix expression at
 statement position, if the next token is `PLUSPLUS`/`MINUSMINUS`, require
 the expression to be a valid assignment target (identifier or index
 expression, matching compound assignment's existing lvalue restriction) and
@@ -303,9 +303,9 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 11. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
-(`TryStmt` in `cinder/ast_nodes.py:264-270`, parsed by `_try_statement` in
-`cinder/parser.py:373-397`, executed by `_execute_try` in
-`cinder/interpreter.py:281-287`) with an optional trailing
+(`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
+`cinder/parser.py:395-417`, executed by `_execute_try` in
+`cinder/interpreter.py:284-289`) with an optional trailing
 `finally { ... }` block that always runs — whether the `try` block
 succeeded, raised a `CinderRuntimeError` caught by `catch`, or unwound via
 an uncaught Python-internal control-flow signal (`_BreakSignal`,

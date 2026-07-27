@@ -234,6 +234,65 @@ class TestOperators(unittest.TestCase):
         )
         self.assertEqual(tokens[1].lexeme, "+=")
 
+    def test_bitwise_compound_assignment_operators(self):
+        source = "&= |= ^="
+        expected = [
+            TokenType.AMPEQ,
+            TokenType.PIPEEQ,
+            TokenType.CARETEQ,
+            TokenType.EOF,
+        ]
+        self.assertEqual(types(tokenize(source)), expected)
+
+    def test_bitwise_compound_assignment_lexes_as_single_token(self):
+        tokens = tokenize("a &= 1")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.IDENTIFIER, TokenType.AMPEQ, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "&=")
+        # A lone `&` still lexes as AMP, not AMPEQ.
+        self.assertEqual(types(tokenize("a & 1")), [TokenType.IDENTIFIER, TokenType.AMP, TokenType.INT, TokenType.EOF])
+
+    def test_shift_compound_assignment_operators(self):
+        tokens = tokenize("a <<= 1; b >>= 2;")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.LSHIFTEQ,
+                TokenType.INT,
+                TokenType.SEMICOLON,
+                TokenType.IDENTIFIER,
+                TokenType.RSHIFTEQ,
+                TokenType.INT,
+                TokenType.SEMICOLON,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(tokens[1].lexeme, "<<=")
+        self.assertEqual(tokens[5].lexeme, ">>=")
+
+    def test_shift_compound_assignment_does_not_collide_with_shift_or_comparisons(self):
+        # Plain `<<`/`>>` (no trailing `=`) still lex as before.
+        self.assertEqual(
+            types(tokenize("1 << 2")),
+            [TokenType.INT, TokenType.LSHIFT, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(
+            types(tokenize("1 >> 2")),
+            [TokenType.INT, TokenType.RSHIFT, TokenType.INT, TokenType.EOF],
+        )
+        # `<=`/`>=` are unaffected by the new lookahead.
+        self.assertEqual(
+            types(tokenize("1 <= 2")),
+            [TokenType.INT, TokenType.LTEQ, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(
+            types(tokenize("1 >= 2")),
+            [TokenType.INT, TokenType.GTEQ, TokenType.INT, TokenType.EOF],
+        )
+
 
 class TestComments(unittest.TestCase):
     def test_comment_stripped(self):

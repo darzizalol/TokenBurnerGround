@@ -108,6 +108,21 @@ class IndexAssign:
 
 
 @dataclass(frozen=True)
+class IndexCompoundAssign:
+    """`xs[i] &= v` and friends: unlike `IndexAssign`, `obj`/`index` are each
+    evaluated exactly once (their values are reused for both the read and
+    the write) rather than desugaring into an `IndexAssign` around a
+    `Binary` that re-walks an embedded `Index` sub-expression."""
+
+    obj: "Expr"
+    index: "Expr"
+    operator: Token
+    value: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class SliceExpr:
     obj: "Expr"
     start: "Expr | None"

@@ -18,6 +18,7 @@ from cinder.ast_nodes import (
     Identifier,
     Index,
     IndexAssign,
+    IndexCompoundAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -74,6 +75,14 @@ def shape(node):
             "IndexAssign",
             shape(node.obj),
             shape(node.index),
+            shape(node.value),
+        )
+    if isinstance(node, IndexCompoundAssign):
+        return (
+            "IndexCompoundAssign",
+            shape(node.obj),
+            shape(node.index),
+            node.operator.type,
             shape(node.value),
         )
     if isinstance(node, Assign):
@@ -792,6 +801,67 @@ class TestCompoundAssignment(unittest.TestCase):
     def test_index_target_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse_stmts("xs[0] += 1;")
+
+    def test_amp_eq_desugars_to_binary_amp(self):
+        self.assertEqual(
+            shape(parse("x &= 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.AMP, ("Literal", 1))),
+        )
+
+    def test_pipe_eq_desugars_to_binary_pipe(self):
+        self.assertEqual(
+            shape(parse("x |= 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.PIPE, ("Literal", 1))),
+        )
+
+    def test_caret_eq_desugars_to_binary_caret(self):
+        self.assertEqual(
+            shape(parse("x ^= 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.CARET, ("Literal", 1))),
+        )
+
+    def test_lshift_eq_desugars_to_binary_lshift(self):
+        self.assertEqual(
+            shape(parse("x <<= 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.LSHIFT, ("Literal", 1))),
+        )
+
+    def test_rshift_eq_desugars_to_binary_rshift(self):
+        self.assertEqual(
+            shape(parse("x >>= 1")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.RSHIFT, ("Literal", 1))),
+        )
+
+    def test_bitwise_compound_assign_allows_index_target(self):
+        # Unlike the arithmetic set, the bitwise/shift ops accept an
+        # index-expression target too, desugaring into IndexCompoundAssign
+        # (not IndexAssign wrapping a Binary over the same Index node, which
+        # would evaluate obj/index twice at runtime).
+        stmts = parse_stmts("xs[0] &= 1;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexCompoundAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    TokenType.AMP,
+                    ("Literal", 1),
+                ),
+            ),
+        )
+
+    def test_plain_lshift_and_rshift_unaffected(self):
+        # Regression: plain (non-assignment) `<<`/`>>` still parse as before.
+        self.assertEqual(
+            shape(parse("1 << 2")),
+            ("Binary", ("Literal", 1), TokenType.LSHIFT, ("Literal", 2)),
+        )
+        self.assertEqual(
+            shape(parse("1 >> 2")),
+            ("Binary", ("Literal", 1), TokenType.RSHIFT, ("Literal", 2)),
+        )
 
 
 class TestStatements(unittest.TestCase):

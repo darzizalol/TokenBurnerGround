@@ -47,9 +47,11 @@ while (i < 10) {
   `break`/`continue`/`return` still propagate through uncaught), `switch`
   statements with `case`/`default` (no fallthrough, first match wins)
 - **Operators**: full arithmetic/comparison/logical set, compound
-  assignment (`+=`, `-=`, `*=`, `/=`, `%=`), `*` repetition for
-  `str * int`/`list * int` (Python repetition semantics), `in` for
-  membership tests (lists, strings, maps), the ternary conditional
+  assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`;
+  the bitwise/shift set also accepts an index-expression target, e.g.
+  `xs[0] &= 3`, unlike the arithmetic set which is identifier-only), `*`
+  repetition for `str * int`/`list * int` (Python repetition semantics),
+  `in` for membership tests (lists, strings, maps), the ternary conditional
   `cond ? then : else`, the nil-coalescing operator `a ?? b` (short-circuits
   like `and`/`or`: evaluates `b` only when `a` is `nil`, unlike `or` which
   falls through on any falsy value), and bitwise operators `&`, `|`, `^`,

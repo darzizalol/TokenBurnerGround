@@ -1888,3 +1888,20 @@ The morning paper: what shipped, what bounced, what's still open.
   surfaced the expected "second PR conflicts after the first merges"
   case — the pipeline handled it correctly by leaving the conflicted PR
   open instead of force-merging or bouncing it unfairly.
+- **Merged**: PR #99 "Standard library: `mean` and `median` for lists of
+  numbers" (`feat/20260727-mean-median`) — added both to
+  `cinder/builtins.py`: `mean` always returns `float`, `median` sorts a
+  non-mutating copy and returns the middle element (odd length) or float
+  mean of the two middle elements (even length). Rebased once after PR
+  #98 merged (docstring/README listing conflict only) and re-reviewed +
+  re-QA'd post-rebase — `VERDICT: LGTM` and `QA: PASS` both posted after
+  the force-push (1136 tests passing, up from 1123). Clean squash merge,
+  branch deleted, worktree removed first. BACKLOG.md task 1 marked done
+  and remaining tasks renumbered (2-14 → 1-13, now starting at spread
+  arguments in function calls).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-three clean cycles in a row since the `gh pr create` outage
+  cleared — last cycle's conflicted PR resolved itself cleanly on the very
+  next pass, exactly as expected, and the backlog keeps moving with zero
+  rework.

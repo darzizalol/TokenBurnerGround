@@ -11,34 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `mean` and `median` for lists of numbers [claimed 2026-07-27T14:05:34Z, PR #99 has VERDICT: LGTM + QA: PASS but now conflicts with main after PR #98 merged — next Engineer session should recreate a worktree from `origin/feat/20260727-mean-median`, rebase onto main, resolve, force-push; then it's ready to merge]
-
-Build: add `mean(list)` and `median(list)` to `cinder/builtins.py`. `mean`
-sums the elements (reuse `_sum`'s numeric-check style) and divides by the
-count, always returning a `float` (unlike `sum`, which stays `int` when
-every element is `int` — averages are conceptually fractional even when
-they land on a whole number). `median` sorts a *copy* of the list (reuse
-`sort`'s all-numeric check, non-mutating like `sort`/`reverse`) and returns
-the middle element for odd length, or the arithmetic mean of the two
-middle elements (always `float`) for even length.
-
-Acceptance criteria:
-- `mean([1, 2, 3])` is `2.0`; `mean([1, 2])` is `1.5`.
-- `median([1, 3, 2])` is `2`; `median([1, 2, 3, 4])` is `2.5`.
-- `median([5])` is `5`.
-- Empty list raises `CinderRuntimeError` with line/column, for both
-  builtins (no natural mean/median of zero elements).
-- A non-numeric element or non-list argument raises `CinderRuntimeError`
-  with line/column, for both builtins.
-- Wrong arity raises `CinderRuntimeError` with line/column, for both
-  builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Spread arguments in function calls: `f(...args)`
+## 1. Spread arguments in function calls: `f(...args)`
 
 Build: let `...expr` appear as a call argument, splicing `expr`'s list
 elements into the positional argument list at that point — the call-site
@@ -82,7 +55,7 @@ Likely files: `cinder/parser.py`, `cinder/interpreter.py`,
 
 ---
 
-## 3. Standard library: `sin`, `cos`, `tan`, `log` math builtins
+## 2. Standard library: `sin`, `cos`, `tan`, `log` math builtins
 
 Build: add `sin(n)`, `cos(n)`, `tan(n)` (radians, delegating to
 `math.sin`/`math.cos`/`math.tan`) and `log(n)` (natural log, delegating to
@@ -106,7 +79,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `shuffle` and `sample` for lists
+## 3. Standard library: `shuffle` and `sample` for lists
 
 Build: add `shuffle(list)` and `sample(list, n)` to `cinder/builtins.py`
 using Python's stdlib `random` module (no new dependency — `random` ships
@@ -137,7 +110,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
+## 4. Bitwise/shift compound assignment operators: `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 Build: extend the existing compound-assignment family (`+=`, `-=`, `*=`,
 `/=`, `%=`, desugared in the parser via a base-operator lookup table at
@@ -177,7 +150,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `map_keys` for maps
+## 5. Standard library: `map_keys` for maps
 
 Build: add `map_keys(map, fn)` to `cinder/builtins.py`, the key-side
 counterpart to the existing `map_values` — returns a new map with the same
@@ -205,7 +178,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `title` for strings
+## 6. Standard library: `title` for strings
 
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
@@ -232,7 +205,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `trim_start` and `trim_end` for strings
+## 7. Standard library: `trim_start` and `trim_end` for strings
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
@@ -255,7 +228,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `sign` for numbers
+## 8. Standard library: `sign` for numbers
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
@@ -275,7 +248,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `random_int` and `random_choice`
+## 9. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -306,7 +279,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `round` with an optional `digits` argument
+## 10. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:657`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -343,7 +316,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. Standard library: `to_fixed` for fixed-decimal number formatting
+## 11. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -372,7 +345,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 13. Increment/decrement statement operators: `++`, `--`
+## 12. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -414,7 +387,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 14. Standard library: `interleave` for two lists
+## 13. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 859, already used by `union`/
@@ -1158,6 +1131,14 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
   `clamp`/`min`/`max`), matching `floor`/`ceil`/`pow`/`sqrt`'s
   single-expression style. Clean first pass, no bounces (1123 tests
   passing, up from 1108).
+- **Standard library: `mean` and `median` for lists of numbers** — merged
+  2026-07-27T14:21:43Z via PR #99 (`feat/20260727-mean-median`). Added both
+  to `cinder/builtins.py`: `mean` sums and divides by count, always
+  returning `float`; `median` sorts a non-mutating copy and returns the
+  middle element (odd length) or float mean of the two middle elements
+  (even length). Rebased once after PR #98 merged (docstring/README
+  listing conflict only, no functional changes); re-reviewed and
+  re-QA'd post-rebase (1136 tests passing, up from 1123).
 
 ## Graveyard
 

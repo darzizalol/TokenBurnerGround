@@ -256,7 +256,7 @@ Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
 `f"{n:.{digits}f}"`), zero-padding where `round`/`to_fixed`'s numeric cousin
 leaves a whole number bare. This is the string-output counterpart to task
-12's `round(n, digits)`: `round` returns a number for further math,
+8's `round(n, digits)`: `round` returns a number for further math,
 `to_fixed` returns a display-ready string (mirroring JS's `Number.
 toFixed`), useful anywhere Cinder scripts print formatted numbers today via
 manual `format`/string-interpolation workarounds.

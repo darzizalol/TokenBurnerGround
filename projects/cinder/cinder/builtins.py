@@ -4,7 +4,7 @@
 `len`, `is_empty`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
 `keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `lines`, `words`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
-`ceil`, `pow`, `sqrt`, `gcd`, `lcm`, `sum`, `mean`, `median`,
+`ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `sum`, `mean`, `median`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
@@ -726,6 +726,50 @@ def _sqrt(arguments: list, line: int, column: int) -> object:
             "sqrt() requires a non-negative number, no complex numbers", line, column
         )
     return math.sqrt(value)
+
+
+def _sin(arguments: list, line: int, column: int) -> object:
+    _require_arity("sin", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"sin() requires a number, got {type_name(value)}", line, column
+        )
+    return math.sin(value)
+
+
+def _cos(arguments: list, line: int, column: int) -> object:
+    _require_arity("cos", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"cos() requires a number, got {type_name(value)}", line, column
+        )
+    return math.cos(value)
+
+
+def _tan(arguments: list, line: int, column: int) -> object:
+    _require_arity("tan", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"tan() requires a number, got {type_name(value)}", line, column
+        )
+    return math.tan(value)
+
+
+def _log(arguments: list, line: int, column: int) -> object:
+    _require_arity("log", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"log() requires a number, got {type_name(value)}", line, column
+        )
+    if value <= 0:
+        raise CinderRuntimeError(
+            "log() requires a positive number, domain error", line, column
+        )
+    return math.log(value)
 
 
 def _gcd(arguments: list, line: int, column: int) -> object:
@@ -1675,6 +1719,10 @@ _BUILTINS = {
     "ceil": _ceil,
     "pow": _pow,
     "sqrt": _sqrt,
+    "sin": _sin,
+    "cos": _cos,
+    "tan": _tan,
+    "log": _log,
     "gcd": _gcd,
     "lcm": _lcm,
     "sum": _sum,

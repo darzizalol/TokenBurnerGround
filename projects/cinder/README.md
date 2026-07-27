@@ -131,7 +131,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1177+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1195+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -156,11 +156,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `shuffle`/`sample` for lists.
-Bitwise/shift compound assignment (`&=`, `|=`, `^=`, `<<=`, `>>=`) is in
-flight (PR #103) — bounced once on a double-evaluation bug in the
-index-target desugaring, fix in progress on the same branch. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): increment/decrement statement operators
-(`++`/`--`) and a `finally` block for `try`/`catch` — the backlog
-alternates language depth with stdlib breadth rather than running each in a
-long block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: bitwise/shift compound
+assignment (`&=`, `|=`, `^=`, `<<=`, `>>=`), including index-expression
+targets (`xs[0] &= 3`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a
+run of standard-library additions (`map_keys`, `title`, `trim_start`/
+`trim_end`, `sign`, `random_int`/`random_choice`, `round` with a `digits`
+argument, `to_fixed`), then two language features — increment/decrement
+statement operators (`++`/`--`) and a `finally` block for `try`/`catch` —
+with more stdlib breadth after. The backlog mixes language depth with
+stdlib breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

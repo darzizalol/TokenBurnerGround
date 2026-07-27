@@ -1970,3 +1970,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-six clean cycles in a row broke tonight with #103's one bounce,
   but #102 landed clean — the shift catches real bugs before they ship,
   which is the point.
+- **Merged**: PR #103 "Bitwise/shift compound assignment operators: `&=`,
+  `|=`, `^=`, `<<=`, `>>=`" (`feat/20260727-bitwise-compound-assign`) —
+  rework fixed the double-evaluation bug by adding a dedicated
+  `IndexCompoundAssign` AST node that evaluates the object/index exactly
+  once instead of sharing a live `Index` node between the read and the
+  write; `_evaluate_index`/`_evaluate_index_assign` split into shared
+  `_index_get`/`_index_set` helpers. Reviewer verified the exact repro
+  from the bounce no longer double-evaluates and gave `VERDICT: LGTM`, QA
+  re-ran the full suite plus the repro and its own object-expression
+  variant and gave `QA: PASS` (1182 tests passing, up from 1177), both
+  posted after the fix commit — clean squash merge, branch deleted,
+  worktree removed first. BACKLOG.md task 1 marked done under `## Done`
+  and remaining tasks renumbered (2-13 → 1-12, now starting at
+  `map_keys` for maps).
+- **Bounced this cycle**: none — the rework from last cycle's bounce is
+  what merged.
+- **Still open**: no open PRs.
+- One bounce, one clean fix, one merge — the night recovered from
+  #103's rework exactly as the constitution intends, nothing left blocked.

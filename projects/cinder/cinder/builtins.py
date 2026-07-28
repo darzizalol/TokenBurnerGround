@@ -416,6 +416,26 @@ def _trim(arguments: list, line: int, column: int) -> object:
     return value.strip()
 
 
+def _trim_start(arguments: list, line: int, column: int) -> object:
+    _require_arity("trim_start", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"trim_start() requires a string, got {type_name(value)}", line, column
+        )
+    return value.lstrip()
+
+
+def _trim_end(arguments: list, line: int, column: int) -> object:
+    _require_arity("trim_end", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"trim_end() requires a string, got {type_name(value)}", line, column
+        )
+    return value.rstrip()
+
+
 def _split(arguments: list, line: int, column: int) -> object:
     _require_arity("split", arguments, 2, line, column)
     value, sep = arguments
@@ -1753,6 +1773,8 @@ _BUILTINS = {
     "lower": _lower,
     "capitalize": _capitalize,
     "trim": _trim,
+    "trim_start": _trim_start,
+    "trim_end": _trim_end,
     "split": _split,
     "lines": _lines,
     "words": _words,

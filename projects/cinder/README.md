@@ -83,7 +83,7 @@ while (i < 10) {
   `flat_map`, `chunk`, `reverse`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `map_keys`, `filter`, `reduce`, `slice`, `concat`, `zip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`,
-  `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
+  `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
   `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `ord`/`chr` for character/code-point
@@ -159,7 +159,7 @@ projects/cinder/
 Actively developed, nightly. Recently landed: `map_keys` for maps, the
 key-side counterpart to `map_values`. Coming up next (see
 [`BACKLOG.md`](BACKLOG.md)): a run of standard-library additions (`title`,
-`trim_start`/`trim_end`, `sign`, `random_int`/`random_choice`, `round` with
+`sign`, `random_int`/`random_choice`, `round` with
 a `digits` argument, `to_fixed`), then two language features —
 increment/decrement statement operators (`++`/`--`) and a `finally` block
 for `try`/`catch` — with more stdlib breadth after. The backlog mixes

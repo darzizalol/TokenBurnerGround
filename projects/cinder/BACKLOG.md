@@ -38,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Standard library: `trim_start` and `trim_end` for strings
+## 2. Standard library: `trim_start` and `trim_end` for strings [claimed 2026-07-28T14:06:10Z]
 
 Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
 delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same

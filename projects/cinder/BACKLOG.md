@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `interleave` for two lists
+## 1. Standard library: `interleave` for two lists [claimed 2026-07-29T20:42:36Z]
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 1058, already used by `union`/

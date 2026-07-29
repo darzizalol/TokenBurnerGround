@@ -1,6 +1,6 @@
 """Tests for cinder.builtins: print, len, is_empty, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, trim_start, trim_end, split, lines, words, join,
-find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
+find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, to_fixed, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function, random_int, random_choice."""
@@ -1393,6 +1393,44 @@ class TestRound(unittest.TestCase):
     def test_round_too_many_arguments_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("round(1.5, 2, 3);")
+
+
+class TestToFixed(unittest.TestCase):
+    def test_to_fixed_truncates_and_rounds(self):
+        self.assertEqual(run("let result = to_fixed(3.14159, 2);").get("result"), "3.14")
+
+    def test_to_fixed_zero_pads_int_input(self):
+        self.assertEqual(run("let result = to_fixed(3, 2);").get("result"), "3.00")
+
+    def test_to_fixed_rounds_half_away_via_float_format(self):
+        self.assertEqual(run("let result = to_fixed(3.145, 2);").get("result"), "3.15")
+
+    def test_to_fixed_zero_digits_preserves_sign_no_dot(self):
+        self.assertEqual(run("let result = to_fixed(-1.5, 0);").get("result"), "-2")
+
+    def test_to_fixed_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('to_fixed("x", 2);')
+
+    def test_to_fixed_non_int_digits_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_fixed(3.456, 1.5);")
+        with self.assertRaises(CinderRuntimeError):
+            run('to_fixed(3.456, "2");')
+
+    def test_to_fixed_negative_digits_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_fixed(3.456, -1);")
+
+    def test_to_fixed_zero_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_fixed();")
+
+    def test_to_fixed_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_fixed(1.5);")
+        with self.assertRaises(CinderRuntimeError):
+            run("to_fixed(1.5, 2, 3);")
 
 
 class TestFloor(unittest.TestCase):

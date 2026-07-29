@@ -735,6 +735,25 @@ def _round(arguments: list, line: int, column: int) -> object:
     return round(value, digits)
 
 
+def _to_fixed(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_fixed", arguments, 2, line, column)
+    value, digits = arguments
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"to_fixed() requires a number, got {type_name(value)}", line, column
+        )
+    if not isinstance(digits, int) or isinstance(digits, bool):
+        raise CinderRuntimeError(
+            f"to_fixed() requires an int digits argument, got {type_name(digits)}",
+            line, column,
+        )
+    if digits < 0:
+        raise CinderRuntimeError(
+            f"to_fixed() requires digits >= 0, got {digits}", line, column
+        )
+    return f"{value:.{digits}f}"
+
+
 def _floor(arguments: list, line: int, column: int) -> object:
     _require_arity("floor", arguments, 1, line, column)
     value = arguments[0]
@@ -1880,6 +1899,7 @@ _BUILTINS = {
     "max": _max,
     "clamp": _clamp,
     "round": _round,
+    "to_fixed": _to_fixed,
     "floor": _floor,
     "ceil": _ceil,
     "pow": _pow,

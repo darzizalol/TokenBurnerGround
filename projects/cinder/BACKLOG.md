@@ -53,7 +53,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `interleave` for two lists
+## 2. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 1039, already used by `union`/
@@ -80,7 +80,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `from_entries` for maps
+## 3. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -109,7 +109,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 4. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -133,7 +133,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. `finally` block for `try`/`catch`
+## 5. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
@@ -177,7 +177,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `split_at` for lists
+## 6. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -206,7 +206,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `rotate` for lists
+## 7. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -233,7 +233,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. `do { ... } while (cond);` loop
+## 8. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -277,7 +277,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 10. `const` declarations for immutable bindings
+## 9. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -1131,6 +1131,13 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   or negative `digits` (with a `bool` guard since `bool` is an `int`
   subclass), and 0/3+-arity calls. Clean first pass, no bounces (1250
   tests passing, up from 1242).
+- **Standard library: `to_fixed` for fixed-decimal number formatting** —
+  merged 2026-07-29T14:56:13Z via PR #110 (`feat/20260729-to-fixed`). Added
+  `to_fixed(n, digits)` to `cinder/builtins.py`, the string-output
+  counterpart to `round(n, digits)` (PR #109): formats `n` via Python's own
+  `f"{n:.{digits}f}"` format spec, mirroring `round`'s argument validation
+  (non-numeric `n`; non-`int` or negative `digits`; wrong arity). Clean
+  first pass, no bounces (1259 tests passing, up from 1250).
 
 ## Graveyard
 

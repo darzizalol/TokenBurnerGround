@@ -682,6 +682,53 @@ class TestCapitalize(unittest.TestCase):
             run('capitalize("a", "b");')
 
 
+class TestTitle(unittest.TestCase):
+    def test_title_single_word(self):
+        self.assertEqual(run('let result = title("hello");').get("result"), "Hello")
+
+    def test_title_multiple_words(self):
+        self.assertEqual(
+            run('let result = title("hello world");').get("result"), "Hello World"
+        )
+
+    def test_title_preserves_internal_whitespace_runs(self):
+        self.assertEqual(
+            run('let result = title("hello   world");').get("result"),
+            "Hello   World",
+        )
+
+    def test_title_preserves_leading_and_trailing_whitespace(self):
+        self.assertEqual(
+            run('let result = title("  hello world  ");').get("result"),
+            "  Hello World  ",
+        )
+
+    def test_title_only_touches_first_letter_of_each_word(self):
+        # Deliberately not Python's str.title(), which also lowercases the
+        # rest of each word and mishandles apostrophes.
+        self.assertEqual(
+            run('let result = title("won\'t stop");').get("result"), "Won't Stop"
+        )
+
+    def test_title_empty_string(self):
+        self.assertEqual(run('let result = title("");').get("result"), "")
+
+    def test_title_word_with_leading_non_alphabetic_character(self):
+        self.assertEqual(
+            run('let result = title("1abc test");').get("result"), "1Abc Test"
+        )
+
+    def test_title_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("title(1);")
+
+    def test_title_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("title();")
+        with self.assertRaises(CinderRuntimeError):
+            run('title("a", "b");')
+
+
 class TestTrim(unittest.TestCase):
     def test_trim_strips_leading_and_trailing_whitespace(self):
         self.assertEqual(run('let result = trim("  hi  ");').get("result"), "hi")

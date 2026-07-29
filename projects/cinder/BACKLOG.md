@@ -14,7 +14,7 @@ a later task while an earlier one is unclaimed/open.
 ## 1. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
-`_require_two_lists` helper (line 1039, already used by `union`/
+`_require_two_lists` helper (line 1058, already used by `union`/
 `intersection`/`difference`) for argument validation. Returns a new flat
 list alternating one element from `list1`, one from `list2`, continuing
 with whichever list still has elements once the other runs out (unlike
@@ -94,9 +94,9 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 ## 4. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
-(`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
-`cinder/parser.py:395-417`, executed by `_execute_try` in
-`cinder/interpreter.py:284-289`) with an optional trailing
+(`TryStmt` in `cinder/ast_nodes.py:279-284`, parsed by `_try_statement` in
+`cinder/parser.py:415-439`, executed by `_execute_try` in
+`cinder/interpreter.py:284-290`) with an optional trailing
 `finally { ... }` block that always runs — whether the `try` block
 succeeded, raised a `CinderRuntimeError` caught by `catch`, or unwound via
 an uncaught Python-internal control-flow signal (`_BreakSignal`,
@@ -141,7 +141,7 @@ Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
 `list[index:]`, reusing `_normalize_slice_bound` (already imported from
 `cinder/interpreter.py`, used by `_slice`/`_take`/`_drop` at
-`cinder/builtins.py:1313-1406`) so a negative `index` counts from the end
+`cinder/builtins.py:1332-1386`) so a negative `index` counts from the end
 and an out-of-range `index` clamps into `[0, len(list)]` instead of
 erroring — matching `slice`'s bound-handling exactly, just splitting at
 one point instead of two.
@@ -195,7 +195,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
-check-first semantics (`_while_statement` in `cinder/parser.py:261-269`,
+check-first semantics (`_while_statement` in `cinder/parser.py:281-289`,
 executed inline in `Interpreter.execute` at `cinder/interpreter.py:245-253`
 — there is no separate `_execute_while` method). Add a `DO` keyword token
 to `cinder/tokens.py` (alongside `WHILE`, plus a `"do": TokenType.DO`

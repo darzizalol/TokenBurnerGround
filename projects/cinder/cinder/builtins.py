@@ -711,13 +711,28 @@ def _clamp(arguments: list, line: int, column: int) -> object:
 
 
 def _round(arguments: list, line: int, column: int) -> object:
-    _require_arity("round", arguments, 1, line, column)
+    if len(arguments) == 0:
+        raise _arity_error("round", 1, 0, line, column)
+    if len(arguments) > 2:
+        raise _arity_error("round", 2, len(arguments), line, column)
     value = arguments[0]
     if not _is_numeric(value):
         raise CinderRuntimeError(
             f"round() requires a number, got {type_name(value)}", line, column
         )
-    return round(value)
+    if len(arguments) == 1:
+        return round(value)
+    digits = arguments[1]
+    if not isinstance(digits, int) or isinstance(digits, bool):
+        raise CinderRuntimeError(
+            f"round() requires an int digits argument, got {type_name(digits)}",
+            line, column,
+        )
+    if digits < 0:
+        raise CinderRuntimeError(
+            f"round() requires digits >= 0, got {digits}", line, column
+        )
+    return round(value, digits)
 
 
 def _floor(arguments: list, line: int, column: int) -> object:

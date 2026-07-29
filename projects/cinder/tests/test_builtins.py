@@ -1355,13 +1355,44 @@ class TestRound(unittest.TestCase):
         self.assertEqual(run("let result = round(2.5);").get("result"), 2)
         self.assertEqual(run("let result = round(3.5);").get("result"), 4)
 
+    def test_round_one_arg_unchanged(self):
+        self.assertEqual(run("let result = round(3.456);").get("result"), 3)
+
+    def test_round_with_digits(self):
+        self.assertEqual(run("let result = round(3.456, 2);").get("result"), 3.46)
+
+    def test_round_with_zero_digits_returns_float(self):
+        self.assertEqual(run("let result = round(3.456, 0);").get("result"), 3.0)
+        self.assertIsInstance(run("let result = round(3.456, 0);").get("result"), float)
+
+    def test_round_with_digits_ties_to_even(self):
+        self.assertEqual(run("let result = round(2.5, 0);").get("result"), 2.0)
+
     def test_round_of_non_numeric_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('round("x");')
 
-    def test_round_wrong_arity_raises(self):
+    def test_round_of_non_numeric_with_digits_raises(self):
         with self.assertRaises(CinderRuntimeError):
-            run("round(1.5, 2);")
+            run('round("x", 2);')
+
+    def test_round_non_int_digits_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("round(3.456, 1.5);")
+        with self.assertRaises(CinderRuntimeError):
+            run('round(3.456, "2");')
+
+    def test_round_negative_digits_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("round(3.456, -1);")
+
+    def test_round_zero_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("round();")
+
+    def test_round_too_many_arguments_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("round(1.5, 2, 3);")
 
 
 class TestFloor(unittest.TestCase):

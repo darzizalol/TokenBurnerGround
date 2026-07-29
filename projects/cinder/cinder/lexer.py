@@ -27,6 +27,13 @@ _COMPOUND_ASSIGN_TOKENS = {
     "^": (TokenType.CARET, TokenType.CARETEQ),
 }
 
+# Only `+`/`-` get a doubled-character form (`++`/`--`); the other operators
+# in `_COMPOUND_ASSIGN_TOKENS` above have no such statement-sugar counterpart.
+_INCREMENT_DECREMENT_TOKENS = {
+    "+": TokenType.PLUSPLUS,
+    "-": TokenType.MINUSMINUS,
+}
+
 _ESCAPES = {
     "n": "\n",
     "t": "\t",
@@ -291,7 +298,12 @@ class Lexer:
 
     def _op_or_compound_assign(self, char: str, start_line: int, start_col: int):
         simple_type, compound_type = _COMPOUND_ASSIGN_TOKENS[char]
-        if self._match("="):
+        if char in _INCREMENT_DECREMENT_TOKENS and self._match(char):
+            doubled_type = _INCREMENT_DECREMENT_TOKENS[char]
+            self.tokens.append(
+                Token(doubled_type, char + char, None, start_line, start_col)
+            )
+        elif self._match("="):
             lexeme = char + "="
             self.tokens.append(Token(compound_type, lexeme, None, start_line, start_col))
         else:

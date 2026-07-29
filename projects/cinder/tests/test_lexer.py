@@ -293,6 +293,46 @@ class TestOperators(unittest.TestCase):
             [TokenType.INT, TokenType.GTEQ, TokenType.INT, TokenType.EOF],
         )
 
+    def test_increment_decrement_operators(self):
+        tokens = tokenize("a++; b--;")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.PLUSPLUS,
+                TokenType.SEMICOLON,
+                TokenType.IDENTIFIER,
+                TokenType.MINUSMINUS,
+                TokenType.SEMICOLON,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(tokens[1].lexeme, "++")
+        self.assertEqual(tokens[4].lexeme, "--")
+
+    def test_increment_decrement_does_not_collide_with_plus_minus_or_compound_assign(self):
+        # Plain `+`/`-` and `+=`/`-=` still lex as before.
+        self.assertEqual(
+            types(tokenize("1 + 2")),
+            [TokenType.INT, TokenType.PLUS, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(
+            types(tokenize("1 - 2")),
+            [TokenType.INT, TokenType.MINUS, TokenType.INT, TokenType.EOF],
+        )
+        tokens = tokenize("a += 1")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.IDENTIFIER, TokenType.PLUSEQ, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "+=")
+        tokens = tokenize("a -= 1")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.IDENTIFIER, TokenType.MINUSEQ, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "-=")
+
 
 class TestComments(unittest.TestCase):
     def test_comment_stripped(self):

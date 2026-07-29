@@ -864,6 +864,88 @@ class TestCompoundAssignment(unittest.TestCase):
         )
 
 
+class TestIncrementDecrement(unittest.TestCase):
+    def test_plus_plus_desugars_to_assign_of_binary_plus_one(self):
+        stmts = parse_stmts("a++;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                ("Assign", "a", ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Literal", 1))),
+            ),
+        )
+
+    def test_minus_minus_desugars_to_assign_of_binary_minus_one(self):
+        stmts = parse_stmts("a--;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                ("Assign", "a", ("Binary", ("Identifier", "a"), TokenType.MINUS, ("Literal", 1))),
+            ),
+        )
+
+    def test_plus_plus_allows_index_target(self):
+        # Like the bitwise compound-assign ops, ++/-- accept an index target,
+        # desugaring into IndexCompoundAssign so obj/index are each evaluated
+        # once rather than twice.
+        stmts = parse_stmts("xs[0]++;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexCompoundAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    TokenType.PLUS,
+                    ("Literal", 1),
+                ),
+            ),
+        )
+
+    def test_minus_minus_allows_index_target(self):
+        stmts = parse_stmts("xs[0]--;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexCompoundAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    TokenType.MINUS,
+                    ("Literal", 1),
+                ),
+            ),
+        )
+
+    def test_non_lvalue_target_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("5++;")
+        with self.assertRaises(ParseError):
+            parse_stmts("(1 + 2)--;")
+
+    def test_used_as_value_is_unparseable(self):
+        # `++`/`--` is statement-only sugar, not an expression: using it as a
+        # value is rejected (whether by an explicit lvalue check or simply
+        # because the grammar never reaches it inside an expression).
+        with self.assertRaises(ParseError):
+            parse_stmts("let b = a++;")
+
+    def test_plus_and_minus_and_compound_assign_unaffected(self):
+        # Regression: plain `+`/`-` and `+=`/`-=` still parse exactly as
+        # before the doubled-character lookahead was added.
+        self.assertEqual(
+            shape(parse("1 + 2")),
+            ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2)),
+        )
+        self.assertEqual(
+            shape(parse("a += 1")),
+            ("Assign", "a", ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Literal", 1))),
+        )
+
+
 class TestStatements(unittest.TestCase):
     def test_let_statement(self):
         self.assertEqual(

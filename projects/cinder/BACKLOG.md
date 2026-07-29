@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `random_int` and `random_choice`
+## 1. Standard library: `random_int` and `random_choice` [claimed 2026-07-29T14:28:29Z]
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)

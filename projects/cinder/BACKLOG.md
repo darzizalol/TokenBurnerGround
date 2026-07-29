@@ -230,6 +230,106 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
+## 7. Standard library: `unzip` for lists
+
+Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
+(`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
+`[a, b]` pairs and returns `[list_of_firsts, list_of_seconds]`. Validate
+with `_require_arity("unzip", arguments, 1, line, column)` then check the
+argument is a `list`; each element must itself be a `list` of length
+exactly 2 (raise `CinderRuntimeError` naming the offending index on any
+element that isn't a 2-element list, e.g. `f"unzip() requires a list of
+2-element lists, got {type_name(element)} at index {i}"` or similar,
+mirroring the style of `_require_two_lists` at
+`cinder/builtins.py:1082-1095`). An empty input list returns `[[], []]`
+(not an error) — reduces from `zip(pairs)`'s intuition that unzip and
+`zip` should round-trip: `zip(*unzip(pairs)) == pairs` in spirit, though
+Cinder's `zip` only takes exactly two lists so the round-trip is via
+`zip(unzip(pairs)[0], unzip(pairs)[1])`.
+
+Acceptance criteria:
+- `unzip([[1, "a"], [2, "b"], [3, "c"]])` is `[[1, 2, 3], ["a", "b",
+  "c"]]`.
+- `unzip([])` is `[[], []]`.
+- `unzip([[1, 2]])` is `[[1], [2]]`.
+- `zip(unzip(pairs)[0], unzip(pairs)[1])` reproduces the original `pairs`
+  for a non-empty example — add this as an explicit round-trip test
+  alongside the direct-output assertions above.
+- A non-list argument raises `CinderRuntimeError` with line/column.
+- An element that isn't a list, or is a list of the wrong length (0, 1, or
+  3+ elements), raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. C-style `for (init; cond; step) { ... }` loop
+
+Build: add a second `for` form alongside the existing foreach
+(`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,
+parsed by `_for_statement` in `cinder/parser.py:291-309`, executed by
+`_execute_for` in `cinder/interpreter.py:292-...`): a classic three-clause
+`for (init; cond; step) { ... }`, disambiguated at parse time by peeking
+right after the `for` keyword — the foreach form always continues with an
+`IDENTIFIER` then `in`, while the C-style form always continues with `(`,
+so `_for_statement` can dispatch on `self._check(TokenType.LPAREN)` before
+falling into the existing identifier-consuming path. Add a `ForCStmt` AST
+node (`init: Stmt | None`, `condition: Expr | None`, `step: Stmt | None`,
+`body: Stmt`, `line`, `column`) to `cinder/ast_nodes.py`. Parse: `init` is
+either a `let` declaration (reuse `_let_statement`, which already consumes
+its own trailing `;`) or an expression/increment statement reusing the
+same expr-then-optional-`++`/`--`-then-`;` logic `_expr_statement` uses
+today (`cinder/parser.py:482-515`) — factor that logic out of
+`_expr_statement` into a helper both call, since the for-loop needs it
+without necessarily wrapping every clause; an empty init clause (just
+`;`) is valid and leaves `init` as `None`. `condition` is an optional
+`_assignment()` expression, defaulting to always-true when omitted
+(`for (;;) { ... }` is a valid infinite loop, matching C). `step` is an
+optional expression/increment (same helper as init, but not consuming a
+trailing `;` — the closing `)` terminates it instead). Execute in
+`_interpreter.py`: create a fresh child `Environment` for the loop (so an
+`init` `let` doesn't leak into the enclosing scope, matching block-scoping
+elsewhere), run `init` once, then loop while `condition` is truthy (or
+unconditionally if omitted): run `body` catching `_BreakSignal` (exit the
+loop) and `_ContinueSignal` (fall through *without* re-raising — do not
+`continue` the Python loop directly, since `step` must still run before
+the next condition check), then always run `step` (if present) before
+re-checking `condition` — this mirrors the do-while task's
+continue-runs-step-not-body distinction so `continue` can't skip `step`
+and infinite-loop.
+
+Acceptance criteria:
+- `let log = []; for (let i = 0; i < 3; i = i + 1) { push(log, i); } log`
+  is `[0, 1, 2]`.
+- `let log = []; for (let i = 0; i < 3; i++) { push(log, i); } log` is
+  `[0, 1, 2]` — `i++` works as the step clause.
+- `let i = 0; let log = []; for (; i < 3; i++) { push(log, i); }` (empty
+  init) is `[0, 1, 2]`, reusing the outer `i`.
+- `for (let i = 0; i < 5; i++) { if (i == 2) { break; } push(log, i); }`
+  stops after `[0, 1]` — `break` exits without running `step` again.
+- `let log = []; for (let i = 0; i < 5; i++) { if (i == 2) { continue; }
+  push(log, i); } log` is `[0, 1, 3, 4]` — `continue` skips to `step`,
+  not back to the top of `body` unconditionally (test with a case that
+  would infinite-loop if `step` were skipped).
+- `for (;;) { break; }` parses and runs (condition omitted = infinite
+  loop, immediately broken).
+- `init`'s `let i = 0` is scoped to the loop only — referencing `i` after
+  the loop raises a name-resolution `CinderRuntimeError`, it doesn't leak
+  into the enclosing scope.
+- The existing foreach `for NAME in EXPR { ... }` is unaffected — add a
+  regression test that it still parses/executes exactly as before.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (none new needed — reuses existing
+`LPAREN`/`SEMICOLON`/`RPAREN`), `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_lexer.py` (only if untouched
+regression coverage is missing), `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -201,6 +201,67 @@ class TestChr(unittest.TestCase):
             run("chr();")
 
 
+class TestToHex(unittest.TestCase):
+    def test_to_hex_of_positive_int(self):
+        self.assertEqual(run("let result = to_hex(255);").get("result"), "ff")
+
+    def test_to_hex_of_zero(self):
+        self.assertEqual(run("let result = to_hex(0);").get("result"), "0")
+
+    def test_to_hex_of_negative_int(self):
+        self.assertEqual(run("let result = to_hex(-255);").get("result"), "-ff")
+
+    def test_to_hex_of_non_int_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_hex(1.5);")
+
+    def test_to_hex_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('to_hex("255");')
+
+    def test_to_hex_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_hex();")
+
+
+class TestToBin(unittest.TestCase):
+    def test_to_bin_of_positive_int(self):
+        self.assertEqual(run("let result = to_bin(5);").get("result"), "101")
+
+    def test_to_bin_of_zero(self):
+        self.assertEqual(run("let result = to_bin(0);").get("result"), "0")
+
+    def test_to_bin_of_negative_int(self):
+        self.assertEqual(run("let result = to_bin(-5);").get("result"), "-101")
+
+    def test_to_bin_of_non_int_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_bin(1.5);")
+
+    def test_to_bin_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_bin();")
+
+
+class TestToOct(unittest.TestCase):
+    def test_to_oct_of_positive_int(self):
+        self.assertEqual(run("let result = to_oct(8);").get("result"), "10")
+
+    def test_to_oct_of_zero(self):
+        self.assertEqual(run("let result = to_oct(0);").get("result"), "0")
+
+    def test_to_oct_of_negative_int(self):
+        self.assertEqual(run("let result = to_oct(-8);").get("result"), "-10")
+
+    def test_to_oct_of_non_int_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_oct(1.5);")
+
+    def test_to_oct_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_oct();")
+
+
 class TestPush(unittest.TestCase):
     def test_push_appends_and_returns_the_list(self):
         env = run("let xs = [1, 2]; let result = push(xs, 3);")

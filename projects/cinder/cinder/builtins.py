@@ -1,7 +1,7 @@
 """Standard library builtins injected into every Cinder program's global scope.
 
 `create_global_environment` returns a fresh `Environment` with `print`,
-`len`, `is_empty`, `type`, `str`, `int`, `float`, `ord`, `chr`, `push`, `pop`, `insert`, `remove_at`,
+`len`, `is_empty`, `type`, `str`, `int`, `float`, `ord`, `chr`, `to_hex`, `to_bin`, `to_oct`, `push`, `pop`, `insert`, `remove_at`,
 `keys`, `values`, `items`, `get`, `remove`, `merge`, `upper`, `lower`, `trim`, `split`, `lines`, `words`, `join`, `find`,
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `sum`, `mean`, `median`,
@@ -150,6 +150,32 @@ def _chr(arguments: list, line: int, column: int) -> object:
         raise CinderRuntimeError(
             f"chr() requires a code point between 0 and 0x10FFFF, got {value}", line, column
         ) from None
+
+
+def _require_int(name: str, value: object, line: int, column: int) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise CinderRuntimeError(
+            f"{name}() requires an int, got {type_name(value)}", line, column
+        )
+    return value
+
+
+def _to_hex(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_hex", arguments, 1, line, column)
+    value = _require_int("to_hex", arguments[0], line, column)
+    return format(value, "x")
+
+
+def _to_bin(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_bin", arguments, 1, line, column)
+    value = _require_int("to_bin", arguments[0], line, column)
+    return format(value, "b")
+
+
+def _to_oct(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_oct", arguments, 1, line, column)
+    value = _require_int("to_oct", arguments[0], line, column)
+    return format(value, "o")
 
 
 def _push(arguments: list, line: int, column: int) -> object:
@@ -1895,6 +1921,9 @@ _BUILTINS = {
     "float": _float,
     "ord": _ord,
     "chr": _chr,
+    "to_hex": _to_hex,
+    "to_bin": _to_bin,
+    "to_oct": _to_oct,
     "push": _push,
     "pop": _pop,
     "insert": _insert,

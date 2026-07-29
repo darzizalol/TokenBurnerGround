@@ -11,36 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_fixed` for fixed-decimal number formatting [claimed 2026-07-29T14:51:00Z]
-
-Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
-`str` with exactly `digits` digits after the decimal point (via Python's
-`f"{n:.{digits}f}"`), zero-padding where `round`/`to_fixed`'s numeric cousin
-leaves a whole number bare. This is the string-output counterpart to task
-1's `round(n, digits)`: `round` returns a number for further math,
-`to_fixed` returns a display-ready string (mirroring JS's `Number.
-toFixed`), useful anywhere Cinder scripts print formatted numbers today via
-manual `format`/string-interpolation workarounds.
-
-Acceptance criteria:
-- `to_fixed(3.14159, 2)` is `"3.14"`; `to_fixed(3, 2)` is `"3.00"` (int
-  input still zero-pads).
-- `to_fixed(3.145, 2)` is `"3.15"` (uses Python's own float-formatting
-  rounding — no custom rounding logic needed, just delegate to the format
-  spec).
-- `to_fixed(-1.5, 0)` is `"-2"` (sign preserved, no decimal point when
-  `digits` is `0`).
-- A non-numeric `n` raises `CinderRuntimeError` with line/column.
-- A non-`int` or negative `digits` raises `CinderRuntimeError` with
-  line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Increment/decrement statement operators: `++`, `--`
+## 1. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value

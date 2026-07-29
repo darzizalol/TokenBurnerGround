@@ -120,9 +120,9 @@ source-mapped call-stack traces for nested calls — both once listed here as
 future work — have since landed. What remains plausible, not yet scoped into
 tasks: continued standard-library breadth (string/list/map/math methods,
 picked incrementally per `BACKLOG.md`'s own grooming), targeted language
-features that round out expressiveness (e.g. increment/decrement operators,
-`finally` blocks — see current `BACKLOG.md`), and only much later, a
-bytecode VM if performance ever actually matters. The Architect should keep
+features that round out expressiveness (e.g. `do`/`while` loops, `const`
+bindings, a C-style `for` loop — see current `BACKLOG.md`), and only much
+later, a bytecode VM if performance ever actually matters. The Architect should keep
 scoping these into `BACKLOG.md` incrementally — do not jump ahead of the
 current layer.
 

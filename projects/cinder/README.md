@@ -86,7 +86,8 @@ while (i < 10) {
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
   `pad_start`, `pad_end`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
-  `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `ord`/`chr` for character/code-point
+  `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
+  `ord`/`chr` for character/code-point
   conversion, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`
@@ -131,7 +132,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1232+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1242+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -157,9 +158,9 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: `trim_start`/`trim_end` for
-strings, `sign` for numbers, and `title` for strings. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `random_int`/`random_choice`, `round` with a
-`digits` argument, and `to_fixed`, then two language features —
+strings, `sign` and `title` for strings, and `random_int`/`random_choice`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `round` with a `digits`
+argument and `to_fixed`, then two language features —
 increment/decrement statement operators (`++`/`--`) and a `finally` block
 for `try`/`catch` — with more stdlib breadth after. The backlog mixes
 language depth with stdlib breadth over time rather than running either in

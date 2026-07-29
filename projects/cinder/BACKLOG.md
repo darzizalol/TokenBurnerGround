@@ -13,11 +13,11 @@ a later task while an earlier one is unclaimed/open.
 
 ## 1. Standard library: `round` with an optional `digits` argument
 
-Build: extend the existing `round(n)` (`cinder/builtins.py:692`, currently a
+Build: extend the existing `round(n)` (`cinder/builtins.py:713`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
 `digits` argument — `round(n, digits)` rounds to `digits` decimal places via
 Python's own `round(n, digits)`, matching Python's banker's-rounding
-behavior. Follow `min`/`max`'s manual-bounds-check style (lines 650/661,
+behavior. Follow `min`/`max`'s manual-bounds-check style (lines 671/682,
 which don't use `_require_arity` because their arity isn't fixed) rather
 than `_require_arity`, since this builtin now accepts 1 *or* 2 arguments:
 raise the existing arity error shape (reuse `_arity_error`, called with
@@ -54,7 +54,7 @@ Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
 `f"{n:.{digits}f}"`), zero-padding where `round`/`to_fixed`'s numeric cousin
 leaves a whole number bare. This is the string-output counterpart to task
-6's `round(n, digits)`: `round` returns a number for further math,
+1's `round(n, digits)`: `round` returns a number for further math,
 `to_fixed` returns a display-ready string (mirroring JS's `Number.
 toFixed`), useful anywhere Cinder scripts print formatted numbers today via
 manual `format`/string-interpolation workarounds.
@@ -84,7 +84,7 @@ Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 distinction to design around; this is `+=`/`-=` shorthand, nothing more,
 keeping the scope tight for one session). Lexing: `+` and `-` currently
 lex via `_op_or_compound_assign` (`cinder/lexer.py:292`) using the
-`_COMPOUND_ASSIGN_TOKENS` table (`cinder/lexer.py:22-28`), which only
+`_COMPOUND_ASSIGN_TOKENS` table (`cinder/lexer.py:19-27`), which only
 distinguishes the bare char from one `=`-suffixed form; extend just the
 `+`/`-` handling (not the shared table, since `*`/`/`/`%` don't get this
 form) to also check for a doubled character (`self._match("+")` /

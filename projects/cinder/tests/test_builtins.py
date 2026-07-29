@@ -1,5 +1,5 @@
 """Tests for cinder.builtins: print, len, is_empty, type, str, int, float, ord, chr, push, pop,
-insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, split, lines, words, join,
+insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, trim_start, trim_end, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
@@ -693,6 +693,48 @@ class TestTrim(unittest.TestCase):
     def test_trim_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run('trim("a", "b");')
+
+
+class TestTrimStart(unittest.TestCase):
+    def test_trim_start_strips_leading_whitespace_only(self):
+        self.assertEqual(
+            run('let result = trim_start("  hi  ");').get("result"), "hi  "
+        )
+
+    def test_trim_start_no_whitespace_is_noop(self):
+        self.assertEqual(run('let result = trim_start("hi");').get("result"), "hi")
+
+    def test_trim_start_empty_string(self):
+        self.assertEqual(run('let result = trim_start("");').get("result"), "")
+
+    def test_trim_start_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("trim_start(1);")
+
+    def test_trim_start_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('trim_start("a", "b");')
+
+
+class TestTrimEnd(unittest.TestCase):
+    def test_trim_end_strips_trailing_whitespace_only(self):
+        self.assertEqual(
+            run('let result = trim_end("  hi  ");').get("result"), "  hi"
+        )
+
+    def test_trim_end_no_whitespace_is_noop(self):
+        self.assertEqual(run('let result = trim_end("hi");').get("result"), "hi")
+
+    def test_trim_end_empty_string(self):
+        self.assertEqual(run('let result = trim_end("");').get("result"), "")
+
+    def test_trim_end_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("trim_end(1);")
+
+    def test_trim_end_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('trim_end("a", "b");')
 
 
 class TestSplit(unittest.TestCase):

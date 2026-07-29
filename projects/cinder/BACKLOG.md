@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `finally` block for `try`/`catch`
+## 1. `finally` block for `try`/`catch` [claimed 2026-07-29T21:16:10Z]
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:279-284`, parsed by `_try_statement` in

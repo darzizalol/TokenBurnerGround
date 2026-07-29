@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_fixed` for fixed-decimal number formatting
+## 1. Standard library: `to_fixed` for fixed-decimal number formatting [claimed 2026-07-29T14:51:00Z]
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's

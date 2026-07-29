@@ -11,51 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `finally` block for `try`/`catch` [claimed 2026-07-29T21:16:10Z]
-
-Build: extend the existing `try { ... } catch (name) { ... }`
-(`TryStmt` in `cinder/ast_nodes.py:279-284`, parsed by `_try_statement` in
-`cinder/parser.py:415-439`, executed by `_execute_try` in
-`cinder/interpreter.py:284-290`) with an optional trailing
-`finally { ... }` block that always runs — whether the `try` block
-succeeded, raised a `CinderRuntimeError` caught by `catch`, or unwound via
-an uncaught Python-internal control-flow signal (`_BreakSignal`,
-`_ContinueSignal`, `_ReturnSignal`, or an uncaught `CinderRuntimeError`
-from inside `catch` itself). Add a `FINALLY` keyword token to
-`cinder/tokens.py`, give `TryStmt` a `finally_block: "Block" | None` field,
-parse an optional `finally { ... }` after the existing catch clause
-(reusing `_block()`), and implement `_execute_try` with a `try/finally`
-around the existing `try/except CinderRuntimeError` so the finally block
-runs via Python's own `finally` semantics regardless of exit path — no
-change needed to how `break`/`continue`/`return` propagate through `try`
-today, since Python's `finally` already re-raises after running.
-
-Acceptance criteria:
-- `let log = []; try { push(log, 1); } finally { push(log, 2); } log` is
-  `[1, 2]` — finally runs after a clean try with no catch triggered.
-- `let log = []; try { push(log, 1); assert(false, "x"); } catch (e) {
-  push(log, 2); } finally { push(log, 3); } log` is `[1, 2, 3]` — finally
-  runs after catch handles an error.
-- A `return` inside a function's `try` block still runs `finally` before
-  the function actually returns (test via a function that pushes to an
-  outer-scope list in `finally` then checks the list after calling the
-  function).
-- `break`/`continue` inside a loop's `try` block still run `finally` before
-  actually breaking/continuing the loop.
-- `try { ... } finally { ... }` with no `catch` clause at all is valid
-  (finally-only, matching a common pattern in other languages) — add a
-  parser test and an interpreter test for this form.
-- Omitting `finally` entirely still behaves exactly as before (regression
-  test pinning today's catch-only behavior unchanged).
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `split_at` for lists
+## 1. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -84,7 +40,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `rotate` for lists
+## 2. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -111,7 +67,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. `do { ... } while (cond);` loop
+## 3. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -155,7 +111,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. `const` declarations for immutable bindings
+## 4. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -206,7 +162,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `unzip` for lists
+## 5. Standard library: `unzip` for lists
 
 Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
 (`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
@@ -241,7 +197,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. C-style `for (init; cond; step) { ... }` loop
+## 6. C-style `for (init; cond; step) { ... }` loop
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,

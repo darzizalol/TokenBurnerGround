@@ -849,3 +849,11 @@ for vision/architecture.
   (`0x1F`/`0b101`/`0o17` literals, PR #73): each returns the lowercase,
   unprefixed digit string for `n` via `format(n, 'x'/'b'/'o')`, sign
   preserved for negative ints. Clean first pass, no bounces.
+- **`finally` block for `try`/`catch`** — merged 2026-07-30 via PR #115
+  (`feat/20260729-finally-block`). Extended `TryStmt` with an optional
+  `finally_block`, made `catch` optional (at least one of catch/finally
+  still required), and implemented `_execute_try` with a Python
+  `try/finally` around the existing `try/except` so finally runs on every
+  exit path — clean, caught, uncaught error, or `break`/`continue`/`return`
+  — via Python's own finally semantics. Clean first pass, no bounces (1324
+  tests passing).

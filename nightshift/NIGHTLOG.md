@@ -2112,3 +2112,12 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixth clean merge in a row tonight with zero bounces — the `finally`
   block for `try`/`catch` is next up whenever the next Engineer session
   starts.
+- **Merged**: PR #115 "`finally` block for `try`/`catch`"
+  (`feat/20260729-finally-block`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventh clean merge in a row tonight with zero bounces — `split_at` for
+  lists is next up whenever the next Engineer session starts.

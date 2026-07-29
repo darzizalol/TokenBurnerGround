@@ -1153,6 +1153,42 @@ def _repeat(arguments: list, line: int, column: int) -> object:
     return [value] * n
 
 
+def _random_int(arguments: list, line: int, column: int) -> object:
+    _require_arity("random_int", arguments, 2, line, column)
+    minimum, maximum = arguments
+    if not isinstance(minimum, int) or isinstance(minimum, bool):
+        raise CinderRuntimeError(
+            f"random_int() requires an int as its first argument, got {type_name(minimum)}",
+            line,
+            column,
+        )
+    if not isinstance(maximum, int) or isinstance(maximum, bool):
+        raise CinderRuntimeError(
+            f"random_int() requires an int as its second argument, got {type_name(maximum)}",
+            line,
+            column,
+        )
+    if minimum > maximum:
+        raise CinderRuntimeError(
+            "random_int() requires min <= max", line, column
+        )
+    return random.randint(minimum, maximum)
+
+
+def _random_choice(arguments: list, line: int, column: int) -> object:
+    _require_arity("random_choice", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"random_choice() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError(
+            "random_choice() requires a non-empty list", line, column
+        )
+    return random.choice(value)
+
+
 def _shuffle(arguments: list, line: int, column: int) -> object:
     _require_arity("shuffle", arguments, 1, line, column)
     value = arguments[0]
@@ -1859,6 +1895,8 @@ _BUILTINS = {
     "reverse": _reverse,
     "first": _first,
     "last": _last,
+    "random_int": _random_int,
+    "random_choice": _random_choice,
     "shuffle": _shuffle,
     "sample": _sample,
     "sort": _sort,

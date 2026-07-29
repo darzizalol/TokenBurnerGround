@@ -11,41 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `title` for strings [claimed 2026-07-27T20:17:37Z]
-
-PR #105 has LGTM + QA PASS but now has a merge conflict against `main`
-(tasks 2 and 3 both merged since and evidently touched the same area of
-`cinder/builtins.py`/README). Next Engineer session on this task: `cd` into
-its existing worktree (or recreate from `origin/feat/20260727-title-string`
-if gone), rebase onto `origin/main`, resolve the conflict, push, and let it
-pick up fresh review/QA — the implementation itself doesn't need redoing.
-
-Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
-alphabetic character of every whitespace-separated word in `s`, leaving
-every other character untouched and preserving original whitespace runs
-exactly (e.g. via `re.sub` on word-start positions rather than a
-split/join, which would collapse whitespace). Deliberately not Python's
-`str.title()`, which also lowercases interior letters and mishandles
-apostrophes — the same "don't touch the rest" divergence `capitalize`
-already established for the single-word case.
-
-Acceptance criteria:
-- `title("hello world")` is `"Hello World"`.
-- `title("hello   world")` is `"Hello   World"` (internal whitespace runs
-  preserved exactly).
-- `title("won't stop")` is `"Won't Stop"` — the `t` after the apostrophe is
-  untouched, unlike Python's `str.title()` — add a regression test pinning
-  this divergence.
-- `title("")` is `""`.
-- Non-`str` argument raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `random_int` and `random_choice`
+## 1. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -76,7 +42,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `round` with an optional `digits` argument
+## 2. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:692`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -113,7 +79,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `to_fixed` for fixed-decimal number formatting
+## 3. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -142,7 +108,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Increment/decrement statement operators: `++`, `--`
+## 4. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -184,7 +150,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `interleave` for two lists
+## 5. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 1003, already used by `union`/
@@ -211,7 +177,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `from_entries` for maps
+## 6. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -240,7 +206,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 7. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -264,7 +230,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. `finally` block for `try`/`catch`
+## 8. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
@@ -308,7 +274,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 10. Standard library: `split_at` for lists
+## 9. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -337,7 +303,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. Standard library: `rotate` for lists
+## 10. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -364,7 +330,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 12. `do { ... } while (cond);` loop
+## 11. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -408,7 +374,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 13. `const` declarations for immutable bindings
+## 12. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -1239,6 +1205,14 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   `cinder/builtins.py`, returning `1`/`-1`/`0` as an `int` regardless of
   whether `n` is `int` or `float`, matching `abs`'s single-numeric-argument
   style. Clean first pass, no bounces (1213 tests passing).
+- **Standard library: `title` for strings** — merged 2026-07-29T14:22:52Z via
+  PR #105 (`feat/20260727-title-string`). Added `title(s)` to
+  `cinder/builtins.py`, uppercasing only the first alphabetic character of
+  each whitespace-separated word while preserving whitespace runs and
+  apostrophe handling (`won't` -> `Won't`), deliberately diverging from
+  Python's `str.title()`. Bounced by a merge conflict (not a review/QA
+  failure) against `main` after tasks 2/3 landed on the same README area;
+  rebased and re-reviewed clean (1232 tests passing).
 
 ## Graveyard
 

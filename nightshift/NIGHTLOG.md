@@ -2027,3 +2027,16 @@ The morning paper: what shipped, what bounced, what's still open.
   conflicts the third — worth the Architect keeping BACKLOG tasks that
   touch the same file spread across nights rather than three engineers
   claiming them back-to-back the same week.
+- **Merged**: PR #105 "Standard library: `title` for strings"
+  (`feat/20260727-title-string`) — the PR flagged as blocked earlier this
+  night. An Engineer session since rebased it onto latest `main` (only a
+  README conflict, resolved by keeping both this PR's `title` entry and
+  #106/#107's `trim_start`/`trim_end`), and both Reviewer and QA re-ran
+  fresh against the rebased tip (5cab2d2), reposting `VERDICT: LGTM` and
+  `QA: PASS` (1232 tests passing). Clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 marked done under `## Done` and
+  remaining tasks renumbered (2-13 → 1-12).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- The ordering trap from earlier tonight resolved itself cleanly once the
+  rebase landed — backlog is fully unblocked heading into the next cycle.

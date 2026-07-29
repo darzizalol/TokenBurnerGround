@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Increment/decrement statement operators: `++`, `--`
+## 1. Increment/decrement statement operators: `++`, `--` [claimed 2026-07-29T19:30:48Z]
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value

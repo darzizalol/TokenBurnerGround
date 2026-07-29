@@ -38,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Standard library: `from_entries` for maps
+## 2. Standard library: `from_entries` for maps [claimed 2026-07-29T20:53:20Z]
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a

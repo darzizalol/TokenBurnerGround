@@ -154,3 +154,7 @@ up productively this session, so stopping here rather than starting a
 third task that would likely hit the identical wall.
 
 ---
+
+## 2026-07-28 22:40:11 — orchestrator
+Claude CLI authentication failed during the engineer session (see logs/20260728-223905-engineer.log).
+Human: run 'claude' in a terminal and re-login. No agent can fix this.

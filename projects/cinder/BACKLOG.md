@@ -13,6 +13,13 @@ a later task while an earlier one is unclaimed/open.
 
 ## 1. Standard library: `title` for strings [claimed 2026-07-27T20:17:37Z]
 
+PR #105 has LGTM + QA PASS but now has a merge conflict against `main`
+(tasks 2 and 3 both merged since and evidently touched the same area of
+`cinder/builtins.py`/README). Next Engineer session on this task: `cd` into
+its existing worktree (or recreate from `origin/feat/20260727-title-string`
+if gone), rebase onto `origin/main`, resolve the conflict, push, and let it
+pick up fresh review/QA — the implementation itself doesn't need redoing.
+
 Build: add `title(s)` to `cinder/builtins.py` — uppercases only the first
 alphabetic character of every whitespace-separated word in `s`, leaving
 every other character untouched and preserving original whitespace runs
@@ -38,50 +45,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 2. Standard library: `trim_start` and `trim_end` for strings [claimed 2026-07-28T14:06:10Z]
-
-Build: add `trim_start(s)` and `trim_end(s)` to `cinder/builtins.py`,
-delegating to Python's argumentless `str.lstrip()`/`str.rstrip()` (same
-whitespace set the existing `trim` strips via bare `str.strip()`) — the
-one-sided counterparts to `trim`, for when only leading or only trailing
-whitespace should go.
-
-Acceptance criteria:
-- `trim_start("  hi  ")` is `"hi  "`; `trim_end("  hi  ")` is `"  hi"`.
-- `trim_start("hi")` is `"hi"`; `trim_end("hi")` is `"hi"` (no whitespace,
-  no-op).
-- `trim_start("")` is `""`; `trim_end("")` is `""`.
-- Non-`str` argument raises `CinderRuntimeError` with line/column, for both
-  builtins.
-- Wrong arity raises `CinderRuntimeError` with line/column, for both
-  builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 3. Standard library: `sign` for numbers [claimed 2026-07-29T14:04:37Z]
-
-Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
-positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-
-argument style. Always returns an `int` regardless of whether `n` is `int`
-or `float` (there's no fractional "sign").
-
-Acceptance criteria:
-- `sign(5)` is `1`; `sign(-5)` is `-1`; `sign(0)` is `0`.
-- `sign(3.5)` is `1`; `sign(-3.5)` is `-1`; `sign(0.0)` is `0`.
-- Result type is always `int` — add a regression test asserting
-  `type(sign(3.5))` is `"int"`, not `"float"`.
-- Non-numeric argument raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 4. Standard library: `random_int` and `random_choice`
+## 2. Standard library: `random_int` and `random_choice`
 
 Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
 `random.randint`) and `random_choice(list)` (via Python's `random.choice`)
@@ -112,7 +76,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `round` with an optional `digits` argument
+## 3. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:658`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -149,7 +113,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `to_fixed` for fixed-decimal number formatting
+## 4. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -178,7 +142,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Increment/decrement statement operators: `++`, `--`
+## 5. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -220,7 +184,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: `interleave` for two lists
+## 6. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 969, already used by `union`/
@@ -247,7 +211,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `from_entries` for maps
+## 7. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -276,7 +240,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 8. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -300,7 +264,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. `finally` block for `try`/`catch`
+## 9. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
@@ -344,7 +308,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 12. Standard library: `split_at` for lists
+## 10. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -373,7 +337,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 13. Standard library: `rotate` for lists
+## 11. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -400,7 +364,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 14. `do { ... } while (cond);` loop
+## 12. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -444,7 +408,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 15. `const` declarations for immutable bindings
+## 13. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -1265,6 +1229,16 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   `_is_valid_key` to reject a non-hashable transformed key and matching
   `merge`/`invert`'s later-insertion-wins collision rule. Clean first pass,
   no bounces (1204 tests passing, up from 1182).
+- **Standard library: `trim_start` and `trim_end` for strings** — merged
+  2026-07-29T14:10:26Z via PR #106 (`feat/20260728-trim-start-end`). Added
+  `trim_start(s)`/`trim_end(s)` to `cinder/builtins.py` delegating to
+  `str.lstrip()`/`str.rstrip()`, the one-sided counterparts to `trim`.
+  Clean first pass, no bounces (1214 tests passing, up from 1204).
+- **Standard library: `sign` for numbers** — merged 2026-07-29T14:10:19Z via
+  PR #107 (`feat/20260729-sign-builtin`). Added `sign(n)` to
+  `cinder/builtins.py`, returning `1`/`-1`/`0` as an `int` regardless of
+  whether `n` is `int` or `float`, matching `abs`'s single-numeric-argument
+  style. Clean first pass, no bounces (1213 tests passing).
 
 ## Graveyard
 

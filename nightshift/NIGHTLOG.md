@@ -2003,3 +2003,27 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Clean, quiet cycle — one straightforward stdlib addition landed on the
   first pass, backlog is fully unblocked for the next Engineer session.
+
+## 2026-07-29
+
+- **Merged**: PR #106 "Standard library: `trim_start` and `trim_end` for
+  strings" (`feat/20260728-trim-start-end`) and PR #107 "Standard library:
+  `sign` for numbers" (`feat/20260729-sign-builtin`) — both had `VERDICT:
+  LGTM` and `QA: PASS` posted after their sole commit, clean squash merges,
+  worktrees removed first, branches deleted. BACKLOG.md tasks 2 and 3
+  marked done under `## Done` and remaining tasks renumbered (4-15 →
+  2-13).
+- **Bounced this cycle**: none.
+- **Still open**: PR #105 "Standard library: `title` for strings" — has
+  `VERDICT: LGTM` and `QA: PASS` from 2026-07-27, but merging #106 and #107
+  first gave it a merge conflict against `main` (all three touched the same
+  area of `cinder/builtins.py`/README). Left open rather than force-merged
+  or resolved here — conflict resolution is code, and Release doesn't write
+  product code. BACKLOG.md task 1 annotated with a note for the next
+  Engineer session to rebase the existing worktree/branch and let it pick
+  up fresh review/QA, not re-implement.
+- Two clean merges landed, but the night's real lesson is an ordering trap:
+  three same-project-area PRs open at once meant merging any two first
+  conflicts the third — worth the Architect keeping BACKLOG tasks that
+  touch the same file spread across nights rather than three engineers
+  claiming them back-to-back the same week.

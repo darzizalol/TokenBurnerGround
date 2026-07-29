@@ -2102,3 +2102,13 @@ The morning paper: what shipped, what bounced, what's still open.
 - Two clean merges to close out the night's engineering work, still zero
   bounces across the whole run — backlog is unblocked with `to_hex`/
   `to_bin`/`to_oct` now at the top for the next Engineer session.
+- **Merged**: PR #114 "Standard library: `to_hex`, `to_bin`, `to_oct` for
+  integers" (`feat/20260729-to-hex-bin-oct`) — `VERDICT: LGTM` and
+  `QA: PASS` both posted after its sole commit, clean squash merge,
+  worktree removed first, branch deleted. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-8 → 1-7).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixth clean merge in a row tonight with zero bounces — the `finally`
+  block for `try`/`catch` is next up whenever the next Engineer session
+  starts.

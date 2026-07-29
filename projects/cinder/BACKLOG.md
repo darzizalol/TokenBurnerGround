@@ -11,31 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_hex`, `to_bin`, `to_oct` for integers [claimed 2026-07-29T21:06:41Z]
-
-Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
-the string-formatting counterpart to the numeric-literal-parsing side
-already shipped (`0x1F`/`0b101`/`0o17` literals, PR #73): each returns the
-lowercase, unprefixed digit string for `n` in that base (via Python's
-`format(n, 'x')`/`'b'`/`'o'`, not `hex()`/`bin()`/`oct()`, which include a
-`0x`/`0b`/`0o` prefix that isn't wanted here), following `str`/`chr`'s
-single-numeric-argument style.
-
-Acceptance criteria:
-- `to_hex(255)` is `"ff"`; `to_bin(5)` is `"101"`; `to_oct(8)` is `"10"`.
-- `to_hex(0)` is `"0"`; `to_bin(0)` is `"0"`; `to_oct(0)` is `"0"`.
-- `to_hex(-255)` is `"-ff"` (sign preserved, no two's-complement encoding —
-  matching Python's own `format(n, 'x')` behavior for negative ints).
-- A non-`int` argument (e.g. a `float` or `str`) raises
-  `CinderRuntimeError` with line/column, for all three.
-- Wrong arity raises `CinderRuntimeError` with line/column, for all three.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. `finally` block for `try`/`catch`
+## 1. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:279-284`, parsed by `_try_statement` in
@@ -79,7 +55,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `split_at` for lists
+## 2. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -108,7 +84,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `rotate` for lists
+## 3. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -135,7 +111,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. `do { ... } while (cond);` loop
+## 4. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -179,7 +155,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. `const` declarations for immutable bindings
+## 5. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -230,7 +206,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `unzip` for lists
+## 6. Standard library: `unzip` for lists
 
 Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
 (`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
@@ -265,7 +241,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. C-style `for (init; cond; step) { ... }` loop
+## 7. C-style `for (init; cond; step) { ... }` loop
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,

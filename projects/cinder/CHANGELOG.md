@@ -843,3 +843,9 @@ for vision/architecture.
   — takes a list of `[key, value]` pairs and builds a new map, later entry
   wins on duplicate keys (matching `merge`/`pick`), reusing `_is_valid_key`
   for key validation. Clean first pass, no bounces (1288 tests passing).
+- **Standard library: `to_hex`, `to_bin`, `to_oct` for integers** — merged
+  2026-07-29T21:11:43Z via PR #114 (`feat/20260729-to-hex-bin-oct`). Added
+  the string-formatting counterpart to the numeric-literal-parsing side
+  (`0x1F`/`0b101`/`0o17` literals, PR #73): each returns the lowercase,
+  unprefixed digit string for `n` via `format(n, 'x'/'b'/'o')`, sign
+  preserved for negative ints. Clean first pass, no bounces.

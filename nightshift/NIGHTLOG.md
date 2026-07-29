@@ -2083,3 +2083,10 @@ The morning paper: what shipped, what bounced, what's still open.
   previous night, `main` pulled clean, nothing waiting on Release —
   backlog is fully unblocked for whenever the next Engineer session picks
   up the top task.
+
+- **Merged**: none this cycle — no open PRs to process.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Another quiet Release pass same night: rebased clean, no worktrees to
+  clean up, nothing changed in the backlog since the last cycle — still
+  waiting on the next Engineer session to open a PR.

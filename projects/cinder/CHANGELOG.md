@@ -830,3 +830,16 @@ for vision/architecture.
   single-evaluation of index targets. Not an expression form — `let b =
   a++;` doesn't parse. Clean first pass, no bounces (1279 tests passing, up
   from 1259).
+- **Standard library: `interleave` for two lists** — merged
+  2026-07-29T20:58:50Z via PR #112 (`feat/20260729-interleave`). Added
+  `interleave(list1, list2)` to `cinder/builtins.py`, reusing
+  `_require_two_lists` for validation; flattens elements alternately from
+  each list, appending whichever list's remainder is left once the other
+  runs out (unlike `zip`/`zip_with`, which truncate to the shorter
+  length). Clean first pass, no bounces (1288 tests passing).
+- **Standard library: `from_entries` for maps** — merged
+  2026-07-29T20:58:46Z via PR #113 (`feat/20260729-from-entries`). Added
+  `from_entries(list)` to `cinder/builtins.py`, the inverse of `items(map)`
+  — takes a list of `[key, value]` pairs and builds a new map, later entry
+  wins on duplicate keys (matching `merge`/`pick`), reusing `_is_valid_key`
+  for key validation. Clean first pass, no bounces (1288 tests passing).

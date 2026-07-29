@@ -11,63 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `interleave` for two lists [claimed 2026-07-29T20:42:36Z]
-
-Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
-`_require_two_lists` helper (line 1058, already used by `union`/
-`intersection`/`difference`) for argument validation. Returns a new flat
-list alternating one element from `list1`, one from `list2`, continuing
-with whichever list still has elements once the other runs out (unlike
-`zip`/`zip_with`, which truncate to the shorter length and pair elements
-instead of flattening them).
-
-Acceptance criteria:
-- `interleave([1, 3, 5], [2, 4, 6])` is `[1, 2, 3, 4, 5, 6]`.
-- `interleave([1, 2], [10, 20, 30, 40])` is `[1, 10, 2, 20, 30, 40]` (once
-  the shorter list runs out, the rest of the longer list is appended as-is
-  — this divergence from `zip`'s truncation is the point of the builtin).
-- `interleave([], [1, 2])` is `[1, 2]`; `interleave([1, 2], [])` is
-  `[1, 2]`.
-- `interleave([], [])` is `[]`.
-- A non-list argument raises `CinderRuntimeError` with line/column (reusing
-  `_require_two_lists`'s existing error shape).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `from_entries` for maps [claimed 2026-07-29T20:53:20Z]
-
-Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
-existing `items(map)` — takes a list of `[key, value]` pairs and returns a
-new map, matching `merge`/`pick`'s later-entry-wins collision rule (same
-rule `items` itself round-trips: `from_entries(items(m))` reproduces `m`
-for any map `m` with hashable keys, which is a good regression test).
-Reuse `_is_valid_key` for key validation, matching `map_keys`/`invert`'s
-existing guard.
-
-Acceptance criteria:
-- `from_entries([["a", 1], ["b", 2]])` is `{"a": 1, "b": 2}`.
-- `from_entries([["a", 1], ["a", 2]])` is `{"a": 2}` — later entry wins.
-- `from_entries([])` is `{}`.
-- `from_entries(items({"x": 1, "y": 2}))` is `{"x": 1, "y": 2}` — round-trip
-  regression test tying it to `items`.
-- Each element of the list must itself be a 2-element list (`[key, value]`);
-  anything else (wrong-length list, non-list element) raises
-  `CinderRuntimeError` with line/column.
-- A non-hashable key (e.g. a list) raises `CinderRuntimeError` with
-  line/column, matching `_is_valid_key`'s existing guard elsewhere.
-- Non-list top-level argument raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 3. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 1. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -91,7 +35,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. `finally` block for `try`/`catch`
+## 2. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:279-284`, parsed by `_try_statement` in
@@ -135,7 +79,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `split_at` for lists
+## 3. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -164,7 +108,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `rotate` for lists
+## 4. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -191,7 +135,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. `do { ... } while (cond);` loop
+## 5. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -235,7 +179,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 8. `const` declarations for immutable bindings
+## 6. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:

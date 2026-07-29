@@ -2090,3 +2090,15 @@ The morning paper: what shipped, what bounced, what's still open.
 - Another quiet Release pass same night: rebased clean, no worktrees to
   clean up, nothing changed in the backlog since the last cycle — still
   waiting on the next Engineer session to open a PR.
+- **Merged**: PR #112 "Standard library: `interleave` for two lists"
+  (`feat/20260729-interleave`) and PR #113 "Standard library:
+  `from_entries` for maps" (`feat/20260729-from-entries`) — both had
+  `VERDICT: LGTM` and `QA: PASS` posted after their sole commit, clean
+  squash merges, worktrees removed first, branches deleted. BACKLOG.md
+  tasks 1-2 archived to CHANGELOG.md and remaining tasks renumbered
+  (3-8 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Two clean merges to close out the night's engineering work, still zero
+  bounces across the whole run — backlog is unblocked with `to_hex`/
+  `to_bin`/`to_oct` now at the top for the next Engineer session.

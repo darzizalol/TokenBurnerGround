@@ -78,11 +78,11 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ## 3. Standard library: `round` with an optional `digits` argument
 
-Build: extend the existing `round(n)` (`cinder/builtins.py:658`, currently a
+Build: extend the existing `round(n)` (`cinder/builtins.py:692`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
 `digits` argument — `round(n, digits)` rounds to `digits` decimal places via
 Python's own `round(n, digits)`, matching Python's banker's-rounding
-behavior. Follow `min`/`max`'s manual-bounds-check style (lines 616/627,
+behavior. Follow `min`/`max`'s manual-bounds-check style (lines 650/661,
 which don't use `_require_arity` because their arity isn't fixed) rather
 than `_require_arity`, since this builtin now accepts 1 *or* 2 arguments:
 raise the existing arity error shape (reuse `_arity_error`, called with
@@ -187,7 +187,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 ## 6. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
-`_require_two_lists` helper (line 969, already used by `union`/
+`_require_two_lists` helper (line 1003, already used by `union`/
 `intersection`/`difference`) for argument validation. Returns a new flat
 list alternating one element from `list1`, one from `list2`, continuing
 with whichever list still has elements once the other runs out (unlike
@@ -314,7 +314,7 @@ Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
 `list[index:]`, reusing `_normalize_slice_bound` (already imported from
 `cinder/interpreter.py`, used by `_slice`/`_take`/`_drop` at
-`cinder/builtins.py:1207-1261`) so a negative `index` counts from the end
+`cinder/builtins.py:1241-1296`) so a negative `index` counts from the end
 and an out-of-range `index` clamps into `[0, len(list)]` instead of
 erroring — matching `slice`'s bound-handling exactly, just splitting at
 one point instead of two.

@@ -42,6 +42,8 @@ class TokenType(Enum):
     # Operators
     PLUS = auto()
     MINUS = auto()
+    PLUSPLUS = auto()
+    MINUSMINUS = auto()
     STAR = auto()
     SLASH = auto()
     PERCENT = auto()

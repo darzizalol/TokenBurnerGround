@@ -22,6 +22,17 @@ over the same `Index` node — that would evaluate the object/index
 sub-expressions twice) so `obj`/`index` are each evaluated exactly once at
 runtime and their values reused for both the read and the write.
 
+`x++`/`x--` are statement-only sugar for `x += 1`/`x -= 1` (not an
+expression form: `let b = a++;` is unparseable), handled in `_expr_statement`
+rather than `_assignment` so they're unreachable from any expression
+context. Like the bitwise/shift compound-assign set, both an `Identifier`
+and an `Index` target are accepted, the latter via `IndexCompoundAssign` for
+the same single-evaluation reason. The lexer's doubled-`-` lookahead means
+`--5` (prefix double negation, no space) now lexes as one `MINUSMINUS`
+token instead of two `MINUS`; `_unary` re-splits it back into nested
+`Unary(MINUS, ...)` nodes since a leading `--` can never be a postfix
+decrement (there's nothing before it to decrement).
+
 Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `let [IDENTIFIER, ...] = <expr>;` or
 `let {IDENTIFIER, ...} = <expr>;` (DestructureLetStmt, a flat positional
@@ -143,6 +154,15 @@ _INDEX_TARGET_COMPOUND_ASSIGN_OPS = {
     TokenType.CARETEQ,
     TokenType.LSHIFTEQ,
     TokenType.RSHIFTEQ,
+}
+# `x++`/`x--` statement-only sugar for `x += 1`/`x -= 1`: unlike the
+# arithmetic compound-assign ops above, these accept both `Identifier` and
+# `Index` targets (an `Index` target desugars into `IndexCompoundAssign`,
+# same as the bitwise/shift compound-assign ops, to evaluate `obj`/`index`
+# only once).
+_INCREMENT_DECREMENT_OPS = {
+    TokenType.PLUSPLUS: TokenType.PLUS,
+    TokenType.MINUSMINUS: TokenType.MINUS,
 }
 
 
@@ -461,6 +481,36 @@ class Parser:
 
     def _expr_statement(self) -> Stmt:
         expr = self._assignment()
+        if self._peek().type in _INCREMENT_DECREMENT_OPS:
+            op_token = self._advance()
+            binary_operator = Token(
+                _INCREMENT_DECREMENT_OPS[op_token.type],
+                op_token.lexeme[0],
+                None,
+                op_token.line,
+                op_token.column,
+            )
+            one = Literal(1, op_token.line, op_token.column)
+            if isinstance(expr, Identifier):
+                expr = Assign(
+                    expr.name,
+                    Binary(expr, binary_operator, one),
+                    op_token.line,
+                    op_token.column,
+                )
+            elif isinstance(expr, Index):
+                expr = IndexCompoundAssign(
+                    expr.obj,
+                    expr.index,
+                    binary_operator,
+                    one,
+                    op_token.line,
+                    op_token.column,
+                )
+            else:
+                raise ParseError(
+                    "invalid assignment target", op_token.line, op_token.column
+                )
         self._consume(TokenType.SEMICOLON, "';' after expression")
         return ExprStmt(expr)
 
@@ -615,6 +665,15 @@ class Parser:
         return expr
 
     def _unary(self) -> Expr:
+        if self._check(TokenType.MINUSMINUS):
+            # `--5`/`--x` in prefix position has no postfix meaning (there's
+            # nothing before it to decrement) — it's the same doubled unary
+            # minus `- -5` lexes as with a space, just written without one.
+            # Re-split the merged token into two MINUS operators rather than
+            # rejecting what used to parse fine before `--` became a token.
+            token = self._advance()
+            minus = Token(TokenType.MINUS, "-", None, token.line, token.column)
+            return Unary(minus, Unary(minus, self._unary()))
         if self._peek().type in _UNARY:
             operator = self._advance()
             operand = self._unary()

@@ -2,7 +2,7 @@
 
 import unittest
 
-from cinder.errors import CinderRuntimeError
+from cinder.errors import CinderRuntimeError, ParseError
 from cinder.interpreter import Environment, Interpreter
 from cinder.lexer import tokenize
 from cinder.parser import parse_expression, parse_program
@@ -647,6 +647,63 @@ class TestCompoundAssignment(unittest.TestCase):
             run("let b = 1; b <<= -1;")
         with self.assertRaises(CinderRuntimeError):
             run("let b = 1; b >>= -1;")
+
+
+class TestIncrementDecrement(unittest.TestCase):
+    def test_plus_plus(self):
+        env = run("let a = 5; a++;")
+        self.assertEqual(env.get("a"), 6)
+
+    def test_minus_minus(self):
+        env = run("let a = 5; a--;")
+        self.assertEqual(env.get("a"), 4)
+
+    def test_plus_plus_then_minus_minus_round_trips(self):
+        env = run("let a = 5; a++; a--;")
+        self.assertEqual(env.get("a"), 5)
+
+    def test_plus_plus_on_index_target(self):
+        env = run("let xs = [1]; xs[0]++;")
+        self.assertEqual(env.get("xs"), [2])
+
+    def test_minus_minus_on_index_target(self):
+        env = run("let xs = [1]; xs[0]--;")
+        self.assertEqual(env.get("xs"), [0])
+
+    def test_increment_evaluates_index_expression_once(self):
+        # Same double-evaluation hazard as bitwise compound-assign on an
+        # index target: idx() must be called exactly once.
+        env = run(
+            """
+            let calls = 0;
+            let idx = fn() { calls = calls + 1; return 0; };
+            let xs = [1];
+            xs[idx()]++;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("xs"), [2])
+
+    def test_increment_to_undefined_variable_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("a++;")
+
+    def test_increment_type_error_matches_binary(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('let s = "a"; s++;')
+
+    def test_increment_on_non_lvalue_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("5++;"))
+
+    def test_used_as_expression_value_is_unparseable(self):
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("let b = a++;"))
+
+    def test_plus_and_minus_and_compound_assign_unaffected(self):
+        self.assertEqual(evaluate("1 + 2"), 3)
+        env = run("let a = 1; a += 1;")
+        self.assertEqual(env.get("a"), 2)
 
 
 class TestIfStatement(unittest.TestCase):

@@ -49,8 +49,11 @@ while (i < 10) {
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`;
   the bitwise/shift set also accepts an index-expression target, e.g.
-  `xs[0] &= 3`, unlike the arithmetic set which is identifier-only), `*`
-  repetition for `str * int`/`list * int` (Python repetition semantics),
+  `xs[0] &= 3`, unlike the arithmetic set which is identifier-only),
+  increment/decrement statement sugar `x++;`/`x--;` (identifier or
+  index-expression target, e.g. `xs[0]++;`; statement-only, not usable as a
+  value), `*` repetition for `str * int`/`list * int` (Python repetition
+  semantics),
   `in` for membership tests (lists, strings, maps), the ternary conditional
   `cond ? then : else`, the nil-coalescing operator `a ?? b` (short-circuits
   like `and`/`or`: evaluates `b` only when `a` is `nil`, unlike `or` which

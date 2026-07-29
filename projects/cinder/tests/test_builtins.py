@@ -3,7 +3,7 @@ insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, 
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
-is_string, is_number, is_bool, is_nil, is_function."""
+is_string, is_number, is_bool, is_nil, is_function, random_int, random_choice."""
 
 import io
 import subprocess
@@ -2035,6 +2035,54 @@ class TestLast(unittest.TestCase):
     def test_last_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("last([1], 2);")
+
+
+class TestRandomInt(unittest.TestCase):
+    def test_degenerate_range_is_exact(self):
+        for _ in range(10):
+            self.assertEqual(run("let result = random_int(1, 1);").get("result"), 1)
+
+    def test_result_is_int_within_bounds(self):
+        for _ in range(200):
+            result = run("let result = random_int(1, 10);").get("result")
+            self.assertIsInstance(result, int)
+            self.assertGreaterEqual(result, 1)
+            self.assertLessEqual(result, 10)
+
+    def test_min_greater_than_max_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("random_int(5, 1);")
+
+    def test_non_int_min_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('random_int("1", 5);')
+
+    def test_non_int_max_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('random_int(1, "5");')
+
+    def test_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("random_int(1);")
+
+
+class TestRandomChoice(unittest.TestCase):
+    def test_result_is_member_of_list(self):
+        for _ in range(50):
+            result = run("let result = random_choice([1, 2, 3]);").get("result")
+            self.assertIn(result, [1, 2, 3])
+
+    def test_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("random_choice([]);")
+
+    def test_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('random_choice("hi");')
+
+    def test_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("random_choice([1], 2);")
 
 
 class TestShuffle(unittest.TestCase):

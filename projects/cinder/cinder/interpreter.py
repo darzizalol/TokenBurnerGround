@@ -8,11 +8,16 @@ and returns a plain Python value (int, float, str, bool, None), or a Python
 than returning a value. `ForStmt` binds its loop variable in a fresh child
 `Environment` per iteration, so a closure created inside the loop body
 captures that iteration's value rather than the final one. `TryStmt` runs its
-try block and, if it raises `CinderRuntimeError`, binds the error's message
-to the catch name in a fresh child `Environment` and runs the catch block;
+try block and, if it raises `CinderRuntimeError` and a `catch` clause is
+present, binds the error's message to the catch name in a fresh child
+`Environment` and runs the catch block; an optional `finally` block always
+runs afterward, via a Python `try/finally` wrapped around the try/catch
+logic, regardless of whether the try block succeeded, was caught, or exited
+via an uncaught `CinderRuntimeError` or control-flow signal.
 `_BreakSignal`/`_ContinueSignal`/`_ReturnSignal` are Python-internal
 control-flow signals, not `CinderRuntimeError`, so `break`/`continue`/
-`return` inside a `try` block still propagate through it uncaught.
+`return` inside a `try` block still propagate through it uncaught (running
+`finally` on the way, via Python's own `finally` semantics).
 
 `Call` nodes invoke a `CinderFunction`: a new child `Environment` of the
 function's closure is pushed, parameters are bound there, and the body runs.
@@ -283,11 +288,17 @@ class Interpreter:
 
     def _execute_try(self, stmt: TryStmt, env: Environment) -> None:
         try:
-            self.execute(stmt.try_block, env)
-        except CinderRuntimeError as error:
-            catch_env = Environment(env)
-            catch_env.define(stmt.catch_name, error.message)
-            self.execute(stmt.catch_block, catch_env)
+            try:
+                self.execute(stmt.try_block, env)
+            except CinderRuntimeError as error:
+                if stmt.catch_block is None:
+                    raise
+                catch_env = Environment(env)
+                catch_env.define(stmt.catch_name, error.message)
+                self.execute(stmt.catch_block, catch_env)
+        finally:
+            if stmt.finally_block is not None:
+                self.execute(stmt.finally_block, env)
 
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
         iterable = self.evaluate(stmt.iterable, env)

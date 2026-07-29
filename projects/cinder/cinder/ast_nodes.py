@@ -279,8 +279,9 @@ class ContinueStmt:
 @dataclass(frozen=True)
 class TryStmt:
     try_block: "Block"
-    catch_name: str
-    catch_block: "Block"
+    catch_name: "str | None"
+    catch_block: "Block | None"
+    finally_block: "Block | None"
     line: int
     column: int
 

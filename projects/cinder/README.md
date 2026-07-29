@@ -91,7 +91,7 @@ while (i < 10) {
   `pad_start`, `pad_end`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, and type predicates
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python

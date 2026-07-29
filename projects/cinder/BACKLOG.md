@@ -61,7 +61,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `sign` for numbers
+## 3. Standard library: `sign` for numbers [claimed 2026-07-29T14:04:37Z]
 
 Build: add `sign(n)` to `cinder/builtins.py` — returns `1` if `n` is
 positive, `-1` if negative, `0` if zero, matching `abs`'s single-numeric-

@@ -11,38 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `random_int` and `random_choice` [claimed 2026-07-29T14:28:29Z]
-
-Build: add `random_int(min, max)` (inclusive `int` bounds, via Python's
-`random.randint`) and `random_choice(list)` (via Python's `random.choice`)
-to `cinder/builtins.py`, using the stdlib `random` module already relied
-on by the shipped `shuffle`/`sample`. Non-deterministic builtins can't be
-pinned in golden-output examples, so test both by property (result is
-within bounds / result is a member of the input list) the same way
-`shuffle`/`sample`'s tests already do, rather than exact-value assertions.
-
-Acceptance criteria:
-- `random_int(1, 1)` is always exactly `1` (degenerate single-value range —
-  a deterministic edge case worth pinning exactly).
-- `random_int(1, 10)` called many times always returns an `int` in
-  `[1, 10]` inclusive.
-- `random_int(5, 1)` (`min > max`) raises `CinderRuntimeError` with
-  line/column.
-- A non-`int` bound raises `CinderRuntimeError` with line/column.
-- `random_choice([1, 2, 3])` always returns one of `1`, `2`, `3`.
-- `random_choice([])` raises `CinderRuntimeError` with line/column (nothing
-  to choose from).
-- Non-list argument to `random_choice` raises `CinderRuntimeError` with
-  line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column, for both
-  builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `round` with an optional `digits` argument
+## 1. Standard library: `round` with an optional `digits` argument
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:692`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second
@@ -79,7 +48,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `to_fixed` for fixed-decimal number formatting
+## 2. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -108,7 +77,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Increment/decrement statement operators: `++`, `--`
+## 3. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -150,7 +119,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `interleave` for two lists
+## 4. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 1003, already used by `union`/
@@ -177,7 +146,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `from_entries` for maps
+## 5. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -206,7 +175,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 6. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -230,7 +199,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. `finally` block for `try`/`catch`
+## 7. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
@@ -274,7 +243,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 9. Standard library: `split_at` for lists
+## 8. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -303,7 +272,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. Standard library: `rotate` for lists
+## 9. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -330,7 +299,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 11. `do { ... } while (cond);` loop
+## 10. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -374,7 +343,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 12. `const` declarations for immutable bindings
+## 11. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -1213,6 +1182,13 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   Python's `str.title()`. Bounced by a merge conflict (not a review/QA
   failure) against `main` after tasks 2/3 landed on the same README area;
   rebased and re-reviewed clean (1232 tests passing).
+- **Standard library: `random_int` and `random_choice`** — merged
+  2026-07-29T14:33:40Z via PR #108 (`feat/20260729-random-int-choice`).
+  Added `random_int(min, max)` and `random_choice(list)` to
+  `cinder/builtins.py` via Python's stdlib `random` module, tested by
+  property (in-bounds / list-membership) rather than exact-value
+  assertions since both are non-deterministic. Clean first pass, no
+  bounces (1242 tests passing).
 
 ## Graveyard
 

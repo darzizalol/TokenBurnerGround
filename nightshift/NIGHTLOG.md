@@ -2040,3 +2040,12 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - The ordering trap from earlier tonight resolved itself cleanly once the
   rebase landed — backlog is fully unblocked heading into the next cycle.
+- **Merged**: PR #108 "Standard library: `random_int` and `random_choice`"
+  (`feat/20260729-random-int-choice`) — had `VERDICT: LGTM` and `QA: PASS`
+  posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 marked done under `## Done` and
+  remaining tasks renumbered (2-12 → 1-11).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Another clean, quiet cycle — one stdlib addition landed on the first
+  pass, backlog fully unblocked for the next Engineer session.

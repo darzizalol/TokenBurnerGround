@@ -85,7 +85,7 @@ while (i < 10) {
   `any`, `all`, string methods `upper`, `lower`, `capitalize`,
   `trim`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
-  `pad_start`, `pad_end`, math builtins `abs`, `min`, `max`, `round`, `floor`,
+  `pad_start`, `pad_end`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `ord`/`chr` for character/code-point
   conversion, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,

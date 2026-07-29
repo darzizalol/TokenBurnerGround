@@ -613,6 +613,20 @@ def _abs(arguments: list, line: int, column: int) -> object:
     return abs(value)
 
 
+def _sign(arguments: list, line: int, column: int) -> object:
+    _require_arity("sign", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"sign() requires a number, got {type_name(value)}", line, column
+        )
+    if value > 0:
+        return 1
+    if value < 0:
+        return -1
+    return 0
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -1766,6 +1780,7 @@ _BUILTINS = {
     "pad_start": _pad_start,
     "pad_end": _pad_end,
     "abs": _abs,
+    "sign": _sign,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

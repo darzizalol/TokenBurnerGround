@@ -1159,6 +1159,39 @@ class TestAbs(unittest.TestCase):
             run("abs(1, 2);")
 
 
+class TestSign(unittest.TestCase):
+    def test_sign_of_positive_int(self):
+        self.assertEqual(run("let result = sign(5);").get("result"), 1)
+
+    def test_sign_of_negative_int(self):
+        self.assertEqual(run("let result = sign(-5);").get("result"), -1)
+
+    def test_sign_of_zero_int(self):
+        self.assertEqual(run("let result = sign(0);").get("result"), 0)
+
+    def test_sign_of_positive_float(self):
+        self.assertEqual(run("let result = sign(3.5);").get("result"), 1)
+
+    def test_sign_of_negative_float(self):
+        self.assertEqual(run("let result = sign(-3.5);").get("result"), -1)
+
+    def test_sign_of_zero_float(self):
+        self.assertEqual(run("let result = sign(0.0);").get("result"), 0)
+
+    def test_sign_result_type_is_always_int(self):
+        self.assertEqual(run("let result = type(sign(3.5));").get("result"), "int")
+        self.assertEqual(run("let result = type(sign(-3.5));").get("result"), "int")
+        self.assertEqual(run("let result = type(sign(0.0));").get("result"), "int")
+
+    def test_sign_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('sign("x");')
+
+    def test_sign_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("sign(1, 2);")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

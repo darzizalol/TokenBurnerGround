@@ -2059,3 +2059,12 @@ The morning paper: what shipped, what bounced, what's still open.
 - Fourth clean merge in a row tonight, no bounces all night — the backlog
   is moving smoothly and stays fully unblocked heading into the next
   cycle.
+- **Merged**: PR #111 "Increment/decrement statement operators: `++`, `--`"
+  (`feat/20260729-inc-dec-ops`) — had `VERDICT: LGTM` and `QA: PASS`
+  posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 marked done under `## Done` and
+  remaining tasks renumbered (2-9 → 1-8).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifth clean merge in a row tonight, still zero bounces — the backlog
+  keeps moving without friction heading into the next cycle.

@@ -11,49 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Increment/decrement statement operators: `++`, `--` [claimed 2026-07-29T19:30:48Z]
-
-Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
-— deliberately **not** an expression form (no `y = x++;`, no pre/post-value
-distinction to design around; this is `+=`/`-=` shorthand, nothing more,
-keeping the scope tight for one session). Lexing: `+` and `-` currently
-lex via `_op_or_compound_assign` (`cinder/lexer.py:292`) using the
-`_COMPOUND_ASSIGN_TOKENS` table (`cinder/lexer.py:19-27`), which only
-distinguishes the bare char from one `=`-suffixed form; extend just the
-`+`/`-` handling (not the shared table, since `*`/`/`/`%` don't get this
-form) to also check for a doubled character (`self._match("+")` /
-`self._match("-")`) and emit new `PLUSPLUS`/`MINUSMINUS` tokens before
-falling back to the existing compound-assign check. Add both token types to
-`cinder/tokens.py`. Parsing: hook into statement parsing (not the
-expression/Pratt parser) alongside where compound assignment is desugared
-(`cinder/parser.py:467`, inside `_assignment`) — after parsing a primary/postfix expression at
-statement position, if the next token is `PLUSPLUS`/`MINUSMINUS`, require
-the expression to be a valid assignment target (identifier or index
-expression, matching compound assignment's existing lvalue restriction) and
-desugar to the same `target = target OP 1` AST shape compound assignment
-already produces, with `1` as an `IntLiteral`.
-
-Acceptance criteria:
-- `let a = 5; a++; a` is `6`; `a--;` after that makes `a` `5` again.
-- Works on an index-expression target: `let xs = [1]; xs[0]++; xs[0]` is
-  `2`.
-- `a++` is a statement, not an expression — using it as a value (e.g.
-  `let b = a++;`) raises a `ParseError` with line/column (or is simply
-  unparseable per the grammar — pick whichever the implementation naturally
-  produces, but add a test pinning it either way).
-- `a++` on a non-lvalue (e.g. `5++;`) raises a `ParseError` with
-  line/column, matching compound assignment's existing lvalue check.
-- Existing `+`/`-`/`+=`/`-=` lexing and parsing are unaffected — add a
-  regression test that `1 + 2` and `a += 1` still lex/parse exactly as
-  before.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
-`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `interleave` for two lists
+## 1. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 1039, already used by `union`/
@@ -80,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `from_entries` for maps
+## 2. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -109,7 +67,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 3. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -133,7 +91,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. `finally` block for `try`/`catch`
+## 4. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
@@ -177,7 +135,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 6. Standard library: `split_at` for lists
+## 5. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -206,7 +164,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `rotate` for lists
+## 6. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -233,7 +191,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. `do { ... } while (cond);` loop
+## 7. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -277,7 +235,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 9. `const` declarations for immutable bindings
+## 8. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -1138,6 +1096,16 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   `f"{n:.{digits}f}"` format spec, mirroring `round`'s argument validation
   (non-numeric `n`; non-`int` or negative `digits`; wrong arity). Clean
   first pass, no bounces (1259 tests passing, up from 1250).
+- **Increment/decrement statement operators: `++`, `--`** — merged
+  2026-07-29T19:41:48Z via PR #111 (`feat/20260729-inc-dec-ops`). Added
+  `PLUSPLUS`/`MINUSMINUS` tokens (extending `+`/`-` lexing to check for a
+  doubled character before falling back to the compound-assign check) and
+  statement-only `x++;`/`x--;` sugar desugaring to `x = x + 1;`/`x = x - 1;`
+  at parse time, reusing compound assignment's existing lvalue restriction
+  (identifier or index expression) and `IndexCompoundAssign` node for
+  single-evaluation of index targets. Not an expression form — `let b =
+  a++;` doesn't parse. Clean first pass, no bounces (1279 tests passing, up
+  from 1259).
 
 ## Graveyard
 

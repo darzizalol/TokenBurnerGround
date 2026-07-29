@@ -155,7 +155,8 @@ projects/cinder/
 ├── tests/            # unit + end-to-end tests
 ├── examples/         # sample programs with expected output
 ├── PROJECT.md        # vision, spec, and roadmap (Architect-owned)
-└── BACKLOG.md        # prioritized task list for upcoming nights
+├── BACKLOG.md        # prioritized task list for upcoming nights
+└── CHANGELOG.md      # archived history of every merged task
 ```
 
 ## Status & roadmap

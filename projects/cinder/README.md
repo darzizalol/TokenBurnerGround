@@ -131,7 +131,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1223+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1232+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -157,11 +157,11 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: `trim_start`/`trim_end` for
-strings and `sign` for numbers. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `title` for strings (rebasing after a merge
-conflict), `random_int`/`random_choice`, `round` with a `digits` argument,
-and `to_fixed`, then two language features — increment/decrement statement
-operators (`++`/`--`) and a `finally` block for `try`/`catch` — with more
-stdlib breadth after. The backlog mixes language depth with stdlib breadth
-over time rather than running either in one long block. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+strings, `sign` for numbers, and `title` for strings. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `random_int`/`random_choice`, `round` with a
+`digits` argument, and `to_fixed`, then two language features —
+increment/decrement statement operators (`++`/`--`) and a `finally` block
+for `try`/`catch` — with more stdlib breadth after. The backlog mixes
+language depth with stdlib breadth over time rather than running either in
+one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

@@ -29,6 +29,7 @@ class TokenType(Enum):
     CONTINUE = auto()
     TRY = auto()
     CATCH = auto()
+    FINALLY = auto()
     SWITCH = auto()
     CASE = auto()
     DEFAULT = auto()
@@ -102,6 +103,7 @@ KEYWORDS = {
     "continue": TokenType.CONTINUE,
     "try": TokenType.TRY,
     "catch": TokenType.CATCH,
+    "finally": TokenType.FINALLY,
     "switch": TokenType.SWITCH,
     "case": TokenType.CASE,
     "default": TokenType.DEFAULT,

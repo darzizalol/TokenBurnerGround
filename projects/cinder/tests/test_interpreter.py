@@ -1398,6 +1398,62 @@ class TestTryCatch(unittest.TestCase):
         self.assertIsInstance(env.get("outer"), str)
 
 
+class TestTryFinally(unittest.TestCase):
+    def _run(self, source: str) -> Environment:
+        from cinder.builtins import create_global_environment
+
+        return run(source, create_global_environment())
+
+    def test_finally_runs_after_clean_try(self):
+        env = self._run("let log = []; try { push(log, 1); } finally { push(log, 2); } ")
+        self.assertEqual(env.get("log"), [1, 2])
+
+    def test_finally_runs_after_catch_handles_error(self):
+        env = self._run(
+            "let log = []; "
+            'try { push(log, 1); assert(false, "x"); } '
+            "catch (e) { push(log, 2); } "
+            "finally { push(log, 3); }"
+        )
+        self.assertEqual(env.get("log"), [1, 2, 3])
+
+    def test_finally_runs_before_function_return(self):
+        env = self._run(
+            "let log = []; "
+            "fn f() { try { return 1; } finally { push(log, 1); } } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+        self.assertEqual(env.get("log"), [1])
+
+    def test_finally_runs_before_loop_break(self):
+        env = self._run(
+            "let log = []; "
+            "for x in [1, 2] { try { break; } finally { push(log, 1); } } "
+        )
+        self.assertEqual(env.get("log"), [1])
+
+    def test_finally_runs_before_loop_continue(self):
+        env = self._run(
+            "let log = []; "
+            "for x in [1, 2] { try { continue; } finally { push(log, x); } } "
+        )
+        self.assertEqual(env.get("log"), [1, 2])
+
+    def test_finally_only_no_catch_clause_is_valid(self):
+        env = self._run("let log = []; try { push(log, 1); } finally { push(log, 2); }")
+        self.assertEqual(env.get("log"), [1, 2])
+
+    def test_finally_only_still_propagates_uncaught_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            self._run("let log = []; try { let x = 1 / 0; } finally { push(log, 1); }")
+
+    def test_omitting_finally_behaves_as_before(self):
+        env = run("let msg = nil; try { let x = 1 / 0; } catch (e) { msg = e; }")
+        self.assertIsInstance(env.get("msg"), str)
+        self.assertIn("division by zero", env.get("msg"))
+
+
 class TestSwitchStatement(unittest.TestCase):
     def test_first_match_wins_no_fallthrough(self):
         import io

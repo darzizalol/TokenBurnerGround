@@ -156,7 +156,8 @@ def stmt_shape(node):
             "TryStmt",
             stmt_shape(node.try_block),
             node.catch_name,
-            stmt_shape(node.catch_block),
+            stmt_shape(node.catch_block) if node.catch_block is not None else None,
+            stmt_shape(node.finally_block) if node.finally_block is not None else None,
         )
     if isinstance(node, SwitchStmt):
         return (
@@ -1546,6 +1547,7 @@ class TestTryCatch(unittest.TestCase):
                             )
                         ],
                     ),
+                    None,
                 )
             ],
         )
@@ -1553,10 +1555,45 @@ class TestTryCatch(unittest.TestCase):
     def test_try_catch_empty_bodies(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("try {} catch (e) {}")],
-            [("TryStmt", ("Block", []), "e", ("Block", []))],
+            [("TryStmt", ("Block", []), "e", ("Block", []), None)],
         )
 
-    def test_missing_catch_raises(self):
+    def test_try_catch_finally_shape(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("try { 1; } catch (e) { 2; } finally { 3; }")
+            ],
+            [
+                (
+                    "TryStmt",
+                    ("Block", [("ExprStmt", ("Literal", 1))]),
+                    "e",
+                    ("Block", [("ExprStmt", ("Literal", 2))]),
+                    ("Block", [("ExprStmt", ("Literal", 3))]),
+                )
+            ],
+        )
+
+    def test_try_finally_without_catch_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("try { 1; } finally { 2; }")],
+            [
+                (
+                    "TryStmt",
+                    ("Block", [("ExprStmt", ("Literal", 1))]),
+                    None,
+                    None,
+                    ("Block", [("ExprStmt", ("Literal", 2))]),
+                )
+            ],
+        )
+
+    def test_finally_body_must_be_block(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("try { 1; } finally 2;")
+
+    def test_missing_catch_and_finally_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("try { 1; }")
 

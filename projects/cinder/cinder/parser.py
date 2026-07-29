@@ -422,20 +422,47 @@ class Parser:
                 token.column,
             )
         try_block = self._block()
-        self._consume(TokenType.CATCH, "'catch' after try block")
-        self._consume(TokenType.LPAREN, "'(' after 'catch'")
-        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
-        self._consume(TokenType.RPAREN, "')' after catch name")
-        if not self._check(TokenType.LBRACE):
+        catch_name = None
+        catch_block = None
+        if self._check(TokenType.CATCH):
+            self._advance()
+            self._consume(TokenType.LPAREN, "'(' after 'catch'")
+            name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
+            self._consume(TokenType.RPAREN, "')' after catch name")
+            if not self._check(TokenType.LBRACE):
+                token = self._peek()
+                raise ParseError(
+                    f"expected '{{' before catch body, found {self._describe(token)}",
+                    token.line,
+                    token.column,
+                )
+            catch_name = name_token.lexeme
+            catch_block = self._block()
+        finally_block = None
+        if self._check(TokenType.FINALLY):
+            self._advance()
+            if not self._check(TokenType.LBRACE):
+                token = self._peek()
+                raise ParseError(
+                    f"expected '{{' before finally body, found {self._describe(token)}",
+                    token.line,
+                    token.column,
+                )
+            finally_block = self._block()
+        if catch_block is None and finally_block is None:
             token = self._peek()
             raise ParseError(
-                f"expected '{{' before catch body, found {self._describe(token)}",
+                f"expected 'catch' or 'finally' after try block, found {self._describe(token)}",
                 token.line,
                 token.column,
             )
-        catch_block = self._block()
         return TryStmt(
-            try_block, name_token.lexeme, catch_block, try_token.line, try_token.column
+            try_block,
+            catch_name,
+            catch_block,
+            finally_block,
+            try_token.line,
+            try_token.column,
         )
 
     def _switch_statement(self) -> Stmt:

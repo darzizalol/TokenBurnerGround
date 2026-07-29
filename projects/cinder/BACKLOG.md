@@ -193,7 +193,7 @@ form) to also check for a doubled character (`self._match("+")` /
 falling back to the existing compound-assign check. Add both token types to
 `cinder/tokens.py`. Parsing: hook into statement parsing (not the
 expression/Pratt parser) alongside where compound assignment is desugared
-(`cinder/parser.py:481`, inside `_assignment`) — after parsing a primary/postfix expression at
+(`cinder/parser.py:467`, inside `_assignment`) — after parsing a primary/postfix expression at
 statement position, if the next token is `PLUSPLUS`/`MINUSMINUS`, require
 the expression to be a valid assignment target (identifier or index
 expression, matching compound assignment's existing lvalue restriction) and
@@ -223,7 +223,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 ## 8. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
-`_require_two_lists` helper (line 924, already used by `union`/
+`_require_two_lists` helper (line 969, already used by `union`/
 `intersection`/`difference`) for argument validation. Returns a new flat
 list alternating one element from `list1`, one from `list2`, continuing
 with whichever list still has elements once the other runs out (unlike

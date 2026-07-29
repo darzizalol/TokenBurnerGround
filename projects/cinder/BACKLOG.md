@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `split_at` for lists
+## 1. Standard library: `split_at` for lists [claimed 2026-07-29T21:30:40Z]
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is

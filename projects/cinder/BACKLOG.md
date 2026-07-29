@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 1. Standard library: `to_hex`, `to_bin`, `to_oct` for integers [claimed 2026-07-29T21:06:41Z]
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side

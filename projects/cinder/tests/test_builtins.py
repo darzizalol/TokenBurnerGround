@@ -2048,6 +2048,53 @@ class TestUnionIntersectionDifference(unittest.TestCase):
             run("difference([1], [2], [3]);")
 
 
+class TestInterleave(unittest.TestCase):
+    def test_interleave_equal_length_lists(self):
+        self.assertEqual(
+            run("let result = interleave([1, 3, 5], [2, 4, 6]);").get("result"),
+            [1, 2, 3, 4, 5, 6],
+        )
+
+    def test_interleave_appends_remaining_elements_of_longer_list(self):
+        self.assertEqual(
+            run("let result = interleave([1, 2], [10, 20, 30, 40]);").get("result"),
+            [1, 10, 2, 20, 30, 40],
+        )
+
+    def test_interleave_first_list_longer(self):
+        self.assertEqual(
+            run("let result = interleave([1, 2, 3, 4], [10, 20]);").get("result"),
+            [1, 10, 2, 20, 3, 4],
+        )
+
+    def test_interleave_first_list_empty(self):
+        self.assertEqual(
+            run("let result = interleave([], [1, 2]);").get("result"), [1, 2]
+        )
+
+    def test_interleave_second_list_empty(self):
+        self.assertEqual(
+            run("let result = interleave([1, 2], []);").get("result"), [1, 2]
+        )
+
+    def test_interleave_both_empty(self):
+        self.assertEqual(run("let result = interleave([], []);").get("result"), [])
+
+    def test_interleave_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("interleave(5, [1]);")
+
+    def test_interleave_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("interleave([1], 5);")
+
+    def test_interleave_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("interleave([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("interleave([1], [2], [3]);")
+
+
 class TestReverse(unittest.TestCase):
     def test_reverse_returns_new_reversed_list(self):
         self.assertEqual(run("let result = reverse([1, 2, 3]);").get("result"), [3, 2, 1])

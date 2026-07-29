@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `round` with an optional `digits` argument
+## 1. Standard library: `round` with an optional `digits` argument [claimed 2026-07-29T14:40:04Z]
 
 Build: extend the existing `round(n)` (`cinder/builtins.py:713`, currently a
 strict 1-arg builtin via `_require_arity`) to also accept an optional second

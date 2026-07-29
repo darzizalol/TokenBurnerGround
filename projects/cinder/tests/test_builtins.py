@@ -361,6 +361,51 @@ class TestItems(unittest.TestCase):
             run('items({"a": 1}, 2);')
 
 
+class TestFromEntries(unittest.TestCase):
+    def test_from_entries_builds_map_from_pairs(self):
+        env = run('let result = from_entries([["a", 1], ["b", 2]]);')
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2})
+
+    def test_from_entries_later_entry_wins_on_duplicate_key(self):
+        env = run('let result = from_entries([["a", 1], ["a", 2]]);')
+        self.assertEqual(env.get("result"), {"a": 2})
+
+    def test_from_entries_of_empty_list_is_empty_map(self):
+        env = run("let result = from_entries([]);")
+        self.assertEqual(env.get("result"), {})
+
+    def test_from_entries_round_trips_with_items(self):
+        env = run(
+            'let m = {"x": 1, "y": 2};'
+            "let result = from_entries(items(m));"
+        )
+        self.assertEqual(env.get("result"), {"x": 1, "y": 2})
+
+    def test_from_entries_wrong_length_pair_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('from_entries([["a", 1, "extra"]]);')
+        with self.assertRaises(CinderRuntimeError):
+            run('from_entries([["a"]]);')
+
+    def test_from_entries_non_list_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("from_entries([5]);")
+
+    def test_from_entries_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('from_entries([[[1, 2], "value"]]);')
+
+    def test_from_entries_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("from_entries(5);")
+
+    def test_from_entries_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("from_entries();")
+        with self.assertRaises(CinderRuntimeError):
+            run('from_entries([["a", 1]], "extra");')
+
+
 class TestGet(unittest.TestCase):
     def test_get_returns_value_for_present_key(self):
         env = run('let result = get({"a": 1}, "a", 0);')

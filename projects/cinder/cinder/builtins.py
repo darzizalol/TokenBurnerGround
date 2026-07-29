@@ -247,6 +247,30 @@ def _items(arguments: list, line: int, column: int) -> object:
     return [[key, value] for key, value in target.items()]
 
 
+def _from_entries(arguments: list, line: int, column: int) -> object:
+    _require_arity("from_entries", arguments, 1, line, column)
+    entries = arguments[0]
+    if not isinstance(entries, list):
+        raise CinderRuntimeError(
+            f"from_entries() requires a list, got {type_name(entries)}", line, column
+        )
+    result: dict = {}
+    for entry in entries:
+        if not isinstance(entry, list) or len(entry) != 2:
+            raise CinderRuntimeError(
+                "from_entries() requires a list of [key, value] pairs, got "
+                f"{type_name(entry)}",
+                line, column,
+            )
+        key, value = entry
+        if not _is_valid_key(key):
+            raise CinderRuntimeError(
+                f"{type_name(key)} is not a valid map key", line, column
+            )
+        result[key] = value
+    return result
+
+
 def _get(arguments: list, line: int, column: int) -> object:
     _require_arity("get", arguments, 3, line, column)
     target, key, default = arguments
@@ -1867,6 +1891,7 @@ _BUILTINS = {
     "keys": _keys,
     "values": _values,
     "items": _items,
+    "from_entries": _from_entries,
     "get": _get,
     "pluck": _pluck,
     "remove": _remove,

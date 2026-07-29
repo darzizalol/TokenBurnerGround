@@ -79,7 +79,7 @@ while (i < 10) {
   (map literals don't support spread)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
-  `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
+  `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
   `union`, `intersection`, `difference` (lists treated as unordered sets),
   `pluck`, `pick`, `omit`,

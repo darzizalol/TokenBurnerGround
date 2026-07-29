@@ -1118,6 +1118,17 @@ def _difference(arguments: list, line: int, column: int) -> object:
     ]
 
 
+def _interleave(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("interleave", arguments, line, column)
+    result = []
+    for element1, element2 in zip(list1, list2):
+        result.append(element1)
+        result.append(element2)
+    result.extend(list1[len(list2):])
+    result.extend(list2[len(list1):])
+    return result
+
+
 def _reverse(arguments: list, line: int, column: int) -> object:
     _require_arity("reverse", arguments, 1, line, column)
     value = arguments[0]
@@ -1952,6 +1963,7 @@ _BUILTINS = {
     "union": _union,
     "intersection": _intersection,
     "difference": _difference,
+    "interleave": _interleave,
     "reverse": _reverse,
     "first": _first,
     "last": _last,

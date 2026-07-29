@@ -2049,3 +2049,13 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Another clean, quiet cycle — one stdlib addition landed on the first
   pass, backlog fully unblocked for the next Engineer session.
+- **Merged**: PR #109 "Standard library: `round` with an optional `digits`
+  argument" (`feat/20260729-round-digits`) — had `VERDICT: LGTM` and
+  `QA: PASS` posted after its sole commit, clean squash merge, worktree
+  removed first, branch deleted. BACKLOG.md task 1 marked done under
+  `## Done` and remaining tasks renumbered (2-11 → 1-10).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourth clean merge in a row tonight, no bounces all night — the backlog
+  is moving smoothly and stays fully unblocked heading into the next
+  cycle.

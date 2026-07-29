@@ -11,44 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `round` with an optional `digits` argument [claimed 2026-07-29T14:40:04Z]
-
-Build: extend the existing `round(n)` (`cinder/builtins.py:713`, currently a
-strict 1-arg builtin via `_require_arity`) to also accept an optional second
-`digits` argument — `round(n, digits)` rounds to `digits` decimal places via
-Python's own `round(n, digits)`, matching Python's banker's-rounding
-behavior. Follow `min`/`max`'s manual-bounds-check style (lines 671/682,
-which don't use `_require_arity` because their arity isn't fixed) rather
-than `_require_arity`, since this builtin now accepts 1 *or* 2 arguments:
-raise the existing arity error shape (reuse `_arity_error`, called with
-whichever count fits) when called with 0 or more than 2 arguments. When
-`digits` is omitted, behavior must stay byte-for-byte identical to today
-(`round(n)` still returns `round(n)`, an `int`).
-
-Acceptance criteria:
-- `round(3.456)` is still `3` (1-arg call unchanged — add a regression test
-  pinning this since the arity check is being loosened).
-- `round(3.456, 2)` is `3.46`; `round(3.456, 0)` is `3.0` (Python's own
-  `round(n, 0)` returns a `float`, not an `int` — pin this distinction from
-  the 1-arg form).
-- `round(2.5, 0)` is `2.0` (banker's rounding to even, matching Python's
-  `round` — not "round half up").
-- A non-numeric `n` raises `CinderRuntimeError` with line/column.
-- A non-`int` `digits` (e.g. a `float` or `str`) raises `CinderRuntimeError`
-  with line/column.
-- A negative `digits` raises `CinderRuntimeError` with line/column (Python
-  allows it to round to tens/hundreds, but that's surprising here — keep
-  this builtin's domain to "decimal places", matching `clamp`'s style of
-  rejecting surprising-but-technically-valid inputs).
-- Calling with 0 or 3+ arguments raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `to_fixed` for fixed-decimal number formatting
+## 1. Standard library: `to_fixed` for fixed-decimal number formatting
 
 Build: add `to_fixed(n, digits)` to `cinder/builtins.py` — formats `n` as a
 `str` with exactly `digits` digits after the decimal point (via Python's
@@ -77,7 +40,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Increment/decrement statement operators: `++`, `--`
+## 2. Increment/decrement statement operators: `++`, `--`
 
 Build: add `x++;` and `x--;` as statement-only sugar for `x += 1;` / `x -= 1;`
 — deliberately **not** an expression form (no `y = x++;`, no pre/post-value
@@ -119,7 +82,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `interleave` for two lists
+## 3. Standard library: `interleave` for two lists
 
 Build: add `interleave(list1, list2)` to `cinder/builtins.py`, reusing the
 `_require_two_lists` helper (line 1003, already used by `union`/
@@ -146,7 +109,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `from_entries` for maps
+## 4. Standard library: `from_entries` for maps
 
 Build: add `from_entries(list)` to `cinder/builtins.py`, the inverse of the
 existing `items(map)` — takes a list of `[key, value]` pairs and returns a
@@ -175,7 +138,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
+## 5. Standard library: `to_hex`, `to_bin`, `to_oct` for integers
 
 Build: add `to_hex(n)`, `to_bin(n)`, `to_oct(n)` to `cinder/builtins.py` —
 the string-formatting counterpart to the numeric-literal-parsing side
@@ -199,7 +162,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. `finally` block for `try`/`catch`
+## 6. `finally` block for `try`/`catch`
 
 Build: extend the existing `try { ... } catch (name) { ... }`
 (`TryStmt` in `cinder/ast_nodes.py:280-286`, parsed by `_try_statement` in
@@ -243,7 +206,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 8. Standard library: `split_at` for lists
+## 7. Standard library: `split_at` for lists
 
 Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
 `[left, right]` where `left` is `list[0:index]` and `right` is
@@ -272,7 +235,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. Standard library: `rotate` for lists
+## 8. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -299,7 +262,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 10. `do { ... } while (cond);` loop
+## 9. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -343,7 +306,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 11. `const` declarations for immutable bindings
+## 10. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -1189,6 +1152,14 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
   property (in-bounds / list-membership) rather than exact-value
   assertions since both are non-deterministic. Clean first pass, no
   bounces (1242 tests passing).
+- **Standard library: `round` with an optional `digits` argument** — merged
+  2026-07-29T~ via PR #109 (`feat/20260729-round-digits`). Extended
+  `round(n)` to accept an optional `digits` argument, following `min`/
+  `max`'s manual-bounds-check style; delegates to Python's own
+  `round(n, digits)` (banker's rounding), rejects non-numeric `n`, non-`int`
+  or negative `digits` (with a `bool` guard since `bool` is an `int`
+  subclass), and 0/3+-arity calls. Clean first pass, no bounces (1250
+  tests passing, up from 1242).
 
 ## Graveyard
 

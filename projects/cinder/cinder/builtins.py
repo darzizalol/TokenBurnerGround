@@ -1616,6 +1616,25 @@ def _chunk(arguments: list, line: int, column: int) -> object:
     return [value[i:i + size] for i in range(0, len(value), size)]
 
 
+def _sliding_window(arguments: list, line: int, column: int) -> object:
+    _require_arity("sliding_window", arguments, 2, line, column)
+    value, size = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"sliding_window() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise CinderRuntimeError(
+            f"sliding_window() requires an int size, got {type_name(size)}", line, column
+        )
+    if size <= 0:
+        raise CinderRuntimeError(
+            f"sliding_window() requires a positive size, got {size}", line, column
+        )
+    return [value[i:i + size] for i in range(0, len(value) - size + 1)]
+
+
 def _group_consecutive(arguments: list, line: int, column: int) -> object:
     _require_arity("group_consecutive", arguments, 1, line, column)
     value = arguments[0]
@@ -2121,6 +2140,7 @@ _BUILTINS = {
     "flatten_deep": _flatten_deep,
     "flat_map": _flat_map,
     "chunk": _chunk,
+    "sliding_window": _sliding_window,
     "group_consecutive": _group_consecutive,
     "zip": _zip,
     "zip_longest": _zip_longest,

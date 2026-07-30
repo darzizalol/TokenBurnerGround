@@ -11,73 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Nil-coalescing compound assignment: `??=` [claimed 2026-07-30T20:22:08Z]
-
-Build: add `x ??= expr;` as a compound-assignment sibling to the existing
-set (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, handled
-via `_COMPOUND_ASSIGN_OPS` in `cinder/parser.py:138-149`) that assigns
-`expr` to `x` only when `x` is currently `nil`, mirroring the existing
-`??` nil-coalescing operator (`_nullish` in `cinder/parser.py:621-627`,
-lexed in `cinder/lexer.py:351-357`'s `_question`, evaluated as a
-short-circuiting `Logical` node at `cinder/interpreter.py:577` — `right`
-is only evaluated when `left` is `nil`, unlike `or` which short-circuits
-on any truthy value). `??=` cannot reuse the existing compound-assign
-desugaring path used by `+=`/etc. as-is: that path wraps the target and
-value in a `Binary` node (`cinder/parser.py:584`:
-`binary = Binary(expr, binary_operator, value)`), but `Binary` always
-evaluates both operands eagerly — `x ??= f()` must not call `f()` when
-`x` is already non-nil, exactly like `??` doesn't evaluate its right side
-unnecessarily. Instead, when the new `QQEQ` token is seen, desugar to
-`Assign(expr.name, Logical(expr, qq_operator, value), ...)`, where
-`qq_operator` is a synthetic `Token(TokenType.QUESTION_QUESTION, "??",
-None, op_token.line, op_token.column)` — mirroring how the existing path
-builds `binary_operator` from `op_token` at `cinder/parser.py:576-582`,
-but typed `QUESTION_QUESTION` (not `QQEQ`) since `_evaluate_logical`
-(`cinder/interpreter.py:567-581`) dispatches on `expr.operator.type` and
-only recognizes `OR`/`AND`/`QUESTION_QUESTION` — a `Logical` node
-carrying `QQEQ` would hit that function's final `raise TypeError`. This
-is the same `Logical` shape `??` itself produces, just constructed
-directly in `_assignment()` rather than routed through the generic
-`_COMPOUND_ASSIGN_OPS` dict/`Binary` path (since that dict maps each
-compound-assign token to a plain binary operator token, which doesn't
-fit a short-circuiting `Logical` node).
-Add `QQEQ = auto()` to `cinder/tokens.py` (near `QUESTION_QUESTION`), and
-teach `cinder/lexer.py`'s `_question` to check for a third `=` after
-matching the second `?` (i.e. `??=` scans as one token, not `??` followed
-by `=`) — mirror how `_question` already uses `self._match("?")` to
-distinguish `?` from `??`, adding a further `self._match("=")` check once
-`??` has matched to decide between emitting `QUESTION_QUESTION` and the
-new `QQEQ`. Only an `Identifier` target is supported (matching the
-arithmetic compound-assign ops' identifier-only restriction noted at
-`cinder/parser.py:150-151` — `??=` is not added to
-`_INDEX_TARGET_COMPOUND_ASSIGN_OPS`, so `xs[0] ??= 1` is out of scope for
-this task and should raise the same "invalid assignment target"
-`ParseError` an unsupported index target already raises for e.g. `xs[0]
-%= 2`).
-
-Acceptance criteria:
-- `let x = nil; x ??= 5; x` is `5`.
-- `let x = 1; x ??= 5; x` is `1` — non-nil `x` is left untouched.
-- `let x = false; x ??= 5; x` is `false` — `false` is not `nil`, so it is
-  *not* replaced (contrast with `x ||= 5`-style truthiness, which this
-  language doesn't have; this pins that `??=` checks nil-ness only).
-- `let calls = 0; fn bump() { calls = calls + 1; return 99; } let x = 1;
-  x ??= bump(); calls` is `0` — the right-hand side is not evaluated when
-  the target is already non-nil (short-circuiting, same as `??`).
-- `let calls = 0; fn bump() { calls = calls + 1; return 99; } let x = nil;
-  x ??= bump(); calls` is `1` and `x` is `99` — the right-hand side *is*
-  evaluated exactly once when the target is `nil`.
-- `let xs = [nil]; xs[0] ??= 1;` raises a `ParseError` ("invalid
-  assignment target") with line/column — index targets are out of scope
-  for this task.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
-`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `sliding_window` for lists
+## 1. Standard library: `sliding_window` for lists
 
 Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
 `chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows
@@ -115,7 +49,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `deep_equal` for structural equality
+## 2. Standard library: `deep_equal` for structural equality
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per
@@ -159,7 +93,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. CLI: `-e`/`--eval` flag to run an inline snippet
+## 3. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -204,7 +138,7 @@ not yet exist — check first).
 
 ---
 
-## 5. "Did you mean...?" suggestions for undefined-name errors
+## 4. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
@@ -244,7 +178,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 6. Labeled `break`/`continue` for nested loops
+## 5. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)

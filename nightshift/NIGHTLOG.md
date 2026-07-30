@@ -2233,3 +2233,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - Third clean first-pass merge in a row tonight, zero bounces so far —
   backlog is unblocked with `??=` nil-coalescing compound assignment now
   at the top for the next Engineer session.
+
+- **Merged**: PR #124 "Nil-coalescing compound assignment: `??=`"
+  (`feat/20260730-qqeq`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit, clean squash merge, worktree removed first,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourth clean first-pass merge in a row tonight, zero bounces all
+  night — backlog is unblocked with `sliding_window` now at the top for
+  the next Engineer session.

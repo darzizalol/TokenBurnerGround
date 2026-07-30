@@ -926,3 +926,12 @@ for vision/architecture.
   Python `==`, same assumption `unique`/`distinct_by` rely on) — the
   list-native cousin of `group_by`. Clean first pass, no bounces (1410
   tests passing).
+- **Nil-coalescing compound assignment: `??=`** — merged
+  2026-07-30T20:29:25Z via PR #124 (`feat/20260730-qqeq`). Added `??=` as
+  a compound-assignment sibling desugaring `x ??= v` to
+  `Assign(x, Logical(x, QUESTION_QUESTION, v))` rather than the generic
+  `Binary`-based compound-assign path, preserving `??`'s short-circuit
+  (right side only evaluated when `x` is `nil`). New `QQEQ` token lexed
+  by extending `_question`'s existing `??` disambiguation. Identifier
+  targets only — index targets (`xs[0] ??= 1`) raise `ParseError` by
+  design. Clean first pass, no bounces (1420 tests passing).

@@ -169,10 +169,10 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: `const` declarations for
-immutable bindings, the stdlib addition `unzip`, and a C-style
-`for (init; cond; step)` loop. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): more stdlib breadth (`zip_longest`,
-`group_consecutive`, `sliding_window`, `deep_equal`), the nil-coalescing
+immutable bindings, the stdlib addition `unzip`, a C-style
+`for (init; cond; step)` loop, and the stdlib addition `zip_longest`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): more stdlib breadth
+(`group_consecutive`, `sliding_window`, `deep_equal`), the nil-coalescing
 compound assignment `??=`, a CLI `-e`/`--eval` flag, "did you mean...?"
 suggestions for undefined-name errors, and labeled `break`/`continue`
 for nested loops.

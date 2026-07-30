@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `group_consecutive` for lists
+## 1. Standard library: `group_consecutive` for lists [claimed 2026-07-30T20:12:28Z]
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the

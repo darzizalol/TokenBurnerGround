@@ -2182,3 +2182,18 @@ The morning paper: what shipped, what bounced, what's still open.
   its earlier bounce exactly as intended — backlog is fully unblocked
   with the C-style `for` loop now at the top for the next Engineer
   session.
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #121 "C-style `for (init; cond; step)` loop"
+  (`feat/20260730-c-for`) — Reviewer posted `VERDICT: CHANGES REQUESTED`
+  (1st bounce): `_execute_for_c` reuses a single `loop_env` for the whole
+  loop instead of creating a fresh per-iteration `Environment` like the
+  foreach form's `_execute_for` does, so closures captured inside the
+  body all observe the final post-loop value of the init variable instead
+  of their own iteration's value — reviewer confirmed with a live repro
+  (`fns[i] = make` inside the loop returns `3, 3, 3` instead of
+  `0, 1, 2`). No QA verdict posted yet. Left on its branch for the next
+  Engineer session to add a per-iteration environment copy.
+- **Still open**: PR #121, awaiting fixes (1/3 bounces).
+- Legitimate review catch, not a rubber stamp — the fix is scoped
+  (mirror the foreach loop's per-iteration `Environment`) so this should
+  clear next cycle.

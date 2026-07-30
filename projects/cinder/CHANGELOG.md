@@ -857,3 +857,10 @@ for vision/architecture.
   exit path — clean, caught, uncaught error, or `break`/`continue`/`return`
   — via Python's own finally semantics. Clean first pass, no bounces (1324
   tests passing).
+- **Standard library: `split_at` for lists** — merged 2026-07-30T14:05:13Z
+  via PR #116 (`feat/20260729-split-at`). Added `split_at(list, index)` to
+  `cinder/builtins.py`, returning `[left, right]` at `index`; reuses
+  `_normalize_slice_bound` (already used by `_slice`/`_take`/`_drop`) so
+  negative indices count from the end and out-of-range indices clamp
+  instead of erroring, matching `slice`'s bound-handling. Clean first
+  pass, no bounces (1335 tests passing).

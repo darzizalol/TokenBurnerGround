@@ -11,36 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `split_at` for lists [claimed 2026-07-29T21:30:40Z]
-
-Build: add `split_at(list, index)` to `cinder/builtins.py` — returns
-`[left, right]` where `left` is `list[0:index]` and `right` is
-`list[index:]`, reusing `_normalize_slice_bound` (already imported from
-`cinder/interpreter.py`, used by `_slice`/`_take`/`_drop` at
-`cinder/builtins.py:1332-1386`) so a negative `index` counts from the end
-and an out-of-range `index` clamps into `[0, len(list)]` instead of
-erroring — matching `slice`'s bound-handling exactly, just splitting at
-one point instead of two.
-
-Acceptance criteria:
-- `split_at([1, 2, 3, 4, 5], 2)` is `[[1, 2], [3, 4, 5]]`.
-- `split_at([1, 2, 3], 0)` is `[[], [1, 2, 3]]`; `split_at([1, 2, 3], 3)`
-  is `[[1, 2, 3], []]`.
-- `split_at([1, 2, 3], -1)` is `[[1, 2], [3]]` (negative index counts from
-  the end, like `slice`).
-- `split_at([1, 2, 3], 10)` is `[[1, 2, 3], []]`; `split_at([1, 2, 3],
-  -10)` is `[[], [1, 2, 3]]` (out-of-range clamps, doesn't error).
-- `split_at([], 0)` is `[[], []]`.
-- Non-list first argument raises `CinderRuntimeError` with line/column.
-- Non-`int` index raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `rotate` for lists
+## 1. Standard library: `rotate` for lists
 
 Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
 rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
@@ -67,7 +38,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. `do { ... } while (cond);` loop
+## 2. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -111,7 +82,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. `const` declarations for immutable bindings
+## 3. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -162,7 +133,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `unzip` for lists
+## 4. Standard library: `unzip` for lists
 
 Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
 (`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
@@ -197,7 +168,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. C-style `for (init; cond; step) { ... }` loop
+## 5. C-style `for (init; cond; step) { ... }` loop
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,
@@ -262,7 +233,7 @@ regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 7. Standard library: `zip_longest` for lists
+## 6. Standard library: `zip_longest` for lists
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
 like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
@@ -295,7 +266,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `group_consecutive` for lists
+## 7. Standard library: `group_consecutive` for lists
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the

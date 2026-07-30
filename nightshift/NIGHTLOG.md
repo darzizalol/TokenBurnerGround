@@ -2121,3 +2121,12 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Seventh clean merge in a row tonight with zero bounces — `split_at` for
   lists is next up whenever the next Engineer session starts.
+- **Merged**: PR #116 "Standard library: `split_at` for lists"
+  (`feat/20260729-split-at`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit, clean squash merge, no worktree to remove,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-8 → 1-7).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eighth clean merge in a row tonight, still zero bounces — `rotate` for
+  lists is next up whenever the next Engineer session starts.

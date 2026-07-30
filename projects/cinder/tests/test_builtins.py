@@ -3309,6 +3309,38 @@ class TestChunk(unittest.TestCase):
             run("chunk([1, 2, 3], 2, 3);")
 
 
+class TestGroupConsecutive(unittest.TestCase):
+    def test_group_consecutive_trailing_singleton_stays_separate(self):
+        env = run("let result = group_consecutive([1, 1, 2, 2, 2, 1]);")
+        self.assertEqual(env.get("result"), [[1, 1], [2, 2, 2], [1]])
+
+    def test_group_consecutive_no_adjacent_duplicates(self):
+        env = run("let result = group_consecutive([1, 2, 3]);")
+        self.assertEqual(env.get("result"), [[1], [2], [3]])
+
+    def test_group_consecutive_empty_list(self):
+        env = run("let result = group_consecutive([]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_group_consecutive_single_run_covers_whole_list(self):
+        env = run('let result = group_consecutive(["a", "a", "a"]);')
+        self.assertEqual(env.get("result"), [["a", "a", "a"]])
+
+    def test_group_consecutive_structural_equality_for_list_elements(self):
+        env = run("let result = group_consecutive([[1, 2], [1, 2], [3]]);")
+        self.assertEqual(env.get("result"), [[[1, 2], [1, 2]], [[3]]])
+
+    def test_group_consecutive_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_consecutive(5);")
+
+    def test_group_consecutive_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("group_consecutive();")
+        with self.assertRaises(CinderRuntimeError):
+            run("group_consecutive([1, 2], 3);")
+
+
 class TestFlatten(unittest.TestCase):
     def test_flatten_one_level_of_nesting(self):
         env = run("let result = flatten([[1, 2], [3, 4]]);")

@@ -45,7 +45,10 @@ while (i < 10) {
   looking it up as a key, extra unnamed keys ignored)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
-  and maps (over keys), `break`/`continue` in all loop kinds,
+  and maps (over keys), a C-style `for (init; cond; step) { ... }` loop
+  (each clause optional; the loop variable gets a fresh binding per
+  iteration so closures captured in the body see their own iteration's
+  value), `break`/`continue` in all loop kinds,
   `try { ... } catch (name) { ... }` for recovering from runtime errors
   (the caught message binds to `name`; `break`/`continue`/`return` still
   propagate through uncaught), `switch` statements with `case`/`default`
@@ -139,7 +142,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1380+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1396+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -166,12 +169,13 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: `const` declarations for
-immutable bindings, and the stdlib addition `unzip`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): a C-style `for (init; cond; step)` loop,
-more stdlib breadth (`zip_longest`, `group_consecutive`,
-`sliding_window`, `deep_equal`), the nil-coalescing compound assignment
-`??=`, a CLI `-e`/`--eval` flag, "did you mean...?" suggestions for
-undefined-name errors, and labeled `break`/`continue` for nested loops.
+immutable bindings, the stdlib addition `unzip`, and a C-style
+`for (init; cond; step)` loop. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): more stdlib breadth (`zip_longest`,
+`group_consecutive`, `sliding_window`, `deep_equal`), the nil-coalescing
+compound assignment `??=`, a CLI `-e`/`--eval` flag, "did you mean...?"
+suggestions for undefined-name errors, and labeled `break`/`continue`
+for nested loops.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

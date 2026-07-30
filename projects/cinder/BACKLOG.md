@@ -14,7 +14,7 @@ a later task while an earlier one is unclaimed/open.
 ## 1. Standard library: `zip_longest` for lists
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
-like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
+like `zip` (`_zip` at `cinder/builtins.py:1618-1655`, which truncates to
 the shorter list via Python's own `zip`) but pads the shorter list with
 `fill` instead of truncating, so the result always has
 `max(len(list1), len(list2))` pairs. Reuse the same two-list validation
@@ -50,7 +50,7 @@ Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the
 list-native cousin of `group_by`, which groups by key across the whole
 list regardless of position — `_group_by` at
-`cinder/builtins.py:1781-...`). Equality between elements uses the same
+`cinder/builtins.py:1837-...`). Equality between elements uses the same
 `==` semantics Cinder's interpreter already applies to values (structural
 equality for lists/maps, value equality for numbers/strings/bools/nil) —
 implement by iterating once, comparing each element to the last element
@@ -60,7 +60,7 @@ runtime, same assumption `unique`/`distinct_by` already rely on), and
 starting a new run on a mismatch. Validate with
 `_require_arity("group_consecutive", arguments, 1, line, column)` then a
 `list` check, mirroring `_flatten`'s single-list validation style
-(`cinder/builtins.py:1506-...`).
+(`cinder/builtins.py:1540-...`).
 
 Acceptance criteria:
 - `group_consecutive([1, 1, 2, 2, 2, 1])` is `[[1, 1], [2, 2, 2], [1]]` —
@@ -323,11 +323,9 @@ Build: let a loop be prefixed with a label — `outer: while (cond) {
 `continue outer;` target that specific enclosing loop instead of the
 innermost one, e.g. to break out of a nested loop from inside it in one
 step. Add a `LabelStmt`-style optional field instead of a new
-wrapper node: add `label: str | None` to each loop AST node
-(`WhileStmt`, `ForStmt`, `ForCStmt`, `DoWhileStmt` — check
-`cinder/ast_nodes.py` first for the current set of loop nodes, since
-`ForCStmt` is mid-flight on PR #121 as of this writing), defaulting to
-`None`
+wrapper node: add `label: str | None` to each loop AST node —
+`WhileStmt` (`cinder/ast_nodes.py:239`), `DoWhileStmt` (:247), `ForStmt`
+(:255), and `ForCStmt` (:264, merged via PR #121) — defaulting to `None`
 for unlabeled loops, and `label: str | None` on `BreakStmt`/
 `ContinueStmt` (defaulting to `None` for the existing unlabeled form).
 Lex: no new token type needed — a label is just an `IDENTIFIER` followed

@@ -10,6 +10,7 @@ from cinder.ast_nodes import (
     Call,
     ContinueStmt,
     DestructureLetStmt,
+    DoWhileStmt,
     ExprStmt,
     FnDecl,
     FnExpr,
@@ -147,6 +148,8 @@ def stmt_shape(node):
             shape(node.iterable),
             stmt_shape(node.body),
         )
+    if isinstance(node, DoWhileStmt):
+        return ("DoWhileStmt", shape(node.condition), stmt_shape(node.body))
     if isinstance(node, BreakStmt):
         return ("BreakStmt",)
     if isinstance(node, ContinueStmt):
@@ -1445,6 +1448,53 @@ class TestForStatement(unittest.TestCase):
             parse_stmts("for x in [1] { return 5; }")
 
 
+class TestDoWhileStatement(unittest.TestCase):
+    def test_do_while_shape(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("do { print(1); } while (x < 3);")
+            ],
+            [
+                (
+                    "DoWhileStmt",
+                    (
+                        "Binary",
+                        ("Identifier", "x"),
+                        TokenType.LT,
+                        ("Literal", 3),
+                    ),
+                    (
+                        "Block",
+                        [("ExprStmt", ("Call", ("Identifier", "print"), [("Literal", 1)]))],
+                    ),
+                )
+            ],
+        )
+
+    def test_plain_while_still_parses_unaffected(self):
+        # WhileStmt has no `stmt_shape` case (see TestBreakContinue below);
+        # shape its body directly instead of the statement itself.
+        stmts = parse_stmts("while (x < 3) { print(1); }")
+        self.assertEqual(len(stmts), 1)
+        self.assertEqual(
+            shape(stmts[0].condition),
+            ("Binary", ("Identifier", "x"), TokenType.LT, ("Literal", 3)),
+        )
+        self.assertEqual(
+            stmt_shape(stmts[0].body),
+            ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Literal", 1)]))]),
+        )
+
+    def test_missing_trailing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("do { print(1); } while (x < 3)")
+
+    def test_missing_while_keyword_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("do { print(1); } (x < 3);")
+
+
 class TestBreakContinue(unittest.TestCase):
     def test_break_and_continue_inside_while_body(self):
         # WhileStmt has no `stmt_shape` case (not needed elsewhere in this
@@ -1470,6 +1520,14 @@ class TestBreakContinue(unittest.TestCase):
                     ("Block", [("BreakStmt",), ("ContinueStmt",)]),
                 )
             ],
+        )
+
+    def test_break_and_continue_inside_do_while_body(self):
+        stmts = parse_stmts("do { break; continue; } while (true);")
+        self.assertEqual(len(stmts), 1)
+        self.assertEqual(
+            stmt_shape(stmts[0].body),
+            ("Block", [("BreakStmt",), ("ContinueStmt",)]),
         )
 
     def test_break_outside_loop_raises(self):

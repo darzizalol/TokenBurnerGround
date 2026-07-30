@@ -236,6 +236,14 @@ class WhileStmt:
 
 
 @dataclass(frozen=True)
+class DoWhileStmt:
+    condition: "Expr"
+    body: "Stmt"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class ForStmt:
     var_name: str
     iterable: "Expr"
@@ -315,6 +323,7 @@ Stmt = Union[
     Block,
     IfStmt,
     WhileStmt,
+    DoWhileStmt,
     ForStmt,
     FnDecl,
     ReturnStmt,

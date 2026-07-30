@@ -21,6 +21,7 @@ class TokenType(Enum):
     IF = auto()
     ELSE = auto()
     WHILE = auto()
+    DO = auto()
     FOR = auto()
     IN = auto()
     FN = auto()
@@ -95,6 +96,7 @@ KEYWORDS = {
     "if": TokenType.IF,
     "else": TokenType.ELSE,
     "while": TokenType.WHILE,
+    "do": TokenType.DO,
     "for": TokenType.FOR,
     "in": TokenType.IN,
     "fn": TokenType.FN,

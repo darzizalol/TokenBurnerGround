@@ -90,6 +90,7 @@ from cinder.ast_nodes import (
     Call,
     ContinueStmt,
     DestructureLetStmt,
+    DoWhileStmt,
     Expr,
     ExprStmt,
     FnDecl,
@@ -199,6 +200,8 @@ class Parser:
             return self._if_statement()
         if self._check(TokenType.WHILE):
             return self._while_statement()
+        if self._check(TokenType.DO):
+            return self._do_while_statement()
         if self._check(TokenType.FOR):
             return self._for_statement()
         if self._check(TokenType.FN):
@@ -287,6 +290,18 @@ class Parser:
         body = self._statement()
         self._loop_depth -= 1
         return WhileStmt(condition, body, while_token.line, while_token.column)
+
+    def _do_while_statement(self) -> Stmt:
+        do_token = self._advance()
+        self._loop_depth += 1
+        body = self._statement()
+        self._loop_depth -= 1
+        self._consume(TokenType.WHILE, "'while' after 'do' body")
+        self._consume(TokenType.LPAREN, "'(' after 'while'")
+        condition = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after while condition")
+        self._consume(TokenType.SEMICOLON, "';' after 'do ... while (...)'")
+        return DoWhileStmt(condition, body, do_token.line, do_token.column)
 
     def _for_statement(self) -> Stmt:
         for_token = self._advance()

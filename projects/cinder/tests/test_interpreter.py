@@ -752,6 +752,41 @@ class TestWhileStatement(unittest.TestCase):
         self.assertEqual(env.get("x"), 0)
 
 
+class TestDoWhileStatement(unittest.TestCase):
+    def _run(self, source: str) -> Environment:
+        from cinder.builtins import create_global_environment
+
+        return run(source, create_global_environment())
+
+    def test_do_while_runs_body_while_condition_holds(self):
+        env = self._run(
+            "let i = 0; let log = []; "
+            "do { push(log, i); i = i + 1; } while (i < 3); "
+        )
+        self.assertEqual(env.get("log"), [0, 1, 2])
+
+    def test_do_while_runs_body_once_even_if_condition_starts_false(self):
+        env = self._run("let i = 5; let log = []; do { push(log, i); } while (i < 0);")
+        self.assertEqual(env.get("log"), [5])
+
+    def test_break_exits_do_while_without_rechecking_condition(self):
+        env = self._run(
+            "let i = 0; let log = []; "
+            "do { push(log, i); i = i + 1; break; } while (true); "
+        )
+        self.assertEqual(env.get("log"), [0])
+
+    def test_continue_goes_to_condition_check_not_top_of_body(self):
+        # If `continue` re-ran the body from the top without checking `cond`
+        # first, this would infinite-loop instead of terminating.
+        env = self._run(
+            "let i = 0; let log = []; "
+            "do { i = i + 1; if (i < 3) { continue; } push(log, i); } while (i < 3); "
+        )
+        self.assertEqual(env.get("log"), [3])
+        self.assertEqual(env.get("i"), 3)
+
+
 class TestForStatement(unittest.TestCase):
     def test_for_in_sums_list(self):
         env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")

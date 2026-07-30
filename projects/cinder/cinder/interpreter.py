@@ -44,6 +44,7 @@ from cinder.ast_nodes import (
     Call,
     ContinueStmt,
     DestructureLetStmt,
+    DoWhileStmt,
     Expr,
     ExprStmt,
     FnDecl,
@@ -255,6 +256,17 @@ class Interpreter:
                     break
                 except _ContinueSignal:
                     continue
+            return
+        if isinstance(stmt, DoWhileStmt):
+            while True:
+                try:
+                    self.execute(stmt.body, env)
+                except _BreakSignal:
+                    break
+                except _ContinueSignal:
+                    pass
+                if not is_truthy(self.evaluate(stmt.condition, env)):
+                    break
             return
         if isinstance(stmt, ForStmt):
             self._execute_for(stmt, env)

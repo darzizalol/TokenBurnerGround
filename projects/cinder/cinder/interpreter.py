@@ -42,6 +42,7 @@ from cinder.ast_nodes import (
     Block,
     BreakStmt,
     Call,
+    ConstStmt,
     ContinueStmt,
     DestructureLetStmt,
     DoWhileStmt,
@@ -93,6 +94,15 @@ class _ContinueSignal(Exception):
     """Internal control-flow signal for `continue`; never surfaced to users."""
 
 
+class _ConstAssignError(Exception):
+    """Internal signal for assigning to a `const` name; caught at the
+    `Assign` evaluation boundary and converted to a `CinderRuntimeError`
+    carrying the assignment's (not the declaration's) line/column."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+
 class CinderFunction:
     """A first-class function value: an `FnDecl`/`FnExpr` plus the `Environment`
     it closed over. `FnExpr` (anonymous functions) have no `name`."""
@@ -132,9 +142,15 @@ class Environment:
     def __init__(self, parent: "Environment | None" = None):
         self.parent = parent
         self._values: dict[str, object] = {}
+        self._frozen: set[str] = set()
 
     def define(self, name: str, value: object) -> None:
         self._values[name] = value
+        self._frozen.discard(name)
+
+    def define_const(self, name: str, value: object) -> None:
+        self._values[name] = value
+        self._frozen.add(name)
 
     def get(self, name: str) -> object:
         env: Environment | None = self
@@ -148,6 +164,8 @@ class Environment:
         env: Environment | None = self
         while env is not None:
             if name in env._values:
+                if name in env._frozen:
+                    raise _ConstAssignError(name)
                 env._values[name] = value
                 return
             env = env.parent
@@ -200,6 +218,9 @@ class Interpreter:
     def execute(self, stmt: Stmt, env: Environment) -> None:
         if isinstance(stmt, LetStmt):
             env.define(stmt.name, self.evaluate(stmt.initializer, env))
+            return
+        if isinstance(stmt, ConstStmt):
+            env.define_const(stmt.name, self.evaluate(stmt.initializer, env))
             return
         if isinstance(stmt, DestructureLetStmt):
             value = self.evaluate(stmt.initializer, env)
@@ -539,6 +560,10 @@ class Interpreter:
         except KeyError:
             raise CinderRuntimeError(
                 f"undefined name {expr.name!r}", expr.line, expr.column
+            ) from None
+        except _ConstAssignError:
+            raise CinderRuntimeError(
+                f"cannot assign to const {expr.name!r}", expr.line, expr.column
             ) from None
         return value
 

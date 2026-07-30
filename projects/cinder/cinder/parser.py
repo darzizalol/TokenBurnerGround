@@ -88,6 +88,7 @@ from cinder.ast_nodes import (
     Block,
     BreakStmt,
     Call,
+    ConstStmt,
     ContinueStmt,
     DestructureLetStmt,
     DoWhileStmt,
@@ -194,6 +195,8 @@ class Parser:
     def _statement(self) -> Stmt:
         if self._check(TokenType.LET):
             return self._let_statement()
+        if self._check(TokenType.CONST):
+            return self._const_statement()
         if self._check(TokenType.LBRACE):
             return self._brace_statement()
         if self._check(TokenType.IF):
@@ -229,6 +232,14 @@ class Parser:
         initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
+
+    def _const_statement(self) -> Stmt:
+        const_token = self._advance()
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'const'")
+        self._consume(TokenType.EQ, "'=' after variable name")
+        initializer = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
+        return ConstStmt(name_token.lexeme, initializer, const_token.line, const_token.column)
 
     def _destructure_let_statement(
         self, let_token: Token, close_type: TokenType, close_lexeme: str, is_map: bool

@@ -93,6 +93,7 @@ class TestKeywords(unittest.TestCase):
     def test_all_keywords(self):
         keywords = {
             "let": TokenType.LET,
+            "const": TokenType.CONST,
             "if": TokenType.IF,
             "else": TokenType.ELSE,
             "while": TokenType.WHILE,

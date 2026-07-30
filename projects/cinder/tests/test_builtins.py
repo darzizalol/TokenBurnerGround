@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, is_empty, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, trim_start, trim_end, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, to_fixed, floor, ceil,
-pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, sort, sort_by, min_by, max_by, range, map,
+pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, rotate, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function, random_int, random_choice."""
 
@@ -2217,6 +2217,49 @@ class TestReverse(unittest.TestCase):
     def test_reverse_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("reverse([1], 2);")
+
+
+class TestRotate(unittest.TestCase):
+    def test_rotate_left_by_positive_n(self):
+        self.assertEqual(
+            run("let result = rotate([1, 2, 3, 4, 5], 2);").get("result"),
+            [3, 4, 5, 1, 2],
+        )
+
+    def test_rotate_right_by_negative_n(self):
+        self.assertEqual(
+            run("let result = rotate([1, 2, 3, 4, 5], -1);").get("result"),
+            [5, 1, 2, 3, 4],
+        )
+
+    def test_rotate_by_zero_is_no_op(self):
+        self.assertEqual(run("let result = rotate([1, 2, 3], 0);").get("result"), [1, 2, 3])
+
+    def test_rotate_by_length_is_no_op(self):
+        self.assertEqual(run("let result = rotate([1, 2, 3], 3);").get("result"), [1, 2, 3])
+
+    def test_rotate_by_more_than_length_wraps_via_modulo(self):
+        self.assertEqual(run("let result = rotate([1, 2, 3], 4);").get("result"), [2, 3, 1])
+
+    def test_rotate_empty_list_is_always_a_no_op(self):
+        self.assertEqual(run("let result = rotate([], 5);").get("result"), [])
+
+    def test_rotate_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; let result = rotate(xs, 1);")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [2, 3, 1])
+
+    def test_rotate_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('rotate("hi", 1);')
+
+    def test_rotate_of_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('rotate([1, 2, 3], "1");')
+
+    def test_rotate_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("rotate([1, 2, 3]);")
 
 
 class TestFirst(unittest.TestCase):

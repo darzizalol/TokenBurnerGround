@@ -262,6 +262,77 @@ regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
+## 7. Standard library: `zip_longest` for lists
+
+Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
+like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
+the shorter list via Python's own `zip`) but pads the shorter list with
+`fill` instead of truncating, so the result always has
+`max(len(list1), len(list2))` pairs. Reuse the same two-list validation
+style `_zip` already uses (a `list` check on each argument, not
+`_require_two_lists` since that helper is arity-2 only and this builtin
+is arity-3) plus `_require_arity("zip_longest", arguments, 3, line,
+column)`. Implement with `itertools.zip_longest(list1, list2,
+fillvalue=fill)` (stdlib `itertools` — no new dependency, already usable
+via Python's standard library) wrapped in a list comprehension producing
+`[a, b]` pairs, mirroring `_zip`'s `[[a, b] for a, b in ...]` shape.
+
+Acceptance criteria:
+- `zip_longest([1, 2, 3], ["a", "b"], nil)` is `[[1, "a"], [2, "b"], [3,
+  nil]]` — shorter list padded with `fill` (here `nil`) once it runs out.
+- `zip_longest([1], [1, 2, 3], 0)` is `[[1, 1], [0, 2], [0, 3]]` — padding
+  works symmetrically when the *first* list is shorter.
+- `zip_longest([1, 2], [1, 2], "x")` is `[[1, 1], [2, 2]]` — equal-length
+  lists behave exactly like `zip`, `fill` unused.
+- `zip_longest([], [], 0)` is `[]`.
+- `zip_longest([], [1, 2], 0)` is `[[0, 1], [0, 2]]`.
+- A non-list first or second argument raises `CinderRuntimeError` with
+  line/column (mirror `_zip`'s two separate checks/messages).
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 8. Standard library: `group_consecutive` for lists
+
+Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
+*adjacent* equal elements into sublists, i.e. run-length grouping (the
+list-native cousin of `group_by`, which groups by key across the whole
+list regardless of position — `_group_by` at
+`cinder/builtins.py:1781-...`). Equality between elements uses the same
+`==` semantics Cinder's interpreter already applies to values (structural
+equality for lists/maps, value equality for numbers/strings/bools/nil) —
+implement by iterating once, comparing each element to the last element
+of the current run with plain Python `==` (safe here since Cinder values
+are plain Python `int`/`float`/`str`/`bool`/`None`/`list`/`dict` at
+runtime, same assumption `unique`/`distinct_by` already rely on), and
+starting a new run on a mismatch. Validate with
+`_require_arity("group_consecutive", arguments, 1, line, column)` then a
+`list` check, mirroring `_flatten`'s single-list validation style
+(`cinder/builtins.py:1506-...`).
+
+Acceptance criteria:
+- `group_consecutive([1, 1, 2, 2, 2, 1])` is `[[1, 1], [2, 2, 2], [1]]` —
+  note the trailing `1` is its own group since it's not adjacent to the
+  earlier `1, 1` run.
+- `group_consecutive([1, 2, 3])` is `[[1], [2], [3]]` — no adjacent
+  duplicates means every element is its own singleton group.
+- `group_consecutive([])` is `[]`.
+- `group_consecutive(["a", "a", "a"])` is `[["a", "a", "a"]]` — a single
+  run covering the whole list.
+- `group_consecutive([[1, 2], [1, 2], [3]])` is `[[[1, 2], [1, 2]],
+  [[3]]]` — structural equality groups equal *list* elements adjacently,
+  not just primitives.
+- A non-list argument raises `CinderRuntimeError` with line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -163,10 +163,11 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: a `finally` block for
 `try`/`catch`, and stdlib additions `interleave`, `from_entries`, and
-`to_hex`/`to_bin`/`to_oct`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): more stdlib breadth (`split_at`, `rotate`,
-`unzip`), a `do`/`while` loop, `const` bindings, and a C-style
-`for (init; cond; step)` loop. The backlog mixes
+`to_hex`/`to_bin`/`to_oct`; `split_at` for lists has an open PR
+(already `LGTM`/`QA: PASS`, pending merge). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): more stdlib breadth (`rotate`, `unzip`,
+`zip_longest`, `group_consecutive`), a `do`/`while` loop, `const`
+bindings, and a C-style `for (init; cond; step)` loop. The backlog mixes
 language depth with stdlib breadth over time rather than running either in
 one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

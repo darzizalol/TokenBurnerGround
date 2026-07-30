@@ -13,6 +13,7 @@ this instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
 """
 
+import itertools
 import math
 import random
 
@@ -1631,6 +1632,27 @@ def _zip(arguments: list, line: int, column: int) -> object:
     return [[a, b] for a, b in zip(list1, list2)]
 
 
+def _zip_longest(arguments: list, line: int, column: int) -> object:
+    _require_arity("zip_longest", arguments, 3, line, column)
+    list1, list2, fill = arguments
+    if not isinstance(list1, list):
+        raise CinderRuntimeError(
+            f"zip_longest() requires a list as its first argument, got "
+            f"{type_name(list1)}",
+            line, column,
+        )
+    if not isinstance(list2, list):
+        raise CinderRuntimeError(
+            f"zip_longest() requires a list as its second argument, got "
+            f"{type_name(list2)}",
+            line, column,
+        )
+    return [
+        [a, b]
+        for a, b in itertools.zip_longest(list1, list2, fillvalue=fill)
+    ]
+
+
 def _unzip(arguments: list, line: int, column: int) -> object:
     _require_arity("unzip", arguments, 1, line, column)
     pairs = arguments[0]
@@ -2083,6 +2105,7 @@ _BUILTINS = {
     "flat_map": _flat_map,
     "chunk": _chunk,
     "zip": _zip,
+    "zip_longest": _zip_longest,
     "unzip": _unzip,
     "zip_with": _zip_with,
     "enumerate": _enumerate,

@@ -337,6 +337,211 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 8. Standard library: `deep_equal` for structural equality
+
+Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
+structural equality for lists and maps, unlike plain `==` which (per
+Cinder's runtime representation of lists/maps as Python `list`/`dict`)
+already recurses correctly for *value* equality but this builtin exists
+to give scripts an explicit, self-documenting name for that comparison
+rather than relying on `==`'s incidental behavior, and to nail down
+edge cases `==` leaves ambiguous. Validate with `_require_arity
+("deep_equal", arguments, 2, line, column)` — no type restriction on
+`a`/`b`, any two values are comparable. Implement recursively: two lists
+are equal iff same length and every element is `deep_equal` pairwise
+(not Python's `==`, so nested list/map structures recurse through this
+same function rather than falling back to `==`'s own recursion); two
+maps are equal iff same set of keys and every value is `deep_equal`
+pairwise (key order does not matter); two non-collection values
+(numbers, strings, bools, `nil`) are equal iff `==` says so, with one
+deliberate carve-out: numeric equality does not distinguish `int` from
+`float` (`deep_equal(1, 1.0)` is `true`, matching Cinder's own `==`
+between numbers), but `bool` is not treated as numeric here even though
+Python's `bool` subclasses `int` — `deep_equal(true, 1)` must be `false`
+(check `isinstance(x, bool)` before falling into the numeric-equality
+branch, mirroring the existing `isinstance(size, int) and not
+isinstance(size, bool)` guard style used elsewhere, e.g. `_chunk`).
+
+Acceptance criteria:
+- `deep_equal([1, [2, 3]], [1, [2, 3]])` is `true`.
+- `deep_equal([1, [2, 3]], [1, [2, 4]])` is `false`.
+- `deep_equal({"a": 1, "b": {"c": 2}}, {"b": {"c": 2}, "a": 1})` is
+  `true` — key order does not matter, nested map values recurse.
+- `deep_equal({"a": 1}, {"a": 1, "b": 2})` is `false` — different key
+  sets.
+- `deep_equal(1, 1.0)` is `true` — numeric equality ignores int/float.
+- `deep_equal(true, 1)` is `false` — bools are never equal to numbers,
+  even though `1` is truthy-adjacent.
+- `deep_equal([1, 2], [1, 2, 3])` is `false` — different lengths.
+- `deep_equal("x", "x")` is `true`; `deep_equal(nil, nil)` is `true`.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
+## 9. CLI: `-e`/`--eval` flag to run an inline snippet
+
+Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
+run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
+'print(1 + 2);'`. Add a third subparser alongside `run`/`repl` in
+`build_parser` (`cinder/cli.py:19-27`): `subparsers.add_parser("eval",
+help=...)` taking a single positional `source` argument (the snippet
+text itself, not a path). Factor the shared lex/parse/execute pipeline
+out of `run_file` (`cinder/cli.py:30-35`) into a helper — e.g.
+`_run_source(source: str) -> None` containing exactly `run_file`'s
+current body from `tokenize(source)` onward — so `run_file` becomes
+`_run_source(open(path).read())` and the new eval path calls
+`_run_source(args.source)` directly, without needing a temp file.
+Wire the new `"eval"` branch into `main` (`cinder/cli.py:39-53`)
+alongside the existing `"run"`/`"repl"` branches, reusing the exact
+same `CinderError` catch-and-format block `run` already uses (line/
+column formatting) — but the error-message prefix that currently reads
+`f"{args.file}:{e.line}:{e.column}: ..."` should read `f"<eval>:
+{e.line}:{e.column}: ..."` for the eval path, since there's no file
+name to print. `OSError` handling is `run`-only (there's no file to
+fail to open in eval mode, so don't wrap `_run_source` in an `OSError`
+catch for the eval branch).
+
+Acceptance criteria:
+- `python3 -m cinder.cli eval 'print(1 + 2);'` prints `3` and exits 0.
+- `python3 -m cinder.cli eval 'let x = 1; x = 2; print(x);'` prints `2`
+  — multi-statement snippets work, not just single expressions.
+- A runtime error in the snippet (e.g. `eval 'print(undefined_name);'`)
+  prints `<eval>:1:7: undefined name 'undefined_name'` (line/column
+  matching the snippet's own coordinates, prefix literally `<eval>`)
+  to stderr and exits 1 — same formatting `run` uses for `CinderError`,
+  minus the filename.
+- A parse error in the snippet exits 1 with a `<eval>`-prefixed message,
+  matching `run`'s parse-error handling.
+- `run_file` against an existing example (e.g. `examples/fizzbuzz.cin`)
+  still behaves identically post-refactor — add/keep a regression test
+  covering `run` end to end so the `_run_source` extraction didn't
+  change its behavior.
+- Full test suite passes.
+
+Likely files: `cinder/cli.py`, `tests/test_cli.py` (create if it does
+not yet exist — check first).
+
+---
+
+## 10. "Did you mean...?" suggestions for undefined-name errors
+
+Build: when `_evaluate_identifier` or `_evaluate_assign`
+(`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
+an `Environment.get`/`assign` `KeyError`, append a suggestion when a
+close match exists among the names currently in scope. Add a method to
+`Environment` (`cinder/interpreter.py:129-154`) — e.g. `all_names(self)
+-> set[str]` — that walks `self` and every `parent` up the chain,
+unioning each level's `self._values.keys()` (this naturally includes
+global builtins, since `create_global_environment` populates the
+outermost `Environment` the same way). In both call sites, on
+`KeyError`, use `difflib.get_close_matches(expr.name, env.all_names(),
+n=1, cutoff=0.6)` (stdlib `difflib`, no new dependency) to find the
+single closest match; if one is found, append `f" (did you mean
+{match!r}?)"` to the existing message, otherwise leave the message
+exactly as it is today (no trailing text) — do not change the exception
+type, line/column, or the no-match message wording, only append the
+suggestion when one exists, so every existing test asserting the exact
+current message on a genuinely-unmatched name keeps passing.
+
+Acceptance criteria:
+- `let cost = 1; print(costt);` raises `CinderRuntimeError` with message
+  `"undefined name 'costt' (did you mean 'cost'?)"`.
+- `let cost = 1; costt = 2;` (assignment path) raises the same
+  suggestion form via `_evaluate_assign`.
+- A name with no close match in scope (e.g. `print(zzzzzzz_no_match);`
+  with nothing similar defined) raises the exact unchanged message
+  `"undefined name 'zzzzzzz_no_match'"`, with no `(did you mean...?)`
+  suffix — pin this as an explicit regression test.
+- A builtin name typo suggests the builtin, e.g. `pritn(1);` (missing
+  `print`) suggests `'print'` — since builtins live in the outermost
+  `Environment`, `all_names()` must include them.
+- Line/column on the raised error are unchanged (still `expr.line`/
+  `expr.column`) — the suggestion only changes the message text.
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
+
+---
+
+## 11. Labeled `break`/`continue` for nested loops
+
+Build: let a loop be prefixed with a label — `outer: while (cond) {
+... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)
+{ ... }`, `outer: do { ... } while (cond);` — and let `break outer;`/
+`continue outer;` target that specific enclosing loop instead of the
+innermost one, e.g. to break out of a nested loop from inside it in one
+step. Add a `LabelStmt`-style optional field instead of a new
+wrapper node: add `label: str | None` to each loop AST node
+(`WhileStmt`, `ForStmt`, `ForCStmt` if task 3 has landed by the time
+this is picked up — check `cinder/ast_nodes.py` first and coordinate
+with whichever loop nodes exist, `DoWhileStmt`), defaulting to `None`
+for unlabeled loops, and `label: str | None` on `BreakStmt`/
+`ContinueStmt` (defaulting to `None` for the existing unlabeled form).
+Lex: no new token type needed — a label is just an `IDENTIFIER` followed
+by `:` at statement position, immediately before one of the loop
+keywords; in the parser's statement dispatcher, peek for
+`IDENTIFIER` + `:` before falling into the existing loop-keyword
+dispatch, consume both, parse the loop as normal, and attach the label.
+`break`/`continue` parsing optionally consumes a trailing `IDENTIFIER`
+before the `;` (only when the next token is an identifier, not `;` —
+don't require one, preserving today's unlabeled `break;`/`continue;`).
+Interpreter: give `_BreakSignal`/`_ContinueSignal`
+(`cinder/interpreter.py:88-93`) an optional `label: str | None`
+constructor arg; when a loop's execution catches one of these signals,
+if the signal's label is `None` or matches the loop's own label, handle
+it as today (stop/skip-to-step), otherwise **re-raise it unchanged**
+so it propagates to the next enclosing loop up the Python call stack —
+this is the entire mechanism, no explicit "loop registry" needed since
+Python's own exception propagation through nested `execute` calls does
+the targeting. A labeled `break`/`continue` naming a label that matches
+no enclosing loop should be a parse-time error if staticaly detectable,
+but since loop nesting is only fully known at parse time via a simple
+stack of in-scope labels the parser is already tracking for
+break/continue-outside-loop validation (find that existing check — it
+validates break/continue only appear inside a loop) extend the same
+stack to carry labels and validate the named label is currently open,
+raising `ParseError` with line/column if not.
+
+Acceptance criteria:
+- ```
+  let log = [];
+  outer: for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+          if (j == 1) { continue outer; }
+          push(log, [i, j]);
+      }
+  }
+  log
+  ```
+  is `[[0, 0], [1, 0], [2, 0]]` — `continue outer` skips the rest of
+  the inner loop *and* the rest of the outer iteration's remaining
+  inner-loop work, advancing the outer loop's own step.
+- Same shape with `break outer;` instead stops the entire nested
+  structure after the first `j == 1` hit: `log` is `[[0, 0]]`.
+- Unlabeled `break;`/`continue;` inside a labeled loop still target the
+  innermost loop exactly as before (regression test) — labels don't
+  change default behavior.
+- A label on each of `while`, `do`/`while`, and both `for` forms all
+  work with `break <label>;` (one test per loop kind naming its own
+  label).
+- `break nonexistent;` (naming a label with no matching enclosing loop)
+  raises `ParseError` with line/column.
+- `break;`/`continue;` outside any loop still raises the existing
+  `ParseError` this already raises today (regression test — labels must
+  not weaken that check).
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (only if a dedicated check is easiest
+via a new helper — likely no new `TokenType` needed), `cinder/ast_nodes.py`,
+`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py` (only
+if untouched regression coverage is missing), `tests/test_parser.py`,
+`tests/test_interpreter.py`.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

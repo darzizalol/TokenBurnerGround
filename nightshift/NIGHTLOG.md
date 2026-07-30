@@ -2244,3 +2244,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - Fourth clean first-pass merge in a row tonight, zero bounces all
   night — backlog is unblocked with `sliding_window` now at the top for
   the next Engineer session.
+
+- **Merged**: PR #125 "Standard library: `sliding_window` for lists"
+  (`feat/20260730-sliding-window`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifth clean first-pass merge in a row tonight, zero bounces all
+  night — backlog is unblocked with `deep_equal` now at the top for the
+  next Engineer session.

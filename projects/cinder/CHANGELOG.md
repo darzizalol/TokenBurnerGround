@@ -935,3 +935,11 @@ for vision/architecture.
   by extending `_question`'s existing `??` disambiguation. Identifier
   targets only — index targets (`xs[0] ??= 1`) raise `ParseError` by
   design. Clean first pass, no bounces (1420 tests passing).
+- **Standard library: `sliding_window` for lists** — merged
+  2026-07-30T20:40:27Z via PR #125 (`feat/20260730-sliding-window`).
+  Added `sliding_window(list, size)` to `cinder/builtins.py`, the
+  overlapping-window counterpart to `chunk` (contiguous runs of `size`
+  elements sliding forward by one, rather than partitioning into
+  disjoint pieces). Mirrors `chunk`'s validation exactly, but a `size`
+  larger than the list produces `[]` rather than an error. Clean first
+  pass, no bounces (1432 tests passing).

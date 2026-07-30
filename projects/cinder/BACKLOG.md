@@ -11,45 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sliding_window` for lists [claimed 2026-07-30T20:36:15Z]
-
-Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
-`chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows
-*overlap* by `size - 1` elements instead of partitioning the list into
-disjoint pieces, i.e. every contiguous run of `size` elements, sliding
-forward by one each time (`[list[i:i+size] for i in range(0, len(list) -
-size + 1)]`). Mirror `_chunk`'s validation exactly: `_require_arity`,
-a `list` check on the first argument, an `int`-and-not-`bool` check on
-`size` (`isinstance(size, int) and not isinstance(size, bool)`, following
-`cinder/builtins.py:1607`'s existing pattern since Cinder's runtime
-booleans are Python `bool`, a subclass of `int`), and a positive-size
-check — reusing the exact same error-message phrasing `_chunk` uses with
-`sliding_window` substituted for `chunk`. Unlike `chunk`, a `size` larger
-than the list's length is not an error: it simply produces zero windows
-(`sliding_window([1, 2], 5)` is `[]`), matching what the range-based
-comprehension above naturally does when `len(list) - size + 1 <= 0` —
-add an explicit test pinning this rather than special-casing it as an
-error.
-
-Acceptance criteria:
-- `sliding_window([1, 2, 3, 4], 2)` is `[[1, 2], [2, 3], [3, 4]]`.
-- `sliding_window([1, 2, 3, 4], 3)` is `[[1, 2, 3], [2, 3, 4]]`.
-- `sliding_window([1, 2, 3], 1)` is `[[1], [2], [3]]`.
-- `sliding_window([1, 2], 5)` is `[]` — window larger than the list
-  produces no windows, not an error.
-- `sliding_window([], 1)` is `[]`.
-- A non-list first argument raises `CinderRuntimeError` with line/column.
-- A non-int, or int-but-`bool`, `size` raises `CinderRuntimeError` with
-  line/column.
-- A zero or negative `size` raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `deep_equal` for structural equality
+## 1. Standard library: `deep_equal` for structural equality
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per
@@ -93,7 +55,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. CLI: `-e`/`--eval` flag to run an inline snippet
+## 2. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -138,7 +100,7 @@ not yet exist — check first).
 
 ---
 
-## 4. "Did you mean...?" suggestions for undefined-name errors
+## 3. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
@@ -178,7 +140,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 5. Labeled `break`/`continue` for nested loops
+## 4. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)
@@ -253,7 +215,7 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 6. Standard library: `key_by` for lists
+## 5. Standard library: `key_by` for lists
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to

@@ -40,12 +40,13 @@ while (i < 10) {
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting/rest)
   and map destructuring (`let {a, b} = expr;`, binds each identifier by
   looking it up as a key, extra unnamed keys ignored)
-- **Control flow**: `if`/`else`, `while`, `for NAME in EXPR { ... }` over
-  lists, strings (character-by-character), and maps (over keys),
-  `break`/`continue` in both loop kinds, `try { ... } catch (name) { ... }`
-  for recovering from runtime errors (the caught message binds to `name`;
-  `break`/`continue`/`return` still propagate through uncaught), `switch`
-  statements with `case`/`default` (no fallthrough, first match wins)
+- **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
+  `for NAME in EXPR { ... }` over lists, strings (character-by-character),
+  and maps (over keys), `break`/`continue` in all loop kinds,
+  `try { ... } catch (name) { ... }` for recovering from runtime errors
+  (the caught message binds to `name`; `break`/`continue`/`return` still
+  propagate through uncaught), `switch` statements with `case`/`default`
+  (no fallthrough, first match wins)
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`;
   the bitwise/shift set also accepts an index-expression target, e.g.
@@ -161,11 +162,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a `finally` block for
-`try`/`catch`, and stdlib additions `split_at` and `rotate`. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): a `do`/`while` loop, `const`
-bindings, a C-style `for (init; cond; step)` loop, and more stdlib
-breadth (`unzip`, `zip_longest`, `group_consecutive`). The backlog mixes
-language depth with stdlib breadth over time rather than running either in
-one long block. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: a `do { ... } while (cond);`
+loop, and stdlib additions `split_at` and `rotate`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `const` bindings, a C-style
+`for (init; cond; step)` loop, the nil-coalescing compound assignment
+`??=`, and more stdlib breadth (`unzip`, `zip_longest`,
+`group_consecutive`, `sliding_window`). The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

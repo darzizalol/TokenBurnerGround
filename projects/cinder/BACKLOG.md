@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. C-style `for (init; cond; step) { ... }` loop
+## 1. C-style `for (init; cond; step) { ... }` loop [claimed 2026-07-30T19:38:02Z]
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,

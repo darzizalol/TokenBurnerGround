@@ -2222,3 +2222,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - Another clean first-pass merge, zero bounces tonight so far — backlog
   is unblocked with `group_consecutive` now at the top for the next
   Engineer session.
+
+- **Merged**: PR #123 "Standard library: `group_consecutive` for lists"
+  (`feat/20260730-group-consecutive`) — `VERDICT: LGTM` and `QA: PASS`
+  both posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-7 to 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Third clean first-pass merge in a row tonight, zero bounces so far —
+  backlog is unblocked with `??=` nil-coalescing compound assignment now
+  at the top for the next Engineer session.

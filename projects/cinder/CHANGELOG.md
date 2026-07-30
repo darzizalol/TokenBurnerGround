@@ -919,3 +919,10 @@ for vision/architecture.
   lists element-wise like `zip` but padding the shorter list with `fill`
   instead of truncating, via stdlib `itertools.zip_longest`. Clean first
   pass, no bounces (1403 tests passing).
+- **Standard library: `group_consecutive` for lists** — merged
+  2026-07-30T20:17:30Z via PR #123 (`feat/20260730-group-consecutive`).
+  Added `group_consecutive(list)` to `cinder/builtins.py`, run-length
+  grouping of adjacent equal elements (structural equality via plain
+  Python `==`, same assumption `unique`/`distinct_by` rely on) — the
+  list-native cousin of `group_by`. Clean first pass, no bounces (1410
+  tests passing).

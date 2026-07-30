@@ -11,45 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `group_consecutive` for lists [claimed 2026-07-30T20:12:28Z]
-
-Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
-*adjacent* equal elements into sublists, i.e. run-length grouping (the
-list-native cousin of `group_by`, which groups by key across the whole
-list regardless of position — `_group_by` at
-`cinder/builtins.py:1837-...`). Equality between elements uses the same
-`==` semantics Cinder's interpreter already applies to values (structural
-equality for lists/maps, value equality for numbers/strings/bools/nil) —
-implement by iterating once, comparing each element to the last element
-of the current run with plain Python `==` (safe here since Cinder values
-are plain Python `int`/`float`/`str`/`bool`/`None`/`list`/`dict` at
-runtime, same assumption `unique`/`distinct_by` already rely on), and
-starting a new run on a mismatch. Validate with
-`_require_arity("group_consecutive", arguments, 1, line, column)` then a
-`list` check, mirroring `_flatten`'s single-list validation style
-(`cinder/builtins.py:1540-...`).
-
-Acceptance criteria:
-- `group_consecutive([1, 1, 2, 2, 2, 1])` is `[[1, 1], [2, 2, 2], [1]]` —
-  note the trailing `1` is its own group since it's not adjacent to the
-  earlier `1, 1` run.
-- `group_consecutive([1, 2, 3])` is `[[1], [2], [3]]` — no adjacent
-  duplicates means every element is its own singleton group.
-- `group_consecutive([])` is `[]`.
-- `group_consecutive(["a", "a", "a"])` is `[["a", "a", "a"]]` — a single
-  run covering the whole list.
-- `group_consecutive([[1, 2], [1, 2], [3]])` is `[[[1, 2], [1, 2]],
-  [[3]]]` — structural equality groups equal *list* elements adjacently,
-  not just primitives.
-- A non-list argument raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Nil-coalescing compound assignment: `??=`
+## 1. Nil-coalescing compound assignment: `??=`
 
 Build: add `x ??= expr;` as a compound-assignment sibling to the existing
 set (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, handled
@@ -115,7 +77,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `sliding_window` for lists
+## 2. Standard library: `sliding_window` for lists
 
 Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
 `chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows
@@ -153,7 +115,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `deep_equal` for structural equality
+## 3. Standard library: `deep_equal` for structural equality
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per
@@ -197,7 +159,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. CLI: `-e`/`--eval` flag to run an inline snippet
+## 4. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -242,7 +204,7 @@ not yet exist — check first).
 
 ---
 
-## 6. "Did you mean...?" suggestions for undefined-name errors
+## 5. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
@@ -282,7 +244,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 7. Labeled `break`/`continue` for nested loops
+## 6. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)

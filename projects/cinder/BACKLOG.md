@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `do { ... } while (cond);` loop
+## 1. `do { ... } while (cond);` loop [claimed 2026-07-30T14:20:55Z]
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s

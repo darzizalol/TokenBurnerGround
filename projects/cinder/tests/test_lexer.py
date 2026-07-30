@@ -171,6 +171,31 @@ class TestOperators(unittest.TestCase):
             ],
         )
 
+    def test_qq_eq_is_one_token(self):
+        # "??=" must lex as one QQEQ token, not QUESTION_QUESTION then EQ.
+        tokens = tokenize("a ??= b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QQEQ,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
+    def test_qq_eq_does_not_collide_with_question_question(self):
+        tokens = tokenize("a ?? b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QUESTION_QUESTION,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
     def test_bitwise_operators(self):
         source = "& | ^ ~ << >>"
         expected = [

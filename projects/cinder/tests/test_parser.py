@@ -818,6 +818,23 @@ class TestCompoundAssignment(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("xs[0] += 1;")
 
+    def test_qq_eq_desugars_to_assign_of_logical_question_question(self):
+        # Unlike the arithmetic compound-assign ops, `??=` desugars into a
+        # Logical node (not Binary) so the right-hand side short-circuits
+        # exactly like plain `??`, rather than evaluating eagerly.
+        self.assertEqual(
+            shape(parse("x ??= 1")),
+            (
+                "Assign",
+                "x",
+                ("Logical", ("Identifier", "x"), TokenType.QUESTION_QUESTION, ("Literal", 1)),
+            ),
+        )
+
+    def test_qq_eq_index_target_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("xs[0] ??= 1;")
+
     def test_amp_eq_desugars_to_binary_amp(self):
         self.assertEqual(
             shape(parse("x &= 1")),

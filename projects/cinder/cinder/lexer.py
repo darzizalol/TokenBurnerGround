@@ -350,9 +350,14 @@ class Lexer:
 
     def _question(self, start_line: int, start_col: int):
         if self._match("?"):
-            self.tokens.append(
-                Token(TokenType.QUESTION_QUESTION, "??", None, start_line, start_col)
-            )
+            if self._match("="):
+                self.tokens.append(
+                    Token(TokenType.QQEQ, "??=", None, start_line, start_col)
+                )
+            else:
+                self.tokens.append(
+                    Token(TokenType.QUESTION_QUESTION, "??", None, start_line, start_col)
+                )
         else:
             self.tokens.append(Token(TokenType.QUESTION, "?", None, start_line, start_col))
 

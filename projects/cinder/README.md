@@ -142,7 +142,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1396+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1410+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -168,14 +168,14 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `const` declarations for
-immutable bindings, the stdlib addition `unzip`, a C-style
-`for (init; cond; step)` loop, and the stdlib addition `zip_longest`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): more stdlib breadth
-(`group_consecutive`, `sliding_window`, `deep_equal`), the nil-coalescing
-compound assignment `??=`, a CLI `-e`/`--eval` flag, "did you mean...?"
-suggestions for undefined-name errors, and labeled `break`/`continue`
-for nested loops.
+Actively developed, nightly. Recently landed: a C-style
+`for (init; cond; step)` loop, and the stdlib additions `zip_longest`
+and `group_consecutive`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the nil-coalescing
+compound assignment `??=`, more stdlib breadth (`sliding_window`,
+`deep_equal`), a CLI `-e`/`--eval` flag, "did you mean...?" suggestions
+for undefined-name errors, and labeled `break`/`continue` for nested
+loops.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

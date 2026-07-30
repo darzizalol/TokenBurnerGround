@@ -1631,6 +1631,28 @@ def _zip(arguments: list, line: int, column: int) -> object:
     return [[a, b] for a, b in zip(list1, list2)]
 
 
+def _unzip(arguments: list, line: int, column: int) -> object:
+    _require_arity("unzip", arguments, 1, line, column)
+    pairs = arguments[0]
+    if not isinstance(pairs, list):
+        raise CinderRuntimeError(
+            f"unzip() requires a list, got {type_name(pairs)}", line, column
+        )
+    firsts = []
+    seconds = []
+    for i, element in enumerate(pairs):
+        if not isinstance(element, list) or len(element) != 2:
+            raise CinderRuntimeError(
+                f"unzip() requires a list of 2-element lists, got "
+                f"{type_name(element)} at index {i}",
+                line, column,
+            )
+        a, b = element
+        firsts.append(a)
+        seconds.append(b)
+    return [firsts, seconds]
+
+
 def _zip_with(arguments: list, line: int, column: int) -> object:
     _require_arity("zip_with", arguments, 3, line, column)
     list1, list2, fn = arguments
@@ -2061,6 +2083,7 @@ _BUILTINS = {
     "flat_map": _flat_map,
     "chunk": _chunk,
     "zip": _zip,
+    "unzip": _unzip,
     "zip_with": _zip_with,
     "enumerate": _enumerate,
     "assert": _assert,

@@ -389,9 +389,10 @@ Build: let a loop be prefixed with a label — `outer: while (cond) {
 innermost one, e.g. to break out of a nested loop from inside it in one
 step. Add a `LabelStmt`-style optional field instead of a new
 wrapper node: add `label: str | None` to each loop AST node
-(`WhileStmt`, `ForStmt`, `ForCStmt` if task 3 has landed by the time
-this is picked up — check `cinder/ast_nodes.py` first and coordinate
-with whichever loop nodes exist, `DoWhileStmt`), defaulting to `None`
+(`WhileStmt`, `ForStmt`, `ForCStmt`, `DoWhileStmt` — check
+`cinder/ast_nodes.py` first for the current set of loop nodes, since
+`ForCStmt` is mid-flight on PR #121 as of this writing), defaulting to
+`None`
 for unlabeled loops, and `label: str | None` on `BreakStmt`/
 `ContinueStmt` (defaulting to `None` for the existing unlabeled form).
 Lex: no new token type needed — a label is just an `IDENTIFIER` followed

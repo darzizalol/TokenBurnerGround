@@ -15,6 +15,7 @@ from cinder.ast_nodes import (
     ExprStmt,
     FnDecl,
     FnExpr,
+    ForCStmt,
     ForStmt,
     Grouping,
     Identifier,
@@ -149,6 +150,14 @@ def stmt_shape(node):
             "ForStmt",
             node.var_name,
             shape(node.iterable),
+            stmt_shape(node.body),
+        )
+    if isinstance(node, ForCStmt):
+        return (
+            "ForCStmt",
+            stmt_shape(node.init) if node.init is not None else None,
+            shape(node.condition) if node.condition is not None else None,
+            stmt_shape(node.step) if node.step is not None else None,
             stmt_shape(node.body),
         )
     if isinstance(node, DoWhileStmt):
@@ -1467,6 +1476,55 @@ class TestForStatement(unittest.TestCase):
     def test_return_inside_top_level_for_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("for x in [1] { return 5; }")
+
+
+class TestForCStatement(unittest.TestCase):
+    def test_full_three_clause_for(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("for (let i = 0; i < 3; i = i + 1) { }")],
+            [
+                (
+                    "ForCStmt",
+                    ("LetStmt", "i", ("Literal", 0)),
+                    ("Binary", ("Identifier", "i"), TokenType.LT, ("Literal", 3)),
+                    (
+                        "ExprStmt",
+                        ("Assign", "i", ("Binary", ("Identifier", "i"), TokenType.PLUS, ("Literal", 1))),
+                    ),
+                    ("Block", []),
+                )
+            ],
+        )
+
+    def test_increment_step_desugars_to_plusplus(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("for (let i = 0; i < 3; i++) { }")][0][3],
+            ("ExprStmt", ("Assign", "i", ("Binary", ("Identifier", "i"), TokenType.PLUS, ("Literal", 1)))),
+        )
+
+    def test_empty_init_clause(self):
+        shapes = [stmt_shape(s) for s in parse_stmts("for (; i < 3; i++) { }")]
+        self.assertIsNone(shapes[0][1])
+
+    def test_empty_condition_clause(self):
+        shapes = [stmt_shape(s) for s in parse_stmts("for (;;) { break; }")]
+        self.assertIsNone(shapes[0][1])
+        self.assertIsNone(shapes[0][2])
+        self.assertIsNone(shapes[0][3])
+
+    def test_non_block_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for (;;) break;")
+
+    def test_break_and_continue_allowed_inside_c_for(self):
+        # Regression: _loop_depth must be tracked for the C-style form too.
+        parse_stmts("for (let i = 0; i < 3; i++) { if (i == 1) { break; } continue; }")
+
+    def test_foreach_still_parses_unaffected(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("for x in xs { }")],
+            [("ForStmt", "x", ("Identifier", "xs"), ("Block", []))],
+        )
 
 
 class TestDoWhileStatement(unittest.TestCase):

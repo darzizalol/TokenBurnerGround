@@ -50,6 +50,7 @@ from cinder.ast_nodes import (
     ExprStmt,
     FnDecl,
     FnExpr,
+    ForCStmt,
     ForStmt,
     Grouping,
     Identifier,
@@ -292,6 +293,9 @@ class Interpreter:
         if isinstance(stmt, ForStmt):
             self._execute_for(stmt, env)
             return
+        if isinstance(stmt, ForCStmt):
+            self._execute_for_c(stmt, env)
+            return
         if isinstance(stmt, FnDecl):
             env.define(stmt.name, CinderFunction(stmt, env))
             return
@@ -354,6 +358,20 @@ class Interpreter:
                 break
             except _ContinueSignal:
                 continue
+
+    def _execute_for_c(self, stmt: ForCStmt, env: Environment) -> None:
+        loop_env = Environment(env)
+        if stmt.init is not None:
+            self.execute(stmt.init, loop_env)
+        while stmt.condition is None or is_truthy(self.evaluate(stmt.condition, loop_env)):
+            try:
+                self.execute(stmt.body, loop_env)
+            except _BreakSignal:
+                break
+            except _ContinueSignal:
+                pass
+            if stmt.step is not None:
+                self.execute(stmt.step, loop_env)
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)

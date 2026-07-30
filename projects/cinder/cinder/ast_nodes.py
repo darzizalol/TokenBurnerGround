@@ -261,6 +261,21 @@ class ForStmt:
 
 
 @dataclass(frozen=True)
+class ForCStmt:
+    """Classic three-clause `for (init; cond; step) { ... }`, distinct from
+    the foreach `ForStmt` above. `init`/`step` are `None` when their clause
+    is empty (`for (;;) { ... }` is a valid infinite loop); `condition` is
+    `None` when omitted, treated as always-true at execution time."""
+
+    init: "Stmt | None"
+    condition: "Expr | None"
+    step: "Stmt | None"
+    body: "Block"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class FnDecl:
     """`params` and `rest_param` are the same shape as `FnExpr`'s — see its
     docstring."""
@@ -334,6 +349,7 @@ Stmt = Union[
     WhileStmt,
     DoWhileStmt,
     ForStmt,
+    ForCStmt,
     FnDecl,
     ReturnStmt,
     BreakStmt,

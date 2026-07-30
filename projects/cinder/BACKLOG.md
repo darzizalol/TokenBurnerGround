@@ -11,40 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip_longest` for lists [claimed 2026-07-30T20:02:15Z]
-
-Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
-like `zip` (`_zip` at `cinder/builtins.py:1618-1655`, which truncates to
-the shorter list via Python's own `zip`) but pads the shorter list with
-`fill` instead of truncating, so the result always has
-`max(len(list1), len(list2))` pairs. Reuse the same two-list validation
-style `_zip` already uses (a `list` check on each argument, not
-`_require_two_lists` since that helper is arity-2 only and this builtin
-is arity-3) plus `_require_arity("zip_longest", arguments, 3, line,
-column)`. Implement with `itertools.zip_longest(list1, list2,
-fillvalue=fill)` (stdlib `itertools` — no new dependency, already usable
-via Python's standard library) wrapped in a list comprehension producing
-`[a, b]` pairs, mirroring `_zip`'s `[[a, b] for a, b in ...]` shape.
-
-Acceptance criteria:
-- `zip_longest([1, 2, 3], ["a", "b"], nil)` is `[[1, "a"], [2, "b"], [3,
-  nil]]` — shorter list padded with `fill` (here `nil`) once it runs out.
-- `zip_longest([1], [1, 2, 3], 0)` is `[[1, 1], [0, 2], [0, 3]]` — padding
-  works symmetrically when the *first* list is shorter.
-- `zip_longest([1, 2], [1, 2], "x")` is `[[1, 1], [2, 2]]` — equal-length
-  lists behave exactly like `zip`, `fill` unused.
-- `zip_longest([], [], 0)` is `[]`.
-- `zip_longest([], [1, 2], 0)` is `[[0, 1], [0, 2]]`.
-- A non-list first or second argument raises `CinderRuntimeError` with
-  line/column (mirror `_zip`'s two separate checks/messages).
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `group_consecutive` for lists
+## 1. Standard library: `group_consecutive` for lists
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the
@@ -82,7 +49,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Nil-coalescing compound assignment: `??=`
+## 2. Nil-coalescing compound assignment: `??=`
 
 Build: add `x ??= expr;` as a compound-assignment sibling to the existing
 set (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, handled
@@ -148,7 +115,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `sliding_window` for lists
+## 3. Standard library: `sliding_window` for lists
 
 Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
 `chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows
@@ -186,7 +153,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `deep_equal` for structural equality
+## 4. Standard library: `deep_equal` for structural equality
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per
@@ -230,7 +197,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. CLI: `-e`/`--eval` flag to run an inline snippet
+## 5. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -275,7 +242,7 @@ not yet exist — check first).
 
 ---
 
-## 7. "Did you mean...?" suggestions for undefined-name errors
+## 6. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
@@ -315,7 +282,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 8. Labeled `break`/`continue` for nested loops
+## 7. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)

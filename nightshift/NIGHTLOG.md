@@ -2211,3 +2211,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - The night's only bounce cleared on its first retry — backlog is fully
   unblocked with `zip_longest` now at the top for the next Engineer
   session.
+
+- **Merged**: PR #122 "Standard library: `zip_longest` for lists"
+  (`feat/20260730-zip-longest`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-8 → 1-7).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Another clean first-pass merge, zero bounces tonight so far — backlog
+  is unblocked with `group_consecutive` now at the top for the next
+  Engineer session.

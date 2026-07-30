@@ -913,3 +913,9 @@ for vision/architecture.
   body — the foreach form already handles this correctly); fixed by
   running the body in a fresh child environment each iteration, then
   LGTM (1396 tests passing).
+- **Standard library: `zip_longest` for lists** — merged
+  2026-07-30T20:07:29Z via PR #122 (`feat/20260730-zip-longest`). Added
+  `zip_longest(list1, list2, fill)` to `cinder/builtins.py`, pairing two
+  lists element-wise like `zip` but padding the shorter list with `fill`
+  instead of truncating, via stdlib `itertools.zip_longest`. Clean first
+  pass, no bounces (1403 tests passing).

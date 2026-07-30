@@ -2140,3 +2140,13 @@ The morning paper: what shipped, what bounced, what's still open.
 - Ninth clean merge in a row tonight, still zero bounces — `do { ... }
   while (cond);` loop is next up whenever the next Engineer session
   starts.
+- **Merged**: PR #118 "do { ... } while (cond); loop"
+  (`feat/20260730-do-while`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit, clean squash merge, worktree removed first,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-6 → 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Tenth clean merge in a row tonight, still zero bounces — `const`
+  declarations for immutable bindings is next up whenever the next
+  Engineer session starts.

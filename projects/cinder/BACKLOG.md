@@ -11,51 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `do { ... } while (cond);` loop [claimed 2026-07-30T14:20:55Z]
-
-Build: add a `do { ... } while (<expr>);` loop that runs the body once
-unconditionally before checking `cond` — the mirror of `while`'s
-check-first semantics (`_while_statement` in `cinder/parser.py:281-289`,
-executed inline in `Interpreter.execute` at `cinder/interpreter.py:245-253`
-— there is no separate `_execute_while` method). Add a `DO` keyword token
-to `cinder/tokens.py` (alongside `WHILE`, plus a `"do": TokenType.DO`
-entry in the `KEYWORDS` map), and a `DoWhileStmt` AST node mirroring
-`WhileStmt` (`cinder/ast_nodes.py:230-235`: `condition`, `body`, `line`,
-`column`). Parse `do <statement> while (<expr>);` — note the trailing
-semicolon after the `while (cond)` clause, unlike plain `while`, since the
-body was already consumed as a statement and there's no block left to
-terminate the statement; reuse `_loop_depth` bumping around the body
-exactly like `_while_statement` does so `break`/`continue` are valid
-inside it. Execute by running the body once, then looping on the same
-check-then-repeat structure `WhileStmt` uses, with `break`/`continue`
-caught the same way.
-
-Acceptance criteria:
-- `let i = 0; let log = []; do { push(log, i); i = i + 1; } while (i < 3);
-  log` is `[0, 1, 2]`.
-- `let i = 5; let log = []; do { push(log, i); } while (i < 0); log` is
-  `[5]` — body runs exactly once even though the condition is false from
-  the start (the defining difference from `while`).
-- `break` inside the body exits the loop immediately without re-checking
-  `cond` — test via a `do` loop whose condition is always true but whose
-  body `break`s after one iteration.
-- `continue` inside the body skips to the condition check, not back to
-  the top of the body unconditionally — test with a counter that would
-  infinite-loop if `continue` re-ran the body without re-checking `cond`.
-- `do { ... } while (cond)` with no trailing `;` raises a `ParseError`
-  with line/column (semicolon required, matching every other simple
-  statement).
-- Existing `while` loops are unaffected — add a regression test that a
-  plain `while (cond) { ... }` still parses/executes exactly as before.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. `const` declarations for immutable bindings
+## 1. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -106,7 +62,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. Standard library: `unzip` for lists
+## 2. Standard library: `unzip` for lists
 
 Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
 (`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
@@ -141,7 +97,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. C-style `for (init; cond; step) { ... }` loop
+## 3. C-style `for (init; cond; step) { ... }` loop
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,
@@ -206,7 +162,7 @@ regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 5. Standard library: `zip_longest` for lists
+## 4. Standard library: `zip_longest` for lists
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
 like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
@@ -239,7 +195,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `group_consecutive` for lists
+## 5. Standard library: `group_consecutive` for lists
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the

@@ -871,3 +871,13 @@ for vision/architecture.
   list-rotation idiom; negative `n` rotates right, empty list is always a
   no-op (avoids `n % 0`). Non-mutating, matching `reverse`/`sort`/
   `shuffle`'s style. Clean first pass, no bounces (1345 tests passing).
+- **`do { ... } while (cond);` loop** — merged 2026-07-30T14:29:17Z via
+  PR #118 (`feat/20260730-do-while`). Added a `DO` keyword token and a
+  `DoWhileStmt` AST node mirroring `WhileStmt`, with the parser requiring
+  the trailing `;` after `while (cond)` (unlike plain `while`, since the
+  body was already consumed as a statement) and reusing `_loop_depth`
+  bumping so `break`/`continue` are valid inside it; the interpreter runs
+  the body once unconditionally, then loops on check-then-repeat, with
+  `break` exiting without rechecking `cond` and `continue` skipping
+  straight to the condition check. Clean first pass, no bounces (1354
+  tests passing).

@@ -1165,6 +1165,23 @@ def _reverse(arguments: list, line: int, column: int) -> object:
     return list(reversed(value))
 
 
+def _rotate(arguments: list, line: int, column: int) -> object:
+    _require_arity("rotate", arguments, 2, line, column)
+    target, n = arguments
+    if not isinstance(target, list):
+        raise CinderRuntimeError(
+            f"rotate() requires a list, got {type_name(target)}", line, column
+        )
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"rotate() requires an int, got {type_name(n)}", line, column
+        )
+    if not target:
+        return []
+    shift = n % len(target)
+    return target[shift:] + target[:shift]
+
+
 def _copy(arguments: list, line: int, column: int) -> object:
     _require_arity("copy", arguments, 1, line, column)
     value = arguments[0]
@@ -2011,6 +2028,7 @@ _BUILTINS = {
     "difference": _difference,
     "interleave": _interleave,
     "reverse": _reverse,
+    "rotate": _rotate,
     "first": _first,
     "last": _last,
     "random_int": _random_int,

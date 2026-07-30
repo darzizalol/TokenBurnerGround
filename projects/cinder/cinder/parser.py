@@ -40,7 +40,10 @@ list pattern or a flat shorthand map pattern — `is_map` distinguishes the
 two), `{ <statement>* }` (Block),
 `if (<expr>) <statement> [else <statement>]` (IfStmt),
 `while (<expr>) <statement>` (WhileStmt), `for IDENTIFIER in <expr> { ... }`
-(ForStmt, body always a block), `break;`/`continue;` (BreakStmt/ContinueStmt,
+(ForStmt, body always a block), `for (init; cond; step) { ... }` (ForCStmt,
+disambiguated from the foreach form by peeking for `(` right after `for`;
+`init`/`cond`/`step` are each independently optional), `break;`/`continue;`
+(BreakStmt/ContinueStmt,
 only valid inside a loop), `try { <statement>* } catch (IDENTIFIER)
 { <statement>* }` (TryStmt, both bodies always blocks, the parenthesized
 catch name is required), `switch (<expr>) { case <expr>: { ... } ...
@@ -96,6 +99,7 @@ from cinder.ast_nodes import (
     ExprStmt,
     FnDecl,
     FnExpr,
+    ForCStmt,
     ForStmt,
     Grouping,
     Identifier,
@@ -316,6 +320,8 @@ class Parser:
 
     def _for_statement(self) -> Stmt:
         for_token = self._advance()
+        if self._check(TokenType.LPAREN):
+            return self._for_c_statement(for_token)
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'for'")
         self._consume(TokenType.IN, "'in' after for-loop variable")
         iterable = self._assignment()
@@ -332,6 +338,38 @@ class Parser:
         return ForStmt(
             name_token.lexeme, iterable, body, for_token.line, for_token.column
         )
+
+    def _for_c_statement(self, for_token: Token) -> Stmt:
+        self._advance()  # LPAREN
+        if self._check(TokenType.SEMICOLON):
+            self._advance()
+            init = None
+        elif self._check(TokenType.LET):
+            init = self._let_statement()  # consumes its own trailing ';'
+        else:
+            init = ExprStmt(self._expr_or_incdec())
+            self._consume(TokenType.SEMICOLON, "';' after for-loop init")
+        if self._check(TokenType.SEMICOLON):
+            condition = None
+        else:
+            condition = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after for-loop condition")
+        if self._check(TokenType.RPAREN):
+            step = None
+        else:
+            step = ExprStmt(self._expr_or_incdec())
+        self._consume(TokenType.RPAREN, "')' after for-loop clauses")
+        if not self._check(TokenType.LBRACE):
+            token = self._peek()
+            raise ParseError(
+                f"expected '{{' before for-loop body, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._loop_depth += 1
+        body = self._block()
+        self._loop_depth -= 1
+        return ForCStmt(init, condition, step, body, for_token.line, for_token.column)
 
     def _fn_declaration(self) -> Stmt:
         fn_token = self._advance()
@@ -533,6 +571,15 @@ class Parser:
         return SwitchStmt(scrutinee, cases, default, switch_token.line, switch_token.column)
 
     def _expr_statement(self) -> Stmt:
+        expr = self._expr_or_incdec()
+        self._consume(TokenType.SEMICOLON, "';' after expression")
+        return ExprStmt(expr)
+
+    def _expr_or_incdec(self) -> Expr:
+        """An assignment expression, optionally followed by a postfix
+        `++`/`--` (statement-only sugar for `+= 1`/`-= 1`). Shared by
+        `_expr_statement` and the C-style for-loop's init/step clauses,
+        neither of which consumes a trailing `;` itself here."""
         expr = self._assignment()
         if self._peek().type in _INCREMENT_DECREMENT_OPS:
             op_token = self._advance()
@@ -564,8 +611,7 @@ class Parser:
                 raise ParseError(
                     "invalid assignment target", op_token.line, op_token.column
                 )
-        self._consume(TokenType.SEMICOLON, "';' after expression")
-        return ExprStmt(expr)
+        return expr
 
     def _assignment(self) -> Expr:
         expr = self._ternary()

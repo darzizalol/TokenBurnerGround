@@ -940,6 +940,68 @@ class TestForStatement(unittest.TestCase):
         self.assertEqual(env.get("x"), 0)
 
 
+class TestForCStatement(unittest.TestCase):
+    def _run(self, source: str) -> Environment:
+        from cinder.builtins import create_global_environment
+
+        return run(source, create_global_environment())
+
+    def test_full_three_clause_for(self):
+        env = self._run("let log = []; for (let i = 0; i < 3; i = i + 1) { push(log, i); }")
+        self.assertEqual(env.get("log"), [0, 1, 2])
+
+    def test_increment_step(self):
+        env = self._run("let log = []; for (let i = 0; i < 3; i++) { push(log, i); }")
+        self.assertEqual(env.get("log"), [0, 1, 2])
+
+    def test_empty_init_reuses_outer_variable(self):
+        env = self._run("let i = 0; let log = []; for (; i < 3; i++) { push(log, i); }")
+        self.assertEqual(env.get("log"), [0, 1, 2])
+
+    def test_break_stops_before_step_reruns(self):
+        env = self._run(
+            "let log = []; "
+            "for (let i = 0; i < 5; i++) { if (i == 2) { break; } push(log, i); }"
+        )
+        self.assertEqual(env.get("log"), [0, 1])
+
+    def test_continue_skips_to_step_not_body_top(self):
+        env = self._run(
+            "let log = []; "
+            "for (let i = 0; i < 5; i++) { if (i == 2) { continue; } push(log, i); }"
+        )
+        self.assertEqual(env.get("log"), [0, 1, 3, 4])
+
+    def test_infinite_loop_with_immediate_break(self):
+        env = run("let ran = false; for (;;) { ran = true; break; }")
+        self.assertEqual(env.get("ran"), True)
+
+    def test_init_let_scoped_to_loop_only(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("for (let i = 0; i < 3; i++) { } i;")
+
+    def test_foreach_unaffected_regression(self):
+        env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")
+        self.assertEqual(env.get("total"), 6)
+
+    def test_closure_inside_for_c_body_captures_its_own_iteration_value(self):
+        # Regression test: each iteration must get a fresh binding of the
+        # init-declared loop variable, so closures made in different
+        # iterations don't all end up sharing the final post-loop value
+        # (mirrors test_closure_inside_for_body_captures_its_own_iteration_value
+        # for the foreach form).
+        env = self._run(
+            "let fns = [nil, nil, nil]; "
+            "for (let i = 0; i < 3; i = i + 1) { fn make() { return i; } fns[i] = make; } "
+            "let a = fns[0](); "
+            "let b = fns[1](); "
+            "let c = fns[2]();"
+        )
+        self.assertEqual(env.get("a"), 0)
+        self.assertEqual(env.get("b"), 1)
+        self.assertEqual(env.get("c"), 2)
+
+
 class TestBreakContinue(unittest.TestCase):
     def test_break_exits_while_loop_immediately(self):
         env = run(

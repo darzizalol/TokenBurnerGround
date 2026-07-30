@@ -627,6 +627,18 @@ class Parser:
             raise ParseError(
                 "invalid assignment target", eq_token.line, eq_token.column
             )
+        if self._check(TokenType.QQEQ):
+            op_token = self._advance()
+            value = self._assignment()
+            if isinstance(expr, Identifier):
+                qq_operator = Token(
+                    TokenType.QUESTION_QUESTION, "??", None, op_token.line, op_token.column
+                )
+                logical = Logical(expr, qq_operator, value)
+                return Assign(expr.name, logical, op_token.line, op_token.column)
+            raise ParseError(
+                "invalid assignment target", op_token.line, op_token.column
+            )
         if self._peek().type in _COMPOUND_ASSIGN_OPS:
             op_token = self._advance()
             value = self._assignment()

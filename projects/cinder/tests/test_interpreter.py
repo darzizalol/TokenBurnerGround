@@ -732,6 +732,50 @@ class TestCompoundAssignment(unittest.TestCase):
             run("let b = 1; b >>= -1;")
 
 
+class TestNilCoalescingCompoundAssignment(unittest.TestCase):
+    def test_nil_target_is_replaced(self):
+        env = run("let x = nil; x ??= 5;")
+        self.assertEqual(env.get("x"), 5)
+
+    def test_non_nil_target_is_left_untouched(self):
+        env = run("let x = 1; x ??= 5;")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_false_is_not_nil(self):
+        # unlike `x ||= 5`-style truthiness (which this language doesn't
+        # have), `??=` only replaces on `nil`, not general falsiness.
+        env = run("let x = false; x ??= 5;")
+        self.assertEqual(env.get("x"), False)
+
+    def test_right_not_evaluated_when_target_non_nil(self):
+        env = run(
+            """
+            let calls = 0;
+            fn bump() { calls = calls + 1; return 99; }
+            let x = 1;
+            x ??= bump();
+            """
+        )
+        self.assertEqual(env.get("calls"), 0)
+        self.assertEqual(env.get("x"), 1)
+
+    def test_right_evaluated_once_when_target_nil(self):
+        env = run(
+            """
+            let calls = 0;
+            fn bump() { calls = calls + 1; return 99; }
+            let x = nil;
+            x ??= bump();
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("x"), 99)
+
+    def test_index_target_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("xs[0] ??= 1;"))
+
+
 class TestIncrementDecrement(unittest.TestCase):
     def test_plus_plus(self):
         env = run("let a = 5; a++;")

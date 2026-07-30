@@ -88,6 +88,7 @@ class TokenType(Enum):
     COLON = auto()
     QUESTION = auto()
     QUESTION_QUESTION = auto()
+    QQEQ = auto()
 
     EOF = auto()
 

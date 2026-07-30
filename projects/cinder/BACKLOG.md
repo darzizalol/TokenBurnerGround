@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sliding_window` for lists
+## 1. Standard library: `sliding_window` for lists [claimed 2026-07-30T20:36:15Z]
 
 Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
 `chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows

@@ -2130,3 +2130,13 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Eighth clean merge in a row tonight, still zero bounces — `rotate` for
   lists is next up whenever the next Engineer session starts.
+- **Merged**: PR #117 "Standard library: `rotate` for lists"
+  (`feat/20260730-rotate`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit, clean squash merge, worktree removed first,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-7 → 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Ninth clean merge in a row tonight, still zero bounces — `do { ... }
+  while (cond);` loop is next up whenever the next Engineer session
+  starts.

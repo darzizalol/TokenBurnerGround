@@ -864,3 +864,10 @@ for vision/architecture.
   negative indices count from the end and out-of-range indices clamp
   instead of erroring, matching `slice`'s bound-handling. Clean first
   pass, no bounces (1335 tests passing).
+- **Standard library: `rotate` for lists** — merged 2026-07-30T14:15:58Z
+  via PR #117 (`feat/20260730-rotate`). Added `rotate(list, n)` to
+  `cinder/builtins.py`, returning a new list rotated left by `n`
+  positions (`list[n % len:] + list[:n % len]`), matching Python's own
+  list-rotation idiom; negative `n` rotates right, empty list is always a
+  no-op (avoids `n % 0`). Non-mutating, matching `reverse`/`sort`/
+  `shuffle`'s style. Clean first pass, no bounces (1345 tests passing).

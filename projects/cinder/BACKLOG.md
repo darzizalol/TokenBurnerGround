@@ -11,34 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `rotate` for lists [claimed 2026-07-30T14:10:17Z]
-
-Build: add `rotate(list, n)` to `cinder/builtins.py` — returns a new list
-rotated left by `n` positions (`list[n:] + list[:n]` after reducing `n`
-modulo the list's length), matching Python's own list-rotation idiom;
-negative `n` rotates right. Non-mutating, matching `reverse`/`sort`/
-`shuffle`'s style. An empty list is always returned unchanged regardless
-of `n` (avoid `n % 0`).
-
-Acceptance criteria:
-- `rotate([1, 2, 3, 4, 5], 2)` is `[3, 4, 5, 1, 2]` (rotate left by 2).
-- `rotate([1, 2, 3, 4, 5], -1)` is `[5, 1, 2, 3, 4]` (negative `n` rotates
-  right).
-- `rotate([1, 2, 3], 0)` is `[1, 2, 3]` (no-op).
-- `rotate([1, 2, 3], 3)` is `[1, 2, 3]`; `rotate([1, 2, 3], 4)` is
-  `[2, 3, 1]` (`n` larger than length wraps via modulo).
-- `rotate([], 5)` is `[]` (empty list is always a no-op, no
-  division-by-zero on the modulo).
-- Non-list first argument raises `CinderRuntimeError` with line/column.
-- Non-`int` `n` raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. `do { ... } while (cond);` loop
+## 1. `do { ... } while (cond);` loop
 
 Build: add a `do { ... } while (<expr>);` loop that runs the body once
 unconditionally before checking `cond` — the mirror of `while`'s
@@ -82,7 +55,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 3. `const` declarations for immutable bindings
+## 2. `const` declarations for immutable bindings
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
@@ -133,7 +106,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 4. Standard library: `unzip` for lists
+## 3. Standard library: `unzip` for lists
 
 Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
 (`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
@@ -168,7 +141,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. C-style `for (init; cond; step) { ... }` loop
+## 4. C-style `for (init; cond; step) { ... }` loop
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,
@@ -233,7 +206,7 @@ regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 6. Standard library: `zip_longest` for lists
+## 5. Standard library: `zip_longest` for lists
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
 like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
@@ -266,7 +239,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. Standard library: `group_consecutive` for lists
+## 6. Standard library: `group_consecutive` for lists
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the

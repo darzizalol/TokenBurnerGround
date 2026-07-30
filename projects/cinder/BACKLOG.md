@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Nil-coalescing compound assignment: `??=`
+## 1. Nil-coalescing compound assignment: `??=` [claimed 2026-07-30T20:22:08Z]
 
 Build: add `x ??= expr;` as a compound-assignment sibling to the existing
 set (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, handled

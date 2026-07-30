@@ -96,6 +96,7 @@ class TestKeywords(unittest.TestCase):
             "if": TokenType.IF,
             "else": TokenType.ELSE,
             "while": TokenType.WHILE,
+            "do": TokenType.DO,
             "fn": TokenType.FN,
             "return": TokenType.RETURN,
             "true": TokenType.TRUE,

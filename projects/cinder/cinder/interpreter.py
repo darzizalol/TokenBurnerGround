@@ -7,7 +7,13 @@ and returns a plain Python value (int, float, str, bool, None), or a Python
 `IfStmt`, `WhileStmt`, `ForStmt`, `TryStmt`, `SwitchStmt`), mutating an `Environment` rather
 than returning a value. `ForStmt` binds its loop variable in a fresh child
 `Environment` per iteration, so a closure created inside the loop body
-captures that iteration's value rather than the final one. `TryStmt` runs its
+captures that iteration's value rather than the final one. `ForCStmt` (the
+three-clause `for (init; cond; step)` form) gets the same per-iteration
+binding: its body runs in a fresh `Environment` copied from the init/step
+bindings each pass, with any mutations copied back afterward so the
+condition and step clauses still see them, so closures over its init
+variable behave the same as closures over a `ForStmt` loop variable rather
+than all sharing the final post-loop value. `TryStmt` runs its
 try block and, if it raises `CinderRuntimeError` and a `catch` clause is
 present, binds the error's message to the catch name in a fresh child
 `Environment` and runs the catch block; an optional `finally` block always
@@ -360,16 +366,32 @@ class Interpreter:
                 continue
 
     def _execute_for_c(self, stmt: ForCStmt, env: Environment) -> None:
+        # Mirrors `_execute_for`: each iteration runs in its own fresh
+        # `Environment` (copied from `loop_env`) so a closure captured inside
+        # the body sees that iteration's value of an init-declared variable,
+        # not whatever it's mutated to by later iterations. Values (and any
+        # `const` bindings) are copied back into `loop_env` after the body
+        # runs, so the condition/step clauses still observe body mutations
+        # and the loop variable carries forward as expected.
         loop_env = Environment(env)
         if stmt.init is not None:
             self.execute(stmt.init, loop_env)
-        while stmt.condition is None or is_truthy(self.evaluate(stmt.condition, loop_env)):
+        while True:
+            iter_env = Environment(env)
+            iter_env._values.update(loop_env._values)
+            iter_env._frozen.update(loop_env._frozen)
+            if stmt.condition is not None and not is_truthy(
+                self.evaluate(stmt.condition, iter_env)
+            ):
+                break
             try:
-                self.execute(stmt.body, loop_env)
+                self.execute(stmt.body, iter_env)
             except _BreakSignal:
                 break
             except _ContinueSignal:
                 pass
+            loop_env._values.update(iter_env._values)
+            loop_env._frozen.update(iter_env._frozen)
             if stmt.step is not None:
                 self.execute(stmt.step, loop_env)
 

@@ -984,6 +984,23 @@ class TestForCStatement(unittest.TestCase):
         env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")
         self.assertEqual(env.get("total"), 6)
 
+    def test_closure_inside_for_c_body_captures_its_own_iteration_value(self):
+        # Regression test: each iteration must get a fresh binding of the
+        # init-declared loop variable, so closures made in different
+        # iterations don't all end up sharing the final post-loop value
+        # (mirrors test_closure_inside_for_body_captures_its_own_iteration_value
+        # for the foreach form).
+        env = self._run(
+            "let fns = [nil, nil, nil]; "
+            "for (let i = 0; i < 3; i = i + 1) { fn make() { return i; } fns[i] = make; } "
+            "let a = fns[0](); "
+            "let b = fns[1](); "
+            "let c = fns[2]();"
+        )
+        self.assertEqual(env.get("a"), 0)
+        self.assertEqual(env.get("b"), 1)
+        self.assertEqual(env.get("c"), 2)
+
 
 class TestBreakContinue(unittest.TestCase):
     def test_break_exits_while_loop_immediately(self):

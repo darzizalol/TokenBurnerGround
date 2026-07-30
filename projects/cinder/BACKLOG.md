@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `const` declarations for immutable bindings
+## 1. `const` declarations for immutable bindings [claimed 2026-07-30T14:37:48Z]
 
 Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
 the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:

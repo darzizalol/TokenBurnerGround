@@ -1409,6 +1409,23 @@ def _slice(arguments: list, line: int, column: int) -> object:
     return value[start:end]
 
 
+def _split_at(arguments: list, line: int, column: int) -> object:
+    _require_arity("split_at", arguments, 2, line, column)
+    value, index = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"split_at() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(index, int) or isinstance(index, bool):
+        raise CinderRuntimeError(
+            f"split_at() requires an int as its second argument, got {type_name(index)}",
+            line, column,
+        )
+    split = _normalize_slice_bound(index, len(value))
+    return [value[:split], value[split:]]
+
+
 def _take(arguments: list, line: int, column: int) -> object:
     _require_arity("take", arguments, 2, line, column)
     value, n = arguments
@@ -2015,6 +2032,7 @@ _BUILTINS = {
     "count_by": _count_by,
     "partition": _partition,
     "slice": _slice,
+    "split_at": _split_at,
     "take": _take,
     "drop": _drop,
     "take_while": _take_while,

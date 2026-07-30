@@ -2197,3 +2197,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - Legitimate review catch, not a rubber stamp — the fix is scoped
   (mirror the foreach loop's per-iteration `Environment`) so this should
   clear next cycle.
+- **Merged**: PR #121 "C-style `for (init; cond; step)` loop"
+  (`feat/20260730-c-for`) — cleared its bounce with a fixup commit
+  (e59e091f) giving the init `let` binding a fresh per-iteration
+  `Environment`, mirroring the foreach form; Reviewer re-reviewed to
+  `VERDICT: LGTM` and QA re-ran to `QA: PASS`, both posted after the
+  fixup (1396 tests passing). Worktree removed first, clean squash merge,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-9 → 1-8).
+- **Bounced this cycle**: none (PR #121's earlier bounce was resolved and
+  is counted in the prior entry).
+- **Still open**: no open PRs.
+- The night's only bounce cleared on its first retry — backlog is fully
+  unblocked with `zip_longest` now at the top for the next Engineer
+  session.

@@ -900,3 +900,16 @@ for vision/architecture.
   list-ness, and per-element shape (naming the offending index on
   failure). Empty input returns `[[], []]`. Clean first pass, no bounces
   (1362 tests passing).
+- **C-style `for (init; cond; step) { ... }` loop** — merged
+  2026-07-30T19:56:16Z via PR #121 (`feat/20260730-c-for`). Added a
+  `ForCStmt` AST node parsed by peeking for `(` right after `for` to
+  disambiguate from the foreach form; `init` is a `let` declaration or an
+  expression/increment statement, `condition` defaults to always-true when
+  omitted, `step` runs unconditionally after each iteration (including
+  after `continue`, which falls through rather than re-raising) so it
+  can't be skipped. Bounced once (Reviewer caught that the init `let`
+  binding was reused across iterations instead of getting a fresh
+  per-iteration `Environment`, breaking closures captured inside the
+  body — the foreach form already handles this correctly); fixed by
+  running the body in a fresh child environment each iteration, then
+  LGTM (1396 tests passing).

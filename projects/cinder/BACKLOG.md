@@ -11,72 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. C-style `for (init; cond; step) { ... }` loop [claimed 2026-07-30T19:38:02Z]
-
-Build: add a second `for` form alongside the existing foreach
-(`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,
-parsed by `_for_statement` in `cinder/parser.py:291-309`, executed by
-`_execute_for` in `cinder/interpreter.py:292-...`): a classic three-clause
-`for (init; cond; step) { ... }`, disambiguated at parse time by peeking
-right after the `for` keyword — the foreach form always continues with an
-`IDENTIFIER` then `in`, while the C-style form always continues with `(`,
-so `_for_statement` can dispatch on `self._check(TokenType.LPAREN)` before
-falling into the existing identifier-consuming path. Add a `ForCStmt` AST
-node (`init: Stmt | None`, `condition: Expr | None`, `step: Stmt | None`,
-`body: Stmt`, `line`, `column`) to `cinder/ast_nodes.py`. Parse: `init` is
-either a `let` declaration (reuse `_let_statement`, which already consumes
-its own trailing `;`) or an expression/increment statement reusing the
-same expr-then-optional-`++`/`--`-then-`;` logic `_expr_statement` uses
-today (`cinder/parser.py:482-515`) — factor that logic out of
-`_expr_statement` into a helper both call, since the for-loop needs it
-without necessarily wrapping every clause; an empty init clause (just
-`;`) is valid and leaves `init` as `None`. `condition` is an optional
-`_assignment()` expression, defaulting to always-true when omitted
-(`for (;;) { ... }` is a valid infinite loop, matching C). `step` is an
-optional expression/increment (same helper as init, but not consuming a
-trailing `;` — the closing `)` terminates it instead). Execute in
-`_interpreter.py`: create a fresh child `Environment` for the loop (so an
-`init` `let` doesn't leak into the enclosing scope, matching block-scoping
-elsewhere), run `init` once, then loop while `condition` is truthy (or
-unconditionally if omitted): run `body` catching `_BreakSignal` (exit the
-loop) and `_ContinueSignal` (fall through *without* re-raising — do not
-`continue` the Python loop directly, since `step` must still run before
-the next condition check), then always run `step` (if present) before
-re-checking `condition` — this mirrors the do-while task's
-continue-runs-step-not-body distinction so `continue` can't skip `step`
-and infinite-loop.
-
-Acceptance criteria:
-- `let log = []; for (let i = 0; i < 3; i = i + 1) { push(log, i); } log`
-  is `[0, 1, 2]`.
-- `let log = []; for (let i = 0; i < 3; i++) { push(log, i); } log` is
-  `[0, 1, 2]` — `i++` works as the step clause.
-- `let i = 0; let log = []; for (; i < 3; i++) { push(log, i); }` (empty
-  init) is `[0, 1, 2]`, reusing the outer `i`.
-- `for (let i = 0; i < 5; i++) { if (i == 2) { break; } push(log, i); }`
-  stops after `[0, 1]` — `break` exits without running `step` again.
-- `let log = []; for (let i = 0; i < 5; i++) { if (i == 2) { continue; }
-  push(log, i); } log` is `[0, 1, 3, 4]` — `continue` skips to `step`,
-  not back to the top of `body` unconditionally (test with a case that
-  would infinite-loop if `step` were skipped).
-- `for (;;) { break; }` parses and runs (condition omitted = infinite
-  loop, immediately broken).
-- `init`'s `let i = 0` is scoped to the loop only — referencing `i` after
-  the loop raises a name-resolution `CinderRuntimeError`, it doesn't leak
-  into the enclosing scope.
-- The existing foreach `for NAME in EXPR { ... }` is unaffected — add a
-  regression test that it still parses/executes exactly as before.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (none new needed — reuses existing
-`LPAREN`/`SEMICOLON`/`RPAREN`), `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py` (only if untouched
-regression coverage is missing), `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `zip_longest` for lists
+## 1. Standard library: `zip_longest` for lists
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
 like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
@@ -109,7 +44,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `group_consecutive` for lists
+## 2. Standard library: `group_consecutive` for lists
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the
@@ -147,7 +82,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Nil-coalescing compound assignment: `??=`
+## 3. Nil-coalescing compound assignment: `??=`
 
 Build: add `x ??= expr;` as a compound-assignment sibling to the existing
 set (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, handled
@@ -213,7 +148,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 5. Standard library: `sliding_window` for lists
+## 4. Standard library: `sliding_window` for lists
 
 Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
 `chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows
@@ -251,7 +186,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `deep_equal` for structural equality
+## 5. Standard library: `deep_equal` for structural equality
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per
@@ -295,7 +230,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 7. CLI: `-e`/`--eval` flag to run an inline snippet
+## 6. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -340,7 +275,7 @@ not yet exist — check first).
 
 ---
 
-## 8. "Did you mean...?" suggestions for undefined-name errors
+## 7. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
@@ -380,7 +315,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 9. Labeled `break`/`continue` for nested loops
+## 8. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)

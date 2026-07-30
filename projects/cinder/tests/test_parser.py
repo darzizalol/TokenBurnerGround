@@ -8,6 +8,7 @@ from cinder.ast_nodes import (
     Block,
     BreakStmt,
     Call,
+    ConstStmt,
     ContinueStmt,
     DestructureLetStmt,
     DoWhileStmt,
@@ -125,6 +126,8 @@ def stmt_shape(node):
     """Structural view of a statement AST node, ignoring line/column noise."""
     if isinstance(node, LetStmt):
         return ("LetStmt", node.name, shape(node.initializer))
+    if isinstance(node, ConstStmt):
+        return ("ConstStmt", node.name, shape(node.initializer))
     if isinstance(node, DestructureLetStmt):
         return ("DestructureLetStmt", node.names, shape(node.initializer), node.is_map)
     if isinstance(node, ExprStmt):
@@ -994,6 +997,24 @@ class TestStatements(unittest.TestCase):
     def test_let_missing_semicolon_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let x = 1")
+
+    def test_const_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("const x = 1 + 2;")],
+            [("ConstStmt", "x", ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2)))],
+        )
+
+    def test_const_missing_initializer_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("const x;")
+
+    def test_const_missing_equals_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("const x 1;")
+
+    def test_const_missing_semicolon_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("const x = 1")
 
     def test_destructure_let_statement(self):
         self.assertEqual(

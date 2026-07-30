@@ -426,6 +426,89 @@ class TestStatements(unittest.TestCase):
         with self.assertRaises(KeyError):
             env.get("x")
 
+    def test_let_redeclare_same_scope_overwrites(self):
+        # Regression: `Environment.define` just overwrites the dict entry,
+        # so a second `let` for the same name in the same scope silently
+        # rebinds rather than erroring. Pinning this rather than adding new
+        # redeclaration-checking behavior.
+        env = run("let x = 1; let x = 2;")
+        self.assertEqual(env.get("x"), 2)
+
+
+class TestConst(unittest.TestCase):
+    def test_const_declares_and_lookup_works(self):
+        env = run("const x = 5;")
+        self.assertEqual(env.get("x"), 5)
+
+    def test_const_reassignment_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("const x = 5; x = 6;")
+
+    def test_const_reassignment_leaves_value_unchanged(self):
+        env = Environment()
+        interpreter = Interpreter()
+        statements = parse_program(tokenize("const x = 5; x = 6;"))
+        with self.assertRaises(CinderRuntimeError):
+            for statement in statements:
+                interpreter.execute(statement, env)
+        self.assertEqual(env.get("x"), 5)
+
+    def test_const_reassignment_error_carries_assignment_location(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("const x = 5;\nx = 6;")
+        self.assertEqual(ctx.exception.line, 2)
+
+    def test_const_compound_assignment_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("const x = 5; x += 1;")
+
+    def test_const_compound_assignment_leaves_value_unchanged(self):
+        env = Environment()
+        interpreter = Interpreter()
+        statements = parse_program(tokenize("const x = 5; x += 1;"))
+        with self.assertRaises(CinderRuntimeError):
+            for statement in statements:
+                interpreter.execute(statement, env)
+        self.assertEqual(env.get("x"), 5)
+
+    def test_const_index_assignment_unaffected(self):
+        env = run("const xs = [1, 2]; xs[0] = 9;")
+        self.assertEqual(env.get("xs"), [9, 2])
+
+    def test_const_inner_block_shadows_outer_let(self):
+        # A `const` shadowing an outer `let` in an inner block is a fresh,
+        # independent binding; the outer `let` can still be reassigned once
+        # the inner block exits.
+        env = run("let x = 1; { const x = 2; } x = 3;")
+        self.assertEqual(env.get("x"), 3)
+
+    def test_const_inner_block_does_not_leak_out(self):
+        env = run("{ const x = 1; }")
+        with self.assertRaises(KeyError):
+            env.get("x")
+
+    def test_const_increment_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("const x = 5; x++;")
+
+    def test_let_then_const_redeclare_same_scope_freezes(self):
+        # `let` followed by `const` for the same name in the same scope:
+        # define_const freshly freezes the name, so it takes effect even
+        # though a plain `let` bound it moments earlier.
+        with self.assertRaises(CinderRuntimeError):
+            run("let x = 1; const x = 2; x = 3;")
+
+    def test_const_then_let_redeclare_same_scope_unfreezes(self):
+        # `const` followed by `let` for the same name in the same scope:
+        # `define` discards the stale `_frozen` entry, so the name is
+        # mutable again rather than still raising from the earlier const.
+        env = run("const x = 1; let x = 2; x = 3;")
+        self.assertEqual(env.get("x"), 3)
+
+    def test_const_redeclare_same_scope_still_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("const x = 1; const x = 2; x = 3;")
+
 
 class TestDestructureLet(unittest.TestCase):
     def test_binds_two_names(self):

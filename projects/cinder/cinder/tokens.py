@@ -18,6 +18,7 @@ class TokenType(Enum):
 
     # Keywords
     LET = auto()
+    CONST = auto()
     IF = auto()
     ELSE = auto()
     WHILE = auto()
@@ -93,6 +94,7 @@ class TokenType(Enum):
 
 KEYWORDS = {
     "let": TokenType.LET,
+    "const": TokenType.CONST,
     "if": TokenType.IF,
     "else": TokenType.ELSE,
     "while": TokenType.WHILE,

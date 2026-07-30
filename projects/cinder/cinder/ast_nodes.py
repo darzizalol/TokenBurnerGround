@@ -205,6 +205,14 @@ class LetStmt:
 
 
 @dataclass(frozen=True)
+class ConstStmt:
+    name: str
+    initializer: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class DestructureLetStmt:
     names: list
     initializer: "Expr"
@@ -319,6 +327,7 @@ class SwitchStmt:
 Stmt = Union[
     ExprStmt,
     LetStmt,
+    ConstStmt,
     DestructureLetStmt,
     Block,
     IfStmt,

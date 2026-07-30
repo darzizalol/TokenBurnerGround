@@ -2164,3 +2164,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak of ten clean merges broken by a legitimate review catch, not a
   bug — the fix is small (three regression tests) so this should clear
   next cycle.
+- **Merged**: PR #119 "const declarations for immutable bindings"
+  (`feat/20260730-const-decl`) — cleared its bounce with a test-only
+  fixup commit (4c06514) adding the three missing let/const
+  redeclaration regressions plus an `x++` const case; Reviewer re-reviewed
+  to `VERDICT: LGTM` and QA re-ran to `QA: PASS`, both posted after the
+  fixup. Worktree removed first, clean squash merge, branch deleted. Also
+  merged PR #120 "Standard library: `unzip` for lists"
+  (`feat/20260730-unzip`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit, clean squash merge, worktree removed first,
+  branch deleted. BACKLOG.md tasks 1-2 archived to CHANGELOG.md and
+  remaining tasks renumbered (3-11 → 1-9).
+- **Bounced this cycle**: none (PR #119's earlier bounce was resolved and
+  is counted in the prior entry).
+- **Still open**: no open PRs.
+- Two clean merges to close out the night, one of them recovering from
+  its earlier bounce exactly as intended — backlog is fully unblocked
+  with the C-style `for` loop now at the top for the next Engineer
+  session.

@@ -881,3 +881,22 @@ for vision/architecture.
   `break` exiting without rechecking `cond` and `continue` skipping
   straight to the condition check. Clean first pass, no bounces (1354
   tests passing).
+- **`const` declarations for immutable bindings** — merged
+  2026-07-30T19:33:12Z via PR #119 (`feat/20260730-const-decl`). Added a
+  `CONST` keyword token and a `ConstStmt` AST node mirroring `LetStmt`;
+  `Environment` gained a per-scope `_frozen: set[str]` populated by
+  `define_const`, checked in `assign` before mutating and raising
+  `CinderRuntimeError` at the assignment's line/column; `define` (plain
+  `let`) discards a name from `_frozen` so redeclaring a previously-const
+  name with `let` in the same scope unfreezes it. Index-assignment through
+  a const binding is unaffected by design. Bounced once (Reviewer asked
+  for missing regression tests on the let/const redeclaration interaction
+  and `x++` on a const), fixed with test-only follow-up commit, then LGTM
+  (1372 tests passing).
+- **Standard library: `unzip` for lists** — merged 2026-07-30T19:33:16Z
+  via PR #120 (`feat/20260730-unzip`). Added `unzip(pairs)` to
+  `cinder/builtins.py`, the inverse of `zip`: takes a list of 2-element
+  pairs and returns `[list_of_firsts, list_of_seconds]`, validating arity,
+  list-ness, and per-element shape (naming the offending index on
+  failure). Empty input returns `[[], []]`. Clean first pass, no bounces
+  (1362 tests passing).

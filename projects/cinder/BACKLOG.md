@@ -11,93 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `const` declarations for immutable bindings [claimed 2026-07-30T14:37:48Z]
-
-Build: add `const NAME = expr;` as a sibling to `let` that binds `NAME` in
-the current scope like `LetStmt` does (`cinder/interpreter.py:195-197`:
-`env.define(stmt.name, self.evaluate(stmt.initializer, env))`) but forbids
-any later assignment to that name — plain (`NAME = ...`), compound
-(`NAME += ...`, desugared through `Assign` at parse time per PR #32/#103),
-and any other form that funnels through `Environment.assign`
-(`cinder/interpreter.py:141-148`) — raising `CinderRuntimeError` with
-line/column instead of silently mutating. Since `Environment._values`
-(`cinder/interpreter.py:123-148`) is currently a plain
-`dict[str, object]` with no per-name metadata, add a parallel
-`self._frozen: set[str] = set()` to `Environment`, populated by a new
-`define_const` method (or a `const: bool` flag on the existing `define`),
-and check it at the top of `assign` before mutating, raising there. Add a
-`CONST` keyword token (`cinder/tokens.py`, alongside `LET`) and a
-`ConstStmt` AST node mirroring `LetStmt` (`cinder/ast_nodes.py:199-204`:
-`name`, `initializer`, `line`, `column`). Index-assignment (`xs[i] = ...`)
-is unaffected by this task — it mutates the list/map object referenced by
-a binding, not the binding itself, so `const xs = [1]; xs[0] = 2;` still
-works; only rebinding the name `xs` itself is forbidden.
-
-Acceptance criteria:
-- `const x = 5; x` is `5`.
-- `const x = 5; x = 6;` raises `CinderRuntimeError` with line/column (the
-  assignment's location), leaving `x` unchanged.
-- `const x = 5; x += 1;` raises `CinderRuntimeError` with line/column
-  (compound assignment funnels through the same `assign` path).
-- `const xs = [1, 2]; xs[0] = 9; xs` is `[9, 2]` — index-assignment
-  through a `const` binding is unaffected, since it mutates the list, not
-  the name.
-- `const` requires an initializer — `const x;` raises a `ParseError` with
-  line/column.
-- A `const` in an inner block scope shadowing an outer `let`/`const` of
-  the same name is a fresh, independent binding (matching `let`'s
-  existing shadowing rule) — reassigning the *outer* name after the inner
-  block exits still works if the outer was `let`.
-- Redeclaring the same name with a second `const` (or `let`) in the
-  *same* scope — pick whichever `let`'s existing redeclaration behavior
-  already is (likely silently rebinds, since `Environment.define` just
-  overwrites the dict entry) and add a regression test pinning it, rather
-  than introducing new redeclaration-checking behavior as a side effect
-  of this task.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `unzip` for lists [claimed 2026-07-30T19:28:25Z]
-
-Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
-(`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element
-`[a, b]` pairs and returns `[list_of_firsts, list_of_seconds]`. Validate
-with `_require_arity("unzip", arguments, 1, line, column)` then check the
-argument is a `list`; each element must itself be a `list` of length
-exactly 2 (raise `CinderRuntimeError` naming the offending index on any
-element that isn't a 2-element list, e.g. `f"unzip() requires a list of
-2-element lists, got {type_name(element)} at index {i}"` or similar,
-mirroring the style of `_require_two_lists` at
-`cinder/builtins.py:1082-1095`). An empty input list returns `[[], []]`
-(not an error) — reduces from `zip(pairs)`'s intuition that unzip and
-`zip` should round-trip: `zip(*unzip(pairs)) == pairs` in spirit, though
-Cinder's `zip` only takes exactly two lists so the round-trip is via
-`zip(unzip(pairs)[0], unzip(pairs)[1])`.
-
-Acceptance criteria:
-- `unzip([[1, "a"], [2, "b"], [3, "c"]])` is `[[1, 2, 3], ["a", "b",
-  "c"]]`.
-- `unzip([])` is `[[], []]`.
-- `unzip([[1, 2]])` is `[[1], [2]]`.
-- `zip(unzip(pairs)[0], unzip(pairs)[1])` reproduces the original `pairs`
-  for a non-empty example — add this as an explicit round-trip test
-  alongside the direct-output assertions above.
-- A non-list argument raises `CinderRuntimeError` with line/column.
-- An element that isn't a list, or is a list of the wrong length (0, 1, or
-  3+ elements), raises `CinderRuntimeError` with line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 3. C-style `for (init; cond; step) { ... }` loop
+## 1. C-style `for (init; cond; step) { ... }` loop
 
 Build: add a second `for` form alongside the existing foreach
 (`for NAME in EXPR { ... }`, `ForStmt` in `cinder/ast_nodes.py:238-244`,
@@ -162,7 +76,7 @@ regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 4. Standard library: `zip_longest` for lists
+## 2. Standard library: `zip_longest` for lists
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
 like `zip` (`_zip` at `cinder/builtins.py:1584-1597`, which truncates to
@@ -195,7 +109,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `group_consecutive` for lists
+## 3. Standard library: `group_consecutive` for lists
 
 Build: add `group_consecutive(list)` to `cinder/builtins.py` — groups
 *adjacent* equal elements into sublists, i.e. run-length grouping (the
@@ -233,7 +147,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Nil-coalescing compound assignment: `??=`
+## 4. Nil-coalescing compound assignment: `??=`
 
 Build: add `x ??= expr;` as a compound-assignment sibling to the existing
 set (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, handled
@@ -299,7 +213,7 @@ Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
 
 ---
 
-## 7. Standard library: `sliding_window` for lists
+## 5. Standard library: `sliding_window` for lists
 
 Build: add `sliding_window(list, size)` to `cinder/builtins.py` — like
 `chunk` (`_chunk` at `cinder/builtins.py:1599-1615`) but windows
@@ -337,7 +251,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 8. Standard library: `deep_equal` for structural equality
+## 6. Standard library: `deep_equal` for structural equality
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per
@@ -381,7 +295,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 9. CLI: `-e`/`--eval` flag to run an inline snippet
+## 7. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -426,7 +340,7 @@ not yet exist — check first).
 
 ---
 
-## 10. "Did you mean...?" suggestions for undefined-name errors
+## 8. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
@@ -466,7 +380,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 11. Labeled `break`/`continue` for nested loops
+## 9. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)

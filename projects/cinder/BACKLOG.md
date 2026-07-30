@@ -62,7 +62,7 @@ Likely files: `cinder/tokens.py`, `cinder/ast_nodes.py`, `cinder/parser.py`,
 
 ---
 
-## 2. Standard library: `unzip` for lists
+## 2. Standard library: `unzip` for lists [claimed 2026-07-30T19:28:25Z]
 
 Build: add `unzip(pairs)` to `cinder/builtins.py` — the inverse of `zip`
 (`_zip` at `cinder/builtins.py:1558-1571`): takes a list of 2-element

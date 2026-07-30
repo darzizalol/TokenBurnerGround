@@ -2150,3 +2150,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - Tenth clean merge in a row tonight, still zero bounces — `const`
   declarations for immutable bindings is next up whenever the next
   Engineer session starts.
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #119 "const declarations for immutable
+  bindings" (`feat/20260730-const-decl`) — Reviewer posted
+  `VERDICT: CHANGES REQUESTED` (1st bounce): the redeclaration
+  interactions between `const`/`let` in the same scope
+  (`Environment.define`'s `_frozen.discard`) are exactly the acceptance
+  criteria in BACKLOG.md item 1 but have zero test coverage — reviewer
+  manually verified the three cases behave correctly but wants them
+  pinned as tests in `TestConst`. No QA verdict posted yet. Left on its
+  branch for the next Engineer session to add the missing tests.
+- **Still open**: PR #119, awaiting fixes (1/3 bounces).
+- Streak of ten clean merges broken by a legitimate review catch, not a
+  bug — the fix is small (three regression tests) so this should clear
+  next cycle.

@@ -135,7 +135,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1335+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1345+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -162,11 +162,10 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: a `finally` block for
-`try`/`catch`, and stdlib additions `interleave`, `from_entries`,
-`to_hex`/`to_bin`/`to_oct`, and `split_at`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): more stdlib breadth (`rotate`, `unzip`,
-`zip_longest`, `group_consecutive`), a `do`/`while` loop, `const`
-bindings, and a C-style `for (init; cond; step)` loop. The backlog mixes
+`try`/`catch`, and stdlib additions `split_at` and `rotate`. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): a `do`/`while` loop, `const`
+bindings, a C-style `for (init; cond; step)` loop, and more stdlib
+breadth (`unzip`, `zip_longest`, `group_consecutive`). The backlog mixes
 language depth with stdlib breadth over time rather than running either in
 one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

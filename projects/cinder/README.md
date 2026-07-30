@@ -35,7 +35,10 @@ while (i < 10) {
   inside `${...}`, stringified the same way `print`/`format` render values;
   integer literals may also be written in hex (`0x1F`), binary (`0b101`), or
   octal (`0o17`)
-- **Variables & scope**: `let` declarations, assignment, blocks with proper
+- **Variables & scope**: `let` declarations, `const` declarations for
+  immutable bindings (reassignment or `++`/`--`/compound-assignment on a
+  `const` name raises a runtime error; a `let` may still be redeclared as
+  `const` and vice versa in the same scope), assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting/rest)
   and map destructuring (`let {a, b} = expr;`, binds each identifier by
@@ -136,7 +139,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1345+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1380+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -162,12 +165,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a `do { ... } while (cond);`
-loop, and stdlib additions `split_at` and `rotate`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `const` bindings, a C-style
-`for (init; cond; step)` loop, the nil-coalescing compound assignment
-`??=`, and more stdlib breadth (`unzip`, `zip_longest`,
-`group_consecutive`, `sliding_window`). The backlog mixes language depth
-with stdlib breadth over time rather than running either in one long
-block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `const` declarations for
+immutable bindings, and the stdlib addition `unzip`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): a C-style `for (init; cond; step)` loop,
+more stdlib breadth (`zip_longest`, `group_consecutive`,
+`sliding_window`, `deep_equal`), the nil-coalescing compound assignment
+`??=`, a CLI `-e`/`--eval` flag, "did you mean...?" suggestions for
+undefined-name errors, and labeled `break`/`continue` for nested loops.
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

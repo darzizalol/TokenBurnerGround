@@ -115,14 +115,16 @@ every PR, not just tests touching the new code.
 ## Roadmap (beyond current backlog)
 
 The core interpreter (lexer through error handling) has been solid for many
-nights now, and REPL ergonomics (multiline input, persistent history) and
-source-mapped call-stack traces for nested calls — both once listed here as
-future work — have since landed. What remains plausible, not yet scoped into
-tasks: continued standard-library breadth (string/list/map/math methods,
-picked incrementally per `BACKLOG.md`'s own grooming), targeted language
-features that round out expressiveness (e.g. `do`/`while` loops, `const`
-bindings, a C-style `for` loop — see current `BACKLOG.md`), and only much
-later, a bytecode VM if performance ever actually matters. The Architect should keep
+nights now, and REPL ergonomics (multiline input, persistent history),
+source-mapped call-stack traces for nested calls, `do`/`while` loops, and
+`const` bindings — all once listed here as future work — have since landed.
+What remains plausible, not yet scoped into tasks beyond current
+`BACKLOG.md`: continued standard-library breadth (string/list/map/math
+methods, picked incrementally per `BACKLOG.md`'s own grooming), targeted
+language features that round out expressiveness (a C-style `for` loop,
+`??=`, labeled `break`/`continue` — see current `BACKLOG.md`), better
+error ergonomics ("did you mean...?" suggestions), and only much later, a
+bytecode VM if performance ever actually matters. The Architect should keep
 scoping these into `BACKLOG.md` incrementally — do not jump ahead of the
 current layer.
 

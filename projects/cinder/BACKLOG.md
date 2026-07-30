@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip_longest` for lists
+## 1. Standard library: `zip_longest` for lists [claimed 2026-07-30T20:02:15Z]
 
 Build: add `zip_longest(list1, list2, fill)` to `cinder/builtins.py` —
 like `zip` (`_zip` at `cinder/builtins.py:1618-1655`, which truncates to

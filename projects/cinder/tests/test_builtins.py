@@ -3445,6 +3445,55 @@ class TestZip(unittest.TestCase):
             run("zip([1], 5);")
 
 
+class TestUnzip(unittest.TestCase):
+    def test_unzip_splits_pairs(self):
+        env = run(
+            'let result = unzip([[1, "a"], [2, "b"], [3, "c"]]);'
+        )
+        self.assertEqual(env.get("result"), [[1, 2, 3], ["a", "b", "c"]])
+
+    def test_unzip_empty_list(self):
+        env = run("let result = unzip([]);")
+        self.assertEqual(env.get("result"), [[], []])
+
+    def test_unzip_single_pair(self):
+        env = run("let result = unzip([[1, 2]]);")
+        self.assertEqual(env.get("result"), [[1], [2]])
+
+    def test_unzip_round_trips_with_zip(self):
+        env = run(
+            'let pairs = [[1, "a"], [2, "b"], [3, "c"]];'
+            "let u = unzip(pairs);"
+            "let result = zip(u[0], u[1]);"
+        )
+        self.assertEqual(
+            env.get("result"), [[1, "a"], [2, "b"], [3, "c"]]
+        )
+
+    def test_unzip_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("unzip(5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_unzip_element_not_a_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("unzip([1, 2]);")
+
+    def test_unzip_element_wrong_length_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("unzip([[1]]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("unzip([[1, 2, 3]]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("unzip([[]]);")
+
+    def test_unzip_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("unzip();")
+        with self.assertRaises(CinderRuntimeError):
+            run("unzip([[1, 2]], [[3, 4]]);")
+
+
 class TestZipWith(unittest.TestCase):
     def test_zip_with_combines_elementwise(self):
         env = run(

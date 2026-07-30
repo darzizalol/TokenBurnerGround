@@ -1616,6 +1616,23 @@ def _chunk(arguments: list, line: int, column: int) -> object:
     return [value[i:i + size] for i in range(0, len(value), size)]
 
 
+def _group_consecutive(arguments: list, line: int, column: int) -> object:
+    _require_arity("group_consecutive", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"group_consecutive() requires a list, got {type_name(value)}",
+            line, column,
+        )
+    result = []
+    for element in value:
+        if result and result[-1][-1] == element:
+            result[-1].append(element)
+        else:
+            result.append([element])
+    return result
+
+
 def _zip(arguments: list, line: int, column: int) -> object:
     _require_arity("zip", arguments, 2, line, column)
     list1, list2 = arguments
@@ -2104,6 +2121,7 @@ _BUILTINS = {
     "flatten_deep": _flatten_deep,
     "flat_map": _flat_map,
     "chunk": _chunk,
+    "group_consecutive": _group_consecutive,
     "zip": _zip,
     "zip_longest": _zip_longest,
     "unzip": _unzip,

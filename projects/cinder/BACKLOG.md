@@ -253,6 +253,43 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
+## 6. Standard library: `key_by` for lists
+
+Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
+into a map keyed by `fn(item)`, the "one winner per key" counterpart to
+`group_by` (`_group_by` at `cinder/builtins.py:1876-1897`, which buckets
+into lists instead). Mirror `_group_by`'s validation exactly:
+`_require_arity("key_by", arguments, 2, line, column)`, a `list` check
+on the first argument (same error-message phrasing as `_group_by`'s,
+`key_by` substituted for `group_by`), an `_is_callable` check on `fn`
+(same phrasing), and the same `_is_valid_key` check on each computed key
+raising the same `"{type_name(key)} is not a valid map key"` error
+`_group_by`/`_count_by` already raise. Unlike `group_by`, each key maps
+directly to the *item itself*, not a list of items; when two items
+produce the same key, the later item wins (plain last-write-wins via
+`result[key] = item` in iteration order — same overwrite semantics
+Python dict assignment gives for free, no special-casing needed).
+
+Acceptance criteria:
+- `key_by([{"id": 1, "n": "a"}, {"id": 2, "n": "b"}], fn(x) { return
+  x["id"]; })` is `{1: {"id": 1, "n": "a"}, 2: {"id": 2, "n": "b"}}`.
+- Duplicate keys: `key_by([{"id": 1, "n": "a"}, {"id": 1, "n": "b"}],
+  fn(x) { return x["id"]; })` is `{1: {"id": 1, "n": "b"}}` — the later
+  item wins, pin this as an explicit regression test.
+- `key_by([], fn(x) { return x; })` is `{}`.
+- A key function returning a non-hashable value (e.g. a list) raises
+  `CinderRuntimeError` with the same `"... is not a valid map key"`
+  message `group_by`/`count_by` use, with line/column.
+- A non-list first argument raises `CinderRuntimeError` with line/column.
+- A non-function second argument raises `CinderRuntimeError` with
+  line/column.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

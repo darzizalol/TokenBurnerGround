@@ -3445,6 +3445,41 @@ class TestZip(unittest.TestCase):
             run("zip([1], 5);")
 
 
+class TestZipLongest(unittest.TestCase):
+    def test_zip_longest_pads_shorter_second_list(self):
+        env = run('let result = zip_longest([1, 2, 3], ["a", "b"], nil);')
+        self.assertEqual(env.get("result"), [[1, "a"], [2, "b"], [3, None]])
+
+    def test_zip_longest_pads_shorter_first_list(self):
+        env = run("let result = zip_longest([1], [1, 2, 3], 0);")
+        self.assertEqual(env.get("result"), [[1, 1], [0, 2], [0, 3]])
+
+    def test_zip_longest_equal_length_lists_ignore_fill(self):
+        env = run('let result = zip_longest([1, 2], [1, 2], "x");')
+        self.assertEqual(env.get("result"), [[1, 1], [2, 2]])
+
+    def test_zip_longest_both_empty(self):
+        env = run("let result = zip_longest([], [], 0);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_zip_longest_first_empty(self):
+        env = run("let result = zip_longest([], [1, 2], 0);")
+        self.assertEqual(env.get("result"), [[0, 1], [0, 2]])
+
+    def test_zip_longest_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("zip_longest(5, [1], 0);")
+        self.assertEqual(ctx.exception.line, 1)
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_longest([1], 5, 0);")
+
+    def test_zip_longest_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_longest([1], [2]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_longest([1], [2], 0, 0);")
+
+
 class TestUnzip(unittest.TestCase):
     def test_unzip_splits_pairs(self):
         env = run(

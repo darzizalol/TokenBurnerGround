@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Function composition: `pipe` and `compose`
+## 1. Function composition: `pipe` and `compose` [claimed 2026-07-31T20:28:19Z]
 
 Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
 each takes zero or more Cinder function values (variable arity, no fixed

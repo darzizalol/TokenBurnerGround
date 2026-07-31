@@ -387,9 +387,7 @@ def _deep_equal_values(a: object, b: object) -> bool:
         return all(_deep_equal_values(a[key], b[key]) for key in a)
     if isinstance(a, (list, dict)) or isinstance(b, (list, dict)):
         return False
-    if isinstance(a, bool) or isinstance(b, bool):
-        return isinstance(a, bool) and isinstance(b, bool) and a == b
-    return a == b
+    return values_equal(a, b)
 
 
 def _deep_equal(arguments: list, line: int, column: int) -> object:

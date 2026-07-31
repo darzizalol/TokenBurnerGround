@@ -35,6 +35,7 @@ from cinder.ast_nodes import (
     Ternary,
     TryStmt,
     Unary,
+    WhileStmt,
 )
 from cinder.errors import LexError, ParseError
 from cinder.lexer import tokenize
@@ -1656,6 +1657,84 @@ class TestBreakContinue(unittest.TestCase):
     def test_break_inside_function_with_own_loop_is_valid(self):
         stmts = parse_stmts("while (true) { fn f() { while (true) { break; } } }")
         self.assertEqual(len(stmts), 1)
+
+
+class TestLabeledLoops(unittest.TestCase):
+    def test_while_carries_its_label(self):
+        stmt = parse_stmts("outer: while (true) { break outer; }")[0]
+        self.assertIsInstance(stmt, WhileStmt)
+        self.assertEqual(stmt.label, "outer")
+        self.assertEqual(stmt.body.statements[0].label, "outer")
+
+    def test_do_while_carries_its_label(self):
+        stmt = parse_stmts("outer: do { break outer; } while (true);")[0]
+        self.assertIsInstance(stmt, DoWhileStmt)
+        self.assertEqual(stmt.label, "outer")
+
+    def test_foreach_for_carries_its_label(self):
+        stmt = parse_stmts("outer: for x in [1] { break outer; }")[0]
+        self.assertIsInstance(stmt, ForStmt)
+        self.assertEqual(stmt.label, "outer")
+
+    def test_c_style_for_carries_its_label(self):
+        stmt = parse_stmts("outer: for (let i = 0; i < 1; i++) { break outer; }")[0]
+        self.assertIsInstance(stmt, ForCStmt)
+        self.assertEqual(stmt.label, "outer")
+
+    def test_unlabeled_loops_default_label_to_none(self):
+        # Regression: a plain, unlabeled loop must still parse with `label`
+        # defaulting to None, not require the new syntax.
+        stmt = parse_stmts("while (true) { break; }")[0]
+        self.assertIsNone(stmt.label)
+        self.assertIsNone(stmt.body.statements[0].label)
+
+    def test_break_and_continue_without_a_name_still_default_to_none(self):
+        stmts = parse_stmts("outer: while (true) { break; continue; }")
+        body_stmts = stmts[0].body.statements
+        self.assertIsNone(body_stmts[0].label)
+        self.assertIsNone(body_stmts[1].label)
+
+    def test_nested_loops_break_and_continue_can_name_the_outer_label(self):
+        stmts = parse_stmts(
+            "outer: for (let i = 0; i < 3; i++) {"
+            "  for (let j = 0; j < 3; j++) {"
+            "    continue outer;"
+            "    break outer;"
+            "  }"
+            "}"
+        )
+        inner_body = stmts[0].body.statements[0].body.statements
+        self.assertEqual(inner_body[0].label, "outer")
+        self.assertEqual(inner_body[1].label, "outer")
+
+    def test_break_naming_nonexistent_label_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { break nonexistent; }")
+
+    def test_continue_naming_nonexistent_label_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("while (true) { continue nonexistent; }")
+
+    def test_break_naming_label_only_valid_in_sibling_loop_raises(self):
+        # `a` and `b` are siblings, not nested — `a`'s label isn't in scope
+        # inside `b`'s body.
+        with self.assertRaises(ParseError):
+            parse_stmts(
+                "a: while (true) { break; } b: while (true) { break a; }"
+            )
+
+    def test_labeled_break_outside_any_loop_raises(self):
+        # Same guard as unlabeled break/continue outside a loop — a label
+        # doesn't create a loop out of nothing.
+        with self.assertRaises(ParseError):
+            parse_stmts("break outer;")
+
+    def test_bare_empty_map_literal_still_parses_as_expression_statement(self):
+        # Regression: the new "IDENTIFIER ':' loop-keyword" lookahead in
+        # `_statement` must not affect the unrelated leading-`{` disambiguation
+        # between a Block and a map-literal expression statement.
+        stmts = parse_stmts('{"a": 1};')
+        self.assertEqual(stmt_shape(stmts[0]), ("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))])))
 
 
 class TestErrors(unittest.TestCase):

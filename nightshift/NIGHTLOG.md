@@ -2284,3 +2284,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - One-fix recovery: the reuse nit from last cycle got fixed fast and
   merged clean tonight — backlog is unblocked with the `-e`/`--eval` CLI
   flag now at the top for the next Engineer session.
+
+- **Merged**: PR #127 "CLI: `-e`/`--eval` flag to run an inline snippet"
+  (`feat/20260731-cli-eval-flag`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit, clean squash merge, worktree removed
+  first, branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (3-5 to 2-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Second clean first-pass merge in a row tonight — backlog is unblocked
+  with "did you mean...?" suggestions for undefined names now at the
+  top for the next Engineer session.

@@ -11,52 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. CLI: `-e`/`--eval` flag to run an inline snippet [claimed 2026-07-31T14:22:47Z]
-
-Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
-run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
-'print(1 + 2);'`. Add a third subparser alongside `run`/`repl` in
-`build_parser` (`cinder/cli.py:19-28`): `subparsers.add_parser("eval",
-help=...)` taking a single positional `source` argument (the snippet
-text itself, not a path). Factor the shared lex/parse/execute pipeline
-out of `run_file` (`cinder/cli.py:31-38`) into a helper — e.g.
-`_run_source(source: str) -> None` containing exactly `run_file`'s
-current body from `tokenize(source)` onward — so `run_file` becomes
-`_run_source(open(path).read())` and the new eval path calls
-`_run_source(args.source)` directly, without needing a temp file.
-Wire the new `"eval"` branch into `main` (`cinder/cli.py:41-62`)
-alongside the existing `"run"`/`"repl"` branches, reusing the exact
-same `CinderError` catch-and-format block `run` already uses (line/
-column formatting) — but the error-message prefix that currently reads
-`f"{args.file}:{e.line}:{e.column}: ..."` should read `f"<eval>:
-{e.line}:{e.column}: ..."` for the eval path, since there's no file
-name to print. `OSError` handling is `run`-only (there's no file to
-fail to open in eval mode, so don't wrap `_run_source` in an `OSError`
-catch for the eval branch).
-
-Acceptance criteria:
-- `python3 -m cinder.cli eval 'print(1 + 2);'` prints `3` and exits 0.
-- `python3 -m cinder.cli eval 'let x = 1; x = 2; print(x);'` prints `2`
-  — multi-statement snippets work, not just single expressions.
-- A runtime error in the snippet (e.g. `eval 'print(undefined_name);'`)
-  prints `<eval>:1:7: undefined name 'undefined_name'` (line/column
-  matching the snippet's own coordinates, prefix literally `<eval>`)
-  to stderr and exits 1 — same formatting `run` uses for `CinderError`,
-  minus the filename.
-- A parse error in the snippet exits 1 with a `<eval>`-prefixed message,
-  matching `run`'s parse-error handling.
-- `run_file` against an existing example (e.g. `examples/fizzbuzz.cin`)
-  still behaves identically post-refactor — add/keep a regression test
-  covering `run` end to end so the `_run_source` extraction didn't
-  change its behavior.
-- Full test suite passes.
-
-Likely files: `cinder/cli.py`, `tests/test_cli.py` (create if it does
-not yet exist — check first).
-
----
-
-## 2. "Did you mean...?" suggestions for undefined-name errors
+## 1. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:588-606`) raise `undefined name {name!r}` after
@@ -96,7 +51,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 3. Labeled `break`/`continue` for nested loops
+## 2. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)
@@ -171,7 +126,7 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 4. Standard library: `key_by` for lists
+## 3. Standard library: `key_by` for lists
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to
@@ -208,7 +163,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Standard library: `deep_merge` for maps
+## 4. Standard library: `deep_merge` for maps
 
 Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
 recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,

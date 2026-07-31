@@ -953,3 +953,12 @@ for vision/architecture.
   originally reimplemented that coercion/exclusion logic instead of
   reusing `values_equal`, risking silent drift between the two; fixed by
   delegating. Clean after the one fix (1441 tests passing, up from 1432).
+- **CLI: `-e`/`--eval` flag to run an inline snippet** — merged
+  2026-07-31T14:27:50Z via PR #127 (`feat/20260731-cli-eval-flag`).
+  Added an `eval` subcommand to `cinder/cli.py` alongside `run`/`repl`,
+  taking the snippet text as a positional argument instead of a file
+  path. Factored `run_file`'s lex/parse/execute body into a shared
+  `_run_source` helper so both paths reuse it; errors report with an
+  `<eval>:` prefix (no filename) via the same `CinderError` line/column
+  formatting `run` already used. Clean first pass, no bounces (1446
+  tests passing).

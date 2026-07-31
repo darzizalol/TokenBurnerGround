@@ -376,6 +376,26 @@ def _merge(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _deep_equal_values(a: object, b: object) -> bool:
+    if isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return False
+        return all(_deep_equal_values(x, y) for x, y in zip(a, b))
+    if isinstance(a, dict) and isinstance(b, dict):
+        if a.keys() != b.keys():
+            return False
+        return all(_deep_equal_values(a[key], b[key]) for key in a)
+    if isinstance(a, (list, dict)) or isinstance(b, (list, dict)):
+        return False
+    return values_equal(a, b)
+
+
+def _deep_equal(arguments: list, line: int, column: int) -> object:
+    _require_arity("deep_equal", arguments, 2, line, column)
+    a, b = arguments
+    return _deep_equal_values(a, b)
+
+
 def _invert(arguments: list, line: int, column: int) -> object:
     _require_arity("invert", arguments, 1, line, column)
     target = arguments[0]
@@ -2050,6 +2070,7 @@ _BUILTINS = {
     "pluck": _pluck,
     "remove": _remove,
     "merge": _merge,
+    "deep_equal": _deep_equal,
     "invert": _invert,
     "pick": _pick,
     "omit": _omit,

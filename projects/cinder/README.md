@@ -93,7 +93,7 @@ while (i < 10) {
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
   `pluck`, `pick`, `omit`,
-  `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
+  `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `map_keys`, `filter`, `reduce`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
@@ -152,7 +152,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1473+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1480+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -178,11 +178,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: "did you mean...?"
-suggestions for undefined-name errors, and labeled `break`/`continue` for
-nested loops. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the stdlib
-additions `key_by` and `deep_merge`, spread elements in map literals, and
-function composition (`pipe`/`compose`).
+Actively developed, nightly. Recently landed: labeled `break`/`continue`
+for nested loops, and the stdlib addition `key_by`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `deep_merge` for maps, spread elements in
+map literals, function composition (`pipe`/`compose`), a rest element in
+list destructuring, and a `throw` statement for user-raised errors.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

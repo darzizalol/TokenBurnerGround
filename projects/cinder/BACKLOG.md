@@ -73,9 +73,9 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 Build: extend the spread operator, currently only accepted inside list
 literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;
-parsed at `_list_element`, `cinder/parser.py:888-892`; evaluated in
-`_evaluate_list_literal`, `cinder/interpreter.py:426-440`), to also work
-inside map literals. `MapLiteral.pairs` (`cinder/ast_nodes.py:87-90`) is
+parsed at `_list_element`, `cinder/parser.py:939-943`; evaluated in
+`_evaluate_list_literal`, `cinder/interpreter.py:456-469`), to also work
+inside map literals. `MapLiteral.pairs` (`cinder/ast_nodes.py:86-90`) is
 currently `list[tuple[Expr, Expr]]`; change its contents to mix `tuple`
 entries (plain `key: value` pairs, as today) with `Spread` entries,
 mirroring how `ListLiteral.elements` already mixes plain `Expr` and
@@ -83,10 +83,10 @@ mirroring how `ListLiteral.elements` already mixes plain `Expr` and
 — if the next token is `DOT_DOT_DOT`, consume it and return
 `Spread(self._ternary(), dots.line, dots.column)`; otherwise delegate to
 the existing `_map_pair()` and return its `(key, value)` tuple unchanged.
-Update `_map_literal()` (`cinder/parser.py:894-903`) to call
+Update `_map_literal()` (`cinder/parser.py:945-953`) to call
 `_map_entry()` in both places it currently calls `_map_pair()` directly
 (the first entry and each comma-separated one). Interpreter: in
-`_evaluate_map_literal` (`cinder/interpreter.py:442-453`), iterate
+`_evaluate_map_literal` (`cinder/interpreter.py:472-482`), iterate
 `expr.pairs` and branch on `isinstance(entry, Spread)`: if so, evaluate
 `entry.expression`, require the result is a `dict` (else
 `CinderRuntimeError` `f"cannot spread {type_name(value)} in a map
@@ -131,15 +131,15 @@ leave that to the Architect's next grooming pass, not this task.
 
 Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
 each takes zero or more Cinder function values (variable arity, no fixed
-argument count — mirror how `_min`/`_max` at `cinder/builtins.py:742-761`
+argument count — mirror how `_min`/`_max` at `cinder/builtins.py:742-760`
 already validate a variable-length `arguments` list with no
 `_require_arity` call) and *returns a new callable Cinder value* rather
 than computing a result directly. This is the first builtin in the
 codebase to hand back a function instead of a plain value, but the
-mechanism already exists: `Builtin` (`cinder/interpreter.py:133-145`) is
+mechanism already exists: `Builtin` (`cinder/interpreter.py:149-161`) is
 a thin wrapper around any Python closure with signature `(arguments:
 list, line: int, column: int) -> object`, and `call_value`
-(`cinder/interpreter.py:794`, already imported into `builtins.py` and
+(`cinder/interpreter.py:824`, already imported into `builtins.py` and
 used by `map`/`filter`/`reduce` to invoke a Cinder function value passed
 in) is exactly what a returned function needs to call each wrapped `fn`
 in turn. Validate every element of `fns` is callable up front (loop over
@@ -194,7 +194,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register both in `_BUILTINS`,
-`cinder/builtins.py:2048` onward, near `map`/`filter`/`reduce`'s
+`cinder/builtins.py:2072` onward, near `map`/`filter`/`reduce`'s
 entries), `tests/test_builtins.py`. Update the module docstring's
 builtin-name list at the top of `cinder/builtins.py` and the README's
 Builtins bullet once merged — leave both to the Architect's next
@@ -208,10 +208,12 @@ Build: extend list-destructuring `let` (`DestructureLetStmt`,
 `cinder/ast_nodes.py:216-221`, currently `names: list` plus an `is_map`
 flag with no rest concept) to accept an optional trailing rest name,
 reusing the spread token exactly as function parameters already do
-(`fn f(a, ...rest) { ... }`, parsed at `cinder/parser.py:393-407` via
-`TokenType.DOT_DOT_DOT`). Add a `rest: str | None` field to
+(`fn f(a, ...rest) { ... }`, parsed at `_fn_params_and_body`,
+`cinder/parser.py:419-458`, whose comma loop raises `ParseError("rest
+parameter must be the last parameter", ...)` at `cinder/parser.py:432-436`
+via `TokenType.DOT_DOT_DOT`). Add a `rest: str | None` field to
 `DestructureLetStmt`, defaulting to `None`. Parser: in
-`_destructure_let_statement` (`cinder/parser.py:248-262`), only for the
+`_destructure_let_statement` (`cinder/parser.py:269-283`), only for the
 list form (`is_map=False` — map destructuring keeps its current
 exact-keys behavior unchanged, rest is list-only for this task), after
 parsing each comma-separated identifier, check whether the next token is
@@ -219,11 +221,11 @@ parsing each comma-separated identifier, check whether the next token is
 rest name, and require it to be the *last* pattern element — a
 non-`]`/`,` token immediately after (i.e. anything but the closing
 bracket) following the rest name is a `ParseError` (mirror the phrasing
-`_parameter_list`'s existing rest-parameter-must-be-last check uses, if
-one exists at `cinder/parser.py:393-407`; otherwise use `f"rest element
-must be last in destructuring pattern, found {self._describe(token)}"`
-with the offending token's line/column). Interpreter: in `execute`'s
-`DestructureLetStmt` branch (`cinder/interpreter.py:243-275`), when
+`_fn_params_and_body`'s existing rest-parameter-must-be-last check uses,
+at `cinder/parser.py:432-436`, adapted to: `f"rest element must be last
+in destructuring pattern, found {self._describe(token)}"` with the
+offending token's line/column). Interpreter: in `execute`'s
+`DestructureLetStmt` branch (`cinder/interpreter.py:259-286`), when
 `stmt.rest is not None`, require `len(value) >= len(stmt.names)` (not
 `==` — the fixed names must all have a source element, the rest soaks up
 whatever's left, including zero), bind each fixed name positionally as
@@ -269,7 +271,7 @@ runtime errors with a custom message, instead of the only way to
 signal failure today being `assert(cond, message)` (`_assert`,
 `cinder/builtins.py:1765-1774`) or an error that already happened
 naturally — both catchable today only via `try { ... } catch (name) {
-... }` (`_execute_try`, `cinder/interpreter.py:343-355`, which binds
+... }` (`_execute_try`, `cinder/interpreter.py:366-377`, which binds
 `error.message`, a plain string, to `name`). Mirror `assert`'s own
 message-typing rule exactly: the thrown value must be a `str` (`throw`
 does not accept arbitrary values the way `return` does — same
@@ -279,7 +281,7 @@ must not change that contract). Lex/parse: no new token type needed —
 add `TokenType.THROW` as a new keyword (mirror how `TokenType.RETURN` is
 lexed/reserved) and a `ThrowStmt` AST node (`expression: Expr`, `line:
 int`, `column: int`, mirroring `ReturnStmt`'s shape). Parser: dispatch
-`THROW` in `_statement()` (`cinder/parser.py:199-226`, alongside the
+`THROW` in `_statement()` (`cinder/parser.py:214-245`, alongside the
 existing `RETURN`/`BREAK`/`CONTINUE` dispatch) to a new
 `_throw_statement()` that consumes `throw`, parses one expression via
 `self._assignment()`, consumes the trailing `;`, and returns
@@ -288,7 +290,7 @@ existing `RETURN`/`BREAK`/`CONTINUE` dispatch) to a new
 optional — `throw;` with no value is a `ParseError`, `"expected
 expression after 'throw'"` at the `throw` token's line/column).
 Interpreter: in `execute` (`cinder/interpreter.py`, alongside the
-`ReturnStmt`/`BreakStmt`/`ContinueStmt` handling around line 320),
+`ReturnStmt`/`BreakStmt`/`ContinueStmt` handling around lines 342-348),
 evaluate `stmt.expression`; if the result isn't a `str`, raise
 `CinderRuntimeError(f"throw requires a string message, got
 {type_name(value)}", stmt.line, stmt.column)` (same phrasing pattern as

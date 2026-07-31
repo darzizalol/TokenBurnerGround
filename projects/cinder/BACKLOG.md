@@ -221,6 +221,64 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 5. Spread elements in map literals: `{...map1, "k": v}`
+
+Build: extend the spread operator, currently only accepted inside list
+literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;
+parsed at `_list_element`, `cinder/parser.py:888-892`; evaluated in
+`_evaluate_list_literal`, `cinder/interpreter.py:415-429`), to also work
+inside map literals. `MapLiteral.pairs` (`cinder/ast_nodes.py:87-90`) is
+currently `list[tuple[Expr, Expr]]`; change its contents to mix `tuple`
+entries (plain `key: value` pairs, as today) with `Spread` entries,
+mirroring how `ListLiteral.elements` already mixes plain `Expr` and
+`Spread`. Parser: add a `_map_entry()` method mirroring `_list_element()`
+— if the next token is `DOT_DOT_DOT`, consume it and return
+`Spread(self._ternary(), dots.line, dots.column)`; otherwise delegate to
+the existing `_map_pair()` and return its `(key, value)` tuple unchanged.
+Update `_map_literal()` (`cinder/parser.py:894-903`) to call
+`_map_entry()` in both places it currently calls `_map_pair()` directly
+(the first entry and each comma-separated one). Interpreter: in
+`_evaluate_map_literal` (`cinder/interpreter.py:431-441`), iterate
+`expr.pairs` and branch on `isinstance(entry, Spread)`: if so, evaluate
+`entry.expression`, require the result is a `dict` (else
+`CinderRuntimeError` `f"cannot spread {type_name(value)} in a map
+literal"` at `entry.line`/`entry.column`, matching the phrasing pattern
+`_evaluate_list_literal`/`_evaluate_call` already use for their own kind
+of literal/call), then `result.update(value)`; otherwise keep today's
+per-pair logic (evaluate key, `_is_valid_key` check, evaluate value,
+assign) unchanged. Splicing order follows plain iteration/last-write-wins
+— no special-casing needed since `dict.update`/assignment already give
+"later entry wins" for free, whether the later entry is a spread or an
+explicit key.
+
+Acceptance criteria:
+- `{"a": 1, ...{"b": 2}}` is `{"a": 1, "b": 2}`.
+- `{...{"a": 1}, "a": 2}` is `{"a": 2}` — an explicit key after a spread
+  overrides the spread's value for that key.
+- `{...{"a": 1}, ...{"a": 2, "b": 3}}` is `{"a": 2, "b": 3}` — a later
+  spread overrides an earlier one key-by-key, not wholesale.
+- `{...{}}` is `{}`; `{}` (no spread at all) still parses as today's
+  empty map literal, not a block (regression test — don't disturb the
+  existing empty-`{}`-is-a-map disambiguation).
+- Spreading a non-map value, e.g. `{...[1, 2]}` or `{...5}`, raises
+  `CinderRuntimeError` with the message `"cannot spread {type} in a map
+  literal"` and the spread expression's line/column.
+- A map literal mixing multiple spreads and explicit keys in any order
+  (e.g. `{"x": 0, ...{"a": 1}, "y": 2, ...{"a": 3}}`) evaluates left to
+  right with strict last-write-wins: `{"x": 0, "a": 3, "y": 2}`.
+- List-literal spread and call-argument spread both still behave exactly
+  as before (regression tests) — this task only adds a new place spread
+  is accepted, it must not change existing behavior.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s Data Structures
+bullet ("map literals don't support spread") will need updating too —
+leave that to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

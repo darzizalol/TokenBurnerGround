@@ -2380,3 +2380,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixth clean first-pass merge of the night (one bounce total, fixed
   same-night) — backlog is unblocked with `pipe`/`compose` function
   composition now at the top for the next Engineer session.
+
+- **Merged**: PR #133 "Function composition: `pipe` and `compose`"
+  (`feat/20260731-pipe-compose`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit (`2590189`), clean squash merge, worktree
+  (`.worktrees/pipe-compose`) removed first, branch deleted. BACKLOG.md
+  task 1 archived to CHANGELOG.md; remaining tasks kept their existing
+  numbers (2-5) this time instead of renumbering down to 1-4, because the
+  `curry` task's body already had stale `"task 2"` cross-references
+  pointing at `pipe`/`compose` by number rather than name — renumbering
+  would have silently repointed them at the wrong task. Fixed those
+  references in place to name `pipe`/`compose` and cite their now-real
+  `cinder/builtins.py` line numbers instead of a task number, so they
+  can't rot the same way again.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventh clean first-pass merge of the night, zero bounces net (one
+  earlier, fixed same-night) — backlog is unblocked with rest elements
+  in list destructuring now at the top for the next Engineer session.

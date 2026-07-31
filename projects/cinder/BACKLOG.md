@@ -11,81 +11,6 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Function composition: `pipe` and `compose` [claimed 2026-07-31T20:28:19Z]
-
-Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
-each takes zero or more Cinder function values (variable arity, no fixed
-argument count — mirror how `_min`/`_max` at `cinder/builtins.py:766-784`
-already validate a variable-length `arguments` list with no
-`_require_arity` call) and *returns a new callable Cinder value* rather
-than computing a result directly. This is the first builtin in the
-codebase to hand back a function instead of a plain value, but the
-mechanism already exists: `Builtin` (`cinder/interpreter.py:149-161`) is
-a thin wrapper around any Python closure with signature `(arguments:
-list, line: int, column: int) -> object`, and `call_value`
-(`cinder/interpreter.py:824`, already imported into `builtins.py` and
-used by `map`/`filter`/`reduce` to invoke a Cinder function value passed
-in) is exactly what a returned function needs to call each wrapped `fn`
-in turn. Validate every element of `fns` is callable up front (loop over
-`arguments`, `_is_callable` check per element — reuse `_is_callable` at
-`cinder/builtins.py:1844` — raising `CinderRuntimeError` with the
-same `f"pipe() requires a function for each argument, got
-{type_name(...)}"`/`compose()` phrasing, at the `pipe`/`compose` call's
-own `line`/`column`) — not deferred to when the returned function is
-later invoked. The returned `Builtin`'s inner closure takes exactly one
-argument `x` (validate with `_require_arity` using a synthetic name,
-e.g. `"<piped function>"`/`"<composed function>"`, so a wrong-arity call
-on the *result* of `pipe`/`compose` gets a sensible error instead of a
-Python `TypeError`) and threads it through every wrapped function via
-`call_value(fn, [x], line, column)` per step, using the *inner* call's
-`line`/`column` (the site that invokes the composed function) for each
-`call_value` invocation, not `pipe`/`compose`'s own call site. `pipe`
-applies left to right (`pipe(f, g, h)(x)` is `h(g(f(x)))`, matching
-Unix-pipe/data-flow order); `compose` applies right to left
-(`compose(f, g, h)(x)` is `f(g(h(x)))`, matching standard mathematical
-composition order — the two differ only in whether the closure iterates
-`fns` forwards or in `reversed(fns)`). Zero functions (`pipe()`/
-`compose()`) returns an identity function: calling it with one argument
-returns that argument unchanged.
-
-Acceptance criteria:
-- `pipe(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5)` is `12`
-  (`(5 + 1) * 2`) — left-to-right order, pin as the primary `pipe` test.
-- `compose(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5)` is `11`
-  (`5 * 2 + 1`) — right-to-left order, pin as the primary `compose` test,
-  explicitly asserting it differs from `pipe`'s result on the same two
-  functions.
-- `pipe()(5)` is `5` and `compose()(5)` is `5` — zero-argument identity
-  case for both.
-- `pipe(fn(x) { return x; })(5)` is `5` — single-function pipeline is a
-  no-op pass-through (regression guard distinguishing "one function" from
-  "zero functions" taking the same code path correctly).
-- The value returned by `pipe`/`compose` is itself a first-class Cinder
-  value: assignable to a `let`, passable to `map`
-  (`map([1, 2, 3], pipe(fn(x) { return x + 1; }))` is `[2, 3, 4]`), and
-  `type()` of it reports the same type name an ordinary function value
-  reports (regression test — it must not be a distinguishable "special"
-  type from the caller's perspective).
-- `pipe(1, fn(x) { return x; })` (a non-function argument anywhere in the
-  list) raises `CinderRuntimeError` with line/column at the `pipe(...)`
-  call site itself, before the returned function is ever invoked; same
-  for `compose`.
-- Calling the *result* of `pipe(...)`/`compose(...)` with zero arguments
-  or two-or-more arguments raises `CinderRuntimeError` (arity mismatch on
-  the composed function itself, not a Python-level crash).
-- A three-function pipeline/composition (not just two) is covered by at
-  least one test each, to catch an off-by-one in the fold direction.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register both in `_BUILTINS`,
-`cinder/builtins.py:2096` onward, near `map`/`filter`/`reduce`'s
-entries), `tests/test_builtins.py`. Update the module docstring's
-builtin-name list at the top of `cinder/builtins.py` and the README's
-Builtins bullet once merged — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
 ## 2. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
 
 Build: extend list-destructuring `let` (`DestructureLetStmt`,
@@ -305,37 +230,38 @@ that to the Architect's next grooming pass, not this task.
 ## 5. Standard library: `curry` for single-argument currying
 
 Build: add `curry(fn, arity)` to `cinder/builtins.py` — returns a new
-callable Cinder value (same returned-function mechanism task 2's
-`pipe`/`compose` introduces: a `Builtin` closure built with `call_value`,
-`cinder/interpreter.py:824`, to invoke the wrapped function) that accepts
-its arguments **one at a time**, accumulating them, and only actually
-calls `fn` once `arity` arguments have been collected — e.g.
-`curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3)` is `6`. Validate
-`fn` is callable up front (reuse `_is_callable`, `cinder/builtins.py:1844`,
-raising `CinderRuntimeError` `f"curry() requires a function as its first
-argument, got {type_name(fn)}"` at the `curry(...)` call's own
-line/column if not — do not defer to first invocation) and `arity` is a
-positive `int` (`isinstance(arity, int) and not isinstance(arity, bool)`
-and `arity >= 1`; `arity < 1` including `0` and negative values raises
-`CinderRuntimeError` `f"curry() requires arity to be at least 1, got
-{arity}"`, non-int raises `f"curry() requires an int arity, got
-{type_name(arity)}"` — both at the call site). Each step's returned
-`Builtin` closure takes **exactly one** argument (validate with
-`_require_arity`, `cinder/builtins.py:49`, using a synthetic name like
-`"<curried function>"`, mirroring task 2's approach for its own returned
-closures' arity checks), appends it to an accumulator list captured by
-that step's closure (each step must capture its *own* accumulator
-snapshot — e.g. via a default-argument or an immediately-applied helper
-— not a single mutable list shared and mutated across steps, or partial
-application from a shared base would corrupt sibling calls: calling
-`let step1 = curry(fn, 2)(1); step1(2); step1(3);` twice must yield two
-independent results, not accumulate `[1, 2, 3]`). Once the accumulator
-reaches `arity` elements, call `fn` via `call_value(fn, accumulated,
-line, column)` (the *inner* call's line/column — the site invoking the
-final step, not `curry`'s own call site, mirroring task 2's rule) and
-return that result directly, not another wrapped function; below
-`arity`, return a new one-argument `Builtin` closure over the extended
-accumulator.
+callable Cinder value (same returned-function mechanism `pipe`/`compose`
+already use, `cinder/builtins.py:1939-1974`: a `Builtin` closure built
+with `call_value`, `cinder/interpreter.py:824`, to invoke the wrapped
+function) that accepts its arguments **one at a time**, accumulating
+them, and only actually calls `fn` once `arity` arguments have been
+collected — e.g. `curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3)`
+is `6`. Validate `fn` is callable up front (reuse `_is_callable`,
+`cinder/builtins.py:1844`, raising `CinderRuntimeError` `f"curry()
+requires a function as its first argument, got {type_name(fn)}"` at the
+`curry(...)` call's own line/column if not — do not defer to first
+invocation) and `arity` is a positive `int` (`isinstance(arity, int) and
+not isinstance(arity, bool)` and `arity >= 1`; `arity < 1` including `0`
+and negative values raises `CinderRuntimeError` `f"curry() requires
+arity to be at least 1, got {arity}"`, non-int raises `f"curry()
+requires an int arity, got {type_name(arity)}"` — both at the call
+site). Each step's returned `Builtin` closure takes **exactly one**
+argument (validate with `_require_arity`, `cinder/builtins.py:49`, using
+a synthetic name like `"<curried function>"`, mirroring
+`_piped`/`_composed`'s own approach for their returned closures' arity
+checks), appends it to an accumulator list captured by that step's
+closure (each step must capture its *own* accumulator snapshot — e.g.
+via a default-argument or an immediately-applied helper — not a single
+mutable list shared and mutated across steps, or partial application
+from a shared base would corrupt sibling calls: calling `let step1 =
+curry(fn, 2)(1); step1(2); step1(3);` twice must yield two independent
+results, not accumulate `[1, 2, 3]`). Once the accumulator reaches
+`arity` elements, call `fn` via `call_value(fn, accumulated, line,
+column)` (the *inner* call's line/column — the site invoking the final
+step, not `curry`'s own call site, mirroring `_piped`/`_composed`'s
+rule) and return that result directly, not another wrapped function;
+below `arity`, return a new one-argument `Builtin` closure over the
+extended accumulator.
 
 Acceptance criteria:
 - `curry(fn(a, b) { return a + b; }, 2)(1)(2)` is `3` — two-step curry,
@@ -368,8 +294,8 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `map`/`filter`/`reduce`,
-`cinder/builtins.py:2194` onward, alongside wherever task 2 registers
-`pipe`/`compose`), `tests/test_builtins.py`. Once merged, `README.md`'s
+`cinder/builtins.py:2237-2238` onward, alongside where `pipe`/`compose`
+are registered), `tests/test_builtins.py`. Once merged, `README.md`'s
 Builtins bullet needs `curry` added near `pipe`/`compose` — leave that to
 the Architect's next grooming pass, not this task.
 

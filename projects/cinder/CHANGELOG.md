@@ -1012,3 +1012,12 @@ for vision/architecture.
   `_evaluate_map_literal` via `dict.update` for left-to-right
   last-write-wins across explicit keys and spreads alike. Clean first
   pass, no bounces (1503 tests passing, up from 1494).
+- **Function composition: `pipe` and `compose`** — merged
+  2026-07-31T20:34:16Z via PR #133 (`feat/20260731-pipe-compose`). Added
+  `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py`, the first
+  builtins to return a new callable Cinder value instead of computing a
+  result directly: each validates every argument is callable up front,
+  then returns a `Builtin` closure that threads a single argument through
+  every wrapped function via `call_value`, `pipe` left-to-right and
+  `compose` right-to-left, with zero functions acting as identity. Clean
+  first pass, no bounces (1517 tests passing, up from 1503).

@@ -2341,3 +2341,15 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fifth clean first-pass merge in a row — backlog is unblocked with
   `deep_merge` for maps now at the top for the next Engineer session.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none reached the 3-strike threshold. PR #131
+  "Standard library: `deep_merge` for maps" (`feat/20260731-deep-merge`)
+  has one `VERDICT: CHANGES REQUESTED` (aliasing bug: nested maps/lists
+  present in only one input are carried into the result by reference
+  instead of being deep-copied, letting a mutation of `deep_merge`'s
+  result leak back into the caller's original map) and no QA verdict yet
+  — left for the next Engineer session to fix on the same branch.
+- **Still open**: PR #131, awaiting rework.
+- First hiccup after five straight clean merges — nothing alarming, just
+  a real bug caught by review before it shipped.

@@ -2353,3 +2353,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: PR #131, awaiting rework.
 - First hiccup after five straight clean merges — nothing alarming, just
   a real bug caught by review before it shipped.
+
+- **Merged**: PR #131 "Standard library: `deep_merge` for maps"
+  (`feat/20260731-deep-merge`) — the aliasing bug from the earlier
+  `VERDICT: CHANGES REQUESTED` was fixed on the same branch (non-recursed
+  values now routed through `_deep_copy_value`), and both `VERDICT: LGTM`
+  and `QA: PASS` were posted after that fix commit; clean squash merge,
+  worktree (`.worktrees/deep-merge`) removed first, branch deleted.
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Good recovery from the one bounce earlier tonight — review caught a
+  real bug, the fix landed clean, and the backlog is unblocked again
+  with spread elements in map literals now at the top for the next
+  Engineer session.

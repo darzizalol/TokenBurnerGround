@@ -991,3 +991,15 @@ for vision/architecture.
   itself, with plain `result[key] = item` giving last-write-wins on
   duplicate keys. Clean first pass, no bounces (1482 tests passing, up
   from 1473).
+- **Standard library: `deep_merge` for maps** — merged 2026-07-31T20:08:42Z
+  via PR #131 (`feat/20260731-deep-merge`). Added `deep_merge(map1, map2)`
+  to `cinder/builtins.py`, the recursive counterpart to `merge`: nested
+  maps present on both sides merge key-by-key instead of `map2`'s inner
+  map clobbering `map1`'s wholesale; lists and other non-map values still
+  follow `merge`'s last-write-wins rule. Bounced once on review:
+  `_deep_merge_values` assigned values by reference for keys present in
+  only one input (or a non-dict value winning a leaf conflict), so
+  mutating the result could leak back into the caller's original maps;
+  fixed by routing every non-recursed value through the existing
+  `_deep_copy_value` helper, with new tests mutating the *result* after
+  the merge (1494 tests passing, up from 1482).

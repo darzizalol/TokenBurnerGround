@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `key_by` for lists
+## 1. Standard library: `key_by` for lists [claimed 2026-07-31T19:42:36Z]
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to

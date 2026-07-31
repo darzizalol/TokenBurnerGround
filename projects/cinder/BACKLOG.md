@@ -103,10 +103,10 @@ not yet exist — check first).
 ## 3. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
-(`cinder/interpreter.py:527-543`) raise `undefined name {name!r}` after
+(`cinder/interpreter.py:588-606`) raise `undefined name {name!r}` after
 an `Environment.get`/`assign` `KeyError`, append a suggestion when a
 close match exists among the names currently in scope. Add a method to
-`Environment` (`cinder/interpreter.py:129-154`) — e.g. `all_names(self)
+`Environment` (`cinder/interpreter.py:146-187`) — e.g. `all_names(self)
 -> set[str]` — that walks `self` and every `parent` up the chain,
 unioning each level's `self._values.keys()` (this naturally includes
 global builtins, since `create_global_environment` populates the
@@ -162,7 +162,7 @@ dispatch, consume both, parse the loop as normal, and attach the label.
 before the `;` (only when the next token is an identifier, not `;` —
 don't require one, preserving today's unlabeled `break;`/`continue;`).
 Interpreter: give `_BreakSignal`/`_ContinueSignal`
-(`cinder/interpreter.py:88-93`) an optional `label: str | None`
+(`cinder/interpreter.py:96-101`) an optional `label: str | None`
 constructor arg; when a loop's execution catches one of these signals,
 if the signal's label is `None` or matches the loop's own label, handle
 it as today (stop/skip-to-step), otherwise **re-raise it unchanged**
@@ -219,7 +219,7 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to
-`group_by` (`_group_by` at `cinder/builtins.py:1876-1897`, which buckets
+`group_by` (`_group_by` at `cinder/builtins.py:1895-1916`, which buckets
 into lists instead). Mirror `_group_by`'s validation exactly:
 `_require_arity("key_by", arguments, 2, line, column)`, a `list` check
 on the first argument (same error-message phrasing as `_group_by`'s,

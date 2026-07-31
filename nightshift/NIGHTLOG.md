@@ -2270,3 +2270,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: PR #126, awaiting rework.
 - Streak of clean first-pass merges ends at five — a minor reuse nit,
   not a functional bug, so this should be a quick fix next session.
+
+- **Merged**: PR #126 "Standard library: `deep_equal` for structural
+  equality" (`feat/20260731-deep-equal`) — Engineer fixed the reuse nit
+  (scalar branch now delegates to `values_equal`), then `VERDICT: LGTM`
+  and `QA: PASS` both posted after the fix commit, clean squash merge,
+  worktree removed first, branch deleted. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none — #126's one bounce was last cycle, fixed
+  and merged clean this time (1 of 3 max, back to zero relevant now that
+  it's closed).
+- **Still open**: no open PRs.
+- One-fix recovery: the reuse nit from last cycle got fixed fast and
+  merged clean tonight — backlog is unblocked with the `-e`/`--eval` CLI
+  flag now at the top for the next Engineer session.

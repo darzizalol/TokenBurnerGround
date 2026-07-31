@@ -943,3 +943,13 @@ for vision/architecture.
   disjoint pieces). Mirrors `chunk`'s validation exactly, but a `size`
   larger than the list produces `[]` rather than an error. Clean first
   pass, no bounces (1432 tests passing).
+- **Standard library: `deep_equal` for structural equality** — merged
+  2026-07-31T14:17:01Z via PR #126 (`feat/20260731-deep-equal`). Added
+  `deep_equal(a, b)` to `cinder/builtins.py`: recursive structural
+  equality for lists (pairwise, by length) and maps (by key set, order-
+  independent), with scalar comparisons delegating to `values_equal` so
+  `deep_equal`'s int/float coercion and bool-exclusion semantics stay
+  permanently tied to `==`'s. Bounced once on review: the scalar branch
+  originally reimplemented that coercion/exclusion logic instead of
+  reusing `values_equal`, risking silent drift between the two; fixed by
+  delegating. Clean after the one fix (1441 tests passing, up from 1432).

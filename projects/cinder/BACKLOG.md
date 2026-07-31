@@ -11,51 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `deep_equal` for structural equality [claimed 2026-07-31T14:03:09Z]
-
-Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
-structural equality for lists and maps, unlike plain `==` which (per
-Cinder's runtime representation of lists/maps as Python `list`/`dict`)
-already recurses correctly for *value* equality but this builtin exists
-to give scripts an explicit, self-documenting name for that comparison
-rather than relying on `==`'s incidental behavior, and to nail down
-edge cases `==` leaves ambiguous. Validate with `_require_arity
-("deep_equal", arguments, 2, line, column)` — no type restriction on
-`a`/`b`, any two values are comparable. Implement recursively: two lists
-are equal iff same length and every element is `deep_equal` pairwise
-(not Python's `==`, so nested list/map structures recurse through this
-same function rather than falling back to `==`'s own recursion); two
-maps are equal iff same set of keys and every value is `deep_equal`
-pairwise (key order does not matter); two non-collection values
-(numbers, strings, bools, `nil`) are equal iff `==` says so, with one
-deliberate carve-out: numeric equality does not distinguish `int` from
-`float` (`deep_equal(1, 1.0)` is `true`, matching Cinder's own `==`
-between numbers), but `bool` is not treated as numeric here even though
-Python's `bool` subclasses `int` — `deep_equal(true, 1)` must be `false`
-(check `isinstance(x, bool)` before falling into the numeric-equality
-branch, mirroring the existing `isinstance(size, int) and not
-isinstance(size, bool)` guard style used elsewhere, e.g. `_chunk`).
-
-Acceptance criteria:
-- `deep_equal([1, [2, 3]], [1, [2, 3]])` is `true`.
-- `deep_equal([1, [2, 3]], [1, [2, 4]])` is `false`.
-- `deep_equal({"a": 1, "b": {"c": 2}}, {"b": {"c": 2}, "a": 1})` is
-  `true` — key order does not matter, nested map values recurse.
-- `deep_equal({"a": 1}, {"a": 1, "b": 2})` is `false` — different key
-  sets.
-- `deep_equal(1, 1.0)` is `true` — numeric equality ignores int/float.
-- `deep_equal(true, 1)` is `false` — bools are never equal to numbers,
-  even though `1` is truthy-adjacent.
-- `deep_equal([1, 2], [1, 2, 3])` is `false` — different lengths.
-- `deep_equal("x", "x")` is `true`; `deep_equal(nil, nil)` is `true`.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. CLI: `-e`/`--eval` flag to run an inline snippet
+## 1. CLI: `-e`/`--eval` flag to run an inline snippet
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
@@ -100,7 +56,7 @@ not yet exist — check first).
 
 ---
 
-## 3. "Did you mean...?" suggestions for undefined-name errors
+## 2. "Did you mean...?" suggestions for undefined-name errors
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:588-606`) raise `undefined name {name!r}` after
@@ -140,7 +96,7 @@ Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
 
 ---
 
-## 4. Labeled `break`/`continue` for nested loops
+## 3. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)
@@ -215,7 +171,7 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 5. Standard library: `key_by` for lists
+## 4. Standard library: `key_by` for lists
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to
@@ -252,7 +208,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 6. Standard library: `deep_merge` for maps
+## 5. Standard library: `deep_merge` for maps
 
 Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
 recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,

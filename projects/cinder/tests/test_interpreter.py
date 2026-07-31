@@ -392,6 +392,49 @@ class TestIdentifiers(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
         self.assertEqual(ctx.exception.column, 1)
 
+    def test_all_names_includes_parent_chain(self):
+        parent = Environment()
+        parent.define("x", 1)
+        child = Environment(parent)
+        child.define("y", 2)
+        self.assertEqual(child.all_names(), {"x", "y"})
+
+
+class TestUndefinedNameSuggestions(unittest.TestCase):
+    def test_identifier_lookup_suggests_close_match(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let cost = 1; costt;")
+        self.assertEqual(
+            ctx.exception.message, "undefined name 'costt' (did you mean 'cost'?)"
+        )
+
+    def test_assignment_suggests_close_match(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let cost = 1; costt = 2;")
+        self.assertEqual(
+            ctx.exception.message, "undefined name 'costt' (did you mean 'cost'?)"
+        )
+
+    def test_no_close_match_leaves_message_unchanged(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("zzzzzzz_no_match;")
+        self.assertEqual(ctx.exception.message, "undefined name 'zzzzzzz_no_match'")
+
+    def test_builtin_typo_suggests_builtin(self):
+        from cinder.builtins import create_global_environment
+
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("pritn(1);", create_global_environment())
+        self.assertEqual(
+            ctx.exception.message, "undefined name 'pritn' (did you mean 'print'?)"
+        )
+
+    def test_suggestion_does_not_change_line_or_column(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let cost = 1;\ncostt;")
+        self.assertEqual(ctx.exception.line, 2)
+        self.assertEqual(ctx.exception.column, 1)
+
 
 class TestStatements(unittest.TestCase):
     def test_let_declares_and_lookup_works(self):

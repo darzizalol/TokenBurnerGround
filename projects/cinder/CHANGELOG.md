@@ -983,3 +983,11 @@ for vision/architecture.
   propagating to the next enclosing loop via ordinary Python exception
   propagation. Clean first pass, no bounces (1473 tests passing, up from
   1452).
+- **Standard library: `key_by` for lists** — merged 2026-07-31T19:47:30Z
+  via PR #130 (`feat/20260731-key-by`). Added `_key_by` to
+  `cinder/builtins.py`, mirroring `_group_by`'s validation exactly
+  (arity, list check, callable check, `_is_valid_key` check with
+  matching error phrasing) but indexing each key directly to the item
+  itself, with plain `result[key] = item` giving last-write-wins on
+  duplicate keys. Clean first pass, no bounces (1482 tests passing, up
+  from 1473).

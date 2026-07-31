@@ -11,44 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `key_by` for lists [claimed 2026-07-31T19:42:36Z]
-
-Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
-into a map keyed by `fn(item)`, the "one winner per key" counterpart to
-`group_by` (`_group_by` at `cinder/builtins.py:1915-1935`, which buckets
-into lists instead). Mirror `_group_by`'s validation exactly:
-`_require_arity("key_by", arguments, 2, line, column)`, a `list` check
-on the first argument (same error-message phrasing as `_group_by`'s,
-`key_by` substituted for `group_by`), an `_is_callable` check on `fn`
-(same phrasing), and the same `_is_valid_key` check on each computed key
-raising the same `"{type_name(key)} is not a valid map key"` error
-`_group_by`/`_count_by` already raise. Unlike `group_by`, each key maps
-directly to the *item itself*, not a list of items; when two items
-produce the same key, the later item wins (plain last-write-wins via
-`result[key] = item` in iteration order — same overwrite semantics
-Python dict assignment gives for free, no special-casing needed).
-
-Acceptance criteria:
-- `key_by([{"id": 1, "n": "a"}, {"id": 2, "n": "b"}], fn(x) { return
-  x["id"]; })` is `{1: {"id": 1, "n": "a"}, 2: {"id": 2, "n": "b"}}`.
-- Duplicate keys: `key_by([{"id": 1, "n": "a"}, {"id": 1, "n": "b"}],
-  fn(x) { return x["id"]; })` is `{1: {"id": 1, "n": "b"}}` — the later
-  item wins, pin this as an explicit regression test.
-- `key_by([], fn(x) { return x; })` is `{}`.
-- A key function returning a non-hashable value (e.g. a list) raises
-  `CinderRuntimeError` with the same `"... is not a valid map key"`
-  message `group_by`/`count_by` use, with line/column.
-- A non-list first argument raises `CinderRuntimeError` with line/column.
-- A non-function second argument raises `CinderRuntimeError` with
-  line/column.
-- Wrong arity raises `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
-
----
-
-## 2. Standard library: `deep_merge` for maps
+## 1. Standard library: `deep_merge` for maps
 
 Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
 recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,
@@ -106,7 +69,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Spread elements in map literals: `{...map1, "k": v}`
+## 2. Spread elements in map literals: `{...map1, "k": v}`
 
 Build: extend the spread operator, currently only accepted inside list
 literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;
@@ -164,7 +127,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Function composition: `pipe` and `compose`
+## 3. Function composition: `pipe` and `compose`
 
 Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
 each takes zero or more Cinder function values (variable arity, no fixed
@@ -239,7 +202,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
+## 4. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
 
 Build: extend list-destructuring `let` (`DestructureLetStmt`,
 `cinder/ast_nodes.py:216-221`, currently `names: list` plus an `is_map`
@@ -299,7 +262,7 @@ task.
 
 ---
 
-## 6. `throw` statement for user-raised errors
+## 5. `throw` statement for user-raised errors
 
 Build: add a `throw EXPR;` statement so Cinder code can raise its own
 runtime errors with a custom message, instead of the only way to

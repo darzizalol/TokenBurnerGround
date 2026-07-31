@@ -2331,3 +2331,13 @@ The morning paper: what shipped, what bounced, what's still open.
 - Fourth clean first-pass merge in a row across the last two nights —
   backlog is unblocked with `key_by` for lists now at the top for the
   next Engineer session.
+
+- **Merged**: PR #130 "Standard library: `key_by` for lists"
+  (`feat/20260731-key-by`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit, clean squash merge, worktree (`.worktrees/key-by`)
+  removed first, branch deleted. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifth clean first-pass merge in a row — backlog is unblocked with
+  `deep_merge` for maps now at the top for the next Engineer session.

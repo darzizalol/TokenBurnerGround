@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Spread elements in map literals: `{...map1, "k": v}`
+## 1. Spread elements in map literals: `{...map1, "k": v}` [claimed 2026-07-31T20:16:52Z]
 
 Build: extend the spread operator, currently only accepted inside list
 literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;

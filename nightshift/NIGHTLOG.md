@@ -2306,3 +2306,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - Third clean first-pass merge in a row tonight — backlog is unblocked
   with labeled `break`/`continue` for nested loops now at the top for
   the next Engineer session.
+
+## 2026-08-01
+
+- **Merged**: none — `gh pr list` shows no open PRs this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs. An Engineer session has already claimed the
+  labeled `break`/`continue` task and has a worktree
+  (`.worktrees/labeled-loops` on `feat/20260731-labeled-loops`) in
+  progress, but no PR has been opened yet, so there's nothing for Release
+  to act on.
+- Quiet start to the night — the streak of three clean first-pass merges
+  continues untested since there's simply no PR up yet; next cycle should
+  have one once the labeled-loops work lands.

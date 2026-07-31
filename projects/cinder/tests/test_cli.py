@@ -65,5 +65,55 @@ class TestCliSubcommands(unittest.TestCase):
         self.assertIn("/no/such/file.cin", result.stderr)
 
 
+class TestCliEval(unittest.TestCase):
+    def test_eval_prints_expression_result(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = cli.main(["eval", "print(1 + 2);"])
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stdout.getvalue(), "3\n")
+
+    def test_eval_multi_statement_snippet(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = cli.main(["eval", "let x = 1; x = 2; print(x);"])
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stdout.getvalue(), "2\n")
+
+    def test_eval_runtime_error_reports_eval_prefixed_diagnostic(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "cinder.cli", "eval", "print(undefined_name);"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn(
+            "<eval>:1:7: undefined name 'undefined_name'", result.stderr
+        )
+
+    def test_eval_parse_error_reports_eval_prefixed_diagnostic(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "cinder.cli", "eval", "let x = ;"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertTrue(result.stderr.startswith("<eval>:"))
+
+    def test_run_file_behavior_unchanged_after_refactor(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".cin", delete=False) as f:
+            f.write("print(1 + 2);\n")
+            path = f.name
+        result = subprocess.run(
+            [sys.executable, "-m", "cinder.cli", "run", path],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "3\n")
+
+
 if __name__ == "__main__":
     unittest.main()

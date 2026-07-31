@@ -23,19 +23,26 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="Run a Cinder script")
     run_parser.add_argument("file", help="Path to a .cin script")
 
+    eval_parser = subparsers.add_parser("eval", help="Run an inline Cinder snippet")
+    eval_parser.add_argument("source", help="Cinder source code to run")
+
     subparsers.add_parser("repl", help="Start an interactive Cinder REPL")
 
     return parser
 
 
-def run_file(path: str) -> None:
-    with open(path, "r", encoding="utf-8") as f:
-        source = f.read()
+def _run_source(source: str) -> None:
     statements = parse_program(tokenize(source))
     interpreter = Interpreter()
     env = create_global_environment()
     for statement in statements:
         interpreter.execute(statement, env)
+
+
+def run_file(path: str) -> None:
+    with open(path, "r", encoding="utf-8") as f:
+        source = f.read()
+    _run_source(source)
 
 
 def main(argv=None) -> int:
@@ -50,6 +57,15 @@ def main(argv=None) -> int:
             return 1
         except CinderError as e:
             print(f"{args.file}:{e.line}:{e.column}: {e.message}", file=sys.stderr)
+            for name, line, column in getattr(e, "frames", []):
+                print(f"  at {name} ({line}:{column})", file=sys.stderr)
+            return 1
+        return 0
+    if args.command == "eval":
+        try:
+            _run_source(args.source)
+        except CinderError as e:
+            print(f"<eval>:{e.line}:{e.column}: {e.message}", file=sys.stderr)
             for name, line, column in getattr(e, "frames", []):
                 print(f"  at {name} ({line}:{column})", file=sys.stderr)
             return 1

@@ -64,7 +64,15 @@ def shape(node):
     if isinstance(node, ListLiteral):
         return ("ListLiteral", [shape(e) for e in node.elements])
     if isinstance(node, MapLiteral):
-        return ("MapLiteral", [(shape(k), shape(v)) for k, v in node.pairs])
+        return (
+            "MapLiteral",
+            [
+                shape(entry)
+                if isinstance(entry, Spread)
+                else (shape(entry[0]), shape(entry[1]))
+                for entry in node.pairs
+            ],
+        )
     if isinstance(node, Index):
         return ("Index", shape(node.obj), shape(node.index))
     if isinstance(node, SliceExpr):
@@ -626,9 +634,37 @@ class TestListsAndMaps(unittest.TestCase):
             ),
         )
 
-    def test_bare_spread_in_map_literal_raises(self):
-        with self.assertRaises(ParseError):
-            parse("{...m}")
+    def test_map_literal_with_spread(self):
+        self.assertEqual(
+            shape(parse('{...m, "b": 2}')),
+            (
+                "MapLiteral",
+                [
+                    ("Spread", ("Identifier", "m")),
+                    (("Literal", "b"), ("Literal", 2)),
+                ],
+            ),
+        )
+
+    def test_map_literal_multiple_spreads(self):
+        self.assertEqual(
+            shape(parse('{"x": 0, ...m1, "y": 2, ...m2}')),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "x"), ("Literal", 0)),
+                    ("Spread", ("Identifier", "m1")),
+                    (("Literal", "y"), ("Literal", 2)),
+                    ("Spread", ("Identifier", "m2")),
+                ],
+            ),
+        )
+
+    def test_bare_spread_map_literal(self):
+        self.assertEqual(
+            shape(parse("{...m}")),
+            ("MapLiteral", [("Spread", ("Identifier", "m"))]),
+        )
 
     def test_map_literal(self):
         self.assertEqual(

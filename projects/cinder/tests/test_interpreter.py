@@ -1579,6 +1579,38 @@ class TestListsAndMaps(unittest.TestCase):
     def test_empty_map_literal(self):
         self.assertEqual(evaluate("{}"), {})
 
+    def test_map_literal_with_spread(self):
+        self.assertEqual(evaluate('{"a": 1, ...{"b": 2}}'), {"a": 1, "b": 2})
+
+    def test_map_literal_spread_then_explicit_key_overrides(self):
+        self.assertEqual(evaluate('{...{"a": 1}, "a": 2}'), {"a": 2})
+
+    def test_map_literal_later_spread_overrides_earlier_key_by_key(self):
+        self.assertEqual(
+            evaluate('{...{"a": 1}, ...{"a": 2, "b": 3}}'), {"a": 2, "b": 3}
+        )
+
+    def test_map_literal_spread_of_empty_map(self):
+        self.assertEqual(evaluate("{...{}}"), {})
+
+    def test_map_literal_spreading_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{...[1, 2]}")
+        self.assertIn("cannot spread", str(ctx.exception))
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 2)
+
+    def test_map_literal_spreading_number_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{...5}")
+        self.assertIn("cannot spread", str(ctx.exception))
+
+    def test_map_literal_mixed_spreads_and_keys_strict_last_write_wins(self):
+        self.assertEqual(
+            evaluate('{"x": 0, ...{"a": 1}, "y": 2, ...{"a": 3}}'),
+            {"x": 0, "a": 3, "y": 2},
+        )
+
     def test_list_get_index(self):
         self.assertEqual(evaluate("[10, 20, 30][1]"), 20)
 

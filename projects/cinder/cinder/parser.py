@@ -946,12 +946,18 @@ class Parser:
         brace = self._advance()  # consume '{'
         pairs = []
         if not self._check(TokenType.RBRACE):
-            pairs.append(self._map_pair())
+            pairs.append(self._map_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
-                pairs.append(self._map_pair())
+                pairs.append(self._map_entry())
         self._consume(TokenType.RBRACE, "'}' after map literal")
         return MapLiteral(pairs, brace.line, brace.column)
+
+    def _map_entry(self):
+        if self._check(TokenType.DOT_DOT_DOT):
+            dots = self._advance()
+            return Spread(self._ternary(), dots.line, dots.column)
+        return self._map_pair()
 
     def _map_pair(self) -> tuple:
         key = self._or()

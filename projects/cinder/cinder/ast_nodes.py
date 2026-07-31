@@ -85,7 +85,7 @@ class ListLiteral:
 
 @dataclass(frozen=True)
 class MapLiteral:
-    pairs: list  # list[tuple[Expr, Expr]] of (key, value) expressions
+    pairs: list  # list of (key, value) Expr tuples mixed with Spread entries
     line: int
     column: int
 

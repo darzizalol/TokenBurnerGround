@@ -471,7 +471,18 @@ class Interpreter:
 
     def _evaluate_map_literal(self, expr: MapLiteral, env: Environment) -> object:
         result: dict = {}
-        for key_expr, value_expr in expr.pairs:
+        for entry in expr.pairs:
+            if isinstance(entry, Spread):
+                value = self.evaluate(entry.expression, env)
+                if not isinstance(value, dict):
+                    raise CinderRuntimeError(
+                        f"cannot spread {type_name(value)} in a map literal",
+                        entry.line,
+                        entry.column,
+                    )
+                result.update(value)
+                continue
+            key_expr, value_expr = entry
             key = self.evaluate(key_expr, env)
             if not _is_valid_key(key):
                 raise CinderRuntimeError(

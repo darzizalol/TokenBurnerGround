@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Labeled `break`/`continue` for nested loops
+## 1. Labeled `break`/`continue` for nested loops [claimed 2026-07-31T14:47Z]
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)

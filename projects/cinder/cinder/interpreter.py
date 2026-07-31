@@ -42,6 +42,8 @@ straight to `map`/`filter`) — both carry `params`/`body`, so `call_value`
 distinguish them.
 """
 
+import difflib
+
 from cinder.ast_nodes import (
     Assign,
     Binary,
@@ -177,6 +179,15 @@ class Environment:
                 return
             env = env.parent
         raise KeyError(name)
+
+    def all_names(self) -> set[str]:
+        """Every name visible from this scope, including parents and builtins."""
+        names: set[str] = set()
+        env: Environment | None = self
+        while env is not None:
+            names.update(env._values.keys())
+            env = env.parent
+        return names
 
 
 def is_truthy(value: object) -> bool:
@@ -585,12 +596,19 @@ class Interpreter:
             column,
         )
 
+    def _undefined_name_message(self, name: str, env: Environment) -> str:
+        message = f"undefined name {name!r}"
+        matches = difflib.get_close_matches(name, env.all_names(), n=1, cutoff=0.6)
+        if matches:
+            message += f" (did you mean {matches[0]!r}?)"
+        return message
+
     def _evaluate_identifier(self, expr: Identifier, env: Environment) -> object:
         try:
             return env.get(expr.name)
         except KeyError:
             raise CinderRuntimeError(
-                f"undefined name {expr.name!r}", expr.line, expr.column
+                self._undefined_name_message(expr.name, env), expr.line, expr.column
             ) from None
 
     def _evaluate_assign(self, expr: Assign, env: Environment) -> object:
@@ -599,7 +617,7 @@ class Interpreter:
             env.assign(expr.name, value)
         except KeyError:
             raise CinderRuntimeError(
-                f"undefined name {expr.name!r}", expr.line, expr.column
+                self._undefined_name_message(expr.name, env), expr.line, expr.column
             ) from None
         except _ConstAssignError:
             raise CinderRuntimeError(

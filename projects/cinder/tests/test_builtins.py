@@ -659,6 +659,26 @@ class TestDeepMerge(unittest.TestCase):
         self.assertEqual(env.get("m1"), {"a": {"x": 1}})
         self.assertEqual(env.get("m2"), {"a": {"y": 2}})
 
+    def test_deep_merge_result_mutation_does_not_leak_into_inputs(self):
+        env = run(
+            'let m1 = {"a": {"x": 1}};'
+            'let m2 = {"b": 2};'
+            "let result = deep_merge(m1, m2);"
+            'result["a"]["z"] = 999;'
+        )
+        self.assertEqual(env.get("m1"), {"a": {"x": 1}})
+        self.assertEqual(env.get("result"), {"a": {"x": 1, "z": 999}, "b": 2})
+
+    def test_deep_merge_result_list_mutation_does_not_leak_into_inputs(self):
+        env = run(
+            'let m1 = {"a": [1, 2]};'
+            'let m2 = {"b": 3};'
+            "let result = deep_merge(m1, m2);"
+            'result["a"][0] = 999;'
+        )
+        self.assertEqual(env.get("m1"), {"a": [1, 2]})
+        self.assertEqual(env.get("result"), {"a": [999, 2], "b": 3})
+
     def test_deep_merge_with_empty_maps(self):
         self.assertEqual(run("let result = deep_merge({}, {});").get("result"), {})
 

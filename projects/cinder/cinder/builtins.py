@@ -377,12 +377,12 @@ def _merge(arguments: list, line: int, column: int) -> object:
 
 
 def _deep_merge_values(map1: dict, map2: dict) -> dict:
-    result = dict(map1)
+    result = {key: _deep_copy_value(value) for key, value in map1.items()}
     for key, value in map2.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             result[key] = _deep_merge_values(result[key], value)
         else:
-            result[key] = value
+            result[key] = _deep_copy_value(value)
     return result
 
 

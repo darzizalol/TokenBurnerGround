@@ -84,9 +84,10 @@ while (i < 10) {
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
   `list[start:end]`/`string[start:end]` (Python-style, out-of-range bounds
-  clamp, not assignable); list literals also accept spread elements
-  (`[...list1, x, ...list2]`), splicing each spread list's elements in place
-  (map literals don't support spread)
+  clamp, not assignable); list literals accept spread elements
+  (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
+  map literals accept spread elements too (`{...map1, "k": v}`), merging
+  left to right with later keys/spreads winning on conflict
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -179,11 +180,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: labeled `break`/`continue`
-for nested loops, and the stdlib additions `key_by` and `deep_merge`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): spread elements in
-map literals, function composition (`pipe`/`compose`), a rest element in
-list destructuring, a `throw` statement for user-raised errors, and the
+Actively developed, nightly. Recently landed: the stdlib additions
+`key_by` and `deep_merge`, and spread elements in map literals
+(`{...map1, "k": v}`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+function composition (`pipe`/`compose`), a rest element in list
+destructuring, a `throw` statement for user-raised errors, and the
 stdlib additions `get_in` for safe nested map/list access and `curry`
 for single-argument currying.
 The backlog mixes language depth with stdlib breadth over time rather

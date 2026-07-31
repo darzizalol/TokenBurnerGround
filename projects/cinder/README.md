@@ -91,7 +91,7 @@ while (i < 10) {
   `copy`, `deep_copy`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
   `pluck`, `pick`, `omit`,
-  `flat_map`, `chunk`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
+  `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `map_values`, `map_keys`, `filter`, `reduce`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
@@ -143,7 +143,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1420+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1432+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -169,13 +169,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the stdlib additions
-`zip_longest` and `group_consecutive`, and the nil-coalescing compound
-assignment `??=`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): more stdlib breadth
-(`sliding_window`, `deep_equal`, `key_by`), a CLI `-e`/`--eval` flag,
-"did you mean...?" suggestions for undefined-name errors, and labeled
-`break`/`continue` for nested loops.
+Actively developed, nightly. Recently landed: the nil-coalescing compound
+assignment `??=` and the stdlib addition `sliding_window`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the stdlib additions
+`deep_equal` and `key_by`, a CLI `-e`/`--eval` flag, "did you mean...?"
+suggestions for undefined-name errors, and labeled `break`/`continue` for
+nested loops.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

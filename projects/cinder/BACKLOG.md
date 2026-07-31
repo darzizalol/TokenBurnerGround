@@ -252,6 +252,64 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
+## 6. Standard library: `deep_merge` for maps
+
+Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
+recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,
+which does a shallow `dict(map1); result.update(map2)`). Mirror `_merge`'s
+validation exactly: `_require_arity("deep_merge", arguments, 2, line,
+column)`, then a `dict` check on each of `map1`/`map2` with the same
+error-message phrasing as `_merge`'s (`"deep_merge() requires a map, got
+{type_name(...)}"`, substituting `deep_merge` for `merge`). Merge
+semantics: for each key present in either map, if the key exists in both
+*and* both values are `dict` (use plain `isinstance(x, dict)`, matching
+how `_merge`/`_group_by` already test map-ness), recursively
+`deep_merge` those two nested values; otherwise (key only in one map, or
+present in both but at least one side is not a map) `map2`'s value wins
+if the key is in `map2`, otherwise `map1`'s value is kept — i.e. exactly
+`merge`'s existing last-write-wins behavior, just applied key-by-key
+instead of via a single top-level `dict.update`. Lists are never merged
+element-wise — a list value on either side is treated as an opaque
+non-map value subject to the same override rule as any other scalar.
+Neither input map is mutated; build and return a new `dict` (recursive
+calls naturally do this already since `deep_merge` itself returns a new
+dict, but the top-level result must not be `map1` or `map2` by
+reference — construct it fresh, e.g. starting from `dict(map1)` only at
+each recursion level the same way `_merge` does today, then overwriting/
+recursing per key from `map2`).
+
+Acceptance criteria:
+- `deep_merge({"a": 1}, {"b": 2})` is `{"a": 1, "b": 2}` — disjoint keys
+  from both sides survive, matching flat `merge`.
+- `deep_merge({"a": {"x": 1}}, {"a": {"y": 2}})` is `{"a": {"x": 1, "y":
+  2}}` — nested maps merge recursively instead of the inner map from
+  `map2` clobbering the inner map from `map1` wholesale (this is the
+  behavior that distinguishes it from plain `merge`, pin as the primary
+  regression test).
+- `deep_merge({"a": {"x": 1}}, {"a": {"x": 2}})` is `{"a": {"x": 2}}` —
+  conflicting leaf keys still follow last-write-wins (`map2` wins).
+- `deep_merge({"a": [1, 2]}, {"a": [3]})` is `{"a": [3]}` — a list value
+  is overwritten wholesale by `map2`'s list, not concatenated or merged
+  index-wise, pin this as an explicit regression test since it's the
+  easiest behavior to get wrong by analogy with recursive-map merging.
+- `deep_merge({"a": {"x": 1}}, {"a": 5})` is `{"a": 5}` — when one side's
+  value at a shared key isn't a map, `map2`'s value wins outright rather
+  than attempting a partial merge.
+- Three levels of nesting merge correctly (e.g.
+  `deep_merge({"a": {"b": {"c": 1}}}, {"a": {"b": {"d": 2}}})` is
+  `{"a": {"b": {"c": 1, "d": 2}}}`).
+- Neither input map is mutated by the call (assert both original maps
+  are unchanged after `deep_merge` runs on them).
+- `deep_merge({}, {})` is `{}`.
+- A non-map first or second argument raises `CinderRuntimeError` with
+  line/column, same phrasing pattern as `merge`'s own type-check errors.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

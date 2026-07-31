@@ -48,7 +48,9 @@ while (i < 10) {
   and maps (over keys), a C-style `for (init; cond; step) { ... }` loop
   (each clause optional; the loop variable gets a fresh binding per
   iteration so closures captured in the body see their own iteration's
-  value), `break`/`continue` in all loop kinds,
+  value), `break`/`continue` in all loop kinds, including labeled
+  `break`/`continue` (`outer: while (...) { for x in y { break outer; } }`)
+  to target an enclosing loop from a nested one,
   `try { ... } catch (name) { ... }` for recovering from runtime errors
   (the caught message binds to `name`; `break`/`continue`/`return` still
   propagate through uncaught), `switch` statements with `case`/`default`
@@ -150,7 +152,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1452+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1473+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -176,11 +178,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a CLI `-e`/`--eval` flag for
-running inline snippets, and "did you mean...?" suggestions for
-undefined-name errors. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-labeled `break`/`continue` for nested loops, the stdlib additions `key_by`
-and `deep_merge`, and spread elements in map literals.
+Actively developed, nightly. Recently landed: "did you mean...?"
+suggestions for undefined-name errors, and labeled `break`/`continue` for
+nested loops. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the stdlib
+additions `key_by` and `deep_merge`, spread elements in map literals, and
+function composition (`pipe`/`compose`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

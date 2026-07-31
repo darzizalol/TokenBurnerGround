@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `deep_equal` for structural equality
+## 1. Standard library: `deep_equal` for structural equality [claimed 2026-07-31T14:03:09Z]
 
 Build: add `deep_equal(a, b)` to `cinder/builtins.py` — recursive
 structural equality for lists and maps, unlike plain `==` which (per

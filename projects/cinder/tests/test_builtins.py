@@ -2895,6 +2895,56 @@ class TestGroupBy(unittest.TestCase):
             run("group_by([1]);")
 
 
+class TestKeyBy(unittest.TestCase):
+    def test_key_by_indexes_maps_by_computed_key(self):
+        env = run(
+            'let result = key_by([{"id": 1, "n": "a"}, {"id": 2, "n": "b"}], '
+            'fn(x) { return x["id"]; });'
+        )
+        self.assertEqual(
+            env.get("result"),
+            {1: {"id": 1, "n": "a"}, 2: {"id": 2, "n": "b"}},
+        )
+
+    def test_key_by_duplicate_keys_later_item_wins(self):
+        env = run(
+            'let result = key_by([{"id": 1, "n": "a"}, {"id": 1, "n": "b"}], '
+            'fn(x) { return x["id"]; });'
+        )
+        self.assertEqual(env.get("result"), {1: {"id": 1, "n": "b"}})
+
+    def test_key_by_empty_list(self):
+        env = run("let result = key_by([], fn(x) { return x; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_key_by_does_not_mutate_input(self):
+        env = run(
+            'let xs = [{"id": 1}]; '
+            'let result = key_by(xs, fn(x) { return x["id"]; });'
+        )
+        self.assertEqual(env.get("xs"), [{"id": 1}])
+
+    def test_key_by_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("key_by([1, 2], fn(n) { return [n]; });")
+
+    def test_key_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("key_by(5, fn(n) { return n; });")
+
+    def test_key_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("key_by([1, 2], 5);")
+
+    def test_key_by_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("key_by([1], fn(x, y) { return x; });")
+
+    def test_key_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("key_by([1]);")
+
+
 class TestCountBy(unittest.TestCase):
     def test_count_by_parity(self):
         env = run(

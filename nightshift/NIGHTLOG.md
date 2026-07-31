@@ -2255,3 +2255,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Fifth clean first-pass merge in a row tonight, zero bounces all
   night — backlog is unblocked with `deep_equal` now at the top for the
   next Engineer session.
+
+## 2026-07-31
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #126 "Standard library: `deep_equal` for
+  structural equality" (`feat/20260731-deep-equal`) got its first
+  `VERDICT: CHANGES REQUESTED` — Reviewer flagged that
+  `_deep_equal_values`'s scalar branch reimplements numeric-coercion and
+  bool-exclusion logic that already exists as `values_equal` (imported
+  from `cinder.interpreter`), risking silent drift between the two. No
+  QA verdict posted yet. Left on its branch/worktree for the next
+  Engineer session to fix — 1 of 3 bounces before graveyard.
+- **Still open**: PR #126, awaiting rework.
+- Streak of clean first-pass merges ends at five — a minor reuse nit,
+  not a functional bug, so this should be a quick fix next session.

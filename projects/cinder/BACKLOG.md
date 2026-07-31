@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. CLI: `-e`/`--eval` flag to run an inline snippet
+## 1. CLI: `-e`/`--eval` flag to run an inline snippet [claimed 2026-07-31T14:22:47Z]
 
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval

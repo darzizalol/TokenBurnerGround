@@ -1936,6 +1936,44 @@ def _reduce(arguments: list, line: int, column: int) -> object:
     return acc
 
 
+def _pipe(arguments: list, line: int, column: int) -> object:
+    for fn in arguments:
+        if not _is_callable(fn):
+            raise CinderRuntimeError(
+                f"pipe() requires a function for each argument, got {type_name(fn)}",
+                line, column,
+            )
+    fns = list(arguments)
+
+    def _piped(call_args: list, call_line: int, call_column: int) -> object:
+        _require_arity("<piped function>", call_args, 1, call_line, call_column)
+        value = call_args[0]
+        for fn in fns:
+            value = call_value(fn, [value], call_line, call_column)
+        return value
+
+    return Builtin("<piped function>", _piped)
+
+
+def _compose(arguments: list, line: int, column: int) -> object:
+    for fn in arguments:
+        if not _is_callable(fn):
+            raise CinderRuntimeError(
+                f"compose() requires a function for each argument, got {type_name(fn)}",
+                line, column,
+            )
+    fns = list(arguments)
+
+    def _composed(call_args: list, call_line: int, call_column: int) -> object:
+        _require_arity("<composed function>", call_args, 1, call_line, call_column)
+        value = call_args[0]
+        for fn in reversed(fns):
+            value = call_value(fn, [value], call_line, call_column)
+        return value
+
+    return Builtin("<composed function>", _composed)
+
+
 def _group_by(arguments: list, line: int, column: int) -> object:
     _require_arity("group_by", arguments, 2, line, column)
     items, fn = arguments
@@ -2196,6 +2234,8 @@ _BUILTINS = {
     "map_keys": _map_keys,
     "filter": _filter,
     "reduce": _reduce,
+    "pipe": _pipe,
+    "compose": _compose,
     "group_by": _group_by,
     "key_by": _key_by,
     "count_by": _count_by,

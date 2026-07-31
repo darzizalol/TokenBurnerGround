@@ -16,15 +16,15 @@ a later task while an earlier one is unclaimed/open.
 Build: add an `eval` mode to `cinder/cli.py` so a one-line script can be
 run without creating a `.cin` file, e.g. `python3 -m cinder.cli eval
 'print(1 + 2);'`. Add a third subparser alongside `run`/`repl` in
-`build_parser` (`cinder/cli.py:19-27`): `subparsers.add_parser("eval",
+`build_parser` (`cinder/cli.py:19-28`): `subparsers.add_parser("eval",
 help=...)` taking a single positional `source` argument (the snippet
 text itself, not a path). Factor the shared lex/parse/execute pipeline
-out of `run_file` (`cinder/cli.py:30-35`) into a helper — e.g.
+out of `run_file` (`cinder/cli.py:31-38`) into a helper — e.g.
 `_run_source(source: str) -> None` containing exactly `run_file`'s
 current body from `tokenize(source)` onward — so `run_file` becomes
 `_run_source(open(path).read())` and the new eval path calls
 `_run_source(args.source)` directly, without needing a temp file.
-Wire the new `"eval"` branch into `main` (`cinder/cli.py:39-53`)
+Wire the new `"eval"` branch into `main` (`cinder/cli.py:41-62`)
 alongside the existing `"run"`/`"repl"` branches, reusing the exact
 same `CinderError` catch-and-format block `run` already uses (line/
 column formatting) — but the error-message prefix that currently reads
@@ -62,7 +62,7 @@ Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:588-606`) raise `undefined name {name!r}` after
 an `Environment.get`/`assign` `KeyError`, append a suggestion when a
 close match exists among the names currently in scope. Add a method to
-`Environment` (`cinder/interpreter.py:146-187`) — e.g. `all_names(self)
+`Environment` (`cinder/interpreter.py:146-177`) — e.g. `all_names(self)
 -> set[str]` — that walks `self` and every `parent` up the chain,
 unioning each level's `self._values.keys()` (this naturally includes
 global builtins, since `create_global_environment` populates the
@@ -175,7 +175,7 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to
-`group_by` (`_group_by` at `cinder/builtins.py:1895-1916`, which buckets
+`group_by` (`_group_by` at `cinder/builtins.py:1915-1935`, which buckets
 into lists instead). Mirror `_group_by`'s validation exactly:
 `_require_arity("key_by", arguments, 2, line, column)`, a `list` check
 on the first argument (same error-message phrasing as `_group_by`'s,

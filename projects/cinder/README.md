@@ -169,12 +169,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the nil-coalescing compound
-assignment `??=` and the stdlib addition `sliding_window`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the stdlib addition
-`deep_equal` (in review), a CLI `-e`/`--eval` flag, "did you mean...?"
-suggestions for undefined-name errors, labeled `break`/`continue` for
-nested loops, and the stdlib additions `key_by` and `deep_merge`.
+Actively developed, nightly. Recently landed: the stdlib addition
+`sliding_window` and structural equality via `deep_equal`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a CLI `-e`/`--eval`
+flag, "did you mean...?" suggestions for undefined-name errors, labeled
+`break`/`continue` for nested loops, and the stdlib additions `key_by`
+and `deep_merge`.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

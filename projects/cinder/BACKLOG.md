@@ -317,6 +317,138 @@ grooming pass, not this task.
 
 ---
 
+## 6. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
+
+Build: extend list-destructuring `let` (`DestructureLetStmt`,
+`cinder/ast_nodes.py:216-221`, currently `names: list` plus an `is_map`
+flag with no rest concept) to accept an optional trailing rest name,
+reusing the spread token exactly as function parameters already do
+(`fn f(a, ...rest) { ... }`, parsed at `cinder/parser.py:393-407` via
+`TokenType.DOT_DOT_DOT`). Add a `rest: str | None` field to
+`DestructureLetStmt`, defaulting to `None`. Parser: in
+`_destructure_let_statement` (`cinder/parser.py:248-262`), only for the
+list form (`is_map=False` — map destructuring keeps its current
+exact-keys behavior unchanged, rest is list-only for this task), after
+parsing each comma-separated identifier, check whether the next token is
+`DOT_DOT_DOT`; if so, consume it, consume one more `IDENTIFIER` as the
+rest name, and require it to be the *last* pattern element — a
+non-`]`/`,` token immediately after (i.e. anything but the closing
+bracket) following the rest name is a `ParseError` (mirror the phrasing
+`_parameter_list`'s existing rest-parameter-must-be-last check uses, if
+one exists at `cinder/parser.py:393-407`; otherwise use `f"rest element
+must be last in destructuring pattern, found {self._describe(token)}"`
+with the offending token's line/column). Interpreter: in `execute`'s
+`DestructureLetStmt` branch (`cinder/interpreter.py:243-275`), when
+`stmt.rest is not None`, require `len(value) >= len(stmt.names)` (not
+`==` — the fixed names must all have a source element, the rest soaks up
+whatever's left, including zero), bind each fixed name positionally as
+today, then `env.define(stmt.rest, list(value[len(stmt.names):]))`
+(always a list, even if empty). When `stmt.rest is None`, behavior is
+byte-for-byte unchanged from today (the existing `len(value) !=
+len(stmt.names)` exact-match check still applies).
+
+Acceptance criteria:
+- `let [a, b, ...rest] = [1, 2, 3, 4]; [a, b, rest]` is `[1, 2, [3, 4]]`.
+- `let [a, ...rest] = [1]; [a, rest]` is `[1, []]` — rest binds an empty
+  list when there's nothing left over, pin as an explicit regression
+  test.
+- `let [...rest] = [1, 2, 3]; rest` is `[1, 2, 3]` — a pattern that's
+  only a rest element (no fixed names before it) captures everything.
+- `let [a, b, ...rest] = [1]` (fewer elements than fixed names, even
+  with a rest present) raises `CinderRuntimeError` with line/column —
+  rest does not relax the minimum-length requirement for the fixed
+  names before it.
+- `let [a, ...rest, b] = [1, 2, 3];` (rest not last) raises `ParseError`
+  with line/column.
+- Map destructuring (`let {a, b} = expr;`) is completely unaffected —
+  existing tests still pass unchanged (regression test — this task only
+  touches the list form).
+- Destructuring without any rest element (`let [a, b] = [1, 2];`) still
+  requires an exact length match, byte-for-byte the same error as today
+  on mismatch (regression test).
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, the README's Variables & scope
+bullet ("flat positional binding, no nesting/rest") needs a wording
+update — leave that to the Architect's next grooming pass, not this
+task.
+
+---
+
+## 7. `throw` statement for user-raised errors
+
+Build: add a `throw EXPR;` statement so Cinder code can raise its own
+runtime errors with a custom message, instead of the only way to
+signal failure today being `assert(cond, message)` (`_assert`,
+`cinder/builtins.py:1765-1774`) or an error that already happened
+naturally — both catchable today only via `try { ... } catch (name) {
+... }` (`_execute_try`, `cinder/interpreter.py:343-355`, which binds
+`error.message`, a plain string, to `name`). Mirror `assert`'s own
+message-typing rule exactly: the thrown value must be a `str` (`throw`
+does not accept arbitrary values the way `return` does — same
+constraint `_assert` already imposes on its second argument, and for the
+same reason: `catch (name)` binds a plain string today and this task
+must not change that contract). Lex/parse: no new token type needed —
+add `TokenType.THROW` as a new keyword (mirror how `TokenType.RETURN` is
+lexed/reserved) and a `ThrowStmt` AST node (`expression: Expr`, `line:
+int`, `column: int`, mirroring `ReturnStmt`'s shape). Parser: dispatch
+`THROW` in `_statement()` (`cinder/parser.py:199-226`, alongside the
+existing `RETURN`/`BREAK`/`CONTINUE` dispatch) to a new
+`_throw_statement()` that consumes `throw`, parses one expression via
+`self._assignment()`, consumes the trailing `;`, and returns
+`ThrowStmt(expression, throw_token.line, throw_token.column)` (mirror
+`_return_statement`'s shape, but the expression is required, not
+optional — `throw;` with no value is a `ParseError`, `"expected
+expression after 'throw'"` at the `throw` token's line/column).
+Interpreter: in `execute` (`cinder/interpreter.py`, alongside the
+`ReturnStmt`/`BreakStmt`/`ContinueStmt` handling around line 320),
+evaluate `stmt.expression`; if the result isn't a `str`, raise
+`CinderRuntimeError(f"throw requires a string message, got
+{type_name(value)}", stmt.line, stmt.column)` (same phrasing pattern as
+`_assert`'s type check); otherwise raise `CinderRuntimeError(value,
+stmt.line, stmt.column)` directly — no new signal/exception class
+needed, `try`/`catch` already catches any `CinderRuntimeError` via
+`_execute_try`, so a thrown error is caught exactly like a
+builtin-raised one, `finally` still runs (regression-covered by
+`_execute_try`'s existing `finally` block, untouched by this task), and
+an uncaught `throw` still reports line/column (and a call-stack trace if
+thrown from inside a nested call) exactly like any other uncaught
+`CinderRuntimeError` today.
+
+Acceptance criteria:
+- `try { throw "boom"; } catch (e) { print(e); }` prints `boom` — a
+  thrown string is caught and bound exactly like a naturally-raised
+  error's message.
+- An uncaught `throw "boom";` at top level raises `CinderRuntimeError`
+  with message `"boom"` and the `throw` statement's own line/column
+  (regression test asserting the structured fields, not just that it
+  raises).
+- `throw 42;` (non-string operand) raises `CinderRuntimeError` with
+  message `"throw requires a string message, got number"` and the
+  `throw` statement's own line/column — the type error itself, distinct
+  from the "thrown" error it would otherwise be.
+- `throw` inside a function called from another function still reports
+  the full call-stack trace on the way out, same as any other runtime
+  error raised deep in a call chain (reuse whatever existing test
+  pattern `test_interpreter.py` uses for call-stack frames on a
+  naturally-raised error).
+- `try { throw "x"; } finally { <side effect>; }` (no catch block) still
+  runs the `finally` body before the error propagates uncaught
+  (regression test pinning `finally`'s existing run-before-propagate
+  semantics against this new source of error).
+- `throw;` with no expression raises `ParseError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
+`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged, the
+README's Control flow bullet needs a `throw` mention — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

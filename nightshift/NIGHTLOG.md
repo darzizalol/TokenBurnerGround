@@ -2295,3 +2295,14 @@ The morning paper: what shipped, what bounced, what's still open.
 - Second clean first-pass merge in a row tonight — backlog is unblocked
   with "did you mean...?" suggestions for undefined names now at the
   top for the next Engineer session.
+
+- **Merged**: PR #128 "\"Did you mean...?\" suggestions for
+  undefined-name errors" (`feat/20260731-did-you-mean`) — `VERDICT: LGTM`
+  and `QA: PASS` both posted after its sole commit, clean squash merge,
+  worktree removed first, branch deleted. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Third clean first-pass merge in a row tonight — backlog is unblocked
+  with labeled `break`/`continue` for nested loops now at the top for
+  the next Engineer session.

@@ -11,47 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. "Did you mean...?" suggestions for undefined-name errors [claimed 2026-07-31T14:34:36Z]
-
-Build: when `_evaluate_identifier` or `_evaluate_assign`
-(`cinder/interpreter.py:588-606`) raise `undefined name {name!r}` after
-an `Environment.get`/`assign` `KeyError`, append a suggestion when a
-close match exists among the names currently in scope. Add a method to
-`Environment` (`cinder/interpreter.py:146-177`) — e.g. `all_names(self)
--> set[str]` — that walks `self` and every `parent` up the chain,
-unioning each level's `self._values.keys()` (this naturally includes
-global builtins, since `create_global_environment` populates the
-outermost `Environment` the same way). In both call sites, on
-`KeyError`, use `difflib.get_close_matches(expr.name, env.all_names(),
-n=1, cutoff=0.6)` (stdlib `difflib`, no new dependency) to find the
-single closest match; if one is found, append `f" (did you mean
-{match!r}?)"` to the existing message, otherwise leave the message
-exactly as it is today (no trailing text) — do not change the exception
-type, line/column, or the no-match message wording, only append the
-suggestion when one exists, so every existing test asserting the exact
-current message on a genuinely-unmatched name keeps passing.
-
-Acceptance criteria:
-- `let cost = 1; print(costt);` raises `CinderRuntimeError` with message
-  `"undefined name 'costt' (did you mean 'cost'?)"`.
-- `let cost = 1; costt = 2;` (assignment path) raises the same
-  suggestion form via `_evaluate_assign`.
-- A name with no close match in scope (e.g. `print(zzzzzzz_no_match);`
-  with nothing similar defined) raises the exact unchanged message
-  `"undefined name 'zzzzzzz_no_match'"`, with no `(did you mean...?)`
-  suffix — pin this as an explicit regression test.
-- A builtin name typo suggests the builtin, e.g. `pritn(1);` (missing
-  `print`) suggests `'print'` — since builtins live in the outermost
-  `Environment`, `all_names()` must include them.
-- Line/column on the raised error are unchanged (still `expr.line`/
-  `expr.column`) — the suggestion only changes the message text.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py`, `tests/test_interpreter.py`.
-
----
-
-## 2. Labeled `break`/`continue` for nested loops
+## 1. Labeled `break`/`continue` for nested loops
 
 Build: let a loop be prefixed with a label — `outer: while (cond) {
 ... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)
@@ -126,7 +86,7 @@ if untouched regression coverage is missing), `tests/test_parser.py`,
 
 ---
 
-## 3. Standard library: `key_by` for lists
+## 2. Standard library: `key_by` for lists
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to
@@ -163,7 +123,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Standard library: `deep_merge` for maps
+## 3. Standard library: `deep_merge` for maps
 
 Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
 recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,
@@ -221,7 +181,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 5. Spread elements in map literals: `{...map1, "k": v}`
+## 4. Spread elements in map literals: `{...map1, "k": v}`
 
 Build: extend the spread operator, currently only accepted inside list
 literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;

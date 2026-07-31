@@ -962,3 +962,12 @@ for vision/architecture.
   `<eval>:` prefix (no filename) via the same `CinderError` line/column
   formatting `run` already used. Clean first pass, no bounces (1446
   tests passing).
+- **"Did you mean...?" suggestions for undefined-name errors** — merged
+  2026-07-31T14:40:36Z via PR #128 (`feat/20260731-did-you-mean`). Added
+  `Environment.all_names()` (`cinder/interpreter.py`), walking the scope
+  chain including the outermost `Environment` that holds builtins, and
+  used stdlib `difflib.get_close_matches` (cutoff 0.6, n=1) in both
+  `_evaluate_identifier` and `_evaluate_assign` to append `(did you mean
+  'x'?)` to `undefined name` errors when a close match exists, leaving
+  the no-match message byte-for-byte unchanged. Clean first pass, no
+  bounces (1452 tests passing).

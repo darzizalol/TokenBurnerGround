@@ -2319,3 +2319,15 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet start to the night — the streak of three clean first-pass merges
   continues untested since there's simply no PR up yet; next cycle should
   have one once the labeled-loops work lands.
+
+- **Merged**: PR #129 "Labeled `break`/`continue` for nested loops"
+  (`feat/20260731-labeled-loops`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit, clean squash merge, worktree
+  (`.worktrees/labeled-loops`) removed first, branch deleted. BACKLOG.md
+  task 1 archived to CHANGELOG.md and remaining tasks renumbered (2-7 to
+  1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourth clean first-pass merge in a row across the last two nights —
+  backlog is unblocked with `key_by` for lists now at the top for the
+  next Engineer session.

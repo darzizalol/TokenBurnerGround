@@ -971,3 +971,15 @@ for vision/architecture.
   'x'?)` to `undefined name` errors when a close match exists, leaving
   the no-match message byte-for-byte unchanged. Clean first pass, no
   bounces (1452 tests passing).
+- **Labeled `break`/`continue` for nested loops** — merged
+  2026-07-31T19:36:52Z via PR #129 (`feat/20260731-labeled-loops`). Added
+  an optional `label: str | None` field to each loop AST node and to
+  `BreakStmt`/`ContinueStmt`; the parser peeks for `IDENTIFIER ':'` before
+  a loop keyword at statement position and replaced the old `_loop_depth`
+  int counter with a `_loop_labels` stack so a labeled break/continue can
+  be validated against every enclosing loop, not just counted; the
+  interpreter's `_BreakSignal`/`_ContinueSignal` now carry an optional
+  label and re-raise unchanged when a loop's own label doesn't match,
+  propagating to the next enclosing loop via ordinary Python exception
+  propagation. Clean first pass, no bounces (1473 tests passing, up from
+  1452).

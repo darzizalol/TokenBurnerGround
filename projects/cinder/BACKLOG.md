@@ -11,85 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Labeled `break`/`continue` for nested loops [claimed 2026-07-31T14:47Z]
-
-Build: let a loop be prefixed with a label — `outer: while (cond) {
-... }`, `outer: for (x in xs) { ... }`, `outer: for (let i = 0; ...; ...)
-{ ... }`, `outer: do { ... } while (cond);` — and let `break outer;`/
-`continue outer;` target that specific enclosing loop instead of the
-innermost one, e.g. to break out of a nested loop from inside it in one
-step. Add a `LabelStmt`-style optional field instead of a new
-wrapper node: add `label: str | None` to each loop AST node —
-`WhileStmt` (`cinder/ast_nodes.py:239`), `DoWhileStmt` (:247), `ForStmt`
-(:255), and `ForCStmt` (:264, merged via PR #121) — defaulting to `None`
-for unlabeled loops, and `label: str | None` on `BreakStmt`/
-`ContinueStmt` (defaulting to `None` for the existing unlabeled form).
-Lex: no new token type needed — a label is just an `IDENTIFIER` followed
-by `:` at statement position, immediately before one of the loop
-keywords; in the parser's statement dispatcher, peek for
-`IDENTIFIER` + `:` before falling into the existing loop-keyword
-dispatch, consume both, parse the loop as normal, and attach the label.
-`break`/`continue` parsing optionally consumes a trailing `IDENTIFIER`
-before the `;` (only when the next token is an identifier, not `;` —
-don't require one, preserving today's unlabeled `break;`/`continue;`).
-Interpreter: give `_BreakSignal`/`_ContinueSignal`
-(`cinder/interpreter.py:98-103`) an optional `label: str | None`
-constructor arg; when a loop's execution catches one of these signals,
-if the signal's label is `None` or matches the loop's own label, handle
-it as today (stop/skip-to-step), otherwise **re-raise it unchanged**
-so it propagates to the next enclosing loop up the Python call stack —
-this is the entire mechanism, no explicit "loop registry" needed since
-Python's own exception propagation through nested `execute` calls does
-the targeting. A labeled `break`/`continue` naming a label that matches
-no enclosing loop should be a parse-time error if staticaly detectable.
-The parser already tracks loop nesting for break/continue-outside-loop
-validation via a plain int counter, `self._loop_depth`
-(`cinder/parser.py:180`, incremented/decremented around each loop body,
-checked at `_break_statement`/`_continue_statement`, `cinder/parser.py:461-477`)
-— replace that counter with a `list[str | None]` stack (push the loop's
-label, or `None` if unlabeled, on entry; pop on exit; `len(stack)` gives
-the same depth the `== 0` checks rely on today) and validate a labeled
-break/continue's name appears somewhere in that stack, raising
-`ParseError` with line/column if not.
-
-Acceptance criteria:
-- ```
-  let log = [];
-  outer: for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-          if (j == 1) { continue outer; }
-          push(log, [i, j]);
-      }
-  }
-  log
-  ```
-  is `[[0, 0], [1, 0], [2, 0]]` — `continue outer` skips the rest of
-  the inner loop *and* the rest of the outer iteration's remaining
-  inner-loop work, advancing the outer loop's own step.
-- Same shape with `break outer;` instead stops the entire nested
-  structure after the first `j == 1` hit: `log` is `[[0, 0]]`.
-- Unlabeled `break;`/`continue;` inside a labeled loop still target the
-  innermost loop exactly as before (regression test) — labels don't
-  change default behavior.
-- A label on each of `while`, `do`/`while`, and both `for` forms all
-  work with `break <label>;` (one test per loop kind naming its own
-  label).
-- `break nonexistent;` (naming a label with no matching enclosing loop)
-  raises `ParseError` with line/column.
-- `break;`/`continue;` outside any loop still raises the existing
-  `ParseError` this already raises today (regression test — labels must
-  not weaken that check).
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (only if a dedicated check is easiest
-via a new helper — likely no new `TokenType` needed), `cinder/ast_nodes.py`,
-`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py` (only
-if untouched regression coverage is missing), `tests/test_parser.py`,
-`tests/test_interpreter.py`.
-
----
-
-## 2. Standard library: `key_by` for lists
+## 1. Standard library: `key_by` for lists
 
 Build: add `key_by(list, fn)` to `cinder/builtins.py` — indexes a list
 into a map keyed by `fn(item)`, the "one winner per key" counterpart to
@@ -126,7 +48,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 3. Standard library: `deep_merge` for maps
+## 2. Standard library: `deep_merge` for maps
 
 Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
 recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,
@@ -184,7 +106,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 
 ---
 
-## 4. Spread elements in map literals: `{...map1, "k": v}`
+## 3. Spread elements in map literals: `{...map1, "k": v}`
 
 Build: extend the spread operator, currently only accepted inside list
 literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;
@@ -242,7 +164,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Function composition: `pipe` and `compose`
+## 4. Function composition: `pipe` and `compose`
 
 Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
 each takes zero or more Cinder function values (variable arity, no fixed
@@ -317,7 +239,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
+## 5. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
 
 Build: extend list-destructuring `let` (`DestructureLetStmt`,
 `cinder/ast_nodes.py:216-221`, currently `names: list` plus an `is_map`
@@ -377,7 +299,7 @@ task.
 
 ---
 
-## 7. `throw` statement for user-raised errors
+## 6. `throw` statement for user-raised errors
 
 Build: add a `throw EXPR;` statement so Cinder code can raise its own
 runtime errors with a custom message, instead of the only way to

@@ -94,6 +94,7 @@ while (i < 10) {
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
   `pluck`, `pick`, `omit`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
+  `deep_merge`,
   `map_values`, `map_keys`, `filter`, `reduce`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
@@ -179,11 +180,12 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: labeled `break`/`continue`
-for nested loops, and the stdlib addition `key_by`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `deep_merge` for maps, spread elements in
+for nested loops, and the stdlib additions `key_by` and `deep_merge`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): spread elements in
 map literals, function composition (`pipe`/`compose`), a rest element in
 list destructuring, a `throw` statement for user-raised errors, and the
-stdlib addition `get_in` for safe nested map/list access.
+stdlib additions `get_in` for safe nested map/list access and `curry`
+for single-argument currying.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

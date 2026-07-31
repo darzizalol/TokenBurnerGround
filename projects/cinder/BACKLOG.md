@@ -73,7 +73,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
 each takes zero or more Cinder function values (variable arity, no fixed
-argument count — mirror how `_min`/`_max` at `cinder/builtins.py:742-760`
+argument count — mirror how `_min`/`_max` at `cinder/builtins.py:766-784`
 already validate a variable-length `arguments` list with no
 `_require_arity` call) and *returns a new callable Cinder value* rather
 than computing a result directly. This is the first builtin in the
@@ -86,7 +86,7 @@ used by `map`/`filter`/`reduce` to invoke a Cinder function value passed
 in) is exactly what a returned function needs to call each wrapped `fn`
 in turn. Validate every element of `fns` is callable up front (loop over
 `arguments`, `_is_callable` check per element — reuse `_is_callable` at
-`cinder/builtins.py:1820-1821` — raising `CinderRuntimeError` with the
+`cinder/builtins.py:1844` — raising `CinderRuntimeError` with the
 same `f"pipe() requires a function for each argument, got
 {type_name(...)}"`/`compose()` phrasing, at the `pipe`/`compose` call's
 own `line`/`column`) — not deferred to when the returned function is
@@ -136,7 +136,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register both in `_BUILTINS`,
-`cinder/builtins.py:2072` onward, near `map`/`filter`/`reduce`'s
+`cinder/builtins.py:2096` onward, near `map`/`filter`/`reduce`'s
 entries), `tests/test_builtins.py`. Update the module docstring's
 builtin-name list at the top of `cinder/builtins.py` and the README's
 Builtins bullet once merged — leave both to the Architect's next
@@ -286,7 +286,7 @@ returning `default` the moment the path can't be followed (wrong
 container type, missing key, or out-of-range index) instead of raising,
 the way chaining `get(get(get(m, "a", {}), "b", {}), "c", nil)` would
 require today for a three-level path. Signature and arity mirror `get`
-(`_get`, `cinder/builtins.py:301-314`): `_require_arity("get_in",
+(`_get`, `cinder/builtins.py:301-313`): `_require_arity("get_in",
 arguments, 3, line, column)`, then unpack `container, path, default =
 arguments`. `path` itself must be a `list` (raise `CinderRuntimeError`
 `f"get_in() requires a list path, got {type_name(path)}"` at
@@ -301,10 +301,10 @@ immediately if `key` isn't a valid map-key type or isn't present in
 for); if `current` is a `list`, return `default` immediately if `key`
 isn't a plain `int` (reuse the same `isinstance(key, int) and not
 isinstance(key, bool)` check `_insert`/`_remove_at` already use at
-`cinder/builtins.py:213`/`234`) or, after normalizing with
+`cinder/builtins.py:213`/`235`) or, after normalizing with
 `normalize_index(key, len(current))` (already imported into
 `builtins.py` from `cinder.interpreter`, used the same way at
-`cinder/builtins.py:218`/`239`), the normalized index falls outside
+`cinder/builtins.py:218`/`240`), the normalized index falls outside
 `[0, len(current))`; otherwise (`current` is neither a `dict` nor a
 `list` but the path isn't exhausted yet — e.g. it bottomed out on a
 number or string mid-path) return `default` immediately too, same
@@ -357,6 +357,79 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`. Once
 merged, `README.md`'s Builtins bullet needs `get_in` added to the
 alphabetically-grouped map/list-access names near `get`/`remove` — leave
 that to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `curry` for single-argument currying
+
+Build: add `curry(fn, arity)` to `cinder/builtins.py` — returns a new
+callable Cinder value (same returned-function mechanism task 2's
+`pipe`/`compose` introduces: a `Builtin` closure built with `call_value`,
+`cinder/interpreter.py:824`, to invoke the wrapped function) that accepts
+its arguments **one at a time**, accumulating them, and only actually
+calls `fn` once `arity` arguments have been collected — e.g.
+`curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3)` is `6`. Validate
+`fn` is callable up front (reuse `_is_callable`, `cinder/builtins.py:1844`,
+raising `CinderRuntimeError` `f"curry() requires a function as its first
+argument, got {type_name(fn)}"` at the `curry(...)` call's own
+line/column if not — do not defer to first invocation) and `arity` is a
+positive `int` (`isinstance(arity, int) and not isinstance(arity, bool)`
+and `arity >= 1`; `arity < 1` including `0` and negative values raises
+`CinderRuntimeError` `f"curry() requires arity to be at least 1, got
+{arity}"`, non-int raises `f"curry() requires an int arity, got
+{type_name(arity)}"` — both at the call site). Each step's returned
+`Builtin` closure takes **exactly one** argument (validate with
+`_require_arity`, `cinder/builtins.py:49`, using a synthetic name like
+`"<curried function>"`, mirroring task 2's approach for its own returned
+closures' arity checks), appends it to an accumulator list captured by
+that step's closure (each step must capture its *own* accumulator
+snapshot — e.g. via a default-argument or an immediately-applied helper
+— not a single mutable list shared and mutated across steps, or partial
+application from a shared base would corrupt sibling calls: calling
+`let step1 = curry(fn, 2)(1); step1(2); step1(3);` twice must yield two
+independent results, not accumulate `[1, 2, 3]`). Once the accumulator
+reaches `arity` elements, call `fn` via `call_value(fn, accumulated,
+line, column)` (the *inner* call's line/column — the site invoking the
+final step, not `curry`'s own call site, mirroring task 2's rule) and
+return that result directly, not another wrapped function; below
+`arity`, return a new one-argument `Builtin` closure over the extended
+accumulator.
+
+Acceptance criteria:
+- `curry(fn(a, b) { return a + b; }, 2)(1)(2)` is `3` — two-step curry,
+  pin as the primary test.
+- `curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3)` is `6` —
+  three-step curry, catches an off-by-one in the accumulate-until-arity
+  logic.
+- `let add5 = curry(fn(a, b) { return a + b; }, 2)(5); add5(1)` is `6`
+  and `add5(10)` is `15` — a partially-applied step is reusable across
+  multiple final calls, each producing an independent result (regression
+  guard for accumulator-sharing bugs).
+- `curry(fn(a, b) { return a + b; }, 2)(1)` is itself a callable Cinder
+  value: `type()` of it reports the same type name an ordinary function
+  value reports, and it's passable to `map`
+  (`map([1, 2, 3], curry(fn(a, b) { return a + b; }, 2)(10)))` is
+  `[11, 12, 13]`).
+- `curry(1, 2)` (non-function `fn`) raises `CinderRuntimeError` with
+  line/column at the `curry(...)` call site, before any step is invoked.
+- `curry(fn(a) { return a; }, 0)` and `curry(fn(a) { return a; }, -1)`
+  both raise `CinderRuntimeError` (`arity` must be at least 1) at the
+  `curry(...)` call site.
+- `curry(fn(a) { return a; }, "2")` (non-int `arity`) raises
+  `CinderRuntimeError` at the call site.
+- Calling any intermediate or final step with zero arguments or two-plus
+  arguments raises `CinderRuntimeError` (arity mismatch on that step
+  itself, not a Python-level crash) — regression-test both an
+  intermediate step and the final step.
+- Wrong arity on `curry` itself (not 2 arguments) raises
+  `CinderRuntimeError` with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `map`/`filter`/`reduce`,
+`cinder/builtins.py:2194` onward, alongside wherever task 2 registers
+`pipe`/`compose`), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `curry` added near `pipe`/`compose` — leave that to
+the Architect's next grooming pass, not this task.
 
 ---
 

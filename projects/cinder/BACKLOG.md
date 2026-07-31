@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `deep_merge` for maps
+## 1. Standard library: `deep_merge` for maps [claimed 2026-07-31T19:54:21Z]
 
 Build: add `deep_merge(map1, map2)` to `cinder/builtins.py` — the
 recursive counterpart to `merge` (`_merge` at `cinder/builtins.py:363-376`,

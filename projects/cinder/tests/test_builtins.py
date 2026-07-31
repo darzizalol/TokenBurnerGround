@@ -622,6 +622,49 @@ class TestMerge(unittest.TestCase):
             run('merge({"a": 1}, {}, {});')
 
 
+class TestDeepEqual(unittest.TestCase):
+    def test_equal_nested_lists(self):
+        env = run("let result = deep_equal([1, [2, 3]], [1, [2, 3]]);")
+        self.assertTrue(env.get("result"))
+
+    def test_unequal_nested_lists(self):
+        env = run("let result = deep_equal([1, [2, 3]], [1, [2, 4]]);")
+        self.assertFalse(env.get("result"))
+
+    def test_equal_maps_regardless_of_key_order(self):
+        env = run(
+            'let result = deep_equal({"a": 1, "b": {"c": 2}}, '
+            '{"b": {"c": 2}, "a": 1});'
+        )
+        self.assertTrue(env.get("result"))
+
+    def test_maps_with_different_key_sets_are_unequal(self):
+        env = run('let result = deep_equal({"a": 1}, {"a": 1, "b": 2});')
+        self.assertFalse(env.get("result"))
+
+    def test_numeric_equality_ignores_int_float_distinction(self):
+        env = run("let result = deep_equal(1, 1.0);")
+        self.assertTrue(env.get("result"))
+
+    def test_bool_never_equal_to_number(self):
+        env = run("let result = deep_equal(true, 1);")
+        self.assertFalse(env.get("result"))
+
+    def test_different_length_lists_are_unequal(self):
+        env = run("let result = deep_equal([1, 2], [1, 2, 3]);")
+        self.assertFalse(env.get("result"))
+
+    def test_equal_strings_and_nils(self):
+        self.assertTrue(run('let result = deep_equal("x", "x");').get("result"))
+        self.assertTrue(run("let result = deep_equal(nil, nil);").get("result"))
+
+    def test_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("deep_equal(1);")
+        with self.assertRaises(CinderRuntimeError):
+            run("deep_equal(1, 2, 3);")
+
+
 class TestInvert(unittest.TestCase):
     def test_invert_swaps_keys_and_values(self):
         env = run('let result = invert({"a": 1, "b": 2});')

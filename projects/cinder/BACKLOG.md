@@ -336,6 +336,88 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `get_in` for safe nested access
+
+Build: add `get_in(container, path, default)` to `cinder/builtins.py` —
+walks a list of keys/indices through nested maps and lists in one call,
+returning `default` the moment the path can't be followed (wrong
+container type, missing key, or out-of-range index) instead of raising,
+the way chaining `get(get(get(m, "a", {}), "b", {}), "c", nil)` would
+require today for a three-level path. Signature and arity mirror `get`
+(`_get`, `cinder/builtins.py:301-314`): `_require_arity("get_in",
+arguments, 3, line, column)`, then unpack `container, path, default =
+arguments`. `path` itself must be a `list` (raise `CinderRuntimeError`
+`f"get_in() requires a list path, got {type_name(path)}"` at
+`line`/`column` if not — this is a structural argument-type error like
+`get`'s own checks, not a soft "not found" case). Then iterate `path`'s
+elements in order, threading a `current` value that starts as
+`container`: for each `key` in `path`, if `current` is a `dict`, use the
+same key-validity check `_get` already uses (`_is_valid_key`,
+`cinder/builtins.py` — reuse it, don't reimplement) and return `default`
+immediately if `key` isn't a valid map-key type or isn't present in
+`current` (no error — this is the soft/expected case `get_in` exists
+for); if `current` is a `list`, return `default` immediately if `key`
+isn't a plain `int` (reuse the same `isinstance(key, int) and not
+isinstance(key, bool)` check `_insert`/`_remove_at` already use at
+`cinder/builtins.py:213`/`234`) or, after normalizing with
+`normalize_index(key, len(current))` (already imported into
+`builtins.py` from `cinder.interpreter`, used the same way at
+`cinder/builtins.py:218`/`239`), the normalized index falls outside
+`[0, len(current))`; otherwise (`current` is neither a `dict` nor a
+`list` but the path isn't exhausted yet — e.g. it bottomed out on a
+number or string mid-path) return `default` immediately too, same
+soft-failure treatment, no error. On each successful step, advance
+`current` to the looked-up value and continue to the next path element.
+After the loop completes without early return, return `current` (which
+is `container` itself unchanged if `path` was empty — `get_in(x, [],
+default)` is `x`, no navigation needed, matching the empty-path base
+case of the walk). Only `path`'s own type is validated up front;
+per-step problems (wrong container type, bad key type, missing key,
+out-of-range index) are all part of `get_in`'s normal soft-fail
+contract and must never raise `CinderRuntimeError` — that is the entire
+point of the builtin relative to chaining raw index expressions
+(`obj[a][b][c]`, which raises on the first bad step) or nested `get`
+calls (which need a dummy default at every intermediate level to avoid
+raising).
+
+Acceptance criteria:
+- `get_in({"a": {"b": {"c": 1}}}, ["a", "b", "c"], nil)` is `1` — the
+  primary three-level nested-map walk, pin as the main regression test.
+- `get_in({"a": {"b": 1}}, ["a", "x"], "missing")` is `"missing"` — a
+  missing key partway through the path returns `default`, not an error.
+- `get_in({"a": [1, 2, 3]}, ["a", 1], nil)` is `2` — the path can mix
+  map keys and list indices in the same call.
+- `get_in({"a": [1, 2, 3]}, ["a", 99], "oob")` is `"oob"` — an
+  out-of-range list index mid-path returns `default`, not
+  `CinderRuntimeError`.
+- `get_in({"a": [1, 2, 3]}, ["a", -1], nil)` is `3` — negative list
+  indices in the path normalize the same way plain indexing does.
+- `get_in({"a": 5}, ["a", "b"], "nope")` is `"nope"` — the path tries to
+  descend into `5` (neither map nor list) because it isn't exhausted
+  yet; returns `default` instead of raising, distinct from the
+  container-type errors `get`/`pluck` raise for their own top-level
+  argument.
+- `get_in({"a": 1}, [], "unused")` is `{"a": 1}` — an empty path returns
+  the container itself unchanged.
+- `get_in([1, [2, 3]], [1, 0], nil)` is `2` — works starting from a
+  top-level list, not just a top-level map.
+- `get_in({"a": 1}, "a", nil)` (a string, not a list, as `path`) raises
+  `CinderRuntimeError` with message `"get_in() requires a list path, got
+  string"` and line/column — the one case that *does* raise, since it's
+  a caller error on `get_in`'s own argument shape, not a path-walk
+  failure.
+- Wrong arity raises `CinderRuntimeError` with line/column.
+- `get_in` does not mutate `container` (assert the original nested
+  structure is unchanged after the call).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py`, `tests/test_builtins.py`. Once
+merged, `README.md`'s Builtins bullet needs `get_in` added to the
+alphabetically-grouped map/list-access names near `get`/`remove` — leave
+that to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

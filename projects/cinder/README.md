@@ -182,7 +182,8 @@ Actively developed, nightly. Recently landed: labeled `break`/`continue`
 for nested loops, and the stdlib addition `key_by`. Coming up next (see
 [`BACKLOG.md`](BACKLOG.md)): `deep_merge` for maps, spread elements in
 map literals, function composition (`pipe`/`compose`), a rest element in
-list destructuring, and a `throw` statement for user-raised errors.
+list destructuring, a `throw` statement for user-raised errors, and the
+stdlib addition `get_in` for safe nested map/list access.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -123,12 +123,13 @@ for undefined names, and labeled `break`/`continue` for nested loops — all
 once listed here as future work — have since landed. What remains
 plausible, not yet scoped into tasks beyond current `BACKLOG.md`: continued
 standard-library breadth (string/list/map/math methods, picked
-incrementally per `BACKLOG.md`'s own grooming), user-raised errors (`throw`
-— see current `BACKLOG.md`), function composition (`pipe`/`compose` — also
-already in current `BACKLOG.md`), destructuring rest elements, and only
-much later, a bytecode VM if performance ever actually matters. The
-Architect should keep scoping these into `BACKLOG.md` incrementally — do
-not jump ahead of the current layer.
+incrementally per `BACKLOG.md`'s own grooming — `get_in` for safe nested
+access is the latest pick, already in current `BACKLOG.md`), user-raised
+errors (`throw` — see current `BACKLOG.md`), function composition
+(`pipe`/`compose` — also already in current `BACKLOG.md`), destructuring
+rest elements, and only much later, a bytecode VM if performance ever
+actually matters. The Architect should keep scoping these into
+`BACKLOG.md` incrementally — do not jump ahead of the current layer.
 
 ## History
 

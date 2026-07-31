@@ -2914,6 +2914,97 @@ class TestReduce(unittest.TestCase):
         self.assertEqual(env.get("result"), 6)
 
 
+class TestPipe(unittest.TestCase):
+    def test_pipe_applies_left_to_right(self):
+        env = run(
+            "let result = pipe(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5);"
+        )
+        self.assertEqual(env.get("result"), 12)
+
+    def test_pipe_of_zero_functions_is_identity(self):
+        env = run("let result = pipe()(5);")
+        self.assertEqual(env.get("result"), 5)
+
+    def test_pipe_of_single_function_is_passthrough(self):
+        env = run("let result = pipe(fn(x) { return x; })(5);")
+        self.assertEqual(env.get("result"), 5)
+
+    def test_pipe_of_three_functions(self):
+        env = run(
+            "let result = pipe("
+            "fn(x) { return x + 1; }, "
+            "fn(x) { return x * 2; }, "
+            "fn(x) { return x - 3; }"
+            ")(5);"
+        )
+        self.assertEqual(env.get("result"), 9)
+
+    def test_pipe_result_is_first_class_function_value(self):
+        env = run(
+            "let piped = pipe(fn(x) { return x + 1; }); "
+            "let result_type = type(piped); "
+            "let mapped = map([1, 2, 3], piped);"
+        )
+        self.assertEqual(env.get("result_type"), "function")
+        self.assertEqual(env.get("mapped"), [2, 3, 4])
+
+    def test_pipe_non_function_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pipe(1, fn(x) { return x; });")
+
+    def test_pipe_result_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pipe(fn(x) { return x; })();")
+        with self.assertRaises(CinderRuntimeError):
+            run("pipe(fn(x) { return x; })(1, 2);")
+
+
+class TestCompose(unittest.TestCase):
+    def test_compose_applies_right_to_left(self):
+        env = run(
+            "let result = compose(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5);"
+        )
+        self.assertEqual(env.get("result"), 11)
+
+    def test_compose_differs_from_pipe_on_same_functions(self):
+        env = run(
+            "let piped = pipe(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5); "
+            "let composed = compose(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5);"
+        )
+        self.assertNotEqual(env.get("piped"), env.get("composed"))
+
+    def test_compose_of_zero_functions_is_identity(self):
+        env = run("let result = compose()(5);")
+        self.assertEqual(env.get("result"), 5)
+
+    def test_compose_of_three_functions(self):
+        env = run(
+            "let result = compose("
+            "fn(x) { return x + 1; }, "
+            "fn(x) { return x * 2; }, "
+            "fn(x) { return x - 3; }"
+            ")(5);"
+        )
+        self.assertEqual(env.get("result"), 5)
+
+    def test_compose_result_is_first_class_function_value(self):
+        env = run(
+            "let composed = compose(fn(x) { return x + 1; }); "
+            "let result_type = type(composed);"
+        )
+        self.assertEqual(env.get("result_type"), "function")
+
+    def test_compose_non_function_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("compose(1, fn(x) { return x; });")
+
+    def test_compose_result_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("compose(fn(x) { return x; })();")
+        with self.assertRaises(CinderRuntimeError):
+            run("compose(fn(x) { return x; })(1, 2);")
+
+
 class TestGroupBy(unittest.TestCase):
     def test_group_by_parity(self):
         env = run(

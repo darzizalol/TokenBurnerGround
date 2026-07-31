@@ -104,7 +104,9 @@ while (i < 10) {
   `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
-  the full call stack (`  at name (line:col)` per frame, innermost first)
+  the full call stack (`  at name (line:col)` per frame, innermost first);
+  an undefined-name error suggests a close match already in scope
+  (`undefined name 'lenght' (did you mean 'length'?)`) when one exists
 - **Three front ends**: run `.cin` script files, evaluate an inline snippet
   passed on the command line (`-e`/`--eval`, no file needed), or an
   interactive REPL with `readline`-backed command history (up-arrow to
@@ -148,7 +150,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1446+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1452+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -174,12 +176,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: structural equality via
-`deep_equal` and a CLI `-e`/`--eval` flag for running inline snippets.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): "did you mean...?"
-suggestions for undefined-name errors, labeled `break`/`continue` for
-nested loops, the stdlib additions `key_by` and `deep_merge`, and spread
-elements in map literals.
+Actively developed, nightly. Recently landed: a CLI `-e`/`--eval` flag for
+running inline snippets, and "did you mean...?" suggestions for
+undefined-name errors. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+labeled `break`/`continue` for nested loops, the stdlib additions `key_by`
+and `deep_merge`, and spread elements in map literals.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

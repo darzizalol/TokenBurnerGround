@@ -33,7 +33,7 @@ dispatch, consume both, parse the loop as normal, and attach the label.
 before the `;` (only when the next token is an identifier, not `;` —
 don't require one, preserving today's unlabeled `break;`/`continue;`).
 Interpreter: give `_BreakSignal`/`_ContinueSignal`
-(`cinder/interpreter.py:96-101`) an optional `label: str | None`
+(`cinder/interpreter.py:98-103`) an optional `label: str | None`
 constructor arg; when a loop's execution catches one of these signals,
 if the signal's label is `None` or matches the loop's own label, handle
 it as today (stop/skip-to-step), otherwise **re-raise it unchanged**
@@ -41,13 +41,16 @@ so it propagates to the next enclosing loop up the Python call stack —
 this is the entire mechanism, no explicit "loop registry" needed since
 Python's own exception propagation through nested `execute` calls does
 the targeting. A labeled `break`/`continue` naming a label that matches
-no enclosing loop should be a parse-time error if staticaly detectable,
-but since loop nesting is only fully known at parse time via a simple
-stack of in-scope labels the parser is already tracking for
-break/continue-outside-loop validation (find that existing check — it
-validates break/continue only appear inside a loop) extend the same
-stack to carry labels and validate the named label is currently open,
-raising `ParseError` with line/column if not.
+no enclosing loop should be a parse-time error if staticaly detectable.
+The parser already tracks loop nesting for break/continue-outside-loop
+validation via a plain int counter, `self._loop_depth`
+(`cinder/parser.py:180`, incremented/decremented around each loop body,
+checked at `_break_statement`/`_continue_statement`, `cinder/parser.py:461-477`)
+— replace that counter with a `list[str | None]` stack (push the loop's
+label, or `None` if unlabeled, on entry; pop on exit; `len(stack)` gives
+the same depth the `== 0` checks rely on today) and validate a labeled
+break/continue's name appears somewhere in that stack, raising
+`ParseError` with line/column if not.
 
 Acceptance criteria:
 - ```
@@ -186,7 +189,7 @@ Likely files: `cinder/builtins.py`, `tests/test_builtins.py`.
 Build: extend the spread operator, currently only accepted inside list
 literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;
 parsed at `_list_element`, `cinder/parser.py:888-892`; evaluated in
-`_evaluate_list_literal`, `cinder/interpreter.py:415-429`), to also work
+`_evaluate_list_literal`, `cinder/interpreter.py:426-440`), to also work
 inside map literals. `MapLiteral.pairs` (`cinder/ast_nodes.py:87-90`) is
 currently `list[tuple[Expr, Expr]]`; change its contents to mix `tuple`
 entries (plain `key: value` pairs, as today) with `Spread` entries,
@@ -198,7 +201,7 @@ the existing `_map_pair()` and return its `(key, value)` tuple unchanged.
 Update `_map_literal()` (`cinder/parser.py:894-903`) to call
 `_map_entry()` in both places it currently calls `_map_pair()` directly
 (the first entry and each comma-separated one). Interpreter: in
-`_evaluate_map_literal` (`cinder/interpreter.py:431-441`), iterate
+`_evaluate_map_literal` (`cinder/interpreter.py:442-453`), iterate
 `expr.pairs` and branch on `isinstance(entry, Spread)`: if so, evaluate
 `entry.expression`, require the result is a `dict` (else
 `CinderRuntimeError` `f"cannot spread {type_name(value)} in a map
@@ -236,6 +239,81 @@ Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
 `tests/test_interpreter.py`. Once merged, `README.md`'s Data Structures
 bullet ("map literals don't support spread") will need updating too —
 leave that to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Function composition: `pipe` and `compose`
+
+Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
+each takes zero or more Cinder function values (variable arity, no fixed
+argument count — mirror how `_min`/`_max` at `cinder/builtins.py:742-761`
+already validate a variable-length `arguments` list with no
+`_require_arity` call) and *returns a new callable Cinder value* rather
+than computing a result directly. This is the first builtin in the
+codebase to hand back a function instead of a plain value, but the
+mechanism already exists: `Builtin` (`cinder/interpreter.py:133-145`) is
+a thin wrapper around any Python closure with signature `(arguments:
+list, line: int, column: int) -> object`, and `call_value`
+(`cinder/interpreter.py:794`, already imported into `builtins.py` and
+used by `map`/`filter`/`reduce` to invoke a Cinder function value passed
+in) is exactly what a returned function needs to call each wrapped `fn`
+in turn. Validate every element of `fns` is callable up front (loop over
+`arguments`, `_is_callable` check per element — reuse `_is_callable` at
+`cinder/builtins.py:1820-1821` — raising `CinderRuntimeError` with the
+same `f"pipe() requires a function for each argument, got
+{type_name(...)}"`/`compose()` phrasing, at the `pipe`/`compose` call's
+own `line`/`column`) — not deferred to when the returned function is
+later invoked. The returned `Builtin`'s inner closure takes exactly one
+argument `x` (validate with `_require_arity` using a synthetic name,
+e.g. `"<piped function>"`/`"<composed function>"`, so a wrong-arity call
+on the *result* of `pipe`/`compose` gets a sensible error instead of a
+Python `TypeError`) and threads it through every wrapped function via
+`call_value(fn, [x], line, column)` per step, using the *inner* call's
+`line`/`column` (the site that invokes the composed function) for each
+`call_value` invocation, not `pipe`/`compose`'s own call site. `pipe`
+applies left to right (`pipe(f, g, h)(x)` is `h(g(f(x)))`, matching
+Unix-pipe/data-flow order); `compose` applies right to left
+(`compose(f, g, h)(x)` is `f(g(h(x)))`, matching standard mathematical
+composition order — the two differ only in whether the closure iterates
+`fns` forwards or in `reversed(fns)`). Zero functions (`pipe()`/
+`compose()`) returns an identity function: calling it with one argument
+returns that argument unchanged.
+
+Acceptance criteria:
+- `pipe(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5)` is `12`
+  (`(5 + 1) * 2`) — left-to-right order, pin as the primary `pipe` test.
+- `compose(fn(x) { return x + 1; }, fn(x) { return x * 2; })(5)` is `11`
+  (`5 * 2 + 1`) — right-to-left order, pin as the primary `compose` test,
+  explicitly asserting it differs from `pipe`'s result on the same two
+  functions.
+- `pipe()(5)` is `5` and `compose()(5)` is `5` — zero-argument identity
+  case for both.
+- `pipe(fn(x) { return x; })(5)` is `5` — single-function pipeline is a
+  no-op pass-through (regression guard distinguishing "one function" from
+  "zero functions" taking the same code path correctly).
+- The value returned by `pipe`/`compose` is itself a first-class Cinder
+  value: assignable to a `let`, passable to `map`
+  (`map([1, 2, 3], pipe(fn(x) { return x + 1; }))` is `[2, 3, 4]`), and
+  `type()` of it reports the same type name an ordinary function value
+  reports (regression test — it must not be a distinguishable "special"
+  type from the caller's perspective).
+- `pipe(1, fn(x) { return x; })` (a non-function argument anywhere in the
+  list) raises `CinderRuntimeError` with line/column at the `pipe(...)`
+  call site itself, before the returned function is ever invoked; same
+  for `compose`.
+- Calling the *result* of `pipe(...)`/`compose(...)` with zero arguments
+  or two-or-more arguments raises `CinderRuntimeError` (arity mismatch on
+  the composed function itself, not a Python-level crash).
+- A three-function pipeline/composition (not just two) is covered by at
+  least one test each, to catch an off-by-one in the fold direction.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register both in `_BUILTINS`,
+`cinder/builtins.py:2048` onward, near `map`/`filter`/`reduce`'s
+entries), `tests/test_builtins.py`. Update the module docstring's
+builtin-name list at the top of `cinder/builtins.py` and the README's
+Builtins bullet once merged — leave both to the Architect's next
+grooming pass, not this task.
 
 ---
 

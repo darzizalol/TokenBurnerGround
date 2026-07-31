@@ -1003,3 +1003,12 @@ for vision/architecture.
   fixed by routing every non-recursed value through the existing
   `_deep_copy_value` helper, with new tests mutating the *result* after
   the merge (1494 tests passing, up from 1482).
+- **Spread elements in map literals: `{...map1, "k": v}`** — merged
+  2026-07-31T20:22:55Z via PR #132 (`feat/20260731-map-spread`). Extended
+  the spread operator, previously only accepted in list literals and call
+  arguments, to map literals: `MapLiteral.pairs` now mixes plain
+  `(key, value)` tuples with `Spread` entries, parsed by a new
+  `_map_entry()` mirroring `_list_element()`, and evaluated by
+  `_evaluate_map_literal` via `dict.update` for left-to-right
+  last-write-wins across explicit keys and spreads alike. Clean first
+  pass, no bounces (1503 tests passing, up from 1494).

@@ -11,65 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Spread elements in map literals: `{...map1, "k": v}` [claimed 2026-07-31T20:16:52Z]
-
-Build: extend the spread operator, currently only accepted inside list
-literals and call arguments (`Spread` node, `cinder/ast_nodes.py:69-76`;
-parsed at `_list_element`, `cinder/parser.py:939-943`; evaluated in
-`_evaluate_list_literal`, `cinder/interpreter.py:456-469`), to also work
-inside map literals. `MapLiteral.pairs` (`cinder/ast_nodes.py:86-90`) is
-currently `list[tuple[Expr, Expr]]`; change its contents to mix `tuple`
-entries (plain `key: value` pairs, as today) with `Spread` entries,
-mirroring how `ListLiteral.elements` already mixes plain `Expr` and
-`Spread`. Parser: add a `_map_entry()` method mirroring `_list_element()`
-— if the next token is `DOT_DOT_DOT`, consume it and return
-`Spread(self._ternary(), dots.line, dots.column)`; otherwise delegate to
-the existing `_map_pair()` and return its `(key, value)` tuple unchanged.
-Update `_map_literal()` (`cinder/parser.py:945-953`) to call
-`_map_entry()` in both places it currently calls `_map_pair()` directly
-(the first entry and each comma-separated one). Interpreter: in
-`_evaluate_map_literal` (`cinder/interpreter.py:472-482`), iterate
-`expr.pairs` and branch on `isinstance(entry, Spread)`: if so, evaluate
-`entry.expression`, require the result is a `dict` (else
-`CinderRuntimeError` `f"cannot spread {type_name(value)} in a map
-literal"` at `entry.line`/`entry.column`, matching the phrasing pattern
-`_evaluate_list_literal`/`_evaluate_call` already use for their own kind
-of literal/call), then `result.update(value)`; otherwise keep today's
-per-pair logic (evaluate key, `_is_valid_key` check, evaluate value,
-assign) unchanged. Splicing order follows plain iteration/last-write-wins
-— no special-casing needed since `dict.update`/assignment already give
-"later entry wins" for free, whether the later entry is a spread or an
-explicit key.
-
-Acceptance criteria:
-- `{"a": 1, ...{"b": 2}}` is `{"a": 1, "b": 2}`.
-- `{...{"a": 1}, "a": 2}` is `{"a": 2}` — an explicit key after a spread
-  overrides the spread's value for that key.
-- `{...{"a": 1}, ...{"a": 2, "b": 3}}` is `{"a": 2, "b": 3}` — a later
-  spread overrides an earlier one key-by-key, not wholesale.
-- `{...{}}` is `{}`; `{}` (no spread at all) still parses as today's
-  empty map literal, not a block (regression test — don't disturb the
-  existing empty-`{}`-is-a-map disambiguation).
-- Spreading a non-map value, e.g. `{...[1, 2]}` or `{...5}`, raises
-  `CinderRuntimeError` with the message `"cannot spread {type} in a map
-  literal"` and the spread expression's line/column.
-- A map literal mixing multiple spreads and explicit keys in any order
-  (e.g. `{"x": 0, ...{"a": 1}, "y": 2, ...{"a": 3}}`) evaluates left to
-  right with strict last-write-wins: `{"x": 0, "a": 3, "y": 2}`.
-- List-literal spread and call-argument spread both still behave exactly
-  as before (regression tests) — this task only adds a new place spread
-  is accepted, it must not change existing behavior.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s Data Structures
-bullet ("map literals don't support spread") will need updating too —
-leave that to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Function composition: `pipe` and `compose`
+## 1. Function composition: `pipe` and `compose`
 
 Build: add `pipe(...fns)` and `compose(...fns)` to `cinder/builtins.py` —
 each takes zero or more Cinder function values (variable arity, no fixed
@@ -144,7 +86,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
+## 2. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
 
 Build: extend list-destructuring `let` (`DestructureLetStmt`,
 `cinder/ast_nodes.py:216-221`, currently `names: list` plus an `is_map`
@@ -206,7 +148,7 @@ task.
 
 ---
 
-## 4. `throw` statement for user-raised errors
+## 3. `throw` statement for user-raised errors
 
 Build: add a `throw EXPR;` statement so Cinder code can raise its own
 runtime errors with a custom message, instead of the only way to
@@ -278,7 +220,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `get_in` for safe nested access
+## 4. Standard library: `get_in` for safe nested access
 
 Build: add `get_in(container, path, default)` to `cinder/builtins.py` —
 walks a list of keys/indices through nested maps and lists in one call,
@@ -360,7 +302,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `curry` for single-argument currying
+## 5. Standard library: `curry` for single-argument currying
 
 Build: add `curry(fn, arity)` to `cinder/builtins.py` — returns a new
 callable Cinder value (same returned-function mechanism task 2's

@@ -2368,3 +2368,15 @@ The morning paper: what shipped, what bounced, what's still open.
   real bug, the fix landed clean, and the backlog is unblocked again
   with spread elements in map literals now at the top for the next
   Engineer session.
+
+- **Merged**: PR #132 "Spread elements in map literals: `{...map1,
+  "k": v}`" (`feat/20260731-map-spread`) — `VERDICT: LGTM` and `QA: PASS`
+  both posted after its sole commit (`e31e161`), clean squash merge,
+  worktree (`.worktrees/map-spread`) removed first, branch deleted.
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixth clean first-pass merge of the night (one bounce total, fixed
+  same-night) — backlog is unblocked with `pipe`/`compose` function
+  composition now at the top for the next Engineer session.

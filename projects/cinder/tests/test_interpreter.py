@@ -1160,6 +1160,105 @@ class TestBreakContinue(unittest.TestCase):
         self.assertEqual(env.get("inner_sum"), 3)  # 1 (before break) x 3 calls
 
 
+class TestLabeledBreakContinue(unittest.TestCase):
+    def _run_with_builtins(self, source: str) -> Environment:
+        from cinder.builtins import create_global_environment
+
+        return run(source, create_global_environment())
+
+    def test_continue_outer_skips_rest_of_outer_iteration(self):
+        env = self._run_with_builtins(
+            "let log = []; "
+            "outer: for (let i = 0; i < 3; i++) { "
+            "  for (let j = 0; j < 3; j++) { "
+            "    if (j == 1) { continue outer; } "
+            "    push(log, [i, j]); "
+            "  } "
+            "}"
+        )
+        self.assertEqual(env.get("log"), [[0, 0], [1, 0], [2, 0]])
+
+    def test_break_outer_stops_the_entire_nested_structure(self):
+        env = self._run_with_builtins(
+            "let log = []; "
+            "outer: for (let i = 0; i < 3; i++) { "
+            "  for (let j = 0; j < 3; j++) { "
+            "    if (j == 1) { break outer; } "
+            "    push(log, [i, j]); "
+            "  } "
+            "}"
+        )
+        self.assertEqual(env.get("log"), [[0, 0]])
+
+    def test_unlabeled_break_continue_inside_labeled_loop_still_target_innermost(self):
+        # Regression: a label on the outer loop must not change the default
+        # target of a bare, unlabeled break/continue in the inner loop.
+        env = self._run_with_builtins(
+            "let log = []; "
+            "outer: for (let i = 0; i < 2; i++) { "
+            "  for (let j = 0; j < 3; j++) { "
+            "    if (j == 1) { break; } "
+            "    push(log, [i, j]); "
+            "  } "
+            "}"
+        )
+        self.assertEqual(env.get("log"), [[0, 0], [1, 0]])
+
+    def test_labeled_break_on_while_loop(self):
+        env = self._run_with_builtins(
+            "let log = []; let i = 0; "
+            "lbl: while (i < 5) { "
+            "  i = i + 1; "
+            "  if (i == 3) { break lbl; } "
+            "  push(log, i); "
+            "}"
+        )
+        self.assertEqual(env.get("log"), [1, 2])
+
+    def test_labeled_break_on_do_while_loop(self):
+        env = self._run_with_builtins(
+            "let log = []; let i = 0; "
+            "lbl: do { "
+            "  i = i + 1; "
+            "  if (i == 3) { break lbl; } "
+            "  push(log, i); "
+            "} while (i < 5);"
+        )
+        self.assertEqual(env.get("log"), [1, 2])
+
+    def test_labeled_break_on_foreach_for_loop(self):
+        env = self._run_with_builtins(
+            "let log = []; "
+            "lbl: for x in [1, 2, 3, 4] { "
+            "  if (x == 3) { break lbl; } "
+            "  push(log, x); "
+            "}"
+        )
+        self.assertEqual(env.get("log"), [1, 2])
+
+    def test_labeled_break_on_c_style_for_loop(self):
+        env = self._run_with_builtins(
+            "let log = []; "
+            "lbl: for (let i = 0; i < 5; i++) { "
+            "  if (i == 2) { break lbl; } "
+            "  push(log, i); "
+            "}"
+        )
+        self.assertEqual(env.get("log"), [0, 1])
+
+    def test_break_nonexistent_label_is_a_parse_error(self):
+        with self.assertRaises(ParseError):
+            run("while (true) { break nonexistent; }")
+
+    def test_break_and_continue_outside_loop_still_raise_parse_error(self):
+        # Regression: labels must not weaken the existing "outside any loop"
+        # check for plain, unlabeled break/continue.
+        with self.assertRaises(ParseError):
+            run("break;")
+        with self.assertRaises(ParseError):
+            run("continue;")
+
+
 class TestTruthinessRule(unittest.TestCase):
     """Pins the rule: `false`/`nil` are falsy; everything else is truthy."""
 

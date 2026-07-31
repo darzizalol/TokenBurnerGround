@@ -77,12 +77,26 @@ disambiguates by attempting a speculative full-expression parse first (so
 postfix indexing/calls and binary operators on the leading map literal are
 captured too); empty `{}` is always an (empty) Block.
 
-`_loop_depth` tracks loop nesting the same way `_fn_depth` tracks function
+`_loop_labels` tracks loop nesting the same way `_fn_depth` tracks function
 nesting for `return`: `break`/`continue` outside any loop is a `ParseError`.
-Entering a function body resets `_loop_depth` to 0 (saved/restored around the
-body) so a bare `break`/`continue` inside a function nested in a loop is
-still rejected unless that function has its own enclosing loop — mirroring
-how `return` is scoped to the nearest function, not any outer one.
+It's a `list[str | None]` rather than a plain counter — one entry per
+enclosing loop, `None` for an unlabeled loop or the loop's label string —
+so a labeled `break`/`continue` can be validated against the full set of
+enclosing labels, not just a depth count. Entering a function body resets
+`_loop_labels` to `[]` (saved/restored around the body) so a bare
+`break`/`continue` inside a function nested in a loop is still rejected
+unless that function has its own enclosing loop — mirroring how `return`
+is scoped to the nearest function, not any outer one.
+
+A label (`outer: while (...) { ... }`) is a plain `IDENTIFIER` followed by
+`:` immediately before one of `while`/`do`/`for` at statement position — no
+new token type needed. `_statement`'s dispatcher peeks two tokens ahead for
+this shape before falling into the normal statement dispatch (an
+identifier followed by `:` never starts a valid expression statement today,
+so there's no ambiguity to resolve). `break`/`continue` optionally consume
+a trailing `IDENTIFIER` naming the loop to target; a name that doesn't
+match any label currently on `_loop_labels` is a `ParseError` at the name's
+own position.
 """
 
 from cinder.ast_nodes import (
@@ -170,6 +184,7 @@ _INCREMENT_DECREMENT_OPS = {
     TokenType.PLUSPLUS: TokenType.PLUS,
     TokenType.MINUSMINUS: TokenType.MINUS,
 }
+_LOOP_KEYWORDS = {TokenType.WHILE, TokenType.DO, TokenType.FOR}
 
 
 class Parser:
@@ -177,7 +192,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self._fn_depth = 0
-        self._loop_depth = 0
+        self._loop_labels: list = []
 
     def parse_expression(self) -> Expr:
         expr = self._assignment()
@@ -197,6 +212,12 @@ class Parser:
         return statements
 
     def _statement(self) -> Stmt:
+        if (
+            self._check(TokenType.IDENTIFIER)
+            and self._peek_next().type == TokenType.COLON
+            and self._peek_at(2).type in _LOOP_KEYWORDS
+        ):
+            return self._labeled_loop_statement()
         if self._check(TokenType.LET):
             return self._let_statement()
         if self._check(TokenType.CONST):
@@ -296,32 +317,41 @@ class Parser:
             else_branch = self._statement()
         return IfStmt(condition, then_branch, else_branch, if_token.line, if_token.column)
 
-    def _while_statement(self) -> Stmt:
+    def _labeled_loop_statement(self) -> Stmt:
+        label_token = self._advance()  # IDENTIFIER
+        self._advance()  # ':'
+        if self._check(TokenType.WHILE):
+            return self._while_statement(label_token.lexeme)
+        if self._check(TokenType.DO):
+            return self._do_while_statement(label_token.lexeme)
+        return self._for_statement(label_token.lexeme)
+
+    def _while_statement(self, label: "str | None" = None) -> Stmt:
         while_token = self._advance()
         self._consume(TokenType.LPAREN, "'(' after 'while'")
         condition = self._assignment()
         self._consume(TokenType.RPAREN, "')' after while condition")
-        self._loop_depth += 1
+        self._loop_labels.append(label)
         body = self._statement()
-        self._loop_depth -= 1
-        return WhileStmt(condition, body, while_token.line, while_token.column)
+        self._loop_labels.pop()
+        return WhileStmt(condition, body, while_token.line, while_token.column, label)
 
-    def _do_while_statement(self) -> Stmt:
+    def _do_while_statement(self, label: "str | None" = None) -> Stmt:
         do_token = self._advance()
-        self._loop_depth += 1
+        self._loop_labels.append(label)
         body = self._statement()
-        self._loop_depth -= 1
+        self._loop_labels.pop()
         self._consume(TokenType.WHILE, "'while' after 'do' body")
         self._consume(TokenType.LPAREN, "'(' after 'while'")
         condition = self._assignment()
         self._consume(TokenType.RPAREN, "')' after while condition")
         self._consume(TokenType.SEMICOLON, "';' after 'do ... while (...)'")
-        return DoWhileStmt(condition, body, do_token.line, do_token.column)
+        return DoWhileStmt(condition, body, do_token.line, do_token.column, label)
 
-    def _for_statement(self) -> Stmt:
+    def _for_statement(self, label: "str | None" = None) -> Stmt:
         for_token = self._advance()
         if self._check(TokenType.LPAREN):
-            return self._for_c_statement(for_token)
+            return self._for_c_statement(for_token, label)
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'for'")
         self._consume(TokenType.IN, "'in' after for-loop variable")
         iterable = self._assignment()
@@ -332,14 +362,14 @@ class Parser:
                 token.line,
                 token.column,
             )
-        self._loop_depth += 1
+        self._loop_labels.append(label)
         body = self._block()
-        self._loop_depth -= 1
+        self._loop_labels.pop()
         return ForStmt(
-            name_token.lexeme, iterable, body, for_token.line, for_token.column
+            name_token.lexeme, iterable, body, for_token.line, for_token.column, label
         )
 
-    def _for_c_statement(self, for_token: Token) -> Stmt:
+    def _for_c_statement(self, for_token: Token, label: "str | None" = None) -> Stmt:
         self._advance()  # LPAREN
         if self._check(TokenType.SEMICOLON):
             self._advance()
@@ -366,10 +396,12 @@ class Parser:
                 token.line,
                 token.column,
             )
-        self._loop_depth += 1
+        self._loop_labels.append(label)
         body = self._block()
-        self._loop_depth -= 1
-        return ForCStmt(init, condition, step, body, for_token.line, for_token.column)
+        self._loop_labels.pop()
+        return ForCStmt(
+            init, condition, step, body, for_token.line, for_token.column, label
+        )
 
     def _fn_declaration(self) -> Stmt:
         fn_token = self._advance()
@@ -418,10 +450,10 @@ class Parser:
                 token.column,
             )
         self._fn_depth += 1
-        outer_loop_depth = self._loop_depth
-        self._loop_depth = 0
+        outer_loop_labels = self._loop_labels
+        self._loop_labels = []
         body = self._block()
-        self._loop_depth = outer_loop_depth
+        self._loop_labels = outer_loop_labels
         self._fn_depth -= 1
         return params, rest_param, body
 
@@ -460,21 +492,40 @@ class Parser:
 
     def _break_statement(self) -> Stmt:
         break_token = self._advance()
-        if self._loop_depth == 0:
+        if not self._loop_labels:
             raise ParseError(
                 "'break' outside of a loop", break_token.line, break_token.column
             )
+        label = self._consume_loop_label("break")
         self._consume(TokenType.SEMICOLON, "';' after 'break'")
-        return BreakStmt(break_token.line, break_token.column)
+        return BreakStmt(break_token.line, break_token.column, label)
 
     def _continue_statement(self) -> Stmt:
         continue_token = self._advance()
-        if self._loop_depth == 0:
+        if not self._loop_labels:
             raise ParseError(
                 "'continue' outside of a loop", continue_token.line, continue_token.column
             )
+        label = self._consume_loop_label("continue")
         self._consume(TokenType.SEMICOLON, "';' after 'continue'")
-        return ContinueStmt(continue_token.line, continue_token.column)
+        return ContinueStmt(continue_token.line, continue_token.column, label)
+
+    def _consume_loop_label(self, keyword: str) -> "str | None":
+        """Optionally consumes a trailing `IDENTIFIER` naming the loop a
+        `break`/`continue` targets, validating it against `_loop_labels` —
+        the labels of loops currently open in the parser. Absent entirely
+        (next token isn't an identifier) it targets the innermost loop, same
+        as today."""
+        if not self._check(TokenType.IDENTIFIER):
+            return None
+        label_token = self._advance()
+        if label_token.lexeme not in self._loop_labels:
+            raise ParseError(
+                f"'{keyword} {label_token.lexeme}' does not match any enclosing loop label",
+                label_token.line,
+                label_token.column,
+            )
+        return label_token.lexeme
 
     def _try_statement(self) -> Stmt:
         try_token = self._advance()
@@ -930,6 +981,10 @@ class Parser:
 
     def _peek_next(self) -> Token:
         idx = min(self.pos + 1, len(self.tokens) - 1)
+        return self.tokens[idx]
+
+    def _peek_at(self, offset: int) -> Token:
+        idx = min(self.pos + offset, len(self.tokens) - 1)
         return self.tokens[idx]
 
     def _previous(self) -> Token:

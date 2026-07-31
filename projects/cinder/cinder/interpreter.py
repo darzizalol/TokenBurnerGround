@@ -96,11 +96,27 @@ class _ReturnSignal(Exception):
 
 
 class _BreakSignal(Exception):
-    """Internal control-flow signal for `break`; never surfaced to users."""
+    """Internal control-flow signal for `break`; never surfaced to users.
+
+    `label` is `None` for a plain `break;` (targets the innermost loop) or
+    the named loop's label for `break label;`. A loop that catches this and
+    finds its own label doesn't match re-raises it unchanged so it keeps
+    propagating up through enclosing loops' `execute` calls until it reaches
+    the one whose label matches — Python's own exception propagation across
+    the nested per-loop `execute` calls is the entire targeting mechanism,
+    no explicit loop registry needed."""
+
+    def __init__(self, label: "str | None" = None):
+        self.label = label
 
 
 class _ContinueSignal(Exception):
-    """Internal control-flow signal for `continue`; never surfaced to users."""
+    """Internal control-flow signal for `continue`; never surfaced to users.
+
+    `label` behaves the same as `_BreakSignal.label` above."""
+
+    def __init__(self, label: "str | None" = None):
+        self.label = label
 
 
 class _ConstAssignError(Exception):
@@ -291,19 +307,26 @@ class Interpreter:
             while is_truthy(self.evaluate(stmt.condition, env)):
                 try:
                     self.execute(stmt.body, env)
-                except _BreakSignal:
+                except _BreakSignal as signal:
+                    if signal.label is not None and signal.label != stmt.label:
+                        raise
                     break
-                except _ContinueSignal:
+                except _ContinueSignal as signal:
+                    if signal.label is not None and signal.label != stmt.label:
+                        raise
                     continue
             return
         if isinstance(stmt, DoWhileStmt):
             while True:
                 try:
                     self.execute(stmt.body, env)
-                except _BreakSignal:
+                except _BreakSignal as signal:
+                    if signal.label is not None and signal.label != stmt.label:
+                        raise
                     break
-                except _ContinueSignal:
-                    pass
+                except _ContinueSignal as signal:
+                    if signal.label is not None and signal.label != stmt.label:
+                        raise
                 if not is_truthy(self.evaluate(stmt.condition, env)):
                     break
             return
@@ -320,9 +343,9 @@ class Interpreter:
             value = self.evaluate(stmt.value, env) if stmt.value is not None else None
             raise _ReturnSignal(value)
         if isinstance(stmt, BreakStmt):
-            raise _BreakSignal()
+            raise _BreakSignal(stmt.label)
         if isinstance(stmt, ContinueStmt):
-            raise _ContinueSignal()
+            raise _ContinueSignal(stmt.label)
         if isinstance(stmt, TryStmt):
             self._execute_try(stmt, env)
             return
@@ -371,9 +394,13 @@ class Interpreter:
             iter_env.define(stmt.var_name, item)
             try:
                 self.execute(stmt.body, iter_env)
-            except _BreakSignal:
+            except _BreakSignal as signal:
+                if signal.label is not None and signal.label != stmt.label:
+                    raise
                 break
-            except _ContinueSignal:
+            except _ContinueSignal as signal:
+                if signal.label is not None and signal.label != stmt.label:
+                    raise
                 continue
 
     def _execute_for_c(self, stmt: ForCStmt, env: Environment) -> None:
@@ -397,10 +424,13 @@ class Interpreter:
                 break
             try:
                 self.execute(stmt.body, iter_env)
-            except _BreakSignal:
+            except _BreakSignal as signal:
+                if signal.label is not None and signal.label != stmt.label:
+                    raise
                 break
-            except _ContinueSignal:
-                pass
+            except _ContinueSignal as signal:
+                if signal.label is not None and signal.label != stmt.label:
+                    raise
             loop_env._values.update(iter_env._values)
             loop_env._frozen.update(iter_env._frozen)
             if stmt.step is not None:

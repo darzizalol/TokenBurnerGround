@@ -241,6 +241,7 @@ class WhileStmt:
     body: "Stmt"
     line: int
     column: int
+    label: "str | None" = None
 
 
 @dataclass(frozen=True)
@@ -249,6 +250,7 @@ class DoWhileStmt:
     body: "Stmt"
     line: int
     column: int
+    label: "str | None" = None
 
 
 @dataclass(frozen=True)
@@ -258,6 +260,7 @@ class ForStmt:
     body: "Block"
     line: int
     column: int
+    label: "str | None" = None
 
 
 @dataclass(frozen=True)
@@ -273,6 +276,7 @@ class ForCStmt:
     body: "Block"
     line: int
     column: int
+    label: "str | None" = None
 
 
 @dataclass(frozen=True)
@@ -299,12 +303,14 @@ class ReturnStmt:
 class BreakStmt:
     line: int
     column: int
+    label: "str | None" = None
 
 
 @dataclass(frozen=True)
 class ContinueStmt:
     line: int
     column: int
+    label: "str | None" = None
 
 
 @dataclass(frozen=True)

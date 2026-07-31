@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. "Did you mean...?" suggestions for undefined-name errors
+## 1. "Did you mean...?" suggestions for undefined-name errors [claimed 2026-07-31T14:34:36Z]
 
 Build: when `_evaluate_identifier` or `_evaluate_assign`
 (`cinder/interpreter.py:588-606`) raise `undefined name {name!r}` after

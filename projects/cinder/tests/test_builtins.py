@@ -622,6 +622,79 @@ class TestMerge(unittest.TestCase):
             run('merge({"a": 1}, {}, {});')
 
 
+class TestDeepMerge(unittest.TestCase):
+    def test_deep_merge_combines_disjoint_keys(self):
+        env = run('let result = deep_merge({"a": 1}, {"b": 2});')
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2})
+
+    def test_deep_merge_recurses_into_nested_maps(self):
+        env = run('let result = deep_merge({"a": {"x": 1}}, {"a": {"y": 2}});')
+        self.assertEqual(env.get("result"), {"a": {"x": 1, "y": 2}})
+
+    def test_deep_merge_map2_wins_on_leaf_conflict(self):
+        env = run('let result = deep_merge({"a": {"x": 1}}, {"a": {"x": 2}});')
+        self.assertEqual(env.get("result"), {"a": {"x": 2}})
+
+    def test_deep_merge_overwrites_lists_wholesale(self):
+        env = run('let result = deep_merge({"a": [1, 2]}, {"a": [3]});')
+        self.assertEqual(env.get("result"), {"a": [3]})
+
+    def test_deep_merge_non_map_value_wins_outright(self):
+        env = run('let result = deep_merge({"a": {"x": 1}}, {"a": 5});')
+        self.assertEqual(env.get("result"), {"a": 5})
+
+    def test_deep_merge_three_levels_of_nesting(self):
+        env = run(
+            'let result = deep_merge({"a": {"b": {"c": 1}}}, '
+            '{"a": {"b": {"d": 2}}});'
+        )
+        self.assertEqual(env.get("result"), {"a": {"b": {"c": 1, "d": 2}}})
+
+    def test_deep_merge_does_not_mutate_inputs(self):
+        env = run(
+            'let m1 = {"a": {"x": 1}};'
+            'let m2 = {"a": {"y": 2}};'
+            "let result = deep_merge(m1, m2);"
+        )
+        self.assertEqual(env.get("m1"), {"a": {"x": 1}})
+        self.assertEqual(env.get("m2"), {"a": {"y": 2}})
+
+    def test_deep_merge_result_mutation_does_not_leak_into_inputs(self):
+        env = run(
+            'let m1 = {"a": {"x": 1}};'
+            'let m2 = {"b": 2};'
+            "let result = deep_merge(m1, m2);"
+            'result["a"]["z"] = 999;'
+        )
+        self.assertEqual(env.get("m1"), {"a": {"x": 1}})
+        self.assertEqual(env.get("result"), {"a": {"x": 1, "z": 999}, "b": 2})
+
+    def test_deep_merge_result_list_mutation_does_not_leak_into_inputs(self):
+        env = run(
+            'let m1 = {"a": [1, 2]};'
+            'let m2 = {"b": 3};'
+            "let result = deep_merge(m1, m2);"
+            'result["a"][0] = 999;'
+        )
+        self.assertEqual(env.get("m1"), {"a": [1, 2]})
+        self.assertEqual(env.get("result"), {"a": [999, 2], "b": 3})
+
+    def test_deep_merge_with_empty_maps(self):
+        self.assertEqual(run("let result = deep_merge({}, {});").get("result"), {})
+
+    def test_deep_merge_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("deep_merge(5, {});")
+        with self.assertRaises(CinderRuntimeError):
+            run("deep_merge({}, 5);")
+
+    def test_deep_merge_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('deep_merge({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('deep_merge({"a": 1}, {}, {});')
+
+
 class TestDeepEqual(unittest.TestCase):
     def test_equal_nested_lists(self):
         env = run("let result = deep_equal([1, [2, 3]], [1, [2, 3]]);")

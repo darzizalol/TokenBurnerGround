@@ -376,6 +376,30 @@ def _merge(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _deep_merge_values(map1: dict, map2: dict) -> dict:
+    result = {key: _deep_copy_value(value) for key, value in map1.items()}
+    for key, value in map2.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge_values(result[key], value)
+        else:
+            result[key] = _deep_copy_value(value)
+    return result
+
+
+def _deep_merge(arguments: list, line: int, column: int) -> object:
+    _require_arity("deep_merge", arguments, 2, line, column)
+    map1, map2 = arguments
+    if not isinstance(map1, dict):
+        raise CinderRuntimeError(
+            f"deep_merge() requires a map, got {type_name(map1)}", line, column
+        )
+    if not isinstance(map2, dict):
+        raise CinderRuntimeError(
+            f"deep_merge() requires a map, got {type_name(map2)}", line, column
+        )
+    return _deep_merge_values(map1, map2)
+
+
 def _deep_equal_values(a: object, b: object) -> bool:
     if isinstance(a, list) and isinstance(b, list):
         if len(a) != len(b):
@@ -2094,6 +2118,7 @@ _BUILTINS = {
     "pluck": _pluck,
     "remove": _remove,
     "merge": _merge,
+    "deep_merge": _deep_merge,
     "deep_equal": _deep_equal,
     "invert": _invert,
     "pick": _pick,

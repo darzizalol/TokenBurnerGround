@@ -98,7 +98,7 @@ while (i < 10) {
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
-  `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`,
+  `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
   `pluck`, `pick`, `omit`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
@@ -161,7 +161,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1520+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1545+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -187,12 +187,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a rest element in list
-destructuring (`let [a, b, ...rest] = expr;`) and a `throw` statement for
-user-raised errors. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the
-stdlib additions `get_in` for safe nested map/list access, `curry` for
-single-argument currying, and `memoize` for caching pure functions, and
-multiple values per `switch` case (`case 1, 2, 3: { ... }`).
+Actively developed, nightly. Recently landed: a `throw` statement for
+user-raised errors and `get_in` for safe nested map/list access. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `curry` for single-argument currying,
+`memoize` for caching pure functions, multiple values per `switch` case
+(`case 1, 2, 3: { ... }`), and list destructuring in `for`-loop variables.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

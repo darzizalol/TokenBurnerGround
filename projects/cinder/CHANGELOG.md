@@ -1040,3 +1040,14 @@ for vision/architecture.
   `type_name()` convention (`"got int"`) rather than the backlog's
   literal wording (`"got number"`). Clean first pass, no bounces (1534
   tests passing, up from 1526).
+- **Standard library: `get_in` for safe nested access** — merged
+  2026-08-01T14:43:18Z via PR #136 (`feat/20260801-get-in`). Added
+  `get_in(container, path, default)` to `cinder/builtins.py`: walks a
+  list of map keys/list indices through nested containers in one call,
+  reusing `_is_valid_key` and `normalize_index` (the same helpers
+  `get`/`pluck`/`insert`/`remove_at` already use) rather than
+  reimplementing key/index validation. Every per-step failure (bad key
+  type, missing key, out-of-range index, non-container mid-path) is a
+  soft `return default`; only a non-list `path` argument raises
+  `CinderRuntimeError`. Clean first pass, no bounces (1545 tests
+  passing, up from 1534).

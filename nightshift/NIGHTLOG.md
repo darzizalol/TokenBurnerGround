@@ -2427,3 +2427,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Ninth clean first-pass merge of the night, zero bounces net — a very
   quiet, very productive shift, with `get_in` for safe nested access now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #136 "Standard library: `get_in` for safe nested access"
+  (`feat/20260801-get-in`) — `VERDICT: LGTM` and `QA: PASS` both posted
+  after its sole commit (`e9887fa`), clean squash merge, worktree
+  (`.worktrees/get-in`) removed first, branch deleted. BACKLOG.md task 1
+  archived to CHANGELOG.md; remaining tasks renumbered (2-5 to 1-4) after
+  checking their bodies for stale number-based `"task N"`
+  cross-references (the `pipe`/`compose`-cycle gotcha) — found and fixed
+  one in the for-loop-destructuring task, which pointed at the switch
+  task by number and needed to move from "task 4" to "task 3".
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Tenth clean first-pass merge in a row, zero bounces net — an
+  unusually clean night end to end, with `curry` for single-argument
+  currying now at the top of the backlog for the next Engineer session.

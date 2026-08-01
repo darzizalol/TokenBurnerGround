@@ -2502,3 +2502,18 @@ The morning paper: what shipped, what bounced, what's still open.
   night shift's clean streak continues unbroken, with `for`-loop list
   destructuring now at the top of the backlog for the next Engineer
   session.
+
+- **Merged**: PR #140 "List destructuring in `for`-loop variables: `for
+  [k, v] in items(m) { ... }`" (`feat/20260801-for-destructure`) —
+  `VERDICT: LGTM` and `QA: PASS` both posted after the branch's only
+  push, worktree (`.worktrees/for-destructure`) removed first, clean
+  squash merge, branch deleted. BACKLOG.md task 1 archived to
+  CHANGELOG.md; remaining tasks renumbered (2-6 to 1-5); checked their
+  bodies for stale number-based cross-references and found none this
+  time.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fourteenth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. Dot-access sugar for
+  map string keys is now at the top of the backlog for the next Engineer
+  session.

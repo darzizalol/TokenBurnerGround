@@ -1076,3 +1076,14 @@ for vision/architecture.
   side effects don't run once an earlier one matched. Single-value cases
   are unaffected. Clean first pass, no bounces (1571 tests passing, up
   from 1565).
+- **List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`**
+  — merged 2026-08-01T19:45:14Z via PR #140 (`feat/20260801-for-destructure`).
+  `ForStmt` gained optional `names`/`rest` fields alongside `var_name`
+  (mutually exclusive), with the parser's pattern-parsing loop factored
+  out of `_destructure_let_statement` into a shared
+  `_destructure_list_pattern` helper used by both `let` and the new
+  `for [a, b] in ...` form, and the interpreter's arity/rest binding
+  logic similarly factored into `_bind_list_destructure`, shared between
+  `DestructureLetStmt` and `_execute_for`. Map-pattern destructuring in
+  `for` stays out of scope. Clean first pass, no bounces (1588 tests
+  passing, up from 1571).

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `get_in` for safe nested access
+## 1. Standard library: `get_in` for safe nested access [claimed 2026-08-01T14:37:36Z]
 
 Build: add `get_in(container, path, default)` to `cinder/builtins.py` —
 walks a list of keys/indices through nested maps and lists in one call,

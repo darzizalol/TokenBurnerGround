@@ -333,7 +333,7 @@ class TryStmt:
 
 @dataclass(frozen=True)
 class SwitchCase:
-    value: "Expr"
+    values: list
     body: "Block"
 
 
@@ -342,9 +342,13 @@ class SwitchStmt:
     """`switch (scrutinee) { case v1: { ... } case v2: { ... } default: { ... } }`.
 
     `scrutinee` is evaluated exactly once; `cases` are tried in source order
-    via `values_equal` and the first match's block runs (no fallthrough).
-    `default` (or `None`) runs only if no case matched. Not a loop: `break`/
-    `continue` inside a case body still target an enclosing loop, if any."""
+    via `values_equal` and the first match's block runs (no fallthrough). A
+    case may list several values (`case v1, v2, v3: { ... }`) — its `values`
+    is evaluated left to right and the block runs on the first match, so a
+    later value expression's side effects don't happen once an earlier one
+    already matched. `default` (or `None`) runs only if no case matched. Not
+    a loop: `break`/`continue` inside a case body still target an enclosing
+    loop, if any."""
 
     scrutinee: "Expr"
     cases: list

@@ -379,9 +379,10 @@ class Interpreter:
     def _execute_switch(self, stmt: SwitchStmt, env: Environment) -> None:
         scrutinee = self.evaluate(stmt.scrutinee, env)
         for case in stmt.cases:
-            if values_equal(scrutinee, self.evaluate(case.value, env)):
-                self.execute(case.body, env)
-                return
+            for value_expr in case.values:
+                if values_equal(scrutinee, self.evaluate(value_expr, env)):
+                    self.execute(case.body, env)
+                    return
         if stmt.default is not None:
             self.execute(stmt.default, env)
 

@@ -624,7 +624,10 @@ class Parser:
         while self._check(TokenType.CASE) or self._check(TokenType.DEFAULT):
             if self._check(TokenType.CASE):
                 self._advance()
-                value = self._ternary()
+                values = [self._ternary()]
+                while self._check(TokenType.COMMA):
+                    self._advance()
+                    values.append(self._ternary())
                 self._consume(TokenType.COLON, "':' after case value")
                 if not self._check(TokenType.LBRACE):
                     token = self._peek()
@@ -633,7 +636,7 @@ class Parser:
                         token.line,
                         token.column,
                     )
-                cases.append(SwitchCase(value, self._block()))
+                cases.append(SwitchCase(values, self._block()))
             else:
                 default_token = self._advance()
                 if default is not None:

@@ -1,5 +1,5 @@
 """Tests for cinder.builtins: print, len, is_empty, type, str, int, float, ord, chr, push, pop,
-insert, remove_at, keys, values, items, get, remove, merge, upper, lower, trim, trim_start, trim_end, split, lines, words, join,
+insert, remove_at, keys, values, items, get, get_in, remove, merge, upper, lower, trim, trim_start, trim_end, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, to_fixed, floor, ceil,
 pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, rotate, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
@@ -497,6 +497,57 @@ class TestGet(unittest.TestCase):
             run('get({"a": 1}, "a");')
         with self.assertRaises(CinderRuntimeError):
             run('get({"a": 1}, "a", 0, 1);')
+
+
+class TestGetIn(unittest.TestCase):
+    def test_get_in_walks_nested_maps(self):
+        env = run('let result = get_in({"a": {"b": {"c": 1}}}, ["a", "b", "c"], nil);')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_get_in_missing_key_partway_returns_default(self):
+        env = run('let result = get_in({"a": {"b": 1}}, ["a", "x"], "missing");')
+        self.assertEqual(env.get("result"), "missing")
+
+    def test_get_in_mixes_map_keys_and_list_indices(self):
+        env = run('let result = get_in({"a": [1, 2, 3]}, ["a", 1], nil);')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_get_in_out_of_range_list_index_returns_default(self):
+        env = run('let result = get_in({"a": [1, 2, 3]}, ["a", 99], "oob");')
+        self.assertEqual(env.get("result"), "oob")
+
+    def test_get_in_negative_list_index_normalizes(self):
+        env = run('let result = get_in({"a": [1, 2, 3]}, ["a", -1], nil);')
+        self.assertEqual(env.get("result"), 3)
+
+    def test_get_in_descends_into_non_container_returns_default(self):
+        env = run('let result = get_in({"a": 5}, ["a", "b"], "nope");')
+        self.assertEqual(env.get("result"), "nope")
+
+    def test_get_in_empty_path_returns_container(self):
+        env = run('let result = get_in({"a": 1}, [], "unused");')
+        self.assertEqual(env.get("result"), {"a": 1})
+
+    def test_get_in_starts_from_top_level_list(self):
+        env = run('let result = get_in([1, [2, 3]], [1, 0], nil);')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_get_in_non_list_path_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('get_in({"a": 1}, "a", nil);')
+
+    def test_get_in_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('get_in({"a": 1}, ["a"]);')
+        with self.assertRaises(CinderRuntimeError):
+            run('get_in({"a": 1}, ["a"], nil, 1);')
+
+    def test_get_in_does_not_mutate_container(self):
+        env = run(
+            'let original = {"a": {"b": {"c": 1}}}; '
+            'get_in(original, ["a", "b", "c"], nil);'
+        )
+        self.assertEqual(env.get("original"), {"a": {"b": {"c": 1}}})
 
 
 class TestPluck(unittest.TestCase):

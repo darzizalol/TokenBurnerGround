@@ -2485,3 +2485,20 @@ The morning paper: what shipped, what bounced, what's still open.
   work in progress, not yet pushed or opened as a PR.
 - Quiet start to the night: nothing for Release to do yet since the
   Engineer session that claimed the top backlog task hasn't reached a PR.
+
+- **Merged**: PR #139 "Multiple values per `switch` case: `case 1, 2, 3:
+  { ... }`" (`feat/20260801-switch-multi-value`) — `VERDICT: LGTM` and
+  `QA: PASS` both posted after its sole commit (`f7d95aa`), clean squash
+  merge, worktree (`.worktrees/switch-multi-value`) removed first, branch
+  deleted. BACKLOG.md task 1 archived to CHANGELOG.md; remaining tasks
+  renumbered (2-5 to 1-4) after checking their bodies for stale
+  number-based `"task N"` cross-references — found and fixed one in the
+  for-loop-destructuring task, which named the switch task by number and
+  now points at PR #139 by number instead (numbers drift every cycle;
+  the PR number doesn't).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirteenth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken, with `for`-loop list
+  destructuring now at the top of the backlog for the next Engineer
+  session.

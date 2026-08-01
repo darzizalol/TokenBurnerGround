@@ -1067,3 +1067,12 @@ for vision/architecture.
   number and a bool argument never collide, matching `values_equal`'s
   number/bool distinction. Clean first pass, no bounces (1565 tests
   passing, up from 1555).
+- **Multiple values per `switch` case: `case 1, 2, 3: { ... }`** — merged
+  2026-08-02T~ via PR #139 (`feat/20260801-switch-multi-value`). Changed
+  `SwitchCase.value: Expr` to `values: list` (non-empty), with the parser
+  comma-parsing extra case values the same way call arguments/list
+  literals already do, and the interpreter matching `case.values` left to
+  right, short-circuiting on the first match so later value expressions'
+  side effects don't run once an earlier one matched. Single-value cases
+  are unaffected. Clean first pass, no bounces (1571 tests passing, up
+  from 1565).

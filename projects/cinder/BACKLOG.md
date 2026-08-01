@@ -11,71 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Multiple values per `switch` case: `case 1, 2, 3: { ... }` [claimed 2026-08-01T15:18:27Z]
-
-Build: let a single `switch` case match any of several values, instead of
-requiring one `case` per value with duplicated bodies. Today `SwitchCase`
-(`cinder/ast_nodes.py:327-330`) holds one `value: Expr`; change it to
-`values: list` (a non-empty list of `Expr`, still frozen dataclass) and
-update its docstring-adjacent `SwitchStmt` docstring
-(`cinder/ast_nodes.py:333-341`) to describe multi-value cases. Parser:
-in `_switch_statement` (`cinder/parser.py:603-639`), after `self._advance()`
-consumes `case`, parse one `self._ternary()` (exactly as today) then loop
-while `self._check(TokenType.COMMA)`: `self._advance()` and parse another
-`self._ternary()`, appending each to a `values` list — mirror how call
-arguments or list-literal elements are comma-parsed elsewhere in this
-parser (same `while self._check(TokenType.COMMA): self._advance(); ...`
-shape). Stop consuming values at `':'` exactly as before; the rest of the
-case (colon, `{`-check, block body) is unchanged. Interpreter: in
-`_execute_switch` (`cinder/interpreter.py:369-375`), replace the
-single `values_equal(scrutinee, self.evaluate(case.value, env))` check
-with a loop over `case.values`, evaluating each in source order (left to
-right — evaluation order can matter if a case value expression has a
-side effect, e.g. `case f(), g():`) and matching on the first one where
-`values_equal(scrutinee, ...)` is `True`; short-circuit — do not
-evaluate later value expressions in the same case once an earlier one
-already matched. A single-value case (today's only form) is just a
-`values` list of length 1, so no separate code path is needed for it —
-this must not change behavior for any existing single-value `switch`
-(regression-covered by the existing switch tests, which must keep
-passing unmodified). No new token type needed (`TokenType.COMMA` already
-exists and is used elsewhere in the parser).
-
-Acceptance criteria:
-- `switch (2) { case 1, 2, 3: { print("small"); } default: { print("big"); } }`
-  prints `"small"` — the primary multi-value match, pin as the main
-  regression test.
-- `switch (5) { case 1, 2, 3: { print("small"); } default: { print("big"); } }`
-  prints `"big"` — a scrutinee matching none of a multi-value case's
-  values falls through to `default`, same as today's single-value miss.
-- Existing single-value cases (`case 1: { ... }`) still parse and match
-  exactly as before — run the existing switch test file unmodified and
-  confirm it still passes (regression, not a new test).
-- `switch (1) { case f(), g(): { ... } }` where `f()` has a side effect
-  (e.g. increments a counter) and the scrutinee equals `f()`'s return
-  value: `g()` is never called — evaluation short-circuits on first
-  match (regression test with a counter, asserting `g`'s side-effect
-  counter stays at 0).
-- A case's value list can mix literal and computed expressions in the
-  same case (e.g. `case 1, x + 1, "three":`) — values aren't required to
-  be constant.
-- `case 1, 2 : { ... }` with case values sharing one body still runs
-  that one body when either value matches — no duplicated-block
-  workaround needed at the call site anymore, which is the whole point
-  of this task (add an example in `examples/` only if a suitable one
-  already demonstrates `switch`; do not create a new example file just
-  for this).
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s `switch` bullet
-under Control flow needs a mention of multi-value cases — leave that to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
+## 1. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
 
 Build: let a `for`-in loop's variable position accept a list destructuring
 pattern (the same `[name, name, ...rest]` syntax `let` already supports),
@@ -127,9 +63,9 @@ line, column)`, and call it both from the `DestructureLetStmt` handler
 and from `_execute_for` (passing `stmt.names`, `stmt.rest`, `item`,
 `stmt.line`, `stmt.column` — the `for` statement's own line/column, not
 per-item, matching how the existing single-name path already attributes
-errors to the loop) — this mirrors task 1's "reuse, don't reimplement"
-approach and avoids the arity/rest logic drifting between the two call
-sites. Every iteration still gets its own fresh `iter_env`
+errors to the loop) — this mirrors the "reuse, don't reimplement"
+approach from PR #139 and avoids the arity/rest logic drifting between
+the two call sites. Every iteration still gets its own fresh `iter_env`
 (`Environment(env)`) exactly as today, so closures captured in the body
 over a destructured binding see that iteration's values, not a later
 one's — no change to that part of the loop's structure.
@@ -173,7 +109,7 @@ this task.
 
 ---
 
-## 3. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
+## 2. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
 
 Build: let a map be read/written with dot notation (`m.key`) as pure
 syntactic sugar for bracket indexing with a string literal (`m["key"]`) —
@@ -259,7 +195,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
+## 3. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
 
 Build: add `pick_by(map, predicate)` and `omit_by(map, predicate)` to
 `cinder/builtins.py`, filling the gap `pick`/`omit`
@@ -326,7 +262,7 @@ this task.
 
 ---
 
-## 5. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
+## 4. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
 
 Build: add `take_right(list, n)` and `drop_right(list, n)` to
 `cinder/builtins.py`, the end-anchored complements of the existing

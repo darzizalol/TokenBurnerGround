@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
+## 1. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]` [claimed 2026-08-01T19:51:58Z]
 
 Build: let a map be read/written with dot notation (`m.key`) as pure
 syntactic sugar for bracket indexing with a string literal (`m["key"]`) —

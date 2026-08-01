@@ -278,6 +278,59 @@ next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `mode` for the most frequently occurring value in a list
+
+Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
+after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1026-`
+onward, plus wherever this cycle's `variance`/`std_dev` task lands them)
+— but unlike those four, `mode` isn't numeric-only: it works on any
+valid Cinder value (strings, bools, lists, maps, ...), so model its
+counting logic on `_dedupe`'s existing two-path approach
+(`cinder/builtins.py:1148-1166`) rather than `_mean`'s numeric-only
+validation. Arity 1, argument a non-empty `list` (else `CinderRuntimeError`
+naming `mode` and `type_name(value)`; empty list raises `"mode() requires
+a non-empty list"`, matching `mean([])`/`median([])`'s existing message
+shape). Count occurrences left-to-right: if every element is a valid map
+key (`_is_valid_key`, same check `_dedupe`'s fast path already uses),
+count via a `dict` keyed on `(isinstance(element, bool), element)` exactly
+as `_dedupe` does (so `1` and `true` never collide); otherwise fall back
+to `_dedupe`'s O(n²) path, counting via `values_equal` against a list of
+`(element, count)` pairs built incrementally. Either way, return the
+*first-encountered* element among those with the maximum count — ties
+are broken by first appearance in the input list, not by any ordering on
+the values themselves (arbitrary Cinder values, e.g. lists/maps, aren't
+orderable). Do not introduce a "return all tied modes as a list" variant;
+that's a different, unrequested return shape — single-value return only.
+
+Acceptance criteria:
+- `mode([1, 2, 2, 3]);` is `2` — the primary case, pin as the main
+  regression test.
+- `mode([1, 1, 2, 2]);` is `1` — a tie between `1` and `2` (two each)
+  resolves to `1`, the one that appeared first.
+- `mode([5]);` is `5` — a single-element list is its own mode.
+- `mode(["a", "b", "b", "c"]);` is `"b"` — works on strings, not just
+  numbers (the key difference from `mean`/`median`/`variance`/`std_dev`).
+- `mode([true, false, true]);` is `true`, and `mode([1, true, 1]);` is
+  `1` (the bool/int split from `_dedupe`'s comment applies here too — `1`
+  and `true` must not be counted together).
+- `mode([[1], [1], [2]]);` is `[1]` — a list of lists exercises the
+  `values_equal` fallback path, since lists aren't valid map keys.
+- `mode([]);` raises `CinderRuntimeError` naming a non-empty-list
+  requirement, at the call site's line/column.
+- `mode("abc");` (a string, not a list) raises `CinderRuntimeError`
+  naming `mode` and `string` in the message.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `mean`/`median`, see
+current line numbers — shift if this cycle's `variance`/`std_dev` task
+landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `mode` added near `mean`/`median` — leave that to
+the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

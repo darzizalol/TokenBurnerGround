@@ -99,7 +99,12 @@ while (i < 10) {
   clamp, not assignable); list literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   map literals accept spread elements too (`{...map1, "k": v}`), merging
-  left to right with later keys/spreads winning on conflict
+  left to right with later keys/spreads winning on conflict; dot access
+  sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
+  an assignment/`++`/`--`/bitwise-compound-assign target — arithmetic
+  compound-assign like `m.key += 1` isn't supported, matching bracket
+  indexing's own gap; only identifier-shaped keys work, so `m.if` is a
+  `ParseError`)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -192,13 +197,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: multiple values per
-`switch` case (`case 1, 2, 3: { ... }`) and list destructuring in
-`for`-loop variables (`for [k, v] in items(m) { ... }`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): dot-access sugar for
-map string keys (`m.key` as sugar for `m["key"]`), predicate-based map
+Actively developed, nightly. Recently landed: list destructuring in
+`for`-loop variables (`for [k, v] in items(m) { ... }`) and dot-access
+sugar for map string keys (`m.key` as sugar for `m["key"]`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): predicate-based map
 filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
-population `variance`/`std_dev`, and REPL Tab completion for
-builtins/variables. The backlog mixes language depth with stdlib
+population `variance`/`std_dev`, REPL Tab completion for
+builtins/variables, and `mode` for a list's most frequent value.
+The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

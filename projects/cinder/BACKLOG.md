@@ -11,74 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pick_by`/`omit_by` for predicate-based map filtering [claimed 2026-08-01T20:04:16Z]
-
-Build: add `pick_by(map, predicate)` and `omit_by(map, predicate)` to
-`cinder/builtins.py`, filling the gap `pick`/`omit`
-(`cinder/builtins.py:465-494`) leave open — those two take an explicit
-list of keys, but there's no way today to keep/drop map entries by a
-condition on the key or value the way `filter` (`cinder/builtins.py:1929-
-1942`) already does for lists. Model both new functions directly on
-`_pick`/`_omit`'s existing shape (arity 2, first argument a `dict`), with
-the `keys: list` argument replaced by a `predicate` callable argument
-validated with `_is_callable` (imported already via
-`cinder/interpreter.py`'s exports used elsewhere in this file — mirror
-`filter`'s own validation at `cinder/builtins.py:1937-1941` exactly,
-including its error message shape) instead of `isinstance(keys, list)`.
-For each `key, value` pair in the target map (iterate `target.items()`,
-same as `_omit`'s dict-comprehension today), call the predicate via
-`call_value(predicate, [key, value], line, column)` — the *call site's*
-`line`/`column` (this builtin's own, since the predicate is invoked
-synchronously inline, not via a separately-tracked call site — same
-attribution `filter` already uses for its own predicate calls) — and
-check truthiness with `is_truthy` on the result, exactly as `filter`
-does. `pick_by` keeps an entry when the predicate call is truthy;
-`omit_by` keeps an entry when it is falsy — the two are exact mirror
-images of each other, same as `pick`/`omit` already are. Preserve
-insertion order (build the result via a dict comprehension or explicit
-loop over `target.items()` in order, never via any operation that could
-reorder keys).
-
-Acceptance criteria:
-- `pick_by({"a": 1, "b": 2, "c": 3}, fn(k, v) { return v > 1; });` is
-  `{"b": 2, "c": 3}` — the primary value-predicate case, pin as the main
-  regression test.
-- `omit_by({"a": 1, "b": 2, "c": 3}, fn(k, v) { return v > 1; });` is
-  `{"a": 1}` — the exact complement of the `pick_by` case above on the
-  same input and predicate.
-- `pick_by({"a": 1, "bb": 2, "ccc": 3}, fn(k, v) { return len(k) == 1; });`
-  is `{"a": 1}` — the predicate can inspect the key, not just the value.
-- `pick_by({}, fn(k, v) { return true; });` is `{}` — an empty map
-  produces an empty result without invoking the predicate.
-- `pick_by({"a": 1, "b": 2}, fn(k, v) { return false; });` is `{}` and
-  `omit_by({"a": 1, "b": 2}, fn(k, v) { return false; });` is
-  `{"a": 1, "b": 2}` — an always-false predicate is the identity for
-  `omit_by` and empties `pick_by`, confirming the two aren't accidentally
-  swapped.
-- `pick_by([1, 2, 3], fn(k, v) { return true; });` (a list, not a map)
-  raises `CinderRuntimeError` naming `pick_by` and `list` in the message,
-  at the call site's line/column; `omit_by` raises the equivalent error
-  for the same input.
-- `pick_by({"a": 1}, "not a function");` raises `CinderRuntimeError`
-  naming `pick_by` and the actual argument's type in the message
-  (mirroring `filter`'s non-callable-second-argument error shape); same
-  for `omit_by`.
-- Wrong arity on either builtin (not exactly 2 arguments) raises
-  `CinderRuntimeError` with line/column.
-- Result key insertion order matches the source map's iteration order
-  for both builtins (e.g. `keys(pick_by({"z": 1, "a": 2}, fn(k, v) {
-  return true; }));` is `["z", "a"]`, not re-sorted).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `pick`/`omit`,
-`cinder/builtins.py:2244-2245`), `tests/test_builtins.py`. Once merged,
-`README.md`'s Builtins bullet needs `pick_by`/`omit_by` added near
-`pick`/`omit` — leave that to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
+## 1. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
 
 Build: add `take_right(list, n)` and `drop_right(list, n)` to
 `cinder/builtins.py`, the end-anchored complements of the existing
@@ -137,7 +70,7 @@ this task.
 
 ---
 
-## 3. Standard library: `variance`/`std_dev` for a list of numbers
+## 2. Standard library: `variance`/`std_dev` for a list of numbers
 
 Build: add `variance(list)` and `std_dev(list)` to `cinder/builtins.py`,
 the natural next stop after `mean`/`median` (`cinder/builtins.py:1026-
@@ -194,7 +127,7 @@ this task.
 
 ---
 
-## 4. REPL tab completion for builtin names and in-scope variables
+## 3. REPL tab completion for builtin names and in-scope variables
 
 Build: wire up `readline`'s completer API so pressing Tab in the REPL
 completes builtin function names and the current top-level environment's
@@ -278,7 +211,7 @@ next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `mode` for the most frequently occurring value in a list
+## 4. Standard library: `mode` for the most frequently occurring value in a list
 
 Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
 after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1026-`

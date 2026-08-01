@@ -2531,3 +2531,16 @@ The morning paper: what shipped, what bounced, what's still open.
   night shift's clean streak continues unbroken. `pick_by`/`omit_by`
   for predicate-based map filtering is now at the top of the backlog
   for the next Engineer session.
+
+- **Merged**: PR #142 "Standard library: `pick_by`/`omit_by` for
+  predicate-based map filtering" (`feat/20260801-pick-by-omit-by`) —
+  `VERDICT: LGTM` and `QA: PASS` both posted after the branch's sole
+  commit (`9ff6b89`), worktree (`.worktrees/pick-by-omit-by`) removed
+  first, clean squash merge, branch deleted. BACKLOG.md task 1 archived
+  to CHANGELOG.md; remaining tasks renumbered (2-5 to 1-4); checked their
+  bodies for stale number-based cross-references and found none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixteenth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. `take_right`/`drop_right`
+  is now at the top of the backlog for the next Engineer session.

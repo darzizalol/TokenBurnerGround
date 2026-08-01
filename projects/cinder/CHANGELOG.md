@@ -1099,3 +1099,11 @@ for vision/architecture.
   compound-assign (`m.key += 1`) stays unsupported, matching bracket
   indexing's existing gap. Clean first pass, no bounces (1603 tests
   passing, up from 1588).
+- **Standard library: `pick_by`/`omit_by` for predicate-based map
+  filtering** — merged 2026-08-01T20:09:27Z via PR #142
+  (`feat/20260801-pick-by-omit-by`). Both mirror `pick`/`omit`'s
+  arity/type-check shape and `filter`'s predicate-validation shape,
+  keeping (`pick_by`) or dropping (`omit_by`) each `key, value` pair
+  based on `call_value(predicate, [key, value], ...)`'s truthiness,
+  preserving source insertion order. Clean first pass, no bounces (1617
+  tests passing, up from 1603).

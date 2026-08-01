@@ -96,7 +96,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reduce`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
+  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
@@ -180,13 +180,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the stdlib additions
-`key_by` and `deep_merge`, and spread elements in map literals
-(`{...map1, "k": v}`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-function composition (`pipe`/`compose`), a rest element in list
-destructuring, a `throw` statement for user-raised errors, and the
-stdlib additions `get_in` for safe nested map/list access and `curry`
-for single-argument currying.
+Actively developed, nightly. Recently landed: spread elements in map
+literals (`{...map1, "k": v}`) and function composition (`pipe`/
+`compose`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a rest
+element in list destructuring, a `throw` statement for user-raised
+errors, and the stdlib additions `get_in` for safe nested map/list
+access, `curry` for single-argument currying, and `memoize` for caching
+pure functions.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

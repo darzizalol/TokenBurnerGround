@@ -119,16 +119,16 @@ nights now, and REPL ergonomics (multiline input, persistent history),
 source-mapped call-stack traces for nested calls, `do`/`while` loops,
 `const` bindings, a C-style `for` loop, the nil-coalescing compound
 assignment `??=`, an `-e`/`--eval` CLI flag, "did you mean...?" suggestions
-for undefined names, and labeled `break`/`continue` for nested loops — all
-once listed here as future work — have since landed. What remains
-plausible, not yet scoped into tasks beyond current `BACKLOG.md`: continued
-standard-library breadth (string/list/map/math methods, picked
-incrementally per `BACKLOG.md`'s own grooming — `get_in` for safe nested
-access and `curry` for single-argument currying are the latest picks,
+for undefined names, labeled `break`/`continue` for nested loops, and
+function composition (`pipe`/`compose`) — all once listed here as future
+work — have since landed. What remains plausible, not yet scoped into
+tasks beyond current `BACKLOG.md`: continued standard-library breadth
+(string/list/map/math methods, picked incrementally per `BACKLOG.md`'s own
+grooming — `get_in` for safe nested access, `curry` for single-argument
+currying, and `memoize` for caching pure functions are the latest picks,
 already in current `BACKLOG.md`), user-raised errors (`throw` — see
-current `BACKLOG.md`), function composition (`pipe`/`compose` — also
-already in current `BACKLOG.md`), destructuring rest elements, and only
-much later, a bytecode VM if performance ever
+current `BACKLOG.md`), destructuring rest elements (also in current
+`BACKLOG.md`), and only much later, a bytecode VM if performance ever
 actually matters. The Architect should keep scoping these into
 `BACKLOG.md` incrementally — do not jump ahead of the current layer.
 

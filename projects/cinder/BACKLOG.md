@@ -11,64 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `variance`/`std_dev` for a list of numbers [claimed 2026-08-01T20:28:01Z]
-
-Build: add `variance(list)` and `std_dev(list)` to `cinder/builtins.py`,
-the natural next stop after `mean`/`median` (`cinder/builtins.py:1064-
-1099`) — population variance and standard deviation (divide by `n`, not
-`n - 1`; Cinder has no separate sample-vs-population statistics concept
-anywhere else, so don't introduce one here). Model both directly on
-`_mean`'s existing shape: arity 1, argument a non-empty `list` of
-numbers, using the exact same validation `_mean`/`_median` already use —
-`isinstance(value, list)` (else `CinderRuntimeError` naming the
-function and `type_name(value)`), non-empty (else `"...() requires a
-non-empty list"`), and each element checked with the already-imported
-`_is_numeric` (else `"...() requires a list of numbers, got
-{type_name(element)}"`). `variance` computes the mean first (reuse the
-same summation approach `_mean` uses, or call `_mean`'s logic inline —
-either is fine, just don't duplicate the non-empty/type-checking twice
-per call), then returns the mean of each element's squared deviation
-from that mean: `sum((x - mean) ** 2 for x in value) / len(value)`.
-`std_dev` returns `variance`'s result passed through `math.sqrt` (`math`
-is already imported at the top of `builtins.py` for `gcd`/`lcm`/etc) —
-implement `std_dev` by calling the same computation `variance` uses
-(factor the shared mean/squared-deviation logic into one internal
-helper both call, rather than reimplementing it twice or having
-`std_dev` call the public `_variance` function recursively through
-`call_value` — it's an internal Python-level call, not a Cinder-level
-one).
-
-Acceptance criteria:
-- `variance([2, 4, 4, 4, 5, 5, 7, 9]);` is `4` — the textbook example
-  (population variance of this exact set), pin as the main regression
-  test.
-- `std_dev([2, 4, 4, 4, 5, 5, 7, 9]);` is `2` — `sqrt(4)`, the exact
-  companion of the `variance` case above on the same input.
-- `variance([5]);` is `0` and `std_dev([5]);` is `0` — a single-element
-  list has zero spread.
-- `variance([3, 3, 3]);` is `0` — identical elements have zero variance.
-- `variance([]);` and `std_dev([]);` each raise `CinderRuntimeError`
-  naming a non-empty-list requirement, matching `mean([])`/`median([])`'s
-  existing error shape exactly.
-- `variance("abc");` (a string, not a list) raises `CinderRuntimeError`
-  naming `variance` and `string` in the message; `std_dev` raises the
-  equivalent error for the same input.
-- `variance([1, "two", 3]);` (a non-numeric element) raises
-  `CinderRuntimeError` naming `variance` and the offending element's
-  type; `std_dev` raises the equivalent error for the same input.
-- Wrong arity on either builtin (not exactly 1 argument) raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `mean`/`median`,
-`cinder/builtins.py:2361-2362`), `tests/test_builtins.py`. Once merged,
-`README.md`'s Builtins bullet needs `variance`/`std_dev` added near
-`mean`/`median` — leave that to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. REPL tab completion for builtin names and in-scope variables
+## 1. REPL tab completion for builtin names and in-scope variables
 
 Build: wire up `readline`'s completer API so pressing Tab in the REPL
 completes builtin function names and the current top-level environment's
@@ -152,7 +95,7 @@ next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `mode` for the most frequently occurring value in a list
+## 2. Standard library: `mode` for the most frequently occurring value in a list
 
 Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
 after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1064-`
@@ -205,7 +148,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
+## 3. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
 
 Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
 `*=`, `/=`, `%=`) to accept an `Index`-expression target — which
@@ -290,7 +233,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `product` for the product of a list of numbers
+## 4. Standard library: `product` for the product of a list of numbers
 
 Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
 counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —

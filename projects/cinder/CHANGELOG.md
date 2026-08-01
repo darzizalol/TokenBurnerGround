@@ -1115,3 +1115,11 @@ for vision/architecture.
   elements in original order, `drop_right` returns everything except
   them, neither mutates the input list. Clean first pass, no bounces
   (1635 tests passing, up from 1617).
+- **Standard library: `variance`/`std_dev` for a list of numbers** — merged
+  2026-08-02T~ via PR #144 (`feat/20260801-variance-std-dev`). Added both to
+  `cinder/builtins.py`, following `mean`/`median`'s arity/type-check shape
+  exactly; population variance (divide by `n`, matching Cinder's existing
+  no-sample-vs-population convention), with the shared mean/squared-
+  deviation logic factored into an internal `_population_variance` helper
+  so `std_dev` doesn't duplicate it or call `variance` through `call_value`.
+  Clean first pass, no bounces (1648 tests passing, up from 1635).

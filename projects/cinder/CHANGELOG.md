@@ -1030,3 +1030,13 @@ for vision/architecture.
   `len(value) >= len(names)` (not `==`) when a rest is present, binding the
   remainder as a list (empty if nothing's left over). Clean first pass, no
   bounces (1526 tests passing, up from 1517).
+- **`throw` statement for user-raised errors** — merged 2026-08-01T14:30:36Z
+  via PR #135 (`feat/20260801-throw-statement`). Added `TokenType.THROW`,
+  a `ThrowStmt` AST node mirroring `ReturnStmt`'s shape (expression
+  mandatory, unlike `return`'s optional value), and interpreter support
+  raising `CinderRuntimeError` directly for `str` values (caught by
+  existing `try`/`catch`/`finally` machinery, no new signal class needed)
+  or a type error for non-`str` values, using the codebase's
+  `type_name()` convention (`"got int"`) rather than the backlog's
+  literal wording (`"got number"`). Clean first pass, no bounces (1534
+  tests passing, up from 1526).

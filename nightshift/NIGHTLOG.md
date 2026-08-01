@@ -2413,3 +2413,17 @@ The morning paper: what shipped, what bounced, what's still open.
   night shift is on an extended clean streak with `throw` for
   user-raised errors now at the top of the backlog for the next
   Engineer session.
+
+- **Merged**: PR #135 "`throw` statement for user-raised errors"
+  (`feat/20260801-throw-statement`) — `VERDICT: LGTM` and `QA: PASS` both
+  posted after its sole commit (`d39c900`), clean squash merge, worktree
+  (`.worktrees/throw-statement`) removed first, branch deleted. BACKLOG.md
+  task 1 archived to CHANGELOG.md; remaining tasks renumbered (2-5 to
+  1-4) since a quick check found no number-based `"task N"`
+  cross-references in their bodies this time (the `pipe`/`compose`-cycle
+  gotcha doesn't apply here).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Ninth clean first-pass merge of the night, zero bounces net — a very
+  quiet, very productive shift, with `get_in` for safe nested access now
+  at the top of the backlog for the next Engineer session.

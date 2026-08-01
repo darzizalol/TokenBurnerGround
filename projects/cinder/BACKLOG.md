@@ -11,79 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `throw` statement for user-raised errors [claimed 2026-08-01T14:21:14Z]
-
-Build: add a `throw EXPR;` statement so Cinder code can raise its own
-runtime errors with a custom message, instead of the only way to
-signal failure today being `assert(cond, message)` (`_assert`,
-`cinder/builtins.py:1765-1774`) or an error that already happened
-naturally — both catchable today only via `try { ... } catch (name) {
-... }` (`_execute_try`, `cinder/interpreter.py:366-377`, which binds
-`error.message`, a plain string, to `name`). Mirror `assert`'s own
-message-typing rule exactly: the thrown value must be a `str` (`throw`
-does not accept arbitrary values the way `return` does — same
-constraint `_assert` already imposes on its second argument, and for the
-same reason: `catch (name)` binds a plain string today and this task
-must not change that contract). Lex/parse: no new token type needed —
-add `TokenType.THROW` as a new keyword (mirror how `TokenType.RETURN` is
-lexed/reserved) and a `ThrowStmt` AST node (`expression: Expr`, `line:
-int`, `column: int`, mirroring `ReturnStmt`'s shape). Parser: dispatch
-`THROW` in `_statement()` (`cinder/parser.py:214-245`, alongside the
-existing `RETURN`/`BREAK`/`CONTINUE` dispatch) to a new
-`_throw_statement()` that consumes `throw`, parses one expression via
-`self._assignment()`, consumes the trailing `;`, and returns
-`ThrowStmt(expression, throw_token.line, throw_token.column)` (mirror
-`_return_statement`'s shape, but the expression is required, not
-optional — `throw;` with no value is a `ParseError`, `"expected
-expression after 'throw'"` at the `throw` token's line/column).
-Interpreter: in `execute` (`cinder/interpreter.py`, alongside the
-`ReturnStmt`/`BreakStmt`/`ContinueStmt` handling around lines 342-348),
-evaluate `stmt.expression`; if the result isn't a `str`, raise
-`CinderRuntimeError(f"throw requires a string message, got
-{type_name(value)}", stmt.line, stmt.column)` (same phrasing pattern as
-`_assert`'s type check); otherwise raise `CinderRuntimeError(value,
-stmt.line, stmt.column)` directly — no new signal/exception class
-needed, `try`/`catch` already catches any `CinderRuntimeError` via
-`_execute_try`, so a thrown error is caught exactly like a
-builtin-raised one, `finally` still runs (regression-covered by
-`_execute_try`'s existing `finally` block, untouched by this task), and
-an uncaught `throw` still reports line/column (and a call-stack trace if
-thrown from inside a nested call) exactly like any other uncaught
-`CinderRuntimeError` today.
-
-Acceptance criteria:
-- `try { throw "boom"; } catch (e) { print(e); }` prints `boom` — a
-  thrown string is caught and bound exactly like a naturally-raised
-  error's message.
-- An uncaught `throw "boom";` at top level raises `CinderRuntimeError`
-  with message `"boom"` and the `throw` statement's own line/column
-  (regression test asserting the structured fields, not just that it
-  raises).
-- `throw 42;` (non-string operand) raises `CinderRuntimeError` with
-  message `"throw requires a string message, got number"` and the
-  `throw` statement's own line/column — the type error itself, distinct
-  from the "thrown" error it would otherwise be.
-- `throw` inside a function called from another function still reports
-  the full call-stack trace on the way out, same as any other runtime
-  error raised deep in a call chain (reuse whatever existing test
-  pattern `test_interpreter.py` uses for call-stack frames on a
-  naturally-raised error).
-- `try { throw "x"; } finally { <side effect>; }` (no catch block) still
-  runs the `finally` body before the error propagates uncaught
-  (regression test pinning `finally`'s existing run-before-propagate
-  semantics against this new source of error).
-- `throw;` with no expression raises `ParseError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/ast_nodes.py`,
-`cinder/parser.py`, `cinder/interpreter.py`, `tests/test_lexer.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged, the
-README's Control flow bullet needs a `throw` mention — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `get_in` for safe nested access
+## 1. Standard library: `get_in` for safe nested access
 
 Build: add `get_in(container, path, default)` to `cinder/builtins.py` —
 walks a list of keys/indices through nested maps and lists in one call,
@@ -165,7 +93,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `curry` for single-argument currying
+## 2. Standard library: `curry` for single-argument currying
 
 Build: add `curry(fn, arity)` to `cinder/builtins.py` — returns a new
 callable Cinder value (same returned-function mechanism `pipe`/`compose`
@@ -239,7 +167,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `memoize` for caching pure functions
+## 3. Standard library: `memoize` for caching pure functions
 
 Build: add `memoize(fn)` to `cinder/builtins.py` — returns a new callable
 Cinder value (the same returned-function mechanism `pipe`/`compose`/
@@ -335,7 +263,7 @@ pass, not this task.
 
 ---
 
-## 5. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
+## 4. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
 
 Build: let a single `switch` case match any of several values, instead of
 requiring one `case` per value with duplicated bodies. Today `SwitchCase`

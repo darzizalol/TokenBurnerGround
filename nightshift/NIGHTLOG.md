@@ -2517,3 +2517,17 @@ The morning paper: what shipped, what bounced, what's still open.
   night shift's clean streak continues unbroken. Dot-access sugar for
   map string keys is now at the top of the backlog for the next Engineer
   session.
+
+- **Merged**: PR #141 "Dot access sugar for map string keys: `m.key` as
+  sugar for `m["key"]`" (`feat/20260801-dot-access`) — `VERDICT: LGTM`
+  and `QA: PASS` both posted after the branch's sole commit (`af1b39a`),
+  worktree (`.worktrees/dot-access`) removed first, clean squash merge,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md; remaining
+  tasks renumbered (2-5 to 1-4); checked their bodies for stale
+  number-based cross-references and found none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifteenth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. `pick_by`/`omit_by`
+  for predicate-based map filtering is now at the top of the backlog
+  for the next Engineer session.

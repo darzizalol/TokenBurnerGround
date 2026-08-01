@@ -11,93 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]` [claimed 2026-08-01T19:51:58Z]
-
-Build: let a map be read/written with dot notation (`m.key`) as pure
-syntactic sugar for bracket indexing with a string literal (`m["key"]`) —
-no new AST node, no interpreter changes. `TokenType.DOT` already exists
-(`cinder/tokens.py:87`) and the lexer already emits a standalone `DOT`
-token for any `.` that isn't consumed while scanning a number literal
-(`cinder/lexer.py:349`), so no lexer change is needed either. In `_call`
-(`cinder/parser.py:902-912`, the postfix loop that already handles `(`
-and `[` after a primary expression), add a third branch:
-`elif self._check(TokenType.DOT): expr = self._finish_dot(expr)`. Add
-`_finish_dot`, modeled on `_finish_index` (`cinder/parser.py:931-944`):
-consume the `DOT`, require the next token be `TokenType.IDENTIFIER`
-(raise `ParseError` `"expected a property name after '.'"` at the
-identifier-position token if not — this means dot access only reaches
-identifier-shaped keys, never a keyword or a computed key; `m["if"]` or
-`m[k]` remain the only way to reach those, which is an accepted
-limitation, not a bug to work around), and return `Index(obj,
-Literal(name_token.lexeme, name_token.line, name_token.column), dot.line,
-dot.column)` — i.e. dot access desugars into exactly the same `Index`
-node (`cinder/ast_nodes.py:94-98`) that `m["key"]` already produces, just
-with the bracket-expression replaced by a string literal built from the
-identifier's lexeme.
-
-This reuse is what makes the task small: `_assignment`
-(`cinder/parser.py:724-785`) and the statement-level `_expr_or_incdec`
-(`cinder/parser.py:686-723`) both already dispatch on `isinstance(expr,
-Index)` — not on how that `Index` was produced — to build `IndexAssign`,
-`IndexCompoundAssign` (for the bitwise/shift compound-assign set), and
-`++`/`--` targets. Because `_finish_dot` produces a plain `Index`, plain
-assignment (`m.key = v`), the bitwise/shift compound-assign set (`m.key
-&= 3`), and increment/decrement (`m.key++`) all work automatically with
-zero additional parser or interpreter code — do not add special-case
-handling for any of these; if you find yourself editing
-`interpreter.py`, you've taken a wrong turn. The one exception already
-true of bracket indexing (not a new gap this task introduces): the
-arithmetic compound-assign set (`+=` etc.) is identifier-only, so `m.key
-+= 1` raises `"invalid assignment target"` exactly as `m["key"] += 1`
-already does today — out of scope to change here.
-
-Acceptance criteria:
-- `let m = {"a": 1}; m.a;` is `1` — the primary read case, pin as the
-  main regression test.
-- `let m = {"nested": {"b": 2}}; m.nested.b;` is `2` — chained dot access
-  through nested maps.
-- `let m = {"a": 1}; m.a = 5; m.a;` is `5` — dot access as an assignment
-  target.
-- `let m = {"x": 6}; m.x &= 3; m.x;` is `2` — dot access as a bitwise
-  compound-assign target, same as `m["x"] &= 3` today.
-- `let m = {"x": 1}; m.x++; m.x;` is `2` — dot access as an
-  increment-statement target, same as `m["x"]++;` today.
-- `let m = {"a": 1}; m.a += 1;` raises `CinderRuntimeError` (or
-  `ParseError`, matching whatever `m["a"] += 1` already raises today —
-  check and mirror it exactly) — dot access does not gain arithmetic
-  compound-assign where bracket indexing doesn't have it either.
-- `let m = {"a": 1}; m.b;` (missing key) raises `CinderRuntimeError` at
-  the `.b` site, the same error `m["b"]` already raises for a missing
-  key — no special-cased "did you mean" behavior for dot access.
-- `let xs = [1, 2, 3]; xs.foo;` (dot access on a list) raises
-  `CinderRuntimeError` — same error `xs["foo"]` already raises today
-  (list indices must be `int`), not a new/different message.
-- `let m = {"greet": fn(name) { return "hi " + name; }}; m.greet("Ada");`
-  is `"hi Ada"` — a map value reached via dot access is callable exactly
-  like one reached via bracket access (no special method-call binding of
-  `self`/`this` — Cinder has none, and this task must not add one).
-- `m.if;` where `m` is a map (dot access followed by a keyword rather
-  than a plain identifier) raises `ParseError` at the `.` — dot access
-  never reaches keyword-named keys; this is the documented limitation,
-  not a regression to fix.
-- Existing bracket indexing (`m["key"]`, `xs[0]`, slices, all existing
-  assignment/compound-assignment/increment forms on `Index` targets) is
-  completely unchanged — run the existing indexing/assignment tests
-  unmodified and confirm they still pass (regression, not a new test;
-  this task only ever adds a new way to *produce* an `Index` node, never
-  changes what happens to one after it's produced).
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (the only file expected to change),
-`tests/test_parser.py`, `tests/test_interpreter.py` (end-to-end dot-access
-programs, mirroring how other sugar features are end-to-end tested).
-Once merged, `README.md`'s `Data structures` bullet needs a mention that
-maps also support dot access for string keys — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
+## 1. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
 
 Build: add `pick_by(map, predicate)` and `omit_by(map, predicate)` to
 `cinder/builtins.py`, filling the gap `pick`/`omit`
@@ -164,7 +78,7 @@ this task.
 
 ---
 
-## 3. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
+## 2. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
 
 Build: add `take_right(list, n)` and `drop_right(list, n)` to
 `cinder/builtins.py`, the end-anchored complements of the existing
@@ -223,7 +137,7 @@ this task.
 
 ---
 
-## 4. Standard library: `variance`/`std_dev` for a list of numbers
+## 3. Standard library: `variance`/`std_dev` for a list of numbers
 
 Build: add `variance(list)` and `std_dev(list)` to `cinder/builtins.py`,
 the natural next stop after `mean`/`median` (`cinder/builtins.py:1026-
@@ -280,7 +194,7 @@ this task.
 
 ---
 
-## 5. REPL tab completion for builtin names and in-scope variables
+## 4. REPL tab completion for builtin names and in-scope variables
 
 Build: wire up `readline`'s completer API so pressing Tab in the REPL
 completes builtin function names and the current top-level environment's

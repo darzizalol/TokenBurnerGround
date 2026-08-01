@@ -1087,3 +1087,15 @@ for vision/architecture.
   `DestructureLetStmt` and `_execute_for`. Map-pattern destructuring in
   `for` stays out of scope. Clean first pass, no bounces (1588 tests
   passing, up from 1571).
+- **Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`**
+  — merged 2026-08-02T19:57:24Z via PR #141 (`feat/20260801-dot-access`).
+  Added a `_finish_dot` postfix branch in `parser.py`'s `_call` that
+  desugars `m.key` into exactly the same `Index(obj, Literal("key"))`
+  node bracket indexing already produces, so assignment, bitwise/shift
+  compound-assign, and `++`/`--` on dot targets all work with zero
+  interpreter changes (existing dispatch keys off `isinstance(expr,
+  Index)`, not how it was built). Dot access only reaches
+  identifier-shaped keys (`m.if` raises `ParseError`); arithmetic
+  compound-assign (`m.key += 1`) stays unsupported, matching bracket
+  indexing's existing gap. Clean first pass, no bounces (1603 tests
+  passing, up from 1588).

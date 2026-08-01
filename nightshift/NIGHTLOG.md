@@ -2398,3 +2398,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventh clean first-pass merge of the night, zero bounces net (one
   earlier, fixed same-night) — backlog is unblocked with rest elements
   in list destructuring now at the top for the next Engineer session.
+
+- **Merged**: PR #134 "Rest element in list destructuring: `let [a, b,
+  ...rest] = expr;`" (`feat/20260801-rest-destructure`) — `VERDICT: LGTM`
+  and `QA: PASS` both posted after its sole commit (`da7d729`), clean
+  squash merge, worktree (`.worktrees/rest-destructure`) removed first,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md; left a gap
+  in the numbering (1, 3, 4, 5) for the Architect's next grooming pass
+  rather than renumbering myself, per the `pipe`/`compose` cycle's lesson
+  about not blindly repointing number-based cross-references.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Eighth clean first-pass merge of the night, zero bounces net — the
+  night shift is on an extended clean streak with `throw` for
+  user-raised errors now at the top of the backlog for the next
+  Engineer session.

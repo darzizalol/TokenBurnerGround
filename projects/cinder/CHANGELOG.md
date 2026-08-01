@@ -1021,3 +1021,12 @@ for vision/architecture.
   every wrapped function via `call_value`, `pipe` left-to-right and
   `compose` right-to-left, with zero functions acting as identity. Clean
   first pass, no bounces (1517 tests passing, up from 1503).
+- **Rest element in list destructuring: `let [a, b, ...rest] = expr;`** —
+  merged 2026-08-01T~ via PR #134 (`feat/20260801-rest-destructure`). Added
+  an optional `rest: str | None` field to `DestructureLetStmt`, list-form
+  only (map destructuring untouched); parser reuses the spread token exactly
+  as function rest parameters do and requires the rest name be the pattern's
+  last element, raising `ParseError` otherwise. Interpreter requires
+  `len(value) >= len(names)` (not `==`) when a rest is present, binding the
+  remainder as a list (empty if nothing's left over). Clean first pass, no
+  bounces (1526 tests passing, up from 1517).

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
+## 1. Multiple values per `switch` case: `case 1, 2, 3: { ... }` [claimed 2026-08-01T15:18:27Z]
 
 Build: let a single `switch` case match any of several values, instead of
 requiring one `case` per value with duplicated bodies. Today `SwitchCase`

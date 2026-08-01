@@ -892,6 +892,83 @@ class TestOmit(unittest.TestCase):
             run('omit({"a": 1}, ["a"], 1);')
 
 
+class TestPickBy(unittest.TestCase):
+    def test_pick_by_keeps_entries_matching_predicate(self):
+        env = run(
+            'let result = pick_by({"a": 1, "b": 2, "c": 3}, fn(k, v) { return v > 1; });'
+        )
+        self.assertEqual(env.get("result"), {"b": 2, "c": 3})
+
+    def test_pick_by_predicate_can_inspect_key(self):
+        env = run(
+            'let result = pick_by({"a": 1, "bb": 2, "ccc": 3}, '
+            "fn(k, v) { return len(k) == 1; });"
+        )
+        self.assertEqual(env.get("result"), {"a": 1})
+
+    def test_pick_by_of_empty_map_is_empty(self):
+        env = run("let result = pick_by({}, fn(k, v) { return true; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_pick_by_always_false_predicate_is_empty(self):
+        env = run(
+            'let result = pick_by({"a": 1, "b": 2}, fn(k, v) { return false; });'
+        )
+        self.assertEqual(env.get("result"), {})
+
+    def test_pick_by_preserves_source_key_order(self):
+        env = run(
+            'let result = keys(pick_by({"z": 1, "a": 2}, fn(k, v) { return true; }));'
+        )
+        self.assertEqual(env.get("result"), ["z", "a"])
+
+    def test_pick_by_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("pick_by([1, 2, 3], fn(k, v) { return true; });")
+
+    def test_pick_by_with_non_callable_predicate_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pick_by({"a": 1}, "not a function");')
+
+    def test_pick_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pick_by({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('pick_by({"a": 1}, fn(k, v) { return true; }, 1);')
+
+
+class TestOmitBy(unittest.TestCase):
+    def test_omit_by_drops_entries_matching_predicate(self):
+        env = run(
+            'let result = omit_by({"a": 1, "b": 2, "c": 3}, fn(k, v) { return v > 1; });'
+        )
+        self.assertEqual(env.get("result"), {"a": 1})
+
+    def test_omit_by_always_false_predicate_is_identity(self):
+        env = run(
+            'let result = omit_by({"a": 1, "b": 2}, fn(k, v) { return false; });'
+        )
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2})
+
+    def test_omit_by_of_empty_map_is_empty(self):
+        env = run("let result = omit_by({}, fn(k, v) { return true; });")
+        self.assertEqual(env.get("result"), {})
+
+    def test_omit_by_on_non_map_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("omit_by([1, 2, 3], fn(k, v) { return true; });")
+
+    def test_omit_by_with_non_callable_predicate_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('omit_by({"a": 1}, "not a function");')
+
+    def test_omit_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('omit_by({"a": 1});')
+        with self.assertRaises(CinderRuntimeError):
+            run('omit_by({"a": 1}, fn(k, v) { return true; }, 1);')
+
+
 class TestUpper(unittest.TestCase):
     def test_upper_of_string(self):
         self.assertEqual(run('let result = upper("hello");').get("result"), "HELLO")

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end
+## 1. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end [claimed 2026-08-01T20:17:52Z]
 
 Build: add `take_right(list, n)` and `drop_right(list, n)` to
 `cinder/builtins.py`, the end-anchored complements of the existing

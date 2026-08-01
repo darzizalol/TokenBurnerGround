@@ -1051,3 +1051,11 @@ for vision/architecture.
   soft `return default`; only a non-list `path` argument raises
   `CinderRuntimeError`. Clean first pass, no bounces (1545 tests
   passing, up from 1534).
+- **Standard library: `curry` for single-argument currying** — merged
+  2026-08-01T14:56:25Z via PR #137 (`feat/20260801-curry`). Added
+  `curry(fn, arity)` to `cinder/builtins.py`, the same returned-function
+  mechanism `pipe`/`compose` already use: a chain of one-argument
+  `Builtin` closures, each capturing its own accumulator snapshot so
+  partial applications are independent and reusable, that calls `fn` via
+  `call_value` once `arity` arguments have been collected. Clean first
+  pass, no bounces (1555 tests passing, up from 1545).

@@ -11,81 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `curry` for single-argument currying [claimed 2026-08-01T14:50:47Z]
-
-Build: add `curry(fn, arity)` to `cinder/builtins.py` — returns a new
-callable Cinder value (same returned-function mechanism `pipe`/`compose`
-already use, `cinder/builtins.py:1939-1974`: a `Builtin` closure built
-with `call_value`, `cinder/interpreter.py:824`, to invoke the wrapped
-function) that accepts its arguments **one at a time**, accumulating
-them, and only actually calls `fn` once `arity` arguments have been
-collected — e.g. `curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3)`
-is `6`. Validate `fn` is callable up front (reuse `_is_callable`,
-`cinder/builtins.py:1844`, raising `CinderRuntimeError` `f"curry()
-requires a function as its first argument, got {type_name(fn)}"` at the
-`curry(...)` call's own line/column if not — do not defer to first
-invocation) and `arity` is a positive `int` (`isinstance(arity, int) and
-not isinstance(arity, bool)` and `arity >= 1`; `arity < 1` including `0`
-and negative values raises `CinderRuntimeError` `f"curry() requires
-arity to be at least 1, got {arity}"`, non-int raises `f"curry()
-requires an int arity, got {type_name(arity)}"` — both at the call
-site). Each step's returned `Builtin` closure takes **exactly one**
-argument (validate with `_require_arity`, `cinder/builtins.py:49`, using
-a synthetic name like `"<curried function>"`, mirroring
-`_piped`/`_composed`'s own approach for their returned closures' arity
-checks), appends it to an accumulator list captured by that step's
-closure (each step must capture its *own* accumulator snapshot — e.g.
-via a default-argument or an immediately-applied helper — not a single
-mutable list shared and mutated across steps, or partial application
-from a shared base would corrupt sibling calls: calling `let step1 =
-curry(fn, 2)(1); step1(2); step1(3);` twice must yield two independent
-results, not accumulate `[1, 2, 3]`). Once the accumulator reaches
-`arity` elements, call `fn` via `call_value(fn, accumulated, line,
-column)` (the *inner* call's line/column — the site invoking the final
-step, not `curry`'s own call site, mirroring `_piped`/`_composed`'s
-rule) and return that result directly, not another wrapped function;
-below `arity`, return a new one-argument `Builtin` closure over the
-extended accumulator.
-
-Acceptance criteria:
-- `curry(fn(a, b) { return a + b; }, 2)(1)(2)` is `3` — two-step curry,
-  pin as the primary test.
-- `curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3)` is `6` —
-  three-step curry, catches an off-by-one in the accumulate-until-arity
-  logic.
-- `let add5 = curry(fn(a, b) { return a + b; }, 2)(5); add5(1)` is `6`
-  and `add5(10)` is `15` — a partially-applied step is reusable across
-  multiple final calls, each producing an independent result (regression
-  guard for accumulator-sharing bugs).
-- `curry(fn(a, b) { return a + b; }, 2)(1)` is itself a callable Cinder
-  value: `type()` of it reports the same type name an ordinary function
-  value reports, and it's passable to `map`
-  (`map([1, 2, 3], curry(fn(a, b) { return a + b; }, 2)(10)))` is
-  `[11, 12, 13]`).
-- `curry(1, 2)` (non-function `fn`) raises `CinderRuntimeError` with
-  line/column at the `curry(...)` call site, before any step is invoked.
-- `curry(fn(a) { return a; }, 0)` and `curry(fn(a) { return a; }, -1)`
-  both raise `CinderRuntimeError` (`arity` must be at least 1) at the
-  `curry(...)` call site.
-- `curry(fn(a) { return a; }, "2")` (non-int `arity`) raises
-  `CinderRuntimeError` at the call site.
-- Calling any intermediate or final step with zero arguments or two-plus
-  arguments raises `CinderRuntimeError` (arity mismatch on that step
-  itself, not a Python-level crash) — regression-test both an
-  intermediate step and the final step.
-- Wrong arity on `curry` itself (not 2 arguments) raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `map`/`filter`/`reduce`,
-`cinder/builtins.py:2237-2238` onward, alongside where `pipe`/`compose`
-are registered), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `curry` added near `pipe`/`compose` — leave that to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `memoize` for caching pure functions
+## 1. Standard library: `memoize` for caching pure functions
 
 Build: add `memoize(fn)` to `cinder/builtins.py` — returns a new callable
 Cinder value (the same returned-function mechanism `pipe`/`compose`/
@@ -181,7 +107,7 @@ pass, not this task.
 
 ---
 
-## 3. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
+## 2. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
 
 Build: let a single `switch` case match any of several values, instead of
 requiring one `case` per value with duplicated bodies. Today `SwitchCase`
@@ -245,7 +171,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
+## 3. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
 
 Build: let a `for`-in loop's variable position accept a list destructuring
 pattern (the same `[name, name, ...rest]` syntax `let` already supports),
@@ -297,7 +223,7 @@ line, column)`, and call it both from the `DestructureLetStmt` handler
 and from `_execute_for` (passing `stmt.names`, `stmt.rest`, `item`,
 `stmt.line`, `stmt.column` — the `for` statement's own line/column, not
 per-item, matching how the existing single-name path already attributes
-errors to the loop) — this mirrors task 3's "reuse, don't reimplement"
+errors to the loop) — this mirrors task 2's "reuse, don't reimplement"
 approach and avoids the arity/rest logic drifting between the two call
 sites. Every iteration still gets its own fresh `iter_env`
 (`Environment(env)`) exactly as today, so closures captured in the body
@@ -343,7 +269,7 @@ this task.
 
 ---
 
-## 5. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
+## 4. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
 
 Build: let a map be read/written with dot notation (`m.key`) as pure
 syntactic sugar for bracket indexing with a string literal (`m["key"]`) —

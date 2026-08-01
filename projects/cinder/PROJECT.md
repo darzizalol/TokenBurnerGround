@@ -121,13 +121,13 @@ source-mapped call-stack traces for nested calls, `do`/`while` loops,
 assignment `??=`, an `-e`/`--eval` CLI flag, "did you mean...?" suggestions
 for undefined names, labeled `break`/`continue` for nested loops, function
 composition (`pipe`/`compose`), user-raised errors (`throw`), rest elements
-in list destructuring, and safe nested access/currying (`get_in`, `curry`)
-— all once listed here as future work — have since landed. What remains
-plausible, not yet scoped into tasks beyond current `BACKLOG.md`: continued
-standard-library breadth (string/list/map/math methods, picked
-incrementally per `BACKLOG.md`'s own grooming — `memoize` for caching pure
-functions and predicate-based map filtering (`pick_by`/`omit_by`) are the
-latest picks, already in current `BACKLOG.md`), more destructuring surface
+in list destructuring, safe nested access/currying (`get_in`, `curry`), and
+`memoize` for caching pure functions — all once listed here as future work —
+have since landed. What remains plausible, not yet scoped into tasks beyond
+current `BACKLOG.md`: continued standard-library breadth (string/list/map/math
+methods, picked incrementally per `BACKLOG.md`'s own grooming — predicate-
+based map filtering (`pick_by`/`omit_by`) is the latest pick, already in
+current `BACKLOG.md`), more destructuring surface
 (list patterns in `for`-loop variables, also in current `BACKLOG.md`), a
 multi-value `switch` case and dot-access sugar for map string keys (both
 also in current `BACKLOG.md`), and only much later, a bytecode VM if

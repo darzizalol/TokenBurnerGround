@@ -103,7 +103,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
+  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
@@ -187,12 +187,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `get_in` for safe nested
-map/list access and `curry` for single-argument currying. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `memoize` for caching pure functions,
-multiple values per `switch` case (`case 1, 2, 3: { ... }`), list
-destructuring in `for`-loop variables, dot-access sugar for map string
-keys (`m.key` as sugar for `m["key"]`), and predicate-based map
-filtering (`pick_by`/`omit_by`). The backlog mixes language depth with
-stdlib breadth over time rather than running either in one long block.
+Actively developed, nightly. Recently landed: `curry` for single-argument
+currying and `memoize` for caching pure functions. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): multiple values per `switch` case
+(`case 1, 2, 3: { ... }`), list destructuring in `for`-loop variables,
+dot-access sugar for map string keys (`m.key` as sugar for `m["key"]`),
+and predicate-based map filtering (`pick_by`/`omit_by`). The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

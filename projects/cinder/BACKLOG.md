@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `memoize` for caching pure functions
+## 1. Standard library: `memoize` for caching pure functions [claimed 2026-08-01T15:04:24Z]
 
 Build: add `memoize(fn)` to `cinder/builtins.py` — returns a new callable
 Cinder value (the same returned-function mechanism `pipe`/`compose`/

@@ -27,6 +27,7 @@ class TokenType(Enum):
     IN = auto()
     FN = auto()
     RETURN = auto()
+    THROW = auto()
     BREAK = auto()
     CONTINUE = auto()
     TRY = auto()
@@ -104,6 +105,7 @@ KEYWORDS = {
     "in": TokenType.IN,
     "fn": TokenType.FN,
     "return": TokenType.RETURN,
+    "throw": TokenType.THROW,
     "break": TokenType.BREAK,
     "continue": TokenType.CONTINUE,
     "try": TokenType.TRY,

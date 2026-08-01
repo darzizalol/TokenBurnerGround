@@ -1871,6 +1871,63 @@ class TestTryFinally(unittest.TestCase):
         self.assertIn("division by zero", env.get("msg"))
 
 
+class TestThrowStatement(unittest.TestCase):
+    def test_thrown_string_is_caught_and_bound(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                'try { throw "boom"; } catch (e) { print(e); }',
+                create_global_environment(),
+            )
+        self.assertEqual(out.getvalue(), "boom\n")
+
+    def test_uncaught_throw_raises_with_own_line_and_column(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('throw "boom";')
+        self.assertEqual(ctx.exception.message, "boom")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_throw_non_string_raises_type_error(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("throw 42;")
+        self.assertEqual(
+            ctx.exception.message, "throw requires a string message, got int"
+        )
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+
+    def test_throw_inside_nested_call_reports_call_stack(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                "fn a() { b(); } "
+                'fn b() { throw "boom"; } '
+                "a();"
+            )
+        names = [frame[0] for frame in ctx.exception.frames]
+        self.assertEqual(names, ["b", "a"])
+
+    def test_finally_runs_before_throw_propagates_uncaught(self):
+        from cinder.builtins import create_global_environment
+
+        env = create_global_environment()
+        with self.assertRaises(CinderRuntimeError):
+            run(
+                'let log = []; try { throw "x"; } finally { push(log, 1); }',
+                env,
+            )
+        self.assertEqual(env.get("log"), [1])
+
+    def test_throw_without_expression_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run("throw;")
+
+
 class TestSwitchStatement(unittest.TestCase):
     def test_first_match_wins_no_fallthrough(self):
         import io

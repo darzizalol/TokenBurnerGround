@@ -33,6 +33,7 @@ from cinder.ast_nodes import (
     Spread,
     SwitchStmt,
     Ternary,
+    ThrowStmt,
     TryStmt,
     Unary,
     WhileStmt,
@@ -154,6 +155,8 @@ def stmt_shape(node):
         )
     if isinstance(node, ReturnStmt):
         return ("ReturnStmt", shape(node.value) if node.value is not None else None)
+    if isinstance(node, ThrowStmt):
+        return ("ThrowStmt", shape(node.expression))
     if isinstance(node, ForStmt):
         return (
             "ForStmt",
@@ -1332,6 +1335,16 @@ class TestFunctions(unittest.TestCase):
             [stmt_shape(s) for s in parse_stmts("fn f() { return; }")],
             [("FnDecl", "f", [], None, ("Block", [("ReturnStmt", None)]))],
         )
+
+    def test_throw_statement(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('throw "boom";')],
+            [("ThrowStmt", ("Literal", "boom"))],
+        )
+
+    def test_throw_without_expression_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("throw;")
 
     def test_call_expression_statement(self):
         self.assertEqual(

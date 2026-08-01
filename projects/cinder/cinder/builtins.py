@@ -1102,6 +1102,51 @@ def _median(arguments: list, line: int, column: int) -> object:
     return (ordered[middle - 1] + ordered[middle]) / 2
 
 
+def _population_variance(value: list) -> object:
+    total = 0
+    for element in value:
+        total = total + element
+    mean = total / len(value)
+    squared_deviation_total = 0
+    for element in value:
+        squared_deviation_total = squared_deviation_total + (element - mean) ** 2
+    return squared_deviation_total / len(value)
+
+
+def _variance(arguments: list, line: int, column: int) -> object:
+    _require_arity("variance", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"variance() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("variance() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"variance() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    return _population_variance(value)
+
+
+def _std_dev(arguments: list, line: int, column: int) -> object:
+    _require_arity("std_dev", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"std_dev() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("std_dev() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"std_dev() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    return math.sqrt(_population_variance(value))
+
+
 def _any(arguments: list, line: int, column: int) -> object:
     _require_arity("any", arguments, 1, line, column)
     value = arguments[0]
@@ -2360,6 +2405,8 @@ _BUILTINS = {
     "sum": _sum,
     "mean": _mean,
     "median": _median,
+    "variance": _variance,
+    "std_dev": _std_dev,
     "any": _any,
     "all": _all,
     "contains": _contains,

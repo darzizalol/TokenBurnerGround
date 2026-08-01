@@ -55,8 +55,13 @@ while (i < 10) {
   to target an enclosing loop from a nested one,
   `try { ... } catch (name) { ... }` for recovering from runtime errors
   (the caught message binds to `name`; `break`/`continue`/`return` still
-  propagate through uncaught), `switch` statements with `case`/`default`
-  (no fallthrough, first match wins)
+  propagate through uncaught), an optional `finally { ... }` block (at
+  least one of `catch`/`finally` is required) that always runs on the way
+  out of the `try`, whether it succeeded, was caught, or is propagating
+  uncaught, a `throw expr;` statement for raising user-defined errors
+  (the expression must be a string; catchable by an enclosing
+  `try`/`catch` exactly like a builtin runtime error), `switch`
+  statements with `case`/`default` (no fallthrough, first match wins)
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`;
   the bitwise/shift set also accepts an index-expression target, e.g.
@@ -182,13 +187,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: function composition
-(`pipe`/`compose`) and a rest element in list destructuring
-(`let [a, b, ...rest] = expr;`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): a `throw` statement for user-raised errors,
-and the stdlib additions `get_in` for safe nested map/list access,
-`curry` for single-argument currying, and `memoize` for caching pure
-functions.
+Actively developed, nightly. Recently landed: a rest element in list
+destructuring (`let [a, b, ...rest] = expr;`) and a `throw` statement for
+user-raised errors. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the
+stdlib additions `get_in` for safe nested map/list access, `curry` for
+single-argument currying, and `memoize` for caching pure functions, and
+multiple values per `switch` case (`case 1, 2, 3: { ... }`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

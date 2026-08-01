@@ -327,6 +327,104 @@ the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
+
+Build: let a `for`-in loop's variable position accept a list destructuring
+pattern (the same `[name, name, ...rest]` syntax `let` already supports),
+so iterating over pairs (e.g. `items(map)`, which yields `[key, value]`
+two-element lists per CHANGELOG's `from_entries`/`items` entry) doesn't
+require a manual `let [k, v] = pair;` as the first line of the loop body.
+Only the foreach form (`ForStmt`, `cinder/ast_nodes.py:257-264`) is in
+scope — the C-style `for (init; cond; step)` loop (`ForCStmt`) is
+untouched. Only the list-pattern form (`[a, b, ...rest]`) is in scope —
+map-pattern destructuring (`for {a, b} in ...`) is explicitly **out of
+scope** for this task (an iterated item being map-shaped often enough to
+justify it hasn't come up; don't add it speculatively).
+
+AST: add two optional fields to `ForStmt` — `names: "list | None" = None`
+and `rest: "str | None" = None` — after the existing `label` field, and
+widen `var_name`'s type to `"str | None"`. The two forms are mutually
+exclusive: a plain loop sets `var_name` and leaves `names`/`rest` at
+their `None` default (all existing construction sites, and all existing
+`.cin` programs, keep working unchanged); a destructuring loop sets
+`var_name=None` and populates `names` (and optionally `rest`).
+
+Parser: in `_for_statement` (`cinder/parser.py:374-391`), after the
+existing `if self._check(TokenType.LPAREN):` branch for the C-style
+form, add an `elif self._check(TokenType.LBRACKET):` branch. Factor the
+pattern-parsing loop already used for `let`'s list form —
+`_destructure_let_statement`'s body from the `self._advance()  # consume
+'[' or '{'` line through the `while self._check(TokenType.COMMA):` loop
+(`cinder/parser.py:275-296`, reusing `_destructure_rest_name` at
+`cinder/parser.py:303-306` unchanged) — into a shared helper, e.g.
+`_destructure_list_pattern(self) -> tuple[list, str | None]`, that
+consumes `[`, the names/rest, and the closing `]`, and returns `(names,
+rest)`; call it from both `_destructure_let_statement` (passing
+`is_map=False`, replacing its inline list-pattern logic) and the new
+for-loop branch, so the comma/rest/duplicate-rest parsing logic exists
+in exactly one place. After the new branch parses the pattern, continue
+exactly as the existing identifier path does — expect `TokenType.IN`,
+parse the iterable, require the `{` body — and construct `ForStmt(None,
+iterable, body, for_token.line, for_token.column, label, names=names,
+rest=rest)`.
+
+Interpreter: in `_execute_for` (`cinder/interpreter.py:402-424`), the
+per-item binding line `iter_env.define(stmt.var_name, item)` becomes
+conditional on `stmt.names is not None`. Factor the existing
+list-destructure arity/rest logic already in the `DestructureLetStmt`
+handler (`cinder/interpreter.py:278-304`: the "not a list" type check,
+the `stmt.rest is not None` branch, and the exact-length branch) into a
+shared helper, e.g. `_bind_list_destructure(env, names, rest, value,
+line, column)`, and call it both from the `DestructureLetStmt` handler
+and from `_execute_for` (passing `stmt.names`, `stmt.rest`, `item`,
+`stmt.line`, `stmt.column` — the `for` statement's own line/column, not
+per-item, matching how the existing single-name path already attributes
+errors to the loop) — this mirrors task 4's "reuse, don't reimplement"
+approach and avoids the arity/rest logic drifting between the two call
+sites. Every iteration still gets its own fresh `iter_env`
+(`Environment(env)`) exactly as today, so closures captured in the body
+over a destructured binding see that iteration's values, not a later
+one's — no change to that part of the loop's structure.
+
+Acceptance criteria:
+- `for [k, v] in items({"a": 1, "b": 2}) { print(k); print(v); }` prints
+  `"a"`, `1`, `"b"`, `2` in insertion order — the primary pairs-iteration
+  case this task exists for, pin as the main regression test.
+- `for [first, ...rest] in [[1, 2, 3], [4, 5, 6]] { ... }` binds `first`
+  and `rest` (a list) each iteration — rest elements work in the
+  for-loop position exactly as they do in `let`.
+- Iterating a list of two-element lists with `for [a, b] in [[1, 2]]`
+  binds `a = 1, b = 2`.
+- An item that isn't a list (e.g. iterating `for [a, b] in [1, 2, 3]`,
+  each item a bare number) raises `CinderRuntimeError` at the loop's own
+  line/column, not a Python-level crash.
+- An item list of the wrong length with no rest present (e.g. `for [a,
+  b] in [[1, 2, 3]]`) raises `CinderRuntimeError`, matching `let`'s
+  arity-mismatch message shape.
+- `outer: for [k, v] in items(m) { if (k == "b") { break outer; } }`
+  compiles and runs — labeled `break`/`continue` still work on a
+  destructuring loop exactly as on a plain one (regression, `stmt.label`
+  is untouched by this change).
+- Existing plain `for x in expr { ... }` loops (list, string, and map
+  forms) still parse and run exactly as before — run the existing `for`
+  tests unmodified and confirm they still pass (regression, not a new
+  test).
+- `let`'s own list-destructuring behavior (including its rest-element and
+  error-message tests) is unchanged after factoring out
+  `_destructure_list_pattern`/`_bind_list_destructure` — run the existing
+  destructuring tests unmodified and confirm they still pass (regression
+  for the refactor, not a new test).
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s list-destructuring
+bullet under Variables & scope needs a mention that `for` loops accept
+the same pattern — leave that to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

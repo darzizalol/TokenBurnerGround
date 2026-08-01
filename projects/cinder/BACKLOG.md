@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. `throw` statement for user-raised errors
+## 1. `throw` statement for user-raised errors [claimed 2026-08-01T14:21:14Z]
 
 Build: add a `throw EXPR;` statement so Cinder code can raise its own
 runtime errors with a custom message, instead of the only way to

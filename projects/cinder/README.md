@@ -110,7 +110,7 @@ while (i < 10) {
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
-  `pluck`, `pick`, `omit`,
+  `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
   `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
@@ -197,13 +197,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list destructuring in
-`for`-loop variables (`for [k, v] in items(m) { ... }`) and dot-access
-sugar for map string keys (`m.key` as sugar for `m["key"]`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): predicate-based map
-filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
-population `variance`/`std_dev`, REPL Tab completion for
-builtins/variables, and `mode` for a list's most frequent value.
+Actively developed, nightly. Recently landed: dot-access sugar for map
+string keys (`m.key` as sugar for `m["key"]`) and predicate-based map
+filtering (`pick_by`/`omit_by`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): end-anchored
+`take_right`/`drop_right`, population `variance`/`std_dev`, REPL Tab
+completion for builtins/variables, and `mode` for a list's most
+frequent value.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

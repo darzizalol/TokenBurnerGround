@@ -124,19 +124,24 @@ composition (`pipe`/`compose`), user-raised errors (`throw`), rest elements
 in list destructuring, safe nested access/currying (`get_in`, `curry`),
 `memoize` for caching pure functions, multiple values per `switch`
 case (`case 1, 2, 3: { ... }`), list-pattern destructuring in
-`for`-loop variables (`for [k, v] in items(m) { ... }`), and dot-access
-sugar for map string keys (`m.key` as sugar for `m["key"]`) — all once
-listed here as future work — have since landed. What remains plausible,
-not yet scoped into tasks beyond current `BACKLOG.md`: continued
+`for`-loop variables (`for [k, v] in items(m) { ... }`), dot-access
+sugar for map string keys (`m.key` as sugar for `m["key"]`), and
+predicate-based map filtering (`pick_by`/`omit_by`) — all once listed
+here as future work — have since landed. What remains plausible, not
+yet scoped into tasks beyond current `BACKLOG.md`: continued
 standard-library breadth (string/list/map/math methods, picked
-incrementally per `BACKLOG.md`'s own grooming — predicate-based map
-filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
-population `variance`/`std_dev`, and `mode` for a list's most frequent
-value are the latest picks, already in current `BACKLOG.md`), continued
-REPL ergonomics (Tab completion for builtins/variables, also in current
-`BACKLOG.md`), and only much later, a bytecode VM if performance ever
-actually matters. The Architect should keep scoping these into
-`BACKLOG.md` incrementally — do not jump ahead of the current layer.
+incrementally per `BACKLOG.md`'s own grooming — end-anchored
+`take_right`/`drop_right`, population `variance`/`std_dev`, `mode` for
+a list's most frequent value, and `product` as `sum`'s multiplicative
+counterpart are the latest picks, already in current `BACKLOG.md`),
+continued REPL ergonomics (Tab completion for builtins/variables, also
+in current `BACKLOG.md`), closing the one known language-level gap
+arithmetic compound assignment still has versus the bitwise/shift set —
+`xs[0] += 1`/`m.key += 1` don't parse today even though `xs[0] &= 1`
+does (also in current `BACKLOG.md`) — and only much later, a bytecode
+VM if performance ever actually matters. The Architect should keep
+scoping these into `BACKLOG.md` incrementally — do not jump ahead of
+the current layer.
 
 ## History
 

@@ -15,7 +15,7 @@ a later task while an earlier one is unclaimed/open.
 
 Build: add `take_right(list, n)` and `drop_right(list, n)` to
 `cinder/builtins.py`, the end-anchored complements of the existing
-`take`/`drop` (`cinder/builtins.py:1516-1551`), which only work from the
+`take`/`drop` (`cinder/builtins.py:1554-1589`), which only work from the
 front. Model both directly on `_take`/`_drop`'s existing shape: arity 2,
 first argument a `list` (raise `CinderRuntimeError` naming the function
 and the actual type otherwise, matching `take`'s message shape exactly:
@@ -63,7 +63,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `take`/`drop`,
-`cinder/builtins.py:2329-2330`), `tests/test_builtins.py`. Once merged,
+`cinder/builtins.py:2369-2370`), `tests/test_builtins.py`. Once merged,
 `README.md`'s Builtins bullet needs `take_right`/`drop_right` added near
 `take`/`drop` — leave that to the Architect's next grooming pass, not
 this task.
@@ -73,8 +73,8 @@ this task.
 ## 2. Standard library: `variance`/`std_dev` for a list of numbers
 
 Build: add `variance(list)` and `std_dev(list)` to `cinder/builtins.py`,
-the natural next stop after `mean`/`median` (`cinder/builtins.py:1026-
-1064`) — population variance and standard deviation (divide by `n`, not
+the natural next stop after `mean`/`median` (`cinder/builtins.py:1064-
+1099`) — population variance and standard deviation (divide by `n`, not
 `n - 1`; Cinder has no separate sample-vs-population statistics concept
 anywhere else, so don't introduce one here). Model both directly on
 `_mean`'s existing shape: arity 1, argument a non-empty `list` of
@@ -120,7 +120,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `mean`/`median`,
-`cinder/builtins.py:2283-2284`), `tests/test_builtins.py`. Once merged,
+`cinder/builtins.py:2323-2324`), `tests/test_builtins.py`. Once merged,
 `README.md`'s Builtins bullet needs `variance`/`std_dev` added near
 `mean`/`median` — leave that to the Architect's next grooming pass, not
 this task.
@@ -214,12 +214,12 @@ next grooming pass, not this task.
 ## 4. Standard library: `mode` for the most frequently occurring value in a list
 
 Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
-after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1026-`
+after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1064-`
 onward, plus wherever this cycle's `variance`/`std_dev` task lands them)
 — but unlike those four, `mode` isn't numeric-only: it works on any
 valid Cinder value (strings, bools, lists, maps, ...), so model its
 counting logic on `_dedupe`'s existing two-path approach
-(`cinder/builtins.py:1148-1166`) rather than `_mean`'s numeric-only
+(`cinder/builtins.py:1186-1202`) rather than `_mean`'s numeric-only
 validation. Arity 1, argument a non-empty `list` (else `CinderRuntimeError`
 naming `mode` and `type_name(value)`; empty list raises `"mode() requires
 a non-empty list"`, matching `mean([])`/`median([])`'s existing message
@@ -261,6 +261,142 @@ current line numbers — shift if this cycle's `variance`/`std_dev` task
 landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
 Builtins bullet needs `mode` added near `mean`/`median` — leave that to
 the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
+
+Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
+`*=`, `/=`, `%=`) to accept an `Index`-expression target — which
+includes dot access (`m.key`), since `_finish_dot`
+(`cinder/parser.py:948-952`) already desugars `m.key` straight into an
+`Index(obj, Literal("key"))` node at parse time, identical to
+`m["key"]`. This closes a gap the codebase already documents about
+itself: `cinder/parser.py:15-23`'s module docstring and the comment at
+`cinder/parser.py:170-171` both currently say the arithmetic set is
+"identifier targets only", unlike the bitwise/shift set (`&=`, `|=`,
+`^=`, `<<=`, `>>=`) which already accepts `Index` targets via
+`_INDEX_TARGET_COMPOUND_ASSIGN_OPS` (`cinder/parser.py:172-178`) and
+desugars into the dedicated `IndexCompoundAssign` AST node (not
+`IndexAssign` wrapping a `Binary` over the same `Index` node — that
+would evaluate `obj`/`index` twice at runtime; `IndexCompoundAssign`
+evaluates each exactly once, both for the read and the write). The fix
+is narrowly scoped: the branch at `cinder/parser.py:763-766` in
+`_assignment` already builds `IndexCompoundAssign` for any op in
+`_INDEX_TARGET_COMPOUND_ASSIGN_OPS` when `expr` is an `Index` node —
+add the five arithmetic `TokenType`s (`PLUSEQ`, `MINUSEQ`, `STAREQ`,
+`SLASHEQ`, `PERCENTEQ`, already keys in `_COMPOUND_ASSIGN_OPS` at
+`cinder/parser.py:158-163`) into `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`
+(or otherwise widen that branch's condition to cover both sets — either
+is fine, just don't duplicate the `IndexCompoundAssign`-construction
+code path). No interpreter changes are needed:
+`_evaluate_index_compound_assign` (`cinder/interpreter.py:620-633`)
+already applies whatever binary operator the node carries via
+`_apply_binary_operator` generically — it has no operator-specific
+logic to extend. Update the stale "identifier targets only" language in
+the `cinder/parser.py:15-23` module docstring and the
+`cinder/parser.py:170-171` comment to reflect that the arithmetic and
+bitwise/shift sets now behave the same way on this axis (a single
+comment describing both together is fine — don't leave two comments
+making contradictory claims).
+
+Acceptance criteria:
+- `let xs = [1, 2, 3]; xs[0] += 5; xs[0];` is `6` — the primary case,
+  pin as the main regression test.
+- `let m = {"count": 1}; m.count += 1; m.count;` is `2` — dot access as
+  a target works too, since it desugars to the same `Index` node as
+  bracket indexing; no separate handling needed.
+- Each of `-=`, `*=`, `/=`, `%=` also works on an index target (e.g.
+  `xs[0] -= 1;`, `xs[0] *= 2;`, `xs[0] /= 2;`, `xs[0] %= 2;`), not just
+  `+=` — cover all five in tests, not just the primary case.
+- `obj`/`index` are each evaluated exactly once, not twice: a test with
+  a side-effecting index expression (e.g. call a function that mutates
+  a shared counter and returns the counter's new value as the index)
+  demonstrates the counter only advances once per compound-assign,
+  matching the existing single-evaluation guarantee bitwise/shift
+  compound-assign already has on the same targets — model this on
+  however `tests/test_interpreter.py` already proves that guarantee for
+  `&=`/`|=`/etc. on `Index` targets, if such a test exists; otherwise
+  model it on the parser-level shape assertion in
+  `tests/test_parser.py:946-964`
+  (`test_bitwise_compound_assign_allows_index_target`), which already
+  proves single-evaluation indirectly by asserting the desugared shape
+  is `IndexCompoundAssign` and not a doubled `Index`-inside-`Binary`.
+- Parser-level shape test: `xs[0] += 1;` desugars to `IndexCompoundAssign`
+  with `TokenType.PLUS` as the operator, mirroring
+  `test_bitwise_compound_assign_allows_index_target`
+  (`tests/test_parser.py:946-964`) but for `+=`/`PLUSEQ` in place of
+  `&=`/`AMPEQ`.
+- Plain identifier targets are unaffected: `let x = 1; x += 1; x;` is
+  still `2`, still desugars to a plain `Assign` wrapping a `Binary`, not
+  `IndexCompoundAssign` — regression, not a new behavior for the
+  already-working case.
+- An invalid target still raises `ParseError` with "invalid assignment
+  target" at the operator's line/column (e.g. `1 + 1 += 1;`) — the
+  arithmetic set's error path for a non-`Identifier`, non-`Index`
+  left-hand side is unchanged.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (the `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`
+set and its module-docstring/comment, plus the `_assignment` branch —
+see line numbers above), `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s Operators bullet
+(currently says "the arithmetic set which is identifier-only") and its
+Data structures bullet (currently says "arithmetic compound-assign like
+`m.key += 1` isn't supported, matching bracket indexing's own gap")
+both need updating to reflect the closed gap — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `product` for the product of a list of numbers
+
+Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
+counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —
+same shape, same validation, different fold. Model it directly on
+`_sum`'s existing structure: arity 1, argument a `list` (else
+`CinderRuntimeError` naming `product` and `type_name(value)`, matching
+`sum`'s message shape: `"product() requires a list, got {type_name}"`
+— note `sum` does not require the list to be non-empty, and `product`
+shouldn't either), each element checked with the already-imported
+`_is_numeric` (else `"product() requires a list of numbers, got
+{type_name(element)}"`, matching `sum`'s per-element error shape
+exactly). Fold with multiplication instead of addition, starting from
+`1` (the multiplicative identity, exactly as `sum` starts its fold from
+`0`, the additive identity) — this is what makes `product([])` well-
+defined as `1` without a non-empty check, unlike `mean`/`median`/
+`variance`/`std_dev`/`mode` which all require a non-empty list because
+division/comparison by zero-length input is undefined for them.
+
+Acceptance criteria:
+- `product([1, 2, 3, 4]);` is `24` — the primary case, pin as the main
+  regression test.
+- `product([5]);` is `5` — a single-element list is its own product.
+- `product([]);` is `1` — the empty product, the multiplicative
+  identity, not an error (the key difference from `sum([])`, which is
+  `0`, also not an error — both are defined on empty lists, unlike
+  `mean`/`median`/`variance`/`std_dev`/`mode`).
+- `product([2, 0, 3]);` is `0` — a zero element zeroes the whole
+  product, ordinary multiplication semantics.
+- `product([1, 2.5, 2]);` is `5` (or `5.0` — whichever numeric
+  representation `sum`'s equivalent mixed-int/float case already
+  produces for consistency; match `sum`'s existing int/float coercion
+  behavior exactly, don't introduce a new rule).
+- `product("abc");` (a string, not a list) raises `CinderRuntimeError`
+  naming `product` and `string` in the message, matching `sum`'s
+  equivalent error for the same input.
+- `product([1, "two", 3]);` (a non-numeric element) raises
+  `CinderRuntimeError` naming `product` and the offending element's
+  type, matching `sum`'s equivalent error for the same input.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `sum`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `product` added near `sum` — leave that to the Architect's next
+grooming pass, not this task.
 
 ---
 

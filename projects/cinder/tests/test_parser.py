@@ -710,6 +710,41 @@ class TestListsAndMaps(unittest.TestCase):
             ],
         )
 
+    def test_dot_access_desugars_to_index(self):
+        self.assertEqual(
+            shape(parse("m.a")),
+            ("Index", ("Identifier", "m"), ("Literal", "a")),
+        )
+
+    def test_chained_dot_access(self):
+        self.assertEqual(
+            shape(parse("m.nested.b")),
+            (
+                "Index",
+                ("Index", ("Identifier", "m"), ("Literal", "nested")),
+                ("Literal", "b"),
+            ),
+        )
+
+    def test_dot_access_assignment(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("m.a = 5;")],
+            [
+                (
+                    "ExprStmt",
+                    ("IndexAssign", ("Identifier", "m"), ("Literal", "a"), ("Literal", 5)),
+                )
+            ],
+        )
+
+    def test_dot_access_after_keyword_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("m.if")
+
+    def test_dot_access_missing_identifier_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("m.")
+
     def test_map_literal_missing_colon_raises(self):
         with self.assertRaises(ParseError):
             parse('{"a" 1}')

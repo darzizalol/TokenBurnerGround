@@ -1739,6 +1739,46 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate('{"a": 1}["missing"]')
 
+    def test_dot_access_get(self):
+        self.assertEqual(evaluate('{"a": 1}.a'), 1)
+
+    def test_dot_access_chained_nested_maps(self):
+        self.assertEqual(evaluate('{"nested": {"b": 2}}.nested.b'), 2)
+
+    def test_dot_access_assignment(self):
+        env = run('let m = {"a": 1}; m.a = 5;')
+        self.assertEqual(env.get("m"), {"a": 5})
+
+    def test_dot_access_bitwise_compound_assign(self):
+        env = run("let m = {\"x\": 6}; m.x &= 3;")
+        self.assertEqual(env.get("m"), {"x": 2})
+
+    def test_dot_access_increment(self):
+        env = run('let m = {"x": 1}; m.x++;')
+        self.assertEqual(env.get("m"), {"x": 2})
+
+    def test_dot_access_arithmetic_compound_assign_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run('let m = {"a": 1}; m.a += 1;')
+
+    def test_dot_access_missing_key_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('{"a": 1}.b')
+
+    def test_dot_access_on_list_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("[1, 2, 3].foo")
+
+    def test_dot_access_calls_map_value(self):
+        self.assertEqual(
+            evaluate('{"greet": fn(name) { return "hi " + name; }}.greet("Ada")'),
+            "hi Ada",
+        )
+
+    def test_dot_access_before_keyword_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run('let m = {"if": 1}; m.if;')
+
     def test_list_non_int_index_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):
             evaluate('[1, 2, 3]["a"]')

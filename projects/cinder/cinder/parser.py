@@ -907,6 +907,8 @@ class Parser:
                 expr = self._finish_call(expr)
             elif self._check(TokenType.LBRACKET):
                 expr = self._finish_index(expr)
+            elif self._check(TokenType.DOT):
+                expr = self._finish_dot(expr)
             else:
                 break
         return expr
@@ -942,6 +944,12 @@ class Parser:
             return SliceExpr(obj, start, end, bracket.line, bracket.column)
         self._consume(TokenType.RBRACKET, "']' after index")
         return Index(obj, start, bracket.line, bracket.column)
+
+    def _finish_dot(self, obj: Expr) -> Expr:
+        dot = self._advance()  # consume '.'
+        name_token = self._consume(TokenType.IDENTIFIER, "a property name after '.'")
+        key = Literal(name_token.lexeme, name_token.line, name_token.column)
+        return Index(obj, key, dot.line, dot.column)
 
     def _primary(self) -> Expr:
         token = self._peek()

@@ -139,7 +139,7 @@ def stmt_shape(node):
     if isinstance(node, ConstStmt):
         return ("ConstStmt", node.name, shape(node.initializer))
     if isinstance(node, DestructureLetStmt):
-        return ("DestructureLetStmt", node.names, shape(node.initializer), node.is_map)
+        return ("DestructureLetStmt", node.names, shape(node.initializer), node.is_map, node.rest)
     if isinstance(node, ExprStmt):
         return ("ExprStmt", shape(node.expression))
     if isinstance(node, Block):
@@ -1088,6 +1088,7 @@ class TestStatements(unittest.TestCase):
                     ["a", "b"],
                     ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
                     False,
+                    None,
                 )
             ],
         )
@@ -1095,8 +1096,47 @@ class TestStatements(unittest.TestCase):
     def test_destructure_let_statement_single_name(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("let [a] = [1];")],
-            [("DestructureLetStmt", ["a"], ("ListLiteral", [("Literal", 1)]), False)],
+            [("DestructureLetStmt", ["a"], ("ListLiteral", [("Literal", 1)]), False, None)],
         )
+
+    def test_destructure_let_list_rest(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let [a, b, ...rest] = [1, 2, 3, 4];")],
+            [
+                (
+                    "DestructureLetStmt",
+                    ["a", "b"],
+                    (
+                        "ListLiteral",
+                        [("Literal", 1), ("Literal", 2), ("Literal", 3), ("Literal", 4)],
+                    ),
+                    False,
+                    "rest",
+                )
+            ],
+        )
+
+    def test_destructure_let_list_rest_only(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let [...rest] = [1, 2, 3];")],
+            [
+                (
+                    "DestructureLetStmt",
+                    [],
+                    ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+                    False,
+                    "rest",
+                )
+            ],
+        )
+
+    def test_destructure_let_list_rest_not_last_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a, ...rest, b] = [1, 2, 3];")
+
+    def test_destructure_let_list_rest_missing_name_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a, ...] = [1, 2];")
 
     def test_destructure_let_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):
@@ -1129,6 +1169,7 @@ class TestStatements(unittest.TestCase):
                         ],
                     ),
                     True,
+                    None,
                 )
             ],
         )
@@ -1142,9 +1183,14 @@ class TestStatements(unittest.TestCase):
                     ["a"],
                     ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
                     True,
+                    None,
                 )
             ],
         )
+
+    def test_destructure_let_map_rest_token_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('let {...rest} = {"a": 1};')
 
     def test_destructure_let_map_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):

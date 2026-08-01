@@ -565,6 +565,25 @@ class TestDestructureLet(unittest.TestCase):
         self.assertEqual(env.get("b"), 2)
         self.assertEqual(env.get("c"), 3)
 
+    def test_rest_binds_remaining_elements_as_list(self):
+        env = run("let [a, b, ...rest] = [1, 2, 3, 4];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("rest"), [3, 4])
+
+    def test_rest_binds_empty_list_when_nothing_left_over(self):
+        env = run("let [a, ...rest] = [1];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), [])
+
+    def test_rest_only_pattern_captures_everything(self):
+        env = run("let [...rest] = [1, 2, 3];")
+        self.assertEqual(env.get("rest"), [1, 2, 3])
+
+    def test_rest_does_not_relax_minimum_length(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("let [a, b, ...rest] = [1];")
+
     def test_initializer_fully_evaluated_before_binding(self):
         # RHS is evaluated in full against the outer `x` before any name is
         # bound, matching scalar `let`'s evaluate-then-bind order — neither

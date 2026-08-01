@@ -280,6 +280,18 @@ class Interpreter:
                     stmt.line,
                     stmt.column,
                 )
+            if stmt.rest is not None:
+                if len(value) < len(stmt.names):
+                    raise CinderRuntimeError(
+                        f"destructuring pattern expects at least {len(stmt.names)} elements, "
+                        f"got {len(value)}",
+                        stmt.line,
+                        stmt.column,
+                    )
+                for name, item in zip(stmt.names, value):
+                    env.define(name, item)
+                env.define(stmt.rest, list(value[len(stmt.names):]))
+                return
             if len(value) != len(stmt.names):
                 raise CinderRuntimeError(
                     f"destructuring pattern expects {len(stmt.names)} elements, got {len(value)}",

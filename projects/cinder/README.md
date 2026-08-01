@@ -61,7 +61,9 @@ while (i < 10) {
   uncaught, a `throw expr;` statement for raising user-defined errors
   (the expression must be a string; catchable by an enclosing
   `try`/`catch` exactly like a builtin runtime error), `switch`
-  statements with `case`/`default` (no fallthrough, first match wins)
+  statements with `case`/`default` (no fallthrough, first match wins;
+  a single `case` may list multiple values, e.g. `case 1, 2, 3: { ... }`,
+  matching if any of them equals the switch expression)
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`;
   the bitwise/shift set also accepts an index-expression target, e.g.
@@ -187,12 +189,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `curry` for single-argument
-currying and `memoize` for caching pure functions. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): multiple values per `switch` case
-(`case 1, 2, 3: { ... }`), list destructuring in `for`-loop variables,
-dot-access sugar for map string keys (`m.key` as sugar for `m["key"]`),
-and predicate-based map filtering (`pick_by`/`omit_by`). The backlog
-mixes language depth with stdlib breadth over time rather than running
-either in one long block.
+Actively developed, nightly. Recently landed: `memoize` for caching pure
+functions and multiple values per `switch` case (`case 1, 2, 3: { ... }`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): list destructuring in
+`for`-loop variables, dot-access sugar for map string keys (`m.key` as
+sugar for `m["key"]`), predicate-based map filtering (`pick_by`/`omit_by`),
+end-anchored `take_right`/`drop_right`, population `variance`/`std_dev`,
+and REPL Tab completion for builtins/variables. The backlog mixes
+language depth with stdlib breadth over time rather than running either
+in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -190,7 +190,10 @@ def stmt_shape(node):
         return (
             "SwitchStmt",
             shape(node.scrutinee),
-            [(shape(case.value), stmt_shape(case.body)) for case in node.cases],
+            [
+                ([shape(v) for v in case.values], stmt_shape(case.body))
+                for case in node.cases
+            ],
             stmt_shape(node.default) if node.default is not None else None,
         )
     raise TypeError(f"unhandled statement type: {type(node)!r}")
@@ -1962,11 +1965,11 @@ class TestSwitchStatement(unittest.TestCase):
                     ("Identifier", "x"),
                     [
                         (
-                            ("Literal", 1),
+                            [("Literal", 1)],
                             ("Block", [("LetStmt", "a", ("Literal", 1))]),
                         ),
                         (
-                            ("Literal", 2),
+                            [("Literal", 2)],
                             ("Block", [("LetStmt", "a", ("Literal", 2))]),
                         ),
                     ],
@@ -1981,7 +1984,28 @@ class TestSwitchStatement(unittest.TestCase):
                 stmt_shape(s)
                 for s in parse_stmts("switch (x) { case 1: { } }")
             ],
-            [("SwitchStmt", ("Identifier", "x"), [(("Literal", 1), ("Block", []))], None)],
+            [("SwitchStmt", ("Identifier", "x"), [([("Literal", 1)], ("Block", []))], None)],
+        )
+
+    def test_switch_multi_value_case_shape(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("switch (x) { case 1, 2, 3: { } }")
+            ],
+            [
+                (
+                    "SwitchStmt",
+                    ("Identifier", "x"),
+                    [
+                        (
+                            [("Literal", 1), ("Literal", 2), ("Literal", 3)],
+                            ("Block", []),
+                        )
+                    ],
+                    None,
+                )
+            ],
         )
 
     def test_switch_empty_body(self):

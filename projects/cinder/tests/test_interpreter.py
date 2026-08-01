@@ -2011,6 +2011,62 @@ class TestSwitchStatement(unittest.TestCase):
         )
         self.assertEqual(env.get("calls"), 0)
 
+    def test_multi_value_case_matches_any_listed_value(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            run(
+                'switch (2) { case 1, 2, 3: { print("small"); } '
+                'default: { print("big"); } }',
+                create_global_environment(),
+            )
+        self.assertEqual(stdout.getvalue(), "small\n")
+
+    def test_multi_value_case_falls_through_to_default_on_no_match(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            run(
+                'switch (5) { case 1, 2, 3: { print("small"); } '
+                'default: { print("big"); } }',
+                create_global_environment(),
+            )
+        self.assertEqual(stdout.getvalue(), "big\n")
+
+    def test_multi_value_case_short_circuits_on_first_match(self):
+        env = run(
+            "let g_calls = 0; "
+            "fn f() { return 1; } "
+            "fn g() { g_calls = g_calls + 1; return 2; } "
+            "switch (1) { case f(), g(): { } }"
+        )
+        self.assertEqual(env.get("g_calls"), 0)
+
+    def test_multi_value_case_values_can_mix_literal_and_computed(self):
+        env = run(
+            "let x = 2; let result = \"unset\"; "
+            'switch (3) { case 1, x + 1, "three": { result = "matched"; } }'
+        )
+        self.assertEqual(env.get("result"), "matched")
+
+    def test_single_value_case_with_shared_body_runs_on_either_value(self):
+        results = []
+        for scrutinee in (1, 2):
+            env = run(
+                f'let result = "unset"; '
+                f'switch ({scrutinee}) {{ case 1, 2: {{ result = "matched"; }} }}'
+            )
+            results.append(env.get("result"))
+        self.assertEqual(results, ["matched", "matched"])
+
 
 if __name__ == "__main__":
     unittest.main()

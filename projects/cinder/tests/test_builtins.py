@@ -3056,6 +3056,75 @@ class TestCompose(unittest.TestCase):
             run("compose(fn(x) { return x; })(1, 2);")
 
 
+class TestCurry(unittest.TestCase):
+    def test_curry_two_step(self):
+        env = run(
+            "let result = curry(fn(a, b) { return a + b; }, 2)(1)(2);"
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_curry_three_step(self):
+        env = run(
+            "let result = curry(fn(a, b, c) { return a + b + c; }, 3)(1)(2)(3);"
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_curry_partial_application_is_reusable(self):
+        env = run(
+            "let add5 = curry(fn(a, b) { return a + b; }, 2)(5); "
+            "let r1 = add5(1); "
+            "let r2 = add5(10);"
+        )
+        self.assertEqual(env.get("r1"), 6)
+        self.assertEqual(env.get("r2"), 15)
+
+    def test_curry_step_is_independent_across_calls(self):
+        env = run(
+            "let step1 = curry(fn(a, b, c) { return a + b + c; }, 3)(1); "
+            "let r1 = step1(2)(3); "
+            "let r2 = step1(3)(3);"
+        )
+        self.assertEqual(env.get("r1"), 6)
+        self.assertEqual(env.get("r2"), 7)
+
+    def test_curry_result_is_first_class_function_value(self):
+        env = run(
+            "let step = curry(fn(a, b) { return a + b; }, 2)(1); "
+            "let result_type = type(step); "
+            "let mapped = map([1, 2, 3], curry(fn(a, b) { return a + b; }, 2)(10));"
+        )
+        self.assertEqual(env.get("result_type"), "function")
+        self.assertEqual(env.get("mapped"), [11, 12, 13])
+
+    def test_curry_non_function_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(1, 2);")
+
+    def test_curry_arity_below_one_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a) { return a; }, 0);")
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a) { return a; }, -1);")
+
+    def test_curry_non_int_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('curry(fn(a) { return a; }, "2");')
+
+    def test_curry_step_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a, b) { return a + b; }, 2)();")
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a, b) { return a + b; }, 2)(1, 2);")
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a, b) { return a + b; }, 2)(1)();")
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a, b) { return a + b; }, 2)(1)(2, 3);")
+
+    def test_curry_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("curry(fn(a) { return a; });")
+
+
 class TestGroupBy(unittest.TestCase):
     def test_group_by_parity(self):
         env = run(

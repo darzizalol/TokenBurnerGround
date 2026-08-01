@@ -1999,6 +1999,35 @@ def _compose(arguments: list, line: int, column: int) -> object:
     return Builtin("<composed function>", _composed)
 
 
+def _curry(arguments: list, line: int, column: int) -> object:
+    _require_arity("curry", arguments, 2, line, column)
+    fn, arity = arguments
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"curry() requires a function as its first argument, got {type_name(fn)}",
+            line, column,
+        )
+    if not isinstance(arity, int) or isinstance(arity, bool):
+        raise CinderRuntimeError(
+            f"curry() requires an int arity, got {type_name(arity)}", line, column
+        )
+    if arity < 1:
+        raise CinderRuntimeError(
+            f"curry() requires arity to be at least 1, got {arity}", line, column
+        )
+
+    def _make_step(accumulated: list):
+        def _step(call_args: list, call_line: int, call_column: int) -> object:
+            _require_arity("<curried function>", call_args, 1, call_line, call_column)
+            next_accumulated = accumulated + call_args
+            if len(next_accumulated) == arity:
+                return call_value(fn, next_accumulated, call_line, call_column)
+            return Builtin("<curried function>", _make_step(next_accumulated))
+        return _step
+
+    return Builtin("<curried function>", _make_step([]))
+
+
 def _group_by(arguments: list, line: int, column: int) -> object:
     _require_arity("group_by", arguments, 2, line, column)
     items, fn = arguments
@@ -2262,6 +2291,7 @@ _BUILTINS = {
     "reduce": _reduce,
     "pipe": _pipe,
     "compose": _compose,
+    "curry": _curry,
     "group_by": _group_by,
     "key_by": _key_by,
     "count_by": _count_by,

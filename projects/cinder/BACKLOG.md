@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Rest element in list destructuring: `let [a, b, ...rest] = expr;`
+## 1. Rest element in list destructuring: `let [a, b, ...rest] = expr;` [claimed 2026-08-01T14:05:33Z]
 
 Build: extend list-destructuring `let` (`DestructureLetStmt`,
 `cinder/ast_nodes.py:216-221`, currently `names: list` plus an `is_map`

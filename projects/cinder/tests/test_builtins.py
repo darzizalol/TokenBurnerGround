@@ -2103,6 +2103,64 @@ class TestMedian(unittest.TestCase):
             run("median();")
 
 
+class TestVariance(unittest.TestCase):
+    def test_variance_of_textbook_example(self):
+        result = run("let result = variance([2, 4, 4, 4, 5, 5, 7, 9]);").get("result")
+        self.assertEqual(result, 4)
+
+    def test_variance_of_single_element_list_is_zero(self):
+        result = run("let result = variance([5]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_variance_of_identical_elements_is_zero(self):
+        result = run("let result = variance([3, 3, 3]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_variance_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("variance([]);")
+
+    def test_variance_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('variance([1, "two", 3]);')
+
+    def test_variance_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('variance("abc");')
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_variance_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("variance();")
+
+
+class TestStdDev(unittest.TestCase):
+    def test_std_dev_of_textbook_example(self):
+        result = run("let result = std_dev([2, 4, 4, 4, 5, 5, 7, 9]);").get("result")
+        self.assertEqual(result, 2)
+
+    def test_std_dev_of_single_element_list_is_zero(self):
+        result = run("let result = std_dev([5]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_std_dev_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("std_dev([]);")
+
+    def test_std_dev_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('std_dev([1, "two", 3]);')
+
+    def test_std_dev_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('std_dev("abc");')
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_std_dev_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("std_dev();")
+
+
 class TestAny(unittest.TestCase):
     def test_any_true_when_an_element_is_truthy(self):
         self.assertIs(run("let result = any([false, nil, 1]);").get("result"), True)

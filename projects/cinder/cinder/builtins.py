@@ -314,6 +314,31 @@ def _get(arguments: list, line: int, column: int) -> object:
     return target[key]
 
 
+def _get_in(arguments: list, line: int, column: int) -> object:
+    _require_arity("get_in", arguments, 3, line, column)
+    container, path, default = arguments
+    if not isinstance(path, list):
+        raise CinderRuntimeError(
+            f"get_in() requires a list path, got {type_name(path)}", line, column
+        )
+    current = container
+    for key in path:
+        if isinstance(current, dict):
+            if not _is_valid_key(key) or key not in current:
+                return default
+            current = current[key]
+        elif isinstance(current, list):
+            if not isinstance(key, int) or isinstance(key, bool):
+                return default
+            normalized = normalize_index(key, len(current))
+            if normalized < 0 or normalized >= len(current):
+                return default
+            current = current[normalized]
+        else:
+            return default
+    return current
+
+
 def _pluck(arguments: list, line: int, column: int) -> object:
     _require_arity("pluck", arguments, 2, line, column)
     items, key = arguments
@@ -2153,6 +2178,7 @@ _BUILTINS = {
     "items": _items,
     "from_entries": _from_entries,
     "get": _get,
+    "get_in": _get_in,
     "pluck": _pluck,
     "remove": _remove,
     "merge": _merge,

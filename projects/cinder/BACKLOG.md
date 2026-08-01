@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
+## 1. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }` [claimed 2026-08-01T19:37:15Z]
 
 Build: let a `for`-in loop's variable position accept a list destructuring
 pattern (the same `[name, name, ...rest]` syntax `let` already supports),

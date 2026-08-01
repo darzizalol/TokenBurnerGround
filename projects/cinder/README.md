@@ -40,8 +40,10 @@ while (i < 10) {
   `const` name raises a runtime error; a `let` may still be redeclared as
   `const` and vice versa in the same scope), assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
-  in `let` (`let [a, b] = expr;`, flat positional binding, no nesting/rest)
-  and map destructuring (`let {a, b} = expr;`, binds each identifier by
+  in `let` (`let [a, b] = expr;`, flat positional binding, no nesting, plus
+  an optional trailing rest element `let [a, b, ...rest] = expr;` that
+  collects any remaining elements into a list, empty if none are left) and
+  map destructuring (`let {a, b} = expr;`, binds each identifier by
   looking it up as a key, extra unnamed keys ignored)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
@@ -154,7 +156,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1480+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1520+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -180,13 +182,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: spread elements in map
-literals (`{...map1, "k": v}`) and function composition (`pipe`/
-`compose`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a rest
-element in list destructuring, a `throw` statement for user-raised
-errors, and the stdlib additions `get_in` for safe nested map/list
-access, `curry` for single-argument currying, and `memoize` for caching
-pure functions.
+Actively developed, nightly. Recently landed: function composition
+(`pipe`/`compose`) and a rest element in list destructuring
+(`let [a, b, ...rest] = expr;`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): a `throw` statement for user-raised errors,
+and the stdlib additions `get_in` for safe nested map/list access,
+`curry` for single-argument currying, and `memoize` for caching pure
+functions.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

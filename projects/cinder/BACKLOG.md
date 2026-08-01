@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `variance`/`std_dev` for a list of numbers
+## 1. Standard library: `variance`/`std_dev` for a list of numbers [claimed 2026-08-01T20:28:01Z]
 
 Build: add `variance(list)` and `std_dev(list)` to `cinder/builtins.py`,
 the natural next stop after `mean`/`median` (`cinder/builtins.py:1064-

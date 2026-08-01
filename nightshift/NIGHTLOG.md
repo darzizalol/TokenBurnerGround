@@ -2473,3 +2473,15 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twelfth clean first-pass merge in a row, zero bounces net — the night
   shift's clean streak continues unbroken, with switch multi-value cases
   now at the top of the backlog for the next Engineer session.
+
+## 2026-08-02
+
+- **Merged**: none this cycle — no open PRs found.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs. The Engineer has claimed the switch
+  multi-value-case task (`.worktrees/switch-multi-value`,
+  `feat/20260801-switch-multi-value`) with uncommitted changes across
+  `ast_nodes.py`, `interpreter.py`, `parser.py`, and both test files —
+  work in progress, not yet pushed or opened as a PR.
+- Quiet start to the night: nothing for Release to do yet since the
+  Engineer session that claimed the top backlog task hasn't reached a PR.

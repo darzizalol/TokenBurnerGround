@@ -6,7 +6,7 @@
 `starts_with`, `ends_with`, `replace`, `abs`, `min`, `max`, `round`, `floor`,
 `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `sum`, `mean`, `median`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
-`filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `is_list`, `is_map`,
+`filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `pick_by`, `omit_by`, `is_list`, `is_map`,
 `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
 defined. CLI entrypoints and the REPL should build their global scope with
 this instead of a bare `Environment()` so `.cin` scripts can actually produce
@@ -492,6 +492,44 @@ def _omit(arguments: list, line: int, column: int) -> object:
             f"omit() requires a list of keys, got {type_name(keys)}", line, column
         )
     return {key: value for key, value in target.items() if key not in keys}
+
+
+def _pick_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("pick_by", arguments, 2, line, column)
+    target, predicate = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"pick_by() requires a map, got {type_name(target)}", line, column
+        )
+    if not _is_callable(predicate):
+        raise CinderRuntimeError(
+            f"pick_by() requires a function as its second argument, got {type_name(predicate)}",
+            line, column,
+        )
+    result: dict = {}
+    for key, value in target.items():
+        if is_truthy(call_value(predicate, [key, value], line, column)):
+            result[key] = value
+    return result
+
+
+def _omit_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("omit_by", arguments, 2, line, column)
+    target, predicate = arguments
+    if not isinstance(target, dict):
+        raise CinderRuntimeError(
+            f"omit_by() requires a map, got {type_name(target)}", line, column
+        )
+    if not _is_callable(predicate):
+        raise CinderRuntimeError(
+            f"omit_by() requires a function as its second argument, got {type_name(predicate)}",
+            line, column,
+        )
+    result: dict = {}
+    for key, value in target.items():
+        if not is_truthy(call_value(predicate, [key, value], line, column)):
+            result[key] = value
+    return result
 
 
 def _upper(arguments: list, line: int, column: int) -> object:
@@ -2243,6 +2281,8 @@ _BUILTINS = {
     "invert": _invert,
     "pick": _pick,
     "omit": _omit,
+    "pick_by": _pick_by,
+    "omit_by": _omit_by,
     "upper": _upper,
     "lower": _lower,
     "capitalize": _capitalize,

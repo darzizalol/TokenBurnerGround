@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
+## 1. Standard library: `pick_by`/`omit_by` for predicate-based map filtering [claimed 2026-08-01T20:04:16Z]
 
 Build: add `pick_by(map, predicate)` and `omit_by(map, predicate)` to
 `cinder/builtins.py`, filling the gap `pick`/`omit`

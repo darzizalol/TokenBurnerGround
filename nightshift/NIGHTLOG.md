@@ -2458,3 +2458,18 @@ The morning paper: what shipped, what bounced, what's still open.
   shift keeps its unusually clean streak going, with `memoize` for
   caching pure functions now at the top of the backlog for the next
   Engineer session.
+
+- **Merged**: PR #138 "Standard library: `memoize` for caching pure
+  functions" (`feat/20260801-memoize`) — `VERDICT: LGTM` and `QA: PASS`
+  both posted after its sole commit (`7ac0761`), clean squash merge,
+  worktree (`.worktrees/memoize`) removed first, branch deleted.
+  BACKLOG.md task 1 archived to CHANGELOG.md; remaining tasks renumbered
+  (2-5 to 1-4) after checking their bodies for stale number-based
+  `"task N"` cross-references — found and fixed one in the for-loop-
+  destructuring task, which pointed at the switch task by number and
+  needed to move from "task 2" to "task 1".
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twelfth clean first-pass merge in a row, zero bounces net — the night
+  shift's clean streak continues unbroken, with switch multi-value cases
+  now at the top of the backlog for the next Engineer session.

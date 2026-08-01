@@ -11,103 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `memoize` for caching pure functions [claimed 2026-08-01T15:04:24Z]
-
-Build: add `memoize(fn)` to `cinder/builtins.py` — returns a new callable
-Cinder value (the same returned-function mechanism `pipe`/`compose`/
-`curry` already use, `cinder/builtins.py:1939-1974`: a `Builtin` closure
-built with `call_value` to invoke the wrapped function) that caches
-`fn`'s results by argument list, so calling it again with arguments
-already seen returns the cached result without re-invoking `fn`.
-Validate `fn` is callable up front (reuse `_is_callable`,
-`cinder/builtins.py:1844`, raising `CinderRuntimeError` `f"memoize()
-requires a function argument, got {type_name(fn)}"` at the `memoize(...)`
-call's own line/column if not — do not defer to first invocation,
-mirroring `curry`'s up-front validation). Unlike `pipe`/`compose`'s
-single-argument returned closures, `memoize`'s returned closure accepts
-**any number of arguments** (it must support wrapping functions of any
-arity), so it does not call `_require_arity` on itself — it forwards
-`call_args` straight to `fn` via `call_value(fn, call_args, call_line,
-call_column)` using the *inner* call's line/column (the site invoking
-the memoized function, not `memoize`'s own call site — mirror
-`pipe`/`compose`/`curry`'s existing rule for this). Each call to
-`memoize(fn)` creates one fresh `dict` cache captured by that call's own
-closure — a brand-new cache per `memoize(...)` invocation, never shared
-across two separate `memoize(...)` calls on the same underlying `fn`
-(same "own accumulator" discipline `curry` already established for its
-per-step accumulators, applied here to per-`memoize()`-call caches).
-Before consulting or populating the cache, validate every element of
-`call_args` is a valid cache key via `_is_valid_key`
-(`cinder/interpreter.py:888-890`, already imported into `builtins.py`) —
-on the first invalid argument found (in order), raise
-`CinderRuntimeError` `f"memoize() cannot cache a call with a
-{type_name(arg)} argument"` at the call site; this is a hard requirement,
-not a soft fallback to calling `fn` uncached, since a silently-uncached
-call would be a far more confusing failure mode than a clear error.
-Build the cache key as `tuple((type(arg).__name__, arg) for arg in
-call_args)`, **not** `tuple(call_args)` directly — a plain Python tuple
-would conflate `1` and `true` as the same dict key (`hash(1) ==
-hash(True)` and `1 == True` in Python), which contradicts Cinder's own
-`values_equal` (`cinder/interpreter.py:932-937`, where a number and a
-bool are never equal regardless of value); the `type(...).__name__`
-prefix keeps `(1,)` and `(true,)` in separate cache slots. On a cache
-hit, return the cached value directly without calling `fn` again; on a
-miss, call `fn`, store the result under that key, and return it.
-
-Acceptance criteria:
-- `let calls = 0; fn f(x) { calls = calls + 1; return x * 2; } let
-  memoized = memoize(f); memoized(5); memoized(5); memoized(3); calls;`
-  is `2` — repeated calls with the same argument hit the cache and only
-  invoke `fn` once per distinct argument, pin as the primary regression
-  test.
-- `let calls = 0; fn f(a, b) { calls = calls + 1; return a + b; } let
-  memoized = memoize(f); memoized(1, 2); memoized(1, 2); memoized(2, 1);
-  calls;` is `2` — multi-argument functions are cached by the full
-  argument list, not just the first argument.
-- `let calls = 0; fn f(x) { calls = calls + 1; return x; } let m1 =
-  memoize(f); let m2 = memoize(f); m1(1); m2(1); calls;` is `2` — two
-  separate `memoize(...)` calls on the same underlying function do not
-  share a cache (regression guard mirroring `curry`'s independent-
-  accumulator rule).
-- `let calls = 0; fn f(x) { calls = calls + 1; return x; } let memoized
-  = memoize(f); memoized(1); memoized(true); calls;` is `2` — a number
-  argument and a boolean argument are cached separately even though
-  Python would treat them as the same dict key, matching
-  `values_equal`'s number/bool distinction; pin as an explicit
-  regression test for the `type(...).__name__` cache-key prefix.
-- `memoize(fn(x) { return x; })` is itself a callable Cinder value:
-  `type()` of it reports the same type name an ordinary function value
-  reports, and it's passable to `map` (`map([1, 2, 3], memoize(fn(x) {
-  return x * 2; }))` is `[2, 4, 6]`).
-- `memoize(1)` (non-function argument) raises `CinderRuntimeError` with
-  line/column at the `memoize(...)` call site, before the returned
-  closure is ever invoked.
-- `let memoized = memoize(fn(x) { return x; }); memoized([1, 2]);` (a
-  list argument) raises `CinderRuntimeError` with message `"memoize()
-  cannot cache a call with a list argument"` and the call site's
-  line/column, not `memoize(...)`'s own.
-- `let memoized = memoize(fn(m) { return m; }); memoized({"a": 1});` (a
-  map argument) raises `CinderRuntimeError` the same way, naming `map`
-  in the message.
-- Calling the memoized function with an arity mismatch for the wrapped
-  function (e.g. wrapping a 2-parameter function and calling the
-  memoized version with 1 argument) still raises `CinderRuntimeError`
-  for wrong arity — the check happens naturally inside `call_value`'s
-  dispatch to `fn`, not memoize's own closure, and must not be silently
-  swallowed or cached.
-- Wrong arity on `memoize` itself (not exactly 1 argument) raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `pipe`/`compose`/
-`curry`, `cinder/builtins.py:2237-2238` onward), `tests/test_builtins.py`.
-Once merged, `README.md`'s Builtins bullet needs `memoize` added near
-`pipe`/`compose`/`curry` — leave that to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
+## 1. Multiple values per `switch` case: `case 1, 2, 3: { ... }`
 
 Build: let a single `switch` case match any of several values, instead of
 requiring one `case` per value with duplicated bodies. Today `SwitchCase`
@@ -171,7 +75,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
+## 2. List destructuring in `for`-loop variables: `for [k, v] in items(m) { ... }`
 
 Build: let a `for`-in loop's variable position accept a list destructuring
 pattern (the same `[name, name, ...rest]` syntax `let` already supports),
@@ -223,7 +127,7 @@ line, column)`, and call it both from the `DestructureLetStmt` handler
 and from `_execute_for` (passing `stmt.names`, `stmt.rest`, `item`,
 `stmt.line`, `stmt.column` — the `for` statement's own line/column, not
 per-item, matching how the existing single-name path already attributes
-errors to the loop) — this mirrors task 2's "reuse, don't reimplement"
+errors to the loop) — this mirrors task 1's "reuse, don't reimplement"
 approach and avoids the arity/rest logic drifting between the two call
 sites. Every iteration still gets its own fresh `iter_env`
 (`Environment(env)`) exactly as today, so closures captured in the body
@@ -269,7 +173,7 @@ this task.
 
 ---
 
-## 4. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
+## 3. Dot access sugar for map string keys: `m.key` as sugar for `m["key"]`
 
 Build: let a map be read/written with dot notation (`m.key`) as pure
 syntactic sugar for bracket indexing with a string literal (`m["key"]`) —
@@ -355,7 +259,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
+## 4. Standard library: `pick_by`/`omit_by` for predicate-based map filtering
 
 Build: add `pick_by(map, predicate)` and `omit_by(map, predicate)` to
 `cinder/builtins.py`, filling the gap `pick`/`omit`

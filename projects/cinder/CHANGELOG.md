@@ -1059,3 +1059,11 @@ for vision/architecture.
   partial applications are independent and reusable, that calls `fn` via
   `call_value` once `arity` arguments have been collected. Clean first
   pass, no bounces (1555 tests passing, up from 1545).
+- **Standard library: `memoize` for caching pure functions** — merged
+  2026-08-01T15:11:30Z via PR #138 (`feat/20260801-memoize`). Added
+  `memoize(fn)` to `cinder/builtins.py`, the same returned-closure
+  mechanism `pipe`/`compose`/`curry` already use: a fresh `dict` cache
+  per `memoize(...)` call, keyed on `(type name, value)` pairs so a
+  number and a bool argument never collide, matching `values_equal`'s
+  number/bool distinction. Clean first pass, no bounces (1565 tests
+  passing, up from 1555).

@@ -3686,6 +3686,84 @@ class TestDrop(unittest.TestCase):
             run("drop([1, 2]);")
 
 
+class TestTakeRight(unittest.TestCase):
+    def test_take_right_basic(self):
+        env = run("let result = take_right([1, 2, 3, 4, 5], 2);")
+        self.assertEqual(env.get("result"), [4, 5])
+
+    def test_take_right_n_exceeds_length_clamps(self):
+        env = run("let result = take_right([1, 2, 3], 10);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_take_right_zero(self):
+        env = run("let result = take_right([1, 2, 3], 0);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_take_right_empty_list(self):
+        env = run("let result = take_right([], 3);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_take_right_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; take_right(xs, 1); let result = xs;")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_take_right_negative_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take_right([1, 2, 3], -1);")
+
+    def test_take_right_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('take_right("abc", 2);')
+
+    def test_take_right_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('take_right([1, 2], "1");')
+
+    def test_take_right_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("take_right([1, 2]);")
+
+
+class TestDropRight(unittest.TestCase):
+    def test_drop_right_basic(self):
+        env = run("let result = drop_right([1, 2, 3, 4, 5], 2);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_drop_right_n_exceeds_length_clamps(self):
+        env = run("let result = drop_right([1, 2, 3], 10);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_drop_right_zero(self):
+        env = run("let result = drop_right([1, 2, 3], 0);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_drop_right_empty_list(self):
+        env = run("let result = drop_right([], 3);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_drop_right_does_not_mutate_input(self):
+        env = run("let xs = [1, 2, 3]; drop_right(xs, 1); let result = xs;")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_drop_right_negative_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop_right([1, 2, 3], -1);")
+
+    def test_drop_right_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('drop_right("abc", 2);')
+
+    def test_drop_right_non_int_n_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('drop_right([1, 2], "1");')
+
+    def test_drop_right_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("drop_right([1, 2]);")
+
+
 class TestTakeWhile(unittest.TestCase):
     def test_take_while_stops_at_first_falsy(self):
         env = run(

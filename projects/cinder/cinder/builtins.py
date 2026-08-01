@@ -1589,6 +1589,44 @@ def _drop(arguments: list, line: int, column: int) -> object:
     return value[start:len(value)]
 
 
+def _take_right(arguments: list, line: int, column: int) -> object:
+    _require_arity("take_right", arguments, 2, line, column)
+    value, n = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"take_right() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"take_right() requires an int as its second argument, got {type_name(n)}",
+            line, column,
+        )
+    if n < 0:
+        raise CinderRuntimeError("take_right() requires a non-negative n", line, column)
+    start = len(value) - _normalize_slice_bound(n, len(value))
+    return value[start:len(value)]
+
+
+def _drop_right(arguments: list, line: int, column: int) -> object:
+    _require_arity("drop_right", arguments, 2, line, column)
+    value, n = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"drop_right() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(n, int) or isinstance(n, bool):
+        raise CinderRuntimeError(
+            f"drop_right() requires an int as its second argument, got {type_name(n)}",
+            line, column,
+        )
+    if n < 0:
+        raise CinderRuntimeError("drop_right() requires a non-negative n", line, column)
+    end = len(value) - _normalize_slice_bound(n, len(value))
+    return value[0:end]
+
+
 def _take_while(arguments: list, line: int, column: int) -> object:
     _require_arity("take_while", arguments, 2, line, column)
     items, fn = arguments
@@ -2368,6 +2406,8 @@ _BUILTINS = {
     "split_at": _split_at,
     "take": _take,
     "drop": _drop,
+    "take_right": _take_right,
+    "drop_right": _drop_right,
     "take_while": _take_while,
     "drop_while": _drop_while,
     "concat": _concat,

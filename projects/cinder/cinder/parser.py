@@ -270,17 +270,37 @@ class Parser:
         self, let_token: Token, close_type: TokenType, close_lexeme: str, is_map: bool
     ) -> Stmt:
         self._advance()  # consume '[' or '{'
-        names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
+        names = []
+        rest = None
+        if not is_map and self._check(TokenType.DOT_DOT_DOT):
+            rest = self._destructure_rest_name()
+        else:
+            names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
         while self._check(TokenType.COMMA):
             self._advance()
-            names.append(
-                self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-            )
+            if rest is not None:
+                token = self._peek()
+                raise ParseError(
+                    f"rest element must be last in destructuring pattern, found {self._describe(token)}",
+                    token.line,
+                    token.column,
+                )
+            if not is_map and self._check(TokenType.DOT_DOT_DOT):
+                rest = self._destructure_rest_name()
+            else:
+                names.append(
+                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+                )
         self._consume(close_type, f"'{close_lexeme}' after destructuring pattern")
         self._consume(TokenType.EQ, "'=' after destructuring pattern")
         initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map)
+        return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
+
+    def _destructure_rest_name(self) -> str:
+        self._advance()  # DOT_DOT_DOT
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after '...' in destructuring pattern")
+        return name_token.lexeme
 
     def _brace_statement(self) -> Stmt:
         # Empty `{}` is always an empty Block, never a map literal.

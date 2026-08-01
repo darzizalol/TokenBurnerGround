@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `curry` for single-argument currying
+## 1. Standard library: `curry` for single-argument currying [claimed 2026-08-01T14:50:47Z]
 
 Build: add `curry(fn, arity)` to `cinder/builtins.py` — returns a new
 callable Cinder value (same returned-function mechanism `pipe`/`compose`

@@ -1594,6 +1594,56 @@ class TestForStatement(unittest.TestCase):
             parse_stmts("for x in [1] { return 5; }")
 
 
+class TestForDestructuring(unittest.TestCase):
+    def test_for_list_destructure_two_names(self):
+        stmt = parse_stmts("for [k, v] in items(m) { }")[0]
+        self.assertIsInstance(stmt, ForStmt)
+        self.assertIsNone(stmt.var_name)
+        self.assertEqual(stmt.names, ["k", "v"])
+        self.assertIsNone(stmt.rest)
+        self.assertEqual(
+            shape(stmt.iterable),
+            ("Call", ("Identifier", "items"), [("Identifier", "m")]),
+        )
+
+    def test_for_list_destructure_single_name(self):
+        stmt = parse_stmts("for [a] in xs { }")[0]
+        self.assertEqual(stmt.names, ["a"])
+        self.assertIsNone(stmt.rest)
+
+    def test_for_list_destructure_with_rest(self):
+        stmt = parse_stmts("for [first, ...rest] in xs { }")[0]
+        self.assertEqual(stmt.names, ["first"])
+        self.assertEqual(stmt.rest, "rest")
+
+    def test_for_list_destructure_rest_not_last_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for [a, ...rest, b] in xs { }")
+
+    def test_for_list_destructure_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for [1, b] in xs { }")
+
+    def test_for_list_destructure_unclosed_bracket_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for [a, b in xs { }")
+
+    def test_for_list_destructure_missing_in_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for [a, b] xs { }")
+
+    def test_for_list_destructure_carries_its_label(self):
+        stmt = parse_stmts("outer: for [k, v] in items(m) { break outer; }")[0]
+        self.assertEqual(stmt.label, "outer")
+        self.assertEqual(stmt.names, ["k", "v"])
+
+    def test_for_list_destructure_body_parses(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("for [k, v] in xs { print(k); }")[0].body),
+            ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Identifier", "k")]))]),
+        )
+
+
 class TestForCStatement(unittest.TestCase):
     def test_full_three_clause_for(self):
         self.assertEqual(

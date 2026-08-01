@@ -275,32 +275,7 @@ class Interpreter:
                         )
                     env.define(name, value[name])
                 return
-            if not isinstance(value, list):
-                raise CinderRuntimeError(
-                    f"cannot destructure {type_name(value)} as a list",
-                    stmt.line,
-                    stmt.column,
-                )
-            if stmt.rest is not None:
-                if len(value) < len(stmt.names):
-                    raise CinderRuntimeError(
-                        f"destructuring pattern expects at least {len(stmt.names)} elements, "
-                        f"got {len(value)}",
-                        stmt.line,
-                        stmt.column,
-                    )
-                for name, item in zip(stmt.names, value):
-                    env.define(name, item)
-                env.define(stmt.rest, list(value[len(stmt.names):]))
-                return
-            if len(value) != len(stmt.names):
-                raise CinderRuntimeError(
-                    f"destructuring pattern expects {len(stmt.names)} elements, got {len(value)}",
-                    stmt.line,
-                    stmt.column,
-                )
-            for name, item in zip(stmt.names, value):
-                env.define(name, item)
+            self._bind_list_destructure(env, stmt.names, stmt.rest, value, stmt.line, stmt.column)
             return
         if isinstance(stmt, ExprStmt):
             self.evaluate(stmt.expression, env)
@@ -400,6 +375,42 @@ class Interpreter:
             if stmt.finally_block is not None:
                 self.execute(stmt.finally_block, env)
 
+    def _bind_list_destructure(
+        self,
+        env: Environment,
+        names: list,
+        rest: "str | None",
+        value: object,
+        line: int,
+        column: int,
+    ) -> None:
+        if not isinstance(value, list):
+            raise CinderRuntimeError(
+                f"cannot destructure {type_name(value)} as a list",
+                line,
+                column,
+            )
+        if rest is not None:
+            if len(value) < len(names):
+                raise CinderRuntimeError(
+                    f"destructuring pattern expects at least {len(names)} elements, "
+                    f"got {len(value)}",
+                    line,
+                    column,
+                )
+            for name, item in zip(names, value):
+                env.define(name, item)
+            env.define(rest, list(value[len(names):]))
+            return
+        if len(value) != len(names):
+            raise CinderRuntimeError(
+                f"destructuring pattern expects {len(names)} elements, got {len(value)}",
+                line,
+                column,
+            )
+        for name, item in zip(names, value):
+            env.define(name, item)
+
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
         iterable = self.evaluate(stmt.iterable, env)
         if isinstance(iterable, dict):
@@ -414,7 +425,10 @@ class Interpreter:
             )
         for item in items:
             iter_env = Environment(env)
-            iter_env.define(stmt.var_name, item)
+            if stmt.names is not None:
+                self._bind_list_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
+            else:
+                iter_env.define(stmt.var_name, item)
             try:
                 self.execute(stmt.body, iter_env)
             except _BreakSignal as signal:

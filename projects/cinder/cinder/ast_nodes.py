@@ -256,12 +256,14 @@ class DoWhileStmt:
 
 @dataclass(frozen=True)
 class ForStmt:
-    var_name: str
+    var_name: "str | None"
     iterable: "Expr"
     body: "Block"
     line: int
     column: int
     label: "str | None" = None
+    names: "list | None" = None
+    rest: "str | None" = None
 
 
 @dataclass(frozen=True)

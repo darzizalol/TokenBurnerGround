@@ -3125,6 +3125,80 @@ class TestCurry(unittest.TestCase):
             run("curry(fn(a) { return a; });")
 
 
+class TestMemoize(unittest.TestCase):
+    def test_memoize_caches_repeated_single_argument_calls(self):
+        env = run(
+            "let calls = 0; "
+            "fn f(x) { calls = calls + 1; return x * 2; } "
+            "let memoized = memoize(f); "
+            "memoized(5); memoized(5); memoized(3);"
+        )
+        self.assertEqual(env.get("calls"), 2)
+
+    def test_memoize_caches_by_full_argument_list(self):
+        env = run(
+            "let calls = 0; "
+            "fn f(a, b) { calls = calls + 1; return a + b; } "
+            "let memoized = memoize(f); "
+            "memoized(1, 2); memoized(1, 2); memoized(2, 1);"
+        )
+        self.assertEqual(env.get("calls"), 2)
+
+    def test_memoize_calls_do_not_share_cache(self):
+        env = run(
+            "let calls = 0; "
+            "fn f(x) { calls = calls + 1; return x; } "
+            "let m1 = memoize(f); let m2 = memoize(f); "
+            "m1(1); m2(1);"
+        )
+        self.assertEqual(env.get("calls"), 2)
+
+    def test_memoize_distinguishes_number_and_bool_keys(self):
+        env = run(
+            "let calls = 0; "
+            "fn f(x) { calls = calls + 1; return x; } "
+            "let memoized = memoize(f); "
+            "memoized(1); memoized(true);"
+        )
+        self.assertEqual(env.get("calls"), 2)
+
+    def test_memoize_result_is_first_class_function_value(self):
+        env = run(
+            "let memoized = memoize(fn(x) { return x; }); "
+            "let result_type = type(memoized); "
+            "let mapped = map([1, 2, 3], memoize(fn(x) { return x * 2; }));"
+        )
+        self.assertEqual(env.get("result_type"), "function")
+        self.assertEqual(env.get("mapped"), [2, 4, 6])
+
+    def test_memoize_non_function_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("memoize(1);")
+
+    def test_memoize_list_argument_raises_at_call_site(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let memoized = memoize(fn(x) { return x; }); memoized([1, 2]);")
+        self.assertIn("list", str(ctx.exception))
+
+    def test_memoize_map_argument_raises_at_call_site(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('let memoized = memoize(fn(m) { return m; }); memoized({"a": 1});')
+        self.assertIn("map", str(ctx.exception))
+
+    def test_memoize_arity_mismatch_on_wrapped_function_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run(
+                "let memoized = memoize(fn(a, b) { return a + b; }); "
+                "memoized(1);"
+            )
+
+    def test_memoize_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("memoize();")
+        with self.assertRaises(CinderRuntimeError):
+            run("memoize(fn(x) { return x; }, fn(y) { return y; });")
+
+
 class TestGroupBy(unittest.TestCase):
     def test_group_by_parity(self):
         env = run(

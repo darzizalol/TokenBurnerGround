@@ -2028,6 +2028,33 @@ def _curry(arguments: list, line: int, column: int) -> object:
     return Builtin("<curried function>", _make_step([]))
 
 
+def _memoize(arguments: list, line: int, column: int) -> object:
+    _require_arity("memoize", arguments, 1, line, column)
+    fn = arguments[0]
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"memoize() requires a function argument, got {type_name(fn)}",
+            line, column,
+        )
+    cache: dict = {}
+
+    def _memoized(call_args: list, call_line: int, call_column: int) -> object:
+        for arg in call_args:
+            if not _is_valid_key(arg):
+                raise CinderRuntimeError(
+                    f"memoize() cannot cache a call with a {type_name(arg)} argument",
+                    call_line, call_column,
+                )
+        key = tuple((type(arg).__name__, arg) for arg in call_args)
+        if key in cache:
+            return cache[key]
+        result = call_value(fn, call_args, call_line, call_column)
+        cache[key] = result
+        return result
+
+    return Builtin("<memoized function>", _memoized)
+
+
 def _group_by(arguments: list, line: int, column: int) -> object:
     _require_arity("group_by", arguments, 2, line, column)
     items, fn = arguments
@@ -2292,6 +2319,7 @@ _BUILTINS = {
     "pipe": _pipe,
     "compose": _compose,
     "curry": _curry,
+    "memoize": _memoize,
     "group_by": _group_by,
     "key_by": _key_by,
     "count_by": _count_by,

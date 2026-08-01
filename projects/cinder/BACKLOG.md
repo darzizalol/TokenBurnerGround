@@ -11,66 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `take_right`/`drop_right` for taking/dropping from a list's end [claimed 2026-08-01T20:17:52Z]
-
-Build: add `take_right(list, n)` and `drop_right(list, n)` to
-`cinder/builtins.py`, the end-anchored complements of the existing
-`take`/`drop` (`cinder/builtins.py:1554-1589`), which only work from the
-front. Model both directly on `_take`/`_drop`'s existing shape: arity 2,
-first argument a `list` (raise `CinderRuntimeError` naming the function
-and the actual type otherwise, matching `take`'s message shape exactly:
-`"take_right() requires a list as its first argument, got {type_name}"`),
-second argument a non-bool `int` (same `isinstance(n, int) and not
-isinstance(n, bool)` check `take`/`drop` already use, same error message
-shape with the function's own name), and a `CinderRuntimeError` on a
-negative `n` (`"take_right() requires a non-negative n"`). Reuse
-`_normalize_slice_bound` (already imported at `cinder/builtins.py:26`,
-used by both `take`/`drop` and plain slicing) to clamp `n` against the
-list's length exactly as `take`/`drop` do — an `n` larger than the list's
-length must not raise, it must clamp to the whole list, same as `take`/
-`drop` today. `take_right` returns the last `n` elements in their
-original order (not reversed); `drop_right` returns everything except
-the last `n` elements. Both must work on an empty list (`n` clamps to
-`0`, both return `[]`) and leave the input list unmodified (return a new
-list, exactly as `take`/`drop` do via Python slicing, never mutate the
-argument in place).
-
-Acceptance criteria:
-- `take_right([1, 2, 3, 4, 5], 2);` is `[4, 5]` — the primary case, pin
-  as the main regression test.
-- `drop_right([1, 2, 3, 4, 5], 2);` is `[1, 2, 3]` — the exact complement
-  of the case above on the same input and `n`.
-- `take_right([1, 2, 3], 0);` is `[]` and `drop_right([1, 2, 3], 0);` is
-  `[1, 2, 3]` — `n = 0` is take-nothing/drop-nothing, not an error.
-- `take_right([1, 2, 3], 10);` is `[1, 2, 3]` and `drop_right([1, 2, 3],
-  10);` is `[]` — an `n` larger than the list's length clamps instead of
-  raising, matching `take`/`drop`'s existing clamp behavior.
-- `take_right([], 3);` is `[]` and `drop_right([], 3);` is `[]` — both
-  handle an empty input list without error.
-- `take_right([1, 2, 3], -1);` and `drop_right([1, 2, 3], -1);` each
-  raise `CinderRuntimeError` naming a non-negative requirement, at the
-  call site's line/column — same shape as `take(xs, -1)`/`drop(xs, -1)`
-  today.
-- `take_right("abc", 2);` (a string, not a list) raises
-  `CinderRuntimeError` naming `take_right` and `string` in the message;
-  `drop_right` raises the equivalent error for the same input — neither
-  builtin operates on strings, matching `take`/`drop`'s list-only scope.
-- Wrong arity on either builtin (not exactly 2 arguments) raises
-  `CinderRuntimeError` with line/column.
-- The input list is unchanged after either call (e.g. `let xs = [1, 2,
-  3]; take_right(xs, 1); xs;` is still `[1, 2, 3]`) — no in-place
-  mutation.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `take`/`drop`,
-`cinder/builtins.py:2369-2370`), `tests/test_builtins.py`. Once merged,
-`README.md`'s Builtins bullet needs `take_right`/`drop_right` added near
-`take`/`drop` — leave that to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `variance`/`std_dev` for a list of numbers
+## 1. Standard library: `variance`/`std_dev` for a list of numbers
 
 Build: add `variance(list)` and `std_dev(list)` to `cinder/builtins.py`,
 the natural next stop after `mean`/`median` (`cinder/builtins.py:1064-
@@ -127,7 +68,7 @@ this task.
 
 ---
 
-## 3. REPL tab completion for builtin names and in-scope variables
+## 2. REPL tab completion for builtin names and in-scope variables
 
 Build: wire up `readline`'s completer API so pressing Tab in the REPL
 completes builtin function names and the current top-level environment's
@@ -211,7 +152,7 @@ next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `mode` for the most frequently occurring value in a list
+## 3. Standard library: `mode` for the most frequently occurring value in a list
 
 Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
 after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1064-`
@@ -264,7 +205,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
+## 4. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
 
 Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
 `*=`, `/=`, `%=`) to accept an `Index`-expression target — which
@@ -349,7 +290,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `product` for the product of a list of numbers
+## 5. Standard library: `product` for the product of a list of numbers
 
 Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
 counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —

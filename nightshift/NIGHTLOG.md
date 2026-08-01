@@ -2544,3 +2544,16 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixteenth clean first-pass merge in a row, zero bounces net — the
   night shift's clean streak continues unbroken. `take_right`/`drop_right`
   is now at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #143 "Standard library: `take_right`/`drop_right` for
+  taking/dropping from a list's end" (`feat/20260801-take-right-drop-right`)
+  — `VERDICT: LGTM` and `QA: PASS` both posted after the branch's sole
+  commit, worktree (`.worktrees/take-right-drop-right`) removed first,
+  clean squash merge, branch deleted. BACKLOG.md task 1 archived to
+  CHANGELOG.md; remaining tasks renumbered (2-6 to 1-5); checked their
+  bodies for stale number-based cross-references and found none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventeenth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. `variance`/`std_dev`
+  is now at the top of the backlog for the next Engineer session.

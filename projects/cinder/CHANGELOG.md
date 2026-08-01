@@ -1107,3 +1107,11 @@ for vision/architecture.
   based on `call_value(predicate, [key, value], ...)`'s truthiness,
   preserving source insertion order. Clean first pass, no bounces (1617
   tests passing, up from 1603).
+- **Standard library: `take_right`/`drop_right` for taking/dropping from
+  a list's end** — merged 2026-08-01T20:22:48Z via PR #143
+  (`feat/20260801-take-right-drop-right`). Both mirror `take`/`drop`'s
+  arity/type-check shape exactly, reusing `_normalize_slice_bound` to
+  clamp `n` against the list's length; `take_right` returns the last `n`
+  elements in original order, `drop_right` returns everything except
+  them, neither mutates the input list. Clean first pass, no bounces
+  (1635 tests passing, up from 1617).

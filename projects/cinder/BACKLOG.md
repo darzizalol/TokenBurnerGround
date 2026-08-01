@@ -61,7 +61,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `mean`/`median`,
-`cinder/builtins.py:2323-2324`), `tests/test_builtins.py`. Once merged,
+`cinder/builtins.py:2361-2362`), `tests/test_builtins.py`. Once merged,
 `README.md`'s Builtins bullet needs `variance`/`std_dev` added near
 `mean`/`median` — leave that to the Architect's next grooming pass, not
 this task.

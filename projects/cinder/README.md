@@ -106,7 +106,7 @@ while (i < 10) {
   indexing's own gap; only identifier-shaped keys work, so `m.if` is a
   `ParseError`)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
-  `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `keys`, `values`, `items`,
+  `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
@@ -197,13 +197,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: dot-access sugar for map
-string keys (`m.key` as sugar for `m["key"]`) and predicate-based map
-filtering (`pick_by`/`omit_by`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): end-anchored
-`take_right`/`drop_right`, population `variance`/`std_dev`, REPL Tab
-completion for builtins/variables, and `mode` for a list's most
-frequent value.
+Actively developed, nightly. Recently landed: predicate-based map
+filtering (`pick_by`/`omit_by`) and end-anchored `take_right`/`drop_right`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): population
+`variance`/`std_dev`, REPL Tab completion for builtins/variables, `mode`
+for a list's most frequent value, arithmetic compound-assign on
+index/dot-access targets (`xs[0] += 1`, `m.key += 1`), and `product` for
+a list's multiplicative fold.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

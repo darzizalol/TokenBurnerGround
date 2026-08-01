@@ -125,14 +125,14 @@ in list destructuring, safe nested access/currying (`get_in`, `curry`),
 `memoize` for caching pure functions, multiple values per `switch`
 case (`case 1, 2, 3: { ... }`), list-pattern destructuring in
 `for`-loop variables (`for [k, v] in items(m) { ... }`), dot-access
-sugar for map string keys (`m.key` as sugar for `m["key"]`), and
-predicate-based map filtering (`pick_by`/`omit_by`) — all once listed
-here as future work — have since landed. What remains plausible, not
-yet scoped into tasks beyond current `BACKLOG.md`: continued
-standard-library breadth (string/list/map/math methods, picked
-incrementally per `BACKLOG.md`'s own grooming — end-anchored
-`take_right`/`drop_right`, population `variance`/`std_dev`, `mode` for
-a list's most frequent value, and `product` as `sum`'s multiplicative
+sugar for map string keys (`m.key` as sugar for `m["key"]`),
+predicate-based map filtering (`pick_by`/`omit_by`), and end-anchored
+`take_right`/`drop_right` — all once listed here as future work — have
+since landed. What remains plausible, not yet scoped into tasks beyond
+current `BACKLOG.md`: continued standard-library breadth
+(string/list/map/math methods, picked incrementally per `BACKLOG.md`'s
+own grooming — population `variance`/`std_dev`, `mode` for a list's
+most frequent value, and `product` as `sum`'s multiplicative
 counterpart are the latest picks, already in current `BACKLOG.md`),
 continued REPL ergonomics (Tab completion for builtins/variables, also
 in current `BACKLOG.md`), closing the one known language-level gap

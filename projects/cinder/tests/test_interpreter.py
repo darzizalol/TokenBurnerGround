@@ -1046,6 +1046,65 @@ class TestForStatement(unittest.TestCase):
         self.assertEqual(env.get("x"), 0)
 
 
+class TestForDestructuring(unittest.TestCase):
+    def _run(self, source: str) -> Environment:
+        from cinder.builtins import create_global_environment
+
+        return run(source, create_global_environment())
+
+    def test_destructures_pairs_from_items(self):
+        env = self._run(
+            'let ks = []; let vs = []; '
+            'for [k, v] in items({"a": 1, "b": 2}) { push(ks, k); push(vs, v); }'
+        )
+        self.assertEqual(env.get("ks"), ["a", "b"])
+        self.assertEqual(env.get("vs"), [1, 2])
+
+    def test_binds_first_and_rest_each_iteration(self):
+        env = self._run(
+            "let firsts = []; let rests = []; "
+            "for [first, ...rest] in [[1, 2, 3], [4, 5, 6]] { "
+            "  push(firsts, first); push(rests, rest); "
+            "}"
+        )
+        self.assertEqual(env.get("firsts"), [1, 4])
+        self.assertEqual(env.get("rests"), [[2, 3], [5, 6]])
+
+    def test_two_element_lists_bind_a_and_b(self):
+        env = self._run("let a = nil; let b = nil; for [x, y] in [[1, 2]] { a = x; b = y; }")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_non_list_item_raises_cinder_runtime_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            self._run("for [a, b] in [1, 2, 3] { }")
+
+    def test_wrong_length_item_with_no_rest_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            self._run("for [a, b] in [[1, 2, 3]] { }")
+
+    def test_error_carries_loop_line_and_column(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            self._run("for [a, b] in [1, 2, 3] { }")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_labeled_break_still_works_on_destructuring_loop(self):
+        env = self._run(
+            'let seen = []; '
+            'outer: for [k, v] in items({"a": 1, "b": 2}) { '
+            '  if (k == "b") { break outer; } '
+            '  push(seen, k); '
+            '}'
+        )
+        self.assertEqual(env.get("seen"), ["a"])
+
+    def test_let_destructuring_unaffected_by_shared_helper(self):
+        env = run("let [a, b, ...rest] = [1, 2, 3, 4];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("rest"), [3, 4])
+
+
 class TestForCStatement(unittest.TestCase):
     def _run(self, source: str) -> Environment:
         from cinder.builtins import create_global_environment

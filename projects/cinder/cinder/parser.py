@@ -272,10 +272,28 @@ class Parser:
     def _destructure_let_statement(
         self, let_token: Token, close_type: TokenType, close_lexeme: str, is_map: bool
     ) -> Stmt:
-        self._advance()  # consume '[' or '{'
+        if is_map:
+            self._advance()  # consume '{'
+            names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(
+                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+                )
+            self._consume(close_type, f"'{close_lexeme}' after destructuring pattern")
+            rest = None
+        else:
+            names, rest = self._destructure_list_pattern()
+        self._consume(TokenType.EQ, "'=' after destructuring pattern")
+        initializer = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
+        return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
+
+    def _destructure_list_pattern(self) -> "tuple[list, str | None]":
+        self._advance()  # consume '['
         names = []
         rest = None
-        if not is_map and self._check(TokenType.DOT_DOT_DOT):
+        if self._check(TokenType.DOT_DOT_DOT):
             rest = self._destructure_rest_name()
         else:
             names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
@@ -288,17 +306,14 @@ class Parser:
                     token.line,
                     token.column,
                 )
-            if not is_map and self._check(TokenType.DOT_DOT_DOT):
+            if self._check(TokenType.DOT_DOT_DOT):
                 rest = self._destructure_rest_name()
             else:
                 names.append(
                     self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
                 )
-        self._consume(close_type, f"'{close_lexeme}' after destructuring pattern")
-        self._consume(TokenType.EQ, "'=' after destructuring pattern")
-        initializer = self._assignment()
-        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
+        self._consume(TokenType.RBRACKET, "']' after destructuring pattern")
+        return names, rest
 
     def _destructure_rest_name(self) -> str:
         self._advance()  # DOT_DOT_DOT
@@ -375,7 +390,13 @@ class Parser:
         for_token = self._advance()
         if self._check(TokenType.LPAREN):
             return self._for_c_statement(for_token, label)
-        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'for'")
+        var_name = None
+        names = None
+        rest = None
+        if self._check(TokenType.LBRACKET):
+            names, rest = self._destructure_list_pattern()
+        else:
+            var_name = self._consume(TokenType.IDENTIFIER, "identifier after 'for'").lexeme
         self._consume(TokenType.IN, "'in' after for-loop variable")
         iterable = self._assignment()
         if not self._check(TokenType.LBRACE):
@@ -389,7 +410,7 @@ class Parser:
         body = self._block()
         self._loop_labels.pop()
         return ForStmt(
-            name_token.lexeme, iterable, body, for_token.line, for_token.column, label
+            var_name, iterable, body, for_token.line, for_token.column, label, names=names, rest=rest
         )
 
     def _for_c_statement(self, for_token: Token, label: "str | None" = None) -> Stmt:

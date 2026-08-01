@@ -19,10 +19,10 @@ no new AST node, no interpreter changes. `TokenType.DOT` already exists
 (`cinder/tokens.py:87`) and the lexer already emits a standalone `DOT`
 token for any `.` that isn't consumed while scanning a number literal
 (`cinder/lexer.py:349`), so no lexer change is needed either. In `_call`
-(`cinder/parser.py:878-888`, the postfix loop that already handles `(`
+(`cinder/parser.py:902-912`, the postfix loop that already handles `(`
 and `[` after a primary expression), add a third branch:
 `elif self._check(TokenType.DOT): expr = self._finish_dot(expr)`. Add
-`_finish_dot`, modeled on `_finish_index` (`cinder/parser.py:907-920`):
+`_finish_dot`, modeled on `_finish_index` (`cinder/parser.py:931-944`):
 consume the `DOT`, require the next token be `TokenType.IDENTIFIER`
 (raise `ParseError` `"expected a property name after '.'"` at the
 identifier-position token if not — this means dot access only reaches
@@ -36,8 +36,8 @@ with the bracket-expression replaced by a string literal built from the
 identifier's lexeme.
 
 This reuse is what makes the task small: `_assignment`
-(`cinder/parser.py:700-760`) and the statement-level `_expr_or_incdec`
-(`cinder/parser.py:662-698`) both already dispatch on `isinstance(expr,
+(`cinder/parser.py:724-785`) and the statement-level `_expr_or_incdec`
+(`cinder/parser.py:686-723`) both already dispatch on `isinstance(expr,
 Index)` — not on how that `Index` was produced — to build `IndexAssign`,
 `IndexCompoundAssign` (for the bitwise/shift compound-assign set), and
 `++`/`--` targets. Because `_finish_dot` produces a plain `Index`, plain
@@ -157,7 +157,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `pick`/`omit`,
-`cinder/builtins.py:2217-2218`), `tests/test_builtins.py`. Once merged,
+`cinder/builtins.py:2244-2245`), `tests/test_builtins.py`. Once merged,
 `README.md`'s Builtins bullet needs `pick_by`/`omit_by` added near
 `pick`/`omit` — leave that to the Architect's next grooming pass, not
 this task.

@@ -47,7 +47,10 @@ while (i < 10) {
   looking it up as a key, extra unnamed keys ignored)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
-  and maps (over keys), a C-style `for (init; cond; step) { ... }` loop
+  and maps (over keys), plus list-destructuring loop variables
+  (`for [k, v] in items(m) { ... }`, same flat positional binding and
+  optional trailing rest element as `let` list destructuring), a
+  C-style `for (init; cond; step) { ... }` loop
   (each clause optional; the loop variable gets a fresh binding per
   iteration so closures captured in the body see their own iteration's
   value), `break`/`continue` in all loop kinds, including labeled
@@ -189,13 +192,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `memoize` for caching pure
-functions and multiple values per `switch` case (`case 1, 2, 3: { ... }`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): list destructuring in
-`for`-loop variables, dot-access sugar for map string keys (`m.key` as
-sugar for `m["key"]`), predicate-based map filtering (`pick_by`/`omit_by`),
-end-anchored `take_right`/`drop_right`, population `variance`/`std_dev`,
-and REPL Tab completion for builtins/variables. The backlog mixes
-language depth with stdlib breadth over time rather than running either
-in one long block.
+Actively developed, nightly. Recently landed: multiple values per
+`switch` case (`case 1, 2, 3: { ... }`) and list destructuring in
+`for`-loop variables (`for [k, v] in items(m) { ... }`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): dot-access sugar for
+map string keys (`m.key` as sugar for `m["key"]`), predicate-based map
+filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
+population `variance`/`std_dev`, and REPL Tab completion for
+builtins/variables. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

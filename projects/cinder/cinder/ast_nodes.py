@@ -301,6 +301,13 @@ class ReturnStmt:
 
 
 @dataclass(frozen=True)
+class ThrowStmt:
+    expression: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class BreakStmt:
     line: int
     column: int
@@ -359,6 +366,7 @@ Stmt = Union[
     ForCStmt,
     FnDecl,
     ReturnStmt,
+    ThrowStmt,
     BreakStmt,
     ContinueStmt,
     TryStmt,

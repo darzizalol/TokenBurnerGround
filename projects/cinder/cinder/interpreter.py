@@ -78,6 +78,7 @@ from cinder.ast_nodes import (
     Stmt,
     SwitchStmt,
     Ternary,
+    ThrowStmt,
     TryStmt,
     Unary,
     WhileStmt,
@@ -354,6 +355,15 @@ class Interpreter:
         if isinstance(stmt, ReturnStmt):
             value = self.evaluate(stmt.value, env) if stmt.value is not None else None
             raise _ReturnSignal(value)
+        if isinstance(stmt, ThrowStmt):
+            value = self.evaluate(stmt.expression, env)
+            if not isinstance(value, str):
+                raise CinderRuntimeError(
+                    f"throw requires a string message, got {type_name(value)}",
+                    stmt.line,
+                    stmt.column,
+                )
+            raise CinderRuntimeError(value, stmt.line, stmt.column)
         if isinstance(stmt, BreakStmt):
             raise _BreakSignal(stmt.label)
         if isinstance(stmt, ContinueStmt):

@@ -134,6 +134,7 @@ from cinder.ast_nodes import (
     SwitchCase,
     SwitchStmt,
     Ternary,
+    ThrowStmt,
     TryStmt,
     Unary,
     WhileStmt,
@@ -236,6 +237,8 @@ class Parser:
             return self._fn_declaration()
         if self._check(TokenType.RETURN):
             return self._return_statement()
+        if self._check(TokenType.THROW):
+            return self._throw_statement()
         if self._check(TokenType.BREAK):
             return self._break_statement()
         if self._check(TokenType.CONTINUE):
@@ -509,6 +512,16 @@ class Parser:
             value = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after return statement")
         return ReturnStmt(value, return_token.line, return_token.column)
+
+    def _throw_statement(self) -> Stmt:
+        throw_token = self._advance()
+        if self._check(TokenType.SEMICOLON):
+            raise ParseError(
+                "expected expression after 'throw'", throw_token.line, throw_token.column
+            )
+        expression = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after throw statement")
+        return ThrowStmt(expression, throw_token.line, throw_token.column)
 
     def _break_statement(self) -> Stmt:
         break_token = self._advance()

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Exponentiation operator `**`
+## 1. Exponentiation operator `**` [claimed 2026-08-02T20:26:44Z]
 
 Build: a new binary operator `**` for exponentiation, right-associative,
 binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —

@@ -892,9 +892,30 @@ class TestCompoundAssignment(unittest.TestCase):
             ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.PERCENT, ("Literal", 3))),
         )
 
-    def test_index_target_raises_parse_error(self):
+    def test_plus_eq_allows_index_target(self):
+        # The arithmetic set now accepts an index-expression target too,
+        # desugaring into IndexCompoundAssign (not IndexAssign wrapping a
+        # Binary over the same Index node, which would evaluate obj/index
+        # twice at runtime) — same treatment the bitwise/shift set already
+        # has.
+        stmts = parse_stmts("xs[0] += 1;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexCompoundAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    TokenType.PLUS,
+                    ("Literal", 1),
+                ),
+            ),
+        )
+
+    def test_invalid_arithmetic_compound_assign_target_raises_parse_error(self):
         with self.assertRaises(ParseError):
-            parse_stmts("xs[0] += 1;")
+            parse_stmts("1 + 1 += 1;")
 
     def test_qq_eq_desugars_to_assign_of_logical_question_question(self):
         # Unlike the arithmetic compound-assign ops, `??=` desugars into a

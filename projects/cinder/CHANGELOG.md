@@ -1156,3 +1156,11 @@ for vision/architecture.
   directly on `_sum`'s structure with the fold starting from `1` instead of
   `0`, so `product([])` is well-defined as `1` with no non-empty check.
   Clean first pass, no bounces (1675 tests passing, up from 1667).
+- **Nil-coalescing compound assignment on index/dot-access targets** —
+  merged 2026-08-02T15:08:14Z via PR #149 (`feat/20260802-index-qq-eq`).
+  Added a dedicated `IndexNilCoalesceAssign` AST node and interpreter
+  evaluator (rather than reusing `IndexCompoundAssign`, whose evaluator
+  unconditionally evaluates the RHS) so `xs[0] ??= 1` and `m.key ??= 1`
+  keep `??=`'s short-circuit contract: the RHS is only evaluated, and
+  `obj`/`index` only written back, when the current value is `nil`. Clean
+  first pass, no bounces (1684 tests passing, up from 1675).

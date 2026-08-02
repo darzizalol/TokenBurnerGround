@@ -81,9 +81,11 @@ while (i < 10) {
   falls through on any falsy value) and its compound-assignment sibling
   `a ??= b` (identifier or index/dot-access targets, e.g. `xs[0] ??= 1`,
   `m.key ??= 1`; the RHS is only evaluated, and the target only written,
-  when the current value is `nil`), and bitwise operators `&`, `|`, `^`,
-  `~`, `<<`, `>>` (int-only, with a clean runtime error on a negative shift
-  count)
+  when the current value is `nil`), the safe navigation operator `m?.key`
+  (short-circuits to `nil` when `m` is `nil` instead of raising, single
+  level only, composes with `??` for `m?.key ?? default`), and bitwise
+  operators `&`, `|`, `^`, `~`, `<<`, `>>` (int-only, with a clean runtime
+  error on a negative shift count)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -200,17 +202,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a REPL `:load <path>`
-meta-command to run a script into the current session, `frequencies` for
-a list's per-element occurrence counts, arithmetic *and* nil-coalescing
-compound-assign on index/dot-access targets (`xs[0] += 1`, `m.key ??= 1`),
-closing out both compound-assign families' gaps versus the bitwise/shift
-set, and `product` for a list's multiplicative fold.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a safe-navigation
-operator `?.` for map access (`m?.key` is `nil` when `m` is `nil`),
-`compact` to drop falsy elements from a list, `find_last_index` for
-predicate-based reverse search, and an exponentiation operator `**`
-(right-associative, tighter than `*`/`/`/`%`).
+Actively developed, nightly. Recently landed: the safe-navigation operator
+`?.` for map access (`m?.key` is `nil` when `m` is `nil`), `frequencies`
+for a list's per-element occurrence counts, a REPL `:load <path>`
+meta-command to run a script into the current session, arithmetic *and*
+nil-coalescing compound-assign on index/dot-access targets (`xs[0] += 1`,
+`m.key ??= 1`), closing out both compound-assign families' gaps versus
+the bitwise/shift set.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `compact` to drop falsy
+elements from a list, `find_last_index` for predicate-based reverse
+search, an exponentiation operator `**` (right-associative, tighter than
+`*`/`/`/`%`) and its compound-assign sibling `**=`, and `sum_by` to round
+out the `min_by`/`max_by`/`sort_by` family.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

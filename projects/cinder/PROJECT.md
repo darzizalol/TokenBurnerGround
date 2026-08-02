@@ -134,29 +134,31 @@ dot-access targets (`xs[0] += 1`, `m.key += 1`, closing the last gap
 that family had versus the bitwise/shift set, which already accepted
 those targets), `product` as `sum`'s multiplicative counterpart,
 nil-coalescing compound-assign on `Index`/dot-access targets
-(`xs[0] ??= 1`, `m.key ??= 1`, closing that family's matching gap), and
-a REPL `:load <path>` meta-command to run a script into the current
-session's persistent environment — all once listed here as future
-work — have since landed. What remains plausible, not yet scoped into
-tasks beyond current `BACKLOG.md`:
-continued standard-library breadth (string/list/map/math methods,
-picked incrementally per `BACKLOG.md`'s own grooming — `frequencies`
-for a list's per-element occurrence counts, `compact` to drop falsy
-elements from a list, and `find_last_index` as `find_index`'s
-reverse-search counterpart (mirroring how `last_index_of` already
-closed that gap for equality-based search) are the latest picks,
-already in current `BACKLOG.md`), a new
-safe-navigation operator `?.` for map access (`m?.key` is `nil` when
-`m` is `nil`, pairing with the existing `??`/`??=` nil-coalescing
-family; scoped as a single-level short-circuit, not JS-style
-full-chain propagation — also in current `BACKLOG.md`), and an
-exponentiation operator `**` (right-associative, binding tighter than
-`*`/`/`/`%` and looser than unary — closing the gap between the
-existing `pow()` builtin and infix syntax, deliberately *not* matching
-Python's special-cased unary-minus-vs-`**` precedence), and its
+(`xs[0] ??= 1`, `m.key ??= 1`, closing that family's matching gap), a
+REPL `:load <path>` meta-command to run a script into the current
+session's persistent environment, `frequencies` for a list's
+per-element occurrence counts, and a safe-navigation operator `?.` for
+map access (`m?.key` is `nil` when `m` is `nil`, pairing with the
+existing `??`/`??=` nil-coalescing family; scoped as a single-level
+short-circuit, not JS-style full-chain propagation) — all once listed
+here as future work — have since landed. What remains plausible, not
+yet scoped beyond current `BACKLOG.md`: continued standard-library
+breadth (string/list/map/math methods, picked incrementally per
+`BACKLOG.md`'s own grooming — `compact` to drop falsy elements from a
+list, `find_last_index` as `find_index`'s reverse-search counterpart
+(mirroring how `last_index_of` already closed that gap for
+equality-based search), and `sum_by` as the `min_by`/`max_by`/
+`sort_by`/`group_by`/`count_by`/`distinct_by` family's still-missing
+fold-by-key member (sum of `fn(item)` over a list, numbers-only like
+`sum` rather than `min_by`/`max_by`'s number-or-string key) are the
+latest picks, already in current `BACKLOG.md`), and an exponentiation
+operator `**` (right-associative, binding tighter than `*`/`/`/`%` and
+looser than unary — closing the gap between the existing `pow()`
+builtin and infix syntax, deliberately *not* matching Python's
+special-cased unary-minus-vs-`**` precedence), and its
 compound-assignment sibling `**=` (`x **= 2`, accepting index/dot-
 access targets like the rest of the arithmetic compound-assign family
-— both now scoped as tasks 4 and 5 in current `BACKLOG.md`) — and only
+— both now scoped as tasks 3 and 4 in current `BACKLOG.md`) — and only
 much later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.

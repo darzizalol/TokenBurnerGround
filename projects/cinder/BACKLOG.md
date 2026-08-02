@@ -303,6 +303,62 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `sum_by` — sum of a function applied to each element
+
+Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
+fold-by-key counterpart that closes the last gap in the
+`min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family —
+all of those already take a list plus a key/predicate function, but
+there's no by-key equivalent of `sum`. Unlike `min_by`/`max_by`
+(`cinder/builtins.py:1586-1618`), which accept a function returning all
+numbers *or* all strings (since min/max are well-defined on either),
+`sum_by` is numbers-only, matching `sum` itself
+(`cinder/builtins.py:1047-1061`) — summing strings isn't well-defined
+the way `+` isn't string concatenation via `sum`.
+
+Model the arity/type checks on `_min_max_by`'s structure (arity 2, first
+argument a `list` else `CinderRuntimeError` naming `sum_by` and
+`type_name`, matching `"sum_by() requires a list as its first argument,
+got {type_name}"`; second argument must be `_is_callable` else
+`CinderRuntimeError` matching `"sum_by() requires a function as its
+second argument, got {type_name}"`), but fold like `_sum` does: call
+`call_value(fn, [item], line, column)` for each element, check
+`_is_numeric` on each result (else `CinderRuntimeError` matching
+`"sum_by() requires a function returning numbers, got {type_name}"`),
+and accumulate starting from `0`. Unlike `min_by`/`max_by`, an empty
+list is well-defined (mirrors `sum([])` being `0`, not an error) — do
+not add a non-empty check. Register it in the builtins dict near `sum`/
+`product` (`cinder/builtins.py:2481-2482`, `"sum": _sum,` /
+`"product": _product,`).
+
+Acceptance criteria:
+- `sum_by([1, 2, 3], fn(n) { return n * 2; });` is `12` — the primary
+  case, pin as the main regression test.
+- `sum_by([], fn(n) { return n; });` is `0` and the function is never
+  called — mirrors `sum([])`'s well-defined empty case, not an error
+  (contrast with `min_by`/`max_by`, which do error on empty lists).
+- `sum_by(["a", "bb", "ccc"], fn(s) { return len(s); });` is `6` — the
+  function's return value, not the element itself, is what's summed.
+- `sum_by([1, 2], fn(n) { return "x"; });` (function returns a
+  non-number) raises `CinderRuntimeError` naming `sum_by` and `string`
+  in the message — contrast with `min_by`/`max_by`, which would accept
+  an all-string result; `sum_by` never does.
+- `sum_by(5, fn(n) { return n; });` (a non-list first argument) raises
+  `CinderRuntimeError` naming `sum_by` and `number` in the message.
+- `sum_by([1, 2], 5);` (a non-function second argument) raises
+  `CinderRuntimeError` naming `sum_by` and `number` in the message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `sum`/`product`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `sum_by` added near `sum`/`product` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

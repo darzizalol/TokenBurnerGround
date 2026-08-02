@@ -2306,6 +2306,24 @@ def _count_by(arguments: list, line: int, column: int) -> object:
     return counts
 
 
+def _frequencies(arguments: list, line: int, column: int) -> object:
+    _require_arity("frequencies", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"frequencies() requires a list, got {type_name(items)}",
+            line, column,
+        )
+    counts: dict = {}
+    for item in items:
+        if not _is_valid_key(item):
+            raise CinderRuntimeError(
+                f"{type_name(item)} is not a valid map key", line, column
+            )
+        counts[item] = counts.get(item, 0) + 1
+    return counts
+
+
 def _distinct_by(arguments: list, line: int, column: int) -> object:
     _require_arity("distinct_by", arguments, 2, line, column)
     items, fn = arguments
@@ -2508,6 +2526,7 @@ _BUILTINS = {
     "group_by": _group_by,
     "key_by": _key_by,
     "count_by": _count_by,
+    "frequencies": _frequencies,
     "partition": _partition,
     "slice": _slice,
     "split_at": _split_at,

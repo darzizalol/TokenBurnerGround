@@ -1131,3 +1131,13 @@ for vision/architecture.
   suggestions rather than adding a new accessor) so session-defined variables
   complete immediately alongside builtins/keywords. Clean first pass, no
   bounces (1653 tests passing, up from 1648).
+- **Standard library: `mode` for the most frequently occurring value in a
+  list** — merged 2026-08-02T14:24:52Z via PR #146
+  (`feat/20260802-mode-builtin`). Added to `cinder/builtins.py`, modeled on
+  `_dedupe`'s two-path counting approach rather than `mean`/`median`'s
+  numeric-only validation, since `mode` works on any valid Cinder value: a
+  fast path keyed on `(is_bool, element)` for valid map keys (splitting `1`
+  from `true`), falling back to a `values_equal`-based count for
+  non-hashable values (lists). Ties resolve to first appearance in the
+  input list. Clean first pass, no bounces (1662 tests passing, up from
+  1653).

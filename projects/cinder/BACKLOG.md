@@ -11,60 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `mode` for the most frequently occurring value in a list [claimed 2026-08-02T14:18:48Z]
-
-Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
-after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1064-`
-onward, plus wherever this cycle's `variance`/`std_dev` task lands them)
-— but unlike those four, `mode` isn't numeric-only: it works on any
-valid Cinder value (strings, bools, lists, maps, ...), so model its
-counting logic on `_dedupe`'s existing two-path approach
-(`cinder/builtins.py:1186-1202`) rather than `_mean`'s numeric-only
-validation. Arity 1, argument a non-empty `list` (else `CinderRuntimeError`
-naming `mode` and `type_name(value)`; empty list raises `"mode() requires
-a non-empty list"`, matching `mean([])`/`median([])`'s existing message
-shape). Count occurrences left-to-right: if every element is a valid map
-key (`_is_valid_key`, same check `_dedupe`'s fast path already uses),
-count via a `dict` keyed on `(isinstance(element, bool), element)` exactly
-as `_dedupe` does (so `1` and `true` never collide); otherwise fall back
-to `_dedupe`'s O(n²) path, counting via `values_equal` against a list of
-`(element, count)` pairs built incrementally. Either way, return the
-*first-encountered* element among those with the maximum count — ties
-are broken by first appearance in the input list, not by any ordering on
-the values themselves (arbitrary Cinder values, e.g. lists/maps, aren't
-orderable). Do not introduce a "return all tied modes as a list" variant;
-that's a different, unrequested return shape — single-value return only.
-
-Acceptance criteria:
-- `mode([1, 2, 2, 3]);` is `2` — the primary case, pin as the main
-  regression test.
-- `mode([1, 1, 2, 2]);` is `1` — a tie between `1` and `2` (two each)
-  resolves to `1`, the one that appeared first.
-- `mode([5]);` is `5` — a single-element list is its own mode.
-- `mode(["a", "b", "b", "c"]);` is `"b"` — works on strings, not just
-  numbers (the key difference from `mean`/`median`/`variance`/`std_dev`).
-- `mode([true, false, true]);` is `true`, and `mode([1, true, 1]);` is
-  `1` (the bool/int split from `_dedupe`'s comment applies here too — `1`
-  and `true` must not be counted together).
-- `mode([[1], [1], [2]]);` is `[1]` — a list of lists exercises the
-  `values_equal` fallback path, since lists aren't valid map keys.
-- `mode([]);` raises `CinderRuntimeError` naming a non-empty-list
-  requirement, at the call site's line/column.
-- `mode("abc");` (a string, not a list) raises `CinderRuntimeError`
-  naming `mode` and `string` in the message.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `mean`/`median`, see
-current line numbers — shift if this cycle's `variance`/`std_dev` task
-landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `mode` added near `mean`/`median` — leave that to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
+## 1. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
 
 Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
 `*=`, `/=`, `%=`) to accept an `Index`-expression target — which
@@ -149,7 +96,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `product` for the product of a list of numbers
+## 2. Standard library: `product` for the product of a list of numbers
 
 Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
 counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —
@@ -200,7 +147,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
+## 3. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
 
 Build: extend `??=` to accept an `Index`-expression target (which
 includes dot access, since `m.key` desugars into `Index(obj,
@@ -314,7 +261,7 @@ task.
 
 ---
 
-## 5. REPL `:load <path>` command to run a script into the current session
+## 4. REPL `:load <path>` command to run a script into the current session
 
 Build: add a `:load <path>` REPL meta-command, the natural next REPL
 ergonomics step after tab completion (`cinder/repl.py`) — lets a session

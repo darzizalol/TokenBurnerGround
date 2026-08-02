@@ -130,6 +130,7 @@ from cinder.ast_nodes import (
     Literal,
     Logical,
     MapLiteral,
+    OptionalIndex,
     ReturnStmt,
     SliceExpr,
     Spread,
@@ -923,6 +924,8 @@ class Parser:
                 expr = self._finish_index(expr)
             elif self._check(TokenType.DOT):
                 expr = self._finish_dot(expr)
+            elif self._check(TokenType.QUESTION_DOT):
+                expr = self._finish_optional_dot(expr)
             else:
                 break
         return expr
@@ -964,6 +967,12 @@ class Parser:
         name_token = self._consume(TokenType.IDENTIFIER, "a property name after '.'")
         key = Literal(name_token.lexeme, name_token.line, name_token.column)
         return Index(obj, key, dot.line, dot.column)
+
+    def _finish_optional_dot(self, obj: Expr) -> Expr:
+        dot = self._advance()  # consume '?.'
+        name_token = self._consume(TokenType.IDENTIFIER, "a property name after '?.'")
+        key = Literal(name_token.lexeme, name_token.line, name_token.column)
+        return OptionalIndex(obj, key, dot.line, dot.column)
 
     def _primary(self) -> Expr:
         token = self._peek()

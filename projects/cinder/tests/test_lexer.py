@@ -196,6 +196,50 @@ class TestOperators(unittest.TestCase):
             ],
         )
 
+    def test_question_dot_is_one_token(self):
+        # "?." must lex as one QUESTION_DOT token, not QUESTION then DOT.
+        tokens = tokenize("a?.b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QUESTION_DOT,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
+    def test_question_dot_does_not_collide_with_ternary_or_qq(self):
+        self.assertEqual(
+            types(tokenize("a ? b : c")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QUESTION,
+                TokenType.IDENTIFIER,
+                TokenType.COLON,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(
+            types(tokenize("a ?? b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QUESTION_QUESTION,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(
+            types(tokenize("a ??= b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.QQEQ,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
     def test_bitwise_operators(self):
         source = "& | ^ ~ << >>"
         expected = [

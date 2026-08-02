@@ -358,6 +358,10 @@ class Lexer:
                 self.tokens.append(
                     Token(TokenType.QUESTION_QUESTION, "??", None, start_line, start_col)
                 )
+        elif self._match("."):
+            self.tokens.append(
+                Token(TokenType.QUESTION_DOT, "?.", None, start_line, start_col)
+            )
         else:
             self.tokens.append(Token(TokenType.QUESTION, "?", None, start_line, start_col))
 

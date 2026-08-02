@@ -29,6 +29,7 @@ from cinder.ast_nodes import (
     Literal,
     Logical,
     MapLiteral,
+    OptionalIndex,
     ReturnStmt,
     SliceExpr,
     Spread,
@@ -77,6 +78,8 @@ def shape(node):
         )
     if isinstance(node, Index):
         return ("Index", shape(node.obj), shape(node.index))
+    if isinstance(node, OptionalIndex):
+        return ("OptionalIndex", shape(node.obj), shape(node.index))
     if isinstance(node, SliceExpr):
         return (
             "SliceExpr",
@@ -752,6 +755,20 @@ class TestListsAndMaps(unittest.TestCase):
     def test_dot_access_missing_identifier_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse("m.")
+
+    def test_optional_dot_access_desugars_to_optional_index(self):
+        self.assertEqual(
+            shape(parse("m?.a")),
+            ("OptionalIndex", ("Identifier", "m"), ("Literal", "a")),
+        )
+
+    def test_optional_dot_access_assignment_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("m?.a = 5;")
+
+    def test_optional_dot_access_compound_assignment_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("m?.a += 1;")
 
     def test_map_literal_missing_colon_raises(self):
         with self.assertRaises(ParseError):

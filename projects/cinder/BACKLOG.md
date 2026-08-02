@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil`
+## 1. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil` [claimed 2026-08-02T19:48:58Z]
 
 Build: a new postfix operator `?.` (dot-only, mirroring the existing
 `m.key` sugar) that evaluates its left side and, if that value is `nil`,

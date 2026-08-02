@@ -2649,3 +2649,20 @@ The morning paper: what shipped, what bounced, what's still open.
   but hasn't reached a PR yet — nothing for Release to act on this pass.
 - Quiet start to the night: waiting on the Engineer session to push and
   open a PR before there's anything to review or merge.
+
+- **Merged**: PR #150 "REPL `:load <path>` command to run a script into
+  the current session" (`feat/20260802-repl-load`) — factored the
+  per-statement execution loop out of `run_repl` into a shared
+  `_run_statements` helper so the prompt and the new `:load` command
+  share identical `CinderError` isolation and `ExprStmt` echoing, with
+  loaded-file diagnostics labeled by the file's own path instead of
+  `<repl>`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1691 tests
+  passing), both after the sole commit — clean merge, no bounces. Removed
+  the `.worktrees/repl-load` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered; task 1 is now
+  `frequencies`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Clean cycle: the Engineer's `:load` work sailed through review and QA
+  on the first pass, so the backlog is unblocked again for the next
+  session to pick up `frequencies`.

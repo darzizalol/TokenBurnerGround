@@ -11,99 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL `:load <path>` command to run a script into the current session [claimed 2026-08-02T19:27:12Z]
-
-Build: add a `:load <path>` REPL meta-command, the natural next REPL
-ergonomics step after tab completion (`cinder/repl.py`) — lets a session
-pull in helper functions/data from a `.cin` file without retyping them,
-then keep interacting with them at the prompt. Model the trigger on the
-existing `EXIT_COMMAND` check at `cinder/repl.py:114-115` (`if not
-buffered_lines and line.strip() == EXIT_COMMAND: return`): add a sibling
-check, only when `buffered_lines` is empty (so `:load` can't appear
-mid-continuation), for a line whose `.strip()` starts with `":load "`
-(a bare `:load` with no path is a usage error, not a crash — see below).
-On match, don't fall through to the normal tokenize/parse/execute path
-for that line; instead read the path (`line.strip()[len(":load "):]
-.strip()`), resolve it relative to the process's current working
-directory (`Path(path)`, not relative to `cinder/repl.py`'s own
-location — the user is loading *their* script, not a package-internal
-one), and:
-- If the file doesn't exist or can't be read, `write(...)` a one-line
-  error (e.g. `f"could not read {path}: {exc}"`) and continue the loop —
-  do not crash the REPL, matching how `CinderError` is already caught
-  per-statement without killing the session (`cinder/repl.py:132-133`).
-- Otherwise, tokenize + `parse_program` the file's contents and execute
-  each statement against the *same* persistent `env`/`interpreter` the
-  REPL prompt itself uses (so `let`/`fn`/`const` bindings from the file
-  are visible at the prompt afterward) — reuse the exact same per-
-  statement loop body already in `run_repl` (`cinder/repl.py:125-131`:
-  `ExprStmt` echoes its value via `stringify`, everything else just
-  `execute`s) rather than writing a second, diverging copy of it; the
-  cleanest way is to factor that loop body into a small helper (e.g.
-  `_run_statements(statements, interpreter, env, write)`) called from
-  both the main loop and the `:load` handler, rather than duplicating
-  the `isinstance(statement, ExprStmt)` branch inline in two places.
-- A `LexError`/`ParseError`/`CinderRuntimeError` raised while
-  tokenizing/parsing/executing the loaded file is caught the same way
-  the main loop catches `CinderError` (`cinder/repl.py:132-133`), but
-  the diagnostic's source label must be the loaded file's path, not the
-  literal string `<repl>` (`REPL_SOURCE_NAME`, `cinder/repl.py:23`) —
-  e.g. `f"{path}:{e.line}:{e.column}: {e.message}"` — so a user can tell
-  a `:load`-time error apart from a prompt-time one. One bad statement
-  in the loaded file should not prevent later statements in the *same*
-  file from running, matching the main loop's existing per-statement
-  isolation — catch per-statement inside the `:load` handler's loop,
-  same as `cinder/repl.py:123-133` already does for prompt input, not
-  one `try` wrapping the whole file.
-- After a successful (or partially-successful) `:load`, tab completion
-  must see the newly bound names immediately: no extra wiring should be
-  needed here since `_make_completer` (`cinder/repl.py:34-46`) already
-  re-reads `env.all_names()` fresh on every Tab press, but add a test
-  proving it (see acceptance criteria).
-- `:load` with no path (just `":load"` or `":load "` with nothing after
-  it, once stripped) writes a usage error (e.g. `"usage: :load <path>"`)
-  and does not attempt to open a file.
-
-Acceptance criteria:
-- Given a temp file `helpers.cin` containing `fn double(x) { return x *
-  2; } let greeting = "hi";`, running `:load <path-to-helpers.cin>`
-  then `double(21);` at the next prompt returns `42`, and `greeting;`
-  returns `"hi"` — the primary case, pin as the main regression test.
-  Model the temp-file setup on `tempfile`, already imported in
-  `tests/test_repl.py` (see its `import tempfile` at the top).
-- `:load <path-to-nonexistent-file>` writes one output containing the
-  path (or the error message) and does *not* raise — the loop continues
-  and a following `1 + 1;` still evaluates to `2` in the same session.
-- A `.cin` file with a runtime error partway through (e.g. statement 1
-  defines `let a = 1;`, statement 2 is `undefined_name;`, statement 3 is
-  `let b = 2;`) still leaves `b` bound afterward — proves per-statement
-  isolation inside `:load`, not one `try` around the whole file. The
-  error output for statement 2 names the loaded file's path (not
-  `<repl>`) in its diagnostic prefix.
-- A bare `:load` (no path) writes a usage message and does not attempt a
-  file read (no `FileNotFoundError`/traceback surfaces even if cwd has
-  no file named `""`).
-- `:load` only triggers at the start of a fresh statement (empty
-  `buffered_lines`), matching how `EXIT_COMMAND` already behaves — e.g.
-  typing `:load` isn't reachable mid-continuation since Cinder has no
-  syntax that would put `:load` inside an unbalanced bracket anyway;
-  a single test confirming the top-level trigger path is enough, don't
-  over-test this edge.
-- Existing REPL behavior (bare-expression echoing, multi-statement
-  buffering, `CinderError` diagnostics on prompt input, `exit`) is
-  unaffected — full existing `tests/test_repl.py` suite still passes
-  unmodified alongside the new tests.
-- Full test suite passes.
-
-Likely files: `cinder/repl.py` (new `:load` branch near
-`cinder/repl.py:114-115`, the extracted `_run_statements` helper
-factored out of `cinder/repl.py:123-133`), `tests/test_repl.py`. Once
-merged, `README.md`'s REPL section needs a `:load` mention — leave that
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `frequencies` for a list's per-element occurrence counts
+## 1. Standard library: `frequencies` for a list's per-element occurrence counts
 
 Build: add `frequencies(list)` to `cinder/builtins.py`, returning a map
 from each distinct element to the number of times it occurs in the
@@ -168,7 +76,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil`
+## 2. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil`
 
 Build: a new postfix operator `?.` (dot-only, mirroring the existing
 `m.key` sugar) that evaluates its left side and, if that value is `nil`,
@@ -294,7 +202,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `compact` to drop falsy elements from a list
+## 3. Standard library: `compact` to drop falsy elements from a list
 
 Build: add `compact(list)` to `cinder/builtins.py`, returning a new list
 containing only the elements of the input that are truthy under Cinder's
@@ -340,7 +248,7 @@ next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `find_last_index` — index of the last element matching a predicate
+## 4. Standard library: `find_last_index` — index of the last element matching a predicate
 
 Build: add `find_last_index(list, fn)` to `cinder/builtins.py`, the
 predicate-based counterpart to `find_index` (`cinder/builtins.py:1260-1276`)
@@ -397,7 +305,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Exponentiation operator `**`
+## 5. Exponentiation operator `**`
 
 Build: a new binary operator `**` for exponentiation, right-associative,
 binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —

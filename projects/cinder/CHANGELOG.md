@@ -1164,3 +1164,13 @@ for vision/architecture.
   keep `??=`'s short-circuit contract: the RHS is only evaluated, and
   `obj`/`index` only written back, when the current value is `nil`. Clean
   first pass, no bounces (1684 tests passing, up from 1675).
+- **REPL `:load <path>` command to run a script into the current
+  session** — merged 2026-08-03T19:31:58Z via PR #150
+  (`feat/20260802-repl-load`). Added a `:load` meta-command, triggered only
+  at the start of a fresh statement, and factored the per-statement
+  execution loop out of `run_repl` into a shared `_run_statements` helper
+  so both the prompt and `:load` get identical `CinderError` isolation and
+  `ExprStmt` echoing. Loaded-file diagnostics are labeled with the file's
+  path instead of `<repl>`, and per-statement isolation means one bad
+  statement in the loaded file doesn't block later ones from running.
+  Clean first pass, no bounces (1691 tests passing, up from 1684).

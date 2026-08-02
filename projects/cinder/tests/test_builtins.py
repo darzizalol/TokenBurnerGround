@@ -1,7 +1,7 @@
 """Tests for cinder.builtins: print, len, is_empty, type, str, int, float, ord, chr, push, pop,
 insert, remove_at, keys, values, items, get, get_in, remove, merge, upper, lower, trim, trim_start, trim_end, split, lines, words, join,
 find, starts_with, ends_with, replace, pad_start, pad_end, abs, min, max, round, to_fixed, floor, ceil,
-pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, copy, unique, reverse, rotate, sort, sort_by, min_by, max_by, range, map,
+pow, sqrt, sum, any, all, contains, index_of, last_index_of, find_index, find_last_index, copy, unique, reverse, rotate, sort, sort_by, min_by, max_by, range, map,
 filter, reduce, slice, take, drop, concat, flatten, flatten_deep, zip, enumerate, assert, format, is_list, is_map,
 is_string, is_number, is_bool, is_nil, is_function, random_int, random_choice."""
 
@@ -1352,6 +1352,56 @@ class TestFindIndex(unittest.TestCase):
             run("find_index([1]);")
         with self.assertRaises(CinderRuntimeError):
             run("find_index([1], fn(n) { return n; }, 3);")
+
+
+class TestFindLastIndex(unittest.TestCase):
+    def test_find_last_index_returns_index_of_last_match(self):
+        env = run("let result = find_last_index([1, 2, 3, 4], fn(n) { return n > 2; });")
+        self.assertEqual(env.get("result"), 3)
+
+    def test_find_last_index_contrasts_with_find_index_on_same_input(self):
+        env = run(
+            "let last = find_last_index([1, 2, 3, 4], fn(n) { return n > 2; }); "
+            "let first = find_index([1, 2, 3, 4], fn(n) { return n > 2; });"
+        )
+        self.assertEqual(env.get("last"), 3)
+        self.assertEqual(env.get("first"), 2)
+
+    def test_find_last_index_returns_negative_one_when_not_found(self):
+        env = run("let result = find_last_index([1, 2, 3], fn(n) { return n > 10; });")
+        self.assertEqual(env.get("result"), -1)
+
+    def test_find_last_index_on_empty_list_returns_negative_one_and_never_calls_fn(self):
+        env = run(
+            "let calls = []; "
+            "let result = find_last_index([], fn(n) { push(calls, n); return n; });"
+        )
+        self.assertEqual(env.get("result"), -1)
+        self.assertEqual(env.get("calls"), [])
+
+    def test_find_last_index_returns_later_of_two_matching_indices(self):
+        env = run("let result = find_last_index([1, 2, 2, 3], fn(n) { return n == 2; });")
+        self.assertEqual(env.get("result"), 2)
+
+    def test_find_last_index_on_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("find_last_index(5, fn(n) { return n; });")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertIn("find_last_index", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_find_last_index_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("find_last_index([1, 2], 5);")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertIn("find_last_index", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_find_last_index_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("find_last_index([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("find_last_index([1], fn(n) { return n; }, 3);")
 
 
 class TestCount(unittest.TestCase):

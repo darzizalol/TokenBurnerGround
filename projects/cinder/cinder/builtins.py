@@ -1276,6 +1276,25 @@ def _find_index(arguments: list, line: int, column: int) -> object:
     return -1
 
 
+def _find_last_index(arguments: list, line: int, column: int) -> object:
+    _require_arity("find_last_index", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"find_last_index() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"find_last_index() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    for index in range(len(items) - 1, -1, -1):
+        if is_truthy(call_value(fn, [items[index]], line, column)):
+            return index
+    return -1
+
+
 def _count(arguments: list, line: int, column: int) -> object:
     _require_arity("count", arguments, 2, line, column)
     collection, item = arguments
@@ -2502,6 +2521,7 @@ _BUILTINS = {
     "index_of": _index_of,
     "last_index_of": _last_index_of,
     "find_index": _find_index,
+    "find_last_index": _find_last_index,
     "count": _count,
     "copy": _copy,
     "deep_copy": _deep_copy,

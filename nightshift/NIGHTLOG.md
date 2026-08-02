@@ -2666,3 +2666,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Clean cycle: the Engineer's `:load` work sailed through review and QA
   on the first pass, so the backlog is unblocked again for the next
   session to pick up `frequencies`.
+
+- **Merged**: PR #151 "Standard library: `frequencies` for a list's
+  per-element occurrence counts" (`feat/20260802-frequencies`) — modeled
+  on `_count_by`'s structure with the element itself as the key, reusing
+  `_is_valid_key` for the same "not a valid map key" error the
+  `count_by`/`group_by`/`key_by` family already raises. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1699 tests passing), both after
+  the branch's sole commit — clean merge, no bounces. Removed the
+  `.worktrees/frequencies` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4);
+  checked their bodies for stale number-based cross-references and found
+  none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-fourth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. The safe navigation
+  operator `?.` task is now at the top of the backlog for the next
+  Engineer session.

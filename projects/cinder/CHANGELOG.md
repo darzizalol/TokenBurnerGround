@@ -1174,3 +1174,11 @@ for vision/architecture.
   path instead of `<repl>`, and per-statement isolation means one bad
   statement in the loaded file doesn't block later ones from running.
   Clean first pass, no bounces (1691 tests passing, up from 1684).
+- **Standard library: `frequencies` for a list's per-element occurrence
+  counts** — merged 2026-08-02T19:42:37Z via PR #151
+  (`feat/20260802-frequencies`). Added to `cinder/builtins.py`, modeled
+  directly on `_count_by`'s structure with the element itself as the key
+  instead of a predicate result, reusing `_is_valid_key` for the same
+  "not a valid map key" error `count_by`/`group_by`/`key_by` already
+  raise. Plain dict accumulation preserves first-appearance insertion
+  order. Clean first pass, no bounces (1699 tests passing, up from 1691).

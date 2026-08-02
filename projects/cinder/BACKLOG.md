@@ -313,6 +313,60 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `reject` — `filter`'s inverse
+
+Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
+complement of `filter` (`cinder/builtins.py:2108-2121`) — keeps every
+element the predicate is falsy for instead of truthy for, closing the
+same "opposite of an existing predicate combinator" gap that
+`omit`/`omit_by` already closed for `pick`/`pick_by`, but `filter` has
+never had one. Model directly on `_filter`'s structure line for line
+(arity 2, first argument a `list` else `CinderRuntimeError` naming
+`reject` and `type_name`, matching `"reject() requires a list as its
+first argument, got {type_name}"`; second argument must be
+`_is_callable` else `CinderRuntimeError` matching `"reject() requires a
+function as its second argument, got {type_name}"`), but invert the
+truthiness check in the comprehension: `[item for item in items if not
+is_truthy(call_value(fn, [item], line, column))]` — the single-character
+difference from `_filter`'s body (`not is_truthy(...)` instead of
+`is_truthy(...)`) is the entire behavioral distinction between the two
+functions. Register it in the builtins dict near `filter`
+(`cinder/builtins.py:2531`, `"filter": _filter,`).
+
+Acceptance criteria:
+- `reject([1, 2, 3, 4], fn(n) { return n % 2 == 0; });` is `[1, 3]` —
+  the primary case, pin as the main regression test; contrast with
+  `filter` on the same input/predicate returning `[2, 4]` to prove this
+  isn't accidentally aliased to `filter`.
+- `reject([], fn(n) { return true; });` is `[]` and the function is
+  never called — mirrors `filter`'s existing "on empty list returns []
+  and never calls fn" test shape.
+- `reject([1, 2, 3], fn(n) { return false; });` is `[1, 2, 3]` (the
+  predicate is always falsy, so every element is kept) and
+  `reject([1, 2, 3], fn(n) { return true; });` is `[]` (always truthy,
+  so nothing is kept) — the two boundary cases.
+- `reject([0, 1, nil, 2, false], fn(n) { return n == 1; });` is
+  `[0, nil, 2, false]` — pins that `reject` only removes elements where
+  the predicate itself returns truthy, not elements that are themselves
+  falsy (that's `compact`'s job, a different builtin); the predicate's
+  return value truthiness is what's inverted, not the element's.
+- `reject(5, fn(n) { return true; });` (a non-list first argument)
+  raises `CinderRuntimeError` naming `reject` and `number` in the
+  message.
+- `reject([1, 2], 5);` (a non-function second argument) raises
+  `CinderRuntimeError` naming `reject` and `number` in the message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `filter`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `reject` added near `filter` — leave that to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

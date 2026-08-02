@@ -137,21 +137,23 @@ nil-coalescing compound-assign on `Index`/dot-access targets
 (`xs[0] ??= 1`, `m.key ??= 1`, closing that family's matching gap), a
 REPL `:load <path>` meta-command to run a script into the current
 session's persistent environment, `frequencies` for a list's
-per-element occurrence counts, and a safe-navigation operator `?.` for
+per-element occurrence counts, a safe-navigation operator `?.` for
 map access (`m?.key` is `nil` when `m` is `nil`, pairing with the
 existing `??`/`??=` nil-coalescing family; scoped as a single-level
-short-circuit, not JS-style full-chain propagation) — all once listed
-here as future work — have since landed. What remains plausible, not
-yet scoped beyond current `BACKLOG.md`: continued standard-library
-breadth (string/list/map/math methods, picked incrementally per
-`BACKLOG.md`'s own grooming — `compact` to drop falsy elements from a
-list, `find_last_index` as `find_index`'s reverse-search counterpart
+short-circuit, not JS-style full-chain propagation), and `compact` to
+drop falsy elements from a list — all once listed here as future work —
+have since landed. What remains plausible, not yet scoped beyond current
+`BACKLOG.md`: continued standard-library breadth (string/list/map/math
+methods, picked incrementally per `BACKLOG.md`'s own grooming —
+`find_last_index` as `find_index`'s reverse-search counterpart
 (mirroring how `last_index_of` already closed that gap for
 equality-based search), and `sum_by` as the `min_by`/`max_by`/
 `sort_by`/`group_by`/`count_by`/`distinct_by` family's still-missing
 fold-by-key member (sum of `fn(item)` over a list, numbers-only like
-`sum` rather than `min_by`/`max_by`'s number-or-string key) are the
-latest picks, already in current `BACKLOG.md`), and an exponentiation
+`sum` rather than `min_by`/`max_by`'s number-or-string key), and
+`reject` as `filter`'s predicate-inverted complement (mirroring how
+`omit`/`omit_by` already closed that same gap for `pick`/`pick_by`) are
+the latest picks, already in current `BACKLOG.md`), and an exponentiation
 operator `**` (right-associative, binding tighter than `*`/`/`/`%` and
 looser than unary — closing the gap between the existing `pow()`
 builtin and infix syntax, deliberately *not* matching Python's

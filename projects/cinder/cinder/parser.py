@@ -14,13 +14,15 @@ other falsy value (`0`, `""`, `false`).
 
 Compound assignment (`x += 1`) is desugared at parse time into `x = x + 1`
 (reusing the `Binary`/`Assign` AST nodes) rather than adding dedicated
-interpreter support. The original arithmetic set (`+=` `-=` `*=` `/=` `%=`)
-is restricted to `Identifier` targets; the bitwise/shift set (`&=` `|=` `^=`
-`<<=` `>>=`) additionally accepts an `Index` target, desugared into a
-dedicated `IndexCompoundAssign` node (not `IndexAssign` wrapping a `Binary`
-over the same `Index` node — that would evaluate the object/index
-sub-expressions twice) so `obj`/`index` are each evaluated exactly once at
-runtime and their values reused for both the read and the write.
+interpreter support. Both the arithmetic set (`+=` `-=` `*=` `/=` `%=`) and
+the bitwise/shift set (`&=` `|=` `^=` `<<=` `>>=`) accept an `Identifier`
+target or an `Index` target (which includes dot access, e.g. `m.key`,
+since it desugars into the same `Index` node as `m["key"]`); an `Index`
+target desugars into a dedicated `IndexCompoundAssign` node (not
+`IndexAssign` wrapping a `Binary` over the same `Index` node — that would
+evaluate the object/index sub-expressions twice) so `obj`/`index` are each
+evaluated exactly once at runtime and their values reused for both the
+read and the write.
 
 `x++`/`x--` are statement-only sugar for `x += 1`/`x -= 1` (not an
 expression form: `let b = a++;` is unparseable), handled in `_expr_statement`
@@ -167,9 +169,16 @@ _COMPOUND_ASSIGN_OPS = {
     TokenType.LSHIFTEQ: TokenType.LSHIFT,
     TokenType.RSHIFTEQ: TokenType.RSHIFT,
 }
-# Unlike the arithmetic compound-assign ops above (identifier targets only),
-# the bitwise/shift ops also accept an index-expression target.
+# Both the arithmetic and bitwise/shift compound-assign ops accept an
+# index-expression target (which includes dot access, since `m.key`
+# desugars into `Index(obj, Literal("key"))` at parse time) in addition to
+# a plain identifier target.
 _INDEX_TARGET_COMPOUND_ASSIGN_OPS = {
+    TokenType.PLUSEQ,
+    TokenType.MINUSEQ,
+    TokenType.STAREQ,
+    TokenType.SLASHEQ,
+    TokenType.PERCENTEQ,
     TokenType.AMPEQ,
     TokenType.PIPEEQ,
     TokenType.CARETEQ,

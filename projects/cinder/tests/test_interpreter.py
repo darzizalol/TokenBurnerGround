@@ -731,11 +731,55 @@ class TestCompoundAssignment(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run('let s = "a"; s -= 1;')
 
-    def test_index_target_compound_assignment_raises_parse_error(self):
+    def test_arithmetic_compound_assign_on_index_target(self):
+        env = run("let xs = [1, 2, 3]; xs[0] += 5;")
+        self.assertEqual(env.get("xs"), [6, 2, 3])
+        env = run("let xs = [1, 2, 3]; xs[0] -= 1;")
+        self.assertEqual(env.get("xs"), [0, 2, 3])
+        env = run("let xs = [1, 2, 3]; xs[0] *= 2;")
+        self.assertEqual(env.get("xs"), [2, 2, 3])
+        env = run("let xs = [1, 2, 3]; xs[0] /= 2;")
+        self.assertEqual(env.get("xs"), [0.5, 2, 3])
+        env = run("let xs = [1, 2, 3]; xs[0] %= 2;")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_arithmetic_compound_assign_on_dot_access_target(self):
+        # `m.key` desugars to the same Index node as `m["key"]`, so it gets
+        # the same IndexCompoundAssign treatment for free.
+        env = run('let m = {"count": 1}; m.count += 1;')
+        self.assertEqual(env.get("m"), {"count": 2})
+
+    def test_arithmetic_compound_assign_evaluates_index_expression_once(self):
+        # Regression: xs[idx()] += 1 must call idx() exactly once, not once
+        # for the read and again for the write.
+        env = run(
+            """
+            let calls = 0;
+            let idx = fn() { calls = calls + 1; return 0; };
+            let xs = [5];
+            xs[idx()] += 3;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("xs"), [8])
+
+    def test_arithmetic_compound_assign_evaluates_object_expression_once(self):
+        env = run(
+            """
+            let calls = 0;
+            let get_list = fn() { calls = calls + 1; return xs; };
+            let xs = [5];
+            get_list()[0] += 3;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("xs"), [8])
+
+    def test_invalid_arithmetic_compound_assign_target_raises_parse_error(self):
         from cinder.errors import ParseError
 
         with self.assertRaises(ParseError):
-            parse_program(tokenize("list[0] += 1;"))
+            parse_program(tokenize("1 + 1 += 1;"))
 
     def test_amp_eq_and_pipe_eq_and_caret_eq(self):
         env = run("let a = 0b1010; a &= 0b0110;")
@@ -1757,9 +1801,9 @@ class TestListsAndMaps(unittest.TestCase):
         env = run('let m = {"x": 1}; m.x++;')
         self.assertEqual(env.get("m"), {"x": 2})
 
-    def test_dot_access_arithmetic_compound_assign_raises_parse_error(self):
-        with self.assertRaises(ParseError):
-            run('let m = {"a": 1}; m.a += 1;')
+    def test_dot_access_arithmetic_compound_assign(self):
+        env = run('let m = {"a": 1}; m.a += 1;')
+        self.assertEqual(env.get("m"), {"a": 2})
 
     def test_dot_access_missing_key_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):

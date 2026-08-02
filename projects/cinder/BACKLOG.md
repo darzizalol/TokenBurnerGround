@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
+## 1. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1` [claimed 2026-08-02T14:58:09Z]
 
 Build: extend `??=` to accept an `Index`-expression target (which
 includes dot access, since `m.key` desugars into `Index(obj,

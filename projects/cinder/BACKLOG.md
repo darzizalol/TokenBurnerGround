@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find_last_index` — index of the last element matching a predicate
+## 1. Standard library: `find_last_index` — index of the last element matching a predicate [claimed 2026-08-02T20:14:36Z]
 
 Build: add `find_last_index(list, fn)` to `cinder/builtins.py`, the
 predicate-based counterpart to `find_index` (`cinder/builtins.py:1260-1276`)

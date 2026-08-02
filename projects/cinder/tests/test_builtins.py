@@ -3573,6 +3573,40 @@ class TestCountBy(unittest.TestCase):
             run("count_by([1]);")
 
 
+class TestFrequencies(unittest.TestCase):
+    def test_frequencies_basic(self):
+        env = run("let result = frequencies([1, 2, 2, 3, 3, 3]);")
+        self.assertEqual(env.get("result"), {1: 1, 2: 2, 3: 3})
+
+    def test_frequencies_strings(self):
+        env = run('let result = frequencies(["a", "b", "a"]);')
+        self.assertEqual(env.get("result"), {"a": 2, "b": 1})
+
+    def test_frequencies_empty_list(self):
+        env = run("let result = frequencies([]);")
+        self.assertEqual(env.get("result"), {})
+
+    def test_frequencies_key_order_matches_first_occurrence(self):
+        env = run("let result = keys(frequencies([3, 1, 3, 2]));")
+        self.assertEqual(env.get("result"), [3, 1, 2])
+
+    def test_frequencies_bools(self):
+        env = run("let result = frequencies([true, false, true]);")
+        self.assertEqual(env.get("result"), {True: 2, False: 1})
+
+    def test_frequencies_unhashable_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("frequencies([[1, 2], [1, 2]]);")
+
+    def test_frequencies_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('frequencies("abc");')
+
+    def test_frequencies_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("frequencies([1], [2]);")
+
+
 class TestDistinctBy(unittest.TestCase):
     def test_distinct_by_parity_keeps_first_of_each_key(self):
         env = run(

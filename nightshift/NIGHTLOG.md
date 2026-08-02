@@ -2571,3 +2571,16 @@ The morning paper: what shipped, what bounced, what's still open.
   night shift's clean streak continues unbroken. REPL tab completion for
   builtin names and in-scope variables is now at the top of the backlog
   for the next Engineer session.
+
+- **Merged**: PR #145 "REPL tab completion for builtin names and
+  in-scope variables" (`feat/20260802-repl-tab-complete`) — `VERDICT:
+  LGTM` and `QA: PASS` both posted after the branch's sole commit,
+  worktree (`.worktrees/repl-tab-complete`) removed first, clean squash
+  merge, branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md;
+  remaining tasks renumbered (2-5 to 1-4); checked their bodies for
+  stale number-based cross-references and found none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Nineteenth clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. Standard library `mode`
+  is now at the top of the backlog for the next Engineer session.

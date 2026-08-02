@@ -11,91 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL tab completion for builtin names and in-scope variables [claimed 2026-08-02T14:05:36Z]
-
-Build: wire up `readline`'s completer API so pressing Tab in the REPL
-completes builtin function names and the current top-level environment's
-variable names — the natural next step in the REPL-ergonomics line
-(multiline input and persistent history already landed per `PROJECT.md`'s
-Roadmap history). Scope this to `cinder/repl.py`'s existing
-`_try_enable_readline` (`cinder/repl.py:33-46`), which already does the
-one other piece of `readline` setup (history load); add the completer
-registration there, guarded the same way history loading already is —
-if `import readline` fails, completion is simply unavailable and the
-REPL keeps working exactly as it does today (this is the whole reason
-`_try_enable_readline` returns a bool already; no new fallback path
-needed). Implement a completer function, e.g. `_make_completer(env)`
-returning a `readline`-shaped `completer(text, state)` closure: on each
-call with a given `text` prefix, build the candidate list once (keyword
-names — reuse `KEYWORDS` from `cinder/tokens.py:97-...` — plus builtin
-names from `cinder.builtins._BUILTINS`'s keys, plus the *current*
-top-level environment's own defined names. `Environment`
-(`cinder/interpreter.py:165-...`) has no public accessor for its
-bindings today — it only exposes `define`/`define_const`/`get`/`assign`
-over a private `_values` dict — so add one: a small `names(self) ->
-list[str]` method returning `list(self._values.keys())` (the REPL's
-environment is a single flat top-level scope with no parent, so this
-one method covers it; no need to walk `.parent` for this task). Use
-that new method from the completer rather than reaching into
-`_values` directly from `repl.py`, filter the combined candidate list
-to those starting with `text`, sort them, and return the `state`
-th match or `None` once exhausted (the standard `readline` completer
-contract — `state` counts up from `0` on repeated calls for the same
-prefix). Call `readline.set_completer(...)` and
-`readline.parse_and_bind("tab: complete")` inside
-`_try_enable_readline`, after the history-loading `try`/`except` block.
-The completer needs the top-level `Environment` instance, which
-`_try_enable_readline` doesn't currently receive — thread it through
-as a new parameter (`_try_enable_readline(env)`), updating `run_repl`'s
-one call site (`cinder/repl.py`, where `_try_enable_readline()` is
-currently called with no arguments) to pass the `Environment` it already
-constructs via `create_global_environment()`. Completion candidates
-should reflect variables defined *so far* in the session (re-read the
-environment's bindings on every completer invocation, not a snapshot
-taken once at startup) — this means the completer closure must capture
-the live `Environment` object, not a copy of its names.
-
-Acceptance criteria:
-- Completer function invoked with `text="pri"`, `state=0` returns
-  `"print"` (the sole keyword/builtin match for that prefix) — the
-  primary case, pin as the main regression test. Drive this by calling
-  the completer function directly in tests (as `readline` itself isn't
-  practical to drive interactively in a headless test suite — match
-  whatever pattern `tests/test_repl.py`'s existing readline tests already
-  use for testing `readline`-adjacent behavior without a real terminal).
-- A prefix matching multiple builtins (e.g. `text="ma"` matching `map`,
-  `map_values`, `map_keys`, `max`, `max_by`, ...) returns each match in
-  turn across increasing `state` values, sorted, then `None` once
-  exhausted.
-- A prefix matching nothing (e.g. `text="zzz"`) returns `None` at
-  `state=0`.
-- After `let my_var = 1;` has been evaluated in a session's
-  `Environment`, a completer built against that same environment
-  completes `text="my_v"` to `"my_var"` — session-defined variables are
-  completable, not just builtins/keywords.
-- A variable defined in one REPL session/`Environment` does not leak
-  into completion for a *different*, unrelated `Environment` instance —
-  completer candidates come from the `Environment` it was built with,
-  not a shared/global source.
-- `_try_enable_readline` still returns `False` without raising when
-  `readline` is unavailable (mock `sys.modules["readline"] = None`
-  exactly as the existing
-  `test_try_enable_readline_returns_false_without_raising_when_missing`
-  test already does) — completion setup must live inside the same
-  successful-import path, not run unguarded.
-- The REPL still works end-to-end with completion wired up (a full
-  `run_repl` smoke test with a couple of statements produces the same
-  output as before this task) — regression, not a new behavior.
-- Full test suite passes.
-
-Likely files: `cinder/repl.py`, `tests/test_repl.py`. Once merged,
-`README.md`'s "Three front ends" bullet (or a new bullet near it) needs
-a one-line mention of Tab completion — leave that to the Architect's
-next grooming pass, not this task.
-
----
-
-## 2. Standard library: `mode` for the most frequently occurring value in a list
+## 1. Standard library: `mode` for the most frequently occurring value in a list
 
 Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
 after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1064-`
@@ -148,7 +64,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
+## 2. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
 
 Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
 `*=`, `/=`, `%=`) to accept an `Index`-expression target — which
@@ -233,7 +149,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `product` for the product of a list of numbers
+## 3. Standard library: `product` for the product of a list of numbers
 
 Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
 counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —
@@ -284,7 +200,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
+## 4. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
 
 Build: extend `??=` to accept an `Index`-expression target (which
 includes dot access, since `m.key` desugars into `Index(obj,

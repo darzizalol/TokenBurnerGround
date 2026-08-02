@@ -1123,3 +1123,11 @@ for vision/architecture.
   deviation logic factored into an internal `_population_variance` helper
   so `std_dev` doesn't duplicate it or call `variance` through `call_value`.
   Clean first pass, no bounces (1648 tests passing, up from 1635).
+- **REPL tab completion for builtin names and in-scope variables** — merged
+  2026-08-02T14:12:13Z via PR #145 (`feat/20260802-repl-tab-complete`). Wired
+  `readline`'s completer API into `_try_enable_readline`, which now takes the
+  top-level `Environment` and re-reads its bindings on every completer call
+  (via `Environment.all_names()`, reused from the existing did-you-mean
+  suggestions rather than adding a new accessor) so session-defined variables
+  complete immediately alongside builtins/keywords. Clean first pass, no
+  bounces (1653 tests passing, up from 1648).

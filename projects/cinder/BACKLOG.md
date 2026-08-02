@@ -11,92 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1` [claimed 2026-08-02T14:31:37Z]
-
-Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
-`*=`, `/=`, `%=`) to accept an `Index`-expression target — which
-includes dot access (`m.key`), since `_finish_dot`
-(`cinder/parser.py:948-952`) already desugars `m.key` straight into an
-`Index(obj, Literal("key"))` node at parse time, identical to
-`m["key"]`. This closes a gap the codebase already documents about
-itself: `cinder/parser.py:15-23`'s module docstring and the comment at
-`cinder/parser.py:170-171` both currently say the arithmetic set is
-"identifier targets only", unlike the bitwise/shift set (`&=`, `|=`,
-`^=`, `<<=`, `>>=`) which already accepts `Index` targets via
-`_INDEX_TARGET_COMPOUND_ASSIGN_OPS` (`cinder/parser.py:172-178`) and
-desugars into the dedicated `IndexCompoundAssign` AST node (not
-`IndexAssign` wrapping a `Binary` over the same `Index` node — that
-would evaluate `obj`/`index` twice at runtime; `IndexCompoundAssign`
-evaluates each exactly once, both for the read and the write). The fix
-is narrowly scoped: the branch at `cinder/parser.py:763-766` in
-`_assignment` already builds `IndexCompoundAssign` for any op in
-`_INDEX_TARGET_COMPOUND_ASSIGN_OPS` when `expr` is an `Index` node —
-add the five arithmetic `TokenType`s (`PLUSEQ`, `MINUSEQ`, `STAREQ`,
-`SLASHEQ`, `PERCENTEQ`, already keys in `_COMPOUND_ASSIGN_OPS` at
-`cinder/parser.py:158-163`) into `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`
-(or otherwise widen that branch's condition to cover both sets — either
-is fine, just don't duplicate the `IndexCompoundAssign`-construction
-code path). No interpreter changes are needed:
-`_evaluate_index_compound_assign` (`cinder/interpreter.py:620-633`)
-already applies whatever binary operator the node carries via
-`_apply_binary_operator` generically — it has no operator-specific
-logic to extend. Update the stale "identifier targets only" language in
-the `cinder/parser.py:15-23` module docstring and the
-`cinder/parser.py:170-171` comment to reflect that the arithmetic and
-bitwise/shift sets now behave the same way on this axis (a single
-comment describing both together is fine — don't leave two comments
-making contradictory claims).
-
-Acceptance criteria:
-- `let xs = [1, 2, 3]; xs[0] += 5; xs[0];` is `6` — the primary case,
-  pin as the main regression test.
-- `let m = {"count": 1}; m.count += 1; m.count;` is `2` — dot access as
-  a target works too, since it desugars to the same `Index` node as
-  bracket indexing; no separate handling needed.
-- Each of `-=`, `*=`, `/=`, `%=` also works on an index target (e.g.
-  `xs[0] -= 1;`, `xs[0] *= 2;`, `xs[0] /= 2;`, `xs[0] %= 2;`), not just
-  `+=` — cover all five in tests, not just the primary case.
-- `obj`/`index` are each evaluated exactly once, not twice: a test with
-  a side-effecting index expression (e.g. call a function that mutates
-  a shared counter and returns the counter's new value as the index)
-  demonstrates the counter only advances once per compound-assign,
-  matching the existing single-evaluation guarantee bitwise/shift
-  compound-assign already has on the same targets — model this on
-  however `tests/test_interpreter.py` already proves that guarantee for
-  `&=`/`|=`/etc. on `Index` targets, if such a test exists; otherwise
-  model it on the parser-level shape assertion in
-  `tests/test_parser.py:946-964`
-  (`test_bitwise_compound_assign_allows_index_target`), which already
-  proves single-evaluation indirectly by asserting the desugared shape
-  is `IndexCompoundAssign` and not a doubled `Index`-inside-`Binary`.
-- Parser-level shape test: `xs[0] += 1;` desugars to `IndexCompoundAssign`
-  with `TokenType.PLUS` as the operator, mirroring
-  `test_bitwise_compound_assign_allows_index_target`
-  (`tests/test_parser.py:946-964`) but for `+=`/`PLUSEQ` in place of
-  `&=`/`AMPEQ`.
-- Plain identifier targets are unaffected: `let x = 1; x += 1; x;` is
-  still `2`, still desugars to a plain `Assign` wrapping a `Binary`, not
-  `IndexCompoundAssign` — regression, not a new behavior for the
-  already-working case.
-- An invalid target still raises `ParseError` with "invalid assignment
-  target" at the operator's line/column (e.g. `1 + 1 += 1;`) — the
-  arithmetic set's error path for a non-`Identifier`, non-`Index`
-  left-hand side is unchanged.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (the `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`
-set and its module-docstring/comment, plus the `_assignment` branch —
-see line numbers above), `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s Operators bullet
-(currently says "the arithmetic set which is identifier-only") and its
-Data structures bullet (currently says "arithmetic compound-assign like
-`m.key += 1` isn't supported, matching bracket indexing's own gap")
-both need updating to reflect the closed gap — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `product` for the product of a list of numbers
+## 1. Standard library: `product` for the product of a list of numbers
 
 Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
 counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —
@@ -147,7 +62,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
+## 2. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
 
 Build: extend `??=` to accept an `Index`-expression target (which
 includes dot access, since `m.key` desugars into `Index(obj,
@@ -261,7 +176,7 @@ task.
 
 ---
 
-## 4. REPL `:load <path>` command to run a script into the current session
+## 3. REPL `:load <path>` command to run a script into the current session
 
 Build: add a `:load <path>` REPL meta-command, the natural next REPL
 ergonomics step after tab completion (`cinder/repl.py`) — lets a session
@@ -353,7 +268,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `frequencies` for a list's per-element occurrence counts
+## 4. Standard library: `frequencies` for a list's per-element occurrence counts
 
 Build: add `frequencies(list)` to `cinder/builtins.py`, returning a map
 from each distinct element to the number of times it occurs in the

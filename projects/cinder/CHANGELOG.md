@@ -1141,3 +1141,12 @@ for vision/architecture.
   non-hashable values (lists). Ties resolve to first appearance in the
   input list. Clean first pass, no bounces (1662 tests passing, up from
   1653).
+- **Arithmetic compound assignment on index/dot-access targets** — merged
+  2026-08-02T14:38Z via PR #147 (`feat/20260802-arith-index-compound`).
+  Widened `_INDEX_TARGET_COMPOUND_ASSIGN_OPS` in `cinder/parser.py` to
+  cover `+=`, `-=`, `*=`, `/=`, `%=` alongside the existing bitwise/shift
+  set, so `xs[0] += 1` and `m.key += 1` (which desugars to the same
+  `Index` node) now work; no interpreter changes needed since
+  `_evaluate_index_compound_assign` already applies whatever operator the
+  desugared node carries generically. Clean first pass, no bounces (1667
+  tests passing, up from 1662).

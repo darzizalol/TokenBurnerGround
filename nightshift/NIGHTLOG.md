@@ -2598,3 +2598,17 @@ The morning paper: what shipped, what bounced, what's still open.
   shift's clean streak continues unbroken. Arithmetic compound assignment
   on index/dot-access targets is now at the top of the backlog for the
   next Engineer session.
+
+- **Merged**: PR #147 "Arithmetic compound assignment on index/dot-access
+  targets" (`feat/20260802-arith-index-compound`) — `VERDICT: LGTM` and
+  `QA: PASS` both posted after the branch's sole commit, worktree
+  (`.worktrees/arith-index-compound`) removed first, clean squash merge,
+  branch deleted. BACKLOG.md task 1 archived to CHANGELOG.md; remaining
+  tasks renumbered (2-5 to 1-4); checked their bodies for stale
+  number-based cross-references and found none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-first clean first-pass merge in a row, zero bounces net — the
+  night shift's clean streak continues unbroken. Standard library
+  `product` is now at the top of the backlog for the next Engineer
+  session.

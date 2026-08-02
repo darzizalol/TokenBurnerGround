@@ -333,6 +333,132 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil`
+
+Build: a new postfix operator `?.` (dot-only, mirroring the existing
+`m.key` sugar) that evaluates its left side and, if that value is `nil`,
+short-circuits the whole `?.` expression to `nil` **without** attempting
+the property access — instead of `m.key` raising `CinderRuntimeError`
+("nil is not indexable") when `m` is `nil`, `m?.key` just yields `nil`.
+This pairs with the existing nil-coalescing family (`??`, `??=`) already
+in the language: a common pattern becomes `m?.key ?? default`. Scope
+this as a **single-level** short-circuit only — `a?.b.c` short-circuits
+just the `?.b` step to `nil`; the trailing plain `.c` then runs against
+that `nil` and still raises normally (full chain-propagating short-
+circuit like JS's `?.` would require threading a "short-circuited"
+signal through arbitrary subsequent postfix operations in the same
+call/index chain, which is materially more complex and not needed for
+the common `m?.key ?? default` use case — do not attempt full-chain
+propagation in this task).
+
+Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `QUESTION_DOT = auto()`
+to `TokenType` in `cinder/tokens.py` (near `QUESTION_QUESTION`/`QQEQ`,
+around `cinder/tokens.py:90-91`). In `cinder/lexer.py`'s `_question`
+method (`cinder/lexer.py:351-362`, reached when the lexer sees a `?` —
+see the dispatch at `cinder/lexer.py:80`), the current logic is: match a
+second `?` first (for `??`/`??=`), else emit a bare `QUESTION` (used by
+the ternary `cond ? a : b`). Add a new branch *before* the bare-`QUESTION`
+fallback: if the next character is `.`, consume it and emit
+`QUESTION_DOT` (`"?."`) instead of `QUESTION`. This is lexically
+unambiguous — numbers never start with a bare `.` in this lexer (`_number`
+only fires when the first character is already a digit, see
+`cinder/lexer.py:244-257`), so `?` followed by `.` can never be a ternary
+`?` followed by a `.5`-style float literal; it is always the start of
+`?.`.
+
+AST (`cinder/ast_nodes.py`): add a new frozen dataclass `OptionalIndex`
+near `Index` (`cinder/ast_nodes.py:94-98`), same shape (`obj: "Expr"`,
+`index: "Expr"`, `line: int`, `column: int`) — a distinct class from
+`Index`, not a flag on it, so the interpreter dispatch and any future
+assignment-target checks can tell them apart by type alone (mirroring
+how `IndexCompoundAssign` is its own class rather than a flag on
+`IndexAssign`).
+
+Parser (`cinder/parser.py`): in `_call`'s postfix loop
+(`cinder/parser.py:911-923`), which already checks
+`self._check(TokenType.DOT)` and dispatches to `_finish_dot`, add a
+sibling branch `elif self._check(TokenType.QUESTION_DOT): expr =
+self._finish_optional_dot(expr)`. Add `_finish_optional_dot`, modeled
+directly on `_finish_dot` (`cinder/parser.py:957-961`): consume the
+`QUESTION_DOT` token, `_consume(TokenType.IDENTIFIER, "a property name
+after '?.'")`, build the same `Literal(name_token.lexeme, ...)` key, and
+return `OptionalIndex(obj, key, dot.line, dot.column)` instead of
+`Index(...)`. `OptionalIndex` is deliberately not handled anywhere in
+`_assignment` (`cinder/parser.py:733-`) — `m?.key = 5` and `m?.key += 1`
+etc. must still raise `ParseError("invalid assignment target", ...)`,
+the same fallthrough every non-`Identifier`/non-`Index` expression
+already gets; add a test pinning this (safe navigation is read-only,
+matching how `?.` is also not a valid assignment target in JS).
+
+Interpreter (`cinder/interpreter.py`): add
+`_evaluate_optional_index(self, expr: OptionalIndex, env: Environment)`
+near `_evaluate_index` (`cinder/interpreter.py:542-546`): evaluate `obj =
+self.evaluate(expr.obj, env)`; if `obj is None` (this interpreter's `nil`
+representation — see `_evaluate_logical`'s `??` case,
+`cinder/interpreter.py:738-741`), return `None` immediately *without*
+evaluating `expr.index` (no observable difference here since `expr.index`
+is always a `Literal` from the parser, but matches the short-circuit
+contract established by `??`/`??=`: skip work you don't need); otherwise
+evaluate `index = self.evaluate(expr.index, env)` and delegate to the
+existing `self._index_get(obj, index, expr.line, expr.column)`
+(`cinder/interpreter.py:547-`), reusing all of its existing error
+behavior (e.g. `m?.key` on a non-nil non-map `m` still raises "not
+indexable", exactly like `m.key` does today). Wire the dispatch: add
+`if isinstance(expr, OptionalIndex): return
+self._evaluate_optional_index(expr, env)` to the `evaluate()`
+isinstance chain, next to the existing `Index` check
+(`cinder/interpreter.py:239-240`).
+
+Acceptance criteria:
+- `let m = nil; m?.key;` is `nil` — the primary case, pin as the main
+  regression test.
+- `let m = {"key": 42}; m?.key;` is `42` — non-nil `m` behaves exactly
+  like plain `.key`.
+- `let m = nil; m?.key ?? "default";` is `"default"` — composes with the
+  existing `??` operator, the main motivating use case.
+- `let m = {}; m?.missing;` raises `CinderRuntimeError` ("missing map
+  key") — `?.` only guards against `obj` itself being `nil`; a present-
+  but-wrong-type `obj` or an absent key still errors exactly as `.`
+  already does.
+- `let x = 5; x?.key;` raises `CinderRuntimeError` ("not indexable") —
+  a non-nil, non-map value is still a normal error under `?.`.
+- Single-level scope, pinned explicitly: `let m = nil; m?.a.b;` still
+  raises `CinderRuntimeError` ("nil is not indexable") — the `?.a` step
+  yields `nil`, then the plain `.b` step on that `nil` errors normally;
+  this is the documented, deliberate difference from JS-style full-chain
+  optional chaining.
+- A side-effecting test proves `expr.index`'s key literal is not
+  re-evaluated or otherwise double-evaluated — not very interesting
+  here since the key is always a parsed `Literal`, but do add a test
+  proving `obj` is evaluated exactly once (a function call as the base
+  expression, e.g. `fn m() { push(calls, 1); return nil; } m()?.key;
+  len(calls);` is `1`).
+- `m?.key = 5;` and `m?.key += 1;` both raise `ParseError` ("invalid
+  assignment target") — `?.` is not a valid assignment target.
+- Parser-level shape test: `m?.key;` parses to an `OptionalIndex` with
+  `obj`/`index` matching, mirroring the existing dot-desugaring shape
+  test for plain `Index` (see wherever `_finish_dot`'s desugaring is
+  currently pinned in `tests/test_parser.py`).
+- Lexer-level test: `?.` tokenizes as a single `QUESTION_DOT`, and
+  existing ternary/`??`/`??=` tokenization (`? :`, `??`, `??=`) is
+  unaffected — full existing `tests/test_lexer.py` suite still passes
+  unmodified alongside the new test.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py` (`_question`,
+`cinder/lexer.py:351-362`), `cinder/ast_nodes.py` (new `OptionalIndex`,
+near `cinder/ast_nodes.py:94-98`), `cinder/parser.py` (`_call`'s postfix
+loop and new `_finish_optional_dot`, near `cinder/parser.py:911-961`),
+`cinder/interpreter.py` (new `_evaluate_optional_index`, near
+`cinder/interpreter.py:542-546`, plus the dispatch `isinstance` chain
+around `cinder/interpreter.py:239-240`), `tests/test_lexer.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
+`README.md`'s Operators bullet (the nil-coalescing family description)
+needs a `?.` mention — leave that to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -69,8 +69,8 @@ while (i < 10) {
   matching if any of them equals the switch expression)
 - **Operators**: full arithmetic/comparison/logical set, compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`;
-  the bitwise/shift set also accepts an index-expression target, e.g.
-  `xs[0] &= 3`, unlike the arithmetic set which is identifier-only),
+  all of them, arithmetic and bitwise/shift alike, accept an
+  index-expression target too, e.g. `xs[0] += 1`, `m.key &= 3`),
   increment/decrement statement sugar `x++;`/`x--;` (identifier or
   index-expression target, e.g. `xs[0]++;`; statement-only, not usable as a
   value), `*` repetition for `str * int`/`list * int` (Python repetition
@@ -101,10 +101,9 @@ while (i < 10) {
   map literals accept spread elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; dot access
   sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
-  an assignment/`++`/`--`/bitwise-compound-assign target — arithmetic
-  compound-assign like `m.key += 1` isn't supported, matching bracket
-  indexing's own gap; only identifier-shaped keys work, so `m.if` is a
-  `ParseError`)
+  an assignment/`++`/`--`/compound-assign target (arithmetic and
+  bitwise/shift alike, e.g. `m.key += 1`); only identifier-shaped keys
+  work, so `m.if` is a `ParseError`)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -197,17 +196,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: predicate-based map
-filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
-population `variance`/`std_dev`, REPL Tab completion for
-builtins/variables, and `mode` for a list's most frequent value.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): arithmetic
-compound-assign on index/dot-access targets (`xs[0] += 1`,
-`m.key += 1`), `product` for a list's multiplicative fold,
-nil-coalescing compound-assign on index/dot-access targets
-(`xs[0] ??= 1`, `m.key ??= 1`), a REPL `:load <path>` meta-command to
-run a script into the current session, and `frequencies` for a list's
-per-element occurrence counts.
+Actively developed, nightly. Recently landed: population `variance`/
+`std_dev`, REPL Tab completion for builtins/variables, `mode` for a
+list's most frequent value, and arithmetic compound-assign on
+index/dot-access targets (`xs[0] += 1`, `m.key += 1`), closing the last
+gap arithmetic compound-assign had versus the bitwise/shift set.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `product` for a list's
+multiplicative fold, nil-coalescing compound-assign on index/dot-access
+targets (`xs[0] ??= 1`, `m.key ??= 1`), a REPL `:load <path>`
+meta-command to run a script into the current session, `frequencies`
+for a list's per-element occurrence counts, and a safe-navigation
+operator `?.` for map access (`m?.key` is `nil` when `m` is `nil`).
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL tab completion for builtin names and in-scope variables
+## 1. REPL tab completion for builtin names and in-scope variables [claimed 2026-08-02T14:05:36Z]
 
 Build: wire up `readline`'s completer API so pressing Tab in the REPL
 completes builtin function names and the current top-level environment's

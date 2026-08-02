@@ -123,6 +123,22 @@ class IndexCompoundAssign:
 
 
 @dataclass(frozen=True)
+class IndexNilCoalesceAssign:
+    """`xs[i] ??= v` and `m.key ??= v`: like `IndexCompoundAssign`, `obj`/
+    `index` are each evaluated exactly once, but unlike the arithmetic/
+    bitwise/shift compound-assign family, `value` is only evaluated (and
+    written back) when the current value is `nil` — the short-circuit
+    contract already guaranteed for the identifier case via `Logical`.
+    No `operator` field: the operation is always `??`."""
+
+    obj: "Expr"
+    index: "Expr"
+    value: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class SliceExpr:
     obj: "Expr"
     start: "Expr | None"

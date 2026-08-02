@@ -83,6 +83,78 @@ class TestRepl(unittest.TestCase):
         self.assertEqual(outputs, ["5"])
 
 
+class TestLoadCommand(unittest.TestCase):
+    def _run(self, lines):
+        outputs = []
+        run_repl(read_line=_make_read_line(lines), write=outputs.append)
+        return outputs
+
+    def _write_temp_cin(self, contents):
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        path = os.path.join(tmpdir.name, "helpers.cin")
+        with open(path, "w") as f:
+            f.write(contents)
+        return path
+
+    def test_load_binds_names_visible_at_next_prompt(self):
+        path = self._write_temp_cin(
+            'fn double(x) { return x * 2; } let greeting = "hi";'
+        )
+        outputs = self._run([f":load {path}", "double(21);", "greeting;"])
+        self.assertEqual(outputs, ["42", '"hi"'])
+
+    def test_load_nonexistent_file_reports_error_and_continues(self):
+        outputs = self._run([":load /no/such/file.cin", "1 + 1;"])
+        self.assertEqual(len(outputs), 2)
+        self.assertIn("/no/such/file.cin", outputs[0])
+        self.assertEqual(outputs[1], "2")
+
+    def test_load_isolates_errors_per_statement(self):
+        path = self._write_temp_cin("let a = 1;\nundefined_name;\nlet b = 2;")
+        outputs = self._run([f":load {path}", "b;"])
+        self.assertEqual(len(outputs), 2)
+        self.assertIn(path, outputs[0])
+        self.assertIn("undefined name", outputs[0].lower())
+        self.assertEqual(outputs[1], "2")
+
+    def test_bare_load_reports_usage_and_does_not_read_a_file(self):
+        outputs = self._run([":load", "1 + 1;"])
+        self.assertEqual(outputs, ["usage: :load <path>", "2"])
+
+    def test_bare_load_with_trailing_space_reports_usage(self):
+        outputs = self._run([":load ", "1 + 1;"])
+        self.assertEqual(outputs, ["usage: :load <path>", "2"])
+
+    def test_loaded_names_are_immediately_tab_completable(self):
+        path = self._write_temp_cin("let my_loaded_var = 1;")
+        outputs = []
+
+        def read_line(prompt):
+            outputs.append(None)
+            raise EOFError
+
+        # Drive the REPL far enough to load the file, then inspect env
+        # directly via the completer, mirroring TestCompleter's approach.
+        interpreter = Interpreter()
+        env = create_global_environment()
+        from cinder.repl import _load_file
+        _load_file(path, interpreter, env, lambda *_: None)
+        completer = _make_completer(env)
+        self.assertEqual(completer("my_loaded", 0), "my_loaded_var")
+
+    def test_load_only_triggers_at_start_of_fresh_statement(self):
+        # Mid-continuation (buffered_lines non-empty), a line starting with
+        # ":load" is just source text for the open block, not the command.
+        with mock.patch("cinder.repl._load_file") as mock_load_file:
+            self._run(["if (true) {", ":load x;", "}"])
+        mock_load_file.assert_not_called()
+
+        with mock.patch("cinder.repl._load_file") as mock_load_file:
+            self._run([":load x"])
+        mock_load_file.assert_called_once()
+
+
 class TestReadlineIntegration(unittest.TestCase):
     def test_try_enable_readline_succeeds_when_available(self):
         self.assertTrue(_try_enable_readline(create_global_environment()))

@@ -2121,6 +2121,17 @@ def _filter(arguments: list, line: int, column: int) -> object:
     return [item for item in items if is_truthy(call_value(fn, [item], line, column))]
 
 
+def _compact(arguments: list, line: int, column: int) -> object:
+    _require_arity("compact", arguments, 1, line, column)
+    (items,) = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"compact() requires a list, got {type_name(items)}",
+            line, column,
+        )
+    return [item for item in items if is_truthy(item)]
+
+
 def _reduce(arguments: list, line: int, column: int) -> object:
     _require_arity("reduce", arguments, 3, line, column)
     items, fn, initial = arguments
@@ -2518,6 +2529,7 @@ _BUILTINS = {
     "map_values": _map_values,
     "map_keys": _map_keys,
     "filter": _filter,
+    "compact": _compact,
     "reduce": _reduce,
     "pipe": _pipe,
     "compose": _compose,

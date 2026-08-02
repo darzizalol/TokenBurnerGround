@@ -112,7 +112,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`, `variance`, `std_dev`, `mode`,
+  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
@@ -170,7 +170,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1648+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1675+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -196,17 +196,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: population `variance`/
-`std_dev`, REPL Tab completion for builtins/variables, `mode` for a
-list's most frequent value, and arithmetic compound-assign on
+Actively developed, nightly. Recently landed: arithmetic compound-assign on
 index/dot-access targets (`xs[0] += 1`, `m.key += 1`), closing the last
-gap arithmetic compound-assign had versus the bitwise/shift set.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `product` for a list's
-multiplicative fold, nil-coalescing compound-assign on index/dot-access
-targets (`xs[0] ??= 1`, `m.key ??= 1`), a REPL `:load <path>`
-meta-command to run a script into the current session, `frequencies`
-for a list's per-element occurrence counts, and a safe-navigation
-operator `?.` for map access (`m?.key` is `nil` when `m` is `nil`).
+gap arithmetic compound-assign had versus the bitwise/shift set, and
+`product` for a list's multiplicative fold.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): nil-coalescing
+compound-assign on index/dot-access targets (`xs[0] ??= 1`,
+`m.key ??= 1`), a REPL `:load <path>` meta-command to run a script into
+the current session, `frequencies` for a list's per-element occurrence
+counts, and a safe-navigation operator `?.` for map access (`m?.key` is
+`nil` when `m` is `nil`).
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

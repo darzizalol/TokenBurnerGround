@@ -18,17 +18,17 @@ includes dot access, since `m.key` desugars into `Index(obj,
 Literal("key"))` at parse time) — closing the last documented
 compound-assign gap versus the bitwise/shift set. README's Operators
 bullet already flags this in passing: `a ??= b` is "identifier targets
-only". Today `_assignment` (`cinder/parser.py:738-749`) handles `QQEQ`
+only". Today `_assignment` (`cinder/parser.py:747-757`) handles `QQEQ`
 in its own branch, separate from the `_COMPOUND_ASSIGN_OPS` dict-driven
 branch that handles the arithmetic/bitwise/shift sets — it desugars
 `x ??= v` into `Assign(x.name, Logical(Identifier(x), QUESTION_QUESTION,
 v))`, reusing the existing `Logical` node so `v` short-circuits exactly
-like plain `??` (proven by `tests/test_parser.py:899-910`,
+like plain `??` (proven by `tests/test_parser.py:920-930`,
 `test_qq_eq_desugars_to_assign_of_logical_question_question`). When
 `expr` is anything but an `Identifier`, that branch falls through to
 `raise ParseError("invalid assignment target", ...)`
-(`cinder/parser.py:747-749`) — proven today by
-`tests/test_parser.py:912-914`,
+(`cinder/parser.py:747-757`) — proven today by
+`tests/test_parser.py:933-935`,
 `test_qq_eq_index_target_raises_parse_error`, which this task flips
 from expecting a `ParseError` to expecting a parsed
 `IndexNilCoalesceAssign` shape (update, don't delete, that test).
@@ -65,7 +65,7 @@ None`, evaluate `rhs = self.evaluate(expr.value, env)`, call
 `rhs`.
 
 Wire the parser side: in `_assignment`'s `QQEQ` branch
-(`cinder/parser.py:738-749`), after the existing
+(`cinder/parser.py:747-757`), after the existing
 `isinstance(expr, Identifier)` case, add
 `elif isinstance(expr, Index): return IndexNilCoalesceAssign(expr.obj,
 expr.index, value, op_token.line, op_token.column)` before the final
@@ -97,9 +97,9 @@ Acceptance criteria:
 - Parser-level shape test: `xs[0] ??= 1;` desugars to
   `IndexNilCoalesceAssign` with `obj`/`index`/`value` matching,
   mirroring `test_bitwise_compound_assign_allows_index_target`
-  (`tests/test_parser.py:946-964`) but for the new node (no operator
+  (`tests/test_parser.py:967-985`) but for the new node (no operator
   field to assert on).
-- Update `tests/test_parser.py:912-914`'s
+- Update `tests/test_parser.py:933-935`'s
   `test_qq_eq_index_target_raises_parse_error` — it currently asserts
   `xs[0] ??= 1;` raises `ParseError`; that's no longer true, so rewrite
   it into a positive shape assertion (or fold it into the new shape
@@ -113,7 +113,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/parser.py` (`_assignment`'s `QQEQ` branch,
-`cinder/parser.py:738-749`), `cinder/ast_nodes.py` (new
+`cinder/parser.py:747-757`), `cinder/ast_nodes.py` (new
 `IndexNilCoalesceAssign`, near `cinder/ast_nodes.py:110-122`),
 `cinder/interpreter.py` (new evaluator method, near
 `cinder/interpreter.py:621-635`, plus the dispatch `isinstance` chain
@@ -222,7 +222,7 @@ to the Architect's next grooming pass, not this task.
 Build: add `frequencies(list)` to `cinder/builtins.py`, returning a map
 from each distinct element to the number of times it occurs in the
 input list. Model it directly on `_count_by`'s existing structure
-(`cinder/builtins.py:2268-2289`) — arity 1, argument a `list` (else
+(`cinder/builtins.py:2285-2305`) — arity 1, argument a `list` (else
 `CinderRuntimeError` naming `frequencies` and `type_name(value)`,
 matching `count_by`'s message shape:
 `"frequencies() requires a list, got {type_name}"`), building a plain
@@ -230,13 +230,13 @@ matching `count_by`'s message shape:
 0) + 1` for `key = element` (`count_by` does the identical thing except
 its key comes from calling a predicate function first — `frequencies`
 has no predicate, the element *is* the key) — reuse `_is_valid_key`
-(already imported, see its use at `cinder/builtins.py:2284`) to raise
+(already imported, see its use at `cinder/builtins.py:2301`) to raise
 `CinderRuntimeError(f"{type_name(key)} is not a valid map key", line,
 column)` for a non-hashable element (a list or map), the exact error
 `count_by`/`group_by`/`key_by` already raise for a non-valid-key result
 — **do not** reach for `mode`'s `(is_bool, element)`-keyed fast path or
 its `values_equal`-based fallback for unhashable elements
-(`cinder/builtins.py:1150-1188`): those exist because `mode` only ever
+(`cinder/builtins.py:1167-1205`): those exist because `mode` only ever
 *compares* counts internally and never returns the dict itself, so it
 can use a disambiguating internal key shape freely, whereas
 `frequencies` must return a real Cinder map, which is bound by the same
@@ -405,6 +405,52 @@ around `cinder/interpreter.py:239-240`), `tests/test_lexer.py`,
 `README.md`'s Operators bullet (the nil-coalescing family description)
 needs a `?.` mention — leave that to the Architect's next grooming
 pass, not this task.
+
+---
+
+## 5. Standard library: `compact` to drop falsy elements from a list
+
+Build: add `compact(list)` to `cinder/builtins.py`, returning a new list
+containing only the elements of the input that are truthy under Cinder's
+own truthiness rule — i.e. it drops `nil` and `false` and keeps
+everything else, including `0`, `0.0`, and `""` (per PROJECT.md's fixed
+truthiness principle: "every other value ... is truthy"). Model it
+directly on `_filter`'s existing structure (`cinder/builtins.py:2107-2120`)
+but with arity 1 (no predicate argument) and a comprehension gated on the
+already-imported `is_truthy` helper (`cinder/builtins.py:29`, the same
+helper `_filter`, `_any`, `_all`, `_take_while` etc. already use — see
+its uses at `cinder/builtins.py:1215`, `1225`, `2121`): arity 1, argument
+a `list` (else `CinderRuntimeError` naming `compact` and
+`type_name(value)`, matching `filter`'s message shape:
+`"compact() requires a list, got {type_name}"` — note `compact` has no
+second argument, so its error message drops the "as its first argument"
+phrasing `filter` uses for its two-argument case), returning
+`[item for item in items if is_truthy(item)]`. Register it in the
+builtins dict near `filter` (`cinder/builtins.py:2502`,
+`"filter": _filter,`).
+
+Acceptance criteria:
+- `compact([1, nil, 2, false, 3]);` is `[1, 2, 3]` — the primary case,
+  pin as the main regression test.
+- `compact([0, 0.0, "", nil, false, 1]);` is `[0, 0.0, "", 1]` — falsy
+  *values* by Python convention (`0`, `""`) are NOT dropped, only
+  Cinder's own falsy set (`nil`, `false`) is; this is the one case worth
+  over-testing since it's the whole point of reusing `is_truthy` instead
+  of a naive Python truthiness check.
+- `compact([]);` is `[]` — an empty list is well-defined, not an error.
+- `compact([1, 2, 3]);` is `[1, 2, 3]` unchanged — a list with nothing
+  falsy passes through as an equal (but new) list.
+- `compact("abc");` (a string, not a list) raises `CinderRuntimeError`
+  naming `compact` and `string` in the message.
+- Wrong arity (0 or 2+ arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `filter`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `compact` added near `filter` — leave that to the Architect's
+next grooming pass, not this task.
 
 ---
 

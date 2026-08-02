@@ -8,7 +8,11 @@ import unittest
 from contextlib import redirect_stdout
 from unittest import mock
 
-from cinder.repl import _save_history, _try_enable_readline, run_repl
+from cinder.builtins import create_global_environment
+from cinder.interpreter import Interpreter
+from cinder.lexer import tokenize
+from cinder.parser import parse_program
+from cinder.repl import _make_completer, _save_history, _try_enable_readline, run_repl
 
 
 def _make_read_line(lines):
@@ -81,11 +85,11 @@ class TestRepl(unittest.TestCase):
 
 class TestReadlineIntegration(unittest.TestCase):
     def test_try_enable_readline_succeeds_when_available(self):
-        self.assertTrue(_try_enable_readline())
+        self.assertTrue(_try_enable_readline(create_global_environment()))
 
     def test_try_enable_readline_returns_false_without_raising_when_missing(self):
         with mock.patch.dict(sys.modules, {"readline": None}):
-            self.assertFalse(_try_enable_readline())
+            self.assertFalse(_try_enable_readline(create_global_environment()))
 
     def test_repl_still_works_when_readline_is_unavailable(self):
         with mock.patch.dict(sys.modules, {"readline": None}):
@@ -120,7 +124,7 @@ class TestHistoryPersistence(unittest.TestCase):
         readline.clear_history()
         self.assertEqual(readline.get_current_history_length(), 0)
 
-        self.assertTrue(_try_enable_readline())
+        self.assertTrue(_try_enable_readline(create_global_environment()))
         self.assertEqual(readline.get_current_history_length(), 2)
         self.assertEqual(readline.get_history_item(1), "let x = 1;")
         self.assertEqual(readline.get_history_item(2), "x;")
@@ -152,6 +156,49 @@ class TestHistoryPersistence(unittest.TestCase):
         outputs = []
         run_repl(read_line=_make_read_line(lines), write=outputs.append)
         return outputs
+
+
+class TestCompleter(unittest.TestCase):
+    def test_unambiguous_prefix_completes_at_state_zero(self):
+        completer = _make_completer(create_global_environment())
+        self.assertEqual(completer("pri", 0), "print")
+
+    def test_ambiguous_prefix_yields_each_match_in_sorted_order_then_none(self):
+        completer = _make_completer(create_global_environment())
+        matches = []
+        state = 0
+        while True:
+            match = completer("ma", state)
+            if match is None:
+                break
+            matches.append(match)
+            state += 1
+        self.assertEqual(matches, sorted(matches))
+        for name in ("map", "map_keys", "map_values", "max", "max_by"):
+            self.assertIn(name, matches)
+
+    def test_no_match_returns_none_at_state_zero(self):
+        completer = _make_completer(create_global_environment())
+        self.assertIsNone(completer("zzz", 0))
+
+    def test_session_defined_variable_is_completable(self):
+        env = create_global_environment()
+        interpreter = Interpreter()
+        statements = parse_program(tokenize("let my_var = 1;"))
+        interpreter.execute(statements[0], env)
+
+        completer = _make_completer(env)
+        self.assertEqual(completer("my_v", 0), "my_var")
+
+    def test_variable_in_one_environment_does_not_leak_into_another(self):
+        env_with_var = create_global_environment()
+        interpreter = Interpreter()
+        statements = parse_program(tokenize("let my_var = 1;"))
+        interpreter.execute(statements[0], env_with_var)
+
+        other_env = create_global_environment()
+        completer = _make_completer(other_env)
+        self.assertIsNone(completer("my_v", 0))
 
 
 if __name__ == "__main__":

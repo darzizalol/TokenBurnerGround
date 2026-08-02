@@ -13,10 +13,10 @@ from typing import Callable, Optional
 from cinder.ast_nodes import ExprStmt
 from cinder.builtins import create_global_environment, stringify
 from cinder.errors import CinderError, LexError
-from cinder.interpreter import Interpreter
+from cinder.interpreter import Environment, Interpreter
 from cinder.lexer import tokenize
 from cinder.parser import parse_program
-from cinder.tokens import TokenType
+from cinder.tokens import KEYWORDS, TokenType
 
 PRIMARY_PROMPT = ">>> "
 CONTINUATION_PROMPT = "... "
@@ -31,9 +31,25 @@ _OPENERS = {TokenType.LPAREN, TokenType.LBRACE, TokenType.LBRACKET}
 _CLOSERS = {TokenType.RPAREN, TokenType.RBRACE, TokenType.RBRACKET}
 
 
-def _try_enable_readline() -> bool:
+def _make_completer(env: Environment) -> Callable[[str, int], Optional[str]]:
+    """Build a `readline`-shaped completer over `env`'s bindings (which
+    already include every builtin, since `create_global_environment` defines
+    them straight into the environment) plus the language's keywords.
+
+    Re-reads `env` on every call, so names defined later in the session (via
+    `let`/`const`/`fn`) become completable immediately."""
+    def completer(text: str, state: int) -> Optional[str]:
+        candidates = sorted(n for n in KEYWORDS.keys() | env.all_names() if n.startswith(text))
+        if state < len(candidates):
+            return candidates[state]
+        return None
+    return completer
+
+
+def _try_enable_readline(env: Environment) -> bool:
     """Import `readline` so `input()` gets history/in-line editing for free,
-    and load any history persisted from a previous session.
+    load any history persisted from a previous session, and wire up Tab
+    completion over `env`'s names.
 
     Not available on every platform (e.g. stock Windows Python), so the REPL
     must keep working without it."""
@@ -45,6 +61,8 @@ def _try_enable_readline() -> bool:
         readline.read_history_file(HISTORY_FILE)
     except OSError:
         pass  # no history file yet, or it's unreadable — start fresh
+    readline.set_completer(_make_completer(env))
+    readline.parse_and_bind("tab: complete")
     return True
 
 
@@ -80,10 +98,9 @@ def run_repl(
     if write is None:
         write = print
 
-    has_readline = _try_enable_readline()
-
     interpreter = Interpreter()
     env = create_global_environment()
+    has_readline = _try_enable_readline(env)
     buffered_lines: list[str] = []
 
     try:

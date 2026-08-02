@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `compact` to drop falsy elements from a list
+## 1. Standard library: `compact` to drop falsy elements from a list [claimed 2026-08-02T20:03:44Z]
 
 Build: add `compact(list)` to `cinder/builtins.py`, returning a new list
 containing only the elements of the input that are truthy under Cinder's

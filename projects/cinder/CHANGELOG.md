@@ -1192,3 +1192,10 @@ for vision/architecture.
   `_index_get`. Single-level short-circuit only, composes with `??` for
   `m?.key ?? default`. Clean first pass, no bounces (1713 tests passing,
   up from 1699).
+- **Standard library: `compact` to drop falsy elements from a list** —
+  merged 2026-08-02T20:08:01Z via PR #153 (`feat/20260802-compact`).
+  Added to `cinder/builtins.py`, modeled directly on `_filter`'s
+  structure with arity 1 and a comprehension gated on the existing
+  `is_truthy` helper, dropping only Cinder's own falsy set (`nil`,
+  `false`) and keeping `0`, `0.0`, `""` and everything else. Clean first
+  pass, no bounces (1719 tests passing, up from 1713).

@@ -11,53 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `compact` to drop falsy elements from a list [claimed 2026-08-02T20:03:44Z]
-
-Build: add `compact(list)` to `cinder/builtins.py`, returning a new list
-containing only the elements of the input that are truthy under Cinder's
-own truthiness rule — i.e. it drops `nil` and `false` and keeps
-everything else, including `0`, `0.0`, and `""` (per PROJECT.md's fixed
-truthiness principle: "every other value ... is truthy"). Model it
-directly on `_filter`'s existing structure (`cinder/builtins.py:2107-2120`)
-but with arity 1 (no predicate argument) and a comprehension gated on the
-already-imported `is_truthy` helper (`cinder/builtins.py:29`, the same
-helper `_filter`, `_any`, `_all`, `_take_while` etc. already use — see
-its uses at `cinder/builtins.py:1215`, `1225`, `2121`): arity 1, argument
-a `list` (else `CinderRuntimeError` naming `compact` and
-`type_name(value)`, matching `filter`'s message shape:
-`"compact() requires a list, got {type_name}"` — note `compact` has no
-second argument, so its error message drops the "as its first argument"
-phrasing `filter` uses for its two-argument case), returning
-`[item for item in items if is_truthy(item)]`. Register it in the
-builtins dict near `filter` (`cinder/builtins.py:2502`,
-`"filter": _filter,`).
-
-Acceptance criteria:
-- `compact([1, nil, 2, false, 3]);` is `[1, 2, 3]` — the primary case,
-  pin as the main regression test.
-- `compact([0, 0.0, "", nil, false, 1]);` is `[0, 0.0, "", 1]` — falsy
-  *values* by Python convention (`0`, `""`) are NOT dropped, only
-  Cinder's own falsy set (`nil`, `false`) is; this is the one case worth
-  over-testing since it's the whole point of reusing `is_truthy` instead
-  of a naive Python truthiness check.
-- `compact([]);` is `[]` — an empty list is well-defined, not an error.
-- `compact([1, 2, 3]);` is `[1, 2, 3]` unchanged — a list with nothing
-  falsy passes through as an equal (but new) list.
-- `compact("abc");` (a string, not a list) raises `CinderRuntimeError`
-  naming `compact` and `string` in the message.
-- Wrong arity (0 or 2+ arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `filter`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `compact` added near `filter` — leave that to the Architect's
-next grooming pass, not this task.
-
----
-
-## 2. Standard library: `find_last_index` — index of the last element matching a predicate
+## 1. Standard library: `find_last_index` — index of the last element matching a predicate
 
 Build: add `find_last_index(list, fn)` to `cinder/builtins.py`, the
 predicate-based counterpart to `find_index` (`cinder/builtins.py:1260-1276`)
@@ -114,7 +68,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Exponentiation operator `**`
+## 2. Exponentiation operator `**`
 
 Build: a new binary operator `**` for exponentiation, right-associative,
 binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —
@@ -224,23 +178,23 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Compound assignment `**=` for exponentiation
+## 3. Compound assignment `**=` for exponentiation
 
-Build: once task 3 (`**`) lands, add its compound-assignment sibling
+Build: once task 2 (`**`) lands, add its compound-assignment sibling
 `**=`, mirroring every other arithmetic operator's `+=`/`-=`/`*=`/`/=`/
 `%=` pattern — the natural follow-up `PROJECT.md`'s roadmap already
-flags as deferred out of task 3 to keep that task single-feature.
+flags as deferred out of task 2 to keep that task single-feature.
 `x **= 2;` desugars to `x = x ** 2;` for identifier targets, and (like
 the other arithmetic compound-assign ops, not the bitwise/shift-only
 ones) also accepts index/dot-access targets: `xs[0] **= 2;`,
 `m.key **= 2;`.
 
 Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `STARSTAREQ =
-auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 3
-placed `STARSTAR` (near `STAR`). Task 3 adds a dedicated branch at the
+auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 2
+placed `STARSTAR` (near `STAR`). Task 2 adds a dedicated branch at the
 top of `_op_or_compound_assign` (`cinder/lexer.py`, currently around
 line 299): `if char == "*" and self._match("*"): ... emit STARSTAR
-...`, returning immediately after consuming the second `*` — task 3
+...`, returning immediately after consuming the second `*` — task 2
 deliberately pins `2 **= 3` as lexing to `STARSTAR` then `EQ` (a later
 `ParseError`) as its baseline. Extend that branch: after consuming the
 second `*`, also check `self._match("=")`; if it matches, emit
@@ -266,7 +220,7 @@ existing desugaring (`cinder/parser.py:764-793`) turns `x **= 2` into
 `Assign(x, Binary(Identifier(x), Token(STARSTAR, "**", ...), Literal(2)))`
 (the compound token's lexeme sliced `[:-1]` becomes the base operator's
 lexeme: `"**="[:-1] == "**"`), and `Binary` nodes with a `STARSTAR`
-operator already evaluate correctly via task 3's `_apply_binary_operator`
+operator already evaluate correctly via task 2's `_apply_binary_operator`
 branch; `xs[0] **= 2` similarly reuses the existing `IndexCompoundAssign`
 evaluator unchanged.
 
@@ -284,16 +238,16 @@ Acceptance criteria:
   pair for `+=` in `tests/test_interpreter.py:504-514`.
 - `"a" **= 2;`-shaped type errors: `let x = "a"; x **= 2;` raises
   `CinderRuntimeError` naming `**` and the non-number operand's type,
-  matching task 3's `**` error message shape (the desugared `Binary`
+  matching task 2's `**` error message shape (the desugared `Binary`
   reuses the same `_numeric_op` path).
 - Lexer-level test: `**=` tokenizes as a single `STARSTAREQ`, and `**`
   (no trailing `=`) still tokenizes as `STARSTAR` unaffected — full
-  existing `tests/test_lexer.py` suite (including task 3's new `**`
+  existing `tests/test_lexer.py` suite (including task 2's new `**`
   tests) still passes unmodified alongside the new test.
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py` (new `STARSTAREQ`, near `STARSTAR`),
-`cinder/lexer.py` (extend task 3's `_op_or_compound_assign` branch),
+`cinder/lexer.py` (extend task 2's `_op_or_compound_assign` branch),
 `cinder/parser.py` (`_COMPOUND_ASSIGN_OPS` and
 `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`, `cinder/parser.py:161-188`),
 `tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
@@ -303,7 +257,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `sum_by` — sum of a function applied to each element
+## 4. Standard library: `sum_by` — sum of a function applied to each element
 
 Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
 fold-by-key counterpart that closes the last gap in the

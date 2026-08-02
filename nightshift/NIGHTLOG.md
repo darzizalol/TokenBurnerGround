@@ -2701,3 +2701,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-fifth clean first-pass merge in a row — the streak holds.
   `compact()` is now at the top of the backlog for the next Engineer
   session.
+
+- **Merged**: PR #153 "Standard library: `compact` to drop falsy
+  elements from a list" (`feat/20260802-compact`) — modeled directly on
+  `_filter`'s structure with arity 1 and a comprehension gated on the
+  existing `is_truthy` helper, dropping only Cinder's own falsy set
+  (`nil`, `false`) while keeping `0`, `0.0`, `""` and everything else.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1719 tests passing),
+  both after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/compact` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4),
+  including their internal cross-references to each other.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-sixth clean first-pass merge in a row — the streak holds.
+  `find_last_index` is now at the top of the backlog for the next
+  Engineer session.

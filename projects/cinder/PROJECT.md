@@ -127,14 +127,16 @@ case (`case 1, 2, 3: { ... }`), list-pattern destructuring in
 `for`-loop variables (`for [k, v] in items(m) { ... }`), dot-access
 sugar for map string keys (`m.key` as sugar for `m["key"]`),
 predicate-based map filtering (`pick_by`/`omit_by`), end-anchored
-`take_right`/`drop_right`, population `variance`/`std_dev`, and Tab
-completion for builtins/variables in the REPL — all once listed here as
-future work — have since landed. What remains plausible, not yet scoped
-into tasks beyond current `BACKLOG.md`: continued standard-library
-breadth (string/list/map/math methods, picked incrementally per
-`BACKLOG.md`'s own grooming — `mode` for a list's most frequent value
-and `product` as `sum`'s multiplicative counterpart are the latest
-picks, already in current `BACKLOG.md`), continued REPL ergonomics (a
+`take_right`/`drop_right`, population `variance`/`std_dev`, Tab
+completion for builtins/variables in the REPL, and `mode` for a list's
+most frequent value — all once listed here as future work — have since
+landed. What remains plausible, not yet scoped into tasks beyond
+current `BACKLOG.md`: continued standard-library breadth
+(string/list/map/math methods, picked incrementally per
+`BACKLOG.md`'s own grooming — `product` as `sum`'s multiplicative
+counterpart and `frequencies` for a list's per-element occurrence
+counts are the latest picks, already in current `BACKLOG.md`),
+continued REPL ergonomics (a
 `:load <path>` meta-command to run a script into the current session's
 persistent environment, also in current `BACKLOG.md`), and closing the
 two known language-level gaps

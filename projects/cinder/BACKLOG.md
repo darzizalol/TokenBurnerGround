@@ -353,6 +353,71 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `frequencies` for a list's per-element occurrence counts
+
+Build: add `frequencies(list)` to `cinder/builtins.py`, returning a map
+from each distinct element to the number of times it occurs in the
+input list. Model it directly on `_count_by`'s existing structure
+(`cinder/builtins.py:2268-2289`) — arity 1, argument a `list` (else
+`CinderRuntimeError` naming `frequencies` and `type_name(value)`,
+matching `count_by`'s message shape:
+`"frequencies() requires a list, got {type_name}"`), building a plain
+`dict` by iterating the list and doing `counts[key] = counts.get(key,
+0) + 1` for `key = element` (`count_by` does the identical thing except
+its key comes from calling a predicate function first — `frequencies`
+has no predicate, the element *is* the key) — reuse `_is_valid_key`
+(already imported, see its use at `cinder/builtins.py:2284`) to raise
+`CinderRuntimeError(f"{type_name(key)} is not a valid map key", line,
+column)` for a non-hashable element (a list or map), the exact error
+`count_by`/`group_by`/`key_by` already raise for a non-valid-key result
+— **do not** reach for `mode`'s `(is_bool, element)`-keyed fast path or
+its `values_equal`-based fallback for unhashable elements
+(`cinder/builtins.py:1150-1188`): those exist because `mode` only ever
+*compares* counts internally and never returns the dict itself, so it
+can use a disambiguating internal key shape freely, whereas
+`frequencies` must return a real Cinder map, which is bound by the same
+`1`/`true`-collide-as-keys behavior every other map-key-producing
+builtin already has (`count_by`, `group_by`, `key_by` all use a plain
+dict with no bool/int disambiguation — that's the established,
+already-shipped convention for this family of builtins, not a bug to
+route around here). Preserve first-appearance insertion order (falls
+out for free from a plain Python `dict` and a single left-to-right
+pass, same as `count_by`).
+
+Acceptance criteria:
+- `frequencies([1, 2, 2, 3, 3, 3]);` is `{1: 1, 2: 2, 3: 3}` — the
+  primary case, pin as the main regression test.
+- `frequencies(["a", "b", "a"]);` is `{"a": 2, "b": 1}` — strings work
+  as keys too, not just numbers.
+- `frequencies([]);` is `{}` — an empty list is well-defined, not an
+  error (matches `count_by([], fn(x) { return x; })`'s behavior on an
+  empty list).
+- Key order in the result matches first appearance in the input list —
+  assert on `keys(frequencies([3, 1, 3, 2]))` being `[3, 1, 2]`, not
+  sorted or insertion-via-count order.
+- `frequencies([true, false, true]);` is `{true: 2, false: 1}` — bools
+  work as keys (and, matching `count_by`'s existing behavior, don't
+  need special-casing against ints here).
+- `frequencies([[1, 2], [1, 2]]);` (a list of lists, each not a valid
+  map key) raises `CinderRuntimeError` naming `frequencies` — or at
+  minimum matches whatever exact wording `group_by`'s
+  `"{type_name(key)} is not a valid map key"` error produces for the
+  same underlying reason, since this reuses that same check.
+- `frequencies("abc");` (a string, not a list) raises
+  `CinderRuntimeError` naming `frequencies` and `string` in the
+  message, matching `count_by`'s equivalent error for the same input.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `count_by`/`mode`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `frequencies` added near `count_by` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

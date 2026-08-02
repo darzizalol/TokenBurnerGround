@@ -153,10 +153,11 @@ full-chain propagation — also in current `BACKLOG.md`), and an
 exponentiation operator `**` (right-associative, binding tighter than
 `*`/`/`/`%` and looser than unary — closing the gap between the
 existing `pow()` builtin and infix syntax, deliberately *not* matching
-Python's special-cased unary-minus-vs-`**` precedence; `**=` compound
-assignment is left for a later follow-up task, also in current
-`BACKLOG.md`) — and only much later, a bytecode VM if performance ever
-actually matters. The
+Python's special-cased unary-minus-vs-`**` precedence), and its
+compound-assignment sibling `**=` (`x **= 2`, accepting index/dot-
+access targets like the rest of the arithmetic compound-assign family
+— both now scoped as tasks 4 and 5 in current `BACKLOG.md`) — and only
+much later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

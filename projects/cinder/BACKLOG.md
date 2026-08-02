@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. REPL `:load <path>` command to run a script into the current session [claimed 2026-08-02T15:15:42Z]
+## 1. REPL `:load <path>` command to run a script into the current session [claimed 2026-08-02T19:27:12Z]
 
 Build: add a `:load <path>` REPL meta-command, the natural next REPL
 ergonomics step after tab completion (`cinder/repl.py`) — lets a session

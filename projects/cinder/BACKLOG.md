@@ -340,6 +340,63 @@ next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `find_last_index` — index of the last element matching a predicate
+
+Build: add `find_last_index(list, fn)` to `cinder/builtins.py`, the
+predicate-based counterpart to `find_index` (`cinder/builtins.py:1260-1276`)
+that searches from the end instead of the start — closing the same kind
+of gap `take_right`/`drop_right` closed for `take`/`drop`, and
+`last_index_of` (`cinder/builtins.py:1247-1257`) already closed for
+equality-based search, but no predicate-based reverse search exists yet.
+Model the arity/type checks directly on `_find_index`'s existing
+structure (arity 2, first argument a `list` else `CinderRuntimeError`
+naming `find_last_index` and `type_name`, matching `"find_last_index()
+requires a list as its first argument, got {type_name}"`; second
+argument must be `_is_callable` else `CinderRuntimeError` matching
+`"find_last_index() requires a function as its second argument, got
+{type_name}"`), but iterate the list in reverse the same way
+`_last_index_of` already does (`for index in range(len(collection) - 1,
+-1, -1):`) instead of `find_index`'s forward `enumerate`, calling
+`call_value(fn, [item], line, column)` and checking `is_truthy(...)` on
+each element, returning the first (i.e. highest) index where it's true,
+or `-1` if none match. Note `find` (`cinder/builtins.py:675`) is an
+unrelated string-substring-search builtin, not a list predicate
+search — do not model on or confuse with it; `find_index`/
+`find_last_index` are the list-predicate family.
+
+Acceptance criteria:
+- `find_last_index([1, 2, 3, 4], fn(n) { return n > 2; });` is `3` (the
+  last index where the predicate holds) — the primary case, pin as the
+  main regression test; contrast with `find_index` on the same input
+  returning `2` (the first match) to prove this isn't accidentally
+  aliased to `find_index`.
+- `find_last_index([1, 2, 3], fn(n) { return n > 10; });` is `-1` — no
+  match.
+- `find_last_index([], fn(n) { return true; });` is `-1` and the
+  function is never called (an empty list has no elements to test) —
+  mirror `find_index`'s existing "on empty list returns -1 and never
+  calls fn" test shape.
+- `find_last_index([1, 2, 2, 3], fn(n) { return n == 2; });` is `2` (the
+  later of the two matching indices, not the first) — the case that
+  specifically distinguishes this from `find_index`.
+- `find_last_index(5, fn(n) { return true; });` (a non-list first
+  argument) raises `CinderRuntimeError` naming `find_last_index` and
+  `number` in the message.
+- `find_last_index([1, 2], 5);` (a non-function second argument) raises
+  `CinderRuntimeError` naming `find_last_index` and `number` in the
+  message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `find_index`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `find_last_index` added near `find_index` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

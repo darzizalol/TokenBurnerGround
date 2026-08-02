@@ -129,30 +129,30 @@ sugar for map string keys (`m.key` as sugar for `m["key"]`),
 predicate-based map filtering (`pick_by`/`omit_by`), end-anchored
 `take_right`/`drop_right`, population `variance`/`std_dev`, Tab
 completion for builtins/variables in the REPL, `mode` for a list's
-most frequent value, and arithmetic compound-assign on `Index`/
+most frequent value, arithmetic compound-assign on `Index`/
 dot-access targets (`xs[0] += 1`, `m.key += 1`, closing the last gap
 that family had versus the bitwise/shift set, which already accepted
-those targets) — all once listed here as future work — have since
-landed. What remains plausible, not yet scoped into tasks beyond
-current `BACKLOG.md`: continued standard-library breadth
-(string/list/map/math methods, picked incrementally per
-`BACKLOG.md`'s own grooming — `product` as `sum`'s multiplicative
-counterpart and `frequencies` for a list's per-element occurrence
-counts are the latest picks, already in current `BACKLOG.md`),
-continued REPL ergonomics (a
+those targets), `product` as `sum`'s multiplicative counterpart, and
+nil-coalescing compound-assign on `Index`/dot-access targets
+(`xs[0] ??= 1`, `m.key ??= 1`, closing that family's matching gap) —
+all once listed here as future work — have since landed. What remains
+plausible, not yet scoped into tasks beyond current `BACKLOG.md`:
+continued standard-library breadth (string/list/map/math methods,
+picked incrementally per `BACKLOG.md`'s own grooming — `frequencies`
+for a list's per-element occurrence counts, `compact` to drop falsy
+elements from a list, and `find_last_index` as `find_index`'s
+reverse-search counterpart (mirroring how `last_index_of` already
+closed that gap for equality-based search) are the latest picks,
+already in current `BACKLOG.md`), continued REPL ergonomics (a
 `:load <path>` meta-command to run a script into the current session's
-persistent environment, also in current `BACKLOG.md`), and closing the
-one remaining known language-level gap compound assignment still has
-versus the bitwise/shift set on `Index`/dot-access targets —
-`xs[0] ??= 1`/`m.key ??= 1` don't parse today even though `xs[0] &= 1`
-does (also in current `BACKLOG.md`), plus a new safe-navigation
-operator `?.` for map access (`m?.key` is `nil` when `m` is `nil`,
-pairing with the existing `??`/`??=` nil-coalescing family; scoped as a
-single-level short-circuit, not JS-style full-chain propagation — also
-in current `BACKLOG.md`) — and only much later, a bytecode VM if
-performance ever actually matters. The Architect should keep scoping
-these into `BACKLOG.md` incrementally — do not jump ahead of the
-current layer.
+persistent environment, also in current `BACKLOG.md`), and a new
+safe-navigation operator `?.` for map access (`m?.key` is `nil` when
+`m` is `nil`, pairing with the existing `??`/`??=` nil-coalescing
+family; scoped as a single-level short-circuit, not JS-style
+full-chain propagation — also in current `BACKLOG.md`) — and only much
+later, a bytecode VM if performance ever actually matters. The
+Architect should keep scoping these into `BACKLOG.md` incrementally —
+do not jump ahead of the current layer.
 
 ## History
 

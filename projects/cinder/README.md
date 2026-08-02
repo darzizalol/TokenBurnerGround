@@ -79,7 +79,9 @@ while (i < 10) {
   `cond ? then : else`, the nil-coalescing operator `a ?? b` (short-circuits
   like `and`/`or`: evaluates `b` only when `a` is `nil`, unlike `or` which
   falls through on any falsy value) and its compound-assignment sibling
-  `a ??= b` (identifier targets only), and bitwise operators `&`, `|`, `^`,
+  `a ??= b` (identifier or index/dot-access targets, e.g. `xs[0] ??= 1`,
+  `m.key ??= 1`; the RHS is only evaluated, and the target only written,
+  when the current value is `nil`), and bitwise operators `&`, `|`, `^`,
   `~`, `<<`, `>>` (int-only, with a clean runtime error on a negative shift
   count)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
@@ -130,8 +132,9 @@ while (i < 10) {
 - **Three front ends**: run `.cin` script files, evaluate an inline snippet
   passed on the command line (`-e`/`--eval`, no file needed), or an
   interactive REPL with `readline`-backed command history (up-arrow to
-  recall, when available), persisted across sessions in a gitignored
-  `.cinder_history` file
+  recall, when available) persisted across sessions in a gitignored
+  `.cinder_history` file, plus Tab completion for builtin names and
+  in-scope variables
 - **Comments**: `# line comments` and `/* block comments */` (non-nesting),
   both skipped by the lexer wherever whitespace is allowed
 
@@ -170,7 +173,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1675+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1684+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -196,16 +199,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: arithmetic compound-assign on
-index/dot-access targets (`xs[0] += 1`, `m.key += 1`), closing the last
-gap arithmetic compound-assign had versus the bitwise/shift set, and
-`product` for a list's multiplicative fold.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): nil-coalescing
-compound-assign on index/dot-access targets (`xs[0] ??= 1`,
-`m.key ??= 1`), a REPL `:load <path>` meta-command to run a script into
-the current session, `frequencies` for a list's per-element occurrence
-counts, and a safe-navigation operator `?.` for map access (`m?.key` is
-`nil` when `m` is `nil`).
+Actively developed, nightly. Recently landed: REPL tab completion for
+builtin names and in-scope variables, `mode` for a list's most frequent
+value, arithmetic *and* nil-coalescing compound-assign on index/dot-access
+targets (`xs[0] += 1`, `m.key ??= 1`), closing out both compound-assign
+families' gaps versus the bitwise/shift set, and `product` for a list's
+multiplicative fold.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a REPL `:load <path>`
+meta-command to run a script into the current session, `frequencies` for a
+list's per-element occurrence counts, a safe-navigation operator `?.` for
+map access (`m?.key` is `nil` when `m` is `nil`), `compact` to drop falsy
+elements from a list, and `find_last_index` for predicate-based reverse
+search.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

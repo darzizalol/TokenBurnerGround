@@ -2042,6 +2042,45 @@ class TestSum(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestProduct(unittest.TestCase):
+    def test_product_of_ints(self):
+        result = run("let result = product([1, 2, 3, 4]);").get("result")
+        self.assertEqual(result, 24)
+
+    def test_product_of_single_element_list(self):
+        result = run("let result = product([5]);").get("result")
+        self.assertEqual(result, 5)
+
+    def test_product_of_empty_list_is_one(self):
+        result = run("let result = product([]);").get("result")
+        self.assertEqual(result, 1)
+        self.assertIsInstance(result, int)
+
+    def test_product_with_a_zero_element_is_zero(self):
+        result = run("let result = product([2, 0, 3]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_product_with_a_float_is_float(self):
+        result = run("let result = product([1, 2.5, 2]);").get("result")
+        self.assertEqual(result, 5)
+        self.assertIsInstance(result, float)
+
+    def test_product_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('product([1, "two", 3]);')
+
+    def test_product_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("product(5);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_product_of_string_argument_raises_naming_string(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('product("abc");')
+        self.assertIn("product", str(ctx.exception))
+        self.assertIn("string", str(ctx.exception))
+
+
 class TestMean(unittest.TestCase):
     def test_mean_of_ints_is_float(self):
         result = run("let result = mean([1, 2, 3]);").get("result")

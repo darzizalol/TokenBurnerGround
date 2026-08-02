@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1`
+## 1. Arithmetic compound assignment on index/dot-access targets: `xs[0] += 1`, `m.key += 1` [claimed 2026-08-02T14:31:37Z]
 
 Build: extend the arithmetic compound-assign operators (`+=`, `-=`,
 `*=`, `/=`, `%=`) to accept an `Index`-expression target — which

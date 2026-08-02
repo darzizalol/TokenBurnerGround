@@ -113,7 +113,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`,
+  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `mean`, `median`, `variance`, `std_dev`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
@@ -171,7 +171,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1555+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1648+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -198,12 +198,14 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: predicate-based map
-filtering (`pick_by`/`omit_by`) and end-anchored `take_right`/`drop_right`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): population
-`variance`/`std_dev`, REPL Tab completion for builtins/variables, `mode`
-for a list's most frequent value, arithmetic compound-assign on
-index/dot-access targets (`xs[0] += 1`, `m.key += 1`), and `product` for
-a list's multiplicative fold.
+filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
+and population `variance`/`std_dev`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): REPL Tab completion
+for builtins/variables, `mode` for a list's most frequent value,
+arithmetic compound-assign on index/dot-access targets (`xs[0] += 1`,
+`m.key += 1`), `product` for a list's multiplicative fold, and
+nil-coalescing compound-assign on index/dot-access targets
+(`xs[0] ??= 1`, `m.key ??= 1`).
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

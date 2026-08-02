@@ -126,22 +126,23 @@ in list destructuring, safe nested access/currying (`get_in`, `curry`),
 case (`case 1, 2, 3: { ... }`), list-pattern destructuring in
 `for`-loop variables (`for [k, v] in items(m) { ... }`), dot-access
 sugar for map string keys (`m.key` as sugar for `m["key"]`),
-predicate-based map filtering (`pick_by`/`omit_by`), and end-anchored
-`take_right`/`drop_right` — all once listed here as future work — have
-since landed. What remains plausible, not yet scoped into tasks beyond
-current `BACKLOG.md`: continued standard-library breadth
-(string/list/map/math methods, picked incrementally per `BACKLOG.md`'s
-own grooming — population `variance`/`std_dev`, `mode` for a list's
-most frequent value, and `product` as `sum`'s multiplicative
+predicate-based map filtering (`pick_by`/`omit_by`), end-anchored
+`take_right`/`drop_right`, and population `variance`/`std_dev` — all
+once listed here as future work — have since landed. What remains
+plausible, not yet scoped into tasks beyond current `BACKLOG.md`:
+continued standard-library breadth (string/list/map/math methods,
+picked incrementally per `BACKLOG.md`'s own grooming — `mode` for a
+list's most frequent value and `product` as `sum`'s multiplicative
 counterpart are the latest picks, already in current `BACKLOG.md`),
 continued REPL ergonomics (Tab completion for builtins/variables, also
-in current `BACKLOG.md`), closing the one known language-level gap
-arithmetic compound assignment still has versus the bitwise/shift set —
-`xs[0] += 1`/`m.key += 1` don't parse today even though `xs[0] &= 1`
-does (also in current `BACKLOG.md`) — and only much later, a bytecode
-VM if performance ever actually matters. The Architect should keep
-scoping these into `BACKLOG.md` incrementally — do not jump ahead of
-the current layer.
+in current `BACKLOG.md`), and closing the two known language-level gaps
+compound assignment still has versus the bitwise/shift set on
+`Index`/dot-access targets — `xs[0] += 1`/`m.key += 1` and
+`xs[0] ??= 1`/`m.key ??= 1` don't parse today even though `xs[0] &= 1`
+does (both also in current `BACKLOG.md`) — and only much later, a
+bytecode VM if performance ever actually matters. The Architect should
+keep scoping these into `BACKLOG.md` incrementally — do not jump ahead
+of the current layer.
 
 ## History
 

@@ -284,6 +284,120 @@ grooming pass, not this task.
 
 ---
 
+## 5. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
+
+Build: extend `??=` to accept an `Index`-expression target (which
+includes dot access, since `m.key` desugars into `Index(obj,
+Literal("key"))` at parse time) — closing the last documented
+compound-assign gap versus the bitwise/shift set. README's Operators
+bullet already flags this in passing: `a ??= b` is "identifier targets
+only". Today `_assignment` (`cinder/parser.py:738-749`) handles `QQEQ`
+in its own branch, separate from the `_COMPOUND_ASSIGN_OPS` dict-driven
+branch that handles the arithmetic/bitwise/shift sets — it desugars
+`x ??= v` into `Assign(x.name, Logical(Identifier(x), QUESTION_QUESTION,
+v))`, reusing the existing `Logical` node so `v` short-circuits exactly
+like plain `??` (proven by `tests/test_parser.py:899-910`,
+`test_qq_eq_desugars_to_assign_of_logical_question_question`). When
+`expr` is anything but an `Identifier`, that branch falls through to
+`raise ParseError("invalid assignment target", ...)`
+(`cinder/parser.py:747-749`) — proven today by
+`tests/test_parser.py:912-914`,
+`test_qq_eq_index_target_raises_parse_error`, which this task flips
+from expecting a `ParseError` to expecting a parsed
+`IndexNilCoalesceAssign` shape (update, don't delete, that test).
+
+Do not reuse `IndexCompoundAssign` for this: its interpreter evaluation
+(`_evaluate_index_compound_assign`, `cinder/interpreter.py:621-635`)
+unconditionally evaluates `expr.value` (line 632,
+`rhs = self.evaluate(expr.value, env)`) before combining with
+`_apply_binary_operator` — correct for `&=`/`|=`/etc. (which always
+evaluate their RHS), but wrong for `??=`, whose entire point is to
+*not* evaluate the RHS when the current value isn't `nil` (the
+short-circuit already guaranteed for the identifier case via
+`Logical`). Add a new dedicated AST node instead:
+`IndexNilCoalesceAssign(obj, index, value, line, column)` in
+`cinder/ast_nodes.py` (near `IndexCompoundAssign`,
+`cinder/ast_nodes.py:110-122` — no `operator` field needed, the
+operation is always `??`), and a new
+`Interpreter._evaluate_index_nil_coalesce_assign` in
+`cinder/interpreter.py` (near `_evaluate_index_compound_assign`,
+dispatched from `evaluate()`'s `isinstance` chain alongside the
+existing `IndexCompoundAssign` check at
+`cinder/interpreter.py:245-246`) that: evaluates `obj` once, `index`
+once, reads `current = self._index_get(obj, index, expr.line,
+expr.column)`; `nil` is represented as Python `None` in this
+interpreter (see `_evaluate_logical`'s `??` case,
+`cinder/interpreter.py:738-741`, `if left is not None: return left`) —
+mirror that check here: if `current is not None`, return `current`
+immediately *without* evaluating `expr.value` and *without* calling
+`_index_set` (skip the redundant write — matches the short-circuit
+contract, and there's no observable difference since the value that
+would be written back equals the value already there); if `current is
+None`, evaluate `rhs = self.evaluate(expr.value, env)`, call
+`self._index_set(obj, index, rhs, expr.line, expr.column)`, and return
+`rhs`.
+
+Wire the parser side: in `_assignment`'s `QQEQ` branch
+(`cinder/parser.py:738-749`), after the existing
+`isinstance(expr, Identifier)` case, add
+`elif isinstance(expr, Index): return IndexNilCoalesceAssign(expr.obj,
+expr.index, value, op_token.line, op_token.column)` before the final
+`raise ParseError(...)` (which still applies to any other invalid
+target, e.g. `1 + 1 ??= 1;`). Update any comment/docstring language
+describing `??=` as identifier-only (near the `QQEQ` handling in
+`cinder/parser.py`, and `IndexCompoundAssign`'s docstring in
+`cinder/ast_nodes.py` if it enumerates the compound-assign family) to
+reflect the closed gap.
+
+Acceptance criteria:
+- `let m = {"a": nil}; m["a"] ??= 5; m["a"];` is `5` — the primary
+  case, pin as the main regression test.
+- `let m = {"a": 1}; m["a"] ??= 5; m["a"];` is still `1` — `??=` leaves
+  a non-nil current value untouched.
+- `let m = {}; m.key ??= 5; m.key;` is `5` — dot access as a target
+  works too, since it desugars to the same `Index` node.
+- A test with a side-effecting index expression (a function that
+  mutates a shared counter and returns the counter's new value as the
+  index) proves `obj`/`index` are each evaluated exactly once, whether
+  or not the current value is nil — model on however the existing
+  single-evaluation tests for `IndexCompoundAssign` prove it in
+  `tests/test_interpreter.py`.
+- A test proves the RHS is *not* evaluated at all when the current
+  value is non-nil — e.g. `let m = {"a": 1}; let calls = [];
+  fn side() { push(calls, 1); return 99; } m["a"] ??= side();
+  len(calls);` is `0` — the short-circuit guarantee, the whole point of
+  this task.
+- Parser-level shape test: `xs[0] ??= 1;` desugars to
+  `IndexNilCoalesceAssign` with `obj`/`index`/`value` matching,
+  mirroring `test_bitwise_compound_assign_allows_index_target`
+  (`tests/test_parser.py:946-964`) but for the new node (no operator
+  field to assert on).
+- Update `tests/test_parser.py:912-914`'s
+  `test_qq_eq_index_target_raises_parse_error` — it currently asserts
+  `xs[0] ??= 1;` raises `ParseError`; that's no longer true, so rewrite
+  it into a positive shape assertion (or fold it into the new shape
+  test above) rather than leaving a stale test asserting the old, wrong
+  behavior.
+- Plain identifier targets are unaffected: `let x = nil; x ??= 1; x;`
+  is still `1`, still desugars to `Assign`/`Logical` — regression, not
+  a new behavior for the already-working case.
+- An invalid target still raises `ParseError` with "invalid assignment
+  target" at the operator's line/column (e.g. `1 + 1 ??= 1;`).
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_assignment`'s `QQEQ` branch,
+`cinder/parser.py:738-749`), `cinder/ast_nodes.py` (new
+`IndexNilCoalesceAssign`, near `cinder/ast_nodes.py:110-122`),
+`cinder/interpreter.py` (new evaluator method, near
+`cinder/interpreter.py:621-635`, plus the dispatch `isinstance` chain
+around `cinder/interpreter.py:245-246`), `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s Operators
+bullet (currently says `a ??= b` is "identifier targets only") needs
+updating — leave that to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

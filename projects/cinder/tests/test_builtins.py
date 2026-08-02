@@ -3143,6 +3143,39 @@ class TestFilter(unittest.TestCase):
             run("filter([1], fn(x, y) { return x; });")
 
 
+class TestCompact(unittest.TestCase):
+    def test_compact_drops_nil_and_false(self):
+        result = run("let result = compact([1, nil, 2, false, 3]);").get("result")
+        self.assertEqual(result, [1, 2, 3])
+
+    def test_compact_keeps_python_falsy_but_cinder_truthy_values(self):
+        result = run('let result = compact([0, 0.0, "", nil, false, 1]);').get(
+            "result"
+        )
+        self.assertEqual(result, [0, 0.0, "", 1])
+
+    def test_compact_of_empty_list(self):
+        result = run("let result = compact([]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_compact_with_nothing_falsy_returns_equal_new_list(self):
+        env = run("let xs = [1, 2, 3]; let result = compact(xs);")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+        self.assertIsNot(env.get("result"), env.get("xs"))
+
+    def test_compact_non_list_argument_raises_naming_compact_and_type(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('compact("abc");')
+        self.assertIn("compact", str(ctx.exception))
+        self.assertIn("string", str(ctx.exception))
+
+    def test_compact_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("compact();")
+        with self.assertRaises(CinderRuntimeError):
+            run("compact([1], [2]);")
+
+
 class TestReduce(unittest.TestCase):
     def test_reduce_sums_list(self):
         env = run("let result = reduce([1, 2, 3], fn(acc, x) { return acc + x; }, 0);")

@@ -1061,6 +1061,23 @@ def _sum(arguments: list, line: int, column: int) -> object:
     return total
 
 
+def _product(arguments: list, line: int, column: int) -> object:
+    _require_arity("product", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"product() requires a list, got {type_name(value)}", line, column
+        )
+    total = 1
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"product() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        total = total * element
+    return total
+
+
 def _mean(arguments: list, line: int, column: int) -> object:
     _require_arity("mean", arguments, 1, line, column)
     value = arguments[0]
@@ -2444,6 +2461,7 @@ _BUILTINS = {
     "gcd": _gcd,
     "lcm": _lcm,
     "sum": _sum,
+    "product": _product,
     "mean": _mean,
     "median": _median,
     "variance": _variance,

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `mode` for the most frequently occurring value in a list
+## 1. Standard library: `mode` for the most frequently occurring value in a list [claimed 2026-08-02T14:18:48Z]
 
 Build: add `mode(list)` to `cinder/builtins.py`, the natural next stop
 after `mean`/`median`/`variance`/`std_dev` (`cinder/builtins.py:1064-`

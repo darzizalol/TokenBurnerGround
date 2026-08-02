@@ -807,6 +807,8 @@ class Interpreter:
             if repeated is not None:
                 return repeated
             return self._numeric_op(operator, left, right, lambda a, b: a * b)
+        if op == TokenType.STARSTAR:
+            return self._numeric_op(operator, left, right, lambda a, b: a ** b)
         if op == TokenType.SLASH:
             return self._divide_op(operator, left, right, lambda a, b: a / b)
         if op == TokenType.PERCENT:

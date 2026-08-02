@@ -891,10 +891,18 @@ class Parser:
         return expr
 
     def _factor(self) -> Expr:
-        expr = self._unary()
+        expr = self._power()
         while self._peek().type in _FACTOR:
             operator = self._advance()
-            right = self._unary()
+            right = self._power()
+            expr = Binary(expr, operator, right)
+        return expr
+
+    def _power(self) -> Expr:
+        expr = self._unary()
+        if self._check(TokenType.STARSTAR):
+            operator = self._advance()
+            right = self._power()  # right-associative: 2 ** 3 ** 2 == 2 ** (3 ** 2)
             expr = Binary(expr, operator, right)
         return expr
 

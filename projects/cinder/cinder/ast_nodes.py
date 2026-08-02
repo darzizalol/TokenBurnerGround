@@ -99,6 +99,14 @@ class Index:
 
 
 @dataclass(frozen=True)
+class OptionalIndex:
+    obj: "Expr"
+    index: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class IndexAssign:
     obj: "Expr"
     index: "Expr"

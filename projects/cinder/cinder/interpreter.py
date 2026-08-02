@@ -73,6 +73,7 @@ from cinder.ast_nodes import (
     Literal,
     Logical,
     MapLiteral,
+    OptionalIndex,
     ReturnStmt,
     SliceExpr,
     Spread,
@@ -239,6 +240,8 @@ class Interpreter:
             return self._evaluate_map_literal(expr, env)
         if isinstance(expr, Index):
             return self._evaluate_index(expr, env)
+        if isinstance(expr, OptionalIndex):
+            return self._evaluate_optional_index(expr, env)
         if isinstance(expr, SliceExpr):
             return self._evaluate_slice(expr, env)
         if isinstance(expr, IndexAssign):
@@ -544,6 +547,13 @@ class Interpreter:
 
     def _evaluate_index(self, expr: Index, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)
+        index = self.evaluate(expr.index, env)
+        return self._index_get(obj, index, expr.line, expr.column)
+
+    def _evaluate_optional_index(self, expr: OptionalIndex, env: Environment) -> object:
+        obj = self.evaluate(expr.obj, env)
+        if obj is None:
+            return None
         index = self.evaluate(expr.index, env)
         return self._index_get(obj, index, expr.line, expr.column)
 

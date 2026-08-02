@@ -266,6 +266,52 @@ class TestNullishCoalescing(unittest.TestCase):
         self.assertEqual(evaluate("nil ?? nil ?? 3"), 3)
 
 
+class TestOptionalChaining(unittest.TestCase):
+    def test_nil_short_circuits_to_nil(self):
+        self.assertIsNone(evaluate("nil?.key"))
+
+    def test_non_nil_map_behaves_like_plain_dot(self):
+        self.assertEqual(evaluate('{"key": 42}?.key'), 42)
+
+    def test_composes_with_nil_coalescing(self):
+        self.assertEqual(evaluate('nil?.key ?? "default"'), "default")
+
+    def test_missing_key_on_non_nil_map_still_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("{}?.missing")
+
+    def test_non_nil_non_map_still_raises_not_indexable(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("5?.key")
+
+    def test_single_level_short_circuit_only(self):
+        # `?.a` yields nil, then the plain `.b` on that nil still raises —
+        # this is the documented, deliberate divergence from JS-style
+        # full-chain optional chaining.
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("nil?.a.b")
+
+    def test_base_expression_evaluated_exactly_once(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let calls = []; "
+            "fn m() { push(calls, 1); return nil; } "
+            "m()?.key; "
+            "let n = len(calls);",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("n"), 1)
+
+    def test_optional_dot_assignment_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run("let m = nil; m?.key = 5;")
+
+    def test_optional_dot_compound_assignment_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run("let m = nil; m?.key += 1;")
+
+
 class TestTernary(unittest.TestCase):
     def test_true_condition_takes_then_branch(self):
         self.assertEqual(evaluate("true ? 1 : 2"), 1)

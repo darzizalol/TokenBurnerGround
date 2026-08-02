@@ -145,12 +145,18 @@ reverse-search counterpart (mirroring how `last_index_of` already
 closed that gap for equality-based search) are the latest picks,
 already in current `BACKLOG.md`), continued REPL ergonomics (a
 `:load <path>` meta-command to run a script into the current session's
-persistent environment, also in current `BACKLOG.md`), and a new
+persistent environment, also in current `BACKLOG.md`), a new
 safe-navigation operator `?.` for map access (`m?.key` is `nil` when
 `m` is `nil`, pairing with the existing `??`/`??=` nil-coalescing
 family; scoped as a single-level short-circuit, not JS-style
-full-chain propagation — also in current `BACKLOG.md`) — and only much
-later, a bytecode VM if performance ever actually matters. The
+full-chain propagation — also in current `BACKLOG.md`), and an
+exponentiation operator `**` (right-associative, binding tighter than
+`*`/`/`/`%` and looser than unary — closing the gap between the
+existing `pow()` builtin and infix syntax, deliberately *not* matching
+Python's special-cased unary-minus-vs-`**` precedence; `**=` compound
+assignment is left for a later follow-up task, also in current
+`BACKLOG.md`) — and only much later, a bytecode VM if performance ever
+actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

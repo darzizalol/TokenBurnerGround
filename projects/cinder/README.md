@@ -209,8 +209,9 @@ Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a REPL `:load <path>`
 meta-command to run a script into the current session, `frequencies` for a
 list's per-element occurrence counts, a safe-navigation operator `?.` for
 map access (`m?.key` is `nil` when `m` is `nil`), `compact` to drop falsy
-elements from a list, and `find_last_index` for predicate-based reverse
-search.
+elements from a list, `find_last_index` for predicate-based reverse
+search, and an exponentiation operator `**` (right-associative, tighter
+than `*`/`/`/`%`).
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

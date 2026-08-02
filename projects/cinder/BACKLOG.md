@@ -397,6 +397,116 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Exponentiation operator `**`
+
+Build: a new binary operator `**` for exponentiation, right-associative,
+binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —
+Cinder has had a `pow()` builtin all along but no infix syntax for it,
+the same kind of gap `product`/`sum` closed on the stdlib side. Scope
+this as the operator only: **no** `**=` compound-assignment form in this
+task (every other arithmetic operator's `**=`-shaped sibling was added
+in lockstep with its base operator, but bundling that here as well would
+make this a two-feature task — leave `**=` as a natural, separately-
+scoped follow-up once `**` itself exists, same reasoning the `?.` task
+above uses to defer full-chain propagation).
+
+Lexer (`cinder/lexer.py`): `*` currently goes through
+`_op_or_compound_assign` (`cinder/lexer.py:299-310`), which handles the
+doubled-character case only for `+`/`-` via `_INCREMENT_DECREMENT_TOKENS`
+(`cinder/lexer.py:32-35`) — `*` isn't in that dict, so a second `*` is
+presently unreachable from that function and would fall through to
+`_match("=")`, then emit a lone `STAR` and leave the second `*` for the
+next iteration (wrong: `2**3` would lex as `STAR STAR` two separate
+tokens, then `_op_or_compound_assign` would run again for the second
+`*`). Add a dedicated branch at the top of `_op_or_compound_assign`,
+before the existing `if char in _INCREMENT_DECREMENT_TOKENS` check:
+`if char == "*" and self._match("*"): self.tokens.append(Token(TokenType.STARSTAR, "**", None, start_line, start_col)); return` —
+mirrors the shape of the existing doubled-token branch just below it.
+Add `STARSTAR = auto()` to `TokenType` in `cinder/tokens.py`, near `STAR`
+(`cinder/tokens.py:51`).
+
+Parser (`cinder/parser.py`): insert a new `_power` precedence level
+between `_factor` (`cinder/parser.py:892-898`) and `_unary`
+(`cinder/parser.py:900-914`) — right-associative, unlike every other
+binary level in this chain (`_term`/`_factor`/`_bitand`/etc. are all
+left-associative loops):
+```python
+def _power(self) -> Expr:
+    expr = self._unary()
+    if self._check(TokenType.STARSTAR):
+        operator = self._advance()
+        right = self._power()  # right-associative: 2 ** 3 ** 2 == 2 ** (3 ** 2)
+        expr = Binary(expr, operator, right)
+    return expr
+```
+Change `_factor` (`cinder/parser.py:892-898`) to call `self._power()`
+instead of `self._unary()` on both its initial `expr` line and inside
+its `while` loop's `right = self._unary()` line — this makes `**` bind
+tighter than `*`/`/`/`%` (`_FACTOR`, `cinder/parser.py:158`) and looser
+than unary, which deliberately means `-2 ** 2` parses as `(-2) ** 2`
+(`4`), **not** Python's special-cased `-(2 ** 2)` (`-4`) — pin this
+explicitly as a test rather than silently inheriting whichever behavior
+falls out, since it's the one place this feature knowingly diverges from
+Python's operator precedence table.
+
+Interpreter (`cinder/interpreter.py`): in `_apply_binary_operator`
+(`cinder/interpreter.py:780-822`), add a branch alongside `STAR`
+(`cinder/interpreter.py:795-799`): `if op == TokenType.STARSTAR: return
+self._numeric_op(operator, left, right, lambda a, b: a ** b)` — reuses
+`_numeric_op` (`cinder/interpreter.py:856-864`) exactly like `MINUS`
+does (`cinder/interpreter.py:793-794`), which already raises
+`CinderRuntimeError` naming both operand types via `type_name` and the
+operator's own `lexeme` (`"**"`) when either side isn't a number; no
+`_repeat_op`-style special case is needed since `**` has no string/list
+repetition meaning the way `*` does.
+
+Acceptance criteria:
+- `2 ** 10;` is `1024` — the primary case, pin as the main regression
+  test.
+- `2 ** 3 ** 2;` is `512` (right-associative: `2 ** (3 ** 2)`, not
+  `(2 ** 2) ** 3 == 64`) — the case that specifically distinguishes this
+  from every other binary operator in the language, all of which are
+  left-associative.
+- `(-2) ** 2;` is `4` and `-2 ** 2;` is also `4` (not `-4`) — pins the
+  deliberate divergence from Python's precedence table where unary minus
+  binds *looser* than `**`; here it binds *tighter*, matching every other
+  unary-vs-binary interaction already in the language.
+- `2 ** -1;` is `0.5` — a negative exponent on the right works via plain
+  Python `**` semantics (the right operand is parsed through `_unary`,
+  so `-1` is a valid right-hand operand).
+- `2.5 ** 2;` is `6.25` — floats work, not just ints.
+- `2 ** 0;` is `1` and `0 ** 0;` is `1` — the zero-exponent and
+  zero-base-zero-exponent edge cases match Python's own `**` behavior
+  (no special-casing needed, just don't accidentally guard against them).
+- `"a" ** 2;` and `2 ** "a"` both raise `CinderRuntimeError` naming `**`
+  and the non-number operand's type, matching `_numeric_op`'s existing
+  message shape for `MINUS`/other numeric-only operators.
+- `2 ** 3 * 4;` is `32` (`(2 ** 3) * 4`, i.e. `**` binds tighter than
+  `*`) and `2 * 3 ** 2;` is `18` (`2 * (3 ** 2)`) — pins precedence
+  relative to `_factor`'s operators from both sides.
+- Lexer-level test: `**` tokenizes as a single `STARSTAR`, and `2 * *3`
+  (a `*` then whitespace then another `*`, if that's even reachable —
+  otherwise skip) and existing single-`*`/`*=` tokenization are
+  unaffected — full existing `tests/test_lexer.py` suite still passes
+  unmodified alongside the new test.
+- `**=` is not implemented in this task: `x **= 2;` raises `ParseError`
+  (there is no `STARSTAREQ` token) — add one test pinning that it's a
+  parse error, not a silent no-op or crash, so a future task adding
+  `**=` has a clear "this used to error" baseline.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (new `STARSTAR`, near
+`cinder/tokens.py:51`), `cinder/lexer.py` (`_op_or_compound_assign`,
+`cinder/lexer.py:299-310`), `cinder/parser.py` (new `_power`, and
+`_factor`'s two call sites, near `cinder/parser.py:892-898`),
+`cinder/interpreter.py` (`_apply_binary_operator`, near
+`cinder/interpreter.py:795-799`), `tests/test_lexer.py`,
+`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
+`README.md`'s Operators bullet needs a `**` mention — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

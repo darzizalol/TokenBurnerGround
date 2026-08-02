@@ -207,7 +207,7 @@ fold-by-key counterpart that closes the last gap in the
 `min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family —
 all of those already take a list plus a key/predicate function, but
 there's no by-key equivalent of `sum`. Unlike `min_by`/`max_by`
-(`cinder/builtins.py:1586-1618`), which accept a function returning all
+(`cinder/builtins.py:1605-1637`), which accept a function returning all
 numbers *or* all strings (since min/max are well-defined on either),
 `sum_by` is numbers-only, matching `sum` itself
 (`cinder/builtins.py:1047-1061`) — summing strings isn't well-defined
@@ -225,7 +225,7 @@ second argument, got {type_name}"`), but fold like `_sum` does: call
 and accumulate starting from `0`. Unlike `min_by`/`max_by`, an empty
 list is well-defined (mirrors `sum([])` being `0`, not an error) — do
 not add a non-empty check. Register it in the builtins dict near `sum`/
-`product` (`cinder/builtins.py:2481-2482`, `"sum": _sum,` /
+`product` (`cinder/builtins.py:2511-2512`, `"sum": _sum,` /
 `"product": _product,`).
 
 Acceptance criteria:
@@ -259,7 +259,7 @@ Architect's next grooming pass, not this task.
 ## 4. Standard library: `reject` — `filter`'s inverse
 
 Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
-complement of `filter` (`cinder/builtins.py:2108-2121`) — keeps every
+complement of `filter` (`cinder/builtins.py:2127-2140`) — keeps every
 element the predicate is falsy for instead of truthy for, closing the
 same "opposite of an existing predicate combinator" gap that
 `omit`/`omit_by` already closed for `pick`/`pick_by`, but `filter` has
@@ -274,7 +274,7 @@ is_truthy(call_value(fn, [item], line, column))]` — the single-character
 difference from `_filter`'s body (`not is_truthy(...)` instead of
 `is_truthy(...)`) is the entire behavioral distinction between the two
 functions. Register it in the builtins dict near `filter`
-(`cinder/builtins.py:2531`, `"filter": _filter,`).
+(`cinder/builtins.py:2551`, `"filter": _filter,`).
 
 Acceptance criteria:
 - `reject([1, 2, 3, 4], fn(n) { return n % 2 == 0; });` is `[1, 3]` —
@@ -307,6 +307,55 @@ line numbers — shift if earlier tasks this cycle landed first),
 `tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
 needs `reject` added near `filter` — leave that to the Architect's next
 grooming pass, not this task.
+
+---
+
+## 5. Standard library: `find_last` — reverse-search counterpart to `find`
+
+Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
+string search analog of what `find_last_index` just did for lists —
+`find` (`cinder/builtins.py:675-687`) already returns the index of a
+substring's *first* occurrence via Python's `str.find`, but there's no
+way to search from the end; Python's `str.rfind` is the direct
+equivalent, and this closes that gap the same way `last_index_of`
+closes it for list equality-search versus `index_of`.
+
+Model directly on `_find`'s structure line for line (arity 2, first
+argument a `string` else `CinderRuntimeError` naming `find_last` and
+`type_name`, matching `"find_last() requires a string as its first
+argument, got {type_name}"`; second argument must be a `string` else
+`CinderRuntimeError` matching `"find_last() requires a string to search
+for, got {type_name}"`), but call `value.rfind(sub)` instead of
+`value.find(sub)` — the single-call difference from `_find`'s body is
+the entire behavioral distinction between the two functions, exactly
+like `not is_truthy(...)` was the entire distinction between `reject`
+and `filter` in task 4. Register it in the builtins dict near `find`
+(`cinder/builtins.py:2483`, `"find": _find,`).
+
+Acceptance criteria:
+- `find_last("abcabc", "a");` is `3` — the primary case, pin as the main
+  regression test; contrast with `find("abcabc", "a");` on the same
+  input returning `0` to prove this isn't accidentally aliased to `find`.
+- `find_last("abcabc", "z");` is `-1` — substring not present.
+- `find_last("hello", "");` is `5` — matches Python's `str.rfind`
+  behavior for an empty needle (the length of the haystack, i.e. the
+  rightmost valid insertion point), not an error.
+- `find_last("", "");` is `0` — both empty, matches `str.rfind` again.
+- `find_last("aaa", "a");` is `2` — the last of several overlapping
+  single-character matches.
+- `find_last(5, "a");` (a non-string first argument) raises
+  `CinderRuntimeError` naming `find_last` and `number` in the message.
+- `find_last("abc", 5);` (a non-string second argument) raises
+  `CinderRuntimeError` naming `find_last` and `number` in the message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `find`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `find_last` added near `find` — leave that to the Architect's
+next grooming pass, not this task.
 
 ---
 

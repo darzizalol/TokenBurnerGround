@@ -111,7 +111,7 @@ while (i < 10) {
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
-  `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
+  `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `find_last_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
   `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
@@ -176,7 +176,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1719+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1727+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -202,19 +202,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `compact` to drop falsy
-elements from a list, the safe-navigation operator `?.` for map access
-(`m?.key` is `nil` when `m` is `nil`), `frequencies` for a list's
-per-element occurrence counts, a REPL `:load <path>` meta-command to run
-a script into the current session, arithmetic *and* nil-coalescing
-compound-assign on index/dot-access targets (`xs[0] += 1`,
-`m.key ??= 1`), closing out both compound-assign families' gaps versus
-the bitwise/shift set.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `find_last_index` for
-predicate-based reverse search, an exponentiation operator `**`
-(right-associative, tighter than `*`/`/`/`%`) and its compound-assign
-sibling `**=`, `sum_by` to round out the `min_by`/`max_by`/`sort_by`
-family, and `reject` as `filter`'s predicate-inverted complement.
+Actively developed, nightly. Recently landed: `find_last_index` for
+predicate-based reverse search, `compact` to drop falsy elements from a
+list, the safe-navigation operator `?.` for map access (`m?.key` is
+`nil` when `m` is `nil`), `frequencies` for a list's per-element
+occurrence counts, a REPL `:load <path>` meta-command to run a script
+into the current session, arithmetic *and* nil-coalescing compound-assign
+on index/dot-access targets (`xs[0] += 1`, `m.key ??= 1`), closing out
+both compound-assign families' gaps versus the bitwise/shift set.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): an exponentiation
+operator `**` (right-associative, tighter than `*`/`/`/`%`) and its
+compound-assign sibling `**=`, `sum_by` to round out the
+`min_by`/`max_by`/`sort_by` family, and `reject` as `filter`'s
+predicate-inverted complement.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

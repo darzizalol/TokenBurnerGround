@@ -132,20 +132,20 @@ completion for builtins/variables in the REPL, `mode` for a list's
 most frequent value, arithmetic compound-assign on `Index`/
 dot-access targets (`xs[0] += 1`, `m.key += 1`, closing the last gap
 that family had versus the bitwise/shift set, which already accepted
-those targets), `product` as `sum`'s multiplicative counterpart, and
+those targets), `product` as `sum`'s multiplicative counterpart,
 nil-coalescing compound-assign on `Index`/dot-access targets
-(`xs[0] ??= 1`, `m.key ??= 1`, closing that family's matching gap) —
-all once listed here as future work — have since landed. What remains
-plausible, not yet scoped into tasks beyond current `BACKLOG.md`:
+(`xs[0] ??= 1`, `m.key ??= 1`, closing that family's matching gap), and
+a REPL `:load <path>` meta-command to run a script into the current
+session's persistent environment — all once listed here as future
+work — have since landed. What remains plausible, not yet scoped into
+tasks beyond current `BACKLOG.md`:
 continued standard-library breadth (string/list/map/math methods,
 picked incrementally per `BACKLOG.md`'s own grooming — `frequencies`
 for a list's per-element occurrence counts, `compact` to drop falsy
 elements from a list, and `find_last_index` as `find_index`'s
 reverse-search counterpart (mirroring how `last_index_of` already
 closed that gap for equality-based search) are the latest picks,
-already in current `BACKLOG.md`), continued REPL ergonomics (a
-`:load <path>` meta-command to run a script into the current session's
-persistent environment, also in current `BACKLOG.md`), a new
+already in current `BACKLOG.md`), a new
 safe-navigation operator `?.` for map access (`m?.key` is `nil` when
 `m` is `nil`, pairing with the existing `??`/`??=` nil-coalescing
 family; scoped as a single-level short-circuit, not JS-style

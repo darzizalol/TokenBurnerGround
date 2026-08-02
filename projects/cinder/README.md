@@ -133,8 +133,9 @@ while (i < 10) {
   passed on the command line (`-e`/`--eval`, no file needed), or an
   interactive REPL with `readline`-backed command history (up-arrow to
   recall, when available) persisted across sessions in a gitignored
-  `.cinder_history` file, plus Tab completion for builtin names and
-  in-scope variables
+  `.cinder_history` file, Tab completion for builtin names and in-scope
+  variables, and a `:load <path>` meta-command to run a script's
+  statements into the current REPL session
 - **Comments**: `# line comments` and `/* block comments */` (non-nesting),
   both skipped by the lexer wherever whitespace is allowed
 
@@ -199,14 +200,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: REPL tab completion for
-builtin names and in-scope variables, `mode` for a list's most frequent
-value, arithmetic *and* nil-coalescing compound-assign on index/dot-access
-targets (`xs[0] += 1`, `m.key ??= 1`), closing out both compound-assign
-families' gaps versus the bitwise/shift set, and `product` for a list's
-multiplicative fold.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a REPL `:load <path>`
-meta-command to run a script into the current session, `frequencies` for a
+Actively developed, nightly. Recently landed: a REPL `:load <path>`
+meta-command to run a script into the current session, `mode` for a list's
+most frequent value, arithmetic *and* nil-coalescing compound-assign on
+index/dot-access targets (`xs[0] += 1`, `m.key ??= 1`), closing out both
+compound-assign families' gaps versus the bitwise/shift set, and `product`
+for a list's multiplicative fold.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `frequencies` for a
 list's per-element occurrence counts, a safe-navigation operator `?.` for
 map access (`m?.key` is `nil` when `m` is `nil`), `compact` to drop falsy
 elements from a list, `find_last_index` for predicate-based reverse

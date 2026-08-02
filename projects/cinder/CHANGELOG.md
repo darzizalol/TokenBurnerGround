@@ -1182,3 +1182,13 @@ for vision/architecture.
   "not a valid map key" error `count_by`/`group_by`/`key_by` already
   raise. Plain dict accumulation preserves first-appearance insertion
   order. Clean first pass, no bounces (1699 tests passing, up from 1691).
+- **Safe navigation operator `?.` for map access** — merged
+  2026-08-02T19:57:28Z via PR #152 (`feat/20260802-safe-nav`). Added a new
+  `QUESTION_DOT` token, an `OptionalIndex` AST node (parsed alongside
+  `Index` in `_call`'s postfix loop, deliberately excluded from
+  `_assignment` so `m?.key = 5` still raises `ParseError`), and
+  `_evaluate_optional_index` in the interpreter, short-circuiting to `nil`
+  when the base is `nil` and otherwise delegating to the existing
+  `_index_get`. Single-level short-circuit only, composes with `??` for
+  `m?.key ?? default`. Clean first pass, no bounces (1713 tests passing,
+  up from 1699).

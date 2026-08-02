@@ -11,133 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil` [claimed 2026-08-02T19:48:58Z]
-
-Build: a new postfix operator `?.` (dot-only, mirroring the existing
-`m.key` sugar) that evaluates its left side and, if that value is `nil`,
-short-circuits the whole `?.` expression to `nil` **without** attempting
-the property access — instead of `m.key` raising `CinderRuntimeError`
-("nil is not indexable") when `m` is `nil`, `m?.key` just yields `nil`.
-This pairs with the existing nil-coalescing family (`??`, `??=`) already
-in the language: a common pattern becomes `m?.key ?? default`. Scope
-this as a **single-level** short-circuit only — `a?.b.c` short-circuits
-just the `?.b` step to `nil`; the trailing plain `.c` then runs against
-that `nil` and still raises normally (full chain-propagating short-
-circuit like JS's `?.` would require threading a "short-circuited"
-signal through arbitrary subsequent postfix operations in the same
-call/index chain, which is materially more complex and not needed for
-the common `m?.key ?? default` use case — do not attempt full-chain
-propagation in this task).
-
-Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `QUESTION_DOT = auto()`
-to `TokenType` in `cinder/tokens.py` (near `QUESTION_QUESTION`/`QQEQ`,
-around `cinder/tokens.py:90-91`). In `cinder/lexer.py`'s `_question`
-method (`cinder/lexer.py:351-362`, reached when the lexer sees a `?` —
-see the dispatch at `cinder/lexer.py:80`), the current logic is: match a
-second `?` first (for `??`/`??=`), else emit a bare `QUESTION` (used by
-the ternary `cond ? a : b`). Add a new branch *before* the bare-`QUESTION`
-fallback: if the next character is `.`, consume it and emit
-`QUESTION_DOT` (`"?."`) instead of `QUESTION`. This is lexically
-unambiguous — numbers never start with a bare `.` in this lexer (`_number`
-only fires when the first character is already a digit, see
-`cinder/lexer.py:244-257`), so `?` followed by `.` can never be a ternary
-`?` followed by a `.5`-style float literal; it is always the start of
-`?.`.
-
-AST (`cinder/ast_nodes.py`): add a new frozen dataclass `OptionalIndex`
-near `Index` (`cinder/ast_nodes.py:94-98`), same shape (`obj: "Expr"`,
-`index: "Expr"`, `line: int`, `column: int`) — a distinct class from
-`Index`, not a flag on it, so the interpreter dispatch and any future
-assignment-target checks can tell them apart by type alone (mirroring
-how `IndexCompoundAssign` is its own class rather than a flag on
-`IndexAssign`).
-
-Parser (`cinder/parser.py`): in `_call`'s postfix loop
-(`cinder/parser.py:911-923`), which already checks
-`self._check(TokenType.DOT)` and dispatches to `_finish_dot`, add a
-sibling branch `elif self._check(TokenType.QUESTION_DOT): expr =
-self._finish_optional_dot(expr)`. Add `_finish_optional_dot`, modeled
-directly on `_finish_dot` (`cinder/parser.py:957-961`): consume the
-`QUESTION_DOT` token, `_consume(TokenType.IDENTIFIER, "a property name
-after '?.'")`, build the same `Literal(name_token.lexeme, ...)` key, and
-return `OptionalIndex(obj, key, dot.line, dot.column)` instead of
-`Index(...)`. `OptionalIndex` is deliberately not handled anywhere in
-`_assignment` (`cinder/parser.py:733-`) — `m?.key = 5` and `m?.key += 1`
-etc. must still raise `ParseError("invalid assignment target", ...)`,
-the same fallthrough every non-`Identifier`/non-`Index` expression
-already gets; add a test pinning this (safe navigation is read-only,
-matching how `?.` is also not a valid assignment target in JS).
-
-Interpreter (`cinder/interpreter.py`): add
-`_evaluate_optional_index(self, expr: OptionalIndex, env: Environment)`
-near `_evaluate_index` (`cinder/interpreter.py:542-546`): evaluate `obj =
-self.evaluate(expr.obj, env)`; if `obj is None` (this interpreter's `nil`
-representation — see `_evaluate_logical`'s `??` case,
-`cinder/interpreter.py:738-741`), return `None` immediately *without*
-evaluating `expr.index` (no observable difference here since `expr.index`
-is always a `Literal` from the parser, but matches the short-circuit
-contract established by `??`/`??=`: skip work you don't need); otherwise
-evaluate `index = self.evaluate(expr.index, env)` and delegate to the
-existing `self._index_get(obj, index, expr.line, expr.column)`
-(`cinder/interpreter.py:547-`), reusing all of its existing error
-behavior (e.g. `m?.key` on a non-nil non-map `m` still raises "not
-indexable", exactly like `m.key` does today). Wire the dispatch: add
-`if isinstance(expr, OptionalIndex): return
-self._evaluate_optional_index(expr, env)` to the `evaluate()`
-isinstance chain, next to the existing `Index` check
-(`cinder/interpreter.py:239-240`).
-
-Acceptance criteria:
-- `let m = nil; m?.key;` is `nil` — the primary case, pin as the main
-  regression test.
-- `let m = {"key": 42}; m?.key;` is `42` — non-nil `m` behaves exactly
-  like plain `.key`.
-- `let m = nil; m?.key ?? "default";` is `"default"` — composes with the
-  existing `??` operator, the main motivating use case.
-- `let m = {}; m?.missing;` raises `CinderRuntimeError` ("missing map
-  key") — `?.` only guards against `obj` itself being `nil`; a present-
-  but-wrong-type `obj` or an absent key still errors exactly as `.`
-  already does.
-- `let x = 5; x?.key;` raises `CinderRuntimeError` ("not indexable") —
-  a non-nil, non-map value is still a normal error under `?.`.
-- Single-level scope, pinned explicitly: `let m = nil; m?.a.b;` still
-  raises `CinderRuntimeError` ("nil is not indexable") — the `?.a` step
-  yields `nil`, then the plain `.b` step on that `nil` errors normally;
-  this is the documented, deliberate difference from JS-style full-chain
-  optional chaining.
-- A side-effecting test proves `expr.index`'s key literal is not
-  re-evaluated or otherwise double-evaluated — not very interesting
-  here since the key is always a parsed `Literal`, but do add a test
-  proving `obj` is evaluated exactly once (a function call as the base
-  expression, e.g. `fn m() { push(calls, 1); return nil; } m()?.key;
-  len(calls);` is `1`).
-- `m?.key = 5;` and `m?.key += 1;` both raise `ParseError` ("invalid
-  assignment target") — `?.` is not a valid assignment target.
-- Parser-level shape test: `m?.key;` parses to an `OptionalIndex` with
-  `obj`/`index` matching, mirroring the existing dot-desugaring shape
-  test for plain `Index` (see wherever `_finish_dot`'s desugaring is
-  currently pinned in `tests/test_parser.py`).
-- Lexer-level test: `?.` tokenizes as a single `QUESTION_DOT`, and
-  existing ternary/`??`/`??=` tokenization (`? :`, `??`, `??=`) is
-  unaffected — full existing `tests/test_lexer.py` suite still passes
-  unmodified alongside the new test.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py` (`_question`,
-`cinder/lexer.py:351-362`), `cinder/ast_nodes.py` (new `OptionalIndex`,
-near `cinder/ast_nodes.py:94-98`), `cinder/parser.py` (`_call`'s postfix
-loop and new `_finish_optional_dot`, near `cinder/parser.py:911-961`),
-`cinder/interpreter.py` (new `_evaluate_optional_index`, near
-`cinder/interpreter.py:542-546`, plus the dispatch `isinstance` chain
-around `cinder/interpreter.py:239-240`), `tests/test_lexer.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
-`README.md`'s Operators bullet (the nil-coalescing family description)
-needs a `?.` mention — leave that to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `compact` to drop falsy elements from a list
+## 1. Standard library: `compact` to drop falsy elements from a list
 
 Build: add `compact(list)` to `cinder/builtins.py`, returning a new list
 containing only the elements of the input that are truthy under Cinder's
@@ -183,7 +57,7 @@ next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `find_last_index` — index of the last element matching a predicate
+## 2. Standard library: `find_last_index` — index of the last element matching a predicate
 
 Build: add `find_last_index(list, fn)` to `cinder/builtins.py`, the
 predicate-based counterpart to `find_index` (`cinder/builtins.py:1260-1276`)
@@ -240,7 +114,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Exponentiation operator `**`
+## 3. Exponentiation operator `**`
 
 Build: a new binary operator `**` for exponentiation, right-associative,
 binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —
@@ -250,8 +124,8 @@ this as the operator only: **no** `**=` compound-assignment form in this
 task (every other arithmetic operator's `**=`-shaped sibling was added
 in lockstep with its base operator, but bundling that here as well would
 make this a two-feature task — leave `**=` as a natural, separately-
-scoped follow-up once `**` itself exists, same reasoning the `?.` task
-above uses to defer full-chain propagation).
+scoped follow-up once `**` itself exists, the same deferral reasoning
+the safe-navigation task used for full-chain propagation).
 
 Lexer (`cinder/lexer.py`): `*` currently goes through
 `_op_or_compound_assign` (`cinder/lexer.py:299-310`), which handles the
@@ -350,23 +224,23 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Compound assignment `**=` for exponentiation
+## 4. Compound assignment `**=` for exponentiation
 
-Build: once task 4 (`**`) lands, add its compound-assignment sibling
+Build: once task 3 (`**`) lands, add its compound-assignment sibling
 `**=`, mirroring every other arithmetic operator's `+=`/`-=`/`*=`/`/=`/
 `%=` pattern — the natural follow-up `PROJECT.md`'s roadmap already
-flags as deferred out of task 4 to keep that task single-feature.
+flags as deferred out of task 3 to keep that task single-feature.
 `x **= 2;` desugars to `x = x ** 2;` for identifier targets, and (like
 the other arithmetic compound-assign ops, not the bitwise/shift-only
 ones) also accepts index/dot-access targets: `xs[0] **= 2;`,
 `m.key **= 2;`.
 
 Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `STARSTAREQ =
-auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 4
-placed `STARSTAR` (near `STAR`). Task 4 adds a dedicated branch at the
+auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 3
+placed `STARSTAR` (near `STAR`). Task 3 adds a dedicated branch at the
 top of `_op_or_compound_assign` (`cinder/lexer.py`, currently around
 line 299): `if char == "*" and self._match("*"): ... emit STARSTAR
-...`, returning immediately after consuming the second `*` — task 4
+...`, returning immediately after consuming the second `*` — task 3
 deliberately pins `2 **= 3` as lexing to `STARSTAR` then `EQ` (a later
 `ParseError`) as its baseline. Extend that branch: after consuming the
 second `*`, also check `self._match("=")`; if it matches, emit
@@ -392,7 +266,7 @@ existing desugaring (`cinder/parser.py:764-793`) turns `x **= 2` into
 `Assign(x, Binary(Identifier(x), Token(STARSTAR, "**", ...), Literal(2)))`
 (the compound token's lexeme sliced `[:-1]` becomes the base operator's
 lexeme: `"**="[:-1] == "**"`), and `Binary` nodes with a `STARSTAR`
-operator already evaluate correctly via task 4's `_apply_binary_operator`
+operator already evaluate correctly via task 3's `_apply_binary_operator`
 branch; `xs[0] **= 2` similarly reuses the existing `IndexCompoundAssign`
 evaluator unchanged.
 
@@ -410,16 +284,16 @@ Acceptance criteria:
   pair for `+=` in `tests/test_interpreter.py:504-514`.
 - `"a" **= 2;`-shaped type errors: `let x = "a"; x **= 2;` raises
   `CinderRuntimeError` naming `**` and the non-number operand's type,
-  matching task 4's `**` error message shape (the desugared `Binary`
+  matching task 3's `**` error message shape (the desugared `Binary`
   reuses the same `_numeric_op` path).
 - Lexer-level test: `**=` tokenizes as a single `STARSTAREQ`, and `**`
   (no trailing `=`) still tokenizes as `STARSTAR` unaffected — full
-  existing `tests/test_lexer.py` suite (including task 4's new `**`
+  existing `tests/test_lexer.py` suite (including task 3's new `**`
   tests) still passes unmodified alongside the new test.
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py` (new `STARSTAREQ`, near `STARSTAR`),
-`cinder/lexer.py` (extend task 4's `_op_or_compound_assign` branch),
+`cinder/lexer.py` (extend task 3's `_op_or_compound_assign` branch),
 `cinder/parser.py` (`_COMPOUND_ASSIGN_OPS` and
 `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`, `cinder/parser.py:161-188`),
 `tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.

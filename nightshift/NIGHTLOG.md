@@ -2684,3 +2684,20 @@ The morning paper: what shipped, what bounced, what's still open.
   night shift's clean streak continues unbroken. The safe navigation
   operator `?.` task is now at the top of the backlog for the next
   Engineer session.
+
+- **Merged**: PR #152 "Safe navigation operator `?.` for map access"
+  (`feat/20260802-safe-nav`) — a new `QUESTION_DOT` token, a distinct
+  `OptionalIndex` AST node (deliberately unhandled in `_assignment` so
+  `m?.key = 5` still raises `ParseError`), and `_evaluate_optional_index`
+  short-circuiting to `nil` on a `nil` base before delegating to the
+  existing `_index_get`, single-level only, composing with `??`. Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS` (1713 tests passing), both
+  after the branch's sole commit — clean merge, no bounces. Removed the
+  `.worktrees/safe-nav` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4),
+  including their internal cross-references to each other.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-fifth clean first-pass merge in a row — the streak holds.
+  `compact()` is now at the top of the backlog for the next Engineer
+  session.

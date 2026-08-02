@@ -11,58 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `product` for the product of a list of numbers [claimed 2026-08-02T14:46:00Z]
-
-Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
-counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —
-same shape, same validation, different fold. Model it directly on
-`_sum`'s existing structure: arity 1, argument a `list` (else
-`CinderRuntimeError` naming `product` and `type_name(value)`, matching
-`sum`'s message shape: `"product() requires a list, got {type_name}"`
-— note `sum` does not require the list to be non-empty, and `product`
-shouldn't either), each element checked with the already-imported
-`_is_numeric` (else `"product() requires a list of numbers, got
-{type_name(element)}"`, matching `sum`'s per-element error shape
-exactly). Fold with multiplication instead of addition, starting from
-`1` (the multiplicative identity, exactly as `sum` starts its fold from
-`0`, the additive identity) — this is what makes `product([])` well-
-defined as `1` without a non-empty check, unlike `mean`/`median`/
-`variance`/`std_dev`/`mode` which all require a non-empty list because
-division/comparison by zero-length input is undefined for them.
-
-Acceptance criteria:
-- `product([1, 2, 3, 4]);` is `24` — the primary case, pin as the main
-  regression test.
-- `product([5]);` is `5` — a single-element list is its own product.
-- `product([]);` is `1` — the empty product, the multiplicative
-  identity, not an error (the key difference from `sum([])`, which is
-  `0`, also not an error — both are defined on empty lists, unlike
-  `mean`/`median`/`variance`/`std_dev`/`mode`).
-- `product([2, 0, 3]);` is `0` — a zero element zeroes the whole
-  product, ordinary multiplication semantics.
-- `product([1, 2.5, 2]);` is `5` (or `5.0` — whichever numeric
-  representation `sum`'s equivalent mixed-int/float case already
-  produces for consistency; match `sum`'s existing int/float coercion
-  behavior exactly, don't introduce a new rule).
-- `product("abc");` (a string, not a list) raises `CinderRuntimeError`
-  naming `product` and `string` in the message, matching `sum`'s
-  equivalent error for the same input.
-- `product([1, "two", 3]);` (a non-numeric element) raises
-  `CinderRuntimeError` naming `product` and the offending element's
-  type, matching `sum`'s equivalent error for the same input.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `sum`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `product` added near `sum` — leave that to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
+## 1. Nil-coalescing compound assignment on index/dot-access targets: `xs[0] ??= 1`, `m.key ??= 1`
 
 Build: extend `??=` to accept an `Index`-expression target (which
 includes dot access, since `m.key` desugars into `Index(obj,
@@ -176,7 +125,7 @@ task.
 
 ---
 
-## 3. REPL `:load <path>` command to run a script into the current session
+## 2. REPL `:load <path>` command to run a script into the current session
 
 Build: add a `:load <path>` REPL meta-command, the natural next REPL
 ergonomics step after tab completion (`cinder/repl.py`) — lets a session
@@ -268,7 +217,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `frequencies` for a list's per-element occurrence counts
+## 3. Standard library: `frequencies` for a list's per-element occurrence counts
 
 Build: add `frequencies(list)` to `cinder/builtins.py`, returning a map
 from each distinct element to the number of times it occurs in the
@@ -333,7 +282,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil`
+## 4. Safe navigation operator `?.` for map access: `m?.key` is `nil` when `m` is `nil`
 
 Build: a new postfix operator `?.` (dot-only, mirroring the existing
 `m.key` sugar) that evaluates its left side and, if that value is `nil`,

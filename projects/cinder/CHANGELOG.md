@@ -1150,3 +1150,9 @@ for vision/architecture.
   `_evaluate_index_compound_assign` already applies whatever operator the
   desugared node carries generically. Clean first pass, no bounces (1667
   tests passing, up from 1662).
+- **Standard library: `product` for the product of a list of numbers** —
+  merged 2026-08-02T14:51:01Z via PR #148
+  (`feat/20260802-product-builtin`). Added to `cinder/builtins.py`, modeled
+  directly on `_sum`'s structure with the fold starting from `1` instead of
+  `0`, so `product([])` is well-defined as `1` with no non-empty check.
+  Clean first pass, no bounces (1675 tests passing, up from 1667).

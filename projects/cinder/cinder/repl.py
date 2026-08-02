@@ -22,6 +22,8 @@ PRIMARY_PROMPT = ">>> "
 CONTINUATION_PROMPT = "... "
 REPL_SOURCE_NAME = "<repl>"
 EXIT_COMMAND = "exit"
+LOAD_COMMAND_PREFIX = ":load "
+LOAD_COMMAND_BARE = ":load"
 
 # Lives inside the project directory, never the user's home or a dotfile
 # outside the repo.
@@ -91,6 +93,54 @@ def _needs_more_input(source: str) -> bool:
     return depth > 0
 
 
+def _run_statements(
+    statements: list,
+    interpreter: Interpreter,
+    env: Environment,
+    write: Callable[[str], None],
+    source_name: str,
+) -> None:
+    """Execute `statements` one at a time against `env`, catching each
+    `CinderError` per-statement so one bad statement doesn't stop the rest
+    from running. `source_name` labels diagnostics (`<repl>` for prompt
+    input, a loaded file's path for `:load`)."""
+    for statement in statements:
+        try:
+            if isinstance(statement, ExprStmt):
+                value = interpreter.evaluate(statement.expression, env)
+                if value is not None:
+                    write(stringify(value, quoted=True))
+            else:
+                interpreter.execute(statement, env)
+        except CinderError as e:
+            write(f"{source_name}:{e.line}:{e.column}: {e.message}")
+
+
+def _load_file(
+    path: str,
+    interpreter: Interpreter,
+    env: Environment,
+    write: Callable[[str], None],
+) -> None:
+    """Handle a `:load <path>` REPL command: read and run `path`'s
+    statements against the session's persistent `env`, so later prompt
+    input sees any names it binds."""
+    if not path:
+        write("usage: :load <path>")
+        return
+    try:
+        source = Path(path).read_text()
+    except OSError as exc:
+        write(f"could not read {path}: {exc}")
+        return
+    try:
+        statements = parse_program(tokenize(source))
+    except CinderError as e:
+        write(f"{path}:{e.line}:{e.column}: {e.message}")
+        return
+    _run_statements(statements, interpreter, env, write, path)
+
+
 def run_repl(
     read_line: Callable[[str], str] = input,
     write: Optional[Callable[[str], None]] = None,
@@ -114,6 +164,14 @@ def run_repl(
             if not buffered_lines and line.strip() == EXIT_COMMAND:
                 return
 
+            if not buffered_lines and (
+                line.strip().startswith(LOAD_COMMAND_PREFIX)
+                or line.strip() == LOAD_COMMAND_BARE
+            ):
+                path = line.strip()[len(LOAD_COMMAND_PREFIX):].strip()
+                _load_file(path, interpreter, env, write)
+                continue
+
             buffered_lines.append(line)
             source = "\n".join(buffered_lines)
             if _needs_more_input(source):
@@ -122,15 +180,10 @@ def run_repl(
 
             try:
                 statements = parse_program(tokenize(source))
-                for statement in statements:
-                    if isinstance(statement, ExprStmt):
-                        value = interpreter.evaluate(statement.expression, env)
-                        if value is not None:
-                            write(stringify(value, quoted=True))
-                    else:
-                        interpreter.execute(statement, env)
             except CinderError as e:
                 write(f"{REPL_SOURCE_NAME}:{e.line}:{e.column}: {e.message}")
+                continue
+            _run_statements(statements, interpreter, env, write, REPL_SOURCE_NAME)
     finally:
         if has_readline:
             _save_history()

@@ -199,13 +199,14 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: predicate-based map
 filtering (`pick_by`/`omit_by`), end-anchored `take_right`/`drop_right`,
-and population `variance`/`std_dev`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): REPL Tab completion
-for builtins/variables, `mode` for a list's most frequent value,
-arithmetic compound-assign on index/dot-access targets (`xs[0] += 1`,
-`m.key += 1`), `product` for a list's multiplicative fold, and
-nil-coalescing compound-assign on index/dot-access targets
-(`xs[0] ??= 1`, `m.key ??= 1`).
+population `variance`/`std_dev`, and REPL Tab completion for
+builtins/variables.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `mode` for a list's
+most frequent value, arithmetic compound-assign on index/dot-access
+targets (`xs[0] += 1`, `m.key += 1`), `product` for a list's
+multiplicative fold, nil-coalescing compound-assign on index/dot-access
+targets (`xs[0] ??= 1`, `m.key ??= 1`), and a REPL `:load <path>`
+meta-command to run a script into the current session.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

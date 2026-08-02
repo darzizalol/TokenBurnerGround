@@ -22,6 +22,7 @@ from cinder.ast_nodes import (
     Index,
     IndexAssign,
     IndexCompoundAssign,
+    IndexNilCoalesceAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -96,6 +97,13 @@ def shape(node):
             shape(node.obj),
             shape(node.index),
             node.operator.type,
+            shape(node.value),
+        )
+    if isinstance(node, IndexNilCoalesceAssign):
+        return (
+            "IndexNilCoalesceAssign",
+            shape(node.obj),
+            shape(node.index),
             shape(node.value),
         )
     if isinstance(node, Assign):
@@ -930,9 +938,29 @@ class TestCompoundAssignment(unittest.TestCase):
             ),
         )
 
-    def test_qq_eq_index_target_raises_parse_error(self):
+    def test_qq_eq_allows_index_target(self):
+        # Unlike plain identifiers (desugared via Logical/Assign above),
+        # an Index target desugars into a dedicated IndexNilCoalesceAssign
+        # node so obj/index are each evaluated exactly once and the RHS
+        # short-circuits, mirroring how the bitwise/shift set desugars into
+        # IndexCompoundAssign for an Index target.
+        stmts = parse_stmts("xs[0] ??= 1;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexNilCoalesceAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    ("Literal", 1),
+                ),
+            ),
+        )
+
+    def test_qq_eq_invalid_target_raises_parse_error(self):
         with self.assertRaises(ParseError):
-            parse_stmts("xs[0] ??= 1;")
+            parse_stmts("1 + 1 ??= 1;")
 
     def test_amp_eq_desugars_to_binary_amp(self):
         self.assertEqual(

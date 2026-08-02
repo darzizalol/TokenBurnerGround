@@ -123,6 +123,7 @@ from cinder.ast_nodes import (
     Index,
     IndexAssign,
     IndexCompoundAssign,
+    IndexNilCoalesceAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -753,6 +754,10 @@ class Parser:
                 )
                 logical = Logical(expr, qq_operator, value)
                 return Assign(expr.name, logical, op_token.line, op_token.column)
+            if isinstance(expr, Index):
+                return IndexNilCoalesceAssign(
+                    expr.obj, expr.index, value, op_token.line, op_token.column
+                )
             raise ParseError(
                 "invalid assignment target", op_token.line, op_token.column
             )

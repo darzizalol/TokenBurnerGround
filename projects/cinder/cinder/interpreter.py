@@ -66,6 +66,7 @@ from cinder.ast_nodes import (
     Index,
     IndexAssign,
     IndexCompoundAssign,
+    IndexNilCoalesceAssign,
     InterpString,
     LetStmt,
     ListLiteral,
@@ -244,6 +245,8 @@ class Interpreter:
             return self._evaluate_index_assign(expr, env)
         if isinstance(expr, IndexCompoundAssign):
             return self._evaluate_index_compound_assign(expr, env)
+        if isinstance(expr, IndexNilCoalesceAssign):
+            return self._evaluate_index_nil_coalesce_assign(expr, env)
         if isinstance(expr, FnExpr):
             return CinderFunction(expr, env)
         if isinstance(expr, InterpString):
@@ -633,6 +636,28 @@ class Interpreter:
         result = self._apply_binary_operator(expr.operator, current, rhs)
         self._index_set(obj, index, result, expr.line, expr.column)
         return result
+
+    def _evaluate_index_nil_coalesce_assign(
+        self, expr: IndexNilCoalesceAssign, env: Environment
+    ) -> object:
+        # Like IndexCompoundAssign, obj/index are each evaluated exactly
+        # once. Unlike it, expr.value is only evaluated (and only written
+        # back) when the current value is nil, matching ??'s short-circuit
+        # contract (_evaluate_logical's QUESTION_QUESTION case). A missing
+        # map key is treated the same as an explicit nil value here (not
+        # an error, unlike plain `.`/`[]` reads) since the whole point of
+        # `m.key ??= v` is the get-or-initialize idiom on maps.
+        obj = self.evaluate(expr.obj, env)
+        index = self.evaluate(expr.index, env)
+        if isinstance(obj, dict) and _is_valid_key(index) and index not in obj:
+            current = None
+        else:
+            current = self._index_get(obj, index, expr.line, expr.column)
+        if current is not None:
+            return current
+        rhs = self.evaluate(expr.value, env)
+        self._index_set(obj, index, rhs, expr.line, expr.column)
+        return rhs
 
     def _index_set(
         self, obj: object, index: object, value: object, line: int, column: int

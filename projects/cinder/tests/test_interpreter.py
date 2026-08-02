@@ -877,9 +877,67 @@ class TestNilCoalescingCompoundAssignment(unittest.TestCase):
         self.assertEqual(env.get("calls"), 1)
         self.assertEqual(env.get("x"), 99)
 
-    def test_index_target_raises_parse_error(self):
+    def test_index_target_nil_is_replaced(self):
+        env = run('let m = {"a": nil}; m["a"] ??= 5;')
+        self.assertEqual(env.get("m"), {"a": 5})
+
+    def test_list_index_target_nil_is_replaced(self):
+        env = run("let xs = [nil]; xs[0] ??= 1;")
+        self.assertEqual(env.get("xs"), [1])
+
+    def test_list_index_target_non_nil_is_left_untouched(self):
+        env = run("let xs = [7]; xs[0] ??= 1;")
+        self.assertEqual(env.get("xs"), [7])
+
+    def test_index_target_non_nil_is_left_untouched(self):
+        env = run('let m = {"a": 1}; m["a"] ??= 5;')
+        self.assertEqual(env.get("m"), {"a": 1})
+
+    def test_dot_access_target_nil_is_replaced(self):
+        # `m.key` desugars to the same Index node as `m["key"]`, so it gets
+        # the same IndexNilCoalesceAssign treatment for free.
+        env = run("let m = {}; m.key ??= 5;")
+        self.assertEqual(env.get("m"), {"key": 5})
+
+    def test_index_target_evaluates_object_and_index_exactly_once_when_nil(self):
+        env = run(
+            """
+            let calls = 0;
+            let counter = fn() { calls = calls + 1; return calls; };
+            let m = {1: nil};
+            m[counter()] ??= 99;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("m"), {1: 99})
+
+    def test_index_target_evaluates_object_and_index_exactly_once_when_non_nil(self):
+        env = run(
+            """
+            let calls = 0;
+            let counter = fn() { calls = calls + 1; return calls; };
+            let m = {1: 1};
+            m[counter()] ??= 99;
+            """
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("m"), {1: 1})
+
+    def test_index_target_right_not_evaluated_when_current_non_nil(self):
+        env = run(
+            """
+            let m = {"a": 1};
+            let calls = [];
+            fn side() { push(calls, 1); return 99; }
+            m["a"] ??= side();
+            """
+        )
+        self.assertEqual(env.get("calls"), [])
+        self.assertEqual(env.get("m"), {"a": 1})
+
+    def test_invalid_qq_eq_target_raises_parse_error(self):
         with self.assertRaises(ParseError):
-            parse_program(tokenize("xs[0] ??= 1;"))
+            parse_program(tokenize("1 + 1 ??= 1;"))
 
 
 class TestIncrementDecrement(unittest.TestCase):

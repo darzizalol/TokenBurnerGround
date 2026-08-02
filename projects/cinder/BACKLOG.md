@@ -11,64 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find_last_index` — index of the last element matching a predicate [claimed 2026-08-02T20:14:36Z]
-
-Build: add `find_last_index(list, fn)` to `cinder/builtins.py`, the
-predicate-based counterpart to `find_index` (`cinder/builtins.py:1260-1276`)
-that searches from the end instead of the start — closing the same kind
-of gap `take_right`/`drop_right` closed for `take`/`drop`, and
-`last_index_of` (`cinder/builtins.py:1247-1257`) already closed for
-equality-based search, but no predicate-based reverse search exists yet.
-Model the arity/type checks directly on `_find_index`'s existing
-structure (arity 2, first argument a `list` else `CinderRuntimeError`
-naming `find_last_index` and `type_name`, matching `"find_last_index()
-requires a list as its first argument, got {type_name}"`; second
-argument must be `_is_callable` else `CinderRuntimeError` matching
-`"find_last_index() requires a function as its second argument, got
-{type_name}"`), but iterate the list in reverse the same way
-`_last_index_of` already does (`for index in range(len(collection) - 1,
--1, -1):`) instead of `find_index`'s forward `enumerate`, calling
-`call_value(fn, [item], line, column)` and checking `is_truthy(...)` on
-each element, returning the first (i.e. highest) index where it's true,
-or `-1` if none match. Note `find` (`cinder/builtins.py:675`) is an
-unrelated string-substring-search builtin, not a list predicate
-search — do not model on or confuse with it; `find_index`/
-`find_last_index` are the list-predicate family.
-
-Acceptance criteria:
-- `find_last_index([1, 2, 3, 4], fn(n) { return n > 2; });` is `3` (the
-  last index where the predicate holds) — the primary case, pin as the
-  main regression test; contrast with `find_index` on the same input
-  returning `2` (the first match) to prove this isn't accidentally
-  aliased to `find_index`.
-- `find_last_index([1, 2, 3], fn(n) { return n > 10; });` is `-1` — no
-  match.
-- `find_last_index([], fn(n) { return true; });` is `-1` and the
-  function is never called (an empty list has no elements to test) —
-  mirror `find_index`'s existing "on empty list returns -1 and never
-  calls fn" test shape.
-- `find_last_index([1, 2, 2, 3], fn(n) { return n == 2; });` is `2` (the
-  later of the two matching indices, not the first) — the case that
-  specifically distinguishes this from `find_index`.
-- `find_last_index(5, fn(n) { return true; });` (a non-list first
-  argument) raises `CinderRuntimeError` naming `find_last_index` and
-  `number` in the message.
-- `find_last_index([1, 2], 5);` (a non-function second argument) raises
-  `CinderRuntimeError` naming `find_last_index` and `number` in the
-  message.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `find_index`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `find_last_index` added near `find_index` — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Exponentiation operator `**`
+## 1. Exponentiation operator `**`
 
 Build: a new binary operator `**` for exponentiation, right-associative,
 binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —
@@ -178,23 +121,23 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Compound assignment `**=` for exponentiation
+## 2. Compound assignment `**=` for exponentiation
 
-Build: once task 2 (`**`) lands, add its compound-assignment sibling
+Build: once task 1 (`**`) lands, add its compound-assignment sibling
 `**=`, mirroring every other arithmetic operator's `+=`/`-=`/`*=`/`/=`/
 `%=` pattern — the natural follow-up `PROJECT.md`'s roadmap already
-flags as deferred out of task 2 to keep that task single-feature.
+flags as deferred out of task 1 to keep that task single-feature.
 `x **= 2;` desugars to `x = x ** 2;` for identifier targets, and (like
 the other arithmetic compound-assign ops, not the bitwise/shift-only
 ones) also accepts index/dot-access targets: `xs[0] **= 2;`,
 `m.key **= 2;`.
 
 Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `STARSTAREQ =
-auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 2
+auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 1
 placed `STARSTAR` (near `STAR`). Task 2 adds a dedicated branch at the
 top of `_op_or_compound_assign` (`cinder/lexer.py`, currently around
 line 299): `if char == "*" and self._match("*"): ... emit STARSTAR
-...`, returning immediately after consuming the second `*` — task 2
+...`, returning immediately after consuming the second `*` — task 1
 deliberately pins `2 **= 3` as lexing to `STARSTAR` then `EQ` (a later
 `ParseError`) as its baseline. Extend that branch: after consuming the
 second `*`, also check `self._match("=")`; if it matches, emit
@@ -220,7 +163,7 @@ existing desugaring (`cinder/parser.py:764-793`) turns `x **= 2` into
 `Assign(x, Binary(Identifier(x), Token(STARSTAR, "**", ...), Literal(2)))`
 (the compound token's lexeme sliced `[:-1]` becomes the base operator's
 lexeme: `"**="[:-1] == "**"`), and `Binary` nodes with a `STARSTAR`
-operator already evaluate correctly via task 2's `_apply_binary_operator`
+operator already evaluate correctly via task 1's `_apply_binary_operator`
 branch; `xs[0] **= 2` similarly reuses the existing `IndexCompoundAssign`
 evaluator unchanged.
 
@@ -238,16 +181,16 @@ Acceptance criteria:
   pair for `+=` in `tests/test_interpreter.py:504-514`.
 - `"a" **= 2;`-shaped type errors: `let x = "a"; x **= 2;` raises
   `CinderRuntimeError` naming `**` and the non-number operand's type,
-  matching task 2's `**` error message shape (the desugared `Binary`
+  matching task 1's `**` error message shape (the desugared `Binary`
   reuses the same `_numeric_op` path).
 - Lexer-level test: `**=` tokenizes as a single `STARSTAREQ`, and `**`
   (no trailing `=`) still tokenizes as `STARSTAR` unaffected — full
-  existing `tests/test_lexer.py` suite (including task 2's new `**`
+  existing `tests/test_lexer.py` suite (including task 1's new `**`
   tests) still passes unmodified alongside the new test.
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py` (new `STARSTAREQ`, near `STARSTAR`),
-`cinder/lexer.py` (extend task 2's `_op_or_compound_assign` branch),
+`cinder/lexer.py` (extend task 1's `_op_or_compound_assign` branch),
 `cinder/parser.py` (`_COMPOUND_ASSIGN_OPS` and
 `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`, `cinder/parser.py:161-188`),
 `tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
@@ -257,7 +200,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `sum_by` — sum of a function applied to each element
+## 3. Standard library: `sum_by` — sum of a function applied to each element
 
 Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
 fold-by-key counterpart that closes the last gap in the
@@ -313,7 +256,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `reject` — `filter`'s inverse
+## 4. Standard library: `reject` — `filter`'s inverse
 
 Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
 complement of `filter` (`cinder/builtins.py:2108-2121`) — keeps every

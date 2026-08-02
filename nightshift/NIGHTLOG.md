@@ -2717,3 +2717,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-sixth clean first-pass merge in a row — the streak holds.
   `find_last_index` is now at the top of the backlog for the next
   Engineer session.
+
+- **Merged**: PR #154 "Standard library: `find_last_index` — index of
+  the last element matching a predicate" (`feat/20260802-find-last-index`)
+  — modeled directly on `_find_index`'s arity/type checks but iterating
+  in reverse the same way `_last_index_of` does, returning the highest
+  index where the predicate holds or `-1` if none match. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1727 tests passing), both after
+  the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/find-last-index` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4),
+  including their internal cross-references to each other.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-seventh clean first-pass merge in a row — the streak holds.
+  Exponentiation operator `**` is now at the top of the backlog for the
+  next Engineer session.

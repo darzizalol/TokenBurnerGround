@@ -1199,3 +1199,10 @@ for vision/architecture.
   `is_truthy` helper, dropping only Cinder's own falsy set (`nil`,
   `false`) and keeping `0`, `0.0`, `""` and everything else. Clean first
   pass, no bounces (1719 tests passing, up from 1713).
+- **Standard library: `find_last_index` — index of the last element
+  matching a predicate** — merged 2026-08-02T20:19:10Z via PR #154
+  (`feat/20260802-find-last-index`). Added to `cinder/builtins.py`,
+  modeled directly on `_find_index`'s arity/type checks but iterating in
+  reverse the same way `_last_index_of` does, returning the highest index
+  where the predicate holds or `-1` if none match. Clean first pass, no
+  bounces (1727 tests passing, up from 1719).

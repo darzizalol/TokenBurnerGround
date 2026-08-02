@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `frequencies` for a list's per-element occurrence counts
+## 1. Standard library: `frequencies` for a list's per-element occurrence counts [claimed 2026-08-02T19:37:49Z]
 
 Build: add `frequencies(list)` to `cinder/builtins.py`, returning a map
 from each distinct element to the number of times it occurs in the

@@ -2161,6 +2161,50 @@ class TestStdDev(unittest.TestCase):
             run("std_dev();")
 
 
+class TestMode(unittest.TestCase):
+    def test_mode_of_clear_winner(self):
+        result = run("let result = mode([1, 2, 2, 3]);").get("result")
+        self.assertEqual(result, 2)
+
+    def test_mode_tie_resolves_to_first_appearance(self):
+        result = run("let result = mode([1, 1, 2, 2]);").get("result")
+        self.assertEqual(result, 1)
+
+    def test_mode_of_single_element_list(self):
+        result = run("let result = mode([5]);").get("result")
+        self.assertEqual(result, 5)
+
+    def test_mode_works_on_strings(self):
+        result = run('let result = mode(["a", "b", "b", "c"]);').get("result")
+        self.assertEqual(result, "b")
+
+    def test_mode_splits_bools_from_ints(self):
+        result = run("let result = mode([true, false, true]);").get("result")
+        self.assertIs(result, True)
+
+        result = run("let result = mode([1, true, 1]);").get("result")
+        self.assertEqual(result, 1)
+        self.assertNotIsInstance(result, bool)
+
+    def test_mode_of_lists_of_lists_uses_values_equal_fallback(self):
+        result = run("let result = mode([[1], [1], [2]]);").get("result")
+        self.assertEqual(result, [1])
+
+    def test_mode_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("mode([]);")
+
+    def test_mode_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('mode("abc");')
+        self.assertIn("mode", str(ctx.exception))
+        self.assertIn("string", str(ctx.exception))
+
+    def test_mode_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("mode();")
+
+
 class TestAny(unittest.TestCase):
     def test_any_true_when_an_element_is_truthy(self):
         self.assertIs(run("let result = any([false, nil, 1]);").get("result"), True)

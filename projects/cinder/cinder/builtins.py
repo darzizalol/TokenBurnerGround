@@ -1147,6 +1147,47 @@ def _std_dev(arguments: list, line: int, column: int) -> object:
     return math.sqrt(_population_variance(value))
 
 
+def _mode(arguments: list, line: int, column: int) -> object:
+    _require_arity("mode", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"mode() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("mode() requires a non-empty list", line, column)
+    if all(_is_valid_key(element) for element in value):
+        # Same (is_bool, element) keying as `_dedupe`, so `1` and `true`
+        # are counted separately despite `1 == True` under native hash/eq.
+        counts: dict = {}
+        for element in value:
+            key = (isinstance(element, bool), element)
+            counts[key] = counts.get(key, 0) + 1
+        best_element = value[0]
+        best_count = 0
+        for element in value:
+            key = (isinstance(element, bool), element)
+            if counts[key] > best_count:
+                best_count = counts[key]
+                best_element = element
+        return best_element
+    pairs: list = []
+    for element in value:
+        for index, (kept, count) in enumerate(pairs):
+            if values_equal(element, kept):
+                pairs[index] = (kept, count + 1)
+                break
+        else:
+            pairs.append((element, 1))
+    best_element = value[0]
+    best_count = 0
+    for element, count in pairs:
+        if count > best_count:
+            best_count = count
+            best_element = element
+    return best_element
+
+
 def _any(arguments: list, line: int, column: int) -> object:
     _require_arity("any", arguments, 1, line, column)
     value = arguments[0]
@@ -2407,6 +2448,7 @@ _BUILTINS = {
     "median": _median,
     "variance": _variance,
     "std_dev": _std_dev,
+    "mode": _mode,
     "any": _any,
     "all": _all,
     "contains": _contains,

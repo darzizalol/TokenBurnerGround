@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `product` for the product of a list of numbers
+## 1. Standard library: `product` for the product of a list of numbers [claimed 2026-08-02T14:46:00Z]
 
 Build: add `product(list)` to `cinder/builtins.py`, the multiplicative
 counterpart of the existing `sum` (`cinder/builtins.py:1046-1060`) —

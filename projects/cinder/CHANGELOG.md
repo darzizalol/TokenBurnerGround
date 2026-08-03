@@ -1255,3 +1255,13 @@ for vision/architecture.
   (1779 tests passing, up from 1770). `README.md`'s Builtins list still
   needs `find_last` added near `find` — left to the Architect's next
   grooming pass.
+- **Standard library: `none`** — merged 2026-08-04T~ via PR #161
+  (`feat/20260803-none-builtin`). Added `none(list)` to
+  `cinder/builtins.py`, closing the last gap in the `any`/`all` pair —
+  modeled line for line on `_all`'s structure with the truthiness check
+  inverted (`not any(is_truthy(...))`). Confirmed against actual
+  interpreter truthiness (`nil`/`false` only) rather than the backlog's
+  originally-stated (and wrong) expectation that `0`/`""` were falsy.
+  Clean first pass, no bounces (1785 tests passing, up from 1779).
+  `README.md`'s Builtins list still needs `none` added near `any`/`all`
+  — left to the Architect's next grooming pass.

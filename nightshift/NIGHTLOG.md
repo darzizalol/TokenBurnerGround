@@ -2844,3 +2844,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-second merge in a row, still a clean run — `none` (the
   `any`/`all` complement) is now at the top of the backlog for the next
   Engineer session.
+
+- **Merged**: PR #161 "Standard library: `none` — the no-element-truthy
+  complement to `any`/`all`" (`feat/20260803-none-builtin`) —
+  `none(list)` added to `cinder/builtins.py`, modeled line for line on
+  `_all`'s structure with the truthiness check inverted. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1785 tests passing), both after
+  the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/none-builtin` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4),
+  including fixing the `//=` task's internal cross-references to the
+  `//` task (was task 4, now task 3).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-third merge in a row, still a clean run — `zip_object` is now
+  at the top of the backlog for the next Engineer session.

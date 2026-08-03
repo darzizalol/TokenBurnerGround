@@ -11,55 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `none` — the "no element truthy" complement to `any`/`all` [claimed 2026-08-03T19:16:28Z]
-
-Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
-the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
-`any`/`all` (`cinder/builtins.py:1223-1239`) take a single list argument
-and test each element's own truthiness directly (no predicate function
-involved), so `none` follows that same shape rather than the
-predicate-taking shape `reject`/`filter` use. `none([])` is `true` by
-the same vacuous-truth logic Python's own `all([])` already gives
-`all()`/`any()` their empty-list behavior.
-
-Model directly on `_all`'s structure line for line (arity 1, argument
-must be a `list` else `CinderRuntimeError` naming `none` and
-`type_name`, matching `"none() requires a list, got {type_name}"`), but
-invert the truthiness check: `return not any(is_truthy(element) for
-element in value)` — the single inverted call is the entire behavioral
-distinction from `_any`, exactly like `reject` differed from `filter`
-by one inverted condition. Register it in the builtins dict near
-`any`/`all` (`cinder/builtins.py:2576-2577`, `"any": _any,` /
-`"all": _all,`).
-
-Acceptance criteria:
-- `none([false, nil, false]);` is `true` — no truthy element, primary
-  case.
-- `none([false, 1, nil]);` is `false` — one truthy element (`1`) is
-  enough to make it false; contrast with `any` on the same input
-  returning `true` and `all` returning `false`, to prove `none` isn't
-  accidentally aliased to either.
-- `none([]);` is `true` — vacuous truth on an empty list, mirroring
-  `all([])` being `true`.
-- `none([0, "", nil, false]);` is `true` — pins that Cinder's actual
-  falsy set (`nil`/`false` only) is what's tested, not Python's broader
-  falsy set; `0` and `""` are truthy in Cinder so if either were
-  mistakenly treated as falsy this test would catch it.
-- `none(5);` (a non-list argument) raises `CinderRuntimeError` naming
-  `none` and `number` in the message.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `any`/`all`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `none` added near `any`/`all` — leave that to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 1. Standard library: `zip_object` — build a map from parallel keys/values lists
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
@@ -125,7 +77,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `symmetric_difference` — elements in either list but not both
+## 2. Standard library: `symmetric_difference` — elements in either list but not both
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`
@@ -185,7 +137,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Floor division operator `//`
+## 3. Floor division operator `//`
 
 Build: add a floor-division binary operator `//` to the language,
 closing the gap between `/` (true division, `cinder/interpreter.py:812`)
@@ -263,9 +215,9 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Compound assignment `//=` for floor division
+## 4. Compound assignment `//=` for floor division
 
-**Depends on task 4 (`//`) — do not start this until floor division has
+**Depends on task 3 (`//`) — do not start this until floor division has
 merged**, since this task adds no new evaluation semantics of its own,
 only sugar over it (same relationship `**=` had to `**`, see
 `CHANGELOG.md`'s entries for PRs #155/#157).
@@ -273,10 +225,10 @@ only sugar over it (same relationship `**=` had to `**`, see
 Build: add `TokenType.SLASHSLASHEQ` and wire it in as `//`'s
 compound-assignment form, mirroring `**=`'s addition line for line:
 - `cinder/tokens.py`: add `SLASHSLASHEQ = auto()` right after the
-  `SLASHSLASH` token task 4 adds (mirrors `STARSTAR` immediately
+  `SLASHSLASH` token task 3 adds (mirrors `STARSTAR` immediately
   followed by `STARSTAREQ`, `cinder/tokens.py:52-53`).
 - `cinder/lexer.py`: in `_op_or_compound_assign`'s `//` branch that
-  task 4 adds (mirroring the existing `char == "*" and
+  task 3 adds (mirroring the existing `char == "*" and
   self._match("*")` branch at `cinder/lexer.py:301-310`), add the same
   nested `self._match("=")` check that branch already has for `**`/
   `**=` — if `//` is followed by `=`, emit `SLASHSLASHEQ` with lexeme
@@ -290,21 +242,21 @@ compound-assignment form, mirroring `**=`'s addition line for line:
   the existing dict-driven compound-assign desugaring every other
   compound operator already goes through.
 - `cinder/interpreter.py`: no changes — desugaring turns `x //= 2` into
-  the equivalent of `x = x // 2`, reusing task 4's `SLASHSLASH` binary
+  the equivalent of `x = x // 2`, reusing task 3's `SLASHSLASH` binary
   handling unchanged, exactly like `**=` needed zero interpreter
   changes beyond what `**` already provided.
 
 Acceptance criteria:
 - `let x = 7; x //= 2; x;` is `3`.
 - `let x = -7; x //= 2; x;` is `-4` — floors toward negative infinity,
-  matching task 4's `//` behavior, not truncation.
+  matching task 3's `//` behavior, not truncation.
 - Index and dot-access targets both work: `let xs = [7]; xs[0] //= 2;
   xs[0];` is `3`, and `let m = {"a": 7}; m.a //= 2; m.a;` is `3`.
 - `const x = 7; x //= 2;` raises a `CinderRuntimeError` for assigning to
   a const, matching every other compound-assign operator's const-target
   error.
 - `let x = 7; x //= 0;` raises `CinderRuntimeError` with message
-  `"division by zero in '//'"`, reusing task 4's `_divide_op` guard
+  `"division by zero in '//'"`, reusing task 3's `_divide_op` guard
   unchanged.
 - A standalone `x /= 2` (plain `/=`, not `//=`) still parses and
   behaves exactly as before — confirms the new token doesn't shadow or

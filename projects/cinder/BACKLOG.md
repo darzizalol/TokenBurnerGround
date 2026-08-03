@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Compound assignment `**=` for exponentiation
+## 1. Compound assignment `**=` for exponentiation [claimed 2026-08-03T14:15:57Z]
 
 Build: `**` (exponentiation) is already merged; add its compound-assignment sibling
 `**=`, mirroring every other arithmetic operator's `+=`/`-=`/`*=`/`/=`/

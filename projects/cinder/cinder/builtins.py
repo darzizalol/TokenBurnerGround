@@ -1422,6 +1422,15 @@ def _difference(arguments: list, line: int, column: int) -> object:
     ]
 
 
+def _symmetric_difference(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("symmetric_difference", arguments, line, column)
+    return [
+        element for element in _dedupe(list1) if not _contains_value(list2, element)
+    ] + [
+        element for element in _dedupe(list2) if not _contains_value(list1, element)
+    ]
+
+
 def _interleave(arguments: list, line: int, column: int) -> object:
     list1, list2 = _require_two_lists("interleave", arguments, line, column)
     result = []
@@ -2623,6 +2632,7 @@ _BUILTINS = {
     "union": _union,
     "intersection": _intersection,
     "difference": _difference,
+    "symmetric_difference": _symmetric_difference,
     "interleave": _interleave,
     "reverse": _reverse,
     "rotate": _rotate,

@@ -2741,6 +2741,61 @@ class TestUnionIntersectionDifference(unittest.TestCase):
             run("difference([1], [2], [3]);")
 
 
+class TestSymmetricDifference(unittest.TestCase):
+    def test_symmetric_difference_keeps_elements_unique_to_either_side(self):
+        self.assertEqual(
+            run(
+                "let result = symmetric_difference([1, 2, 3], [2, 3, 4]);"
+            ).get("result"),
+            [1, 4],
+        )
+
+    def test_symmetric_difference_of_identical_lists_is_empty(self):
+        self.assertEqual(
+            run("let result = symmetric_difference([1, 2], [1, 2]);").get("result"),
+            [],
+        )
+
+    def test_symmetric_difference_with_empty_second_list(self):
+        self.assertEqual(
+            run("let result = symmetric_difference([1, 2], []);").get("result"),
+            [1, 2],
+        )
+
+    def test_symmetric_difference_with_empty_first_list(self):
+        self.assertEqual(
+            run("let result = symmetric_difference([], [1, 2]);").get("result"),
+            [1, 2],
+        )
+
+    def test_symmetric_difference_of_two_empty_lists_is_empty(self):
+        self.assertEqual(
+            run("let result = symmetric_difference([], []);").get("result"), []
+        )
+
+    def test_symmetric_difference_dedupes_within_each_input(self):
+        self.assertEqual(
+            run(
+                "let result = symmetric_difference([1, 1, 2], [2, 3]);"
+            ).get("result"),
+            [1, 3],
+        )
+
+    def test_symmetric_difference_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("symmetric_difference(5, [1]);")
+
+    def test_symmetric_difference_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("symmetric_difference([1], 5);")
+
+    def test_symmetric_difference_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("symmetric_difference([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("symmetric_difference([1], [2], [3]);")
+
+
 class TestInterleave(unittest.TestCase):
     def test_interleave_equal_length_lists(self):
         self.assertEqual(

@@ -1219,3 +1219,13 @@ for vision/architecture.
   rejection, with tests for `0 ** -1`, `2.0 ** 100000`, and
   `(-8) ** 0.5`. `**=` compound assignment intentionally deferred to
   task 2. 1744 tests passing (up from 1727).
+- **Compound assignment `**=` for exponentiation** — merged
+  2026-08-03T14:23:23Z via PR #157 (`feat/20260803-starstareq`). Added
+  `TokenType.STARSTAREQ` and lexer support in `_op_or_compound_assign`
+  (mirrors the `<`/`<=`/`<<`/`<<=` cascade pattern), and wired it into
+  the parser's dict-driven `_COMPOUND_ASSIGN_OPS`/
+  `_INDEX_TARGET_COMPOUND_ASSIGN_OPS` — no interpreter changes needed
+  since desugaring reuses the existing `**` `Binary`/`IndexCompoundAssign`
+  paths unchanged. Covers identifier, index, and dot-access targets,
+  const-target errors, and type errors. Clean first pass, no bounces
+  (1752 tests passing, up from 1744).

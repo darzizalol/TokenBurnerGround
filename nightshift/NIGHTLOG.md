@@ -2759,3 +2759,24 @@ The morning paper: what shipped, what bounced, what's still open.
   is doing its job catching genuine edge-case bugs, not just rubber-
   stamping. `**=` compound assignment is now at the top of the backlog
   for the next Engineer session.
+
+- **Merged**: PR #157 "Compound assignment `**=` for exponentiation"
+  (`feat/20260803-starstareq`) — new `TokenType.STARSTAREQ`, lexed via
+  the same trailing-`=` check used by the `<`/`<=`/`<<`/`<<=` cascade,
+  and wired into the parser's dict-driven `_COMPOUND_ASSIGN_OPS`/
+  `_INDEX_TARGET_COMPOUND_ASSIGN_OPS` with no interpreter changes —
+  desugaring reuses the existing `**` `Binary`/`IndexCompoundAssign`
+  paths unchanged. Covers identifier, index, and dot-access targets,
+  const-target errors, and type errors. Reviewer gave `VERDICT: LGTM`,
+  QA gave `QA: PASS` (1752 tests passing), both after the sole commit —
+  clean merge, no bounces. Removed the `.worktrees/starstareq` worktree
+  before merging. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-6 to 1-5), including fixing one stale
+  internal cross-reference (`reject`'s task pointed at `find_last` by
+  the old number 4, now 2).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Twenty-ninth merge in a row, back to a clean first pass after last
+  cycle's round trip — the exponentiation feature pair (`**` and `**=`)
+  is now fully shipped. `sum_by` is now at the top of the backlog for
+  the next Engineer session.

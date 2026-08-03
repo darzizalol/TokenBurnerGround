@@ -11,86 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Compound assignment `**=` for exponentiation [claimed 2026-08-03T14:15:57Z]
-
-Build: `**` (exponentiation) is already merged; add its compound-assignment sibling
-`**=`, mirroring every other arithmetic operator's `+=`/`-=`/`*=`/`/=`/
-`%=` pattern — the natural follow-up `PROJECT.md`'s roadmap already
-flags as deferred out of the `**` task to keep that task single-feature.
-`x **= 2;` desugars to `x = x ** 2;` for identifier targets, and (like
-the other arithmetic compound-assign ops, not the bitwise/shift-only
-ones) also accepts index/dot-access targets: `xs[0] **= 2;`,
-`m.key **= 2;`.
-
-Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `STARSTAREQ =
-auto()` to `TokenType` in `cinder/tokens.py`, next to `STARSTAR` (near
-`STAR`). This task adds a dedicated branch at the
-top of `_op_or_compound_assign` (`cinder/lexer.py`, currently around
-line 299): `if char == "*" and self._match("*"): ... emit STARSTAR
-...`, returning immediately after consuming the second `*` — the `**`
-task deliberately pinned `2 **= 3` as lexing to `STARSTAR` then `EQ` (a later
-`ParseError`) as its baseline. Extend that branch: after consuming the
-second `*`, also check `self._match("=")`; if it matches, emit
-`STARSTAREQ` (lexeme `"**="`) instead of `STARSTAR`; otherwise emit
-`STARSTAR` as before — mirrors how `_lt`'s `<`/`<=`/`<<`/`<<=` cascade
-checks for a further `=` after already matching a doubled character.
-
-Parser (`cinder/parser.py`): this codebase's compound-assign machinery
-is fully dict-driven — `_COMPOUND_ASSIGN_OPS` (`cinder/parser.py:161-
-171`) maps each compound token to its base binary-operator token, and
-`_INDEX_TARGET_COMPOUND_ASSIGN_OPS` (`cinder/parser.py:177-188`) is the
-set of compound tokens that may also target an `Index`/dot-access
-expression (not just a plain `Identifier`) — no new AST node or
-dispatch branch is needed. Add `TokenType.STARSTAREQ:
-TokenType.STARSTAR` to `_COMPOUND_ASSIGN_OPS`, and add
-`TokenType.STARSTAREQ` to the `_INDEX_TARGET_COMPOUND_ASSIGN_OPS` set
-(every existing arithmetic compound-assign op already accepts index
-targets, so `**=` belongs in that family, not excluded from it like
-`??=` is scoped separately).
-
-Interpreter (`cinder/interpreter.py`): no changes needed. `_assignment`'s
-existing desugaring (`cinder/parser.py:764-793`) turns `x **= 2` into
-`Assign(x, Binary(Identifier(x), Token(STARSTAR, "**", ...), Literal(2)))`
-(the compound token's lexeme sliced `[:-1]` becomes the base operator's
-lexeme: `"**="[:-1] == "**"`), and `Binary` nodes with a `STARSTAR`
-operator already evaluate correctly via the existing `_apply_binary_operator`
-branch; `xs[0] **= 2` similarly reuses the existing `IndexCompoundAssign`
-evaluator unchanged.
-
-Acceptance criteria:
-- `let x = 2; x **= 10; x;` is `1024` — the primary case, pin as the
-  main regression test.
-- `let xs = [2]; xs[0] **= 3; xs[0];` is `8` — index-target compound
-  assign works.
-- `let m = {"a": 2}; m.a **= 3; m.a;` is `8` — dot-access target
-  compound assign works (dot access desugars to `Index`, same path).
-- `let x = 2; x **= -1; x;` is `0.5` — a negative-exponent RHS still
-  works through the compound-assign desugaring.
-- `const x = 2; x **= 2;` raises `CinderRuntimeError` and leaves `x`
-  unchanged — mirrors the existing `test_const_compound_assignment_*`
-  pair for `+=` in `tests/test_interpreter.py:504-514`.
-- `"a" **= 2;`-shaped type errors: `let x = "a"; x **= 2;` raises
-  `CinderRuntimeError` naming `**` and the non-number operand's type,
-  matching `**`'s existing error message shape (the desugared `Binary`
-  reuses the same `_numeric_op` path).
-- Lexer-level test: `**=` tokenizes as a single `STARSTAREQ`, and `**`
-  (no trailing `=`) still tokenizes as `STARSTAR` unaffected — full
-  existing `tests/test_lexer.py` suite (including the `**`
-  tests) still passes unmodified alongside the new test.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (new `STARSTAREQ`, near `STARSTAR`),
-`cinder/lexer.py` (extend `**`'s `_op_or_compound_assign` branch),
-`cinder/parser.py` (`_COMPOUND_ASSIGN_OPS` and
-`_INDEX_TARGET_COMPOUND_ASSIGN_OPS`, `cinder/parser.py:161-188`),
-`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
-Once merged, `README.md`'s Operators bullet needs a `**=` mention
-alongside the other compound-assignment operators — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `sum_by` — sum of a function applied to each element
+## 1. Standard library: `sum_by` — sum of a function applied to each element
 
 Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
 fold-by-key counterpart that closes the last gap in the
@@ -146,7 +67,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `reject` — `filter`'s inverse
+## 2. Standard library: `reject` — `filter`'s inverse
 
 Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
 complement of `filter` (`cinder/builtins.py:2127-2140`) — keeps every
@@ -200,7 +121,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `find_last` — reverse-search counterpart to `find`
+## 3. Standard library: `find_last` — reverse-search counterpart to `find`
 
 Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
 string search analog of what `find_last_index` just did for lists —
@@ -219,7 +140,7 @@ for, got {type_name}"`), but call `value.rfind(sub)` instead of
 `value.find(sub)` — the single-call difference from `_find`'s body is
 the entire behavioral distinction between the two functions, exactly
 like `not is_truthy(...)` was the entire distinction between `reject`
-and `filter` in task 4. Register it in the builtins dict near `find`
+and `filter` in task 2. Register it in the builtins dict near `find`
 (`cinder/builtins.py:2483`, `"find": _find,`).
 
 Acceptance criteria:
@@ -249,7 +170,7 @@ next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+## 4. Standard library: `none` — the "no element truthy" complement to `any`/`all`
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
@@ -297,7 +218,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 5. Standard library: `zip_object` — build a map from parallel keys/values lists
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of

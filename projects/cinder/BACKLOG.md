@@ -11,61 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `reject` — `filter`'s inverse [claimed 2026-08-03T14:43:12Z]
-
-Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
-complement of `filter` (`cinder/builtins.py:2127-2140`) — keeps every
-element the predicate is falsy for instead of truthy for, closing the
-same "opposite of an existing predicate combinator" gap that
-`omit`/`omit_by` already closed for `pick`/`pick_by`, but `filter` has
-never had one. Model directly on `_filter`'s structure line for line
-(arity 2, first argument a `list` else `CinderRuntimeError` naming
-`reject` and `type_name`, matching `"reject() requires a list as its
-first argument, got {type_name}"`; second argument must be
-`_is_callable` else `CinderRuntimeError` matching `"reject() requires a
-function as its second argument, got {type_name}"`), but invert the
-truthiness check in the comprehension: `[item for item in items if not
-is_truthy(call_value(fn, [item], line, column))]` — the single-character
-difference from `_filter`'s body (`not is_truthy(...)` instead of
-`is_truthy(...)`) is the entire behavioral distinction between the two
-functions. Register it in the builtins dict near `filter`
-(`cinder/builtins.py:2551`, `"filter": _filter,`).
-
-Acceptance criteria:
-- `reject([1, 2, 3, 4], fn(n) { return n % 2 == 0; });` is `[1, 3]` —
-  the primary case, pin as the main regression test; contrast with
-  `filter` on the same input/predicate returning `[2, 4]` to prove this
-  isn't accidentally aliased to `filter`.
-- `reject([], fn(n) { return true; });` is `[]` and the function is
-  never called — mirrors `filter`'s existing "on empty list returns []
-  and never calls fn" test shape.
-- `reject([1, 2, 3], fn(n) { return false; });` is `[1, 2, 3]` (the
-  predicate is always falsy, so every element is kept) and
-  `reject([1, 2, 3], fn(n) { return true; });` is `[]` (always truthy,
-  so nothing is kept) — the two boundary cases.
-- `reject([0, 1, nil, 2, false], fn(n) { return n == 1; });` is
-  `[0, nil, 2, false]` — pins that `reject` only removes elements where
-  the predicate itself returns truthy, not elements that are themselves
-  falsy (that's `compact`'s job, a different builtin); the predicate's
-  return value truthiness is what's inverted, not the element's.
-- `reject(5, fn(n) { return true; });` (a non-list first argument)
-  raises `CinderRuntimeError` naming `reject` and `number` in the
-  message.
-- `reject([1, 2], 5);` (a non-function second argument) raises
-  `CinderRuntimeError` naming `reject` and `number` in the message.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `filter`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `reject` added near `filter` — leave that to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `find_last` — reverse-search counterpart to `find`
+## 1. Standard library: `find_last` — reverse-search counterpart to `find`
 
 Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
 string search analog of what `find_last_index` just did for lists —
@@ -84,7 +30,7 @@ for, got {type_name}"`), but call `value.rfind(sub)` instead of
 `value.find(sub)` — the single-call difference from `_find`'s body is
 the entire behavioral distinction between the two functions, exactly
 like `not is_truthy(...)` was the entire distinction between `reject`
-and `filter` in task 1. Register it in the builtins dict near `find`
+and `filter`. Register it in the builtins dict near `find`
 (`cinder/builtins.py:2483`, `"find": _find,`).
 
 Acceptance criteria:
@@ -114,7 +60,7 @@ next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+## 2. Standard library: `none` — the "no element truthy" complement to `any`/`all`
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
@@ -162,7 +108,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 3. Standard library: `zip_object` — build a map from parallel keys/values lists
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
@@ -228,7 +174,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `symmetric_difference` — elements in either list but not both
+## 4. Standard library: `symmetric_difference` — elements in either list but not both
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`

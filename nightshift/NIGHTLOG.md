@@ -2799,3 +2799,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirtieth merge in a row, another clean first pass — `reject` is now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #159 "Standard library: `reject` — `filter`'s inverse"
+  (`feat/20260803-reject`) — `reject(list, fn)` added to
+  `cinder/builtins.py`, modeled line for line on `_filter`'s structure
+  with the truthiness check inverted (`not is_truthy(...)`), closing
+  the same "opposite of an existing predicate combinator" gap
+  `omit`/`omit_by` already closed for `pick`/`pick_by`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1770 tests passing), both after
+  the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/reject` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4),
+  including fixing one stale internal cross-reference (`find_last`'s
+  task referred to `reject` by the old task number 1; now refers to it
+  by name instead).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-first merge in a row, still a clean run — `find_last` is now
+  at the top of the backlog for the next Engineer session.

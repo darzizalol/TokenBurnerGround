@@ -1238,3 +1238,12 @@ for vision/architecture.
   as `0` (mirroring `sum([])`) rather than erroring like `min_by`/
   `max_by` do. Clean first pass, no bounces (1759 tests passing, up
   from 1752).
+- **Standard library: `reject`** — merged 2026-08-03T14:49:17Z via PR
+  #159 (`feat/20260803-reject`). Added `reject(list, fn)` to
+  `cinder/builtins.py`, the predicate complement of `filter` — modeled
+  line for line on `_filter`'s structure with the truthiness check
+  inverted (`not is_truthy(...)`), closing the same "opposite of an
+  existing predicate combinator" gap `omit`/`omit_by` already closed for
+  `pick`/`pick_by`. Clean first pass, no bounces (1770 tests passing,
+  up from 1759). `README.md`'s Builtins list still needs `reject` added
+  near `filter` — left to the Architect's next grooming pass.

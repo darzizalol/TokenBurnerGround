@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Floor division operator `//`
+## 1. Floor division operator `//` [claimed 2026-08-03T19:56:19Z]
 
 Build: add a floor-division binary operator `//` to the language,
 closing the gap between `/` (true division, `cinder/interpreter.py:812`)

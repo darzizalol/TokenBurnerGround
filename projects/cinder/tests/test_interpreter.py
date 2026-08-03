@@ -818,6 +818,35 @@ class TestCompoundAssignment(unittest.TestCase):
         env = run("let x = 5; x %= 3;")
         self.assertEqual(env.get("x"), 2)
 
+    def test_starstar_eq(self):
+        env = run("let x = 2; x **= 10; x;")
+        self.assertEqual(env.get("x"), 1024)
+
+    def test_starstar_eq_negative_exponent(self):
+        env = run("let x = 2; x **= -1; x;")
+        self.assertEqual(env.get("x"), 0.5)
+
+    def test_starstar_eq_on_index_target(self):
+        env = run("let xs = [2]; xs[0] **= 3; xs[0];")
+        self.assertEqual(env.get("xs"), [8])
+
+    def test_starstar_eq_on_dot_access_target(self):
+        env = run('let m = {"a": 2}; m.a **= 3; m.a;')
+        self.assertEqual(env.get("m"), {"a": 8})
+
+    def test_starstar_eq_type_error_matches_binary(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('let x = "a"; x **= 2;')
+
+    def test_const_starstar_eq_raises_and_leaves_value_unchanged(self):
+        env = Environment()
+        interpreter = Interpreter()
+        statements = parse_program(tokenize("const x = 2; x **= 2;"))
+        with self.assertRaises(CinderRuntimeError):
+            for statement in statements:
+                interpreter.execute(statement, env)
+        self.assertEqual(env.get("x"), 2)
+
     def test_compound_assignment_to_undefined_variable_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("x += 1;")

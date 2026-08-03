@@ -342,10 +342,6 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
-    def test_starstareq_is_not_implemented(self):
-        with self.assertRaises(ParseError):
-            parse("x **= 2")
-
     def test_identifier_and_string(self):
         self.assertEqual(shape(parse("x")), ("Identifier", "x"))
         self.assertEqual(shape(parse('"hi"')), ("Literal", "hi"))
@@ -947,6 +943,28 @@ class TestCompoundAssignment(unittest.TestCase):
         self.assertEqual(
             shape(parse("x *= 2")),
             ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2))),
+        )
+
+    def test_starstar_eq_desugars_to_binary_starstar(self):
+        self.assertEqual(
+            shape(parse("x **= 2")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.STARSTAR, ("Literal", 2))),
+        )
+
+    def test_starstar_eq_allows_index_target(self):
+        stmts = parse_stmts("xs[0] **= 3;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexCompoundAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    TokenType.STARSTAR,
+                    ("Literal", 3),
+                ),
+            ),
         )
 
     def test_slash_eq_desugars_to_binary_slash(self):

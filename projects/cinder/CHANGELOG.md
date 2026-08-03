@@ -1275,3 +1275,17 @@ for vision/architecture.
   (1794 tests passing, up from 1785). `README.md`'s Builtins list still
   needs `zip_object` added near `from_entries`/`items` — left to the
   Architect's next grooming pass.
+- **Standard library: `symmetric_difference`** — merged 2026-08-03
+  via PR #163 (`feat/20260803-symmetric-difference`). Added
+  `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
+  completing the set-ops trio started by `union`/`intersection`/
+  `difference` with the classic fourth member — implemented as
+  `_difference([list1, list2]) + _difference([list2, list1])`, deduped
+  per side like the other set-ops. Clean first pass, no bounces (1803
+  tests passing, up from 1794). GitHub's merge API partially failed on
+  this one — the squash commit landed on `main` directly but the PR
+  itself never flipped to "merged" and the branch was never deleted
+  (see `nightshift/HELP.md` 2026-08-03T19:47Z); PR #163 closed and its
+  branch removed by hand to reconcile. `README.md`'s Builtins list
+  still needs `symmetric_difference` added near `union`/`intersection`/
+  `difference` — left to the Architect's next grooming pass.

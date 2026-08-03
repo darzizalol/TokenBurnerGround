@@ -11,67 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `symmetric_difference` — elements in either list but not both [claimed 2026-08-03T19:40:16Z]
-
-Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
-completing the set-ops trio started by `union`/`intersection`/`difference`
-(`cinder/builtins.py:1406-1424`) — those three cover "everything",
-"only in both", and "only in the first", but not the classic fourth
-member, "in exactly one of the two" (the symmetric difference, `A ^ B`
-in set notation). Lists are treated as unordered sets, exactly like the
-other three.
-
-Model directly on `_union`/`_difference`'s structure: reuse
-`_require_two_lists("symmetric_difference", arguments, line, column)`
-(the same arity/type-check helper all three existing set-ops share, see
-`cinder/builtins.py:1386-1398`) for argument validation, then compute it
-as `_difference`'s body applied in both directions and concatenated:
-`_difference([list1, list2], ...) + _difference([list2, list1], ...)`,
-or equivalently inline the two `_dedupe`-and-filter comprehensions
-directly — either way, the result is deduped per input side the same
-way `_difference` already dedupes (via `_dedupe`, `cinder/
-builtins.py:1356-1372`), not deduped again across the concatenation.
-Register it in the builtins dict near `union`/`intersection`/
-`difference` (`cinder/builtins.py:2623-2625`, `"union": _union,` /
-`"intersection": _intersection,` / `"difference": _difference,`).
-
-Acceptance criteria:
-- `symmetric_difference([1, 2, 3], [2, 3, 4]);` is `[1, 4]` — the
-  primary case: `1` and `4` are each in only one list, `2`/`3` are in
-  both and excluded; order is first list's leftovers before second
-  list's leftovers.
-- `symmetric_difference([1, 2], [1, 2]);` is `[]` — identical lists
-  have no elements unique to either side.
-- `symmetric_difference([1, 2], []);` is `[1, 2]` and
-  `symmetric_difference([], [1, 2]);` is `[1, 2]` — one side empty
-  degenerates to the other side's (deduped) contents, matching
-  `difference`'s own empty-list behavior.
-- `symmetric_difference([], []);` is `[]`.
-- `symmetric_difference([1, 1, 2], [2, 3]);` is `[1, 3]` — duplicates
-  within a single input list are deduped exactly like `union`/
-  `intersection`/`difference` already dedupe (via `_dedupe`), not
-  treated as separate occurrences.
-- `symmetric_difference(5, [1]);` (a non-list first argument) raises
-  `CinderRuntimeError` naming `symmetric_difference` and `number` in
-  the message, matching the exact message shape `_require_two_lists`
-  already produces for `union`/`intersection`/`difference`.
-- `symmetric_difference([1], 5);` (a non-list second argument) raises
-  `CinderRuntimeError` naming `symmetric_difference` and `number` in
-  the message.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `union`/
-`intersection`/`difference`, see current line numbers — shift if
-earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
-merged, `README.md`'s Builtins bullet needs `symmetric_difference`
-added near `union`/`intersection`/`difference` — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Floor division operator `//`
+## 1. Floor division operator `//`
 
 Build: add a floor-division binary operator `//` to the language,
 closing the gap between `/` (true division, `cinder/interpreter.py:812`)
@@ -149,9 +89,9 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Compound assignment `//=` for floor division
+## 2. Compound assignment `//=` for floor division
 
-**Depends on task 2 (`//`) — do not start this until floor division has
+**Depends on task 1 (`//`) — do not start this until floor division has
 merged**, since this task adds no new evaluation semantics of its own,
 only sugar over it (same relationship `**=` had to `**`, see
 `CHANGELOG.md`'s entries for PRs #155/#157).
@@ -159,10 +99,10 @@ only sugar over it (same relationship `**=` had to `**`, see
 Build: add `TokenType.SLASHSLASHEQ` and wire it in as `//`'s
 compound-assignment form, mirroring `**=`'s addition line for line:
 - `cinder/tokens.py`: add `SLASHSLASHEQ = auto()` right after the
-  `SLASHSLASH` token task 2 adds (mirrors `STARSTAR` immediately
+  `SLASHSLASH` token task 1 adds (mirrors `STARSTAR` immediately
   followed by `STARSTAREQ`, `cinder/tokens.py:52-53`).
 - `cinder/lexer.py`: in `_op_or_compound_assign`'s `//` branch that
-  task 2 adds (mirroring the existing `char == "*" and
+  task 1 adds (mirroring the existing `char == "*" and
   self._match("*")` branch at `cinder/lexer.py:301-310`), add the same
   nested `self._match("=")` check that branch already has for `**`/
   `**=` — if `//` is followed by `=`, emit `SLASHSLASHEQ` with lexeme
@@ -176,21 +116,21 @@ compound-assignment form, mirroring `**=`'s addition line for line:
   the existing dict-driven compound-assign desugaring every other
   compound operator already goes through.
 - `cinder/interpreter.py`: no changes — desugaring turns `x //= 2` into
-  the equivalent of `x = x // 2`, reusing task 2's `SLASHSLASH` binary
+  the equivalent of `x = x // 2`, reusing task 1's `SLASHSLASH` binary
   handling unchanged, exactly like `**=` needed zero interpreter
   changes beyond what `**` already provided.
 
 Acceptance criteria:
 - `let x = 7; x //= 2; x;` is `3`.
 - `let x = -7; x //= 2; x;` is `-4` — floors toward negative infinity,
-  matching task 2's `//` behavior, not truncation.
+  matching task 1's `//` behavior, not truncation.
 - Index and dot-access targets both work: `let xs = [7]; xs[0] //= 2;
   xs[0];` is `3`, and `let m = {"a": 7}; m.a //= 2; m.a;` is `3`.
 - `const x = 7; x //= 2;` raises a `CinderRuntimeError` for assigning to
   a const, matching every other compound-assign operator's const-target
   error.
 - `let x = 7; x //= 0;` raises `CinderRuntimeError` with message
-  `"division by zero in '//'"`, reusing task 2's `_divide_op` guard
+  `"division by zero in '//'"`, reusing task 1's `_divide_op` guard
   unchanged.
 - A standalone `x /= 2` (plain `/=`, not `//=`) still parses and
   behaves exactly as before — confirms the new token doesn't shadow or
@@ -204,7 +144,7 @@ Once merged, `README.md`'s Operators bullet needs `//=` added next to
 
 ---
 
-## 4. Standard library: `replace_first` — replace only the first occurrence
+## 3. Standard library: `replace_first` — replace only the first occurrence
 
 Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
 giving `replace` (`cinder/builtins.py:788-804`, which replaces *every*
@@ -262,7 +202,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `interpose` — insert a separator between list elements
+## 4. Standard library: `interpose` — insert a separator between list elements
 
 Build: add `interpose(list, separator)` to `cinder/builtins.py`. `join`
 (`cinder/builtins.py`, string builtins section) already does this for

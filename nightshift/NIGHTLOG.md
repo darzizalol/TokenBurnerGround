@@ -2876,22 +2876,32 @@ The morning paper: what shipped, what bounced, what's still open.
 - Thirty-fourth merge in a row, still a clean run — `symmetric_difference`
   is now at the top of the backlog for the next Engineer session.
 
-- **Merged**: none this cycle.
-- **Bounced this cycle**: none.
-- **Still open**: PR #163 "Standard library: `symmetric_difference` —
+- **Merged**: PR #163 "Standard library: `symmetric_difference` —
   elements in either list but not both" (`feat/20260803-symmetric-difference`)
-  — has both `VERDICT: LGTM` and `QA: PASS` since its sole commit and is
-  merge-ready, but `gh pr merge` (and a `gh api` REST fallback) failed 3x
-  in a row with transient-looking GitHub errors (a GraphQL 500, a 502 Bad
-  Gateway, and two `Merge already in progress` responses) despite
-  `mergeStateStatus: CLEAN` / `mergeable: MERGEABLE` and no actual merge
-  landing (`mergedAt` stayed `null` throughout). Worktree was already
-  removed pre-merge attempt, so no cleanup owed there. Logged full detail
-  to `nightshift/HELP.md` per token discipline (stop after 3x); not
-  paging the human since this matches the mutation-endpoint GitHub
-  flakiness already flagged there on 2026-07-24 for `gh pr create`. Left
-  the PR and its BACKLOG.md task untouched for the next Release session
-  to just retry the merge — no re-review or re-QA needed.
-- The pipeline itself is healthy (34 clean-or-recovered merges running
-  into this one) — tonight's snag is GitHub's API, not the work. Next
-  Release pass should retry PR #163's merge first before anything else.
+  — `symmetric_difference(list1, list2)` added to `cinder/builtins.py`,
+  completing the set-ops trio started by `union`/`intersection`/
+  `difference` with the classic fourth member. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1803 tests passing), both after
+  the sole commit. This one merged the hard way: `gh pr merge` and a
+  `gh api` REST fallback each returned transient-looking errors (a
+  GraphQL 500, a 502 Bad Gateway, two "merge already in progress"
+  responses) with `gh pr view` showing `state: OPEN`/`merged: false`
+  throughout, so it was logged as blocked — but a subsequent
+  `git pull --rebase` revealed one of those attempts had actually
+  written the squash commit to `main` before erroring; GitHub just never
+  flipped the PR's own merged/closed state or deleted the branch.
+  Reconciled by hand: verified the commit's content matched the PR
+  exactly, closed PR #163 with an explanatory comment, deleted the
+  leftover branch, added its CHANGELOG.md entry, and renumbered
+  BACKLOG.md (task 1 removed, 2-5 to 1-4, fixing the `//=` task's
+  internal cross-references to the `//` task, task 2 → task 1). Full
+  timeline in `nightshift/HELP.md` (2026-08-03T19:47Z and the
+  2026-08-03T19:52Z correction).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- The pipeline is healthy — tonight's snag was GitHub's merge API
+  silently succeeding while reporting failure, not the work itself. The
+  lesson banked in HELP.md for future Release sessions: after a `gh pr
+  merge` error, check whether the commit landed on `main` anyway before
+  logging it as blocked. `//` (floor division) is now at the top of the
+  backlog for the next Engineer session.

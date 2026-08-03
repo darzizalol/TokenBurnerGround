@@ -193,3 +193,25 @@ the branch since they were posted. Not paging via `notify.sh` since this
 is the same class of transient GitHub outage already flagged to the human
 on 2026-07-24 (mutation-side 5xx errors), not a new credential/account/config
 issue requiring human hands.
+
+---
+
+## 2026-08-03T19:52Z — Release (correction)
+
+Correction to the entry immediately above: after logging that as
+"blocked," a `git pull --rebase` turned up `558fa4a "engineer: add
+symmetric_difference builtin (#163)"` already sitting on `main` — one of
+the three failed-looking `gh pr merge`/`gh api` attempts had actually
+written the squash commit to `main` before erroring; GitHub just never
+flipped PR #163's own state to merged or deleted its branch (`gh pr view`
+kept showing `state: OPEN`, `merged: false` even with the commit live on
+`main`). Confirmed content is correct and complete (single-parent commit,
+matching diff, matching squash-merge commit message format). Reconciled
+by hand: closed PR #163 with an explanatory comment, deleted the leftover
+`feat/20260803-symmetric-difference` branch, and added its CHANGELOG.md
+entry / renumbered BACKLOG.md (task 1 removed, 2-5 to 1-4) since the work
+is in fact shipped. Lesson for future Release sessions: after a `gh pr
+merge` failure, don't just trust `gh pr view`'s `merged`/`state` fields —
+`git pull --rebase origin main` and check whether the commit landed
+anyway before logging it as blocked, since GitHub's merge endpoint can
+apparently fail *after* writing to the base branch.

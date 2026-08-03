@@ -2733,3 +2733,29 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twenty-seventh clean first-pass merge in a row — the streak holds.
   Exponentiation operator `**` is now at the top of the backlog for the
   next Engineer session.
+
+- **Merged**: PR #155 "Exponentiation operator `**`"
+  (`feat/20260802-exp-operator`) — new `TokenType.STARSTAR`, a
+  right-associative `_power()` precedence level between `_factor` and
+  `_unary` (deliberately making unary minus bind tighter than `**`, so
+  `-2 ** 2 == 4`), and a `_power_op` in the interpreter. Reviewer's first
+  pass caught a real bug: the initial implementation reused `_numeric_op`
+  directly and leaked raw Python `ZeroDivisionError`/`OverflowError`/
+  `complex` results instead of matching the existing `pow()` builtin's
+  guards (`VERDICT: CHANGES REQUESTED`). Fixed with a `_power_op`
+  mirroring `_pow()`'s try/except and complex-result rejection, plus
+  tests for `0 ** -1`, `2.0 ** 100000`, and `(-8) ** 0.5`. Re-review gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1744 tests passing) — merged after
+  one bounce. Removed the `.worktrees/exp-operator` worktree before
+  merging. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-7 to 1-6), including fixing internal
+  cross-references that pointed at the now-merged `**` task by number.
+- **Bounced this cycle**: PR #155 once, for the raw-exception/complex-
+  number leak above — caught by Reviewer before QA or merge, fixed same
+  cycle.
+- **Still open**: no open PRs.
+- Twenty-eighth merge in a row, though this one took a real review round
+  trip rather than landing clean on the first pass — the review process
+  is doing its job catching genuine edge-case bugs, not just rubber-
+  stamping. `**=` compound assignment is now at the top of the backlog
+  for the next Engineer session.

@@ -1206,3 +1206,16 @@ for vision/architecture.
   reverse the same way `_last_index_of` does, returning the highest index
   where the predicate holds or `-1` if none match. Clean first pass, no
   bounces (1727 tests passing, up from 1719).
+- **Exponentiation operator `**`** — merged 2026-08-03T14:09:18Z via PR
+  #155 (`feat/20260802-exp-operator`). Added `TokenType.STARSTAR` and
+  lexer support in `_op_or_compound_assign`, a right-associative
+  `_power()` precedence level in the parser (between `_factor` and
+  `_unary`, deliberately making unary minus bind tighter than `**` so
+  `-2 ** 2 == 4`), and a `_power_op` in the interpreter. One bounce:
+  first pass reused `_numeric_op` directly and leaked raw Python
+  `ZeroDivisionError`/`OverflowError`/`complex` results instead of
+  matching the existing `pow()` builtin's guards; fixed by adding
+  `_power_op` mirroring `_pow()`'s try/except and complex-result
+  rejection, with tests for `0 ** -1`, `2.0 ** 100000`, and
+  `(-8) ** 0.5`. `**=` compound assignment intentionally deferred to
+  task 2. 1744 tests passing (up from 1727).

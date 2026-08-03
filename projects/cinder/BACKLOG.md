@@ -11,134 +11,24 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Exponentiation operator `**` [claimed 2026-08-02T20:26:44Z]
+## 1. Compound assignment `**=` for exponentiation
 
-Build: a new binary operator `**` for exponentiation, right-associative,
-binding tighter than `*`/`/`/`%` and looser than unary (`-`/`not`/`~`) —
-Cinder has had a `pow()` builtin all along but no infix syntax for it,
-the same kind of gap `product`/`sum` closed on the stdlib side. Scope
-this as the operator only: **no** `**=` compound-assignment form in this
-task (every other arithmetic operator's `**=`-shaped sibling was added
-in lockstep with its base operator, but bundling that here as well would
-make this a two-feature task — leave `**=` as a natural, separately-
-scoped follow-up once `**` itself exists, the same deferral reasoning
-the safe-navigation task used for full-chain propagation).
-
-Lexer (`cinder/lexer.py`): `*` currently goes through
-`_op_or_compound_assign` (`cinder/lexer.py:299-310`), which handles the
-doubled-character case only for `+`/`-` via `_INCREMENT_DECREMENT_TOKENS`
-(`cinder/lexer.py:32-35`) — `*` isn't in that dict, so a second `*` is
-presently unreachable from that function and would fall through to
-`_match("=")`, then emit a lone `STAR` and leave the second `*` for the
-next iteration (wrong: `2**3` would lex as `STAR STAR` two separate
-tokens, then `_op_or_compound_assign` would run again for the second
-`*`). Add a dedicated branch at the top of `_op_or_compound_assign`,
-before the existing `if char in _INCREMENT_DECREMENT_TOKENS` check:
-`if char == "*" and self._match("*"): self.tokens.append(Token(TokenType.STARSTAR, "**", None, start_line, start_col)); return` —
-mirrors the shape of the existing doubled-token branch just below it.
-Add `STARSTAR = auto()` to `TokenType` in `cinder/tokens.py`, near `STAR`
-(`cinder/tokens.py:51`).
-
-Parser (`cinder/parser.py`): insert a new `_power` precedence level
-between `_factor` (`cinder/parser.py:892-898`) and `_unary`
-(`cinder/parser.py:900-914`) — right-associative, unlike every other
-binary level in this chain (`_term`/`_factor`/`_bitand`/etc. are all
-left-associative loops):
-```python
-def _power(self) -> Expr:
-    expr = self._unary()
-    if self._check(TokenType.STARSTAR):
-        operator = self._advance()
-        right = self._power()  # right-associative: 2 ** 3 ** 2 == 2 ** (3 ** 2)
-        expr = Binary(expr, operator, right)
-    return expr
-```
-Change `_factor` (`cinder/parser.py:892-898`) to call `self._power()`
-instead of `self._unary()` on both its initial `expr` line and inside
-its `while` loop's `right = self._unary()` line — this makes `**` bind
-tighter than `*`/`/`/`%` (`_FACTOR`, `cinder/parser.py:158`) and looser
-than unary, which deliberately means `-2 ** 2` parses as `(-2) ** 2`
-(`4`), **not** Python's special-cased `-(2 ** 2)` (`-4`) — pin this
-explicitly as a test rather than silently inheriting whichever behavior
-falls out, since it's the one place this feature knowingly diverges from
-Python's operator precedence table.
-
-Interpreter (`cinder/interpreter.py`): in `_apply_binary_operator`
-(`cinder/interpreter.py:780-822`), add a branch alongside `STAR`
-(`cinder/interpreter.py:795-799`): `if op == TokenType.STARSTAR: return
-self._numeric_op(operator, left, right, lambda a, b: a ** b)` — reuses
-`_numeric_op` (`cinder/interpreter.py:856-864`) exactly like `MINUS`
-does (`cinder/interpreter.py:793-794`), which already raises
-`CinderRuntimeError` naming both operand types via `type_name` and the
-operator's own `lexeme` (`"**"`) when either side isn't a number; no
-`_repeat_op`-style special case is needed since `**` has no string/list
-repetition meaning the way `*` does.
-
-Acceptance criteria:
-- `2 ** 10;` is `1024` — the primary case, pin as the main regression
-  test.
-- `2 ** 3 ** 2;` is `512` (right-associative: `2 ** (3 ** 2)`, not
-  `(2 ** 2) ** 3 == 64`) — the case that specifically distinguishes this
-  from every other binary operator in the language, all of which are
-  left-associative.
-- `(-2) ** 2;` is `4` and `-2 ** 2;` is also `4` (not `-4`) — pins the
-  deliberate divergence from Python's precedence table where unary minus
-  binds *looser* than `**`; here it binds *tighter*, matching every other
-  unary-vs-binary interaction already in the language.
-- `2 ** -1;` is `0.5` — a negative exponent on the right works via plain
-  Python `**` semantics (the right operand is parsed through `_unary`,
-  so `-1` is a valid right-hand operand).
-- `2.5 ** 2;` is `6.25` — floats work, not just ints.
-- `2 ** 0;` is `1` and `0 ** 0;` is `1` — the zero-exponent and
-  zero-base-zero-exponent edge cases match Python's own `**` behavior
-  (no special-casing needed, just don't accidentally guard against them).
-- `"a" ** 2;` and `2 ** "a"` both raise `CinderRuntimeError` naming `**`
-  and the non-number operand's type, matching `_numeric_op`'s existing
-  message shape for `MINUS`/other numeric-only operators.
-- `2 ** 3 * 4;` is `32` (`(2 ** 3) * 4`, i.e. `**` binds tighter than
-  `*`) and `2 * 3 ** 2;` is `18` (`2 * (3 ** 2)`) — pins precedence
-  relative to `_factor`'s operators from both sides.
-- Lexer-level test: `**` tokenizes as a single `STARSTAR`, and `2 * *3`
-  (a `*` then whitespace then another `*`, if that's even reachable —
-  otherwise skip) and existing single-`*`/`*=` tokenization are
-  unaffected — full existing `tests/test_lexer.py` suite still passes
-  unmodified alongside the new test.
-- `**=` is not implemented in this task: `x **= 2;` raises `ParseError`
-  (there is no `STARSTAREQ` token) — add one test pinning that it's a
-  parse error, not a silent no-op or crash, so a future task adding
-  `**=` has a clear "this used to error" baseline.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (new `STARSTAR`, near
-`cinder/tokens.py:51`), `cinder/lexer.py` (`_op_or_compound_assign`,
-`cinder/lexer.py:299-310`), `cinder/parser.py` (new `_power`, and
-`_factor`'s two call sites, near `cinder/parser.py:892-898`),
-`cinder/interpreter.py` (`_apply_binary_operator`, near
-`cinder/interpreter.py:795-799`), `tests/test_lexer.py`,
-`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
-`README.md`'s Operators bullet needs a `**` mention — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Compound assignment `**=` for exponentiation
-
-Build: once task 1 (`**`) lands, add its compound-assignment sibling
+Build: `**` (exponentiation) is already merged; add its compound-assignment sibling
 `**=`, mirroring every other arithmetic operator's `+=`/`-=`/`*=`/`/=`/
 `%=` pattern — the natural follow-up `PROJECT.md`'s roadmap already
-flags as deferred out of task 1 to keep that task single-feature.
+flags as deferred out of the `**` task to keep that task single-feature.
 `x **= 2;` desugars to `x = x ** 2;` for identifier targets, and (like
 the other arithmetic compound-assign ops, not the bitwise/shift-only
 ones) also accepts index/dot-access targets: `xs[0] **= 2;`,
 `m.key **= 2;`.
 
 Lexer (`cinder/tokens.py`, `cinder/lexer.py`): add `STARSTAREQ =
-auto()` to `TokenType` in `cinder/tokens.py`, next to wherever task 1
-placed `STARSTAR` (near `STAR`). Task 2 adds a dedicated branch at the
+auto()` to `TokenType` in `cinder/tokens.py`, next to `STARSTAR` (near
+`STAR`). This task adds a dedicated branch at the
 top of `_op_or_compound_assign` (`cinder/lexer.py`, currently around
 line 299): `if char == "*" and self._match("*"): ... emit STARSTAR
-...`, returning immediately after consuming the second `*` — task 1
-deliberately pins `2 **= 3` as lexing to `STARSTAR` then `EQ` (a later
+...`, returning immediately after consuming the second `*` — the `**`
+task deliberately pinned `2 **= 3` as lexing to `STARSTAR` then `EQ` (a later
 `ParseError`) as its baseline. Extend that branch: after consuming the
 second `*`, also check `self._match("=")`; if it matches, emit
 `STARSTAREQ` (lexeme `"**="`) instead of `STARSTAR`; otherwise emit
@@ -163,7 +53,7 @@ existing desugaring (`cinder/parser.py:764-793`) turns `x **= 2` into
 `Assign(x, Binary(Identifier(x), Token(STARSTAR, "**", ...), Literal(2)))`
 (the compound token's lexeme sliced `[:-1]` becomes the base operator's
 lexeme: `"**="[:-1] == "**"`), and `Binary` nodes with a `STARSTAR`
-operator already evaluate correctly via task 1's `_apply_binary_operator`
+operator already evaluate correctly via the existing `_apply_binary_operator`
 branch; `xs[0] **= 2` similarly reuses the existing `IndexCompoundAssign`
 evaluator unchanged.
 
@@ -181,16 +71,16 @@ Acceptance criteria:
   pair for `+=` in `tests/test_interpreter.py:504-514`.
 - `"a" **= 2;`-shaped type errors: `let x = "a"; x **= 2;` raises
   `CinderRuntimeError` naming `**` and the non-number operand's type,
-  matching task 1's `**` error message shape (the desugared `Binary`
+  matching `**`'s existing error message shape (the desugared `Binary`
   reuses the same `_numeric_op` path).
 - Lexer-level test: `**=` tokenizes as a single `STARSTAREQ`, and `**`
   (no trailing `=`) still tokenizes as `STARSTAR` unaffected — full
-  existing `tests/test_lexer.py` suite (including task 1's new `**`
+  existing `tests/test_lexer.py` suite (including the `**`
   tests) still passes unmodified alongside the new test.
 - Full test suite passes.
 
 Likely files: `cinder/tokens.py` (new `STARSTAREQ`, near `STARSTAR`),
-`cinder/lexer.py` (extend task 1's `_op_or_compound_assign` branch),
+`cinder/lexer.py` (extend `**`'s `_op_or_compound_assign` branch),
 `cinder/parser.py` (`_COMPOUND_ASSIGN_OPS` and
 `_INDEX_TARGET_COMPOUND_ASSIGN_OPS`, `cinder/parser.py:161-188`),
 `tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
@@ -200,7 +90,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `sum_by` — sum of a function applied to each element
+## 2. Standard library: `sum_by` — sum of a function applied to each element
 
 Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
 fold-by-key counterpart that closes the last gap in the
@@ -256,7 +146,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `reject` — `filter`'s inverse
+## 3. Standard library: `reject` — `filter`'s inverse
 
 Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
 complement of `filter` (`cinder/builtins.py:2127-2140`) — keeps every
@@ -310,7 +200,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `find_last` — reverse-search counterpart to `find`
+## 4. Standard library: `find_last` — reverse-search counterpart to `find`
 
 Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
 string search analog of what `find_last_index` just did for lists —
@@ -359,7 +249,7 @@ next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+## 5. Standard library: `none` — the "no element truthy" complement to `any`/`all`
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
@@ -407,7 +297,7 @@ grooming pass, not this task.
 
 ---
 
-## 7. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 6. Standard library: `zip_object` — build a map from parallel keys/values lists
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of

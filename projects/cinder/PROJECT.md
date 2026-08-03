@@ -140,35 +140,36 @@ session's persistent environment, `frequencies` for a list's
 per-element occurrence counts, a safe-navigation operator `?.` for
 map access (`m?.key` is `nil` when `m` is `nil`, pairing with the
 existing `??`/`??=` nil-coalescing family; scoped as a single-level
-short-circuit, not JS-style full-chain propagation), and `compact` to
-drop falsy elements from a list — all once listed here as future work —
-have since landed, and so has `find_last_index` as `find_index`'s
+short-circuit, not JS-style full-chain propagation), `compact` to
+drop falsy elements from a list, `find_last_index` as `find_index`'s
 reverse-search counterpart (mirroring how `last_index_of` already
-closed that gap for equality-based search). What remains plausible, not
-yet scoped beyond current `BACKLOG.md`: an exponentiation operator `**`
-(right-associative, binding tighter than `*`/`/`/`%` and looser than
-unary — closing the gap between the existing `pow()` builtin and infix
-syntax, deliberately *not* matching Python's special-cased
-unary-minus-vs-`**` precedence) and its compound-assignment sibling
-`**=` (`x **= 2`, accepting index/dot-access targets like the rest of
-the arithmetic compound-assign family — tasks 1 and 2 in current
-`BACKLOG.md`); continued standard-library breadth, picked incrementally
-per `BACKLOG.md`'s own grooming — `sum_by` as the `min_by`/`max_by`/
-`sort_by`/`group_by`/`count_by`/`distinct_by` family's still-missing
-fold-by-key member (sum of `fn(item)` over a list, numbers-only like
-`sum` rather than `min_by`/`max_by`'s number-or-string key), `reject` as
-`filter`'s predicate-inverted complement (mirroring how `omit`/`omit_by`
-already closed that same gap for `pick`/`pick_by`), `find_last` as
-`find`'s reverse-search counterpart for strings (the same kind of gap
-`find_last_index` just closed for lists, but via Python's `str.rfind`),
-`none` as the "no element truthy" complement to the existing `any`/`all`
-pair, and `zip_object` to build a map straight from two parallel
-keys/values lists (the `zip`-side inverse of `from_entries`/`items`,
-without manually composing `from_entries(zip(keys, values))`) — tasks
-3 through 7 in current `BACKLOG.md` — and only much later, a bytecode VM
-if performance ever actually matters. The Architect should keep scoping
-these into `BACKLOG.md` incrementally — do not jump ahead of the current
-layer.
+closed that gap for equality-based search), and an exponentiation
+operator `**` (right-associative, binding tighter than `*`/`/`/`%` and
+looser than unary — closing the gap between the existing `pow()`
+builtin and infix syntax, deliberately *not* matching Python's
+special-cased unary-minus-vs-`**` precedence, and guarding the same
+overflow/complex-result edge cases the `pow()` builtin already does) —
+all once listed here as future work — have since landed. What remains
+plausible, not yet scoped beyond current `BACKLOG.md`: `**`'s
+compound-assignment sibling `**=` (`x **= 2`, accepting index/dot-access
+targets like the rest of the arithmetic compound-assign family — task 1
+in current `BACKLOG.md`); continued standard-library breadth, picked
+incrementally per `BACKLOG.md`'s own grooming — `sum_by` as the
+`min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family's
+still-missing fold-by-key member (sum of `fn(item)` over a list,
+numbers-only like `sum` rather than `min_by`/`max_by`'s number-or-string
+key), `reject` as `filter`'s predicate-inverted complement (mirroring
+how `omit`/`omit_by` already closed that same gap for `pick`/`pick_by`),
+`find_last` as `find`'s reverse-search counterpart for strings (the same
+kind of gap `find_last_index` just closed for lists, but via Python's
+`str.rfind`), `none` as the "no element truthy" complement to the
+existing `any`/`all` pair, and `zip_object` to build a map straight from
+two parallel keys/values lists (the `zip`-side inverse of
+`from_entries`/`items`, without manually composing
+`from_entries(zip(keys, values))`) — tasks 2 through 6 in current
+`BACKLOG.md` — and only much later, a bytecode VM if performance ever
+actually matters. The Architect should keep scoping these into
+`BACKLOG.md` incrementally — do not jump ahead of the current layer.
 
 ## History
 

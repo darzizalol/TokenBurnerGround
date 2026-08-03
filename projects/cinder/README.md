@@ -85,7 +85,12 @@ while (i < 10) {
   (short-circuits to `nil` when `m` is `nil` instead of raising, single
   level only, composes with `??` for `m?.key ?? default`), and bitwise
   operators `&`, `|`, `^`, `~`, `<<`, `>>` (int-only, with a clean runtime
-  error on a negative shift count)
+  error on a negative shift count), and the exponentiation operator `**`
+  (right-associative, binds tighter than `*`/`/`/`%` and looser than unary
+  minus, so `-2 ** 2` is `4`; guards against the same edge cases the `pow()`
+  builtin does, e.g. `0 ** -1` and complex results from a negative base with
+  a fractional exponent both raise a clean runtime error instead of leaking
+  a raw Python exception or a complex number)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -202,16 +207,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `find_last_index` for
-predicate-based reverse search, `compact` to drop falsy elements from a
-list, the safe-navigation operator `?.` for map access (`m?.key` is
-`nil` when `m` is `nil`), `frequencies` for a list's per-element
-occurrence counts, a REPL `:load <path>` meta-command to run a script
-into the current session, arithmetic *and* nil-coalescing compound-assign
-on index/dot-access targets (`xs[0] += 1`, `m.key ??= 1`), closing out
-both compound-assign families' gaps versus the bitwise/shift set.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): an exponentiation
-operator `**` (right-associative, tighter than `*`/`/`/`%`) and its
+Actively developed, nightly. Recently landed: the safe-navigation operator
+`?.` for map access (`m?.key` is `nil` when `m` is `nil`), `frequencies`
+for a list's per-element occurrence counts, a REPL `:load <path>`
+meta-command to run a script into the current session, arithmetic *and*
+nil-coalescing compound-assign on index/dot-access targets (`xs[0] += 1`,
+`m.key ??= 1`), `compact` to drop falsy elements from a list,
+`find_last_index` for predicate-based reverse search, and the
+exponentiation operator `**` (right-associative, tighter than
+`*`/`/`/`%`, with the same overflow/complex-result guards as the `pow()`
+builtin). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `**`'s
 compound-assign sibling `**=`, `sum_by` to round out the
 `min_by`/`max_by`/`sort_by` family, and `reject` as `filter`'s
 predicate-inverted complement.

@@ -1238,6 +1238,47 @@ class TestFind(unittest.TestCase):
             run('find("hello");')
 
 
+class TestFindLast(unittest.TestCase):
+    def test_find_last_returns_index_of_last_match(self):
+        self.assertEqual(run('let result = find_last("abcabc", "a");').get("result"), 3)
+
+    def test_find_last_contrasts_with_find_on_same_input(self):
+        env = run(
+            'let last = find_last("abcabc", "a"); '
+            'let first = find("abcabc", "a");'
+        )
+        self.assertEqual(env.get("last"), 3)
+        self.assertEqual(env.get("first"), 0)
+
+    def test_find_last_returns_negative_one_when_not_found(self):
+        self.assertEqual(run('let result = find_last("abcabc", "z");').get("result"), -1)
+
+    def test_find_last_on_empty_needle_returns_haystack_length(self):
+        self.assertEqual(run('let result = find_last("hello", "");').get("result"), 5)
+
+    def test_find_last_on_both_empty_returns_zero(self):
+        self.assertEqual(run('let result = find_last("", "");').get("result"), 0)
+
+    def test_find_last_returns_last_of_overlapping_matches(self):
+        self.assertEqual(run('let result = find_last("aaa", "a");').get("result"), 2)
+
+    def test_find_last_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('find_last(5, "a");')
+        self.assertIn("find_last", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_find_last_on_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('find_last("abc", 5);')
+        self.assertIn("find_last", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_find_last_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('find_last("hello");')
+
+
 class TestIndexOf(unittest.TestCase):
     def test_index_of_returns_index_of_first_match(self):
         self.assertEqual(run('let result = index_of([1, 2, 3], 2);').get("result"), 1)

@@ -467,6 +467,46 @@ class TestFromEntries(unittest.TestCase):
             run('from_entries([["a", 1]], "extra");')
 
 
+class TestZipObject(unittest.TestCase):
+    def test_zip_object_builds_map_from_parallel_lists(self):
+        env = run('let result = zip_object(["a", "b", "c"], [1, 2, 3]);')
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2, "c": 3})
+
+    def test_zip_object_truncates_to_shorter_values_list(self):
+        env = run('let result = zip_object(["a", "b"], [1, 2, 3]);')
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2})
+
+    def test_zip_object_truncates_to_shorter_keys_list(self):
+        env = run('let result = zip_object(["a", "b", "c"], [1, 2]);')
+        self.assertEqual(env.get("result"), {"a": 1, "b": 2})
+
+    def test_zip_object_of_empty_lists_is_empty_map(self):
+        env = run("let result = zip_object([], []);")
+        self.assertEqual(env.get("result"), {})
+
+    def test_zip_object_later_entry_wins_on_duplicate_key(self):
+        env = run('let result = zip_object(["a", "a", "b"], [1, 2, 3]);')
+        self.assertEqual(env.get("result"), {"a": 2, "b": 3})
+
+    def test_zip_object_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_object([[1, 2]], [1]);")
+
+    def test_zip_object_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_object(5, [1]);")
+
+    def test_zip_object_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('zip_object(["a"], 5);')
+
+    def test_zip_object_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zip_object();")
+        with self.assertRaises(CinderRuntimeError):
+            run('zip_object(["a"], [1], "extra");')
+
+
 class TestGet(unittest.TestCase):
     def test_get_returns_value_for_present_key(self):
         env = run('let result = get({"a": 1}, "a", 0);')

@@ -52,6 +52,7 @@ class TokenType(Enum):
     STARSTAR = auto()
     STARSTAREQ = auto()
     SLASH = auto()
+    SLASHSLASH = auto()
     PERCENT = auto()
     EQ = auto()
     EQEQ = auto()

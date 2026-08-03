@@ -342,6 +342,38 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_floor_div_left_associative_same_tier_as_mul_div_mod(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("8 // 2 * 2")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 8), TokenType.SLASHSLASH, ("Literal", 2)),
+                TokenType.STAR,
+                ("Literal", 2),
+            ),
+        )
+
+    def test_exponent_binds_tighter_than_floor_division(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("2 ** 3 // 2")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 2), TokenType.STARSTAR, ("Literal", 3)),
+                TokenType.SLASHSLASH,
+                ("Literal", 2),
+            ),
+        )
+
+    def test_floor_div_assign_raises_parse_error(self):
+        # No SLASHSLASHEQ token exists yet, so `x //= 1` is a ParseError, not
+        # a silently-wrong parse.
+        with self.assertRaises(ParseError):
+            parse_stmts("x //= 1;")
+
     def test_identifier_and_string(self):
         self.assertEqual(shape(parse("x")), ("Identifier", "x"))
         self.assertEqual(shape(parse('"hi"')), ("Literal", "hi"))

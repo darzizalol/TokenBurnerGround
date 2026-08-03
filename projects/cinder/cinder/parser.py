@@ -156,7 +156,7 @@ _COMPARISON = {
     TokenType.GTEQ,
 }
 _TERM = {TokenType.PLUS, TokenType.MINUS}
-_FACTOR = {TokenType.STAR, TokenType.SLASH, TokenType.PERCENT}
+_FACTOR = {TokenType.STAR, TokenType.SLASH, TokenType.SLASHSLASH, TokenType.PERCENT}
 _UNARY = {TokenType.MINUS, TokenType.NOT, TokenType.TILDE}
 _BITSHIFT = {TokenType.LSHIFT, TokenType.RSHIFT}
 _COMPOUND_ASSIGN_OPS = {

@@ -59,6 +59,39 @@ class TestArithmetic(unittest.TestCase):
             evaluate('-"x"')
 
 
+class TestFloorDivision(unittest.TestCase):
+    def test_basic(self):
+        self.assertEqual(evaluate("7 // 2"), 3)
+
+    def test_exact_no_remainder(self):
+        self.assertEqual(evaluate("6 // 2"), 3)
+
+    def test_floors_toward_negative_infinity(self):
+        # -7 // 2 is -4 (floored), not -3 (truncated toward zero) — this
+        # would catch an accidental int(a / b) implementation.
+        self.assertEqual(evaluate("-7 // 2"), -4)
+
+    def test_float_operand_returns_float(self):
+        self.assertEqual(evaluate("7.5 // 2"), 3.0)
+
+    def test_same_precedence_tier_as_mul_div_mod(self):
+        # Evaluated left-to-right when mixed with */ /%.
+        self.assertEqual(evaluate("8 // 2 * 2"), 8)
+
+    def test_looser_than_exponent(self):
+        self.assertEqual(evaluate("2 ** 3 // 2"), 4)
+
+    def test_division_by_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("7 // 0")
+        self.assertIn("division by zero in '//'", str(ctx.exception))
+
+    def test_non_number_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('"a" // 2')
+        self.assertIn("'//'", str(ctx.exception))
+
+
 class TestExponentiation(unittest.TestCase):
     def test_basic(self):
         self.assertEqual(evaluate("2 ** 10"), 1024)

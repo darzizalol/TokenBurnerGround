@@ -11,73 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip_object` — build a map from parallel keys/values lists [claimed 2026-08-03T19:28:29Z]
-
-Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
-inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
-`[key, value]` pairs) approached from the `zip` side instead of the
-`from_entries` side — `from_entries` (`cinder/builtins.py:277-`) already
-builds a map from a list of `[key, value]` pairs, and `zip`
-(`cinder/builtins.py:1962-1975`) already pairs up two parallel lists
-into `[[a, b], ...]`, but there's no single builtin that goes straight
-from two parallel lists to a map without manually composing
-`from_entries(zip(keys, values))`. This closes that ergonomic gap the
-same way `frequencies` closed the gap between `group_by` and `len`.
-
-Model the arity/type checks on `_zip`'s structure (arity 2, first
-argument a `list` else `CinderRuntimeError` naming `zip_object` and
-`type_name`, matching `"zip_object() requires a list as its first
-argument, got {type_name}"`; second argument a `list` else
-`CinderRuntimeError` matching `"zip_object() requires a list as its
-second argument, got {type_name}"`), then reuse `_is_valid_key` (the
-same map-key validity check `frequencies` uses, imported from
-`cinder/interpreter.py:993`) on each element of `keys` — a
-non-hashable key (a `list` or `map`) raises `CinderRuntimeError`
-matching `"{type_name} is not a valid map key"`, the exact message
-`frequencies` already raises, not a `zip_object()`-prefixed variant.
-Pair via
-Python's `zip(keys, values)` exactly like `_zip` does — when the two
-lists have different lengths, stop at the shorter one (matching `zip`'s
-own truncating behavior, not an error and not padding). Build and
-return a `dict` from the pairs, later keys overwriting earlier
-duplicates (matching every other map-building builtin's left-to-right
-last-write-wins behavior, e.g. `merge`/`from_entries`). Register it in
-the builtins dict near `from_entries`/`items`
-(`cinder/builtins.py:2517-2518`, `"items": _items,` /
-`"from_entries": _from_entries,`).
-
-Acceptance criteria:
-- `zip_object(["a", "b", "c"], [1, 2, 3]);` is `{"a": 1, "b": 2, "c":
-  3}` — the primary case, pin as the main regression test.
-- `zip_object(["a", "b"], [1, 2, 3]);` is `{"a": 1, "b": 2}` — the
-  longer `values` list is truncated to match the shorter `keys` list,
-  mirroring `zip`'s own truncating behavior; `zip_object(["a", "b",
-  "c"], [1, 2]);` is `{"a": 1, "b": 2}` in the other direction.
-- `zip_object([], []);` is `{}` — both empty.
-- `zip_object(["a", "a", "b"], [1, 2, 3]);` is `{"a": 2, "b": 3}` — a
-  duplicate key takes the later value, last-write-wins like
-  `merge`/`from_entries`.
-- `zip_object([[1, 2]], [1]);` (a non-hashable key, a `list`) raises
-  `CinderRuntimeError` with message `"list is not a valid map key"` —
-  matching `frequencies`' exact message shape for the same error, not a
-  `zip_object()`-prefixed message.
-- `zip_object(5, [1]);` (a non-list first argument) raises
-  `CinderRuntimeError` naming `zip_object` and `number` in the message.
-- `zip_object(["a"], 5);` (a non-list second argument) raises
-  `CinderRuntimeError` naming `zip_object` and `number` in the message.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `from_entries`/
-`items`, see current line numbers — shift if earlier tasks this cycle
-landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `zip_object` added near `from_entries`/`items` —
-leave that to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `symmetric_difference` — elements in either list but not both
+## 1. Standard library: `symmetric_difference` — elements in either list but not both
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`
@@ -137,7 +71,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Floor division operator `//`
+## 2. Floor division operator `//`
 
 Build: add a floor-division binary operator `//` to the language,
 closing the gap between `/` (true division, `cinder/interpreter.py:812`)
@@ -215,9 +149,9 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Compound assignment `//=` for floor division
+## 3. Compound assignment `//=` for floor division
 
-**Depends on task 3 (`//`) — do not start this until floor division has
+**Depends on task 2 (`//`) — do not start this until floor division has
 merged**, since this task adds no new evaluation semantics of its own,
 only sugar over it (same relationship `**=` had to `**`, see
 `CHANGELOG.md`'s entries for PRs #155/#157).
@@ -225,10 +159,10 @@ only sugar over it (same relationship `**=` had to `**`, see
 Build: add `TokenType.SLASHSLASHEQ` and wire it in as `//`'s
 compound-assignment form, mirroring `**=`'s addition line for line:
 - `cinder/tokens.py`: add `SLASHSLASHEQ = auto()` right after the
-  `SLASHSLASH` token task 3 adds (mirrors `STARSTAR` immediately
+  `SLASHSLASH` token task 2 adds (mirrors `STARSTAR` immediately
   followed by `STARSTAREQ`, `cinder/tokens.py:52-53`).
 - `cinder/lexer.py`: in `_op_or_compound_assign`'s `//` branch that
-  task 3 adds (mirroring the existing `char == "*" and
+  task 2 adds (mirroring the existing `char == "*" and
   self._match("*")` branch at `cinder/lexer.py:301-310`), add the same
   nested `self._match("=")` check that branch already has for `**`/
   `**=` — if `//` is followed by `=`, emit `SLASHSLASHEQ` with lexeme
@@ -242,21 +176,21 @@ compound-assignment form, mirroring `**=`'s addition line for line:
   the existing dict-driven compound-assign desugaring every other
   compound operator already goes through.
 - `cinder/interpreter.py`: no changes — desugaring turns `x //= 2` into
-  the equivalent of `x = x // 2`, reusing task 3's `SLASHSLASH` binary
+  the equivalent of `x = x // 2`, reusing task 2's `SLASHSLASH` binary
   handling unchanged, exactly like `**=` needed zero interpreter
   changes beyond what `**` already provided.
 
 Acceptance criteria:
 - `let x = 7; x //= 2; x;` is `3`.
 - `let x = -7; x //= 2; x;` is `-4` — floors toward negative infinity,
-  matching task 3's `//` behavior, not truncation.
+  matching task 2's `//` behavior, not truncation.
 - Index and dot-access targets both work: `let xs = [7]; xs[0] //= 2;
   xs[0];` is `3`, and `let m = {"a": 7}; m.a //= 2; m.a;` is `3`.
 - `const x = 7; x //= 2;` raises a `CinderRuntimeError` for assigning to
   a const, matching every other compound-assign operator's const-target
   error.
 - `let x = 7; x //= 0;` raises `CinderRuntimeError` with message
-  `"division by zero in '//'"`, reusing task 3's `_divide_op` guard
+  `"division by zero in '//'"`, reusing task 2's `_divide_op` guard
   unchanged.
 - A standalone `x /= 2` (plain `/=`, not `//=`) still parses and
   behaves exactly as before — confirms the new token doesn't shadow or
@@ -270,7 +204,7 @@ Once merged, `README.md`'s Operators bullet needs `//=` added next to
 
 ---
 
-## 5. Standard library: `replace_first` — replace only the first occurrence
+## 4. Standard library: `replace_first` — replace only the first occurrence
 
 Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
 giving `replace` (`cinder/builtins.py:765-781`, which replaces *every*

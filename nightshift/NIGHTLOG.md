@@ -2859,3 +2859,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-third merge in a row, still a clean run — `zip_object` is now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #162 "Standard library: `zip_object` — build a map from
+  parallel keys/values lists" (`feat/20260803-zip-object`) —
+  `zip_object(keys, values)` added to `cinder/builtins.py`, closing the
+  ergonomic gap between `zip()` and `from_entries()`, modeled on `_zip`'s
+  structure with `_is_valid_key` reused for key validation. Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS` (1794 tests passing), both
+  after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/zip-object` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4),
+  including fixing the `//=` task's internal cross-references to the
+  `//` task (was task 3, now task 2).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-fourth merge in a row, still a clean run — `symmetric_difference`
+  is now at the top of the backlog for the next Engineer session.

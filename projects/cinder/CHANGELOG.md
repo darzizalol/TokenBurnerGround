@@ -1265,3 +1265,13 @@ for vision/architecture.
   Clean first pass, no bounces (1785 tests passing, up from 1779).
   `README.md`'s Builtins list still needs `none` added near `any`/`all`
   — left to the Architect's next grooming pass.
+- **Standard library: `zip_object`** — merged 2026-08-03T19:33:20Z via
+  PR #162 (`feat/20260803-zip-object`). Added `zip_object(keys,
+  values)` to `cinder/builtins.py`, building a map straight from two
+  parallel lists — closes the ergonomic gap between `zip()` and
+  `from_entries()` that previously required manually composing
+  `from_entries(zip(keys, values))`, the same shape `frequencies`
+  closed between `group_by` and `len`. Clean first pass, no bounces
+  (1794 tests passing, up from 1785). `README.md`'s Builtins list still
+  needs `zip_object` added near `from_entries`/`items` — left to the
+  Architect's next grooming pass.

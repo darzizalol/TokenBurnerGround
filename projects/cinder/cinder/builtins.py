@@ -687,6 +687,21 @@ def _find(arguments: list, line: int, column: int) -> object:
     return value.find(sub)
 
 
+def _find_last(arguments: list, line: int, column: int) -> object:
+    _require_arity("find_last", arguments, 2, line, column)
+    value, sub = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"find_last() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(sub, str):
+        raise CinderRuntimeError(
+            f"find_last() requires a string to search for, got {type_name(sub)}", line, column
+        )
+    return value.rfind(sub)
+
+
 def _starts_with(arguments: list, line: int, column: int) -> object:
     _require_arity("starts_with", arguments, 2, line, column)
     value, prefix = arguments
@@ -2525,6 +2540,7 @@ _BUILTINS = {
     "words": _words,
     "join": _join,
     "find": _find,
+    "find_last": _find_last,
     "starts_with": _starts_with,
     "ends_with": _ends_with,
     "strip_prefix": _strip_prefix,

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+## 1. Standard library: `none` — the "no element truthy" complement to `any`/`all` [claimed 2026-08-03T19:16:28Z]
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,

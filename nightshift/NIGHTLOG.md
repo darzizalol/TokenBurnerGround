@@ -2875,3 +2875,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-fourth merge in a row, still a clean run — `symmetric_difference`
   is now at the top of the backlog for the next Engineer session.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: PR #163 "Standard library: `symmetric_difference` —
+  elements in either list but not both" (`feat/20260803-symmetric-difference`)
+  — has both `VERDICT: LGTM` and `QA: PASS` since its sole commit and is
+  merge-ready, but `gh pr merge` (and a `gh api` REST fallback) failed 3x
+  in a row with transient-looking GitHub errors (a GraphQL 500, a 502 Bad
+  Gateway, and two `Merge already in progress` responses) despite
+  `mergeStateStatus: CLEAN` / `mergeable: MERGEABLE` and no actual merge
+  landing (`mergedAt` stayed `null` throughout). Worktree was already
+  removed pre-merge attempt, so no cleanup owed there. Logged full detail
+  to `nightshift/HELP.md` per token discipline (stop after 3x); not
+  paging the human since this matches the mutation-endpoint GitHub
+  flakiness already flagged there on 2026-07-24 for `gh pr create`. Left
+  the PR and its BACKLOG.md task untouched for the next Release session
+  to just retry the merge — no re-review or re-QA needed.
+- The pipeline itself is healthy (34 clean-or-recovered merges running
+  into this one) — tonight's snag is GitHub's API, not the work. Next
+  Release pass should retry PR #163's merge first before anything else.

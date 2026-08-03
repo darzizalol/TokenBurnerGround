@@ -158,3 +158,38 @@ third task that would likely hit the identical wall.
 ## 2026-07-28 22:40:11 — orchestrator
 Claude CLI authentication failed during the engineer session (see logs/20260728-223905-engineer.log).
 Human: run 'claude' in a terminal and re-login. No agent can fix this.
+
+---
+
+## 2026-08-03T19:47Z — Release
+
+What's wrong: PR #163 (`feat/20260803-symmetric-difference`) has both
+`VERDICT: LGTM` and `QA: PASS` since its sole commit — merge-eligible —
+but `gh pr merge 163 --squash --delete-branch` failed 3x in a row with
+three different transient-looking errors: a GraphQL 500 ("Something went
+wrong while executing your query"), a 502 Bad Gateway from nginx, then
+twice more `Merge already in progress` (once via `gh api -X PUT
+.../merge`, once via `gh pr merge` again) even though `gh pr view 163`
+consistently shows `state: OPEN`, `mergedAt: null`, `mergeStateStatus:
+CLEAN`, `mergeable: MERGEABLE` — i.e. GitHub's REST/GraphQL merge
+endpoints are erroring or wedged but the PR itself is untouched, not
+actually mid-merge.
+
+What I tried: `gh pr merge` (x2, GraphQL), `gh api -X PUT .../merge`
+(REST), then polled `mergedAt` for ~20s waiting for an async completion
+that never landed. This is the same flavor of GitHub-API-500 flakiness
+logged on 2026-07-24 for `gh pr create` (see above), just hitting the
+merge endpoint instead of PR creation this time — looks account/repo-wide
+on the mutation side of the API rather than specific to this PR.
+
+What I did instead: stopping at 3 failed attempts per the token-discipline
+rule rather than continuing to retry. Left PR #163 open, untouched,
+worktree already cleaned up (`.worktrees/symmetric-difference` removed
+pre-merge per protocol, so nothing to re-clean). Not moving its BACKLOG.md
+task since it isn't actually done yet. Next Release session should just
+retry `gh pr merge 163 --squash --delete-branch` once — no re-review, no
+re-QA needed, both verdicts still stand since nothing has been pushed to
+the branch since they were posted. Not paging via `notify.sh` since this
+is the same class of transient GitHub outage already flagged to the human
+on 2026-07-24 (mutation-side 5xx errors), not a new credential/account/config
+issue requiring human hands.

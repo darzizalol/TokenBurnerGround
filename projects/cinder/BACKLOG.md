@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `reject` — `filter`'s inverse
+## 1. Standard library: `reject` — `filter`'s inverse [claimed 2026-08-03T14:43:12Z]
 
 Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
 complement of `filter` (`cinder/builtins.py:2127-2140`) — keeps every

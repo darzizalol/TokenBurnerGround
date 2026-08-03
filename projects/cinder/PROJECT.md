@@ -151,28 +151,29 @@ special-cased unary-minus-vs-`**` precedence, and guarding the same
 overflow/complex-result edge cases the `pow()` builtin already does),
 and its compound-assignment sibling `**=` (`x **= 2`, accepting
 index/dot-access targets like the rest of the arithmetic
-compound-assign family), and `sum_by` as the
+compound-assign family), `sum_by` as the
 `min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family's
 fold-by-key member (sum of `fn(item)` over a list, numbers-only like
-`sum` rather than `min_by`/`max_by`'s number-or-string key) — all once
-listed here as future work — have since landed. What remains
-plausible, not yet scoped beyond current `BACKLOG.md`: continued
-standard-library breadth, picked incrementally per `BACKLOG.md`'s own
-grooming — `reject` as `filter`'s predicate-inverted complement
-(mirroring how `omit`/`omit_by` already closed that same gap for
-`pick`/`pick_by`), `find_last` as `find`'s reverse-search counterpart
-for strings (the same kind of gap `find_last_index` just closed for
-lists, but via Python's `str.rfind`), `none` as the "no element
-truthy" complement to the existing `any`/`all` pair, `zip_object`
-to build a map straight from two parallel keys/values lists (the
-`zip`-side inverse of `from_entries`/`items`, without manually
-composing `from_entries(zip(keys, values))`), and
+`sum` rather than `min_by`/`max_by`'s number-or-string key), and
+`reject` as `filter`'s predicate-inverted complement (mirroring how
+`omit`/`omit_by` already closed that same gap for `pick`/`pick_by`) —
+all once listed here as future work — have since landed. What remains
+plausible, not yet scoped beyond current `BACKLOG.md`: `find_last` as
+`find`'s reverse-search counterpart for strings (the same kind of gap
+`find_last_index` just closed for lists, but via Python's `str.rfind`),
+`none` as the "no element truthy" complement to the existing `any`/`all`
+pair, `zip_object` to build a map straight from two parallel keys/values
+lists (the `zip`-side inverse of `from_entries`/`items`, without
+manually composing `from_entries(zip(keys, values))`),
 `symmetric_difference` as the fourth member of the `union`/
 `intersection`/`difference` set-ops trio (elements in exactly one of
-the two lists) — tasks 1 through 5 in current `BACKLOG.md` — and only
-much later, a bytecode VM if performance ever actually matters. The
-Architect should keep scoping these into `BACKLOG.md` incrementally —
-do not jump ahead of the current layer.
+the two lists), and a floor-division operator `//` (language depth
+rather than stdlib breadth — same precedence tier as `/`/`%`, closing
+the gap between true division and the awkward `floor(a / b)`) — tasks 1
+through 5 in current `BACKLOG.md` — and only much later, a bytecode VM
+if performance ever actually matters. The Architect should keep scoping
+these into `BACKLOG.md` incrementally — do not jump ahead of the
+current layer.
 
 ## History
 

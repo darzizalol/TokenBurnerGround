@@ -31,7 +31,7 @@ for, got {type_name}"`), but call `value.rfind(sub)` instead of
 the entire behavioral distinction between the two functions, exactly
 like `not is_truthy(...)` was the entire distinction between `reject`
 and `filter`. Register it in the builtins dict near `find`
-(`cinder/builtins.py:2483`, `"find": _find,`).
+(`cinder/builtins.py:2527`, `"find": _find,`).
 
 Acceptance criteria:
 - `find_last("abcabc", "a");` is `3` — the primary case, pin as the main
@@ -78,7 +78,7 @@ invert the truthiness check: `return not any(is_truthy(element) for
 element in value)` — the single inverted call is the entire behavioral
 distinction from `_any`, exactly like `reject` differed from `filter`
 by one inverted condition. Register it in the builtins dict near
-`any`/`all` (`cinder/builtins.py:2518-2519`, `"any": _any,` /
+`any`/`all` (`cinder/builtins.py:2560-2561`, `"any": _any,` /
 `"all": _all,`).
 
 Acceptance criteria:
@@ -115,7 +115,7 @@ inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
 `[key, value]` pairs) approached from the `zip` side instead of the
 `from_entries` side — `from_entries` (`cinder/builtins.py:277-`) already
 builds a map from a list of `[key, value]` pairs, and `zip`
-(`cinder/builtins.py:1922-1935`) already pairs up two parallel lists
+(`cinder/builtins.py:1947-1960`) already pairs up two parallel lists
 into `[[a, b], ...]`, but there's no single builtin that goes straight
 from two parallel lists to a map without manually composing
 `from_entries(zip(keys, values))`. This closes that ergonomic gap the
@@ -127,8 +127,8 @@ argument a `list` else `CinderRuntimeError` naming `zip_object` and
 argument, got {type_name}"`; second argument a `list` else
 `CinderRuntimeError` matching `"zip_object() requires a list as its
 second argument, got {type_name}"`), then reuse `_is_valid_key` (the
-same map-key validity check `frequencies` uses, see
-`cinder/builtins.py:2349-2352`) on each element of `keys` — a
+same map-key validity check `frequencies` uses, imported from
+`cinder/interpreter.py:993`) on each element of `keys` — a
 non-hashable key (a `list` or `map`) raises `CinderRuntimeError`
 matching `"{type_name} is not a valid map key"`, the exact message
 `frequencies` already raises, not a `zip_object()`-prefixed variant.
@@ -140,7 +140,7 @@ return a `dict` from the pairs, later keys overwriting earlier
 duplicates (matching every other map-building builtin's left-to-right
 last-write-wins behavior, e.g. `merge`/`from_entries`). Register it in
 the builtins dict near `from_entries`/`items`
-(`cinder/builtins.py:2461-2462`, `"items": _items,` /
+(`cinder/builtins.py:2502-2503`, `"items": _items,` /
 `"from_entries": _from_entries,`).
 
 Acceptance criteria:
@@ -195,7 +195,7 @@ directly — either way, the result is deduped per input side the same
 way `_difference` already dedupes (via `_dedupe`, `cinder/
 builtins.py:1308-1323`), not deduped again across the concatenation.
 Register it in the builtins dict near `union`/`intersection`/
-`difference` (`cinder/builtins.py:2556-2558`, `"union": _union,` /
+`difference` (`cinder/builtins.py:2572-2574`, `"union": _union,` /
 `"intersection": _intersection,` / `"difference": _difference,`).
 
 Acceptance criteria:
@@ -231,6 +231,84 @@ earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
 merged, `README.md`'s Builtins bullet needs `symmetric_difference`
 added near `union`/`intersection`/`difference` — leave that to the
 Architect's next grooming pass, not this task.
+
+---
+
+## 5. Floor division operator `//`
+
+Build: add a floor-division binary operator `//` to the language,
+closing the gap between `/` (true division, `cinder/interpreter.py:812`)
+and the `floor()` builtin — right now getting a floored quotient
+requires the awkward `floor(a / b)`, and there's no infix form at all.
+This is a language-depth task (lexer + token + parser + interpreter),
+the same shape as the recent `**` exponentiation operator, not a
+stdlib task like tasks 1-4 above.
+
+Model directly on how `**`/`STARSTAR` was added, reusing the exact same
+seams, but at `/`'s existing precedence tier instead of a new one (no
+`_power`-style right-associative rung is needed — floor division is
+left-associative, same tier as `/` and `%`):
+- `cinder/tokens.py`: add `SLASHSLASH = auto()` right after `SLASH = auto()`
+  (`cinder/tokens.py:54`). Do not add a `SLASHSLASHEQ` — a `//=`
+  compound-assignment form is deliberately out of scope for this task
+  (mirroring how `**=` was its own separate follow-up task after `**`
+  landed, not bundled into the same PR).
+- `cinder/lexer.py`: in `_op_or_compound_assign`
+  (`cinder/lexer.py:299-320`), add a branch for `char == "/" and
+  self._match("/")` that appends a `SLASHSLASH` token with lexeme
+  `"//"`, mirroring the existing `char == "*" and self._match("*")`
+  branch (`cinder/lexer.py:301-310`) but simpler — no nested `=` check,
+  since there's no `SLASHSLASHEQ`. Place this check before the existing
+  `_COMPOUND_ASSIGN_TOKENS[char]` unpacking is used for the plain `/`
+  path, exactly where the `*` branch sits relative to `STAR`. This does
+  not conflict with the block-comment check in
+  `_skip_whitespace_and_comments` (`cinder/lexer.py:132-143`), which
+  only special-cases `/*`, never `//` — a `//` in source is never
+  ambiguous with a comment starter.
+- `cinder/parser.py`: add `TokenType.SLASHSLASH` to the `_FACTOR` set
+  (`cinder/parser.py:159`, currently `{TokenType.STAR, TokenType.SLASH,
+  TokenType.PERCENT}`) so it's parsed at `_factor`
+  (`cinder/parser.py:895-901`) with the same left-associative loop as
+  `/`/`%` — no new parser method needed.
+- `cinder/interpreter.py`: in `_apply_binary_operator`
+  (`cinder/interpreter.py:790-834`), add a branch `if op ==
+  TokenType.SLASHSLASH: return self._divide_op(operator, left, right,
+  lambda a, b: a // b)` right next to the existing `TokenType.SLASH`
+  branch (`cinder/interpreter.py:812-813`) — reusing `_divide_op`
+  (`cinder/interpreter.py:909-918`) as-is gives floor division the same
+  type-check and division-by-zero guard `/` and `%` already have, for
+  free; the only new code is the one-line `a // b` branch, exactly like
+  `find_last` differed from `_find` by one call.
+
+Acceptance criteria:
+- `7 // 2;` is `3` — the primary case.
+- `-7 // 2;` is `-4` — floors toward negative infinity like Python's
+  `//`, not toward zero like a naive truncating division would give
+  (`-3`); this is the test that would catch an accidental `int(a / b)`
+  implementation instead of `a // b`.
+- `7.5 // 2;` is `3.0` — floor division on a `float` operand returns a
+  `float`, matching Python's own `//` type-promotion rule.
+- `6 // 2;` is `3` (exact, no remainder).
+- `7 // 0;` raises `CinderRuntimeError` with message `"division by zero
+  in '//'"` — same message shape `_divide_op` already produces for `/`
+  and `%`, just with `//`'s lexeme.
+- `"a" // 2;` (non-number operand) raises `CinderRuntimeError` naming
+  `'//'` and the operand types, matching `_divide_op`'s existing
+  type-error shape for `/`.
+- `2 ** 3 // 2;` is `4` — confirms `//` sits at the same precedence
+  tier as `/`/`%` (looser than `**`), evaluated left-to-right with
+  `*`/`/`/`%` when mixed, e.g. `8 // 2 * 2;` is `8` not `2`.
+- A standalone `//` followed by `=` (e.g. `x //= 1;`) is a `ParseError`,
+  not a silently-wrong parse — confirms no `SLASHSLASHEQ` token was
+  accidentally introduced.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s Operators
+bullet needs `//` added near the existing arithmetic operator list, and
+a note that a future `//=` compound-assign task remains open — leave
+both to the Architect's next grooming pass, not this task.
 
 ---
 

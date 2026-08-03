@@ -2924,3 +2924,19 @@ The morning paper: what shipped, what bounced, what's still open.
   endpoint is behaving normally again. `//=` (compound-assign for floor
   division) is now at the top of the backlog for the next Engineer
   session.
+
+- **Merged**: PR #165 "Compound assignment `//=` for floor division"
+  (`feat/20260803-floor-div-compound-assign`) — `SLASHSLASHEQ` token
+  added and wired into the existing dict-driven compound-assign
+  desugaring, mirroring `**=`'s addition; no interpreter changes
+  needed since `x //= 2` desugars to the existing `SLASHSLASH` binary
+  handling. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1825
+  tests passing), both after the sole commit — clean merge, no
+  bounces. Removed the `.worktrees/floor-div-compound-assign` worktree
+  before merging; `gh pr merge --squash --delete-branch` succeeded
+  cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-fifth merge in a row, still a clean run — `replace_first` is
+  now at the top of the backlog for the next Engineer session.

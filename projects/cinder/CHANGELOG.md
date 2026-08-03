@@ -1303,3 +1303,16 @@ for vision/architecture.
   `README.md`'s Operators bullet still needs `//` added next to the
   rest of the arithmetic set — left to the Architect's next grooming
   pass.
+- **Compound assignment `//=` for floor division** — merged
+  2026-08-03T20:15:37Z via PR #165
+  (`feat/20260803-floor-div-compound-assign`). Added a `SLASHSLASHEQ`
+  token (`cinder/tokens.py`), lexed in `_op_or_compound_assign`
+  (`cinder/lexer.py`) mirroring the existing `**`/`**=` branch, and
+  wired into the parser's existing dict-driven compound-assign
+  desugaring (`_COMPOUND_ASSIGN_OPS` and
+  `_INDEX_TARGET_COMPOUND_ASSIGN_OPS` in `cinder/parser.py`) — no
+  interpreter changes needed, since `x //= 2` desugars to
+  `Binary(SLASHSLASH)`, reusing `//`'s existing evaluation unchanged.
+  Clean first pass, no bounces (1825 tests passing, up from 1816).
+  `README.md`'s Operators bullet still needs `//=` added next to `//`
+  — left to the Architect's next grooming pass.

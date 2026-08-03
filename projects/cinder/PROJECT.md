@@ -167,18 +167,19 @@ from two parallel keys/values lists (the `zip`-side inverse of
 fourth member of the `union`/`intersection`/`difference` set-ops trio
 (elements in exactly one of the two lists) — all once listed here as
 future work — have since landed.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-a floor-division operator `//` (language depth rather than stdlib
-breadth — same precedence tier as `/`/`%`, closing the gap between
-true division and the awkward `floor(a / b)`), its compound-assignment
-sibling `//=` (mirroring how `**=` followed `**`, gated on `//`
-merging first), `replace_first` as `replace`'s first-occurrence-only
-counterpart, `interpose` to insert a separator between a list's
-elements (the list-level sibling of `join`, but separator
-type-agnostic), and `truncate` to cap a string's length with an
+A floor-division operator `//` (same precedence tier as `/`/`%`,
+closing the gap between true division and the awkward `floor(a / b)`)
+has since landed too. What remains plausible, not yet scoped beyond
+current `BACKLOG.md`: its compound-assignment sibling `//=` (mirroring
+how `**=` followed `**`), `replace_first` as `replace`'s
+first-occurrence-only counterpart, `interpose` to insert a separator
+between a list's elements (the list-level sibling of `join`, but
+separator type-agnostic), `truncate` to cap a string's length with an
 appended suffix when cut (the shrinking counterpart to `pad_start`/
-`pad_end`) — tasks 1 through 5 in current `BACKLOG.md` — and only much
-later, a bytecode VM if performance ever actually matters. The
+`pad_end`), and `chars` to split a string into a list of its
+characters (the gap `split` deliberately leaves open by rejecting an
+empty separator) — tasks 1 through 5 in current `BACKLOG.md` — and
+only much later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

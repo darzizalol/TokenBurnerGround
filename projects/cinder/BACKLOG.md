@@ -245,6 +245,49 @@ task.
 
 ---
 
+## 5. Standard library: `chars` — split a string into a list of its characters
+
+Build: add `chars(string)` to `cinder/builtins.py`. `split` deliberately
+raises `CinderRuntimeError` on an empty separator
+(`cinder/builtins.py:653-654`, `"split() separator must not be empty"`)
+rather than falling back to Python's `list(s)`-style per-character
+split, so there is currently no builtin way to turn a string into a
+list of its individual characters — needed to run any of the existing
+list builtins (`map`, `filter`, `reverse`, `sort`, ...) character-by-
+character over a string, today only reachable by hand-rolling a `for`
+loop and `push`-ing into a fresh list.
+
+Model directly on `_lines`/`_words`'s structure
+(`cinder/builtins.py:658-675`): same arity-1 check via
+`_require_arity("chars", arguments, 1, line, column)`, same single
+type check (the argument a `string` else `CinderRuntimeError` matching
+`"chars() requires a string, got {type_name}"`, same message shape
+`_lines`/`_words` use). Behavior once validated: return `list(value)`
+— Python's built-in per-character split, which already does the right
+thing for `""` (`list("")` is `[]`). Register it in the builtins dict
+right after `"words": _words,` (`cinder/builtins.py:2583`).
+
+Acceptance criteria:
+- `chars("abc");` is `["a", "b", "c"]`.
+- `chars("");` is `[]` — empty string, no characters.
+- `chars("a");` is `["a"]` — single character.
+- `chars(" a ");` is `[" ", "a", " "]` — whitespace is a character
+  too, not trimmed (contrast with `words`, which splits on and
+  discards whitespace).
+- `chars(5);` (non-string argument) raises `CinderRuntimeError` naming
+  `chars` and `number` in the message.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `lines`/`words`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `chars` added near `lines`/`words` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

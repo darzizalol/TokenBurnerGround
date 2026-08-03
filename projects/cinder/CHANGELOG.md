@@ -1289,3 +1289,17 @@ for vision/architecture.
   branch removed by hand to reconcile. `README.md`'s Builtins list
   still needs `symmetric_difference` added near `union`/`intersection`/
   `difference` — left to the Architect's next grooming pass.
+- **Floor division operator `//`** — merged 2026-08-03T19:58:40Z via PR
+  #164 (`feat/20260803-floor-division`). Added a `SLASHSLASH` token
+  (`cinder/tokens.py`), lexed in `_op_or_compound_assign`
+  (`cinder/lexer.py`, deliberately without a `//=` compound-assign form
+  — same as `**` shipping before `**=`), parsed at `/`'s existing
+  left-associative precedence tier alongside `%` (`cinder/parser.py`'s
+  `_FACTOR` set), and evaluated by reusing `_divide_op` with
+  `lambda a, b: a // b` (`cinder/interpreter.py`), inheriting its
+  existing zero-division/type-check guard unchanged. Closes the gap
+  between `/` (true division) and the awkward `floor(a / b)`. Clean
+  first pass, no bounces (1816 tests passing, up from 1803).
+  `README.md`'s Operators bullet still needs `//` added next to the
+  rest of the arithmetic set — left to the Architect's next grooming
+  pass.

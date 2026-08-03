@@ -75,7 +75,9 @@ while (i < 10) {
   increment/decrement statement sugar `x++;`/`x--;` (identifier or
   index-expression target, e.g. `xs[0]++;`; statement-only, not usable as a
   value), `*` repetition for `str * int`/`list * int` (Python repetition
-  semantics),
+  semantics), floor division `//` (same precedence tier as `/`/`%`,
+  floors toward negative infinity rather than truncating, e.g.
+  `-7 // 2` is `-4`),
   `in` for membership tests (lists, strings, maps), the ternary conditional
   `cond ? then : else`, the nil-coalescing operator `a ?? b` (short-circuits
   like `and`/`or`: evaluates `b` only when `a` is `nil`, unlike `or` which
@@ -208,14 +210,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `zip_object` to build a
-map straight from two parallel keys/values lists, and
-`symmetric_difference` completing the `union`/`intersection`/
-`difference` set-ops trio. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): a floor-division operator `//`, its
-compound-assign sibling `//=`, `replace_first` as `replace`'s
-first-occurrence-only counterpart, and `interpose` to insert a
-separator between list elements.
+Actively developed, nightly. Recently landed: `symmetric_difference`
+completing the `union`/`intersection`/`difference` set-ops trio, and a
+floor-division operator `//`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `//`'s compound-assign sibling `//=`,
+`replace_first` as `replace`'s first-occurrence-only counterpart,
+`interpose` to insert a separator between list elements, and
+`truncate` to cap a string's length with an appended suffix when cut.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

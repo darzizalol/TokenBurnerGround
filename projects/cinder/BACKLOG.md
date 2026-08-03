@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find_last` — reverse-search counterpart to `find`
+## 1. Standard library: `find_last` — reverse-search counterpart to `find` [claimed 2026-08-03T14:58:11Z]
 
 Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
 string search analog of what `find_last_index` just did for lists —

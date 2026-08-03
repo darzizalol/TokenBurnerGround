@@ -158,13 +158,17 @@ per `BACKLOG.md`'s own grooming — `sum_by` as the `min_by`/`max_by`/
 fold-by-key member (sum of `fn(item)` over a list, numbers-only like
 `sum` rather than `min_by`/`max_by`'s number-or-string key), `reject` as
 `filter`'s predicate-inverted complement (mirroring how `omit`/`omit_by`
-already closed that same gap for `pick`/`pick_by`), and `find_last` as
+already closed that same gap for `pick`/`pick_by`), `find_last` as
 `find`'s reverse-search counterpart for strings (the same kind of gap
-`find_last_index` just closed for lists, but via Python's `str.rfind`)
-— tasks 3, 4, and 5 in current `BACKLOG.md` — and only much later, a
-bytecode VM if performance ever actually matters. The Architect should
-keep scoping these into `BACKLOG.md` incrementally — do not jump ahead
-of the current layer.
+`find_last_index` just closed for lists, but via Python's `str.rfind`),
+`none` as the "no element truthy" complement to the existing `any`/`all`
+pair, and `zip_object` to build a map straight from two parallel
+keys/values lists (the `zip`-side inverse of `from_entries`/`items`,
+without manually composing `from_entries(zip(keys, values))`) — tasks
+3 through 7 in current `BACKLOG.md` — and only much later, a bytecode VM
+if performance ever actually matters. The Architect should keep scoping
+these into `BACKLOG.md` incrementally — do not jump ahead of the current
+layer.
 
 ## History
 

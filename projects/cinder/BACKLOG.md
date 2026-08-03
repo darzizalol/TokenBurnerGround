@@ -359,6 +359,120 @@ next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+
+Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
+the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
+`any`/`all` (`cinder/builtins.py:1208-1225`) take a single list argument
+and test each element's own truthiness directly (no predicate function
+involved), so `none` follows that same shape rather than the
+predicate-taking shape `reject`/`filter` use. `none([])` is `true` by
+the same vacuous-truth logic Python's own `all([])` already gives
+`all()`/`any()` their empty-list behavior.
+
+Model directly on `_all`'s structure line for line (arity 1, argument
+must be a `list` else `CinderRuntimeError` naming `none` and
+`type_name`, matching `"none() requires a list, got {type_name}"`), but
+invert the truthiness check: `return not any(is_truthy(element) for
+element in value)` — the single inverted call is the entire behavioral
+distinction from `_any`, exactly like `reject` differed from `filter`
+by one inverted condition. Register it in the builtins dict near
+`any`/`all` (`cinder/builtins.py:2518-2519`, `"any": _any,` /
+`"all": _all,`).
+
+Acceptance criteria:
+- `none([false, nil, false]);` is `true` — no truthy element, primary
+  case.
+- `none([false, 1, nil]);` is `false` — one truthy element (`1`) is
+  enough to make it false; contrast with `any` on the same input
+  returning `true` and `all` returning `false`, to prove `none` isn't
+  accidentally aliased to either.
+- `none([]);` is `true` — vacuous truth on an empty list, mirroring
+  `all([])` being `true`.
+- `none([0, "", nil, false]);` is `true` — pins that Cinder's actual
+  falsy set (`nil`/`false` only) is what's tested, not Python's broader
+  falsy set; `0` and `""` are truthy in Cinder so if either were
+  mistakenly treated as falsy this test would catch it.
+- `none(5);` (a non-list argument) raises `CinderRuntimeError` naming
+  `none` and `number` in the message.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `any`/`all`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `none` added near `any`/`all` — leave that to the Architect's next
+grooming pass, not this task.
+
+---
+
+## 7. Standard library: `zip_object` — build a map from parallel keys/values lists
+
+Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
+inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
+`[key, value]` pairs) approached from the `zip` side instead of the
+`from_entries` side — `from_entries` (`cinder/builtins.py:277-`) already
+builds a map from a list of `[key, value]` pairs, and `zip`
+(`cinder/builtins.py:1922-1935`) already pairs up two parallel lists
+into `[[a, b], ...]`, but there's no single builtin that goes straight
+from two parallel lists to a map without manually composing
+`from_entries(zip(keys, values))`. This closes that ergonomic gap the
+same way `frequencies` closed the gap between `group_by` and `len`.
+
+Model the arity/type checks on `_zip`'s structure (arity 2, first
+argument a `list` else `CinderRuntimeError` naming `zip_object` and
+`type_name`, matching `"zip_object() requires a list as its first
+argument, got {type_name}"`; second argument a `list` else
+`CinderRuntimeError` matching `"zip_object() requires a list as its
+second argument, got {type_name}"`), then reuse `_is_valid_key` (the
+same map-key validity check `frequencies` uses, see
+`cinder/builtins.py:2349-2352`) on each element of `keys` — a
+non-hashable key (a `list` or `map`) raises `CinderRuntimeError`
+matching `"{type_name} is not a valid map key"`, the exact message
+`frequencies` already raises, not a `zip_object()`-prefixed variant.
+Pair via
+Python's `zip(keys, values)` exactly like `_zip` does — when the two
+lists have different lengths, stop at the shorter one (matching `zip`'s
+own truncating behavior, not an error and not padding). Build and
+return a `dict` from the pairs, later keys overwriting earlier
+duplicates (matching every other map-building builtin's left-to-right
+last-write-wins behavior, e.g. `merge`/`from_entries`). Register it in
+the builtins dict near `from_entries`/`items`
+(`cinder/builtins.py:2461-2462`, `"items": _items,` /
+`"from_entries": _from_entries,`).
+
+Acceptance criteria:
+- `zip_object(["a", "b", "c"], [1, 2, 3]);` is `{"a": 1, "b": 2, "c":
+  3}` — the primary case, pin as the main regression test.
+- `zip_object(["a", "b"], [1, 2, 3]);` is `{"a": 1, "b": 2}` — the
+  longer `values` list is truncated to match the shorter `keys` list,
+  mirroring `zip`'s own truncating behavior; `zip_object(["a", "b",
+  "c"], [1, 2]);` is `{"a": 1, "b": 2}` in the other direction.
+- `zip_object([], []);` is `{}` — both empty.
+- `zip_object(["a", "a", "b"], [1, 2, 3]);` is `{"a": 2, "b": 3}` — a
+  duplicate key takes the later value, last-write-wins like
+  `merge`/`from_entries`.
+- `zip_object([[1, 2]], [1]);` (a non-hashable key, a `list`) raises
+  `CinderRuntimeError` with message `"list is not a valid map key"` —
+  matching `frequencies`' exact message shape for the same error, not a
+  `zip_object()`-prefixed message.
+- `zip_object(5, [1]);` (a non-list first argument) raises
+  `CinderRuntimeError` naming `zip_object` and `number` in the message.
+- `zip_object(["a"], 5);` (a non-list second argument) raises
+  `CinderRuntimeError` naming `zip_object` and `number` in the message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `from_entries`/
+`items`, see current line numbers — shift if earlier tasks this cycle
+landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `zip_object` added near `from_entries`/`items` —
+leave that to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

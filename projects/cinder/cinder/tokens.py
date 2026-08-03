@@ -50,6 +50,7 @@ class TokenType(Enum):
     MINUSMINUS = auto()
     STAR = auto()
     STARSTAR = auto()
+    STARSTAREQ = auto()
     SLASH = auto()
     PERCENT = auto()
     EQ = auto()

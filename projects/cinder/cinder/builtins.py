@@ -1629,6 +1629,31 @@ def _min_max_by(name: str, arguments: list, line: int, column: int, *, want_min:
     return best_item
 
 
+def _sum_by(arguments: list, line: int, column: int) -> object:
+    _require_arity("sum_by", arguments, 2, line, column)
+    items, fn = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"sum_by() requires a list as its first argument, got {type_name(items)}",
+            line, column,
+        )
+    if not _is_callable(fn):
+        raise CinderRuntimeError(
+            f"sum_by() requires a function as its second argument, got {type_name(fn)}",
+            line, column,
+        )
+    total = 0
+    for item in items:
+        result = call_value(fn, [item], line, column)
+        if not _is_numeric(result):
+            raise CinderRuntimeError(
+                f"sum_by() requires a function returning numbers, got {type_name(result)}",
+                line, column,
+            )
+        total = total + result
+    return total
+
+
 def _min_by(arguments: list, line: int, column: int) -> object:
     return _min_max_by("min_by", arguments, line, column, want_min=True)
 
@@ -2509,6 +2534,7 @@ _BUILTINS = {
     "gcd": _gcd,
     "lcm": _lcm,
     "sum": _sum,
+    "sum_by": _sum_by,
     "product": _product,
     "mean": _mean,
     "median": _median,

@@ -2092,6 +2092,49 @@ class TestSum(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestSumBy(unittest.TestCase):
+    def test_sum_by_doubles_and_sums(self):
+        result = run("let result = sum_by([1, 2, 3], fn(n) { return n * 2; });").get("result")
+        self.assertEqual(result, 12)
+
+    def test_sum_by_empty_list_is_zero_and_fn_not_called(self):
+        calls = run(
+            "let calls = 0; "
+            "let result = sum_by([], fn(n) { calls = calls + 1; return n; });"
+        )
+        self.assertEqual(calls.get("result"), 0)
+        self.assertEqual(calls.get("calls"), 0)
+
+    def test_sum_by_sums_function_result_not_element(self):
+        result = run(
+            'let result = sum_by(["a", "bb", "ccc"], fn(s) { return len(s); });'
+        ).get("result")
+        self.assertEqual(result, 6)
+
+    def test_sum_by_non_numeric_result_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('sum_by([1, 2], fn(n) { return "x"; });')
+        self.assertIn("sum_by", str(ctx.exception))
+        self.assertIn("string", str(ctx.exception))
+
+    def test_sum_by_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("sum_by(5, fn(n) { return n; });")
+        self.assertIn("sum_by", str(ctx.exception))
+        self.assertIn("int", str(ctx.exception))
+
+    def test_sum_by_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("sum_by([1, 2], 5);")
+        self.assertIn("sum_by", str(ctx.exception))
+        self.assertIn("int", str(ctx.exception))
+
+    def test_sum_by_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("sum_by([1]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestProduct(unittest.TestCase):
     def test_product_of_ints(self):
         result = run("let result = product([1, 2, 3, 4]);").get("result")

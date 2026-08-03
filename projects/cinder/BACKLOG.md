@@ -15,7 +15,7 @@ a later task while an earlier one is unclaimed/open.
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
-`any`/`all` (`cinder/builtins.py:1208-1225`) take a single list argument
+`any`/`all` (`cinder/builtins.py:1223-1239`) take a single list argument
 and test each element's own truthiness directly (no predicate function
 involved), so `none` follows that same shape rather than the
 predicate-taking shape `reject`/`filter` use. `none([])` is `true` by
@@ -29,7 +29,7 @@ invert the truthiness check: `return not any(is_truthy(element) for
 element in value)` — the single inverted call is the entire behavioral
 distinction from `_any`, exactly like `reject` differed from `filter`
 by one inverted condition. Register it in the builtins dict near
-`any`/`all` (`cinder/builtins.py:2560-2561`, `"any": _any,` /
+`any`/`all` (`cinder/builtins.py:2576-2577`, `"any": _any,` /
 `"all": _all,`).
 
 Acceptance criteria:
@@ -66,7 +66,7 @@ inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
 `[key, value]` pairs) approached from the `zip` side instead of the
 `from_entries` side — `from_entries` (`cinder/builtins.py:277-`) already
 builds a map from a list of `[key, value]` pairs, and `zip`
-(`cinder/builtins.py:1947-1960`) already pairs up two parallel lists
+(`cinder/builtins.py:1962-1975`) already pairs up two parallel lists
 into `[[a, b], ...]`, but there's no single builtin that goes straight
 from two parallel lists to a map without manually composing
 `from_entries(zip(keys, values))`. This closes that ergonomic gap the
@@ -91,7 +91,7 @@ return a `dict` from the pairs, later keys overwriting earlier
 duplicates (matching every other map-building builtin's left-to-right
 last-write-wins behavior, e.g. `merge`/`from_entries`). Register it in
 the builtins dict near `from_entries`/`items`
-(`cinder/builtins.py:2502-2503`, `"items": _items,` /
+(`cinder/builtins.py:2517-2518`, `"items": _items,` /
 `"from_entries": _from_entries,`).
 
 Acceptance criteria:
@@ -129,7 +129,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`
-(`cinder/builtins.py:1358-1374`) — those three cover "everything",
+(`cinder/builtins.py:1373-1389`) — those three cover "everything",
 "only in both", and "only in the first", but not the classic fourth
 member, "in exactly one of the two" (the symmetric difference, `A ^ B`
 in set notation). Lists are treated as unordered sets, exactly like the
@@ -138,15 +138,15 @@ other three.
 Model directly on `_union`/`_difference`'s structure: reuse
 `_require_two_lists("symmetric_difference", arguments, line, column)`
 (the same arity/type-check helper all three existing set-ops share, see
-`cinder/builtins.py:1338-1351`) for argument validation, then compute it
+`cinder/builtins.py:1353-1365`) for argument validation, then compute it
 as `_difference`'s body applied in both directions and concatenated:
 `_difference([list1, list2], ...) + _difference([list2, list1], ...)`,
 or equivalently inline the two `_dedupe`-and-filter comprehensions
 directly — either way, the result is deduped per input side the same
 way `_difference` already dedupes (via `_dedupe`, `cinder/
-builtins.py:1308-1323`), not deduped again across the concatenation.
+builtins.py:1323-1339`), not deduped again across the concatenation.
 Register it in the builtins dict near `union`/`intersection`/
-`difference` (`cinder/builtins.py:2572-2574`, `"union": _union,` /
+`difference` (`cinder/builtins.py:2588-2590`, `"union": _union,` /
 `"intersection": _intersection,` / `"difference": _difference,`).
 
 Acceptance criteria:

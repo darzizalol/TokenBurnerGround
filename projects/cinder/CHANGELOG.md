@@ -1229,3 +1229,12 @@ for vision/architecture.
   paths unchanged. Covers identifier, index, and dot-access targets,
   const-target errors, and type errors. Clean first pass, no bounces
   (1752 tests passing, up from 1744).
+- **Standard library: `sum_by`** — merged 2026-08-03T14:36:22Z via PR
+  #158 (`feat/20260803-sum-by`). Added `sum_by(list, fn)` to
+  `cinder/builtins.py`, closing the last gap in the `min_by`/`max_by`/
+  `sort_by`/`group_by`/`count_by`/`distinct_by` family — a numbers-only
+  fold-by-key counterpart to `sum`, modeled on `_min_max_by`'s arity/
+  type checks and `_sum`'s accumulation, with empty list well-defined
+  as `0` (mirroring `sum([])`) rather than erroring like `min_by`/
+  `max_by` do. Clean first pass, no bounces (1759 tests passing, up
+  from 1752).

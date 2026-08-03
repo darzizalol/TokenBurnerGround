@@ -11,63 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sum_by` — sum of a function applied to each element [claimed 2026-08-03T14:30:22Z]
-
-Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
-fold-by-key counterpart that closes the last gap in the
-`min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family —
-all of those already take a list plus a key/predicate function, but
-there's no by-key equivalent of `sum`. Unlike `min_by`/`max_by`
-(`cinder/builtins.py:1605-1637`), which accept a function returning all
-numbers *or* all strings (since min/max are well-defined on either),
-`sum_by` is numbers-only, matching `sum` itself
-(`cinder/builtins.py:1047-1061`) — summing strings isn't well-defined
-the way `+` isn't string concatenation via `sum`.
-
-Model the arity/type checks on `_min_max_by`'s structure (arity 2, first
-argument a `list` else `CinderRuntimeError` naming `sum_by` and
-`type_name`, matching `"sum_by() requires a list as its first argument,
-got {type_name}"`; second argument must be `_is_callable` else
-`CinderRuntimeError` matching `"sum_by() requires a function as its
-second argument, got {type_name}"`), but fold like `_sum` does: call
-`call_value(fn, [item], line, column)` for each element, check
-`_is_numeric` on each result (else `CinderRuntimeError` matching
-`"sum_by() requires a function returning numbers, got {type_name}"`),
-and accumulate starting from `0`. Unlike `min_by`/`max_by`, an empty
-list is well-defined (mirrors `sum([])` being `0`, not an error) — do
-not add a non-empty check. Register it in the builtins dict near `sum`/
-`product` (`cinder/builtins.py:2511-2512`, `"sum": _sum,` /
-`"product": _product,`).
-
-Acceptance criteria:
-- `sum_by([1, 2, 3], fn(n) { return n * 2; });` is `12` — the primary
-  case, pin as the main regression test.
-- `sum_by([], fn(n) { return n; });` is `0` and the function is never
-  called — mirrors `sum([])`'s well-defined empty case, not an error
-  (contrast with `min_by`/`max_by`, which do error on empty lists).
-- `sum_by(["a", "bb", "ccc"], fn(s) { return len(s); });` is `6` — the
-  function's return value, not the element itself, is what's summed.
-- `sum_by([1, 2], fn(n) { return "x"; });` (function returns a
-  non-number) raises `CinderRuntimeError` naming `sum_by` and `string`
-  in the message — contrast with `min_by`/`max_by`, which would accept
-  an all-string result; `sum_by` never does.
-- `sum_by(5, fn(n) { return n; });` (a non-list first argument) raises
-  `CinderRuntimeError` naming `sum_by` and `number` in the message.
-- `sum_by([1, 2], 5);` (a non-function second argument) raises
-  `CinderRuntimeError` naming `sum_by` and `number` in the message.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `sum`/`product`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `sum_by` added near `sum`/`product` — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `reject` — `filter`'s inverse
+## 1. Standard library: `reject` — `filter`'s inverse
 
 Build: add `reject(list, fn)` to `cinder/builtins.py`, the predicate
 complement of `filter` (`cinder/builtins.py:2127-2140`) — keeps every
@@ -121,7 +65,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `find_last` — reverse-search counterpart to `find`
+## 2. Standard library: `find_last` — reverse-search counterpart to `find`
 
 Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
 string search analog of what `find_last_index` just did for lists —
@@ -140,7 +84,7 @@ for, got {type_name}"`), but call `value.rfind(sub)` instead of
 `value.find(sub)` — the single-call difference from `_find`'s body is
 the entire behavioral distinction between the two functions, exactly
 like `not is_truthy(...)` was the entire distinction between `reject`
-and `filter` in task 2. Register it in the builtins dict near `find`
+and `filter` in task 1. Register it in the builtins dict near `find`
 (`cinder/builtins.py:2483`, `"find": _find,`).
 
 Acceptance criteria:
@@ -170,7 +114,7 @@ next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+## 3. Standard library: `none` — the "no element truthy" complement to `any`/`all`
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
@@ -218,7 +162,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 4. Standard library: `zip_object` — build a map from parallel keys/values lists
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of

@@ -2780,3 +2780,22 @@ The morning paper: what shipped, what bounced, what's still open.
   cycle's round trip — the exponentiation feature pair (`**` and `**=`)
   is now fully shipped. `sum_by` is now at the top of the backlog for
   the next Engineer session.
+
+- **Merged**: PR #158 "Standard library: `sum_by` — sum of a function
+  applied to each element" (`feat/20260803-sum-by`) — `sum_by(list, fn)`
+  added to `cinder/builtins.py`, closing the last gap in the `min_by`/
+  `max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family: a
+  numbers-only fold-by-key counterpart to `sum`, modeled on
+  `_min_max_by`'s arity/type checks and `_sum`'s accumulation, empty
+  list well-defined as `0` (mirroring `sum([])`) rather than erroring
+  like `min_by`/`max_by`. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (1759 tests passing), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/sum-by` worktree before
+  merging. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-5 to 1-4), including fixing one stale internal
+  cross-reference (`find_last`'s task pointed at `reject` by the old
+  number 2, now 1).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirtieth merge in a row, another clean first pass — `reject` is now
+  at the top of the backlog for the next Engineer session.

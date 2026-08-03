@@ -346,6 +346,40 @@ class TestOperators(unittest.TestCase):
             ],
         )
 
+    def test_slashslasheq_is_one_token(self):
+        # "//=" must lex as one SLASHSLASHEQ token, not SLASHSLASH then EQ.
+        tokens = tokenize("a //= b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.SLASHSLASHEQ,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(tokens[1].lexeme, "//=")
+        # "//" without a trailing "=" still lexes as SLASHSLASH, unaffected.
+        self.assertEqual(
+            types(tokenize("a // b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.SLASHSLASH,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        # A plain "/=" still lexes as SLASHEQ, unaffected by the new token.
+        self.assertEqual(
+            types(tokenize("a /= b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.SLASHEQ,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
     def test_lshift_does_not_collide_with_lteq_or_lt(self):
         # "<<" must lex as one LSHIFT token, not two LT tokens.
         tokens = tokenize("1 << 2")

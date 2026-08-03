@@ -880,6 +880,42 @@ class TestCompoundAssignment(unittest.TestCase):
                 interpreter.execute(statement, env)
         self.assertEqual(env.get("x"), 2)
 
+    def test_slashslash_eq(self):
+        env = run("let x = 7; x //= 2; x;")
+        self.assertEqual(env.get("x"), 3)
+
+    def test_slashslash_eq_floors_toward_negative_infinity(self):
+        env = run("let x = -7; x //= 2; x;")
+        self.assertEqual(env.get("x"), -4)
+
+    def test_slashslash_eq_on_index_target(self):
+        env = run("let xs = [7]; xs[0] //= 2; xs[0];")
+        self.assertEqual(env.get("xs"), [3])
+
+    def test_slashslash_eq_on_dot_access_target(self):
+        env = run('let m = {"a": 7}; m.a //= 2; m.a;')
+        self.assertEqual(env.get("m"), {"a": 3})
+
+    def test_const_slashslash_eq_raises_and_leaves_value_unchanged(self):
+        env = Environment()
+        interpreter = Interpreter()
+        statements = parse_program(tokenize("const x = 7; x //= 2;"))
+        with self.assertRaises(CinderRuntimeError):
+            for statement in statements:
+                interpreter.execute(statement, env)
+        self.assertEqual(env.get("x"), 7)
+
+    def test_slashslash_eq_division_by_zero(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let x = 7; x //= 0;")
+        self.assertIn("division by zero in '//'", str(ctx.exception))
+
+    def test_slash_eq_still_works_alongside_slashslash_eq(self):
+        # A plain "/=" must still parse and behave as before — confirms the
+        # new SLASHSLASHEQ token doesn't shadow or interfere with "/=".
+        env = run("let x = 7; x /= 2; x;")
+        self.assertEqual(env.get("x"), 3.5)
+
     def test_compound_assignment_to_undefined_variable_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("x += 1;")

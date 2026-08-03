@@ -2410,6 +2410,34 @@ class TestAll(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestNone(unittest.TestCase):
+    def test_none_true_when_no_element_truthy(self):
+        self.assertIs(
+            run("let result = none([false, nil, false]);").get("result"), True
+        )
+
+    def test_none_false_when_an_element_truthy(self):
+        self.assertIs(run("let result = none([false, 1, nil]);").get("result"), False)
+
+    def test_none_of_empty_list_is_true(self):
+        self.assertIs(run("let result = none([]);").get("result"), True)
+
+    def test_none_uses_cinder_falsy_set_not_python_falsy_set(self):
+        self.assertIs(
+            run('let result = none([0, "", nil, false]);').get("result"), False
+        )
+
+    def test_none_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("none(5);")
+        self.assertIn("none", str(ctx.exception))
+        self.assertIn("int", str(ctx.exception))
+
+    def test_none_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("none();")
+
+
 class TestContains(unittest.TestCase):
     def test_contains_in_list(self):
         self.assertIs(run("let result = contains([1, 2, 3], 2);").get("result"), True)

@@ -1240,6 +1240,16 @@ def _all(arguments: list, line: int, column: int) -> object:
     return all(is_truthy(element) for element in value)
 
 
+def _none(arguments: list, line: int, column: int) -> object:
+    _require_arity("none", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"none() requires a list, got {type_name(value)}", line, column
+        )
+    return not any(is_truthy(element) for element in value)
+
+
 def _contains(arguments: list, line: int, column: int) -> object:
     _require_arity("contains", arguments, 2, line, column)
     collection, item = arguments
@@ -2575,6 +2585,7 @@ _BUILTINS = {
     "mode": _mode,
     "any": _any,
     "all": _all,
+    "none": _none,
     "contains": _contains,
     "index_of": _index_of,
     "last_index_of": _last_index_of,

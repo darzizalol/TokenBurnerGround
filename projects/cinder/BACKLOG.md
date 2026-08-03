@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `sum_by` — sum of a function applied to each element
+## 1. Standard library: `sum_by` — sum of a function applied to each element [claimed 2026-08-03T14:30:22Z]
 
 Build: add `sum_by(list, fn)` to `cinder/builtins.py`, the numeric
 fold-by-key counterpart that closes the last gap in the

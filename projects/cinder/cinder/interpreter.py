@@ -808,7 +808,7 @@ class Interpreter:
                 return repeated
             return self._numeric_op(operator, left, right, lambda a, b: a * b)
         if op == TokenType.STARSTAR:
-            return self._numeric_op(operator, left, right, lambda a, b: a ** b)
+            return self._power_op(operator, left, right)
         if op == TokenType.SLASH:
             return self._divide_op(operator, left, right, lambda a, b: a / b)
         if op == TokenType.PERCENT:
@@ -874,6 +874,37 @@ class Interpreter:
                 operator.column,
             )
         return fn(left, right)
+
+    def _power_op(self, operator: Token, left, right):
+        if not (_is_number(left) and _is_number(right)):
+            raise CinderRuntimeError(
+                f"unsupported operand types for {operator.lexeme!r}: "
+                f"{type_name(left)} and {type_name(right)}",
+                operator.line,
+                operator.column,
+            )
+        try:
+            result = left ** right
+        except ZeroDivisionError:
+            raise CinderRuntimeError(
+                f"{operator.lexeme!r} cannot raise zero to a negative power",
+                operator.line,
+                operator.column,
+            ) from None
+        except OverflowError:
+            raise CinderRuntimeError(
+                f"{operator.lexeme!r} result is too large",
+                operator.line,
+                operator.column,
+            ) from None
+        if isinstance(result, complex):
+            raise CinderRuntimeError(
+                f"{operator.lexeme!r} requires a non-negative base for fractional "
+                "exponents, no complex numbers",
+                operator.line,
+                operator.column,
+            )
+        return result
 
     def _divide_op(self, operator: Token, left, right, fn):
         if not (_is_number(left) and _is_number(right)):

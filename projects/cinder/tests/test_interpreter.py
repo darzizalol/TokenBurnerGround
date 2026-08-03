@@ -89,6 +89,20 @@ class TestExponentiation(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate('2 ** "a"')
 
+    def test_zero_to_negative_power_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("0 ** -1")
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("0.0 ** -1")
+
+    def test_overflow_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("2.0 ** 100000")
+
+    def test_complex_result_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("(-8) ** 0.5")
+
     def test_binds_tighter_than_multiplication(self):
         self.assertEqual(evaluate("2 ** 3 * 4"), 32)
         self.assertEqual(evaluate("2 * 3 ** 2"), 18)

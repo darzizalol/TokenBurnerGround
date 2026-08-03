@@ -298,6 +298,29 @@ def _from_entries(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _zip_object(arguments: list, line: int, column: int) -> object:
+    _require_arity("zip_object", arguments, 2, line, column)
+    keys, values = arguments
+    if not isinstance(keys, list):
+        raise CinderRuntimeError(
+            f"zip_object() requires a list as its first argument, got {type_name(keys)}",
+            line, column,
+        )
+    if not isinstance(values, list):
+        raise CinderRuntimeError(
+            f"zip_object() requires a list as its second argument, got {type_name(values)}",
+            line, column,
+        )
+    result: dict = {}
+    for key, value in zip(keys, values):
+        if not _is_valid_key(key):
+            raise CinderRuntimeError(
+                f"{type_name(key)} is not a valid map key", line, column
+            )
+        result[key] = value
+    return result
+
+
 def _get(arguments: list, line: int, column: int) -> object:
     _require_arity("get", arguments, 3, line, column)
     target, key, default = arguments
@@ -2526,6 +2549,7 @@ _BUILTINS = {
     "values": _values,
     "items": _items,
     "from_entries": _from_entries,
+    "zip_object": _zip_object,
     "get": _get,
     "get_in": _get_in,
     "pluck": _pluck,

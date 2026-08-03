@@ -149,8 +149,10 @@ are the fuel — burn them on building, not on flailing:
 | `nightshift/` | Orchestrator scripts, cron setup, role prompts. |
 | `nightshift/NIGHTLOG.md` | One entry per night: what shipped, what failed. |
 | `nightshift/HELP.md` | Escalations to the human, and human replies. |
-| `nightshift/notify.sh` | Pings the human (desktop + email + optional phone push). Use per the human-intervention rule. |
+| `nightshift/notify.sh` | Pings the human (desktop + email + Telegram + optional phone push). Use per the human-intervention rule. |
 | `nightshift/email.sh` | Emails the human via Gmail SMTP. Credentials live in gitignored `nightshift/.env` — never commit them. |
+| `nightshift/telegram.sh` | Messages the human via Telegram bot; same `"Subject" "Body"` contract as `email.sh`, auto-splits past Telegram's 4096-char cap. Credentials live in gitignored `nightshift/.env` — never commit them. |
+| `nightshift/shift-watchdog.sh` | Cron at 07:05. Silent on a normal morning; alerts if no clock-out report was sent, i.e. the shift never ran. |
 | `nightshift/token-ledger.py` | Mines the local claude transcript store for night-shift sessions; writes `tokens.csv` and regenerates the animated burn odometer `burn.svg` embedded in the root README. |
 | `nightshift/update-ledger.sh` | Refreshes + commits the odometer. Runs via cron at 07:15 (after each shift) and again at clock-in; do not commit `burn.svg`/`tokens.csv` by hand. |
 | `nightshift/logs/` | Raw session logs (gitignored). |

@@ -4,8 +4,10 @@
 #
 # Channels:
 #   1. Linux desktop notification (notify-send) — always attempted.
-#   2. Email via Web3Forms (email.sh) — if WEB3FORMS_KEY is set in nightshift/.env.
-#   3. Phone push via ntfy.sh — only if NTFY_TOPIC is set in nightshift/.env.
+#   2. Email via Gmail SMTP (email.sh) — if the GMAIL_* keys are in nightshift/.env.
+#   3. Telegram bot (telegram.sh) — if TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+#      are set in nightshift/.env.
+#   4. Phone push via ntfy.sh — only if NTFY_TOPIC is set in nightshift/.env.
 #      (Install the ntfy app, subscribe to your topic, done. No account needed.)
 #
 # This script never fails the caller: notification channels are best-effort.
@@ -28,7 +30,8 @@ if command -v notify-send >/dev/null 2>&1; then
   notify-send --urgency=critical --app-name="Night Shift" "🌙 $TITLE" "$MSG" 2>/dev/null || true
 fi
 
-"$DIR/email.sh" "⚠️ $TITLE" "$MSG" >/dev/null 2>&1 || true
+"$DIR/email.sh"    "⚠️ $TITLE" "$MSG" >/dev/null 2>&1 || true
+"$DIR/telegram.sh" "⚠️ $TITLE" "$MSG" >/dev/null 2>&1 || true
 
 if [ -n "${NTFY_TOPIC:-}" ]; then
   curl -fsS -m 10 -H "Title: $TITLE" -H "Priority: high" -H "Tags: crescent_moon" \

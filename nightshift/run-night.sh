@@ -40,10 +40,21 @@ if [ -e "$LOCK" ] && kill -0 "$(cat "$LOCK" 2>/dev/null)" 2>/dev/null; then
 fi
 echo $$ > "$LOCK"
 
-# --- shift start/end emails ---------------------------------------------------
+# --- shift start/end reports --------------------------------------------------
 SHIFT_START="$(date '+%F %T')"
 STARTED=0
 REPORT_SENT=0
+# Epoch of the last clock-out report. shift-watchdog.sh reads it at 07:05 to
+# tell a quiet night apart from a shift that never ran.
+STAMP="$DIR/.last-report"
+
+# One body, every channel. Composing the report once is what keeps the email
+# and the Telegram message saying the same thing; each transport handles its
+# own formatting and failure modes, and neither can fail the shift.
+announce() {
+  "$DIR/email.sh"    "$1" "$2" >> "$NIGHT_LOG" 2>&1
+  "$DIR/telegram.sh" "$1" "$2" >> "$NIGHT_LOG" 2>&1
+}
 
 send_report() {
   [ "$STARTED" = 1 ] || return 0
@@ -52,8 +63,10 @@ send_report() {
   cd "$REPO" 2>/dev/null || return 0
   local commits prs
   commits=$(git log --since="$SHIFT_START" --pretty='- %s' 2>/dev/null | head -40)
-  prs=$(gh pr list 2>/dev/null | head -20)
-  "$DIR/email.sh" "🌅 Night shift report — $(date '+%F %H:%M')" \
+  # One PR per line: gh's default table is columnar and wraps badly on a phone.
+  prs=$(gh pr list --json number,title --jq '.[] | "- #\(.number) \(.title)"' 2>/dev/null | head -20)
+  [ -n "$prs" ] || prs=$(gh pr list 2>/dev/null | head -20)
+  announce "🌅 Night shift report — $(date '+%F %H:%M')" \
 "Shift ran from $SHIFT_START to $(date '+%F %T').
 
 Commits landed on main tonight:
@@ -65,7 +78,8 @@ ${prs:-(none)}
 Latest nightlog:
 $(tail -n 30 "$DIR/NIGHTLOG.md" 2>/dev/null)
 
-Raw session logs: nightshift/logs/ on $(hostname)." >> "$NIGHT_LOG" 2>&1
+Raw session logs: nightshift/logs/ on $(hostname)."
+  date +%s > "$STAMP"
 }
 
 on_exit() { send_report; rm -f "$LOCK"; }
@@ -73,13 +87,13 @@ trap on_exit EXIT
 trap 'exit 143' TERM INT   # ensure the EXIT trap (report + lock cleanup) runs on 07:00 kill
 
 log "=== night shift clocking in (pid $$) ==="
-"$DIR/email.sh" "🌙 Night shift clocked in — $(date +%F)" \
+announce "🌙 Night shift clocked in — $(date +%F)" \
 "The night shift started at $SHIFT_START on $(hostname).
 
 Backlog snapshot:
 $(head -n 15 "$REPO/$(grep -m1 '^ACTIVE:' "$REPO/PROJECTS.md" 2>/dev/null | awk '{print $2}')/BACKLOG.md" 2>/dev/null || echo '(no active project yet — the Architect will invent one)')
 
-A progress report lands in this inbox when the shift ends (~07:00)." >> "$NIGHT_LOG" 2>&1
+A progress report follows when the shift ends (~07:00)."
 STARTED=1
 
 # Token-burn odometer: backup refresh at clock-in (primary is the 07:15 cron,

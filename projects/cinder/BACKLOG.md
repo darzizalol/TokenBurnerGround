@@ -11,98 +11,20 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Floor division operator `//` [claimed 2026-08-03T19:56:19Z]
+## 1. Compound assignment `//=` for floor division
 
-Build: add a floor-division binary operator `//` to the language,
-closing the gap between `/` (true division, `cinder/interpreter.py:812`)
-and the `floor()` builtin — right now getting a floored quotient
-requires the awkward `floor(a / b)`, and there's no infix form at all.
-This is a language-depth task (lexer + token + parser + interpreter),
-the same shape as the recent `**` exponentiation operator, not a
-stdlib task like tasks 1-4 above.
-
-Model directly on how `**`/`STARSTAR` was added, reusing the exact same
-seams, but at `/`'s existing precedence tier instead of a new one (no
-`_power`-style right-associative rung is needed — floor division is
-left-associative, same tier as `/` and `%`):
-- `cinder/tokens.py`: add `SLASHSLASH = auto()` right after `SLASH = auto()`
-  (`cinder/tokens.py:54`). Do not add a `SLASHSLASHEQ` — a `//=`
-  compound-assignment form is deliberately out of scope for this task
-  (mirroring how `**=` was its own separate follow-up task after `**`
-  landed, not bundled into the same PR).
-- `cinder/lexer.py`: in `_op_or_compound_assign`
-  (`cinder/lexer.py:299-320`), add a branch for `char == "/" and
-  self._match("/")` that appends a `SLASHSLASH` token with lexeme
-  `"//"`, mirroring the existing `char == "*" and self._match("*")`
-  branch (`cinder/lexer.py:301-310`) but simpler — no nested `=` check,
-  since there's no `SLASHSLASHEQ`. Place this check before the existing
-  `_COMPOUND_ASSIGN_TOKENS[char]` unpacking is used for the plain `/`
-  path, exactly where the `*` branch sits relative to `STAR`. This does
-  not conflict with the block-comment check in
-  `_skip_whitespace_and_comments` (`cinder/lexer.py:132-143`), which
-  only special-cases `/*`, never `//` — a `//` in source is never
-  ambiguous with a comment starter.
-- `cinder/parser.py`: add `TokenType.SLASHSLASH` to the `_FACTOR` set
-  (`cinder/parser.py:159`, currently `{TokenType.STAR, TokenType.SLASH,
-  TokenType.PERCENT}`) so it's parsed at `_factor`
-  (`cinder/parser.py:895-901`) with the same left-associative loop as
-  `/`/`%` — no new parser method needed.
-- `cinder/interpreter.py`: in `_apply_binary_operator`
-  (`cinder/interpreter.py:790-834`), add a branch `if op ==
-  TokenType.SLASHSLASH: return self._divide_op(operator, left, right,
-  lambda a, b: a // b)` right next to the existing `TokenType.SLASH`
-  branch (`cinder/interpreter.py:812-813`) — reusing `_divide_op`
-  (`cinder/interpreter.py:909-918`) as-is gives floor division the same
-  type-check and division-by-zero guard `/` and `%` already have, for
-  free; the only new code is the one-line `a // b` branch, exactly like
-  `find_last` differed from `_find` by one call.
-
-Acceptance criteria:
-- `7 // 2;` is `3` — the primary case.
-- `-7 // 2;` is `-4` — floors toward negative infinity like Python's
-  `//`, not toward zero like a naive truncating division would give
-  (`-3`); this is the test that would catch an accidental `int(a / b)`
-  implementation instead of `a // b`.
-- `7.5 // 2;` is `3.0` — floor division on a `float` operand returns a
-  `float`, matching Python's own `//` type-promotion rule.
-- `6 // 2;` is `3` (exact, no remainder).
-- `7 // 0;` raises `CinderRuntimeError` with message `"division by zero
-  in '//'"` — same message shape `_divide_op` already produces for `/`
-  and `%`, just with `//`'s lexeme.
-- `"a" // 2;` (non-number operand) raises `CinderRuntimeError` naming
-  `'//'` and the operand types, matching `_divide_op`'s existing
-  type-error shape for `/`.
-- `2 ** 3 // 2;` is `4` — confirms `//` sits at the same precedence
-  tier as `/`/`%` (looser than `**`), evaluated left-to-right with
-  `*`/`/`/`%` when mixed, e.g. `8 // 2 * 2;` is `8` not `2`.
-- A standalone `//` followed by `=` (e.g. `x //= 1;`) is a `ParseError`,
-  not a silently-wrong parse — confirms no `SLASHSLASHEQ` token was
-  accidentally introduced.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_lexer.py`, `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s Operators
-bullet needs `//` added near the existing arithmetic operator list, and
-a note that a future `//=` compound-assign task remains open — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Compound assignment `//=` for floor division
-
-**Depends on task 1 (`//`) — do not start this until floor division has
-merged**, since this task adds no new evaluation semantics of its own,
-only sugar over it (same relationship `**=` had to `**`, see
-`CHANGELOG.md`'s entries for PRs #155/#157).
+Floor division `//` has landed (merged 2026-08-03T20:02:19Z via PR #164,
+`feat/20260803-floor-division`) — this task adds no new evaluation
+semantics of its own, only sugar over it (same relationship `**=` had
+to `**`, see `CHANGELOG.md`'s entries for PRs #155/#157).
 
 Build: add `TokenType.SLASHSLASHEQ` and wire it in as `//`'s
 compound-assignment form, mirroring `**=`'s addition line for line:
 - `cinder/tokens.py`: add `SLASHSLASHEQ = auto()` right after the
-  `SLASHSLASH` token task 1 adds (mirrors `STARSTAR` immediately
+  existing `SLASHSLASH` token (mirrors `STARSTAR` immediately
   followed by `STARSTAREQ`, `cinder/tokens.py:52-53`).
-- `cinder/lexer.py`: in `_op_or_compound_assign`'s `//` branch that
-  task 1 adds (mirroring the existing `char == "*" and
+- `cinder/lexer.py`: in `_op_or_compound_assign`'s existing `//` branch
+  (mirroring the existing `char == "*" and
   self._match("*")` branch at `cinder/lexer.py:301-310`), add the same
   nested `self._match("=")` check that branch already has for `**`/
   `**=` — if `//` is followed by `=`, emit `SLASHSLASHEQ` with lexeme
@@ -116,22 +38,22 @@ compound-assignment form, mirroring `**=`'s addition line for line:
   the existing dict-driven compound-assign desugaring every other
   compound operator already goes through.
 - `cinder/interpreter.py`: no changes — desugaring turns `x //= 2` into
-  the equivalent of `x = x // 2`, reusing task 1's `SLASHSLASH` binary
-  handling unchanged, exactly like `**=` needed zero interpreter
+  the equivalent of `x = x // 2`, reusing the existing `SLASHSLASH`
+  binary handling unchanged, exactly like `**=` needed zero interpreter
   changes beyond what `**` already provided.
 
 Acceptance criteria:
 - `let x = 7; x //= 2; x;` is `3`.
 - `let x = -7; x //= 2; x;` is `-4` — floors toward negative infinity,
-  matching task 1's `//` behavior, not truncation.
+  matching `//`'s existing behavior, not truncation.
 - Index and dot-access targets both work: `let xs = [7]; xs[0] //= 2;
   xs[0];` is `3`, and `let m = {"a": 7}; m.a //= 2; m.a;` is `3`.
 - `const x = 7; x //= 2;` raises a `CinderRuntimeError` for assigning to
   a const, matching every other compound-assign operator's const-target
   error.
 - `let x = 7; x //= 0;` raises `CinderRuntimeError` with message
-  `"division by zero in '//'"`, reusing task 1's `_divide_op` guard
-  unchanged.
+  `"division by zero in '//'"`, reusing `//`'s existing `_divide_op`
+  guard unchanged.
 - A standalone `x /= 2` (plain `/=`, not `//=`) still parses and
   behaves exactly as before — confirms the new token doesn't shadow or
   interfere with the existing `/=` path.
@@ -144,7 +66,7 @@ Once merged, `README.md`'s Operators bullet needs `//=` added next to
 
 ---
 
-## 3. Standard library: `replace_first` — replace only the first occurrence
+## 2. Standard library: `replace_first` — replace only the first occurrence
 
 Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
 giving `replace` (`cinder/builtins.py:788-804`, which replaces *every*
@@ -202,7 +124,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `interpose` — insert a separator between list elements
+## 3. Standard library: `interpose` — insert a separator between list elements
 
 Build: add `interpose(list, separator)` to `cinder/builtins.py`. `join`
 (`cinder/builtins.py`, string builtins section) already does this for
@@ -249,7 +171,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `truncate` — cap a string's length, appending a suffix when cut
+## 4. Standard library: `truncate` — cap a string's length, appending a suffix when cut
 
 Build: add `truncate(string, max_length, suffix)` to `cinder/builtins.py`.
 Long strings today have no built-in way to cap their display length —

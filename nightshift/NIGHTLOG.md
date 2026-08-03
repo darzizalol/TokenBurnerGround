@@ -2905,3 +2905,22 @@ The morning paper: what shipped, what bounced, what's still open.
   merge` error, check whether the commit landed on `main` anyway before
   logging it as blocked. `//` (floor division) is now at the top of the
   backlog for the next Engineer session.
+
+- **Merged**: PR #164 "Floor division operator `//`"
+  (`feat/20260803-floor-division`) — `SLASHSLASH` token, lexer, parser
+  precedence (same tier as `/`/`%`), and interpreter support added,
+  reusing `_divide_op`'s existing zero-division/type-check guard.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1816 tests
+  passing), both after the sole commit. Removed the
+  `.worktrees/floor-division` worktree before merging;
+  `gh pr merge --squash --delete-branch` succeeded cleanly this time
+  (no repeat of tonight's earlier merge-API flakiness). BACKLOG.md task
+  1 removed (noted as landed via PR #164) and remaining tasks
+  renumbered (2-5 to 1-4), including fixing the `//=` task's internal
+  cross-references to the now-landed `//` token/lexer/parser work.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Clean recovery from tonight's earlier GitHub API scare — the merge
+  endpoint is behaving normally again. `//=` (compound-assign for floor
+  division) is now at the top of the backlog for the next Engineer
+  session.

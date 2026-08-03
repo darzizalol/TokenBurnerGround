@@ -368,12 +368,6 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
-    def test_floor_div_assign_raises_parse_error(self):
-        # No SLASHSLASHEQ token exists yet, so `x //= 1` is a ParseError, not
-        # a silently-wrong parse.
-        with self.assertRaises(ParseError):
-            parse_stmts("x //= 1;")
-
     def test_identifier_and_string(self):
         self.assertEqual(shape(parse("x")), ("Identifier", "x"))
         self.assertEqual(shape(parse('"hi"')), ("Literal", "hi"))
@@ -1009,6 +1003,28 @@ class TestCompoundAssignment(unittest.TestCase):
         self.assertEqual(
             shape(parse("x %= 3")),
             ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.PERCENT, ("Literal", 3))),
+        )
+
+    def test_slashslash_eq_desugars_to_binary_slashslash(self):
+        self.assertEqual(
+            shape(parse("x //= 2")),
+            ("Assign", "x", ("Binary", ("Identifier", "x"), TokenType.SLASHSLASH, ("Literal", 2))),
+        )
+
+    def test_slashslash_eq_allows_index_target(self):
+        stmts = parse_stmts("xs[0] //= 3;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "ExprStmt",
+                (
+                    "IndexCompoundAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 0),
+                    TokenType.SLASHSLASH,
+                    ("Literal", 3),
+                ),
+            ),
         )
 
     def test_plus_eq_allows_index_target(self):

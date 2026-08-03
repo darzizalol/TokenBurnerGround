@@ -312,6 +312,61 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Compound assignment `//=` for floor division
+
+**Depends on task 5 (`//`) — do not start this until floor division has
+merged**, since this task adds no new evaluation semantics of its own,
+only sugar over it (same relationship `**=` had to `**`, see
+`CHANGELOG.md`'s entries for PRs #155/#157).
+
+Build: add `TokenType.SLASHSLASHEQ` and wire it in as `//`'s
+compound-assignment form, mirroring `**=`'s addition line for line:
+- `cinder/tokens.py`: add `SLASHSLASHEQ = auto()` right after the
+  `SLASHSLASH` token task 5 adds (mirrors `STARSTAR` immediately
+  followed by `STARSTAREQ`, `cinder/tokens.py:52-53`).
+- `cinder/lexer.py`: in `_op_or_compound_assign`'s `//` branch that
+  task 5 adds (mirroring the existing `char == "*" and
+  self._match("*")` branch at `cinder/lexer.py:301-310`), add the same
+  nested `self._match("=")` check that branch already has for `**`/
+  `**=` — if `//` is followed by `=`, emit `SLASHSLASHEQ` with lexeme
+  `"//="`, else emit `SLASHSLASH` with lexeme `"//"`.
+- `cinder/parser.py`: add `TokenType.SLASHSLASHEQ:
+  TokenType.SLASHSLASH` to `_COMPOUND_ASSIGN_OPS`
+  (`cinder/parser.py:162-172`, same line `STARSTAREQ: STARSTAR` sits
+  on) and add `TokenType.SLASHSLASHEQ` to
+  `_INDEX_TARGET_COMPOUND_ASSIGN_OPS` (`cinder/parser.py:179-190`, same
+  place `STARSTAREQ` sits) — no new parser method needed, this reuses
+  the existing dict-driven compound-assign desugaring every other
+  compound operator already goes through.
+- `cinder/interpreter.py`: no changes — desugaring turns `x //= 2` into
+  the equivalent of `x = x // 2`, reusing task 5's `SLASHSLASH` binary
+  handling unchanged, exactly like `**=` needed zero interpreter
+  changes beyond what `**` already provided.
+
+Acceptance criteria:
+- `let x = 7; x //= 2; x;` is `3`.
+- `let x = -7; x //= 2; x;` is `-4` — floors toward negative infinity,
+  matching task 5's `//` behavior, not truncation.
+- Index and dot-access targets both work: `let xs = [7]; xs[0] //= 2;
+  xs[0];` is `3`, and `let m = {"a": 7}; m.a //= 2; m.a;` is `3`.
+- `const x = 7; x //= 2;` raises a `CinderRuntimeError` for assigning to
+  a const, matching every other compound-assign operator's const-target
+  error.
+- `let x = 7; x //= 0;` raises `CinderRuntimeError` with message
+  `"division by zero in '//'"`, reusing task 5's `_divide_op` guard
+  unchanged.
+- A standalone `x /= 2` (plain `/=`, not `//=`) still parses and
+  behaves exactly as before — confirms the new token doesn't shadow or
+  interfere with the existing `/=` path.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py`, `cinder/lexer.py`, `cinder/parser.py`,
+`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`.
+Once merged, `README.md`'s Operators bullet needs `//=` added next to
+`//` — leave that to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

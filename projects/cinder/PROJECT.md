@@ -167,13 +167,14 @@ lists (the `zip`-side inverse of `from_entries`/`items`, without
 manually composing `from_entries(zip(keys, values))`),
 `symmetric_difference` as the fourth member of the `union`/
 `intersection`/`difference` set-ops trio (elements in exactly one of
-the two lists), and a floor-division operator `//` (language depth
+the two lists), a floor-division operator `//` (language depth
 rather than stdlib breadth — same precedence tier as `/`/`%`, closing
-the gap between true division and the awkward `floor(a / b)`) — tasks 1
-through 5 in current `BACKLOG.md` — and only much later, a bytecode VM
-if performance ever actually matters. The Architect should keep scoping
-these into `BACKLOG.md` incrementally — do not jump ahead of the
-current layer.
+the gap between true division and the awkward `floor(a / b)`), and its
+compound-assignment sibling `//=` (mirroring how `**=` followed `**`,
+gated on `//` merging first) — tasks 1 through 6 in current
+`BACKLOG.md` — and only much later, a bytecode VM if performance ever
+actually matters. The Architect should keep scoping these into
+`BACKLOG.md` incrementally — do not jump ahead of the current layer.
 
 ## History
 

@@ -148,12 +148,12 @@ operator `**` (right-associative, binding tighter than `*`/`/`/`%` and
 looser than unary — closing the gap between the existing `pow()`
 builtin and infix syntax, deliberately *not* matching Python's
 special-cased unary-minus-vs-`**` precedence, and guarding the same
-overflow/complex-result edge cases the `pow()` builtin already does) —
-all once listed here as future work — have since landed. What remains
-plausible, not yet scoped beyond current `BACKLOG.md`: `**`'s
-compound-assignment sibling `**=` (`x **= 2`, accepting index/dot-access
-targets like the rest of the arithmetic compound-assign family — task 1
-in current `BACKLOG.md`); continued standard-library breadth, picked
+overflow/complex-result edge cases the `pow()` builtin already does),
+and its compound-assignment sibling `**=` (`x **= 2`, accepting
+index/dot-access targets like the rest of the arithmetic
+compound-assign family) — all once listed here as future work — have
+since landed. What remains plausible, not yet scoped beyond current
+`BACKLOG.md`: continued standard-library breadth, picked
 incrementally per `BACKLOG.md`'s own grooming — `sum_by` as the
 `min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by` family's
 still-missing fold-by-key member (sum of `fn(item)` over a list,
@@ -166,7 +166,7 @@ kind of gap `find_last_index` just closed for lists, but via Python's
 existing `any`/`all` pair, and `zip_object` to build a map straight from
 two parallel keys/values lists (the `zip`-side inverse of
 `from_entries`/`items`, without manually composing
-`from_entries(zip(keys, values))`) — tasks 2 through 6 in current
+`from_entries(zip(keys, values))`) — tasks 1 through 5 in current
 `BACKLOG.md` — and only much later, a bytecode VM if performance ever
 actually matters. The Architect should keep scoping these into
 `BACKLOG.md` incrementally — do not jump ahead of the current layer.

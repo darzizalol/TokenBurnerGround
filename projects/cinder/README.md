@@ -213,13 +213,15 @@ for a list's per-element occurrence counts, a REPL `:load <path>`
 meta-command to run a script into the current session, arithmetic *and*
 nil-coalescing compound-assign on index/dot-access targets (`xs[0] += 1`,
 `m.key ??= 1`), `compact` to drop falsy elements from a list,
-`find_last_index` for predicate-based reverse search, and the
+`find_last_index` for predicate-based reverse search, the
 exponentiation operator `**` (right-associative, tighter than
 `*`/`/`/`%`, with the same overflow/complex-result guards as the `pow()`
-builtin). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `**`'s
-compound-assign sibling `**=`, `sum_by` to round out the
-`min_by`/`max_by`/`sort_by` family, and `reject` as `filter`'s
-predicate-inverted complement.
+builtin), and its compound-assign sibling `**=` (accepting index/dot-access
+targets like the rest of the arithmetic compound-assign family). Coming
+up next (see [`BACKLOG.md`](BACKLOG.md)): `sum_by` to round out the
+`min_by`/`max_by`/`sort_by` family, `reject` as `filter`'s
+predicate-inverted complement, and `find_last` as `find`'s
+reverse-search counterpart for strings.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

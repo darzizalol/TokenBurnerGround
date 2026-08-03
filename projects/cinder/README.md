@@ -121,7 +121,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `frequencies`, `compact`,
   `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
@@ -207,21 +207,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the safe-navigation operator
-`?.` for map access (`m?.key` is `nil` when `m` is `nil`), `frequencies`
-for a list's per-element occurrence counts, a REPL `:load <path>`
-meta-command to run a script into the current session, arithmetic *and*
-nil-coalescing compound-assign on index/dot-access targets (`xs[0] += 1`,
-`m.key ??= 1`), `compact` to drop falsy elements from a list,
-`find_last_index` for predicate-based reverse search, the
-exponentiation operator `**` (right-associative, tighter than
-`*`/`/`/`%`, with the same overflow/complex-result guards as the `pow()`
-builtin), and its compound-assign sibling `**=` (accepting index/dot-access
-targets like the rest of the arithmetic compound-assign family). Coming
-up next (see [`BACKLOG.md`](BACKLOG.md)): `sum_by` to round out the
-`min_by`/`max_by`/`sort_by` family, `reject` as `filter`'s
-predicate-inverted complement, and `find_last` as `find`'s
-reverse-search counterpart for strings.
+Actively developed, nightly. Recently landed: `compact` to drop falsy
+elements from a list, `find_last_index` for predicate-based reverse
+search, the exponentiation operator `**` (right-associative, tighter
+than `*`/`/`/`%`, with the same overflow/complex-result guards as the
+`pow()` builtin), its compound-assign sibling `**=` (accepting
+index/dot-access targets like the rest of the arithmetic
+compound-assign family), and `sum_by` to round out the
+`min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by`
+fold-by-key family. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`reject` as `filter`'s predicate-inverted complement, `find_last` as
+`find`'s reverse-search counterpart for strings, `none` as the
+"no element truthy" complement to `any`/`all`, and `zip_object` to
+build a map straight from two parallel keys/values lists.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

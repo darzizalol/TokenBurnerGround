@@ -228,6 +228,66 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `symmetric_difference` — elements in either list but not both
+
+Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
+completing the set-ops trio started by `union`/`intersection`/`difference`
+(`cinder/builtins.py:1358-1374`) — those three cover "everything",
+"only in both", and "only in the first", but not the classic fourth
+member, "in exactly one of the two" (the symmetric difference, `A ^ B`
+in set notation). Lists are treated as unordered sets, exactly like the
+other three.
+
+Model directly on `_union`/`_difference`'s structure: reuse
+`_require_two_lists("symmetric_difference", arguments, line, column)`
+(the same arity/type-check helper all three existing set-ops share, see
+`cinder/builtins.py:1338-1351`) for argument validation, then compute it
+as `_difference`'s body applied in both directions and concatenated:
+`_difference([list1, list2], ...) + _difference([list2, list1], ...)`,
+or equivalently inline the two `_dedupe`-and-filter comprehensions
+directly — either way, the result is deduped per input side the same
+way `_difference` already dedupes (via `_dedupe`, `cinder/
+builtins.py:1308-1323`), not deduped again across the concatenation.
+Register it in the builtins dict near `union`/`intersection`/
+`difference` (`cinder/builtins.py:2556-2558`, `"union": _union,` /
+`"intersection": _intersection,` / `"difference": _difference,`).
+
+Acceptance criteria:
+- `symmetric_difference([1, 2, 3], [2, 3, 4]);` is `[1, 4]` — the
+  primary case: `1` and `4` are each in only one list, `2`/`3` are in
+  both and excluded; order is first list's leftovers before second
+  list's leftovers.
+- `symmetric_difference([1, 2], [1, 2]);` is `[]` — identical lists
+  have no elements unique to either side.
+- `symmetric_difference([1, 2], []);` is `[1, 2]` and
+  `symmetric_difference([], [1, 2]);` is `[1, 2]` — one side empty
+  degenerates to the other side's (deduped) contents, matching
+  `difference`'s own empty-list behavior.
+- `symmetric_difference([], []);` is `[]`.
+- `symmetric_difference([1, 1, 2], [2, 3]);` is `[1, 3]` — duplicates
+  within a single input list are deduped exactly like `union`/
+  `intersection`/`difference` already dedupe (via `_dedupe`), not
+  treated as separate occurrences.
+- `symmetric_difference(5, [1]);` (a non-list first argument) raises
+  `CinderRuntimeError` naming `symmetric_difference` and `number` in
+  the message, matching the exact message shape `_require_two_lists`
+  already produces for `union`/`intersection`/`difference`.
+- `symmetric_difference([1], 5);` (a non-list second argument) raises
+  `CinderRuntimeError` naming `symmetric_difference` and `number` in
+  the message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `union`/
+`intersection`/`difference`, see current line numbers — shift if
+earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
+merged, `README.md`'s Builtins bullet needs `symmetric_difference`
+added near `union`/`intersection`/`difference` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

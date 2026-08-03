@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `symmetric_difference` — elements in either list but not both
+## 1. Standard library: `symmetric_difference` — elements in either list but not both [claimed 2026-08-03T19:40:16Z]
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`

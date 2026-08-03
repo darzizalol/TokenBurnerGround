@@ -159,20 +159,23 @@ fold-by-key member (sum of `fn(item)` over a list, numbers-only like
 `omit`/`omit_by` already closed that same gap for `pick`/`pick_by`),
 `find_last` as `find`'s reverse-search counterpart for strings (the same
 kind of gap `find_last_index` just closed for lists, but via Python's
-`str.rfind`), and `none` as the "no element truthy" complement to the
-existing `any`/`all` pair — all once listed here as future work — have
-since landed.
+`str.rfind`), `none` as the "no element truthy" complement to the
+existing `any`/`all` pair, and `zip_object` to build a map straight
+from two parallel keys/values lists (the `zip`-side inverse of
+`from_entries`/`items`, without manually composing
+`from_entries(zip(keys, values))`) — all once listed here as future
+work — have since landed.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`zip_object` to build a map straight from two parallel keys/values
-lists (the `zip`-side inverse of `from_entries`/`items`, without
-manually composing `from_entries(zip(keys, values))`),
 `symmetric_difference` as the fourth member of the `union`/
 `intersection`/`difference` set-ops trio (elements in exactly one of
 the two lists), a floor-division operator `//` (language depth
 rather than stdlib breadth — same precedence tier as `/`/`%`, closing
-the gap between true division and the awkward `floor(a / b)`), and its
+the gap between true division and the awkward `floor(a / b)`), its
 compound-assignment sibling `//=` (mirroring how `**=` followed `**`,
-gated on `//` merging first) — tasks 1 through 4 in current
+gated on `//` merging first), `replace_first` as `replace`'s
+first-occurrence-only counterpart, and `interpose` to insert a
+separator between a list's elements (the list-level sibling of
+`join`, but separator type-agnostic) — tasks 1 through 5 in current
 `BACKLOG.md` — and only much later, a bytecode VM if performance ever
 actually matters. The Architect should keep scoping these into
 `BACKLOG.md` incrementally — do not jump ahead of the current layer.

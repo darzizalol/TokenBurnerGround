@@ -118,7 +118,7 @@ while (i < 10) {
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `find_last_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
-  `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`,
+  `union`, `intersection`, `difference` (lists treated as unordered sets), `interleave`, `zip_object`,
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
@@ -208,14 +208,14 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `reject` as `filter`'s
-predicate-inverted complement, `find_last` as `find`'s reverse-search
-counterpart for strings, and `none` as the "no element truthy"
-complement to `any`/`all`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `zip_object` to build a map straight from
-two parallel keys/values lists, `symmetric_difference` to complete the
+Actively developed, nightly. Recently landed: `find_last` as `find`'s
+reverse-search counterpart for strings, `none` as the "no element
+truthy" complement to `any`/`all`, and `zip_object` to build a map
+straight from two parallel keys/values lists. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `symmetric_difference` to complete the
 `union`/`intersection`/`difference` set-ops trio, a floor-division
-operator `//`, and its compound-assign sibling `//=`.
+operator `//`, its compound-assign sibling `//=`, and `replace_first`
+as `replace`'s first-occurrence-only counterpart.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

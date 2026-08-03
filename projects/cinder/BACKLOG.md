@@ -15,7 +15,7 @@ a later task while an earlier one is unclaimed/open.
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`
-(`cinder/builtins.py:1373-1389`) — those three cover "everything",
+(`cinder/builtins.py:1406-1424`) — those three cover "everything",
 "only in both", and "only in the first", but not the classic fourth
 member, "in exactly one of the two" (the symmetric difference, `A ^ B`
 in set notation). Lists are treated as unordered sets, exactly like the
@@ -24,15 +24,15 @@ other three.
 Model directly on `_union`/`_difference`'s structure: reuse
 `_require_two_lists("symmetric_difference", arguments, line, column)`
 (the same arity/type-check helper all three existing set-ops share, see
-`cinder/builtins.py:1353-1365`) for argument validation, then compute it
+`cinder/builtins.py:1386-1398`) for argument validation, then compute it
 as `_difference`'s body applied in both directions and concatenated:
 `_difference([list1, list2], ...) + _difference([list2, list1], ...)`,
 or equivalently inline the two `_dedupe`-and-filter comprehensions
 directly — either way, the result is deduped per input side the same
 way `_difference` already dedupes (via `_dedupe`, `cinder/
-builtins.py:1323-1339`), not deduped again across the concatenation.
+builtins.py:1356-1372`), not deduped again across the concatenation.
 Register it in the builtins dict near `union`/`intersection`/
-`difference` (`cinder/builtins.py:2588-2590`, `"union": _union,` /
+`difference` (`cinder/builtins.py:2623-2625`, `"union": _union,` /
 `"intersection": _intersection,` / `"difference": _difference,`).
 
 Acceptance criteria:
@@ -207,7 +207,7 @@ Once merged, `README.md`'s Operators bullet needs `//=` added next to
 ## 4. Standard library: `replace_first` — replace only the first occurrence
 
 Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
-giving `replace` (`cinder/builtins.py:765-781`, which replaces *every*
+giving `replace` (`cinder/builtins.py:788-804`, which replaces *every*
 occurrence via Python's `str.replace(old, new)`) the same first/last
 split the stdlib already has for searching — `find`/`find_last`
 (`cinder/builtins.py:675-702`) and `index_of`/`last_index_of` both
@@ -215,7 +215,7 @@ distinguish "first match" from "last match", but `replace` has no
 "only the first one" mode at all, only "all of them". This closes that
 gap the same way `find_last` closed it for `find`.
 
-Model directly on `_replace`'s structure (`cinder/builtins.py:765-781`):
+Model directly on `_replace`'s structure (`cinder/builtins.py:788-804`):
 same arity-3 check via `_require_arity("replace_first", arguments, 3,
 line, column)`, same three argument type checks (first argument a
 `string` else `CinderRuntimeError` matching `"replace_first() requires
@@ -227,7 +227,7 @@ as `_replace`, just with the `replace_first()` name swapped in). The
 only behavioral difference: call Python's `value.replace(old, new, 1)`
 (the optional `count` argument `_replace` doesn't pass) instead of
 `value.replace(old, new)`. Register it in the builtins dict
-immediately after `"replace": _replace,` (`cinder/builtins.py:2558`).
+immediately after `"replace": _replace,` (`cinder/builtins.py:2582`).
 
 Acceptance criteria:
 - `replace_first("a-a-a", "a", "b");` is `"b-a-a"` — only the leftmost
@@ -259,6 +259,53 @@ current line numbers — shift if earlier tasks this cycle landed
 first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
 bullet needs `replace_first` added right after `replace` — leave that
 to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `interpose` — insert a separator between list elements
+
+Build: add `interpose(list, separator)` to `cinder/builtins.py`. `join`
+(`cinder/builtins.py`, string builtins section) already does this for
+strings — glue a separator between adjacent elements, none before the
+first or after the last — but there's no list-level equivalent that
+keeps the result a list (e.g. building `[1, ",", 2, ",", 3]` today
+means hand-rolling a loop; `interleave` is the nearest existing
+builtin but merges *two* lists element-by-element rather than
+repeating one separator value between one list's elements). Unlike
+`join`, `separator` need not be a string — any value is valid (e.g.
+`interpose([1, 2, 3], 0);` is `[1, 0, 2, 0, 3]`), so this is a plain
+list builtin, not a string one.
+
+Model directly on `_interleave`'s structure
+(`cinder/builtins.py:1425-1433`): single-list arity/type check instead
+of `_require_two_lists` (`_require_arity("interpose", arguments, 2,
+line, column)` then check `arguments[0]` is a `list`, matching the
+message shape `_interleave`/`_union` use — `"interpose() requires a
+list as its first argument, got {type_name}"`; the second argument,
+the separator, takes no type check since any value is valid), then a
+single loop appending `separator` before every element except the
+first (`if i > 0: result.append(separator)` then `result.append(element)`,
+using `enumerate`). Register it in the builtins dict right after
+`"interleave": _interleave,` (`cinder/builtins.py:2626`).
+
+Acceptance criteria:
+- `interpose([1, 2, 3], 0);` is `[1, 0, 2, 0, 3]` — the primary case.
+- `interpose([1], 0);` is `[1]` — a single element has no gaps to fill,
+  matching `join`'s no-separator-needed behavior for a one-element list.
+- `interpose([], 0);` is `[]`.
+- `interpose([1, 2], "x");` is `[1, "x", 2]` — the separator's type
+  need not match the list elements' type.
+- `interpose(5, 0);` (non-list first argument) raises
+  `CinderRuntimeError` naming `interpose` and `number` in the message.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `interleave`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `interpose` added near `interleave` — leave that to the
+Architect's next grooming pass, not this task.
 
 ---
 

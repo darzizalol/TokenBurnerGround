@@ -253,6 +253,40 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertEqual(types(tokenize(source)), expected)
 
+    def test_starstar_is_one_token(self):
+        # "**" must lex as one STARSTAR token, not two STARs.
+        tokens = tokenize("a ** b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.STARSTAR,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(tokens[1].lexeme, "**")
+
+    def test_starstar_does_not_collide_with_single_star_or_stareq(self):
+        self.assertEqual(
+            types(tokenize("a * b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.STAR,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(
+            types(tokenize("a *= b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.STAREQ,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
     def test_lshift_does_not_collide_with_lteq_or_lt(self):
         # "<<" must lex as one LSHIFT token, not two LT tokens.
         tokens = tokenize("1 << 2")

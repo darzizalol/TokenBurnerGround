@@ -59,6 +59,55 @@ class TestArithmetic(unittest.TestCase):
             evaluate('-"x"')
 
 
+class TestExponentiation(unittest.TestCase):
+    def test_basic(self):
+        self.assertEqual(evaluate("2 ** 10"), 1024)
+
+    def test_right_associative(self):
+        # 2 ** (3 ** 2) == 2 ** 9 == 512, not (2 ** 3) ** 2 == 64.
+        self.assertEqual(evaluate("2 ** 3 ** 2"), 512)
+
+    def test_unary_minus_binds_tighter_than_exponent(self):
+        # Deliberately diverges from Python: here unary minus binds tighter,
+        # so both forms are (-2) ** 2 == 4, never -(2 ** 2) == -4.
+        self.assertEqual(evaluate("(-2) ** 2"), 4)
+        self.assertEqual(evaluate("-2 ** 2"), 4)
+
+    def test_negative_exponent(self):
+        self.assertEqual(evaluate("2 ** -1"), 0.5)
+
+    def test_float_base(self):
+        self.assertEqual(evaluate("2.5 ** 2"), 6.25)
+
+    def test_zero_exponent_and_zero_base(self):
+        self.assertEqual(evaluate("2 ** 0"), 1)
+        self.assertEqual(evaluate("0 ** 0"), 1)
+
+    def test_string_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('"a" ** 2')
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('2 ** "a"')
+
+    def test_zero_to_negative_power_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("0 ** -1")
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("0.0 ** -1")
+
+    def test_overflow_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("2.0 ** 100000")
+
+    def test_complex_result_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("(-8) ** 0.5")
+
+    def test_binds_tighter_than_multiplication(self):
+        self.assertEqual(evaluate("2 ** 3 * 4"), 32)
+        self.assertEqual(evaluate("2 * 3 ** 2"), 18)
+
+
 class TestPrefixedIntLiterals(unittest.TestCase):
     def test_hex_literal_value(self):
         self.assertEqual(evaluate("0xFF"), 255)

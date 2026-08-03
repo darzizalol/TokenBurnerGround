@@ -302,6 +302,50 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_exponent_binds_tighter_than_multiplication(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("2 * 3 ** 2")),
+            (
+                "Binary",
+                ("Literal", 2),
+                TokenType.STAR,
+                ("Binary", ("Literal", 3), TokenType.STARSTAR, ("Literal", 2)),
+            ),
+        )
+
+    def test_exponent_is_right_associative(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("2 ** 3 ** 2")),
+            (
+                "Binary",
+                ("Literal", 2),
+                TokenType.STARSTAR,
+                ("Binary", ("Literal", 3), TokenType.STARSTAR, ("Literal", 2)),
+            ),
+        )
+
+    def test_unary_minus_binds_tighter_than_exponent(self):
+        # `-2 ** 2` parses as `(-2) ** 2`, not Python's `-(2 ** 2)`.
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("-2 ** 2")),
+            (
+                "Binary",
+                ("Unary", TokenType.MINUS, ("Literal", 2)),
+                TokenType.STARSTAR,
+                ("Literal", 2),
+            ),
+        )
+
+    def test_starstareq_is_not_implemented(self):
+        with self.assertRaises(ParseError):
+            parse("x **= 2")
+
     def test_identifier_and_string(self):
         self.assertEqual(shape(parse("x")), ("Identifier", "x"))
         self.assertEqual(shape(parse('"hi"')), ("Literal", "hi"))

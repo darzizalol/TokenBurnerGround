@@ -298,6 +298,11 @@ class Lexer:
 
     def _op_or_compound_assign(self, char: str, start_line: int, start_col: int):
         simple_type, compound_type = _COMPOUND_ASSIGN_TOKENS[char]
+        if char == "*" and self._match("*"):
+            self.tokens.append(
+                Token(TokenType.STARSTAR, "**", None, start_line, start_col)
+            )
+            return
         if char in _INCREMENT_DECREMENT_TOKENS and self._match(char):
             doubled_type = _INCREMENT_DECREMENT_TOKENS[char]
             self.tokens.append(

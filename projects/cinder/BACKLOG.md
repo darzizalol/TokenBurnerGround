@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Compound assignment `//=` for floor division
+## 1. Compound assignment `//=` for floor division [claimed 2026-08-03T20:09:30Z]
 
 Floor division `//` has landed (merged 2026-08-03T20:02:19Z via PR #164,
 `feat/20260803-floor-division`) — this task adds no new evaluation

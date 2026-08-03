@@ -311,6 +311,41 @@ class TestOperators(unittest.TestCase):
             ],
         )
 
+    def test_slashslash_is_one_token(self):
+        # "//" must lex as one SLASHSLASH token, not two SLASHes, and must
+        # not be mistaken for a comment starter (only "/*" is a comment).
+        tokens = tokenize("a // b")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.SLASHSLASH,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(tokens[1].lexeme, "//")
+
+    def test_slashslash_does_not_collide_with_single_slash_or_slasheq(self):
+        self.assertEqual(
+            types(tokenize("a / b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.SLASH,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+        self.assertEqual(
+            types(tokenize("a /= b")),
+            [
+                TokenType.IDENTIFIER,
+                TokenType.SLASHEQ,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
     def test_lshift_does_not_collide_with_lteq_or_lt(self):
         # "<<" must lex as one LSHIFT token, not two LT tokens.
         tokens = tokenize("1 << 2")

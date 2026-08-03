@@ -811,6 +811,8 @@ class Interpreter:
             return self._power_op(operator, left, right)
         if op == TokenType.SLASH:
             return self._divide_op(operator, left, right, lambda a, b: a / b)
+        if op == TokenType.SLASHSLASH:
+            return self._divide_op(operator, left, right, lambda a, b: a // b)
         if op == TokenType.PERCENT:
             return self._divide_op(operator, left, right, lambda a, b: a % b)
 

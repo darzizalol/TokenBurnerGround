@@ -270,6 +270,64 @@ Once merged, `README.md`'s Operators bullet needs `//=` added next to
 
 ---
 
+## 5. Standard library: `replace_first` — replace only the first occurrence
+
+Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
+giving `replace` (`cinder/builtins.py:765-781`, which replaces *every*
+occurrence via Python's `str.replace(old, new)`) the same first/last
+split the stdlib already has for searching — `find`/`find_last`
+(`cinder/builtins.py:675-702`) and `index_of`/`last_index_of` both
+distinguish "first match" from "last match", but `replace` has no
+"only the first one" mode at all, only "all of them". This closes that
+gap the same way `find_last` closed it for `find`.
+
+Model directly on `_replace`'s structure (`cinder/builtins.py:765-781`):
+same arity-3 check via `_require_arity("replace_first", arguments, 3,
+line, column)`, same three argument type checks (first argument a
+`string` else `CinderRuntimeError` matching `"replace_first() requires
+a string as its first argument, got {type_name}"`, second argument a
+`string` else `"replace_first() requires a string to search for, got
+{type_name}"`, third argument a `string` else `"replace_first()
+requires a string replacement, got {type_name}"` — same three messages
+as `_replace`, just with the `replace_first()` name swapped in). The
+only behavioral difference: call Python's `value.replace(old, new, 1)`
+(the optional `count` argument `_replace` doesn't pass) instead of
+`value.replace(old, new)`. Register it in the builtins dict
+immediately after `"replace": _replace,` (`cinder/builtins.py:2558`).
+
+Acceptance criteria:
+- `replace_first("a-a-a", "a", "b");` is `"b-a-a"` — only the leftmost
+  occurrence changes, unlike `replace("a-a-a", "a", "b");` which is
+  `"b-b-b"` — pin both in the same test to show the contrast.
+- `replace_first("hello", "l", "L");` is `"heLlo"`.
+- `replace_first("hello", "xyz", "L");` is `"hello"` unchanged — no
+  match found is a no-op, matching `replace`'s own behavior for a
+  non-matching `old`.
+- `replace_first("hello", "", "X");` is `"Xhello"` — an empty `old`
+  matches at the start, matching Python's `str.replace("", x, 1)`
+  semantics (and `replace`'s own empty-`old` behavior for the
+  all-occurrences case, `replace("ab", "", "X");` is `"XaXbX"`).
+- `replace_first(5, "a", "b");` (non-string first argument) raises
+  `CinderRuntimeError` naming `replace_first` and `number` in the
+  message.
+- `replace_first("a", 5, "b");` (non-string second argument) raises
+  `CinderRuntimeError` naming `replace_first` and `number` in the
+  message.
+- `replace_first("a", "a", 5);` (non-string third argument) raises
+  `CinderRuntimeError` naming `replace_first` and `number` in the
+  message.
+- Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register right after `replace`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `replace_first` added right after `replace` — leave that
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

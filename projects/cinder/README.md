@@ -123,7 +123,7 @@ while (i < 10) {
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
   `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `frequencies`, `compact`,
-  `any`, `all`, string methods `upper`, `lower`, `capitalize`, `title`,
+  `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
   `pad_start`, `pad_end`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
@@ -182,7 +182,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1770+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1785+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -208,19 +208,14 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: the exponentiation
-operator `**` (right-associative, tighter than `*`/`/`/`%`, with the
-same overflow/complex-result guards as the `pow()` builtin) and its
-compound-assign sibling `**=`, `sum_by` to round out the
-`min_by`/`max_by`/`sort_by`/`group_by`/`count_by`/`distinct_by`
-fold-by-key family, `reject` as `filter`'s predicate-inverted
-complement, and `find_last` as `find`'s reverse-search counterpart for
-strings. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `none` as
-the "no element truthy" complement to `any`/`all`, `zip_object` to
-build a map straight from two parallel keys/values lists,
-`symmetric_difference` to complete the `union`/`intersection`/
-`difference` set-ops trio, a floor-division operator `//`, and its
-compound-assign sibling `//=`.
+Actively developed, nightly. Recently landed: `reject` as `filter`'s
+predicate-inverted complement, `find_last` as `find`'s reverse-search
+counterpart for strings, and `none` as the "no element truthy"
+complement to `any`/`all`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `zip_object` to build a map straight from
+two parallel keys/values lists, `symmetric_difference` to complete the
+`union`/`intersection`/`difference` set-ops trio, a floor-division
+operator `//`, and its compound-assign sibling `//=`.
 The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

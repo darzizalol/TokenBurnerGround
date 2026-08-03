@@ -11,56 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `find_last` — reverse-search counterpart to `find` [claimed 2026-08-03T14:58:11Z]
-
-Build: add `find_last(string, substring)` to `cinder/builtins.py`, the
-string search analog of what `find_last_index` just did for lists —
-`find` (`cinder/builtins.py:675-687`) already returns the index of a
-substring's *first* occurrence via Python's `str.find`, but there's no
-way to search from the end; Python's `str.rfind` is the direct
-equivalent, and this closes that gap the same way `last_index_of`
-closes it for list equality-search versus `index_of`.
-
-Model directly on `_find`'s structure line for line (arity 2, first
-argument a `string` else `CinderRuntimeError` naming `find_last` and
-`type_name`, matching `"find_last() requires a string as its first
-argument, got {type_name}"`; second argument must be a `string` else
-`CinderRuntimeError` matching `"find_last() requires a string to search
-for, got {type_name}"`), but call `value.rfind(sub)` instead of
-`value.find(sub)` — the single-call difference from `_find`'s body is
-the entire behavioral distinction between the two functions, exactly
-like `not is_truthy(...)` was the entire distinction between `reject`
-and `filter`. Register it in the builtins dict near `find`
-(`cinder/builtins.py:2527`, `"find": _find,`).
-
-Acceptance criteria:
-- `find_last("abcabc", "a");` is `3` — the primary case, pin as the main
-  regression test; contrast with `find("abcabc", "a");` on the same
-  input returning `0` to prove this isn't accidentally aliased to `find`.
-- `find_last("abcabc", "z");` is `-1` — substring not present.
-- `find_last("hello", "");` is `5` — matches Python's `str.rfind`
-  behavior for an empty needle (the length of the haystack, i.e. the
-  rightmost valid insertion point), not an error.
-- `find_last("", "");` is `0` — both empty, matches `str.rfind` again.
-- `find_last("aaa", "a");` is `2` — the last of several overlapping
-  single-character matches.
-- `find_last(5, "a");` (a non-string first argument) raises
-  `CinderRuntimeError` naming `find_last` and `number` in the message.
-- `find_last("abc", 5);` (a non-string second argument) raises
-  `CinderRuntimeError` naming `find_last` and `number` in the message.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `find`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `find_last` added near `find` — leave that to the Architect's
-next grooming pass, not this task.
-
----
-
-## 2. Standard library: `none` — the "no element truthy" complement to `any`/`all`
+## 1. Standard library: `none` — the "no element truthy" complement to `any`/`all`
 
 Build: add `none(list)` to `cinder/builtins.py`, closing the last gap in
 the `any`/`all` pair — unlike most of Cinder's `_by`-suffixed family,
@@ -108,7 +59,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 2. Standard library: `zip_object` — build a map from parallel keys/values lists
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of
@@ -174,7 +125,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `symmetric_difference` — elements in either list but not both
+## 3. Standard library: `symmetric_difference` — elements in either list but not both
 
 Build: add `symmetric_difference(list1, list2)` to `cinder/builtins.py`,
 completing the set-ops trio started by `union`/`intersection`/`difference`
@@ -234,7 +185,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Floor division operator `//`
+## 4. Floor division operator `//`
 
 Build: add a floor-division binary operator `//` to the language,
 closing the gap between `/` (true division, `cinder/interpreter.py:812`)
@@ -312,9 +263,9 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Compound assignment `//=` for floor division
+## 5. Compound assignment `//=` for floor division
 
-**Depends on task 5 (`//`) — do not start this until floor division has
+**Depends on task 4 (`//`) — do not start this until floor division has
 merged**, since this task adds no new evaluation semantics of its own,
 only sugar over it (same relationship `**=` had to `**`, see
 `CHANGELOG.md`'s entries for PRs #155/#157).
@@ -322,10 +273,10 @@ only sugar over it (same relationship `**=` had to `**`, see
 Build: add `TokenType.SLASHSLASHEQ` and wire it in as `//`'s
 compound-assignment form, mirroring `**=`'s addition line for line:
 - `cinder/tokens.py`: add `SLASHSLASHEQ = auto()` right after the
-  `SLASHSLASH` token task 5 adds (mirrors `STARSTAR` immediately
+  `SLASHSLASH` token task 4 adds (mirrors `STARSTAR` immediately
   followed by `STARSTAREQ`, `cinder/tokens.py:52-53`).
 - `cinder/lexer.py`: in `_op_or_compound_assign`'s `//` branch that
-  task 5 adds (mirroring the existing `char == "*" and
+  task 4 adds (mirroring the existing `char == "*" and
   self._match("*")` branch at `cinder/lexer.py:301-310`), add the same
   nested `self._match("=")` check that branch already has for `**`/
   `**=` — if `//` is followed by `=`, emit `SLASHSLASHEQ` with lexeme
@@ -339,21 +290,21 @@ compound-assignment form, mirroring `**=`'s addition line for line:
   the existing dict-driven compound-assign desugaring every other
   compound operator already goes through.
 - `cinder/interpreter.py`: no changes — desugaring turns `x //= 2` into
-  the equivalent of `x = x // 2`, reusing task 5's `SLASHSLASH` binary
+  the equivalent of `x = x // 2`, reusing task 4's `SLASHSLASH` binary
   handling unchanged, exactly like `**=` needed zero interpreter
   changes beyond what `**` already provided.
 
 Acceptance criteria:
 - `let x = 7; x //= 2; x;` is `3`.
 - `let x = -7; x //= 2; x;` is `-4` — floors toward negative infinity,
-  matching task 5's `//` behavior, not truncation.
+  matching task 4's `//` behavior, not truncation.
 - Index and dot-access targets both work: `let xs = [7]; xs[0] //= 2;
   xs[0];` is `3`, and `let m = {"a": 7}; m.a //= 2; m.a;` is `3`.
 - `const x = 7; x //= 2;` raises a `CinderRuntimeError` for assigning to
   a const, matching every other compound-assign operator's const-target
   error.
 - `let x = 7; x //= 0;` raises `CinderRuntimeError` with message
-  `"division by zero in '//'"`, reusing task 5's `_divide_op` guard
+  `"division by zero in '//'"`, reusing task 4's `_divide_op` guard
   unchanged.
 - A standalone `x /= 2` (plain `/=`, not `//=`) still parses and
   behaves exactly as before — confirms the new token doesn't shadow or

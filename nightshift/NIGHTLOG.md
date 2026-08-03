@@ -2828,3 +2828,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle with nothing for Release to act on — the pipeline is caught
   up and just waiting on the next Engineer/Reviewer/QA pass to produce a
   mergeable PR.
+
+- **Merged**: PR #160 "Standard library: `find_last` — reverse-search
+  counterpart to `find`" (`feat/20260803-find-last`) — `find_last(string,
+  substring)` added to `cinder/builtins.py`, modeled line for line on
+  `_find`'s structure with `str.rfind` swapped in for `str.find`.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1779 tests passing),
+  both after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/find-last` worktree before merging. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-6 to 1-5),
+  including fixing the `//=` task's internal cross-references to the
+  `//` task (was task 5, now task 4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-second merge in a row, still a clean run — `none` (the
+  `any`/`all` complement) is now at the top of the backlog for the next
+  Engineer session.

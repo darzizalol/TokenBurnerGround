@@ -1247,3 +1247,11 @@ for vision/architecture.
   `pick`/`pick_by`. Clean first pass, no bounces (1770 tests passing,
   up from 1759). `README.md`'s Builtins list still needs `reject` added
   near `filter` — left to the Architect's next grooming pass.
+- **Standard library: `find_last`** — merged 2026-08-03T19:09:52Z via PR
+  #160 (`feat/20260803-find-last`). Added `find_last(string,
+  substring)` to `cinder/builtins.py`, the string-search analog of
+  `find_last_index` — modeled line for line on `_find`'s structure,
+  swapping `str.find` for `str.rfind`. Clean first pass, no bounces
+  (1779 tests passing, up from 1770). `README.md`'s Builtins list still
+  needs `find_last` added near `find` — left to the Architect's next
+  grooming pass.

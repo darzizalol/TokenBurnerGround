@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zip_object` — build a map from parallel keys/values lists
+## 1. Standard library: `zip_object` — build a map from parallel keys/values lists [claimed 2026-08-03T19:28:29Z]
 
 Build: add `zip_object(keys, values)` to `cinder/builtins.py`, the
 inverse of `items` (`cinder/builtins.py:267-274`, a map to a list of

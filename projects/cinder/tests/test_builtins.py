@@ -3236,6 +3236,64 @@ class TestFilter(unittest.TestCase):
             run("filter([1], fn(x, y) { return x; });")
 
 
+class TestReject(unittest.TestCase):
+    def test_reject_with_closure(self):
+        env = run(
+            "let result = reject([1, 2, 3, 4], fn(n) { return n % 2 == 0; });"
+        )
+        self.assertEqual(env.get("result"), [1, 3])
+
+    def test_reject_contrasts_with_filter(self):
+        env = run(
+            "let rejected = reject([1, 2, 3, 4], fn(n) { return n % 2 == 0; }); "
+            "let filtered = filter([1, 2, 3, 4], fn(n) { return n % 2 == 0; });"
+        )
+        self.assertEqual(env.get("rejected"), [1, 3])
+        self.assertEqual(env.get("filtered"), [2, 4])
+
+    def test_reject_of_empty_list_never_calls_fn(self):
+        env = run("let result = reject([], fn(n) { return true; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_reject_always_falsy_predicate_keeps_everything(self):
+        env = run("let result = reject([1, 2, 3], fn(n) { return false; });")
+        self.assertEqual(env.get("result"), [1, 2, 3])
+
+    def test_reject_always_truthy_predicate_keeps_nothing(self):
+        env = run("let result = reject([1, 2, 3], fn(n) { return true; });")
+        self.assertEqual(env.get("result"), [])
+
+    def test_reject_only_removes_predicate_truthy_elements(self):
+        env = run(
+            "let result = reject([0, 1, nil, 2, false], fn(n) { return n == 1; });"
+        )
+        self.assertEqual(env.get("result"), [0, None, 2, False])
+
+    def test_reject_does_not_mutate_input(self):
+        env = run(
+            "let xs = [1, 2, 3, 4]; "
+            "let result = reject(xs, fn(n) { return n % 2 == 0; });"
+        )
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+        self.assertEqual(env.get("result"), [1, 3])
+
+    def test_reject_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reject(5, fn(n) { return true; });")
+
+    def test_reject_non_callable_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reject([1, 2], 5);")
+
+    def test_reject_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reject([1, 2]);")
+
+    def test_reject_propagates_callback_arity_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reject([1], fn(x, y) { return x; });")
+
+
 class TestCompact(unittest.TestCase):
     def test_compact_drops_nil_and_false(self):
         result = run("let result = compact([1, nil, 2, false, 3]);").get("result")

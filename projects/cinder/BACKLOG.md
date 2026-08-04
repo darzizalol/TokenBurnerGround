@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `not in` — negated membership operator
+## 1. Language: `not in` — negated membership operator [claimed 2026-08-04T14:47:13Z]
 
 Build: add `not in` as a single combined binary operator, sugar for
 `not (x in y)` but parsed as one operator at `in`'s own precedence

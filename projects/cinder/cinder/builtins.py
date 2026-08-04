@@ -1461,6 +1461,22 @@ def _interleave(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _interpose(arguments: list, line: int, column: int) -> object:
+    _require_arity("interpose", arguments, 2, line, column)
+    value, separator = arguments
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"interpose() requires a list as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    result = []
+    for i, element in enumerate(value):
+        if i > 0:
+            result.append(separator)
+        result.append(element)
+    return result
+
+
 def _reverse(arguments: list, line: int, column: int) -> object:
     _require_arity("reverse", arguments, 1, line, column)
     value = arguments[0]
@@ -2654,6 +2670,7 @@ _BUILTINS = {
     "difference": _difference,
     "symmetric_difference": _symmetric_difference,
     "interleave": _interleave,
+    "interpose": _interpose,
     "reverse": _reverse,
     "rotate": _rotate,
     "first": _first,

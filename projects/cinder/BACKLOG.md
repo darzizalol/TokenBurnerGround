@@ -315,6 +315,64 @@ pass, not this task.
 
 ---
 
+## 6. Standard library: `is_upper`/`is_lower` — string case predicates
+
+Build: add `is_upper(string)` and `is_lower(string)` to
+`cinder/builtins.py`. `swap_case` flips case, `upper`/`lower` force
+case, but there is no builtin to ask whether a string is *already*
+entirely one case — the same gap `is_even`/`is_odd` fill for parity,
+applied to string casing this time. Like `is_palindrome` (task 2
+above), this is a property predicate on a string's existing content,
+not a kind predicate on any value — group it with `is_palindrome`
+near `is_string`, not with the case-manipulation builtins
+(`upper`/`lower`/`capitalize`/`title`/`swap_case`) it superficially
+resembles, the same "group by predicate family, not by implementation
+resemblance" principle `is_palindrome`'s task already established.
+
+Model directly on `_swap_case`'s structure
+(`cinder/builtins.py:611-618`): same arity-1 check via
+`_require_arity("is_upper"/"is_lower", arguments, 1, line, column)`,
+same single type check (argument a `string` else
+`CinderRuntimeError` matching `"is_upper() requires a string, got
+{type_name}"` / `"is_lower() requires a string, got {type_name}"`).
+Behavior once validated: delegate directly to Python's own
+`value.isupper()` / `value.islower()` — no reimplementation, matching
+how `swap_case` delegates to `str.swapcase()`. This inherits Python's
+semantics for free: digits/punctuation/whitespace are case-neutral
+and don't affect the result, but at least one cased character must be
+present, so a string with no cased characters at all (digits-only,
+empty, whitespace-only, punctuation-only) is neither upper nor lower.
+
+Acceptance criteria:
+- `is_upper("ABC");` is `true`, `is_lower("abc");` is `true`.
+- `is_upper("abc");` is `false`, `is_lower("ABC");` is `false`.
+- `is_upper("Abc");` is `false`, `is_lower("Abc");` is `false` — mixed
+  case is neither.
+- `is_upper("ABC123");` is `true`, `is_lower("abc123");` is `true` —
+  digits are case-neutral and don't break an otherwise-uniform-case
+  string.
+- `is_upper("123");` is `false`, `is_lower("123");` is `false` — no
+  cased characters at all, so neither predicate holds (matches
+  Python's `str.isupper()`/`str.islower()` on digit-only input).
+- `is_upper("");` is `false`, `is_lower("");` is `false` — empty
+  string has no cased characters either.
+- `is_upper(5);` (non-string argument) raises `CinderRuntimeError`
+  naming `is_upper` and `int` in the message; same for `is_lower(5);`
+  naming `is_lower`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column, for both functions.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_palindrome`/the
+other `is_*` predicates once that's landed, else near `is_string`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_upper`/`is_lower` added near the other `is_*`
+predicates — leave that to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

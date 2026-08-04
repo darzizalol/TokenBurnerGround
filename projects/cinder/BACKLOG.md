@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_prime` — test whether an integer is prime
+## 1. Standard library: `is_prime` — test whether an integer is prime [claimed 2026-08-04T20:15:21Z]
 
 Build: add `is_prime(value)` to `cinder/builtins.py`. `is_even`/`is_odd`
 (`cinder/builtins.py:925-934`) already classify an integer's *parity*;

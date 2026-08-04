@@ -193,25 +193,30 @@ mirroring how `str.center` relates to `str.ljust`/`str.rjust`), and
 backwards (a case-sensitive, no-normalization predicate — no
 stripping of spaces/punctuation — the same minimal-behavior spirit
 `chars`/`swap_case` already follow rather than guessing at what a
-caller wants stripped) have since landed too. What remains plausible,
-not yet scoped beyond current `BACKLOG.md`: `is_int`/`is_float` as
-type predicates splitting `is_number`'s single "numeric" kind into its
-two concrete ones (sitting next to `is_number` the same way `is_list`/
-`is_map`/`is_string` already classify a value's kind rather than a
-property of it, so — unlike `is_even`/`is_palindrome` — neither raises
-on a non-numeric argument, just returns `false`), `is_prime` as
-`is_even`/`is_odd`'s natural sibling integer-property predicate (trial
-division to `sqrt(n)`, no need for anything fancier at Cinder's scale),
-`is_sorted` to test whether a list is already in non-decreasing
-order without sorting it first and comparing by hand (reusing
-`sort`'s own numbers-only-or-strings-only ordering rule), and
+caller wants stripped), and `is_int`/`is_float` splitting
+`is_number`'s single "numeric" kind into its two concrete ones
+(sitting next to `is_number` the same way `is_list`/`is_map`/
+`is_string` already classify a value's kind rather than a property of
+it, so — unlike `is_even`/`is_palindrome` — neither raises on a
+non-numeric argument, just returns `false`) have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+`is_prime` as `is_even`/`is_odd`'s natural sibling integer-property
+predicate (trial division to `sqrt(n)`, no need for anything fancier
+at Cinder's scale), `is_sorted` to test whether a list is already in
+non-decreasing order without sorting it first and comparing by hand
+(reusing `sort`'s own numbers-only-or-strings-only ordering rule),
 `is_upper`/`is_lower` as string case predicates delegating straight to
 Python's own `str.isupper()`/`str.islower()` (the same "ask, don't
 force" gap `is_sorted` fills for ordering, applied to casing instead),
-and `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
+`is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
 predicates delegating to Python's `str.isalpha()`/`str.isdigit()`/
 `str.isalnum()`/`str.isspace()` (the same delegation `is_upper`/
-`is_lower` use, one layer more basic — content rather than case) —
+`is_lower` use, one layer more basic — content rather than case), and
+`is_positive`/`is_negative`/`is_zero` as numeric sign predicates
+sitting next to `sign` the same way `is_even`/`is_odd` already sit
+next to it for parity (a property predicate on any number, int or
+float alike, raising on a non-numeric argument the same way `sign`
+itself does — unlike the kind predicates `is_int`/`is_float`) —
 tasks 1 through 5 in current `BACKLOG.md` — and only much later, a
 bytecode VM if performance ever actually matters. The Architect should
 keep scoping these into `BACKLOG.md` incrementally — do not jump ahead

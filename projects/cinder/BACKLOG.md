@@ -246,6 +246,65 @@ not this task.
 
 ---
 
+## 5. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
+
+Build: add `is_positive(value)`, `is_negative(value)`, and
+`is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:940-951`)
+already reduces a number to `1`/`-1`/`0`, but every caller who only
+cares about one branch has to write `sign(x) == 1` (or worse,
+`x > 0`, which silently accepts non-numeric input Cinder would
+otherwise reject). This is the same family as `is_even`/`is_odd`:
+a **property** predicate on a number, not a **kind** predicate on
+any value — so, like `is_even`/`is_odd`/`is_prime` and unlike
+`is_int`/`is_float`, a non-numeric argument is a type error, not a
+`false`. Unlike `is_even`/`is_odd`/`is_prime`, though, these three
+apply to *any* number, not just integers — `is_positive(1.5)` is
+`true`, matching `sign`'s own float-inclusive behavior.
+
+Model directly on `_sign`'s structure (`cinder/builtins.py:940-951`):
+same arity-1 check via `_require_arity(name, arguments, 1, line,
+column)`, same `_is_numeric(value)` check (not `_require_int` — floats
+are valid input here, matching `sign`, not `is_even`/`is_odd`) else
+`CinderRuntimeError` matching `"is_positive() requires a number, got
+{type_name}"` and so on for the other two, name substituted. Behavior
+once validated: `is_positive` returns `value > 0`, `is_negative`
+returns `value < 0`, `is_zero` returns `value == 0` — plain
+delegation to Python's own comparison operators, no reimplementation,
+the same "ask, don't force" spirit `is_upper`/`is_lower` (task 3
+above) use for Python's `str` predicates. `is_zero(0.0)` is `true`
+(Python's `0.0 == 0` is `true`; no special-casing float zero).
+Register the trio in the builtins dict right after `"sign": _sign,`,
+keeping the numeric-property-predicate family (`sign`/`is_positive`/
+`is_negative`/`is_zero`) contiguous, distinct from the integer-only
+`is_even`/`is_odd`/`is_prime` trio elsewhere in the file.
+
+Acceptance criteria:
+- `is_positive(5);` is `true`, `is_positive(1.5);` is `true`,
+  `is_positive(-5);` is `false`, `is_positive(0);` is `false`.
+- `is_negative(-5);` is `true`, `is_negative(-1.5);` is `true`,
+  `is_negative(5);` is `false`, `is_negative(0);` is `false`.
+- `is_zero(0);` is `true`, `is_zero(0.0);` is `true`,
+  `is_zero(5);` is `false`, `is_zero(-5);` is `false`.
+- Exactly one of the three is `true` for any given number (mutual
+  exclusivity), matching `sign`'s own three-way partition.
+- `is_positive("5");` (non-numeric string) raises `CinderRuntimeError`
+  naming `is_positive` and `string` in the message; same pattern for
+  `is_negative("5");` and `is_zero("5");`, each naming itself.
+- `is_positive(true);` raises `CinderRuntimeError` — a bool is not a
+  number, matching `sign(true)`'s existing behavior via
+  `_is_numeric`; same for `is_negative(true);` and `is_zero(true);`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column, for all three functions.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `sign`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_positive`/`is_negative`/`is_zero` added near `sign` — leave
+that to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

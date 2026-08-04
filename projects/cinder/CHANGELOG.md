@@ -1375,3 +1375,13 @@ for vision/architecture.
   passing, up from 1862). `README.md`'s Builtins bullet still needs
   `chars` added near `lines`/`words` — left to the Architect's next
   grooming pass.
+- **Standard library: `is_even`/`is_odd` — integer parity predicates**
+  — merged 2026-08-04T19:17:35Z via PR #171
+  (`feat/20260804-is-even-odd`). Added both, modeled on `_sign` but
+  using `_require_int` (not `_is_numeric`) so a whole-valued float
+  like `4.0` is still a type error, not silently truncated. Correct
+  for negative integers via Python's `%` semantics. Registered right
+  after `"sign": _sign,`. Clean first pass, no bounces (1881 tests
+  passing, up from 1868). `README.md`'s Builtins bullet still needs
+  `is_even`/`is_odd` added near the other type predicates — left to
+  the Architect's next grooming pass.

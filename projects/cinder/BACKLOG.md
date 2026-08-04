@@ -11,60 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_even`/`is_odd` — integer parity predicates [claimed 2026-08-04T19:12:46Z]
-
-Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
-There is currently no builtin way to test a number's parity — the
-existing type predicates (`is_list`, `is_map`, `is_string`, `is_number`,
-`is_bool`, `is_nil`, `is_function`, `cinder/builtins.py:2756-2762` in
-the dict) all classify a value's *kind*, not a numeric property of it,
-and the closest numeric helper, `sign` (`cinder/builtins.py:901-912`),
-classifies a number's sign, not its parity — every Cinder program that
-wants "is this number even" today hand-rolls `n % 2 == 0`. This adds
-the pair the same way `sign` already sits next to `abs` as a small,
-self-contained numeric predicate.
-
-Model both on `_sign`'s structure (`cinder/builtins.py:853-864`): same
-arity-1 check via `_require_arity("is_even"/"is_odd", arguments, 1,
-line, column)`, but reuse `_require_int` (`cinder/builtins.py:156-161`,
-already used by `to_hex`/`to_bin`/`to_oct`) instead of `_is_numeric`
-for the type check — parity is only meaningful for integers, so a
-`float` argument (even a whole-valued one like `4.0`) is a type error,
-not silently truncated; `_require_int`'s existing message shape
-(`"{name}() requires an int, got {type_name}"`) applies unchanged, no
-new message text to invent. Behavior once validated: `is_even` returns
-`value % 2 == 0`; `is_odd` returns `value % 2 != 0` (correct for
-negative integers too, since Python's `%` on ints always returns a
-non-negative result when the divisor is positive: `-3 % 2 == 1`).
-Register both in the builtins dict right after `"sign": _sign,`
-(`cinder/builtins.py:2661`), `is_even` before `is_odd`.
-
-Acceptance criteria:
-- `is_even(4);` is `true`, `is_odd(4);` is `false`.
-- `is_even(3);` is `false`, `is_odd(3);` is `true`.
-- `is_even(0);` is `true` — zero is even.
-- `is_even(-4);` is `true`, `is_odd(-3);` is `true` — negative integers
-  use the same parity rule as positive ones.
-- `is_even(4.0);` (float, even though whole-valued) raises
-  `CinderRuntimeError` naming `is_even` and `float` in the message
-  (`type_name(4.0)` is `"float"`); same for `is_odd(4.0);` naming
-  `is_odd`.
-- `is_even("4");` (non-numeric argument) raises `CinderRuntimeError`
-  naming `is_even` and `string` in the message; same for `is_odd`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column, for both functions.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `sign`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_even`/`is_odd` added near the other type predicates
-(`is_list`/`is_map`/... ) or near `sign` — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `swap_case` — flip each character's case
+## 1. Standard library: `swap_case` — flip each character's case
 
 Build: add `swap_case(string)` to `cinder/builtins.py`. The existing case
 builtins (`upper`, `lower`, `capitalize`, `title`,
@@ -109,7 +56,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `pad_center` — center a string within a width, padding both sides
+## 2. Standard library: `pad_center` — center a string within a width, padding both sides
 
 Build: add `pad_center(string, width, fill)` to `cinder/builtins.py`.
 `pad_start`/`pad_end` (`cinder/builtins.py:844-859`) only ever pad on
@@ -173,7 +120,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `is_palindrome` — test whether a string reads the same forwards and backwards
+## 3. Standard library: `is_palindrome` — test whether a string reads the same forwards and backwards
 
 Build: add `is_palindrome(string)` to `cinder/builtins.py`. There is
 currently no builtin way to test this common string property directly
@@ -230,7 +177,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_int`/`is_float` — split `is_number`'s single kind into its two concrete ones
+## 4. Standard library: `is_int`/`is_float` — split `is_number`'s single kind into its two concrete ones
 
 Build: add `is_int(value)` and `is_float(value)` to `cinder/builtins.py`.
 `is_number` (`cinder/builtins.py:2594-2596`) already answers "is this

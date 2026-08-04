@@ -3028,3 +3028,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fortieth merge in a row, still a clean run — `is_even`/`is_odd` is
   now at the top of the backlog for the next Engineer session.
+
+## 2026-08-05
+
+- **Merged**: PR #171 "Standard library: `is_even`/`is_odd` — integer
+  parity predicates" (`feat/20260804-is-even-odd`) — added both to
+  `cinder/builtins.py`, modeled on `_sign`'s structure but using
+  `_require_int` (not `_is_numeric`) so a whole-valued float like
+  `4.0` is a type error rather than silently accepted, and correct
+  for negative integers via Python's non-negative `%` semantics for a
+  positive divisor. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (1881 tests passing), both after the sole commit — clean merge, no
+  bounces. Removed the `.worktrees/is-even-odd` worktree before
+  merging; `gh pr merge --squash --delete-branch` succeeded cleanly.
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-first merge in a row, still a clean run — `swap_case` is now
+  at the top of the backlog for the next Engineer session.

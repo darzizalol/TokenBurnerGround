@@ -217,6 +217,63 @@ pass, not this task.
 
 ---
 
+## 5. Standard library: `is_palindrome` — test whether a string reads the same forwards and backwards
+
+Build: add `is_palindrome(string)` to `cinder/builtins.py`. There is
+currently no builtin way to test this common string property directly
+— today it requires hand-rolling `value == value[::-1]`-equivalent
+logic with a manual reverse loop (Cinder has no slice-reversal
+shorthand), even though the language already has string
+predicates elsewhere (`is_string` et al. classify a value's *kind*;
+this one, like `is_even`/`is_odd` above, classifies a property of the
+value itself).
+
+Model directly on `_capitalize`'s/`_title`'s structure
+(`cinder/builtins.py:578-606`): same arity-1 check via
+`_require_arity("is_palindrome", arguments, 1, line, column)`, same
+single type check (the argument a `string` else `CinderRuntimeError`
+matching `"is_palindrome() requires a string, got {type_name}"`, same
+message shape `_capitalize`/`_title`/`swap_case` use — reuse whichever
+of those has landed by the time this task is picked up as the
+template, since they're structurally identical). Behavior once
+validated: return `value == value[::-1]`. Deliberately no
+normalization — do not strip whitespace/punctuation and do not
+case-fold; this is a literal character-for-character check, matching
+the minimal-behavior spirit `chars`/`swap_case` above already follow
+rather than guessing at what a caller wants ignored. Register it in
+the builtins dict right after `"is_string": _is_string,`
+(`cinder/builtins.py:2758`), grouping it with the other `is_*`
+predicates rather than with the case-manipulation builtins its
+implementation resembles.
+
+Acceptance criteria:
+- `is_palindrome("racecar");` is `true` — odd-length palindrome.
+- `is_palindrome("noon");` is `true` — even-length palindrome.
+- `is_palindrome("hello");` is `false` — not a palindrome.
+- `is_palindrome("");` is `true` — empty string, vacuously a
+  palindrome.
+- `is_palindrome("a");` is `true` — single character.
+- `is_palindrome("Racecar");` is `false` — no case-folding; the
+  mismatched `R`/`r` at the ends makes this not a literal palindrome.
+- `is_palindrome("a man a");` is `false` — no whitespace stripping;
+  contrast with the classic "a man a plan a canal panama" phrasing,
+  which is out of scope here.
+- `is_palindrome(5);` (non-string argument) raises
+  `CinderRuntimeError` naming `is_palindrome` and `int` in the message
+  (`type_name(5)` is `"int"`, not `"number"`).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_string`/the
+other `is_*` predicates, see current line numbers — shift if earlier
+tasks this cycle landed first), `tests/test_builtins.py`. Once
+merged, `README.md`'s Builtins bullet needs `is_palindrome` added near
+the other `is_*` type predicates — leave that to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

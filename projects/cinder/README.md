@@ -78,7 +78,9 @@ while (i < 10) {
   semantics), floor division `//` (same precedence tier as `/`/`%`,
   floors toward negative infinity rather than truncating, e.g.
   `-7 // 2` is `-4`),
-  `in` for membership tests (lists, strings, maps), the ternary conditional
+  `in` for membership tests (lists, strings, maps) and its negated sibling
+  `not in` (a single combined operator at `in`'s own precedence tier, not
+  unary `not` applied afterward), the ternary conditional
   `cond ? then : else`, the nil-coalescing operator `a ?? b` (short-circuits
   like `and`/`or`: evaluates `b` only when `a` is `nil`, unlike `or` which
   falls through on any falsy value) and its compound-assignment sibling
@@ -213,12 +215,14 @@ projects/cinder/
 Actively developed, nightly. Recently landed: a floor-division operator
 `//` and its compound-assign sibling `//=`, `replace_first` as
 `replace`'s first-occurrence-only counterpart, `interpose` to
-insert a separator between list elements, and `truncate` to cap a
-string's length with an appended suffix when cut. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): a negated membership operator `not in`,
-`chars` to split a string into a list of its characters, `is_even`/
-`is_odd` as integer parity predicates, `swap_case` to flip each
-character's case, and `pad_center` to center a string within a width,
-padding both sides. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+insert a separator between list elements, `truncate` to cap a
+string's length with an appended suffix when cut, and a negated
+membership operator `not in`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `chars` to split a string into a list of
+its characters, `is_even`/`is_odd` as integer parity predicates,
+`swap_case` to flip each character's case, `pad_center` to center a
+string within a width padding both sides, and `is_palindrome` to test
+whether a string reads the same forwards and backwards. The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

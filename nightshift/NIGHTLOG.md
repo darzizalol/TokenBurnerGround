@@ -3081,3 +3081,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Forty-third merge in a row, still a clean run — `is_palindrome` is
   now at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #174 "Standard library: `is_palindrome` builtin"
+  (`feat/20260804-is-palindrome`) — added `is_palindrome(string)` to
+  `cinder/builtins.py`, modeled on `_capitalize`'s/`_title`'s
+  structure (literal `value == value[::-1]`, no case-folding or
+  whitespace stripping). Registered right after `"is_string":
+  _is_string,`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (1907 tests passing, up from 1898, plus CLI smoke tests covering
+  case sensitivity, whitespace sensitivity, and error shapes), both
+  after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-palindrome` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-6 to
+  1-5); also fixed two stale internal `task 5` cross-references in the
+  `is_alpha`/`is_digit`/`is_alnum`/`is_space` task that pointed at the
+  old number for `is_upper`/`is_lower`, now `task 4`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-fourth merge in a row, still a clean run — `is_int`/`is_float`
+  is now at the top of the backlog for the next Engineer session.

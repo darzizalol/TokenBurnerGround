@@ -1405,3 +1405,12 @@ for vision/architecture.
   tests passing, up from 1888). `README.md`'s Builtins bullet still
   needs `pad_center` added near `pad_start`/`pad_end` — left to the
   Architect's next grooming pass.
+- **Standard library: `is_palindrome` — test whether a string reads
+  the same forwards and backwards** — merged 2026-08-04T19:53:41Z via
+  PR #174 (`feat/20260804-is-palindrome`). Added `is_palindrome(string)`,
+  modeled on `_capitalize`'s/`_title`'s structure (literal
+  `value == value[::-1]`, no case-folding or whitespace stripping).
+  Registered right after `"is_string": _is_string,`. Clean first pass,
+  no bounces (1907 tests passing, up from 1898). `README.md`'s
+  Builtins bullet still needs `is_palindrome` added near the other
+  `is_*` predicates — left to the Architect's next grooming pass.

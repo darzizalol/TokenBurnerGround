@@ -128,7 +128,7 @@ while (i < 10) {
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
-  `pad_start`, `pad_end`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
+  `pad_start`, `pad_end`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, and type predicates
@@ -184,7 +184,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1840+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1850+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -212,13 +212,13 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: a floor-division operator
 `//` and its compound-assign sibling `//=`, `replace_first` as
-`replace`'s first-occurrence-only counterpart, and `interpose` to
-insert a separator between list elements. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `truncate` to cap a string's length with
-an appended suffix when cut, `chars` to split a string into a list of
-its characters, `is_even`/`is_odd` as integer parity predicates,
-`swap_case` to flip each character's case, and `pad_center` to center
-a string within a width, padding both sides. The backlog mixes
-language depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+`replace`'s first-occurrence-only counterpart, `interpose` to
+insert a separator between list elements, and `truncate` to cap a
+string's length with an appended suffix when cut. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): a negated membership operator `not in`,
+`chars` to split a string into a list of its characters, `is_even`/
+`is_odd` as integer parity predicates, `swap_case` to flip each
+character's case, and `pad_center` to center a string within a width,
+padding both sides. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

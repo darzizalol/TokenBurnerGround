@@ -3011,3 +3011,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-ninth merge in a row, still a clean run — `chars` is now at
   the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #170 "Standard library: `chars` — split a string into
+  a list of its characters" (`feat/20260804-chars-builtin`) — added
+  `chars(string)` to `cinder/builtins.py`, returning `list(value)`,
+  modeled directly on `_lines`/`_words`'s structure (same arity-1
+  check, same type-check/error-message shape). Correctly handles the
+  empty string (`list("") == []`) with no special case and preserves
+  whitespace, unlike `words`. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (1868 tests passing), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/chars-builtin` worktree
+  before merging; `gh pr merge --squash --delete-branch` succeeded
+  cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fortieth merge in a row, still a clean run — `is_even`/`is_odd` is
+  now at the top of the backlog for the next Engineer session.

@@ -1364,3 +1364,14 @@ for vision/architecture.
   passing, up from 1851). `README.md`'s language feature bullets and
   `PROJECT.md`'s roadmap still need `not in` added — left to the
   Architect's next grooming pass.
+- **Standard library: `chars` — split a string into a list of its
+  characters** — merged 2026-08-04T19:06:55Z via PR #170
+  (`feat/20260804-chars-builtin`). Added `chars(string)` returning
+  `list(value)`, modeled directly on `_lines`/`_words` (same arity-1
+  check, same type-check/error-message shape). Handles the empty
+  string correctly (`list("") == []`) with no special case, and
+  preserves whitespace characters unlike `words`. Registered right
+  after `"words": _words,`. Clean first pass, no bounces (1868 tests
+  passing, up from 1862). `README.md`'s Builtins bullet still needs
+  `chars` added near `lines`/`words` — left to the Architect's next
+  grooming pass.

@@ -2002,6 +2002,50 @@ class TestIsOdd(unittest.TestCase):
             run("is_odd(1, 2);")
 
 
+class TestIsPrime(unittest.TestCase):
+    def test_is_prime_of_two(self):
+        self.assertEqual(run("let result = is_prime(2);").get("result"), True)
+
+    def test_is_prime_of_larger_primes(self):
+        self.assertEqual(run("let result = is_prime(17);").get("result"), True)
+        self.assertEqual(run("let result = is_prime(97);").get("result"), True)
+
+    def test_is_prime_of_one_is_false(self):
+        self.assertEqual(run("let result = is_prime(1);").get("result"), False)
+
+    def test_is_prime_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_prime(0);").get("result"), False)
+
+    def test_is_prime_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_prime(-7);").get("result"), False)
+
+    def test_is_prime_of_composites_is_false(self):
+        self.assertEqual(run("let result = is_prime(4);").get("result"), False)
+        self.assertEqual(run("let result = is_prime(9);").get("result"), False)
+        self.assertEqual(run("let result = is_prime(100);").get("result"), False)
+
+    def test_is_prime_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_prime(4.0);")
+        self.assertIn("is_prime", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_prime_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_prime(true);")
+        self.assertIn("is_prime", ctx.exception.message)
+
+    def test_is_prime_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_prime("4");')
+        self.assertIn("is_prime", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_prime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_prime();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

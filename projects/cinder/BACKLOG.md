@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `pad_center` — center a string within a width, padding both sides
+## 1. Standard library: `pad_center` — center a string within a width, padding both sides [claimed 2026-08-04T19:36:29Z]
 
 Build: add `pad_center(string, width, fill)` to `cinder/builtins.py`.
 `pad_start`/`pad_end` (`cinder/builtins.py:844-859`) only ever pad on

@@ -120,7 +120,7 @@ while (i < 10) {
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `find_last_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
-  `union`, `intersection`, `difference`, `symmetric_difference` (lists treated as unordered sets), `interleave`, `zip_object`,
+  `union`, `intersection`, `difference`, `symmetric_difference` (lists treated as unordered sets), `interleave`, `interpose`, `zip_object`,
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
@@ -184,7 +184,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1830+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1840+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -211,13 +211,14 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: a floor-division operator
-`//` and its compound-assign sibling `//=`, and `replace_first` as
-`replace`'s first-occurrence-only counterpart. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `interpose` to insert a separator
-between list elements, `truncate` to cap a string's length with an
-appended suffix when cut, `chars` to split a string into a list of
-its characters, `is_even`/`is_odd` as integer parity predicates, and
-`swap_case` to flip each character's case. The backlog mixes language
-depth with stdlib breadth over time rather than running either in one
-long block. The full vision and non-goals live in
+`//` and its compound-assign sibling `//=`, `replace_first` as
+`replace`'s first-occurrence-only counterpart, and `interpose` to
+insert a separator between list elements. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `truncate` to cap a string's length with
+an appended suffix when cut, `chars` to split a string into a list of
+its characters, `is_even`/`is_odd` as integer parity predicates,
+`swap_case` to flip each character's case, and `pad_center` to center
+a string within a width, padding both sides. The backlog mixes
+language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

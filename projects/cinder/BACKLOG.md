@@ -228,6 +228,70 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `pad_center` — center a string within a width, padding both sides
+
+Build: add `pad_center(string, width, fill)` to `cinder/builtins.py`.
+`pad_start`/`pad_end` (`cinder/builtins.py:844-859`) only ever pad on
+one side — the natural third member is centering, padding both sides
+so the original content sits in the middle, the same relationship
+Python's `str.center` has to `str.ljust`/`str.rjust`.
+
+Model directly on `_pad_start`/`_pad_end`'s structure
+(`cinder/builtins.py:844-859`), reusing the existing
+`_check_pad_arguments` helper unchanged (`cinder/builtins.py:826-841`)
+— same three checks it already runs for `pad_start`/`pad_end`: first
+argument a `string` else `CinderRuntimeError` matching `"pad_center()
+requires a string as its first argument, got {type_name}"`, second
+argument a non-bool, non-negative `int` else `"pad_center() requires
+an int width, got {type_name}"` / `"pad_center() width must not be
+negative, got {width}"`, third argument a single-character `string`
+else `"pad_center() requires a single-character fill string, got
+{fill!r}"` (call it as `_check_pad_arguments("pad_center", value,
+width, fill, line, column)` — the message text swaps in automatically
+via the `name` parameter, no new strings to write). Behavior once
+validated: if `len(value) >= width`, return `value` unchanged (same
+no-op boundary `pad_start`/`pad_end` use); otherwise return
+`value.center(width, fill)` — Python's built-in centering, which puts
+any extra (odd) padding character on the left, e.g. `"ab".center(5,
+"*")` is `"**ab*"`. Register it in the builtins dict right after
+`"pad_end": _pad_end,` (find via `grep -n '"pad_end": _pad_end,'
+cinder/builtins.py` — shift if `truncate` landed first this cycle and
+moved it).
+
+Acceptance criteria:
+- `pad_center("ab", 5, "*");` is `"**ab*"` — odd padding (3 extra
+  chars) splits 2 left / 1 right, matching Python's `str.center`.
+- `pad_center("ab", 6, "*");` is `"**ab**"` — even padding splits
+  evenly.
+- `pad_center("hello", 3, "*");` is `"hello"` unchanged — `width`
+  smaller than the string, no-op.
+- `pad_center("hello", 5, "*");` is `"hello"` unchanged — exactly at
+  `width` is not "under" it, matching `_pad_start`/`_pad_end`'s own
+  `>=` boundary treatment as a no-op.
+- `pad_center("", 3, "*");` is `"***"` — empty string, pure fill.
+- `pad_center(5, 3, "*");` (non-string first argument) raises
+  `CinderRuntimeError` naming `pad_center` and `int` in the message.
+- `pad_center("ab", "3", "*");` (non-int second argument) raises
+  `CinderRuntimeError` naming `pad_center` and `string` in the
+  message.
+- `pad_center("ab", -1, "*");` (negative `width`) raises
+  `CinderRuntimeError` naming `pad_center` and `-1` in the message.
+- `pad_center("ab", 5, "**");` (multi-character fill) raises
+  `CinderRuntimeError` naming `pad_center` and mentioning the
+  two-character fill string.
+- Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `pad_start`/
+`pad_end`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged,
+`README.md`'s Builtins bullet needs `pad_center` added near
+`pad_start`/`pad_end` — leave that to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

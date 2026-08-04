@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_palindrome` — test whether a string reads the same forwards and backwards
+## 1. Standard library: `is_palindrome` — test whether a string reads the same forwards and backwards [claimed 2026-08-04T19:48:43Z]
 
 Build: add `is_palindrome(string)` to `cinder/builtins.py`. There is
 currently no builtin way to test this common string property directly

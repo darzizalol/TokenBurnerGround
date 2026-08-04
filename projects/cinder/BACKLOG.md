@@ -231,6 +231,51 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `swap_case` — flip each character's case
+
+Build: add `swap_case(string)` to `cinder/builtins.py`. The existing case
+builtins (`upper`, `lower`, `capitalize`, `title`,
+`cinder/builtins.py:558-609`) only ever push a string toward one
+direction — all upper, all lower, or capitalized at word starts —
+there is no builtin that flips each character's existing case in
+place (`"Hello World"` → `"hELLO wORLD"`), a common text-processing
+operation and the natural fourth member alongside `upper`/`lower`/
+`capitalize`/`title` since none of those touch already-correct casing
+symmetrically.
+
+Model directly on `_capitalize`'s structure
+(`cinder/builtins.py:578-587`): same arity-1 check via
+`_require_arity("swap_case", arguments, 1, line, column)`, same single
+type check (the argument a `string` else `CinderRuntimeError` matching
+`"swap_case() requires a string, got {type_name}"`, same message
+shape `_capitalize`/`_title` use). Behavior once validated: return
+`value.swapcase()` — Python's built-in per-character case flip, which
+already leaves non-alphabetic characters untouched and handles the
+empty string correctly. Register it in the builtins dict right after
+`"title": _title,` (`cinder/builtins.py:2596`).
+
+Acceptance criteria:
+- `swap_case("Hello World");` is `"hELLO wORLD"` — the primary case.
+- `swap_case("");` is `""` — empty string, no-op.
+- `swap_case("123 abc XYZ");` is `"123 ABC xyz"` — digits/spaces
+  untouched, only letters flip.
+- `swap_case("ABC");` is `"abc"`, `swap_case("abc");` is `"ABC"` —
+  fully-uppercase and fully-lowercase inputs invert cleanly.
+- `swap_case(5);` (non-string argument) raises `CinderRuntimeError`
+  naming `swap_case` and `int` in the message (`type_name(5)` is
+  `"int"`, not `"number"`).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `capitalize`/
+`title`, see current line numbers — shift if earlier tasks this cycle
+landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `swap_case` added near `capitalize`/`title` —
+leave that to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

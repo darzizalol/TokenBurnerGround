@@ -68,8 +68,8 @@ while (i < 10) {
   a single `case` may list multiple values, e.g. `case 1, 2, 3: { ... }`,
   matching if any of them equals the switch expression)
 - **Operators**: full arithmetic/comparison/logical set, compound
-  assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `&=`, `|=`, `^=`, `<<=`,
-  `>>=`;
+  assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `&=`, `|=`, `^=`,
+  `<<=`, `>>=`;
   all of them, arithmetic and bitwise/shift alike, accept an
   index-expression target too, e.g. `xs[0] += 1`, `m.key &= 3`),
   increment/decrement statement sugar `x++;`/`x--;` (identifier or
@@ -126,7 +126,7 @@ while (i < 10) {
   `deep_merge`,
   `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
-  `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`,
+  `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`,
   `pad_start`, `pad_end`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
@@ -184,7 +184,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1785+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1830+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -211,11 +211,13 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: a floor-division operator
-`//` and its compound-assign sibling `//=`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `replace_first` as `replace`'s
-first-occurrence-only counterpart, `interpose` to insert a separator
+`//` and its compound-assign sibling `//=`, and `replace_first` as
+`replace`'s first-occurrence-only counterpart. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `interpose` to insert a separator
 between list elements, `truncate` to cap a string's length with an
-appended suffix when cut, and `chars` to split a string into a list of
-its characters. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+appended suffix when cut, `chars` to split a string into a list of
+its characters, `is_even`/`is_odd` as integer parity predicates, and
+`swap_case` to flip each character's case. The backlog mixes language
+depth with stdlib breadth over time rather than running either in one
+long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

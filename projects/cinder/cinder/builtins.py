@@ -608,6 +608,16 @@ def _title(arguments: list, line: int, column: int) -> object:
     return "".join(result)
 
 
+def _swap_case(arguments: list, line: int, column: int) -> object:
+    _require_arity("swap_case", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"swap_case() requires a string, got {type_name(value)}", line, column
+        )
+    return value.swapcase()
+
+
 def _trim(arguments: list, line: int, column: int) -> object:
     _require_arity("trim", arguments, 1, line, column)
     value = arguments[0]
@@ -2661,6 +2671,7 @@ _BUILTINS = {
     "lower": _lower,
     "capitalize": _capitalize,
     "title": _title,
+    "swap_case": _swap_case,
     "trim": _trim,
     "trim_start": _trim_start,
     "trim_end": _trim_end,

@@ -1811,6 +1811,43 @@ class TestPadEnd(unittest.TestCase):
             run('pad_end("7", 3);')
 
 
+class TestPadCenter(unittest.TestCase):
+    def test_pad_center_odd_padding_favors_left(self):
+        self.assertEqual(run('let result = pad_center("ab", 5, "*");').get("result"), "**ab*")
+
+    def test_pad_center_even_padding_splits_evenly(self):
+        self.assertEqual(run('let result = pad_center("ab", 6, "*");').get("result"), "**ab**")
+
+    def test_pad_center_width_smaller_than_string_unchanged(self):
+        self.assertEqual(run('let result = pad_center("hello", 3, "*");').get("result"), "hello")
+
+    def test_pad_center_exactly_at_width_unchanged(self):
+        self.assertEqual(run('let result = pad_center("hello", 5, "*");').get("result"), "hello")
+
+    def test_pad_center_empty_string(self):
+        self.assertEqual(run('let result = pad_center("", 3, "*");').get("result"), "***")
+
+    def test_pad_center_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_center(5, 3, "*");')
+
+    def test_pad_center_on_non_int_width_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_center("ab", "3", "*");')
+
+    def test_pad_center_negative_width_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_center("ab", -1, "*");')
+
+    def test_pad_center_multi_character_fill_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_center("ab", 5, "**");')
+
+    def test_pad_center_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('pad_center("ab", 5);')
+
+
 class TestTruncate(unittest.TestCase):
     def test_truncate_cuts_and_appends_suffix(self):
         self.assertEqual(run('let result = truncate("hello world", 8, "...");').get("result"), "hello...")

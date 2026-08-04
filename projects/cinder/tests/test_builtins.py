@@ -1119,6 +1119,39 @@ class TestTitle(unittest.TestCase):
             run('title("a", "b");')
 
 
+class TestSwapCase(unittest.TestCase):
+    def test_swap_case_mixed(self):
+        self.assertEqual(
+            run('let result = swap_case("Hello World");').get("result"),
+            "hELLO wORLD",
+        )
+
+    def test_swap_case_empty_string(self):
+        self.assertEqual(run('let result = swap_case("");').get("result"), "")
+
+    def test_swap_case_leaves_non_alphabetic_untouched(self):
+        self.assertEqual(
+            run('let result = swap_case("123 abc XYZ");').get("result"),
+            "123 ABC xyz",
+        )
+
+    def test_swap_case_all_uppercase(self):
+        self.assertEqual(run('let result = swap_case("ABC");').get("result"), "abc")
+
+    def test_swap_case_all_lowercase(self):
+        self.assertEqual(run('let result = swap_case("abc");').get("result"), "ABC")
+
+    def test_swap_case_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("swap_case(5);")
+
+    def test_swap_case_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("swap_case();")
+        with self.assertRaises(CinderRuntimeError):
+            run('swap_case("a", "b");')
+
+
 class TestTrim(unittest.TestCase):
     def test_trim_strips_leading_and_trailing_whitespace(self):
         self.assertEqual(run('let result = trim("  hi  ");').get("result"), "hi")

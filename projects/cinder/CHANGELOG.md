@@ -1394,3 +1394,14 @@ for vision/architecture.
   passing, up from 1881). `README.md`'s Builtins bullet still needs
   `swap_case` added near `capitalize`/`title` — left to the
   Architect's next grooming pass.
+- **Standard library: `pad_center` — center a string within a width**
+  — merged 2026-08-05T19:42:08Z via PR #173
+  (`feat/20260804-pad-center`). Added `pad_center(string, width,
+  fill)`, modeled on `_pad_start`/`_pad_end`'s structure and reusing
+  `_check_pad_arguments` unchanged, delegating to Python's
+  `str.center()` (extra odd padding character goes left, same no-op
+  `>=` width boundary as `pad_start`/`pad_end`). Registered right
+  after `"pad_end": _pad_end,`. Clean first pass, no bounces (1898
+  tests passing, up from 1888). `README.md`'s Builtins bullet still
+  needs `pad_center` added near `pad_start`/`pad_end` — left to the
+  Architect's next grooming pass.

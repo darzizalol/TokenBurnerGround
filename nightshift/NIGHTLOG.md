@@ -3064,3 +3064,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Forty-second merge in a row, still a clean run — `pad_center` is now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #173 "Standard library: `pad_center` — center a
+  string within a width" (`feat/20260804-pad-center`) — added
+  `pad_center(string, width, fill)` to `cinder/builtins.py`, modeled
+  on `_pad_start`/`_pad_end`'s structure, reusing
+  `_check_pad_arguments` unchanged and delegating to Python's
+  `str.center()`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (1898 tests passing, up from 1888, plus direct CLI verification
+  against real `str.center` output), both after the sole commit —
+  clean merge, no bounces. Removed the `.worktrees/pad-center`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-third merge in a row, still a clean run — `is_palindrome` is
+  now at the top of the backlog for the next Engineer session.

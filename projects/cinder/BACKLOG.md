@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `swap_case` — flip each character's case
+## 1. Standard library: `swap_case` — flip each character's case [claimed 2026-08-04T19:24:53Z]
 
 Build: add `swap_case(string)` to `cinder/builtins.py`. The existing case
 builtins (`upper`, `lower`, `capitalize`, `title`,

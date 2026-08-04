@@ -188,13 +188,13 @@ number's sign), `swap_case` to flip each character's case (the
 symmetric fourth member alongside `upper`/`lower`/`capitalize`/
 `title`), and `pad_center` to center a string within a width, padding
 both sides (the third member alongside `pad_start`/`pad_end`,
-mirroring how `str.center` relates to `str.ljust`/`str.rjust`) have
-since landed too. What remains plausible, not yet scoped beyond
-current `BACKLOG.md`: `is_palindrome` to test whether a string
-reads the same forwards and backwards (a case-sensitive, no-normalization
-predicate — no stripping of spaces/punctuation — the same
-minimal-behavior spirit `chars`/`swap_case` already follow rather than
-guessing at what a caller wants stripped), `is_int`/`is_float` as
+mirroring how `str.center` relates to `str.ljust`/`str.rjust`), and
+`is_palindrome` to test whether a string reads the same forwards and
+backwards (a case-sensitive, no-normalization predicate — no
+stripping of spaces/punctuation — the same minimal-behavior spirit
+`chars`/`swap_case` already follow rather than guessing at what a
+caller wants stripped) have since landed too. What remains plausible,
+not yet scoped beyond current `BACKLOG.md`: `is_int`/`is_float` as
 type predicates splitting `is_number`'s single "numeric" kind into its
 two concrete ones (sitting next to `is_number` the same way `is_list`/
 `is_map`/`is_string` already classify a value's kind rather than a
@@ -212,7 +212,7 @@ and `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
 predicates delegating to Python's `str.isalpha()`/`str.isdigit()`/
 `str.isalnum()`/`str.isspace()` (the same delegation `is_upper`/
 `is_lower` use, one layer more basic — content rather than case) —
-tasks 1 through 6 in current `BACKLOG.md` — and only much later, a
+tasks 1 through 5 in current `BACKLOG.md` — and only much later, a
 bytecode VM if performance ever actually matters. The Architect should
 keep scoping these into `BACKLOG.md` incrementally — do not jump ahead
 of the current layer.

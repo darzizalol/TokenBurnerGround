@@ -134,7 +134,8 @@ while (i < 10) {
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`
-  integer parity predicates, `swap_case` to flip each character's case, and type predicates
+  integer parity predicates, `is_palindrome` to test whether a string reads the same forwards
+  and backwards, `swap_case` to flip each character's case, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -216,10 +217,10 @@ projects/cinder/
 Actively developed, nightly. Recently landed: a negated membership
 operator `not in`, `chars` to split a string into a list of its
 characters, `is_even`/`is_odd` as integer parity predicates,
-`swap_case` to flip each character's case, and `pad_center` to center
-a string within a width padding both sides. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_palindrome` to test whether a string
-reads the same forwards and backwards, `is_int`/`is_float` as type
+`swap_case` to flip each character's case, `pad_center` to center
+a string within a width padding both sides, and `is_palindrome` to
+test whether a string reads the same forwards and backwards. Coming
+up next (see [`BACKLOG.md`](BACKLOG.md)): `is_int`/`is_float` as type
 predicates distinguishing `is_number`'s two numeric kinds, `is_prime`
 as an integer primality predicate, `is_sorted` to test whether a list
 is already in non-decreasing order, `is_upper`/`is_lower` as string

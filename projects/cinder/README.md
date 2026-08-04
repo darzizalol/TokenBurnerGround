@@ -210,13 +210,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `symmetric_difference`
-completing the `union`/`intersection`/`difference` set-ops trio, and a
-floor-division operator `//`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `//`'s compound-assign sibling `//=`,
-`replace_first` as `replace`'s first-occurrence-only counterpart,
-`interpose` to insert a separator between list elements, and
-`truncate` to cap a string's length with an appended suffix when cut.
-The backlog mixes language depth with stdlib
+Actively developed, nightly. Recently landed: a floor-division operator
+`//` and its compound-assign sibling `//=`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `replace_first` as `replace`'s
+first-occurrence-only counterpart, `interpose` to insert a separator
+between list elements, `truncate` to cap a string's length with an
+appended suffix when cut, and `chars` to split a string into a list of
+its characters. The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block.
 The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

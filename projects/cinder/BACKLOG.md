@@ -17,7 +17,7 @@ Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
 giving `replace` (`cinder/builtins.py:788-804`, which replaces *every*
 occurrence via Python's `str.replace(old, new)`) the same first/last
 split the stdlib already has for searching — `find`/`find_last`
-(`cinder/builtins.py:675-702`) and `index_of`/`last_index_of` both
+(`cinder/builtins.py:698-725`) and `index_of`/`last_index_of` both
 distinguish "first match" from "last match", but `replace` has no
 "only the first one" mode at all, only "all of them". This closes that
 gap the same way `find_last` closed it for `find`.
@@ -34,7 +34,7 @@ as `_replace`, just with the `replace_first()` name swapped in). The
 only behavioral difference: call Python's `value.replace(old, new, 1)`
 (the optional `count` argument `_replace` doesn't pass) instead of
 `value.replace(old, new)`. Register it in the builtins dict
-immediately after `"replace": _replace,` (`cinder/builtins.py:2582`).
+immediately after `"replace": _replace,` (`cinder/builtins.py:2591`).
 
 Acceptance criteria:
 - `replace_first("a-a-a", "a", "b");` is `"b-a-a"` — only the leftmost
@@ -49,13 +49,14 @@ Acceptance criteria:
   semantics (and `replace`'s own empty-`old` behavior for the
   all-occurrences case, `replace("ab", "", "X");` is `"XaXbX"`).
 - `replace_first(5, "a", "b");` (non-string first argument) raises
-  `CinderRuntimeError` naming `replace_first` and `number` in the
-  message.
+  `CinderRuntimeError` naming `replace_first` and `int` in the
+  message (`type_name(5)` is `"int"`, not `"number"` —
+  `cinder/interpreter.py:1047-1064`).
 - `replace_first("a", 5, "b");` (non-string second argument) raises
-  `CinderRuntimeError` naming `replace_first` and `number` in the
+  `CinderRuntimeError` naming `replace_first` and `int` in the
   message.
 - `replace_first("a", "a", 5);` (non-string third argument) raises
-  `CinderRuntimeError` naming `replace_first` and `number` in the
+  `CinderRuntimeError` naming `replace_first` and `int` in the
   message.
 - Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError`
   with line/column.
@@ -84,7 +85,7 @@ repeating one separator value between one list's elements). Unlike
 list builtin, not a string one.
 
 Model directly on `_interleave`'s structure
-(`cinder/builtins.py:1425-1433`): single-list arity/type check instead
+(`cinder/builtins.py:1434-1442`): single-list arity/type check instead
 of `_require_two_lists` (`_require_arity("interpose", arguments, 2,
 line, column)` then check `arguments[0]` is a `list`, matching the
 message shape `_interleave`/`_union` use — `"interpose() requires a
@@ -93,7 +94,7 @@ the separator, takes no type check since any value is valid), then a
 single loop appending `separator` before every element except the
 first (`if i > 0: result.append(separator)` then `result.append(element)`,
 using `enumerate`). Register it in the builtins dict right after
-`"interleave": _interleave,` (`cinder/builtins.py:2626`).
+`"interleave": _interleave,` (`cinder/builtins.py:2636`).
 
 Acceptance criteria:
 - `interpose([1, 2, 3], 0);` is `[1, 0, 2, 0, 3]` — the primary case.
@@ -103,7 +104,8 @@ Acceptance criteria:
 - `interpose([1, 2], "x");` is `[1, "x", 2]` — the separator's type
   need not match the list elements' type.
 - `interpose(5, 0);` (non-list first argument) raises
-  `CinderRuntimeError` naming `interpose` and `number` in the message.
+  `CinderRuntimeError` naming `interpose` and `int` in the message
+  (`type_name(5)` is `"int"`, not `"number"`).
 - Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
   with line/column.
 - Full test suite passes.
@@ -170,13 +172,14 @@ Acceptance criteria:
 - `truncate("hello", 3, "");` is `"hel"` — an empty suffix behaves like
   a plain hard cut.
 - `truncate(5, 3, "...");` (non-string first argument) raises
-  `CinderRuntimeError` naming `truncate` and `number` in the message.
+  `CinderRuntimeError` naming `truncate` and `int` in the message
+  (`type_name(5)` is `"int"`, not `"number"`).
 - `truncate("hello", "3", "...");` (non-int second argument) raises
   `CinderRuntimeError` naming `truncate` and `string` in the message.
 - `truncate("hello", -1, "...");` (negative `max_length`) raises
   `CinderRuntimeError` naming `truncate` and `-1` in the message.
 - `truncate("hello", 3, 5);` (non-string third argument) raises
-  `CinderRuntimeError` naming `truncate` and `number` in the message.
+  `CinderRuntimeError` naming `truncate` and `int` in the message.
 - Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError`
   with line/column.
 - Full test suite passes.
@@ -220,7 +223,8 @@ Acceptance criteria:
   too, not trimmed (contrast with `words`, which splits on and
   discards whitespace).
 - `chars(5);` (non-string argument) raises `CinderRuntimeError` naming
-  `chars` and `number` in the message.
+  `chars` and `int` in the message (`type_name(5)` is `"int"`, not
+  `"number"`).
 - Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
   with line/column.
 - Full test suite passes.
@@ -229,6 +233,59 @@ Likely files: `cinder/builtins.py` (register near `lines`/`words`, see
 current line numbers — shift if earlier tasks this cycle landed
 first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
 bullet needs `chars` added near `lines`/`words` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `is_even`/`is_odd` — integer parity predicates
+
+Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
+There is currently no builtin way to test a number's parity — the
+existing type predicates (`is_list`, `is_map`, `is_string`, `is_number`,
+`is_bool`, `is_nil`, `is_function`, `cinder/builtins.py:2689-2695` in
+the dict) all classify a value's *kind*, not a numeric property of it,
+and the closest numeric helper, `sign` (`cinder/builtins.py:853-864`),
+classifies a number's sign, not its parity — every Cinder program that
+wants "is this number even" today hand-rolls `n % 2 == 0`. This adds
+the pair the same way `sign` already sits next to `abs` as a small,
+self-contained numeric predicate.
+
+Model both on `_sign`'s structure (`cinder/builtins.py:853-864`): same
+arity-1 check via `_require_arity("is_even"/"is_odd", arguments, 1,
+line, column)`, but reuse `_require_int` (`cinder/builtins.py:156-161`,
+already used by `to_hex`/`to_bin`/`to_oct`) instead of `_is_numeric`
+for the type check — parity is only meaningful for integers, so a
+`float` argument (even a whole-valued one like `4.0`) is a type error,
+not silently truncated; `_require_int`'s existing message shape
+(`"{name}() requires an int, got {type_name}"`) applies unchanged, no
+new message text to invent. Behavior once validated: `is_even` returns
+`value % 2 == 0`; `is_odd` returns `value % 2 != 0` (correct for
+negative integers too, since Python's `%` on ints always returns a
+non-negative result when the divisor is positive: `-3 % 2 == 1`).
+Register both in the builtins dict right after `"sign": _sign,`
+(`cinder/builtins.py:2595`), `is_even` before `is_odd`.
+
+Acceptance criteria:
+- `is_even(4);` is `true`, `is_odd(4);` is `false`.
+- `is_even(3);` is `false`, `is_odd(3);` is `true`.
+- `is_even(0);` is `true` — zero is even.
+- `is_even(-4);` is `true`, `is_odd(-3);` is `true` — negative integers
+  use the same parity rule as positive ones.
+- `is_even(4.0);` (float, even though whole-valued) raises
+  `CinderRuntimeError` naming `is_even` and `float` in the message
+  (`type_name(4.0)` is `"float"`); same for `is_odd(4.0);` naming
+  `is_odd`.
+- `is_even("4");` (non-numeric argument) raises `CinderRuntimeError`
+  naming `is_even` and `string` in the message; same for `is_odd`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column, for both functions.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `sign`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_even`/`is_odd` added near the other type predicates
+(`is_list`/`is_map`/... ) or near `sign` — leave that to the
 Architect's next grooming pass, not this task.
 
 ---

@@ -3101,3 +3101,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Forty-fourth merge in a row, still a clean run — `is_int`/`is_float`
   is now at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #175 "Standard library: `is_int`/`is_float` — split
+  `is_number`'s single kind into its two concrete ones"
+  (`feat/20260804-is-int-is-float`) — added `is_int(value)` and
+  `is_float(value)` to `cinder/builtins.py`, modeled on
+  `_is_list`'s/`_is_map`'s structure as kind predicates (no type error
+  on non-numeric input, just `false`); `is_int` excludes `bool` the
+  same way `_is_numeric` does. Registered right after `"is_number":
+  _is_number,`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (1926 tests passing, up from 1907, plus CLI smoke tests covering
+  bool exclusion, no-coercion, and the `is_number` composition
+  invariant), both after the sole commit — clean merge, no bounces.
+  Removed the `.worktrees/is-int-is-float` worktree before merging;
+  `gh pr merge --squash --delete-branch` succeeded cleanly. BACKLOG.md
+  task 1 archived to CHANGELOG.md and remaining tasks renumbered (2-5
+  to 1-4); also fixed one stale `task 2` cross-reference to the
+  already-shipped `is_palindrome` and three stale `task 4`
+  cross-references that now point at `is_upper`/`is_lower`'s new
+  number, `task 3`.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-fifth merge in a row, still a clean run — `is_prime` is now at
+  the top of the backlog for the next Engineer session.

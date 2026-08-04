@@ -11,70 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. [claimed 2026-08-04T20:01:30Z] Standard library: `is_int`/`is_float` — split `is_number`'s single kind into its two concrete ones
-
-Build: add `is_int(value)` and `is_float(value)` to `cinder/builtins.py`.
-`is_number` (`cinder/builtins.py:2594-2596`) already answers "is this
-numeric at all," but there is no builtin to tell the two concrete
-numeric kinds apart — every Cinder program that wants to know whether
-a value is specifically an integer (say, before using it as a list
-index) or specifically a float today has no way to ask short of
-comparing it to its own `floor()`, which is wrong for non-numeric
-input anyway. This is a **kind** predicate, the same family as
-`is_list`/`is_map`/`is_string` (`cinder/builtins.py:2579-2591`), not a
-**property** predicate like `is_even`/`is_palindrome` — the distinction
-matters for error behavior (see below).
-
-Model directly on `_is_list`'s/`_is_map`'s structure
-(`cinder/builtins.py:2579-2586`): same arity-1 check via
-`_require_arity("is_int"/"is_float", arguments, 1, line, column)`,
-then a single `isinstance` check — **no type error on a non-numeric
-argument**, just `false`, exactly like `is_list("x")` is `false`
-rather than raising. Behavior once validated: `is_int` returns
-`isinstance(value, int) and not isinstance(value, bool)` (Python's
-`bool` is an `int` subclass — the existing `_is_numeric` helper at
-`cinder/builtins.py:39-40` already excludes `bool` for the same
-reason, and `_is_number`'s own tests already cover that a raw `true`/
-`false` is not numeric, so `is_int(true)` must also be `false`);
-`is_float` returns `isinstance(value, float)` (no `bool` wrinkle here
-since `bool` is never a `float` subclass). Register both in the
-builtins dict right after `"is_number": _is_number,`
-(`cinder/builtins.py:2769`), `is_int` before `is_float`.
-
-Acceptance criteria:
-- `is_int(4);` is `true`, `is_float(4);` is `false`.
-- `is_int(4.0);` is `false`, `is_float(4.0);` is `true` — a
-  whole-valued float is still a float, matching `is_even`'s task-1
-  treatment of `4.0` as not an int.
-- `is_int(-3);` is `true`, `is_float(-3.5);` is `true`.
-- `is_int(true);` is `false` and `is_float(true);` is `false` — a
-  bool is neither, even though Python's `bool` is an `int` subclass.
-- `is_int("4");` is `false`, `is_float("4");` is `false` — no
-  coercion, and no error: a non-numeric argument returns `false`
-  rather than raising (contrast with `is_even("4")`, which raises,
-  since `is_even`/`is_odd` are property predicates that require a
-  numeric argument to be meaningful, while `is_int`/`is_float` are
-  kind predicates like `is_list`/`is_map` that classify any value).
-- `is_int(nil);` is `false`, `is_int([1, 2]);` is `false`,
-  `is_int({});` is `false` — same "any value in, bool out, never
-  raises" shape as `is_list`/`is_map`/`is_string`.
-- `is_int(4) or is_float(4.0);` composes with `is_number` such that
-  `is_number(x)` implies exactly one of `is_int(x)`/`is_float(x)` is
-  `true` for every numeric `x`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column, for both functions.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_number`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_int`/`is_float` added near the other `is_*` type
-predicates — leave that to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `is_prime` — test whether an integer is prime
+## 1. Standard library: `is_prime` — test whether an integer is prime
 
 Build: add `is_prime(value)` to `cinder/builtins.py`. `is_even`/`is_odd`
 (`cinder/builtins.py:925-934`) already classify an integer's *parity*;
@@ -132,7 +69,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_sorted` — test whether a list is in non-decreasing order
+## 2. Standard library: `is_sorted` — test whether a list is in non-decreasing order
 
 Build: add `is_sorted(list)` to `cinder/builtins.py`. `sort`
 (`cinder/builtins.py:1707-1722`) already establishes that Cinder lists
@@ -194,14 +131,14 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `is_upper`/`is_lower` — string case predicates
+## 3. Standard library: `is_upper`/`is_lower` — string case predicates
 
 Build: add `is_upper(string)` and `is_lower(string)` to
 `cinder/builtins.py`. `swap_case` flips case, `upper`/`lower` force
 case, but there is no builtin to ask whether a string is *already*
 entirely one case — the same gap `is_even`/`is_odd` fill for parity,
-applied to string casing this time. Like `is_palindrome` (task 2
-above), this is a property predicate on a string's existing content,
+applied to string casing this time. Like `is_palindrome` (already
+shipped), this is a property predicate on a string's existing content,
 not a kind predicate on any value — group it with `is_palindrome`
 near `is_string`, not with the case-manipulation builtins
 (`upper`/`lower`/`capitalize`/`title`/`swap_case`) it superficially
@@ -252,10 +189,10 @@ this task.
 
 ---
 
-## 5. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
+## 4. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
 
 Build: add `is_alpha(string)`, `is_digit(string)`, `is_alnum(string)`,
-and `is_space(string)` to `cinder/builtins.py`. Task 4 above
+and `is_space(string)` to `cinder/builtins.py`. Task 3 above
 (`is_upper`/`is_lower`) answers "what case is this string in"; there
 is still no builtin to answer the more basic "what kind of characters
 does this string contain" — today that requires manually walking the
@@ -264,7 +201,7 @@ ranges. Like `is_upper`/`is_lower`, these are property predicates on a
 string's existing content, not kind predicates on any value — group
 all four with `is_upper`/`is_lower`/`is_palindrome` near `is_string`.
 
-Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 4
+Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 3
 has landed — same file, same block): same arity-1 check via
 `_require_arity(name, arguments, 1, line, column)`, same single type
 check (argument a `string` else `CinderRuntimeError` matching
@@ -300,7 +237,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `is_upper`/`is_lower`
-once task 4 has landed, else near `is_string`, see current line
+once task 3 has landed, else near `is_string`, see current line
 numbers — shift if earlier tasks this cycle landed first),
 `tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
 needs `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near the other

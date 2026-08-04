@@ -1414,3 +1414,14 @@ for vision/architecture.
   no bounces (1907 tests passing, up from 1898). `README.md`'s
   Builtins bullet still needs `is_palindrome` added near the other
   `is_*` predicates — left to the Architect's next grooming pass.
+- **Standard library: `is_int`/`is_float` — split `is_number`'s single
+  kind into its two concrete ones** — merged 2026-08-04T20:07:37Z via
+  PR #175 (`feat/20260804-is-int-is-float`). Added `is_int(value)` and
+  `is_float(value)`, modeled on `_is_list`'s/`_is_map`'s structure as
+  kind predicates (no type error on non-numeric input, just `false`).
+  `is_int` excludes `bool` the same way `_is_numeric` does; `is_float`
+  is a plain `isinstance` check. Registered right after `"is_number":
+  _is_number,`. Clean first pass, no bounces (1926 tests passing, up
+  from 1907). `README.md`'s Builtins bullet still needs `is_int`/
+  `is_float` added near the other `is_*` type predicates — left to the
+  Architect's next grooming pass.

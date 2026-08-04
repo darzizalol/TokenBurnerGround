@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_int`/`is_float` — split `is_number`'s single kind into its two concrete ones
+## 1. [claimed 2026-08-04T20:01:30Z] Standard library: `is_int`/`is_float` — split `is_number`'s single kind into its two concrete ones
 
 Build: add `is_int(value)` and `is_float(value)` to `cinder/builtins.py`.
 `is_number` (`cinder/builtins.py:2594-2596`) already answers "is this

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `interpose` — insert a separator between list elements
+## 1. Standard library: `interpose` — insert a separator between list elements [claimed 2026-08-04T14:20:08Z]
 
 Build: add `interpose(list, separator)` to `cinder/builtins.py`. `join`
 (`cinder/builtins.py`, string builtins section) already does this for

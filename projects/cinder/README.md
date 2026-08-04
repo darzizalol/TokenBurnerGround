@@ -133,7 +133,8 @@ while (i < 10) {
   `pad_start`, `pad_end`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, and type predicates
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`
+  integer parity predicates, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -212,17 +213,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `replace_first` as
-`replace`'s first-occurrence-only counterpart, `interpose` to
-insert a separator between list elements, `truncate` to cap a
+Actively developed, nightly. Recently landed: `truncate` to cap a
 string's length with an appended suffix when cut, a negated
-membership operator `not in`, and `chars` to split a string into a
-list of its characters. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_even`/`is_odd` as integer parity
-predicates, `swap_case` to flip each character's case, `pad_center` to
-center a string within a width padding both sides, `is_palindrome` to
-test whether a string reads the same forwards and backwards, and
-`is_int`/`is_float` as type predicates distinguishing `is_number`'s two
-numeric kinds. The backlog mixes language depth with stdlib breadth
-over time rather than running either in one long block. The full
-vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+membership operator `not in`, `chars` to split a string into a
+list of its characters, and `is_even`/`is_odd` as integer parity
+predicates. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `swap_case` to flip each character's
+case, `pad_center` to center a string within a width padding both
+sides, `is_palindrome` to test whether a string reads the same
+forwards and backwards, `is_int`/`is_float` as type predicates
+distinguishing `is_number`'s two numeric kinds, `is_prime` as an
+integer primality predicate, and `is_sorted` to test whether a list
+is already in non-decreasing order. The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

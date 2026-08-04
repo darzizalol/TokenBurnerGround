@@ -5159,6 +5159,45 @@ class TestIsString(unittest.TestCase):
             run('is_string("a", "b");')
 
 
+class TestIsPalindrome(unittest.TestCase):
+    def test_is_palindrome_odd_length_true(self):
+        self.assertIs(run('let result = is_palindrome("racecar");').get("result"), True)
+
+    def test_is_palindrome_even_length_true(self):
+        self.assertIs(run('let result = is_palindrome("noon");').get("result"), True)
+
+    def test_is_palindrome_false(self):
+        self.assertIs(run('let result = is_palindrome("hello");').get("result"), False)
+
+    def test_is_palindrome_empty_string_true(self):
+        self.assertIs(run('let result = is_palindrome("");').get("result"), True)
+
+    def test_is_palindrome_single_character_true(self):
+        self.assertIs(run('let result = is_palindrome("a");').get("result"), True)
+
+    def test_is_palindrome_no_case_folding(self):
+        self.assertIs(
+            run('let result = is_palindrome("Racecar");').get("result"), False
+        )
+
+    def test_is_palindrome_no_whitespace_stripping(self):
+        self.assertIs(
+            run('let result = is_palindrome("a man a");').get("result"), False
+        )
+
+    def test_is_palindrome_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_palindrome(5);")
+        self.assertIn("is_palindrome", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_palindrome_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_palindrome();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_palindrome("a", "b");')
+
+
 class TestIsNumber(unittest.TestCase):
     def test_is_number_true_for_int(self):
         self.assertIs(run("let result = is_number(1);").get("result"), True)

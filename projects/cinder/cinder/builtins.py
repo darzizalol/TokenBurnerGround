@@ -618,6 +618,16 @@ def _swap_case(arguments: list, line: int, column: int) -> object:
     return value.swapcase()
 
 
+def _is_palindrome(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_palindrome", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_palindrome() requires a string, got {type_name(value)}", line, column
+        )
+    return value == value[::-1]
+
+
 def _trim(arguments: list, line: int, column: int) -> object:
     _require_arity("trim", arguments, 1, line, column)
     value = arguments[0]
@@ -2802,6 +2812,7 @@ _BUILTINS = {
     "is_list": _is_list,
     "is_map": _is_map,
     "is_string": _is_string,
+    "is_palindrome": _is_palindrome,
     "is_number": _is_number,
     "is_bool": _is_bool,
     "is_nil": _is_nil,

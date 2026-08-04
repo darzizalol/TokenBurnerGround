@@ -175,30 +175,35 @@ counterpart, `interpose` to insert a separator between a list's
 elements (the list-level sibling of `join`, but separator
 type-agnostic), `truncate` to cap a string's length with an
 appended suffix when cut (the shrinking counterpart to
-`pad_start`/`pad_end`), and a negated membership operator `not in`
+`pad_start`/`pad_end`), a negated membership operator `not in`
 (sugar for `not (x in y)`, but parsed as a single operator at `in`'s
 own precedence tier rather than through the looser,
 unary-`not`-then-`in` reading that adjacent keywords would otherwise
 get — that looser reading was previously dead syntax, now a fixed
-regression case) have since landed too. What remains plausible, not
-yet scoped beyond current `BACKLOG.md`: `chars` to split a string into
-a list of its characters (the gap `split` deliberately leaves open by
-rejecting an empty separator), `is_even`/`is_odd` as integer parity
-predicates (sitting next to `sign` the same way that already
+regression case), and `chars` to split a string into a list of its
+characters (the gap `split` deliberately leaves open by rejecting an
+empty separator) have since landed too. What remains plausible, not
+yet scoped beyond current `BACKLOG.md`: `is_even`/`is_odd` as integer
+parity predicates (sitting next to `sign` the same way that already
 classifies a number's sign), `swap_case` to flip each character's
 case (the symmetric fourth member alongside
 `upper`/`lower`/`capitalize`/`title`), `pad_center` to center a
 string within a width, padding both sides (the third member alongside
 `pad_start`/`pad_end`, mirroring how `str.center` relates to
-`str.ljust`/`str.rjust`), and `is_palindrome` to test whether a string
+`str.ljust`/`str.rjust`), `is_palindrome` to test whether a string
 reads the same forwards and backwards (a case-sensitive, no-normalization
 predicate — no stripping of spaces/punctuation — the same
 minimal-behavior spirit `chars`/`swap_case` already follow rather than
-guessing at what a caller wants stripped) — tasks 1 through 5 in
-current `BACKLOG.md` — and only much later, a bytecode VM if
-performance ever actually matters. The Architect should keep scoping
-these into `BACKLOG.md` incrementally — do not jump ahead of the
-current layer.
+guessing at what a caller wants stripped), and `is_int`/`is_float` as
+type predicates splitting `is_number`'s single "numeric" kind into its
+two concrete ones (sitting next to `is_number` the same way `is_list`/
+`is_map`/`is_string` already classify a value's kind rather than a
+property of it, so — unlike `is_even`/`is_palindrome` above — neither
+raises on a non-numeric argument, just returns `false`) — tasks 1
+through 5 in current `BACKLOG.md` — and only much later, a bytecode VM
+if performance ever actually matters. The Architect should keep
+scoping these into `BACKLOG.md` incrementally — do not jump ahead of
+the current layer.
 
 ## History
 

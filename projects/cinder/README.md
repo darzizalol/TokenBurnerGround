@@ -129,7 +129,7 @@ while (i < 10) {
   `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
-  `strip_prefix`, `strip_suffix`, `lines`, `words`,
+  `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
   `pad_start`, `pad_end`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
@@ -186,7 +186,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1850+ tests) covers every layer — lexer, parser, interpreter,
+The suite (1860+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -212,17 +212,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a floor-division operator
-`//` and its compound-assign sibling `//=`, `replace_first` as
+Actively developed, nightly. Recently landed: `replace_first` as
 `replace`'s first-occurrence-only counterpart, `interpose` to
 insert a separator between list elements, `truncate` to cap a
-string's length with an appended suffix when cut, and a negated
-membership operator `not in`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `chars` to split a string into a list of
-its characters, `is_even`/`is_odd` as integer parity predicates,
-`swap_case` to flip each character's case, `pad_center` to center a
-string within a width padding both sides, and `is_palindrome` to test
-whether a string reads the same forwards and backwards. The backlog
-mixes language depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+string's length with an appended suffix when cut, a negated
+membership operator `not in`, and `chars` to split a string into a
+list of its characters. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_even`/`is_odd` as integer parity
+predicates, `swap_case` to flip each character's case, `pad_center` to
+center a string within a width padding both sides, `is_palindrome` to
+test whether a string reads the same forwards and backwards, and
+`is_int`/`is_float` as type predicates distinguishing `is_number`'s two
+numeric kinds. The backlog mixes language depth with stdlib breadth
+over time rather than running either in one long block. The full
+vision and non-goals live in [`PROJECT.md`](PROJECT.md).

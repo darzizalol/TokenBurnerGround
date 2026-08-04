@@ -879,6 +879,15 @@ def _pad_end(arguments: list, line: int, column: int) -> object:
     return value + fill * (width - len(value))
 
 
+def _pad_center(arguments: list, line: int, column: int) -> object:
+    _require_arity("pad_center", arguments, 3, line, column)
+    value, width, fill = arguments
+    _check_pad_arguments("pad_center", value, width, fill, line, column)
+    if len(value) >= width:
+        return value
+    return value.center(width, fill)
+
+
 def _check_truncate_arguments(value: object, max_length: object, suffix: object, line: int, column: int) -> None:
     if not isinstance(value, str):
         raise CinderRuntimeError(
@@ -2690,6 +2699,7 @@ _BUILTINS = {
     "replace_first": _replace_first,
     "pad_start": _pad_start,
     "pad_end": _pad_end,
+    "pad_center": _pad_center,
     "truncate": _truncate,
     "abs": _abs,
     "sign": _sign,

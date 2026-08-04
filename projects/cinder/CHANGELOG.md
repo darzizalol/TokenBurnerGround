@@ -1327,3 +1327,13 @@ for vision/architecture.
   first pass, no bounces (1834 tests passing, up from 1825).
   `README.md`'s Builtins bullet still needs `replace_first` added next
   to `replace` — left to the Architect's next grooming pass.
+- **Standard library: `interpose`** — merged 2026-08-04T14:24:54Z via
+  PR #167 (`feat/20260804-interpose`). Added `interpose(list,
+  separator)` to `cinder/builtins.py`, modeled on `_interleave`'s
+  arity/type-check structure (single-list arity-2 check, type check
+  only on the first argument), inserting `separator` before every
+  element except the first via `enumerate`. Registered right after
+  `"interleave": _interleave,`. Clean first pass, no bounces (1840
+  tests passing, up from 1834). `README.md`'s Builtins bullet still
+  needs `interpose` added next to `interleave` — left to the
+  Architect's next grooming pass.

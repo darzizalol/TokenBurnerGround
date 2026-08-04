@@ -11,55 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `interpose` — insert a separator between list elements [claimed 2026-08-04T14:20:08Z]
-
-Build: add `interpose(list, separator)` to `cinder/builtins.py`. `join`
-(`cinder/builtins.py`, string builtins section) already does this for
-strings — glue a separator between adjacent elements, none before the
-first or after the last — but there's no list-level equivalent that
-keeps the result a list (e.g. building `[1, ",", 2, ",", 3]` today
-means hand-rolling a loop; `interleave` is the nearest existing
-builtin but merges *two* lists element-by-element rather than
-repeating one separator value between one list's elements). Unlike
-`join`, `separator` need not be a string — any value is valid (e.g.
-`interpose([1, 2, 3], 0);` is `[1, 0, 2, 0, 3]`), so this is a plain
-list builtin, not a string one.
-
-Model directly on `_interleave`'s structure
-(`cinder/builtins.py:1434-1442`): single-list arity/type check instead
-of `_require_two_lists` (`_require_arity("interpose", arguments, 2,
-line, column)` then check `arguments[0]` is a `list`, matching the
-message shape `_interleave`/`_union` use — `"interpose() requires a
-list as its first argument, got {type_name}"`; the second argument,
-the separator, takes no type check since any value is valid), then a
-single loop appending `separator` before every element except the
-first (`if i > 0: result.append(separator)` then `result.append(element)`,
-using `enumerate`). Register it in the builtins dict right after
-`"interleave": _interleave,` (`cinder/builtins.py:2636`).
-
-Acceptance criteria:
-- `interpose([1, 2, 3], 0);` is `[1, 0, 2, 0, 3]` — the primary case.
-- `interpose([1], 0);` is `[1]` — a single element has no gaps to fill,
-  matching `join`'s no-separator-needed behavior for a one-element list.
-- `interpose([], 0);` is `[]`.
-- `interpose([1, 2], "x");` is `[1, "x", 2]` — the separator's type
-  need not match the list elements' type.
-- `interpose(5, 0);` (non-list first argument) raises
-  `CinderRuntimeError` naming `interpose` and `int` in the message
-  (`type_name(5)` is `"int"`, not `"number"`).
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `interleave`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `interpose` added near `interleave` — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `truncate` — cap a string's length, appending a suffix when cut
+## 1. Standard library: `truncate` — cap a string's length, appending a suffix when cut
 
 Build: add `truncate(string, max_length, suffix)` to `cinder/builtins.py`.
 Long strings today have no built-in way to cap their display length —
@@ -134,7 +86,7 @@ task.
 
 ---
 
-## 3. Standard library: `chars` — split a string into a list of its characters
+## 2. Standard library: `chars` — split a string into a list of its characters
 
 Build: add `chars(string)` to `cinder/builtins.py`. `split` deliberately
 raises `CinderRuntimeError` on an empty separator
@@ -178,7 +130,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_even`/`is_odd` — integer parity predicates
+## 3. Standard library: `is_even`/`is_odd` — integer parity predicates
 
 Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
 There is currently no builtin way to test a number's parity — the
@@ -231,7 +183,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `swap_case` — flip each character's case
+## 4. Standard library: `swap_case` — flip each character's case
 
 Build: add `swap_case(string)` to `cinder/builtins.py`. The existing case
 builtins (`upper`, `lower`, `capitalize`, `title`,

@@ -2959,3 +2959,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-sixth merge in a row, still a clean run — `interpose` is now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #167 "Standard library: `interpose` — insert a
+  separator between list elements" (`feat/20260804-interpose`) —
+  `interpose(list, separator)` added to `cinder/builtins.py`, modeled
+  on `_interleave`'s arity/type-check structure (single-list arity-2
+  check, type check only on the first argument), inserting `separator`
+  before every element except the first via `enumerate`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1840 tests passing), both after
+  the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/interpose` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly this time (no repeat of earlier
+  GitHub API flakiness). BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-seventh merge in a row, still a clean run — `truncate` is now
+  at the top of the backlog for the next Engineer session.

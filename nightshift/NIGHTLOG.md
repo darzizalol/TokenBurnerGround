@@ -2993,3 +2993,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-eighth merge in a row, still a clean run — `chars` is now at
   the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #169 "Language: `not in` — negated membership
+  operator" (`feat/20260804-not-in`) — added `not in` as a single
+  combined binary operator at `in`'s own precedence tier via a
+  synthesized `TokenType.NOT_IN` token in `_membership`, rather than as
+  unary `not` applied afterward (`not x in y` was previously dead
+  syntax parsing as the unrelated `(not x) in y`). Reuses
+  `contains_value` as-is in the interpreter, inheriting `in`'s
+  list/map/string membership semantics and error messages unchanged.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1862 tests
+  passing), both after the sole commit — clean merge, no bounces.
+  Removed the `.worktrees/not-in` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-ninth merge in a row, still a clean run — `chars` is now at
+  the top of the backlog for the next Engineer session.

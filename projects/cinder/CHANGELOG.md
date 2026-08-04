@@ -1351,3 +1351,16 @@ for vision/architecture.
   from 1840). `README.md`'s Builtins bullet still needs `truncate`
   added next to `pad_start`/`pad_end` — left to the Architect's next
   grooming pass.
+- **Language: `not in` — negated membership operator** — merged
+  2026-08-04T14:54:10Z via PR #169 (`feat/20260804-not-in`). Added
+  `not in` as a single combined binary operator at `in`'s own
+  precedence tier (synthesized `TokenType.NOT_IN` token in
+  `_membership`, mirroring the compound-assign desugaring pattern),
+  rather than as unary `not` applied afterward — `not x in y` was
+  previously dead syntax parsing as the unrelated `(not x) in y`, now
+  unchanged as a regression case. Reuses `contains_value` as-is in the
+  interpreter, inheriting list/map/string membership semantics and
+  error messages from `in`. Clean first pass, no bounces (1862 tests
+  passing, up from 1851). `README.md`'s language feature bullets and
+  `PROJECT.md`'s roadmap still need `not in` added — left to the
+  Architect's next grooming pass.

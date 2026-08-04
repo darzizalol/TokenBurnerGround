@@ -11,97 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `not in` — negated membership operator [claimed 2026-08-04T14:47:13Z]
-
-Build: add `not in` as a single combined binary operator, sugar for
-`not (x in y)` but parsed as one operator at `in`'s own precedence
-tier rather than as unary `not` applied afterward. Today `in`
-(`cinder/parser.py:841-847`, `_membership`) is the only membership
-test, and there is no way to negate it except wrapping in parens —
-`not (x in y)` — since standalone `not` is a high-precedence unary
-operator (`_UNARY = {MINUS, NOT, TILDE}`, `cinder/parser.py:160`,
-consumed inside `_unary`, far tighter-binding than `_membership`).
-Writing the two keywords adjacent today, `not x in y`, does **not**
-give Python-style `not (x in y)` semantics — it parses as `(not x) in
-y` (unary `not` binds to `x` first), and the truly adjacent form,
-`not in [1]` with nothing between the keywords, is not currently valid
-syntax at all: `_unary` consumes `NOT` then recurses into `_unary()`
-expecting an operand, but `IN` cannot start an expression, so it's a
-`ParseError` today — i.e. `not` immediately followed by `in` is dead
-syntax with no existing meaning to preserve, so this is purely
-additive with zero regression risk to current programs.
-
-Implementation, modeled on the existing synthesized-operator-token
-pattern used for compound assignment desugaring (`qq_operator =
-Token(TokenType.QUESTION_QUESTION, "??", None, op_token.line,
-op_token.column)`, `cinder/parser.py:757-759`):
-
-1. `cinder/tokens.py`: add `NOT_IN = auto()` to `TokenType` near `IN`
-   (`cinder/tokens.py:27`). It is never produced by the lexer directly
-   (no entry in `KEYWORDS`) — only synthesized by the parser, the same
-   way `TokenType.PLUS` etc. are synthesized from compound-assign
-   tokens.
-2. `cinder/parser.py`'s `_membership` (`cinder/parser.py:841-847`):
-   currently `while self._check(TokenType.IN): ...`. Change the loop
-   to also recognize the adjacent two-keyword sequence: when the
-   current token is `NOT` and `self._peek_next().type == TokenType.IN`
-   (the existing lookahead helper, already used elsewhere e.g.
-   `cinder/parser.py:233`), consume both tokens, parse the right
-   operand at `_comparison()` precedence (same as the plain `in`
-   branch), and build a `Binary` node whose operator is a synthesized
-   `Token(TokenType.NOT_IN, "not in", None, not_token.line,
-   not_token.column)` (`not_token` being the `NOT` token consumed).
-   Keep the plain `IN` branch unchanged; this is a second condition in
-   the same loop, not a replacement.
-3. `cinder/interpreter.py`'s `_apply_binary_operator`
-   (`cinder/interpreter.py:790-836`): next to the existing `if op ==
-   TokenType.IN: return contains_value(right, left, operator.line,
-   operator.column)` (`cinder/interpreter.py:825-826`), add `if op ==
-   TokenType.NOT_IN: return not contains_value(right, left,
-   operator.line, operator.column)`. Reuse `contains_value`
-   (`cinder/interpreter.py:1014-1034`) as-is — same list
-   `==`-membership, map key check, string substring check, and same
-   errors (a non-container right-hand side, or a non-string item
-   against a string, both already raise `CinderRuntimeError` with
-   existing message text — no new error strings to write).
-4. Update the parser module docstring's precedence line
-   (`cinder/parser.py:6`, `"> ?? (nullish-coalescing, right-assoc) >
-   or > and > in"`) to read `"> or > and > in / not in"`.
-
-Acceptance criteria:
-- `2 not in [1, 2, 3];` is `false`; `4 not in [1, 2, 3];` is `true`.
-- `"a" not in "abc";` is `false` (substring check); `"z" not in
-  "abc";` is `true`.
-- `"x" not in {"x": 1};` is `false` (map key check); `"y" not in
-  {"x": 1};` is `true`.
-- `1 not in [2] and 2 not in [1];` is `true` — `not in` participates
-  in `and`/`or` chains as a single operator at the same precedence as
-  `in`, not as a looser-binding unary `not`.
-- `1 < 2 not in [true];` parses as `(1 < 2) not in [true]` — comparison
-  binds tighter than `not in`, mirroring `in`'s own existing
-  precedence test (`test_comparison_binds_tighter_than_in`,
-  `tests/test_parser.py:398-407`).
-- `not (2 in [1, 2, 3]);` (existing parenthesized form) still works
-  unchanged and agrees with `2 not in [1, 2, 3];` on the same inputs.
-- `5 not in 5;` (non-container right-hand side) raises
-  `CinderRuntimeError` with the same message `in` already produces for
-  this case (`"membership test requires a list, map, or string, got
-  int"`) — errors are inherited from `contains_value`, not
-  reimplemented.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py`, `cinder/parser.py` (`_membership`,
-module docstring), `cinder/interpreter.py`
-(`_apply_binary_operator`), `tests/test_parser.py` (model new cases on
-`test_in_is_binary_op`/`test_in_binds_tighter_than_and`/
-`test_comparison_binds_tighter_than_in`, `tests/test_parser.py:376-407`),
-`tests/test_interpreter.py`. Once merged, `README.md`'s language
-feature bullets and `PROJECT.md`'s roadmap need `not in` added — leave
-that to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `chars` — split a string into a list of its characters
+## 1. Standard library: `chars` — split a string into a list of its characters
 
 Build: add `chars(string)` to `cinder/builtins.py`. `split` deliberately
 raises `CinderRuntimeError` on an empty separator
@@ -145,7 +55,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_even`/`is_odd` — integer parity predicates
+## 2. Standard library: `is_even`/`is_odd` — integer parity predicates
 
 Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
 There is currently no builtin way to test a number's parity — the
@@ -198,7 +108,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `swap_case` — flip each character's case
+## 3. Standard library: `swap_case` — flip each character's case
 
 Build: add `swap_case(string)` to `cinder/builtins.py`. The existing case
 builtins (`upper`, `lower`, `capitalize`, `title`,
@@ -243,7 +153,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `pad_center` — center a string within a width, padding both sides
+## 4. Standard library: `pad_center` — center a string within a width, padding both sides
 
 Build: add `pad_center(string, width, fill)` to `cinder/builtins.py`.
 `pad_start`/`pad_end` (`cinder/builtins.py:844-859`) only ever pad on

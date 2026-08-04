@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `chars` — split a string into a list of its characters
+## 1. Standard library: `chars` — split a string into a list of its characters [claimed 2026-08-04T19:02:01Z]
 
 Build: add `chars(string)` to `cinder/builtins.py`. `split` deliberately
 raises `CinderRuntimeError` on an empty separator

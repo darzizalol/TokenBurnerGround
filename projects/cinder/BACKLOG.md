@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `replace_first` — replace only the first occurrence
+## 1. Standard library: `replace_first` — replace only the first occurrence [claimed 2026-08-04T14:07:22Z]
 
 Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
 giving `replace` (`cinder/builtins.py:788-804`, which replaces *every*

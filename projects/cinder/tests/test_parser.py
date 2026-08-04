@@ -406,6 +406,52 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_not_in_is_binary_op(self):
+        self.assertEqual(
+            shape(parse("2 not in [1, 2, 3]")),
+            (
+                "Binary",
+                ("Literal", 2),
+                TokenType.NOT_IN,
+                ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+            ),
+        )
+
+    def test_not_in_binds_tighter_than_and(self):
+        self.assertEqual(
+            shape(parse("1 not in [1] and 2 not in [2]")),
+            (
+                "Logical",
+                ("Binary", ("Literal", 1), TokenType.NOT_IN, ("ListLiteral", [("Literal", 1)])),
+                TokenType.AND,
+                ("Binary", ("Literal", 2), TokenType.NOT_IN, ("ListLiteral", [("Literal", 2)])),
+            ),
+        )
+
+    def test_comparison_binds_tighter_than_not_in(self):
+        self.assertEqual(
+            shape(parse("1 < 2 not in [true]")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 1), TokenType.LT, ("Literal", 2)),
+                TokenType.NOT_IN,
+                ("ListLiteral", [("Literal", True)]),
+            ),
+        )
+
+    def test_not_followed_by_non_in_is_unary(self):
+        # `not x in y` (no adjacent `in` right after `not`) stays unary `not`
+        # applied first, i.e. `(not x) in y` — unchanged existing behavior.
+        self.assertEqual(
+            shape(parse("not x in y")),
+            (
+                "Binary",
+                ("Unary", TokenType.NOT, ("Identifier", "x")),
+                TokenType.IN,
+                ("Identifier", "y"),
+            ),
+        )
+
     def test_bitwise_or_binds_looser_than_comparison(self):
         # `1 | 2 == 3` parses as `1 | (2 == 3)` or `(1 | 2) == 3`; this repo
         # picks the latter, since bitwise ops bind tighter than comparisons.

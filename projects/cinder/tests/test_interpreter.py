@@ -476,6 +476,37 @@ class TestMembership(unittest.TestCase):
         env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")
         self.assertEqual(env.get("total"), 6)
 
+    def test_not_in_list(self):
+        self.assertEqual(evaluate("2 not in [1, 2, 3]"), False)
+        self.assertEqual(evaluate("4 not in [1, 2, 3]"), True)
+
+    def test_not_in_string_substring(self):
+        self.assertEqual(evaluate('"a" not in "abc"'), False)
+        self.assertEqual(evaluate('"z" not in "abc"'), True)
+
+    def test_not_in_map_checks_keys(self):
+        self.assertEqual(evaluate('"x" not in {"x": 1}'), False)
+        self.assertEqual(evaluate('"y" not in {"x": 1}'), True)
+
+    def test_not_in_precedence_with_and(self):
+        self.assertEqual(evaluate("1 not in [2] and 2 not in [1]"), True)
+
+    def test_comparison_binds_tighter_than_not_in(self):
+        # `1 < 2` is `true`; `true not in [true]` is `false`.
+        self.assertEqual(evaluate("1 < 2 not in [true]"), False)
+
+    def test_not_in_agrees_with_parenthesized_not_in(self):
+        self.assertEqual(
+            evaluate("not (2 in [1, 2, 3])"), evaluate("2 not in [1, 2, 3]")
+        )
+        self.assertEqual(
+            evaluate("not (4 in [1, 2, 3])"), evaluate("4 not in [1, 2, 3]")
+        )
+
+    def test_not_in_non_collection_right_operand_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("5 not in 5")
+
 
 class TestUnaryAndGrouping(unittest.TestCase):
     def test_unary_minus(self):

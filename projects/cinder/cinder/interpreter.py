@@ -824,6 +824,8 @@ class Interpreter:
             return self._compare(operator, left, right, op)
         if op == TokenType.IN:
             return contains_value(right, left, operator.line, operator.column)
+        if op == TokenType.NOT_IN:
+            return not contains_value(right, left, operator.line, operator.column)
         if op in (
             TokenType.AMP,
             TokenType.PIPE,

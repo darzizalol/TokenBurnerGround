@@ -1752,6 +1752,54 @@ class TestPadEnd(unittest.TestCase):
             run('pad_end("7", 3);')
 
 
+class TestTruncate(unittest.TestCase):
+    def test_truncate_cuts_and_appends_suffix(self):
+        self.assertEqual(run('let result = truncate("hello world", 8, "...");').get("result"), "hello...")
+
+    def test_truncate_short_max_length(self):
+        self.assertEqual(run('let result = truncate("hello world", 5, "...");').get("result"), "he...")
+
+    def test_truncate_shorter_than_max_length_unchanged(self):
+        self.assertEqual(run('let result = truncate("hello", 10, "...");').get("result"), "hello")
+
+    def test_truncate_exactly_at_max_length_unchanged(self):
+        self.assertEqual(run('let result = truncate("hello", 5, "...");').get("result"), "hello")
+
+    def test_truncate_max_length_smaller_than_suffix(self):
+        self.assertEqual(run('let result = truncate("hello world", 1, "...");').get("result"), "...")
+
+    def test_truncate_empty_suffix_is_hard_cut(self):
+        self.assertEqual(run('let result = truncate("hello", 3, "");').get("result"), "hel")
+
+    def test_truncate_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('truncate(5, 3, "...");')
+        self.assertIn("truncate", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_truncate_on_non_int_max_length_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('truncate("hello", "3", "...");')
+        self.assertIn("truncate", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_truncate_negative_max_length_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('truncate("hello", -1, "...");')
+        self.assertIn("truncate", ctx.exception.message)
+        self.assertIn("-1", ctx.exception.message)
+
+    def test_truncate_on_non_string_suffix_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('truncate("hello", 3, 5);')
+        self.assertIn("truncate", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_truncate_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('truncate("hello", 3);')
+
+
 class TestAbs(unittest.TestCase):
     def test_abs_of_negative_int(self):
         self.assertEqual(run("let result = abs(-3);").get("result"), 3)

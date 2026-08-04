@@ -859,6 +859,35 @@ def _pad_end(arguments: list, line: int, column: int) -> object:
     return value + fill * (width - len(value))
 
 
+def _check_truncate_arguments(value: object, max_length: object, suffix: object, line: int, column: int) -> None:
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"truncate() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(max_length, int) or isinstance(max_length, bool):
+        raise CinderRuntimeError(
+            f"truncate() requires an int max_length, got {type_name(max_length)}", line, column
+        )
+    if max_length < 0:
+        raise CinderRuntimeError(
+            f"truncate() max_length must not be negative, got {max_length}", line, column
+        )
+    if not isinstance(suffix, str):
+        raise CinderRuntimeError(
+            f"truncate() requires a string suffix, got {type_name(suffix)}", line, column
+        )
+
+
+def _truncate(arguments: list, line: int, column: int) -> object:
+    _require_arity("truncate", arguments, 3, line, column)
+    value, max_length, suffix = arguments
+    _check_truncate_arguments(value, max_length, suffix, line, column)
+    if len(value) <= max_length:
+        return value
+    return value[:max(0, max_length - len(suffix))] + suffix
+
+
 def _abs(arguments: list, line: int, column: int) -> object:
     _require_arity("abs", arguments, 1, line, column)
     value = arguments[0]
@@ -2627,6 +2656,7 @@ _BUILTINS = {
     "replace_first": _replace_first,
     "pad_start": _pad_start,
     "pad_end": _pad_end,
+    "truncate": _truncate,
     "abs": _abs,
     "sign": _sign,
     "min": _min,

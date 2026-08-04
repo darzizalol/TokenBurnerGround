@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_even`/`is_odd` — integer parity predicates
+## 1. Standard library: `is_even`/`is_odd` — integer parity predicates [claimed 2026-08-04T19:12:46Z]
 
 Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
 There is currently no builtin way to test a number's parity — the

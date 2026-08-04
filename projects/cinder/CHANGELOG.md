@@ -1385,3 +1385,12 @@ for vision/architecture.
   passing, up from 1868). `README.md`'s Builtins bullet still needs
   `is_even`/`is_odd` added near the other type predicates — left to
   the Architect's next grooming pass.
+- **Standard library: `swap_case` — flip each character's case** —
+  merged 2026-08-05T19:30:04Z via PR #172 (`feat/20260804-swap-case`).
+  Added `swap_case(string)`, modeled on `_capitalize`'s structure,
+  delegating to Python's `str.swapcase()` (leaves non-alphabetic
+  characters untouched, empty string is a no-op). Registered right
+  after `"title": _title,`. Clean first pass, no bounces (1888 tests
+  passing, up from 1881). `README.md`'s Builtins bullet still needs
+  `swap_case` added near `capitalize`/`title` — left to the
+  Architect's next grooming pass.

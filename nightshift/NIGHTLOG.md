@@ -3047,3 +3047,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Forty-first merge in a row, still a clean run — `swap_case` is now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #172 "Standard library: `swap_case` — flip each
+  character's case" (`feat/20260804-swap-case`) — added
+  `swap_case(string)` to `cinder/builtins.py`, modeled on
+  `_capitalize`'s structure, delegating to Python's `str.swapcase()`
+  (leaves non-alphabetic characters untouched, empty string is a
+  no-op). Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1888
+  tests passing, up from 1881, plus real CLI/REPL exercise including
+  unicode), both after the sole commit — clean merge, no bounces.
+  Removed the `.worktrees/swap-case` worktree before merging; `gh pr
+  merge --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to
+  1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-second merge in a row, still a clean run — `pad_center` is now
+  at the top of the backlog for the next Engineer session.

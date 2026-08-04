@@ -2940,3 +2940,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-fifth merge in a row, still a clean run — `replace_first` is
   now at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #166 "Standard library: `replace_first` — replace only
+  the first occurrence" (`feat/20260804-replace-first`) —
+  `replace_first(string, old, new)` added to `cinder/builtins.py`,
+  modeled directly on `_replace`'s structure (same arity-3 and
+  argument-type checks, same three error messages with the name
+  swapped in) but calling `value.replace(old, new, 1)` instead of
+  `value.replace(old, new)`, giving `replace` the same first/last split
+  `find`/`find_last` and `index_of`/`last_index_of` already have.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1834 tests
+  passing), both after the sole commit — clean merge, no bounces.
+  Removed the `.worktrees/replace-first` worktree before merging;
+  `gh pr merge --squash --delete-branch` succeeded cleanly. BACKLOG.md
+  task 1 archived to CHANGELOG.md and remaining tasks renumbered (2-5
+  to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-sixth merge in a row, still a clean run — `interpose` is now
+  at the top of the backlog for the next Engineer session.

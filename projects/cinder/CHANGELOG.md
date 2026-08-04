@@ -1316,3 +1316,14 @@ for vision/architecture.
   Clean first pass, no bounces (1825 tests passing, up from 1816).
   `README.md`'s Operators bullet still needs `//=` added next to `//`
   — left to the Architect's next grooming pass.
+- **Standard library: `replace_first`** — merged 2026-08-04T14:12:37Z via
+  PR #166 (`feat/20260804-replace-first`). Added `replace_first(string,
+  old, new)` to `cinder/builtins.py`, modeled directly on `_replace`
+  (same arity-3 and argument-type checks, same three error messages
+  with the name swapped in) but calling `value.replace(old, new, 1)`
+  instead of `value.replace(old, new)`, giving `replace` the same
+  first/last split `find`/`find_last` and `index_of`/`last_index_of`
+  already have. Registered right after `"replace": _replace,`. Clean
+  first pass, no bounces (1834 tests passing, up from 1825).
+  `README.md`'s Builtins bullet still needs `replace_first` added next
+  to `replace` — left to the Architect's next grooming pass.

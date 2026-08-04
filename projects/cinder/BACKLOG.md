@@ -11,66 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `replace_first` — replace only the first occurrence [claimed 2026-08-04T14:07:22Z]
-
-Build: add `replace_first(string, old, new)` to `cinder/builtins.py`,
-giving `replace` (`cinder/builtins.py:788-804`, which replaces *every*
-occurrence via Python's `str.replace(old, new)`) the same first/last
-split the stdlib already has for searching — `find`/`find_last`
-(`cinder/builtins.py:698-725`) and `index_of`/`last_index_of` both
-distinguish "first match" from "last match", but `replace` has no
-"only the first one" mode at all, only "all of them". This closes that
-gap the same way `find_last` closed it for `find`.
-
-Model directly on `_replace`'s structure (`cinder/builtins.py:788-804`):
-same arity-3 check via `_require_arity("replace_first", arguments, 3,
-line, column)`, same three argument type checks (first argument a
-`string` else `CinderRuntimeError` matching `"replace_first() requires
-a string as its first argument, got {type_name}"`, second argument a
-`string` else `"replace_first() requires a string to search for, got
-{type_name}"`, third argument a `string` else `"replace_first()
-requires a string replacement, got {type_name}"` — same three messages
-as `_replace`, just with the `replace_first()` name swapped in). The
-only behavioral difference: call Python's `value.replace(old, new, 1)`
-(the optional `count` argument `_replace` doesn't pass) instead of
-`value.replace(old, new)`. Register it in the builtins dict
-immediately after `"replace": _replace,` (`cinder/builtins.py:2591`).
-
-Acceptance criteria:
-- `replace_first("a-a-a", "a", "b");` is `"b-a-a"` — only the leftmost
-  occurrence changes, unlike `replace("a-a-a", "a", "b");` which is
-  `"b-b-b"` — pin both in the same test to show the contrast.
-- `replace_first("hello", "l", "L");` is `"heLlo"`.
-- `replace_first("hello", "xyz", "L");` is `"hello"` unchanged — no
-  match found is a no-op, matching `replace`'s own behavior for a
-  non-matching `old`.
-- `replace_first("hello", "", "X");` is `"Xhello"` — an empty `old`
-  matches at the start, matching Python's `str.replace("", x, 1)`
-  semantics (and `replace`'s own empty-`old` behavior for the
-  all-occurrences case, `replace("ab", "", "X");` is `"XaXbX"`).
-- `replace_first(5, "a", "b");` (non-string first argument) raises
-  `CinderRuntimeError` naming `replace_first` and `int` in the
-  message (`type_name(5)` is `"int"`, not `"number"` —
-  `cinder/interpreter.py:1047-1064`).
-- `replace_first("a", 5, "b");` (non-string second argument) raises
-  `CinderRuntimeError` naming `replace_first` and `int` in the
-  message.
-- `replace_first("a", "a", 5);` (non-string third argument) raises
-  `CinderRuntimeError` naming `replace_first` and `int` in the
-  message.
-- Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register right after `replace`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `replace_first` added right after `replace` — leave that
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `interpose` — insert a separator between list elements
+## 1. Standard library: `interpose` — insert a separator between list elements
 
 Build: add `interpose(list, separator)` to `cinder/builtins.py`. `join`
 (`cinder/builtins.py`, string builtins section) already does this for
@@ -118,7 +59,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `truncate` — cap a string's length, appending a suffix when cut
+## 2. Standard library: `truncate` — cap a string's length, appending a suffix when cut
 
 Build: add `truncate(string, max_length, suffix)` to `cinder/builtins.py`.
 Long strings today have no built-in way to cap their display length —
@@ -193,7 +134,7 @@ task.
 
 ---
 
-## 4. Standard library: `chars` — split a string into a list of its characters
+## 3. Standard library: `chars` — split a string into a list of its characters
 
 Build: add `chars(string)` to `cinder/builtins.py`. `split` deliberately
 raises `CinderRuntimeError` on an empty separator
@@ -237,7 +178,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_even`/`is_odd` — integer parity predicates
+## 4. Standard library: `is_even`/`is_odd` — integer parity predicates
 
 Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
 There is currently no builtin way to test a number's parity — the

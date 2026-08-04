@@ -1236,6 +1236,32 @@ class TestWords(unittest.TestCase):
             run('words("a", "b");')
 
 
+class TestChars(unittest.TestCase):
+    def test_chars_splits_into_characters(self):
+        env = run('let result = chars("abc");')
+        self.assertEqual(env.get("result"), ["a", "b", "c"])
+
+    def test_chars_of_empty_string_is_empty_list(self):
+        env = run('let result = chars("");')
+        self.assertEqual(env.get("result"), [])
+
+    def test_chars_of_single_character(self):
+        env = run('let result = chars("a");')
+        self.assertEqual(env.get("result"), ["a"])
+
+    def test_chars_keeps_whitespace(self):
+        env = run('let result = chars(" a ");')
+        self.assertEqual(env.get("result"), [" ", "a", " "])
+
+    def test_chars_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("chars(5);")
+
+    def test_chars_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('chars("a", "b");')
+
+
 class TestJoin(unittest.TestCase):
     def test_join_concatenates_with_separator(self):
         env = run('let result = join(["a", "b", "c"], ",");')

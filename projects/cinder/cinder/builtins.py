@@ -675,6 +675,16 @@ def _words(arguments: list, line: int, column: int) -> object:
     return value.split()
 
 
+def _chars(arguments: list, line: int, column: int) -> object:
+    _require_arity("chars", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"chars() requires a string, got {type_name(value)}", line, column
+        )
+    return list(value)
+
+
 def _join(arguments: list, line: int, column: int) -> object:
     _require_arity("join", arguments, 2, line, column)
     items, sep = arguments
@@ -2645,6 +2655,7 @@ _BUILTINS = {
     "split": _split,
     "lines": _lines,
     "words": _words,
+    "chars": _chars,
     "join": _join,
     "find": _find,
     "find_last": _find_last,

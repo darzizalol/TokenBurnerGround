@@ -922,6 +922,18 @@ def _sign(arguments: list, line: int, column: int) -> object:
     return 0
 
 
+def _is_even(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_even", arguments, 1, line, column)
+    value = _require_int("is_even", arguments[0], line, column)
+    return value % 2 == 0
+
+
+def _is_odd(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_odd", arguments, 1, line, column)
+    value = _require_int("is_odd", arguments[0], line, column)
+    return value % 2 != 0
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -2670,6 +2682,8 @@ _BUILTINS = {
     "truncate": _truncate,
     "abs": _abs,
     "sign": _sign,
+    "is_even": _is_even,
+    "is_odd": _is_odd,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

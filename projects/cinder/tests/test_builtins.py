@@ -1875,6 +1875,63 @@ class TestSign(unittest.TestCase):
             run("sign(1, 2);")
 
 
+class TestIsEven(unittest.TestCase):
+    def test_is_even_of_even_int(self):
+        self.assertEqual(run("let result = is_even(4);").get("result"), True)
+
+    def test_is_even_of_odd_int(self):
+        self.assertEqual(run("let result = is_even(3);").get("result"), False)
+
+    def test_is_even_of_zero(self):
+        self.assertEqual(run("let result = is_even(0);").get("result"), True)
+
+    def test_is_even_of_negative_even_int(self):
+        self.assertEqual(run("let result = is_even(-4);").get("result"), True)
+
+    def test_is_even_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_even(4.0);")
+        self.assertIn("is_even", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_even_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_even("4");')
+        self.assertIn("is_even", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_even_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_even();")
+
+
+class TestIsOdd(unittest.TestCase):
+    def test_is_odd_of_odd_int(self):
+        self.assertEqual(run("let result = is_odd(3);").get("result"), True)
+
+    def test_is_odd_of_even_int(self):
+        self.assertEqual(run("let result = is_odd(4);").get("result"), False)
+
+    def test_is_odd_of_negative_odd_int(self):
+        self.assertEqual(run("let result = is_odd(-3);").get("result"), True)
+
+    def test_is_odd_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_odd(4.0);")
+        self.assertIn("is_odd", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_odd_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_odd("4");')
+        self.assertIn("is_odd", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_odd_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_odd(1, 2);")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

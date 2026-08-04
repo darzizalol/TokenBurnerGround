@@ -25,6 +25,10 @@ class TokenType(Enum):
     DO = auto()
     FOR = auto()
     IN = auto()
+    # Never produced by the lexer/KEYWORDS; synthesized by the parser from
+    # adjacent `not`/`in` tokens, mirroring how compound-assign tokens
+    # synthesize e.g. `TokenType.PLUS`.
+    NOT_IN = auto()
     FN = auto()
     RETURN = auto()
     THROW = auto()

@@ -3,7 +3,7 @@
 Precedence, loosest to tightest:
     assignment (=, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=, right-assoc)
     > ternary (?:, right-assoc)
-    > ?? (nullish-coalescing, right-assoc) > or > and > in
+    > ?? (nullish-coalescing, right-assoc) > or > and > in / not in
     > comparisons (== != < <= > >=) > | > ^ > & > << >> >
     + - > * / % > unary (- not ~)
 with parenthesized grouping and call expressions binding tightest of all.
@@ -840,10 +840,24 @@ class Parser:
 
     def _membership(self) -> Expr:
         expr = self._comparison()
-        while self._check(TokenType.IN):
-            operator = self._advance()
-            right = self._comparison()
-            expr = Binary(expr, operator, right)
+        while True:
+            if self._check(TokenType.IN):
+                operator = self._advance()
+                right = self._comparison()
+                expr = Binary(expr, operator, right)
+            elif (
+                self._check(TokenType.NOT)
+                and self._peek_next().type == TokenType.IN
+            ):
+                not_token = self._advance()
+                self._advance()  # consume IN
+                operator = Token(
+                    TokenType.NOT_IN, "not in", None, not_token.line, not_token.column
+                )
+                right = self._comparison()
+                expr = Binary(expr, operator, right)
+            else:
+                break
         return expr
 
     def _comparison(self) -> Expr:

@@ -1645,6 +1645,45 @@ class TestReplace(unittest.TestCase):
             run('replace("a", "a");')
 
 
+class TestReplaceFirst(unittest.TestCase):
+    def test_replace_first_only_changes_leftmost_occurrence(self):
+        self.assertEqual(run('let result = replace_first("a-a-a", "a", "b");').get("result"), "b-a-a")
+
+    def test_replace_contrasts_by_replacing_all_occurrences(self):
+        self.assertEqual(run('let result = replace("a-a-a", "a", "b");').get("result"), "b-b-b")
+
+    def test_replace_first_replaces_first_of_multiple_matches(self):
+        self.assertEqual(run('let result = replace_first("hello", "l", "L");').get("result"), "heLlo")
+
+    def test_replace_first_no_match_returns_unchanged(self):
+        self.assertEqual(run('let result = replace_first("hello", "xyz", "L");').get("result"), "hello")
+
+    def test_replace_first_empty_old_matches_at_start(self):
+        self.assertEqual(run('let result = replace_first("hello", "", "X");').get("result"), "Xhello")
+
+    def test_replace_first_on_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('replace_first(5, "a", "b");')
+        self.assertIn("replace_first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_replace_first_on_non_string_old_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('replace_first("a", 5, "b");')
+        self.assertIn("replace_first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_replace_first_on_non_string_new_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('replace_first("a", "a", 5);')
+        self.assertIn("replace_first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_replace_first_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('replace_first("a", "a");')
+
+
 class TestPadStart(unittest.TestCase):
     def test_pad_start_pads_on_the_left(self):
         self.assertEqual(run('let result = pad_start("7", 3, "0");').get("result"), "007")

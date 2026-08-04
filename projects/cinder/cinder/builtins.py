@@ -804,6 +804,25 @@ def _replace(arguments: list, line: int, column: int) -> object:
     return value.replace(old, new)
 
 
+def _replace_first(arguments: list, line: int, column: int) -> object:
+    _require_arity("replace_first", arguments, 3, line, column)
+    value, old, new = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"replace_first() requires a string as its first argument, got {type_name(value)}",
+            line, column,
+        )
+    if not isinstance(old, str):
+        raise CinderRuntimeError(
+            f"replace_first() requires a string to search for, got {type_name(old)}", line, column
+        )
+    if not isinstance(new, str):
+        raise CinderRuntimeError(
+            f"replace_first() requires a string replacement, got {type_name(new)}", line, column
+        )
+    return value.replace(old, new, 1)
+
+
 def _check_pad_arguments(name: str, value: object, width: object, fill: object, line: int, column: int) -> None:
     if not isinstance(value, str):
         raise CinderRuntimeError(
@@ -2589,6 +2608,7 @@ _BUILTINS = {
     "strip_prefix": _strip_prefix,
     "strip_suffix": _strip_suffix,
     "replace": _replace,
+    "replace_first": _replace_first,
     "pad_start": _pad_start,
     "pad_end": _pad_end,
     "abs": _abs,

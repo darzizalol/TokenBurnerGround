@@ -2882,6 +2882,35 @@ class TestInterleave(unittest.TestCase):
             run("interleave([1], [2], [3]);")
 
 
+class TestInterpose(unittest.TestCase):
+    def test_interpose_basic(self):
+        self.assertEqual(
+            run("let result = interpose([1, 2, 3], 0);").get("result"),
+            [1, 0, 2, 0, 3],
+        )
+
+    def test_interpose_single_element(self):
+        self.assertEqual(run("let result = interpose([1], 0);").get("result"), [1])
+
+    def test_interpose_empty_list(self):
+        self.assertEqual(run("let result = interpose([], 0);").get("result"), [])
+
+    def test_interpose_separator_type_need_not_match(self):
+        self.assertEqual(
+            run('let result = interpose([1, 2], "x");').get("result"), [1, "x", 2]
+        )
+
+    def test_interpose_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("interpose(5, 0);")
+
+    def test_interpose_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("interpose([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("interpose([1], 0, 0);")
+
+
 class TestReverse(unittest.TestCase):
     def test_reverse_returns_new_reversed_list(self):
         self.assertEqual(run("let result = reverse([1, 2, 3]);").get("result"), [3, 2, 1])

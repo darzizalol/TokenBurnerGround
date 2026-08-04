@@ -963,6 +963,17 @@ def _is_odd(arguments: list, line: int, column: int) -> object:
     return value % 2 != 0
 
 
+def _is_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_prime", arguments, 1, line, column)
+    value = _require_int("is_prime", arguments[0], line, column)
+    if value < 2:
+        return False
+    for divisor in range(2, int(value ** 0.5) + 1):
+        if value % divisor == 0:
+            return False
+    return True
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -2726,6 +2737,7 @@ _BUILTINS = {
     "sign": _sign,
     "is_even": _is_even,
     "is_odd": _is_odd,
+    "is_prime": _is_prime,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

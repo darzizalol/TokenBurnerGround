@@ -2637,6 +2637,17 @@ def _is_number(arguments: list, line: int, column: int) -> object:
     return _is_numeric(arguments[0])
 
 
+def _is_int(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_int", arguments, 1, line, column)
+    value = arguments[0]
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_float(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_float", arguments, 1, line, column)
+    return isinstance(arguments[0], float)
+
+
 def _is_bool(arguments: list, line: int, column: int) -> object:
     _require_arity("is_bool", arguments, 1, line, column)
     return isinstance(arguments[0], bool)
@@ -2814,6 +2825,8 @@ _BUILTINS = {
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
     "is_number": _is_number,
+    "is_int": _is_int,
+    "is_float": _is_float,
     "is_bool": _is_bool,
     "is_nil": _is_nil,
     "is_function": _is_function,

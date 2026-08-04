@@ -5215,6 +5215,80 @@ class TestIsNumber(unittest.TestCase):
             run("is_number(1, 2);")
 
 
+class TestIsInt(unittest.TestCase):
+    def test_is_int_true_for_int(self):
+        self.assertIs(run("let result = is_int(4);").get("result"), True)
+
+    def test_is_int_true_for_negative_int(self):
+        self.assertIs(run("let result = is_int(-3);").get("result"), True)
+
+    def test_is_int_false_for_float(self):
+        self.assertIs(run("let result = is_int(4.0);").get("result"), False)
+
+    def test_is_int_false_for_bool(self):
+        self.assertIs(run("let result = is_int(true);").get("result"), False)
+
+    def test_is_int_false_for_non_numeric_string(self):
+        self.assertIs(run('let result = is_int("4");').get("result"), False)
+
+    def test_is_int_false_for_nil(self):
+        self.assertIs(run("let result = is_int(nil);").get("result"), False)
+
+    def test_is_int_false_for_list(self):
+        self.assertIs(run("let result = is_int([1, 2]);").get("result"), False)
+
+    def test_is_int_false_for_map(self):
+        self.assertIs(run("let result = is_int({});").get("result"), False)
+
+    def test_is_int_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_int();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_int(1, 2);")
+
+
+class TestIsFloat(unittest.TestCase):
+    def test_is_float_true_for_float(self):
+        self.assertIs(run("let result = is_float(4.0);").get("result"), True)
+
+    def test_is_float_true_for_negative_float(self):
+        self.assertIs(run("let result = is_float(-3.5);").get("result"), True)
+
+    def test_is_float_false_for_int(self):
+        self.assertIs(run("let result = is_float(4);").get("result"), False)
+
+    def test_is_float_false_for_bool(self):
+        self.assertIs(run("let result = is_float(true);").get("result"), False)
+
+    def test_is_float_false_for_non_numeric_string(self):
+        self.assertIs(run('let result = is_float("4");').get("result"), False)
+
+    def test_is_float_false_for_nil(self):
+        self.assertIs(run("let result = is_float(nil);").get("result"), False)
+
+    def test_is_float_false_for_list(self):
+        self.assertIs(run("let result = is_float([1, 2]);").get("result"), False)
+
+    def test_is_float_false_for_map(self):
+        self.assertIs(run("let result = is_float({});").get("result"), False)
+
+    def test_is_float_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_float();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_float(1, 2);")
+
+    def test_is_number_implies_exactly_one_of_is_int_is_float(self):
+        result = run(
+            "let a = is_int(4) or is_float(4.0);"
+            "let b = is_int(4) and is_float(4);"
+            "let c = is_int(4.0) and is_float(4.0);"
+        )
+        self.assertIs(result.get("a"), True)
+        self.assertIs(result.get("b"), False)
+        self.assertIs(result.get("c"), False)
+
+
 class TestIsBool(unittest.TestCase):
     def test_is_bool_true_for_bool(self):
         self.assertIs(run("let result = is_bool(true);").get("result"), True)

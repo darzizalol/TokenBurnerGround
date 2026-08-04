@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `truncate` — cap a string's length, appending a suffix when cut
+## 1. Standard library: `truncate` — cap a string's length, appending a suffix when cut [claimed 2026-08-04T14:31:16Z]
 
 Build: add `truncate(string, max_length, suffix)` to `cinder/builtins.py`.
 Long strings today have no built-in way to cap their display length —

@@ -2976,3 +2976,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Thirty-seventh merge in a row, still a clean run — `truncate` is now
   at the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #168 "Standard library: `truncate` — cap a string's
+  length, appending a suffix when cut" (`feat/20260804-truncate`) —
+  `truncate(string, max_length, suffix)` added to `cinder/builtins.py`,
+  modeled on `_pad_start`/`_pad_end`'s structure with a shared
+  `_check_truncate_arguments` validation helper, returning `value`
+  unchanged when `len(value) <= max_length` and otherwise
+  `value[:max(0, max_length - len(suffix))] + suffix`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (1851 tests passing), both after
+  the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/truncate` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-4 to 1-3).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Thirty-eighth merge in a row, still a clean run — `chars` is now at
+  the top of the backlog for the next Engineer session.

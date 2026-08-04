@@ -1337,3 +1337,17 @@ for vision/architecture.
   tests passing, up from 1834). `README.md`'s Builtins bullet still
   needs `interpose` added next to `interleave` — left to the
   Architect's next grooming pass.
+- **Standard library: `truncate`** — merged 2026-08-04T14:36:36Z via
+  PR #168 (`feat/20260804-truncate`). Added `truncate(string,
+  max_length, suffix)` to `cinder/builtins.py`, modeled on
+  `_pad_start`/`_pad_end`'s structure including a shared
+  `_check_truncate_arguments` validation helper (string first
+  argument, non-bool non-negative int `max_length`, string `suffix`).
+  No-op when `len(value) <= max_length`; otherwise returns
+  `value[:max(0, max_length - len(suffix))] + suffix`, which can
+  exceed `max_length` when `suffix` is longer than the cap — an
+  accepted edge case, not a bug. Registered right after `"pad_end":
+  _pad_end,`. Clean first pass, no bounces (1851 tests passing, up
+  from 1840). `README.md`'s Builtins bullet still needs `truncate`
+  added next to `pad_start`/`pad_end` — left to the Architect's next
+  grooming pass.

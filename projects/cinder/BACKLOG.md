@@ -11,82 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `truncate` — cap a string's length, appending a suffix when cut [claimed 2026-08-04T14:31:16Z]
-
-Build: add `truncate(string, max_length, suffix)` to `cinder/builtins.py`.
-Long strings today have no built-in way to cap their display length —
-`pad_start`/`pad_end` (`cinder/builtins.py:825-840`) only grow strings,
-never shrink them, and `slice` is list/string-index-based, not
-length-aware with an ellipsis-style suffix. This is the shrinking
-counterpart to padding: cap a string at `max_length` characters total,
-and when it's actually cut, splice `suffix` onto the end so the result
-still communicates "there was more here" (the classic `"hello..."`
-UI pattern).
-
-Model directly on `_pad_start`/`_pad_end`'s structure
-(`cinder/builtins.py:825-840`), including a small shared validation
-helper the same way those two share `_check_pad_arguments`
-(`cinder/builtins.py:807-822`) — add a `_check_truncate_arguments`
-helper (or inline checks directly in `_truncate`, whichever reads
-closer to the existing pad helper) that requires: first argument a
-`string` else `CinderRuntimeError` matching
-`"truncate() requires a string as its first argument, got
-{type_name}"`; second argument a non-bool `int` else
-`"truncate() requires an int max_length, got {type_name}"`, and
-negative else `"truncate() max_length must not be negative, got
-{max_length}"` (same shape `_check_pad_arguments` uses for `width`,
-`cinder/builtins.py:813-818`); third argument a `string` else
-`"truncate() requires a string suffix, got {type_name}"`. Behavior once
-validated: if `len(value) <= max_length`, return `value` unchanged (no
-suffix appended — nothing was actually cut); otherwise return
-`value[:max(0, max_length - len(suffix))] + suffix` — note this can
-make the result longer than `max_length` when `suffix` itself is
-longer than `max_length` (e.g. a length-1 cap with a 3-character
-suffix); that's an accepted edge case, not a bug to guard against,
-mirroring how `_pad_start`/`_pad_end` don't guard against a
-multi-character `fill` producing an over-wide pad. Register it in the
-builtins dict right after `"pad_end": _pad_end,`
-(`cinder/builtins.py:2593`).
-
-Acceptance criteria:
-- `truncate("hello world", 8, "...");` is `"hello..."` — 5 characters
-  of content plus the 3-character suffix, totaling exactly 8.
-- `truncate("hello world", 5, "...");` is `"he..."` — 2 characters of
-  content plus the suffix, totaling exactly 5.
-- `truncate("hello", 10, "...");` is `"hello"` unchanged — shorter than
-  `max_length`, no truncation, no suffix appended.
-- `truncate("hello", 5, "...");` is `"hello"` unchanged — exactly at
-  `max_length` is not "over" it, matching `_pad_start`/`_pad_end`'s own
-  `>=` boundary treatment as a no-op.
-- `truncate("hello world", 1, "...");` is `"..."` — `max_length` (1) is
-  smaller than the suffix alone (3 chars), so content is empty and the
-  result (length 3) exceeds `max_length`; pins the accepted edge case
-  from the spec above.
-- `truncate("hello", 3, "");` is `"hel"` — an empty suffix behaves like
-  a plain hard cut.
-- `truncate(5, 3, "...");` (non-string first argument) raises
-  `CinderRuntimeError` naming `truncate` and `int` in the message
-  (`type_name(5)` is `"int"`, not `"number"`).
-- `truncate("hello", "3", "...");` (non-int second argument) raises
-  `CinderRuntimeError` naming `truncate` and `string` in the message.
-- `truncate("hello", -1, "...");` (negative `max_length`) raises
-  `CinderRuntimeError` naming `truncate` and `-1` in the message.
-- `truncate("hello", 3, 5);` (non-string third argument) raises
-  `CinderRuntimeError` naming `truncate` and `int` in the message.
-- Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `pad_start`/
-`pad_end`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged,
-`README.md`'s Builtins bullet needs `truncate` added near `pad_start`/
-`pad_end` — leave that to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `chars` — split a string into a list of its characters
+## 1. Standard library: `chars` — split a string into a list of its characters
 
 Build: add `chars(string)` to `cinder/builtins.py`. `split` deliberately
 raises `CinderRuntimeError` on an empty separator
@@ -130,7 +55,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_even`/`is_odd` — integer parity predicates
+## 2. Standard library: `is_even`/`is_odd` — integer parity predicates
 
 Build: add `is_even(number)` and `is_odd(number)` to `cinder/builtins.py`.
 There is currently no builtin way to test a number's parity — the
@@ -183,7 +108,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `swap_case` — flip each character's case
+## 3. Standard library: `swap_case` — flip each character's case
 
 Build: add `swap_case(string)` to `cinder/builtins.py`. The existing case
 builtins (`upper`, `lower`, `capitalize`, `title`,
@@ -228,7 +153,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `pad_center` — center a string within a width, padding both sides
+## 4. Standard library: `pad_center` — center a string within a width, padding both sides
 
 Build: add `pad_center(string, width, fill)` to `cinder/builtins.py`.
 `pad_start`/`pad_end` (`cinder/builtins.py:844-859`) only ever pad on

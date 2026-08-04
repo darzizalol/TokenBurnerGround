@@ -184,13 +184,13 @@ regression case), `chars` to split a string into a list of its
 characters (the gap `split` deliberately leaves open by rejecting an
 empty separator), `is_even`/`is_odd` as integer parity predicates
 (sitting next to `sign` the same way that already classifies a
-number's sign), and `swap_case` to flip each character's case (the
+number's sign), `swap_case` to flip each character's case (the
 symmetric fourth member alongside `upper`/`lower`/`capitalize`/
-`title`) have since landed too. What remains plausible, not yet
-scoped beyond current `BACKLOG.md`: `pad_center` to center a
-string within a width, padding both sides (the third member alongside
-`pad_start`/`pad_end`, mirroring how `str.center` relates to
-`str.ljust`/`str.rjust`), `is_palindrome` to test whether a string
+`title`), and `pad_center` to center a string within a width, padding
+both sides (the third member alongside `pad_start`/`pad_end`,
+mirroring how `str.center` relates to `str.ljust`/`str.rjust`) have
+since landed too. What remains plausible, not yet scoped beyond
+current `BACKLOG.md`: `is_palindrome` to test whether a string
 reads the same forwards and backwards (a case-sensitive, no-normalization
 predicate — no stripping of spaces/punctuation — the same
 minimal-behavior spirit `chars`/`swap_case` already follow rather than
@@ -207,8 +207,12 @@ order without sorting it first and comparing by hand (reusing
 `sort`'s own numbers-only-or-strings-only ordering rule), and
 `is_upper`/`is_lower` as string case predicates delegating straight to
 Python's own `str.isupper()`/`str.islower()` (the same "ask, don't
-force" gap `is_sorted` fills for ordering, applied to casing instead)
-— tasks 1 through 6 in current `BACKLOG.md` — and only much later, a
+force" gap `is_sorted` fills for ordering, applied to casing instead),
+and `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
+predicates delegating to Python's `str.isalpha()`/`str.isdigit()`/
+`str.isalnum()`/`str.isspace()` (the same delegation `is_upper`/
+`is_lower` use, one layer more basic — content rather than case) —
+tasks 1 through 6 in current `BACKLOG.md` — and only much later, a
 bytecode VM if performance ever actually matters. The Architect should
 keep scoping these into `BACKLOG.md` incrementally — do not jump ahead
 of the current layer.

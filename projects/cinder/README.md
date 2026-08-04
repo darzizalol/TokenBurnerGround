@@ -130,7 +130,7 @@ while (i < 10) {
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
-  `pad_start`, `pad_end`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
+  `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`
@@ -215,14 +215,15 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: a negated membership
 operator `not in`, `chars` to split a string into a list of its
-characters, `is_even`/`is_odd` as integer parity predicates, and
-`swap_case` to flip each character's case. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `pad_center` to center a string within a
-width padding both sides, `is_palindrome` to test whether a string
+characters, `is_even`/`is_odd` as integer parity predicates,
+`swap_case` to flip each character's case, and `pad_center` to center
+a string within a width padding both sides. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_palindrome` to test whether a string
 reads the same forwards and backwards, `is_int`/`is_float` as type
 predicates distinguishing `is_number`'s two numeric kinds, `is_prime`
 as an integer primality predicate, `is_sorted` to test whether a list
-is already in non-decreasing order, and `is_upper`/`is_lower` as
-string case predicates. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+is already in non-decreasing order, `is_upper`/`is_lower` as string
+case predicates, and `is_alpha`/`is_digit`/`is_alnum`/`is_space` as
+string content predicates. The backlog mixes language depth with
+stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

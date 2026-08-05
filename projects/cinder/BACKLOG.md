@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_unique` — test whether a list has no duplicate elements
+## 1. Standard library: `is_unique` — test whether a list has no duplicate elements [claimed 2026-08-05T19:33:22Z]
 
 Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
 (`cinder/builtins.py:1594-1601`) already strips duplicates out of a

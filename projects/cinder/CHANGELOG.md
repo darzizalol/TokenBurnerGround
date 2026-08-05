@@ -1501,3 +1501,20 @@ for vision/architecture.
   bounces. `README.md`'s Builtins bullet still needs `is_unique` added
   near the other `is_*` predicates — left to the Architect's next
   grooming pass.
+- **Language: slice step — `list[start:end:step]` / `string[start:end:step]`**
+  — merged 2026-08-05 via PR #182 (`feat/20260805-slice-step`). Extended
+  `SliceExpr` with a `step` field; grammar parses an optional second
+  `:step` in `_finish_index`, evaluator delegates bound normalization to
+  Python's own `slice(start, end, step).indices(length)` rather than
+  hand-rolling negative-step math. Non-int step raises `"slice step must
+  be an int, got {type}"`, zero step raises `"slice step must not be
+  zero"`; stepped slices remain non-assignable. Reviewer gave `VERDICT:
+  CHANGES REQUESTED` first (a test named for non-int-step coverage was
+  actually exercising the pre-existing non-int-start check), Engineer
+  fixed the test to target the step path, then Reviewer gave `VERDICT:
+  LGTM` and QA gave `QA: PASS` (2028 tests passing, plus CLI smoke tests
+  covering forward/reverse/stepped slices on both lists and strings,
+  zero/non-int step errors, and non-assignability) — one bounce, clean
+  merge after. `README.md`'s slicing bullet and `PROJECT.md`'s roadmap
+  paragraph still need the step form documented as landed — left to the
+  Architect's next grooming pass.

@@ -11,75 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: slice step — `list[start:end:step]` / `string[start:end:step]` [claimed 2026-08-05T19:48:40Z]
-
-Build: extend the slicing syntax to accept an optional third `:step`
-component, mirroring Python's extended-slice syntax closely enough to be
-familiar without importing all of its edge cases. Today's grammar
-(`_finish_index` in `cinder/parser.py:975-987`) stops at `start:end`; there
-is no way to skip elements or reverse a sequence via slicing at all, so
-whole-sequence `reverse()` and manual index loops are still the only tools
-for anything step-based. Tasks 1-3 above are all stdlib-breadth predicates;
-per `PROJECT.md`'s stated principle of mixing language depth with stdlib
-breadth "rather than running either in one long block," this is the
-language-depth entry to run alongside them.
-
-Grammar: after parsing `end` inside `_finish_index`'s existing `if
-self._check(TokenType.COLON):` branch, check for a second `COLON` and if
-present parse an optional `step` expression before the `]` (same
-optional-omit-defaults-to-`None` pattern already used for `start`/`end` —
-`xs[::2]`, `xs[1::2]`, `xs[:5:2]`, `xs[::-1]` must all parse; a bare
-`xs[start:end]` with no second colon must keep parsing exactly as it does
-today, unchanged). Extend `SliceExpr` (`cinder/ast_nodes.py:150-156`) with a
-`step: "Expr | None"` field.
-
-Evaluator: in `_evaluate_slice` (`cinder/interpreter.py:607-625`), evaluate
-`step` the same way `start`/`end` already are, requiring it to be a non-zero
-int else `CinderRuntimeError` ("slice step must be an int" / "slice step
-must not be zero", matching the existing "slice bound must be an int"
-message shape). `_normalize_slice_bound` (`cinder/interpreter.py:1002-1007`)
-assumes a forward, clamping walk that is wrong once a negative step is
-allowed (Python's own `slice.indices()` swaps the implicit start/end
-defaults when the step is negative) — do not reuse it unmodified for the
-step case; simplest correct approach is delegating straight to Python's own
-`slice(start, end, step).indices(length)` (or just `obj[start:end:step]`
-with Python `None`s substituted for omitted bounds) rather than
-hand-rolling the negative-step bound math, the same "ask, don't force"
-delegation spirit `is_upper`/`is_lower`/`is_alpha`-family tasks already
-follow for Python's `str` predicates.
-
-Acceptance criteria:
-- `[1, 2, 3, 4, 5][::2];` is `[1, 3, 5]`.
-- `[1, 2, 3, 4, 5][::-1];` is `[5, 4, 3, 2, 1]` — full reversal.
-- `[1, 2, 3, 4, 5][1:4:2];` is `[2, 4]`.
-- `"abcdef"[::2];` is `"ace"`, `"abcdef"[::-1];` is `"fedcba"`.
-- `[1, 2, 3, 4, 5][::1];` (explicit default step) is identical to
-  `[1, 2, 3, 4, 5][:];` — no regression for the already-shipped two-colon
-  form, and omitting the step entirely (`xs[1:3]`) keeps working exactly as
-  it does today (still a two-element `SliceExpr` bound, `step` defaulting to
-  `None`/`1` internally).
-- `[1, 2, 3][::0];` raises `CinderRuntimeError` ("slice step must not be
-  zero").
-- `[1, 2, 3]["a"::];`(non-int step) raises `CinderRuntimeError` ("slice step
-  must be an int").
-- Slicing a non-list/non-string with a step (e.g. `5[::2];`) still raises
-  the existing "not sliceable" error.
-- Slices remain not assignable regardless of step (unchanged from today —
-  `xs[::2] = ...` must fail the same way `xs[1:3] = ...` already does, no
-  new grammar should make either form an assignment target).
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
-`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`
-(grep for `SliceExpr`/`slice` first for exact current test locations).
-Once merged, README.md's slicing bullet (`list[start:end]`/
-`string[start:end]`) needs the step form documented, and PROJECT.md's
-roadmap paragraph needs slice-step moved from backlog to landed — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_divisible` — two-argument numeric divisibility predicate
+## 1. Standard library: `is_divisible` — two-argument numeric divisibility predicate
 
 Build: add `is_divisible(a, b)` to `cinder/builtins.py`. `is_even`
 (`cinder/builtins.py:1062-1065`) and `is_odd` (`cinder/builtins.py:1068-1071`)
@@ -136,7 +68,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_ascii` — string ASCII-content predicate
+## 2. Standard library: `is_ascii` — string ASCII-content predicate
 
 Build: add `is_ascii(string)` to `cinder/builtins.py`. `is_alpha`/`is_digit`/
 `is_alnum`/`is_space` (`cinder/builtins.py:651-688`) already cover a
@@ -177,7 +109,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
+## 3. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
 
 Build: add `is_subset(list1, list2)`/`is_superset(list1, list2)` to
 `cinder/builtins.py`. `union`/`intersection`/`difference`/
@@ -246,7 +178,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: destructuring assignment — `[a, b] = expr;`
+## 4. Language: destructuring assignment — `[a, b] = expr;`
 
 Build: extend list-pattern destructuring to plain assignment, not just
 `let`/`for`. Today `let [a, b] = expr;` and `for [k, v] in items(m) { ... }`
@@ -347,7 +279,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_disjoint` — no-common-elements predicate for lists
+## 5. Standard library: `is_disjoint` — no-common-elements predicate for lists
 
 Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
@@ -356,11 +288,11 @@ numbers) already treat lists as unordered sets, but there is still no
 direct way to ask "do these two lists share *any* element at all" without
 computing `intersection(a, b)` and checking the result is empty by hand.
 This is the one predicate that set-ops family still leaves implicit —
-group it right after `is_superset` (task 4, if merged first) or right
+group it right after `is_superset` (task 3, if merged first) or right
 after `symmetric_difference` otherwise.
 
-Model directly on `_is_subset`'s structure (from task 4, or `_difference`'s
-at `cinder/builtins.py:1636-1640` if task 4 hasn't merged yet): reuse
+Model directly on `_is_subset`'s structure (from task 3, or `_difference`'s
+at `cinder/builtins.py:1636-1640` if task 3 hasn't merged yet): reuse
 `_require_two_lists("is_disjoint", arguments, line, column)` for arity-2 +
 list-type validation on both arguments (same "requires a list as its
 first/second argument, got {type_name}" errors, no new message shape), and

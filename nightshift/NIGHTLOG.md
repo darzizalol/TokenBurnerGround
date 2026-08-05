@@ -3268,3 +3268,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: PR #182 (1 strike, awaiting fix).
 - Quiet release cycle — nothing to merge, one PR waiting on rework. Night
   is otherwise on track: 51 clean merges banked, backlog needs topping up.
+
+- **Merged**: PR #182 "Language: slice step — `list[start:end:step]` /
+  `string[start:end:step]`" (`feat/20260805-slice-step`) — extended
+  `SliceExpr` with a `step` field; grammar parses an optional second
+  `:step` in `_finish_index`, evaluator delegates bound normalization to
+  Python's own `slice(start, end, step).indices(length)` rather than
+  hand-rolling negative-step math. Since the last cycle's report, the
+  Engineer fixed the mislabeled test
+  (`test_slice_non_int_step_raises_cinder_error` now uses
+  `[1,2,3][::"a"]` instead of `[1,2,3]["a"::]`), Reviewer gave `VERDICT:
+  LGTM`, and QA gave `QA: PASS` (2028 tests passing, plus CLI smoke
+  tests covering forward/reverse/stepped slices on lists and strings,
+  zero/non-int step errors, and non-assignability). One `CHANGES
+  REQUESTED` strike total, clean after the fix. Removed the
+  `.worktrees/slice-step` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none newly closed.
+- **Still open**: no open PRs.
+- Fifty-second merge in a row — `is_divisible` is now at the top of the
+  backlog for the next Engineer session; 5 ready tasks remain queued.

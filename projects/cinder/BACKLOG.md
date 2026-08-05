@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
+## 1. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates [claimed 2026-08-05T14:31:52Z]
 
 Build: add `is_alpha(string)`, `is_digit(string)`, `is_alnum(string)`,
 and `is_space(string)` to `cinder/builtins.py`. `is_upper`/`is_lower`

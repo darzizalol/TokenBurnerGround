@@ -3247,6 +3247,97 @@ class TestSymmetricDifference(unittest.TestCase):
             run("symmetric_difference([1], [2], [3]);")
 
 
+class TestIsSubsetIsSuperset(unittest.TestCase):
+    def test_is_subset_true_when_all_elements_found(self):
+        self.assertIs(
+            run("let result = is_subset([1, 2], [1, 2, 3]);").get("result"), True
+        )
+
+    def test_is_subset_false_when_element_missing(self):
+        self.assertIs(
+            run("let result = is_subset([1, 2, 3], [1, 2]);").get("result"), False
+        )
+
+    def test_is_subset_empty_first_list_is_true(self):
+        self.assertIs(
+            run("let result = is_subset([], [1, 2, 3]);").get("result"), True
+        )
+        self.assertIs(run("let result = is_subset([], []);").get("result"), True)
+
+    def test_is_subset_empty_second_list_is_false(self):
+        self.assertIs(
+            run("let result = is_subset([1, 2, 3], []);").get("result"), False
+        )
+
+    def test_is_subset_duplicates_in_first_list_do_not_require_duplicates(self):
+        self.assertIs(
+            run("let result = is_subset([1, 1, 2], [1, 2]);").get("result"), True
+        )
+
+    def test_is_subset_uses_deep_equality(self):
+        self.assertIs(
+            run(
+                "let result = is_subset([[1, 2]], [[1, 2], [3, 4]]);"
+            ).get("result"),
+            True,
+        )
+
+    def test_is_subset_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_subset(5, [1, 2]);")
+        self.assertIn("is_subset", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+
+    def test_is_subset_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_subset([1, 2], 5);")
+        self.assertIn("is_subset", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+
+    def test_is_subset_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_subset([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_subset([1], [2], [3]);")
+
+    def test_is_superset_true_when_first_contains_all_of_second(self):
+        self.assertIs(
+            run("let result = is_superset([1, 2, 3], [1, 2]);").get("result"), True
+        )
+
+    def test_is_superset_false_when_second_has_extra_element(self):
+        self.assertIs(
+            run("let result = is_superset([1, 2], [1, 2, 3]);").get("result"), False
+        )
+
+    def test_is_superset_is_flipped_is_subset(self):
+        self.assertEqual(
+            run(
+                "let a = [1, 2]; let b = [1, 2, 3];"
+                "let result = [is_subset(a, b), is_superset(b, a)];"
+            ).get("result"),
+            [True, True],
+        )
+
+    def test_is_superset_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_superset(5, [1, 2]);")
+        self.assertIn("is_superset", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+
+    def test_is_superset_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_superset([1, 2], 5);")
+        self.assertIn("is_superset", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+
+    def test_is_superset_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_superset([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_superset([1], [2], [3]);")
+
+
 class TestInterleave(unittest.TestCase):
     def test_interleave_equal_length_lists(self):
         self.assertEqual(

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_upper`/`is_lower` — string case predicates
+## 1. Standard library: `is_upper`/`is_lower` — string case predicates [claimed 2026-08-05T14:21:02Z]
 
 Build: add `is_upper(string)` and `is_lower(string)` to
 `cinder/builtins.py`. `swap_case` flips case, `upper`/`lower` force

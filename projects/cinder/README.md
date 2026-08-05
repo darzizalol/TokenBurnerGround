@@ -139,7 +139,8 @@ while (i < 10) {
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
   `is_alpha`/`is_digit`/`is_alnum`/`is_space` to test a string's content
   (letters only, digits only, alphanumeric only, whitespace only),
-  `swap_case` to flip each character's case, and type predicates
+  `swap_case` to flip each character's case,
+  `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -218,19 +219,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_int`/`is_float`
-splitting `is_number`'s single numeric kind into its two concrete ones,
-`is_prime` as an integer primality predicate, `is_sorted` to test
-whether a list is already in non-decreasing order, `is_upper`/
-`is_lower` as string case predicates, and `is_alpha`/`is_digit`/
-`is_alnum`/`is_space` as string content predicates. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `is_positive`/`is_negative`/
-`is_zero` as numeric sign predicates, `is_unique` to test whether a
-list has no duplicate elements, a slice step (`xs[start:end:step]`)
-for skipping elements or reversing a sequence, `is_divisible` as
-a two-argument numeric predicate generalizing `is_even`/`is_odd`'s
-fixed divisor of `2` to any divisor, and `is_ascii` to test whether a
-string's content is restricted to the ASCII range.
+Actively developed, nightly. Recently landed: `is_upper`/`is_lower` as
+string case predicates, `is_alpha`/`is_digit`/`is_alnum`/`is_space` as
+string content predicates, and `is_positive`/`is_negative`/`is_zero`
+as numeric sign predicates. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_unique` to test whether a list has no
+duplicate elements, a slice step (`xs[start:end:step]`) for skipping
+elements or reversing a sequence, `is_divisible` as a two-argument
+numeric predicate generalizing `is_even`/`is_odd`'s fixed divisor of
+`2` to any divisor, `is_ascii` to test whether a string's content is
+restricted to the ASCII range, and `is_subset`/`is_superset` as the
+predicate half of the `union`/`intersection`/`difference`/
+`symmetric_difference` set-ops family.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -210,14 +210,14 @@ force" gap `is_sorted` fills for ordering, applied to casing instead),
 and `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
 predicates delegating to Python's `str.isalpha()`/`str.isdigit()`/
 `str.isalnum()`/`str.isspace()` (the same delegation `is_upper`/
-`is_lower` use, one layer more basic — content rather than case)
-have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+`is_lower` use, one layer more basic — content rather than case), and
 `is_positive`/`is_negative`/`is_zero` as numeric sign predicates
 sitting next to `sign` the same way `is_even`/`is_odd` already sit
 next to it for parity (a property predicate on any number, int or
 float alike, raising on a non-numeric argument the same way `sign`
-itself does — unlike the kind predicates `is_int`/`is_float`), and
+itself does — unlike the kind predicates `is_int`/`is_float`)
+have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
 `is_unique` to test whether a list has no duplicate elements without
 discarding that information the way `unique` itself does (reusing
 `unique`'s own `_dedupe`/`values_equal` deep-equality machinery
@@ -231,13 +231,20 @@ predicate testing `a % b == 0` — the general case `is_even`/`is_odd`
 already special-case for a fixed divisor of `2` (raising the same
 "not an int" error `is_even`/`is_odd` do for either argument, plus a
 distinct "divisor must not be zero" error, matching the `%` operator's
-own division-by-zero guard), and `is_ascii` as a string content
+own division-by-zero guard), `is_ascii` as a string content
 predicate delegating to Python's `str.isascii()` — one more member of
-the `is_alpha`/`is_digit`/`is_alnum`/`is_space` content-predicate family —
-tasks 1 through 5 in current `BACKLOG.md` — and only much later, a
-bytecode VM if performance ever actually matters. The Architect should
-keep scoping these into `BACKLOG.md` incrementally — do not jump ahead
-of the current layer.
+the `is_alpha`/`is_digit`/`is_alnum`/`is_space` content-predicate family
+— and `is_subset`/`is_superset` as the predicate half of the
+`union`/`intersection`/`difference`/`symmetric_difference` set-ops
+family (today asking whether one list's elements are all contained in
+another requires computing `difference` and checking it's empty by
+hand; these reuse that family's own `_require_two_lists`/
+`_contains_value` helpers directly, `is_superset(a, b)` simply
+`is_subset(b, a)` with the arguments flipped) — tasks 1 through 5 in
+current `BACKLOG.md` — and only much later, a bytecode VM if
+performance ever actually matters. The Architect should keep scoping
+these into `BACKLOG.md` incrementally — do not jump ahead of the
+current layer.
 
 ## History
 

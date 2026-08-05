@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
+## 1. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists [claimed 2026-08-05T20:40:19Z]
 
 Build: add `is_subset(list1, list2)`/`is_superset(list1, list2)` to
 `cinder/builtins.py`. `union`/`intersection`/`difference`/

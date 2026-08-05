@@ -1081,6 +1081,17 @@ def _is_odd(arguments: list, line: int, column: int) -> object:
     return value % 2 != 0
 
 
+def _is_divisible(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_divisible", arguments, 2, line, column)
+    a = _require_int("is_divisible", arguments[0], line, column)
+    b = _require_int("is_divisible", arguments[1], line, column)
+    if b == 0:
+        raise CinderRuntimeError(
+            "is_divisible() divisor must not be zero", line, column
+        )
+    return a % b == 0
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -2858,6 +2869,7 @@ _BUILTINS = {
     "is_zero": _is_zero,
     "is_even": _is_even,
     "is_odd": _is_odd,
+    "is_divisible": _is_divisible,
     "is_prime": _is_prime,
     "min": _min,
     "max": _max,

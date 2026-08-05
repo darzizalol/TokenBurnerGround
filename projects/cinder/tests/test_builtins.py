@@ -2101,6 +2101,74 @@ class TestIsOdd(unittest.TestCase):
             run("is_odd(1, 2);")
 
 
+class TestIsDivisible(unittest.TestCase):
+    def test_is_divisible_true(self):
+        self.assertEqual(run("let result = is_divisible(10, 5);").get("result"), True)
+
+    def test_is_divisible_false(self):
+        self.assertEqual(run("let result = is_divisible(10, 3);").get("result"), False)
+
+    def test_is_divisible_zero_dividend(self):
+        self.assertEqual(run("let result = is_divisible(0, 5);").get("result"), True)
+
+    def test_is_divisible_negative_dividend(self):
+        self.assertEqual(run("let result = is_divisible(-10, 5);").get("result"), True)
+
+    def test_is_divisible_negative_divisor(self):
+        self.assertEqual(run("let result = is_divisible(10, -5);").get("result"), True)
+
+    def test_is_divisible_agrees_with_is_even(self):
+        for x in [-4, -3, -2, -1, 0, 1, 2, 3, 4]:
+            expected = run(f"let result = is_even({x});").get("result")
+            actual = run(f"let result = is_divisible({x}, 2);").get("result")
+            self.assertEqual(actual, expected)
+
+    def test_is_divisible_agrees_with_is_odd(self):
+        for x in [-4, -3, -2, -1, 0, 1, 2, 3, 4]:
+            expected = run(f"let result = is_odd({x});").get("result")
+            actual = run(f"let result = not is_divisible({x}, 2);").get("result")
+            self.assertEqual(actual, expected)
+
+    def test_is_divisible_by_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_divisible(10, 0);")
+        self.assertIn("is_divisible() divisor must not be zero", ctx.exception.message)
+
+    def test_is_divisible_non_int_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_divisible(1.5, 2);")
+        self.assertIn("is_divisible", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_divisible_non_int_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_divisible(10, 1.5);")
+        self.assertIn("is_divisible", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_divisible_bool_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_divisible(true, 2);")
+        self.assertIn("is_divisible", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_divisible_bool_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_divisible(10, true);")
+        self.assertIn("is_divisible", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_divisible_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_divisible("10", 2);')
+        self.assertIn("is_divisible", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_divisible_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_divisible(10);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

@@ -628,6 +628,26 @@ def _is_palindrome(arguments: list, line: int, column: int) -> object:
     return value == value[::-1]
 
 
+def _is_upper(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_upper", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_upper() requires a string, got {type_name(value)}", line, column
+        )
+    return value.isupper()
+
+
+def _is_lower(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_lower", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_lower() requires a string, got {type_name(value)}", line, column
+        )
+    return value.islower()
+
+
 def _is_sorted(arguments: list, line: int, column: int) -> object:
     _require_arity("is_sorted", arguments, 1, line, column)
     value = arguments[0]
@@ -2854,6 +2874,8 @@ _BUILTINS = {
     "is_map": _is_map,
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
+    "is_upper": _is_upper,
+    "is_lower": _is_lower,
     "is_sorted": _is_sorted,
     "is_number": _is_number,
     "is_int": _is_int,

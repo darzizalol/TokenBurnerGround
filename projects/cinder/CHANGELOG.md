@@ -1488,3 +1488,16 @@ for vision/architecture.
   merge, no bounces. `README.md`'s Builtins bullet still needs
   `is_positive`/`is_negative`/`is_zero` added near `sign` — left to the
   Architect's next grooming pass.
+- **Standard library: `is_unique` — list-has-no-duplicates predicate** —
+  merged 2026-08-05 via PR #181 (`feat/20260805-is-unique`). Added
+  `is_unique(list)`, delegating to the existing `_dedupe` helper
+  (`len(_dedupe(value)) == len(value)`) rather than reimplementing
+  duplicate detection, inheriting deep-equality semantics for free.
+  Registered right after `is_sorted`, grouped with the other list
+  property predicates. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (2012 tests passing, up from 2004, plus CLI smoke tests
+  covering deep-equality on maps, mixed numeric/string types, and
+  arity/type errors), both after the sole commit — clean merge, no
+  bounces. `README.md`'s Builtins bullet still needs `is_unique` added
+  near the other `is_*` predicates — left to the Architect's next
+  grooming pass.

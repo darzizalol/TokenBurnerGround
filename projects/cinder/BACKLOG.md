@@ -11,60 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_unique` — test whether a list has no duplicate elements [claimed 2026-08-05T19:33:22Z]
-
-Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
-(`cinder/builtins.py:1594-1601`) already strips duplicates out of a
-list via its `_dedupe` helper, but there is no way to ask *whether* a
-list had any duplicates in the first place without discarding that
-information — today that requires calling `unique(xs)` and comparing
-`len` by hand. This is the same "ask, don't force" gap `is_sorted`
-fills for ordering, applied to uniqueness instead — a
-property predicate on a list's existing contents, not a kind
-predicate, so group it with `is_sorted`/`is_palindrome` near
-`is_string`, not with `unique`/`distinct_by` themselves.
-
-Model directly on `_unique`'s structure
-(`cinder/builtins.py:1594-1601`): same arity-1 check via
-`_require_arity("is_unique", arguments, 1, line, column)`, same `list`
-type check (else `CinderRuntimeError` matching `"is_unique() requires
-a list, got {type_name}"`). Unlike `is_sorted`, there is no
-numbers-only-or-strings-only restriction to enforce — `unique()`
-itself places none (it dedupes via `values_equal`, which already
-handles every Cinder value, including nested lists/maps by deep
-equality), so `is_unique` shouldn't either. Behavior once validated:
-call the existing `_dedupe(value)` helper and return
-`len(_dedupe(value)) == len(value)` — reuse, don't reimplement the
-comparison logic, the same delegation spirit `unique`'s own
-`_dedupe` helper already embodies. An empty list and a single-element
-list are both trivially unique (`true`).
-
-Acceptance criteria:
-- `is_unique([1, 2, 3]);` is `true` — all distinct.
-- `is_unique([1, 2, 2]);` is `false` — one duplicate.
-- `is_unique([]);` is `true` — empty list, vacuously unique.
-- `is_unique([5]);` is `true` — single element, trivially unique.
-- `is_unique(["a", "b", "a"]);` is `false` — duplicates detected for
-  strings too, not just numbers.
-- `is_unique([[1, 2], [1, 2]]);` is `false` — duplicate detection uses
-  deep equality (via `_dedupe`'s existing `values_equal`), not
-  reference identity, so two structurally-equal nested lists count as
-  duplicates.
-- `is_unique(5);` (non-list argument) raises `CinderRuntimeError`
-  naming `is_unique` and `int` in the message.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `unique`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_unique` added near the other `is_*` predicates —
-leave that to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
+## 1. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
 
 Build: extend the slicing syntax to accept an optional third `:step`
 component, mirroring Python's extended-slice syntax closely enough to be
@@ -132,7 +79,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_divisible` — two-argument numeric divisibility predicate
+## 2. Standard library: `is_divisible` — two-argument numeric divisibility predicate
 
 Build: add `is_divisible(a, b)` to `cinder/builtins.py`. `is_even`
 (`cinder/builtins.py:1062-1065`) and `is_odd` (`cinder/builtins.py:1068-1071`)
@@ -189,7 +136,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_ascii` — string ASCII-content predicate
+## 3. Standard library: `is_ascii` — string ASCII-content predicate
 
 Build: add `is_ascii(string)` to `cinder/builtins.py`. `is_alpha`/`is_digit`/
 `is_alnum`/`is_space` (`cinder/builtins.py:651-688`) already cover a
@@ -230,7 +177,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
+## 4. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
 
 Build: add `is_subset(list1, list2)`/`is_superset(list1, list2)` to
 `cinder/builtins.py`. `union`/`intersection`/`difference`/

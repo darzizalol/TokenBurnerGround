@@ -3231,3 +3231,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet start to the night; no PRs have reached the Release stage yet.
   `is_unique` should still be sitting at the top of the backlog waiting
   for an Engineer session to pick it up.
+
+- **Merged**: PR #181 "Standard library: `is_unique` — test whether a
+  list has no duplicate elements" (`feat/20260805-is-unique`) — added
+  `is_unique(list)` to `cinder/builtins.py`, delegating to the existing
+  `_dedupe` helper (`len(_dedupe(value)) == len(value)`) rather than
+  reimplementing duplicate detection, inheriting deep-equality
+  semantics for free. Registered right after `is_sorted`, keeping the
+  list-property-predicate family contiguous. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2012 tests passing, up from
+  2004, plus CLI smoke tests covering deep-equality on maps, mixed
+  numeric/string types, and arity/type errors), both after the sole
+  commit — clean merge, no bounces. Removed the `.worktrees/is-unique`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-first merge in a row, still a clean run — slice step
+  (`list[start:end:step]`) is now at the top of the backlog for the
+  next Engineer session; the backlog is down to 2 ready tasks (below
+  the 5-task minimum) for the next Architect grooming pass to top
+  back up.

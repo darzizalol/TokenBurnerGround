@@ -1945,6 +1945,105 @@ class TestSign(unittest.TestCase):
             run("sign(1, 2);")
 
 
+class TestIsPositive(unittest.TestCase):
+    def test_is_positive_of_positive_int(self):
+        self.assertEqual(run("let result = is_positive(5);").get("result"), True)
+
+    def test_is_positive_of_positive_float(self):
+        self.assertEqual(run("let result = is_positive(1.5);").get("result"), True)
+
+    def test_is_positive_of_negative_int(self):
+        self.assertEqual(run("let result = is_positive(-5);").get("result"), False)
+
+    def test_is_positive_of_zero(self):
+        self.assertEqual(run("let result = is_positive(0);").get("result"), False)
+
+    def test_is_positive_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_positive("5");')
+        self.assertIn("is_positive", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_positive_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_positive(true);")
+        self.assertIn("is_positive", ctx.exception.message)
+
+    def test_is_positive_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_positive(1, 2);")
+
+
+class TestIsNegative(unittest.TestCase):
+    def test_is_negative_of_negative_int(self):
+        self.assertEqual(run("let result = is_negative(-5);").get("result"), True)
+
+    def test_is_negative_of_negative_float(self):
+        self.assertEqual(run("let result = is_negative(-1.5);").get("result"), True)
+
+    def test_is_negative_of_positive_int(self):
+        self.assertEqual(run("let result = is_negative(5);").get("result"), False)
+
+    def test_is_negative_of_zero(self):
+        self.assertEqual(run("let result = is_negative(0);").get("result"), False)
+
+    def test_is_negative_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_negative("5");')
+        self.assertIn("is_negative", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_negative_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_negative(true);")
+        self.assertIn("is_negative", ctx.exception.message)
+
+    def test_is_negative_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_negative(1, 2);")
+
+
+class TestIsZero(unittest.TestCase):
+    def test_is_zero_of_zero_int(self):
+        self.assertEqual(run("let result = is_zero(0);").get("result"), True)
+
+    def test_is_zero_of_zero_float(self):
+        self.assertEqual(run("let result = is_zero(0.0);").get("result"), True)
+
+    def test_is_zero_of_positive_int(self):
+        self.assertEqual(run("let result = is_zero(5);").get("result"), False)
+
+    def test_is_zero_of_negative_int(self):
+        self.assertEqual(run("let result = is_zero(-5);").get("result"), False)
+
+    def test_is_zero_of_non_numeric_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_zero("5");')
+        self.assertIn("is_zero", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_zero_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_zero(true);")
+        self.assertIn("is_zero", ctx.exception.message)
+
+    def test_is_zero_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_zero(1, 2);")
+
+    def test_is_zero_mutual_exclusivity(self):
+        for value in (-5, -1.5, 0, 0.0, 5, 1.5):
+            source = (
+                f"let a = is_positive({value}); "
+                f"let b = is_negative({value}); "
+                f"let c = is_zero({value});"
+            )
+            result = run(source)
+            self.assertEqual(
+                sum([result.get("a"), result.get("b"), result.get("c")]), 1
+            )
+
+
 class TestIsEven(unittest.TestCase):
     def test_is_even_of_even_int(self):
         self.assertEqual(run("let result = is_even(4);").get("result"), True)

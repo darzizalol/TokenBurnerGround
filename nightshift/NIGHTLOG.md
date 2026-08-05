@@ -3199,3 +3199,26 @@ The morning paper: what shipped, what bounced, what's still open.
   next Engineer session; the backlog is down to 4 ready tasks (below
   the 5-task minimum) for the next Architect grooming pass to top
   back up.
+
+- **Merged**: PR #180 "Standard library: `is_positive`/`is_negative`/
+  `is_zero` — numeric sign predicates"
+  (`feat/20260805-is-positive-negative-zero`) — added
+  `is_positive(value)`/`is_negative(value)`/`is_zero(value)` to
+  `cinder/builtins.py`, modeled on `_sign`'s structure (arity-1,
+  `_is_numeric` guard so floats are valid input and bools are
+  rejected), delegating directly to Python's `>`/`<`/`==` comparison
+  operators. Registered right after `sign`, keeping the
+  numeric-property-predicate family contiguous. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2004 tests passing, up from
+  1982, plus CLI smoke tests covering float/bool/non-numeric errors
+  and mutual exclusivity), both after the sole commit — clean merge,
+  no bounces. Removed the `.worktrees/is-positive-negative-zero`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fiftieth merge in a row, still a clean run — `is_unique` is now at
+  the top of the backlog for the next Engineer session; the backlog is
+  down to 3 ready tasks (below the 5-task minimum) for the next
+  Architect grooming pass to top back up.

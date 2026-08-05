@@ -1474,3 +1474,17 @@ for vision/architecture.
   clean merge, no bounces. `README.md`'s Builtins bullet still needs
   `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near the other
   `is_*` predicates — left to the Architect's next grooming pass.
+- **Standard library: `is_positive`/`is_negative`/`is_zero` — numeric
+  sign predicates** — merged 2026-08-05 via PR #180
+  (`feat/20260805-is-positive-negative-zero`). Added
+  `is_positive(value)`/`is_negative(value)`/`is_zero(value)`, modeled on
+  `_sign`'s structure (arity-1, `_is_numeric` guard so floats are valid
+  input and bools are rejected), delegating directly to Python's `>`/`<`/`==`
+  comparison operators. Registered right after `sign` in the builtins
+  dict, keeping the numeric-property-predicate family contiguous.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2004 tests passing,
+  up from 1982, plus CLI smoke tests covering float/bool/non-numeric
+  errors and mutual exclusivity), both after the sole commit — clean
+  merge, no bounces. `README.md`'s Builtins bullet still needs
+  `is_positive`/`is_negative`/`is_zero` added near `sign` — left to the
+  Architect's next grooming pass.

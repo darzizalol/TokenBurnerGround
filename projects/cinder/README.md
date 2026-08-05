@@ -140,8 +140,8 @@ while (i < 10) {
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
-  `is_alpha`/`is_digit`/`is_alnum`/`is_space` to test a string's content
-  (letters only, digits only, alphanumeric only, whitespace only),
+  `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` to test a string's content
+  (letters only, digits only, alphanumeric only, whitespace only, ASCII-only),
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -222,20 +222,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_positive`/`is_negative`/
-`is_zero` as numeric sign predicates, `is_unique` to test whether a list
-has no duplicate elements, a slice step (`xs[start:end:step]`) for
-skipping elements or reversing a sequence, and `is_divisible` as a
+Actively developed, nightly. Recently landed: `is_divisible` as a
 two-argument numeric predicate generalizing `is_even`/`is_odd`'s fixed
-divisor of `2` to any divisor. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_ascii` to test whether a string's content
-is restricted to the ASCII range, `is_subset`/`is_superset` as the
+divisor of `2` to any divisor, and `is_ascii` to test whether a string's
+content is restricted to the ASCII range. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_subset`/`is_superset` as the
 predicate half of the `union`/`intersection`/`difference`/
 `symmetric_difference` set-ops family, destructuring assignment
 (`[a, b] = expr;`) for reassigning already-declared bindings the same way
 `let [a, b] = expr;` declares them, `is_disjoint` to complete that set-ops
-family with a "no elements in common at all" predicate, and its map-pattern
-counterpart (`{a, b} = expr;`).
+family with a "no elements in common at all" predicate, its map-pattern
+counterpart (`{a, b} = expr;`), and `is_anagram` to test whether two
+strings share the same multiset of characters.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -230,12 +230,12 @@ and a slice step — `list[start:end:step]`/`string[start:end:step]` —
 extending the existing two-colon slice syntax with a third, optional
 component for skipping elements or reversing a sequence (`xs[::-1]`),
 the one language-depth entry mixed in among that run's stdlib-breadth
-predicates.
+predicates, and `is_ascii` as a string content predicate delegating
+to Python's `str.isascii()` — one more member of the
+`is_alpha`/`is_digit`/`is_alnum`/`is_space` content-predicate family —
+have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_ascii` as a string content
-predicate delegating to Python's `str.isascii()` — one more member of
-the `is_alpha`/`is_digit`/`is_alnum`/`is_space` content-predicate family
-— and `is_subset`/`is_superset` as the predicate half of the
+`is_subset`/`is_superset` as the predicate half of the
 `union`/`intersection`/`difference`/`symmetric_difference` set-ops
 family (today asking whether one list's elements are all contained in
 another requires computing `difference` and checking it's empty by
@@ -260,8 +260,14 @@ list-pattern assignment task rather than bundled into it, since making
 beyond "map literal expression" and "block": a destructuring-assignment
 pattern, tried only after both of those fail, keeping today's "map
 literal, else block" disambiguation as the fallback for everything that
-isn't this new pattern — tasks 1 through 5 in
-current `BACKLOG.md` — and only much later, a bytecode VM if
+isn't this new pattern — tasks 1 through 4 in current `BACKLOG.md` —
+plus `is_anagram(a, b)` as task 5, the two-string sibling to
+`is_palindrome`'s single-string "reads the same both ways" check
+(same case-sensitive, no-normalization spirit: two strings are
+anagrams when they have the same multiset of characters, counting
+whitespace/punctuation like any other character, via `collections.Counter`
+rather than a hand-rolled sort-and-compare), topping the backlog back
+up to five ready tasks — and only much later, a bytecode VM if
 performance ever actually matters. The Architect should keep scoping
 these into `BACKLOG.md` incrementally — do not jump ahead of the
 current layer.

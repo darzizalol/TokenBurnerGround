@@ -190,11 +190,11 @@ numbers) already treat lists as unordered sets, but there is still no
 direct way to ask "do these two lists share *any* element at all" without
 computing `intersection(a, b)` and checking the result is empty by hand.
 This is the one predicate that set-ops family still leaves implicit —
-group it right after `is_superset` (task 3, if merged first) or right
+group it right after `is_superset` (task 1, if merged first) or right
 after `symmetric_difference` otherwise.
 
-Model directly on `_is_subset`'s structure (from task 3, or `_difference`'s
-at `cinder/builtins.py:1636-1640` if task 3 hasn't merged yet): reuse
+Model directly on `_is_subset`'s structure (from task 1, or `_difference`'s
+at `cinder/builtins.py:1636-1640` if task 1 hasn't merged yet): reuse
 `_require_two_lists("is_disjoint", arguments, line, column)` for arity-2 +
 list-type validation on both arguments (same "requires a list as its
 first/second argument, got {type_name}" errors, no new message shape), and
@@ -225,7 +225,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `is_subset`/
-`is_superset` if task 4 already landed, else near `symmetric_difference`
+`is_superset` if task 1 already landed, else near `symmetric_difference`
 — see current line numbers, shift if earlier tasks this cycle landed
 first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
 bullet needs `is_disjoint` added near `union`/`intersection`/`difference`/
@@ -237,15 +237,15 @@ Architect's next grooming pass, not this task.
 ## 4. Language: map-pattern destructuring assignment — `{a, b} = expr;`
 
 Build: extend map-pattern destructuring to plain assignment, the map-shaped
-counterpart to task 3's list-pattern assignment. Today `let {a, b} = expr;`
+counterpart to task 2's list-pattern assignment. Today `let {a, b} = expr;`
 binds fresh names via `DestructureLetStmt(is_map=True)` — handled inline in
 `Interpreter.execute()` (`cinder/interpreter.py:266-283`: checks `isinstance(value,
 dict)`, then for each name raises `"cannot destructure {type_name} as a map"` or
 `"destructuring pattern expects key {name!r}, not found in map"` before
 `env.define(name, value[name])`) — but there is no way to destructure into
-*already-declared* bindings the way task 3 adds for list patterns. Depends on
-task 3 landing first (reuses the `DestructureAssign` AST node it introduces);
-do not start this before task 3 merges.
+*already-declared* bindings the way task 2 adds for list patterns. Depends on
+task 2 landing first (reuses the `DestructureAssign` AST node it introduces);
+do not start this before task 2 merges.
 
 Scope: **flat map patterns only** — bare identifiers naming keys to pull out,
 exactly like `let {a, b} = expr;` today (no renaming, no nesting, no rest
@@ -253,10 +253,10 @@ element — none of those exist for `let`'s map form either, so don't add them
 here).
 
 The hard part is grammar, not evaluation. Unlike `[a, b]`, which already
-parses as an ordinary `ListLiteral` before task 3 ever looks at it, `{a, b}`
+parses as an ordinary `ListLiteral` before task 2 ever looks at it, `{a, b}`
 does **not** parse as a `MapLiteral` (no `:` pairs) — so it cannot simply be
 recognized after the fact by inspecting an already-parsed expression the way
-task 3's `_assignment` check does. `_brace_statement`
+task 2's `_assignment` check does. `_brace_statement`
 (`cinder/parser.py:338-351`) currently handles a leading `{` at statement
 position with exactly two outcomes: speculatively parse a full expression
 rooted in a map literal (catching `ParseError`), and if that fails, or if it
@@ -276,10 +276,10 @@ to `start` again and fall through to the existing `_block()` fallback
 unchanged. On a match, parse the RHS via `self._assignment()`, consume `;`,
 and return `ExprStmt(DestructureAssign(names, rest=None, value=..., line,
 column, is_map=True))` — add `is_map: bool = False` to the `DestructureAssign`
-dataclass task 3 introduces (`cinder/ast_nodes.py`), mirroring
+dataclass task 2 introduces (`cinder/ast_nodes.py`), mirroring
 `DestructureLetStmt`'s own `is_map` flag.
 
-Evaluator: in `_evaluate_destructure_assign` (task 3's new method in
+Evaluator: in `_evaluate_destructure_assign` (task 2's new method in
 `cinder/interpreter.py`), branch on `expr.is_map` the same way `execute()`
 already branches on `stmt.is_map` for `DestructureLetStmt` (lines 268-283) —
 but `assign` instead of `define`: validate `value` is a `dict` (else
@@ -289,9 +289,9 @@ key {name!r}, not found in map"` if absent, else `env.assign(name,
 value[name])` — translating a `KeyError` (undefined name) to
 `CinderRuntimeError(self._undefined_name_message(name, env), ...)` and a
 `_ConstAssignError` to `CinderRuntimeError(f"cannot assign to const
-{name!r}", ...)`, exactly like task 3's list-pattern path already does for
+{name!r}", ...)`, exactly like task 2's list-pattern path already does for
 its own per-name assign errors. Return the assigned map value (same
-"assignment is an expression" behavior task 3 establishes).
+"assignment is an expression" behavior task 2 establishes).
 
 Acceptance criteria:
 - `let a = 0; let b = 0; {a, b} = {"a": 1, "b": 2}; print(a); print(b);`
@@ -328,6 +328,63 @@ earlier tasks this cycle landed first). Once merged, README.md's
 destructuring bullet needs this new assignment form documented, and
 PROJECT.md's roadmap paragraph needs it moved from backlog to landed — leave
 both to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `is_anagram` — two-string character-multiset predicate
+
+Build: add `is_anagram(string1, string2)` to `cinder/builtins.py`. It's the
+two-string sibling to `_is_palindrome`'s (`cinder/builtins.py:620-627`)
+single-string "reads the same both ways" check: two strings are anagrams
+of each other when they contain exactly the same characters the same
+number of times, regardless of order. Group it right after
+`is_palindrome`, ahead of `is_upper` — keeping the string-content-predicate
+family contiguous the same way `is_positive`/`is_negative`/`is_zero` sit
+together next to `sign`.
+
+Model the arity/type-checking on `_is_palindrome`'s structure, but for two
+arguments: reuse `_require_arity("is_anagram", arguments, 2, line, column)`,
+then check each of `arguments[0]`/`arguments[1]` is a `str`, raising
+`CinderRuntimeError` naming `is_anagram` and which position (first/second)
+failed on a non-string argument — mirror `_require_two_lists`'s two-argument
+error-naming pattern (`cinder/builtins.py`, used by `union`/`intersection`/
+etc.) rather than inventing new wording. For the comparison itself, use
+`collections.Counter` (`from collections import Counter` at the top of
+`builtins.py` if not already imported — check first) rather than a
+hand-rolled sort-and-compare or dict-tally: `Counter(string1) ==
+Counter(string2)`. Case-sensitive, no normalization — the same
+minimal-behavior spirit `is_palindrome`/`chars`/`swap_case` already follow
+(don't strip whitespace or ignore case unless a caller does that
+explicitly first, e.g. `is_anagram(lower(a), lower(b))`).
+
+Acceptance criteria:
+- `is_anagram("listen", "silent");` is `true`.
+- `is_anagram("hello", "world");` is `false`.
+- `is_anagram("", "");` is `true` — two empty strings share an (empty)
+  multiset of characters.
+- `is_anagram("a", "");` is `false` — different lengths can never be
+  anagrams (falls out of the `Counter` comparison naturally, no separate
+  length check needed).
+- `is_anagram("aabb", "abab");` is `true` — order doesn't matter, only
+  per-character counts.
+- `is_anagram("Listen", "Silent");` is `false` — case-sensitive, `L` and
+  `l` are different characters.
+- `is_anagram("dormitory", "dirty room");` is `false` — no whitespace
+  stripping; the space in `"dirty room"` has no counterpart in
+  `"dormitory"`.
+- `is_anagram(5, "abc");` / `is_anagram("abc", 5);` (non-string argument,
+  either position) raises `CinderRuntimeError` naming `is_anagram` and
+  which position (first/second) failed.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_palindrome`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
+`is_anagram` added near `is_palindrome`, and `PROJECT.md`'s roadmap
+paragraph needs it moved from backlog to landed — leave both to the
+Architect's next grooming pass, not this task.
 
 ---
 

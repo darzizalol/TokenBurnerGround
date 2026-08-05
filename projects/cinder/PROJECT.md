@@ -203,12 +203,12 @@ non-numeric argument, just returns `false`), `is_prime` as
 (trial division to `sqrt(n)`, no need for anything fancier at
 Cinder's scale), and `is_sorted` to test whether a list is already in
 non-decreasing order without sorting it first and comparing by hand
-(reusing `sort`'s own numbers-only-or-strings-only ordering rule)
-have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+(reusing `sort`'s own numbers-only-or-strings-only ordering rule), and
 `is_upper`/`is_lower` as string case predicates delegating straight to
 Python's own `str.isupper()`/`str.islower()` (the same "ask, don't
-force" gap `is_sorted` fills for ordering, applied to casing instead),
+force" gap `is_sorted` fills for ordering, applied to casing instead)
+have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
 `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
 predicates delegating to Python's `str.isalpha()`/`str.isdigit()`/
 `str.isalnum()`/`str.isspace()` (the same delegation `is_upper`/
@@ -226,7 +226,12 @@ rather than reimplementing duplicate detection), and a slice step —
 existing two-colon slice syntax with a third, optional component for
 skipping elements or reversing a sequence (`xs[::-1]`), the one
 language-depth entry mixed in among this run's stdlib-breadth
-predicates —
+predicates, and `is_divisible(a, b)` as a two-argument numeric
+predicate testing `a % b == 0` — the general case `is_even`/`is_odd`
+already special-case for a fixed divisor of `2` (raising the same
+"not an int" error `is_even`/`is_odd` do for either argument, plus a
+distinct "divisor must not be zero" error, matching the `%` operator's
+own division-by-zero guard) —
 tasks 1 through 5 in current `BACKLOG.md` — and only much later, a
 bytecode VM if performance ever actually matters. The Architect should
 keep scoping these into `BACKLOG.md` incrementally — do not jump ahead

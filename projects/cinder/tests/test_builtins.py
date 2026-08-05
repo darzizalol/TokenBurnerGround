@@ -5565,6 +5565,37 @@ class TestIsSpace(unittest.TestCase):
             run('is_space(" ", " ");')
 
 
+class TestIsAscii(unittest.TestCase):
+    def test_is_ascii_letters_and_digits_true(self):
+        self.assertIs(run('let result = is_ascii("hello");').get("result"), True)
+
+    def test_is_ascii_letters_digits_and_punctuation_true(self):
+        self.assertIs(
+            run('let result = is_ascii("Hello123 !");').get("result"), True
+        )
+
+    def test_is_ascii_with_accented_char_false(self):
+        self.assertIs(run('let result = is_ascii("héllo");').get("result"), False)
+
+    def test_is_ascii_with_non_ascii_script_false(self):
+        self.assertIs(run('let result = is_ascii("日本語");').get("result"), False)
+
+    def test_is_ascii_empty_string_true(self):
+        self.assertIs(run('let result = is_ascii("");').get("result"), True)
+
+    def test_is_ascii_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_ascii(5);")
+        self.assertIn("is_ascii", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_ascii_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_ascii();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_ascii("a", "b");')
+
+
 class TestIsSorted(unittest.TestCase):
     def test_is_sorted_ascending_numbers_true(self):
         self.assertIs(run("let result = is_sorted([1, 2, 3]);").get("result"), True)

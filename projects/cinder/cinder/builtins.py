@@ -706,6 +706,16 @@ def _is_sorted(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _is_unique(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_unique", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"is_unique() requires a list, got {type_name(value)}", line, column
+        )
+    return len(_dedupe(value)) == len(value)
+
+
 def _trim(arguments: list, line: int, column: int) -> object:
     _require_arity("trim", arguments, 1, line, column)
     value = arguments[0]
@@ -2954,6 +2964,7 @@ _BUILTINS = {
     "is_alnum": _is_alnum,
     "is_space": _is_space,
     "is_sorted": _is_sorted,
+    "is_unique": _is_unique,
     "is_number": _is_number,
     "is_int": _is_int,
     "is_float": _is_float,

@@ -3309,3 +3309,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fifty-third merge in a row — clean run continues; backlog is down to
   4 ready tasks for the next Architect grooming pass to top back up.
+
+- **Merged**: PR #184 "Standard library: `is_ascii` — string
+  ASCII-content predicate" (`feat/20260805-is-ascii`) — added `_is_ascii`
+  to `cinder/builtins.py`, mirroring `_is_space`'s arity/type-check
+  structure and delegating straight to Python's own `str.isascii()`
+  (including its empty-string-is-true behavior, kept per the task spec).
+  Registered right after `is_space`, keeping the string-content-predicate
+  family contiguous. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (2049 tests passing, plus CLI smoke tests covering ASCII/non-ASCII
+  strings, the empty-string case, non-string argument, and wrong arity),
+  both after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-ascii` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly. BACKLOG.md task 1 removed (its
+  README/CHANGELOG entry left to the Architect's grooming pass per the
+  task's own note) and remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-fourth merge in a row — clean run continues; `is_subset`/
+  `is_superset` is now at the top of the backlog for the next Engineer
+  session, and the backlog is down to 3 ready tasks for the next
+  Architect grooming pass to top back up.

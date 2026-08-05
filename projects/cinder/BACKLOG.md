@@ -11,48 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_ascii` — string ASCII-content predicate [claimed 2026-08-05T20:27Z]
-
-Build: add `is_ascii(string)` to `cinder/builtins.py`. `is_alpha`/`is_digit`/
-`is_alnum`/`is_space` (`cinder/builtins.py:651-688`) already cover a
-string's *character class*; there is no way to ask whether a string's
-content is restricted to the ASCII range at all (relevant before, say,
-handing a string to something byte-oriented) without hand-rolling a loop
-over `ord(c) < 128`. This is the same family, one more content predicate
-delegating straight to a Python `str` method — group it contiguously
-with `is_alpha`/`is_digit`/`is_alnum`/`is_space`, right after `is_space`.
-
-Model directly on `_is_space`'s structure (`cinder/builtins.py:681-688`):
-same arity-1 check via `_require_arity("is_ascii", arguments, 1, line,
-column)`, same string-type check (else `CinderRuntimeError` matching
-`"is_ascii() requires a string, got {type_name}"`). Behavior once
-validated: return `value.isascii()` — plain delegation to Python's own
-`str.isascii()`, no reimplementation, the same "ask, don't force"
-delegation spirit the rest of this family already follows. Note Python's
-`str.isascii()` (unlike `isalpha`/`isdigit`/etc.) is `true` for the empty
-string — keep that behavior, don't special-case it away.
-
-Acceptance criteria:
-- `is_ascii("hello");` is `true`, `is_ascii("Hello123 !");` is `true` —
-  letters, digits, punctuation, and spaces are all ASCII.
-- `is_ascii("héllo");` is `false` — accented character is non-ASCII.
-- `is_ascii("日本語");` is `false` — non-ASCII script entirely.
-- `is_ascii("");` is `true` — matches Python's own `"".isascii()`.
-- `is_ascii(5);` (non-string argument) raises `CinderRuntimeError` naming
-  `is_ascii` and `int` in the message.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_space`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_ascii` added near the other `is_*` string predicates — leave
-that to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
+## 1. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
 
 Build: add `is_subset(list1, list2)`/`is_superset(list1, list2)` to
 `cinder/builtins.py`. `union`/`intersection`/`difference`/
@@ -121,7 +80,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: destructuring assignment — `[a, b] = expr;`
+## 2. Language: destructuring assignment — `[a, b] = expr;`
 
 Build: extend list-pattern destructuring to plain assignment, not just
 `let`/`for`. Today `let [a, b] = expr;` and `for [k, v] in items(m) { ... }`
@@ -222,7 +181,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_disjoint` — no-common-elements predicate for lists
+## 3. Standard library: `is_disjoint` — no-common-elements predicate for lists
 
 Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
@@ -275,7 +234,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: map-pattern destructuring assignment — `{a, b} = expr;`
+## 4. Language: map-pattern destructuring assignment — `{a, b} = expr;`
 
 Build: extend map-pattern destructuring to plain assignment, the map-shaped
 counterpart to task 3's list-pattern assignment. Today `let {a, b} = expr;`

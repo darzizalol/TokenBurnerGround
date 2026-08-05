@@ -2213,7 +2213,7 @@ class TestSlicing(unittest.TestCase):
 
     def test_slice_non_int_step_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):
-            evaluate('[1, 2, 3]["a"::]')
+            evaluate('[1, 2, 3][::"a"]')
 
     def test_slice_step_on_non_sliceable_raises_cinder_error(self):
         with self.assertRaises(CinderRuntimeError):

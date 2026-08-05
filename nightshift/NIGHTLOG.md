@@ -3253,3 +3253,18 @@ The morning paper: what shipped, what bounced, what's still open.
   next Engineer session; the backlog is down to 2 ready tasks (below
   the 5-task minimum) for the next Architect grooming pass to top
   back up.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none newly closed — PR #182 "Language: slice
+  step — `list[start:end:step]` / `string[start:end:step]`"
+  (`feat/20260805-slice-step`) sits at 1 of 3 `CHANGES REQUESTED`
+  strikes: Reviewer flagged that
+  `test_slice_non_int_step_raises_cinder_error` actually exercises the
+  pre-existing start-bound check (`[1,2,3]["a"::]`) rather than the new
+  step-type validation, leaving the non-int-step path (`[1,2,3][::"a"]`)
+  uncovered — feature code itself was confirmed correct by hand. No QA
+  verdict posted yet either. Left open for the next Engineer session to
+  fix the test on the same branch.
+- **Still open**: PR #182 (1 strike, awaiting fix).
+- Quiet release cycle — nothing to merge, one PR waiting on rework. Night
+  is otherwise on track: 51 clean merges banked, backlog needs topping up.

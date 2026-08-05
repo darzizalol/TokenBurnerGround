@@ -5306,6 +5306,98 @@ class TestIsLower(unittest.TestCase):
             run('is_lower("a", "b");')
 
 
+class TestIsAlpha(unittest.TestCase):
+    def test_is_alpha_all_alpha_true(self):
+        self.assertIs(run('let result = is_alpha("abc");').get("result"), True)
+
+    def test_is_alpha_with_digits_false(self):
+        self.assertIs(run('let result = is_alpha("abc123");').get("result"), False)
+
+    def test_is_alpha_empty_string_false(self):
+        self.assertIs(run('let result = is_alpha("");').get("result"), False)
+
+    def test_is_alpha_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_alpha(5);")
+        self.assertIn("is_alpha", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_alpha_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_alpha();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_alpha("a", "b");')
+
+
+class TestIsDigit(unittest.TestCase):
+    def test_is_digit_all_digits_true(self):
+        self.assertIs(run('let result = is_digit("123");').get("result"), True)
+
+    def test_is_digit_with_decimal_point_false(self):
+        self.assertIs(run('let result = is_digit("12.3");').get("result"), False)
+
+    def test_is_digit_empty_string_false(self):
+        self.assertIs(run('let result = is_digit("");').get("result"), False)
+
+    def test_is_digit_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_digit(5);")
+        self.assertIn("is_digit", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_digit_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_digit();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_digit("1", "2");')
+
+
+class TestIsAlnum(unittest.TestCase):
+    def test_is_alnum_letters_and_digits_true(self):
+        self.assertIs(run('let result = is_alnum("abc123");').get("result"), True)
+
+    def test_is_alnum_with_space_false(self):
+        self.assertIs(run('let result = is_alnum("abc 123");').get("result"), False)
+
+    def test_is_alnum_empty_string_false(self):
+        self.assertIs(run('let result = is_alnum("");').get("result"), False)
+
+    def test_is_alnum_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_alnum(5);")
+        self.assertIn("is_alnum", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_alnum_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_alnum();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_alnum("a", "b");')
+
+
+class TestIsSpace(unittest.TestCase):
+    def test_is_space_all_spaces_true(self):
+        self.assertIs(run('let result = is_space("   ");').get("result"), True)
+
+    def test_is_space_with_non_space_false(self):
+        self.assertIs(run('let result = is_space(" a ");').get("result"), False)
+
+    def test_is_space_empty_string_false(self):
+        self.assertIs(run('let result = is_space("");').get("result"), False)
+
+    def test_is_space_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_space(5);")
+        self.assertIn("is_space", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_space_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_space();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_space(" ", " ");')
+
+
 class TestIsSorted(unittest.TestCase):
     def test_is_sorted_ascending_numbers_true(self):
         self.assertIs(run("let result = is_sorted([1, 2, 3]);").get("result"), True)

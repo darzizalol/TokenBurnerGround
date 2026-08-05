@@ -648,6 +648,46 @@ def _is_lower(arguments: list, line: int, column: int) -> object:
     return value.islower()
 
 
+def _is_alpha(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_alpha", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_alpha() requires a string, got {type_name(value)}", line, column
+        )
+    return value.isalpha()
+
+
+def _is_digit(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_digit", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_digit() requires a string, got {type_name(value)}", line, column
+        )
+    return value.isdigit()
+
+
+def _is_alnum(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_alnum", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_alnum() requires a string, got {type_name(value)}", line, column
+        )
+    return value.isalnum()
+
+
+def _is_space(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_space", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_space() requires a string, got {type_name(value)}", line, column
+        )
+    return value.isspace()
+
+
 def _is_sorted(arguments: list, line: int, column: int) -> object:
     _require_arity("is_sorted", arguments, 1, line, column)
     value = arguments[0]
@@ -2876,6 +2916,10 @@ _BUILTINS = {
     "is_palindrome": _is_palindrome,
     "is_upper": _is_upper,
     "is_lower": _is_lower,
+    "is_alpha": _is_alpha,
+    "is_digit": _is_digit,
+    "is_alnum": _is_alnum,
+    "is_space": _is_space,
     "is_sorted": _is_sorted,
     "is_number": _is_number,
     "is_int": _is_int,

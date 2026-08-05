@@ -167,6 +167,12 @@ from two parallel keys/values lists (the `zip`-side inverse of
 fourth member of the `union`/`intersection`/`difference` set-ops trio
 (elements in exactly one of the two lists) — all once listed here as
 future work — have since landed.
+`is_divisible(a, b)` as a two-argument numeric predicate testing
+`a % b == 0`, generalizing the fixed divisor of `2` that `is_even`/
+`is_odd` already special-case (raising the same "not an int" error
+either does for either argument, plus a distinct "divisor must not be
+zero" error, matching the `%` operator's own division-by-zero guard),
+has since landed too.
 A floor-division operator `//` (same precedence tier as `/`/`%`,
 closing the gap between true division and the awkward `floor(a / b)`)
 and its compound-assignment sibling `//=` (mirroring how `**=` followed
@@ -226,12 +232,7 @@ component for skipping elements or reversing a sequence (`xs[::-1]`),
 the one language-depth entry mixed in among that run's stdlib-breadth
 predicates.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_divisible(a, b)` as a two-argument numeric
-predicate testing `a % b == 0` — the general case `is_even`/`is_odd`
-already special-case for a fixed divisor of `2` (raising the same
-"not an int" error `is_even`/`is_odd` do for either argument, plus a
-distinct "divisor must not be zero" error, matching the `%` operator's
-own division-by-zero guard), `is_ascii` as a string content
+`is_ascii` as a string content
 predicate delegating to Python's `str.isascii()` — one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space` content-predicate family
 — and `is_subset`/`is_superset` as the predicate half of the
@@ -246,11 +247,20 @@ counterpart to the existing `let`/`for`-loop list patterns —
 no-nesting way `let [a, b] = expr;` declares them (parsed only when a
 bracketed list literal sits on an assignment's left-hand side, so no
 ambiguity with list-literal expressions used elsewhere) — the next
-language-depth entry after slice step, and `is_disjoint(list1, list2)`
+language-depth entry after slice step, `is_disjoint(list1, list2)`
 as the one predicate the `union`/`intersection`/`difference`/
 `symmetric_difference`/`is_subset`/`is_superset` set-ops family still
 leaves implicit (no elements in common at all, the complement of a
-non-empty `intersection`) — tasks 1 through 5 in
+non-empty `intersection`), and its map-pattern counterpart —
+`{a, b} = expr;` reassigning already-declared bindings the same flat
+way `let {a, b} = expr;` declares them — deliberately deferred by the
+list-pattern assignment task rather than bundled into it, since making
+`{a, b}` parse as an assignment target means teaching the *statement-level*
+`{`-disambiguation logic (see Design principles above) a third outcome
+beyond "map literal expression" and "block": a destructuring-assignment
+pattern, tried only after both of those fail, keeping today's "map
+literal, else block" disambiguation as the fallback for everything that
+isn't this new pattern — tasks 1 through 5 in
 current `BACKLOG.md` — and only much later, a bytecode VM if
 performance ever actually matters. The Architect should keep scoping
 these into `BACKLOG.md` incrementally — do not jump ahead of the

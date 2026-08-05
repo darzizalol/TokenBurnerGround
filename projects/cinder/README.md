@@ -135,8 +135,8 @@ while (i < 10) {
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_prime`
-  integer parity/primality predicates, `is_palindrome` to test whether a string reads the same forwards
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`
+  integer parity/divisibility/primality predicates, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
@@ -224,17 +224,18 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: `is_positive`/`is_negative`/
 `is_zero` as numeric sign predicates, `is_unique` to test whether a list
-has no duplicate elements, and a slice step (`xs[start:end:step]`) for
-skipping elements or reversing a sequence. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_divisible` as a two-argument numeric
-predicate generalizing `is_even`/`is_odd`'s fixed divisor of `2` to any
-divisor, `is_ascii` to test whether a string's content is restricted to
-the ASCII range, `is_subset`/`is_superset` as the predicate half of the
-`union`/`intersection`/`difference`/`symmetric_difference` set-ops
-family, destructuring assignment (`[a, b] = expr;`) for reassigning
-already-declared bindings the same way `let [a, b] = expr;` declares
-them, and `is_disjoint` to complete that set-ops family with a "no
-elements in common at all" predicate.
+has no duplicate elements, a slice step (`xs[start:end:step]`) for
+skipping elements or reversing a sequence, and `is_divisible` as a
+two-argument numeric predicate generalizing `is_even`/`is_odd`'s fixed
+divisor of `2` to any divisor. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_ascii` to test whether a string's content
+is restricted to the ASCII range, `is_subset`/`is_superset` as the
+predicate half of the `union`/`intersection`/`difference`/
+`symmetric_difference` set-ops family, destructuring assignment
+(`[a, b] = expr;`) for reassigning already-declared bindings the same way
+`let [a, b] = expr;` declares them, `is_disjoint` to complete that set-ops
+family with a "no elements in common at all" predicate, and its map-pattern
+counterpart (`{a, b} = expr;`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

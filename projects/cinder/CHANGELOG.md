@@ -1518,3 +1518,14 @@ for vision/architecture.
   merge after. `README.md`'s slicing bullet and `PROJECT.md`'s roadmap
   paragraph still need the step form documented as landed — left to the
   Architect's next grooming pass.
+- **Standard library: `is_divisible` — two-argument numeric divisibility
+  predicate** — merged 2026-08-06 via PR #183 (`feat/20260805-is-divisible`).
+  Added `_is_divisible` (`cinder/builtins.py:1084-1092`) reusing
+  `_require_arity`/`_require_int` per the backlog spec, validating both
+  operands before an explicit zero-divisor guard that raises a dedicated
+  `CinderRuntimeError` instead of letting Python's `%` throw. Registered
+  right after `is_odd`, ahead of `is_prime`. Reviewer gave `VERDICT: LGTM`,
+  QA gave `QA: PASS` (2042 tests passing, plus CLI smoke tests covering sign
+  combinations, zero-divisor and non-int/bool/string argument errors in both
+  positions, and wrong arity), both after the sole commit — clean merge, no
+  bounces.

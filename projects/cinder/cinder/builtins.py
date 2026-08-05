@@ -1029,6 +1029,36 @@ def _sign(arguments: list, line: int, column: int) -> object:
     return 0
 
 
+def _is_positive(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_positive", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"is_positive() requires a number, got {type_name(value)}", line, column
+        )
+    return value > 0
+
+
+def _is_negative(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_negative", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"is_negative() requires a number, got {type_name(value)}", line, column
+        )
+    return value < 0
+
+
+def _is_zero(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_zero", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"is_zero() requires a number, got {type_name(value)}", line, column
+        )
+    return value == 0
+
+
 def _is_even(arguments: list, line: int, column: int) -> object:
     _require_arity("is_even", arguments, 1, line, column)
     value = _require_int("is_even", arguments[0], line, column)
@@ -2813,6 +2843,9 @@ _BUILTINS = {
     "truncate": _truncate,
     "abs": _abs,
     "sign": _sign,
+    "is_positive": _is_positive,
+    "is_negative": _is_negative,
+    "is_zero": _is_zero,
     "is_even": _is_even,
     "is_odd": _is_odd,
     "is_prime": _is_prime,

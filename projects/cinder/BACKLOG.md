@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_sorted` — test whether a list is in non-decreasing order
+## 1. Standard library: `is_sorted` — test whether a list is in non-decreasing order [claimed 2026-08-05T14:04:24Z]
 
 Build: add `is_sorted(list)` to `cinder/builtins.py`. `sort`
 (`cinder/builtins.py:1707-1722`) already establishes that Cinder lists

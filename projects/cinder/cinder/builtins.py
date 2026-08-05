@@ -1680,6 +1680,16 @@ def _symmetric_difference(arguments: list, line: int, column: int) -> object:
     ]
 
 
+def _is_subset(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("is_subset", arguments, line, column)
+    return all(_contains_value(list2, element) for element in list1)
+
+
+def _is_superset(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("is_superset", arguments, line, column)
+    return all(_contains_value(list1, element) for element in list2)
+
+
 def _interleave(arguments: list, line: int, column: int) -> object:
     list1, list2 = _require_two_lists("interleave", arguments, line, column)
     result = []
@@ -2921,6 +2931,8 @@ _BUILTINS = {
     "intersection": _intersection,
     "difference": _difference,
     "symmetric_difference": _symmetric_difference,
+    "is_subset": _is_subset,
+    "is_superset": _is_superset,
     "interleave": _interleave,
     "interpose": _interpose,
     "reverse": _reverse,

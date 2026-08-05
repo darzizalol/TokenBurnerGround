@@ -151,6 +151,7 @@ class SliceExpr:
     obj: "Expr"
     start: "Expr | None"
     end: "Expr | None"
+    step: "Expr | None"
     line: int
     column: int
 

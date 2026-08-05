@@ -611,18 +611,34 @@ class Interpreter:
                 f"{type_name(obj)} is not sliceable", expr.line, expr.column
             )
         length = len(obj)
-        start = self.evaluate(expr.start, env) if expr.start is not None else 0
-        end = self.evaluate(expr.end, env) if expr.end is not None else length
+        start = self.evaluate(expr.start, env) if expr.start is not None else None
+        end = self.evaluate(expr.end, env) if expr.end is not None else None
+        step = self.evaluate(expr.step, env) if expr.step is not None else None
         for bound in (start, end):
-            if not isinstance(bound, int) or isinstance(bound, bool):
+            if bound is not None and (
+                not isinstance(bound, int) or isinstance(bound, bool)
+            ):
                 raise CinderRuntimeError(
                     f"slice bound must be an int, got {type_name(bound)}",
                     expr.line,
                     expr.column,
                 )
-        start = _normalize_slice_bound(start, length)
-        end = _normalize_slice_bound(end, length)
-        return obj[start:end]
+        if step is not None:
+            if not isinstance(step, int) or isinstance(step, bool):
+                raise CinderRuntimeError(
+                    f"slice step must be an int, got {type_name(step)}",
+                    expr.line,
+                    expr.column,
+                )
+            if step == 0:
+                raise CinderRuntimeError(
+                    "slice step must not be zero", expr.line, expr.column
+                )
+        norm_start, norm_end, norm_step = slice(start, end, step).indices(length)
+        indices = range(norm_start, norm_end, norm_step)
+        if isinstance(obj, str):
+            return "".join(obj[i] for i in indices)
+        return [obj[i] for i in indices]
 
     def _evaluate_index_assign(self, expr: IndexAssign, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)

@@ -219,14 +219,14 @@ itself does — unlike the kind predicates `is_int`/`is_float`)
 have since landed too, along with `is_unique` to test whether a list
 has no duplicate elements without discarding that information the way
 `unique` itself does (reusing `unique`'s own `_dedupe`/`values_equal`
-deep-equality machinery rather than reimplementing duplicate detection).
+deep-equality machinery rather than reimplementing duplicate detection),
+and a slice step — `list[start:end:step]`/`string[start:end:step]` —
+extending the existing two-colon slice syntax with a third, optional
+component for skipping elements or reversing a sequence (`xs[::-1]`),
+the one language-depth entry mixed in among that run's stdlib-breadth
+predicates.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-a slice step —
-`list[start:end:step]`/`string[start:end:step]` — extending the
-existing two-colon slice syntax with a third, optional component for
-skipping elements or reversing a sequence (`xs[::-1]`), the one
-language-depth entry mixed in among this run's stdlib-breadth
-predicates, and `is_divisible(a, b)` as a two-argument numeric
+`is_divisible(a, b)` as a two-argument numeric
 predicate testing `a % b == 0` — the general case `is_even`/`is_odd`
 already special-case for a fixed divisor of `2` (raising the same
 "not an int" error `is_even`/`is_odd` do for either argument, plus a
@@ -250,7 +250,7 @@ language-depth entry after slice step, and `is_disjoint(list1, list2)`
 as the one predicate the `union`/`intersection`/`difference`/
 `symmetric_difference`/`is_subset`/`is_superset` set-ops family still
 leaves implicit (no elements in common at all, the complement of a
-non-empty `intersection`) — tasks 1 through 6 in
+non-empty `intersection`) — tasks 1 through 5 in
 current `BACKLOG.md` — and only much later, a bytecode VM if
 performance ever actually matters. The Architect should keep scoping
 these into `BACKLOG.md` incrementally — do not jump ahead of the

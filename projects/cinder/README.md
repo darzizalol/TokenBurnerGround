@@ -109,8 +109,10 @@ while (i < 10) {
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
-  `list[start:end]`/`string[start:end]` (Python-style, out-of-range bounds
-  clamp, not assignable); list literals accept spread elements
+  `list[start:end]`/`string[start:end]` with an optional third `:step`
+  component (`list[start:end:step]`/`string[start:end:step]`, Python-style,
+  out-of-range bounds clamp, negative step reverses direction, not
+  assignable); list literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   map literals accept spread elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; dot access
@@ -220,16 +222,14 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_alpha`/`is_digit`/
-`is_alnum`/`is_space` as string content predicates,
-`is_positive`/`is_negative`/`is_zero` as numeric sign predicates, and
-`is_unique` to test whether a list has no duplicate elements. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): a slice step
-(`xs[start:end:step]`) for skipping elements or reversing a sequence,
-`is_divisible` as a two-argument numeric predicate generalizing
-`is_even`/`is_odd`'s fixed divisor of `2` to any divisor, `is_ascii` to
-test whether a string's content is restricted to the ASCII range,
-`is_subset`/`is_superset` as the predicate half of the
+Actively developed, nightly. Recently landed: `is_positive`/`is_negative`/
+`is_zero` as numeric sign predicates, `is_unique` to test whether a list
+has no duplicate elements, and a slice step (`xs[start:end:step]`) for
+skipping elements or reversing a sequence. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_divisible` as a two-argument numeric
+predicate generalizing `is_even`/`is_odd`'s fixed divisor of `2` to any
+divisor, `is_ascii` to test whether a string's content is restricted to
+the ASCII range, `is_subset`/`is_superset` as the predicate half of the
 `union`/`intersection`/`difference`/`symmetric_difference` set-ops
 family, destructuring assignment (`[a, b] = expr;`) for reassigning
 already-declared bindings the same way `let [a, b] = expr;` declares

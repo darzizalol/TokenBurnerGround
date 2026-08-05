@@ -981,10 +981,15 @@ class Parser:
         if self._check(TokenType.COLON):
             self._advance()
             end = None
-            if not self._check(TokenType.RBRACKET):
+            if not self._check(TokenType.RBRACKET) and not self._check(TokenType.COLON):
                 end = self._ternary()
+            step = None
+            if self._check(TokenType.COLON):
+                self._advance()
+                if not self._check(TokenType.RBRACKET):
+                    step = self._ternary()
             self._consume(TokenType.RBRACKET, "']' after slice")
-            return SliceExpr(obj, start, end, bracket.line, bracket.column)
+            return SliceExpr(obj, start, end, step, bracket.line, bracket.column)
         self._consume(TokenType.RBRACKET, "']' after index")
         return Index(obj, start, bracket.line, bracket.column)
 

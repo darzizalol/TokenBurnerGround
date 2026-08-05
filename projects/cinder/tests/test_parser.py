@@ -86,6 +86,7 @@ def shape(node):
             shape(node.obj),
             shape(node.start) if node.start is not None else None,
             shape(node.end) if node.end is not None else None,
+            shape(node.step) if node.step is not None else None,
         )
     if isinstance(node, IndexAssign):
         return (
@@ -893,25 +894,85 @@ class TestListsAndMaps(unittest.TestCase):
     def test_slice_both_bounds(self):
         self.assertEqual(
             shape(parse("xs[1:3]")),
-            ("SliceExpr", ("Identifier", "xs"), ("Literal", 1), ("Literal", 3)),
+            (
+                "SliceExpr",
+                ("Identifier", "xs"),
+                ("Literal", 1),
+                ("Literal", 3),
+                None,
+            ),
         )
 
     def test_slice_missing_start(self):
         self.assertEqual(
             shape(parse("xs[:3]")),
-            ("SliceExpr", ("Identifier", "xs"), None, ("Literal", 3)),
+            ("SliceExpr", ("Identifier", "xs"), None, ("Literal", 3), None),
         )
 
     def test_slice_missing_end(self):
         self.assertEqual(
             shape(parse("xs[1:]")),
-            ("SliceExpr", ("Identifier", "xs"), ("Literal", 1), None),
+            ("SliceExpr", ("Identifier", "xs"), ("Literal", 1), None, None),
         )
 
     def test_slice_both_missing(self):
         self.assertEqual(
             shape(parse("xs[:]")),
-            ("SliceExpr", ("Identifier", "xs"), None, None),
+            ("SliceExpr", ("Identifier", "xs"), None, None, None),
+        )
+
+    def test_slice_step_only(self):
+        self.assertEqual(
+            shape(parse("xs[::2]")),
+            ("SliceExpr", ("Identifier", "xs"), None, None, ("Literal", 2)),
+        )
+
+    def test_slice_start_and_step(self):
+        self.assertEqual(
+            shape(parse("xs[1::2]")),
+            (
+                "SliceExpr",
+                ("Identifier", "xs"),
+                ("Literal", 1),
+                None,
+                ("Literal", 2),
+            ),
+        )
+
+    def test_slice_end_and_step(self):
+        self.assertEqual(
+            shape(parse("xs[:5:2]")),
+            (
+                "SliceExpr",
+                ("Identifier", "xs"),
+                None,
+                ("Literal", 5),
+                ("Literal", 2),
+            ),
+        )
+
+    def test_slice_all_three(self):
+        self.assertEqual(
+            shape(parse("xs[1:4:2]")),
+            (
+                "SliceExpr",
+                ("Identifier", "xs"),
+                ("Literal", 1),
+                ("Literal", 4),
+                ("Literal", 2),
+            ),
+        )
+
+    def test_slice_negative_step_reverses(self):
+        self.assertEqual(
+            shape(parse("xs[::-1]")),
+            (
+                "SliceExpr",
+                ("Identifier", "xs"),
+                None,
+                None,
+                ("Unary", TokenType.MINUS, ("Literal", 1)),
+            ),
         )
 
     def test_plain_index_unaffected_by_slice_grammar(self):

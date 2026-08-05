@@ -2184,6 +2184,47 @@ class TestSlicing(unittest.TestCase):
         with self.assertRaises(ParseError):
             run("[1, 2, 3][1:2] = [9];")
 
+    def test_slice_step_skips_elements(self):
+        self.assertEqual(evaluate("[1, 2, 3, 4, 5][::2]"), [1, 3, 5])
+
+    def test_slice_negative_step_reverses_list(self):
+        self.assertEqual(evaluate("[1, 2, 3, 4, 5][::-1]"), [5, 4, 3, 2, 1])
+
+    def test_slice_all_three_parts(self):
+        self.assertEqual(evaluate("[1, 2, 3, 4, 5][1:4:2]"), [2, 4])
+
+    def test_slice_step_on_string(self):
+        self.assertEqual(evaluate('"abcdef"[::2]'), "ace")
+
+    def test_slice_negative_step_reverses_string(self):
+        self.assertEqual(evaluate('"abcdef"[::-1]'), "fedcba")
+
+    def test_slice_explicit_default_step_matches_omitted(self):
+        self.assertEqual(
+            evaluate("[1, 2, 3, 4, 5][::1]"), evaluate("[1, 2, 3, 4, 5][:]")
+        )
+
+    def test_slice_omitted_step_two_colon_form_unaffected(self):
+        self.assertEqual(evaluate("[1, 2, 3][1:3]"), [2, 3])
+
+    def test_slice_zero_step_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("[1, 2, 3][::0]")
+
+    def test_slice_non_int_step_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('[1, 2, 3]["a"::]')
+
+    def test_slice_step_on_non_sliceable_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("5[::2]")
+
+    def test_slice_with_step_assignment_raises_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            run("[1, 2, 3][::2] = [9];")
+
 
 class TestTryCatch(unittest.TestCase):
     def test_catch_binds_error_message_and_recovers(self):

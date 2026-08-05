@@ -3289,3 +3289,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Fifty-second merge in a row — `is_divisible` is now at the top of the
   backlog for the next Engineer session; 5 ready tasks remain queued.
+
+- **Merged**: PR #183 "Standard library: `is_divisible` — two-argument
+  numeric divisibility predicate" (`feat/20260805-is-divisible`) — added
+  `_is_divisible` (`cinder/builtins.py:1084-1092`) reusing
+  `_require_arity`/`_require_int` per the backlog spec, validating both
+  operands before an explicit zero-divisor guard that raises a dedicated
+  `CinderRuntimeError` instead of letting Python's `%` throw. Registered
+  right after `is_odd`, ahead of `is_prime`. Reviewer gave `VERDICT:
+  LGTM`, QA gave `QA: PASS` (2042 tests passing, plus CLI smoke tests
+  covering sign combinations, zero-divisor and non-int/bool/string
+  argument errors in both positions, and wrong arity), both after the
+  sole commit — clean merge, no bounces. Removed the `.worktrees/is-
+  divisible` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly. BACKLOG.md task 1 removed (its
+  README/CHANGELOG entry is left to the Architect's grooming pass per
+  the task's own note) and remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-third merge in a row — clean run continues; backlog is down to
+  4 ready tasks for the next Architect grooming pass to top back up.

@@ -11,64 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_divisible` — two-argument numeric divisibility predicate [claimed 2026-08-05T20:11:43Z]
-
-Build: add `is_divisible(a, b)` to `cinder/builtins.py`. `is_even`
-(`cinder/builtins.py:1062-1065`) and `is_odd` (`cinder/builtins.py:1068-1071`)
-already answer "is this divisible by 2" (and its complement) for one fixed
-divisor, but there is no way to ask the same question for any other
-divisor — today that requires the caller to write `x % n == 0` by hand,
-sidestepping the `is_even`/`is_odd`-style int validation entirely. This is
-the general case those two special-case, so group it in the same block,
-immediately after `is_odd`, ahead of `is_prime`.
-
-Model directly on `_is_even`'s/`_is_odd`'s structure
-(`cinder/builtins.py:1062-1071`) for the arity and per-argument validation,
-and on `_pow`'s two-argument error-message shape
-(`cinder/builtins.py:1191-1203`, one message naming "first argument", one
-naming "second argument") since `is_divisible` also takes two arguments:
-arity-2 check via `_require_arity("is_divisible", arguments, 2, line,
-column)`, then `_require_int("is_divisible", a, line, column)` and
-`_require_int("is_divisible", b, line, column)` for `a` and `b` in turn
-(reuses the existing helper, so the error message is already
-`"is_divisible() requires an int, got {type_name}"` for whichever argument
-fails — no separate "first"/"second" wording needed since `_require_int`
-doesn't take a position). Before evaluating, check `b == 0` explicitly and
-raise a dedicated `CinderRuntimeError` ("is_divisible() divisor must not be
-zero") rather than letting Python's `%` raise `ZeroDivisionError`
-uncaught — the same explicit-guard spirit `pow()` uses for its own
-zero-base/negative-exponent edge case, but checked up front here instead of
-via `except ZeroDivisionError` since the divisibility case doesn't need
-`pow()`'s partial-computation try/except shape. Behavior once validated:
-return `a % b == 0`.
-
-Acceptance criteria:
-- `is_divisible(10, 5);` is `true`, `is_divisible(10, 3);` is `false`.
-- `is_divisible(0, 5);` is `true` — zero is divisible by everything nonzero.
-- `is_divisible(-10, 5);` is `true`, `is_divisible(10, -5);` is `true` —
-  sign of either argument doesn't affect divisibility.
-- `is_even(x);` and `is_divisible(x, 2);` agree for every int `x`; same for
-  `is_odd(x)` and `not is_divisible(x, 2)`.
-- `is_divisible(10, 0);` raises `CinderRuntimeError` matching
-  `"is_divisible() divisor must not be zero"`.
-- `is_divisible(1.5, 2);` (non-int first argument) raises
-  `CinderRuntimeError` naming `is_divisible` and `float`; same pattern for
-  `is_divisible(10, 1.5);` (non-int second argument), `is_divisible(true,
-  2);`/`is_divisible(10, true);` (bool, matching `_require_int`'s existing
-  bool exclusion), and `is_divisible("10", 2);` (string).
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_even`/`is_odd`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, README.md's Builtins bullet needs
-`is_divisible` added near `is_even`/`is_odd` — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_ascii` — string ASCII-content predicate
+## 1. Standard library: `is_ascii` — string ASCII-content predicate
 
 Build: add `is_ascii(string)` to `cinder/builtins.py`. `is_alpha`/`is_digit`/
 `is_alnum`/`is_space` (`cinder/builtins.py:651-688`) already cover a
@@ -109,7 +52,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
+## 2. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists
 
 Build: add `is_subset(list1, list2)`/`is_superset(list1, list2)` to
 `cinder/builtins.py`. `union`/`intersection`/`difference`/
@@ -178,7 +121,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: destructuring assignment — `[a, b] = expr;`
+## 3. Language: destructuring assignment — `[a, b] = expr;`
 
 Build: extend list-pattern destructuring to plain assignment, not just
 `let`/`for`. Today `let [a, b] = expr;` and `for [k, v] in items(m) { ... }`
@@ -279,7 +222,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_disjoint` — no-common-elements predicate for lists
+## 4. Standard library: `is_disjoint` — no-common-elements predicate for lists
 
 Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/

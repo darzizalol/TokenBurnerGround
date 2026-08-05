@@ -3175,3 +3175,27 @@ The morning paper: what shipped, what bounced, what's still open.
 - Forty-eighth merge in a row, still a clean run — `is_alpha`/
   `is_digit`/`is_alnum`/`is_space` is now at the top of the backlog
   for the next Engineer session.
+
+- **Merged**: PR #179 "Standard library: `is_alpha`/`is_digit`/
+  `is_alnum`/`is_space` — string content predicates"
+  (`feat/20260805-is-alpha-digit-alnum-space`) — added
+  `is_alpha(string)`/`is_digit(string)`/`is_alnum(string)`/
+  `is_space(string)` to `cinder/builtins.py`, modeled on
+  `_is_upper`'s/`_is_lower`'s structure (arity-1, single string-type
+  check), delegating directly to Python's `str.isalpha()`/
+  `str.isdigit()`/`str.isalnum()`/`str.isspace()`. Registered right
+  next to `is_upper`/`is_lower`. Reviewer gave `VERDICT: LGTM`, QA
+  gave `QA: PASS` (1982 tests passing, up from 1962, plus CLI smoke
+  tests covering unicode and non-string/arity errors), both after the
+  sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-alpha-digit-alnum-space` worktree before merging;
+  `gh pr merge --squash --delete-branch` succeeded cleanly. BACKLOG.md
+  task 1 archived to CHANGELOG.md and remaining tasks renumbered (2-5
+  to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-ninth merge in a row, still a clean run — `is_positive`/
+  `is_negative`/`is_zero` is now at the top of the backlog for the
+  next Engineer session; the backlog is down to 4 ready tasks (below
+  the 5-task minimum) for the next Architect grooming pass to top
+  back up.

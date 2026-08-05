@@ -11,63 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates [claimed 2026-08-05T14:31:52Z]
-
-Build: add `is_alpha(string)`, `is_digit(string)`, `is_alnum(string)`,
-and `is_space(string)` to `cinder/builtins.py`. `is_upper`/`is_lower`
-(already shipped) answer "what case is this string in"; there
-is still no builtin to answer the more basic "what kind of characters
-does this string contain" — today that requires manually walking the
-string and checking each character's code point against `ord()`
-ranges. Like `is_upper`/`is_lower`, these are property predicates on a
-string's existing content, not kind predicates on any value — group
-all four with `is_upper`/`is_lower`/`is_palindrome` near `is_string`.
-
-Model directly on `_is_upper`'s/`_is_lower`'s structure (same file,
-same block): same arity-1 check via
-`_require_arity(name, arguments, 1, line, column)`, same single type
-check (argument a `string` else `CinderRuntimeError` matching
-`"is_alpha() requires a string, got {type_name}"` and so on for each
-of the other three, name substituted). Behavior once validated:
-delegate directly to Python's own `value.isalpha()` / `value.isdigit()`
-/ `value.isalnum()` / `value.isspace()` — no reimplementation, the
-same "ask, don't force" delegation `is_upper`/`is_lower` already use
-for `str.isupper()`/`str.islower()`. This inherits Python's semantics
-for free, including that **all four are `false` on the empty string**
-(unlike `is_upper`/`is_lower`, which is already documented and tested
-behavior for those two — this is the same "no characters means no
-category holds" rule, just consistently `false` here for every one of
-the four rather than needing per-function exceptions).
-
-Acceptance criteria:
-- `is_alpha("abc");` is `true`, `is_alpha("abc123");` is `false` —
-  digits break a pure-alphabetic string.
-- `is_digit("123");` is `true`, `is_digit("12.3");` is `false` — a
-  decimal point is not a digit character.
-- `is_alnum("abc123");` is `true`, `is_alnum("abc 123");` is `false`
-  — a space is neither alphabetic nor a digit.
-- `is_space("   ");` is `true`, `is_space(" a ");` is `false`.
-- `is_alpha("");` is `false`, `is_digit("");` is `false`,
-  `is_alnum("");` is `false`, `is_space("");` is `false` — empty
-  string satisfies none of the four (Python's `str.isalpha()` et al.
-  are all `false` on `""`).
-- `is_alpha(5);` (non-string argument) raises `CinderRuntimeError`
-  naming `is_alpha` and `int` in the message; same pattern for
-  `is_digit(5);`, `is_alnum(5);`, `is_space(5);`, each naming itself.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column, for all four functions.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_upper`/`is_lower`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near
-the other `is_*` predicates — leave that to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
+## 1. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
 `is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:958-968`)
@@ -126,7 +70,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_unique` — test whether a list has no duplicate elements
+## 2. Standard library: `is_unique` — test whether a list has no duplicate elements
 
 Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
 (`cinder/builtins.py:1504-1511`) already strips duplicates out of a
@@ -179,7 +123,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
+## 3. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
 
 Build: extend the slicing syntax to accept an optional third `:step`
 component, mirroring Python's extended-slice syntax closely enough to be
@@ -247,7 +191,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_divisible` — two-argument numeric divisibility predicate
+## 4. Standard library: `is_divisible` — two-argument numeric divisibility predicate
 
 Build: add `is_divisible(a, b)` to `cinder/builtins.py`. `is_even`
 (`cinder/builtins.py:992-995`) and `is_odd` (`cinder/builtins.py:998-1001`)

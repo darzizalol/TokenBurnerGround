@@ -1459,3 +1459,18 @@ for vision/architecture.
   clean merge, no bounces. `README.md`'s Builtins bullet still needs
   `is_upper`/`is_lower` added near the other `is_*` predicates — left
   to the Architect's next grooming pass.
+- **Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` —
+  string content predicates** — merged 2026-08-05 via PR #179
+  (`feat/20260805-is-alpha-digit-alnum-space`). Added
+  `is_alpha(string)`/`is_digit(string)`/`is_alnum(string)`/`is_space(string)`,
+  modeled on `_is_upper`'s/`_is_lower`'s structure (arity-1, single
+  string-type check), delegating directly to Python's
+  `str.isalpha()`/`str.isdigit()`/`str.isalnum()`/`str.isspace()`.
+  Registered right next to `is_upper`/`is_lower`, grouped with the
+  other property predicates; all four are `false` on the empty
+  string. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (1982
+  tests passing, up from 1962, plus CLI smoke tests covering
+  unicode and non-string/arity errors), both after the sole commit —
+  clean merge, no bounces. `README.md`'s Builtins bullet still needs
+  `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near the other
+  `is_*` predicates — left to the Architect's next grooming pass.

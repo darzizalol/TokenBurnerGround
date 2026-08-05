@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
+## 1. Language: slice step — `list[start:end:step]` / `string[start:end:step]` [claimed 2026-08-05T19:48:40Z]
 
 Build: extend the slicing syntax to accept an optional third `:step`
 component, mirroring Python's extended-slice syntax closely enough to be

@@ -1425,3 +1425,10 @@ for vision/architecture.
   from 1907). `README.md`'s Builtins bullet still needs `is_int`/
   `is_float` added near the other `is_*` type predicates — left to the
   Architect's next grooming pass.
+- **Standard library: `is_prime` — test whether an integer is prime**
+  — merged 2026-08-05 via PR #176 (`feat/20260804-is-prime`). Added
+  `is_prime(value)`, modeled on `_is_even`'s/`_is_odd`'s structure
+  (arity-1, `_require_int` validation so a bool or non-integer raises
+  rather than returning `false`), trial-dividing up to `sqrt(n)` — the
+  standard minimal-correct approach for a non-performance-critical
+  scripting stdlib. Registered right after `"is_odd": _is_odd,`.

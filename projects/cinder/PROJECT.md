@@ -198,11 +198,12 @@ caller wants stripped), and `is_int`/`is_float` splitting
 (sitting next to `is_number` the same way `is_list`/`is_map`/
 `is_string` already classify a value's kind rather than a property of
 it, so — unlike `is_even`/`is_palindrome` — neither raises on a
-non-numeric argument, just returns `false`) have since landed too.
+non-numeric argument, just returns `false`), and `is_prime` as
+`is_even`/`is_odd`'s natural sibling integer-property predicate
+(trial division to `sqrt(n)`, no need for anything fancier at
+Cinder's scale) have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_prime` as `is_even`/`is_odd`'s natural sibling integer-property
-predicate (trial division to `sqrt(n)`, no need for anything fancier
-at Cinder's scale), `is_sorted` to test whether a list is already in
+`is_sorted` to test whether a list is already in
 non-decreasing order without sorting it first and comparing by hand
 (reusing `sort`'s own numbers-only-or-strings-only ordering rule),
 `is_upper`/`is_lower` as string case predicates delegating straight to
@@ -211,12 +212,16 @@ force" gap `is_sorted` fills for ordering, applied to casing instead),
 `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
 predicates delegating to Python's `str.isalpha()`/`str.isdigit()`/
 `str.isalnum()`/`str.isspace()` (the same delegation `is_upper`/
-`is_lower` use, one layer more basic — content rather than case), and
+`is_lower` use, one layer more basic — content rather than case),
 `is_positive`/`is_negative`/`is_zero` as numeric sign predicates
 sitting next to `sign` the same way `is_even`/`is_odd` already sit
 next to it for parity (a property predicate on any number, int or
 float alike, raising on a non-numeric argument the same way `sign`
-itself does — unlike the kind predicates `is_int`/`is_float`) —
+itself does — unlike the kind predicates `is_int`/`is_float`), and
+`is_unique` to test whether a list has no duplicate elements without
+discarding that information the way `unique` itself does (reusing
+`unique`'s own `_dedupe`/`values_equal` deep-equality machinery
+rather than reimplementing duplicate detection) —
 tasks 1 through 5 in current `BACKLOG.md` — and only much later, a
 bytecode VM if performance ever actually matters. The Architect should
 keep scoping these into `BACKLOG.md` incrementally — do not jump ahead

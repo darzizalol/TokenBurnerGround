@@ -133,8 +133,8 @@ while (i < 10) {
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`
-  integer parity predicates, `is_palindrome` to test whether a string reads the same forwards
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_prime`
+  integer parity/primality predicates, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `swap_case` to flip each character's case, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
@@ -219,13 +219,14 @@ string into a list of its characters, `is_even`/`is_odd` as integer
 parity predicates, `swap_case` to flip each character's case,
 `pad_center` to center a string within a width padding both sides,
 `is_palindrome` to test whether a string reads the same forwards and
-backwards, and `is_int`/`is_float` splitting `is_number`'s single
-numeric kind into its two concrete ones. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_prime` as an integer primality
-predicate, `is_sorted` to test whether a list is already in
-non-decreasing order, `is_upper`/`is_lower` as string case predicates,
+backwards, `is_int`/`is_float` splitting `is_number`'s single numeric
+kind into its two concrete ones, and `is_prime` as an integer
+primality predicate. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_sorted` to test whether a list is already in non-decreasing order,
+`is_upper`/`is_lower` as string case predicates,
 `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
-predicates, and `is_positive`/`is_negative`/`is_zero` as numeric sign
-predicates. The backlog mixes language depth with stdlib breadth over
+predicates, `is_positive`/`is_negative`/`is_zero` as numeric sign
+predicates, and `is_unique` to test whether a list has no duplicate
+elements. The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long
 block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

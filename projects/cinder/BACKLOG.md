@@ -11,65 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_prime` — test whether an integer is prime [claimed 2026-08-04T20:15:21Z]
-
-Build: add `is_prime(value)` to `cinder/builtins.py`. `is_even`/`is_odd`
-(`cinder/builtins.py:925-934`) already classify an integer's *parity*;
-there is no builtin for its most common other property, primality —
-today it requires hand-rolling trial division from scratch in Cinder
-itself. This is the same family as `is_even`/`is_odd`: a **property**
-predicate on an integer, not a **kind** predicate on any value, so
-(like `is_even`/`is_odd`, unlike `is_int`/`is_float` above) a
-non-integer argument is a type error, not a `false`.
-
-Model directly on `_is_even`'s/`_is_odd`'s structure
-(`cinder/builtins.py:925-934`): same arity-1 check via
-`_require_arity("is_prime", arguments, 1, line, column)`, same
-`value = _require_int("is_prime", arguments[0], line, column)` (so
-`is_prime(true)` raises, not returns `false` — booleans are excluded
-by `_require_int` itself the same way they're excluded for
-`is_even`/`is_odd`, and a whole-valued float like `4.0` is a type
-error rather than silently accepted, matching `is_even`'s task-1
-precedent). Behavior once validated: `value < 2` returns `false`
-(covers negatives, `0`, and `1` — none are prime); otherwise trial
-divide by every integer from `2` up to `int(value ** 0.5)` inclusive,
-returning `false` on the first exact divisor found and `true` if none
-divide evenly. No need for anything fancier (no Miller-Rabin, no
-sieve) — Cinder scripts are not performance-critical and trial
-division to `sqrt(n)` is the standard minimal-correct approach.
-Register it in the builtins dict right after `"is_odd": _is_odd,`
-(`cinder/builtins.py:2686`), keeping the integer-property-predicate
-trio (`is_even`/`is_odd`/`is_prime`) contiguous.
-
-Acceptance criteria:
-- `is_prime(2);` is `true` — smallest prime, and the only even one.
-- `is_prime(17);` is `true`, `is_prime(97);` is `true` — larger primes.
-- `is_prime(1);` is `false`, `is_prime(0);` is `false`,
-  `is_prime(-7);` is `false` — not prime by definition, no error.
-- `is_prime(4);` is `false`, `is_prime(9);` is `false`,
-  `is_prime(100);` is `false` — composite numbers correctly rejected,
-  including perfect squares (exercises the inclusive `sqrt(n)` bound).
-- `is_prime(4.0);` (non-int, whole-valued float) raises
-  `CinderRuntimeError` naming `is_prime`, matching `is_even`'s task-1
-  treatment of the same case.
-- `is_prime(true);` raises `CinderRuntimeError` — a bool is not an
-  int, matching `is_even(true)`'s existing behavior via
-  `_require_int`.
-- `is_prime("4");` (non-numeric string) raises `CinderRuntimeError`
-  naming `is_prime` and `string` in the message.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_even`/`is_odd`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_prime` added near `is_even`/`is_odd` — leave that to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_sorted` — test whether a list is in non-decreasing order
+## 1. Standard library: `is_sorted` — test whether a list is in non-decreasing order
 
 Build: add `is_sorted(list)` to `cinder/builtins.py`. `sort`
 (`cinder/builtins.py:1707-1722`) already establishes that Cinder lists
@@ -131,7 +73,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `is_upper`/`is_lower` — string case predicates
+## 2. Standard library: `is_upper`/`is_lower` — string case predicates
 
 Build: add `is_upper(string)` and `is_lower(string)` to
 `cinder/builtins.py`. `swap_case` flips case, `upper`/`lower` force
@@ -189,7 +131,7 @@ this task.
 
 ---
 
-## 4. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
+## 3. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
 
 Build: add `is_alpha(string)`, `is_digit(string)`, `is_alnum(string)`,
 and `is_space(string)` to `cinder/builtins.py`. Task 3 above
@@ -201,7 +143,7 @@ ranges. Like `is_upper`/`is_lower`, these are property predicates on a
 string's existing content, not kind predicates on any value — group
 all four with `is_upper`/`is_lower`/`is_palindrome` near `is_string`.
 
-Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 3
+Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 2
 has landed — same file, same block): same arity-1 check via
 `_require_arity(name, arguments, 1, line, column)`, same single type
 check (argument a `string` else `CinderRuntimeError` matching
@@ -237,7 +179,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `is_upper`/`is_lower`
-once task 3 has landed, else near `is_string`, see current line
+once task 2 has landed, else near `is_string`, see current line
 numbers — shift if earlier tasks this cycle landed first),
 `tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
 needs `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near the other
@@ -246,7 +188,7 @@ not this task.
 
 ---
 
-## 5. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
+## 4. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
 `is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:940-951`)
@@ -270,7 +212,7 @@ are valid input here, matching `sign`, not `is_even`/`is_odd`) else
 once validated: `is_positive` returns `value > 0`, `is_negative`
 returns `value < 0`, `is_zero` returns `value == 0` — plain
 delegation to Python's own comparison operators, no reimplementation,
-the same "ask, don't force" spirit `is_upper`/`is_lower` (task 3
+the same "ask, don't force" spirit `is_upper`/`is_lower` (task 2
 above) use for Python's `str` predicates. `is_zero(0.0)` is `true`
 (Python's `0.0 == 0` is `true`; no special-casing float zero).
 Register the trio in the builtins dict right after `"sign": _sign,`,
@@ -302,6 +244,59 @@ line numbers — shift if earlier tasks this cycle landed first),
 `tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
 needs `is_positive`/`is_negative`/`is_zero` added near `sign` — leave
 that to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `is_unique` — test whether a list has no duplicate elements
+
+Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
+(`cinder/builtins.py:1486-1493`) already strips duplicates out of a
+list via its `_dedupe` helper, but there is no way to ask *whether* a
+list had any duplicates in the first place without discarding that
+information — today that requires calling `unique(xs)` and comparing
+`len` by hand. This is the same "ask, don't force" gap `is_sorted`
+(task 1) fills for ordering, applied to uniqueness instead — a
+property predicate on a list's existing contents, not a kind
+predicate, so group it with `is_sorted`/`is_palindrome` near
+`is_string`, not with `unique`/`distinct_by` themselves.
+
+Model directly on `_unique`'s structure
+(`cinder/builtins.py:1486-1493`): same arity-1 check via
+`_require_arity("is_unique", arguments, 1, line, column)`, same `list`
+type check (else `CinderRuntimeError` matching `"is_unique() requires
+a list, got {type_name}"`). Unlike `is_sorted`, there is no
+numbers-only-or-strings-only restriction to enforce — `unique()`
+itself places none (it dedupes via `values_equal`, which already
+handles every Cinder value, including nested lists/maps by deep
+equality), so `is_unique` shouldn't either. Behavior once validated:
+call the existing `_dedupe(value)` helper and return
+`len(_dedupe(value)) == len(value)` — reuse, don't reimplement the
+comparison logic, the same delegation spirit `unique`'s own
+`_dedupe` helper already embodies. An empty list and a single-element
+list are both trivially unique (`true`).
+
+Acceptance criteria:
+- `is_unique([1, 2, 3]);` is `true` — all distinct.
+- `is_unique([1, 2, 2]);` is `false` — one duplicate.
+- `is_unique([]);` is `true` — empty list, vacuously unique.
+- `is_unique([5]);` is `true` — single element, trivially unique.
+- `is_unique(["a", "b", "a"]);` is `false` — duplicates detected for
+  strings too, not just numbers.
+- `is_unique([[1, 2], [1, 2]]);` is `false` — duplicate detection uses
+  deep equality (via `_dedupe`'s existing `values_equal`), not
+  reference identity, so two structurally-equal nested lists count as
+  duplicates.
+- `is_unique(5);` (non-list argument) raises `CinderRuntimeError`
+  naming `is_unique` and `int` in the message.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `unique`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_unique` added near the other `is_*` predicates —
+leave that to the Architect's next grooming pass, not this task.
 
 ---
 

@@ -11,69 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_sorted` — test whether a list is in non-decreasing order [claimed 2026-08-05T14:04:24Z]
-
-Build: add `is_sorted(list)` to `cinder/builtins.py`. `sort`
-(`cinder/builtins.py:1707-1722`) already establishes that Cinder lists
-are only orderable when every element is numeric or every element is
-a string (never mixed); there is currently no way to check whether a
-list already satisfies that order without sorting it and comparing
-the result by hand. Like `is_palindrome` above, this is a property
-predicate over a sequence's existing arrangement, not a kind
-predicate — group it with the other `is_*` predicates near
-`is_palindrome`/`is_string`, not with `sort`/`sort_by`, the same
-"group by predicate family, not by implementation resemblance"
-principle `is_palindrome`'s task above already established.
-
-Model the validation on `_sort`'s structure
-(`cinder/builtins.py:1707-1722`): same arity-1 check via
-`_require_arity("is_sorted", arguments, 1, line, column)`, same
-`list` type check (else `CinderRuntimeError` matching `"is_sorted()
-requires a list, got {type_name}"`), same empty-list short-circuit
-(`_sort` returns `[]` for empty input; `is_sorted` should return
-`true` for empty input — vacuously sorted). For a non-empty list,
-reuse `_sort`'s own mixed-type rule: if the elements are neither
-all-numeric nor all-string, raise `CinderRuntimeError` matching
-`"is_sorted() requires a list of all numbers or all strings"` (same
-message shape `sort()` uses, `is_sorted` substituted for `sort`).
-Behavior once validated: return `value == sorted(value)` — a
-single-element list is trivially sorted (`true`), and this is a
-**non-decreasing** check (`is_sorted([1, 1, 2])` is `true`; adjacent
-equal elements do not violate order), matching how `_sort` itself
-treats equal elements as already in order. Register it in the
-builtins dict right after `"is_palindrome": _is_palindrome,` once
-that task has landed (else after `"is_string": _is_string,` if
-`is_sorted` is picked up first — check the current builtins dict for
-whichever has landed).
-
-Acceptance criteria:
-- `is_sorted([1, 2, 3]);` is `true` — ascending numbers.
-- `is_sorted([3, 2, 1]);` is `false` — descending, not sorted.
-- `is_sorted([1, 1, 2]);` is `true` — equal adjacent elements do not
-  break non-decreasing order.
-- `is_sorted(["a", "b", "c"]);` is `true`, `is_sorted(["c", "a"]);` is
-  `false` — string lists use lexicographic order, same as `sort()`.
-- `is_sorted([]);` is `true` — empty list, vacuously sorted.
-- `is_sorted([5]);` is `true` — single element, trivially sorted.
-- `is_sorted([1, "a"]);` (mixed numbers and strings) raises
-  `CinderRuntimeError` naming `is_sorted`, matching `sort()`'s own
-  mixed-type rejection.
-- `is_sorted(5);` (non-list argument) raises `CinderRuntimeError`
-  naming `is_sorted` and `int` in the message.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_palindrome`/the
-other `is_*` predicates, see current line numbers — shift if earlier
-tasks this cycle landed first), `tests/test_builtins.py`. Once
-merged, `README.md`'s Builtins bullet needs `is_sorted` added near the
-other `is_*` predicates — leave that to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `is_upper`/`is_lower` — string case predicates
+## 1. Standard library: `is_upper`/`is_lower` — string case predicates
 
 Build: add `is_upper(string)` and `is_lower(string)` to
 `cinder/builtins.py`. `swap_case` flips case, `upper`/`lower` force
@@ -131,10 +69,10 @@ this task.
 
 ---
 
-## 3. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
+## 2. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
 
 Build: add `is_alpha(string)`, `is_digit(string)`, `is_alnum(string)`,
-and `is_space(string)` to `cinder/builtins.py`. Task 3 above
+and `is_space(string)` to `cinder/builtins.py`. Task 1 above
 (`is_upper`/`is_lower`) answers "what case is this string in"; there
 is still no builtin to answer the more basic "what kind of characters
 does this string contain" — today that requires manually walking the
@@ -143,7 +81,7 @@ ranges. Like `is_upper`/`is_lower`, these are property predicates on a
 string's existing content, not kind predicates on any value — group
 all four with `is_upper`/`is_lower`/`is_palindrome` near `is_string`.
 
-Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 2
+Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 1
 has landed — same file, same block): same arity-1 check via
 `_require_arity(name, arguments, 1, line, column)`, same single type
 check (argument a `string` else `CinderRuntimeError` matching
@@ -179,7 +117,7 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `is_upper`/`is_lower`
-once task 2 has landed, else near `is_string`, see current line
+once task 1 has landed, else near `is_string`, see current line
 numbers — shift if earlier tasks this cycle landed first),
 `tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
 needs `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near the other
@@ -188,7 +126,7 @@ not this task.
 
 ---
 
-## 4. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
+## 3. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
 `is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:940-951`)
@@ -212,7 +150,7 @@ are valid input here, matching `sign`, not `is_even`/`is_odd`) else
 once validated: `is_positive` returns `value > 0`, `is_negative`
 returns `value < 0`, `is_zero` returns `value == 0` — plain
 delegation to Python's own comparison operators, no reimplementation,
-the same "ask, don't force" spirit `is_upper`/`is_lower` (task 2
+the same "ask, don't force" spirit `is_upper`/`is_lower` (task 1
 above) use for Python's `str` predicates. `is_zero(0.0)` is `true`
 (Python's `0.0 == 0` is `true`; no special-casing float zero).
 Register the trio in the builtins dict right after `"sign": _sign,`,
@@ -247,7 +185,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_unique` — test whether a list has no duplicate elements
+## 4. Standard library: `is_unique` — test whether a list has no duplicate elements
 
 Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
 (`cinder/builtins.py:1486-1493`) already strips duplicates out of a
@@ -255,7 +193,7 @@ list via its `_dedupe` helper, but there is no way to ask *whether* a
 list had any duplicates in the first place without discarding that
 information — today that requires calling `unique(xs)` and comparing
 `len` by hand. This is the same "ask, don't force" gap `is_sorted`
-(task 1) fills for ordering, applied to uniqueness instead — a
+fills for ordering, applied to uniqueness instead — a
 property predicate on a list's existing contents, not a kind
 predicate, so group it with `is_sorted`/`is_palindrome` near
 `is_string`, not with `unique`/`distinct_by` themselves.

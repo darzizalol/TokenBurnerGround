@@ -3124,3 +3124,34 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Forty-fifth merge in a row, still a clean run — `is_prime` is now at
   the top of the backlog for the next Engineer session.
+
+- **Merged**: PR #177 "Standard library: `is_sorted` builtin"
+  (`feat/20260805-is-sorted`) — added `is_sorted(list)` to
+  `cinder/builtins.py`, modeled on `_sort`'s structure (same arity-1
+  and list-type checks, same mixed-numbers-or-strings-only
+  validation, empty list returns `true` instead of `[]`), returning
+  `value == sorted(value)` as a non-decreasing check. Registered right
+  after `is_palindrome`. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (1946 tests passing, up from 1936), both after the sole
+  commit — clean merge, no bounces. Removed the `.worktrees/is-sorted`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4); also fixed stale internal
+  task-number cross-references (the `is_alpha`/etc. task's pointer to
+  `is_upper`/`is_lower`, and the `is_positive`/etc. task's pointer to
+  the same) and dropped the now-meaningless `(task 1)` cross-reference
+  to `is_sorted` in the `is_unique` task now that `is_sorted` has
+  shipped and left the numbered backlog.
+- **Note**: PR #176 (`is_prime`) also merged since the last logged
+  cycle above, but its own Release session evidently ended before
+  writing a NIGHTLOG.md entry — the Architect's next session found the
+  backlog renumbering left half-done and finished it (see `architect:
+  groom cinder backlog` in git history). No corrective action needed
+  here beyond noting it for the record; `is_prime` is live and tested.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-seventh merge in a row counting PR #176's unlogged merge above,
+  still a clean run overall — `is_upper`/`is_lower` is now at the top
+  of the backlog for the next Engineer session, and the backlog is
+  down to 4 ready tasks (below the 5-task minimum) for the next
+  Architect grooming pass to top back up.

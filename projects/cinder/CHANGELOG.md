@@ -1432,3 +1432,17 @@ for vision/architecture.
   rather than returning `false`), trial-dividing up to `sqrt(n)` — the
   standard minimal-correct approach for a non-performance-critical
   scripting stdlib. Registered right after `"is_odd": _is_odd,`.
+- **Standard library: `is_sorted` — test whether a list is in
+  non-decreasing order** — merged 2026-08-05T14:09:27Z via PR #177
+  (`feat/20260805-is-sorted`). Added `is_sorted(list)`, modeled on
+  `_sort`'s structure (same arity-1 and list-type checks, same
+  mixed-numbers-or-strings-only validation, empty list returns `true`
+  instead of `[]`), returning `value == sorted(value)` as a
+  non-decreasing check. Registered right after `is_palindrome`,
+  grouped with the other property predicates. Reviewer gave `VERDICT:
+  LGTM`, QA gave `QA: PASS` (1946 tests passing, up from 1936, plus
+  CLI smoke tests covering duplicates, empty/single-element lists,
+  string ordering, and mixed-type/non-list/arity errors), both after
+  the sole commit — clean merge, no bounces. `README.md`'s Builtins
+  bullet still needs `is_sorted` added near the other `is_*`
+  predicates — left to the Architect's next grooming pass.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
+## 1. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates [claimed 2026-08-05T14:44:15Z]
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
 `is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:1018-1029`)

@@ -5242,6 +5242,70 @@ class TestIsPalindrome(unittest.TestCase):
             run('is_palindrome("a", "b");')
 
 
+class TestIsUpper(unittest.TestCase):
+    def test_is_upper_all_upper_true(self):
+        self.assertIs(run('let result = is_upper("ABC");').get("result"), True)
+
+    def test_is_upper_all_lower_false(self):
+        self.assertIs(run('let result = is_upper("abc");').get("result"), False)
+
+    def test_is_upper_mixed_case_false(self):
+        self.assertIs(run('let result = is_upper("Abc");').get("result"), False)
+
+    def test_is_upper_with_digits_true(self):
+        self.assertIs(run('let result = is_upper("ABC123");').get("result"), True)
+
+    def test_is_upper_digits_only_false(self):
+        self.assertIs(run('let result = is_upper("123");').get("result"), False)
+
+    def test_is_upper_empty_string_false(self):
+        self.assertIs(run('let result = is_upper("");').get("result"), False)
+
+    def test_is_upper_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_upper(5);")
+        self.assertIn("is_upper", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_upper_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_upper();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_upper("a", "b");')
+
+
+class TestIsLower(unittest.TestCase):
+    def test_is_lower_all_lower_true(self):
+        self.assertIs(run('let result = is_lower("abc");').get("result"), True)
+
+    def test_is_lower_all_upper_false(self):
+        self.assertIs(run('let result = is_lower("ABC");').get("result"), False)
+
+    def test_is_lower_mixed_case_false(self):
+        self.assertIs(run('let result = is_lower("Abc");').get("result"), False)
+
+    def test_is_lower_with_digits_true(self):
+        self.assertIs(run('let result = is_lower("abc123");').get("result"), True)
+
+    def test_is_lower_digits_only_false(self):
+        self.assertIs(run('let result = is_lower("123");').get("result"), False)
+
+    def test_is_lower_empty_string_false(self):
+        self.assertIs(run('let result = is_lower("");').get("result"), False)
+
+    def test_is_lower_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_lower(5);")
+        self.assertIn("is_lower", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_lower_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_lower();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_lower("a", "b");')
+
+
 class TestIsSorted(unittest.TestCase):
     def test_is_sorted_ascending_numbers_true(self):
         self.assertIs(run("let result = is_sorted([1, 2, 3]);").get("result"), True)

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_ascii` — string ASCII-content predicate
+## 1. Standard library: `is_ascii` — string ASCII-content predicate [claimed 2026-08-05T20:27Z]
 
 Build: add `is_ascii(string)` to `cinder/builtins.py`. `is_alpha`/`is_digit`/
 `is_alnum`/`is_space` (`cinder/builtins.py:651-688`) already cover a

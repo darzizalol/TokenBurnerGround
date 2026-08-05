@@ -129,7 +129,7 @@ not this task.
 ## 3. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
-`is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:940-951`)
+`is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:958-968`)
 already reduces a number to `1`/`-1`/`0`, but every caller who only
 cares about one branch has to write `sign(x) == 1` (or worse,
 `x > 0`, which silently accepts non-numeric input Cinder would
@@ -141,7 +141,7 @@ any value — so, like `is_even`/`is_odd`/`is_prime` and unlike
 apply to *any* number, not just integers — `is_positive(1.5)` is
 `true`, matching `sign`'s own float-inclusive behavior.
 
-Model directly on `_sign`'s structure (`cinder/builtins.py:940-951`):
+Model directly on `_sign`'s structure (`cinder/builtins.py:958-968`):
 same arity-1 check via `_require_arity(name, arguments, 1, line,
 column)`, same `_is_numeric(value)` check (not `_require_int` — floats
 are valid input here, matching `sign`, not `is_even`/`is_odd`) else
@@ -188,7 +188,7 @@ that to the Architect's next grooming pass, not this task.
 ## 4. Standard library: `is_unique` — test whether a list has no duplicate elements
 
 Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
-(`cinder/builtins.py:1486-1493`) already strips duplicates out of a
+(`cinder/builtins.py:1504-1511`) already strips duplicates out of a
 list via its `_dedupe` helper, but there is no way to ask *whether* a
 list had any duplicates in the first place without discarding that
 information — today that requires calling `unique(xs)` and comparing
@@ -199,7 +199,7 @@ predicate, so group it with `is_sorted`/`is_palindrome` near
 `is_string`, not with `unique`/`distinct_by` themselves.
 
 Model directly on `_unique`'s structure
-(`cinder/builtins.py:1486-1493`): same arity-1 check via
+(`cinder/builtins.py:1504-1511`): same arity-1 check via
 `_require_arity("is_unique", arguments, 1, line, column)`, same `list`
 type check (else `CinderRuntimeError` matching `"is_unique() requires
 a list, got {type_name}"`). Unlike `is_sorted`, there is no
@@ -235,6 +235,74 @@ current line numbers — shift if earlier tasks this cycle landed
 first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
 bullet needs `is_unique` added near the other `is_*` predicates —
 leave that to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
+
+Build: extend the slicing syntax to accept an optional third `:step`
+component, mirroring Python's extended-slice syntax closely enough to be
+familiar without importing all of its edge cases. Today's grammar
+(`_finish_index` in `cinder/parser.py:975-987`) stops at `start:end`; there
+is no way to skip elements or reverse a sequence via slicing at all, so
+whole-sequence `reverse()` and manual index loops are still the only tools
+for anything step-based. Tasks 1-4 above are all stdlib-breadth predicates;
+per `PROJECT.md`'s stated principle of mixing language depth with stdlib
+breadth "rather than running either in one long block," this is the
+language-depth entry to run alongside them.
+
+Grammar: after parsing `end` inside `_finish_index`'s existing `if
+self._check(TokenType.COLON):` branch, check for a second `COLON` and if
+present parse an optional `step` expression before the `]` (same
+optional-omit-defaults-to-`None` pattern already used for `start`/`end` —
+`xs[::2]`, `xs[1::2]`, `xs[:5:2]`, `xs[::-1]` must all parse; a bare
+`xs[start:end]` with no second colon must keep parsing exactly as it does
+today, unchanged). Extend `SliceExpr` (`cinder/ast_nodes.py:150-156`) with a
+`step: "Expr | None"` field.
+
+Evaluator: in `_evaluate_slice` (`cinder/interpreter.py:607-625`), evaluate
+`step` the same way `start`/`end` already are, requiring it to be a non-zero
+int else `CinderRuntimeError` ("slice step must be an int" / "slice step
+must not be zero", matching the existing "slice bound must be an int"
+message shape). `_normalize_slice_bound` (`cinder/interpreter.py:1002-1007`)
+assumes a forward, clamping walk that is wrong once a negative step is
+allowed (Python's own `slice.indices()` swaps the implicit start/end
+defaults when the step is negative) — do not reuse it unmodified for the
+step case; simplest correct approach is delegating straight to Python's own
+`slice(start, end, step).indices(length)` (or just `obj[start:end:step]`
+with Python `None`s substituted for omitted bounds) rather than
+hand-rolling the negative-step bound math, the same "ask, don't force"
+delegation spirit `is_upper`/`is_lower`/`is_alpha`-family tasks already
+follow for Python's `str` predicates.
+
+Acceptance criteria:
+- `[1, 2, 3, 4, 5][::2];` is `[1, 3, 5]`.
+- `[1, 2, 3, 4, 5][::-1];` is `[5, 4, 3, 2, 1]` — full reversal.
+- `[1, 2, 3, 4, 5][1:4:2];` is `[2, 4]`.
+- `"abcdef"[::2];` is `"ace"`, `"abcdef"[::-1];` is `"fedcba"`.
+- `[1, 2, 3, 4, 5][::1];` (explicit default step) is identical to
+  `[1, 2, 3, 4, 5][:];` — no regression for the already-shipped two-colon
+  form, and omitting the step entirely (`xs[1:3]`) keeps working exactly as
+  it does today (still a two-element `SliceExpr` bound, `step` defaulting to
+  `None`/`1` internally).
+- `[1, 2, 3][::0];` raises `CinderRuntimeError` ("slice step must not be
+  zero").
+- `[1, 2, 3]["a"::];`(non-int step) raises `CinderRuntimeError` ("slice step
+  must be an int").
+- Slicing a non-list/non-string with a step (e.g. `5[::2];`) still raises
+  the existing "not sliceable" error.
+- Slices remain not assignable regardless of step (unchanged from today —
+  `xs[::2] = ...` must fail the same way `xs[1:3] = ...` already does, no
+  new grammar should make either form an assignment target).
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`
+(grep for `SliceExpr`/`slice` first for exact current test locations).
+Once merged, README.md's slicing bullet (`list[start:end]`/
+`string[start:end]`) needs the step form documented, and PROJECT.md's
+roadmap paragraph needs slice-step moved from backlog to landed — leave
+both to the Architect's next grooming pass, not this task.
 
 ---
 

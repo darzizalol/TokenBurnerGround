@@ -198,14 +198,14 @@ caller wants stripped), and `is_int`/`is_float` splitting
 (sitting next to `is_number` the same way `is_list`/`is_map`/
 `is_string` already classify a value's kind rather than a property of
 it, so — unlike `is_even`/`is_palindrome` — neither raises on a
-non-numeric argument, just returns `false`), and `is_prime` as
+non-numeric argument, just returns `false`), `is_prime` as
 `is_even`/`is_odd`'s natural sibling integer-property predicate
 (trial division to `sqrt(n)`, no need for anything fancier at
-Cinder's scale) have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_sorted` to test whether a list is already in
+Cinder's scale), and `is_sorted` to test whether a list is already in
 non-decreasing order without sorting it first and comparing by hand
-(reusing `sort`'s own numbers-only-or-strings-only ordering rule),
+(reusing `sort`'s own numbers-only-or-strings-only ordering rule)
+have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
 `is_upper`/`is_lower` as string case predicates delegating straight to
 Python's own `str.isupper()`/`str.islower()` (the same "ask, don't
 force" gap `is_sorted` fills for ordering, applied to casing instead),
@@ -221,7 +221,12 @@ itself does — unlike the kind predicates `is_int`/`is_float`), and
 `is_unique` to test whether a list has no duplicate elements without
 discarding that information the way `unique` itself does (reusing
 `unique`'s own `_dedupe`/`values_equal` deep-equality machinery
-rather than reimplementing duplicate detection) —
+rather than reimplementing duplicate detection), and a slice step —
+`list[start:end:step]`/`string[start:end:step]` — extending the
+existing two-colon slice syntax with a third, optional component for
+skipping elements or reversing a sequence (`xs[::-1]`), the one
+language-depth entry mixed in among this run's stdlib-breadth
+predicates —
 tasks 1 through 5 in current `BACKLOG.md` — and only much later, a
 bytecode VM if performance ever actually matters. The Architect should
 keep scoping these into `BACKLOG.md` incrementally — do not jump ahead

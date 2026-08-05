@@ -135,7 +135,8 @@ while (i < 10) {
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_prime`
   integer parity/primality predicates, `is_palindrome` to test whether a string reads the same forwards
-  and backwards, `swap_case` to flip each character's case, and type predicates
+  and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
+  `swap_case` to flip each character's case, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -220,13 +221,14 @@ parity predicates, `swap_case` to flip each character's case,
 `pad_center` to center a string within a width padding both sides,
 `is_palindrome` to test whether a string reads the same forwards and
 backwards, `is_int`/`is_float` splitting `is_number`'s single numeric
-kind into its two concrete ones, and `is_prime` as an integer
-primality predicate. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_sorted` to test whether a list is already in non-decreasing order,
-`is_upper`/`is_lower` as string case predicates,
-`is_alpha`/`is_digit`/`is_alnum`/`is_space` as string content
-predicates, `is_positive`/`is_negative`/`is_zero` as numeric sign
-predicates, and `is_unique` to test whether a list has no duplicate
-elements. The backlog mixes language depth with stdlib breadth over
-time rather than running either in one long
-block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+kind into its two concrete ones, `is_prime` as an integer
+primality predicate, and `is_sorted` to test whether a list is
+already in non-decreasing order. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_upper`/`is_lower` as string case
+predicates, `is_alpha`/`is_digit`/`is_alnum`/`is_space` as string
+content predicates, `is_positive`/`is_negative`/`is_zero` as numeric
+sign predicates, `is_unique` to test whether a list has no
+duplicate elements, and a slice step (`xs[start:end:step]`) for
+skipping elements or reversing a sequence. The backlog mixes language
+depth with stdlib breadth over time rather than running either in one
+long block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

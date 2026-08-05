@@ -136,6 +136,7 @@ while (i < 10) {
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_prime`
   integer parity/primality predicates, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
+  `is_unique` to test whether a list has no duplicate elements,
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
   `is_alpha`/`is_digit`/`is_alnum`/`is_space` to test a string's content
   (letters only, digits only, alphanumeric only, whitespace only),
@@ -193,7 +194,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (1860+ tests) covers every layer — lexer, parser, interpreter,
+The suite (2000+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -219,18 +220,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_upper`/`is_lower` as
-string case predicates, `is_alpha`/`is_digit`/`is_alnum`/`is_space` as
-string content predicates, and `is_positive`/`is_negative`/`is_zero`
-as numeric sign predicates. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_unique` to test whether a list has no
-duplicate elements, a slice step (`xs[start:end:step]`) for skipping
-elements or reversing a sequence, `is_divisible` as a two-argument
-numeric predicate generalizing `is_even`/`is_odd`'s fixed divisor of
-`2` to any divisor, `is_ascii` to test whether a string's content is
-restricted to the ASCII range, and `is_subset`/`is_superset` as the
-predicate half of the `union`/`intersection`/`difference`/
-`symmetric_difference` set-ops family.
+Actively developed, nightly. Recently landed: `is_alpha`/`is_digit`/
+`is_alnum`/`is_space` as string content predicates,
+`is_positive`/`is_negative`/`is_zero` as numeric sign predicates, and
+`is_unique` to test whether a list has no duplicate elements. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): a slice step
+(`xs[start:end:step]`) for skipping elements or reversing a sequence,
+`is_divisible` as a two-argument numeric predicate generalizing
+`is_even`/`is_odd`'s fixed divisor of `2` to any divisor, `is_ascii` to
+test whether a string's content is restricted to the ASCII range,
+`is_subset`/`is_superset` as the predicate half of the
+`union`/`intersection`/`difference`/`symmetric_difference` set-ops
+family, destructuring assignment (`[a, b] = expr;`) for reassigning
+already-declared bindings the same way `let [a, b] = expr;` declares
+them, and `is_disjoint` to complete that set-ops family with a "no
+elements in common at all" predicate.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

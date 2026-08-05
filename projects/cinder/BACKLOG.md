@@ -246,6 +246,160 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: destructuring assignment — `[a, b] = expr;`
+
+Build: extend list-pattern destructuring to plain assignment, not just
+`let`/`for`. Today `let [a, b] = expr;` and `for [k, v] in items(m) { ... }`
+both bind fresh names via `DestructureLetStmt` (`cinder/ast_nodes.py:240-246`,
+`cinder/interpreter.py:266-284`), but there is no way to destructure into
+*already-declared* bindings — `[a, b] = [b, a];` (the classic swap idiom)
+today is a `ParseError` ("invalid assignment target"), since `_assignment`
+(`cinder/parser.py:739-753`) only recognizes an `Identifier` or `Index` on
+the left of `=`. Per `PROJECT.md`'s stated principle of mixing language
+depth with stdlib breadth, this is the depth entry to run after this
+batch's `is_divisible`/`is_ascii`/`is_subset`/`is_superset` breadth run.
+
+Scope: **list patterns only** — flat, no nesting, mirroring
+`let`'s own "no nesting" rule. Map-pattern assignment (`{a, b} = expr;`) is
+explicitly out of scope for this task: `{a, b}` isn't valid `MapLiteral`
+syntax (no `:` pairs) so making it parse would require touching the
+statement-level `{`-disambiguation logic in `PROJECT.md`'s design
+principles, a separate and larger change — leave it for a future task.
+
+Grammar: in `_assignment` (`cinder/parser.py:739-753`), `expr = self._ternary()`
+already parses a bracketed left-hand side as an ordinary `ListLiteral`
+(`cinder/ast_nodes.py:80-84`, `elements: list` mixing plain `Expr`s with
+`Spread` wrappers) before the `=` is even seen — so when `self._check(TokenType.EQ)`
+and `isinstance(expr, ListLiteral)`, validate its `elements` the same shape
+`_destructure_list_pattern` (`cinder/parser.py:307-...`) already enforces:
+every element must be a plain `Identifier`, except optionally the *last*
+element may be a `Spread` wrapping an `Identifier` (becomes the rest name);
+a `Spread` anywhere but last, or any element that isn't an `Identifier`
+(nested list, literal, call, etc.), or zero elements, raises the existing
+`ParseError("invalid assignment target", ...)` at the `=` token's
+line/column — same message already used for every other invalid target,
+no new wording needed. On success, build a new `DestructureAssign` AST
+node (add to `cinder/ast_nodes.py`, as an **`Expr`**, not a `Stmt` — unlike
+`DestructureLetStmt` this has no leading keyword to disambiguate at
+statement level, so it must slot into `_assignment`'s `Expr`-returning
+signature): fields `names: list`, `rest: "str | None"`, `value: "Expr"`,
+`line: int`, `column: int` (deliberately the same shape as
+`DestructureLetStmt` minus `is_map`, since map patterns aren't in scope
+here). Only bare `=` triggers this — `[a, b] ??= x` or any compound-assign
+op on a `ListLiteral` LHS should keep falling through to the existing
+"invalid assignment target" raise unchanged, no new grammar for those.
+
+Evaluator: in `evaluate()` (`cinder/interpreter.py:213-257`), add
+`isinstance(expr, DestructureAssign)` dispatching to a new
+`_evaluate_destructure_assign`. Evaluate `expr.value`, validate it's a
+list and length-check against `names`/`rest` — reuse the exact same
+messages `_bind_list_destructure` (`cinder/interpreter.py:384-418`) already
+raises ("cannot destructure {type_name} as a list", "destructuring pattern
+expects {n} elements, got {m}" / "...at least {n} elements, got {m}") — then
+assign (not define) each name via `env.assign(name, item)` instead of
+`env.define`, since these must be bindings that already exist. Mirror
+`_evaluate_assign`'s (`cinder/interpreter.py:727-739`) exact error
+translation for each name: a `KeyError` from `env.assign` (undefined name)
+becomes `CinderRuntimeError(self._undefined_name_message(name, env), ...)`;
+a `_ConstAssignError` (name is `const`) becomes
+`CinderRuntimeError(f"cannot assign to const {name!r}", ...)`. Whether to
+extend `_bind_list_destructure` with a mode flag or write a small sibling
+method is an implementation detail — either is fine as long as the
+length-mismatch messages stay identical to the `let`-destructure path and
+the per-name assign errors match `_evaluate_assign`'s shape above. Return
+the assigned list value (matching `_evaluate_assign`'s "assignment is an
+expression, returns the value" behavior) so `[a, b] = [b, a];` composes
+the same way plain `x = y;` does (e.g. usable as an `ExprStmt`, or inside a
+C-style `for` loop's init/step clause, though only the `ExprStmt` case
+needs a test).
+
+Acceptance criteria:
+- `let a = 1; let b = 2; [a, b] = [b, a]; print(a); print(b);` prints `2`
+  then `1` — the classic swap idiom.
+- `let a = 0; let b = 0; let rest = []; [a, b, ...rest] = [1, 2, 3, 4];`
+  gives `a` = `1`, `b` = `2`, `rest` = `[3, 4]`.
+- `let a = 0; let b = 0; [a, b] = [1];` raises `CinderRuntimeError`
+  matching `"destructuring pattern expects 2 elements, got 1"`.
+- `let a = 0; [a] = 5;` (non-list RHS) raises `CinderRuntimeError` matching
+  `"cannot destructure int as a list"`.
+- `[undefined_a, undefined_b] = [1, 2];` (names never `let`-declared)
+  raises `CinderRuntimeError` with the same undefined-name message shape
+  `x = 1;` on an undeclared `x` already produces.
+- `const a = 1; let b = 2; [a, b] = [3, 4];` raises `CinderRuntimeError`
+  matching `"cannot assign to const 'a'"`.
+- `[1, 2] = [3, 4];` (literal, not identifier, as a pattern element) and
+  `[[a, b], c] = [[1, 2], 3];` (nested pattern) both raise `ParseError`
+  ("invalid assignment target") — flat identifiers only, no nesting.
+- `[a, ...rest, b] = [1, 2, 3];` (rest not last) raises `ParseError`.
+- Plain `let [a, b] = expr;` declarations and `for [k, v] in items(m) { ... }`
+  loops are unaffected — this task only adds a new path through
+  `_assignment`, it does not touch `_let_statement`/`_destructure_let_statement`.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`,
+`cinder/interpreter.py`, `tests/test_parser.py`, `tests/test_interpreter.py`
+(grep for `DestructureLetStmt`/`_bind_list_destructure` first for exact
+current locations — line numbers above may have shifted if earlier tasks
+this cycle landed first). Once merged, README.md's destructuring bullet
+needs this new assignment form documented, and PROJECT.md's roadmap
+paragraph needs it moved from backlog to landed — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `is_disjoint` — no-common-elements predicate for lists
+
+Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
+`union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
+`is_superset` (`cinder/builtins.py:1613-1661` roughly, see current line
+numbers) already treat lists as unordered sets, but there is still no
+direct way to ask "do these two lists share *any* element at all" without
+computing `intersection(a, b)` and checking the result is empty by hand.
+This is the one predicate that set-ops family still leaves implicit —
+group it right after `is_superset` (task 4, if merged first) or right
+after `symmetric_difference` otherwise.
+
+Model directly on `_is_subset`'s structure (from task 4, or `_difference`'s
+at `cinder/builtins.py:1636-1640` if task 4 hasn't merged yet): reuse
+`_require_two_lists("is_disjoint", arguments, line, column)` for arity-2 +
+list-type validation on both arguments (same "requires a list as its
+first/second argument, got {type_name}" errors, no new message shape), and
+`_contains_value` for membership checks (deep equality via `values_equal`,
+consistent with the rest of this family). `is_disjoint(list1, list2)`
+returns `not any(_contains_value(list2, element) for element in list1)` —
+true when no element of `list1` is found in `list2` (equivalently, their
+`intersection` would be empty); no need to `_dedupe` first, a duplicate
+element that's present still makes the lists non-disjoint.
+
+Acceptance criteria:
+- `is_disjoint([1, 2], [3, 4]);` is `true`.
+- `is_disjoint([1, 2], [2, 3]);` is `false` — `2` is shared.
+- `is_disjoint([], [1, 2, 3]);` is `true`, `is_disjoint([], []);` is
+  `true` — the empty list shares nothing with anything, including itself.
+- `is_disjoint(a, b);` and `is_intersection(a, b)` being empty agree for
+  arbitrary lists `a`/`b` (i.e. `is_disjoint(a, b)` matches
+  `len(intersection(a, b)) == 0` for every case, without literally calling
+  `intersection`).
+- `is_disjoint([[1, 2]], [[1, 2]]);` is `false` — membership uses deep
+  equality (via `_contains_value`'s `values_equal`), not reference
+  identity, so a structurally-equal nested list still counts as shared.
+- `is_disjoint(5, [1, 2]);` / `is_disjoint([1, 2], 5);` (non-list argument,
+  either position) raises `CinderRuntimeError` naming `is_disjoint` and
+  which position (first/second) failed.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_subset`/
+`is_superset` if task 4 already landed, else near `symmetric_difference`
+— see current line numbers, shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_disjoint` added near `union`/`intersection`/`difference`/
+`symmetric_difference`/`is_subset`/`is_superset` — leave that to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

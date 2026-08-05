@@ -216,12 +216,12 @@ sitting next to `sign` the same way `is_even`/`is_odd` already sit
 next to it for parity (a property predicate on any number, int or
 float alike, raising on a non-numeric argument the same way `sign`
 itself does — unlike the kind predicates `is_int`/`is_float`)
-have since landed too.
+have since landed too, along with `is_unique` to test whether a list
+has no duplicate elements without discarding that information the way
+`unique` itself does (reusing `unique`'s own `_dedupe`/`values_equal`
+deep-equality machinery rather than reimplementing duplicate detection).
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_unique` to test whether a list has no duplicate elements without
-discarding that information the way `unique` itself does (reusing
-`unique`'s own `_dedupe`/`values_equal` deep-equality machinery
-rather than reimplementing duplicate detection), and a slice step —
+a slice step —
 `list[start:end:step]`/`string[start:end:step]` — extending the
 existing two-colon slice syntax with a third, optional component for
 skipping elements or reversing a sequence (`xs[::-1]`), the one
@@ -240,7 +240,17 @@ family (today asking whether one list's elements are all contained in
 another requires computing `difference` and checking it's empty by
 hand; these reuse that family's own `_require_two_lists`/
 `_contains_value` helpers directly, `is_superset(a, b)` simply
-`is_subset(b, a)` with the arguments flipped) — tasks 1 through 5 in
+`is_subset(b, a)` with the arguments flipped), a destructuring-assignment
+counterpart to the existing `let`/`for`-loop list patterns —
+`[a, b] = expr;` reassigning already-declared bindings the same flat,
+no-nesting way `let [a, b] = expr;` declares them (parsed only when a
+bracketed list literal sits on an assignment's left-hand side, so no
+ambiguity with list-literal expressions used elsewhere) — the next
+language-depth entry after slice step, and `is_disjoint(list1, list2)`
+as the one predicate the `union`/`intersection`/`difference`/
+`symmetric_difference`/`is_subset`/`is_superset` set-ops family still
+leaves implicit (no elements in common at all, the complement of a
+non-empty `intersection`) — tasks 1 through 6 in
 current `BACKLOG.md` — and only much later, a bytecode VM if
 performance ever actually matters. The Architect should keep scoping
 these into `BACKLOG.md` incrementally — do not jump ahead of the

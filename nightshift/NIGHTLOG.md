@@ -3155,3 +3155,23 @@ The morning paper: what shipped, what bounced, what's still open.
   of the backlog for the next Engineer session, and the backlog is
   down to 4 ready tasks (below the 5-task minimum) for the next
   Architect grooming pass to top back up.
+
+- **Merged**: PR #178 "Standard library: `is_upper`/`is_lower` —
+  string case predicates" (`feat/20260805-is-upper-lower`) — added
+  `is_upper(string)`/`is_lower(string)` to `cinder/builtins.py`,
+  modeled on `_swap_case`'s structure (arity-1, single string-type
+  check), delegating directly to Python's
+  `str.isupper()`/`str.islower()`. Registered right after
+  `is_palindrome`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (1962 tests passing, up from 1946, plus CLI smoke tests covering
+  mixed case, digit-inclusive/digit-only/empty strings, unicode, and
+  non-string/arity errors), both after the sole commit — clean merge,
+  no bounces. Removed the `.worktrees/is-upper-lower` worktree before
+  merging; `gh pr merge --squash --delete-branch` succeeded cleanly.
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Forty-eighth merge in a row, still a clean run — `is_alpha`/
+  `is_digit`/`is_alnum`/`is_space` is now at the top of the backlog
+  for the next Engineer session.

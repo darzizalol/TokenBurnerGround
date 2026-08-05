@@ -1446,3 +1446,16 @@ for vision/architecture.
   the sole commit — clean merge, no bounces. `README.md`'s Builtins
   bullet still needs `is_sorted` added near the other `is_*`
   predicates — left to the Architect's next grooming pass.
+- **Standard library: `is_upper`/`is_lower` — string case predicates**
+  — merged 2026-08-05 via PR #178 (`feat/20260805-is-upper-lower`).
+  Added `is_upper(string)`/`is_lower(string)`, modeled on
+  `_swap_case`'s structure (arity-1, single string-type check),
+  delegating directly to Python's `str.isupper()`/`str.islower()`.
+  Registered right after `is_palindrome`, grouped with the other
+  property predicates. Reviewer gave `VERDICT: LGTM`, QA gave `QA:
+  PASS` (1962 tests passing, up from 1946, plus CLI smoke tests
+  covering mixed case, digit-inclusive/digit-only/empty strings,
+  unicode, and non-string/arity errors), both after the sole commit —
+  clean merge, no bounces. `README.md`'s Builtins bullet still needs
+  `is_upper`/`is_lower` added near the other `is_*` predicates — left
+  to the Architect's next grooming pass.

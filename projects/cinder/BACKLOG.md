@@ -11,69 +11,11 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_upper`/`is_lower` — string case predicates [claimed 2026-08-05T14:21:02Z]
-
-Build: add `is_upper(string)` and `is_lower(string)` to
-`cinder/builtins.py`. `swap_case` flips case, `upper`/`lower` force
-case, but there is no builtin to ask whether a string is *already*
-entirely one case — the same gap `is_even`/`is_odd` fill for parity,
-applied to string casing this time. Like `is_palindrome` (already
-shipped), this is a property predicate on a string's existing content,
-not a kind predicate on any value — group it with `is_palindrome`
-near `is_string`, not with the case-manipulation builtins
-(`upper`/`lower`/`capitalize`/`title`/`swap_case`) it superficially
-resembles, the same "group by predicate family, not by implementation
-resemblance" principle `is_palindrome`'s task already established.
-
-Model directly on `_swap_case`'s structure
-(`cinder/builtins.py:611-618`): same arity-1 check via
-`_require_arity("is_upper"/"is_lower", arguments, 1, line, column)`,
-same single type check (argument a `string` else
-`CinderRuntimeError` matching `"is_upper() requires a string, got
-{type_name}"` / `"is_lower() requires a string, got {type_name}"`).
-Behavior once validated: delegate directly to Python's own
-`value.isupper()` / `value.islower()` — no reimplementation, matching
-how `swap_case` delegates to `str.swapcase()`. This inherits Python's
-semantics for free: digits/punctuation/whitespace are case-neutral
-and don't affect the result, but at least one cased character must be
-present, so a string with no cased characters at all (digits-only,
-empty, whitespace-only, punctuation-only) is neither upper nor lower.
-
-Acceptance criteria:
-- `is_upper("ABC");` is `true`, `is_lower("abc");` is `true`.
-- `is_upper("abc");` is `false`, `is_lower("ABC");` is `false`.
-- `is_upper("Abc");` is `false`, `is_lower("Abc");` is `false` — mixed
-  case is neither.
-- `is_upper("ABC123");` is `true`, `is_lower("abc123");` is `true` —
-  digits are case-neutral and don't break an otherwise-uniform-case
-  string.
-- `is_upper("123");` is `false`, `is_lower("123");` is `false` — no
-  cased characters at all, so neither predicate holds (matches
-  Python's `str.isupper()`/`str.islower()` on digit-only input).
-- `is_upper("");` is `false`, `is_lower("");` is `false` — empty
-  string has no cased characters either.
-- `is_upper(5);` (non-string argument) raises `CinderRuntimeError`
-  naming `is_upper` and `int` in the message; same for `is_lower(5);`
-  naming `is_lower`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column, for both functions.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_palindrome`/the
-other `is_*` predicates once that's landed, else near `is_string`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_upper`/`is_lower` added near the other `is_*`
-predicates — leave that to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
+## 1. Standard library: `is_alpha`/`is_digit`/`is_alnum`/`is_space` — string content predicates
 
 Build: add `is_alpha(string)`, `is_digit(string)`, `is_alnum(string)`,
-and `is_space(string)` to `cinder/builtins.py`. Task 1 above
-(`is_upper`/`is_lower`) answers "what case is this string in"; there
+and `is_space(string)` to `cinder/builtins.py`. `is_upper`/`is_lower`
+(already shipped) answer "what case is this string in"; there
 is still no builtin to answer the more basic "what kind of characters
 does this string contain" — today that requires manually walking the
 string and checking each character's code point against `ord()`
@@ -81,8 +23,8 @@ ranges. Like `is_upper`/`is_lower`, these are property predicates on a
 string's existing content, not kind predicates on any value — group
 all four with `is_upper`/`is_lower`/`is_palindrome` near `is_string`.
 
-Model directly on `_is_upper`'s/`_is_lower`'s structure (once task 1
-has landed — same file, same block): same arity-1 check via
+Model directly on `_is_upper`'s/`_is_lower`'s structure (same file,
+same block): same arity-1 check via
 `_require_arity(name, arguments, 1, line, column)`, same single type
 check (argument a `string` else `CinderRuntimeError` matching
 `"is_alpha() requires a string, got {type_name}"` and so on for each
@@ -116,17 +58,16 @@ Acceptance criteria:
   with line/column, for all four functions.
 - Full test suite passes.
 
-Likely files: `cinder/builtins.py` (register near `is_upper`/`is_lower`
-once task 1 has landed, else near `is_string`, see current line
-numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near the other
-`is_*` predicates — leave that to the Architect's next grooming pass,
-not this task.
+Likely files: `cinder/builtins.py` (register near `is_upper`/`is_lower`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_alpha`/`is_digit`/`is_alnum`/`is_space` added near
+the other `is_*` predicates — leave that to the Architect's next
+grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
+## 2. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
 `is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:958-968`)
@@ -150,8 +91,8 @@ are valid input here, matching `sign`, not `is_even`/`is_odd`) else
 once validated: `is_positive` returns `value > 0`, `is_negative`
 returns `value < 0`, `is_zero` returns `value == 0` — plain
 delegation to Python's own comparison operators, no reimplementation,
-the same "ask, don't force" spirit `is_upper`/`is_lower` (task 1
-above) use for Python's `str` predicates. `is_zero(0.0)` is `true`
+the same "ask, don't force" spirit `is_upper`/`is_lower` use for
+Python's `str` predicates. `is_zero(0.0)` is `true`
 (Python's `0.0 == 0` is `true`; no special-casing float zero).
 Register the trio in the builtins dict right after `"sign": _sign,`,
 keeping the numeric-property-predicate family (`sign`/`is_positive`/
@@ -185,7 +126,7 @@ that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_unique` — test whether a list has no duplicate elements
+## 3. Standard library: `is_unique` — test whether a list has no duplicate elements
 
 Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
 (`cinder/builtins.py:1504-1511`) already strips duplicates out of a
@@ -238,7 +179,7 @@ leave that to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
+## 4. Language: slice step — `list[start:end:step]` / `string[start:end:step]`
 
 Build: extend the slicing syntax to accept an optional third `:step`
 component, mirroring Python's extended-slice syntax closely enough to be
@@ -246,7 +187,7 @@ familiar without importing all of its edge cases. Today's grammar
 (`_finish_index` in `cinder/parser.py:975-987`) stops at `start:end`; there
 is no way to skip elements or reverse a sequence via slicing at all, so
 whole-sequence `reverse()` and manual index loops are still the only tools
-for anything step-based. Tasks 1-4 above are all stdlib-breadth predicates;
+for anything step-based. Tasks 1-3 above are all stdlib-breadth predicates;
 per `PROJECT.md`'s stated principle of mixing language depth with stdlib
 breadth "rather than running either in one long block," this is the
 language-depth entry to run alongside them.

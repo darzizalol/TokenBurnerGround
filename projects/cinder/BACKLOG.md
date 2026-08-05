@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_divisible` — two-argument numeric divisibility predicate
+## 1. Standard library: `is_divisible` — two-argument numeric divisibility predicate [claimed 2026-08-05T20:11:43Z]
 
 Build: add `is_divisible(a, b)` to `cinder/builtins.py`. `is_even`
 (`cinder/builtins.py:1062-1065`) and `is_odd` (`cinder/builtins.py:1068-1071`)

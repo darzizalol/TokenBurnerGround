@@ -137,6 +137,8 @@ while (i < 10) {
   integer parity/primality predicates, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
+  `is_alpha`/`is_digit`/`is_alnum`/`is_space` to test a string's content
+  (letters only, digits only, alphanumeric only, whitespace only),
   `swap_case` to flip each character's case, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
@@ -216,19 +218,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_palindrome` to test
-whether a string reads the same forwards and backwards, `is_int`/
-`is_float` splitting `is_number`'s single numeric kind into its two
-concrete ones, `is_prime` as an integer primality predicate,
-`is_sorted` to test whether a list is already in non-decreasing
-order, and `is_upper`/`is_lower` as string case predicates. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `is_alpha`/`is_digit`/
-`is_alnum`/`is_space` as string content predicates,
-`is_positive`/`is_negative`/`is_zero` as numeric sign predicates,
-`is_unique` to test whether a list has no duplicate elements, a slice
-step (`xs[start:end:step]`) for skipping elements or reversing a
-sequence, and `is_divisible` as a two-argument numeric predicate
-generalizing `is_even`/`is_odd`'s fixed divisor of `2` to any divisor.
+Actively developed, nightly. Recently landed: `is_int`/`is_float`
+splitting `is_number`'s single numeric kind into its two concrete ones,
+`is_prime` as an integer primality predicate, `is_sorted` to test
+whether a list is already in non-decreasing order, `is_upper`/
+`is_lower` as string case predicates, and `is_alpha`/`is_digit`/
+`is_alnum`/`is_space` as string content predicates. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `is_positive`/`is_negative`/
+`is_zero` as numeric sign predicates, `is_unique` to test whether a
+list has no duplicate elements, a slice step (`xs[start:end:step]`)
+for skipping elements or reversing a sequence, `is_divisible` as
+a two-argument numeric predicate generalizing `is_even`/`is_odd`'s
+fixed divisor of `2` to any divisor, and `is_ascii` to test whether a
+string's content is restricted to the ASCII range.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

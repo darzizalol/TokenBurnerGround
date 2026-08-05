@@ -14,7 +14,7 @@ a later task while an earlier one is unclaimed/open.
 ## 1. Standard library: `is_positive`/`is_negative`/`is_zero` — numeric sign predicates
 
 Build: add `is_positive(value)`, `is_negative(value)`, and
-`is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:958-968`)
+`is_zero(value)` to `cinder/builtins.py`. `sign` (`cinder/builtins.py:1018-1029`)
 already reduces a number to `1`/`-1`/`0`, but every caller who only
 cares about one branch has to write `sign(x) == 1` (or worse,
 `x > 0`, which silently accepts non-numeric input Cinder would
@@ -26,7 +26,7 @@ any value — so, like `is_even`/`is_odd`/`is_prime` and unlike
 apply to *any* number, not just integers — `is_positive(1.5)` is
 `true`, matching `sign`'s own float-inclusive behavior.
 
-Model directly on `_sign`'s structure (`cinder/builtins.py:958-968`):
+Model directly on `_sign`'s structure (`cinder/builtins.py:1018-1029`):
 same arity-1 check via `_require_arity(name, arguments, 1, line,
 column)`, same `_is_numeric(value)` check (not `_require_int` — floats
 are valid input here, matching `sign`, not `is_even`/`is_odd`) else
@@ -73,7 +73,7 @@ that to the Architect's next grooming pass, not this task.
 ## 2. Standard library: `is_unique` — test whether a list has no duplicate elements
 
 Build: add `is_unique(list)` to `cinder/builtins.py`. `unique`
-(`cinder/builtins.py:1504-1511`) already strips duplicates out of a
+(`cinder/builtins.py:1564-1571`) already strips duplicates out of a
 list via its `_dedupe` helper, but there is no way to ask *whether* a
 list had any duplicates in the first place without discarding that
 information — today that requires calling `unique(xs)` and comparing
@@ -84,7 +84,7 @@ predicate, so group it with `is_sorted`/`is_palindrome` near
 `is_string`, not with `unique`/`distinct_by` themselves.
 
 Model directly on `_unique`'s structure
-(`cinder/builtins.py:1504-1511`): same arity-1 check via
+(`cinder/builtins.py:1564-1571`): same arity-1 check via
 `_require_arity("is_unique", arguments, 1, line, column)`, same `list`
 type check (else `CinderRuntimeError` matching `"is_unique() requires
 a list, got {type_name}"`). Unlike `is_sorted`, there is no
@@ -194,7 +194,7 @@ both to the Architect's next grooming pass, not this task.
 ## 4. Standard library: `is_divisible` — two-argument numeric divisibility predicate
 
 Build: add `is_divisible(a, b)` to `cinder/builtins.py`. `is_even`
-(`cinder/builtins.py:992-995`) and `is_odd` (`cinder/builtins.py:998-1001`)
+(`cinder/builtins.py:1032-1035`) and `is_odd` (`cinder/builtins.py:1038-1041`)
 already answer "is this divisible by 2" (and its complement) for one fixed
 divisor, but there is no way to ask the same question for any other
 divisor — today that requires the caller to write `x % n == 0` by hand,
@@ -203,9 +203,9 @@ the general case those two special-case, so group it in the same block,
 immediately after `is_odd`, ahead of `is_prime`.
 
 Model directly on `_is_even`'s/`_is_odd`'s structure
-(`cinder/builtins.py:992-1001`) for the arity and per-argument validation,
+(`cinder/builtins.py:1032-1041`) for the arity and per-argument validation,
 and on `_pow`'s two-argument error-message shape
-(`cinder/builtins.py:1121-1133`, one message naming "first argument", one
+(`cinder/builtins.py:1160-1172`, one message naming "first argument", one
 naming "second argument") since `is_divisible` also takes two arguments:
 arity-2 check via `_require_arity("is_divisible", arguments, 2, line,
 column)`, then `_require_int("is_divisible", a, line, column)` and
@@ -245,6 +245,47 @@ current line numbers — shift if earlier tasks this cycle landed first),
 `tests/test_builtins.py`. Once merged, README.md's Builtins bullet needs
 `is_divisible` added near `is_even`/`is_odd` — leave that to the
 Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `is_ascii` — string ASCII-content predicate
+
+Build: add `is_ascii(string)` to `cinder/builtins.py`. `is_alpha`/`is_digit`/
+`is_alnum`/`is_space` (`cinder/builtins.py:651-688`) already cover a
+string's *character class*; there is no way to ask whether a string's
+content is restricted to the ASCII range at all (relevant before, say,
+handing a string to something byte-oriented) without hand-rolling a loop
+over `ord(c) < 128`. This is the same family, one more content predicate
+delegating straight to a Python `str` method — group it contiguously
+with `is_alpha`/`is_digit`/`is_alnum`/`is_space`, right after `is_space`.
+
+Model directly on `_is_space`'s structure (`cinder/builtins.py:681-688`):
+same arity-1 check via `_require_arity("is_ascii", arguments, 1, line,
+column)`, same string-type check (else `CinderRuntimeError` matching
+`"is_ascii() requires a string, got {type_name}"`). Behavior once
+validated: return `value.isascii()` — plain delegation to Python's own
+`str.isascii()`, no reimplementation, the same "ask, don't force"
+delegation spirit the rest of this family already follows. Note Python's
+`str.isascii()` (unlike `isalpha`/`isdigit`/etc.) is `true` for the empty
+string — keep that behavior, don't special-case it away.
+
+Acceptance criteria:
+- `is_ascii("hello");` is `true`, `is_ascii("Hello123 !");` is `true` —
+  letters, digits, punctuation, and spaces are all ASCII.
+- `is_ascii("héllo");` is `false` — accented character is non-ASCII.
+- `is_ascii("日本語");` is `false` — non-ASCII script entirely.
+- `is_ascii("");` is `true` — matches Python's own `"".isascii()`.
+- `is_ascii(5);` (non-string argument) raises `CinderRuntimeError` naming
+  `is_ascii` and `int` in the message.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_space`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_ascii` added near the other `is_*` string predicates — leave
+that to the Architect's next grooming pass, not this task.
 
 ---
 

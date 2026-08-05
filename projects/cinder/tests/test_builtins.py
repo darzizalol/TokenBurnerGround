@@ -5242,6 +5242,50 @@ class TestIsPalindrome(unittest.TestCase):
             run('is_palindrome("a", "b");')
 
 
+class TestIsSorted(unittest.TestCase):
+    def test_is_sorted_ascending_numbers_true(self):
+        self.assertIs(run("let result = is_sorted([1, 2, 3]);").get("result"), True)
+
+    def test_is_sorted_descending_numbers_false(self):
+        self.assertIs(run("let result = is_sorted([3, 2, 1]);").get("result"), False)
+
+    def test_is_sorted_equal_adjacent_elements_true(self):
+        self.assertIs(run("let result = is_sorted([1, 1, 2]);").get("result"), True)
+
+    def test_is_sorted_ascending_strings_true(self):
+        self.assertIs(
+            run('let result = is_sorted(["a", "b", "c"]);').get("result"), True
+        )
+
+    def test_is_sorted_descending_strings_false(self):
+        self.assertIs(
+            run('let result = is_sorted(["c", "a"]);').get("result"), False
+        )
+
+    def test_is_sorted_empty_list_true(self):
+        self.assertIs(run("let result = is_sorted([]);").get("result"), True)
+
+    def test_is_sorted_single_element_true(self):
+        self.assertIs(run("let result = is_sorted([5]);").get("result"), True)
+
+    def test_is_sorted_mixed_numeric_and_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_sorted([1, "a"]);')
+        self.assertIn("is_sorted", ctx.exception.message)
+
+    def test_is_sorted_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_sorted(5);")
+        self.assertIn("is_sorted", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_sorted_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_sorted();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_sorted([1], [2]);")
+
+
 class TestIsNumber(unittest.TestCase):
     def test_is_number_true_for_int(self):
         self.assertIs(run("let result = is_number(1);").get("result"), True)

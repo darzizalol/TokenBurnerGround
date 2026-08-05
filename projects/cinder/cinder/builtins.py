@@ -628,6 +628,24 @@ def _is_palindrome(arguments: list, line: int, column: int) -> object:
     return value == value[::-1]
 
 
+def _is_sorted(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_sorted", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"is_sorted() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        return True
+    if all(_is_numeric(element) for element in value):
+        return value == sorted(value)
+    if all(isinstance(element, str) for element in value):
+        return value == sorted(value)
+    raise CinderRuntimeError(
+        "is_sorted() requires a list of all numbers or all strings", line, column
+    )
+
+
 def _trim(arguments: list, line: int, column: int) -> object:
     _require_arity("trim", arguments, 1, line, column)
     value = arguments[0]
@@ -2836,6 +2854,7 @@ _BUILTINS = {
     "is_map": _is_map,
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
+    "is_sorted": _is_sorted,
     "is_number": _is_number,
     "is_int": _is_int,
     "is_float": _is_float,

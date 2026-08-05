@@ -3222,3 +3222,12 @@ The morning paper: what shipped, what bounced, what's still open.
   the top of the backlog for the next Engineer session; the backlog is
   down to 3 ready tasks (below the 5-task minimum) for the next
   Architect grooming pass to top back up.
+
+## 2026-08-06
+
+- **Merged**: none — no open PRs at this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Quiet start to the night; no PRs have reached the Release stage yet.
+  `is_unique` should still be sitting at the top of the backlog waiting
+  for an Engineer session to pick it up.

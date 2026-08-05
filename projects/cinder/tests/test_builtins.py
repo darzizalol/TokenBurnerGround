@@ -5541,6 +5541,42 @@ class TestIsSorted(unittest.TestCase):
             run("is_sorted([1], [2]);")
 
 
+class TestIsUnique(unittest.TestCase):
+    def test_is_unique_all_distinct_true(self):
+        self.assertIs(run("let result = is_unique([1, 2, 3]);").get("result"), True)
+
+    def test_is_unique_with_duplicate_false(self):
+        self.assertIs(run("let result = is_unique([1, 2, 2]);").get("result"), False)
+
+    def test_is_unique_empty_list_true(self):
+        self.assertIs(run("let result = is_unique([]);").get("result"), True)
+
+    def test_is_unique_single_element_true(self):
+        self.assertIs(run("let result = is_unique([5]);").get("result"), True)
+
+    def test_is_unique_duplicate_strings_false(self):
+        self.assertIs(
+            run('let result = is_unique(["a", "b", "a"]);').get("result"), False
+        )
+
+    def test_is_unique_deep_equality_nested_lists_false(self):
+        self.assertIs(
+            run("let result = is_unique([[1, 2], [1, 2]]);").get("result"), False
+        )
+
+    def test_is_unique_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_unique(5);")
+        self.assertIn("is_unique", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_unique_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_unique();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_unique([1], [2]);")
+
+
 class TestIsNumber(unittest.TestCase):
     def test_is_number_true_for_int(self):
         self.assertIs(run("let result = is_number(1);").get("result"), True)

@@ -3330,3 +3330,27 @@ The morning paper: what shipped, what bounced, what's still open.
   `is_superset` is now at the top of the backlog for the next Engineer
   session, and the backlog is down to 3 ready tasks for the next
   Architect grooming pass to top back up.
+
+- **Merged**: PR #185 "Standard library: `is_subset`/`is_superset` —
+  set-membership predicates for lists" (`feat/20260805-is-subset-superset`)
+  — added `_is_subset`/`_is_superset` to `cinder/builtins.py`, reusing
+  `_require_two_lists` for arity/type validation and `_contains_value`
+  (deep equality) for membership checks, matching the existing
+  `union`/`intersection`/`difference`/`symmetric_difference` family.
+  `is_superset` validates under its own name first, then flips the roles,
+  so error messages report the correct builtin name. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2064 tests passing, plus CLI smoke
+  tests covering both-true/false cases, empty-list edges, duplicates,
+  deep-equality on nested lists, non-list arguments in both positions,
+  and wrong arity), both after the sole commit — clean merge, no bounces.
+  Removed the `.worktrees/is-subset-superset` worktree before merging;
+  `gh pr merge --squash --delete-branch` succeeded cleanly. BACKLOG.md
+  task 1 removed (its README/CHANGELOG entry left to the Architect's
+  grooming pass per the task's own note) and remaining tasks renumbered
+  (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-fifth merge in a row — clean run continues; `destructuring
+  assignment` is now at the top of the backlog for the next Engineer
+  session, and the backlog is down to 4 ready tasks for the next
+  Architect grooming pass to top back up.

@@ -11,76 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_subset`/`is_superset` — set-membership predicates for lists [claimed 2026-08-05T20:40:19Z]
-
-Build: add `is_subset(list1, list2)`/`is_superset(list1, list2)` to
-`cinder/builtins.py`. `union`/`intersection`/`difference`/
-`symmetric_difference` (`cinder/builtins.py:1624-1649`) already treat
-lists as unordered sets via the shared `_require_two_lists`/
-`_contains_value` helpers, but there is no way to ask whether one
-list's elements are entirely contained in another without computing
-`difference(a, b)` and checking the result is empty by hand. This is
-the predicate half of that same set-ops family — group it right after
-`symmetric_difference`, ahead of `interleave`.
-
-Model directly on `_difference`'s structure
-(`cinder/builtins.py:1636-1640`): reuse `_require_two_lists("is_subset",
-arguments, line, column)` for arity-2 + list-type validation on both
-arguments (already produces "requires a list as its first/second
-argument, got {type_name}" errors, matching this family's existing
-message shape — no new error strings to invent), and `_contains_value`
-for membership checks (deep equality via `values_equal`, consistent
-with how `intersection`/`difference` already compare elements). `A is
-subset of B` means every element of `A` is found in `B`:
-`is_subset(list1, list2)` returns `all(_contains_value(list2, element)
-for element in list1)` (no need to `_dedupe` first — a duplicate
-element that's present is still present, dedup would only cost cycles
-here, not change the answer). `is_superset(list1, list2)` is the
-mirror question — every element of `list2` found in `list1` — so
-implement it by delegating straight to the same subset check with
-arguments flipped, the same reuse-over-reimplementation spirit
-`is_odd`/`not is_divisible(x, 2)` already follow elsewhere in this
-backlog: validate both arguments as lists under the `is_superset` name
-first (so a bad argument is reported as `is_superset`, not `is_subset`,
-in the error message), then return the same "every element of the
-second list found in the first" check with the roles swapped.
-
-Acceptance criteria:
-- `is_subset([1, 2], [1, 2, 3]);` is `true`.
-- `is_subset([1, 2, 3], [1, 2]);` is `false` — `3` is missing from the
-  second list.
-- `is_subset([], [1, 2, 3]);` is `true` — the empty list is a subset of
-  everything, including another empty list (`is_subset([], []);` is
-  `true`).
-- `is_subset([1, 2, 3], []);` is `false`.
-- `is_superset([1, 2, 3], [1, 2]);` is `true`; `is_superset([1, 2],
-  [1, 2, 3]);` is `false` — exactly the flipped-argument reading of
-  `is_subset`.
-- `is_subset(a, b);` and `is_superset(b, a);` agree for arbitrary lists
-  `a`/`b`.
-- `is_subset([1, 1, 2], [1, 2]);` is `true` — duplicates in the first
-  list don't require duplicate matches in the second.
-- `is_subset([[1, 2]], [[1, 2], [3, 4]]);` is `true` — membership uses
-  deep equality (via `_contains_value`'s `values_equal`), not reference
-  identity, so a structurally-equal nested list counts as present.
-- `is_subset(5, [1, 2]);` / `is_subset([1, 2], 5);` (non-list argument,
-  either position) raises `CinderRuntimeError` naming `is_subset` and
-  which position (first/second) failed; same pattern for `is_superset`
-  naming `is_superset`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column, for both builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `symmetric_difference`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_subset`/`is_superset` added near
-`union`/`intersection`/`difference`/`symmetric_difference` — leave that
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: destructuring assignment — `[a, b] = expr;`
+## 1. Language: destructuring assignment — `[a, b] = expr;`
 
 Build: extend list-pattern destructuring to plain assignment, not just
 `let`/`for`. Today `let [a, b] = expr;` and `for [k, v] in items(m) { ... }`
@@ -181,7 +112,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_disjoint` — no-common-elements predicate for lists
+## 2. Standard library: `is_disjoint` — no-common-elements predicate for lists
 
 Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
@@ -234,7 +165,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: map-pattern destructuring assignment — `{a, b} = expr;`
+## 3. Language: map-pattern destructuring assignment — `{a, b} = expr;`
 
 Build: extend map-pattern destructuring to plain assignment, the map-shaped
 counterpart to task 2's list-pattern assignment. Today `let {a, b} = expr;`
@@ -331,7 +262,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_anagram` — two-string character-multiset predicate
+## 4. Standard library: `is_anagram` — two-string character-multiset predicate
 
 Build: add `is_anagram(string1, string2)` to `cinder/builtins.py`. It's the
 two-string sibling to `_is_palindrome`'s (`cinder/builtins.py:620-627`)

@@ -44,10 +44,11 @@ while (i < 10) {
   an optional trailing rest element `let [a, b, ...rest] = expr;` that
   collects any remaining elements into a list, empty if none are left) and
   map destructuring (`let {a, b} = expr;`, binds each identifier by
-  looking it up as a key, extra unnamed keys ignored), plus a plain
-  assignment form of list destructuring for already-declared bindings
+  looking it up as a key, extra unnamed keys ignored), plus plain
+  assignment forms of both for already-declared bindings — list
   (`[a, b] = expr;`, same flat positional binding and optional trailing
   rest element as the `let` form, e.g. the swap idiom `[a, b] = [b, a];`)
+  and map (`{a, b} = expr;`, same key-lookup binding as the `let` form)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
@@ -228,16 +229,17 @@ projects/cinder/
 Actively developed, nightly. Recently landed: `is_disjoint` completing the
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
 `is_superset` set-ops family with a "no elements in common at all"
-predicate, and destructuring assignment (`[a, b] = expr;`) for reassigning
-already-declared bindings the same way `let [a, b] = expr;` declares them.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the map-pattern
-counterpart to that destructuring assignment (`{a, b} = expr;`),
-`is_anagram` to test whether two strings share the same multiset of
-characters, `is_permutation` as its list-oriented sibling (same multiset
-check, applied to lists instead of strings), `is_numeric` to test a
-string's Unicode-numeric content (broader than the existing `is_digit`),
-and `is_blank` to test whether a string is empty or whitespace-only (the
-one case `is_space` deliberately excludes).
+predicate, and destructuring assignment for both list (`[a, b] = expr;`)
+and map (`{a, b} = expr;`) patterns, reassigning already-declared
+bindings the same way their `let` forms declare them.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_anagram` to test
+whether two strings share the same multiset of characters, `is_permutation`
+as its list-oriented sibling (same multiset check, applied to lists
+instead of strings), `is_numeric` to test a string's Unicode-numeric
+content (broader than the existing `is_digit`), `is_blank` to test
+whether a string is empty or whitespace-only (the one case `is_space`
+deliberately excludes), and `factorial` rounding out the `pow`/`gcd`/
+`lcm` numeric family.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

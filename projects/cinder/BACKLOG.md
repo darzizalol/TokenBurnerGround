@@ -247,6 +247,62 @@ next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
+
+Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
+sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1222-1330`). Register
+it right after `lcm` — it belongs with that small cluster of
+number-theoretic builtins, not the string/list families above or below it.
+
+Model the arity/type-checking on `_gcd`/`_lcm`'s structure
+(`cinder/builtins.py:1310-1330`): reuse `_require_arity("factorial",
+arguments, 1, line, column)`, then check `arguments[0]` is an `int` and
+not a `bool` (same `isinstance(value, int) and not isinstance(value,
+bool)` guard `_gcd`/`_lcm` use per-argument), raising `CinderRuntimeError`
+with `f"factorial() requires an int, got {type_name(value)}"` on failure.
+Separately, negative input is a domain error, not a type error — mirror
+`_log`'s own "requires a number" vs. "requires a positive number, domain
+error" split (`cinder/builtins.py` around `_log`, two distinct checks, two
+distinct messages): raise `CinderRuntimeError` with
+`"factorial() requires a non-negative int, domain error"` when
+`value < 0`. For the computation itself, delegate directly to Python's
+`math.factorial(value)` (already imported — `builtins.py:17` has `import
+math`) rather than hand-rolling a loop; Cinder ints are Python ints, so
+there's no overflow to guard (unlike `pow()`, which does need its own
+overflow/complex-result guards for float bases/exponents — `factorial`
+only ever takes a non-negative int, so none of that machinery applies
+here).
+
+Acceptance criteria:
+- `factorial(0);` is `1`.
+- `factorial(1);` is `1`.
+- `factorial(5);` is `120`.
+- `factorial(10);` is `3628800`.
+- `factorial(20);` is `2432902008176640000` — confirms no overflow/precision
+  loss on a result too large for a 64-bit float to represent exactly.
+- `factorial(-1);` raises `CinderRuntimeError` matching
+  `"factorial() requires a non-negative int, domain error"`.
+- `factorial(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"factorial() requires an int, got
+  float"` — no implicit float-to-int coercion, matching how `gcd`/`lcm`
+  reject floats today.
+- `factorial(true);` (bool, which is a Python `int` subclass) raises
+  `CinderRuntimeError` matching `"factorial() requires an int, got
+  bool"` — same bool-exclusion `gcd`/`lcm`/`is_even`/`is_odd` already
+  apply.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `gcd`/`lcm`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
+`factorial` added near `pow`/`gcd`/`lcm`, and `PROJECT.md`'s roadmap
+paragraph needs it moved from backlog to landed — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

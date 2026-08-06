@@ -146,6 +146,7 @@ while (i < 10) {
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
   `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` to test a string's content
   (letters only, digits only, alphanumeric only, whitespace only, ASCII-only),
+  `is_anagram` to test whether two strings share the same character multiset,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -226,20 +227,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_disjoint` completing the
-`union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
-`is_superset` set-ops family with a "no elements in common at all"
-predicate, and destructuring assignment for both list (`[a, b] = expr;`)
-and map (`{a, b} = expr;`) patterns, reassigning already-declared
-bindings the same way their `let` forms declare them.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_anagram` to test
-whether two strings share the same multiset of characters, `is_permutation`
-as its list-oriented sibling (same multiset check, applied to lists
+Actively developed, nightly. Recently landed: destructuring assignment for
+both list (`[a, b] = expr;`) and map (`{a, b} = expr;`) patterns,
+reassigning already-declared bindings the same way their `let` forms
+declare them, and `is_anagram` to test whether two strings share the same
+multiset of characters.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_permutation` as
+`is_anagram`'s list-oriented sibling (same multiset check, applied to lists
 instead of strings), `is_numeric` to test a string's Unicode-numeric
 content (broader than the existing `is_digit`), `is_blank` to test
 whether a string is empty or whitespace-only (the one case `is_space`
-deliberately excludes), and `factorial` rounding out the `pow`/`gcd`/
-`lcm` numeric family.
+deliberately excludes), `factorial` rounding out the `pow`/`gcd`/
+`lcm` numeric family, and `is_pangram` to test whether a string contains
+every letter of the alphabet at least once.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -246,6 +246,62 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_pangram` — alphabet-coverage string predicate
+
+Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
+predicate testing whether `string` contains every letter of the English
+alphabet at least once (case-insensitive — `"a"` and `"A"` both count
+toward the same letter), sitting near `is_palindrome`/`is_anagram`
+(`cinder/builtins.py:622-645`) in the string-predicate cluster rather
+than the `is_alpha`/`is_digit`/.../`is_ascii` content-predicate family
+(`:648-698`): unlike that family, `is_pangram` isn't a bare delegation to
+a single `str.is*()` Python method — Python has no built-in for this, so
+the body needs actual logic. Register right after `is_anagram`, ahead of
+`is_upper`.
+
+Model the arity/type-checking on `_is_palindrome`'s structure
+(`cinder/builtins.py:622-629`): reuse `_require_arity("is_pangram",
+arguments, 1, line, column)`, check `arguments[0]` is a `str` (raising
+`CinderRuntimeError` with `f"is_pangram() requires a string, got
+{type_name(value)}"` on a non-string argument, matching the exact
+wording pattern `is_palindrome`/`is_alpha`/etc. all use), then compute
+the body as `set(string.ascii_lowercase) <= set(value.lower())` (`string`
+module already imported for `ascii_lowercase`/`ascii_uppercase` elsewhere
+in this file — check the existing `import string` at the top before
+adding a duplicate; if absent, `set("abcdefghijklmnopqrstuvwxyz")` is an
+equally fine literal, no need to add a new import for one character
+class). Non-letter characters (digits, punctuation, whitespace) are
+simply ignored by the set-membership check — no special-casing needed.
+
+Acceptance criteria:
+- `is_pangram("The quick brown fox jumps over the lazy dog");` is
+  `true` — the canonical English pangram.
+- `is_pangram("Pack my box with five dozen liquor jugs");` is `true` —
+  a second, shorter canonical pangram, confirming the check isn't
+  accidentally tied to the first example's specific length/casing.
+- `is_pangram("hello world");` is `false` — missing most letters.
+- `is_pangram("");` is `false` — empty string, matching the "empty is
+  false" rule every other content-style predicate in this file follows.
+- `is_pangram("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG");` is
+  `true` — all-uppercase input, confirming the check is
+  case-insensitive.
+- `is_pangram("abcdefghijklmnopqrstuvwxyz");` is `true` — exactly the
+  26 letters, no repeats, no filler text.
+- `is_pangram(5);` (non-string argument) raises `CinderRuntimeError`
+  matching `"is_pangram() requires a string, got int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_anagram`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_pangram` added near `is_palindrome`/`is_anagram`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

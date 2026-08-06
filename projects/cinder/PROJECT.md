@@ -253,35 +253,39 @@ map-pattern counterpart — `{a, b} = expr;` reassigning already-declared
 bindings the same flat way `let {a, b} = expr;` declares them, taught to
 the statement-level `{`-disambiguation logic (see Design principles
 above) as a third speculative-parse outcome tried only after both "map
-literal expression" and "block" fail — have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_anagram(a, b)` as task 1, the two-string sibling to `is_palindrome`'s
+literal expression" and "block" fail — have since landed too, along with
+`is_anagram(a, b)` as the two-string sibling to `is_palindrome`'s
 single-string "reads the same both ways" check (same case-sensitive,
 no-normalization spirit: two strings are anagrams when they have the
 same multiset of characters, counting whitespace/punctuation like any
 other character, via `collections.Counter` rather than a hand-rolled
-sort-and-compare), `is_permutation(list1, list2)` as task 2,
-`is_anagram`'s list-oriented sibling (the same multiset-equality check,
+sort-and-compare).
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+`is_permutation(list1, list2)` as task 1, `is_anagram`'s list-oriented
+sibling (the same multiset-equality check,
 but since list elements can be unhashable nested lists/maps, matched via
 `_dedupe`'s O(n²) `values_equal` fallback strategy rather than
-`Counter`), `is_numeric(string)` as task 3, one more member of the
+`Counter`), `is_numeric(string)` as task 2, one more member of the
 `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
 content-predicate family, delegating to Python's own `str.isnumeric()`
 the same way `is_ascii` delegates to `str.isascii()` (named
 `_is_numeric_string` internally, not `_is_numeric` — that name is already
 taken by an unrelated int/float helper used throughout `builtins.py`),
-`is_blank(string)` as task 4, filling the one gap `is_space`
+`is_blank(string)` as task 3, filling the one gap `is_space`
 deliberately leaves open (`str.isspace()` is `false` on the empty string,
 matching every other content predicate's "empty is false" rule, so
 `is_blank` is the first member of this family that is *not* a bare
 delegation to a single `str.is*()` method: `value == "" or
-value.isspace()`), and `factorial(n)` as task 5, a numeric builtin
+value.isspace()`), `factorial(n)` as task 4, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (delegating to Python's own
 `math.factorial`, already imported; a non-negative-int domain check
 mirrors the "requires a number" vs. "domain error" split `log()` already
-uses for its own positive-input requirement) — topping the backlog back
-up to five ready tasks — and only much later, a bytecode VM if
-performance ever actually matters.
+uses for its own positive-input requirement), and `is_pangram(string)`
+as task 5, a case-insensitive alphabet-coverage predicate sitting next
+to `is_palindrome`/`is_anagram` rather than the `is_alpha`/.../`is_ascii`
+content-predicate family, since it isn't a bare delegation to a single
+`str.is*()` method — and only much later, a bytecode VM if performance
+ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

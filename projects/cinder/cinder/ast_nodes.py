@@ -68,18 +68,22 @@ class Assign:
 
 @dataclass(frozen=True)
 class DestructureAssign:
-    """`[a, b] = expr;` (and the rest-element form `[a, ...rest] = expr;`) —
-    the assignment counterpart to `DestructureLetStmt`: `names`/`rest` must
-    already be bound (via `env.assign`, not `env.define`). Flat list patterns
+    """`[a, b] = expr;` (and the rest-element form `[a, ...rest] = expr;`), or
+    with `is_map=True` the map-pattern form `{a, b} = expr;` (no rest element
+    for that form — `rest` is always `None` when `is_map` is `True`) — the
+    assignment counterpart to `DestructureLetStmt`: `names`/`rest` must
+    already be bound (via `env.assign`, not `env.define`). Flat patterns
     only, mirroring `DestructureLetStmt`'s own "no nesting" rule; unlike that
     statement node this has no leading keyword to disambiguate at statement
-    level, so it is an `Expr` and slots into `_assignment` instead."""
+    level, so it is an `Expr` and slots into `_assignment`/`_brace_statement`
+    instead."""
 
     names: list
     rest: "str | None"
     value: "Expr"
     line: int
     column: int
+    is_map: bool = False
 
 
 @dataclass(frozen=True)

@@ -114,7 +114,7 @@ def shape(node):
     if isinstance(node, Assign):
         return ("Assign", node.name, shape(node.value))
     if isinstance(node, DestructureAssign):
-        return ("DestructureAssign", node.names, node.rest, shape(node.value))
+        return ("DestructureAssign", node.names, node.rest, shape(node.value), node.is_map)
     if isinstance(node, Ternary):
         return (
             "Ternary",
@@ -848,6 +848,7 @@ class TestListsAndMaps(unittest.TestCase):
                         ["a", "b"],
                         None,
                         ("ListLiteral", [("Identifier", "b"), ("Identifier", "a")]),
+                        False,
                     ),
                 )
             ],
@@ -872,6 +873,7 @@ class TestListsAndMaps(unittest.TestCase):
                                 ("Literal", 4),
                             ],
                         ),
+                        False,
                     ),
                 )
             ],
@@ -900,6 +902,79 @@ class TestListsAndMaps(unittest.TestCase):
     def test_list_destructure_qq_assign_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse_stmts("[a, b] ??= [1, 2];")
+
+    def test_map_destructure_assignment(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{a, b} = {"a": 1, "b": 2};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        ["a", "b"],
+                        None,
+                        (
+                            "MapLiteral",
+                            [
+                                (("Literal", "a"), ("Literal", 1)),
+                                (("Literal", "b"), ("Literal", 2)),
+                            ],
+                        ),
+                        True,
+                    ),
+                )
+            ],
+        )
+
+    def test_map_destructure_assignment_single_name(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{a} = {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        ["a"],
+                        None,
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        True,
+                    ),
+                )
+            ],
+        )
+
+    def test_map_destructure_assignment_literal_pattern_element_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("{1, 2} = {};")
+
+    def test_map_literal_statement_unaffected(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{"a": 1};')],
+            [("ExprStmt", ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))],
+        )
+
+    def test_empty_braces_still_empty_block(self):
+        self.assertEqual([stmt_shape(s) for s in parse_stmts("{}")], [("Block", [])])
+
+    def test_let_map_destructure_unaffected_by_assign_form(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {a, b} = {"a": 1, "b": 2};')],
+            [
+                (
+                    "DestructureLetStmt",
+                    ["a", "b"],
+                    (
+                        "MapLiteral",
+                        [
+                            (("Literal", "a"), ("Literal", 1)),
+                            (("Literal", "b"), ("Literal", 2)),
+                        ],
+                    ),
+                    True,
+                    None,
+                )
+            ],
+        )
 
     def test_dot_access_desugars_to_index(self):
         self.assertEqual(

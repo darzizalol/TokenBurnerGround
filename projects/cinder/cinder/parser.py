@@ -382,7 +382,41 @@ class Parser:
             self._advance()  # consume ';'
             return ExprStmt(expr)
         self.pos = start
+        destructure_assign = self._try_map_destructure_assign_statement()
+        if destructure_assign is not None:
+            return destructure_assign
+        self.pos = start
         return self._block()
+
+    def _try_map_destructure_assign_statement(self) -> "Stmt | None":
+        """Speculatively parses `{a, b} = expr;` as a map-pattern
+        assignment-destructure, tried after the map-literal-expression
+        attempt in `_brace_statement` fails (or isn't followed by `;`) and
+        before falling back to `_block()`. Returns `None` — leaving `self.pos`
+        untouched for the caller to reset — on any shape mismatch (a
+        non-identifier pattern element, or no `=` after the closing `}`), so
+        `{1, 2};` and the like keep failing exactly as before via the
+        `_block()` fallback."""
+
+        start = self.pos
+        try:
+            self._advance()  # consume '{'
+            names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(
+                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+                )
+            self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
+            eq_token = self._consume(TokenType.EQ, "'=' after destructuring pattern")
+        except ParseError:
+            self.pos = start
+            return None
+        value = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after destructuring assignment")
+        return ExprStmt(
+            DestructureAssign(names, None, value, eq_token.line, eq_token.column, is_map=True)
+        )
 
     def _block(self) -> Stmt:
         self._advance()  # consume '{'

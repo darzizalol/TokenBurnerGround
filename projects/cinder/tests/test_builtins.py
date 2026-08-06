@@ -5614,6 +5614,60 @@ class TestIsAnagram(unittest.TestCase):
             run('is_anagram("a", "b", "c");')
 
 
+class TestIsPermutation(unittest.TestCase):
+    def test_is_permutation_reordered_true(self):
+        self.assertIs(
+            run("let result = is_permutation([1, 2, 3], [3, 2, 1]);").get("result"),
+            True,
+        )
+
+    def test_is_permutation_different_counts_false(self):
+        self.assertIs(
+            run("let result = is_permutation([1, 2, 2], [1, 1, 2]);").get("result"),
+            False,
+        )
+
+    def test_is_permutation_both_empty_true(self):
+        self.assertIs(run("let result = is_permutation([], []);").get("result"), True)
+
+    def test_is_permutation_different_lengths_false(self):
+        self.assertIs(
+            run("let result = is_permutation([1], [1, 2]);").get("result"), False
+        )
+
+    def test_is_permutation_uses_deep_equality(self):
+        self.assertIs(
+            run("let result = is_permutation([[1, 2]], [[1, 2]]);").get("result"),
+            True,
+        )
+
+    def test_is_permutation_distinguishes_int_and_string(self):
+        self.assertIs(
+            run('let result = is_permutation([1, "1"], ["1", 1]);').get("result"),
+            True,
+        )
+
+    def test_is_permutation_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_permutation(5, [1, 2]);")
+        self.assertIn("is_permutation", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_permutation_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_permutation([1, 2], 5);")
+        self.assertIn("is_permutation", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_permutation_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_permutation([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_permutation([1], [2], [3]);")
+
+
 class TestIsUpper(unittest.TestCase):
     def test_is_upper_all_upper_true(self):
         self.assertIs(run('let result = is_upper("ABC");').get("result"), True)

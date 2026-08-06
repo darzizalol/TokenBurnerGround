@@ -5560,6 +5560,60 @@ class TestIsPalindrome(unittest.TestCase):
             run('is_palindrome("a", "b");')
 
 
+class TestIsAnagram(unittest.TestCase):
+    def test_is_anagram_true(self):
+        self.assertIs(
+            run('let result = is_anagram("listen", "silent");').get("result"), True
+        )
+
+    def test_is_anagram_false(self):
+        self.assertIs(
+            run('let result = is_anagram("hello", "world");').get("result"), False
+        )
+
+    def test_is_anagram_both_empty_true(self):
+        self.assertIs(run('let result = is_anagram("", "");').get("result"), True)
+
+    def test_is_anagram_different_lengths_false(self):
+        self.assertIs(run('let result = is_anagram("a", "");').get("result"), False)
+
+    def test_is_anagram_order_independent_true(self):
+        self.assertIs(
+            run('let result = is_anagram("aabb", "abab");').get("result"), True
+        )
+
+    def test_is_anagram_case_sensitive_false(self):
+        self.assertIs(
+            run('let result = is_anagram("Listen", "Silent");').get("result"), False
+        )
+
+    def test_is_anagram_no_whitespace_stripping(self):
+        self.assertIs(
+            run('let result = is_anagram("dormitory", "dirty room");').get("result"),
+            False,
+        )
+
+    def test_is_anagram_of_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_anagram(5, "abc");')
+        self.assertIn("is_anagram", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_anagram_of_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_anagram("abc", 5);')
+        self.assertIn("is_anagram", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_anagram_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('is_anagram("a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('is_anagram("a", "b", "c");')
+
+
 class TestIsUpper(unittest.TestCase):
     def test_is_upper_all_upper_true(self):
         self.assertIs(run('let result = is_upper("ABC");').get("result"), True)

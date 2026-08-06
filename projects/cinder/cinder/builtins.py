@@ -16,6 +16,7 @@ output.
 import itertools
 import math
 import random
+from collections import Counter
 
 from cinder.errors import CinderRuntimeError
 from cinder.interpreter import (
@@ -626,6 +627,22 @@ def _is_palindrome(arguments: list, line: int, column: int) -> object:
             f"is_palindrome() requires a string, got {type_name(value)}", line, column
         )
     return value == value[::-1]
+
+
+def _is_anagram(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_anagram", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"is_anagram() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"is_anagram() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    return Counter(string1) == Counter(string2)
 
 
 def _is_upper(arguments: list, line: int, column: int) -> object:
@@ -2997,6 +3014,7 @@ _BUILTINS = {
     "is_map": _is_map,
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
+    "is_anagram": _is_anagram,
     "is_upper": _is_upper,
     "is_lower": _is_lower,
     "is_alpha": _is_alpha,

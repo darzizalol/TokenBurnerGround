@@ -1529,3 +1529,22 @@ for vision/architecture.
   combinations, zero-divisor and non-int/bool/string argument errors in both
   positions, and wrong arity), both after the sole commit — clean merge, no
   bounces.
+- **Language: destructuring assignment — `[a, b] = expr;`** — merged
+  2026-08-06T14:12:30Z via PR #186 (`feat/20260806-destructure-assign`).
+  Added `DestructureAssign` as a new `Expr` node (`cinder/ast_nodes.py`)
+  produced by `_assignment` (`cinder/parser.py`) when a bare `=` follows a
+  flat-identifier `ListLiteral` LHS (optionally with a trailing rest
+  spread), reusing the existing "invalid assignment target" error for
+  every other shape; `_evaluate_destructure_assign`
+  (`cinder/interpreter.py`) reuses `_bind_list_destructure`'s length-check
+  messages and mirrors `_evaluate_assign`'s error translation
+  (`KeyError` → undefined-name, `_ConstAssignError` → const message),
+  assigning via `env.assign` rather than `env.define`. Scope: flat list
+  patterns only, no nesting, map-pattern assignment left for a future
+  task. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2080 tests
+  passing, plus CLI smoke tests covering the swap idiom, rest capture,
+  destructuring an index-expression result, and all four runtime/parse
+  error shapes), both after the sole commit — clean merge, no bounces.
+  `README.md`'s destructuring bullet and `PROJECT.md`'s roadmap paragraph
+  still need this form documented as landed — left to the Architect's
+  next grooming pass.

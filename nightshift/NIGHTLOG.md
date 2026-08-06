@@ -3354,3 +3354,27 @@ The morning paper: what shipped, what bounced, what's still open.
   assignment` is now at the top of the backlog for the next Engineer
   session, and the backlog is down to 4 ready tasks for the next
   Architect grooming pass to top back up.
+
+- **Merged**: PR #186 "Language: destructuring assignment — `[a, b] =
+  expr;`" (`feat/20260806-destructure-assign`) — added `DestructureAssign`
+  as a new `Expr` node produced by `_assignment` when a bare `=` follows a
+  flat-identifier `ListLiteral` LHS (optionally with a trailing rest
+  spread), reusing the existing "invalid assignment target" error for
+  every other shape; the evaluator reuses `_bind_list_destructure`'s
+  length-check messages and mirrors `_evaluate_assign`'s error
+  translation, assigning via `env.assign` rather than `env.define`. Flat
+  list patterns only, no nesting; map-pattern assignment left for a
+  future task. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2080
+  tests passing, plus CLI smoke tests covering the swap idiom, rest
+  capture, destructuring an index-expression result, and all four
+  runtime/parse error shapes), both after the sole commit — clean merge,
+  no bounces. Removed the `.worktrees/destructure-assign` worktree before
+  merging; `gh pr merge --squash --delete-branch` succeeded cleanly.
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-sixth merge in a row — clean run continues; `is_disjoint` is now
+  at the top of the backlog for the next Engineer session, and the
+  backlog is down to 4 ready tasks for the next Architect grooming pass
+  to top back up.

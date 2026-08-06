@@ -3487,3 +3487,22 @@ The morning paper: what shipped, what bounced, what's still open.
   late July, merge-endpoint flakiness from 2026-08-03) remain historical
   only — no repeat of either issue this cycle, `gh pr merge` succeeded on
   the first attempt.
+
+- **Merged**: PR #192 "Standard library: `is_blank` — whitespace-or-empty
+  string predicate" (`feat/20260806-is-blank`) — added `is_blank(string)`
+  to `cinder/builtins.py`, registered right after `is_space`, filling the
+  gap `is_space` deliberately leaves open (`str.isspace()` is `false` on
+  the empty string): `is_blank` checks `value == "" or value.isspace()`
+  instead of delegating to a single `str.is*()` method. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2137 tests passing, plus CLI/REPL
+  smoke tests covering empty/spaces-only/other-whitespace/non-blank/
+  padded-non-blank/non-string-arg/arity cases), both after the sole
+  commit — clean merge, no bounces. Removed the `.worktrees/is-blank`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-second merge in a row — the clean run continues; the backlog is
+  down to 4 ready tasks (`factorial`, `is_pangram`, `digit_sum`, list
+  comprehensions) for the next Architect grooming pass to top back up.

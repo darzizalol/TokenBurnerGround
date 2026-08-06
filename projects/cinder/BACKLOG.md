@@ -11,53 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_blank` — whitespace-or-empty string predicate [claimed 2026-08-06T20:02:01Z]
-
-Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
-(`cinder/builtins.py:713-720`) deliberately leaves open: `str.isspace()`
-(what `is_space` delegates to) is `false` on the empty string, the same
-"empty string is false" rule every member of the content-predicate family
-(`is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii`) follows on purpose
-— so today there is no single builtin call that answers "is this string
-either empty or nothing but whitespace", a common pre-validation check
-(e.g. rejecting blank form input) that currently needs
-`is_empty(s) or is_space(s)` spelled out by hand every time. Register
-right after `is_space`, ahead of `is_ascii` — it belongs next to the
-predicate whose blind spot it fills, not at the end of the family.
-
-Model the arity/type-checking on `_is_space`'s structure exactly (same
-`_require_arity("is_blank", arguments, 1, line, column)` and
-`f"is_blank() requires a string, got {type_name(value)}"` non-string
-error), but the body is `value == "" or value.isspace()` — not a bare
-delegation to a single Python `str` method the way every other member of
-this family is, since no single `str.is*()` method covers "empty or
-whitespace" on its own.
-
-Acceptance criteria:
-- `is_blank("");` is `true` — the one case that makes this predicate not
-  redundant with `is_space`.
-- `is_blank("   ");` is `true` — spaces only.
-- `is_blank("\t\n");` is `true` — other whitespace characters, same set
-  `str.isspace()` already recognizes.
-- `is_blank("a");` is `false`.
-- `is_blank(" a ");` is `false` — whitespace padding a non-whitespace
-  character still fails.
-- `is_blank(5);` (non-string argument) raises `CinderRuntimeError`
-  matching `"is_blank() requires a string, got int"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_space`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
-`is_blank` added near `is_space`, and `PROJECT.md`'s roadmap paragraph
-needs it moved from backlog to landed — leave both to the Architect's
-next grooming pass, not this task.
-
----
-
-## 2. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
+## 1. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
 
 Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1254-1363`). Register
@@ -113,7 +67,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_pangram` — alphabet-coverage string predicate
+## 2. Standard library: `is_pangram` — alphabet-coverage string predicate
 
 Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
 predicate testing whether `string` contains every letter of the English
@@ -171,7 +125,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `digit_sum` — sum of an integer's decimal digits
+## 3. Standard library: `digit_sum` — sum of an integer's decimal digits
 
 Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
 sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the
@@ -225,7 +179,7 @@ not this task.
 
 ---
 
-## 5. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
+## 4. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
 
 Build: teach the list-literal grammar a comprehension form, so
 `[x * 2 for x in range(5)]` becomes `[0, 2, 4, 6, 8]` without spelling out

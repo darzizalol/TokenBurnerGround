@@ -1619,3 +1619,17 @@ for vision/architecture.
   commit — clean merge, no bounces. `README.md`'s Builtins bullet and
   `PROJECT.md`'s roadmap paragraph still need `is_numeric` moved from
   backlog to landed — left to the Architect's next grooming pass.
+- **Standard library: `is_blank` — whitespace-or-empty string predicate**
+  — merged 2026-08-06 via PR #192 (`feat/20260806-is-blank`). Added
+  `is_blank(string)` to `cinder/builtins.py`, registered right after
+  `is_space`, filling the gap `is_space` deliberately leaves open:
+  `str.isspace()` is `false` on the empty string, so `is_blank` checks
+  `value == "" or value.isspace()` instead of delegating to a single
+  `str.is*()` method like the rest of the content-predicate family.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2137 tests passing
+  plus CLI/REPL smoke tests covering empty, spaces-only, other-whitespace,
+  non-blank, padded-non-blank, non-string-arg, and arity-error cases),
+  both after the sole commit — clean merge, no bounces. `README.md`'s
+  Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
+  `is_blank` moved from backlog to landed — left to the Architect's next
+  grooming pass.

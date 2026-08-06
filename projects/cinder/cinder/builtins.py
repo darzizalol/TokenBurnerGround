@@ -645,6 +645,21 @@ def _is_anagram(arguments: list, line: int, column: int) -> object:
     return Counter(string1) == Counter(string2)
 
 
+def _is_permutation(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("is_permutation", arguments, line, column)
+    if len(list1) != len(list2):
+        return False
+    remaining = list(list2)
+    for element in list1:
+        for index, candidate in enumerate(remaining):
+            if values_equal(element, candidate):
+                del remaining[index]
+                break
+        else:
+            return False
+    return True
+
+
 def _is_upper(arguments: list, line: int, column: int) -> object:
     _require_arity("is_upper", arguments, 1, line, column)
     value = arguments[0]
@@ -3015,6 +3030,7 @@ _BUILTINS = {
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
     "is_anagram": _is_anagram,
+    "is_permutation": _is_permutation,
     "is_upper": _is_upper,
     "is_lower": _is_lower,
     "is_alpha": _is_alpha,

@@ -146,6 +146,7 @@ while (i < 10) {
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
   `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii`/`is_numeric` to test a string's content
   (letters only, digits only, alphanumeric only, whitespace only, ASCII-only, Unicode-numeric),
+  `is_blank` to test whether a string is empty or whitespace-only (the one case `is_space` excludes),
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
   `swap_case` to flip each character's case,
@@ -228,19 +229,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: destructuring assignment for
-both list (`[a, b] = expr;`) and map (`{a, b} = expr;`) patterns,
-reassigning already-declared bindings the same way their `let` forms
-declare them, `is_anagram` to test whether two strings share the same
-multiset of characters, `is_permutation` as its list-oriented sibling, and
-`is_numeric` to test a string's Unicode-numeric content (broader than the
-existing `is_digit` — also true for fraction characters like `"½"`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_blank` to test
-whether a string is empty or whitespace-only (the one case `is_space`
-deliberately excludes), `factorial` rounding out the `pow`/`gcd`/`lcm`
-numeric family, `is_pangram` to test whether a string contains every
-letter of the alphabet at least once, and `digit_sum` to sum an integer's
-decimal digits.
+Actively developed, nightly. Recently landed: `is_anagram` to test whether
+two strings share the same multiset of characters, `is_permutation` as its
+list-oriented sibling, `is_numeric` to test a string's Unicode-numeric
+content (broader than the existing `is_digit` — also true for fraction
+characters like `"½"`), and `is_blank` to test whether a string is empty
+or whitespace-only (the one case `is_space` deliberately excludes).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `factorial` rounding out
+the `pow`/`gcd`/`lcm` numeric family, `is_pangram` to test whether a
+string contains every letter of the alphabet at least once, `digit_sum`
+to sum an integer's decimal digits, list comprehensions
+(`[expr for x in iterable]`, with an optional `if` filter), and their
+map-literal counterpart, map comprehensions (`{k: v for x in iterable}`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

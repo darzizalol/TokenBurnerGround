@@ -269,35 +269,37 @@ content-predicate family, delegating to Python's own `str.isnumeric()`
 the same way `is_ascii` delegates to `str.isascii()` (named
 `_is_numeric_string` internally, not `_is_numeric` — that name was
 already taken by an unrelated int/float helper used throughout
-`builtins.py`).
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_blank(string)` as task 1, filling the one gap `is_space`
+`builtins.py`), and `is_blank(string)`, filling the one gap `is_space`
 deliberately leaves open (`str.isspace()` is `false` on the empty string,
 matching every other content predicate's "empty is false" rule, so
-`is_blank` is the first member of this family that is *not* a bare
+`is_blank` is the first member of that family that is *not* a bare
 delegation to a single `str.is*()` method: `value == "" or
-value.isspace()`), `factorial(n)` as task 2, a numeric builtin
+value.isspace()`), have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+`factorial(n)` as task 1, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (delegating to Python's own
 `math.factorial`, already imported; a non-negative-int domain check
 mirrors the "requires a number" vs. "domain error" split `log()` already
 uses for its own positive-input requirement), `is_pangram(string)`
-as task 3, a case-insensitive alphabet-coverage predicate sitting next
+as task 2, a case-insensitive alphabet-coverage predicate sitting next
 to `is_palindrome`/`is_anagram`/`is_permutation` rather than the
 `is_alpha`/.../`is_ascii` content-predicate family, since it isn't a
 bare delegation to a single `str.is*()` method, and `digit_sum(n)` as
-task 4, a numeric builtin sitting next to `is_even`/`is_odd`/
+task 3, a numeric builtin sitting next to `is_even`/`is_odd`/
 `is_divisible`/`is_prime` (the integer-property cluster, not the
 two-argument `pow`/`gcd`/`lcm`/`factorial` group) that sums an integer's
 decimal digits after normalizing away its sign via `abs()`, and, as
-task 5, list comprehensions — `[expr for x in iterable]` and
+task 4, list comprehensions — `[expr for x in iterable]` and
 `[expr for x in iterable if cond]` — the first language-depth task
 queued in seven cycles after a long run of stdlib-only additions,
 scoped narrowly to a single non-destructuring loop variable, one
 optional `if` filter, and no nesting, mirroring `_execute_for`'s own
 iteration/closure-per-iteration shape rather than introducing a second
-one. A map-literal comprehension counterpart (`{k: v for ...}`) is a
-plausible follow-up once list comprehensions land, not scoped yet —
-and only much later, a bytecode VM if performance ever actually
+one, and, as task 5, its map-literal counterpart — map comprehensions
+(`{k: v for x in iterable}`, same optional `if` filter), scoped to land
+only after list comprehensions merge since it deliberately mirrors that
+task's grammar/AST/interpreter shape rather than inventing a second one
+— and only much later, a bytecode VM if performance ever actually
 matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.

@@ -660,6 +660,16 @@ def _is_permutation(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _is_pangram(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_pangram", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_pangram() requires a string, got {type_name(value)}", line, column
+        )
+    return set("abcdefghijklmnopqrstuvwxyz") <= set(value.lower())
+
+
 def _is_upper(arguments: list, line: int, column: int) -> object:
     _require_arity("is_upper", arguments, 1, line, column)
     value = arguments[0]
@@ -3066,6 +3076,7 @@ _BUILTINS = {
     "is_palindrome": _is_palindrome,
     "is_anagram": _is_anagram,
     "is_permutation": _is_permutation,
+    "is_pangram": _is_pangram,
     "is_upper": _is_upper,
     "is_lower": _is_lower,
     "is_alpha": _is_alpha,

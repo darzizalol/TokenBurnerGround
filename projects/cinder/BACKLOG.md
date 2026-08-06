@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_anagram` — two-string character-multiset predicate
+## 1. Standard library: `is_anagram` — two-string character-multiset predicate [claimed 2026-08-06T19:25:13Z]
 
 Build: add `is_anagram(string1, string2)` to `cinder/builtins.py`. It's the
 two-string sibling to `_is_palindrome`'s (`cinder/builtins.py:620-627`)

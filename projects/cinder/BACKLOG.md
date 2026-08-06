@@ -326,6 +326,71 @@ grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
+
+Build: add `is_armstrong(n)` to `cinder/builtins.py`, one more member of
+the integer-property predicate cluster (`is_even`/`is_odd`/
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, tasks 1 and 4
+above — by the time this task is claimed those will have landed and
+shifted the file's line numbers, so search for `is_perfect_square`
+rather than trusting a specific line) — an Armstrong number (also
+called narcissistic) is one that equals the sum of its own decimal
+digits, each raised to the power of the total digit count, e.g.
+`153 = 1^3 + 5^3 + 3^3`. It's a natural sibling to land after
+`digit_sum`/`is_perfect_square` since it does its own digit-by-digit
+walk with a digit-count-dependent exponent rather than reusing
+`digit_sum`'s plain sum.
+
+Model the arity/type-checking on `_is_prime`'s structure
+(`cinder/builtins.py:1167-1169` before this cycle's other tasks land):
+reuse `_require_arity("is_armstrong", arguments, 1, line, column)` and
+`_require_int("is_armstrong", arguments[0], line, column)` (the same
+helper `is_even`/`is_odd`/`is_divisible`/`is_prime`/`digit_sum`/
+`is_perfect_square` already use, defined at `cinder/builtins.py:157-162`
+— raises `CinderRuntimeError` with `f"{name}() requires an int, got
+{type_name(value)}"` and rejects `bool` since `bool` is a Python `int`
+subclass, so no separate bool-exclusion check is needed here). For the
+computation: negative integers are never Armstrong numbers (matching
+`is_perfect_square`'s own negative-input-is-just-`false` convention, no
+domain error), so return `False` immediately when `value < 0`;
+otherwise convert to a digit string with `digits = str(value)`, compute
+`power = len(digits)`, and return `sum(int(digit) ** power for digit in
+digits) == value`. Single-digit numbers (`0`-`9`) are trivially
+Armstrong numbers under this definition (`power == 1`, so the sum is
+just the digit itself) — do not special-case them away.
+
+Acceptance criteria:
+- `is_armstrong(0);` is `true` — `0^1 == 0`.
+- `is_armstrong(5);` is `true` — single digits are trivially Armstrong
+  (`5^1 == 5`).
+- `is_armstrong(9);` is `true`.
+- `is_armstrong(153);` is `true` — `1^3 + 5^3 + 3^3 == 153`.
+- `is_armstrong(9474);` is `true` — `9^4 + 4^4 + 7^4 + 4^4 == 9474`.
+- `is_armstrong(10);` is `false` — `1^2 + 0^2 == 1 != 10`.
+- `is_armstrong(123);` is `false`.
+- `is_armstrong(-153);` is `false` — negative input, never Armstrong
+  despite `153` itself being one; no domain error, just `false`,
+  matching `is_perfect_square`'s negative-input convention.
+- `is_armstrong(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"is_armstrong() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of the
+  cluster.
+- `is_armstrong(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_armstrong() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_perfect_square`/
+`is_prime`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_armstrong` added near `is_even`/`is_odd`/
+`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

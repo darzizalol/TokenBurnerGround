@@ -149,6 +149,7 @@ while (i < 10) {
   `is_blank` to test whether a string is empty or whitespace-only (the one case `is_space` excludes),
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
+  `is_pangram` to test whether a string contains every letter of the alphabet at least once,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -229,18 +230,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_anagram` to test whether
-two strings share the same multiset of characters, `is_permutation` as its
-list-oriented sibling, `is_numeric` to test a string's Unicode-numeric
-content (broader than the existing `is_digit` — also true for fraction
-characters like `"½"`), and `is_blank` to test whether a string is empty
-or whitespace-only (the one case `is_space` deliberately excludes).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `factorial` rounding out
-the `pow`/`gcd`/`lcm` numeric family, `is_pangram` to test whether a
-string contains every letter of the alphabet at least once, `digit_sum`
-to sum an integer's decimal digits, list comprehensions
-(`[expr for x in iterable]`, with an optional `if` filter), and their
-map-literal counterpart, map comprehensions (`{k: v for x in iterable}`).
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_blank` to test whether a
+string is empty or whitespace-only (the one case `is_space` deliberately
+excludes), `factorial` rounding out the `pow`/`gcd`/`lcm` numeric family,
+and `is_pangram` to test whether a string contains every letter of the
+alphabet at least once.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `digit_sum` to sum an
+integer's decimal digits, list comprehensions (`[expr for x in iterable]`,
+with an optional `if` filter), their map-literal counterpart, map
+comprehensions (`{k: v for x in iterable}`), `is_perfect_square` to test
+whether an integer is a perfect square, and `is_armstrong` to test whether
+an integer equals the sum of its own digits each raised to the digit
+count. The backlog mixes language depth with stdlib breadth over time
+rather than running either in one long block. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

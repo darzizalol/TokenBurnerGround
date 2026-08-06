@@ -730,6 +730,16 @@ def _is_ascii(arguments: list, line: int, column: int) -> object:
     return value.isascii()
 
 
+def _is_numeric_string(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_numeric", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_numeric() requires a string, got {type_name(value)}", line, column
+        )
+    return value.isnumeric()
+
+
 def _is_sorted(arguments: list, line: int, column: int) -> object:
     _require_arity("is_sorted", arguments, 1, line, column)
     value = arguments[0]
@@ -3038,6 +3048,7 @@ _BUILTINS = {
     "is_alnum": _is_alnum,
     "is_space": _is_space,
     "is_ascii": _is_ascii,
+    "is_numeric": _is_numeric_string,
     "is_sorted": _is_sorted,
     "is_unique": _is_unique,
     "is_number": _is_number,

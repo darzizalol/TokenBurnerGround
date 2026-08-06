@@ -5855,6 +5855,36 @@ class TestIsAscii(unittest.TestCase):
             run('is_ascii("a", "b");')
 
 
+class TestIsNumeric(unittest.TestCase):
+    def test_is_numeric_plain_digits_true(self):
+        self.assertIs(run('let result = is_numeric("123");').get("result"), True)
+
+    def test_is_numeric_with_letter_false(self):
+        self.assertIs(run('let result = is_numeric("12a3");').get("result"), False)
+
+    def test_is_numeric_empty_string_false(self):
+        self.assertIs(run('let result = is_numeric("");').get("result"), False)
+
+    def test_is_numeric_minus_sign_false(self):
+        self.assertIs(run('let result = is_numeric("-5");').get("result"), False)
+
+    def test_is_numeric_fraction_char_true_but_is_digit_false(self):
+        self.assertIs(run('let result = is_numeric("½");').get("result"), True)
+        self.assertIs(run('let result = is_digit("½");').get("result"), False)
+
+    def test_is_numeric_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_numeric(5);")
+        self.assertIn("is_numeric", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_numeric_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_numeric();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_numeric("1", "2");')
+
+
 class TestIsSorted(unittest.TestCase):
     def test_is_sorted_ascending_numbers_true(self):
         self.assertIs(run("let result = is_sorted([1, 2, 3]);").get("result"), True)

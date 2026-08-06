@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_permutation` — two-list character/element-multiset predicate
+## 1. Standard library: `is_permutation` — two-list character/element-multiset predicate [claimed 2026-08-06T19:37:18Z]
 
 Build: add `is_permutation(list1, list2)` to `cinder/builtins.py`. It's
 task 1's `is_anagram` generalized from strings to lists: two lists are

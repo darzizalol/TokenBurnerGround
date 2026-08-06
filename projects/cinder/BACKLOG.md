@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring assignment — `[a, b] = expr;`
+## 1. Language: destructuring assignment — `[a, b] = expr;` [claimed 2026-08-06T14:01:54Z]
 
 Build: extend list-pattern destructuring to plain assignment, not just
 `let`/`for`. Today `let [a, b] = expr;` and `for [k, v] in items(m) { ... }`

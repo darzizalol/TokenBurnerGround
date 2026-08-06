@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_disjoint` — no-common-elements predicate for lists
+## 1. Standard library: `is_disjoint` — no-common-elements predicate for lists [claimed 2026-08-06T14:21:44Z]
 
 Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/

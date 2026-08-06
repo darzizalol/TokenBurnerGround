@@ -720,6 +720,16 @@ def _is_space(arguments: list, line: int, column: int) -> object:
     return value.isspace()
 
 
+def _is_blank(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_blank", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_blank() requires a string, got {type_name(value)}", line, column
+        )
+    return value == "" or value.isspace()
+
+
 def _is_ascii(arguments: list, line: int, column: int) -> object:
     _require_arity("is_ascii", arguments, 1, line, column)
     value = arguments[0]
@@ -3047,6 +3057,7 @@ _BUILTINS = {
     "is_digit": _is_digit,
     "is_alnum": _is_alnum,
     "is_space": _is_space,
+    "is_blank": _is_blank,
     "is_ascii": _is_ascii,
     "is_numeric": _is_numeric_string,
     "is_sorted": _is_sorted,

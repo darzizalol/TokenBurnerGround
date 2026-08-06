@@ -3337,6 +3337,66 @@ class TestIsSubsetIsSuperset(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             run("is_superset([1], [2], [3]);")
 
+    def test_is_disjoint_true_when_no_shared_elements(self):
+        self.assertIs(
+            run("let result = is_disjoint([1, 2], [3, 4]);").get("result"), True
+        )
+
+    def test_is_disjoint_false_when_element_shared(self):
+        self.assertIs(
+            run("let result = is_disjoint([1, 2], [2, 3]);").get("result"), False
+        )
+
+    def test_is_disjoint_empty_first_list_is_true(self):
+        self.assertIs(
+            run("let result = is_disjoint([], [1, 2, 3]);").get("result"), True
+        )
+
+    def test_is_disjoint_both_empty_is_true(self):
+        self.assertIs(run("let result = is_disjoint([], []);").get("result"), True)
+
+    def test_is_disjoint_matches_empty_intersection(self):
+        self.assertEqual(
+            run(
+                "let a = [1, 2, 3]; let b = [3, 4, 5];"
+                "let result = [is_disjoint(a, b), len(intersection(a, b)) == 0];"
+            ).get("result"),
+            [False, False],
+        )
+        self.assertEqual(
+            run(
+                "let a = [1, 2]; let b = [3, 4];"
+                "let result = [is_disjoint(a, b), len(intersection(a, b)) == 0];"
+            ).get("result"),
+            [True, True],
+        )
+
+    def test_is_disjoint_uses_deep_equality(self):
+        self.assertIs(
+            run(
+                "let result = is_disjoint([[1, 2]], [[1, 2]]);"
+            ).get("result"),
+            False,
+        )
+
+    def test_is_disjoint_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_disjoint(5, [1, 2]);")
+        self.assertIn("is_disjoint", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+
+    def test_is_disjoint_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_disjoint([1, 2], 5);")
+        self.assertIn("is_disjoint", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+
+    def test_is_disjoint_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_disjoint([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_disjoint([1], [2], [3]);")
+
 
 class TestInterleave(unittest.TestCase):
     def test_interleave_equal_length_lists(self):

@@ -1690,6 +1690,11 @@ def _is_superset(arguments: list, line: int, column: int) -> object:
     return all(_contains_value(list1, element) for element in list2)
 
 
+def _is_disjoint(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("is_disjoint", arguments, line, column)
+    return not any(_contains_value(list2, element) for element in list1)
+
+
 def _interleave(arguments: list, line: int, column: int) -> object:
     list1, list2 = _require_two_lists("interleave", arguments, line, column)
     result = []
@@ -2933,6 +2938,7 @@ _BUILTINS = {
     "symmetric_difference": _symmetric_difference,
     "is_subset": _is_subset,
     "is_superset": _is_superset,
+    "is_disjoint": _is_disjoint,
     "interleave": _interleave,
     "interpose": _interpose,
     "reverse": _reverse,

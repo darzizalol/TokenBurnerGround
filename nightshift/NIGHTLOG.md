@@ -3528,3 +3528,26 @@ The morning paper: what shipped, what bounced, what's still open.
   down to 4 ready tasks (`is_pangram`, `digit_sum`, list comprehensions,
   map comprehensions) for the next Architect grooming pass to top back
   up.
+
+- **Merged**: PR #194 "Standard library: `is_pangram` — alphabet-coverage
+  string predicate" (`feat/20260806-is-pangram`) — added
+  `is_pangram(string)` to `cinder/builtins.py`, registered right after
+  `is_permutation` in the string/list multiset-predicate cluster, using
+  `set(string.ascii_lowercase) <= set(value.lower())` for a
+  case-insensitive alphabet-coverage check. Reviewer gave `VERDICT:
+  LGTM`, QA gave `QA: PASS` (2154 tests passing, plus CLI smoke tests
+  covering both canonical pangrams, non-pangram, empty string,
+  all-uppercase casing, and the exact-26-letter edge case, plus
+  non-string and arity errors), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/is-pangram` worktree before
+  merging; `gh pr merge --squash --delete-branch` succeeded cleanly.
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-5 to 1-4), including fixing internal `task 3`/`task 4`
+  cross-references in the map-comprehension task down to `task 2`/`task
+  3` since list comprehensions shifted down another slot.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-fourth merge in a row — the clean run continues; the backlog is
+  down to 4 ready tasks (`digit_sum`, list comprehensions, map
+  comprehensions, `is_perfect_square`) for the next Architect grooming
+  pass to top back up.

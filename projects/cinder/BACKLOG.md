@@ -11,65 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pangram` — alphabet-coverage string predicate [claimed 2026-08-06T20:24:17Z]
-
-Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
-predicate testing whether `string` contains every letter of the English
-alphabet at least once (case-insensitive — `"a"` and `"A"` both count
-toward the same letter), sitting near `is_palindrome`/`is_anagram`/
-`is_permutation` (`cinder/builtins.py:622-660`) in the string/list
-multiset-predicate cluster rather than the `is_alpha`/`is_digit`/.../
-`is_ascii` content-predicate family (`:683-731`): unlike that family,
-`is_pangram` isn't a bare delegation to a single `str.is*()` Python
-method — Python has no built-in for this, so the body needs actual
-logic. Register right after `is_permutation` (which now sits right
-after `is_anagram`, having landed since this task was first scoped),
-ahead of `is_upper`.
-
-Model the arity/type-checking on `_is_palindrome`'s structure
-(`cinder/builtins.py:622-629`): reuse `_require_arity("is_pangram",
-arguments, 1, line, column)`, check `arguments[0]` is a `str` (raising
-`CinderRuntimeError` with `f"is_pangram() requires a string, got
-{type_name(value)}"` on a non-string argument, matching the exact
-wording pattern `is_palindrome`/`is_alpha`/etc. all use), then compute
-the body as `set(string.ascii_lowercase) <= set(value.lower())` (`string`
-module already imported for `ascii_lowercase`/`ascii_uppercase` elsewhere
-in this file — check the existing `import string` at the top before
-adding a duplicate; if absent, `set("abcdefghijklmnopqrstuvwxyz")` is an
-equally fine literal, no need to add a new import for one character
-class). Non-letter characters (digits, punctuation, whitespace) are
-simply ignored by the set-membership check — no special-casing needed.
-
-Acceptance criteria:
-- `is_pangram("The quick brown fox jumps over the lazy dog");` is
-  `true` — the canonical English pangram.
-- `is_pangram("Pack my box with five dozen liquor jugs");` is `true` —
-  a second, shorter canonical pangram, confirming the check isn't
-  accidentally tied to the first example's specific length/casing.
-- `is_pangram("hello world");` is `false` — missing most letters.
-- `is_pangram("");` is `false` — empty string, matching the "empty is
-  false" rule every other content-style predicate in this file follows.
-- `is_pangram("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG");` is
-  `true` — all-uppercase input, confirming the check is
-  case-insensitive.
-- `is_pangram("abcdefghijklmnopqrstuvwxyz");` is `true` — exactly the
-  26 letters, no repeats, no filler text.
-- `is_pangram(5);` (non-string argument) raises `CinderRuntimeError`
-  matching `"is_pangram() requires a string, got int"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_anagram`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_pangram` added near `is_palindrome`/`is_anagram`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `digit_sum` — sum of an integer's decimal digits
+## 1. Standard library: `digit_sum` — sum of an integer's decimal digits
 
 Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
 sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the
@@ -123,7 +65,7 @@ not this task.
 
 ---
 
-## 3. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
+## 2. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
 
 Build: teach the list-literal grammar a comprehension form, so
 `[x * 2 for x in range(5)]` becomes `[0, 2, 4, 6, 8]` without spelling out
@@ -221,16 +163,16 @@ moved from backlog to landed, and a map-comprehension follow-up task
 
 ---
 
-## 4. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
+## 3. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
 
-Build: the map-literal counterpart to task 3's list comprehensions —
+Build: the map-literal counterpart to task 2's list comprehensions —
 `{x: x * x for x in [1, 2, 3]}` becomes `{1: 1, 2: 4, 3: 9}`. This task
-is scoped to land *after* task 3 (list comprehensions) is merged, since
+is scoped to land *after* task 2 (list comprehensions) is merged, since
 it deliberately mirrors that task's grammar/AST/interpreter shape rather
-than inventing a second one — do not claim this task while task 3 is
+than inventing a second one — do not claim this task while task 2 is
 still open on the backlog.
 
-Scope, matching task 3's narrowness exactly (same reasoning: single
+Scope, matching task 2's narrowness exactly (same reasoning: single
 non-destructuring loop variable, one optional filter, no nesting):
 - Exactly one `for` clause, one loop variable — a plain `IDENTIFIER`
   only, no destructuring.
@@ -252,7 +194,7 @@ comprehension-aware version of that first-entry parse, check
 consume `for`, an `IDENTIFIER`, `in`, then `_ternary()` for the iterable;
 if `IF` follows, consume it and parse another `_ternary()` for the
 condition; finally consume `}` and return a `MapComprehension` — skip
-the existing comma-loop entirely, same as task 3's list version. Note one
+the existing comma-loop entirely, same as task 2's list version. Note one
 wrinkle list comprehensions didn't have: a map entry starts with `key:
 value`, two expressions, not one, so the `FOR` lookahead has to happen
 after both are parsed, not after a single element like `_list_element()`.
@@ -266,7 +208,7 @@ doesn't need its own disambiguation branch.
 
 Interpreter: in `cinder/interpreter.py`, add a branch (near
 `_evaluate_map_literal`, `cinder/interpreter.py:579-601`) for
-`MapComprehension` that mirrors task 3's `ListComprehension` evaluation
+`MapComprehension` that mirrors task 2's `ListComprehension` evaluation
 (same iterable-type dispatch and fresh-child-`Environment`-per-iteration
 binding for closure correctness) but builds a `dict` instead of a
 `list`: for each item, bind `var_name` in the fresh iteration
@@ -290,7 +232,7 @@ Acceptance criteria:
   collapse the same way a hand-written map literal with duplicate keys
   does, not an error.
 - A closure captured per-iteration observes that iteration's binding,
-  same as task 3's equivalent case (e.g. a comprehension value built
+  same as task 2's equivalent case (e.g. a comprehension value built
   from `fn() { return x; }` per iteration must not all close over the
   same final `x`).
 - `{k: v for k in 5};` (non-iterable) raises `CinderRuntimeError`
@@ -315,10 +257,10 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_perfect_square` — perfect-square numeric predicate
+## 4. Standard library: `is_perfect_square` — perfect-square numeric predicate
 
 Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
-builtin sitting right after `digit_sum` (task 2 above — by the time this
+builtin sitting right after `digit_sum` (task 1 above — by the time this
 task is claimed, tasks 1-4 will have landed and shifted the file's line
 numbers, so search for `digit_sum` rather than trusting a specific line)
 in the integer-property predicate cluster (`is_even`/`is_odd`/

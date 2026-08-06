@@ -1647,3 +1647,16 @@ for vision/architecture.
   Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
   `factorial` moved from backlog to landed — left to the Architect's next
   grooming pass.
+- **Standard library: `is_pangram` — alphabet-coverage string predicate**
+  — merged 2026-08-07 via PR #194 (`feat/20260806-is-pangram`). Added
+  `is_pangram(string)` to `cinder/builtins.py`, registered right after
+  `is_permutation` in the string/list multiset-predicate cluster,
+  case-insensitive alphabet-coverage check via
+  `set(string.ascii_lowercase) <= set(value.lower())`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2154 tests passing, plus CLI smoke
+  tests covering both canonical pangrams, non-pangram, empty string,
+  all-uppercase casing, and the exact-26-letter case, plus non-string and
+  arity errors), both after the sole commit — clean merge, no bounces.
+  `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap paragraph
+  still need `is_pangram` moved from backlog to landed — left to the
+  Architect's next grooming pass.

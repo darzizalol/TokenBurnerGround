@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_blank` — whitespace-or-empty string predicate
+## 1. Standard library: `is_blank` — whitespace-or-empty string predicate [claimed 2026-08-06T20:02:01Z]
 
 Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
 (`cinder/builtins.py:713-720`) deliberately leaves open: `str.isspace()`

@@ -5703,6 +5703,56 @@ class TestIsPermutation(unittest.TestCase):
             run("is_permutation([1], [2], [3]);")
 
 
+class TestIsPangram(unittest.TestCase):
+    def test_is_pangram_canonical_true(self):
+        self.assertIs(
+            run(
+                'let result = is_pangram("The quick brown fox jumps over the lazy dog");'
+            ).get("result"),
+            True,
+        )
+
+    def test_is_pangram_second_canonical_true(self):
+        self.assertIs(
+            run(
+                'let result = is_pangram("Pack my box with five dozen liquor jugs");'
+            ).get("result"),
+            True,
+        )
+
+    def test_is_pangram_missing_letters_false(self):
+        self.assertIs(run('let result = is_pangram("hello world");').get("result"), False)
+
+    def test_is_pangram_empty_string_false(self):
+        self.assertIs(run('let result = is_pangram("");').get("result"), False)
+
+    def test_is_pangram_all_uppercase_true(self):
+        self.assertIs(
+            run(
+                'let result = is_pangram("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG");'
+            ).get("result"),
+            True,
+        )
+
+    def test_is_pangram_exact_alphabet_true(self):
+        self.assertIs(
+            run('let result = is_pangram("abcdefghijklmnopqrstuvwxyz");').get("result"),
+            True,
+        )
+
+    def test_is_pangram_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pangram(5);")
+        self.assertIn("is_pangram", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_pangram_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_pangram();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_pangram("a", "b");')
+
+
 class TestIsUpper(unittest.TestCase):
     def test_is_upper_all_upper_true(self):
         self.assertIs(run('let result = is_upper("ABC");').get("result"), True)

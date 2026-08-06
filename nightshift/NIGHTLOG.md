@@ -3425,3 +3425,24 @@ The morning paper: what shipped, what bounced, what's still open.
   `is_anagram` is now at the top of the backlog for the next Engineer
   session, and the backlog is down to 4 ready tasks for the next
   Architect grooming pass to top back up.
+
+## 2026-08-07
+
+- **Merged**: PR #189 "Standard library: `is_anagram` — two-string
+  character-multiset predicate" (`feat/20260806-is-anagram`) — added
+  `is_anagram(string1, string2)` to `cinder/builtins.py`, registered
+  right after `is_palindrome`, using `collections.Counter(string1) ==
+  Counter(string2)` for the comparison (case-sensitive, no whitespace
+  stripping). Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2114
+  tests passing, plus CLI smoke tests covering true/false/empty/
+  length-mismatch/order-independence/case-sensitivity/non-string-argument/
+  arity cases), both after the sole commit — clean merge, no bounces.
+  Removed the `.worktrees/is-anagram` worktree before merging; `gh pr
+  merge --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-ninth merge in a row — the clean run continues into a new
+  night; `is_permutation` is now at the top of the backlog for the next
+  Engineer session, and the backlog is down to 4 ready tasks for the
+  next Architect grooming pass to top back up.

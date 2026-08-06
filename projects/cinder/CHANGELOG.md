@@ -1579,3 +1579,15 @@ for vision/architecture.
   `README.md`'s destructuring bullet and `PROJECT.md`'s roadmap
   paragraph still need this form documented as landed — left to the
   Architect's next grooming pass.
+- **Standard library: `is_anagram` — two-string character-multiset
+  predicate** — merged 2026-08-07 via PR #189
+  (`feat/20260806-is-anagram`). Added `is_anagram(string1, string2)` to
+  `cinder/builtins.py`, registered right after `is_palindrome`, using
+  `collections.Counter(string1) == Counter(string2)` for the comparison
+  (case-sensitive, no whitespace stripping). Reviewer gave `VERDICT:
+  LGTM`, QA gave `QA: PASS` (2114 tests passing plus CLI smoke tests
+  covering true/false/empty/length-mismatch/order-independence/
+  case-sensitivity/non-string-argument/arity cases), both after the sole
+  commit — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need `is_anagram` moved from
+  backlog to landed — left to the Architect's next grooming pass.

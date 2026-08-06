@@ -11,64 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_anagram` — two-string character-multiset predicate [claimed 2026-08-06T19:25:13Z]
-
-Build: add `is_anagram(string1, string2)` to `cinder/builtins.py`. It's the
-two-string sibling to `_is_palindrome`'s (`cinder/builtins.py:620-627`)
-single-string "reads the same both ways" check: two strings are anagrams
-of each other when they contain exactly the same characters the same
-number of times, regardless of order. Group it right after
-`is_palindrome`, ahead of `is_upper` — keeping the string-content-predicate
-family contiguous the same way `is_positive`/`is_negative`/`is_zero` sit
-together next to `sign`.
-
-Model the arity/type-checking on `_is_palindrome`'s structure, but for two
-arguments: reuse `_require_arity("is_anagram", arguments, 2, line, column)`,
-then check each of `arguments[0]`/`arguments[1]` is a `str`, raising
-`CinderRuntimeError` naming `is_anagram` and which position (first/second)
-failed on a non-string argument — mirror `_require_two_lists`'s two-argument
-error-naming pattern (`cinder/builtins.py`, used by `union`/`intersection`/
-etc.) rather than inventing new wording. For the comparison itself, use
-`collections.Counter` (`from collections import Counter` at the top of
-`builtins.py` if not already imported — check first) rather than a
-hand-rolled sort-and-compare or dict-tally: `Counter(string1) ==
-Counter(string2)`. Case-sensitive, no normalization — the same
-minimal-behavior spirit `is_palindrome`/`chars`/`swap_case` already follow
-(don't strip whitespace or ignore case unless a caller does that
-explicitly first, e.g. `is_anagram(lower(a), lower(b))`).
-
-Acceptance criteria:
-- `is_anagram("listen", "silent");` is `true`.
-- `is_anagram("hello", "world");` is `false`.
-- `is_anagram("", "");` is `true` — two empty strings share an (empty)
-  multiset of characters.
-- `is_anagram("a", "");` is `false` — different lengths can never be
-  anagrams (falls out of the `Counter` comparison naturally, no separate
-  length check needed).
-- `is_anagram("aabb", "abab");` is `true` — order doesn't matter, only
-  per-character counts.
-- `is_anagram("Listen", "Silent");` is `false` — case-sensitive, `L` and
-  `l` are different characters.
-- `is_anagram("dormitory", "dirty room");` is `false` — no whitespace
-  stripping; the space in `"dirty room"` has no counterpart in
-  `"dormitory"`.
-- `is_anagram(5, "abc");` / `is_anagram("abc", 5);` (non-string argument,
-  either position) raises `CinderRuntimeError` naming `is_anagram` and
-  which position (first/second) failed.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_palindrome`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
-`is_anagram` added near `is_palindrome`, and `PROJECT.md`'s roadmap
-paragraph needs it moved from backlog to landed — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_permutation` — two-list character/element-multiset predicate
+## 1. Standard library: `is_permutation` — two-list character/element-multiset predicate
 
 Build: add `is_permutation(list1, list2)` to `cinder/builtins.py`. It's
 task 1's `is_anagram` generalized from strings to lists: two lists are
@@ -132,7 +75,7 @@ this task.
 
 ---
 
-## 3. Standard library: `is_numeric` — string numeric-content predicate
+## 2. Standard library: `is_numeric` — string numeric-content predicate
 
 Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
@@ -201,7 +144,7 @@ this task.
 
 ---
 
-## 4. Standard library: `is_blank` — whitespace-or-empty string predicate
+## 3. Standard library: `is_blank` — whitespace-or-empty string predicate
 
 Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
 (`cinder/builtins.py:681-688`) deliberately leaves open: `str.isspace()`
@@ -247,7 +190,7 @@ next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
+## 4. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
 
 Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1222-1330`). Register

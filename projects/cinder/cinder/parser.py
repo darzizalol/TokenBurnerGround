@@ -109,6 +109,7 @@ from cinder.ast_nodes import (
     Call,
     ConstStmt,
     ContinueStmt,
+    DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
     Expr,
@@ -328,6 +329,39 @@ class Parser:
                     self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
                 )
         self._consume(TokenType.RBRACKET, "']' after destructuring pattern")
+        return names, rest
+
+    def _destructure_assign_pattern(
+        self, list_literal: ListLiteral, eq_token: Token
+    ) -> "tuple[list, str | None]":
+        """Validate a `ListLiteral` already parsed on the LHS of `=` as a flat
+        assignment-destructuring pattern (same shape `_destructure_list_pattern`
+        enforces for `let`: plain identifiers, optionally a trailing
+        `...identifier` rest). Any other shape is the existing invalid
+        assignment target error, reported at the `=` token like every other
+        invalid target."""
+
+        elements = list_literal.elements
+        if not elements:
+            raise ParseError(
+                "invalid assignment target", eq_token.line, eq_token.column
+            )
+        names = []
+        rest = None
+        for index, element in enumerate(elements):
+            is_last = index == len(elements) - 1
+            if isinstance(element, Spread):
+                if not is_last or not isinstance(element.expression, Identifier):
+                    raise ParseError(
+                        "invalid assignment target", eq_token.line, eq_token.column
+                    )
+                rest = element.expression.name
+            elif isinstance(element, Identifier):
+                names.append(element.name)
+            else:
+                raise ParseError(
+                    "invalid assignment target", eq_token.line, eq_token.column
+                )
         return names, rest
 
     def _destructure_rest_name(self) -> str:
@@ -746,6 +780,11 @@ class Parser:
             if isinstance(expr, Index):
                 return IndexAssign(
                     expr.obj, expr.index, value, eq_token.line, eq_token.column
+                )
+            if isinstance(expr, ListLiteral):
+                names, rest = self._destructure_assign_pattern(expr, eq_token)
+                return DestructureAssign(
+                    names, rest, value, eq_token.line, eq_token.column
                 )
             raise ParseError(
                 "invalid assignment target", eq_token.line, eq_token.column

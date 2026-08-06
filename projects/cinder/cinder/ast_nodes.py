@@ -67,6 +67,22 @@ class Assign:
 
 
 @dataclass(frozen=True)
+class DestructureAssign:
+    """`[a, b] = expr;` (and the rest-element form `[a, ...rest] = expr;`) —
+    the assignment counterpart to `DestructureLetStmt`: `names`/`rest` must
+    already be bound (via `env.assign`, not `env.define`). Flat list patterns
+    only, mirroring `DestructureLetStmt`'s own "no nesting" rule; unlike that
+    statement node this has no leading keyword to disambiguate at statement
+    level, so it is an `Expr` and slots into `_assignment` instead."""
+
+    names: list
+    rest: "str | None"
+    value: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Spread:
     """A `...expr` element inside a list literal; `ListLiteral.elements` mixes
     these with plain `Expr`s."""
@@ -205,6 +221,7 @@ Expr = Union[
     Grouping,
     Call,
     Assign,
+    DestructureAssign,
     ListLiteral,
     MapLiteral,
     Index,

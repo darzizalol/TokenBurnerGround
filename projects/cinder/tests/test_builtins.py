@@ -2598,6 +2598,41 @@ class TestLcm(unittest.TestCase):
             run("lcm(4);")
 
 
+class TestFactorial(unittest.TestCase):
+    def test_factorial_of_zero(self):
+        self.assertEqual(run("let result = factorial(0);").get("result"), 1)
+
+    def test_factorial_of_one(self):
+        self.assertEqual(run("let result = factorial(1);").get("result"), 1)
+
+    def test_factorial_of_five(self):
+        self.assertEqual(run("let result = factorial(5);").get("result"), 120)
+
+    def test_factorial_of_ten(self):
+        self.assertEqual(run("let result = factorial(10);").get("result"), 3628800)
+
+    def test_factorial_of_twenty_has_no_precision_loss(self):
+        self.assertEqual(
+            run("let result = factorial(20);").get("result"), 2432902008176640000
+        )
+
+    def test_factorial_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("factorial(-1);")
+
+    def test_factorial_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("factorial(3.0);")
+
+    def test_factorial_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("factorial(true);")
+
+    def test_factorial_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("factorial(5, 6);")
+
+
 class TestSum(unittest.TestCase):
     def test_sum_of_ints_is_int(self):
         result = run("let result = sum([1, 2, 3]);").get("result")

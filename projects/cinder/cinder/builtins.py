@@ -1383,6 +1383,20 @@ def _lcm(arguments: list, line: int, column: int) -> object:
     return math.lcm(a, b)
 
 
+def _factorial(arguments: list, line: int, column: int) -> object:
+    _require_arity("factorial", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise CinderRuntimeError(
+            f"factorial() requires an int, got {type_name(value)}", line, column
+        )
+    if value < 0:
+        raise CinderRuntimeError(
+            "factorial() requires a non-negative int, domain error", line, column
+        )
+    return math.factorial(value)
+
+
 def _sum(arguments: list, line: int, column: int) -> object:
     _require_arity("sum", arguments, 1, line, column)
     value = arguments[0]
@@ -2963,6 +2977,7 @@ _BUILTINS = {
     "log": _log,
     "gcd": _gcd,
     "lcm": _lcm,
+    "factorial": _factorial,
     "sum": _sum,
     "sum_by": _sum_by,
     "product": _product,

@@ -11,71 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_permutation` — two-list character/element-multiset predicate [claimed 2026-08-06T19:37:18Z]
-
-Build: add `is_permutation(list1, list2)` to `cinder/builtins.py`. It's
-task 1's `is_anagram` generalized from strings to lists: two lists are
-permutations of each other when they contain exactly the same elements
-the same number of times, regardless of order — the list-oriented sibling
-`is_anagram` deliberately doesn't cover (its `Counter`-based approach
-needs hashable characters; list elements can be lists/maps, which aren't
-hashable). Register right after `is_anagram` (task 1, if merged first) or
-right after `is_subset`/`is_superset`/`is_disjoint` otherwise (see current
-line numbers, shift if earlier tasks this cycle landed first) — grouping
-it with whichever multiset-shaped predicate family lands nearest it.
-
-Model the arity/type-checking on `_is_subset`'s structure
-(`cinder/builtins.py:1683-1685`): reuse
-`_require_two_lists("is_permutation", arguments, line, column)` for
-arity-2 + list-type validation on both arguments (same "requires a list
-as its first/second argument, got {type_name}" errors, no new message
-shape). For the comparison itself, do **not** use `collections.Counter`
-or a `set`/`dict` keyed on the elements directly — unlike `is_anagram`'s
-characters, list elements can be unhashable (nested lists/maps), the same
-reason `_dedupe` (`cinder/builtins.py:1605-1622`) falls back to an
-O(n²) `values_equal` scan when `not all(_is_valid_key(element) for
-element in value)`. Take the same approach here, unconditionally (no
-need to special-case the hashable case for a predicate — simplicity over
-micro-optimization): different lengths short-circuit to `false` (`len(list1)
-!= len(list2)`); otherwise copy `list2` into a working list, and for each
-element of `list1` find the first remaining element it's `values_equal`
-to and remove that one match (not all matches — this is multiset
-removal, not filtering); if any element of `list1` has no remaining match,
-return `false` immediately; if the loop completes, return `true` (the
-length check up front guarantees the working list is exactly emptied,
-no need to check it explicitly).
-
-Acceptance criteria:
-- `is_permutation([1, 2, 3], [3, 2, 1]);` is `true` — same elements,
-  different order.
-- `is_permutation([1, 2, 2], [1, 1, 2]);` is `false` — same elements by
-  set membership, but different per-element counts (two `2`s vs one).
-- `is_permutation([], []);` is `true` — two empty lists share an (empty)
-  multiset.
-- `is_permutation([1], [1, 2]);` is `false` — different lengths can
-  never be permutations (short-circuit, no need to scan).
-- `is_permutation([[1, 2]], [[1, 2]]);` is `true` — matching uses deep
-  equality (`values_equal`), not reference identity or hashing, so a
-  structurally-equal nested list still counts as a match.
-- `is_permutation([1, "1"], ["1", 1]);` is `true` — `1` and `"1"` are
-  distinct elements under `values_equal`, but each side has exactly one
-  of each, matched correctly regardless of order.
-- `is_permutation(5, [1, 2]);` / `is_permutation([1, 2], 5);`
-  (non-list argument, either position) raises `CinderRuntimeError`
-  naming `is_permutation` and which position (first/second) failed.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py`, `tests/test_builtins.py`. Once
-merged, `README.md`'s Builtins bullet needs `is_permutation` added near
-`is_anagram`, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `is_numeric` — string numeric-content predicate
+## 1. Standard library: `is_numeric` — string numeric-content predicate
 
 Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
@@ -144,7 +80,7 @@ this task.
 
 ---
 
-## 3. Standard library: `is_blank` — whitespace-or-empty string predicate
+## 2. Standard library: `is_blank` — whitespace-or-empty string predicate
 
 Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
 (`cinder/builtins.py:681-688`) deliberately leaves open: `str.isspace()`
@@ -190,7 +126,7 @@ next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
+## 3. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
 
 Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1222-1330`). Register
@@ -246,7 +182,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_pangram` — alphabet-coverage string predicate
+## 4. Standard library: `is_pangram` — alphabet-coverage string predicate
 
 Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
 predicate testing whether `string` contains every letter of the English

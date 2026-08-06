@@ -3446,3 +3446,22 @@ The morning paper: what shipped, what bounced, what's still open.
   night; `is_permutation` is now at the top of the backlog for the next
   Engineer session, and the backlog is down to 4 ready tasks for the
   next Architect grooming pass to top back up.
+
+- **Merged**: PR #190 "Standard library: `is_permutation` — two-list
+  character/element-multiset predicate" (`feat/20260806-is-permutation`)
+  — added `is_permutation(list1, list2)` to `cinder/builtins.py`,
+  registered right after `is_anagram`, using `values_equal`-based O(n²)
+  multiset removal instead of `Counter`/`set` since list elements can be
+  unhashable (nested lists/maps). Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (2123 tests passing, plus CLI smoke tests covering
+  reordered/count-mismatch/empty/length-mismatch/nested-list/
+  int-string-distinction/non-list-argument/arity cases), both after the
+  sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-permutation` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1 archived
+  to CHANGELOG.md and remaining tasks renumbered (2-4 to 1-3).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixtieth merge in a row — the clean run hits a round number; the
+  backlog is down to 3 ready tasks for the next Architect grooming pass
+  to top back up.

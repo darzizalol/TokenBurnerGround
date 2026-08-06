@@ -1591,3 +1591,17 @@ for vision/architecture.
   commit — clean merge, no bounces. `README.md`'s Builtins bullet and
   `PROJECT.md`'s roadmap paragraph still need `is_anagram` moved from
   backlog to landed — left to the Architect's next grooming pass.
+- **Standard library: `is_permutation` — two-list character/element-multiset
+  predicate** — merged 2026-08-07 via PR #190
+  (`feat/20260806-is-permutation`). Added `is_permutation(list1, list2)` to
+  `cinder/builtins.py`, registered right after `is_anagram`, using
+  `values_equal`-based O(n²) multiset removal (length short-circuit, then
+  match-and-remove against a working copy of `list2`) instead of
+  `Counter`/`set`, since list elements can be unhashable (nested
+  lists/maps) — the same fallback `_dedupe` already uses. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2123 tests passing plus CLI smoke
+  tests covering reordered/count-mismatch/empty/length-mismatch/nested-list/
+  int-string-distinction/non-list-argument/arity cases), both after the
+  sole commit — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need `is_permutation` moved from
+  backlog to landed — left to the Architect's next grooming pass.

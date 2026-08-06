@@ -1548,3 +1548,15 @@ for vision/architecture.
   `README.md`'s destructuring bullet and `PROJECT.md`'s roadmap paragraph
   still need this form documented as landed — left to the Architect's
   next grooming pass.
+- **Standard library: `is_disjoint` — no-common-elements predicate for
+  lists** — merged 2026-08-06T14:27:06Z via PR #187
+  (`feat/20260806-is-disjoint`). Added `_is_disjoint` to
+  `cinder/builtins.py`, registered right after `is_superset`; reuses
+  `_require_two_lists` for arity/type validation and `_contains_value`
+  (deep equality) for membership, mirroring `_is_subset`/`_is_superset`'s
+  structure exactly — `not any(_contains_value(list2, element) for
+  element in list1)`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (2089 tests passing plus CLI smoke tests), both after the sole commit —
+  clean merge, no bounces. `README.md`'s Builtins bullet still needs
+  `is_disjoint` added near the rest of the set-ops family — left to the
+  Architect's next grooming pass.

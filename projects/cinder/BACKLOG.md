@@ -11,57 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_disjoint` — no-common-elements predicate for lists [claimed 2026-08-06T14:21:44Z]
-
-Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
-`union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
-`is_superset` (`_is_subset`/`_is_superset` at `cinder/builtins.py:1683-1691`,
-see current line numbers) already treat lists as unordered sets, but there
-is still no direct way to ask "do these two lists share *any* element at
-all" without computing `intersection(a, b)` and checking the result is
-empty by hand. This is the one predicate that set-ops family still leaves
-implicit — group it right after `is_superset`.
-
-Model directly on `_is_subset`'s structure (`cinder/builtins.py:1683-1686`):
-reuse `_require_two_lists("is_disjoint", arguments, line, column)` for arity-2 +
-list-type validation on both arguments (same "requires a list as its
-first/second argument, got {type_name}" errors, no new message shape), and
-`_contains_value` for membership checks (deep equality via `values_equal`,
-consistent with the rest of this family). `is_disjoint(list1, list2)`
-returns `not any(_contains_value(list2, element) for element in list1)` —
-true when no element of `list1` is found in `list2` (equivalently, their
-`intersection` would be empty); no need to `_dedupe` first, a duplicate
-element that's present still makes the lists non-disjoint.
-
-Acceptance criteria:
-- `is_disjoint([1, 2], [3, 4]);` is `true`.
-- `is_disjoint([1, 2], [2, 3]);` is `false` — `2` is shared.
-- `is_disjoint([], [1, 2, 3]);` is `true`, `is_disjoint([], []);` is
-  `true` — the empty list shares nothing with anything, including itself.
-- `is_disjoint(a, b);` and `is_intersection(a, b)` being empty agree for
-  arbitrary lists `a`/`b` (i.e. `is_disjoint(a, b)` matches
-  `len(intersection(a, b)) == 0` for every case, without literally calling
-  `intersection`).
-- `is_disjoint([[1, 2]], [[1, 2]]);` is `false` — membership uses deep
-  equality (via `_contains_value`'s `values_equal`), not reference
-  identity, so a structurally-equal nested list still counts as shared.
-- `is_disjoint(5, [1, 2]);` / `is_disjoint([1, 2], 5);` (non-list argument,
-  either position) raises `CinderRuntimeError` naming `is_disjoint` and
-  which position (first/second) failed.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_subset`/
-`is_superset` — see current line numbers, shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `is_disjoint` added near `union`/`intersection`/
-`difference`/`symmetric_difference`/`is_subset`/`is_superset` — leave
-that to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: map-pattern destructuring assignment — `{a, b} = expr;`
+## 1. Language: map-pattern destructuring assignment — `{a, b} = expr;`
 
 Build: extend map-pattern destructuring to plain assignment, the map-shaped
 counterpart to the list-pattern assignment (`[a, b] = expr;`, PR #186)
@@ -163,7 +113,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_anagram` — two-string character-multiset predicate
+## 2. Standard library: `is_anagram` — two-string character-multiset predicate
 
 Build: add `is_anagram(string1, string2)` to `cinder/builtins.py`. It's the
 two-string sibling to `_is_palindrome`'s (`cinder/builtins.py:620-627`)
@@ -220,15 +170,15 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_permutation` — two-list character/element-multiset predicate
+## 3. Standard library: `is_permutation` — two-list character/element-multiset predicate
 
 Build: add `is_permutation(list1, list2)` to `cinder/builtins.py`. It's
-task 3's `is_anagram` generalized from strings to lists: two lists are
+task 2's `is_anagram` generalized from strings to lists: two lists are
 permutations of each other when they contain exactly the same elements
 the same number of times, regardless of order — the list-oriented sibling
 `is_anagram` deliberately doesn't cover (its `Counter`-based approach
 needs hashable characters; list elements can be lists/maps, which aren't
-hashable). Register right after `is_anagram` (task 3, if merged first) or
+hashable). Register right after `is_anagram` (task 2, if merged first) or
 right after `is_subset`/`is_superset`/`is_disjoint` otherwise (see current
 line numbers, shift if earlier tasks this cycle landed first) — grouping
 it with whichever multiset-shaped predicate family lands nearest it.
@@ -284,7 +234,7 @@ this task.
 
 ---
 
-## 5. Standard library: `is_numeric` — string numeric-content predicate
+## 4. Standard library: `is_numeric` — string numeric-content predicate
 
 Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string

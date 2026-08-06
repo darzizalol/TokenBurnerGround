@@ -124,7 +124,7 @@ while (i < 10) {
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `find_last_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
-  `union`, `intersection`, `difference`, `symmetric_difference` (lists treated as unordered sets), `interleave`, `interpose`, `zip_object`,
+  `union`, `intersection`, `difference`, `symmetric_difference`, `is_subset`, `is_superset` (lists treated as unordered sets), `interleave`, `interpose`, `zip_object`,
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
@@ -222,18 +222,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_divisible` as a
-two-argument numeric predicate generalizing `is_even`/`is_odd`'s fixed
-divisor of `2` to any divisor, and `is_ascii` to test whether a string's
-content is restricted to the ASCII range. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_subset`/`is_superset` as the
-predicate half of the `union`/`intersection`/`difference`/
-`symmetric_difference` set-ops family, destructuring assignment
-(`[a, b] = expr;`) for reassigning already-declared bindings the same way
-`let [a, b] = expr;` declares them, `is_disjoint` to complete that set-ops
+Actively developed, nightly. Recently landed: `is_ascii` to test whether a
+string's content is restricted to the ASCII range, and `is_subset`/
+`is_superset` as the predicate half of the `union`/`intersection`/
+`difference`/`symmetric_difference` set-ops family. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): destructuring assignment (`[a, b] = expr;`)
+for reassigning already-declared bindings the same way
+`let [a, b] = expr;` declares them, `is_disjoint` to complete the set-ops
 family with a "no elements in common at all" predicate, its map-pattern
-counterpart (`{a, b} = expr;`), and `is_anagram` to test whether two
-strings share the same multiset of characters.
+counterpart (`{a, b} = expr;`), `is_anagram` to test whether two strings
+share the same multiset of characters, and `is_permutation` as its
+list-oriented sibling (same multiset check, applied to lists instead of
+strings).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

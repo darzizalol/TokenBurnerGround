@@ -233,22 +233,21 @@ the one language-depth entry mixed in among that run's stdlib-breadth
 predicates, and `is_ascii` as a string content predicate delegating
 to Python's `str.isascii()` — one more member of the
 `is_alpha`/`is_digit`/`is_alnum`/`is_space` content-predicate family —
-have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_subset`/`is_superset` as the predicate half of the
+and `is_subset`/`is_superset` as the predicate half of the
 `union`/`intersection`/`difference`/`symmetric_difference` set-ops
 family (today asking whether one list's elements are all contained in
 another requires computing `difference` and checking it's empty by
 hand; these reuse that family's own `_require_two_lists`/
 `_contains_value` helpers directly, `is_superset(a, b)` simply
-`is_subset(b, a)` with the arguments flipped), a destructuring-assignment
-counterpart to the existing `let`/`for`-loop list patterns —
-`[a, b] = expr;` reassigning already-declared bindings the same flat,
-no-nesting way `let [a, b] = expr;` declares them (parsed only when a
-bracketed list literal sits on an assignment's left-hand side, so no
-ambiguity with list-literal expressions used elsewhere) — the next
-language-depth entry after slice step, `is_disjoint(list1, list2)`
-as the one predicate the `union`/`intersection`/`difference`/
+`is_subset(b, a)` with the arguments flipped) have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+a destructuring-assignment counterpart to the existing `let`/`for`-loop
+list patterns — `[a, b] = expr;` reassigning already-declared bindings
+the same flat, no-nesting way `let [a, b] = expr;` declares them (parsed
+only when a bracketed list literal sits on an assignment's left-hand
+side, so no ambiguity with list-literal expressions used elsewhere) —
+the next language-depth entry after slice step, `is_disjoint(list1,
+list2)` as the one predicate the `union`/`intersection`/`difference`/
 `symmetric_difference`/`is_subset`/`is_superset` set-ops family still
 leaves implicit (no elements in common at all, the complement of a
 non-empty `intersection`), and its map-pattern counterpart —
@@ -260,17 +259,20 @@ list-pattern assignment task rather than bundled into it, since making
 beyond "map literal expression" and "block": a destructuring-assignment
 pattern, tried only after both of those fail, keeping today's "map
 literal, else block" disambiguation as the fallback for everything that
-isn't this new pattern — tasks 1 through 4 in current `BACKLOG.md` —
-plus `is_anagram(a, b)` as task 5, the two-string sibling to
+isn't this new pattern — tasks 1 through 3 in current `BACKLOG.md` —
+plus `is_anagram(a, b)` as task 4, the two-string sibling to
 `is_palindrome`'s single-string "reads the same both ways" check
 (same case-sensitive, no-normalization spirit: two strings are
 anagrams when they have the same multiset of characters, counting
 whitespace/punctuation like any other character, via `collections.Counter`
-rather than a hand-rolled sort-and-compare), topping the backlog back
-up to five ready tasks — and only much later, a bytecode VM if
-performance ever actually matters. The Architect should keep scoping
-these into `BACKLOG.md` incrementally — do not jump ahead of the
-current layer.
+rather than a hand-rolled sort-and-compare), and `is_permutation(list1,
+list2)` as task 5, `is_anagram`'s list-oriented sibling (the same
+multiset-equality check, but since list elements can be unhashable
+nested lists/maps, matched via `_dedupe`'s O(n²) `values_equal` fallback
+strategy rather than `Counter`), topping the backlog back up to five
+ready tasks — and only much later, a bytecode VM if performance ever
+actually matters. The Architect should keep scoping these into
+`BACKLOG.md` incrementally — do not jump ahead of the current layer.
 
 ## History
 

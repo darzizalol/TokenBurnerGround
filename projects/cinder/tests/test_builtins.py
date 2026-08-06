@@ -5824,6 +5824,35 @@ class TestIsSpace(unittest.TestCase):
             run('is_space(" ", " ");')
 
 
+class TestIsBlank(unittest.TestCase):
+    def test_is_blank_empty_string_true(self):
+        self.assertIs(run('let result = is_blank("");').get("result"), True)
+
+    def test_is_blank_spaces_only_true(self):
+        self.assertIs(run('let result = is_blank("   ");').get("result"), True)
+
+    def test_is_blank_other_whitespace_true(self):
+        self.assertIs(run('let result = is_blank("\\t\\n");').get("result"), True)
+
+    def test_is_blank_non_whitespace_false(self):
+        self.assertIs(run('let result = is_blank("a");').get("result"), False)
+
+    def test_is_blank_padded_non_whitespace_false(self):
+        self.assertIs(run('let result = is_blank(" a ");').get("result"), False)
+
+    def test_is_blank_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_blank(5);")
+        self.assertIn("is_blank", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_blank_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_blank();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_blank(" ", " ");')
+
+
 class TestIsAscii(unittest.TestCase):
     def test_is_ascii_letters_and_digits_true(self):
         self.assertIs(run('let result = is_ascii("hello");').get("result"), True)

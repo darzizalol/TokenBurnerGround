@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pangram` — alphabet-coverage string predicate
+## 1. Standard library: `is_pangram` — alphabet-coverage string predicate [claimed 2026-08-06T20:24:17Z]
 
 Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
 predicate testing whether `string` contains every letter of the English

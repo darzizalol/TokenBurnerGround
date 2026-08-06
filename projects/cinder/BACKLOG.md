@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
+## 1. [claimed 2026-08-06T20:13:07Z] Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
 
 Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1254-1363`). Register

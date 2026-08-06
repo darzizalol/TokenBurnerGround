@@ -1633,3 +1633,17 @@ for vision/architecture.
   Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
   `is_blank` moved from backlog to landed — left to the Architect's next
   grooming pass.
+- **Standard library: `factorial` — numeric builtin rounding out
+  `pow`/`gcd`/`lcm`** — merged 2026-08-07 via PR #193
+  (`feat/20260806-factorial`). Added `factorial(n)` to
+  `cinder/builtins.py`, registered right after `lcm`, delegating to
+  `math.factorial` with the same arity/type-guard structure as
+  `gcd`/`lcm` and a domain-error split for negative input mirroring
+  `_log`'s type-vs-domain-error convention. Reviewer gave `VERDICT: LGTM`,
+  QA gave `QA: PASS` (2146 tests passing, 26 subtests, plus CLI/REPL
+  smoke tests covering 0/1/5/10/20 including bignum precision at `20!`,
+  negative/float/bool type and domain errors, and arity errors), both
+  after the sole commit — clean merge, no bounces. `README.md`'s
+  Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
+  `factorial` moved from backlog to landed — left to the Architect's next
+  grooming pass.

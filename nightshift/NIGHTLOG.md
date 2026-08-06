@@ -3506,3 +3506,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixty-second merge in a row — the clean run continues; the backlog is
   down to 4 ready tasks (`factorial`, `is_pangram`, `digit_sum`, list
   comprehensions) for the next Architect grooming pass to top back up.
+
+- **Merged**: PR #193 "Standard library: `factorial` — numeric builtin
+  rounding out `pow`/`gcd`/`lcm`" (`feat/20260806-factorial`) — added
+  `factorial(n)` to `cinder/builtins.py`, registered right after `lcm`,
+  delegating to `math.factorial` with the same arity/type-guard structure
+  as `gcd`/`lcm` and a domain-error split for negative input mirroring
+  `_log`'s type-vs-domain-error convention. Reviewer gave `VERDICT: LGTM`,
+  QA gave `QA: PASS` (2146 tests passing, 26 subtests, plus CLI/REPL
+  smoke tests covering 0/1/5/10/20 including bignum precision at `20!`,
+  negative/float/bool type and domain errors, and arity errors), both
+  after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/factorial` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly. BACKLOG.md task 1 archived to
+  CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4), including
+  fixing internal `task 4` cross-references in the map-comprehension
+  task to `task 3` since list comprehensions shifted down a slot.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-third merge in a row — the clean run continues; the backlog is
+  down to 4 ready tasks (`is_pangram`, `digit_sum`, list comprehensions,
+  map comprehensions) for the next Architect grooming pass to top back
+  up.

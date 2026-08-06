@@ -11,63 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. [claimed 2026-08-06T20:13:07Z] Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
-
-Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
-sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1254-1363`). Register
-it right after `lcm` — it belongs with that small cluster of
-number-theoretic builtins, not the string/list families above or below it.
-
-Model the arity/type-checking on `_gcd`/`_lcm`'s structure
-(`cinder/builtins.py:1342-1363`): reuse `_require_arity("factorial",
-arguments, 1, line, column)`, then check `arguments[0]` is an `int` and
-not a `bool` (same `isinstance(value, int) and not isinstance(value,
-bool)` guard `_gcd`/`_lcm` use per-argument), raising `CinderRuntimeError`
-with `f"factorial() requires an int, got {type_name(value)}"` on failure.
-Separately, negative input is a domain error, not a type error — mirror
-`_log`'s own "requires a number" vs. "requires a positive number, domain
-error" split (`cinder/builtins.py` around `_log`, two distinct checks, two
-distinct messages): raise `CinderRuntimeError` with
-`"factorial() requires a non-negative int, domain error"` when
-`value < 0`. For the computation itself, delegate directly to Python's
-`math.factorial(value)` (already imported — `builtins.py:17` has `import
-math`) rather than hand-rolling a loop; Cinder ints are Python ints, so
-there's no overflow to guard (unlike `pow()`, which does need its own
-overflow/complex-result guards for float bases/exponents — `factorial`
-only ever takes a non-negative int, so none of that machinery applies
-here).
-
-Acceptance criteria:
-- `factorial(0);` is `1`.
-- `factorial(1);` is `1`.
-- `factorial(5);` is `120`.
-- `factorial(10);` is `3628800`.
-- `factorial(20);` is `2432902008176640000` — confirms no overflow/precision
-  loss on a result too large for a 64-bit float to represent exactly.
-- `factorial(-1);` raises `CinderRuntimeError` matching
-  `"factorial() requires a non-negative int, domain error"`.
-- `factorial(3.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"factorial() requires an int, got
-  float"` — no implicit float-to-int coercion, matching how `gcd`/`lcm`
-  reject floats today.
-- `factorial(true);` (bool, which is a Python `int` subclass) raises
-  `CinderRuntimeError` matching `"factorial() requires an int, got
-  bool"` — same bool-exclusion `gcd`/`lcm`/`is_even`/`is_odd` already
-  apply.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `gcd`/`lcm`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
-`factorial` added near `pow`/`gcd`/`lcm`, and `PROJECT.md`'s roadmap
-paragraph needs it moved from backlog to landed — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_pangram` — alphabet-coverage string predicate
+## 1. Standard library: `is_pangram` — alphabet-coverage string predicate
 
 Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
 predicate testing whether `string` contains every letter of the English
@@ -125,7 +69,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `digit_sum` — sum of an integer's decimal digits
+## 2. Standard library: `digit_sum` — sum of an integer's decimal digits
 
 Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
 sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the
@@ -179,7 +123,7 @@ not this task.
 
 ---
 
-## 4. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
+## 3. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
 
 Build: teach the list-literal grammar a comprehension form, so
 `[x * 2 for x in range(5)]` becomes `[0, 2, 4, 6, 8]` without spelling out
@@ -277,16 +221,16 @@ moved from backlog to landed, and a map-comprehension follow-up task
 
 ---
 
-## 5. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
+## 4. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
 
-Build: the map-literal counterpart to task 4's list comprehensions —
+Build: the map-literal counterpart to task 3's list comprehensions —
 `{x: x * x for x in [1, 2, 3]}` becomes `{1: 1, 2: 4, 3: 9}`. This task
-is scoped to land *after* task 4 (list comprehensions) is merged, since
+is scoped to land *after* task 3 (list comprehensions) is merged, since
 it deliberately mirrors that task's grammar/AST/interpreter shape rather
-than inventing a second one — do not claim this task while task 4 is
+than inventing a second one — do not claim this task while task 3 is
 still open on the backlog.
 
-Scope, matching task 4's narrowness exactly (same reasoning: single
+Scope, matching task 3's narrowness exactly (same reasoning: single
 non-destructuring loop variable, one optional filter, no nesting):
 - Exactly one `for` clause, one loop variable — a plain `IDENTIFIER`
   only, no destructuring.
@@ -308,7 +252,7 @@ comprehension-aware version of that first-entry parse, check
 consume `for`, an `IDENTIFIER`, `in`, then `_ternary()` for the iterable;
 if `IF` follows, consume it and parse another `_ternary()` for the
 condition; finally consume `}` and return a `MapComprehension` — skip
-the existing comma-loop entirely, same as task 4's list version. Note one
+the existing comma-loop entirely, same as task 3's list version. Note one
 wrinkle list comprehensions didn't have: a map entry starts with `key:
 value`, two expressions, not one, so the `FOR` lookahead has to happen
 after both are parsed, not after a single element like `_list_element()`.
@@ -322,7 +266,7 @@ doesn't need its own disambiguation branch.
 
 Interpreter: in `cinder/interpreter.py`, add a branch (near
 `_evaluate_map_literal`, `cinder/interpreter.py:579-601`) for
-`MapComprehension` that mirrors task 4's `ListComprehension` evaluation
+`MapComprehension` that mirrors task 3's `ListComprehension` evaluation
 (same iterable-type dispatch and fresh-child-`Environment`-per-iteration
 binding for closure correctness) but builds a `dict` instead of a
 `list`: for each item, bind `var_name` in the fresh iteration
@@ -346,7 +290,7 @@ Acceptance criteria:
   collapse the same way a hand-written map literal with duplicate keys
   does, not an error.
 - A closure captured per-iteration observes that iteration's binding,
-  same as task 4's equivalent case (e.g. a comprehension value built
+  same as task 3's equivalent case (e.g. a comprehension value built
   from `fn() { return x; }` per iteration must not all close over the
   same final `x`).
 - `{k: v for k in 5};` (non-iterable) raises `CinderRuntimeError`

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `digit_sum` — sum of an integer's decimal digits
+## 1. Standard library: `digit_sum` — sum of an integer's decimal digits [claimed 2026-08-06T20:35:48Z]
 
 Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
 sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the

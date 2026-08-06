@@ -3465,3 +3465,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixtieth merge in a row — the clean run hits a round number; the
   backlog is down to 3 ready tasks for the next Architect grooming pass
   to top back up.
+
+- **Merged**: PR #191 "Standard library: `is_numeric` — string
+  numeric-content predicate" (`feat/20260806-is-numeric`) — added
+  `is_numeric(string)` to `cinder/builtins.py`, registered right after
+  `is_ascii` in the string content-predicate family, delegating to
+  `str.isnumeric()` via a new `_is_numeric_string` function to avoid
+  shadowing the existing unrelated `_is_numeric` int/float helper.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2130 tests passing,
+  plus CLI smoke tests covering the numeric-vs-digit distinguishing case
+  (`"½"`), empty string, non-digit, non-string-arg, and arity-error
+  cases), both after the sole commit — clean merge, no bounces. Removed
+  the `.worktrees/is-numeric` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1 archived
+  to CHANGELOG.md and remaining tasks renumbered (3-5 to 2-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-first merge in a row — the clean run continues; the backlog is
+  down to 4 ready tasks for the next Architect grooming pass to top back
+  up. HELP.md's older GitHub-API-flakiness entries (PR creation 500s from
+  late July, merge-endpoint flakiness from 2026-08-03) remain historical
+  only — no repeat of either issue this cycle, `gh pr merge` succeeded on
+  the first attempt.

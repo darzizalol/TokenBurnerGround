@@ -11,76 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_numeric` — string numeric-content predicate [claimed 2026-08-06T19:50:20Z]
-
-Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
-the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
-content-predicate family (`cinder/builtins.py:683-731`), which all delegate
-straight to the matching Python `str.is*()` method with the same
-arity/type-check wrapper. `is_numeric` is not redundant with the existing
-`is_digit`: Python's `str.isnumeric()` is strictly broader than
-`str.isdigit()` — it is `true` for any character with a Unicode numeric
-value, which includes not just plain digits but fraction characters
-(`"½"`), superscript/subscript digits, and numeral characters from other
-scripts (e.g. Roman numeral `"Ⅷ"`, CJK `"一"`), none of which
-`str.isdigit()` accepts. Register right after `is_ascii`, keeping the
-string-content-predicate family contiguous.
-
-Model directly on `_is_ascii`'s structure (`cinder/builtins.py:723-731`):
-reuse `_require_arity("is_numeric", arguments, 1, line, column)`, check
-`arguments[0]` is a `str` (raising `CinderRuntimeError` with
-`f"is_numeric() requires a string, got {type_name(value)}"` on a
-non-string argument, matching the exact wording pattern the rest of this
-family uses), and return `value.isnumeric()` directly — no extra logic
-needed, this is a pure delegation like its siblings.
-
-**Naming collision, read before writing code**: do NOT name the new
-function `_is_numeric` — `cinder/builtins.py:39` already defines
-`def _is_numeric(value: object) -> bool` (an unrelated int/float-not-bool
-check used internally ~30 times, e.g. `cinder/builtins.py:710`, `:1031`,
-and inside `_is_number`'s own body at `:2802`). Every other predicate in
-this family names its function to match its registered builtin name
-exactly (`_is_ascii` ↔ `"is_ascii"`), but that convention can't be
-followed literally here without silently shadowing the existing helper —
-Python would accept the redefinition at parse time, then every one of
-those ~30 call sites would start passing a single argument to a function
-that now requires three (`arguments, line, column`), breaking at call
-time far from this diff. Name the new function `_is_numeric_string`
-instead; only its registration key (`"is_numeric": _is_numeric_string`)
-needs to read `is_numeric` — same pattern `_is_disjoint` uses today for
-its own function-name-vs-builtin-name (they happen to match, this one
-just can't).
-
-Acceptance criteria:
-- `is_numeric("123");` is `true`.
-- `is_numeric("12a3");` is `false` — a letter breaks it, same as
-  `is_digit`.
-- `is_numeric("");` is `false` — empty string, matching how
-  `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` all treat the
-  empty string.
-- `is_numeric("-5");` is `false` — `-` is not a numeric character (falls
-  out of `str.isnumeric()` naturally, no special-casing needed).
-- `is_numeric("½");` is `true` but `is_digit("½");` is `false` — the
-  concrete example distinguishing this predicate from the existing
-  `is_digit`, since `str.isnumeric()` accepts fraction characters that
-  `str.isdigit()` rejects.
-- `is_numeric(5);` (non-string argument) raises `CinderRuntimeError`
-  matching `"is_numeric() requires a string, got int"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_ascii`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
-`is_numeric` added near `is_alpha`/`is_digit`/`is_alnum`/`is_space`/
-`is_ascii`, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `is_blank` — whitespace-or-empty string predicate
+## 1. Standard library: `is_blank` — whitespace-or-empty string predicate
 
 Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
 (`cinder/builtins.py:713-720`) deliberately leaves open: `str.isspace()`
@@ -126,7 +57,7 @@ next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
+## 2. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
 
 Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1254-1363`). Register
@@ -182,7 +113,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_pangram` — alphabet-coverage string predicate
+## 3. Standard library: `is_pangram` — alphabet-coverage string predicate
 
 Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
 predicate testing whether `string` contains every letter of the English
@@ -240,7 +171,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `digit_sum` — sum of an integer's decimal digits
+## 4. Standard library: `digit_sum` — sum of an integer's decimal digits
 
 Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
 sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the

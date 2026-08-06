@@ -1605,3 +1605,17 @@ for vision/architecture.
   sole commit — clean merge, no bounces. `README.md`'s Builtins bullet and
   `PROJECT.md`'s roadmap paragraph still need `is_permutation` moved from
   backlog to landed — left to the Architect's next grooming pass.
+- **Standard library: `is_numeric` — string numeric-content predicate** —
+  merged 2026-08-07 via PR #191 (`feat/20260806-is-numeric`). Added
+  `is_numeric(string)` to `cinder/builtins.py`, registered right after
+  `is_ascii` in the string content-predicate family, delegating to
+  `str.isnumeric()` via a new `_is_numeric_string` function (named to
+  avoid shadowing the existing unrelated `_is_numeric` int/float helper).
+  Broader than `is_digit`: also true for fraction characters (`"½"`),
+  superscript/subscript digits, and non-Latin numerals. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2130 tests passing plus CLI smoke
+  tests covering the numeric-vs-digit distinguishing case, empty string,
+  non-digit, non-string-arg, and arity-error cases), both after the sole
+  commit — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need `is_numeric` moved from
+  backlog to landed — left to the Architect's next grooming pass.

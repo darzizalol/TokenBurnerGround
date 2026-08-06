@@ -244,12 +244,12 @@ Destructuring assignment — `[a, b] = expr;`, reassigning
 already-declared bindings the same flat, no-nesting way
 `let [a, b] = expr;` declares them (parsed only when a bracketed list
 literal sits on an assignment's left-hand side, so no ambiguity with
-list-literal expressions used elsewhere) — has since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_disjoint(list1, list2)` as the one predicate the
+list-literal expressions used elsewhere) — has since landed too, along
+with `is_disjoint(list1, list2)` as the one predicate the
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
-`is_superset` set-ops family still leaves implicit (no elements in
-common at all, the complement of a non-empty `intersection`), and its
+`is_superset` set-ops family had still left implicit (no elements in
+common at all, the complement of a non-empty `intersection`).
+What remains plausible, not yet scoped beyond current `BACKLOG.md`: its
 map-pattern counterpart — `{a, b} = expr;` reassigning already-declared
 bindings the same flat way `let {a, b} = expr;` declares them —
 deliberately deferred by the list-pattern assignment task rather than
@@ -258,25 +258,32 @@ means teaching the *statement-level* `{`-disambiguation logic (see
 Design principles above) a third outcome beyond "map literal expression"
 and "block": a destructuring-assignment pattern, tried only after both
 of those fail, keeping today's "map literal, else block" disambiguation
-as the fallback for everything that isn't this new pattern — tasks 1
-and 2 in current `BACKLOG.md` — plus `is_anagram(a, b)` as task 3, the
+as the fallback for everything that isn't this new pattern — task 1 in
+current `BACKLOG.md` — plus `is_anagram(a, b)` as task 2, the
 two-string sibling to `is_palindrome`'s single-string "reads the same
 both ways" check (same case-sensitive, no-normalization spirit: two
 strings are anagrams when they have the same multiset of characters,
 counting whitespace/punctuation like any other character, via
 `collections.Counter` rather than a hand-rolled sort-and-compare),
-`is_permutation(list1, list2)` as task 4, `is_anagram`'s list-oriented
+`is_permutation(list1, list2)` as task 3, `is_anagram`'s list-oriented
 sibling (the same multiset-equality check, but since list elements can
 be unhashable nested lists/maps, matched via `_dedupe`'s O(n²)
-`values_equal` fallback strategy rather than `Counter`), and
-`is_numeric(string)` as task 5, one more member of the
+`values_equal` fallback strategy rather than `Counter`), `is_numeric(string)`
+as task 4, one more member of the
 `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
 content-predicate family, delegating to Python's own `str.isnumeric()`
-the same way `is_ascii` delegates to `str.isascii()` — topping the
-backlog back up to five ready tasks — and only much later, a bytecode
-VM if performance ever actually matters. The Architect should keep
-scoping these into `BACKLOG.md` incrementally — do not jump ahead of
-the current layer.
+the same way `is_ascii` delegates to `str.isascii()` (named
+`_is_numeric_string` internally, not `_is_numeric` — that name is already
+taken by an unrelated int/float helper used throughout `builtins.py`),
+and `is_blank(string)` as task 5, filling the one gap `is_space`
+deliberately leaves open (`str.isspace()` is `false` on the empty string,
+matching every other content predicate's "empty is false" rule, so
+`is_blank` is the first member of this family that is *not* a bare
+delegation to a single `str.is*()` method: `value == "" or
+value.isspace()`) — topping the backlog back up to five ready tasks —
+and only much later, a bytecode VM if performance ever actually matters.
+The Architect should keep scoping these into `BACKLOG.md` incrementally —
+do not jump ahead of the current layer.
 
 ## History
 

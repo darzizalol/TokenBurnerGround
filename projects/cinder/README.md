@@ -127,7 +127,7 @@ while (i < 10) {
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `find_last_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
-  `union`, `intersection`, `difference`, `symmetric_difference`, `is_subset`, `is_superset` (lists treated as unordered sets), `interleave`, `interpose`, `zip_object`,
+  `union`, `intersection`, `difference`, `symmetric_difference`, `is_subset`, `is_superset`, `is_disjoint` (lists treated as unordered sets), `interleave`, `interpose`, `zip_object`,
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
@@ -225,18 +225,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_subset`/`is_superset` as
-the predicate half of the `union`/`intersection`/`difference`/
-`symmetric_difference` set-ops family, and destructuring assignment
-(`[a, b] = expr;`) for reassigning already-declared bindings the same way
-`let [a, b] = expr;` declares them. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_disjoint` to complete the set-ops family
-with a "no elements in common at all" predicate, its map-pattern
-counterpart (`{a, b} = expr;`), `is_anagram` to test whether two strings
-share the same multiset of characters, `is_permutation` as its
-list-oriented sibling (same multiset check, applied to lists instead of
-strings), and `is_numeric` to test a string's Unicode-numeric content
-(broader than the existing `is_digit`).
+Actively developed, nightly. Recently landed: `is_disjoint` completing the
+`union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
+`is_superset` set-ops family with a "no elements in common at all"
+predicate, and destructuring assignment (`[a, b] = expr;`) for reassigning
+already-declared bindings the same way `let [a, b] = expr;` declares them.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the map-pattern
+counterpart to that destructuring assignment (`{a, b} = expr;`),
+`is_anagram` to test whether two strings share the same multiset of
+characters, `is_permutation` as its list-oriented sibling (same multiset
+check, applied to lists instead of strings), `is_numeric` to test a
+string's Unicode-numeric content (broader than the existing `is_digit`),
+and `is_blank` to test whether a string is empty or whitespace-only (the
+one case `is_space` deliberately excludes).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

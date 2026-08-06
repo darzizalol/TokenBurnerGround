@@ -257,6 +257,23 @@ non-string argument, matching the exact wording pattern the rest of this
 family uses), and return `value.isnumeric()` directly — no extra logic
 needed, this is a pure delegation like its siblings.
 
+**Naming collision, read before writing code**: do NOT name the new
+function `_is_numeric` — `cinder/builtins.py:39` already defines
+`def _is_numeric(value: object) -> bool` (an unrelated int/float-not-bool
+check used internally ~30 times, e.g. `cinder/builtins.py:710`, `:1031`,
+and inside `_is_number`'s own body at `:2802`). Every other predicate in
+this family names its function to match its registered builtin name
+exactly (`_is_ascii` ↔ `"is_ascii"`), but that convention can't be
+followed literally here without silently shadowing the existing helper —
+Python would accept the redefinition at parse time, then every one of
+those ~30 call sites would start passing a single argument to a function
+that now requires three (`arguments, line, column`), breaking at call
+time far from this diff. Name the new function `_is_numeric_string`
+instead; only its registration key (`"is_numeric": _is_numeric_string`)
+needs to read `is_numeric` — same pattern `_is_disjoint` uses today for
+its own function-name-vs-builtin-name (they happen to match, this one
+just can't).
+
 Acceptance criteria:
 - `is_numeric("123");` is `true`.
 - `is_numeric("12a3");` is `false` — a letter breaks it, same as
@@ -283,6 +300,52 @@ line numbers — shift if earlier tasks this cycle landed first),
 `is_ascii`, and `PROJECT.md`'s roadmap paragraph needs it moved from
 backlog to landed — leave both to the Architect's next grooming pass, not
 this task.
+
+---
+
+## 5. Standard library: `is_blank` — whitespace-or-empty string predicate
+
+Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
+(`cinder/builtins.py:681-688`) deliberately leaves open: `str.isspace()`
+(what `is_space` delegates to) is `false` on the empty string, the same
+"empty string is false" rule every member of the content-predicate family
+(`is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii`) follows on purpose
+— so today there is no single builtin call that answers "is this string
+either empty or nothing but whitespace", a common pre-validation check
+(e.g. rejecting blank form input) that currently needs
+`is_empty(s) or is_space(s)` spelled out by hand every time. Register
+right after `is_space`, ahead of `is_ascii` — it belongs next to the
+predicate whose blind spot it fills, not at the end of the family.
+
+Model the arity/type-checking on `_is_space`'s structure exactly (same
+`_require_arity("is_blank", arguments, 1, line, column)` and
+`f"is_blank() requires a string, got {type_name(value)}"` non-string
+error), but the body is `value == "" or value.isspace()` — not a bare
+delegation to a single Python `str` method the way every other member of
+this family is, since no single `str.is*()` method covers "empty or
+whitespace" on its own.
+
+Acceptance criteria:
+- `is_blank("");` is `true` — the one case that makes this predicate not
+  redundant with `is_space`.
+- `is_blank("   ");` is `true` — spaces only.
+- `is_blank("\t\n");` is `true` — other whitespace characters, same set
+  `str.isspace()` already recognizes.
+- `is_blank("a");` is `false`.
+- `is_blank(" a ");` is `false` — whitespace padding a non-whitespace
+  character still fails.
+- `is_blank(5);` (non-string argument) raises `CinderRuntimeError`
+  matching `"is_blank() requires a string, got int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_space`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
+`is_blank` added near `is_space`, and `PROJECT.md`'s roadmap paragraph
+needs it moved from backlog to landed — leave both to the Architect's
+next grooming pass, not this task.
 
 ---
 

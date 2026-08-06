@@ -315,6 +315,75 @@ grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_perfect_square` — perfect-square numeric predicate
+
+Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
+builtin sitting right after `digit_sum` (task 2 above — by the time this
+task is claimed, tasks 1-4 will have landed and shifted the file's line
+numbers, so search for `digit_sum` rather than trusting a specific line)
+in the integer-property predicate cluster (`is_even`/`is_odd`/
+`is_divisible`/`is_prime`/`digit_sum`, currently
+`cinder/builtins.py:1134-1165` before this cycle's other tasks land) —
+it belongs there rather than next to `pow`/`gcd`/`lcm`/`factorial`
+further down the file, sharing that cluster's "one property of a single
+int" shape rather than the two-argument number-theoretic shape of the
+farther-down group.
+
+Model the arity/type-checking on `_is_prime`'s structure
+(`cinder/builtins.py:1157-1159` before this cycle's other tasks land):
+reuse `_require_arity("is_perfect_square", arguments, 1, line, column)`
+and `_require_int("is_perfect_square", arguments[0], line, column)` (the
+same helper `is_even`/`is_odd`/`is_divisible`/`is_prime`/`digit_sum`
+already use, defined at `cinder/builtins.py:157-162` — raises
+`CinderRuntimeError` with `f"{name}() requires an int, got
+{type_name(value)}"` and rejects `bool` since `bool` is a Python `int`
+subclass, so no separate bool-exclusion check is needed here). For the
+computation: negative integers are never perfect squares, so return
+`False` immediately when `value < 0` (matching `is_prime`'s own
+`if value < 2: return False` early-out shape); otherwise use Python's
+`math.isqrt(value)` (already imported as `math` at the top of
+`builtins.py` — used by `factorial`/`sqrt`/etc., check the existing
+`import math` before adding a duplicate) rather than
+`math.sqrt(value) ** 0.5`-style floating point, since `math.isqrt`
+returns an exact integer floor square root with no rounding-error risk
+for large values: `root = math.isqrt(value)` then `return root * root
+== value`.
+
+Acceptance criteria:
+- `is_perfect_square(0);` is `true` — `0 * 0 == 0`.
+- `is_perfect_square(1);` is `true`.
+- `is_perfect_square(4);` is `true`.
+- `is_perfect_square(16);` is `true`.
+- `is_perfect_square(15);` is `false` — between two perfect squares.
+- `is_perfect_square(2);` is `false`.
+- `is_perfect_square(-4);` is `false` — negative input, never a perfect
+  square despite `4` itself being one; no domain error, just `false`,
+  matching how `is_prime` returns `false` rather than erroring on
+  out-of-domain input like negative numbers or `0`/`1`.
+- `is_perfect_square(999999999999999999999999 * 999999999999999999999999);`
+  (a large bignum perfect square, well past float precision) is `true`
+  — confirms `math.isqrt` is used instead of a `** 0.5` float path that
+  would lose precision at this magnitude.
+- `is_perfect_square(3.0);` (float, even though numerically whole)
+  raises `CinderRuntimeError` matching `"is_perfect_square() requires
+  an int, got float"` — no implicit float-to-int coercion, matching
+  `is_even`/`is_odd`/`is_prime`/`digit_sum`.
+- `is_perfect_square(true);` (bool) raises `CinderRuntimeError`
+  matching `"is_perfect_square() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `digit_sum`/
+`is_prime`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_perfect_square` added near `is_even`/`is_odd`/
+`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

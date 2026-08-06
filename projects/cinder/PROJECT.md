@@ -274,32 +274,37 @@ deliberately leaves open (`str.isspace()` is `false` on the empty string,
 matching every other content predicate's "empty is false" rule, so
 `is_blank` is the first member of that family that is *not* a bare
 delegation to a single `str.is*()` method: `value == "" or
-value.isspace()`), have since landed too.
+value.isspace()`), and `factorial(n)` as a numeric builtin sitting
+next to `pow`/`gcd`/`lcm` (delegating to Python's own `math.factorial`,
+already imported, with a domain-error split for negative input
+mirroring `log()`'s own type-vs-domain-error convention for its
+positive-input requirement), have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`factorial(n)` as task 1, a numeric builtin
-sitting next to `pow`/`gcd`/`lcm` (delegating to Python's own
-`math.factorial`, already imported; a non-negative-int domain check
-mirrors the "requires a number" vs. "domain error" split `log()` already
-uses for its own positive-input requirement), `is_pangram(string)`
-as task 2, a case-insensitive alphabet-coverage predicate sitting next
-to `is_palindrome`/`is_anagram`/`is_permutation` rather than the
-`is_alpha`/.../`is_ascii` content-predicate family, since it isn't a
-bare delegation to a single `str.is*()` method, and `digit_sum(n)` as
-task 3, a numeric builtin sitting next to `is_even`/`is_odd`/
-`is_divisible`/`is_prime` (the integer-property cluster, not the
-two-argument `pow`/`gcd`/`lcm`/`factorial` group) that sums an integer's
-decimal digits after normalizing away its sign via `abs()`, and, as
-task 4, list comprehensions — `[expr for x in iterable]` and
+`is_pangram(string)` as task 1, a case-insensitive alphabet-coverage
+predicate sitting next to `is_palindrome`/`is_anagram`/`is_permutation`
+rather than the `is_alpha`/.../`is_ascii` content-predicate family,
+since it isn't a bare delegation to a single `str.is*()` method, and
+`digit_sum(n)` as task 2, a numeric builtin sitting next to `is_even`/
+`is_odd`/`is_divisible`/`is_prime` (the integer-property cluster, not
+the two-argument `pow`/`gcd`/`lcm`/`factorial` group) that sums an
+integer's decimal digits after normalizing away its sign via `abs()`,
+and, as task 3, list comprehensions — `[expr for x in iterable]` and
 `[expr for x in iterable if cond]` — the first language-depth task
 queued in seven cycles after a long run of stdlib-only additions,
 scoped narrowly to a single non-destructuring loop variable, one
 optional `if` filter, and no nesting, mirroring `_execute_for`'s own
 iteration/closure-per-iteration shape rather than introducing a second
-one, and, as task 5, its map-literal counterpart — map comprehensions
+one, and, as task 4, its map-literal counterpart — map comprehensions
 (`{k: v for x in iterable}`, same optional `if` filter), scoped to land
 only after list comprehensions merge since it deliberately mirrors that
-task's grammar/AST/interpreter shape rather than inventing a second one
-— and only much later, a bytecode VM if performance ever actually
+task's grammar/AST/interpreter shape rather than inventing a second
+one, and, as task 5, `is_perfect_square(n)` — the same
+integer-property cluster `digit_sum`/`is_prime`/`is_even`/`is_odd`/
+`is_divisible` sit in, testing whether `n` is a perfect square via
+Python's own `math.isqrt` (already available since `math` is imported;
+exact integer square root, no floating-point `sqrt`-then-round
+rounding-error risk) rather than a hand-rolled Newton's-method loop —
+and only much later, a bytecode VM if performance ever actually
 matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.

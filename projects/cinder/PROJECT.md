@@ -240,39 +240,43 @@ another requires computing `difference` and checking it's empty by
 hand; these reuse that family's own `_require_two_lists`/
 `_contains_value` helpers directly, `is_superset(a, b)` simply
 `is_subset(b, a)` with the arguments flipped) have since landed too.
+Destructuring assignment — `[a, b] = expr;`, reassigning
+already-declared bindings the same flat, no-nesting way
+`let [a, b] = expr;` declares them (parsed only when a bracketed list
+literal sits on an assignment's left-hand side, so no ambiguity with
+list-literal expressions used elsewhere) — has since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-a destructuring-assignment counterpart to the existing `let`/`for`-loop
-list patterns — `[a, b] = expr;` reassigning already-declared bindings
-the same flat, no-nesting way `let [a, b] = expr;` declares them (parsed
-only when a bracketed list literal sits on an assignment's left-hand
-side, so no ambiguity with list-literal expressions used elsewhere) —
-the next language-depth entry after slice step, `is_disjoint(list1,
-list2)` as the one predicate the `union`/`intersection`/`difference`/
-`symmetric_difference`/`is_subset`/`is_superset` set-ops family still
-leaves implicit (no elements in common at all, the complement of a
-non-empty `intersection`), and its map-pattern counterpart —
-`{a, b} = expr;` reassigning already-declared bindings the same flat
-way `let {a, b} = expr;` declares them — deliberately deferred by the
-list-pattern assignment task rather than bundled into it, since making
-`{a, b}` parse as an assignment target means teaching the *statement-level*
-`{`-disambiguation logic (see Design principles above) a third outcome
-beyond "map literal expression" and "block": a destructuring-assignment
-pattern, tried only after both of those fail, keeping today's "map
-literal, else block" disambiguation as the fallback for everything that
-isn't this new pattern — tasks 1 through 3 in current `BACKLOG.md` —
-plus `is_anagram(a, b)` as task 4, the two-string sibling to
-`is_palindrome`'s single-string "reads the same both ways" check
-(same case-sensitive, no-normalization spirit: two strings are
-anagrams when they have the same multiset of characters, counting
-whitespace/punctuation like any other character, via `collections.Counter`
-rather than a hand-rolled sort-and-compare), and `is_permutation(list1,
-list2)` as task 5, `is_anagram`'s list-oriented sibling (the same
-multiset-equality check, but since list elements can be unhashable
-nested lists/maps, matched via `_dedupe`'s O(n²) `values_equal` fallback
-strategy rather than `Counter`), topping the backlog back up to five
-ready tasks — and only much later, a bytecode VM if performance ever
-actually matters. The Architect should keep scoping these into
-`BACKLOG.md` incrementally — do not jump ahead of the current layer.
+`is_disjoint(list1, list2)` as the one predicate the
+`union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
+`is_superset` set-ops family still leaves implicit (no elements in
+common at all, the complement of a non-empty `intersection`), and its
+map-pattern counterpart — `{a, b} = expr;` reassigning already-declared
+bindings the same flat way `let {a, b} = expr;` declares them —
+deliberately deferred by the list-pattern assignment task rather than
+bundled into it, since making `{a, b}` parse as an assignment target
+means teaching the *statement-level* `{`-disambiguation logic (see
+Design principles above) a third outcome beyond "map literal expression"
+and "block": a destructuring-assignment pattern, tried only after both
+of those fail, keeping today's "map literal, else block" disambiguation
+as the fallback for everything that isn't this new pattern — tasks 1
+and 2 in current `BACKLOG.md` — plus `is_anagram(a, b)` as task 3, the
+two-string sibling to `is_palindrome`'s single-string "reads the same
+both ways" check (same case-sensitive, no-normalization spirit: two
+strings are anagrams when they have the same multiset of characters,
+counting whitespace/punctuation like any other character, via
+`collections.Counter` rather than a hand-rolled sort-and-compare),
+`is_permutation(list1, list2)` as task 4, `is_anagram`'s list-oriented
+sibling (the same multiset-equality check, but since list elements can
+be unhashable nested lists/maps, matched via `_dedupe`'s O(n²)
+`values_equal` fallback strategy rather than `Counter`), and
+`is_numeric(string)` as task 5, one more member of the
+`is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
+content-predicate family, delegating to Python's own `str.isnumeric()`
+the same way `is_ascii` delegates to `str.isascii()` — topping the
+backlog back up to five ready tasks — and only much later, a bytecode
+VM if performance ever actually matters. The Architect should keep
+scoping these into `BACKLOG.md` incrementally — do not jump ahead of
+the current layer.
 
 ## History
 

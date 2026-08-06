@@ -44,7 +44,10 @@ while (i < 10) {
   an optional trailing rest element `let [a, b, ...rest] = expr;` that
   collects any remaining elements into a list, empty if none are left) and
   map destructuring (`let {a, b} = expr;`, binds each identifier by
-  looking it up as a key, extra unnamed keys ignored)
+  looking it up as a key, extra unnamed keys ignored), plus a plain
+  assignment form of list destructuring for already-declared bindings
+  (`[a, b] = expr;`, same flat positional binding and optional trailing
+  rest element as the `let` form, e.g. the swap idiom `[a, b] = [b, a];`)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
@@ -222,18 +225,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_ascii` to test whether a
-string's content is restricted to the ASCII range, and `is_subset`/
-`is_superset` as the predicate half of the `union`/`intersection`/
-`difference`/`symmetric_difference` set-ops family. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): destructuring assignment (`[a, b] = expr;`)
-for reassigning already-declared bindings the same way
-`let [a, b] = expr;` declares them, `is_disjoint` to complete the set-ops
-family with a "no elements in common at all" predicate, its map-pattern
+Actively developed, nightly. Recently landed: `is_subset`/`is_superset` as
+the predicate half of the `union`/`intersection`/`difference`/
+`symmetric_difference` set-ops family, and destructuring assignment
+(`[a, b] = expr;`) for reassigning already-declared bindings the same way
+`let [a, b] = expr;` declares them. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_disjoint` to complete the set-ops family
+with a "no elements in common at all" predicate, its map-pattern
 counterpart (`{a, b} = expr;`), `is_anagram` to test whether two strings
-share the same multiset of characters, and `is_permutation` as its
+share the same multiset of characters, `is_permutation` as its
 list-oriented sibling (same multiset check, applied to lists instead of
-strings).
+strings), and `is_numeric` to test a string's Unicode-numeric content
+(broader than the existing `is_digit`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -15,17 +15,15 @@ a later task while an earlier one is unclaimed/open.
 
 Build: add `is_disjoint(list1, list2)` to `cinder/builtins.py`.
 `union`/`intersection`/`difference`/`symmetric_difference`/`is_subset`/
-`is_superset` (`cinder/builtins.py:1613-1661` roughly, see current line
-numbers) already treat lists as unordered sets, but there is still no
-direct way to ask "do these two lists share *any* element at all" without
-computing `intersection(a, b)` and checking the result is empty by hand.
-This is the one predicate that set-ops family still leaves implicit —
-group it right after `is_superset` (task 1, if merged first) or right
-after `symmetric_difference` otherwise.
+`is_superset` (`_is_subset`/`_is_superset` at `cinder/builtins.py:1683-1691`,
+see current line numbers) already treat lists as unordered sets, but there
+is still no direct way to ask "do these two lists share *any* element at
+all" without computing `intersection(a, b)` and checking the result is
+empty by hand. This is the one predicate that set-ops family still leaves
+implicit — group it right after `is_superset`.
 
-Model directly on `_is_subset`'s structure (from task 1, or `_difference`'s
-at `cinder/builtins.py:1636-1640` if task 1 hasn't merged yet): reuse
-`_require_two_lists("is_disjoint", arguments, line, column)` for arity-2 +
+Model directly on `_is_subset`'s structure (`cinder/builtins.py:1683-1686`):
+reuse `_require_two_lists("is_disjoint", arguments, line, column)` for arity-2 +
 list-type validation on both arguments (same "requires a list as its
 first/second argument, got {type_name}" errors, no new message shape), and
 `_contains_value` for membership checks (deep equality via `values_equal`,
@@ -55,27 +53,30 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `is_subset`/
-`is_superset` if task 1 already landed, else near `symmetric_difference`
-— see current line numbers, shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_disjoint` added near `union`/`intersection`/`difference`/
-`symmetric_difference`/`is_subset`/`is_superset` — leave that to the
-Architect's next grooming pass, not this task.
+`is_superset` — see current line numbers, shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_disjoint` added near `union`/`intersection`/
+`difference`/`symmetric_difference`/`is_subset`/`is_superset` — leave
+that to the Architect's next grooming pass, not this task.
 
 ---
 
 ## 2. Language: map-pattern destructuring assignment — `{a, b} = expr;`
 
 Build: extend map-pattern destructuring to plain assignment, the map-shaped
-counterpart to task 2's list-pattern assignment. Today `let {a, b} = expr;`
-binds fresh names via `DestructureLetStmt(is_map=True)` — handled inline in
-`Interpreter.execute()` (`cinder/interpreter.py:266-283`: checks `isinstance(value,
-dict)`, then for each name raises `"cannot destructure {type_name} as a map"` or
+counterpart to the list-pattern assignment (`[a, b] = expr;`, PR #186)
+already merged. Today `let {a, b} = expr;` binds fresh names via
+`DestructureLetStmt(is_map=True)` — handled inline in `Interpreter.execute()`
+(`cinder/interpreter.py:269-288`: checks `isinstance(value, dict)`, then for
+each name raises `"cannot destructure {type_name} as a map"` or
 `"destructuring pattern expects key {name!r}, not found in map"` before
 `env.define(name, value[name])`) — but there is no way to destructure into
-*already-declared* bindings the way task 2 adds for list patterns. Depends on
-task 2 landing first (reuses the `DestructureAssign` AST node it introduces);
-do not start this before task 2 merges.
+*already-declared* bindings the way `[a, b] = expr;` does for list patterns.
+The `DestructureAssign` AST node and its evaluator (`_evaluate_destructure_assign`,
+`cinder/interpreter.py:455-460`) already exist from that merge — this task
+reuses that same node, adding an `is_map` flag to it, mirroring
+`DestructureLetStmt`'s own `is_map` field. No blocking dependency remains;
+ready to start now.
 
 Scope: **flat map patterns only** — bare identifiers naming keys to pull out,
 exactly like `let {a, b} = expr;` today (no renaming, no nesting, no rest
@@ -83,34 +84,35 @@ element — none of those exist for `let`'s map form either, so don't add them
 here).
 
 The hard part is grammar, not evaluation. Unlike `[a, b]`, which already
-parses as an ordinary `ListLiteral` before task 2 ever looks at it, `{a, b}`
-does **not** parse as a `MapLiteral` (no `:` pairs) — so it cannot simply be
-recognized after the fact by inspecting an already-parsed expression the way
-task 2's `_assignment` check does. `_brace_statement`
-(`cinder/parser.py:338-351`) currently handles a leading `{` at statement
-position with exactly two outcomes: speculatively parse a full expression
-rooted in a map literal (catching `ParseError`), and if that fails, or if it
-succeeds but isn't followed by `;`, fall back to `_block()` — which itself
-then fails to parse `a, b} = expr;` as statements (a bare `a` isn't followed
-by `;`) and raises `ParseError` uncaught. That means `{a, b} = expr;` is
-today dead syntax (always a `ParseError`), so there's no existing behavior to
-preserve — but adding this pattern means teaching `_brace_statement` a third
-speculative attempt, tried after the map-literal-expression parse fails and
-before falling back to `_block()`: reset to `start`, try consuming a flat
-identifier pattern shaped like `_destructure_let_statement`'s `is_map=True`
-branch (`cinder/parser.py:290-298`, minus the leading `let`/`{` already
-consumed by the caller there — here `_brace_statement` itself must consume
-the `{`) followed by `TokenType.EQ`; if the identifier-list-then-`=` shape
-doesn't match (non-identifier token, or no `=` after the closing `}`), reset
-to `start` again and fall through to the existing `_block()` fallback
-unchanged. On a match, parse the RHS via `self._assignment()`, consume `;`,
-and return `ExprStmt(DestructureAssign(names, rest=None, value=..., line,
-column, is_map=True))` — add `is_map: bool = False` to the `DestructureAssign`
-dataclass task 2 introduces (`cinder/ast_nodes.py`), mirroring
-`DestructureLetStmt`'s own `is_map` flag.
+parses as an ordinary `ListLiteral` before the list-pattern-assignment code
+ever looks at it, `{a, b}` does **not** parse as a `MapLiteral` (no `:`
+pairs) — so it cannot simply be recognized after the fact by inspecting an
+already-parsed expression the way that task's `_assignment` check does.
+`_brace_statement` (`cinder/parser.py:372-385`) currently handles a leading
+`{` at statement position with exactly two outcomes: speculatively parse a
+full expression rooted in a map literal (catching `ParseError`), and if
+that fails, or if it succeeds but isn't followed by `;`, fall back to
+`_block()` — which itself then fails to parse `a, b} = expr;` as statements
+(a bare `a` isn't followed by `;`) and raises `ParseError` uncaught. That
+means `{a, b} = expr;` is today dead syntax (always a `ParseError`), so
+there's no existing behavior to preserve — but adding this pattern means
+teaching `_brace_statement` a third speculative attempt, tried after the
+map-literal-expression parse fails and before falling back to `_block()`:
+reset to `start`, try consuming a flat identifier pattern shaped like
+`_destructure_let_statement`'s `is_map=True` branch (`cinder/parser.py:291-299`,
+minus the leading `let`/`{` already consumed by the caller there — here
+`_brace_statement` itself must consume the `{`) followed by `TokenType.EQ`;
+if the identifier-list-then-`=` shape doesn't match (non-identifier token,
+or no `=` after the closing `}`), reset to `start` again and fall through
+to the existing `_block()` fallback unchanged. On a match, parse the RHS
+via `self._assignment()`, consume `;`, and return
+`ExprStmt(DestructureAssign(names, rest=None, value=..., line, column,
+is_map=True))` — add `is_map: bool = False` to the existing `DestructureAssign`
+dataclass (`cinder/ast_nodes.py:70-83`), mirroring `DestructureLetStmt`'s
+own `is_map` flag.
 
-Evaluator: in `_evaluate_destructure_assign` (task 2's new method in
-`cinder/interpreter.py`), branch on `expr.is_map` the same way `execute()`
+Evaluator: in `_evaluate_destructure_assign` (`cinder/interpreter.py:455-460`),
+branch on `expr.is_map` the same way `execute()`
 already branches on `stmt.is_map` for `DestructureLetStmt` (lines 268-283) —
 but `assign` instead of `define`: validate `value` is a `dict` (else
 `CinderRuntimeError` matching `"cannot destructure {type_name} as a map"`),
@@ -221,12 +223,12 @@ Architect's next grooming pass, not this task.
 ## 4. Standard library: `is_permutation` — two-list character/element-multiset predicate
 
 Build: add `is_permutation(list1, list2)` to `cinder/builtins.py`. It's
-task 4's `is_anagram` generalized from strings to lists: two lists are
+task 3's `is_anagram` generalized from strings to lists: two lists are
 permutations of each other when they contain exactly the same elements
 the same number of times, regardless of order — the list-oriented sibling
 `is_anagram` deliberately doesn't cover (its `Counter`-based approach
 needs hashable characters; list elements can be lists/maps, which aren't
-hashable). Register right after `is_anagram` (task 4, if merged first) or
+hashable). Register right after `is_anagram` (task 3, if merged first) or
 right after `is_subset`/`is_superset`/`is_disjoint` otherwise (see current
 line numbers, shift if earlier tasks this cycle landed first) — grouping
 it with whichever multiset-shaped predicate family lands nearest it.
@@ -277,6 +279,58 @@ Acceptance criteria:
 Likely files: `cinder/builtins.py`, `tests/test_builtins.py`. Once
 merged, `README.md`'s Builtins bullet needs `is_permutation` added near
 `is_anagram`, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
+## 5. Standard library: `is_numeric` — string numeric-content predicate
+
+Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
+the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
+content-predicate family (`cinder/builtins.py:651-698`), which all delegate
+straight to the matching Python `str.is*()` method with the same
+arity/type-check wrapper. `is_numeric` is not redundant with the existing
+`is_digit`: Python's `str.isnumeric()` is strictly broader than
+`str.isdigit()` — it is `true` for any character with a Unicode numeric
+value, which includes not just plain digits but fraction characters
+(`"½"`), superscript/subscript digits, and numeral characters from other
+scripts (e.g. Roman numeral `"Ⅷ"`, CJK `"一"`), none of which
+`str.isdigit()` accepts. Register right after `is_ascii`, keeping the
+string-content-predicate family contiguous.
+
+Model directly on `_is_ascii`'s structure (`cinder/builtins.py:691-698`):
+reuse `_require_arity("is_numeric", arguments, 1, line, column)`, check
+`arguments[0]` is a `str` (raising `CinderRuntimeError` with
+`f"is_numeric() requires a string, got {type_name(value)}"` on a
+non-string argument, matching the exact wording pattern the rest of this
+family uses), and return `value.isnumeric()` directly — no extra logic
+needed, this is a pure delegation like its siblings.
+
+Acceptance criteria:
+- `is_numeric("123");` is `true`.
+- `is_numeric("12a3");` is `false` — a letter breaks it, same as
+  `is_digit`.
+- `is_numeric("");` is `false` — empty string, matching how
+  `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` all treat the
+  empty string.
+- `is_numeric("-5");` is `false` — `-` is not a numeric character (falls
+  out of `str.isnumeric()` naturally, no special-casing needed).
+- `is_numeric("½");` is `true` but `is_digit("½");` is `false` — the
+  concrete example distinguishing this predicate from the existing
+  `is_digit`, since `str.isnumeric()` accepts fraction characters that
+  `str.isdigit()` rejects.
+- `is_numeric(5);` (non-string argument) raises `CinderRuntimeError`
+  matching `"is_numeric() requires a string, got int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_ascii`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
+`is_numeric` added near `is_alpha`/`is_digit`/`is_alnum`/`is_space`/
+`is_ascii`, and `PROJECT.md`'s roadmap paragraph needs it moved from
 backlog to landed — leave both to the Architect's next grooming pass, not
 this task.
 

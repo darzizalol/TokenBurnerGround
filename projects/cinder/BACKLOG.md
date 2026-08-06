@@ -11,109 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-pattern destructuring assignment — `{a, b} = expr;` [claimed 2026-08-06T14:34Z]
-
-Build: extend map-pattern destructuring to plain assignment, the map-shaped
-counterpart to the list-pattern assignment (`[a, b] = expr;`, PR #186)
-already merged. Today `let {a, b} = expr;` binds fresh names via
-`DestructureLetStmt(is_map=True)` — handled inline in `Interpreter.execute()`
-(`cinder/interpreter.py:269-288`: checks `isinstance(value, dict)`, then for
-each name raises `"cannot destructure {type_name} as a map"` or
-`"destructuring pattern expects key {name!r}, not found in map"` before
-`env.define(name, value[name])`) — but there is no way to destructure into
-*already-declared* bindings the way `[a, b] = expr;` does for list patterns.
-The `DestructureAssign` AST node and its evaluator (`_evaluate_destructure_assign`,
-`cinder/interpreter.py:455-460`) already exist from that merge — this task
-reuses that same node, adding an `is_map` flag to it, mirroring
-`DestructureLetStmt`'s own `is_map` field. No blocking dependency remains;
-ready to start now.
-
-Scope: **flat map patterns only** — bare identifiers naming keys to pull out,
-exactly like `let {a, b} = expr;` today (no renaming, no nesting, no rest
-element — none of those exist for `let`'s map form either, so don't add them
-here).
-
-The hard part is grammar, not evaluation. Unlike `[a, b]`, which already
-parses as an ordinary `ListLiteral` before the list-pattern-assignment code
-ever looks at it, `{a, b}` does **not** parse as a `MapLiteral` (no `:`
-pairs) — so it cannot simply be recognized after the fact by inspecting an
-already-parsed expression the way that task's `_assignment` check does.
-`_brace_statement` (`cinder/parser.py:372-385`) currently handles a leading
-`{` at statement position with exactly two outcomes: speculatively parse a
-full expression rooted in a map literal (catching `ParseError`), and if
-that fails, or if it succeeds but isn't followed by `;`, fall back to
-`_block()` — which itself then fails to parse `a, b} = expr;` as statements
-(a bare `a` isn't followed by `;`) and raises `ParseError` uncaught. That
-means `{a, b} = expr;` is today dead syntax (always a `ParseError`), so
-there's no existing behavior to preserve — but adding this pattern means
-teaching `_brace_statement` a third speculative attempt, tried after the
-map-literal-expression parse fails and before falling back to `_block()`:
-reset to `start`, try consuming a flat identifier pattern shaped like
-`_destructure_let_statement`'s `is_map=True` branch (`cinder/parser.py:291-299`,
-minus the leading `let`/`{` already consumed by the caller there — here
-`_brace_statement` itself must consume the `{`) followed by `TokenType.EQ`;
-if the identifier-list-then-`=` shape doesn't match (non-identifier token,
-or no `=` after the closing `}`), reset to `start` again and fall through
-to the existing `_block()` fallback unchanged. On a match, parse the RHS
-via `self._assignment()`, consume `;`, and return
-`ExprStmt(DestructureAssign(names, rest=None, value=..., line, column,
-is_map=True))` — add `is_map: bool = False` to the existing `DestructureAssign`
-dataclass (`cinder/ast_nodes.py:70-83`), mirroring `DestructureLetStmt`'s
-own `is_map` flag.
-
-Evaluator: in `_evaluate_destructure_assign` (`cinder/interpreter.py:455-460`),
-branch on `expr.is_map` the same way `execute()`
-already branches on `stmt.is_map` for `DestructureLetStmt` (lines 268-283) —
-but `assign` instead of `define`: validate `value` is a `dict` (else
-`CinderRuntimeError` matching `"cannot destructure {type_name} as a map"`),
-then for each name in `expr.names`, raise `"destructuring pattern expects
-key {name!r}, not found in map"` if absent, else `env.assign(name,
-value[name])` — translating a `KeyError` (undefined name) to
-`CinderRuntimeError(self._undefined_name_message(name, env), ...)` and a
-`_ConstAssignError` to `CinderRuntimeError(f"cannot assign to const
-{name!r}", ...)`, exactly like task 2's list-pattern path already does for
-its own per-name assign errors. Return the assigned map value (same
-"assignment is an expression" behavior task 2 establishes).
-
-Acceptance criteria:
-- `let a = 0; let b = 0; {a, b} = {"a": 1, "b": 2}; print(a); print(b);`
-  prints `1` then `2`.
-- `let a = 0; {a} = {"a": 1, "b": 2};` binds `a` to `1`; the unnamed key
-  `"b"` is ignored (matches `let {a} = expr;`'s existing "extra unnamed keys
-  ignored" behavior).
-- `let a = 0; let b = 0; {a, b} = {"a": 1};` (missing key `"b"`) raises
-  `CinderRuntimeError` matching `"destructuring pattern expects key 'b', not
-  found in map"`.
-- `let a = 0; {a} = [1, 2];` (non-map RHS) raises `CinderRuntimeError`
-  matching `"cannot destructure list as a map"`.
-- `{undefined_a} = {"undefined_a": 1};` (name never `let`-declared) raises
-  `CinderRuntimeError` with the same undefined-name message shape `x = 1;`
-  on an undeclared `x` already produces.
-- `const a = 1; let b = 2; {a, b} = {"a": 3, "b": 4};` raises
-  `CinderRuntimeError` matching `"cannot assign to const 'a'"`.
-- `{"a": 1};` (an actual map literal statement), `{1, 2};` (non-identifier
-  pattern element), and `{}` (empty braces) all keep parsing exactly as
-  before — `ExprStmt(MapLiteral)`, `ParseError`, and empty `Block`
-  respectively; this task only adds a new fallback path tried between the
-  existing map-literal-expression attempt and the existing block fallback,
-  it does not change either of those outcomes.
-- Plain `let {a, b} = expr;` declarations are unaffected — this task only
-  touches `_brace_statement`, not `_let_statement`/`_destructure_let_statement`.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py`, `cinder/parser.py`
-(`_brace_statement`), `cinder/interpreter.py`
-(`_evaluate_destructure_assign`), `tests/test_parser.py`,
-`tests/test_interpreter.py` (grep for `DestructureAssign`/`_brace_statement`
-first for exact current locations — line numbers above may have shifted if
-earlier tasks this cycle landed first). Once merged, README.md's
-destructuring bullet needs this new assignment form documented, and
-PROJECT.md's roadmap paragraph needs it moved from backlog to landed — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_anagram` — two-string character-multiset predicate
+## 1. Standard library: `is_anagram` — two-string character-multiset predicate
 
 Build: add `is_anagram(string1, string2)` to `cinder/builtins.py`. It's the
 two-string sibling to `_is_palindrome`'s (`cinder/builtins.py:620-627`)
@@ -170,15 +68,15 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_permutation` — two-list character/element-multiset predicate
+## 2. Standard library: `is_permutation` — two-list character/element-multiset predicate
 
 Build: add `is_permutation(list1, list2)` to `cinder/builtins.py`. It's
-task 2's `is_anagram` generalized from strings to lists: two lists are
+task 1's `is_anagram` generalized from strings to lists: two lists are
 permutations of each other when they contain exactly the same elements
 the same number of times, regardless of order — the list-oriented sibling
 `is_anagram` deliberately doesn't cover (its `Counter`-based approach
 needs hashable characters; list elements can be lists/maps, which aren't
-hashable). Register right after `is_anagram` (task 2, if merged first) or
+hashable). Register right after `is_anagram` (task 1, if merged first) or
 right after `is_subset`/`is_superset`/`is_disjoint` otherwise (see current
 line numbers, shift if earlier tasks this cycle landed first) — grouping
 it with whichever multiset-shaped predicate family lands nearest it.
@@ -234,7 +132,7 @@ this task.
 
 ---
 
-## 4. Standard library: `is_numeric` — string numeric-content predicate
+## 3. Standard library: `is_numeric` — string numeric-content predicate
 
 Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
@@ -303,7 +201,7 @@ this task.
 
 ---
 
-## 5. Standard library: `is_blank` — whitespace-or-empty string predicate
+## 4. Standard library: `is_blank` — whitespace-or-empty string predicate
 
 Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
 (`cinder/builtins.py:681-688`) deliberately leaves open: `str.isspace()`

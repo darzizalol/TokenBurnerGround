@@ -1560,3 +1560,22 @@ for vision/architecture.
   clean merge, no bounces. `README.md`'s Builtins bullet still needs
   `is_disjoint` added near the rest of the set-ops family — left to the
   Architect's next grooming pass.
+- **Language: map-pattern destructuring assignment — `{a, b} = expr;`** —
+  merged 2026-08-06T14:44:56Z via PR #188
+  (`feat/20260806-map-destructure-assign`). Extended map-pattern
+  destructuring to plain assignment (the map-shaped counterpart to
+  `[a, b] = expr;`, PR #186): added an `is_map` flag to the existing
+  `DestructureAssign` AST node, taught `_brace_statement` a third
+  speculative parse attempt for `{a, b} = expr;` tried between the
+  existing map-literal-expression attempt and the `_block()` fallback,
+  and extended `_evaluate_destructure_assign` with a map branch that
+  assigns (not defines) into already-declared bindings via a new
+  `_bind_map_destructure` extraction shared with `DestructureLetStmt`'s
+  inline map handling. Flat patterns only, no nesting/renaming/rest.
+  Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS` (2104 tests passing
+  plus CLI smoke tests covering binding, const/undefined/missing-key/
+  non-map errors, and non-interference with map literals and empty
+  blocks), both after the sole commit — clean merge, no bounces.
+  `README.md`'s destructuring bullet and `PROJECT.md`'s roadmap
+  paragraph still need this form documented as landed — left to the
+  Architect's next grooming pass.

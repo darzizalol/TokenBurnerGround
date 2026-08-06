@@ -3398,3 +3398,30 @@ The morning paper: what shipped, what bounced, what's still open.
   destructuring assignment (`{a, b} = expr;`) is now at the top of the
   backlog for the next Engineer session, and the backlog is down to 4
   ready tasks for the next Architect grooming pass to top back up.
+
+- **Merged**: PR #188 "Language: map-pattern destructuring assignment —
+  `{a, b} = expr;`" (`feat/20260806-map-destructure-assign`) — the
+  map-shaped counterpart to `[a, b] = expr;` (PR #186). Added an `is_map`
+  flag to the existing `DestructureAssign` AST node, taught
+  `_brace_statement` a third speculative parse attempt for
+  `{a, b} = expr;` tried between the existing map-literal-expression
+  attempt and the `_block()` fallback, and extended
+  `_evaluate_destructure_assign` with a map branch that assigns (not
+  defines) via a new `_bind_map_destructure` extraction shared with
+  `DestructureLetStmt`'s inline map handling. Flat map patterns only, no
+  nesting/renaming/rest. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS` (2104 tests passing, plus CLI smoke tests covering binding,
+  const/undefined/missing-key/non-map errors, and non-interference with
+  map literals and empty blocks), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/map-destructure-assign`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4); one internal cross-reference
+  ("task 2's `is_anagram`") in the `is_permutation` task also updated to
+  match.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Fifty-eighth merge in a row — the night's clean run continues;
+  `is_anagram` is now at the top of the backlog for the next Engineer
+  session, and the backlog is down to 4 ready tasks for the next
+  Architect grooming pass to top back up.

@@ -269,20 +269,7 @@ class Interpreter:
         if isinstance(stmt, DestructureLetStmt):
             value = self.evaluate(stmt.initializer, env)
             if stmt.is_map:
-                if not isinstance(value, dict):
-                    raise CinderRuntimeError(
-                        f"cannot destructure {type_name(value)} as a map",
-                        stmt.line,
-                        stmt.column,
-                    )
-                for name in stmt.names:
-                    if name not in value:
-                        raise CinderRuntimeError(
-                            f"destructuring pattern expects key {name!r}, not found in map",
-                            stmt.line,
-                            stmt.column,
-                        )
-                    env.define(name, value[name])
+                self._bind_map_destructure(env, stmt.names, value, stmt.line, stmt.column)
                 return
             self._bind_list_destructure(env, stmt.names, stmt.rest, value, stmt.line, stmt.column)
             return
@@ -452,11 +439,46 @@ class Interpreter:
                 f"cannot assign to const {name!r}", line, column
             ) from None
 
+    def _bind_map_destructure(
+        self,
+        env: Environment,
+        names: list,
+        value: object,
+        line: int,
+        column: int,
+        use_assign: bool = False,
+    ) -> None:
+        """Binds `names` from `value`, the map-pattern counterpart to
+        `_bind_list_destructure`. Same `use_assign` split: `let`-style fresh
+        bindings (`env.define`, the default) vs. assignment-destructuring
+        (`env.assign` into names that must already exist, for
+        `DestructureAssign`)."""
+
+        if not isinstance(value, dict):
+            raise CinderRuntimeError(
+                f"cannot destructure {type_name(value)} as a map",
+                line,
+                column,
+            )
+        for name in names:
+            if name not in value:
+                raise CinderRuntimeError(
+                    f"destructuring pattern expects key {name!r}, not found in map",
+                    line,
+                    column,
+                )
+            self._bind_destructure_name(env, name, value[name], line, column, use_assign)
+
     def _evaluate_destructure_assign(self, expr: DestructureAssign, env: Environment) -> object:
         value = self.evaluate(expr.value, env)
-        self._bind_list_destructure(
-            env, expr.names, expr.rest, value, expr.line, expr.column, use_assign=True
-        )
+        if expr.is_map:
+            self._bind_map_destructure(
+                env, expr.names, value, expr.line, expr.column, use_assign=True
+            )
+        else:
+            self._bind_list_destructure(
+                env, expr.names, expr.rest, value, expr.line, expr.column, use_assign=True
+            )
         return value
 
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:

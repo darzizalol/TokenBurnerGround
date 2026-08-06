@@ -835,6 +835,62 @@ class TestDestructureAssign(unittest.TestCase):
         self.assertEqual(env.get("b"), 1)
 
 
+class TestDestructureAssignMap(unittest.TestCase):
+    def test_binds_two_names(self):
+        env = run('let a = 0; let b = 0; {a, b} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_extra_unnamed_keys_are_ignored(self):
+        env = run('let a = 0; {a} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+
+    def test_expression_returns_assigned_value(self):
+        # `{a, b} = expr` only parses via `_brace_statement`'s statement-level
+        # speculation (unlike `[a, b] = expr`, a plain `ListLiteral` that
+        # parses fine standalone), so this goes through `parse_program` and
+        # pulls the `DestructureAssign` back out of its `ExprStmt` rather
+        # than using `parse_expression` directly.
+        env = Environment()
+        interpreter = Interpreter()
+        for statement in parse_program(tokenize("let a = 0; let b = 0;")):
+            interpreter.execute(statement, env)
+        assign_stmt = parse_program(tokenize('{a, b} = {"a": 1, "b": 2};'))[0]
+        value = interpreter.evaluate(assign_stmt.expression, env)
+        self.assertEqual(value, {"a": 1, "b": 2})
+
+    def test_missing_named_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('let a = 0; let b = 0; {a, b} = {"a": 1};')
+        self.assertEqual(
+            ctx.exception.message,
+            "destructuring pattern expects key 'b', not found in map",
+        )
+
+    def test_non_map_rhs_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let a = 0; {a} = [1, 2];")
+        self.assertEqual(ctx.exception.message, "cannot destructure list as a map")
+
+    def test_undefined_name_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('{undefined_a} = {"undefined_a": 1};')
+        self.assertEqual(ctx.exception.message, "undefined name 'undefined_a'")
+
+    def test_const_target_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('const a = 1; let b = 2; {a, b} = {"a": 3, "b": 4};')
+        self.assertEqual(ctx.exception.message, "cannot assign to const 'a'")
+
+    def test_plain_let_map_destructuring_unaffected(self):
+        env = run('let {a, b} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_map_literal_statement_unaffected(self):
+        run('{"a": 1};')  # still an ExprStmt(MapLiteral), no destructuring attempted
+
+
 class TestDestructureLetMap(unittest.TestCase):
     def test_binds_two_names(self):
         env = run('let {a, b} = {"a": 1, "b": 2};')

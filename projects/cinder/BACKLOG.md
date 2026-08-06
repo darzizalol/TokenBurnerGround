@@ -15,7 +15,7 @@ a later task while an earlier one is unclaimed/open.
 
 Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
-content-predicate family (`cinder/builtins.py:651-698`), which all delegate
+content-predicate family (`cinder/builtins.py:683-731`), which all delegate
 straight to the matching Python `str.is*()` method with the same
 arity/type-check wrapper. `is_numeric` is not redundant with the existing
 `is_digit`: Python's `str.isnumeric()` is strictly broader than
@@ -26,7 +26,7 @@ scripts (e.g. Roman numeral `"Ⅷ"`, CJK `"一"`), none of which
 `str.isdigit()` accepts. Register right after `is_ascii`, keeping the
 string-content-predicate family contiguous.
 
-Model directly on `_is_ascii`'s structure (`cinder/builtins.py:691-698`):
+Model directly on `_is_ascii`'s structure (`cinder/builtins.py:723-731`):
 reuse `_require_arity("is_numeric", arguments, 1, line, column)`, check
 `arguments[0]` is a `str` (raising `CinderRuntimeError` with
 `f"is_numeric() requires a string, got {type_name(value)}"` on a
@@ -83,7 +83,7 @@ this task.
 ## 2. Standard library: `is_blank` — whitespace-or-empty string predicate
 
 Build: add `is_blank(string)` to `cinder/builtins.py`, the gap `is_space`
-(`cinder/builtins.py:681-688`) deliberately leaves open: `str.isspace()`
+(`cinder/builtins.py:713-720`) deliberately leaves open: `str.isspace()`
 (what `is_space` delegates to) is `false` on the empty string, the same
 "empty string is false" rule every member of the content-predicate family
 (`is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii`) follows on purpose
@@ -129,12 +129,12 @@ next grooming pass, not this task.
 ## 3. Standard library: `factorial` — numeric builtin rounding out `pow`/`gcd`/`lcm`
 
 Build: add `factorial(n)` to `cinder/builtins.py`, a numeric builtin
-sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1222-1330`). Register
+sitting next to `pow`/`gcd`/`lcm` (`cinder/builtins.py:1254-1363`). Register
 it right after `lcm` — it belongs with that small cluster of
 number-theoretic builtins, not the string/list families above or below it.
 
 Model the arity/type-checking on `_gcd`/`_lcm`'s structure
-(`cinder/builtins.py:1310-1330`): reuse `_require_arity("factorial",
+(`cinder/builtins.py:1342-1363`): reuse `_require_arity("factorial",
 arguments, 1, line, column)`, then check `arguments[0]` is an `int` and
 not a `bool` (same `isinstance(value, int) and not isinstance(value,
 bool)` guard `_gcd`/`_lcm` use per-argument), raising `CinderRuntimeError`
@@ -187,13 +187,15 @@ Architect's next grooming pass, not this task.
 Build: add `is_pangram(string)` to `cinder/builtins.py`, a string
 predicate testing whether `string` contains every letter of the English
 alphabet at least once (case-insensitive — `"a"` and `"A"` both count
-toward the same letter), sitting near `is_palindrome`/`is_anagram`
-(`cinder/builtins.py:622-645`) in the string-predicate cluster rather
-than the `is_alpha`/`is_digit`/.../`is_ascii` content-predicate family
-(`:648-698`): unlike that family, `is_pangram` isn't a bare delegation to
-a single `str.is*()` Python method — Python has no built-in for this, so
-the body needs actual logic. Register right after `is_anagram`, ahead of
-`is_upper`.
+toward the same letter), sitting near `is_palindrome`/`is_anagram`/
+`is_permutation` (`cinder/builtins.py:622-660`) in the string/list
+multiset-predicate cluster rather than the `is_alpha`/`is_digit`/.../
+`is_ascii` content-predicate family (`:683-731`): unlike that family,
+`is_pangram` isn't a bare delegation to a single `str.is*()` Python
+method — Python has no built-in for this, so the body needs actual
+logic. Register right after `is_permutation` (which now sits right
+after `is_anagram`, having landed since this task was first scoped),
+ahead of `is_upper`.
 
 Model the arity/type-checking on `_is_palindrome`'s structure
 (`cinder/builtins.py:622-629`): reuse `_require_arity("is_pangram",
@@ -235,6 +237,60 @@ current line numbers — shift if earlier tasks this cycle landed first),
 needs `is_pangram` added near `is_palindrome`/`is_anagram`, and
 `PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
 leave both to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `digit_sum` — sum of an integer's decimal digits
+
+Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
+sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the
+integer-property predicate cluster (`is_even`/`is_odd`/`is_divisible`/
+`is_prime`, `cinder/builtins.py:1114-1145`) — it isn't itself a
+predicate (it returns a number, not `true`/`false`), but it belongs
+next to that cluster rather than next to `pow`/`gcd`/`lcm`/`factorial`
+further down the file, since it shares their "one property of a single
+int" shape rather than the two-argument number-theoretic shape of that
+farther-down group.
+
+Model the arity/type-checking on `_is_prime`'s structure
+(`cinder/builtins.py:1137-1139`): reuse `_require_arity("digit_sum",
+arguments, 1, line, column)` and `_require_int("digit_sum",
+arguments[0], line, column)` (the same helper `is_even`/`is_odd`/
+`is_divisible`/`is_prime` already use — defined at
+`cinder/builtins.py:157-162`, raises `CinderRuntimeError` with
+`f"{name}() requires an int, got {type_name(value)}"` and rejects `bool`
+since `bool` is a Python `int` subclass, so no separate bool-exclusion
+check is needed here). For the computation, take the absolute value
+first (`digit_sum` is a property of a number's magnitude, not its sign —
+matching how `factorial`'s task above treats domain errors as distinct
+from type errors, `digit_sum` sidesteps the question entirely by
+normalizing sign away rather than rejecting negative input), then sum
+the digits: `sum(int(digit) for digit in str(abs(value)))` is sufficient
+— no need for a hand-rolled `% 10` / `// 10` loop.
+
+Acceptance criteria:
+- `digit_sum(0);` is `0`.
+- `digit_sum(5);` is `5`.
+- `digit_sum(123);` is `6`.
+- `digit_sum(999);` is `27`.
+- `digit_sum(-123);` is `6` — sign is ignored, same magnitude as `123`.
+- `digit_sum(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"digit_sum() requires an int, got
+  float"` — no implicit float-to-int coercion, matching `is_even`/
+  `is_odd`/`is_prime`.
+- `digit_sum(true);` (bool) raises `CinderRuntimeError` matching
+  `"digit_sum() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_prime`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `digit_sum` added near `is_even`/`is_odd`/`is_divisible`/
+`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass,
+not this task.
 
 ---
 

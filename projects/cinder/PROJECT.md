@@ -259,33 +259,36 @@ single-string "reads the same both ways" check (same case-sensitive,
 no-normalization spirit: two strings are anagrams when they have the
 same multiset of characters, counting whitespace/punctuation like any
 other character, via `collections.Counter` rather than a hand-rolled
-sort-and-compare).
+sort-and-compare), and `is_permutation(list1, list2)` as `is_anagram`'s
+list-oriented sibling (the same multiset-equality check, but since list
+elements can be unhashable nested lists/maps, matched via `_dedupe`'s
+O(n²) `values_equal` fallback strategy rather than `Counter`).
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`is_permutation(list1, list2)` as task 1, `is_anagram`'s list-oriented
-sibling (the same multiset-equality check,
-but since list elements can be unhashable nested lists/maps, matched via
-`_dedupe`'s O(n²) `values_equal` fallback strategy rather than
-`Counter`), `is_numeric(string)` as task 2, one more member of the
+`is_numeric(string)` as task 1, one more member of the
 `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string
 content-predicate family, delegating to Python's own `str.isnumeric()`
 the same way `is_ascii` delegates to `str.isascii()` (named
 `_is_numeric_string` internally, not `_is_numeric` — that name is already
 taken by an unrelated int/float helper used throughout `builtins.py`),
-`is_blank(string)` as task 3, filling the one gap `is_space`
+`is_blank(string)` as task 2, filling the one gap `is_space`
 deliberately leaves open (`str.isspace()` is `false` on the empty string,
 matching every other content predicate's "empty is false" rule, so
 `is_blank` is the first member of this family that is *not* a bare
 delegation to a single `str.is*()` method: `value == "" or
-value.isspace()`), `factorial(n)` as task 4, a numeric builtin
+value.isspace()`), `factorial(n)` as task 3, a numeric builtin
 sitting next to `pow`/`gcd`/`lcm` (delegating to Python's own
 `math.factorial`, already imported; a non-negative-int domain check
 mirrors the "requires a number" vs. "domain error" split `log()` already
-uses for its own positive-input requirement), and `is_pangram(string)`
-as task 5, a case-insensitive alphabet-coverage predicate sitting next
-to `is_palindrome`/`is_anagram` rather than the `is_alpha`/.../`is_ascii`
-content-predicate family, since it isn't a bare delegation to a single
-`str.is*()` method — and only much later, a bytecode VM if performance
-ever actually matters.
+uses for its own positive-input requirement), `is_pangram(string)`
+as task 4, a case-insensitive alphabet-coverage predicate sitting next
+to `is_palindrome`/`is_anagram`/`is_permutation` rather than the
+`is_alpha`/.../`is_ascii` content-predicate family, since it isn't a
+bare delegation to a single `str.is*()` method, and `digit_sum(n)` as
+task 5, a numeric builtin sitting next to `is_even`/`is_odd`/
+`is_divisible`/`is_prime` (the integer-property cluster, not the
+two-argument `pow`/`gcd`/`lcm`/`factorial` group) that sums an integer's
+decimal digits after normalizing away its sign via `abs()` — and only
+much later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

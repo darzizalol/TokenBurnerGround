@@ -147,6 +147,7 @@ while (i < 10) {
   `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` to test a string's content
   (letters only, digits only, alphanumeric only, whitespace only, ASCII-only),
   `is_anagram` to test whether two strings share the same character multiset,
+  `is_permutation` as its list-oriented sibling,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -230,16 +231,15 @@ projects/cinder/
 Actively developed, nightly. Recently landed: destructuring assignment for
 both list (`[a, b] = expr;`) and map (`{a, b} = expr;`) patterns,
 reassigning already-declared bindings the same way their `let` forms
-declare them, and `is_anagram` to test whether two strings share the same
-multiset of characters.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_permutation` as
-`is_anagram`'s list-oriented sibling (same multiset check, applied to lists
-instead of strings), `is_numeric` to test a string's Unicode-numeric
-content (broader than the existing `is_digit`), `is_blank` to test
-whether a string is empty or whitespace-only (the one case `is_space`
-deliberately excludes), `factorial` rounding out the `pow`/`gcd`/
-`lcm` numeric family, and `is_pangram` to test whether a string contains
-every letter of the alphabet at least once.
+declare them, `is_anagram` to test whether two strings share the same
+multiset of characters, and `is_permutation` as its list-oriented sibling.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_numeric` to test a
+string's Unicode-numeric content (broader than the existing `is_digit`),
+`is_blank` to test whether a string is empty or whitespace-only (the one
+case `is_space` deliberately excludes), `factorial` rounding out the
+`pow`/`gcd`/`lcm` numeric family, `is_pangram` to test whether a string
+contains every letter of the alphabet at least once, and `digit_sum` to
+sum an integer's decimal digits.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

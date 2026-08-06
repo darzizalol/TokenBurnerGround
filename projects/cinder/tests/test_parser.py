@@ -10,6 +10,7 @@ from cinder.ast_nodes import (
     Call,
     ConstStmt,
     ContinueStmt,
+    DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
     ExprStmt,
@@ -112,6 +113,8 @@ def shape(node):
         )
     if isinstance(node, Assign):
         return ("Assign", node.name, shape(node.value))
+    if isinstance(node, DestructureAssign):
+        return ("DestructureAssign", node.names, node.rest, shape(node.value))
     if isinstance(node, Ternary):
         return (
             "Ternary",
@@ -833,6 +836,70 @@ class TestListsAndMaps(unittest.TestCase):
                 )
             ],
         )
+
+    def test_list_destructure_assignment(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("[a, b] = [b, a];")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        ["a", "b"],
+                        None,
+                        ("ListLiteral", [("Identifier", "b"), ("Identifier", "a")]),
+                    ),
+                )
+            ],
+        )
+
+    def test_list_destructure_assignment_with_rest(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("[a, b, ...rest] = [1, 2, 3, 4];")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        ["a", "b"],
+                        "rest",
+                        (
+                            "ListLiteral",
+                            [
+                                ("Literal", 1),
+                                ("Literal", 2),
+                                ("Literal", 3),
+                                ("Literal", 4),
+                            ],
+                        ),
+                    ),
+                )
+            ],
+        )
+
+    def test_list_destructure_assignment_literal_element_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[1, 2] = [3, 4];")
+
+    def test_list_destructure_assignment_nested_pattern_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[[a, b], c] = [[1, 2], 3];")
+
+    def test_list_destructure_assignment_rest_not_last_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[a, ...rest, b] = [1, 2, 3];")
+
+    def test_list_destructure_assignment_empty_pattern_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[] = [1];")
+
+    def test_list_destructure_compound_assign_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[a, b] += [1, 2];")
+
+    def test_list_destructure_qq_assign_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[a, b] ??= [1, 2];")
 
     def test_dot_access_desugars_to_index(self):
         self.assertEqual(

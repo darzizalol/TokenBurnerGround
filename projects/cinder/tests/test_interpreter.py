@@ -780,6 +780,61 @@ class TestDestructureLet(unittest.TestCase):
             env.get("a")
 
 
+class TestDestructureAssign(unittest.TestCase):
+    def test_swap_idiom(self):
+        env = run("let a = 1; let b = 2; [a, b] = [b, a];")
+        self.assertEqual(env.get("a"), 2)
+        self.assertEqual(env.get("b"), 1)
+
+    def test_rest_binds_remaining_elements_as_list(self):
+        env = run("let a = 0; let b = 0; let rest = []; [a, b, ...rest] = [1, 2, 3, 4];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("rest"), [3, 4])
+
+    def test_expression_returns_assigned_value(self):
+        env = Environment()
+        interpreter = Interpreter()
+        for statement in parse_program(tokenize("let a = 0; let b = 0;")):
+            interpreter.execute(statement, env)
+        value = interpreter.evaluate(
+            parse_expression(tokenize("[a, b] = [1, 2]")), env
+        )
+        self.assertEqual(value, [1, 2])
+
+    def test_too_few_elements_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let a = 0; let b = 0; [a, b] = [1];")
+        self.assertEqual(
+            ctx.exception.message, "destructuring pattern expects 2 elements, got 1"
+        )
+
+    def test_non_list_rhs_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let a = 0; [a] = 5;")
+        self.assertEqual(ctx.exception.message, "cannot destructure int as a list")
+
+    def test_undefined_name_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("[undefined_a, undefined_b] = [1, 2];")
+        self.assertEqual(ctx.exception.message, "undefined name 'undefined_a'")
+
+    def test_const_target_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("const a = 1; let b = 2; [a, b] = [3, 4];")
+        self.assertEqual(ctx.exception.message, "cannot assign to const 'a'")
+
+    def test_plain_let_and_for_destructuring_unaffected(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let [a, b] = [1, 2]; for [k, v] in items({"x": 1}) { a = k; b = v; }',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("a"), "x")
+        self.assertEqual(env.get("b"), 1)
+
+
 class TestDestructureLetMap(unittest.TestCase):
     def test_binds_two_names(self):
         env = run('let {a, b} = {"a": 1, "b": 2};')

@@ -52,6 +52,7 @@ from cinder.ast_nodes import (
     Call,
     ConstStmt,
     ContinueStmt,
+    DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
     Expr,
@@ -232,6 +233,8 @@ class Interpreter:
             return self._evaluate_binary(expr, env)
         if isinstance(expr, Assign):
             return self._evaluate_assign(expr, env)
+        if isinstance(expr, DestructureAssign):
+            return self._evaluate_destructure_assign(expr, env)
         if isinstance(expr, Call):
             return self._evaluate_call(expr, env)
         if isinstance(expr, ListLiteral):
@@ -389,7 +392,14 @@ class Interpreter:
         value: object,
         line: int,
         column: int,
+        use_assign: bool = False,
     ) -> None:
+        """Binds `names`/`rest` from `value`. `use_assign` selects between
+        `let`-style fresh bindings (`env.define`, the default) and
+        assignment-destructuring (`env.assign` into names that must already
+        exist, for `DestructureAssign`) — the length-check error messages are
+        identical either way."""
+
         if not isinstance(value, list):
             raise CinderRuntimeError(
                 f"cannot destructure {type_name(value)} as a list",
@@ -405,8 +415,10 @@ class Interpreter:
                     column,
                 )
             for name, item in zip(names, value):
-                env.define(name, item)
-            env.define(rest, list(value[len(names):]))
+                self._bind_destructure_name(env, name, item, line, column, use_assign)
+            self._bind_destructure_name(
+                env, rest, list(value[len(names):]), line, column, use_assign
+            )
             return
         if len(value) != len(names):
             raise CinderRuntimeError(
@@ -415,7 +427,37 @@ class Interpreter:
                 column,
             )
         for name, item in zip(names, value):
+            self._bind_destructure_name(env, name, item, line, column, use_assign)
+
+    def _bind_destructure_name(
+        self,
+        env: Environment,
+        name: str,
+        item: object,
+        line: int,
+        column: int,
+        use_assign: bool,
+    ) -> None:
+        if not use_assign:
             env.define(name, item)
+            return
+        try:
+            env.assign(name, item)
+        except KeyError:
+            raise CinderRuntimeError(
+                self._undefined_name_message(name, env), line, column
+            ) from None
+        except _ConstAssignError:
+            raise CinderRuntimeError(
+                f"cannot assign to const {name!r}", line, column
+            ) from None
+
+    def _evaluate_destructure_assign(self, expr: DestructureAssign, env: Environment) -> object:
+        value = self.evaluate(expr.value, env)
+        self._bind_list_destructure(
+            env, expr.names, expr.rest, value, expr.line, expr.column, use_assign=True
+        )
+        return value
 
     def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
         iterable = self.evaluate(stmt.iterable, env)

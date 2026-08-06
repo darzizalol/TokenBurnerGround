@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-pattern destructuring assignment — `{a, b} = expr;`
+## 1. Language: map-pattern destructuring assignment — `{a, b} = expr;` [claimed 2026-08-06T14:34Z]
 
 Build: extend map-pattern destructuring to plain assignment, the map-shaped
 counterpart to the list-pattern assignment (`[a, b] = expr;`, PR #186)

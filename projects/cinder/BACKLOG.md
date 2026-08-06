@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_numeric` — string numeric-content predicate
+## 1. Standard library: `is_numeric` — string numeric-content predicate [claimed 2026-08-06T19:50:20Z]
 
 Build: add `is_numeric(string)` to `cinder/builtins.py`, one more member of
 the `is_alpha`/`is_digit`/`is_alnum`/`is_space`/`is_ascii` string

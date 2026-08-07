@@ -1229,6 +1229,21 @@ def _is_perfect_number(arguments: list, line: int, column: int) -> object:
     return total == value
 
 
+def _is_abundant(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_abundant", arguments, 1, line, column)
+    value = _require_int("is_abundant", arguments[0], line, column)
+    if value < 1:
+        return False
+    total = 1 if value > 1 else 0
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            total += divisor
+            complement = value // divisor
+            if complement != divisor:
+                total += complement
+    return total > value
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3032,6 +3047,7 @@ _BUILTINS = {
     "is_armstrong": _is_armstrong,
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,
+    "is_abundant": _is_abundant,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

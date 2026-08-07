@@ -11,85 +11,12 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate [claimed 2026-08-07T20:18:14Z]
-
-Build: add `is_abundant(n)` to `cinder/builtins.py`, one more member of
-the integer-property predicate cluster (`is_even`/`is_odd`/
-`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`/`reverse_int`/`is_perfect_number`, already landed —
-search for `is_perfect_number` rather than trusting a specific line) —
-an abundant number's proper divisors (divisors
-excluding itself) sum to *more* than the number itself, e.g. `12`:
-`1 + 2 + 3 + 4 + 6 = 16 > 12`. It's the natural next member after
-`is_perfect_number` since perfect/abundant/deficient (task 2 below) are
-the three classical divisor-sum classifications, and every positive
-integer falls into exactly one of them.
-
-Model the arity/type-checking on `_is_perfect_number`'s structure
-(search for `def _is_perfect_number`): reuse
-`_require_arity("is_abundant", arguments, 1, line, column)` and
-`_require_int("is_abundant", arguments[0], line, column)` (the same
-helper the rest of the cluster uses, defined at
-`cinder/builtins.py:157-162`). For the computation, reuse the same
-`math.isqrt`-bounded trial-division divisor sum `_is_perfect_number`
-already computes, but do **not** factor it into a shared helper as part
-of this task — keep the sum inline here too, matching how `is_prime` and
-`is_perfect_number` each already duplicate their own trial-division loop
-rather than sharing one; a refactor is out of scope for a single-builtin
-task. Unlike `is_perfect_number`'s `if value < 2: return False`
-early-out, `value == 1` is a real case here (its proper-divisor sum is
-`0`, which is *not* greater than `1`, so `is_abundant(1)` must be
-`false` without an early-out masking it): `if value < 1: return False`
-(no domain error for non-positive input, matching
-`is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`'s
-"just answer" convention), then `total = 1 if value > 1 else 0`, then
-for `d` from `2` to `math.isqrt(value)` inclusive, whenever `value % d
-== 0`, add `d` to `total`, and if the complement `value // d != d`, add
-it too (no need to also exclude `value` itself here, unlike
-`is_perfect_number` — the loop only ever reaches divisors up to
-`math.isqrt(value)` and their complements, never `value` itself, since
-`d` starts at `2`). Return `total > value`.
-
-Acceptance criteria:
-- `is_abundant(12);` is `true` — `1 + 2 + 3 + 4 + 6 == 16 > 12`.
-- `is_abundant(18);` is `true` — `1 + 2 + 3 + 6 + 9 == 21 > 18`.
-- `is_abundant(24);` is `true` — a second, larger case.
-- `is_abundant(6);` is `false` — `6` is perfect (`sum == 6`), not
-  abundant (`sum > 6` is false).
-- `is_abundant(8);` is `false` — `1 + 2 + 4 == 7 < 8`, deficient.
-- `is_abundant(1);` is `false` — proper-divisor sum is `0`, not `> 1`;
-  confirms the `value == 1` case isn't swallowed by an incorrect
-  early-out.
-- `is_abundant(0);` is `false`, `is_abundant(-12);` is `false` —
-  non-positive input, no domain error, matching the cluster's
-  negative/zero-input convention.
-- `is_abundant(3.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"is_abundant() requires an int, got
-  float"` — no implicit float-to-int coercion, matching the rest of the
-  cluster.
-- `is_abundant(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_abundant() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_perfect_number`/
-`is_prime`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `is_abundant` added near `is_even`/`is_odd`/
-`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
+## 1. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
 
 Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
 perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`
-(already landed) and `is_abundant` (task 1 above — by the time this task is
-claimed it will have landed and shifted the file's line numbers, so
-search for `is_abundant` rather than trusting a specific line) — a
+and `is_abundant` (both already landed — search for `is_abundant` rather
+than trusting a specific line) — a
 deficient number's proper divisors sum to *less* than the number itself,
 e.g. `8`: `1 + 2 + 4 = 7 < 8`. Every positive integer is exactly one of
 perfect, abundant, or deficient, so this is the natural task to close
@@ -139,7 +66,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
+## 2. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
 
 Build: add `is_palindrome_number(n)` to `cinder/builtins.py`, sitting
 next to `reverse_int` (already landed, search for `reverse_int` rather
@@ -197,11 +124,11 @@ task.
 
 ---
 
-## 4. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
+## 3. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
 
 Build: add `digital_root(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum`/`reverse_int` (search for `def _reverse_int` — by the time
-this task is claimed, tasks 1-4 above will have landed and shifted line
+this task is claimed, tasks 1-2 above will have landed and shifted line
 numbers) rather than the boolean predicate cluster — like `reverse_int`,
 it returns a number, not a boolean. The digital root of a non-negative
 integer is what you get by repeatedly summing its decimal digits until
@@ -253,11 +180,11 @@ not this task.
 
 ---
 
-## 5. Standard library: `is_composite` — non-prime-above-one predicate
+## 4. Standard library: `is_composite` — non-prime-above-one predicate
 
 Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
 next to `is_prime` (search for `def _is_prime` — by the time this task
-is claimed, tasks 1-4 above will have landed and shifted line numbers)
+is claimed, tasks 1-3 above will have landed and shifted line numbers)
 in the integer-property predicate cluster. A composite number is an
 integer greater than `1` that is *not* prime (e.g. `4`, `6`, `8`, `9`);
 this completes the classical three-way split of the non-negative

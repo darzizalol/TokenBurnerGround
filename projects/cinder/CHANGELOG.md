@@ -1776,3 +1776,19 @@ for vision/architecture.
   bullet and `PROJECT.md`'s roadmap paragraph still need
   `is_perfect_number` moved from backlog to landed — left to the
   Architect's next grooming pass.
+- **Standard library: `is_abundant`** — merged 2026-08-08T~ via PR #203
+  (`feat/20260807-is-abundant`). Added `is_abundant(n)` to
+  `cinder/builtins.py`, joining the integer-property predicate cluster
+  next to `is_perfect_number`: sums proper divisors via the same
+  `math.isqrt`-bounded trial-division loop, kept inline rather than
+  factored into a shared helper (in scope stayed a single-builtin task),
+  returning `total > value`. Non-positive input returns `false` with no
+  domain error, matching the cluster's convention; `value == 1` is a
+  real (non-early-outed) case since its divisor sum is `0`. Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2250 tests passing, plus
+  CLI smoke tests covering abundant/perfect/deficient numbers, the
+  smallest odd abundant number (945), zero/negative input, and
+  float/bool type rejection) — clean merge, no bounces. `README.md`'s
+  Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
+  `is_abundant` moved from backlog to landed — left to the Architect's
+  next grooming pass.

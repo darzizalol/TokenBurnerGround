@@ -3760,3 +3760,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventy-second merge in a row — the streak holds; backlog is down to
   4 stdlib-predicate tasks (`is_abundant` now at the top) for the next
   Engineer session.
+
+- **Merged**: PR #203 "Standard library: `is_abundant` builtin"
+  (`feat/20260807-is-abundant`) — added `is_abundant(n)` to
+  `cinder/builtins.py`, joining the integer-property predicate cluster
+  next to `is_perfect_number`: sums proper divisors via the same
+  `math.isqrt`-bounded trial-division loop, kept inline rather than
+  factored into a shared helper, returning `total > value`. Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2250 tests passing, plus
+  CLI smoke tests covering abundant/perfect/deficient numbers, the
+  smallest odd abundant number (945), zero/negative input, and
+  float/bool type rejection), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/is-abundant` worktree
+  before merging; `gh pr merge --squash --delete-branch` succeeded
+  cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-4 to 1-3), including fixing a stale internal
+  cross-reference that still pointed at `is_abundant` by its old task
+  number.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-third merge in a row — the streak holds; backlog is down to
+  3 stdlib-predicate tasks (`is_deficient` now at the top) for the next
+  Engineer session.

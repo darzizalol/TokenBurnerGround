@@ -347,8 +347,12 @@ don't force many passes — and, as task 5, `is_composite(n)` —
 `is_prime`'s natural complement (an integer greater than 1 that is
 *not* prime, e.g. `4`, `6`, `8`, `9`), completing the classical
 prime/composite/neither(`0`, `1`, negatives) three-way split the same
-way perfect/abundant/deficient already covers divisor sums — and only
-much later, a bytecode VM if performance ever actually matters.
+way perfect/abundant/deficient already covers divisor sums — and, as
+task 6, `is_power_of_two(n)` — a bit-trick predicate (`n & (n - 1) ==
+0` for positive `n`), the first integer-property builtin to lean on
+Cinder's own bitwise operators rather than pure arithmetic or a
+trial-division loop — and only much later, a bytecode VM if
+performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

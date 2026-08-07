@@ -162,6 +162,7 @@ while (i < 10) {
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
+  `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -253,15 +254,18 @@ in iterable}`), `is_perfect_square` to test whether an integer is a
 perfect square, `is_armstrong` to test whether an integer equals the
 sum of its own digits each raised to the digit count, `is_leap_year`
 for the Gregorian leap-year rule, `reverse_int` to reverse an
-integer's decimal digits (sign preserved), and `is_perfect_number` to
-test whether an integer equals the sum of its own proper divisors.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the rest of the
-perfect/abundant/deficient divisor-sum trio — `is_abundant` and
-`is_deficient` — testing whether an integer's proper divisors sum to
-more or less than the integer itself, `is_palindrome_number` to test
-whether an integer's digits read the same forwards and backwards,
-`digital_root` for the repeated-digit-sum-to-single-digit closed form,
-and `is_composite` as `is_prime`'s complement.
+integer's decimal digits (sign preserved), `is_perfect_number` to
+test whether an integer equals the sum of its own proper divisors,
+and `is_abundant` to test whether an integer's proper divisors sum to
+more than itself.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_deficient` to
+close out the perfect/abundant/deficient divisor-sum trio (proper
+divisors summing to less than the integer itself),
+`is_palindrome_number` to test whether an integer's digits read the
+same forwards and backwards, `digital_root` for the
+repeated-digit-sum-to-single-digit closed form, `is_composite` as
+`is_prime`'s complement, and `is_power_of_two` via the `n & (n - 1)
+== 0` bit trick.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

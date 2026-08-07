@@ -241,6 +241,66 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
+
+Build: add `is_power_of_two(n)` to `cinder/builtins.py`, registered
+right after `is_composite` (search for `def _is_composite` — by the
+time this task is claimed, tasks 1-4 above will have landed and
+shifted line numbers) in the integer-property predicate cluster. A
+power of two is `1, 2, 4, 8, 16, ...` — the classic bit-trick
+predicate: for `n > 0`, `n` is a power of two exactly when `n & (n -
+1) == 0` (a power of two has exactly one set bit, so subtracting one
+flips every bit below it, and the two share no set bits — Cinder's
+`&` operator, already used elsewhere in the language, makes this a
+one-line check without any loop or `log2`). This is the first
+builtin in the cluster to use Cinder's own bitwise operators rather
+than pure arithmetic, a small nod toward exercising more of the
+language surface, not just adding to it.
+
+Model the arity/type-checking on `_is_prime`'s structure (search for
+`def _is_prime`): reuse `_require_arity("is_power_of_two", arguments,
+1, line, column)` and `_require_int("is_power_of_two", arguments[0],
+line, column)` (the same helper the rest of the cluster uses, defined
+at `cinder/builtins.py:157-162`). For the computation: `if value < 1:
+return False` (the bit trick only holds for positive `n` — `0 & -1`
+is `0` in Python's arbitrary-precision two's-complement semantics,
+which would wrongly satisfy the check, so `0` and every negative
+number must be excluded up front), otherwise `return (value & (value
+- 1)) == 0`.
+
+Acceptance criteria:
+- `is_power_of_two(1);` is `true` — `2^0`.
+- `is_power_of_two(2);` is `true`, `is_power_of_two(4);` is `true`,
+  `is_power_of_two(1024);` is `true`.
+- `is_power_of_two(3);` is `false`, `is_power_of_two(6);` is `false`,
+  `is_power_of_two(1023);` is `false` — one less than a power of two,
+  confirms the bit trick isn't off-by-one.
+- `is_power_of_two(0);` is `false` — excluded explicitly, not merely
+  by coincidence of the bit trick.
+- `is_power_of_two(-4);` is `false` — negative input, no domain
+  error, matching the cluster's non-positive-input convention.
+- `is_power_of_two(2251799813685248);` (2^51, a bignum-adjacent case)
+  is `true` — confirms the bit trick works past small-int ranges.
+- `is_power_of_two(3.0);` (float, even though numerically whole)
+  raises `CinderRuntimeError` matching `"is_power_of_two() requires
+  an int, got float"` — no implicit float-to-int coercion, matching
+  the rest of the cluster.
+- `is_power_of_two(true);` (bool) raises `CinderRuntimeError`
+  matching `"is_power_of_two() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_composite`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_power_of_two` added near `is_perfect_square`/
+`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

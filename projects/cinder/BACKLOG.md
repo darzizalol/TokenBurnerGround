@@ -271,6 +271,62 @@ task.
 
 ---
 
+## 5. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
+
+Build: add `digital_root(n)` to `cinder/builtins.py`, sitting next to
+`digit_sum`/`reverse_int` (search for `def _reverse_int` — by the time
+this task is claimed, tasks 1-4 above will have landed and shifted line
+numbers) rather than the boolean predicate cluster — like `reverse_int`,
+it returns a number, not a boolean. The digital root of a non-negative
+integer is what you get by repeatedly summing its decimal digits until
+a single digit remains (e.g. `38 -> 3+8=11 -> 1+1=2`, so
+`digital_root(38) == 2`). Like `digit_sum` (not `reverse_int`), sign is
+ignored rather than preserved — a digital root is a magnitude property,
+and `digit_sum` already sets this convention for the cluster.
+
+Model the arity/type-checking on `_digit_sum`'s structure (search for
+`def _digit_sum`): reuse `_require_arity("digital_root", arguments, 1,
+line, column)` and `_require_int("digital_root", arguments[0], line,
+column)` (the same helper the rest of the cluster uses, defined at
+`cinder/builtins.py:157-162`). For the computation, do **not** write a
+naive repeated-summing loop — use the well-known O(1) digital-root
+identity instead, since Cinder ints are arbitrary-precision and a large
+bignum could otherwise force many summing passes: take `value =
+abs(value)` first (sign ignored, per above), then `return 0 if value ==
+0 else 1 + (value - 1) % 9` (the standard closed-form digital root:
+every nonzero value maps to `1..9`, cycling every 9, and `0` is the one
+fixed point the modular formula doesn't cover on its own).
+
+Acceptance criteria:
+- `digital_root(0);` is `0`.
+- `digital_root(5);` is `5` — single digit is its own digital root.
+- `digital_root(38);` is `2` — `3+8=11`, then `1+1=2`.
+- `digital_root(9999);` is `9` — `9+9+9+9=36`, then `3+6=9`.
+- `digital_root(-38);` is `2` — sign ignored, matching `digit_sum`'s
+  convention (not `reverse_int`'s sign-preserving one).
+- `digital_root(999999999999999999999999);` is `9` — a bignum case
+  confirming the closed-form approach handles arbitrary-precision
+  input without a slow repeated-summing loop.
+- `digital_root(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"digital_root() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of the
+  cluster.
+- `digital_root(true);` (bool) raises `CinderRuntimeError` matching
+  `"digital_root() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `reverse_int`/
+`digit_sum`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `digital_root` added near `digit_sum`/
+`reverse_int`, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

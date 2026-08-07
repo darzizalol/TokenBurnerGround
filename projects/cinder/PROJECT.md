@@ -313,30 +313,30 @@ too, as has `is_leap_year(year)` — the Gregorian calendar rule
 (divisible by 4, except century years unless also divisible by 400),
 one more integer-property predicate that deliberately answers on
 zero/negative input rather than raising a domain error, matching
-`is_perfect_square`/`is_armstrong`'s own convention.
+`is_perfect_square`/`is_armstrong`'s own convention, as has
+`reverse_int(n)` — the digit-reversal sibling to `digit_sum`, returning
+a number rather than a boolean (so it sits beside `digit_sum` rather
+than in the boolean predicate cluster proper) and, unlike `digit_sum`,
+preserving the input's sign rather than discarding it.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `reverse_int(n)` — the digit-reversal sibling to
-`digit_sum`, returning a number rather than a boolean (so it sits
-beside `digit_sum` rather than in the boolean predicate cluster
-proper) and, unlike `digit_sum`, preserving the input's sign rather
-than discarding it, and, as task 2, `is_perfect_number(n)` — one more
-member of the integer-property cluster, testing whether `n` equals the
-sum of its own proper divisors (e.g. `6 = 1 + 2 + 3`) via the same
+as task 1, `is_perfect_number(n)` — one more member of the
+integer-property cluster, testing whether `n` equals the sum of its
+own proper divisors (e.g. `6 = 1 + 2 + 3`) via the same
 `math.isqrt`-bounded trial-division approach `is_prime` already uses,
 pairing each divisor with its complement rather than a naive `O(n)`
-scan — and, as task 3, `is_abundant(n)` — the next divisor-sum
+scan — and, as task 2, `is_abundant(n)` — the next divisor-sum
 classification after `is_perfect_number`, testing whether `n`'s proper
 divisors sum to more than `n` itself (e.g. `12 < 1 + 2 + 3 + 4 + 6 =
 16`), reusing the same trial-division shape inline rather than
-factoring a shared helper — and, as task 4, `is_deficient(n)` — the
+factoring a shared helper — and, as task 3, `is_deficient(n)` — the
 third and final divisor-sum classification, testing whether `n`'s
 proper divisors sum to less than `n` itself (e.g. `8 > 1 + 2 + 4 =
 7`), completing the perfect/abundant/deficient trio so every positive
-integer lands in exactly one of the three — and, as task 5,
+integer lands in exactly one of the three — and, as task 4,
 `is_palindrome_number(n)` — a numeric palindrome predicate, testing
 whether `n`'s decimal digits read the same forwards and backwards
 (e.g. `121`, `12321`), the natural closing member of the digit-property
-cluster once `reverse_int` (task 1) exists to build it on top of
+cluster now that `reverse_int` exists to build it on top of
 (`reverse_int(n) == n` for non-negative `n`; negative `n` is always
 `false` since the leading `-` breaks the symmetry) — and only much
 later, a bytecode VM if performance ever actually matters.

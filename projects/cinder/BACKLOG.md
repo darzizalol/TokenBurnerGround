@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_perfect_square` — perfect-square numeric predicate
+## 1. Standard library: `is_perfect_square` — perfect-square numeric predicate [claimed 2026-08-07T19:26:27Z]
 
 Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
 builtin sitting right after `digit_sum` (already landed, and list/map

@@ -2213,6 +2213,39 @@ class TestIsPrime(unittest.TestCase):
             run("is_prime();")
 
 
+class TestDigitSum(unittest.TestCase):
+    def test_digit_sum_of_zero(self):
+        self.assertEqual(run("let result = digit_sum(0);").get("result"), 0)
+
+    def test_digit_sum_of_single_digit(self):
+        self.assertEqual(run("let result = digit_sum(5);").get("result"), 5)
+
+    def test_digit_sum_of_multiple_digits(self):
+        self.assertEqual(run("let result = digit_sum(123);").get("result"), 6)
+
+    def test_digit_sum_of_repeated_digits(self):
+        self.assertEqual(run("let result = digit_sum(999);").get("result"), 27)
+
+    def test_digit_sum_of_negative_ignores_sign(self):
+        self.assertEqual(run("let result = digit_sum(-123);").get("result"), 6)
+
+    def test_digit_sum_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("digit_sum(3.0);")
+        self.assertIn("digit_sum", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_digit_sum_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("digit_sum(true);")
+        self.assertIn("digit_sum", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_digit_sum_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("digit_sum();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

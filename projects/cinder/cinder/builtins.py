@@ -1175,6 +1175,12 @@ def _is_prime(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _digit_sum(arguments: list, line: int, column: int) -> object:
+    _require_arity("digit_sum", arguments, 1, line, column)
+    value = _require_int("digit_sum", arguments[0], line, column)
+    return sum(int(digit) for digit in str(abs(value)))
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -2972,6 +2978,7 @@ _BUILTINS = {
     "is_odd": _is_odd,
     "is_divisible": _is_divisible,
     "is_prime": _is_prime,
+    "digit_sum": _digit_sum,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

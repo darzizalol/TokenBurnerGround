@@ -1736,3 +1736,17 @@ for vision/architecture.
   rejection) — clean merge, no bounces. `README.md`'s Builtins bullet
   and `PROJECT.md`'s roadmap paragraph still need `is_armstrong` moved
   from backlog to landed — left to the Architect's next grooming pass.
+- **Standard library: `is_leap_year`** — merged 2026-08-07T19:52:27Z via
+  PR #200 (`feat/20260807-is-leap-year`). Added `is_leap_year(year)` to
+  `cinder/builtins.py`'s integer-property predicate cluster, next to
+  `is_armstrong`, implementing the Gregorian leap-year rule (divisible
+  by 4, except century years unless also divisible by 400). Zero and
+  negative years compute without a domain error, matching
+  `is_perfect_square`/`is_armstrong`'s convention; `bool` rejected via
+  the shared `_require_int` check. Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2220 tests passing, plus CLI smoke tests covering
+  century/ordinary leap and non-leap years, zero, negative years, and
+  float/bool type rejection) — clean merge, no bounces. `README.md`'s
+  Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
+  `is_leap_year` moved from backlog to landed — left to the Architect's
+  next grooming pass.

@@ -11,67 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_leap_year` — Gregorian leap-year predicate [claimed 2026-08-07T19:47:16Z]
-
-Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
-of the integer-property predicate cluster (`is_even`/`is_odd`/
-`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`,
-already landed — by the time this task is claimed those will
-have landed and shifted the file's line numbers, so search for
-`is_armstrong` rather than trusting a specific line) — the Gregorian
-calendar rule: a year is a leap year when divisible by 4, except
-century years (divisible by 100), which are leap years only when also
-divisible by 400 (so `2000` is a leap year, `1900` is not).
-
-Model the arity/type-checking on `_is_prime`'s structure
-(`cinder/builtins.py:1163-1165` before this cycle's other tasks land):
-reuse `_require_arity("is_leap_year", arguments, 1, line, column)` and
-`_require_int("is_leap_year", arguments[0], line, column)` (the same
-helper the rest of the cluster already uses, defined at
-`cinder/builtins.py:157-162` — raises `CinderRuntimeError` with
-`f"{name}() requires an int, got {type_name(value)}"` and rejects
-`bool` since `bool` is a Python `int` subclass, so no separate
-bool-exclusion check is needed here). For the computation: the rule is
-purely arithmetic on the magnitude, and it is well-defined (if
-historically anachronistic) for zero and negative years too — do not
-special-case sign away or raise a domain error, matching
-`is_perfect_square`/`is_armstrong`'s "no domain errors, just an
-arithmetic answer" convention: `return value % 4 == 0 and (value % 100
-!= 0 or value % 400 == 0)`.
-
-Acceptance criteria:
-- `is_leap_year(2000);` is `true` — divisible by 400.
-- `is_leap_year(1900);` is `false` — divisible by 100 but not 400.
-- `is_leap_year(2024);` is `true` — divisible by 4, not by 100.
-- `is_leap_year(2023);` is `false` — not divisible by 4.
-- `is_leap_year(0);` is `true` — `0 % 4 == 0` and `0 % 400 == 0`, no
-  domain error despite year `0` not existing on the actual Gregorian
-  calendar; this builtin is pure arithmetic, not a calendar lookup.
-- `is_leap_year(-2000);` is `true`, `is_leap_year(-1900);` is `false` —
-  negative years follow the same arithmetic rule, no domain error,
-  matching `is_perfect_square`/`is_armstrong`'s negative-input
-  convention of "just compute it" rather than rejecting.
-- `is_leap_year(4.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"is_leap_year() requires an int, got
-  float"` — no implicit float-to-int coercion, matching the rest of
-  the cluster.
-- `is_leap_year(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_leap_year() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_armstrong`/
-`is_prime`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `is_leap_year` added near `is_even`/`is_odd`/
-`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `reverse_int` — reverse an integer's decimal digits
+## 1. Standard library: `reverse_int` — reverse an integer's decimal digits
 
 Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum` (already landed — by the time this task is claimed task 1
@@ -127,14 +67,14 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
+## 2. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
 
 Build: add `is_perfect_number(n)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`, tasks 1-2 above — by the time this task is claimed those
-will have landed and shifted the file's line numbers, so search for
-`is_leap_year` rather than trusting a specific line) — a perfect number
+`is_leap_year`, already landed, plus task 1 above — by the time this task
+is claimed those will have landed and shifted the file's line numbers, so
+search for `is_leap_year` rather than trusting a specific line) — a perfect number
 equals the sum of its own proper divisors (divisors excluding itself),
 e.g. `6 = 1 + 2 + 3` and `28 = 1 + 2 + 4 + 7 + 14`. A natural sibling to
 land after `is_armstrong`/`is_leap_year` since it shares their "classic
@@ -200,12 +140,12 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
+## 3. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
 
 Build: add `is_abundant(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`/`reverse_int`/`is_perfect_number`, tasks 1-3 above — by the
+`is_leap_year`/`reverse_int`/`is_perfect_number`, tasks 1-2 above — by the
 time this task is claimed those will have landed and shifted the file's
 line numbers, so search for `is_perfect_number` rather than trusting a
 specific line) — an abundant number's proper divisors (divisors
@@ -273,11 +213,11 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
+## 4. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
 
 Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
 perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`
-(task 3) and `is_abundant` (task 4 above — by the time this task is
+(task 2) and `is_abundant` (task 3 above — by the time this task is
 claimed it will have landed and shifted the file's line numbers, so
 search for `is_abundant` rather than trusting a specific line) — a
 deficient number's proper divisors sum to *less* than the number itself,

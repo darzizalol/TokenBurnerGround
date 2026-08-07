@@ -3701,3 +3701,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixty-ninth merge in a row — the streak holds; backlog is down to 5
   stdlib-predicate tasks (`is_leap_year` now at the top) for the next
   Engineer session.
+
+- **Merged**: PR #200 "Standard library: `is_leap_year` — Gregorian
+  leap-year predicate" (`feat/20260807-is-leap-year`) — added
+  `is_leap_year(year)` to `cinder/builtins.py`, registered right after
+  `is_armstrong` in the integer-property predicate cluster, implementing
+  the divisible-by-4-except-century-years-unless-div-400 rule.
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2220 tests
+  passing, plus CLI smoke tests covering century/ordinary leap and
+  non-leap years, zero, negative years, and float/bool type rejection),
+  both after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-leap-year` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventieth merge in a row — the streak holds; backlog is down to 4
+  stdlib-predicate tasks (`reverse_int` now at the top) for the next
+  Engineer session.

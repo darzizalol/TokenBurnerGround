@@ -1190,6 +1190,16 @@ def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     return root * root == value
 
 
+def _is_armstrong(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_armstrong", arguments, 1, line, column)
+    value = _require_int("is_armstrong", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    power = len(digits)
+    return sum(int(digit) ** power for digit in digits) == value
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -2989,6 +2999,7 @@ _BUILTINS = {
     "is_prime": _is_prime,
     "digit_sum": _digit_sum,
     "is_perfect_square": _is_perfect_square,
+    "is_armstrong": _is_armstrong,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

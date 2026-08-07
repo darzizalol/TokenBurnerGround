@@ -2294,6 +2294,48 @@ class TestIsPerfectSquare(unittest.TestCase):
             run("is_perfect_square();")
 
 
+class TestIsArmstrong(unittest.TestCase):
+    def test_is_armstrong_of_zero(self):
+        self.assertEqual(run("let result = is_armstrong(0);").get("result"), True)
+
+    def test_is_armstrong_of_single_digit(self):
+        self.assertEqual(run("let result = is_armstrong(5);").get("result"), True)
+
+    def test_is_armstrong_of_nine(self):
+        self.assertEqual(run("let result = is_armstrong(9);").get("result"), True)
+
+    def test_is_armstrong_of_153(self):
+        self.assertEqual(run("let result = is_armstrong(153);").get("result"), True)
+
+    def test_is_armstrong_of_9474(self):
+        self.assertEqual(run("let result = is_armstrong(9474);").get("result"), True)
+
+    def test_is_armstrong_of_ten_is_false(self):
+        self.assertEqual(run("let result = is_armstrong(10);").get("result"), False)
+
+    def test_is_armstrong_of_123_is_false(self):
+        self.assertEqual(run("let result = is_armstrong(123);").get("result"), False)
+
+    def test_is_armstrong_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_armstrong(-153);").get("result"), False)
+
+    def test_is_armstrong_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_armstrong(3.0);")
+        self.assertIn("is_armstrong", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_armstrong_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_armstrong(true);")
+        self.assertIn("is_armstrong", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_armstrong_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_armstrong();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

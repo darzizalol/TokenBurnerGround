@@ -284,39 +284,39 @@ case-insensitive alphabet-coverage predicate sitting next to
 `is_alpha`/.../`is_ascii` content-predicate family, since it isn't a
 bare delegation to a single `str.is*()` method (checking that a
 lowercased string's character set is a superset of the English
-alphabet), have since landed too.
+alphabet), and `digit_sum(n)` — a numeric builtin sitting next to
+`is_even`/`is_odd`/`is_divisible`/`is_prime` (the integer-property
+cluster, not the two-argument `pow`/`gcd`/`lcm`/`factorial` group)
+that sums an integer's decimal digits after normalizing away its sign
+via `abs()`, have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-`digit_sum(n)` as task 1, a numeric builtin sitting next to `is_even`/
-`is_odd`/`is_divisible`/`is_prime` (the integer-property cluster, not
-the two-argument `pow`/`gcd`/`lcm`/`factorial` group) that sums an
-integer's decimal digits after normalizing away its sign via `abs()`,
-and, as task 2, list comprehensions — `[expr for x in iterable]` and
-`[expr for x in iterable if cond]` — the first language-depth task
-queued in seven cycles after a long run of stdlib-only additions,
-scoped narrowly to a single non-destructuring loop variable, one
-optional `if` filter, and no nesting, mirroring `_execute_for`'s own
+list comprehensions — `[expr for x in iterable]` and `[expr for x in
+iterable if cond]` — as task 1, the first language-depth task queued
+in seven cycles after a long run of stdlib-only additions, scoped
+narrowly to a single non-destructuring loop variable, one optional
+`if` filter, and no nesting, mirroring `_execute_for`'s own
 iteration/closure-per-iteration shape rather than introducing a second
-one, and, as task 3, its map-literal counterpart — map comprehensions
+one, and, as task 2, its map-literal counterpart — map comprehensions
 (`{k: v for x in iterable}`, same optional `if` filter), scoped to land
 only after list comprehensions merge since it deliberately mirrors that
 task's grammar/AST/interpreter shape rather than inventing a second
-one, and, as task 4, `is_perfect_square(n)` — the same
+one, and, as task 3, `is_perfect_square(n)` — the same
 integer-property cluster `digit_sum`/`is_prime`/`is_even`/`is_odd`/
 `is_divisible` sit in, testing whether `n` is a perfect square via
 Python's own `math.isqrt` (already available since `math` is imported;
 exact integer square root, no floating-point `sqrt`-then-round
 rounding-error risk) rather than a hand-rolled Newton's-method loop,
-and, as task 5, `is_armstrong(n)` — one more member of that same
+and, as task 4, `is_armstrong(n)` — one more member of that same
 integer-property cluster, testing whether `n` equals the sum of its own
 decimal digits each raised to the power of the digit count (e.g. `153 =
 1^3 + 5^3 + 3^3`), a natural sibling to land after `digit_sum` since it
 does its own digit-by-digit walk rather than reusing `digit_sum`'s sum
 directly (the exponent depends on digit *count*, not a plain sum), and,
-as task 6, `is_leap_year(year)` — the Gregorian calendar rule
+as task 5, `is_leap_year(year)` — the Gregorian calendar rule
 (divisible by 4, except century years unless also divisible by 400),
 one more integer-property predicate that deliberately answers on
 zero/negative input rather than raising a domain error, matching
-`is_perfect_square`/`is_armstrong`'s own convention, and, as task 7,
+`is_perfect_square`/`is_armstrong`'s own convention, and, as task 6,
 `reverse_int(n)` — the digit-reversal sibling to `digit_sum`, returning
 a number rather than a boolean (so it sits beside `digit_sum` rather
 than in the boolean predicate cluster proper) and, unlike `digit_sum`,

@@ -111,14 +111,14 @@ moved from backlog to landed, and a map-comprehension follow-up task
 
 ## 2. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
 
-Build: the map-literal counterpart to task 2's list comprehensions —
+Build: the map-literal counterpart to task 1's list comprehensions —
 `{x: x * x for x in [1, 2, 3]}` becomes `{1: 1, 2: 4, 3: 9}`. This task
-is scoped to land *after* task 2 (list comprehensions) is merged, since
+is scoped to land *after* task 1 (list comprehensions) is merged, since
 it deliberately mirrors that task's grammar/AST/interpreter shape rather
-than inventing a second one — do not claim this task while task 2 is
+than inventing a second one — do not claim this task while task 1 is
 still open on the backlog.
 
-Scope, matching task 2's narrowness exactly (same reasoning: single
+Scope, matching task 1's narrowness exactly (same reasoning: single
 non-destructuring loop variable, one optional filter, no nesting):
 - Exactly one `for` clause, one loop variable — a plain `IDENTIFIER`
   only, no destructuring.
@@ -140,7 +140,7 @@ comprehension-aware version of that first-entry parse, check
 consume `for`, an `IDENTIFIER`, `in`, then `_ternary()` for the iterable;
 if `IF` follows, consume it and parse another `_ternary()` for the
 condition; finally consume `}` and return a `MapComprehension` — skip
-the existing comma-loop entirely, same as task 2's list version. Note one
+the existing comma-loop entirely, same as task 1's list version. Note one
 wrinkle list comprehensions didn't have: a map entry starts with `key:
 value`, two expressions, not one, so the `FOR` lookahead has to happen
 after both are parsed, not after a single element like `_list_element()`.
@@ -154,7 +154,7 @@ doesn't need its own disambiguation branch.
 
 Interpreter: in `cinder/interpreter.py`, add a branch (near
 `_evaluate_map_literal`, `cinder/interpreter.py:579-601`) for
-`MapComprehension` that mirrors task 2's `ListComprehension` evaluation
+`MapComprehension` that mirrors task 1's `ListComprehension` evaluation
 (same iterable-type dispatch and fresh-child-`Environment`-per-iteration
 binding for closure correctness) but builds a `dict` instead of a
 `list`: for each item, bind `var_name` in the fresh iteration
@@ -178,7 +178,7 @@ Acceptance criteria:
   collapse the same way a hand-written map literal with duplicate keys
   does, not an error.
 - A closure captured per-iteration observes that iteration's binding,
-  same as task 2's equivalent case (e.g. a comprehension value built
+  same as task 1's equivalent case (e.g. a comprehension value built
   from `fn() { return x; }` per iteration must not all close over the
   same final `x`).
 - `{k: v for k in 5};` (non-iterable) raises `CinderRuntimeError`
@@ -206,9 +206,10 @@ grooming pass, not this task.
 ## 3. Standard library: `is_perfect_square` — perfect-square numeric predicate
 
 Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
-builtin sitting right after `digit_sum` (task 1 above — by the time this
-task is claimed, tasks 1-4 will have landed and shifted the file's line
-numbers, so search for `digit_sum` rather than trusting a specific line)
+builtin sitting right after `digit_sum` (already landed — by the time
+this task is claimed, tasks 1-2 above (list/map comprehensions) will
+also have landed and shifted the file's line numbers, so search for
+`digit_sum` rather than trusting a specific line)
 in the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`, currently
 `cinder/builtins.py:1134-1165` before this cycle's other tasks land) —
@@ -276,7 +277,7 @@ grooming pass, not this task.
 
 Build: add `is_armstrong(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
-`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, tasks 1 and 4
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, tasks 1-3
 above — by the time this task is claimed those will have landed and
 shifted the file's line numbers, so search for `is_perfect_square`
 rather than trusting a specific line) — an Armstrong number (also
@@ -342,7 +343,7 @@ grooming pass, not this task.
 Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`,
-tasks 1, 4, and 5 above — by the time this task is claimed those will
+tasks 1-4 above — by the time this task is claimed those will
 have landed and shifted the file's line numbers, so search for
 `is_armstrong` rather than trusting a specific line) — the Gregorian
 calendar rule: a year is a leap year when divisible by 4, except
@@ -400,9 +401,9 @@ grooming pass, not this task.
 ## 6. Standard library: `reverse_int` — reverse an integer's decimal digits
 
 Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
-`digit_sum` (task 1 above — by the time this task is claimed tasks 1-6
-will have landed and shifted the file's line numbers, so search for
-`digit_sum` rather than trusting a specific line) in the
+`digit_sum` (already landed — by the time this task is claimed tasks 1-5
+above will also have landed and shifted the file's line numbers, so
+search for `digit_sum` rather than trusting a specific line) in the
 integer-property cluster — unlike the predicates around it
 (`is_leap_year`/`is_perfect_square`/`is_armstrong`), this one returns a
 number rather than a boolean, the same shape `digit_sum` itself already

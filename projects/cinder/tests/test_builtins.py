@@ -2246,6 +2246,42 @@ class TestDigitSum(unittest.TestCase):
             run("digit_sum();")
 
 
+class TestReverseInt(unittest.TestCase):
+    def test_reverse_int_of_zero(self):
+        self.assertEqual(run("let result = reverse_int(0);").get("result"), 0)
+
+    def test_reverse_int_of_single_digit(self):
+        self.assertEqual(run("let result = reverse_int(5);").get("result"), 5)
+
+    def test_reverse_int_of_multiple_digits(self):
+        self.assertEqual(run("let result = reverse_int(123);").get("result"), 321)
+
+    def test_reverse_int_of_negative_preserves_sign(self):
+        self.assertEqual(run("let result = reverse_int(-123);").get("result"), -321)
+
+    def test_reverse_int_of_trailing_zero(self):
+        self.assertEqual(run("let result = reverse_int(120);").get("result"), 21)
+
+    def test_reverse_int_of_repeated_trailing_zeros(self):
+        self.assertEqual(run("let result = reverse_int(100);").get("result"), 1)
+
+    def test_reverse_int_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("reverse_int(3.0);")
+        self.assertIn("reverse_int", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_reverse_int_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("reverse_int(true);")
+        self.assertIn("reverse_int", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_reverse_int_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("reverse_int();")
+
+
 class TestIsPerfectSquare(unittest.TestCase):
     def test_is_perfect_square_of_zero(self):
         self.assertEqual(run("let result = is_perfect_square(0);").get("result"), True)

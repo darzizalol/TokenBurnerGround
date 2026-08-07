@@ -26,6 +26,7 @@ from cinder.ast_nodes import (
     IndexNilCoalesceAssign,
     InterpString,
     LetStmt,
+    ListComprehension,
     ListLiteral,
     Literal,
     Logical,
@@ -67,6 +68,14 @@ def shape(node):
         return ("Spread", shape(node.expression))
     if isinstance(node, ListLiteral):
         return ("ListLiteral", [shape(e) for e in node.elements])
+    if isinstance(node, ListComprehension):
+        return (
+            "ListComprehension",
+            shape(node.element),
+            node.var_name,
+            shape(node.iterable),
+            shape(node.condition) if node.condition is not None else None,
+        )
     if isinstance(node, MapLiteral):
         return (
             "MapLiteral",
@@ -765,6 +774,40 @@ class TestListsAndMaps(unittest.TestCase):
                     ("Spread", ("ListLiteral", [("Literal", 4), ("Literal", 5)])),
                 ],
             ),
+        )
+
+    def test_list_comprehension(self):
+        self.assertEqual(
+            shape(parse("[x * 2 for x in xs]")),
+            (
+                "ListComprehension",
+                ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                "x",
+                ("Identifier", "xs"),
+                None,
+            ),
+        )
+
+    def test_list_comprehension_with_filter(self):
+        self.assertEqual(
+            shape(parse("[x for x in xs if x > 0]")),
+            (
+                "ListComprehension",
+                ("Identifier", "x"),
+                "x",
+                ("Identifier", "xs"),
+                ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+            ),
+        )
+
+    def test_list_comprehension_spread_head_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("[...[1, 2] for x in [1, 2]]")
+
+    def test_plain_list_literal_still_parses_after_comprehension_added(self):
+        self.assertEqual(
+            shape(parse("[1, 2, 3]")),
+            ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
         )
 
     def test_map_literal_with_spread(self):

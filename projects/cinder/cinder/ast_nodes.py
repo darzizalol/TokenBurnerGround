@@ -104,6 +104,16 @@ class ListLiteral:
 
 
 @dataclass(frozen=True)
+class ListComprehension:
+    element: "Expr"
+    var_name: str
+    iterable: "Expr"
+    condition: "Expr | None"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class MapLiteral:
     pairs: list  # list of (key, value) Expr tuples mixed with Spread entries
     line: int

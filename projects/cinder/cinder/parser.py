@@ -127,6 +127,7 @@ from cinder.ast_nodes import (
     IndexNilCoalesceAssign,
     InterpString,
     LetStmt,
+    ListComprehension,
     ListLiteral,
     Literal,
     Logical,
@@ -1122,11 +1123,33 @@ class Parser:
         elements = []
         if not self._check(TokenType.RBRACKET):
             elements.append(self._list_element())
+            if self._check(TokenType.FOR):
+                if isinstance(elements[0], Spread):
+                    raise ParseError(
+                        "spread not allowed in list comprehension",
+                        bracket.line,
+                        bracket.column,
+                    )
+                return self._list_comprehension(bracket, elements[0])
             while self._check(TokenType.COMMA):
                 self._advance()
                 elements.append(self._list_element())
         self._consume(TokenType.RBRACKET, "']' after list literal")
         return ListLiteral(elements, bracket.line, bracket.column)
+
+    def _list_comprehension(self, bracket: Token, element: Expr) -> Expr:
+        self._advance()  # consume 'for'
+        var_token = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'")
+        self._consume(TokenType.IN, "'in' after loop variable")
+        iterable = self._ternary()
+        condition = None
+        if self._check(TokenType.IF):
+            self._advance()
+            condition = self._ternary()
+        self._consume(TokenType.RBRACKET, "']' after list comprehension")
+        return ListComprehension(
+            element, var_token.lexeme, iterable, condition, bracket.line, bracket.column
+        )
 
     def _list_element(self) -> Expr:
         if self._check(TokenType.DOT_DOT_DOT):

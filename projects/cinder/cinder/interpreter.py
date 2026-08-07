@@ -70,6 +70,7 @@ from cinder.ast_nodes import (
     IndexNilCoalesceAssign,
     InterpString,
     LetStmt,
+    ListComprehension,
     ListLiteral,
     Literal,
     Logical,
@@ -239,6 +240,8 @@ class Interpreter:
             return self._evaluate_call(expr, env)
         if isinstance(expr, ListLiteral):
             return self._evaluate_list_literal(expr, env)
+        if isinstance(expr, ListComprehension):
+            return self._evaluate_list_comprehension(expr, env)
         if isinstance(expr, MapLiteral):
             return self._evaluate_map_literal(expr, env)
         if isinstance(expr, Index):
@@ -574,6 +577,31 @@ class Interpreter:
                 result.extend(value)
             else:
                 result.append(self.evaluate(element, env))
+        return result
+
+    def _evaluate_list_comprehension(
+        self, expr: ListComprehension, env: Environment
+    ) -> list:
+        iterable = self.evaluate(expr.iterable, env)
+        if isinstance(iterable, dict):
+            items = list(iterable.keys())
+        elif isinstance(iterable, (list, str)):
+            items = list(iterable)
+        else:
+            raise CinderRuntimeError(
+                f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
+                expr.line,
+                expr.column,
+            )
+        result: list = []
+        for item in items:
+            iter_env = Environment(env)
+            iter_env.define(expr.var_name, item)
+            if expr.condition is not None and not is_truthy(
+                self.evaluate(expr.condition, iter_env)
+            ):
+                continue
+            result.append(self.evaluate(expr.element, iter_env))
         return result
 
     def _evaluate_map_literal(self, expr: MapLiteral, env: Environment) -> object:

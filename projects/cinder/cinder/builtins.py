@@ -1181,6 +1181,14 @@ def _digit_sum(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) for digit in str(abs(value)))
 
 
+def _reverse_int(arguments: list, line: int, column: int) -> object:
+    _require_arity("reverse_int", arguments, 1, line, column)
+    value = _require_int("reverse_int", arguments[0], line, column)
+    sign = -1 if value < 0 else 1
+    reversed_digits = str(abs(value))[::-1]
+    return sign * int(reversed_digits)
+
+
 def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     _require_arity("is_perfect_square", arguments, 1, line, column)
     value = _require_int("is_perfect_square", arguments[0], line, column)
@@ -3004,6 +3012,7 @@ _BUILTINS = {
     "is_divisible": _is_divisible,
     "is_prime": _is_prime,
     "digit_sum": _digit_sum,
+    "reverse_int": _reverse_int,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_leap_year": _is_leap_year,

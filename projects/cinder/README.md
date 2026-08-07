@@ -250,9 +250,10 @@ Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_perfect_square` to
 test whether an integer is a perfect square, `is_armstrong` to test
 whether an integer equals the sum of its own digits each raised to the
 digit count, `is_leap_year` for the Gregorian leap-year rule,
-`reverse_int` to reverse an integer's decimal digits, and
-`is_perfect_number` to test whether an integer equals the sum of its own
-proper divisors.
+`reverse_int` to reverse an integer's decimal digits, and the
+perfect/abundant/deficient divisor-sum trio — `is_perfect_number`,
+`is_abundant`, and `is_deficient` — testing whether an integer's proper
+divisors sum to equal, more than, or less than the integer itself.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

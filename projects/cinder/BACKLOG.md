@@ -334,6 +334,135 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
+
+Build: add `is_abundant(n)` to `cinder/builtins.py`, one more member of
+the integer-property predicate cluster (`is_even`/`is_odd`/
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
+`is_leap_year`/`reverse_int`/`is_perfect_number`, tasks 1-5 above — by the
+time this task is claimed those will have landed and shifted the file's
+line numbers, so search for `is_perfect_number` rather than trusting a
+specific line) — an abundant number's proper divisors (divisors
+excluding itself) sum to *more* than the number itself, e.g. `12`:
+`1 + 2 + 3 + 4 + 6 = 16 > 12`. It's the natural next member after
+`is_perfect_number` since perfect/abundant/deficient (task 7 below) are
+the three classical divisor-sum classifications, and every positive
+integer falls into exactly one of them.
+
+Model the arity/type-checking on `_is_perfect_number`'s structure
+(search for `def _is_perfect_number`): reuse
+`_require_arity("is_abundant", arguments, 1, line, column)` and
+`_require_int("is_abundant", arguments[0], line, column)` (the same
+helper the rest of the cluster uses, defined at
+`cinder/builtins.py:157-162`). For the computation, reuse the same
+`math.isqrt`-bounded trial-division divisor sum `_is_perfect_number`
+already computes, but do **not** factor it into a shared helper as part
+of this task — keep the sum inline here too, matching how `is_prime` and
+`is_perfect_number` each already duplicate their own trial-division loop
+rather than sharing one; a refactor is out of scope for a single-builtin
+task. Unlike `is_perfect_number`'s `if value < 2: return False`
+early-out, `value == 1` is a real case here (its proper-divisor sum is
+`0`, which is *not* greater than `1`, so `is_abundant(1)` must be
+`false` without an early-out masking it): `if value < 1: return False`
+(no domain error for non-positive input, matching
+`is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`'s
+"just answer" convention), then `total = 1 if value > 1 else 0`, then
+for `d` from `2` to `math.isqrt(value)` inclusive, whenever `value % d
+== 0`, add `d` to `total`, and if the complement `value // d != d`, add
+it too (no need to also exclude `value` itself here, unlike
+`is_perfect_number` — the loop only ever reaches divisors up to
+`math.isqrt(value)` and their complements, never `value` itself, since
+`d` starts at `2`). Return `total > value`.
+
+Acceptance criteria:
+- `is_abundant(12);` is `true` — `1 + 2 + 3 + 4 + 6 == 16 > 12`.
+- `is_abundant(18);` is `true` — `1 + 2 + 3 + 6 + 9 == 21 > 18`.
+- `is_abundant(24);` is `true` — a second, larger case.
+- `is_abundant(6);` is `false` — `6` is perfect (`sum == 6`), not
+  abundant (`sum > 6` is false).
+- `is_abundant(8);` is `false` — `1 + 2 + 4 == 7 < 8`, deficient.
+- `is_abundant(1);` is `false` — proper-divisor sum is `0`, not `> 1`;
+  confirms the `value == 1` case isn't swallowed by an incorrect
+  early-out.
+- `is_abundant(0);` is `false`, `is_abundant(-12);` is `false` —
+  non-positive input, no domain error, matching the cluster's
+  negative/zero-input convention.
+- `is_abundant(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"is_abundant() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of the
+  cluster.
+- `is_abundant(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_abundant() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_perfect_number`/
+`is_prime`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_abundant` added near `is_even`/`is_odd`/
+`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
+## 7. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
+
+Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
+perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`
+(task 5) and `is_abundant` (task 6 above — by the time this task is
+claimed it will have landed and shifted the file's line numbers, so
+search for `is_abundant` rather than trusting a specific line) — a
+deficient number's proper divisors sum to *less* than the number itself,
+e.g. `8`: `1 + 2 + 4 = 7 < 8`. Every positive integer is exactly one of
+perfect, abundant, or deficient, so this is the natural task to close
+out the trio right after `is_abundant`.
+
+Model the arity/type-checking and computation on `_is_abundant`'s
+structure exactly (search for `def _is_abundant`) — same
+`_require_arity("is_deficient", arguments, 1, line, column)` and
+`_require_int("is_deficient", arguments[0], line, column)` calls, same
+`if value < 1: return False` non-positive early-out (no domain error),
+same `total = 1 if value > 1 else 0` plus `math.isqrt`-bounded
+trial-division loop building `total`. The only difference from
+`is_abundant` is the final comparison: return `total < value` instead of
+`total > value` (so a perfect number, where `total == value`, is
+correctly neither abundant nor deficient — do not use `<=`/`>=` for
+either predicate, or a perfect number would incorrectly satisfy one of
+them).
+
+Acceptance criteria:
+- `is_deficient(8);` is `true` — `1 + 2 + 4 == 7 < 8`.
+- `is_deficient(1);` is `true` — proper-divisor sum is `0 < 1`.
+- `is_deficient(10);` is `true` — `1 + 2 + 5 == 8 < 10`.
+- `is_deficient(6);` is `false` — `6` is perfect (`sum == 6`), not
+  deficient (`sum < 6` is false).
+- `is_deficient(12);` is `false` — `12` is abundant (`sum == 16 > 12`),
+  not deficient.
+- `is_deficient(0);` is `false`, `is_deficient(-8);` is `false` —
+  non-positive input, no domain error, matching the cluster's
+  negative/zero-input convention.
+- `is_deficient(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"is_deficient() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of the
+  cluster.
+- `is_deficient(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_deficient() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_abundant`/
+`is_prime`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_deficient` added near `is_even`/`is_odd`/
+`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

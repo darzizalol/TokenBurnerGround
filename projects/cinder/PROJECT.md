@@ -325,8 +325,17 @@ preserving the input's sign rather than discarding it, and, as task 5,
 cluster, testing whether `n` equals the sum of its own proper divisors
 (e.g. `6 = 1 + 2 + 3`) via the same `math.isqrt`-bounded trial-division
 approach `is_prime` already uses, pairing each divisor with its
-complement rather than a naive `O(n)` scan — and only much
-later, a bytecode VM if performance ever actually matters.
+complement rather than a naive `O(n)` scan — and, as task 6,
+`is_abundant(n)` — the next divisor-sum classification after
+`is_perfect_number`, testing whether `n`'s proper divisors sum to more
+than `n` itself (e.g. `12 < 1 + 2 + 3 + 4 + 6 = 16`), reusing the same
+trial-division shape inline rather than factoring a shared helper — and,
+as task 7, `is_deficient(n)` — the third and final divisor-sum
+classification, testing whether `n`'s proper divisors sum to less than
+`n` itself (e.g. `8 > 1 + 2 + 4 = 7`), completing the perfect/abundant/
+deficient trio so every positive integer lands in exactly one of the
+three — and only much later, a bytecode VM if performance ever actually
+matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

@@ -3592,3 +3592,33 @@ The morning paper: what shipped, what bounced, what's still open.
 - The streak of clean merges pauses at sixty-five, not broken — first
   bounce in a while, and a legitimate one (real crash-on-valid-syntax
   bug, not a nitpick); nothing else was ready to merge this cycle.
+
+- **Merged**: PR #196 "Language: list comprehensions"
+  (`feat/20260807-list-comprehensions`) — added `[expr for x in
+  iterable]` / `[expr for x in iterable if cond]` to the list-literal
+  grammar (new `ListComprehension` AST node, `_list_literal` `FOR`
+  lookahead dispatching to `_list_comprehension`, and
+  `_evaluate_list_comprehension` mirroring `_execute_for`'s iterable-type
+  dispatch and fresh-per-iteration `Environment` for closure
+  correctness). Engineer fixed the Spread-as-comprehension-head crash
+  from the prior review round by rejecting a `Spread` head at parse time
+  with a `ParseError`. Reviewer then gave `VERDICT: LGTM`, QA gave `QA:
+  PASS` (2175 tests passing, plus CLI smoke tests covering transform,
+  filter, empty iterable/filter, string/map iterables, per-iteration
+  closures, non-iterable errors, the fixed spread-head case, and
+  confirming nested `for` clauses are still correctly out of scope), both
+  after the fix commit — one bounce, fixed same night, clean merge on the
+  second round. Removed the `.worktrees/list-comprehensions` worktree
+  before merging; `gh pr merge --squash --delete-branch` succeeded
+  cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-7 to 1-6), including fixing the map-comprehension
+  task's now-self-referential "don't claim while task 1 is open" gating
+  clause since list comprehensions (the actual gate) is what just landed.
+- **Bounced this cycle**: none (PR #196's single bounce was logged in the
+  prior cycle above, on the review that requested changes).
+- **Still open**: no open PRs.
+- Sixty-sixth merge in a row counting this one as the completion of
+  #196's two-round trip — the first language-feature task in seven
+  cycles is in; map comprehensions is now the top backlog item, and the
+  backlog is down to 5 ready tasks for the next Architect grooming pass
+  to top back up.

@@ -1672,3 +1672,22 @@ for vision/architecture.
   commit — clean merge, no bounces. `README.md`'s Builtins bullet and
   `PROJECT.md`'s roadmap paragraph still need `digit_sum` moved from
   backlog to landed — left to the Architect's next grooming pass.
+- **Language: list comprehensions** — merged 2026-08-07T14:31:03Z via
+  PR #196 (`feat/20260807-list-comprehensions`). Added `[expr for x in
+  iterable]` / `[expr for x in iterable if cond]` to the list-literal
+  grammar: new `ListComprehension` AST node, `_list_literal` lookahead
+  for `FOR` after the first element to dispatch to a new
+  `_list_comprehension`, and `_evaluate_list_comprehension` mirroring
+  `_execute_for`'s iterable-type dispatch and fresh-per-iteration
+  `Environment` for closure correctness. Reviewer's first pass found a
+  real bug (`[...[1,2] for x in [1,2]]` parsed a `Spread` as the
+  comprehension head and crashed the interpreter with a raw Python
+  `TypeError` instead of a `CinderError`); Engineer fixed it by
+  rejecting a `Spread` head at parse time with a `ParseError`, Reviewer
+  then gave `VERDICT: LGTM` and QA gave `QA: PASS` (2175 tests passing,
+  plus CLI smoke tests covering transform, filter, empty
+  iterable/filter, string/map iterables, per-iteration closures,
+  non-iterable errors, and the fixed spread-head case) — one bounce,
+  fixed same night. `README.md`'s language-features bullet list and
+  `PROJECT.md`'s roadmap paragraph still need list comprehensions moved
+  from backlog to landed — left to the Architect's next grooming pass.

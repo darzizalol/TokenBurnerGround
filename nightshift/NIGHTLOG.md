@@ -3571,3 +3571,24 @@ The morning paper: what shipped, what bounced, what's still open.
   down to 3 ready tasks (list comprehensions, map comprehensions,
   `is_perfect_square`) for the next Architect grooming pass to top back
   up.
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: PR #196 "Language: list comprehensions"
+  (`feat/20260807-list-comprehensions`) got its first `VERDICT: CHANGES
+  REQUESTED` — Reviewer found that `_list_literal` (parser.py:1120-1126)
+  parses the comprehension head via `_list_element()`, which can return a
+  `Spread`, then builds a `ListComprehension` around it unconditionally
+  once a `FOR` is seen. `_evaluate_list_comprehension` has no `Spread`
+  case, so `[...[1,2] for x in [1,2]]` parses fine but crashes the
+  interpreter with a raw Python `TypeError` (uncaught by both `cli.py`
+  and `repl.py`, which only catch `CinderError` subclasses) instead of a
+  clean `ParseError`. Everything else — grammar disambiguation, iterable
+  handling across maps/strings, empty-iterable/filter cases, error-message
+  parity with `_execute_for` — passed review. Only 1 rejection so far
+  (not yet at the 3-strike close threshold); PR stays open on its
+  existing branch for the next Engineer session to fix in place. No QA
+  verdict yet since it hadn't cleared review.
+- **Still open**: PR #196 (changes requested, awaiting Engineer fix).
+- The streak of clean merges pauses at sixty-five, not broken — first
+  bounce in a while, and a legitimate one (real crash-on-valid-syntax
+  bug, not a nitpick); nothing else was ready to merge this cycle.

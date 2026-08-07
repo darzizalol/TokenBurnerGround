@@ -2448,6 +2448,48 @@ class TestIsPerfectNumber(unittest.TestCase):
             run("is_perfect_number();")
 
 
+class TestIsAbundant(unittest.TestCase):
+    def test_is_abundant_of_12(self):
+        self.assertEqual(run("let result = is_abundant(12);").get("result"), True)
+
+    def test_is_abundant_of_18(self):
+        self.assertEqual(run("let result = is_abundant(18);").get("result"), True)
+
+    def test_is_abundant_of_24(self):
+        self.assertEqual(run("let result = is_abundant(24);").get("result"), True)
+
+    def test_is_abundant_of_6_is_false(self):
+        self.assertEqual(run("let result = is_abundant(6);").get("result"), False)
+
+    def test_is_abundant_of_8_is_false(self):
+        self.assertEqual(run("let result = is_abundant(8);").get("result"), False)
+
+    def test_is_abundant_of_1_is_false(self):
+        self.assertEqual(run("let result = is_abundant(1);").get("result"), False)
+
+    def test_is_abundant_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_abundant(0);").get("result"), False)
+
+    def test_is_abundant_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_abundant(-12);").get("result"), False)
+
+    def test_is_abundant_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_abundant(3.0);")
+        self.assertIn("is_abundant", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_abundant_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_abundant(true);")
+        self.assertIn("is_abundant", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_abundant_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_abundant();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

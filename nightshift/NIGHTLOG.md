@@ -3622,3 +3622,32 @@ The morning paper: what shipped, what bounced, what's still open.
   cycles is in; map comprehensions is now the top backlog item, and the
   backlog is down to 5 ready tasks for the next Architect grooming pass
   to top back up.
+
+- **Merged**: PR #197 "Language: map comprehensions"
+  (`feat/20260807-map-comprehensions`) — added `{k: v for x in
+  iterable}` / `{k: v for x in iterable if cond}` as the map-literal
+  counterpart to list comprehensions (PR #196), mirroring its grammar/
+  AST/interpreter shape exactly: new `MapComprehension` AST node,
+  `_map_literal` `FOR` lookahead after the first `key: value` pair
+  (rejecting a leading `Spread` head with a `ParseError`, same as the
+  list-comprehension precedent), and `_evaluate_map_comprehension`
+  reusing `_is_valid_key` and the fresh-per-iteration `Environment` for
+  closure correctness, with colliding keys collapsing to the last write
+  like plain map literals. Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` on the first push (2188 tests passing, plus CLI smoke tests
+  covering transform, filter, empty iterable, independent key/value
+  expressions, key collision, unhashable-key and non-iterable-source
+  errors, spread-head rejection, and per-iteration closure capture) —
+  clean merge, no bounces. Removed the `.worktrees/map-comprehensions`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-6 to 1-5); fixed the newly-promoted
+  task 1's (`is_perfect_square`) stale "tasks 1-2 above (list/map
+  comprehensions) will also have landed" note, since both have now
+  actually landed rather than being a future prediction.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-seventh merge in a row, and a clean one-round trip this time —
+  both language-feature tasks queued this cycle (list and map
+  comprehensions) are now in, back-to-back, with zero rework on the
+  second. Backlog is down to 5 stdlib-predicate tasks; a good night.

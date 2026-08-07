@@ -11,105 +11,12 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}` [claimed 2026-08-07T14:36Z]
-
-Build: the map-literal counterpart to list comprehensions (landed via
-PR #196) — `{x: x * x for x in [1, 2, 3]}` becomes `{1: 1, 2: 4, 3: 9}`.
-This task deliberately mirrors list comprehensions' grammar/AST/
-interpreter shape rather than inventing a second one.
-
-Scope, matching list comprehensions' narrowness exactly (same reasoning: single
-non-destructuring loop variable, one optional filter, no nesting):
-- Exactly one `for` clause, one loop variable — a plain `IDENTIFIER`
-  only, no destructuring.
-- At most one optional trailing `if <cond>` filter clause.
-- No nested `for` clauses.
-- Map comprehensions only — this task does not touch list comprehension
-  syntax at all, it's purely the `{...}` counterpart.
-
-Grammar/parsing: add a new frozen dataclass `MapComprehension` to
-`cinder/ast_nodes.py` (near `MapLiteral`) with fields `key: Expr`,
-`value: Expr`, `var_name: str`, `iterable: Expr`, `condition: "Expr |
-None"`, `line: int`, `column: int`. In `cinder/parser.py`, `_map_literal`
-(`cinder/parser.py:1137-1146`) currently parses the first entry via
-`_map_entry()` then loops on `COMMA`; `_map_entry` in turn dispatches to
-either `Spread` or `_map_pair()` (`key: value`, `cinder/parser.py:1148-
-1158`). After parsing the first pair's `key`/`:`/`value` inside a new
-comprehension-aware version of that first-entry parse, check
-`self._check(TokenType.FOR)` before checking for a comma: if present,
-consume `for`, an `IDENTIFIER`, `in`, then `_ternary()` for the iterable;
-if `IF` follows, consume it and parse another `_ternary()` for the
-condition; finally consume `}` and return a `MapComprehension` — skip
-the existing comma-loop entirely, same as task 1's list version. Note one
-wrinkle list comprehensions didn't have: a map entry starts with `key:
-value`, two expressions, not one, so the `FOR` lookahead has to happen
-after both are parsed, not after a single element like `_list_element()`.
-If `FOR` is not present after the first pair, fall through to the
-existing comma-loop path unchanged — plain map literals (including
-`Spread` entries, which remain untouched by this task) keep working
-exactly as today. Reuse the statement-level `{`-disambiguation logic
-unchanged (Design principles in `PROJECT.md`) — a comprehension is just
-one more shape the speculative map-literal parse attempt can produce, it
-doesn't need its own disambiguation branch.
-
-Interpreter: in `cinder/interpreter.py`, add a branch (near
-`_evaluate_map_literal`, `cinder/interpreter.py:579-601`) for
-`MapComprehension` that mirrors task 1's `ListComprehension` evaluation
-(same iterable-type dispatch and fresh-child-`Environment`-per-iteration
-binding for closure correctness) but builds a `dict` instead of a
-`list`: for each item, bind `var_name` in the fresh iteration
-environment, evaluate `condition` if present and skip when falsy,
-otherwise evaluate `key` and `value`, validate the key with the existing
-`_is_valid_key` check (same `CinderRuntimeError` message
-`_evaluate_map_literal` already raises — `f"{type_name(key)} is not a
-valid map key"` — reuse it rather than writing a new one), and set
-`result[key] = value`. Later keys overwrite earlier ones on collision,
-matching plain map-literal semantics (`{"a": 1, "a": 2}` already keeps
-the last write).
-
-Acceptance criteria:
-- `{x: x * x for x in [1, 2, 3]};` is `{1: 1, 2: 4, 3: 9}`.
-- `{x: x for x in range(5) if x % 2 == 0};` is `{0: 0, 2: 2, 4: 4}` —
-  filter clause works.
-- `{x: x for x in []};` is `{}` — empty iterable, empty result.
-- `{k: len(k) for k in ["a", "bb", "ccc"]};` is `{"a": 1, "bb": 2,
-  "ccc": 3}` — key and value can be independent expressions.
-- `{x: 1 for x in [1, 1, 2]};` is `{1: 1, 2: 1}` — colliding keys
-  collapse the same way a hand-written map literal with duplicate keys
-  does, not an error.
-- A closure captured per-iteration observes that iteration's binding,
-  same as task 1's equivalent case (e.g. a comprehension value built
-  from `fn() { return x; }` per iteration must not all close over the
-  same final `x`).
-- `{k: v for k in 5};` (non-iterable) raises `CinderRuntimeError`
-  matching `"'for'-in loop requires a list, string, or map, got int"`.
-- `{k: k for k in [[1], [2]]};` (unhashable key, a list) raises
-  `CinderRuntimeError` matching `"list is not a valid map key"` — same
-  message `_evaluate_map_literal` already raises for a plain map literal
-  with an unhashable key.
-- A plain map literal (including one with `Spread` entries) keeps
-  parsing and evaluating exactly as before — existing map-literal tests
-  must keep passing unmodified.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (new `MapComprehension` dataclass),
-`cinder/parser.py` (`_map_literal`/`_map_entry`, `~line 1137`),
-`cinder/interpreter.py` (`_evaluate_map_literal` as the sibling
-reference, `~line 579`), `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s language-features
-bullet list and `PROJECT.md`'s roadmap paragraph need map comprehensions
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_perfect_square` — perfect-square numeric predicate
+## 1. Standard library: `is_perfect_square` — perfect-square numeric predicate
 
 Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
-builtin sitting right after `digit_sum` (already landed — by the time
-this task is claimed, tasks 1-2 above (list/map comprehensions) will
-also have landed and shifted the file's line numbers, so search for
-`digit_sum` rather than trusting a specific line)
+builtin sitting right after `digit_sum` (already landed, and list/map
+comprehensions have also landed and shifted the file's line numbers, so
+search for `digit_sum` rather than trusting a specific line)
 in the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`, currently
 `cinder/builtins.py:1134-1165` before this cycle's other tasks land) —
@@ -173,11 +80,11 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
+## 2. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
 
 Build: add `is_armstrong(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
-`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, tasks 1-3
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, task 1
 above — by the time this task is claimed those will have landed and
 shifted the file's line numbers, so search for `is_perfect_square`
 rather than trusting a specific line) — an Armstrong number (also
@@ -238,12 +145,12 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_leap_year` — Gregorian leap-year predicate
+## 3. Standard library: `is_leap_year` — Gregorian leap-year predicate
 
 Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`,
-tasks 1-4 above — by the time this task is claimed those will
+tasks 1-2 above — by the time this task is claimed those will
 have landed and shifted the file's line numbers, so search for
 `is_armstrong` rather than trusting a specific line) — the Gregorian
 calendar rule: a year is a leap year when divisible by 4, except
@@ -298,10 +205,10 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `reverse_int` — reverse an integer's decimal digits
+## 4. Standard library: `reverse_int` — reverse an integer's decimal digits
 
 Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
-`digit_sum` (already landed — by the time this task is claimed tasks 1-5
+`digit_sum` (already landed — by the time this task is claimed tasks 1-3
 above will also have landed and shifted the file's line numbers, so
 search for `digit_sum` rather than trusting a specific line) in the
 integer-property cluster — unlike the predicates around it
@@ -354,12 +261,12 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
+## 5. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
 
 Build: add `is_perfect_number(n)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`, tasks 1-5 above — by the time this task is claimed those
+`is_leap_year`, tasks 1-4 above — by the time this task is claimed those
 will have landed and shifted the file's line numbers, so search for
 `is_leap_year` rather than trusting a specific line) — a perfect number
 equals the sum of its own proper divisors (divisors excluding itself),

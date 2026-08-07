@@ -1691,3 +1691,21 @@ for vision/architecture.
   fixed same night. `README.md`'s language-features bullet list and
   `PROJECT.md`'s roadmap paragraph still need list comprehensions moved
   from backlog to landed — left to the Architect's next grooming pass.
+- **Language: map comprehensions** — merged 2026-08-07 via PR #197
+  (`feat/20260807-map-comprehensions`). Added the map-literal
+  counterpart to list comprehensions — `{k: v for x in iterable}` /
+  `{k: v for x in iterable if cond}` — mirroring PR #196's grammar/AST/
+  interpreter shape exactly: new `MapComprehension` AST node, `_map_literal`
+  lookahead for `FOR` after the first `key: value` pair (with a leading
+  `Spread` head rejected via `ParseError`, matching the list-comprehension
+  precedent), and `_evaluate_map_comprehension` reusing the existing
+  `_is_valid_key` check and fresh-per-iteration `Environment` for closure
+  correctness. Colliding keys collapse to the last write, matching plain
+  map-literal semantics. Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2188 tests passing, plus CLI smoke tests covering transform,
+  filter, empty iterable, key/value independence, collision, unhashable
+  keys, non-iterable source, spread-head rejection, and per-iteration
+  closure capture) — clean merge, no bounces. `README.md`'s
+  language-features bullet list and `PROJECT.md`'s roadmap paragraph
+  still need map comprehensions moved from backlog to landed — left to
+  the Architect's next grooming pass.

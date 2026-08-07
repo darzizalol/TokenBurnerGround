@@ -123,7 +123,12 @@ while (i < 10) {
   filter clause, no nesting; a fresh per-iteration scope so closures built
   inside the comprehension capture their own iteration's binding);
   map literals accept spread elements too (`{...map1, "k": v}`), merging
-  left to right with later keys/spreads winning on conflict; dot access
+  left to right with later keys/spreads winning on conflict; map
+  comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
+  if cond}` (same shape as list comprehensions — single non-destructuring
+  loop variable, one optional filter clause, no nesting, fresh
+  per-iteration scope; colliding keys collapse to the last write, same as
+  a plain map literal); dot access
   sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
   an assignment/`++`/`--`/compound-assign target (arithmetic and
   bitwise/shift alike, e.g. `m.key += 1`); only identifier-shaped keys
@@ -236,15 +241,16 @@ projects/cinder/
 ## Status & roadmap
 
 Actively developed, nightly. Recently landed: `digit_sum` to sum an
-integer's decimal digits, and list comprehensions (`[expr for x in
+integer's decimal digits, list comprehensions (`[expr for x in
 iterable]`, with an optional `if` filter) — the first language-depth
-addition in seven cycles after a long run of stdlib-only work.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): list comprehensions'
-map-literal counterpart, map comprehensions (`{k: v for x in iterable}`),
-`is_perfect_square` to test whether an integer is a perfect square,
-`is_armstrong` to test whether an integer equals the sum of its own digits
-each raised to the digit count, `is_leap_year` for the Gregorian
-leap-year rule, `reverse_int` to reverse an integer's decimal digits, and
+addition in seven cycles after a long run of stdlib-only work — and
+their map-literal counterpart, map comprehensions (`{k: v for x in
+iterable}`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_perfect_square` to
+test whether an integer is a perfect square, `is_armstrong` to test
+whether an integer equals the sum of its own digits each raised to the
+digit count, `is_leap_year` for the Gregorian leap-year rule,
+`reverse_int` to reverse an integer's decimal digits, and
 `is_perfect_number` to test whether an integer equals the sum of its own
 proper divisors.
 The backlog mixes language depth with stdlib breadth over time rather

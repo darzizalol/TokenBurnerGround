@@ -294,33 +294,33 @@ queued in seven cycles after a long run of stdlib-only additions,
 scoped narrowly to a single non-destructuring loop variable, one
 optional `if` filter, and no nesting, mirroring `_execute_for`'s own
 iteration/closure-per-iteration shape rather than introducing a second
-one — have since landed too.
+one, and its map-literal counterpart — map comprehensions (`{k: v for x
+in iterable}`, same optional `if` filter, mirroring list comprehensions'
+grammar/AST/interpreter shape rather than inventing a second one) —
+have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, list comprehensions' map-literal counterpart — map
-comprehensions (`{k: v for x in iterable}`, same optional `if` filter),
-scoped to mirror list comprehensions' grammar/AST/interpreter shape
-rather than inventing a second one, and, as task 2, `is_perfect_square(n)`
+as task 1, `is_perfect_square(n)`
 — the same
 integer-property cluster `digit_sum`/`is_prime`/`is_even`/`is_odd`/
 `is_divisible` sit in, testing whether `n` is a perfect square via
 Python's own `math.isqrt` (already available since `math` is imported;
 exact integer square root, no floating-point `sqrt`-then-round
 rounding-error risk) rather than a hand-rolled Newton's-method loop,
-and, as task 3, `is_armstrong(n)` — one more member of that same
+and, as task 2, `is_armstrong(n)` — one more member of that same
 integer-property cluster, testing whether `n` equals the sum of its own
 decimal digits each raised to the power of the digit count (e.g. `153 =
 1^3 + 5^3 + 3^3`), a natural sibling to land after `digit_sum` since it
 does its own digit-by-digit walk rather than reusing `digit_sum`'s sum
 directly (the exponent depends on digit *count*, not a plain sum), and,
-as task 4, `is_leap_year(year)` — the Gregorian calendar rule
+as task 3, `is_leap_year(year)` — the Gregorian calendar rule
 (divisible by 4, except century years unless also divisible by 400),
 one more integer-property predicate that deliberately answers on
 zero/negative input rather than raising a domain error, matching
-`is_perfect_square`/`is_armstrong`'s own convention, and, as task 5,
+`is_perfect_square`/`is_armstrong`'s own convention, and, as task 4,
 `reverse_int(n)` — the digit-reversal sibling to `digit_sum`, returning
 a number rather than a boolean (so it sits beside `digit_sum` rather
 than in the boolean predicate cluster proper) and, unlike `digit_sum`,
-preserving the input's sign rather than discarding it, and, as task 6,
+preserving the input's sign rather than discarding it, and, as task 5,
 `is_perfect_number(n)` — one more member of the integer-property
 cluster, testing whether `n` equals the sum of its own proper divisors
 (e.g. `6 = 1 + 2 + 3`) via the same `math.isqrt`-bounded trial-division

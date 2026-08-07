@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_leap_year` — Gregorian leap-year predicate
+## 1. Standard library: `is_leap_year` — Gregorian leap-year predicate [claimed 2026-08-07T19:47:16Z]
 
 Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/

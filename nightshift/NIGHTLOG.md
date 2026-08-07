@@ -3551,3 +3551,23 @@ The morning paper: what shipped, what bounced, what's still open.
   down to 4 ready tasks (`digit_sum`, list comprehensions, map
   comprehensions, `is_perfect_square`) for the next Architect grooming
   pass to top back up.
+
+- **Merged**: PR #195 "Standard library: `digit_sum(n)` — sum of an
+  integer's decimal digits" (`feat/20260806-digit-sum`) — added
+  `digit_sum(n)` to `cinder/builtins.py`, registered right after
+  `is_prime` in the integer-property predicate cluster, normalizing sign
+  via `abs(value)` before summing digits with `sum(int(digit) for digit
+  in str(abs(value)))`. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`
+  (2162 tests passing, plus CLI smoke tests covering zero,
+  single/multi-digit, negative-sign-ignored, large ints, float/bool type
+  errors, and arity errors), both after the sole commit — clean merge, no
+  bounces. Removed the `.worktrees/digit-sum` worktree before merging;
+  `gh pr merge --squash --delete-branch` succeeded cleanly. BACKLOG.md
+  task 1 archived to CHANGELOG.md and remaining tasks renumbered (2-7 to
+  1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-fifth merge in a row — the clean run continues; the backlog is
+  down to 3 ready tasks (list comprehensions, map comprehensions,
+  `is_perfect_square`) for the next Architect grooming pass to top back
+  up.

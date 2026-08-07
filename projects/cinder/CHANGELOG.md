@@ -1660,3 +1660,15 @@ for vision/architecture.
   `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap paragraph
   still need `is_pangram` moved from backlog to landed — left to the
   Architect's next grooming pass.
+- **Standard library: `digit_sum` — sum of an integer's decimal digits**
+  — merged 2026-08-07 via PR #195 (`feat/20260806-digit-sum`). Added
+  `digit_sum(n)` to `cinder/builtins.py`, registered right after
+  `is_prime` in the integer-property cluster, normalizing sign via
+  `abs(value)` before summing digits with
+  `sum(int(digit) for digit in str(abs(value)))`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2162 tests passing, plus CLI smoke
+  tests covering zero, single/multi-digit, negative-sign-ignored, large
+  ints, float/bool type errors, and arity errors), both after the sole
+  commit — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need `digit_sum` moved from
+  backlog to landed — left to the Architect's next grooming pass.

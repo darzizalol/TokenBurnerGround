@@ -11,61 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `digit_sum` — sum of an integer's decimal digits [claimed 2026-08-06T20:35:48Z]
-
-Build: add `digit_sum(n)` to `cinder/builtins.py`, a numeric builtin
-sitting right after `is_prime` (`cinder/builtins.py:1137-1145`) in the
-integer-property predicate cluster (`is_even`/`is_odd`/`is_divisible`/
-`is_prime`, `cinder/builtins.py:1114-1145`) — it isn't itself a
-predicate (it returns a number, not `true`/`false`), but it belongs
-next to that cluster rather than next to `pow`/`gcd`/`lcm`/`factorial`
-further down the file, since it shares their "one property of a single
-int" shape rather than the two-argument number-theoretic shape of that
-farther-down group.
-
-Model the arity/type-checking on `_is_prime`'s structure
-(`cinder/builtins.py:1137-1139`): reuse `_require_arity("digit_sum",
-arguments, 1, line, column)` and `_require_int("digit_sum",
-arguments[0], line, column)` (the same helper `is_even`/`is_odd`/
-`is_divisible`/`is_prime` already use — defined at
-`cinder/builtins.py:157-162`, raises `CinderRuntimeError` with
-`f"{name}() requires an int, got {type_name(value)}"` and rejects `bool`
-since `bool` is a Python `int` subclass, so no separate bool-exclusion
-check is needed here). For the computation, take the absolute value
-first (`digit_sum` is a property of a number's magnitude, not its sign —
-matching how `factorial`'s task above treats domain errors as distinct
-from type errors, `digit_sum` sidesteps the question entirely by
-normalizing sign away rather than rejecting negative input), then sum
-the digits: `sum(int(digit) for digit in str(abs(value)))` is sufficient
-— no need for a hand-rolled `% 10` / `// 10` loop.
-
-Acceptance criteria:
-- `digit_sum(0);` is `0`.
-- `digit_sum(5);` is `5`.
-- `digit_sum(123);` is `6`.
-- `digit_sum(999);` is `27`.
-- `digit_sum(-123);` is `6` — sign is ignored, same magnitude as `123`.
-- `digit_sum(3.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"digit_sum() requires an int, got
-  float"` — no implicit float-to-int coercion, matching `is_even`/
-  `is_odd`/`is_prime`.
-- `digit_sum(true);` (bool) raises `CinderRuntimeError` matching
-  `"digit_sum() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_prime`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `digit_sum` added near `is_even`/`is_odd`/`is_divisible`/
-`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
+## 1. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
 
 Build: teach the list-literal grammar a comprehension form, so
 `[x * 2 for x in range(5)]` becomes `[0, 2, 4, 6, 8]` without spelling out
@@ -163,7 +109,7 @@ moved from backlog to landed, and a map-comprehension follow-up task
 
 ---
 
-## 3. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
+## 2. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
 
 Build: the map-literal counterpart to task 2's list comprehensions —
 `{x: x * x for x in [1, 2, 3]}` becomes `{1: 1, 2: 4, 3: 9}`. This task
@@ -257,7 +203,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_perfect_square` — perfect-square numeric predicate
+## 3. Standard library: `is_perfect_square` — perfect-square numeric predicate
 
 Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
 builtin sitting right after `digit_sum` (task 1 above — by the time this
@@ -326,7 +272,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
+## 4. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
 
 Build: add `is_armstrong(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
@@ -391,7 +337,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_leap_year` — Gregorian leap-year predicate
+## 5. Standard library: `is_leap_year` — Gregorian leap-year predicate
 
 Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
@@ -451,7 +397,7 @@ grooming pass, not this task.
 
 ---
 
-## 7. Standard library: `reverse_int` — reverse an integer's decimal digits
+## 6. Standard library: `reverse_int` — reverse an integer's decimal digits
 
 Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum` (task 1 above — by the time this task is claimed tasks 1-6

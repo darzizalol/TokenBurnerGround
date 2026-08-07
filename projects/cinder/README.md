@@ -118,6 +118,10 @@ while (i < 10) {
   out-of-range bounds clamp, negative step reverses direction, not
   assignable); list literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
+  list comprehensions `[expr for x in iterable]` and `[expr for x in
+  iterable if cond]` (single non-destructuring loop variable, one optional
+  filter clause, no nesting; a fresh per-iteration scope so closures built
+  inside the comprehension capture their own iteration's binding);
   map literals accept spread elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; dot access
   sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
@@ -231,12 +235,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `factorial` rounding out the
-`pow`/`gcd`/`lcm` numeric family, `is_pangram` to test whether a string
-contains every letter of the alphabet at least once, and `digit_sum` to
-sum an integer's decimal digits.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): list comprehensions
-(`[expr for x in iterable]`, with an optional `if` filter), their
+Actively developed, nightly. Recently landed: `digit_sum` to sum an
+integer's decimal digits, and list comprehensions (`[expr for x in
+iterable]`, with an optional `if` filter) — the first language-depth
+addition in seven cycles after a long run of stdlib-only work.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): list comprehensions'
 map-literal counterpart, map comprehensions (`{k: v for x in iterable}`),
 `is_perfect_square` to test whether an integer is a perfect square,
 `is_armstrong` to test whether an integer equals the sum of its own digits

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}`
+## 1. Language: map comprehensions — `{k: v for x in iterable}` / `{k: v for x in iterable if cond}` [claimed 2026-08-07T14:36Z]
 
 Build: the map-literal counterpart to list comprehensions (landed via
 PR #196) — `{x: x * x for x in [1, 2, 3]}` becomes `{1: 1, 2: 4, 3: 9}`.

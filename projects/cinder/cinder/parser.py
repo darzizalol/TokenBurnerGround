@@ -1124,6 +1124,12 @@ class Parser:
         if not self._check(TokenType.RBRACKET):
             elements.append(self._list_element())
             if self._check(TokenType.FOR):
+                if isinstance(elements[0], Spread):
+                    raise ParseError(
+                        "spread not allowed in list comprehension",
+                        bracket.line,
+                        bracket.column,
+                    )
                 return self._list_comprehension(bracket, elements[0])
             while self._check(TokenType.COMMA):
                 self._advance()

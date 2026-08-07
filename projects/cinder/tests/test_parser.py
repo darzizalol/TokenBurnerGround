@@ -800,6 +800,10 @@ class TestListsAndMaps(unittest.TestCase):
             ),
         )
 
+    def test_list_comprehension_spread_head_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("[...[1, 2] for x in [1, 2]]")
+
     def test_plain_list_literal_still_parses_after_comprehension_added(self):
         self.assertEqual(
             shape(parse("[1, 2, 3]")),

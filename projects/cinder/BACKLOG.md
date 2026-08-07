@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]`
+## 1. Language: list comprehensions — `[expr for x in iterable]` / `[expr for x in iterable if cond]` [claimed 2026-08-07T14:12:55Z]
 
 Build: teach the list-literal grammar a comprehension form, so
 `[x * 2 for x in range(5)]` becomes `[0, 2, 4, 6, 8]` without spelling out

@@ -2411,6 +2411,43 @@ class TestIsLeapYear(unittest.TestCase):
             run("is_leap_year();")
 
 
+class TestIsPerfectNumber(unittest.TestCase):
+    def test_is_perfect_number_of_6(self):
+        self.assertEqual(run("let result = is_perfect_number(6);").get("result"), True)
+
+    def test_is_perfect_number_of_28(self):
+        self.assertEqual(run("let result = is_perfect_number(28);").get("result"), True)
+
+    def test_is_perfect_number_of_496(self):
+        self.assertEqual(run("let result = is_perfect_number(496);").get("result"), True)
+
+    def test_is_perfect_number_of_12_is_false(self):
+        self.assertEqual(run("let result = is_perfect_number(12);").get("result"), False)
+
+    def test_is_perfect_number_of_1_is_false(self):
+        self.assertEqual(run("let result = is_perfect_number(1);").get("result"), False)
+
+    def test_is_perfect_number_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_perfect_number(0);").get("result"), False)
+
+    def test_is_perfect_number_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_perfect_number(-6);").get("result"), False)
+
+    def test_is_perfect_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_number(3.0);")
+        self.assertIn("is_perfect_number", ctx.exception.message)
+
+    def test_is_perfect_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_number(true);")
+        self.assertIn("is_perfect_number", ctx.exception.message)
+
+    def test_is_perfect_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_perfect_number();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

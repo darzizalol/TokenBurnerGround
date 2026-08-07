@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
+## 1. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate [claimed 2026-08-07T20:29:25Z]
 
 Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
 perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`

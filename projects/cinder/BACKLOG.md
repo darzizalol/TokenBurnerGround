@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `reverse_int` — reverse an integer's decimal digits
+## 1. Standard library: `reverse_int` — reverse an integer's decimal digits [claimed 2026-08-07T19:57:28Z]
 
 Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum` (already landed — by the time this task is claimed task 1

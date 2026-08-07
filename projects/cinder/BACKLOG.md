@@ -269,6 +269,70 @@ grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
+
+Build: add `is_palindrome_number(n)` to `cinder/builtins.py`, sitting
+next to `reverse_int` (task 1 above — by the time this task is claimed
+task 1 will have landed and shifted the file's line numbers, so search
+for `reverse_int` rather than trusting a specific line) rather than the
+boolean predicate cluster proper — it belongs here because it's built
+directly on top of `reverse_int` rather than being an independent
+digit-by-digit walk like `is_armstrong`/`is_perfect_square`. This is the
+numeric sibling to the existing string `is_palindrome` (which already
+tests whether a *string* reads the same forwards and backwards): this
+one tests whether an integer's decimal digits do.
+
+**Depends on task 1 (`reverse_int`) already being merged** — if task 1
+is still open/unclaimed when this task is picked up, claim task 1
+first instead of skipping ahead (per this file's own "do not skip
+ahead" rule above).
+
+Model the arity/type-checking on `reverse_int`'s own structure (search
+for `def _reverse_int`): reuse `_require_arity("is_palindrome_number",
+arguments, 1, line, column)` and `_require_int("is_palindrome_number",
+arguments[0], line, column)` (the same helper the rest of the cluster
+uses, defined at `cinder/builtins.py:157-162`). For the computation,
+negative input is always `false` — the leading `-` sign breaks digit
+symmetry on its own, so there is no ambiguity to resolve (unlike
+`reverse_int` itself, this predicate does not need to reapply a sign):
+`if value < 0: return False`, otherwise compare the value directly
+against its own reversed digit string, *not* against a call to the
+`_reverse_int` helper — reuse the digit-string reversal
+(`str(value)[::-1]`) directly rather than routing through
+`_reverse_int`'s sign-handling logic, since that logic exists to solve
+a problem (preserving sign) this predicate has already special-cased
+away: `return str(value) == str(value)[::-1]`.
+
+Acceptance criteria:
+- `is_palindrome_number(0);` is `true`.
+- `is_palindrome_number(5);` is `true` — single digit.
+- `is_palindrome_number(121);` is `true`.
+- `is_palindrome_number(12321);` is `true` — odd-length palindrome.
+- `is_palindrome_number(123);` is `false`.
+- `is_palindrome_number(120);` is `false` — trailing zero breaks
+  symmetry (reversed digit-string is `"021"`, not equal to `"120"`).
+- `is_palindrome_number(-121);` is `false` — negative input is always
+  `false`, even though `121` itself is a palindrome; no domain error.
+- `is_palindrome_number(3.0);` (float, even though numerically whole)
+  raises `CinderRuntimeError` matching `"is_palindrome_number()
+  requires an int, got float"` — no implicit float-to-int coercion,
+  matching the rest of the cluster.
+- `is_palindrome_number(true);` (bool) raises `CinderRuntimeError`
+  matching `"is_palindrome_number() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `reverse_int`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_palindrome_number` added near `is_palindrome`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to
+landed — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

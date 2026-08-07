@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
+## 1. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate [claimed 2026-08-07T20:07:25Z]
 
 Build: add `is_perfect_number(n)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/

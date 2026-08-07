@@ -391,6 +391,122 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_leap_year` — Gregorian leap-year predicate
+
+Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
+of the integer-property predicate cluster (`is_even`/`is_odd`/
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`,
+tasks 1, 4, and 5 above — by the time this task is claimed those will
+have landed and shifted the file's line numbers, so search for
+`is_armstrong` rather than trusting a specific line) — the Gregorian
+calendar rule: a year is a leap year when divisible by 4, except
+century years (divisible by 100), which are leap years only when also
+divisible by 400 (so `2000` is a leap year, `1900` is not).
+
+Model the arity/type-checking on `_is_prime`'s structure
+(`cinder/builtins.py:1163-1165` before this cycle's other tasks land):
+reuse `_require_arity("is_leap_year", arguments, 1, line, column)` and
+`_require_int("is_leap_year", arguments[0], line, column)` (the same
+helper the rest of the cluster already uses, defined at
+`cinder/builtins.py:157-162` — raises `CinderRuntimeError` with
+`f"{name}() requires an int, got {type_name(value)}"` and rejects
+`bool` since `bool` is a Python `int` subclass, so no separate
+bool-exclusion check is needed here). For the computation: the rule is
+purely arithmetic on the magnitude, and it is well-defined (if
+historically anachronistic) for zero and negative years too — do not
+special-case sign away or raise a domain error, matching
+`is_perfect_square`/`is_armstrong`'s "no domain errors, just an
+arithmetic answer" convention: `return value % 4 == 0 and (value % 100
+!= 0 or value % 400 == 0)`.
+
+Acceptance criteria:
+- `is_leap_year(2000);` is `true` — divisible by 400.
+- `is_leap_year(1900);` is `false` — divisible by 100 but not 400.
+- `is_leap_year(2024);` is `true` — divisible by 4, not by 100.
+- `is_leap_year(2023);` is `false` — not divisible by 4.
+- `is_leap_year(0);` is `true` — `0 % 4 == 0` and `0 % 400 == 0`, no
+  domain error despite year `0` not existing on the actual Gregorian
+  calendar; this builtin is pure arithmetic, not a calendar lookup.
+- `is_leap_year(-2000);` is `true`, `is_leap_year(-1900);` is `false` —
+  negative years follow the same arithmetic rule, no domain error,
+  matching `is_perfect_square`/`is_armstrong`'s negative-input
+  convention of "just compute it" rather than rejecting.
+- `is_leap_year(4.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"is_leap_year() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of
+  the cluster.
+- `is_leap_year(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_leap_year() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_armstrong`/
+`is_prime`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_leap_year` added near `is_even`/`is_odd`/
+`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
+## 7. Standard library: `reverse_int` — reverse an integer's decimal digits
+
+Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
+`digit_sum` (task 1 above — by the time this task is claimed tasks 1-6
+will have landed and shifted the file's line numbers, so search for
+`digit_sum` rather than trusting a specific line) in the
+integer-property cluster — unlike the predicates around it
+(`is_leap_year`/`is_perfect_square`/`is_armstrong`), this one returns a
+number rather than a boolean, the same shape `digit_sum` itself already
+has, so it belongs immediately beside it rather than in the boolean
+cluster proper.
+
+Model the arity/type-checking on `digit_sum`'s own structure (once task
+1 lands): reuse `_require_arity("reverse_int", arguments, 1, line,
+column)` and `_require_int("reverse_int", arguments[0], line, column)`
+(the same helper the rest of the cluster uses, defined at
+`cinder/builtins.py:157-162`). For the computation, mirror `digit_sum`'s
+sign handling exactly (normalize away the sign, reverse the magnitude,
+then reapply the sign — a reversed negative number is still negative,
+unlike `digit_sum` where the sign disappears into a plain positive
+sum): `sign = -1 if value < 0 else 1`, `reversed_digits =
+str(abs(value))[::-1]`, then `return sign * int(reversed_digits)`.
+Leading zeros in the original number's reversed form simply disappear
+via `int(...)`, matching how no integer literal can carry leading
+zeros in the first place (e.g. `reverse_int(120)` produces the digit
+string `"021"`, and `int("021")` is `21` — no special-casing needed,
+Python's own `int()` conversion already drops the leading zero).
+
+Acceptance criteria:
+- `reverse_int(0);` is `0`.
+- `reverse_int(5);` is `5`.
+- `reverse_int(123);` is `321`.
+- `reverse_int(-123);` is `-321` — sign is preserved, unlike
+  `digit_sum` where it's discarded.
+- `reverse_int(120);` is `21` — trailing zero in the original becomes a
+  disappearing leading zero in the reversed form.
+- `reverse_int(100);` is `1`.
+- `reverse_int(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"reverse_int() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of
+  the cluster.
+- `reverse_int(true);` (bool) raises `CinderRuntimeError` matching
+  `"reverse_int() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `digit_sum`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `reverse_int` added near `digit_sum`, and `PROJECT.md`'s
+roadmap paragraph needs it moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

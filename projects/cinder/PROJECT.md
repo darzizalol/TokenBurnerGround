@@ -311,9 +311,17 @@ integer-property cluster, testing whether `n` equals the sum of its own
 decimal digits each raised to the power of the digit count (e.g. `153 =
 1^3 + 5^3 + 3^3`), a natural sibling to land after `digit_sum` since it
 does its own digit-by-digit walk rather than reusing `digit_sum`'s sum
-directly (the exponent depends on digit *count*, not a plain sum) —
-and only much later, a bytecode VM if performance ever actually
-matters.
+directly (the exponent depends on digit *count*, not a plain sum), and,
+as task 6, `is_leap_year(year)` — the Gregorian calendar rule
+(divisible by 4, except century years unless also divisible by 400),
+one more integer-property predicate that deliberately answers on
+zero/negative input rather than raising a domain error, matching
+`is_perfect_square`/`is_armstrong`'s own convention, and, as task 7,
+`reverse_int(n)` — the digit-reversal sibling to `digit_sum`, returning
+a number rather than a boolean (so it sits beside `digit_sum` rather
+than in the boolean predicate cluster proper) and, unlike `digit_sum`,
+preserving the input's sign rather than discarding it — and only much
+later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
+## 1. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate [claimed 2026-08-07T19:37:21Z]
 
 Build: add `is_armstrong(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/

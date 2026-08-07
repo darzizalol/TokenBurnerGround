@@ -253,6 +253,67 @@ not this task.
 
 ---
 
+## 5. Standard library: `is_composite` — non-prime-above-one predicate
+
+Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
+next to `is_prime` (search for `def _is_prime` — by the time this task
+is claimed, tasks 1-4 above will have landed and shifted line numbers)
+in the integer-property predicate cluster. A composite number is an
+integer greater than `1` that is *not* prime (e.g. `4`, `6`, `8`, `9`);
+this completes the classical three-way split of the non-negative
+integers into prime, composite, and neither (`0`, `1`) the same way
+`is_perfect_number`/`is_abundant`/`is_deficient` cover every positive
+integer's divisor-sum classification.
+
+Model the arity/type-checking and trial-division loop on `_is_prime`'s
+own structure exactly (search for `def _is_prime`): reuse
+`_require_arity("is_composite", arguments, 1, line, column)` and
+`_require_int("is_composite", arguments[0], line, column)` (the same
+helper the rest of the cluster uses, defined at
+`cinder/builtins.py:157-162`). Do **not** call `_is_prime`'s function
+object and negate its result — `_is_prime` returns `False` for `n < 2`
+too, which would make `is_composite` incorrectly `true` for `0`, `1`,
+and every negative number. Instead give `is_composite` its own
+early-out — `if value < 4: return False` (the smallest composite
+number is `4`; `2` and `3` are prime, `0`/`1`/negatives are neither) —
+then reuse the same `int(value ** 0.5) + 1`-bounded trial-division loop
+`_is_prime` uses (from `2` up to that bound, checking `value % divisor
+== 0`), returning `True` the moment a divisor is found and `False` if
+the loop completes without one (i.e. `value` is actually prime, so not
+composite).
+
+Acceptance criteria:
+- `is_composite(4);` is `true` — smallest composite number.
+- `is_composite(6);` is `true`.
+- `is_composite(9);` is `true` — odd composite, confirms the loop
+  isn't only catching even numbers.
+- `is_composite(97);` is `false` — a larger prime.
+- `is_composite(2);` is `false`, `is_composite(3);` is `false` — the
+  two smallest primes, must not be swept in by an off-by-one on the
+  early-out.
+- `is_composite(1);` is `false`, `is_composite(0);` is `false`,
+  `is_composite(-6);` is `false` — non-positive/non-composite input,
+  no domain error, and specifically *not* `true` the way naively
+  negating `is_prime(n)` would incorrectly produce.
+- `is_composite(3.0);` (float, even though numerically whole) raises
+  `CinderRuntimeError` matching `"is_composite() requires an int, got
+  float"` — no implicit float-to-int coercion, matching the rest of
+  the cluster.
+- `is_composite(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_composite() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_prime`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_composite` added near `is_prime`, and `PROJECT.md`'s
+roadmap paragraph needs it moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

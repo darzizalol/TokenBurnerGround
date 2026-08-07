@@ -161,6 +161,7 @@ while (i < 10) {
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
+  `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -251,14 +252,16 @@ work — their map-literal counterpart, map comprehensions (`{k: v for x
 in iterable}`), `is_perfect_square` to test whether an integer is a
 perfect square, `is_armstrong` to test whether an integer equals the
 sum of its own digits each raised to the digit count, `is_leap_year`
-for the Gregorian leap-year rule, and `reverse_int` to reverse an
-integer's decimal digits (sign preserved).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the perfect/abundant/
-deficient divisor-sum trio — `is_perfect_number`, `is_abundant`, and
+for the Gregorian leap-year rule, `reverse_int` to reverse an
+integer's decimal digits (sign preserved), and `is_perfect_number` to
+test whether an integer equals the sum of its own proper divisors.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the rest of the
+perfect/abundant/deficient divisor-sum trio — `is_abundant` and
 `is_deficient` — testing whether an integer's proper divisors sum to
-equal, more than, or less than the integer itself, and
-`is_palindrome_number` to test whether an integer's digits read the
-same forwards and backwards.
+more or less than the integer itself, `is_palindrome_number` to test
+whether an integer's digits read the same forwards and backwards,
+`digital_root` for the repeated-digit-sum-to-single-digit closed form,
+and `is_composite` as `is_prime`'s complement.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -3737,3 +3737,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventy-first merge in a row — the streak holds; backlog is down to
   4 stdlib-predicate tasks (`is_perfect_number` now at the top) for
   the next Engineer session.
+
+- **Merged**: PR #202 "Standard library: `is_perfect_number` builtin"
+  (`feat/20260807-is-perfect-number`) — added `is_perfect_number(n)` to
+  `cinder/builtins.py`, joining the integer-property predicate cluster:
+  sums proper divisors via trial-division up to `math.isqrt(value)`,
+  pairing each divisor with its complement and skipping the
+  double-count on perfect squares. Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2239 tests passing, plus CLI smoke tests covering
+  perfect numbers up to the 5th (33550336), an abundant number, a
+  perfect square, and float/bool type rejection), both after the sole
+  commit — clean merge, no bounces. Removed the
+  `.worktrees/is-perfect-number` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly this time (no repeat of
+  the merge-endpoint flakiness logged earlier this cycle in HELP.md).
+  BACKLOG.md task 1 archived to CHANGELOG.md and remaining tasks
+  renumbered (2-5 to 1-4), including fixing two stale internal
+  cross-references that still pointed at `is_perfect_number` by its old
+  task number.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-second merge in a row — the streak holds; backlog is down to
+  4 stdlib-predicate tasks (`is_abundant` now at the top) for the next
+  Engineer session.

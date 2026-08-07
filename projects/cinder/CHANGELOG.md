@@ -1762,3 +1762,17 @@ for vision/architecture.
   bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap
   paragraph still need `reverse_int` moved from backlog to landed —
   left to the Architect's next grooming pass.
+- **Standard library: `is_perfect_number`** — merged 2026-08-07T20:12:14Z
+  via PR #202 (`feat/20260807-is-perfect-number`). Added
+  `is_perfect_number(n)` to `cinder/builtins.py`, joining the
+  integer-property predicate cluster: sums proper divisors via
+  trial-division up to `math.isqrt(value)`, pairing each divisor with its
+  complement and skipping the double-count on perfect squares. Values
+  below 2 return `false` with no domain error, matching the cluster's
+  convention. Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2239
+  tests passing, plus CLI smoke tests covering perfect numbers up to the
+  5th (33550336), an abundant number, a perfect square, and float/bool
+  type rejection) — clean merge, no bounces. `README.md`'s Builtins
+  bullet and `PROJECT.md`'s roadmap paragraph still need
+  `is_perfect_number` moved from backlog to landed — left to the
+  Architect's next grooming pass.

@@ -2246,6 +2246,54 @@ class TestDigitSum(unittest.TestCase):
             run("digit_sum();")
 
 
+class TestIsPerfectSquare(unittest.TestCase):
+    def test_is_perfect_square_of_zero(self):
+        self.assertEqual(run("let result = is_perfect_square(0);").get("result"), True)
+
+    def test_is_perfect_square_of_one(self):
+        self.assertEqual(run("let result = is_perfect_square(1);").get("result"), True)
+
+    def test_is_perfect_square_of_four(self):
+        self.assertEqual(run("let result = is_perfect_square(4);").get("result"), True)
+
+    def test_is_perfect_square_of_sixteen(self):
+        self.assertEqual(run("let result = is_perfect_square(16);").get("result"), True)
+
+    def test_is_perfect_square_of_non_square_is_false(self):
+        self.assertEqual(run("let result = is_perfect_square(15);").get("result"), False)
+
+    def test_is_perfect_square_of_two_is_false(self):
+        self.assertEqual(run("let result = is_perfect_square(2);").get("result"), False)
+
+    def test_is_perfect_square_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_perfect_square(-4);").get("result"), False)
+
+    def test_is_perfect_square_of_large_bignum(self):
+        self.assertEqual(
+            run(
+                "let result = is_perfect_square("
+                "999999999999999999999999 * 999999999999999999999999);"
+            ).get("result"),
+            True,
+        )
+
+    def test_is_perfect_square_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_square(3.0);")
+        self.assertIn("is_perfect_square", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_perfect_square_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_square(true);")
+        self.assertIn("is_perfect_square", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_perfect_square_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_perfect_square();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

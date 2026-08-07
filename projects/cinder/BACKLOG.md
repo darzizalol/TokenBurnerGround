@@ -11,68 +11,12 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `reverse_int` — reverse an integer's decimal digits [claimed 2026-08-07T19:57:28Z]
-
-Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
-`digit_sum` (already landed — by the time this task is claimed task 1
-above will also have landed and shifted the file's line numbers, so
-search for `digit_sum` rather than trusting a specific line) in the
-integer-property cluster — unlike the predicates around it
-(`is_leap_year`/`is_perfect_square`/`is_armstrong`), this one returns a
-number rather than a boolean, the same shape `digit_sum` itself already
-has, so it belongs immediately beside it rather than in the boolean
-cluster proper.
-
-Model the arity/type-checking on `digit_sum`'s own structure: reuse
-`_require_arity("reverse_int", arguments, 1, line,
-column)` and `_require_int("reverse_int", arguments[0], line, column)`
-(the same helper the rest of the cluster uses, defined at
-`cinder/builtins.py:157-162`). For the computation, mirror `digit_sum`'s
-sign handling exactly (normalize away the sign, reverse the magnitude,
-then reapply the sign — a reversed negative number is still negative,
-unlike `digit_sum` where the sign disappears into a plain positive
-sum): `sign = -1 if value < 0 else 1`, `reversed_digits =
-str(abs(value))[::-1]`, then `return sign * int(reversed_digits)`.
-Leading zeros in the original number's reversed form simply disappear
-via `int(...)`, matching how no integer literal can carry leading
-zeros in the first place (e.g. `reverse_int(120)` produces the digit
-string `"021"`, and `int("021")` is `21` — no special-casing needed,
-Python's own `int()` conversion already drops the leading zero).
-
-Acceptance criteria:
-- `reverse_int(0);` is `0`.
-- `reverse_int(5);` is `5`.
-- `reverse_int(123);` is `321`.
-- `reverse_int(-123);` is `-321` — sign is preserved, unlike
-  `digit_sum` where it's discarded.
-- `reverse_int(120);` is `21` — trailing zero in the original becomes a
-  disappearing leading zero in the reversed form.
-- `reverse_int(100);` is `1`.
-- `reverse_int(3.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"reverse_int() requires an int, got
-  float"` — no implicit float-to-int coercion, matching the rest of
-  the cluster.
-- `reverse_int(true);` (bool) raises `CinderRuntimeError` matching
-  `"reverse_int() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `digit_sum`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `reverse_int` added near `digit_sum`, and `PROJECT.md`'s
-roadmap paragraph needs it moved from backlog to landed — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
+## 1. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
 
 Build: add `is_perfect_number(n)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`, already landed, plus task 1 above — by the time this task
+`is_leap_year`/`reverse_int`, already landed — by the time this task
 is claimed those will have landed and shifted the file's line numbers, so
 search for `is_leap_year` rather than trusting a specific line) — a perfect number
 equals the sum of its own proper divisors (divisors excluding itself),
@@ -140,13 +84,13 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
+## 2. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
 
 Build: add `is_abundant(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`/`reverse_int`/`is_perfect_number`, tasks 1-2 above — by the
-time this task is claimed those will have landed and shifted the file's
+`is_leap_year`/`reverse_int`/`is_perfect_number`, task 1 above — by the
+time this task is claimed it will have landed and shifted the file's
 line numbers, so search for `is_perfect_number` rather than trusting a
 specific line) — an abundant number's proper divisors (divisors
 excluding itself) sum to *more* than the number itself, e.g. `12`:
@@ -213,11 +157,11 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
+## 3. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
 
 Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
 perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`
-(task 2) and `is_abundant` (task 3 above — by the time this task is
+(task 1) and `is_abundant` (task 2 above — by the time this task is
 claimed it will have landed and shifted the file's line numbers, so
 search for `is_abundant` rather than trusting a specific line) — a
 deficient number's proper divisors sum to *less* than the number itself,
@@ -269,23 +213,17 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
+## 4. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
 
 Build: add `is_palindrome_number(n)` to `cinder/builtins.py`, sitting
-next to `reverse_int` (task 1 above — by the time this task is claimed
-task 1 will have landed and shifted the file's line numbers, so search
-for `reverse_int` rather than trusting a specific line) rather than the
-boolean predicate cluster proper — it belongs here because it's built
-directly on top of `reverse_int` rather than being an independent
-digit-by-digit walk like `is_armstrong`/`is_perfect_square`. This is the
-numeric sibling to the existing string `is_palindrome` (which already
-tests whether a *string* reads the same forwards and backwards): this
-one tests whether an integer's decimal digits do.
-
-**Depends on task 1 (`reverse_int`) already being merged** — if task 1
-is still open/unclaimed when this task is picked up, claim task 1
-first instead of skipping ahead (per this file's own "do not skip
-ahead" rule above).
+next to `reverse_int` (already landed, search for `reverse_int` rather
+than trusting a specific line) rather than the boolean predicate
+cluster proper — it belongs here because it's built directly on top of
+`reverse_int` rather than being an independent digit-by-digit walk like
+`is_armstrong`/`is_perfect_square`. This is the numeric sibling to the
+existing string `is_palindrome` (which already tests whether a *string*
+reads the same forwards and backwards): this one tests whether an
+integer's decimal digits do.
 
 Model the arity/type-checking on `reverse_int`'s own structure (search
 for `def _reverse_int`): reuse `_require_arity("is_palindrome_number",

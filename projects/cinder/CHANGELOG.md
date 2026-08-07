@@ -1750,3 +1750,15 @@ for vision/architecture.
   Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
   `is_leap_year` moved from backlog to landed — left to the Architect's
   next grooming pass.
+- **Standard library: `reverse_int`** — merged 2026-08-07T20:02:06Z via
+  PR #201 (`feat/20260807-reverse-int`). Added `reverse_int(n)` to
+  `cinder/builtins.py`, next to `digit_sum` in the integer-property
+  cluster, reversing an int's decimal digits while preserving sign
+  (leading zeros in the reversed form disappear via `int()` conversion,
+  matching how no integer literal can carry leading zeros). Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2229 tests passing, plus
+  CLI smoke tests covering zero, single/multi-digit, negative,
+  trailing-zero, and float/bool type rejection) — clean merge, no
+  bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap
+  paragraph still need `reverse_int` moved from backlog to landed —
+  left to the Architect's next grooming pass.

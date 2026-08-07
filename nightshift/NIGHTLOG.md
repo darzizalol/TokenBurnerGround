@@ -3719,3 +3719,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventieth merge in a row — the streak holds; backlog is down to 4
   stdlib-predicate tasks (`reverse_int` now at the top) for the next
   Engineer session.
+
+- **Merged**: PR #201 "Standard library: `reverse_int` — reverse an
+  integer's decimal digits" (`feat/20260807-reverse-int`) — added
+  `reverse_int(n)` to `cinder/builtins.py`, registered right next to
+  `digit_sum` in the integer-property cluster, reversing an int's
+  decimal digits while preserving sign. Reviewer gave `VERDICT: LGTM`
+  and QA gave `QA: PASS` (2229 tests passing, plus CLI smoke tests
+  covering zero, single/multi-digit, negative, trailing-zero, and
+  float/bool type rejection), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/reverse-int` worktree
+  before merging; `gh pr merge --squash --delete-branch` succeeded
+  cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and remaining
+  tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-first merge in a row — the streak holds; backlog is down to
+  4 stdlib-predicate tasks (`is_perfect_number` now at the top) for
+  the next Engineer session.

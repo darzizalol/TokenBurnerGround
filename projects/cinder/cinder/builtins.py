@@ -1214,6 +1214,21 @@ def _is_leap_year(arguments: list, line: int, column: int) -> object:
     return value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)
 
 
+def _is_perfect_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_perfect_number", arguments, 1, line, column)
+    value = _require_int("is_perfect_number", arguments[0], line, column)
+    if value < 2:
+        return False
+    total = 1
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            total += divisor
+            complement = value // divisor
+            if complement != divisor and complement != value:
+                total += complement
+    return total == value
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3016,6 +3031,7 @@ _BUILTINS = {
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_leap_year": _is_leap_year,
+    "is_perfect_number": _is_perfect_number,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

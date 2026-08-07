@@ -298,39 +298,38 @@ one, and its map-literal counterpart — map comprehensions (`{k: v for x
 in iterable}`, same optional `if` filter, mirroring list comprehensions'
 grammar/AST/interpreter shape rather than inventing a second one) —
 have since landed too.
+and `is_perfect_square(n)` — the same integer-property cluster
+`digit_sum`/`is_prime`/`is_even`/`is_odd`/`is_divisible` sit in, testing
+whether `n` is a perfect square via Python's own `math.isqrt` (exact
+integer square root, no floating-point `sqrt`-then-round rounding-error
+risk) rather than a hand-rolled Newton's-method loop — have since landed
+too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `is_perfect_square(n)`
-— the same
-integer-property cluster `digit_sum`/`is_prime`/`is_even`/`is_odd`/
-`is_divisible` sit in, testing whether `n` is a perfect square via
-Python's own `math.isqrt` (already available since `math` is imported;
-exact integer square root, no floating-point `sqrt`-then-round
-rounding-error risk) rather than a hand-rolled Newton's-method loop,
-and, as task 2, `is_armstrong(n)` — one more member of that same
+as task 1, `is_armstrong(n)` — one more member of that same
 integer-property cluster, testing whether `n` equals the sum of its own
 decimal digits each raised to the power of the digit count (e.g. `153 =
 1^3 + 5^3 + 3^3`), a natural sibling to land after `digit_sum` since it
 does its own digit-by-digit walk rather than reusing `digit_sum`'s sum
 directly (the exponent depends on digit *count*, not a plain sum), and,
-as task 3, `is_leap_year(year)` — the Gregorian calendar rule
+as task 2, `is_leap_year(year)` — the Gregorian calendar rule
 (divisible by 4, except century years unless also divisible by 400),
 one more integer-property predicate that deliberately answers on
 zero/negative input rather than raising a domain error, matching
-`is_perfect_square`/`is_armstrong`'s own convention, and, as task 4,
+`is_perfect_square`/`is_armstrong`'s own convention, and, as task 3,
 `reverse_int(n)` — the digit-reversal sibling to `digit_sum`, returning
 a number rather than a boolean (so it sits beside `digit_sum` rather
 than in the boolean predicate cluster proper) and, unlike `digit_sum`,
-preserving the input's sign rather than discarding it, and, as task 5,
+preserving the input's sign rather than discarding it, and, as task 4,
 `is_perfect_number(n)` — one more member of the integer-property
 cluster, testing whether `n` equals the sum of its own proper divisors
 (e.g. `6 = 1 + 2 + 3`) via the same `math.isqrt`-bounded trial-division
 approach `is_prime` already uses, pairing each divisor with its
-complement rather than a naive `O(n)` scan — and, as task 6,
+complement rather than a naive `O(n)` scan — and, as task 5,
 `is_abundant(n)` — the next divisor-sum classification after
 `is_perfect_number`, testing whether `n`'s proper divisors sum to more
 than `n` itself (e.g. `12 < 1 + 2 + 3 + 4 + 6 = 16`), reusing the same
 trial-division shape inline rather than factoring a shared helper — and,
-as task 7, `is_deficient(n)` — the third and final divisor-sum
+as task 6, `is_deficient(n)` — the third and final divisor-sum
 classification, testing whether `n`'s proper divisors sum to less than
 `n` itself (e.g. `8 > 1 + 2 + 4 = 7`), completing the perfect/abundant/
 deficient trio so every positive integer lands in exactly one of the

@@ -157,6 +157,7 @@ while (i < 10) {
   (letters only, digits only, alphanumeric only, whitespace only, ASCII-only, Unicode-numeric),
   `is_blank` to test whether a string is empty or whitespace-only (the one case `is_space` excludes),
   `digit_sum` to sum an integer's decimal digits (sign ignored),
+  `is_perfect_square` to test whether an integer is a perfect square,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -243,11 +244,11 @@ projects/cinder/
 Actively developed, nightly. Recently landed: `digit_sum` to sum an
 integer's decimal digits, list comprehensions (`[expr for x in
 iterable]`, with an optional `if` filter) — the first language-depth
-addition in seven cycles after a long run of stdlib-only work — and
-their map-literal counterpart, map comprehensions (`{k: v for x in
-iterable}`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_perfect_square` to
-test whether an integer is a perfect square, `is_armstrong` to test
+addition in seven cycles after a long run of stdlib-only work — their
+map-literal counterpart, map comprehensions (`{k: v for x in
+iterable}`), and `is_perfect_square` to test whether an integer is a
+perfect square.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_armstrong` to test
 whether an integer equals the sum of its own digits each raised to the
 digit count, `is_leap_year` for the Gregorian leap-year rule,
 `reverse_int` to reverse an integer's decimal digits, and the

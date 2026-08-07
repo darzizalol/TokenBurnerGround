@@ -241,7 +241,9 @@ map-literal counterpart, map comprehensions (`{k: v for x in iterable}`),
 `is_perfect_square` to test whether an integer is a perfect square,
 `is_armstrong` to test whether an integer equals the sum of its own digits
 each raised to the digit count, `is_leap_year` for the Gregorian
-leap-year rule, and `reverse_int` to reverse an integer's decimal digits.
+leap-year rule, `reverse_int` to reverse an integer's decimal digits, and
+`is_perfect_number` to test whether an integer equals the sum of its own
+proper divisors.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

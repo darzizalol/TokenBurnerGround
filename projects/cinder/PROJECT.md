@@ -320,7 +320,12 @@ zero/negative input rather than raising a domain error, matching
 `reverse_int(n)` — the digit-reversal sibling to `digit_sum`, returning
 a number rather than a boolean (so it sits beside `digit_sum` rather
 than in the boolean predicate cluster proper) and, unlike `digit_sum`,
-preserving the input's sign rather than discarding it — and only much
+preserving the input's sign rather than discarding it, and, as task 7,
+`is_perfect_number(n)` — one more member of the integer-property
+cluster, testing whether `n` equals the sum of its own proper divisors
+(e.g. `6 = 1 + 2 + 3`) via the same `math.isqrt`-bounded trial-division
+approach `is_prime` already uses, pairing each divisor with its
+complement rather than a naive `O(n)` scan — and only much
 later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer.

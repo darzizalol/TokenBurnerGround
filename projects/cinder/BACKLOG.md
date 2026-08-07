@@ -454,6 +454,79 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 7. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
+
+Build: add `is_perfect_number(n)` to `cinder/builtins.py`, one more member
+of the integer-property predicate cluster (`is_even`/`is_odd`/
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
+`is_leap_year`, tasks 1-5 above — by the time this task is claimed those
+will have landed and shifted the file's line numbers, so search for
+`is_leap_year` rather than trusting a specific line) — a perfect number
+equals the sum of its own proper divisors (divisors excluding itself),
+e.g. `6 = 1 + 2 + 3` and `28 = 1 + 2 + 4 + 7 + 14`. A natural sibling to
+land after `is_armstrong`/`is_leap_year` since it shares their "classic
+number-theory property, no domain error on out-of-range input" shape.
+
+Model the arity/type-checking on `_is_prime`'s structure (search for
+`def _is_prime` — the file's line numbers shift as earlier tasks this
+cycle land): reuse `_require_arity("is_perfect_number", arguments, 1,
+line, column)` and `_require_int("is_perfect_number", arguments[0],
+line, column)` (the same helper the rest of the cluster uses, defined at
+`cinder/builtins.py:157-162` — raises `CinderRuntimeError` with
+`f"{name}() requires an int, got {type_name(value)}"` and rejects `bool`
+since `bool` is a Python `int` subclass, so no separate bool-exclusion
+check is needed here). For the computation: matching `is_prime`'s own
+`if value < 2: return False` early-out (no proper divisor can sum to a
+value below 2, and this also disposes of 0/negative input without a
+domain error, matching `is_perfect_square`/`is_armstrong`/
+`is_leap_year`'s "just answer, don't reject" convention for out-of-range
+input), then sum proper divisors by trial division up to
+`math.isqrt(value)` (the same bound `is_prime` already uses, and
+`math` is already imported) pairing each divisor `d` that divides
+evenly with its complement `value // d`, taking care not to double-count
+a divisor equal to its own complement (i.e. when `d * d == value`) or to
+include `value` itself: `total = 1` (1 is always a proper divisor for
+`value > 1`), then for `d` from `2` to `math.isqrt(value)` inclusive,
+whenever `value % d == 0`, add `d` to `total`, and if the complement
+`value // d != d` and `value // d != value`, add it too. Return
+`total == value`.
+
+Acceptance criteria:
+- `is_perfect_number(6);` is `true` — `1 + 2 + 3 == 6`.
+- `is_perfect_number(28);` is `true` — `1 + 2 + 4 + 7 + 14 == 28`.
+- `is_perfect_number(496);` is `true` — third perfect number, confirms
+  the trial-division approach scales past the trivial cases.
+- `is_perfect_number(12);` is `false` — `1 + 2 + 3 + 4 + 6 == 16 != 12`
+  (abundant, not perfect).
+- `is_perfect_number(1);` is `false` — no proper divisors other than
+  none at all; `total` would be `1` from the `value > 1` guard not
+  applying, but the early `value < 2` out-out returns `false` directly.
+- `is_perfect_number(0);` is `false` — falls into the `value < 2`
+  early-out, no domain error.
+- `is_perfect_number(-6);` is `false` — negative input, never perfect
+  despite `6` itself being one; no domain error, just `false`, matching
+  `is_perfect_square`/`is_armstrong`/`is_leap_year`'s negative-input
+  convention.
+- `is_perfect_number(3.0);` (float, even though numerically whole)
+  raises `CinderRuntimeError` matching `"is_perfect_number() requires
+  an int, got float"` — no implicit float-to-int coercion, matching the
+  rest of the cluster.
+- `is_perfect_number(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_perfect_number() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_leap_year`/
+`is_prime`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `is_perfect_number` added near `is_even`/`is_odd`/
+`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

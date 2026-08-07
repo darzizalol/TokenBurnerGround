@@ -2253,6 +2253,51 @@ class TestListsAndMaps(unittest.TestCase):
             run('let s = "hi"; s[0] = "y";')
 
 
+class TestListComprehension(unittest.TestCase):
+    def test_basic_transform(self):
+        self.assertEqual(evaluate("[x * 2 for x in [1, 2, 3]]"), [2, 4, 6])
+
+    def test_filter_clause(self):
+        self.assertEqual(
+            evaluate("[x for x in [0,1,2,3,4,5,6,7,8,9] if x % 2 == 0]"),
+            [0, 2, 4, 6, 8],
+        )
+
+    def test_empty_iterable_gives_empty_result(self):
+        self.assertEqual(evaluate("[x for x in []]"), [])
+
+    def test_filter_excludes_everything_gives_empty_result(self):
+        self.assertEqual(evaluate("[x for x in [1, 2, 3] if x > 10]"), [])
+
+    def test_string_iterable(self):
+        self.assertEqual(evaluate('["-" + c for c in "abc"]'), ["-a", "-b", "-c"])
+
+    def test_map_iterable_yields_keys(self):
+        self.assertEqual(evaluate('[k for k in {"a": 1, "b": 2}]'), ["a", "b"])
+
+    def test_closure_captures_its_own_iteration_value(self):
+        env = run(
+            "let fns = [fn() { return x; } for x in [1, 2, 3]]; "
+            "let a = fns[0](); "
+            "let c = fns[2]();"
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_non_iterable_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("[x for x in 5]")
+        self.assertIn(
+            "'for'-in loop requires a list, string, or map, got int",
+            str(ctx.exception),
+        )
+
+    def test_plain_list_literal_unaffected(self):
+        self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])
+        self.assertEqual(evaluate("[...[1, 2], 3]"), [1, 2, 3])
+        self.assertEqual(evaluate("[]"), [])
+
+
 class TestSlicing(unittest.TestCase):
     def test_list_slice_both_bounds(self):
         self.assertEqual(evaluate("[1, 2, 3, 4, 5][1:3]"), [2, 3])

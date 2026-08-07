@@ -121,6 +121,17 @@ class MapLiteral:
 
 
 @dataclass(frozen=True)
+class MapComprehension:
+    key: "Expr"
+    value: "Expr"
+    var_name: str
+    iterable: "Expr"
+    condition: "Expr | None"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Index:
     obj: "Expr"
     index: "Expr"

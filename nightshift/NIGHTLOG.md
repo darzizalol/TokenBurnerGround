@@ -3681,3 +3681,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixty-eighth merge in a row — the clean streak continues after last
   cycle's quiet gap; backlog is down to 6 stdlib-predicate tasks
   (`is_armstrong` now at the top) for the next Engineer session.
+
+- **Merged**: PR #199 "Standard library: `is_armstrong` — Armstrong
+  (narcissistic) number predicate" (`feat/20260807-is-armstrong`) —
+  added `is_armstrong(n)` to `cinder/builtins.py`, registered right
+  after `is_perfect_square` in the integer-property predicate cluster,
+  checking whether a value equals the sum of its own decimal digits
+  each raised to the digit-count power. Reviewer gave `VERDICT: LGTM`
+  and QA gave `QA: PASS` (2210 tests passing, plus CLI smoke tests
+  covering true/false cases including a 4-digit Armstrong number beyond
+  the specced acceptance criteria, negative input returning `false`
+  without a domain error, and type/arity error checks), both after the
+  sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-armstrong` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-6 to 1-5).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-ninth merge in a row — the streak holds; backlog is down to 5
+  stdlib-predicate tasks (`is_leap_year` now at the top) for the next
+  Engineer session.

@@ -1723,3 +1723,16 @@ for vision/architecture.
   and `PROJECT.md`'s roadmap paragraph still need `is_perfect_square`
   moved from backlog to landed — left to the Architect's next grooming
   pass.
+- **Standard library: `is_armstrong`** — merged 2026-08-07T19:41:28Z via
+  PR #199 (`feat/20260807-is-armstrong`). Added `is_armstrong(n)` to
+  `cinder/builtins.py`'s integer-property predicate cluster, next to
+  `is_perfect_square`, checking whether `n` equals the sum of its own
+  decimal digits each raised to the digit-count power. Negative input
+  returns `false` rather than erroring, matching `is_perfect_square`'s
+  convention; `bool` rejected via the shared `_require_int` check.
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2210 tests
+  passing, plus CLI smoke tests covering true/false cases including a
+  4-digit Armstrong number beyond the specced cases, and negative/type
+  rejection) — clean merge, no bounces. `README.md`'s Builtins bullet
+  and `PROJECT.md`'s roadmap paragraph still need `is_armstrong` moved
+  from backlog to landed — left to the Architect's next grooming pass.

@@ -131,6 +131,7 @@ from cinder.ast_nodes import (
     ListLiteral,
     Literal,
     Logical,
+    MapComprehension,
     MapLiteral,
     OptionalIndex,
     ReturnStmt,
@@ -1161,12 +1162,42 @@ class Parser:
         brace = self._advance()  # consume '{'
         pairs = []
         if not self._check(TokenType.RBRACE):
-            pairs.append(self._map_entry())
+            entry = self._map_entry()
+            if self._check(TokenType.FOR):
+                if isinstance(entry, Spread):
+                    raise ParseError(
+                        "spread not allowed in map comprehension",
+                        brace.line,
+                        brace.column,
+                    )
+                return self._map_comprehension(brace, entry)
+            pairs.append(entry)
             while self._check(TokenType.COMMA):
                 self._advance()
                 pairs.append(self._map_entry())
         self._consume(TokenType.RBRACE, "'}' after map literal")
         return MapLiteral(pairs, brace.line, brace.column)
+
+    def _map_comprehension(self, brace: Token, entry: tuple) -> Expr:
+        key, value = entry
+        self._advance()  # consume 'for'
+        var_token = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'")
+        self._consume(TokenType.IN, "'in' after loop variable")
+        iterable = self._ternary()
+        condition = None
+        if self._check(TokenType.IF):
+            self._advance()
+            condition = self._ternary()
+        self._consume(TokenType.RBRACE, "'}' after map comprehension")
+        return MapComprehension(
+            key,
+            value,
+            var_token.lexeme,
+            iterable,
+            condition,
+            brace.line,
+            brace.column,
+        )
 
     def _map_entry(self):
         if self._check(TokenType.DOT_DOT_DOT):

@@ -30,6 +30,7 @@ from cinder.ast_nodes import (
     ListLiteral,
     Literal,
     Logical,
+    MapComprehension,
     MapLiteral,
     OptionalIndex,
     ReturnStmt,
@@ -85,6 +86,15 @@ def shape(node):
                 else (shape(entry[0]), shape(entry[1]))
                 for entry in node.pairs
             ],
+        )
+    if isinstance(node, MapComprehension):
+        return (
+            "MapComprehension",
+            shape(node.key),
+            shape(node.value),
+            node.var_name,
+            shape(node.iterable),
+            shape(node.condition) if node.condition is not None else None,
         )
     if isinstance(node, Index):
         return ("Index", shape(node.obj), shape(node.index))
@@ -856,6 +866,48 @@ class TestListsAndMaps(unittest.TestCase):
 
     def test_empty_map_literal(self):
         self.assertEqual(shape(parse("{}")), ("MapLiteral", []))
+
+    def test_map_comprehension(self):
+        self.assertEqual(
+            shape(parse("{x: x * x for x in xs}")),
+            (
+                "MapComprehension",
+                ("Identifier", "x"),
+                ("Binary", ("Identifier", "x"), TokenType.STAR, ("Identifier", "x")),
+                "x",
+                ("Identifier", "xs"),
+                None,
+            ),
+        )
+
+    def test_map_comprehension_with_filter(self):
+        self.assertEqual(
+            shape(parse("{x: x for x in xs if x > 0}")),
+            (
+                "MapComprehension",
+                ("Identifier", "x"),
+                ("Identifier", "x"),
+                "x",
+                ("Identifier", "xs"),
+                ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+            ),
+        )
+
+    def test_map_comprehension_spread_head_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("{...m for x in [1, 2]}")
+
+    def test_plain_map_literal_still_parses_after_comprehension_added(self):
+        self.assertEqual(
+            shape(parse('{"a": 1, "b": 2}')),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "a"), ("Literal", 1)),
+                    (("Literal", "b"), ("Literal", 2)),
+                ],
+            ),
+        )
 
     def test_index_get(self):
         self.assertEqual(

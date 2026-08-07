@@ -74,6 +74,7 @@ from cinder.ast_nodes import (
     ListLiteral,
     Literal,
     Logical,
+    MapComprehension,
     MapLiteral,
     OptionalIndex,
     ReturnStmt,
@@ -244,6 +245,8 @@ class Interpreter:
             return self._evaluate_list_comprehension(expr, env)
         if isinstance(expr, MapLiteral):
             return self._evaluate_map_literal(expr, env)
+        if isinstance(expr, MapComprehension):
+            return self._evaluate_map_comprehension(expr, env)
         if isinstance(expr, Index):
             return self._evaluate_index(expr, env)
         if isinstance(expr, OptionalIndex):
@@ -626,6 +629,38 @@ class Interpreter:
                     expr.column,
                 )
             result[key] = self.evaluate(value_expr, env)
+        return result
+
+    def _evaluate_map_comprehension(
+        self, expr: MapComprehension, env: Environment
+    ) -> dict:
+        iterable = self.evaluate(expr.iterable, env)
+        if isinstance(iterable, dict):
+            items = list(iterable.keys())
+        elif isinstance(iterable, (list, str)):
+            items = list(iterable)
+        else:
+            raise CinderRuntimeError(
+                f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
+                expr.line,
+                expr.column,
+            )
+        result: dict = {}
+        for item in items:
+            iter_env = Environment(env)
+            iter_env.define(expr.var_name, item)
+            if expr.condition is not None and not is_truthy(
+                self.evaluate(expr.condition, iter_env)
+            ):
+                continue
+            key = self.evaluate(expr.key, iter_env)
+            if not _is_valid_key(key):
+                raise CinderRuntimeError(
+                    f"{type_name(key)} is not a valid map key",
+                    expr.line,
+                    expr.column,
+                )
+            result[key] = self.evaluate(expr.value, iter_env)
         return result
 
     def _evaluate_interp_string(self, expr: InterpString, env: Environment) -> object:

@@ -2298,6 +2298,64 @@ class TestListComprehension(unittest.TestCase):
         self.assertEqual(evaluate("[]"), [])
 
 
+class TestMapComprehension(unittest.TestCase):
+    def test_basic_transform(self):
+        self.assertEqual(
+            evaluate("{x: x * x for x in [1, 2, 3]}"), {1: 1, 2: 4, 3: 9}
+        )
+
+    def test_filter_clause(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let m = {x: x for x in range(5) if x % 2 == 0};",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("m"), {0: 0, 2: 2, 4: 4})
+
+    def test_empty_iterable_gives_empty_result(self):
+        self.assertEqual(evaluate("{x: x for x in []}"), {})
+
+    def test_key_and_value_are_independent_expressions(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let m = {k: len(k) for k in ["a", "bb", "ccc"]};',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("m"), {"a": 1, "bb": 2, "ccc": 3})
+
+    def test_colliding_keys_collapse_to_last_write(self):
+        self.assertEqual(evaluate("{x: 1 for x in [1, 1, 2]}"), {1: 1, 2: 1})
+
+    def test_closure_captures_its_own_iteration_value(self):
+        env = run(
+            "let m = {x: fn() { return x; } for x in [1, 2, 3]}; "
+            "let a = m[1](); "
+            "let c = m[3]();"
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_non_iterable_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{k: v for k in 5}")
+        self.assertIn(
+            "'for'-in loop requires a list, string, or map, got int",
+            str(ctx.exception),
+        )
+
+    def test_unhashable_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{k: k for k in [[1], [2]]}")
+        self.assertIn("list is not a valid map key", str(ctx.exception))
+
+    def test_plain_map_literal_unaffected(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2}'), {"a": 1, "b": 2})
+        self.assertEqual(evaluate('{...{"a": 1}, "b": 2}'), {"a": 1, "b": 2})
+        self.assertEqual(evaluate("{}"), {})
+
+
 class TestSlicing(unittest.TestCase):
     def test_list_slice_both_bounds(self):
         self.assertEqual(evaluate("[1, 2, 3, 4, 5][1:3]"), [2, 3])

@@ -2336,6 +2336,45 @@ class TestIsArmstrong(unittest.TestCase):
             run("is_armstrong();")
 
 
+class TestIsLeapYear(unittest.TestCase):
+    def test_is_leap_year_of_2000(self):
+        self.assertEqual(run("let result = is_leap_year(2000);").get("result"), True)
+
+    def test_is_leap_year_of_1900(self):
+        self.assertEqual(run("let result = is_leap_year(1900);").get("result"), False)
+
+    def test_is_leap_year_of_2024(self):
+        self.assertEqual(run("let result = is_leap_year(2024);").get("result"), True)
+
+    def test_is_leap_year_of_2023(self):
+        self.assertEqual(run("let result = is_leap_year(2023);").get("result"), False)
+
+    def test_is_leap_year_of_zero(self):
+        self.assertEqual(run("let result = is_leap_year(0);").get("result"), True)
+
+    def test_is_leap_year_of_negative_2000(self):
+        self.assertEqual(run("let result = is_leap_year(-2000);").get("result"), True)
+
+    def test_is_leap_year_of_negative_1900(self):
+        self.assertEqual(run("let result = is_leap_year(-1900);").get("result"), False)
+
+    def test_is_leap_year_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_leap_year(4.0);")
+        self.assertIn("is_leap_year", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_leap_year_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_leap_year(true);")
+        self.assertIn("is_leap_year", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_leap_year_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_leap_year();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

@@ -1200,6 +1200,12 @@ def _is_armstrong(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) ** power for digit in digits) == value
 
 
+def _is_leap_year(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_leap_year", arguments, 1, line, column)
+    value = _require_int("is_leap_year", arguments[0], line, column)
+    return value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3000,6 +3006,7 @@ _BUILTINS = {
     "digit_sum": _digit_sum,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
+    "is_leap_year": _is_leap_year,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

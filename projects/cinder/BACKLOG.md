@@ -11,81 +11,12 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_perfect_square` — perfect-square numeric predicate [claimed 2026-08-07T19:26:27Z]
-
-Build: add `is_perfect_square(n)` to `cinder/builtins.py`, a numeric
-builtin sitting right after `digit_sum` (already landed, and list/map
-comprehensions have also landed and shifted the file's line numbers, so
-search for `digit_sum` rather than trusting a specific line)
-in the integer-property predicate cluster (`is_even`/`is_odd`/
-`is_divisible`/`is_prime`/`digit_sum`, currently
-`cinder/builtins.py:1134-1165` before this cycle's other tasks land) —
-it belongs there rather than next to `pow`/`gcd`/`lcm`/`factorial`
-further down the file, sharing that cluster's "one property of a single
-int" shape rather than the two-argument number-theoretic shape of the
-farther-down group.
-
-Model the arity/type-checking on `_is_prime`'s structure
-(`cinder/builtins.py:1157-1159` before this cycle's other tasks land):
-reuse `_require_arity("is_perfect_square", arguments, 1, line, column)`
-and `_require_int("is_perfect_square", arguments[0], line, column)` (the
-same helper `is_even`/`is_odd`/`is_divisible`/`is_prime`/`digit_sum`
-already use, defined at `cinder/builtins.py:157-162` — raises
-`CinderRuntimeError` with `f"{name}() requires an int, got
-{type_name(value)}"` and rejects `bool` since `bool` is a Python `int`
-subclass, so no separate bool-exclusion check is needed here). For the
-computation: negative integers are never perfect squares, so return
-`False` immediately when `value < 0` (matching `is_prime`'s own
-`if value < 2: return False` early-out shape); otherwise use Python's
-`math.isqrt(value)` (already imported as `math` at the top of
-`builtins.py` — used by `factorial`/`sqrt`/etc., check the existing
-`import math` before adding a duplicate) rather than
-`math.sqrt(value) ** 0.5`-style floating point, since `math.isqrt`
-returns an exact integer floor square root with no rounding-error risk
-for large values: `root = math.isqrt(value)` then `return root * root
-== value`.
-
-Acceptance criteria:
-- `is_perfect_square(0);` is `true` — `0 * 0 == 0`.
-- `is_perfect_square(1);` is `true`.
-- `is_perfect_square(4);` is `true`.
-- `is_perfect_square(16);` is `true`.
-- `is_perfect_square(15);` is `false` — between two perfect squares.
-- `is_perfect_square(2);` is `false`.
-- `is_perfect_square(-4);` is `false` — negative input, never a perfect
-  square despite `4` itself being one; no domain error, just `false`,
-  matching how `is_prime` returns `false` rather than erroring on
-  out-of-domain input like negative numbers or `0`/`1`.
-- `is_perfect_square(999999999999999999999999 * 999999999999999999999999);`
-  (a large bignum perfect square, well past float precision) is `true`
-  — confirms `math.isqrt` is used instead of a `** 0.5` float path that
-  would lose precision at this magnitude.
-- `is_perfect_square(3.0);` (float, even though numerically whole)
-  raises `CinderRuntimeError` matching `"is_perfect_square() requires
-  an int, got float"` — no implicit float-to-int coercion, matching
-  `is_even`/`is_odd`/`is_prime`/`digit_sum`.
-- `is_perfect_square(true);` (bool) raises `CinderRuntimeError`
-  matching `"is_perfect_square() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `digit_sum`/
-`is_prime`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `is_perfect_square` added near `is_even`/`is_odd`/
-`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
+## 1. Standard library: `is_armstrong` — Armstrong (narcissistic) number predicate
 
 Build: add `is_armstrong(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
-`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, task 1
-above — by the time this task is claimed those will have landed and
+`is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`, already
+landed — by the time this task is claimed those will have landed and
 shifted the file's line numbers, so search for `is_perfect_square`
 rather than trusting a specific line) — an Armstrong number (also
 called narcissistic) is one that equals the sum of its own decimal
@@ -145,12 +76,12 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_leap_year` — Gregorian leap-year predicate
+## 2. Standard library: `is_leap_year` — Gregorian leap-year predicate
 
 Build: add `is_leap_year(year)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`,
-tasks 1-2 above — by the time this task is claimed those will
+task 1 above — by the time this task is claimed those will
 have landed and shifted the file's line numbers, so search for
 `is_armstrong` rather than trusting a specific line) — the Gregorian
 calendar rule: a year is a leap year when divisible by 4, except
@@ -205,10 +136,10 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `reverse_int` — reverse an integer's decimal digits
+## 3. Standard library: `reverse_int` — reverse an integer's decimal digits
 
 Build: add `reverse_int(n)` to `cinder/builtins.py`, sitting next to
-`digit_sum` (already landed — by the time this task is claimed tasks 1-3
+`digit_sum` (already landed — by the time this task is claimed tasks 1-2
 above will also have landed and shifted the file's line numbers, so
 search for `digit_sum` rather than trusting a specific line) in the
 integer-property cluster — unlike the predicates around it
@@ -217,8 +148,8 @@ number rather than a boolean, the same shape `digit_sum` itself already
 has, so it belongs immediately beside it rather than in the boolean
 cluster proper.
 
-Model the arity/type-checking on `digit_sum`'s own structure (once task
-1 lands): reuse `_require_arity("reverse_int", arguments, 1, line,
+Model the arity/type-checking on `digit_sum`'s own structure: reuse
+`_require_arity("reverse_int", arguments, 1, line,
 column)` and `_require_int("reverse_int", arguments[0], line, column)`
 (the same helper the rest of the cluster uses, defined at
 `cinder/builtins.py:157-162`). For the computation, mirror `digit_sum`'s
@@ -261,12 +192,12 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
+## 4. Standard library: `is_perfect_number` — sum-of-proper-divisors predicate
 
 Build: add `is_perfect_number(n)` to `cinder/builtins.py`, one more member
 of the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`, tasks 1-4 above — by the time this task is claimed those
+`is_leap_year`, tasks 1-3 above — by the time this task is claimed those
 will have landed and shifted the file's line numbers, so search for
 `is_leap_year` rather than trusting a specific line) — a perfect number
 equals the sum of its own proper divisors (divisors excluding itself),
@@ -334,18 +265,18 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
+## 5. Standard library: `is_abundant` — sum-of-proper-divisors-exceeds-n predicate
 
 Build: add `is_abundant(n)` to `cinder/builtins.py`, one more member of
 the integer-property predicate cluster (`is_even`/`is_odd`/
 `is_divisible`/`is_prime`/`digit_sum`/`is_perfect_square`/`is_armstrong`/
-`is_leap_year`/`reverse_int`/`is_perfect_number`, tasks 1-5 above — by the
+`is_leap_year`/`reverse_int`/`is_perfect_number`, tasks 1-4 above — by the
 time this task is claimed those will have landed and shifted the file's
 line numbers, so search for `is_perfect_number` rather than trusting a
 specific line) — an abundant number's proper divisors (divisors
 excluding itself) sum to *more* than the number itself, e.g. `12`:
 `1 + 2 + 3 + 4 + 6 = 16 > 12`. It's the natural next member after
-`is_perfect_number` since perfect/abundant/deficient (task 7 below) are
+`is_perfect_number` since perfect/abundant/deficient (task 6 below) are
 the three classical divisor-sum classifications, and every positive
 integer falls into exactly one of them.
 
@@ -407,11 +338,11 @@ grooming pass, not this task.
 
 ---
 
-## 7. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
+## 6. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate
 
 Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
 perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`
-(task 5) and `is_abundant` (task 6 above — by the time this task is
+(task 4) and `is_abundant` (task 5 above — by the time this task is
 claimed it will have landed and shifted the file's line numbers, so
 search for `is_abundant` rather than trusting a specific line) — a
 deficient number's proper divisors sum to *less* than the number itself,

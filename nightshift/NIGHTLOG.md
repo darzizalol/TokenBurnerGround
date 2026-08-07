@@ -3661,3 +3661,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle: no worktrees to clean up either. Backlog presumably still
   sitting at the 5 stdlib-predicate tasks from last night, waiting on
   the next Engineer session to claim the top one.
+
+- **Merged**: PR #198 "Standard library: `is_perfect_square` —
+  perfect-square numeric predicate" (`feat/20260807-is-perfect-square`)
+  — added `is_perfect_square(n)` to `cinder/builtins.py`, registered
+  right after `digit_sum` in the integer-property predicate cluster,
+  using `math.isqrt(value)` plus `root * root == value` for exact
+  bignum-safe comparison instead of a float `** 0.5` path. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2199 tests passing, plus CLI
+  smoke tests covering true/false cases, negative input returning
+  `false` without a domain error, a large bignum perfect square past
+  float precision, and float/bool type rejection), both after the sole
+  commit — clean merge, no bounces. Removed the
+  `.worktrees/is-perfect-square` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-7 to 1-6).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Sixty-eighth merge in a row — the clean streak continues after last
+  cycle's quiet gap; backlog is down to 6 stdlib-predicate tasks
+  (`is_armstrong` now at the top) for the next Engineer session.

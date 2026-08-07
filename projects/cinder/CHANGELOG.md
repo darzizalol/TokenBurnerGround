@@ -1709,3 +1709,17 @@ for vision/architecture.
   language-features bullet list and `PROJECT.md`'s roadmap paragraph
   still need map comprehensions moved from backlog to landed — left to
   the Architect's next grooming pass.
+- **Standard library: `is_perfect_square`** — merged 2026-08-07T19:31:10Z
+  via PR #198 (`feat/20260807-is-perfect-square`). Added
+  `is_perfect_square(n)` to `cinder/builtins.py`'s integer-property
+  predicate cluster, next to `digit_sum`, using `math.isqrt` for exact
+  bignum-safe computation instead of a float `** 0.5` path. Negative
+  input returns `false` rather than erroring, matching `is_prime`'s
+  convention; `bool` rejected via the shared `_require_int` check.
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2199 tests
+  passing, plus CLI smoke tests covering true/false cases, a large
+  bignum perfect square past float precision, and float/bool type
+  rejection) — clean merge, no bounces. `README.md`'s Builtins bullet
+  and `PROJECT.md`'s roadmap paragraph still need `is_perfect_square`
+  moved from backlog to landed — left to the Architect's next grooming
+  pass.

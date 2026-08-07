@@ -1181,6 +1181,15 @@ def _digit_sum(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) for digit in str(abs(value)))
 
 
+def _is_perfect_square(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_perfect_square", arguments, 1, line, column)
+    value = _require_int("is_perfect_square", arguments[0], line, column)
+    if value < 0:
+        return False
+    root = math.isqrt(value)
+    return root * root == value
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -2979,6 +2988,7 @@ _BUILTINS = {
     "is_divisible": _is_divisible,
     "is_prime": _is_prime,
     "digit_sum": _digit_sum,
+    "is_perfect_square": _is_perfect_square,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

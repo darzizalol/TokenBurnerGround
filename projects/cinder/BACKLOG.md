@@ -11,62 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_deficient` — sum-of-proper-divisors-below-n predicate [claimed 2026-08-07T20:29:25Z]
-
-Build: add `is_deficient(n)` to `cinder/builtins.py`, completing the
-perfect/abundant/deficient divisor-sum trio alongside `is_perfect_number`
-and `is_abundant` (both already landed — search for `is_abundant` rather
-than trusting a specific line) — a
-deficient number's proper divisors sum to *less* than the number itself,
-e.g. `8`: `1 + 2 + 4 = 7 < 8`. Every positive integer is exactly one of
-perfect, abundant, or deficient, so this is the natural task to close
-out the trio right after `is_abundant`.
-
-Model the arity/type-checking and computation on `_is_abundant`'s
-structure exactly (search for `def _is_abundant`) — same
-`_require_arity("is_deficient", arguments, 1, line, column)` and
-`_require_int("is_deficient", arguments[0], line, column)` calls, same
-`if value < 1: return False` non-positive early-out (no domain error),
-same `total = 1 if value > 1 else 0` plus `math.isqrt`-bounded
-trial-division loop building `total`. The only difference from
-`is_abundant` is the final comparison: return `total < value` instead of
-`total > value` (so a perfect number, where `total == value`, is
-correctly neither abundant nor deficient — do not use `<=`/`>=` for
-either predicate, or a perfect number would incorrectly satisfy one of
-them).
-
-Acceptance criteria:
-- `is_deficient(8);` is `true` — `1 + 2 + 4 == 7 < 8`.
-- `is_deficient(1);` is `true` — proper-divisor sum is `0 < 1`.
-- `is_deficient(10);` is `true` — `1 + 2 + 5 == 8 < 10`.
-- `is_deficient(6);` is `false` — `6` is perfect (`sum == 6`), not
-  deficient (`sum < 6` is false).
-- `is_deficient(12);` is `false` — `12` is abundant (`sum == 16 > 12`),
-  not deficient.
-- `is_deficient(0);` is `false`, `is_deficient(-8);` is `false` —
-  non-positive input, no domain error, matching the cluster's
-  negative/zero-input convention.
-- `is_deficient(3.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"is_deficient() requires an int, got
-  float"` — no implicit float-to-int coercion, matching the rest of the
-  cluster.
-- `is_deficient(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_deficient() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_abundant`/
-`is_prime`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `is_deficient` added near `is_even`/`is_odd`/
-`is_divisible`/`is_prime`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
+## 1. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
 
 Build: add `is_palindrome_number(n)` to `cinder/builtins.py`, sitting
 next to `reverse_int` (already landed, search for `reverse_int` rather
@@ -124,11 +69,11 @@ task.
 
 ---
 
-## 3. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
+## 2. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
 
 Build: add `digital_root(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum`/`reverse_int` (search for `def _reverse_int` — by the time
-this task is claimed, tasks 1-2 above will have landed and shifted line
+this task is claimed, task 1 above will have landed and shifted line
 numbers) rather than the boolean predicate cluster — like `reverse_int`,
 it returns a number, not a boolean. The digital root of a non-negative
 integer is what you get by repeatedly summing its decimal digits until
@@ -180,11 +125,11 @@ not this task.
 
 ---
 
-## 4. Standard library: `is_composite` — non-prime-above-one predicate
+## 3. Standard library: `is_composite` — non-prime-above-one predicate
 
 Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
 next to `is_prime` (search for `def _is_prime` — by the time this task
-is claimed, tasks 1-3 above will have landed and shifted line numbers)
+is claimed, tasks 1-2 above will have landed and shifted line numbers)
 in the integer-property predicate cluster. A composite number is an
 integer greater than `1` that is *not* prime (e.g. `4`, `6`, `8`, `9`);
 this completes the classical three-way split of the non-negative
@@ -241,7 +186,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: arrow function expressions `(params) => expr`
+## 4. Language: arrow function expressions `(params) => expr`
 
 Build: add arrow-function syntax as sugar for the existing anonymous `fn`
 expression, e.g. `(x) => x * 2`, `(a, b) => a + b`, `() => 42`. This is a
@@ -354,11 +299,11 @@ next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
+## 5. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
 
 Build: add `is_power_of_two(n)` to `cinder/builtins.py`, registered
 right after `is_composite` (search for `def _is_composite` — by the
-time this task is claimed, tasks 1-4 above will have landed and
+time this task is claimed, tasks 1-3 above will have landed and
 shifted line numbers) in the integer-property predicate cluster. A
 power of two is `1, 2, 4, 8, 16, ...` — the classic bit-trick
 predicate: for `n > 0`, `n` is a power of two exactly when `n & (n -

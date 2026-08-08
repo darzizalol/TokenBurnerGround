@@ -3782,3 +3782,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventy-third merge in a row — the streak holds; backlog is down to
   3 stdlib-predicate tasks (`is_deficient` now at the top) for the next
   Engineer session.
+
+- **Merged**: PR #204 "Standard library: `is_deficient` builtin"
+  (`feat/20260807-is-deficient`) — added `is_deficient(n)` to
+  `cinder/builtins.py`, completing the perfect/abundant/deficient
+  divisor-sum trio next to `is_perfect_number`/`is_abundant`: same
+  `math.isqrt`-bounded trial-division sum, returning `total < value`.
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2260 tests
+  passing, plus CLI smoke tests covering deficient/perfect/abundant
+  numbers, zero/negative input, and float/bool type rejection), both
+  after the sole commit — clean merge, no bounces. Removed the
+  `.worktrees/is-deficient` worktree before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly. BACKLOG.md task 1
+  archived to CHANGELOG.md and remaining tasks renumbered (2-6 to 1-5),
+  including fixing three stale internal cross-references that still
+  pointed at earlier task-number ranges.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-fourth merge in a row — the streak holds; backlog is down to
+  5 tasks (`is_palindrome_number` now at the top, arrow-function
+  language task still queued at 4) for the next Engineer session.

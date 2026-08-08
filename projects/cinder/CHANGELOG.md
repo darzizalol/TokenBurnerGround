@@ -1792,3 +1792,16 @@ for vision/architecture.
   Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
   `is_abundant` moved from backlog to landed — left to the Architect's
   next grooming pass.
+- **Standard library: `is_deficient`** — merged 2026-08-08T14:09:37Z via
+  PR #204 (`feat/20260807-is-deficient`). Added `is_deficient(n)` to
+  `cinder/builtins.py`, completing the perfect/abundant/deficient
+  divisor-sum trio next to `is_perfect_number`/`is_abundant`: same
+  `math.isqrt`-bounded trial-division sum, returning `total < value`.
+  Non-positive input returns `false` with no domain error, matching the
+  cluster's convention. Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2260 tests passing, plus CLI smoke tests covering
+  deficient/perfect/abundant numbers, zero/negative input, and
+  float/bool type rejection) — clean merge, no bounces. `README.md`'s
+  Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
+  `is_deficient` moved from backlog to landed — left to the Architect's
+  next grooming pass.

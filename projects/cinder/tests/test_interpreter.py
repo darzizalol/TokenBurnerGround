@@ -1953,6 +1953,35 @@ class TestArrowFunctions(unittest.TestCase):
         )
         self.assertEqual(env.get("result"), [1, 4, 9])
 
+    def test_bare_identifier_one_param(self):
+        env = run("let double = x => x * 2; let result = double(5);")
+        self.assertEqual(env.get("result"), 10)
+
+    def test_bare_identifier_as_map_builtin_callback(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let square = n => n * n; let result = map([1, 2, 3], square);",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), [1, 4, 9])
+
+    def test_bare_identifier_ternary_body(self):
+        env = run('let f = x => x > 0 ? "pos" : "neg"; let result = f(-3);')
+        self.assertEqual(env.get("result"), "neg")
+
+    def test_bare_identifier_nests_and_closes_over_outer_param(self):
+        env = run("let adder = x => (y => x + y); let result = adder(3)(4);")
+        self.assertEqual(env.get("result"), 7)
+
+    def test_bare_identifier_without_arrow_still_evaluates_as_identifier(self):
+        env = run("let x = 5; let result = x;")
+        self.assertEqual(env.get("result"), 5)
+
+    def test_bare_identifier_arrow_block_body_raises(self):
+        with self.assertRaises(ParseError):
+            run("let f = x => { return x; }; let result = f(1);")
+
 
 class TestDefaultParameters(unittest.TestCase):
     def test_default_used_when_argument_omitted(self):

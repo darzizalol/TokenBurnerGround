@@ -2291,6 +2291,96 @@ class TestArrowFunctions(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("let f = (x) => { let y = x * 2; return y; };")
 
+    def test_bare_identifier_arrow_one_param(self):
+        self.assertEqual(
+            shape(parse("x => x * 2")),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_bare_identifier_arrow_body_is_ternary(self):
+        self.assertEqual(
+            shape(parse('x => x > 0 ? "pos" : "neg"')),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            (
+                                "Ternary",
+                                ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+                                ("Literal", "pos"),
+                                ("Literal", "neg"),
+                            ),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_bare_identifier_arrow_nests_and_closes_over_outer_param(self):
+        self.assertEqual(
+            shape(parse("x => (y => x + y)")),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            (
+                                "Grouping",
+                                (
+                                    "FnExpr",
+                                    [("y", None)],
+                                    None,
+                                    (
+                                        "Block",
+                                        [
+                                            (
+                                                "ReturnStmt",
+                                                (
+                                                    "Binary",
+                                                    ("Identifier", "x"),
+                                                    TokenType.PLUS,
+                                                    ("Identifier", "y"),
+                                                ),
+                                            )
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_bare_identifier_without_arrow_is_plain_identifier(self):
+        self.assertEqual(shape(parse("x")), ("Identifier", "x"))
+
+    def test_bare_identifier_arrow_block_body_not_supported(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let f = x => { return x; };")
+
 
 class TestForStatement(unittest.TestCase):
     def test_for_in_list_literal(self):

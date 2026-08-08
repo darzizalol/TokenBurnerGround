@@ -1175,6 +1175,17 @@ def _is_prime(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _is_composite(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_composite", arguments, 1, line, column)
+    value = _require_int("is_composite", arguments[0], line, column)
+    if value < 4:
+        return False
+    for divisor in range(2, int(value ** 0.5) + 1):
+        if value % divisor == 0:
+            return True
+    return False
+
+
 def _digit_sum(arguments: list, line: int, column: int) -> object:
     _require_arity("digit_sum", arguments, 1, line, column)
     value = _require_int("digit_sum", arguments[0], line, column)
@@ -3071,6 +3082,7 @@ _BUILTINS = {
     "is_odd": _is_odd,
     "is_divisible": _is_divisible,
     "is_prime": _is_prime,
+    "is_composite": _is_composite,
     "digit_sum": _digit_sum,
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,

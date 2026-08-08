@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_palindrome_list` — list palindrome predicate
+## 1. Standard library: `is_palindrome_list` — list palindrome predicate [claimed 2026-08-08T19:17:54Z]
 
 Build: add `is_palindrome_list(list)` to `cinder/builtins.py`, registered
 right after `is_power_of_two` (search for `def _is_power_of_two`). This

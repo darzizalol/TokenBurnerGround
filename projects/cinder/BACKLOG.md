@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_coprime` — two-integer coprimality predicate
+## 1. Standard library: `is_coprime` — two-integer coprimality predicate [claimed 2026-08-08T19:29:37Z]
 
 Build: add `is_coprime(a, b)` to `cinder/builtins.py`, registered right
 after `is_divisible` (search for `def _is_divisible`, currently around

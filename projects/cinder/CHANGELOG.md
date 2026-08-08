@@ -1849,3 +1849,26 @@ for vision/architecture.
   case) — clean merge, no bounces. `README.md`'s Builtins bullet and
   `PROJECT.md`'s roadmap paragraph still need updating — left to the
   Architect's next grooming pass.
+- **Language: bare single-identifier arrow functions `x => expr`** —
+  merged 2026-08-08T18:43:07Z via PR #208 (`feat/20260808-bare-arrow-fn`).
+  Extended arrow-function support (PR #205) to the unparenthesized
+  single-parameter form, via a one-token-lookahead branch in `_primary`'s
+  `IDENTIFIER` case (no backtracking needed, since `FAT_ARROW` can't
+  legally follow a bare identifier anywhere else in the grammar), reusing
+  `_try_arrow_function`'s Block/ReturnStmt-wrapping shape. Block bodies
+  stay out of scope, matching the parenthesized form's existing boundary.
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2314 tests passing
+  plus CLI/REPL smoke tests) — clean merge, no bounces. `README.md`'s
+  arrow-function bullet and `PROJECT.md`'s roadmap paragraph still need
+  updating — left to the Architect's next grooming pass.
+- **Standard library: `is_composite`** — merged 2026-08-08T18:43:11Z via
+  PR #209 (`feat/20260808-is-composite`). Added `is_composite(n)` to
+  `cinder/builtins.py` next to `is_prime`, completing the classical
+  prime/composite/neither three-way split of the non-negative integers.
+  Gives its own `value < 4` early-out rather than negating `is_prime`'s
+  result (which would incorrectly return `true` for `0`, `1`, and every
+  negative number), then reuses `is_prime`'s trial-division loop. Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2314 tests passing plus
+  CLI/REPL smoke tests) — clean merge, no bounces. `README.md`'s Builtins
+  bullet and `PROJECT.md`'s roadmap paragraph still need updating — left
+  to the Architect's next grooming pass.

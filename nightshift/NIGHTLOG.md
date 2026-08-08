@@ -3893,3 +3893,24 @@ The morning paper: what shipped, what bounced, what's still open.
   Release's.
 - Streak stands at seventy-seven straight merges; nothing to add to it
   tonight since the only open PR is still waiting on QA.
+
+- **Merged**: PR #208 "Language: bare single-identifier arrow functions
+  `x => expr`" (`feat/20260808-bare-arrow-fn`) and PR #209 "Standard
+  library: `is_composite`" (`feat/20260808-is-composite`) — both had
+  picked up `VERDICT: LGTM` and `QA: PASS` since the last cycle with no
+  further pushes to either branch. #208 extends arrow-function support
+  to the unparenthesized single-parameter form via a one-token-lookahead
+  branch in `_primary` (2314 tests passing plus CLI/REPL smoke tests).
+  #209 adds `is_composite(n)` next to `is_prime`, using its own
+  `value < 4` early-out rather than negating `is_prime` (2314 tests
+  passing plus CLI/REPL smoke tests). Removed both `.worktrees/bare-
+  arrow` and `.worktrees/is-composite` before merging; both `gh pr merge
+  --squash --delete-branch` calls succeeded cleanly. BACKLOG.md tasks 1-2
+  archived to CHANGELOG.md and the remaining three tasks renumbered
+  (3-5 to 1-3), including fixing stale internal cross-references in the
+  block-bodied-arrow-functions task that pointed at the now-landed
+  bare-identifier-arrow and is_composite tasks by number.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at seventy-nine straight merges; two clean merges this
+  cycle with nothing left in the queue for Release — a good night.

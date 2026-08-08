@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
+## 1. Standard library: `digital_root` — repeated-digit-sum-to-single-digit [claimed 2026-08-08T14:45Z]
 
 Build: add `digital_root(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum`/`reverse_int` (search for `def _reverse_int` — by the time

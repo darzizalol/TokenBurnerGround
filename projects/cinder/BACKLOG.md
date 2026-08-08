@@ -11,127 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: arrow function expressions `(params) => expr` [claimed 2026-08-08T14:16:53Z]
-
-Build: add arrow-function syntax as sugar for the existing anonymous `fn`
-expression, e.g. `(x) => x * 2`, `(a, b) => a + b`, `() => 42`. This is a
-language-depth task — the last one to land was list/map comprehensions
-many nights ago (see `PROJECT.md`'s Roadmap history); everything since has
-been stdlib-predicate breadth, seven builtins in a row (`is_perfect_square`
-through `is_deficient`) and counting — longer than the seven-cycle breadth
-run that prompted comprehensions in the first place. This task is bumped to
-the top of the backlog for that reason: `PROJECT.md`'s roadmap explicitly
-flags a long uninterrupted predicate streak as the signal to inject a
-language-depth task rather than let it run further, and three more
-predicate tasks were queued ahead of this one before this grooming pass.
-Cinder's callback-heavy builtins (`map`, `filter`, `sort_by`, `group_by`,
-...) today require the verbose `fn(x) { return x * 2; }` form for even a
-one-expression callback — arrow syntax closes that ergonomic gap the same
-way JS/other scripting languages do, without adding a new evaluation
-concept: it desugars entirely into the existing `FnExpr` AST node
-(`cinder/ast_nodes.py:221`), so **no interpreter changes are needed at
-all** — this is a parser-only feature.
-
-Scope, deliberately narrow (do not exceed it in this task):
-- **Only the parenthesized form.** `(x) => expr` and `() => expr` and
-  `(a, b) => expr` — not the bare single-identifier form some languages
-  allow (`x => expr` with no parens), which would require lookahead after
-  *every* identifier in expression position and is a much bigger,
-  riskier change. Out of scope for this task.
-- **Expression body only**, not a block body. `(x) => x * 2` is in scope;
-  `(x) => { let y = x * 2; return y; }` is not — that ambiguity (is `{`
-  after `=>` a block-bodied arrow function or an object/map literal being
-  returned?) is exactly the kind of thing `PROJECT.md`'s existing
-  `{`-disambiguation design principle exists to solve for statement
-  position, but arrow bodies are expression position, a different
-  problem; leave block-bodied arrows for a future task if ever wanted.
-- Same parameter grammar `fn` already supports: default values
-  (`(a, b = 1) => a + b`) and a single trailing rest parameter
-  (`(a, ...rest) => a`), reusing the existing `_fn_param`/`_fn_rest_param`
-  helpers (`cinder/parser.py:589-` — search for `def _fn_param`) as-is,
-  not reimplementing parameter parsing.
-
-Lexer: add a `FAT_ARROW` token type (`cinder/tokens.py`) for `=>`. In
-`cinder/lexer.py`'s `_equals_or` (search for `def _equals_or`, handles
-`=`/`==` today), check for `>` *before* falling through to the existing
-`=`-or-`==` check, so `=` (EQ), `==` (EQEQ), and `=>` (FAT_ARROW) are all
-distinguished from the same entry point without disturbing the existing
-two.
-
-Parser: the ambiguity is that `(` at expression position (`_primary`,
-`cinder/parser.py:1104`) already unconditionally parses a grouping
-expression (`(expr)`) — `(x)` and `(x, y) => ...`'s parameter list look
-identical until you've either failed to find a valid param-list shape or
-found the `=>` after the closing `)`. Resolve this with a speculative
-parse, the same backtracking pattern `_brace_statement` already uses for
-the `{`-disambiguation problem (search for `def _brace_statement`: save
-`start = self.pos`, attempt the speculative parse in a `try`/`except
-ParseError`, restore `self.pos = start` and fall through on failure).
-Concretely, when `_primary` sees `LPAREN`: save position, attempt to
-parse a parameter list (reusing `_fn_param`/`_fn_rest_param`, comma-
-separated, same shape `_fn_params_and_body` parses between its own
-`LPAREN`/`RPAREN`) followed by `RPAREN` then `FAT_ARROW`; if that whole
-sequence parses cleanly, parse the body via `_assignment()` (the same
-tier `_fn_params_and_body`'s block-bodied `fn` uses isn't the right
-comparison since bodies differ, but arrow-body expression precedence
-should be `_assignment()` — the same precedence a `return <expr>;`
-accepts, so `(x) => x + 1` and `(x) => a ? b : c` both work without extra
-parens) and return an `FnExpr` whose `body` is a synthetic
-`Block([ReturnStmt(body_expr, line, column)])` (`cinder/ast_nodes.py:293`
-`Block`, `:366` `ReturnStmt`) — this is what makes the feature a pure
-desugar with zero interpreter changes, since `FnExpr` evaluation already
-knows how to run a `Block` body and `return` out of it. If parsing the
-param list, `)`, or `=>` fails at any point, restore `self.pos` and fall
-through to the existing grouping-expression code path unchanged (so
-`(x)`, `(x + 1)`, `(x, y)` used as e.g. a malformed expression still
-error exactly as they do today, and ordinary grouping like `(a + b) * c`
-is untouched).
-
-Acceptance criteria:
-- `let double = (x) => x * 2; double(21);` is `42`.
-- `let add = (a, b) => a + b; add(2, 3);` is `5`.
-- `let always_42 = () => 42; always_42();` is `42` — zero-parameter form.
-- `(x, y = 10) => x + y` called with one argument uses the default,
-  matching `fn`'s own default-parameter behavior exactly.
-- `(a, ...rest) => rest` called with 3 arguments returns a 2-element
-  list, matching `fn`'s own rest-parameter behavior exactly.
-- `map([1, 2, 3], (x) => x * x);` is `[1, 4, 9]` — arrow functions work
-  directly as callback arguments to existing higher-order builtins with
-  no other changes needed.
-- `(x) => x > 0 ? "pos" : "neg"` — ternary in an arrow body works (proves
-  the body is parsed at `_assignment()` precedence, not something
-  narrower).
-- Ordinary parenthesized grouping is unaffected: `(1 + 2) * 3;` is still
-  `9`. `(x);` (a bare identifier in parens, no `=>` following) must still
-  fall through to plain grouping and evaluate `x`'s value, not error —
-  it has one parameter-shaped token inside the parens, but no `=>` after
-  the `)`, so the speculative arrow-parse must fail and hand control back
-  to the existing grouping path.
-- A malformed arrow attempt like `(x, ) => x;` (trailing comma, no
-  parameter after it) still raises the same `ParseError` `fn`'s own
-  parameter parsing would raise for the equivalent shape, not a
-  confusing "expected expression" grouping-fallback error — write a test
-  that documents whichever specific error message actually surfaces
-  after implementing the backtrack, rather than asserting one in
-  advance.
-- Arrow functions nest and close over variables exactly like `fn`
-  expressions do (they *are* `FnExpr`s): `let make_adder = (n) => (x) =>
-  x + n; make_adder(10)(5);` is `15`.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (new `FAT_ARROW` token type),
-`cinder/lexer.py` (`_equals_or`), `cinder/parser.py` (`_primary`'s
-`LPAREN` branch, new helper reusing `_fn_param`/`_fn_rest_param`),
-`tests/test_lexer.py`, `tests/test_parser.py`, `tests/test_interpreter.py`
-(or `tests/test_builtins.py` for the `map`-callback case). Once merged,
-`README.md` needs a short arrow-function mention near wherever `fn`
-expressions/closures are documented, and `PROJECT.md`'s roadmap paragraph
-needs it moved from backlog to landed — leave both to the Architect's
-next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
+## 1. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
 
 Build: add `is_palindrome_number(n)` to `cinder/builtins.py`, sitting
 next to `reverse_int` (already landed, search for `reverse_int` rather
@@ -189,11 +69,11 @@ task.
 
 ---
 
-## 3. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
+## 2. Standard library: `digital_root` — repeated-digit-sum-to-single-digit
 
 Build: add `digital_root(n)` to `cinder/builtins.py`, sitting next to
 `digit_sum`/`reverse_int` (search for `def _reverse_int` — by the time
-this task is claimed, task 2 above will have landed and shifted line
+this task is claimed, task 1 above will have landed and shifted line
 numbers) rather than the boolean predicate cluster — like `reverse_int`,
 it returns a number, not a boolean. The digital root of a non-negative
 integer is what you get by repeatedly summing its decimal digits until
@@ -245,11 +125,11 @@ not this task.
 
 ---
 
-## 4. Standard library: `is_composite` — non-prime-above-one predicate
+## 3. Standard library: `is_composite` — non-prime-above-one predicate
 
 Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
 next to `is_prime` (search for `def _is_prime` — by the time this task
-is claimed, tasks 2-3 above will have landed and shifted line numbers)
+is claimed, tasks 1-2 above will have landed and shifted line numbers)
 in the integer-property predicate cluster. A composite number is an
 integer greater than `1` that is *not* prime (e.g. `4`, `6`, `8`, `9`);
 this completes the classical three-way split of the non-negative
@@ -306,11 +186,11 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
+## 4. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
 
 Build: add `is_power_of_two(n)` to `cinder/builtins.py`, registered
 right after `is_composite` (search for `def _is_composite` — by the
-time this task is claimed, tasks 2-4 above will have landed and
+time this task is claimed, tasks 1-3 above will have landed and
 shifted line numbers) in the integer-property predicate cluster. A
 power of two is `1, 2, 4, 8, 16, ...` — the classic bit-trick
 predicate: for `n > 0`, `n` is a power of two exactly when `n & (n -

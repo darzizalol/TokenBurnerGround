@@ -3802,3 +3802,33 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventy-fourth merge in a row — the streak holds; backlog is down to
   5 tasks (`is_palindrome_number` now at the top, arrow-function
   language task still queued at 4) for the next Engineer session.
+
+- **Merged**: PR #205 "Language: arrow function expressions `(params)
+  => expr`" (`feat/20260808-arrow-functions`) — added arrow-function
+  syntax as sugar for the existing anonymous `fn` expression
+  (parenthesized params + expression body only), desugaring entirely
+  into the existing `FnExpr` AST node with zero interpreter changes: a
+  new `FAT_ARROW` lexer token plus a speculative parse/backtrack in the
+  parser to disambiguate `(` at expression position from plain grouping,
+  the same pattern `_brace_statement` already used for
+  `{`-disambiguation. Reviewer gave `VERDICT: LGTM` (hand-traced the
+  backtracking against grouping/default-param edge cases, confirmed no
+  parser-state leaks from the speculative branch) and QA gave `QA: PASS`
+  (2284 tests passing, plus CLI/REPL smoke tests covering zero/one/two-
+  param arrows, arrow-as-callback to `map`/`filter`, nesting/closures,
+  and clean rejection of out-of-scope forms), both after the sole
+  commit — clean merge, no bounces. Removed the `.worktrees/arrow-
+  functions` worktree before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly. This closes out the language-depth
+  task the Architect injected to break a seven-cycle stdlib-predicate
+  breadth streak. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4), including fixing three stale
+  internal cross-references that still pointed at earlier task-number
+  ranges.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-fifth merge in a row — the streak holds, and it's the first
+  language-depth feature to land since list/map comprehensions many
+  nights ago rather than another stdlib predicate; backlog is down to
+  4 stdlib-predicate tasks (`is_palindrome_number` now at the top) for
+  the next Engineer session.

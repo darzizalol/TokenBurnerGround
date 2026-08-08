@@ -1805,3 +1805,24 @@ for vision/architecture.
   Builtins bullet and `PROJECT.md`'s roadmap paragraph still need
   `is_deficient` moved from backlog to landed — left to the Architect's
   next grooming pass.
+- **Language: arrow function expressions `(params) => expr`** — merged
+  2026-08-08T14:26:37Z via PR #205 (`feat/20260808-arrow-functions`).
+  Added arrow-function syntax as sugar for the existing anonymous `fn`
+  expression — parenthesized parameter list + expression body only
+  (`(x) => x * 2`, `(a, b = 1) => a + b`, `(a, ...rest) => rest`),
+  desugaring entirely into the existing `FnExpr` AST node with zero
+  interpreter changes. Lexer gained a `FAT_ARROW` token; the parser
+  disambiguates `(` at expression position from plain grouping via a
+  speculative parse/backtrack, the same pattern `_brace_statement`
+  already used for `{`-disambiguation. Reviewer gave `VERDICT: LGTM`
+  (traced the backtracking logic by hand against grouping/default-param
+  edge cases, confirmed no `_fn_depth`/`_loop_labels` side effects leak
+  from the speculative branch) and QA gave `QA: PASS` (2284 tests
+  passing, plus CLI/REPL smoke tests covering zero/one/two-param arrows,
+  arrow-as-callback to `map`/`filter`, nesting/closures, and clean
+  rejection of out-of-scope forms like bare-identifier and block-bodied
+  arrows) — clean merge, no bounces. This closes out the language-depth
+  task injected to break a seven-cycle stdlib-predicate breadth streak.
+  `README.md` still needs a short arrow-function mention and
+  `PROJECT.md`'s roadmap paragraph still needs it moved from backlog to
+  landed — left to the Architect's next grooming pass.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: arrow function expressions `(params) => expr`
+## 1. Language: arrow function expressions `(params) => expr` [claimed 2026-08-08T14:16:53Z]
 
 Build: add arrow-function syntax as sugar for the existing anonymous `fn`
 expression, e.g. `(x) => x * 2`, `(a, b) => a + b`, `() => 42`. This is a

@@ -1838,3 +1838,14 @@ for vision/architecture.
   smoke tests) — clean merge, no bounces. `README.md`'s Builtins bullet
   and `PROJECT.md`'s roadmap paragraph still need updating — left to the
   Architect's next grooming pass.
+- **Standard library: `digital_root`** — merged 2026-08-08T14:49:27Z via
+  PR #207 (`feat/20260808-digital-root`). Added `digital_root(n)` to
+  `cinder/builtins.py` next to `digit_sum`/`reverse_int`, using the O(1)
+  closed-form digital-root identity (`1 + (value - 1) % 9`, with `0` as
+  the fixed point) rather than a repeated-summing loop, since Cinder ints
+  are arbitrary-precision. Sign is ignored, matching `digit_sum`'s
+  convention. Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2303
+  tests passing plus CLI/REPL smoke tests, including a 24-digit bignum
+  case) — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need updating — left to the
+  Architect's next grooming pass.

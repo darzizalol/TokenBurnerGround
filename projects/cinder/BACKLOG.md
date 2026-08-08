@@ -11,63 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `digital_root` — repeated-digit-sum-to-single-digit [claimed 2026-08-08T14:45Z]
-
-Build: add `digital_root(n)` to `cinder/builtins.py`, sitting next to
-`digit_sum`/`reverse_int` (search for `def _reverse_int` — by the time
-this task is claimed, task 1 above will have landed and shifted line
-numbers) rather than the boolean predicate cluster — like `reverse_int`,
-it returns a number, not a boolean. The digital root of a non-negative
-integer is what you get by repeatedly summing its decimal digits until
-a single digit remains (e.g. `38 -> 3+8=11 -> 1+1=2`, so
-`digital_root(38) == 2`). Like `digit_sum` (not `reverse_int`), sign is
-ignored rather than preserved — a digital root is a magnitude property,
-and `digit_sum` already sets this convention for the cluster.
-
-Model the arity/type-checking on `_digit_sum`'s structure (search for
-`def _digit_sum`): reuse `_require_arity("digital_root", arguments, 1,
-line, column)` and `_require_int("digital_root", arguments[0], line,
-column)` (the same helper the rest of the cluster uses, defined at
-`cinder/builtins.py:157-162`). For the computation, do **not** write a
-naive repeated-summing loop — use the well-known O(1) digital-root
-identity instead, since Cinder ints are arbitrary-precision and a large
-bignum could otherwise force many summing passes: take `value =
-abs(value)` first (sign ignored, per above), then `return 0 if value ==
-0 else 1 + (value - 1) % 9` (the standard closed-form digital root:
-every nonzero value maps to `1..9`, cycling every 9, and `0` is the one
-fixed point the modular formula doesn't cover on its own).
-
-Acceptance criteria:
-- `digital_root(0);` is `0`.
-- `digital_root(5);` is `5` — single digit is its own digital root.
-- `digital_root(38);` is `2` — `3+8=11`, then `1+1=2`.
-- `digital_root(9999);` is `9` — `9+9+9+9=36`, then `3+6=9`.
-- `digital_root(-38);` is `2` — sign ignored, matching `digit_sum`'s
-  convention (not `reverse_int`'s sign-preserving one).
-- `digital_root(999999999999999999999999);` is `9` — a bignum case
-  confirming the closed-form approach handles arbitrary-precision
-  input without a slow repeated-summing loop.
-- `digital_root(3.0);` (float, even though numerically whole) raises
-  `CinderRuntimeError` matching `"digital_root() requires an int, got
-  float"` — no implicit float-to-int coercion, matching the rest of the
-  cluster.
-- `digital_root(true);` (bool) raises `CinderRuntimeError` matching
-  `"digital_root() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `reverse_int`/
-`digit_sum`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `digital_root` added near `digit_sum`/
-`reverse_int`, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Language: bare single-identifier arrow functions `x => expr`
+## 1. Language: bare single-identifier arrow functions `x => expr`
 
 Build: extend arrow-function support (landed in `feat/20260808-arrow-
 functions`, PR #205) to the bare single-identifier parameter form —
@@ -79,7 +23,7 @@ and `digital_root` back-to-back since arrow functions landed, and
 `PROJECT.md`'s roadmap explicitly calls out watching this balance —
 two predicates is enough runway before injecting depth again, per the
 same policy that promoted arrow functions to the top of the backlog
-last cycle. `is_composite`/`is_power_of_two` (tasks 4-5 below) pick
+last cycle. `is_composite`/`is_power_of_two` (tasks 2-3 below) pick
 breadth back up right after this lands.
 
 Unlike the parenthesized form (`(x) => expr`, `_try_arrow_function` in
@@ -156,11 +100,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_composite` — non-prime-above-one predicate
+## 2. Standard library: `is_composite` — non-prime-above-one predicate
 
 Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
 next to `is_prime` (search for `def _is_prime` — by the time this task
-is claimed, tasks 1-3 above will have landed and shifted line numbers)
+is claimed, task 1 above will have landed and shifted line numbers)
 in the integer-property predicate cluster. A composite number is an
 integer greater than `1` that is *not* prime (e.g. `4`, `6`, `8`, `9`);
 this completes the classical three-way split of the non-negative
@@ -217,11 +161,11 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
+## 3. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
 
 Build: add `is_power_of_two(n)` to `cinder/builtins.py`, registered
 right after `is_composite` (search for `def _is_composite` — by the
-time this task is claimed, tasks 1-4 above will have landed and
+time this task is claimed, tasks 1-2 above will have landed and
 shifted line numbers) in the integer-property predicate cluster. A
 power of two is `1, 2, 4, 8, 16, ...` — the classic bit-trick
 predicate: for `n > 0`, `n` is a power of two exactly when `n & (n -
@@ -277,15 +221,15 @@ not this task.
 
 ---
 
-## 5. Language: block-bodied arrow functions `(params) => { ... }` and `x => { ... }`
+## 4. Language: block-bodied arrow functions `(params) => { ... }` and `x => { ... }`
 
 Build: extend both arrow-function forms — parenthesized (`_try_arrow_function`
 in `cinder/parser.py`, from `feat/20260808-arrow-functions`, PR #205) and
-bare single-identifier (added by task 2 above, in `_primary`'s `IDENTIFIER`
+bare single-identifier (added by task 1 above, in `_primary`'s `IDENTIFIER`
 branch) — to accept a block body, `{ <statement>* }`, as an alternative to
 the current expression-only body. Both prior arrow-function tasks
 deliberately deferred this ("no block-bodied form"); this is a language-depth
-task, not another stdlib predicate, following directly from tasks 3-4 above
+task, not another stdlib predicate, following directly from tasks 2-3 above
 (`is_composite`, `is_power_of_two`) per `PROJECT.md`'s breadth-vs-depth
 policy — two single-builtin predicate tasks queued back-to-back is the
 signal to inject depth again. Concrete motivation for scoping it now: any
@@ -310,7 +254,7 @@ so `return`/`break`/`continue` validity inside the block matches an
 ordinary function body — instead of the current unconditional `body_expr =
 self._assignment()` / synthetic-`ReturnStmt` wrap. If false, keep the
 existing expression-body path unchanged. Apply the identical
-`LBRACE`-check-and-branch at the bare-identifier site added by task 2, so
+`LBRACE`-check-and-branch at the bare-identifier site added by task 1, so
 both forms share the same body-parsing behavior. Consider factoring the
 shared "parse either an expression body (wrapped in a synthetic return) or
 a block body" logic into one small helper called from both sites, but only
@@ -318,7 +262,7 @@ if it's a clean fit — do not force an abstraction that complicates either
 call site.
 
 This task also retires `test_arrow_block_body_not_supported` in
-`tests/test_parser.py` (search for it) and task 2's equivalent
+`tests/test_parser.py` (search for it) and task 1's equivalent
 bare-identifier-form assertion — replace both with tests asserting the
 block body now parses and executes correctly rather than raising
 `ParseError`.
@@ -350,14 +294,14 @@ Acceptance criteria:
   `_fn_params_and_body` threads it for ordinary `fn` bodies.
 - Full test suite passes.
 
-This task depends on task 2 (bare single-identifier arrow functions)
+This task depends on task 1 (bare single-identifier arrow functions)
 having landed first, since it extends both forms — do not claim it out
-of order while task 2 is still unclaimed/open, per this file's "do not
+of order while task 1 is still unclaimed/open, per this file's "do not
 skip ahead" rule at the top.
 
 Likely files: `cinder/parser.py` (`_try_arrow_function`, and
-`_primary`'s `IDENTIFIER` branch added by task 2), `tests/test_parser.py`
-(replace `test_arrow_block_body_not_supported` and task 2's equivalent
+`_primary`'s `IDENTIFIER` branch added by task 1), `tests/test_parser.py`
+(replace `test_arrow_block_body_not_supported` and task 1's equivalent
 bare-identifier assertion with positive-case tests), `tests/
 test_interpreter.py` (execution-level tests for multi-statement bodies).
 Once merged, `README.md`'s arrow-function bullet and `PROJECT.md`'s

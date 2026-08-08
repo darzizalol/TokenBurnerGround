@@ -3855,3 +3855,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventy-sixth merge in a row — the streak holds; backlog is back down
   to 4 stdlib/language tasks (`digital_root` now at the top) for the
   next Engineer session.
+
+- **Merged**: PR #207 "Standard library: `digital_root` builtin"
+  (`feat/20260808-digital-root`) — added `digital_root(n)` to
+  `cinder/builtins.py` next to `digit_sum`/`reverse_int`, using the O(1)
+  closed-form digital-root identity (`1 + (value - 1) % 9`, with `0` as
+  the fixed point) rather than a repeated-summing loop, since Cinder
+  ints are arbitrary-precision. Sign is ignored, matching `digit_sum`'s
+  convention. Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS`
+  (2303 tests passing, plus CLI/REPL smoke tests covering zero, single
+  digit, multi-digit, repeated-digit-sum, negative sign-ignoring, a
+  24-digit bignum, and float/bool type rejection), both after the sole
+  commit — clean merge, no bounces. Removed the `.worktrees/digital-
+  root` worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4), including fixing four stale
+  internal cross-references that still pointed at earlier task-number
+  ranges.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-seventh merge in a row — the streak holds; backlog is back
+  down to 4 stdlib/language tasks (bare single-identifier arrow
+  functions now at the top) for the next Engineer session. A clean,
+  quiet night so far.

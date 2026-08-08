@@ -157,8 +157,8 @@ while (i < 10) {
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`
-  integer parity/divisibility/primality predicates, `is_power_of_two` to test whether an integer is a power of two
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
+  integer parity/divisibility/primality/coprimality predicates, `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
@@ -260,19 +260,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: block-bodied arrow
-functions (`(params) => { ... }` and `x => { ... }`, no implicit
-last-expression return), and `is_palindrome_list` extending the "reads
-the same both ways" predicate family to lists. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_coprime` to test whether two integers
-share no common divisor but `1`, safe navigation bracket indexing
-(`obj?.[expr]`, extending the existing `m?.key` short-circuit to
-computed keys and lists), `is_fibonacci` to test Fibonacci-sequence
-membership via a closed-form perfect-square check, `is_happy_number` to
-test the repeated-sum-of-squared-digits recurrence, numeric literal
-underscores (`1_000_000`) for readability, and `is_triangular` to test
-triangular-number membership via the same closed-form-perfect-square
-technique. The backlog mixes language depth with stdlib breadth over
-time rather than running either in one long block. The full vision and
-non-goals live in
+Actively developed, nightly. Recently landed: `is_palindrome_list`
+extending the "reads the same both ways" predicate family to lists, and
+`is_coprime` to test whether two integers share no common divisor but
+`1`. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): safe navigation
+bracket indexing (`obj?.[expr]`, extending the existing `m?.key`
+short-circuit to computed keys and lists), `is_fibonacci` to test
+Fibonacci-sequence membership via a closed-form perfect-square check,
+`is_happy_number` to test the repeated-sum-of-squared-digits
+recurrence, numeric literal underscores (`1_000_000`) for readability,
+and `is_triangular` to test triangular-number membership via the same
+closed-form-perfect-square technique. The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

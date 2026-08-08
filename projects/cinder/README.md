@@ -163,6 +163,7 @@ while (i < 10) {
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
+  `is_deficient` to test whether an integer's proper divisors sum to less than itself,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -256,16 +257,19 @@ sum of its own digits each raised to the digit count, `is_leap_year`
 for the Gregorian leap-year rule, `reverse_int` to reverse an
 integer's decimal digits (sign preserved), `is_perfect_number` to
 test whether an integer equals the sum of its own proper divisors,
-and `is_abundant` to test whether an integer's proper divisors sum to
-more than itself.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_deficient` to
-close out the perfect/abundant/deficient divisor-sum trio (proper
-divisors summing to less than the integer itself),
-`is_palindrome_number` to test whether an integer's digits read the
-same forwards and backwards, `digital_root` for the
+`is_abundant` to test whether an integer's proper divisors sum to
+more than itself, and `is_deficient` to close out the
+perfect/abundant/deficient divisor-sum trio (proper divisors summing
+to less than the integer itself).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): arrow function
+expressions (`(x) => x * 2`) as sugar for the existing anonymous `fn`
+expression — bumped to the top of the backlog as a depth-over-breadth
+course correction after seven stdlib predicates landed in a row —
+followed by `is_palindrome_number` to test whether an integer's digits
+read the same forwards and backwards, `digital_root` for the
 repeated-digit-sum-to-single-digit closed form, `is_composite` as
-`is_prime`'s complement, and `is_power_of_two` via the `n & (n - 1)
-== 0` bit trick.
+`is_prime`'s complement, and `is_power_of_two` via the `n & (n - 1) ==
+0` bit trick.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

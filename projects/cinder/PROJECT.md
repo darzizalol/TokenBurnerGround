@@ -322,50 +322,53 @@ preserving the input's sign rather than discarding it, as has
 cluster, testing whether `n` equals the sum of its own proper divisors
 (e.g. `6 = 1 + 2 + 3`) via the same `math.isqrt`-bounded trial-division
 approach `is_prime` already uses, pairing each divisor with its
-complement rather than a naive `O(n)` scan.
+complement rather than a naive `O(n)` scan, as has `is_abundant(n)` —
+the next divisor-sum classification after `is_perfect_number`, testing
+whether `n`'s proper divisors sum to more than `n` itself (e.g. `12 <
+1 + 2 + 3 + 4 + 6 = 16`), reusing the same trial-division shape inline
+rather than factoring a shared helper — and, as has `is_deficient(n)`
+— the third and final divisor-sum classification, testing whether
+`n`'s proper divisors sum to less than `n` itself (e.g. `8 > 1 + 2 + 4
+= 7`), completing the perfect/abundant/deficient trio so every
+positive integer lands in exactly one of the three.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `is_abundant(n)` — the next divisor-sum classification
-after `is_perfect_number`, testing whether `n`'s proper divisors sum
-to more than `n` itself (e.g. `12 < 1 + 2 + 3 + 4 + 6 = 16`), reusing
-the same trial-division shape inline rather than factoring a shared
-helper — and, as task 2, `is_deficient(n)` — the third and final
-divisor-sum classification, testing whether `n`'s proper divisors sum
-to less than `n` itself (e.g. `8 > 1 + 2 + 4 = 7`), completing the
-perfect/abundant/deficient trio so every positive integer lands in
-exactly one of the three — and, as task 3, `is_palindrome_number(n)` —
-a numeric palindrome predicate, testing whether `n`'s decimal digits
-read the same forwards and backwards (e.g. `121`, `12321`), the
-natural closing member of the digit-property cluster now that
-`reverse_int` exists to build it on top of (`reverse_int(n) == n` for
-non-negative `n`; negative `n` is always `false` since the leading `-`
-breaks the symmetry) — and, as task 4, `digital_root(n)` — the
-repeated-digit-sum-to-single-digit reduction (e.g. `38 -> 11 -> 2`),
-sitting next to `digit_sum`/`reverse_int` and, like `digit_sum`,
-ignoring sign, computed via the closed-form `1 + (n - 1) % 9` identity
-rather than a repeated-summing loop so arbitrary-precision Cinder ints
-don't force many passes — and, as task 5, `is_composite(n)` —
-`is_prime`'s natural complement (an integer greater than 1 that is
-*not* prime, e.g. `4`, `6`, `8`, `9`), completing the classical
-prime/composite/neither(`0`, `1`, negatives) three-way split the same
-way perfect/abundant/deficient already covers divisor sums — and, as
-task 6, arrow function expressions (`(x) => x * 2`, `(a, b) => a + b`)
-as sugar for the existing anonymous `fn` expression, desugaring purely
-at parse time into the same `FnExpr` AST node (no interpreter changes),
-disambiguated from ordinary parenthesized grouping via the same
-speculative-parse-and-backtrack technique `_brace_statement` already
-uses for the `{`-disambiguation problem. This is a deliberate
-course-correction: the run of stdlib-only integer-property predicates
-since list/map comprehensions landed has gone on longer than the
-seven-cycle breadth run that prompted comprehensions in the first
-place, and the vision favors depth over breadth — arrow functions are
-scoped to a single session (parser-only, one new token, reuses existing
-parameter-parsing helpers) precisely so this course-correction doesn't
-itself become a multi-night detour. Expression-bodied and
-parenthesized-parameter-list only; no bare single-identifier form
-(`x => expr`) and no block-bodied form (`(x) => { ... }`) — both left
-for a future task if ever wanted, to keep this one's disambiguation
-logic tractable. And, as task 7, `is_power_of_two(n)` — a bit-trick
-predicate (`n & (n - 1) == 0` for positive `n`), the first
+as task 1, arrow function expressions (`(x) => x * 2`, `(a, b) => a +
+b`) as sugar for the existing anonymous `fn` expression, desugaring
+purely at parse time into the same `FnExpr` AST node (no interpreter
+changes), disambiguated from ordinary parenthesized grouping via the
+same speculative-parse-and-backtrack technique `_brace_statement`
+already uses for the `{`-disambiguation problem. This is a deliberate
+course-correction, and it is why this task leads the backlog rather
+than sitting behind more predicates: the run of stdlib-only
+integer-property predicates since list/map comprehensions landed —
+`is_perfect_square`, `is_armstrong`, `is_leap_year`, `reverse_int`,
+`is_perfect_number`, `is_abundant`, `is_deficient`, seven in a row —
+has already gone on longer than the seven-cycle breadth run that
+prompted comprehensions in the first place, and the vision favors
+depth over breadth. Arrow functions are scoped to a single session
+(parser-only, one new token, reuses existing parameter-parsing
+helpers) precisely so this course-correction doesn't itself become a
+multi-night detour. Expression-bodied and parenthesized-parameter-list
+only; no bare single-identifier form (`x => expr`) and no block-bodied
+form (`(x) => { ... }`) — both left for a future task if ever wanted,
+to keep this one's disambiguation logic tractable. Then, as task 2,
+`is_palindrome_number(n)` — a numeric palindrome predicate, testing
+whether `n`'s decimal digits read the same forwards and backwards
+(e.g. `121`, `12321`), the natural closing member of the
+digit-property cluster now that `reverse_int` exists to build it on
+top of (`reverse_int(n) == n` for non-negative `n`; negative `n` is
+always `false` since the leading `-` breaks the symmetry) — and, as
+task 3, `digital_root(n)` — the repeated-digit-sum-to-single-digit
+reduction (e.g. `38 -> 11 -> 2`), sitting next to
+`digit_sum`/`reverse_int` and, like `digit_sum`, ignoring sign,
+computed via the closed-form `1 + (n - 1) % 9` identity rather than a
+repeated-summing loop so arbitrary-precision Cinder ints don't force
+many passes — and, as task 4, `is_composite(n)` — `is_prime`'s natural
+complement (an integer greater than 1 that is *not* prime, e.g. `4`,
+`6`, `8`, `9`), completing the classical prime/composite/neither(`0`,
+`1`, negatives) three-way split the same way perfect/abundant/deficient
+already covers divisor sums. And, as task 5, `is_power_of_two(n)` — a
+bit-trick predicate (`n & (n - 1) == 0` for positive `n`), the first
 integer-property builtin to lean on Cinder's own bitwise operators
 rather than pure arithmetic or a trial-division loop — and only much
 later, a bytecode VM if performance ever actually matters.

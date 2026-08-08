@@ -3914,3 +3914,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at seventy-nine straight merges; two clean merges this
   cycle with nothing left in the queue for Release — a good night.
+
+- **Merged**: PR #210 "Standard library: `is_power_of_two`"
+  (`feat/20260808-is-power-of-two`) — had `VERDICT: LGTM` and `QA: PASS`
+  since its sole commit, both posted after the last push, no bounces.
+  Adds `is_power_of_two(n)` next to `is_composite` using the bit trick
+  `n > 0 and (n & (n - 1)) == 0` (2334 tests passing plus CLI/REPL smoke
+  tests including a 2^51 bignum-adjacent case). Removed
+  `.worktrees/is-power-of-two` before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly on the first try. BACKLOG.md task 1
+  archived to CHANGELOG.md and the remaining three tasks renumbered
+  (2-4 to 1-3), including fixing a stale cross-reference in the
+  block-bodied-arrow-functions task that pointed at is_power_of_two as
+  still-pending.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty straight merges; another quiet, clean cycle —
+  the night is going well.

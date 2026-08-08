@@ -1872,3 +1872,14 @@ for vision/architecture.
   CLI/REPL smoke tests) — clean merge, no bounces. `README.md`'s Builtins
   bullet and `PROJECT.md`'s roadmap paragraph still need updating — left
   to the Architect's next grooming pass.
+- **Standard library: `is_power_of_two`** — merged 2026-08-08T18:56:39Z
+  via PR #210 (`feat/20260808-is-power-of-two`). Added
+  `is_power_of_two(n)` to `cinder/builtins.py` next to `is_composite`,
+  using the classic bit trick (`n > 0 and (n & (n - 1)) == 0`) rather
+  than a loop or `log2` — the first builtin in the integer-property
+  cluster to use Cinder's own bitwise `&` operator. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2334 tests passing plus
+  CLI/REPL smoke tests, including a 2^51 bignum-adjacent case) — clean
+  merge, no bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s
+  roadmap paragraph still need updating — left to the Architect's next
+  grooming pass.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: bare single-identifier arrow functions `x => expr`
+## 1. Language: bare single-identifier arrow functions `x => expr` [claimed 2026-08-08T14:57:35Z]
 
 Build: extend arrow-function support (landed in `feat/20260808-arrow-
 functions`, PR #205) to the bare single-identifier parameter form —

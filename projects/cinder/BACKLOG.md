@@ -11,66 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_palindrome_list` — list palindrome predicate [claimed 2026-08-08T19:17:54Z]
-
-Build: add `is_palindrome_list(list)` to `cinder/builtins.py`, registered
-right after `is_power_of_two` (search for `def _is_power_of_two`). This
-extends the "reads the same forwards and backwards"
-predicate family — `is_palindrome` for strings, `is_palindrome_number` for
-integers (search either) — to its third and final natural domain: lists,
-e.g. `[1, 2, 1]` or `["a", "b", "a"]`.
-
-Do **not** implement this as `value == value[::-1]`. List elements can be
-unhashable nested lists/maps, and Python's own `==` on those follows
-Python's equality rules, not Cinder's — the codebase already has a
-dedicated deep-equality helper for exactly this reason. Search for
-`values_equal` (imported from `cinder.interpreter`, already used by
-`_is_unique`/`_is_permutation`/`_remove`/`_index_of`-style helpers) and
-use it to compare `value[i]` against `value[len(value) - 1 - i]` for each
-`i` in the first half of the list, short-circuiting `False` on the first
-mismatch; an empty list or single-element list is trivially `True`.
-
-Model the arity/type-checking on `_is_sorted`'s or `_is_unique`'s
-structure (search for `def _is_unique`): reuse
-`_require_arity("is_palindrome_list", arguments, 1, line, column)`, then
-check `isinstance(value, list)` directly and raise `CinderRuntimeError`
-matching `"is_palindrome_list() requires a list, got {type}"` on a
-mismatch (mirroring `_is_unique`'s own error message shape) — there is no
-existing `_require_list` helper, so write the inline check the same way
-`_is_unique`/`_is_sorted` already do rather than adding a new shared
-helper for a single caller.
-
-Acceptance criteria:
-- `is_palindrome_list([1, 2, 1]);` is `true`.
-- `is_palindrome_list([1, 2, 3]);` is `false`.
-- `is_palindrome_list([]);` is `true` — empty list, vacuously a
-  palindrome, matching `is_palindrome`'s own empty-string convention.
-- `is_palindrome_list([1]);` is `true` — single element.
-- `is_palindrome_list(["a", "b", "b", "a"]);` is `true` — even length,
-  strings not just numbers.
-- `is_palindrome_list([[1, 2], 3, [1, 2]]);` is `true` — nested lists as
-  elements, confirming `values_equal` (deep equality) is used rather
-  than a bare `==`/identity comparison that could wrongly reject
-  structurally-equal-but-distinct nested values.
-- `is_palindrome_list("abcba");` (a string, not a list) raises
-  `CinderRuntimeError` matching `"is_palindrome_list() requires a list,
-  got string"` — this predicate is list-only; `is_palindrome` already
-  covers strings, so there is no fallback/coercion here.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_power_of_two`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_palindrome_list` added near `is_palindrome`/
-`is_palindrome_number`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_coprime` — two-integer coprimality predicate
+## 1. Standard library: `is_coprime` — two-integer coprimality predicate
 
 Build: add `is_coprime(a, b)` to `cinder/builtins.py`, registered right
 after `is_divisible` (search for `def _is_divisible`, currently around
@@ -128,7 +69,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: safe navigation bracket indexing `obj?.[expr]`
+## 2. Language: safe navigation bracket indexing `obj?.[expr]`
 
 Build: extend the existing safe navigation operator — currently
 dot-only (`m?.key`, short-circuits to `nil` when `m` is `nil` instead of
@@ -212,12 +153,12 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_fibonacci` — Fibonacci-membership predicate
+## 3. Standard library: `is_fibonacci` — Fibonacci-membership predicate
 
 Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
 after `is_coprime` (search for `def _is_coprime` — by the time this task
-is claimed, tasks 1-3 above will have landed and shifted line numbers).
-This is a fresh breadth task queued after task 3's depth work (safe
+is claimed, tasks 1-2 above will have landed and shifted line numbers).
+This is a fresh breadth task queued after task 2's depth work (safe
 navigation bracket indexing) per `PROJECT.md`'s breadth-vs-depth policy.
 A non-negative integer `n` is a Fibonacci number (`0, 1, 1, 2, 3, 5, 8,
 13, ...`) exactly when `5n² + 4` or `5n² - 4` is a perfect square — do
@@ -271,11 +212,11 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_happy_number` — happy-number recurrence predicate
+## 4. Standard library: `is_happy_number` — happy-number recurrence predicate
 
 Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
 right after `is_fibonacci` (search for `def _is_fibonacci` — by the
-time this task is claimed, tasks 1-4 above will have landed and shifted
+time this task is claimed, tasks 1-3 above will have landed and shifted
 line numbers). A "happy number" is defined by a recurrence: replace `n`
 with the sum of the squares of its decimal digits, and repeat; `n` is
 happy if this process eventually reaches `1`, unhappy if it instead

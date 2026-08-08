@@ -1897,3 +1897,15 @@ for vision/architecture.
   own-loop break/continue) — clean merge, no bounces. `README.md`'s
   arrow-function bullet and `PROJECT.md`'s roadmap paragraph still need
   updating — left to the Architect's next grooming pass.
+- **Standard library: `is_palindrome_list`** — merged 2026-08-08T19:22:10Z
+  via PR #212 (`feat/20260808-is-palindrome-list`). Added
+  `is_palindrome_list(list)` to `cinder/builtins.py`, registered right
+  after `is_power_of_two`, completing the palindrome predicate family
+  alongside `is_palindrome` (strings) and `is_palindrome_number`
+  (integers). Uses `values_equal` for deep equality rather than
+  `==`/`[::-1]`, so nested lists/maps compare structurally. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2353 tests passing plus CLI
+  smoke tests covering nested-value deep equality, wrong-type, and
+  wrong-arity cases) — clean merge, no bounces. `README.md`'s Builtins
+  bullet and `PROJECT.md`'s roadmap paragraph still need updating — left
+  to the Architect's next grooming pass.

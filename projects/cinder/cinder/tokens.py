@@ -99,6 +99,7 @@ class TokenType(Enum):
     QUESTION_QUESTION = auto()
     QQEQ = auto()
     QUESTION_DOT = auto()
+    FAT_ARROW = auto()
 
     EOF = auto()
 

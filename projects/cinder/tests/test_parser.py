@@ -2104,6 +2104,194 @@ class TestFunctions(unittest.TestCase):
             parse_stmts("fn f() { return 1; } return 2;")
 
 
+class TestArrowFunctions(unittest.TestCase):
+    def test_arrow_no_params(self):
+        self.assertEqual(
+            shape(parse("() => 42")),
+            ("FnExpr", [], None, ("Block", [("ReturnStmt", ("Literal", 42))])),
+        )
+
+    def test_arrow_one_param(self):
+        self.assertEqual(
+            shape(parse("(x) => x * 2")),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_arrow_two_params(self):
+        self.assertEqual(
+            shape(parse("(a, b) => a + b")),
+            (
+                "FnExpr",
+                [("a", None), ("b", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Identifier", "b")),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_arrow_with_default_param(self):
+        self.assertEqual(
+            shape(parse("(x, y = 10) => x + y")),
+            (
+                "FnExpr",
+                [("x", None), ("y", ("Literal", 10))],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "x"), TokenType.PLUS, ("Identifier", "y")),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_arrow_with_rest_param(self):
+        self.assertEqual(
+            shape(parse("(a, ...rest) => rest")),
+            (
+                "FnExpr",
+                [("a", None)],
+                "rest",
+                ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
+            ),
+        )
+
+    def test_arrow_body_is_ternary(self):
+        self.assertEqual(
+            shape(parse('(x) => x > 0 ? "pos" : "neg"')),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            (
+                                "Ternary",
+                                ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+                                ("Literal", "pos"),
+                                ("Literal", "neg"),
+                            ),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_arrow_as_call_argument(self):
+        self.assertEqual(
+            shape(parse("map([1], (x) => x)")),
+            (
+                "Call",
+                ("Identifier", "map"),
+                [
+                    ("ListLiteral", [("Literal", 1)]),
+                    (
+                        "FnExpr",
+                        [("x", None)],
+                        None,
+                        ("Block", [("ReturnStmt", ("Identifier", "x"))]),
+                    ),
+                ],
+            ),
+        )
+
+    def test_arrow_nests_and_closes_over_outer_param(self):
+        self.assertEqual(
+            shape(parse("(n) => (x) => x + n")),
+            (
+                "FnExpr",
+                [("n", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            (
+                                "FnExpr",
+                                [("x", None)],
+                                None,
+                                (
+                                    "Block",
+                                    [
+                                        (
+                                            "ReturnStmt",
+                                            (
+                                                "Binary",
+                                                ("Identifier", "x"),
+                                                TokenType.PLUS,
+                                                ("Identifier", "n"),
+                                            ),
+                                        )
+                                    ],
+                                ),
+                            ),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_ordinary_grouping_still_works(self):
+        self.assertEqual(
+            shape(parse("(1 + 2) * 3")),
+            (
+                "Binary",
+                ("Grouping", ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2))),
+                TokenType.STAR,
+                ("Literal", 3),
+            ),
+        )
+
+    def test_bare_identifier_in_parens_without_arrow_is_grouping(self):
+        # One parameter-shaped token inside the parens but no `=>` after the
+        # `)` — the speculative arrow-parse must fail and hand control back
+        # to plain grouping, not error.
+        self.assertEqual(shape(parse("(x)")), ("Grouping", ("Identifier", "x")))
+
+    def test_malformed_arrow_param_list_raises(self):
+        # Trailing comma with no parameter after it: falls back to the
+        # grouping-expression path (per `_try_arrow_function`'s unconditional
+        # backtrack), which itself fails to find a `)` immediately after the
+        # bare `x` — this documents whichever error actually surfaces rather
+        # than asserting the `fn`-side parameter error in advance.
+        with self.assertRaises(ParseError) as ctx:
+            parse_stmts("let result = (x, ) => x;")
+        self.assertIn("')'", str(ctx.exception))
+
+    def test_arrow_block_body_not_supported(self):
+        # Block-bodied arrows are explicitly out of scope for this task; a
+        # `{` after `=>` is not treated as a block body.
+        with self.assertRaises(ParseError):
+            parse_stmts("let f = (x) => { let y = x * 2; return y; };")
+
+
 class TestForStatement(unittest.TestCase):
     def test_for_in_list_literal(self):
         self.assertEqual(

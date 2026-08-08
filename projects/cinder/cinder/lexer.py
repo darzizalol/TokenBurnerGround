@@ -330,7 +330,9 @@ class Lexer:
             self.tokens.append(Token(simple_type, char, None, start_line, start_col))
 
     def _equals_or(self, start_line: int, start_col: int):
-        if self._match("="):
+        if self._match(">"):
+            self.tokens.append(Token(TokenType.FAT_ARROW, "=>", None, start_line, start_col))
+        elif self._match("="):
             self.tokens.append(Token(TokenType.EQEQ, "==", None, start_line, start_col))
         else:
             self.tokens.append(Token(TokenType.EQ, "=", None, start_line, start_col))

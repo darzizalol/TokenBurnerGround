@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: block-bodied arrow functions `(params) => { ... }` and `x => { ... }`
+## 1. Language: block-bodied arrow functions `(params) => { ... }` and `x => { ... }` [claimed 2026-08-08T19:03:00Z]
 
 Build: extend both arrow-function forms — parenthesized (`_try_arrow_function`
 in `cinder/parser.py`, from `feat/20260808-arrow-functions`, PR #205) and

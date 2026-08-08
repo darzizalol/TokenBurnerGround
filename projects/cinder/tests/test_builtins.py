@@ -2282,6 +2282,45 @@ class TestReverseInt(unittest.TestCase):
             run("reverse_int();")
 
 
+class TestIsPalindromeNumber(unittest.TestCase):
+    def test_is_palindrome_number_of_zero(self):
+        self.assertEqual(run("let result = is_palindrome_number(0);").get("result"), True)
+
+    def test_is_palindrome_number_of_single_digit(self):
+        self.assertEqual(run("let result = is_palindrome_number(5);").get("result"), True)
+
+    def test_is_palindrome_number_of_odd_length_palindrome(self):
+        self.assertEqual(run("let result = is_palindrome_number(121);").get("result"), True)
+
+    def test_is_palindrome_number_of_longer_odd_length_palindrome(self):
+        self.assertEqual(run("let result = is_palindrome_number(12321);").get("result"), True)
+
+    def test_is_palindrome_number_of_non_palindrome(self):
+        self.assertEqual(run("let result = is_palindrome_number(123);").get("result"), False)
+
+    def test_is_palindrome_number_of_trailing_zero(self):
+        self.assertEqual(run("let result = is_palindrome_number(120);").get("result"), False)
+
+    def test_is_palindrome_number_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_palindrome_number(-121);").get("result"), False)
+
+    def test_is_palindrome_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_palindrome_number(3.0);")
+        self.assertIn("is_palindrome_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_palindrome_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_palindrome_number(true);")
+        self.assertIn("is_palindrome_number", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_palindrome_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_palindrome_number();")
+
+
 class TestIsPerfectSquare(unittest.TestCase):
     def test_is_perfect_square_of_zero(self):
         self.assertEqual(run("let result = is_perfect_square(0);").get("result"), True)

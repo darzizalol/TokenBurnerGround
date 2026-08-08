@@ -1189,6 +1189,14 @@ def _reverse_int(arguments: list, line: int, column: int) -> object:
     return sign * int(reversed_digits)
 
 
+def _is_palindrome_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_palindrome_number", arguments, 1, line, column)
+    value = _require_int("is_palindrome_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    return str(value) == str(value)[::-1]
+
+
 def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     _require_arity("is_perfect_square", arguments, 1, line, column)
     value = _require_int("is_perfect_square", arguments[0], line, column)
@@ -3058,6 +3066,7 @@ _BUILTINS = {
     "is_prime": _is_prime,
     "digit_sum": _digit_sum,
     "reverse_int": _reverse_int,
+    "is_palindrome_number": _is_palindrome_number,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_leap_year": _is_leap_year,

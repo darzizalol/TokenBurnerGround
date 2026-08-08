@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
+## 1. Standard library: `is_power_of_two` — power-of-two predicate via bit trick [claimed 2026-08-08T18:52Z]
 
 Build: add `is_power_of_two(n)` to `cinder/builtins.py`, registered
 right after `is_composite` (search for `def _is_composite`) in the

@@ -1194,6 +1194,22 @@ def _is_power_of_two(arguments: list, line: int, column: int) -> object:
     return (value & (value - 1)) == 0
 
 
+def _is_palindrome_list(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_palindrome_list", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"is_palindrome_list() requires a list, got {type_name(value)}",
+            line,
+            column,
+        )
+    length = len(value)
+    for i in range(length // 2):
+        if not values_equal(value[i], value[length - 1 - i]):
+            return False
+    return True
+
+
 def _digit_sum(arguments: list, line: int, column: int) -> object:
     _require_arity("digit_sum", arguments, 1, line, column)
     value = _require_int("digit_sum", arguments[0], line, column)
@@ -3092,6 +3108,7 @@ _BUILTINS = {
     "is_prime": _is_prime,
     "is_composite": _is_composite,
     "is_power_of_two": _is_power_of_two,
+    "is_palindrome_list": _is_palindrome_list,
     "digit_sum": _digit_sum,
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,

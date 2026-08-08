@@ -2299,6 +2299,56 @@ class TestIsPowerOfTwo(unittest.TestCase):
             run("is_power_of_two();")
 
 
+class TestIsPalindromeList(unittest.TestCase):
+    def test_is_palindrome_list_true(self):
+        self.assertIs(
+            run("let result = is_palindrome_list([1, 2, 1]);").get("result"), True
+        )
+
+    def test_is_palindrome_list_false(self):
+        self.assertIs(
+            run("let result = is_palindrome_list([1, 2, 3]);").get("result"), False
+        )
+
+    def test_is_palindrome_list_empty_true(self):
+        self.assertIs(
+            run("let result = is_palindrome_list([]);").get("result"), True
+        )
+
+    def test_is_palindrome_list_single_element_true(self):
+        self.assertIs(
+            run("let result = is_palindrome_list([1]);").get("result"), True
+        )
+
+    def test_is_palindrome_list_even_length_strings_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_list(["a", "b", "b", "a"]);').get(
+                "result"
+            ),
+            True,
+        )
+
+    def test_is_palindrome_list_nested_lists_deep_equality_true(self):
+        self.assertIs(
+            run(
+                "let result = is_palindrome_list([[1, 2], 3, [1, 2]]);"
+            ).get("result"),
+            True,
+        )
+
+    def test_is_palindrome_list_of_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_palindrome_list("abcba");')
+        self.assertIn("is_palindrome_list", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_palindrome_list_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_palindrome_list();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_palindrome_list([1], [2]);")
+
+
 class TestDigitSum(unittest.TestCase):
     def test_digit_sum_of_zero(self):
         self.assertEqual(run("let result = digit_sum(0);").get("result"), 0)

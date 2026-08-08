@@ -2282,6 +2282,44 @@ class TestReverseInt(unittest.TestCase):
             run("reverse_int();")
 
 
+class TestDigitalRoot(unittest.TestCase):
+    def test_digital_root_of_zero(self):
+        self.assertEqual(run("let result = digital_root(0);").get("result"), 0)
+
+    def test_digital_root_of_single_digit(self):
+        self.assertEqual(run("let result = digital_root(5);").get("result"), 5)
+
+    def test_digital_root_of_multiple_digits(self):
+        self.assertEqual(run("let result = digital_root(38);").get("result"), 2)
+
+    def test_digital_root_of_repeated_digits(self):
+        self.assertEqual(run("let result = digital_root(9999);").get("result"), 9)
+
+    def test_digital_root_of_negative_ignores_sign(self):
+        self.assertEqual(run("let result = digital_root(-38);").get("result"), 2)
+
+    def test_digital_root_of_bignum(self):
+        self.assertEqual(
+            run("let result = digital_root(999999999999999999999999);").get("result"), 9
+        )
+
+    def test_digital_root_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("digital_root(3.0);")
+        self.assertIn("digital_root", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_digital_root_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("digital_root(true);")
+        self.assertIn("digital_root", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_digital_root_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("digital_root();")
+
+
 class TestIsPalindromeNumber(unittest.TestCase):
     def test_is_palindrome_number_of_zero(self):
         self.assertEqual(run("let result = is_palindrome_number(0);").get("result"), True)

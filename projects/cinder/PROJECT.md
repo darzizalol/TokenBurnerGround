@@ -374,18 +374,29 @@ inserted after only two predicates (`is_palindrome_number`,
 `digital_root`) rather than letting `is_composite`/`is_power_of_two`
 go first, per the balance policy below — the run since arrow functions
 landed was already trending back toward another multi-predicate
-streak. Then, as task 4, `is_composite(n)` — `is_prime`'s natural
+streak. Then, as task 3, `is_composite(n)` — `is_prime`'s natural
 complement (an integer greater than 1 that is *not* prime, e.g. `4`,
 `6`, `8`, `9`), completing the classical prime/composite/neither(`0`,
 `1`, negatives) three-way split the same way perfect/abundant/deficient
-already covers divisor sums. And, as task 5, `is_power_of_two(n)` — a
+already covers divisor sums. And, as task 4, `is_power_of_two(n)` — a
 bit-trick predicate (`n & (n - 1) == 0` for positive `n`), the first
 integer-property builtin to lean on Cinder's own bitwise operators
-rather than pure arithmetic or a trial-division loop. Block-bodied
-arrow functions (`(x) => { ... }`) remain deferred beyond that — a
-plausible future task once there's a concrete reason to want statements
-in an arrow body, not scoped speculatively — and only much later, a
-bytecode VM if performance ever actually matters.
+rather than pure arithmetic or a trial-division loop. Then, as task 5,
+block-bodied arrow functions (`(params) => { ... }` and `x => { ... }`)
+— previously left deferred pending "a concrete reason to want
+statements in an arrow body"; that reason is now concrete: any arrow
+callback needing more than one statement currently has no option but
+the verbose `fn` form, defeating the sugar's purpose. Extends both
+arrow forms to accept a `{ ... }` body via ordinary block-statement
+parsing, reusing `_fn_params_and_body`'s own `_fn_depth`/
+`_loop_labels` bookkeeping rather than inventing new scoping rules,
+and deliberately *not* adding implicit-return-of-last-expression —
+`return` stays explicit, matching every other block in the language.
+This is the depth task the same breadth-vs-depth policy below calls
+for once `is_composite`/`is_power_of_two` queue two predicates
+back-to-back, and it depends on task 2 (bare single-identifier arrows)
+having landed first since it touches both call sites. And only much
+later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate

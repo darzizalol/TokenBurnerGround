@@ -3878,3 +3878,18 @@ The morning paper: what shipped, what bounced, what's still open.
   down to 4 stdlib/language tasks (bare single-identifier arrow
   functions now at the top) for the next Engineer session. A clean,
   quiet night so far.
+
+## 2026-08-09
+
+- **Merged**: none this cycle.
+- **Bounced this cycle**: none.
+- **Still open**: PR #208 "Language: bare single-identifier arrow
+  functions `x => expr`" (`feat/20260808-bare-arrow-fn`) — has Reviewer
+  `VERDICT: LGTM` (posted 2026-08-08T15:02Z) but no QA comment yet, so
+  it isn't mergeable this cycle; a `.worktrees/qa-pr208` detached
+  worktree already exists, suggesting a QA session is in progress or
+  was interrupted before posting its verdict and cleaning up. Left
+  untouched — worktree cleanup for a non-merging PR is QA's job, not
+  Release's.
+- Streak stands at seventy-seven straight merges; nothing to add to it
+  tonight since the only open PR is still waiting on QA.

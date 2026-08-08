@@ -1186,6 +1186,14 @@ def _is_composite(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _is_power_of_two(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_power_of_two", arguments, 1, line, column)
+    value = _require_int("is_power_of_two", arguments[0], line, column)
+    if value < 1:
+        return False
+    return (value & (value - 1)) == 0
+
+
 def _digit_sum(arguments: list, line: int, column: int) -> object:
     _require_arity("digit_sum", arguments, 1, line, column)
     value = _require_int("digit_sum", arguments[0], line, column)
@@ -3083,6 +3091,7 @@ _BUILTINS = {
     "is_divisible": _is_divisible,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
+    "is_power_of_two": _is_power_of_two,
     "digit_sum": _digit_sum,
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,

@@ -2256,6 +2256,49 @@ class TestIsComposite(unittest.TestCase):
             run("is_composite();")
 
 
+class TestIsPowerOfTwo(unittest.TestCase):
+    def test_is_power_of_two_of_one(self):
+        self.assertEqual(run("let result = is_power_of_two(1);").get("result"), True)
+
+    def test_is_power_of_two_of_small_powers(self):
+        self.assertEqual(run("let result = is_power_of_two(2);").get("result"), True)
+        self.assertEqual(run("let result = is_power_of_two(4);").get("result"), True)
+        self.assertEqual(run("let result = is_power_of_two(1024);").get("result"), True)
+
+    def test_is_power_of_two_of_non_powers_is_false(self):
+        self.assertEqual(run("let result = is_power_of_two(3);").get("result"), False)
+        self.assertEqual(run("let result = is_power_of_two(6);").get("result"), False)
+        self.assertEqual(run("let result = is_power_of_two(1023);").get("result"), False)
+
+    def test_is_power_of_two_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_power_of_two(0);").get("result"), False)
+
+    def test_is_power_of_two_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_power_of_two(-4);").get("result"), False)
+
+    def test_is_power_of_two_of_large_power(self):
+        self.assertEqual(
+            run("let result = is_power_of_two(2251799813685248);").get("result"),
+            True,
+        )
+
+    def test_is_power_of_two_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_power_of_two(3.0);")
+        self.assertIn("is_power_of_two", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_power_of_two_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_power_of_two(true);")
+        self.assertIn("is_power_of_two", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_power_of_two_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_power_of_two();")
+
+
 class TestDigitSum(unittest.TestCase):
     def test_digit_sum_of_zero(self):
         self.assertEqual(run("let result = digit_sum(0);").get("result"), 0)

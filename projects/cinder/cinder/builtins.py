@@ -1189,6 +1189,13 @@ def _reverse_int(arguments: list, line: int, column: int) -> object:
     return sign * int(reversed_digits)
 
 
+def _digital_root(arguments: list, line: int, column: int) -> object:
+    _require_arity("digital_root", arguments, 1, line, column)
+    value = _require_int("digital_root", arguments[0], line, column)
+    value = abs(value)
+    return 0 if value == 0 else 1 + (value - 1) % 9
+
+
 def _is_palindrome_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_palindrome_number", arguments, 1, line, column)
     value = _require_int("is_palindrome_number", arguments[0], line, column)
@@ -3066,6 +3073,7 @@ _BUILTINS = {
     "is_prime": _is_prime,
     "digit_sum": _digit_sum,
     "reverse_int": _reverse_int,
+    "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,

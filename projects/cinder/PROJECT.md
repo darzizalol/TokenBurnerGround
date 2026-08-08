@@ -330,58 +330,51 @@ rather than factoring a shared helper — and, as has `is_deficient(n)`
 — the third and final divisor-sum classification, testing whether
 `n`'s proper divisors sum to less than `n` itself (e.g. `8 > 1 + 2 + 4
 = 7`), completing the perfect/abundant/deficient trio so every
-positive integer lands in exactly one of the three.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, arrow function expressions (`(x) => x * 2`, `(a, b) => a +
-b`) as sugar for the existing anonymous `fn` expression, desugaring
-purely at parse time into the same `FnExpr` AST node (no interpreter
-changes), disambiguated from ordinary parenthesized grouping via the
-same speculative-parse-and-backtrack technique `_brace_statement`
-already uses for the `{`-disambiguation problem. This is a deliberate
-course-correction, and it is why this task leads the backlog rather
-than sitting behind more predicates: the run of stdlib-only
-integer-property predicates since list/map comprehensions landed —
-`is_perfect_square`, `is_armstrong`, `is_leap_year`, `reverse_int`,
-`is_perfect_number`, `is_abundant`, `is_deficient`, seven in a row —
-has already gone on longer than the seven-cycle breadth run that
-prompted comprehensions in the first place, and the vision favors
-depth over breadth. Arrow functions are scoped to a single session
-(parser-only, one new token, reuses existing parameter-parsing
-helpers) precisely so this course-correction doesn't itself become a
-multi-night detour. Expression-bodied and parenthesized-parameter-list
-only; no bare single-identifier form (`x => expr`) and no block-bodied
-form (`(x) => { ... }`) — both left for a future task if ever wanted,
-to keep this one's disambiguation logic tractable. Then, as task 2,
+positive integer lands in exactly one of the three, and, as has arrow
+function expressions (`(x) => x * 2`, `(a, b) => a + b`) as sugar for
+the existing anonymous `fn` expression, desugaring purely at parse
+time into the same `FnExpr` AST node (no interpreter changes),
+disambiguated from ordinary parenthesized grouping via the same
+speculative-parse-and-backtrack technique `_brace_statement` already
+uses for the `{`-disambiguation problem — a deliberate course-
+correction after a seven-cycle run of stdlib-only integer-property
+predicates (`is_perfect_square`, `is_armstrong`, `is_leap_year`,
+`reverse_int`, `is_perfect_number`, `is_abundant`, `is_deficient`),
+scoped to expression-bodied and parenthesized-parameter-list only (no
+bare single-identifier form, no block body, both left for future
+tasks) to keep the disambiguation logic tractable — and, as has
 `is_palindrome_number(n)` — a numeric palindrome predicate, testing
 whether `n`'s decimal digits read the same forwards and backwards
 (e.g. `121`, `12321`), the natural closing member of the
 digit-property cluster now that `reverse_int` exists to build it on
 top of (`reverse_int(n) == n` for non-negative `n`; negative `n` is
 always `false` since the leading `-` breaks the symmetry) — and, as
-task 2, `digital_root(n)` — the repeated-digit-sum-to-single-digit
+has `digital_root(n)` — the repeated-digit-sum-to-single-digit
 reduction (e.g. `38 -> 11 -> 2`), sitting next to
 `digit_sum`/`reverse_int` and, like `digit_sum`, ignoring sign,
 computed via the closed-form `1 + (n - 1) % 9` identity rather than a
 repeated-summing loop so arbitrary-precision Cinder ints don't force
-many passes. Then, as task 3, another language-depth course-correction:
-bare single-identifier arrow functions (`x => x * 2`, no parens around
-the one parameter) — the form last cycle's parenthesized-arrow task
-explicitly deferred, and unlike that task, needing no speculative
-parse/backtrack at all, since `IDENTIFIER` immediately followed by
-`FAT_ARROW` is unambiguous with one token of lookahead
-(`_peek_next()`) in `_primary`'s existing `IDENTIFIER` branch. This is
-inserted after only two predicates (`is_palindrome_number`,
-`digital_root`) rather than letting `is_composite`/`is_power_of_two`
-go first, per the balance policy below — the run since arrow functions
-landed was already trending back toward another multi-predicate
-streak. Then, as task 3, `is_composite(n)` — `is_prime`'s natural
-complement (an integer greater than 1 that is *not* prime, e.g. `4`,
-`6`, `8`, `9`), completing the classical prime/composite/neither(`0`,
-`1`, negatives) three-way split the same way perfect/abundant/deficient
-already covers divisor sums. And, as task 4, `is_power_of_two(n)` — a
-bit-trick predicate (`n & (n - 1) == 0` for positive `n`), the first
+many passes.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+as task 1, another language-depth course-correction: bare
+single-identifier arrow functions (`x => x * 2`, no parens around the
+one parameter) — the form the parenthesized-arrow task explicitly
+deferred, and unlike that task, needing no speculative parse/backtrack
+at all, since `IDENTIFIER` immediately followed by `FAT_ARROW` is
+unambiguous with one token of lookahead (`_peek_next()`) in
+`_primary`'s existing `IDENTIFIER` branch. This is inserted after only
+two predicates (`is_palindrome_number`, `digital_root`) rather than
+letting `is_composite`/`is_power_of_two` go first, per the balance
+policy below — the run since arrow functions landed was already
+trending back toward another multi-predicate streak. Then, as task 2,
+`is_composite(n)` — `is_prime`'s natural complement (an integer
+greater than 1 that is *not* prime, e.g. `4`, `6`, `8`, `9`),
+completing the classical prime/composite/neither (`0`, `1`, negatives)
+three-way split the same way perfect/abundant/deficient already covers
+divisor sums. And, as task 3, `is_power_of_two(n)` — a bit-trick
+predicate (`n & (n - 1) == 0` for positive `n`), the first
 integer-property builtin to lean on Cinder's own bitwise operators
-rather than pure arithmetic or a trial-division loop. Then, as task 5,
+rather than pure arithmetic or a trial-division loop. Then, as task 4,
 block-bodied arrow functions (`(params) => { ... }` and `x => { ... }`)
 — previously left deferred pending "a concrete reason to want
 statements in an arrow body"; that reason is now concrete: any arrow
@@ -394,15 +387,26 @@ and deliberately *not* adding implicit-return-of-last-expression —
 `return` stays explicit, matching every other block in the language.
 This is the depth task the same breadth-vs-depth policy below calls
 for once `is_composite`/`is_power_of_two` queue two predicates
-back-to-back, and it depends on task 2 (bare single-identifier arrows)
-having landed first since it touches both call sites. And only much
-later, a bytecode VM if performance ever actually matters.
+back-to-back, and it depends on task 1 (bare single-identifier arrows)
+having landed first since it touches both call sites. Then, as task 5,
+`is_palindrome_list(list)` — extending the "reads the same forwards
+and backwards" predicate family (`is_palindrome` for strings,
+`is_palindrome_number` for integers) to its third and final natural
+domain, lists: `is_palindrome_list([1, 2, 1]);` is `true`. Since list
+elements can be unhashable nested lists/maps, this compares
+element-by-element from both ends using `values_equal` (the same
+deep-equality helper `is_unique`/`is_permutation` already import from
+`cinder.interpreter`) rather than a bare `list == list[::-1]`, which
+would silently fall back to Python's own (potentially wrong) equality
+on nested structures. Queued as breadth after the depth task 4 lands,
+per the same balance policy. And only much later, a bytecode VM if
+performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
 tasks queued back-to-back is a signal to inject another language-depth
 task rather than just extending the streak further, the same threshold
-that placed task 3 above.
+that placed task 4 above.
 
 ## History
 

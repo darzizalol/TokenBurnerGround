@@ -310,6 +310,66 @@ grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_palindrome_list` — list palindrome predicate
+
+Build: add `is_palindrome_list(list)` to `cinder/builtins.py`, registered
+right after `is_power_of_two` (search for `def _is_power_of_two` — by the
+time this task is claimed, tasks 1-4 above will have landed and shifted
+line numbers). This extends the "reads the same forwards and backwards"
+predicate family — `is_palindrome` for strings, `is_palindrome_number` for
+integers (search either) — to its third and final natural domain: lists,
+e.g. `[1, 2, 1]` or `["a", "b", "a"]`.
+
+Do **not** implement this as `value == value[::-1]`. List elements can be
+unhashable nested lists/maps, and Python's own `==` on those follows
+Python's equality rules, not Cinder's — the codebase already has a
+dedicated deep-equality helper for exactly this reason. Search for
+`values_equal` (imported from `cinder.interpreter`, already used by
+`_is_unique`/`_is_permutation`/`_remove`/`_index_of`-style helpers) and
+use it to compare `value[i]` against `value[len(value) - 1 - i]` for each
+`i` in the first half of the list, short-circuiting `False` on the first
+mismatch; an empty list or single-element list is trivially `True`.
+
+Model the arity/type-checking on `_is_sorted`'s or `_is_unique`'s
+structure (search for `def _is_unique`): reuse
+`_require_arity("is_palindrome_list", arguments, 1, line, column)`, then
+check `isinstance(value, list)` directly and raise `CinderRuntimeError`
+matching `"is_palindrome_list() requires a list, got {type}"` on a
+mismatch (mirroring `_is_unique`'s own error message shape) — there is no
+existing `_require_list` helper, so write the inline check the same way
+`_is_unique`/`_is_sorted` already do rather than adding a new shared
+helper for a single caller.
+
+Acceptance criteria:
+- `is_palindrome_list([1, 2, 1]);` is `true`.
+- `is_palindrome_list([1, 2, 3]);` is `false`.
+- `is_palindrome_list([]);` is `true` — empty list, vacuously a
+  palindrome, matching `is_palindrome`'s own empty-string convention.
+- `is_palindrome_list([1]);` is `true` — single element.
+- `is_palindrome_list(["a", "b", "b", "a"]);` is `true` — even length,
+  strings not just numbers.
+- `is_palindrome_list([[1, 2], 3, [1, 2]]);` is `true` — nested lists as
+  elements, confirming `values_equal` (deep equality) is used rather
+  than a bare `==`/identity comparison that could wrongly reject
+  structurally-equal-but-distinct nested values.
+- `is_palindrome_list("abcba");` (a string, not a list) raises
+  `CinderRuntimeError` matching `"is_palindrome_list() requires a list,
+  got string"` — this predicate is list-only; `is_palindrome` already
+  covers strings, so there is no fallback/coercion here.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_power_of_two`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_palindrome_list` added near `is_palindrome`/
+`is_palindrome_number`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -169,6 +169,8 @@ while (i < 10) {
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
+  `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
+  `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -252,30 +254,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list comprehensions
-(`[expr for x in iterable]`, with an optional `if` filter) — the first
-language-depth addition in seven cycles after a long run of stdlib-only
-work — their map-literal counterpart, map comprehensions (`{k: v for x
-in iterable}`), `is_perfect_square` to test whether an integer is a
-perfect square, `is_armstrong` to test whether an integer equals the
-sum of its own digits each raised to the digit count, `is_leap_year`
-for the Gregorian leap-year rule, `reverse_int` to reverse an
-integer's decimal digits (sign preserved), `is_perfect_number` to
+Actively developed, nightly. Recently landed: `is_perfect_number` to
 test whether an integer equals the sum of its own proper divisors,
 `is_abundant` to test whether an integer's proper divisors sum to
 more than itself, `is_deficient` to close out the
 perfect/abundant/deficient divisor-sum trio (proper divisors summing
-to less than the integer itself), and parenthesized arrow function
+to less than the integer itself), parenthesized arrow function
 expressions (`(a, b) => a + b`) as sugar for anonymous `fn` expressions
 — the first language-depth addition since comprehensions, after seven
-more stdlib predicates in a row.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_palindrome_number`
-to test whether an integer's digits read the same forwards and
-backwards, `digital_root` for the repeated-digit-sum-to-single-digit
-closed form, then another depth course-correction — bare
-single-identifier arrow functions (`x => x * 2`, no parens needed
-around a single parameter) — followed by `is_composite` as `is_prime`'s
-complement and `is_power_of_two` via the `n & (n - 1) == 0` bit trick.
+stdlib predicates in a row — `is_palindrome_number` to test whether an
+integer's digits read the same forwards and backwards, and
+`digital_root` for the repeated-digit-sum-to-single-digit closed form.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): another depth
+course-correction — bare single-identifier arrow functions
+(`x => x * 2`, no parens needed around a single parameter) — followed
+by `is_composite` as `is_prime`'s complement, `is_power_of_two` via the
+`n & (n - 1) == 0` bit trick, block-bodied arrow functions
+(`(params) => { ... }` and `x => { ... }`), and `is_palindrome_list` to
+extend the "reads the same both ways" predicate family to lists.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

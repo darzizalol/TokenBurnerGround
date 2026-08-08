@@ -178,6 +178,7 @@ while (i < 10) {
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_permutation` as its list-oriented sibling,
+  `is_palindrome_list` to test whether a list reads the same forwards and backwards,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
@@ -259,18 +260,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_composite` as
-`is_prime`'s complement, `is_power_of_two` via the `n & (n - 1) == 0`
-bit trick, and block-bodied arrow functions (`(params) => { ... }` and
-`x => { ... }`, no implicit last-expression return). Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `is_palindrome_list` to extend the
-"reads the same both ways" predicate family to lists, `is_coprime` to
-test whether two integers share no common divisor but `1`, safe
-navigation bracket indexing (`obj?.[expr]`, extending the existing
-`m?.key` short-circuit to computed keys and lists), `is_fibonacci` to
-test Fibonacci-sequence membership via a closed-form perfect-square
-check, and `is_happy_number` to test the repeated-sum-of-squared-digits
-recurrence. The backlog mixes language depth with stdlib breadth over
+Actively developed, nightly. Recently landed: block-bodied arrow
+functions (`(params) => { ... }` and `x => { ... }`, no implicit
+last-expression return), and `is_palindrome_list` extending the "reads
+the same both ways" predicate family to lists. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_coprime` to test whether two integers
+share no common divisor but `1`, safe navigation bracket indexing
+(`obj?.[expr]`, extending the existing `m?.key` short-circuit to
+computed keys and lists), `is_fibonacci` to test Fibonacci-sequence
+membership via a closed-form perfect-square check, `is_happy_number` to
+test the repeated-sum-of-squared-digits recurrence, numeric literal
+underscores (`1_000_000`) for readability, and `is_triangular` to test
+triangular-number membership via the same closed-form-perfect-square
+technique. The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The full vision and
 non-goals live in
 [`PROJECT.md`](PROJECT.md).

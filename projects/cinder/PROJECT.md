@@ -379,29 +379,24 @@ rather than inventing new scoping rules, and deliberately *not* adding
 implicit-return-of-last-expression — `return` stays explicit, matching
 every other block in the language. This was the depth task the same
 breadth-vs-depth policy below calls for once `is_composite`/
-`is_power_of_two` queued two predicates back-to-back — have since
-landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `is_palindrome_list(list)` — extending the "reads the same
-forwards and backwards" predicate family (`is_palindrome` for strings,
+`is_power_of_two` queued two predicates back-to-back, and, as has
+`is_palindrome_list(list)` — extending the "reads the same forwards
+and backwards" predicate family (`is_palindrome` for strings,
 `is_palindrome_number` for integers) to its third and final natural
-domain, lists: `is_palindrome_list([1, 2, 1]);` is `true`. Since list
-elements can be unhashable nested lists/maps, this compares
-element-by-element from both ends using `values_equal` (the same
-deep-equality helper `is_unique`/`is_permutation` already import from
-`cinder.interpreter`) rather than a bare `list == list[::-1]`, which
-would silently fall back to Python's own (potentially wrong) equality
-on nested structures. Queued as breadth now that the block-bodied-arrow
-depth task has landed, per the same balance policy. Then, as task 2,
-`is_coprime(a, b)` — the other two-argument member of the
+domain, lists, comparing element-by-element from both ends using
+`values_equal` (the same deep-equality helper `is_unique`/
+`is_permutation` already import from `cinder.interpreter`) rather than
+a bare `list == list[::-1]`, which would silently fall back to
+Python's own (potentially wrong) equality on nested structures — have
+since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+as task 1, `is_coprime(a, b)` — the other two-argument member of the
 integer-property predicate cluster alongside `is_divisible`, testing
 whether two integers share no common divisor but `1` (`gcd(a, b) ==
 1`, via `math.gcd` directly rather than routing through the existing
-`gcd()` builtin's own validation). This is a second breadth task queued
-back-to-back with task 1 (`is_palindrome_list`), which the
-breadth-vs-depth policy below flags as the point to line up a depth
-task next rather than let a third predicate follow immediately. So, as
-task 3, safe navigation bracket indexing (`obj?.[expr]`) — extending
+`gcd()` builtin's own validation). Queued as breadth now that
+`is_palindrome_list` has landed, per the same balance policy. Then, as
+task 2, safe navigation bracket indexing (`obj?.[expr]`) — extending
 the existing dot-only safe navigation operator (`m?.key`,
 short-circuits to `nil` on a `nil` receiver) to a bracket form, closing
 the two gaps the dot form structurally can't reach: a
@@ -411,13 +406,15 @@ change — `OptionalIndex` already carries an arbitrary index expression
 and `_evaluate_optional_index` already delegates to the same
 `_index_get` plain indexing uses, so the interpreter needs no changes at
 all; `_finish_optional_dot` just needs a bracket branch alongside its
-existing identifier branch. Then, as task 4, `is_fibonacci(n)` — a
-fresh breadth task after task 3's depth work, testing whether a
-non-negative integer appears in the Fibonacci sequence via the closed-form
+existing identifier branch. This is the depth task the policy calls for
+right after a single breadth task (task 1), rather than waiting for a
+second one to stack up. Then, as task 3, `is_fibonacci(n)` — a fresh
+breadth task after task 2's depth work, testing whether a non-negative
+integer appears in the Fibonacci sequence via the closed-form
 perfect-square test (`n` is Fibonacci iff `5n² + 4` or `5n² - 4` is a
 perfect square), reusing `math.isqrt` the same exact-integer way
 `is_perfect_square` already does rather than iterating the sequence up
-to `n`. And as task 5, `is_happy_number(n)` — testing the "happy
+to `n`. And as task 4, `is_happy_number(n)` — testing the "happy
 number" recurrence: repeatedly replace `n` with the sum of the squares
 of its decimal digits; `n` is happy if that process reaches `1`,
 unhappy if it instead falls into a cycle that never includes `1` (e.g.
@@ -428,10 +425,28 @@ stopping the moment either `1` appears (happy) or a value repeats
 misclassify a slow-converging happy number as unhappy. Negative input
 answers `false` without raising, mirroring `is_perfect_square`'s own
 convention. This is a second breadth task queued back-to-back with
-task 4 (`is_fibonacci`), which the breadth-vs-depth policy below flags
-as the point to line up a depth task next once task 5 is claimed — the
-Architect's next grooming pass should inject one as task 6 rather than
-let a third predicate follow immediately. And only much later, a
+task 3 (`is_fibonacci`), which the breadth-vs-depth policy below flags
+as the point to line up a depth task next — so, as task 5, numeric
+literal underscores for readability (`1_000_000`, `0xFF_FF`,
+`3.14_159`): teach `_lexer.py`'s `_number`/`_prefixed_int` to accept
+`_` as a digit-group separator, stripped before constructing the
+`int`/`float` value, the same convenience Python's own literal syntax
+offers. An underscore is only consumed into the literal strictly
+between two digits of the same group — a leading (`_1`), trailing
+(`1_`), doubled (`1__0`), decimal-point-adjacent (`1_.5`, `1._5`), or
+post-prefix (`0x_FF`) underscore simply isn't consumed, so scanning
+stops there and the leftover `_...` lexes as a separate token the
+usual way (no new `LexError` case needed). This directly follows two
+breadth tasks (3-4) per the same policy. And as
+task 6, `is_triangular(n)` — one more integer-property predicate,
+testing whether `n` is a triangular number (`0, 1, 3, 6, 10, 15, ...`,
+the sum `1 + 2 + ... + k`) via the closed-form test `8n + 1` is a
+perfect square, the same `math.isqrt`-based exact-integer technique
+`is_fibonacci`/`is_perfect_square` already use rather than an
+accumulating loop. Negative input answers `false` without raising,
+matching the rest of the cluster's convention. This is the next
+breadth task after task 5's depth work, restarting the same
+alternation the policy below describes. And only much later, a
 bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this

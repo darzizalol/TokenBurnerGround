@@ -280,6 +280,147 @@ task rather than a third predicate.
 
 ---
 
+## 5. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
+
+Build: teach the lexer to accept `_` as a digit-group separator in
+integer, float, and prefixed (hex/binary/octal) numeric literals — the
+same readability convenience Python's own literal syntax offers, e.g.
+`1_000_000`, `3.14_159`, `0xFF_FF`, `0b1010_0101`. This is a
+lexer-only, single-session depth task queued per `PROJECT.md`'s
+breadth-vs-depth policy after two stdlib-breadth tasks (`is_fibonacci`,
+`is_happy_number`) in a row above.
+
+In `_number` (`cinder/lexer.py`, search `def _number`): the digit-scan
+loops currently read `while self._peek().isdigit(): digits.append(self.
+_advance())` in two places (the integer-part loop and, inside the
+`is_float` branch, the fractional-part loop). Change the loop condition
+in both places to also accept `_`, but only append it to `digits` if it
+is *between* two digits — i.e. only consume the `_` (advancing past it
+without appending) when `self._peek() == "_"` and the *previous*
+character read was a digit and `self._peek_next()` is also a digit;
+otherwise the `_` is not part of the literal at all and scanning stops
+there (so `1_` lexes as the INT `1` followed by whatever `_` starts —
+an identifier token — exactly like today's behavior for any other
+trailing non-digit character; do not raise for a trailing/leading/
+doubled underscore, just stop consuming, matching how `_number` already
+treats `.` when not followed by a digit, see the existing `self._peek()
+== "." and self._peek_next().isdigit()` guard immediately below the
+integer-part loop). The float-literal decimal point check itself
+(`self._peek() == "." and self._peek_next().isdigit()`) needs no
+change — an underscore adjacent to the `.` (`1_.5` or `1._5`) simply
+isn't consumed by either digit-scan loop, so the number lexes as `1`
+(or `1_` per the rule above) followed by separate `.`/`5` tokens, which
+already produces a `ParseError` downstream since `.5` alone isn't a
+valid statement — no new lexer-level error is needed for that case.
+Strip underscores from the collected `digits` list before joining into
+`lexeme` for `int()`/`float()` conversion (`"".join(c for c in digits
+if c != "_")`), but keep them in the token's own `lexeme` field
+(`"".join(digits)`) so error messages and `str()`-of-token round-trip
+the original source text.
+
+In `_prefixed_int` (`cinder/lexer.py`, search `def _prefixed_int`):
+apply the same treatment to its digit-scan loop
+(`while self._peek().isalnum(): ...`) — accept `_` under the identical
+between-two-valid-digits rule (previous character consumed was a valid
+digit for this base, and `self._peek_next()` is also alnum), stopping
+consumption otherwise. Do **not** allow `_` immediately after the
+`0x`/`0b`/`0o` prefix (`0x_FF`) — there is no "previous digit" at that
+position, so the existing rule already excludes it with no extra code.
+Strip underscores before the `int(..., base)` conversion the same way,
+keep them in `lexeme`.
+
+Acceptance criteria:
+- `1_000_000;` evaluates as the `INT` `1000000`.
+- `3.14_159;` evaluates as the `FLOAT` `3.14159`.
+- `0xFF_FF;` evaluates as the `INT` `65535`, `0b1010_0101;` evaluates as
+  `165`, `0o17_7;` evaluates as `127`.
+- `1_2_3;` evaluates as `123` — multiple separators in one literal.
+- `1_;` lexes as `INT` `1` followed by a separate `_` identifier token
+  (a trailing underscore is not consumed into the number) — confirm via
+  a lexer-level token-list test, not just an end-to-end value, since
+  `1_;` alone as a statement is a `ParseError` (two statements butted
+  together with no operator) and that parse failure is the correct,
+  expected behavior here, not a bug to work around.
+- `1__0;` lexes as `INT` `1` followed by an `__0` identifier token (a
+  doubled underscore stops consumption at the first one, since the
+  character immediately after it is `_`, not a digit) — same
+  lexer-level token-list assertion approach as above.
+- `_1;` (leading underscore, no digit before it) lexes as a plain
+  identifier token `_1`, never reaching `_number` at all — confirms the
+  existing identifier-vs-number dispatch in the lexer's main loop is
+  untouched by this change.
+- Existing plain numeric literals without underscores (`42`, `3.14`,
+  `0xFF`) are completely unaffected — full existing lexer/parser/
+  interpreter test suite still passes unchanged.
+- Full test suite passes.
+
+Likely files: `cinder/lexer.py` (`_number`, `_prefixed_int`), `tests/
+test_lexer.py` (token-list assertions for the separator, boundary, and
+rejection-via-non-consumption cases above). Once merged, `README.md`'s
+numeric-literals bullet (search "hex (`0x1F`)") needs the underscore
+form mentioned, and `PROJECT.md`'s roadmap paragraph needs it moved
+from backlog to landed — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
+## 6. Standard library: `is_triangular` — triangular-number predicate
+
+Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
+after `is_happy_number` (search for `def _is_happy_number` — by the
+time this task is claimed, tasks 1-5 above will have landed and shifted
+line numbers). A non-negative integer `n` is a triangular number (`0,
+1, 3, 6, 10, 15, 21, ...`, the sum `1 + 2 + ... + k` for some `k >= 0`)
+exactly when `8n + 1` is a perfect square — the same closed-form,
+`math.isqrt`-based exact-integer technique `is_fibonacci` and
+`_is_perfect_square` already use (compute `r = math.isqrt(candidate)`
+and check `r * r == candidate`), not an accumulating loop that adds
+`1, 2, 3, ...` until it reaches or passes `n`. This is a fresh breadth
+task queued after task 5's depth work (numeric literal underscores) per
+`PROJECT.md`'s breadth-vs-depth policy.
+
+Model the arity/type-checking on `_is_fibonacci`'s or
+`_is_happy_number`'s structure: reuse `_require_arity("is_triangular",
+arguments, 1, line, column)` and `_require_int("is_triangular",
+arguments[0], line, column)`. Negative input is not an error — mirror
+`_is_perfect_square`'s own convention of answering `false` on negative
+input rather than raising, since triangular numbers are only ever
+defined for `n >= 0`.
+
+Acceptance criteria:
+- `is_triangular(0);` is `true`, `is_triangular(1);` is `true` — the
+  degenerate (`k = 0`) and first (`k = 1`) cases.
+- `is_triangular(3);` is `true`, `is_triangular(6);` is `true`,
+  `is_triangular(10);` is `true`, `is_triangular(15);` is `true`,
+  `is_triangular(21);` is `true`.
+- `is_triangular(2);` is `false`, `is_triangular(4);` is `false`,
+  `is_triangular(5);` is `false`, `is_triangular(100);` is `false` —
+  non-members between/around real triangular numbers.
+- `is_triangular(-6);` is `false` — negative input answers `false`
+  rather than raising, matching `is_perfect_square`'s convention.
+- `is_triangular(500500);` is `true` — a larger, real triangular number
+  (sum `1` through `1000`), confirming the closed-form test rather than
+  an unrolled lookup table of small cases.
+- `is_triangular(3.0);` (float) raises `CinderRuntimeError` matching
+  `"is_triangular() requires an int, got float"` — no implicit
+  float-to-int coercion, matching the rest of the integer-property
+  cluster.
+- `is_triangular(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_triangular() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_happy_number`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_triangular` added near `is_perfect_square`/
+`is_fibonacci`, and `PROJECT.md`'s roadmap paragraph needs it moved
+from backlog to landed — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

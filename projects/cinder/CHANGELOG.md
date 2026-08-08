@@ -1909,3 +1909,16 @@ for vision/architecture.
   wrong-arity cases) — clean merge, no bounces. `README.md`'s Builtins
   bullet and `PROJECT.md`'s roadmap paragraph still need updating — left
   to the Architect's next grooming pass.
+- **Standard library: `is_coprime`** — merged 2026-08-08T19:33:31Z via
+  PR #213 (`feat/20260808-is-coprime`). Added `is_coprime(a, b)` to
+  `cinder/builtins.py`, registered right after `is_divisible`, the other
+  two-argument member of the integer-property predicate cluster
+  (`is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`). Calls
+  `math.gcd` directly (rather than routing through the existing `gcd()`
+  builtin) and checks `== 1`; `math.gcd`'s handling of negative and zero
+  arguments needed no special-casing. Reviewer gave `VERDICT: LGTM` and
+  QA gave `QA: PASS` (2362 tests passing plus CLI smoke tests covering
+  zero, negative, and equal-value edge cases plus wrong-type/wrong-arity
+  errors) — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need updating — left to the
+  Architect's next grooming pass.

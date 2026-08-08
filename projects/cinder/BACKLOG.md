@@ -11,65 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_coprime` — two-integer coprimality predicate [claimed 2026-08-08T19:29:37Z]
-
-Build: add `is_coprime(a, b)` to `cinder/builtins.py`, registered right
-after `is_divisible` (search for `def _is_divisible`, currently around
-line 1156) — the other two-argument member of the integer-property
-predicate cluster (`is_even`/`is_odd`/`is_divisible`/`is_prime`/
-`is_composite`). Two integers are coprime (relatively prime) when their
-only common positive divisor is `1`, i.e. `gcd(a, b) == 1`. Python's
-stdlib `math` module is already imported in `builtins.py` (used by
-`_gcd`, `_is_perfect_square`, `_factorial`, etc.) and its `math.gcd`
-handles negative and zero arguments the same way this task needs (always
-returns a non-negative result, e.g. `math.gcd(-12, 18) == 6`,
-`math.gcd(0, 0) == 0`) — call `math.gcd` directly rather than routing
-through the existing `gcd()` builtin's own Cinder-level function
-(`_gcd`), since that would mean re-deriving/re-validating arguments that
-have already been validated here.
-
-Model the arity/type-checking on `_is_divisible`'s structure (search for
-`def _is_divisible`): reuse `_require_arity("is_coprime", arguments, 2,
-line, column)` and `_require_int("is_coprime", arguments[N], line,
-column)` for each of the two arguments (the same helper the rest of the
-cluster uses). Unlike `is_divisible`, there is no "must not be zero"
-guard to add — `math.gcd(0, n)` is well-defined (`abs(n)`), so
-`is_coprime(0, n)` is simply `false` for any nonzero `n` and
-`is_coprime(0, 0)` is `false` (`gcd(0, 0) == 0 != 1`), both handled
-naturally by the plain `== 1` check with no special-casing.
-
-Acceptance criteria:
-- `is_coprime(8, 15);` is `true` — no common factor.
-- `is_coprime(12, 18);` is `false` — share a factor of `6`.
-- `is_coprime(1, 5);` is `true` — `1` is coprime with everything,
-  including itself: `is_coprime(1, 1);` is `true`.
-- `is_coprime(0, 5);` is `false`, `is_coprime(0, 0);` is `false` — zero
-  shares every divisor with any number (and with itself), so it is
-  never coprime with anything, including `0`.
-- `is_coprime(-8, 15);` is `true`, `is_coprime(-12, 18);` is `false` —
-  negative input, sign doesn't affect the shared-divisor question.
-- `is_coprime(17, 17);` is `false` — a number is only coprime with
-  itself when that number is `1`.
-- `is_coprime(3.0, 5);` (float) raises `CinderRuntimeError` matching
-  `"is_coprime() requires an int, got float"` — no implicit
-  float-to-int coercion, matching the rest of the cluster.
-- `is_coprime(3, true);` (bool as second argument) raises
-  `CinderRuntimeError` matching `"is_coprime() requires an int, got
-  bool"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_divisible`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_coprime` added near `is_divisible`/`is_prime`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: safe navigation bracket indexing `obj?.[expr]`
+## 1. Language: safe navigation bracket indexing `obj?.[expr]`
 
 Build: extend the existing safe navigation operator — currently
 dot-only (`m?.key`, short-circuits to `nil` when `m` is `nil` instead of
@@ -153,12 +95,12 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_fibonacci` — Fibonacci-membership predicate
+## 2. Standard library: `is_fibonacci` — Fibonacci-membership predicate
 
 Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
 after `is_coprime` (search for `def _is_coprime` — by the time this task
-is claimed, tasks 1-2 above will have landed and shifted line numbers).
-This is a fresh breadth task queued after task 2's depth work (safe
+is claimed, task 1 above will have landed and shifted line numbers).
+This is a fresh breadth task queued after task 1's depth work (safe
 navigation bracket indexing) per `PROJECT.md`'s breadth-vs-depth policy.
 A non-negative integer `n` is a Fibonacci number (`0, 1, 1, 2, 3, 5, 8,
 13, ...`) exactly when `5n² + 4` or `5n² - 4` is a perfect square — do
@@ -212,11 +154,11 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_happy_number` — happy-number recurrence predicate
+## 3. Standard library: `is_happy_number` — happy-number recurrence predicate
 
 Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
 right after `is_fibonacci` (search for `def _is_fibonacci` — by the
-time this task is claimed, tasks 1-3 above will have landed and shifted
+time this task is claimed, tasks 1-2 above will have landed and shifted
 line numbers). A "happy number" is defined by a recurrence: replace `n`
 with the sum of the squares of its decimal digits, and repeat; `n` is
 happy if this process eventually reaches `1`, unhappy if it instead
@@ -280,7 +222,7 @@ task rather than a third predicate.
 
 ---
 
-## 5. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
+## 4. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
 
 Build: teach the lexer to accept `_` as a digit-group separator in
 integer, float, and prefixed (hex/binary/octal) numeric literals — the
@@ -364,11 +306,11 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `is_triangular` — triangular-number predicate
+## 5. Standard library: `is_triangular` — triangular-number predicate
 
 Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
 after `is_happy_number` (search for `def _is_happy_number` — by the
-time this task is claimed, tasks 1-5 above will have landed and shifted
+time this task is claimed, tasks 1-4 above will have landed and shifted
 line numbers). A non-negative integer `n` is a triangular number (`0,
 1, 3, 6, 10, 15, 21, ...`, the sum `1 + 2 + ... + k` for some `k >= 0`)
 exactly when `8n + 1` is a perfect square — the same closed-form,
@@ -376,7 +318,7 @@ exactly when `8n + 1` is a perfect square — the same closed-form,
 `_is_perfect_square` already use (compute `r = math.isqrt(candidate)`
 and check `r * r == candidate`), not an accumulating loop that adds
 `1, 2, 3, ...` until it reaches or passes `n`. This is a fresh breadth
-task queued after task 5's depth work (numeric literal underscores) per
+task queued after task 4's depth work (numeric literal underscores) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 Model the arity/type-checking on `_is_fibonacci`'s or

@@ -3970,3 +3970,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty-two straight merges; queue is empty again —
   another clean, uneventful cycle.
+
+- **Merged**: PR #213 "Standard library: `is_coprime`"
+  (`feat/20260808-is-coprime`) — had `VERDICT: LGTM` and `QA: PASS`
+  since its sole commit, both posted after the last push, no bounces.
+  Adds `is_coprime(a, b)` next to `is_divisible`, calling `math.gcd`
+  directly and checking `== 1`, with `math.gcd`'s handling of negative
+  and zero inputs needing no special-casing (2362 tests passing plus CLI
+  smoke tests covering zero, negative, and equal-value edge cases plus
+  wrong-type/wrong-arity errors). Removed `.worktrees/is-coprime` before
+  merging; `gh pr merge --squash --delete-branch` succeeded cleanly on
+  the first try. BACKLOG.md task 1 archived to CHANGELOG.md and the
+  remaining five tasks renumbered (2-6 to 1-5), including fixing three
+  stale forward cross-references inside the `is_fibonacci`,
+  `is_happy_number`, and `is_triangular` tasks that pointed at the old
+  numbering.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-three straight merges; queue is empty again —
+  another clean, uneventful cycle.

@@ -358,25 +358,40 @@ whether `n`'s decimal digits read the same forwards and backwards
 digit-property cluster now that `reverse_int` exists to build it on
 top of (`reverse_int(n) == n` for non-negative `n`; negative `n` is
 always `false` since the leading `-` breaks the symmetry) — and, as
-task 3, `digital_root(n)` — the repeated-digit-sum-to-single-digit
+task 2, `digital_root(n)` — the repeated-digit-sum-to-single-digit
 reduction (e.g. `38 -> 11 -> 2`), sitting next to
 `digit_sum`/`reverse_int` and, like `digit_sum`, ignoring sign,
 computed via the closed-form `1 + (n - 1) % 9` identity rather than a
 repeated-summing loop so arbitrary-precision Cinder ints don't force
-many passes — and, as task 4, `is_composite(n)` — `is_prime`'s natural
+many passes. Then, as task 3, another language-depth course-correction:
+bare single-identifier arrow functions (`x => x * 2`, no parens around
+the one parameter) — the form last cycle's parenthesized-arrow task
+explicitly deferred, and unlike that task, needing no speculative
+parse/backtrack at all, since `IDENTIFIER` immediately followed by
+`FAT_ARROW` is unambiguous with one token of lookahead
+(`_peek_next()`) in `_primary`'s existing `IDENTIFIER` branch. This is
+inserted after only two predicates (`is_palindrome_number`,
+`digital_root`) rather than letting `is_composite`/`is_power_of_two`
+go first, per the balance policy below — the run since arrow functions
+landed was already trending back toward another multi-predicate
+streak. Then, as task 4, `is_composite(n)` — `is_prime`'s natural
 complement (an integer greater than 1 that is *not* prime, e.g. `4`,
 `6`, `8`, `9`), completing the classical prime/composite/neither(`0`,
 `1`, negatives) three-way split the same way perfect/abundant/deficient
 already covers divisor sums. And, as task 5, `is_power_of_two(n)` — a
 bit-trick predicate (`n & (n - 1) == 0` for positive `n`), the first
 integer-property builtin to lean on Cinder's own bitwise operators
-rather than pure arithmetic or a trial-division loop — and only much
-later, a bytecode VM if performance ever actually matters.
+rather than pure arithmetic or a trial-division loop. Block-bodied
+arrow functions (`(x) => { ... }`) remain deferred beyond that — a
+plausible future task once there's a concrete reason to want statements
+in an arrow body, not scoped speculatively — and only much later, a
+bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
-same breadth-vs-depth balance: another long, uninterrupted run of
-single-builtin predicate tasks is a signal to inject another
-language-depth task rather than just extending the streak further.
+same breadth-vs-depth balance: two or more single-builtin predicate
+tasks queued back-to-back is a signal to inject another language-depth
+task rather than just extending the streak further, the same threshold
+that placed task 3 above.
 
 ## History
 

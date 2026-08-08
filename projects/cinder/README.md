@@ -109,7 +109,12 @@ while (i < 10) {
   parameter collects any extra positional arguments into a list
   (`fn f(a, ...rest) { ... }`), combinable with default parameters; call
   arguments accept the same spread syntax (`f(...args)`, `f(1, ...rest, 2)`),
-  splicing a list's elements into the positional argument list in place
+  splicing a list's elements into the positional argument list in place;
+  arrow function expressions `(a, b) => a + b` as expression-bodied sugar
+  for anonymous `fn` expressions (parenthesized parameter list only, no
+  block body — `(x) => { ... }` isn't supported), desugaring purely at
+  parse time so they support everything anonymous `fn`s do: defaults,
+  rest parameters, nesting, and closures
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -258,18 +263,19 @@ for the Gregorian leap-year rule, `reverse_int` to reverse an
 integer's decimal digits (sign preserved), `is_perfect_number` to
 test whether an integer equals the sum of its own proper divisors,
 `is_abundant` to test whether an integer's proper divisors sum to
-more than itself, and `is_deficient` to close out the
+more than itself, `is_deficient` to close out the
 perfect/abundant/deficient divisor-sum trio (proper divisors summing
-to less than the integer itself).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): arrow function
-expressions (`(x) => x * 2`) as sugar for the existing anonymous `fn`
-expression — bumped to the top of the backlog as a depth-over-breadth
-course correction after seven stdlib predicates landed in a row —
-followed by `is_palindrome_number` to test whether an integer's digits
-read the same forwards and backwards, `digital_root` for the
-repeated-digit-sum-to-single-digit closed form, `is_composite` as
-`is_prime`'s complement, and `is_power_of_two` via the `n & (n - 1) ==
-0` bit trick.
+to less than the integer itself), and parenthesized arrow function
+expressions (`(a, b) => a + b`) as sugar for anonymous `fn` expressions
+— the first language-depth addition since comprehensions, after seven
+more stdlib predicates in a row.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_palindrome_number`
+to test whether an integer's digits read the same forwards and
+backwards, `digital_root` for the repeated-digit-sum-to-single-digit
+closed form, then another depth course-correction — bare
+single-identifier arrow functions (`x => x * 2`, no parens needed
+around a single parameter) — followed by `is_composite` as `is_prime`'s
+complement and `is_power_of_two` via the `n & (n - 1) == 0` bit trick.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

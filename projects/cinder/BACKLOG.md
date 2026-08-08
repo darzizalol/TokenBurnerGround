@@ -125,11 +125,100 @@ not this task.
 
 ---
 
-## 3. Standard library: `is_composite` — non-prime-above-one predicate
+## 3. Language: bare single-identifier arrow functions `x => expr`
+
+Build: extend arrow-function support (landed in `feat/20260808-arrow-
+functions`, PR #205) to the bare single-identifier parameter form —
+`x => x * 2` with no parentheses around the single parameter — the
+form that task's own scope note explicitly deferred ("no bare
+single-identifier form (`x => expr`)"). This is a language-depth task,
+not another stdlib predicate: the backlog has run `is_palindrome_number`
+and `digital_root` back-to-back since arrow functions landed, and
+`PROJECT.md`'s roadmap explicitly calls out watching this balance —
+two predicates is enough runway before injecting depth again, per the
+same policy that promoted arrow functions to the top of the backlog
+last cycle. `is_composite`/`is_power_of_two` (tasks 4-5 below) pick
+breadth back up right after this lands.
+
+Unlike the parenthesized form (`(x) => expr`, `_try_arrow_function` in
+`cinder/parser.py`), this form needs **no speculative parse/backtrack**
+— it is unambiguous with one token of lookahead. Search for
+`_try_arrow_function` and `_primary` in `cinder/parser.py`: the
+`IDENTIFIER` branch of `_primary` (around where `token.type ==
+TokenType.IDENTIFIER` currently just advances and returns an
+`Identifier`) is the only place a bare identifier starts an expression,
+and `FAT_ARROW` cannot legally follow an identifier anywhere else in
+the grammar, so there is nothing to backtrack away from. Use the
+existing `self._peek_next()` helper (already used elsewhere in the
+parser for lookahead, e.g. the ternary-vs-map-literal `COLON` check) to
+test `self._peek_next().type == TokenType.FAT_ARROW` right after
+peeking the `IDENTIFIER` token, before deciding whether to fall through
+to the plain-`Identifier` case. On a match: consume the identifier
+token, consume the `FAT_ARROW` (via `self._consume`, matching
+`_try_arrow_function`'s own message style, e.g. `"'=>' after arrow
+function parameter"`), then parse the body the same way
+`_try_arrow_function` does — `body_expr = self._assignment()`, wrapped
+as `Block([ReturnStmt(body_expr, ...)])` — and return a `FnExpr` with
+`params=[(name, None)]` (single parameter, no default) and
+`rest_param=None`. Reuse `_try_arrow_function`'s exact
+Block/ReturnStmt-wrapping shape rather than reinventing it; consider
+factoring the shared "wrap a body expression into a one-`return`
+`Block`" step into a small helper both call, but only if it does not
+complicate either call site — do not force an abstraction that isn't a
+clean fit.
+
+Keep this scoped exactly like the parenthesized form: expression-bodied
+only. A `{` immediately after `=>` in this form must **not** be treated
+as a block body — same out-of-scope boundary
+`test_arrow_block_body_not_supported` already documents for the
+parenthesized form (search `tests/test_parser.py`); a bare-identifier
+arrow with a `{`-body should raise the same way. Do not touch
+`_try_arrow_function` itself or the parenthesized-form grammar — this
+task only adds the new single-token-lookahead branch in `_primary`'s
+`IDENTIFIER` case.
+
+Acceptance criteria:
+- `let double = x => x * 2; double(5);` is `10`.
+- `let square = n => n * n; [1, 2, 3].map(square);` is `[1, 4, 9]` —
+  works as a `map` callback the same way the parenthesized form
+  already does.
+- `let f = x => x > 0 ? "pos" : "neg"; f(-3);` is `"neg"` — ternary
+  body, mirroring the parenthesized form's `test_arrow_body_is_ternary`
+  coverage.
+- Nesting/closures: `let adder = x => (y => x + y); adder(3)(4);` is
+  `7` — a bare-identifier arrow returning another arrow, closing over
+  the outer parameter, mirroring
+  `test_arrow_nests_and_closes_over_outer_param`'s coverage for the
+  parenthesized form.
+- `x;` alone (a bare identifier used as a plain expression, no `=>`
+  following) still parses as an `Identifier`, not an arrow function —
+  confirm the existing "identifier as a plain expression" behavior is
+  unchanged (e.g. `let x = 5; x;` still evaluates to `5`).
+- `let f = x => { return x; }; f(1);` raises `ParseError` — block
+  body after a bare-identifier arrow is out of scope, mirroring
+  `test_arrow_block_body_not_supported`.
+- The zero-parameter (`() => expr`) and multi-parameter
+  (`(a, b) => expr`) parenthesized forms, and parenthesized single-
+  parameter form (`(x) => expr`), still parse exactly as before —
+  this task adds a new branch, it must not change
+  `_try_arrow_function`'s existing behavior or its own tests.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_primary`'s `IDENTIFIER` branch,
+near `_try_arrow_function`), `tests/test_parser.py` (near the existing
+`test_arrow_*` tests, search `class.*Arrow` or `test_arrow_no_params`).
+Once merged, `README.md`'s language-features bullet for arrow functions
+needs the bare-identifier form mentioned, and `PROJECT.md`'s roadmap
+paragraph needs it moved from backlog to landed — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 4. Standard library: `is_composite` — non-prime-above-one predicate
 
 Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
 next to `is_prime` (search for `def _is_prime` — by the time this task
-is claimed, tasks 1-2 above will have landed and shifted line numbers)
+is claimed, tasks 1-3 above will have landed and shifted line numbers)
 in the integer-property predicate cluster. A composite number is an
 integer greater than `1` that is *not* prime (e.g. `4`, `6`, `8`, `9`);
 this completes the classical three-way split of the non-negative
@@ -186,11 +275,11 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
+## 5. Standard library: `is_power_of_two` — power-of-two predicate via bit trick
 
 Build: add `is_power_of_two(n)` to `cinder/builtins.py`, registered
 right after `is_composite` (search for `def _is_composite` — by the
-time this task is claimed, tasks 1-3 above will have landed and
+time this task is claimed, tasks 1-4 above will have landed and
 shifted line numbers) in the integer-property predicate cluster. A
 power of two is `1, 2, 4, 8, 16, ...` — the classic bit-trick
 predicate: for `n > 0`, `n` is a power of two exactly when `n & (n -

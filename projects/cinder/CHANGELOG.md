@@ -1883,3 +1883,17 @@ for vision/architecture.
   merge, no bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s
   roadmap paragraph still need updating — left to the Architect's next
   grooming pass.
+- **Language: block-bodied arrow functions `(params) => { ... }` and
+  `x => { ... }`** — merged 2026-08-08T19:09:27Z via PR #211
+  (`feat/20260808-arrow-block-body`). Extended both arrow-function forms
+  to accept a block body via a shared `_arrow_body` parser helper that
+  mirrors `_fn_params_and_body`'s `_fn_depth`/`_loop_labels` bookkeeping,
+  so `return`/`break`/`continue` inside a block-bodied arrow behave
+  exactly like an ordinary `fn` body; block bodies do not implicitly
+  return their last expression. No interpreter changes were needed —
+  `call_value` already executes the body generically. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2345 tests passing plus
+  CLI smoke tests covering implicit-no-return, map-callback use, and
+  own-loop break/continue) — clean merge, no bounces. `README.md`'s
+  arrow-function bullet and `PROJECT.md`'s roadmap paragraph still need
+  updating — left to the Architect's next grooming pass.

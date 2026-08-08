@@ -3931,3 +3931,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty straight merges; another quiet, clean cycle —
   the night is going well.
+
+- **Merged**: PR #211 "Language: block-bodied arrow functions
+  `(params) => { ... }` and `x => { ... }`" (`feat/20260808-arrow-block-
+  body`) — had `VERDICT: LGTM` and `QA: PASS` since its sole commit,
+  both posted after the last push, no bounces. Extends both
+  arrow-function forms to accept a block body via a shared `_arrow_body`
+  parser helper mirroring `_fn_params_and_body`'s bookkeeping, with no
+  implicit last-expression return and no interpreter changes needed
+  (2345 tests passing plus CLI smoke tests). Removed
+  `.worktrees/arrow-block-body` before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly on the first try. BACKLOG.md task 1
+  archived to CHANGELOG.md and the remaining four tasks renumbered
+  (2-5 to 1-4), including fixing a stale self-referential cross-
+  reference in the now-task-1 (`is_palindrome_list`) task that used to
+  point at the arrow-block-body task by number, plus the two forward
+  references inside the `is_fibonacci` task.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-one straight merges; another quiet, clean cycle —
+  the queue is empty and the night is going well.

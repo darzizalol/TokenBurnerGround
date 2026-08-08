@@ -11,97 +11,11 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: block-bodied arrow functions `(params) => { ... }` and `x => { ... }` [claimed 2026-08-08T19:03:00Z]
-
-Build: extend both arrow-function forms — parenthesized (`_try_arrow_function`
-in `cinder/parser.py`, from `feat/20260808-arrow-functions`, PR #205) and
-bare single-identifier (landed in `feat/20260808-bare-arrow-fn`, PR #208, in
-`_primary`'s `IDENTIFIER` branch) — to accept a block body, `{ <statement>* }`,
-as an alternative to the current expression-only body. Both prior arrow-function
-tasks deliberately deferred this ("no block-bodied form"); this is a
-language-depth task, not another stdlib predicate, following directly from
-`is_composite` (landed, PR #209) and `is_power_of_two` (landed, PR #210) per
-`PROJECT.md`'s breadth-vs-depth policy — two single-builtin predicate tasks
-queued back-to-back is the signal to inject depth again. Concrete motivation
-for scoping it now: any
-arrow-function callback needing more than one statement (log a value before
-returning, compute an intermediate result, branch on a condition) currently
-has no option but to fall back to the verbose `fn` form, defeating the
-sugar's purpose.
-
-Unlike the expression-bodied form, a block body does **not** implicitly
-return its last expression — the caller must write `return` explicitly,
-exactly like an ordinary `fn` body. Cinder has no implicit-return blocks
-anywhere else in the language, and arrow functions should not be the first.
-A block-bodied arrow is simply "the same `{ ... }` body an ordinary `fn`
-expression already accepts, spelled after `=>` instead of after a parameter
-list."
-
-In `_try_arrow_function`: after consuming `FAT_ARROW`, check
-`self._check(TokenType.LBRACE)`. If true, parse the body the same way
-`_fn_params_and_body` does — call `self._block()` wrapped in its
-`_fn_depth`/`_loop_labels` bookkeeping (search `def _fn_params_and_body`),
-so `return`/`break`/`continue` validity inside the block matches an
-ordinary function body — instead of the current unconditional `body_expr =
-self._assignment()` / synthetic-`ReturnStmt` wrap. If false, keep the
-existing expression-body path unchanged. Apply the identical
-`LBRACE`-check-and-branch at the bare-identifier site (PR #208), so
-both forms share the same body-parsing behavior. Consider factoring the
-shared "parse either an expression body (wrapped in a synthetic return) or
-a block body" logic into one small helper called from both sites, but only
-if it's a clean fit — do not force an abstraction that complicates either
-call site.
-
-This task also retires `test_arrow_block_body_not_supported` in
-`tests/test_parser.py` (search for it) and PR #208's equivalent
-bare-identifier-form assertion — replace both with tests asserting the
-block body now parses and executes correctly rather than raising
-`ParseError`.
-
-Acceptance criteria:
-- `let f = (x) => { let y = x * 2; return y; }; f(5);` is `10`.
-- `let f = x => { let y = x * 2; return y; }; f(5);` is `10` —
-  bare-identifier form gets the same treatment.
-- `let f = () => { return 42; }; f();` is `42` — zero-param block body.
-- `let f = (a, b) => { if (a > b) { return a; } return b; }; f(3, 7);`
-  is `7` — multi-statement/control-flow body, confirming the block
-  reuses ordinary statement parsing, not just a single `return`.
-- `let f = (x) => { x * 2; }; f(5);` is `nil` — a block body with no
-  explicit `return` falls off the end like any other function; it does
-  **not** implicitly return the last expression's value. Confirms no
-  implicit-return behavior was accidentally introduced.
-- `[1, 2, 3].map(x => { return x * x; });` is `[1, 4, 9]` — works as a
-  callback the same way expression-bodied arrows already do.
-- `let adder = (x) => { return (y) => { return x + y; }; }; adder(3)(4);`
-  is `7` — nested block-bodied arrows, closures still work.
-- Expression-bodied arrows (both forms) are completely unaffected:
-  `let f = (x) => x * 2; f(5);` is `10` and `let g = x => x * 2; g(5);`
-  is `10` still parse/evaluate exactly as before — this task only adds
-  a new branch when `{` follows `=>`, it must not change the existing
-  expression-body path or its own tests.
-- `break`/`continue` inside a loop inside a block-bodied arrow's body
-  resolve to that arrow's own loop, not an enclosing one — confirms
-  `_loop_labels` bookkeeping is threaded through the same way
-  `_fn_params_and_body` threads it for ordinary `fn` bodies.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_try_arrow_function`, and
-`_primary`'s `IDENTIFIER` branch added by PR #208), `tests/test_parser.py`
-(replace `test_arrow_block_body_not_supported` and PR #208's equivalent
-bare-identifier assertion with positive-case tests), `tests/
-test_interpreter.py` (execution-level tests for multi-statement bodies).
-Once merged, `README.md`'s arrow-function bullet and `PROJECT.md`'s
-roadmap paragraph need updating — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_palindrome_list` — list palindrome predicate
+## 1. Standard library: `is_palindrome_list` — list palindrome predicate
 
 Build: add `is_palindrome_list(list)` to `cinder/builtins.py`, registered
-right after `is_power_of_two` (search for `def _is_power_of_two` — by the
-time this task is claimed, task 1 above will have landed and shifted
-line numbers). This extends the "reads the same forwards and backwards"
+right after `is_power_of_two` (search for `def _is_power_of_two`). This
+extends the "reads the same forwards and backwards"
 predicate family — `is_palindrome` for strings, `is_palindrome_number` for
 integers (search either) — to its third and final natural domain: lists,
 e.g. `[1, 2, 1]` or `["a", "b", "a"]`.
@@ -156,7 +70,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_coprime` — two-integer coprimality predicate
+## 2. Standard library: `is_coprime` — two-integer coprimality predicate
 
 Build: add `is_coprime(a, b)` to `cinder/builtins.py`, registered right
 after `is_divisible` (search for `def _is_divisible`, currently around
@@ -214,7 +128,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: safe navigation bracket indexing `obj?.[expr]`
+## 3. Language: safe navigation bracket indexing `obj?.[expr]`
 
 Build: extend the existing safe navigation operator — currently
 dot-only (`m?.key`, short-circuits to `nil` when `m` is `nil` instead of
@@ -298,12 +212,12 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_fibonacci` — Fibonacci-membership predicate
+## 4. Standard library: `is_fibonacci` — Fibonacci-membership predicate
 
 Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
 after `is_coprime` (search for `def _is_coprime` — by the time this task
-is claimed, tasks 1-4 above will have landed and shifted line numbers).
-This is a fresh breadth task queued after task 4's depth work (safe
+is claimed, tasks 1-3 above will have landed and shifted line numbers).
+This is a fresh breadth task queued after task 3's depth work (safe
 navigation bracket indexing) per `PROJECT.md`'s breadth-vs-depth policy.
 A non-negative integer `n` is a Fibonacci number (`0, 1, 1, 2, 3, 5, 8,
 13, ...`) exactly when `5n² + 4` or `5n² - 4` is a perfect square — do

@@ -1164,6 +1164,13 @@ def _is_divisible(arguments: list, line: int, column: int) -> object:
     return a % b == 0
 
 
+def _is_coprime(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_coprime", arguments, 2, line, column)
+    a = _require_int("is_coprime", arguments[0], line, column)
+    b = _require_int("is_coprime", arguments[1], line, column)
+    return math.gcd(a, b) == 1
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -3105,6 +3112,7 @@ _BUILTINS = {
     "is_even": _is_even,
     "is_odd": _is_odd,
     "is_divisible": _is_divisible,
+    "is_coprime": _is_coprime,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
     "is_power_of_two": _is_power_of_two,

@@ -2169,6 +2169,47 @@ class TestIsDivisible(unittest.TestCase):
             run("is_divisible(10);")
 
 
+class TestIsCoprime(unittest.TestCase):
+    def test_is_coprime_true(self):
+        self.assertEqual(run("let result = is_coprime(8, 15);").get("result"), True)
+
+    def test_is_coprime_false(self):
+        self.assertEqual(run("let result = is_coprime(12, 18);").get("result"), False)
+
+    def test_is_coprime_one_is_always_coprime(self):
+        self.assertEqual(run("let result = is_coprime(1, 5);").get("result"), True)
+        self.assertEqual(run("let result = is_coprime(1, 1);").get("result"), True)
+
+    def test_is_coprime_zero_never_coprime(self):
+        self.assertEqual(run("let result = is_coprime(0, 5);").get("result"), False)
+        self.assertEqual(run("let result = is_coprime(0, 0);").get("result"), False)
+
+    def test_is_coprime_negative_input(self):
+        self.assertEqual(run("let result = is_coprime(-8, 15);").get("result"), True)
+        self.assertEqual(run("let result = is_coprime(-12, 18);").get("result"), False)
+
+    def test_is_coprime_equal_non_one_values_false(self):
+        self.assertEqual(run("let result = is_coprime(17, 17);").get("result"), False)
+
+    def test_is_coprime_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_coprime(3.0, 5);")
+        self.assertIn(
+            "is_coprime() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_coprime_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_coprime(3, true);")
+        self.assertIn(
+            "is_coprime() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_coprime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_coprime(10);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

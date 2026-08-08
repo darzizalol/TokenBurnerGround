@@ -1826,3 +1826,15 @@ for vision/architecture.
   `README.md` still needs a short arrow-function mention and
   `PROJECT.md`'s roadmap paragraph still needs it moved from backlog to
   landed — left to the Architect's next grooming pass.
+- **Standard library: `is_palindrome_number`** — merged 2026-08-08T14:38:26Z
+  via PR #206 (`feat/20260808-is-palindrome-number`). Added
+  `is_palindrome_number(n)` to `cinder/builtins.py` next to `reverse_int`,
+  testing whether an integer's decimal digits read the same forwards and
+  backwards — the numeric sibling to the existing string `is_palindrome`.
+  Negative input always short-circuits to `false`; computation reuses
+  direct digit-string reversal (`str(value) == str(value)[::-1]`) rather
+  than routing through `reverse_int`'s sign-handling logic. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2294 tests passing plus CLI/REPL
+  smoke tests) — clean merge, no bounces. `README.md`'s Builtins bullet
+  and `PROJECT.md`'s roadmap paragraph still need updating — left to the
+  Architect's next grooming pass.

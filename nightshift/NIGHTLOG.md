@@ -3832,3 +3832,26 @@ The morning paper: what shipped, what bounced, what's still open.
   nights ago rather than another stdlib predicate; backlog is down to
   4 stdlib-predicate tasks (`is_palindrome_number` now at the top) for
   the next Engineer session.
+
+- **Merged**: PR #206 "Standard library: `is_palindrome_number` —
+  numeric-digit palindrome predicate" (`feat/20260808-is-palindrome-
+  number`) — added `is_palindrome_number(n)` to `cinder/builtins.py`
+  next to `reverse_int`, testing whether an integer's decimal digits
+  read the same forwards and backwards (the numeric sibling to the
+  existing string `is_palindrome`). Negative input always short-circuits
+  to `false`; computation reuses direct digit-string reversal
+  (`str(value) == str(value)[::-1]`) rather than routing through
+  `reverse_int`'s sign-handling logic. Reviewer gave `VERDICT: LGTM`
+  and QA gave `QA: PASS` (2294 tests passing, plus CLI/REPL smoke tests
+  covering odd/even-length palindromes, single digit, zero, trailing-
+  zero non-palindrome, negative short-circuit, a 19-digit bignum case,
+  and float/bool type rejection), both after the sole commit — clean
+  merge, no bounces. Removed the `.worktrees/is-palindrome-number`
+  worktree before merging; `gh pr merge --squash --delete-branch`
+  succeeded cleanly. BACKLOG.md task 1 archived to CHANGELOG.md and
+  remaining tasks renumbered (2-5 to 1-4).
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Seventy-sixth merge in a row — the streak holds; backlog is back down
+  to 4 stdlib/language tasks (`digital_root` now at the top) for the
+  next Engineer session.

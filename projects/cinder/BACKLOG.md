@@ -215,6 +215,148 @@ grooming pass, not this task.
 
 ---
 
+## 4. Standard library: `is_coprime` — two-integer coprimality predicate
+
+Build: add `is_coprime(a, b)` to `cinder/builtins.py`, registered right
+after `is_divisible` (search for `def _is_divisible`, currently around
+line 1156) — the other two-argument member of the integer-property
+predicate cluster (`is_even`/`is_odd`/`is_divisible`/`is_prime`/
+`is_composite`). Two integers are coprime (relatively prime) when their
+only common positive divisor is `1`, i.e. `gcd(a, b) == 1`. Python's
+stdlib `math` module is already imported in `builtins.py` (used by
+`_gcd`, `_is_perfect_square`, `_factorial`, etc.) and its `math.gcd`
+handles negative and zero arguments the same way this task needs (always
+returns a non-negative result, e.g. `math.gcd(-12, 18) == 6`,
+`math.gcd(0, 0) == 0`) — call `math.gcd` directly rather than routing
+through the existing `gcd()` builtin's own Cinder-level function
+(`_gcd`), since that would mean re-deriving/re-validating arguments that
+have already been validated here.
+
+Model the arity/type-checking on `_is_divisible`'s structure (search for
+`def _is_divisible`): reuse `_require_arity("is_coprime", arguments, 2,
+line, column)` and `_require_int("is_coprime", arguments[N], line,
+column)` for each of the two arguments (the same helper the rest of the
+cluster uses). Unlike `is_divisible`, there is no "must not be zero"
+guard to add — `math.gcd(0, n)` is well-defined (`abs(n)`), so
+`is_coprime(0, n)` is simply `false` for any nonzero `n` and
+`is_coprime(0, 0)` is `false` (`gcd(0, 0) == 0 != 1`), both handled
+naturally by the plain `== 1` check with no special-casing.
+
+Acceptance criteria:
+- `is_coprime(8, 15);` is `true` — no common factor.
+- `is_coprime(12, 18);` is `false` — share a factor of `6`.
+- `is_coprime(1, 5);` is `true` — `1` is coprime with everything,
+  including itself: `is_coprime(1, 1);` is `true`.
+- `is_coprime(0, 5);` is `false`, `is_coprime(0, 0);` is `false` — zero
+  shares every divisor with any number (and with itself), so it is
+  never coprime with anything, including `0`.
+- `is_coprime(-8, 15);` is `true`, `is_coprime(-12, 18);` is `false` —
+  negative input, sign doesn't affect the shared-divisor question.
+- `is_coprime(17, 17);` is `false` — a number is only coprime with
+  itself when that number is `1`.
+- `is_coprime(3.0, 5);` (float) raises `CinderRuntimeError` matching
+  `"is_coprime() requires an int, got float"` — no implicit
+  float-to-int coercion, matching the rest of the cluster.
+- `is_coprime(3, true);` (bool as second argument) raises
+  `CinderRuntimeError` matching `"is_coprime() requires an int, got
+  bool"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_divisible`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_coprime` added near `is_divisible`/`is_prime`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Language: safe navigation bracket indexing `obj?.[expr]`
+
+Build: extend the existing safe navigation operator — currently
+dot-only (`m?.key`, short-circuits to `nil` when `m` is `nil` instead of
+raising, single level only; search `QUESTION_DOT` in `cinder/parser.py`)
+— to also accept a bracket form, `obj?.[expr]`, the same relationship
+plain `.`/`[...]` already have for non-optional access (`_finish_dot`
+vs. `_finish_index` in `cinder/parser.py`). Concrete motivation: today
+`?.` only works for map string-key access shaped like an identifier
+(`m?.name`); it has no answer for a computed key (`m?.[key_var]`) or for
+a possibly-`nil` list (`xs?.[0]`), both of which currently have no
+optional-chaining option at all and must fall back to a manual `xs ==
+nil ? nil : xs[0]` ternary.
+
+This is a smaller task than it looks: the AST node and interpreter side
+already do all the work generically. `OptionalIndex` (`cinder/
+ast_nodes.py`) already carries an arbitrary `index: Expr`, not just an
+identifier-derived key — `_finish_optional_dot` (`cinder/parser.py`)
+just happens to always build that index from an `IDENTIFIER` token
+today. `_evaluate_optional_index` (`cinder/interpreter.py`, search `def
+_evaluate_optional_index`) already short-circuits to `nil` on a `nil`
+receiver and otherwise delegates to `_index_get`, the same helper
+`_evaluate_index` uses for plain `[...]` access — `_index_get` already
+handles both lists (with negative-index normalization) and maps. So
+**no interpreter changes are needed at all**; this is a parser-only
+task.
+
+In `_finish_optional_dot` (`cinder/parser.py`, search `def
+_finish_optional_dot`): after consuming the `?.` token, check
+`self._check(TokenType.LBRACKET)` first. If true, consume `[`, parse the
+index the same way `_finish_index` does for a plain (non-slice) index —
+call `self._ternary()` for the index expression, then consume `]` — and
+return `OptionalIndex(obj, index, dot.line, dot.column)`. If false, fall
+through to the existing identifier-based path unchanged. Do **not**
+support slicing in the bracket form (`obj?.[a:b]`) — plain index only;
+if a `:` follows the index expression where `]` is expected, let the
+existing `_consume(TokenType.RBRACKET, ...)` call raise its normal
+`ParseError`, the same way an unexpected token anywhere else does. No
+change is needed to keep `obj?.[expr]` out of assignment position:
+`_assignment` (`cinder/parser.py`) already only special-cases
+`Identifier`/`Index`/`ListLiteral` as valid targets and raises
+`"invalid assignment target"` for anything else, so an `OptionalIndex`
+built from the new bracket form is rejected automatically, exactly like
+the existing dot form already is (see
+`test_optional_dot_access_assignment_raises_parse_error` in
+`tests/test_parser.py`).
+
+Acceptance criteria:
+- `let m = {"a": 1}; m?.["a"];` is `1` — computed-key bracket form on a
+  non-nil map.
+- `let m = nil; m?.["a"];` is `nil` — short-circuits on `nil`, same as
+  the existing dot form.
+- `let xs = [10, 20, 30]; xs?.[1];` is `20` — bracket form works on
+  lists, which the dot form never could (`xs?.1` isn't valid syntax).
+- `let xs = nil; xs?.[0];` is `nil` — short-circuits for lists too.
+- `let key = "a"; let m = {"a": 1}; m?.[key];` is `1` — the index is an
+  arbitrary expression, not just a literal, confirming this isn't just
+  string-literal sugar.
+- `let m = {"a": 1}; m?.[key] ?? "default";` composes with `??`, same
+  as the dot form already does.
+- `let xs = [1, 2, 3]; xs?.[-1];` is `3` — negative-index normalization
+  still applies, since this goes through the same `_index_get` plain
+  indexing already uses.
+- `let m = {"a": 1}; m?.["a"] = 2;` raises `ParseError` ("invalid
+  assignment target") — bracket-form safe navigation is read-only, same
+  as the dot form.
+- `let m = {"a": 1}; m?.[0:1];` raises `ParseError` — no slicing through
+  the optional-bracket form.
+- Existing dot-form safe navigation (`m?.key`) and its own tests are
+  completely unaffected — this task only adds a new branch when `[`
+  follows `?.`.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_finish_optional_dot`), `tests/
+test_parser.py` (extend the `shape()`-based AST assertions alongside
+`test_optional_dot_access_desugars_to_optional_index`), `tests/
+test_interpreter.py` (execution-level tests for the map/list/nil/
+negative-index cases above). Once merged, `README.md`'s safe navigation
+bullet needs `obj?.[expr]` mentioned alongside `m?.key`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

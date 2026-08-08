@@ -399,7 +399,25 @@ deep-equality helper `is_unique`/`is_permutation` already import from
 `cinder.interpreter`) rather than a bare `list == list[::-1]`, which
 would silently fall back to Python's own (potentially wrong) equality
 on nested structures. Queued as breadth after the depth task 4 lands,
-per the same balance policy. And only much later, a bytecode VM if
+per the same balance policy. Then, as task 6, `is_coprime(a, b)` — the
+other two-argument member of the integer-property predicate cluster
+alongside `is_divisible`, testing whether two integers share no common
+divisor but `1` (`gcd(a, b) == 1`, via `math.gcd` directly rather than
+routing through the existing `gcd()` builtin's own validation). This is
+a second breadth task queued back-to-back with task 5
+(`is_palindrome_list`), which the breadth-vs-depth policy below flags as
+the point to line up a depth task next rather than let a third predicate
+follow immediately. So, as task 7, safe navigation bracket indexing
+(`obj?.[expr]`) — extending the existing dot-only safe navigation
+operator (`m?.key`, short-circuits to `nil` on a `nil` receiver) to a
+bracket form, closing the two gaps the dot form structurally can't reach:
+a computed/non-identifier key (`m?.[key_var]`) and list access
+(`xs?.[0]`, since `xs?.1` isn't valid syntax). Notably a parser-only
+change — `OptionalIndex` already carries an arbitrary index expression
+and `_evaluate_optional_index` already delegates to the same
+`_index_get` plain indexing uses, so the interpreter needs no changes at
+all; `_finish_optional_dot` just needs a bracket branch alongside its
+existing identifier branch. And only much later, a bytecode VM if
 performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this

@@ -111,10 +111,12 @@ while (i < 10) {
   arguments accept the same spread syntax (`f(...args)`, `f(1, ...rest, 2)`),
   splicing a list's elements into the positional argument list in place;
   arrow function expressions `(a, b) => a + b` as expression-bodied sugar
-  for anonymous `fn` expressions (parenthesized parameter list only, no
-  block body — `(x) => { ... }` isn't supported), desugaring purely at
-  parse time so they support everything anonymous `fn`s do: defaults,
-  rest parameters, nesting, and closures
+  for anonymous `fn` expressions, desugaring purely at parse time so the
+  parenthesized form supports everything anonymous `fn`s do: defaults,
+  rest parameters, nesting, and closures; a bare single-identifier
+  parameter may skip the parens too (`x => x * 2`, exactly one required
+  parameter, no default/rest); neither form supports a block body yet
+  (`(x) => { ... }` and `x => { ... }` both raise a `ParseError`)
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -153,7 +155,7 @@ while (i < 10) {
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`
   integer parity/divisibility/primality predicates, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
@@ -254,24 +256,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_perfect_number` to
-test whether an integer equals the sum of its own proper divisors,
-`is_abundant` to test whether an integer's proper divisors sum to
-more than itself, `is_deficient` to close out the
-perfect/abundant/deficient divisor-sum trio (proper divisors summing
-to less than the integer itself), parenthesized arrow function
-expressions (`(a, b) => a + b`) as sugar for anonymous `fn` expressions
-— the first language-depth addition since comprehensions, after seven
-stdlib predicates in a row — `is_palindrome_number` to test whether an
-integer's digits read the same forwards and backwards, and
-`digital_root` for the repeated-digit-sum-to-single-digit closed form.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): another depth
-course-correction — bare single-identifier arrow functions
-(`x => x * 2`, no parens needed around a single parameter) — followed
-by `is_composite` as `is_prime`'s complement, `is_power_of_two` via the
-`n & (n - 1) == 0` bit trick, block-bodied arrow functions
-(`(params) => { ... }` and `x => { ... }`), and `is_palindrome_list` to
-extend the "reads the same both ways" predicate family to lists.
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: parenthesized arrow
+function expressions (`(a, b) => a + b`) as sugar for anonymous `fn`
+expressions — the first language-depth addition since comprehensions,
+after seven stdlib predicates in a row — `is_palindrome_number` to test
+whether an integer's digits read the same forwards and backwards,
+`digital_root` for the repeated-digit-sum-to-single-digit closed form,
+bare single-identifier arrow functions (`x => x * 2`, no parens needed
+around a single parameter), and `is_composite` as `is_prime`'s
+complement. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_power_of_two` via the `n & (n - 1) == 0` bit trick, block-bodied
+arrow functions (`(params) => { ... }` and `x => { ... }`),
+`is_palindrome_list` to extend the "reads the same both ways" predicate
+family to lists, `is_coprime` to test whether two integers share no
+common divisor but `1`, and safe navigation bracket indexing
+(`obj?.[expr]`, extending the existing `m?.key` short-circuit to
+computed keys and lists). The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

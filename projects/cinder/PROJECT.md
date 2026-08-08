@@ -354,28 +354,22 @@ reduction (e.g. `38 -> 11 -> 2`), sitting next to
 `digit_sum`/`reverse_int` and, like `digit_sum`, ignoring sign,
 computed via the closed-form `1 + (n - 1) % 9` identity rather than a
 repeated-summing loop so arbitrary-precision Cinder ints don't force
-many passes.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, another language-depth course-correction: bare
-single-identifier arrow functions (`x => x * 2`, no parens around the
-one parameter) — the form the parenthesized-arrow task explicitly
-deferred, and unlike that task, needing no speculative parse/backtrack
-at all, since `IDENTIFIER` immediately followed by `FAT_ARROW` is
-unambiguous with one token of lookahead (`_peek_next()`) in
-`_primary`'s existing `IDENTIFIER` branch. This is inserted after only
-two predicates (`is_palindrome_number`, `digital_root`) rather than
-letting `is_composite`/`is_power_of_two` go first, per the balance
-policy below — the run since arrow functions landed was already
-trending back toward another multi-predicate streak. Then, as task 2,
-`is_composite(n)` — `is_prime`'s natural complement (an integer
+many passes, and, as has bare single-identifier arrow functions
+(`x => x * 2`, no parens around the one parameter) — the form the
+parenthesized-arrow task explicitly deferred, needing no speculative
+parse/backtrack at all since `IDENTIFIER` immediately followed by
+`FAT_ARROW` is unambiguous with one token of lookahead
+(`_peek_next()`) in `_primary`'s existing `IDENTIFIER` branch, and, as
+has `is_composite(n)` — `is_prime`'s natural complement (an integer
 greater than 1 that is *not* prime, e.g. `4`, `6`, `8`, `9`),
 completing the classical prime/composite/neither (`0`, `1`, negatives)
 three-way split the same way perfect/abundant/deficient already covers
-divisor sums. And, as task 3, `is_power_of_two(n)` — a bit-trick
-predicate (`n & (n - 1) == 0` for positive `n`), the first
-integer-property builtin to lean on Cinder's own bitwise operators
-rather than pure arithmetic or a trial-division loop. Then, as task 4,
-block-bodied arrow functions (`(params) => { ... }` and `x => { ... }`)
+divisor sums, and, as has `is_power_of_two(n)` — a bit-trick predicate
+(`n & (n - 1) == 0` for positive `n`), the first integer-property
+builtin to lean on Cinder's own bitwise operators rather than pure
+arithmetic or a trial-division loop — have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+as task 1, block-bodied arrow functions (`(params) => { ... }` and `x => { ... }`)
 — previously left deferred pending "a concrete reason to want
 statements in an arrow body"; that reason is now concrete: any arrow
 callback needing more than one statement currently has no option but
@@ -386,28 +380,28 @@ parsing, reusing `_fn_params_and_body`'s own `_fn_depth`/
 and deliberately *not* adding implicit-return-of-last-expression —
 `return` stays explicit, matching every other block in the language.
 This is the depth task the same breadth-vs-depth policy below calls
-for once `is_composite`/`is_power_of_two` queue two predicates
-back-to-back, and it depends on task 1 (bare single-identifier arrows)
-having landed first since it touches both call sites. Then, as task 5,
-`is_palindrome_list(list)` — extending the "reads the same forwards
-and backwards" predicate family (`is_palindrome` for strings,
-`is_palindrome_number` for integers) to its third and final natural
-domain, lists: `is_palindrome_list([1, 2, 1]);` is `true`. Since list
-elements can be unhashable nested lists/maps, this compares
-element-by-element from both ends using `values_equal` (the same
-deep-equality helper `is_unique`/`is_permutation` already import from
-`cinder.interpreter`) rather than a bare `list == list[::-1]`, which
-would silently fall back to Python's own (potentially wrong) equality
-on nested structures. Queued as breadth after the depth task 4 lands,
-per the same balance policy. Then, as task 6, `is_coprime(a, b)` — the
-other two-argument member of the integer-property predicate cluster
-alongside `is_divisible`, testing whether two integers share no common
-divisor but `1` (`gcd(a, b) == 1`, via `math.gcd` directly rather than
-routing through the existing `gcd()` builtin's own validation). This is
-a second breadth task queued back-to-back with task 5
+for once `is_composite`/`is_power_of_two` queued two predicates
+back-to-back, and it depends on bare single-identifier arrows (landed)
+since it touches both call sites. Then, as task 2, `is_palindrome_list(list)`
+— extending the "reads the same forwards and backwards" predicate
+family (`is_palindrome` for strings, `is_palindrome_number` for
+integers) to its third and final natural domain, lists:
+`is_palindrome_list([1, 2, 1]);` is `true`. Since list elements can be
+unhashable nested lists/maps, this compares element-by-element from
+both ends using `values_equal` (the same deep-equality helper
+`is_unique`/`is_permutation` already import from `cinder.interpreter`)
+rather than a bare `list == list[::-1]`, which would silently fall back
+to Python's own (potentially wrong) equality on nested structures.
+Queued as breadth after the depth task 1 lands, per the same balance
+policy. Then, as task 3, `is_coprime(a, b)` — the other two-argument
+member of the integer-property predicate cluster alongside
+`is_divisible`, testing whether two integers share no common divisor
+but `1` (`gcd(a, b) == 1`, via `math.gcd` directly rather than routing
+through the existing `gcd()` builtin's own validation). This is a
+second breadth task queued back-to-back with task 2
 (`is_palindrome_list`), which the breadth-vs-depth policy below flags as
 the point to line up a depth task next rather than let a third predicate
-follow immediately. So, as task 7, safe navigation bracket indexing
+follow immediately. So, as task 4, safe navigation bracket indexing
 (`obj?.[expr]`) — extending the existing dot-only safe navigation
 operator (`m?.key`, short-circuits to `nil` on a `nil` receiver) to a
 bracket form, closing the two gaps the dot form structurally can't reach:
@@ -417,8 +411,14 @@ change — `OptionalIndex` already carries an arbitrary index expression
 and `_evaluate_optional_index` already delegates to the same
 `_index_get` plain indexing uses, so the interpreter needs no changes at
 all; `_finish_optional_dot` just needs a bracket branch alongside its
-existing identifier branch. And only much later, a bytecode VM if
-performance ever actually matters.
+existing identifier branch. Then, as task 5, `is_fibonacci(n)` — a
+fresh breadth task after task 4's depth work, testing whether a
+non-negative integer appears in the Fibonacci sequence via the closed-form
+perfect-square test (`n` is Fibonacci iff `5n² + 4` or `5n² - 4` is a
+perfect square), reusing `math.isqrt` the same exact-integer way
+`is_perfect_square` already does rather than iterating the sequence up
+to `n`. And only much later, a bytecode VM if performance ever actually
+matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate

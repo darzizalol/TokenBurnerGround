@@ -298,6 +298,65 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_fibonacci` — Fibonacci-membership predicate
+
+Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
+after `is_coprime` (search for `def _is_coprime` — by the time this task
+is claimed, tasks 1-4 above will have landed and shifted line numbers).
+This is a fresh breadth task queued after task 4's depth work (safe
+navigation bracket indexing) per `PROJECT.md`'s breadth-vs-depth policy.
+A non-negative integer `n` is a Fibonacci number (`0, 1, 1, 2, 3, 5, 8,
+13, ...`) exactly when `5n² + 4` or `5n² - 4` is a perfect square — do
+**not** implement this by iterating/generating the sequence up to `n`,
+which would be needlessly slow for large `n` given Cinder's
+arbitrary-precision ints. Use `math.isqrt` the same exact-integer way
+`_is_perfect_square` already does (search for `def _is_perfect_square`)
+to test each candidate: compute `r = math.isqrt(candidate)` and check
+`r * r == candidate`.
+
+Model the arity/type-checking on `_is_perfect_square`'s or
+`_is_coprime`'s structure: reuse `_require_arity("is_fibonacci",
+arguments, 1, line, column)` and `_require_int("is_fibonacci",
+arguments[0], line, column)`. Negative input is not an error — mirror
+`_is_perfect_square`'s own convention of answering `false` on negative
+input rather than raising, since "is this integer a Fibonacci number" is
+a well-defined question for negative integers too (the answer is simply
+always `false`, since the sequence is only ever defined for `n >= 0`).
+
+Acceptance criteria:
+- `is_fibonacci(0);` is `true`, `is_fibonacci(1);` is `true` — both
+  appear in the sequence (`1` appears twice, at index 1 and 2, but the
+  predicate only cares about membership).
+- `is_fibonacci(2);` is `true`, `is_fibonacci(3);` is `true`,
+  `is_fibonacci(5);` is `true`, `is_fibonacci(8);` is `true`,
+  `is_fibonacci(13);` is `true`, `is_fibonacci(144);` is `true`.
+- `is_fibonacci(4);` is `false`, `is_fibonacci(6);` is `false`,
+  `is_fibonacci(100);` is `false` — non-members between/around real
+  Fibonacci numbers.
+- `is_fibonacci(-5);` is `false` — negative input answers `false` rather
+  than raising, matching `is_perfect_square`'s convention.
+- `is_fibonacci(832040);` is `true` — a larger, real Fibonacci number
+  (F(30)), confirming the closed-form test rather than an unrolled
+  lookup table of small cases.
+- `is_fibonacci(3.0);` (float) raises `CinderRuntimeError` matching
+  `"is_fibonacci() requires an int, got float"` — no implicit
+  float-to-int coercion, matching the rest of the integer-property
+  cluster.
+- `is_fibonacci(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_fibonacci() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_coprime`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_fibonacci` added near `is_perfect_square`/`is_armstrong`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

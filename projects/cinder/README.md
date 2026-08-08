@@ -156,7 +156,8 @@ while (i < 10) {
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`
-  integer parity/divisibility/primality predicates, `is_palindrome` to test whether a string reads the same forwards
+  integer parity/divisibility/primality predicates, `is_power_of_two` to test whether an integer is a power of two
+  via the `n & (n - 1) == 0` bit trick, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
@@ -256,21 +257,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: parenthesized arrow
-function expressions (`(a, b) => a + b`) as sugar for anonymous `fn`
-expressions — the first language-depth addition since comprehensions,
-after seven stdlib predicates in a row — `is_palindrome_number` to test
-whether an integer's digits read the same forwards and backwards,
-`digital_root` for the repeated-digit-sum-to-single-digit closed form,
-bare single-identifier arrow functions (`x => x * 2`, no parens needed
-around a single parameter), and `is_composite` as `is_prime`'s
-complement. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_power_of_two` via the `n & (n - 1) == 0` bit trick, block-bodied
-arrow functions (`(params) => { ... }` and `x => { ... }`),
-`is_palindrome_list` to extend the "reads the same both ways" predicate
-family to lists, `is_coprime` to test whether two integers share no
-common divisor but `1`, and safe navigation bracket indexing
-(`obj?.[expr]`, extending the existing `m?.key` short-circuit to
-computed keys and lists). The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: bare single-identifier
+arrow functions (`x => x * 2`, no parens needed around a single
+parameter), `is_composite` as `is_prime`'s complement, and
+`is_power_of_two` via the `n & (n - 1) == 0` bit trick. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): block-bodied arrow functions
+(`(params) => { ... }` and `x => { ... }`), `is_palindrome_list` to
+extend the "reads the same both ways" predicate family to lists,
+`is_coprime` to test whether two integers share no common divisor but
+`1`, and safe navigation bracket indexing (`obj?.[expr]`, extending the
+existing `m?.key` short-circuit to computed keys and lists). The
+backlog mixes language depth with stdlib breadth over time rather than
+running either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

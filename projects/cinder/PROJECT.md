@@ -348,13 +348,32 @@ don't force many passes — and, as task 5, `is_composite(n)` —
 *not* prime, e.g. `4`, `6`, `8`, `9`), completing the classical
 prime/composite/neither(`0`, `1`, negatives) three-way split the same
 way perfect/abundant/deficient already covers divisor sums — and, as
-task 6, `is_power_of_two(n)` — a bit-trick predicate (`n & (n - 1) ==
-0` for positive `n`), the first integer-property builtin to lean on
-Cinder's own bitwise operators rather than pure arithmetic or a
-trial-division loop — and only much later, a bytecode VM if
-performance ever actually matters.
+task 6, arrow function expressions (`(x) => x * 2`, `(a, b) => a + b`)
+as sugar for the existing anonymous `fn` expression, desugaring purely
+at parse time into the same `FnExpr` AST node (no interpreter changes),
+disambiguated from ordinary parenthesized grouping via the same
+speculative-parse-and-backtrack technique `_brace_statement` already
+uses for the `{`-disambiguation problem. This is a deliberate
+course-correction: the run of stdlib-only integer-property predicates
+since list/map comprehensions landed has gone on longer than the
+seven-cycle breadth run that prompted comprehensions in the first
+place, and the vision favors depth over breadth — arrow functions are
+scoped to a single session (parser-only, one new token, reuses existing
+parameter-parsing helpers) precisely so this course-correction doesn't
+itself become a multi-night detour. Expression-bodied and
+parenthesized-parameter-list only; no bare single-identifier form
+(`x => expr`) and no block-bodied form (`(x) => { ... }`) — both left
+for a future task if ever wanted, to keep this one's disambiguation
+logic tractable. And, as task 7, `is_power_of_two(n)` — a bit-trick
+predicate (`n & (n - 1) == 0` for positive `n`), the first
+integer-property builtin to lean on Cinder's own bitwise operators
+rather than pure arithmetic or a trial-division loop — and only much
+later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
-do not jump ahead of the current layer.
+do not jump ahead of the current layer, and should keep watching this
+same breadth-vs-depth balance: another long, uninterrupted run of
+single-builtin predicate tasks is a signal to inject another
+language-depth task rather than just extending the streak further.
 
 ## History
 

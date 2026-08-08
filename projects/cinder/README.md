@@ -115,8 +115,10 @@ while (i < 10) {
   parenthesized form supports everything anonymous `fn`s do: defaults,
   rest parameters, nesting, and closures; a bare single-identifier
   parameter may skip the parens too (`x => x * 2`, exactly one required
-  parameter, no default/rest); neither form supports a block body yet
-  (`(x) => { ... }` and `x => { ... }` both raise a `ParseError`)
+  parameter, no default/rest); both forms also accept a block body
+  (`(params) => { ... }` and `x => { ... }`), parsed via ordinary
+  block-statement rules with no implicit return of the last
+  expression — `return` stays explicit, same as any other block
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -257,16 +259,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: bare single-identifier
-arrow functions (`x => x * 2`, no parens needed around a single
-parameter), `is_composite` as `is_prime`'s complement, and
-`is_power_of_two` via the `n & (n - 1) == 0` bit trick. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): block-bodied arrow functions
-(`(params) => { ... }` and `x => { ... }`), `is_palindrome_list` to
-extend the "reads the same both ways" predicate family to lists,
-`is_coprime` to test whether two integers share no common divisor but
-`1`, and safe navigation bracket indexing (`obj?.[expr]`, extending the
-existing `m?.key` short-circuit to computed keys and lists). The
-backlog mixes language depth with stdlib breadth over time rather than
-running either in one long block. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: `is_composite` as
+`is_prime`'s complement, `is_power_of_two` via the `n & (n - 1) == 0`
+bit trick, and block-bodied arrow functions (`(params) => { ... }` and
+`x => { ... }`, no implicit last-expression return). Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `is_palindrome_list` to extend the
+"reads the same both ways" predicate family to lists, `is_coprime` to
+test whether two integers share no common divisor but `1`, safe
+navigation bracket indexing (`obj?.[expr]`, extending the existing
+`m?.key` short-circuit to computed keys and lists), `is_fibonacci` to
+test Fibonacci-sequence membership via a closed-form perfect-square
+check, and `is_happy_number` to test the repeated-sum-of-squared-digits
+recurrence. The backlog mixes language depth with stdlib breadth over
+time rather than running either in one long block. The full vision and
+non-goals live in
 [`PROJECT.md`](PROJECT.md).

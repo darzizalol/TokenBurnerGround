@@ -271,6 +271,74 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `is_happy_number` — happy-number recurrence predicate
+
+Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
+right after `is_fibonacci` (search for `def _is_fibonacci` — by the
+time this task is claimed, tasks 1-4 above will have landed and shifted
+line numbers). A "happy number" is defined by a recurrence: replace `n`
+with the sum of the squares of its decimal digits, and repeat; `n` is
+happy if this process eventually reaches `1`, unhappy if it instead
+falls into a cycle that never includes `1` (every non-happy positive
+integer provably cycles rather than diverging — the classic example is
+`4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 -> 20 -> 4`, repeating forever).
+Detect the cycle with a `set` of previously-seen values: loop computing
+the next value, and at each step return `True` the moment the value
+becomes `1`, or return `False` the moment the value repeats a
+previously-seen one (add each new value to the set before computing the
+next). Do **not** cap the loop at a fixed iteration count as a
+cycle-detection substitute — that risks misclassifying a slow-to-cycle
+unhappy number as happy (or vice versa) if the cap is too low; the
+seen-set approach is exact and terminates on every input since the
+digit-square-sum of any number below `10^k` is bounded, forcing a
+revisit within finitely many steps.
+
+Model the arity/type-checking on `_is_fibonacci`'s or
+`_is_perfect_square`'s structure: reuse `_require_arity("is_happy_number",
+arguments, 1, line, column)` and `_require_int("is_happy_number",
+arguments[0], line, column)`. Negative input is not an error — mirror
+`_is_perfect_square`'s own convention of answering `false` on negative
+input rather than raising, since the digit-square-sum recurrence is
+only conventionally defined for non-negative integers.
+
+Acceptance criteria:
+- `is_happy_number(1);` is `true` — the base case, zero steps needed.
+- `is_happy_number(7);` is `true` — `7 -> 49 -> 97 -> 130 -> 10 -> 1`.
+- `is_happy_number(19);` is `true` — a slightly longer chain:
+  `19 -> 82 -> 68 -> 100 -> 1`.
+- `is_happy_number(4);` is `false` — falls into the canonical
+  `4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 -> 20 -> 4` cycle.
+- `is_happy_number(2);` is `false`, `is_happy_number(3);` is `false` —
+  both eventually reach the same `4`-cycle.
+- `is_happy_number(0);` is `false` — `0` maps to itself
+  (`0 -> 0`), an immediate one-value cycle that never includes `1`.
+- `is_happy_number(-7);` is `false` — negative input answers `false`
+  rather than raising, matching `is_perfect_square`'s convention.
+- `is_happy_number(97);` is `true` — a larger multi-digit happy number,
+  confirming the recurrence handles more than one digit-squaring pass.
+- `is_happy_number(3.0);` (float) raises `CinderRuntimeError` matching
+  `"is_happy_number() requires an int, got float"` — no implicit
+  float-to-int coercion, matching the rest of the integer-property
+  cluster.
+- `is_happy_number(true);` (bool) raises `CinderRuntimeError` matching
+  `"is_happy_number() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_fibonacci`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `is_happy_number` added near `is_perfect_square`/`is_fibonacci`,
+and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
+landed — leave both to the Architect's next grooming pass, not this
+task. This is the second breadth task queued back-to-back with
+`is_fibonacci`; per `PROJECT.md`'s breadth-vs-depth policy, the next
+grooming pass after this task is claimed should inject a language-depth
+task rather than a third predicate.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

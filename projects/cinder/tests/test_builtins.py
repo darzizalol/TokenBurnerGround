@@ -2490,6 +2490,45 @@ class TestIsAbundant(unittest.TestCase):
             run("is_abundant();")
 
 
+class TestIsDeficient(unittest.TestCase):
+    def test_is_deficient_of_8(self):
+        self.assertEqual(run("let result = is_deficient(8);").get("result"), True)
+
+    def test_is_deficient_of_1(self):
+        self.assertEqual(run("let result = is_deficient(1);").get("result"), True)
+
+    def test_is_deficient_of_10(self):
+        self.assertEqual(run("let result = is_deficient(10);").get("result"), True)
+
+    def test_is_deficient_of_6_is_false(self):
+        self.assertEqual(run("let result = is_deficient(6);").get("result"), False)
+
+    def test_is_deficient_of_12_is_false(self):
+        self.assertEqual(run("let result = is_deficient(12);").get("result"), False)
+
+    def test_is_deficient_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_deficient(0);").get("result"), False)
+
+    def test_is_deficient_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_deficient(-8);").get("result"), False)
+
+    def test_is_deficient_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_deficient(3.0);")
+        self.assertIn("is_deficient", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_deficient_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_deficient(true);")
+        self.assertIn("is_deficient", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_deficient_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_deficient();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

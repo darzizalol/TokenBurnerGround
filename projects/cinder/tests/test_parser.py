@@ -2285,11 +2285,58 @@ class TestArrowFunctions(unittest.TestCase):
             parse_stmts("let result = (x, ) => x;")
         self.assertIn("')'", str(ctx.exception))
 
-    def test_arrow_block_body_not_supported(self):
-        # Block-bodied arrows are explicitly out of scope for this task; a
-        # `{` after `=>` is not treated as a block body.
+    def test_arrow_block_body_parses(self):
+        self.assertEqual(
+            shape(parse("(x) => { let y = x * 2; return y; }")),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "LetStmt",
+                            "y",
+                            ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                        ),
+                        ("ReturnStmt", ("Identifier", "y")),
+                    ],
+                ),
+            ),
+        )
+
+    def test_arrow_block_body_no_implicit_return(self):
+        # A block body does not implicitly return its last expression — it
+        # parses as a plain `ExprStmt`, not wrapped in a synthetic `ReturnStmt`.
+        self.assertEqual(
+            shape(parse("(x) => { x * 2; }")),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ExprStmt",
+                            ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_arrow_block_body_break_without_own_loop_raises(self):
+        # A block-bodied arrow resets loop-nesting the same way an ordinary
+        # `fn` body does — `break` inside it must refer to a loop inside the
+        # arrow's own body, not one merely lexically outside it.
         with self.assertRaises(ParseError):
-            parse_stmts("let f = (x) => { let y = x * 2; return y; };")
+            parse_stmts("while (true) { let f = () => { break; }; }")
+
+    def test_arrow_block_body_break_with_own_loop_is_valid(self):
+        stmts = parse_stmts("while (true) { let f = () => { while (true) { break; } }; }")
+        self.assertEqual(len(stmts), 1)
 
     def test_bare_identifier_arrow_one_param(self):
         self.assertEqual(
@@ -2377,9 +2424,16 @@ class TestArrowFunctions(unittest.TestCase):
     def test_bare_identifier_without_arrow_is_plain_identifier(self):
         self.assertEqual(shape(parse("x")), ("Identifier", "x"))
 
-    def test_bare_identifier_arrow_block_body_not_supported(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("let f = x => { return x; };")
+    def test_bare_identifier_arrow_block_body_parses(self):
+        self.assertEqual(
+            shape(parse("x => { return x; }")),
+            (
+                "FnExpr",
+                [("x", None)],
+                None,
+                ("Block", [("ReturnStmt", ("Identifier", "x"))]),
+            ),
+        )
 
 
 class TestForStatement(unittest.TestCase):

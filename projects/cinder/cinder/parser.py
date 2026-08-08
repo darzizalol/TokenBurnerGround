@@ -546,16 +546,15 @@ class Parser:
         return FnExpr(params, rest_param, body, fn_token.line, fn_token.column)
 
     def _try_arrow_function(self) -> "FnExpr | None":
-        """Speculatively parses `(params) => expr` at expression position,
-        tried before `_primary`'s existing `(` grouping-expression parse —
-        the two share an opening `(` and look identical until either a
-        valid parameter-list shape isn't found or no `=>` follows the
-        closing `)`. Desugars to a plain `FnExpr` whose body is a synthetic
-        one-statement `return`ing `Block`, so the interpreter needs no
-        changes at all. Returns `None` on any shape mismatch, leaving
-        `self.pos` restored to before the `(` for the caller's grouping
-        fallback — matching the backtracking pattern `_brace_statement`
-        uses for its own `{`-disambiguation problem."""
+        """Speculatively parses `(params) => expr` or `(params) => { ... }`
+        at expression position, tried before `_primary`'s existing `(`
+        grouping-expression parse — the two share an opening `(` and look
+        identical until either a valid parameter-list shape isn't found or
+        no `=>` follows the closing `)`. Desugars to a plain `FnExpr`, so
+        the interpreter needs no changes at all. Returns `None` on any
+        shape mismatch, leaving `self.pos` restored to before the `(` for
+        the caller's grouping fallback — matching the backtracking pattern
+        `_brace_statement` uses for its own `{`-disambiguation problem."""
         start = self.pos
         try:
             lparen = self._advance()  # consume '('
@@ -565,9 +564,27 @@ class Parser:
         except ParseError:
             self.pos = start
             return None
-        body_expr = self._assignment()
-        body = Block([ReturnStmt(body_expr, lparen.line, lparen.column)])
+        body = self._arrow_body(lparen.line, lparen.column)
         return FnExpr(params, rest_param, body, lparen.line, lparen.column)
+
+    def _arrow_body(self, line: int, column: int) -> "Block":
+        """Parses an arrow function's body, shared by both the
+        parenthesized (`_try_arrow_function`) and bare single-identifier
+        (`_primary`'s `IDENTIFIER` branch) forms: a block body `{ ... }`,
+        parsed exactly like an ordinary `fn` body via `_fn_params_and_body`
+        (same `_fn_depth`/`_loop_labels` bookkeeping, no implicit return),
+        or — when no `{` follows `=>` — a bare expression body wrapped in a
+        synthetic `return`, unchanged from before block bodies existed."""
+        if self._check(TokenType.LBRACE):
+            self._fn_depth += 1
+            outer_loop_labels = self._loop_labels
+            self._loop_labels = []
+            body = self._block()
+            self._loop_labels = outer_loop_labels
+            self._fn_depth -= 1
+            return body
+        body_expr = self._assignment()
+        return Block([ReturnStmt(body_expr, line, column)])
 
     def _fn_params_and_body(self) -> tuple:
         self._consume(TokenType.LPAREN, "'(' after 'fn'")
@@ -1135,8 +1152,7 @@ class Parser:
             if self._peek_next().type == TokenType.FAT_ARROW:
                 self._advance()  # consume the identifier
                 self._consume(TokenType.FAT_ARROW, "'=>' after arrow function parameter")
-                body_expr = self._assignment()
-                body = Block([ReturnStmt(body_expr, token.line, token.column)])
+                body = self._arrow_body(token.line, token.column)
                 return FnExpr(
                     [(token.lexeme, None)], None, body, token.line, token.column
                 )

@@ -100,7 +100,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `is_composite` — non-prime-above-one predicate
+## 2. Standard library: `is_composite` — non-prime-above-one predicate [claimed 2026-08-08T18:37:50Z]
 
 Build: add `is_composite(n)` to `cinder/builtins.py`, registered right
 next to `is_prime` (search for `def _is_prime` — by the time this task

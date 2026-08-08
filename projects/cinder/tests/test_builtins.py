@@ -2213,6 +2213,49 @@ class TestIsPrime(unittest.TestCase):
             run("is_prime();")
 
 
+class TestIsComposite(unittest.TestCase):
+    def test_is_composite_of_smallest_composite(self):
+        self.assertEqual(run("let result = is_composite(4);").get("result"), True)
+
+    def test_is_composite_of_six(self):
+        self.assertEqual(run("let result = is_composite(6);").get("result"), True)
+
+    def test_is_composite_of_odd_composite(self):
+        self.assertEqual(run("let result = is_composite(9);").get("result"), True)
+
+    def test_is_composite_of_larger_prime_is_false(self):
+        self.assertEqual(run("let result = is_composite(97);").get("result"), False)
+
+    def test_is_composite_of_small_primes_is_false(self):
+        self.assertEqual(run("let result = is_composite(2);").get("result"), False)
+        self.assertEqual(run("let result = is_composite(3);").get("result"), False)
+
+    def test_is_composite_of_one_is_false(self):
+        self.assertEqual(run("let result = is_composite(1);").get("result"), False)
+
+    def test_is_composite_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_composite(0);").get("result"), False)
+
+    def test_is_composite_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_composite(-6);").get("result"), False)
+
+    def test_is_composite_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_composite(3.0);")
+        self.assertIn("is_composite", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_composite_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_composite(true);")
+        self.assertIn("is_composite", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_composite_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_composite();")
+
+
 class TestDigitSum(unittest.TestCase):
     def test_digit_sum_of_zero(self):
         self.assertEqual(run("let result = digit_sum(0);").get("result"), 0)

@@ -1132,6 +1132,14 @@ class Parser:
             self._advance()
             return Literal(None, token.line, token.column)
         if token.type == TokenType.IDENTIFIER:
+            if self._peek_next().type == TokenType.FAT_ARROW:
+                self._advance()  # consume the identifier
+                self._consume(TokenType.FAT_ARROW, "'=>' after arrow function parameter")
+                body_expr = self._assignment()
+                body = Block([ReturnStmt(body_expr, token.line, token.column)])
+                return FnExpr(
+                    [(token.lexeme, None)], None, body, token.line, token.column
+                )
             self._advance()
             return Identifier(token.lexeme, token.line, token.column)
         if token.type == TokenType.LPAREN:

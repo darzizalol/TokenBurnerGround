@@ -1904,6 +1904,56 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(names, ["bad"])
 
 
+class TestArrowFunctions(unittest.TestCase):
+    def test_one_param(self):
+        env = run("let double = (x) => x * 2; let result = double(21);")
+        self.assertEqual(env.get("result"), 42)
+
+    def test_two_params(self):
+        env = run("let add = (a, b) => a + b; let result = add(2, 3);")
+        self.assertEqual(env.get("result"), 5)
+
+    def test_zero_params(self):
+        env = run("let always_42 = () => 42; let result = always_42();")
+        self.assertEqual(env.get("result"), 42)
+
+    def test_default_param_used_when_argument_omitted(self):
+        env = run("let f = (x, y = 10) => x + y; let result = f(5);")
+        self.assertEqual(env.get("result"), 15)
+
+    def test_rest_param(self):
+        env = run("let f = (a, ...rest) => rest; let result = f(1, 2, 3);")
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_ternary_body(self):
+        env = run('let f = (x) => x > 0 ? "pos" : "neg"; let result = f(5);')
+        self.assertEqual(env.get("result"), "pos")
+
+    def test_ordinary_grouping_unaffected(self):
+        env = run("let result = (1 + 2) * 3;")
+        self.assertEqual(env.get("result"), 9)
+
+    def test_bare_identifier_in_parens_still_evaluates(self):
+        env = run("let x = 5; let result = (x);")
+        self.assertEqual(env.get("result"), 5)
+
+    def test_nests_and_closes_over_outer_param(self):
+        env = run(
+            "let make_adder = (n) => (x) => x + n; "
+            "let result = make_adder(10)(5);"
+        )
+        self.assertEqual(env.get("result"), 15)
+
+    def test_as_callback_to_map_builtin(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let result = map([1, 2, 3], (x) => x * x);",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), [1, 4, 9])
+
+
 class TestDefaultParameters(unittest.TestCase):
     def test_default_used_when_argument_omitted(self):
         env = run(

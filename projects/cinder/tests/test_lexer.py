@@ -196,6 +196,32 @@ class TestOperators(unittest.TestCase):
             ],
         )
 
+    def test_fat_arrow_is_one_token(self):
+        # "=>" must lex as one FAT_ARROW token, not EQ then GT.
+        tokens = tokenize("(x) => x")
+        self.assertEqual(
+            types(tokens),
+            [
+                TokenType.LPAREN,
+                TokenType.IDENTIFIER,
+                TokenType.RPAREN,
+                TokenType.FAT_ARROW,
+                TokenType.IDENTIFIER,
+                TokenType.EOF,
+            ],
+        )
+
+    def test_fat_arrow_does_not_collide_with_eq_or_eqeq(self):
+        self.assertEqual(types(tokenize("a = b")), [
+            TokenType.IDENTIFIER, TokenType.EQ, TokenType.IDENTIFIER, TokenType.EOF,
+        ])
+        self.assertEqual(types(tokenize("a == b")), [
+            TokenType.IDENTIFIER, TokenType.EQEQ, TokenType.IDENTIFIER, TokenType.EOF,
+        ])
+        self.assertEqual(types(tokenize("a => b")), [
+            TokenType.IDENTIFIER, TokenType.FAT_ARROW, TokenType.IDENTIFIER, TokenType.EOF,
+        ])
+
     def test_question_dot_is_one_token(self):
         # "?." must lex as one QUESTION_DOT token, not QUESTION then DOT.
         tokens = tokenize("a?.b")

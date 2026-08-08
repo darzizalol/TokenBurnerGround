@@ -545,8 +545,55 @@ class Parser:
         params, rest_param, body = self._fn_params_and_body()
         return FnExpr(params, rest_param, body, fn_token.line, fn_token.column)
 
+    def _try_arrow_function(self) -> "FnExpr | None":
+        """Speculatively parses `(params) => expr` at expression position,
+        tried before `_primary`'s existing `(` grouping-expression parse —
+        the two share an opening `(` and look identical until either a
+        valid parameter-list shape isn't found or no `=>` follows the
+        closing `)`. Desugars to a plain `FnExpr` whose body is a synthetic
+        one-statement `return`ing `Block`, so the interpreter needs no
+        changes at all. Returns `None` on any shape mismatch, leaving
+        `self.pos` restored to before the `(` for the caller's grouping
+        fallback — matching the backtracking pattern `_brace_statement`
+        uses for its own `{`-disambiguation problem."""
+        start = self.pos
+        try:
+            lparen = self._advance()  # consume '('
+            params, rest_param = self._fn_param_list()
+            self._consume(TokenType.RPAREN, "')' after parameters")
+            self._consume(TokenType.FAT_ARROW, "'=>' after arrow function parameters")
+        except ParseError:
+            self.pos = start
+            return None
+        body_expr = self._assignment()
+        body = Block([ReturnStmt(body_expr, lparen.line, lparen.column)])
+        return FnExpr(params, rest_param, body, lparen.line, lparen.column)
+
     def _fn_params_and_body(self) -> tuple:
         self._consume(TokenType.LPAREN, "'(' after 'fn'")
+        params, rest_param = self._fn_param_list()
+        self._consume(TokenType.RPAREN, "')' after parameters")
+        if not self._check(TokenType.LBRACE):
+            token = self._peek()
+            raise ParseError(
+                f"expected '{{' before function body, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._fn_depth += 1
+        outer_loop_labels = self._loop_labels
+        self._loop_labels = []
+        body = self._block()
+        self._loop_labels = outer_loop_labels
+        self._fn_depth -= 1
+        return params, rest_param, body
+
+    def _fn_param_list(self) -> tuple:
+        """Parses a comma-separated parameter list — default values and a
+        single trailing rest parameter, via `_fn_param`/`_fn_rest_param` —
+        assuming the caller has already consumed the opening `(` and will
+        consume the closing `)` itself. Shared by `fn` expressions/
+        declarations and arrow-function parameter lists."""
         params = []
         rest_param = None
         seen_default = False
@@ -570,21 +617,7 @@ class Parser:
                 else:
                     params.append(self._fn_param(seen_default))
                     seen_default = seen_default or params[-1][1] is not None
-        self._consume(TokenType.RPAREN, "')' after parameters")
-        if not self._check(TokenType.LBRACE):
-            token = self._peek()
-            raise ParseError(
-                f"expected '{{' before function body, found {self._describe(token)}",
-                token.line,
-                token.column,
-            )
-        self._fn_depth += 1
-        outer_loop_labels = self._loop_labels
-        self._loop_labels = []
-        body = self._block()
-        self._loop_labels = outer_loop_labels
-        self._fn_depth -= 1
-        return params, rest_param, body
+        return params, rest_param
 
     def _fn_rest_param(self) -> str:
         self._advance()  # DOT_DOT_DOT
@@ -1102,6 +1135,9 @@ class Parser:
             self._advance()
             return Identifier(token.lexeme, token.line, token.column)
         if token.type == TokenType.LPAREN:
+            arrow = self._try_arrow_function()
+            if arrow is not None:
+                return arrow
             self._advance()
             expr = self._assignment()
             self._consume(TokenType.RPAREN, "')' after expression")

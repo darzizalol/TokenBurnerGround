@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate
+## 1. Standard library: `is_palindrome_number` — numeric-digit palindrome predicate [claimed 2026-08-08T14:34:14Z]
 
 Build: add `is_palindrome_number(n)` to `cinder/builtins.py`, sitting
 next to `reverse_int` (already landed, search for `reverse_int` rather

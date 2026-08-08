@@ -1978,9 +1978,65 @@ class TestArrowFunctions(unittest.TestCase):
         env = run("let x = 5; let result = x;")
         self.assertEqual(env.get("result"), 5)
 
-    def test_bare_identifier_arrow_block_body_raises(self):
-        with self.assertRaises(ParseError):
-            run("let f = x => { return x; }; let result = f(1);")
+    def test_bare_identifier_arrow_block_body_executes(self):
+        env = run("let f = x => { let y = x * 2; return y; }; let result = f(5);")
+        self.assertEqual(env.get("result"), 10)
+
+    def test_parenthesized_arrow_block_body_executes(self):
+        env = run("let f = (x) => { let y = x * 2; return y; }; let result = f(5);")
+        self.assertEqual(env.get("result"), 10)
+
+    def test_zero_param_block_body(self):
+        env = run("let f = () => { return 42; }; let result = f();")
+        self.assertEqual(env.get("result"), 42)
+
+    def test_block_body_multi_statement_control_flow(self):
+        env = run(
+            "let f = (a, b) => { if (a > b) { return a; } return b; }; "
+            "let result = f(3, 7);"
+        )
+        self.assertEqual(env.get("result"), 7)
+
+    def test_block_body_no_implicit_return(self):
+        env = run("let f = (x) => { x * 2; }; let result = f(5);")
+        self.assertIsNone(env.get("result"))
+
+    def test_block_body_as_map_builtin_callback(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let result = map([1, 2, 3], x => { return x * x; });",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), [1, 4, 9])
+
+    def test_block_body_nested_arrows_close_over_outer_param(self):
+        env = run(
+            "let adder = (x) => { return (y) => { return x + y; }; }; "
+            "let result = adder(3)(4);"
+        )
+        self.assertEqual(env.get("result"), 7)
+
+    def test_block_body_break_continue_resolve_to_own_loop(self):
+        env = run(
+            "let f = () => { "
+            "  let total = 0; "
+            "  for i in [1, 2, 3, 4, 5] { "
+            "    if (i == 4) { break; } "
+            "    if (i == 2) { continue; } "
+            "    total = total + i; "
+            "  } "
+            "  return total; "
+            "}; "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 4)
+
+    def test_expression_bodied_arrows_unaffected(self):
+        env = run("let f = (x) => x * 2; let result = f(5);")
+        self.assertEqual(env.get("result"), 10)
+        env2 = run("let g = x => x * 2; let result = g(5);")
+        self.assertEqual(env2.get("result"), 10)
 
 
 class TestDefaultParameters(unittest.TestCase):

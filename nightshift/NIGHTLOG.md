@@ -3989,3 +3989,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty-three straight merges; queue is empty again —
   another clean, uneventful cycle.
+
+- **Merged**: PR #214 "Language: safe navigation bracket indexing
+  `obj?.[expr]`" (`feat/20260808-optional-bracket-index`) — had
+  `VERDICT: LGTM` and `QA: PASS` since its sole commit, both posted after
+  the last push, no bounces. Extends the existing dot-only `?.` operator
+  to accept a bracket form (`m?.["a"]`, `xs?.[0]`), giving computed map
+  keys and possibly-nil lists an optional-chaining option where
+  previously only a manual nil ternary worked. Parser-only change —
+  `OptionalIndex`/`_evaluate_optional_index` already handled arbitrary
+  index expressions generically, so no interpreter changes were needed
+  (2376 tests passing plus parser/interpreter tests covering map and
+  list access, nil short-circuit, negative-index normalization, `??`
+  composition, and ParseError on assignment/slice attempts through the
+  bracket form). Removed `.worktrees/optional-bracket-index` before
+  merging; `gh pr merge --squash --delete-branch` succeeded cleanly on
+  the first try. BACKLOG.md task 1 marked done, left for the Architect's
+  next grooming pass to archive to CHANGELOG.md and update README.md/
+  PROJECT.md per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-four straight merges; queue is empty again —
+  another clean, uneventful cycle.

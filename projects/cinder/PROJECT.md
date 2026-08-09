@@ -434,19 +434,19 @@ group — a leading (`_1`), trailing (`1_`), doubled (`1__0`),
 decimal-point-adjacent (`1_.5`, `1._5`), or post-prefix (`0x_FF`)
 underscore simply isn't consumed, so scanning stops there and the
 leftover `_...` lexes as a separate token the usual way (no new
-`LexError` case needed).
+`LexError` case needed), as has `is_triangular(n)` — one more
+integer-property predicate, testing whether `n` is a triangular number
+(`0, 1, 3, 6, 10, 15, ...`, the sum `1 + 2 + ... + k`) via the
+closed-form test `8n + 1` is a perfect square, the same
+`math.isqrt`-based exact-integer technique `is_fibonacci`/
+`is_perfect_square` already use rather than an accumulating loop;
+negative input answers `false` without raising, matching the rest of
+the cluster's convention. This was the breadth task after the
+numeric-literal-underscores depth work, restarting the same
+alternation the policy below describes.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `is_triangular(n)` — one more integer-property predicate,
-testing whether `n` is a triangular number (`0, 1, 3, 6, 10, 15, ...`,
-the sum `1 + 2 + ... + k`) via the closed-form test `8n + 1` is a
-perfect square, the same `math.isqrt`-based exact-integer technique
-`is_fibonacci`/`is_perfect_square` already use rather than an
-accumulating loop. Negative input answers `false` without raising,
-matching the rest of the cluster's convention. This is the breadth
-task after the numeric-literal-underscores depth work, restarting the
-same alternation the policy below describes. And as task 2,
-destructuring loop variables in list/map comprehensions (`[k + v for
-[k, v] in items(m)]`, `{k: v for [k, v] in items(m)}`) — the
+as task 1, destructuring loop variables in list/map comprehensions
+(`[k + v for [k, v] in items(m)]`, `{k: v for [k, v] in items(m)}`) — the
 comprehension-form gap left over from when plain `for`-loops gained
 list-destructuring loop variables (`for [k, v] in items(m) { ... }`):
 `ListComprehension`/`MapComprehension` gain the same `names`/`rest`
@@ -456,15 +456,15 @@ fields `ForStmt` already has, and reuse the exact same
 with no new binding logic to design. This is the depth task the policy
 calls for right after a single breadth task (`is_triangular`), the
 same one-breadth-then-depth placement the safe navigation bracket
-indexing task got after `is_coprime`. And as task 3, `lerp(a, b, t)` —
-a fresh breadth task after task 2's depth work, linear interpolation
+indexing task got after `is_coprime`. And as task 2, `lerp(a, b, t)` —
+a fresh breadth task after task 1's depth work, linear interpolation
 between two numbers (`a + (b - a) * t`, unclamped — `t` outside `[0,
 1]` extrapolates, matching the conventional graphics/game-math `lerp`
 rather than `clamp`'s bounded behavior), sitting next to `clamp` as a
 simple numeric-range helper rather than joining the integer-property
-predicate cluster. And as task 4, map-destructuring `for`-loop
+predicate cluster. And as task 3, map-destructuring `for`-loop
 variables (`for {a, b} in list_of_maps { ... }`) — the depth task after
-task 3's breadth work, closing the other half of the gap `for`-loop
+task 2's breadth work, closing the other half of the gap `for`-loop
 destructuring left open: `let` already supports both list- and
 map-destructuring patterns, and plain `for`-loops already support the
 list-pattern half (`for [k, v] in items(m) { ... }`), but there is no
@@ -475,15 +475,27 @@ field of the same name), and the map-pattern parsing already inlined in
 `_destructure_map_pattern` helper so both call sites use it — reusing
 the existing `_bind_map_destructure` interpreter helper for the actual
 binding, the same one `let`/assignment-destructuring already call, so
-again pure plumbing with no new binding logic. And as task 5,
-`is_emirp(n)` — a fresh breadth task after task 4's depth work, testing
+again pure plumbing with no new binding logic. And as task 4,
+`is_emirp(n)` — a fresh breadth task after task 3's depth work, testing
 whether `n` is prime and its decimal-digit reversal is a *different*
 prime (e.g. `13`/`31`), sitting next to `is_prime`/`is_composite` as
 the third member of that cluster; inlines `is_composite`'s own
 trial-division loop and `reverse_int`'s digit-reversal rather than
 calling either function directly, since both take the builtin-dispatch
-`(arguments, line, column)` signature rather than a raw `int`. And
-only much later, a bytecode VM if performance ever actually matters.
+`(arguments, line, column)` signature rather than a raw `int`. And as
+task 5, list/map-destructuring function parameters (`fn f([a, b]) {
+... }`, `fn f({a, b}) { ... }`) — the depth task after task 4's breadth
+work, extending the same destructuring patterns `let`, plain
+assignment, and `for`-loops already accept to one more binding
+position: a function parameter, so `fn dist([x, y]) { ... }` works
+directly instead of requiring a manual `let [x, y] = p;` as the first
+line of the body. Reuses the same `_destructure_list_pattern`/
+`_destructure_map_pattern` (parser) and `_bind_list_destructure`/
+`_bind_map_destructure` (interpreter) helpers task 3 already shares
+across `let`/assignment/`for`, so once more this is plumbing — extending
+`FnDecl`/`FnExpr`'s parameter representation to carry an optional
+pattern instead of adding any new binding logic. And only much later,
+a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -491,7 +503,7 @@ tasks queued back-to-back is a signal to inject another language-depth
 task rather than just extending the streak further, the same threshold
 that placed the numeric-literal-underscores task above and that will
 place a future depth task again if breadth tasks stack up two-or-more
-deep after task 5.
+deep after task 4.
 
 ## History
 

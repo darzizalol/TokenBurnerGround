@@ -20,8 +20,8 @@ loop variable in place of the single identifier, mirroring the plain
 `names`/`rest` fields, `cinder/ast_nodes.py`) — today `for [k, v] in
 items(m) { ... }` works as a statement but `[k + v for [k, v] in
 items(m)]` has no comprehension equivalent and must fall back to a
-full statement-form loop building a list by hand with `push`. This is a
-depth task queued after task 2's breadth work (`is_triangular`) per
+full statement-form loop building a list by hand with `push`. This is
+the depth task queued after `is_triangular` landed (breadth work) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 In `cinder/ast_nodes.py`: `ListComprehension` and `MapComprehension`
@@ -97,7 +97,7 @@ not this task.
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural
 neighbors, both simple numeric-range helpers. This is a fresh breadth
-task queued after task 3's depth work (destructuring comprehension loop
+task queued after task 1's depth work (destructuring comprehension loop
 variables) per `PROJECT.md`'s breadth-vs-depth policy. `lerp(a, b, t)`
 linearly interpolates between `a` and `b` by fraction `t`: return
 `a + (b - a) * t`. Unlike `clamp`, do **not** clamp `t` to `[0, 1]` —
@@ -159,7 +159,7 @@ two features were never crossed: there is no way to write
 `for {a, b} in list_of_maps { ... }` to destructure each map in an
 iterable of maps by key, so a caller who wants that today must fall
 back to `for m in list_of_maps { let a = m.a; let b = m.b; ... }`. This
-is the depth task queued after task 4's breadth work (`lerp`) per
+is the depth task queued after task 2's breadth work (`lerp`) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 In `cinder/ast_nodes.py`: `ForStmt` currently carries `names`/`rest`
@@ -243,10 +243,10 @@ test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
 Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
 `_is_composite` (search for `def _is_composite`) — it's the natural
 third member of that prime-family cluster, alongside `is_prime`/
-`is_composite`. This is a fresh breadth task queued after task 4's
+`is_composite`. This is a fresh breadth task queued after task 3's
 depth work (map-destructuring `for`-loop variables) per `PROJECT.md`'s
 breadth-vs-depth policy, continuing the same one-breadth-then-depth
-alternation task 5 (`lerp`) got after task 2's comprehension-
+alternation task 2 (`lerp`) got after task 1's comprehension-
 destructuring depth work.
 
 An **emirp** ("prime" spelled backwards) is a prime number whose
@@ -304,6 +304,114 @@ Likely files: `cinder/builtins.py` (register near `is_composite`, see
 current line numbers — shift if earlier tasks this cycle landed
 first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
 bullet needs `is_emirp` added near `is_prime`/`is_composite`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
+— leave both to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
+
+Build: extend function-parameter parsing/binding — shared by named
+`fn` declarations, anonymous `fn` expressions, and parenthesized arrow
+functions alike, since all three route through `_fn_param_list`/
+`_fn_param` in `cinder/parser.py` (search both) — to accept a list- or
+map-destructuring pattern in place of a plain identifier parameter,
+mirroring the patterns `let`, plain assignment, and (after task 3
+lands) `for`-loops already accept in every other binding position.
+Today a caller passing e.g. a `[x, y]` point or a `{a, b}` options
+record must destructure it by hand on the first line of the body
+(`fn dist(p) { let [x, y] = p; ... }`); this closes that gap so
+`fn dist([x, y]) { ... }` works directly. This is the depth task
+queued after task 4's breadth work (`is_emirp`) per `PROJECT.md`'s
+breadth-vs-depth policy.
+
+In `cinder/ast_nodes.py`: `FnDecl`/`FnExpr` currently carry
+`params: list` of raw `(name: str, default: Expr | None)` tuples
+(built by `_fn_param`). Add a `Param` dataclass — the same field shape
+`ForStmt` already uses for its own pattern flexibility — with
+`name: "str | None"`, `default: "Expr | None" = None`,
+`names: "list | None" = None`, `rest: "str | None" = None`, and
+`is_map: bool = False`. A plain identifier parameter sets only
+`name`/`default` (`names=None`); a list-destructuring parameter sets
+`name=None, names=names, rest=rest`; a map-destructuring parameter
+sets `name=None, names=names, is_map=True`. Change `FnDecl.params`/
+`FnExpr.params`'s annotation from `list` of tuples to `list[Param]`.
+
+In `cinder/parser.py`: change `_fn_param` to check
+`self._check(TokenType.LBRACKET)`/`self._check(TokenType.LBRACE)`
+before its current unconditional
+`self._consume(TokenType.IDENTIFIER, "parameter name")`. On `[`, call
+the existing `_destructure_list_pattern()` helper to get `names, rest`
+and return `Param(name=None, names=names, rest=rest)` — no default
+allowed: a destructuring parameter followed by `=` raises `ParseError`
+(e.g. `"destructuring parameter cannot have a default value"`), since
+there's no single value to show as a default. On `{`, call
+`_destructure_map_pattern()` (the helper task 3 extracts out of
+`_destructure_let_statement`) to get `names` and return
+`Param(name=None, names=names, is_map=True)`, same no-default
+restriction. Otherwise keep the existing identifier-plus-optional-
+default path, now returning `Param(name=name_token.lexeme,
+default=default)` instead of a bare tuple. A destructuring parameter
+counts as "has no default" for the existing `seen_default` tracking in
+`_fn_param_list` — no new rule needed, since `seen_default` already
+only flips true when a default is actually seen.
+
+In `cinder/interpreter.py`: `CinderFunction.arity` currently does
+`sum(1 for _, default in self.decl.params if default is None)` —
+change the unpacking to iterate `Param` objects
+(`sum(1 for param in self.decl.params if param.default is None)`); a
+destructuring parameter's `default` is always `None` so it already
+counts as required, no special-case needed. `call_value`'s parameter-
+binding loop currently does
+`for index, (param_name, default) in enumerate(callee.decl.params):
+... call_env.define(param_name, value)` — change to iterate `Param`
+objects and, after resolving `value` (argument or evaluated default,
+unchanged), branch on `param.names is not None`: if `param.is_map`,
+call the existing `self._bind_map_destructure(call_env, param.names,
+value, line, column)`; elif list pattern, call
+`self._bind_list_destructure(call_env, param.names, param.rest, value,
+line, column)`; else keep `call_env.define(param.name, value)`. Reuse
+the same errors those helpers already raise (`CinderRuntimeError` for
+a non-list/non-map argument or a missing map key) — no new error text
+to design.
+
+Acceptance criteria:
+- `fn dist([x, y]) { return x * x + y * y; } print(dist([3, 4]));`
+  prints `25` — the motivating list-destructuring case.
+- `fn describe({name, age}) { return name + " is " + str(age); }
+  print(describe({"name": "Al", "age": 30}));` prints `Al is 30` — the
+  motivating map-destructuring case.
+- `fn f([a, ...rest]) { return rest; } print(f([1, 2, 3]));` prints
+  `[2, 3]` — the trailing rest element works in a destructuring
+  parameter exactly as it does in `let`/`for`.
+- A destructuring parameter combines with a plain trailing rest
+  *parameter*: `fn f([a, b], ...more) { return [a, b, more]; }
+  print(f([1, 2], 3, 4));` prints `[1, 2, [3, 4]]` — the parameter-
+  list-level rest (extra positional arguments) and a pattern-level
+  rest (inside one `[...]` parameter) are independent features that
+  don't conflict.
+- Anonymous `fn` expressions and parenthesized arrow functions accept
+  the same patterns: `let f = fn([a, b]) { return a + b; };
+  print(f([1, 2]));` and `print((([a, b]) => a + b)([1, 2]));` both
+  print `3`.
+- `fn f([a, b] = [1, 2]) { return a; }` raises `ParseError` (a
+  destructuring parameter cannot have a default value).
+- `fn f([a, b]) { return a; } f(5);` (a non-list argument where a list
+  pattern was declared) raises the same `CinderRuntimeError`
+  `_bind_list_destructure` already raises for `let [a, b] = 5;`, not a
+  silent crash.
+- `fn f({a, b}) { return a; } f({"a": 1});` (a map argument missing an
+  expected key) raises the same `CinderRuntimeError`
+  `_bind_map_destructure` already raises for `let {a, b} = {"a": 1};`.
+- Existing plain-identifier parameters, defaults, and rest parameters
+  (`fn f(a, b = 1, ...rest) { ... }`) are completely unaffected.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`FnDecl`, `FnExpr`, new `Param`),
+`cinder/parser.py` (`_fn_param`, `_fn_param_list`),
+`cinder/interpreter.py` (`CinderFunction.arity`, `call_value`), `tests/
+test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
+Functions bullet needs the destructuring-parameter form mentioned, and
 `PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
 — leave both to the Architect's next grooming pass, not this task.
 

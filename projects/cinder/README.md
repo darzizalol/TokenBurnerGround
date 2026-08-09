@@ -166,6 +166,7 @@ while (i < 10) {
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates, `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
+  `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
@@ -268,16 +269,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_happy_number` to test
-the happy-number digit-square-sum recurrence via set-based cycle
-detection, and numeric literal underscores (`1_000_000`, `0xFF_FF`,
-`3.14_159`) as a digit-group separator. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_triangular` to test triangular-number
-membership via the same closed-form-perfect-square technique,
-destructuring loop variables in list/map comprehensions (`[k + v for
-[k, v] in items(m)]`), `lerp` for linear interpolation between two
-numbers, map-destructuring `for`-loop variables (`for {a, b} in
-list_of_maps { ... }`), and `is_emirp` to test whether a prime's
-digit-reversal is a different prime. The backlog mixes language depth
-with stdlib breadth over time rather than running either in one long
-block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: numeric literal
+underscores (`1_000_000`, `0xFF_FF`, `3.14_159`) as a digit-group
+separator, and `is_triangular` to test triangular-number membership via
+the same closed-form-perfect-square technique as `is_fibonacci`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): destructuring loop
+variables in list/map comprehensions (`[k + v for [k, v] in items(m)]`),
+`lerp` for linear interpolation between two numbers, map-destructuring
+`for`-loop variables (`for {a, b} in list_of_maps { ... }`), `is_emirp`
+to test whether a prime's digit-reversal is a different prime, and
+list/map-destructuring function parameters (`fn f([a, b]) { ... }`,
+`fn f({a, b}) { ... }`). The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

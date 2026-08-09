@@ -11,71 +11,11 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_fibonacci` — Fibonacci-membership predicate [DONE — merged PR #215, 2026-08-09T14:23:17Z]
-
-Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
-after `is_coprime` (search for `def _is_coprime`). This is a fresh
-breadth task queued after the safe navigation bracket indexing depth
-task (`obj?.[expr]`, merged as PR #214) per `PROJECT.md`'s
-breadth-vs-depth policy. A non-negative integer `n` is a Fibonacci
-number (`0, 1, 1, 2, 3, 5, 8,
-13, ...`) exactly when `5n² + 4` or `5n² - 4` is a perfect square — do
-**not** implement this by iterating/generating the sequence up to `n`,
-which would be needlessly slow for large `n` given Cinder's
-arbitrary-precision ints. Use `math.isqrt` the same exact-integer way
-`_is_perfect_square` already does (search for `def _is_perfect_square`)
-to test each candidate: compute `r = math.isqrt(candidate)` and check
-`r * r == candidate`.
-
-Model the arity/type-checking on `_is_perfect_square`'s or
-`_is_coprime`'s structure: reuse `_require_arity("is_fibonacci",
-arguments, 1, line, column)` and `_require_int("is_fibonacci",
-arguments[0], line, column)`. Negative input is not an error — mirror
-`_is_perfect_square`'s own convention of answering `false` on negative
-input rather than raising, since "is this integer a Fibonacci number" is
-a well-defined question for negative integers too (the answer is simply
-always `false`, since the sequence is only ever defined for `n >= 0`).
-
-Acceptance criteria:
-- `is_fibonacci(0);` is `true`, `is_fibonacci(1);` is `true` — both
-  appear in the sequence (`1` appears twice, at index 1 and 2, but the
-  predicate only cares about membership).
-- `is_fibonacci(2);` is `true`, `is_fibonacci(3);` is `true`,
-  `is_fibonacci(5);` is `true`, `is_fibonacci(8);` is `true`,
-  `is_fibonacci(13);` is `true`, `is_fibonacci(144);` is `true`.
-- `is_fibonacci(4);` is `false`, `is_fibonacci(6);` is `false`,
-  `is_fibonacci(100);` is `false` — non-members between/around real
-  Fibonacci numbers.
-- `is_fibonacci(-5);` is `false` — negative input answers `false` rather
-  than raising, matching `is_perfect_square`'s convention.
-- `is_fibonacci(832040);` is `true` — a larger, real Fibonacci number
-  (F(30)), confirming the closed-form test rather than an unrolled
-  lookup table of small cases.
-- `is_fibonacci(3.0);` (float) raises `CinderRuntimeError` matching
-  `"is_fibonacci() requires an int, got float"` — no implicit
-  float-to-int coercion, matching the rest of the integer-property
-  cluster.
-- `is_fibonacci(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_fibonacci() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_coprime`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_fibonacci` added near `is_perfect_square`/`is_armstrong`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_happy_number` — happy-number recurrence predicate
+## 1. Standard library: `is_happy_number` — happy-number recurrence predicate
 
 Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
-right after `is_fibonacci` (search for `def _is_fibonacci` — by the
-time this task is claimed, task 1 above will have landed and shifted
-line numbers). A "happy number" is defined by a recurrence: replace `n`
+right after `is_fibonacci` (search for `def _is_fibonacci`). A "happy
+number" is defined by a recurrence: replace `n`
 with the sum of the squares of its decimal digits, and repeat; `n` is
 happy if this process eventually reaches `1`, unhappy if it instead
 falls into a cycle that never includes `1` (every non-happy positive
@@ -138,7 +78,7 @@ task rather than a third predicate.
 
 ---
 
-## 3. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
+## 2. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
 
 Build: teach the lexer to accept `_` as a digit-group separator in
 integer, float, and prefixed (hex/binary/octal) numeric literals — the
@@ -222,11 +162,11 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `is_triangular` — triangular-number predicate
+## 3. Standard library: `is_triangular` — triangular-number predicate
 
 Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
 after `is_happy_number` (search for `def _is_happy_number` — by the
-time this task is claimed, tasks 1-3 above will have landed and shifted
+time this task is claimed, tasks 1-2 above will have landed and shifted
 line numbers). A non-negative integer `n` is a triangular number (`0,
 1, 3, 6, 10, 15, 21, ...`, the sum `1 + 2 + ... + k` for some `k >= 0`)
 exactly when `8n + 1` is a perfect square — the same closed-form,
@@ -234,7 +174,7 @@ exactly when `8n + 1` is a perfect square — the same closed-form,
 `_is_perfect_square` already use (compute `r = math.isqrt(candidate)`
 and check `r * r == candidate`), not an accumulating loop that adds
 `1, 2, 3, ...` until it reaches or passes `n`. This is a fresh breadth
-task queued after task 3's depth work (numeric literal underscores) per
+task queued after task 2's depth work (numeric literal underscores) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 Model the arity/type-checking on `_is_fibonacci`'s or
@@ -279,7 +219,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: destructuring loop variables in list/map comprehensions
+## 4. Language: destructuring loop variables in list/map comprehensions
 
 Build: extend list comprehensions (`[expr for x in iterable]`) and map
 comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring
@@ -289,7 +229,7 @@ loop variable in place of the single identifier, mirroring the plain
 items(m) { ... }` works as a statement but `[k + v for [k, v] in
 items(m)]` has no comprehension equivalent and must fall back to a
 full statement-form loop building a list by hand with `push`. This is a
-depth task queued after task 4's breadth work (`is_triangular`) per
+depth task queued after task 3's breadth work (`is_triangular`) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 In `cinder/ast_nodes.py`: `ListComprehension` and `MapComprehension`
@@ -360,12 +300,12 @@ not this task.
 
 ---
 
-## 6. Standard library: `lerp` — linear interpolation
+## 5. Standard library: `lerp` — linear interpolation
 
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural
 neighbors, both simple numeric-range helpers. This is a fresh breadth
-task queued after task 5's depth work (destructuring comprehension loop
+task queued after task 4's depth work (destructuring comprehension loop
 variables) per `PROJECT.md`'s breadth-vs-depth policy. `lerp(a, b, t)`
 linearly interpolates between `a` and `b` by fraction `t`: return
 `a + (b - a) * t`. Unlike `clamp`, do **not** clamp `t` to `[0, 1]` —

@@ -1943,3 +1943,15 @@ for vision/architecture.
   `README.md`'s safe navigation bullet and `PROJECT.md`'s roadmap
   paragraph still need updating — left to the Architect's next grooming
   pass.
+- **Standard library: `is_fibonacci`** — merged 2026-08-09T14:23:17Z via
+  PR #215 (`feat/20260809-is-fibonacci`). Added `is_fibonacci(n)` to
+  `cinder/builtins.py`, registered right after `is_coprime`. Tests
+  Fibonacci-sequence membership via the closed-form `5n² + 4` or
+  `5n² - 4` perfect-square identity, using `math.isqrt` the same
+  exact-integer way `is_perfect_square` already does rather than
+  generating the sequence up to `n`; negative input answers `false`
+  rather than raising, matching `is_perfect_square`'s convention.
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2385 tests
+  passing plus CLI smoke tests covering zero, small and large real
+  Fibonacci numbers, non-members, negative input, and wrong-type/
+  wrong-arity errors) — clean merge, no bounces.

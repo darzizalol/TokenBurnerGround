@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: safe navigation bracket indexing `obj?.[expr]` [claimed 2026-08-08T19:40:16Z]
+## 1. Language: safe navigation bracket indexing `obj?.[expr]` [claimed 2026-08-09T14:04:05Z]
 
 Build: extend the existing safe navigation operator — currently
 dot-only (`m?.key`, short-circuits to `nil` when `m` is `nil` instead of

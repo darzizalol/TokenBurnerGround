@@ -1171,6 +1171,23 @@ def _is_coprime(arguments: list, line: int, column: int) -> object:
     return math.gcd(a, b) == 1
 
 
+def _is_fibonacci(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_fibonacci", arguments, 1, line, column)
+    value = _require_int("is_fibonacci", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    def _is_perfect_square_value(candidate: int) -> bool:
+        if candidate < 0:
+            return False
+        root = math.isqrt(candidate)
+        return root * root == candidate
+
+    return _is_perfect_square_value(5 * value * value + 4) or _is_perfect_square_value(
+        5 * value * value - 4
+    )
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -3113,6 +3130,7 @@ _BUILTINS = {
     "is_odd": _is_odd,
     "is_divisible": _is_divisible,
     "is_coprime": _is_coprime,
+    "is_fibonacci": _is_fibonacci,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
     "is_power_of_two": _is_power_of_two,

@@ -2210,6 +2210,56 @@ class TestIsCoprime(unittest.TestCase):
             run("is_coprime(10);")
 
 
+class TestIsFibonacci(unittest.TestCase):
+    def test_is_fibonacci_of_zero(self):
+        self.assertEqual(run("let result = is_fibonacci(0);").get("result"), True)
+
+    def test_is_fibonacci_of_one(self):
+        self.assertEqual(run("let result = is_fibonacci(1);").get("result"), True)
+
+    def test_is_fibonacci_of_members(self):
+        for value in (2, 3, 5, 8, 13, 144):
+            self.assertEqual(
+                run(f"let result = is_fibonacci({value});").get("result"),
+                True,
+                f"expected {value} to be a Fibonacci number",
+            )
+
+    def test_is_fibonacci_of_non_members(self):
+        for value in (4, 6, 100):
+            self.assertEqual(
+                run(f"let result = is_fibonacci({value});").get("result"),
+                False,
+                f"expected {value} to not be a Fibonacci number",
+            )
+
+    def test_is_fibonacci_negative_input_is_false(self):
+        self.assertEqual(run("let result = is_fibonacci(-5);").get("result"), False)
+
+    def test_is_fibonacci_of_large_fibonacci_number(self):
+        self.assertEqual(
+            run("let result = is_fibonacci(832040);").get("result"), True
+        )
+
+    def test_is_fibonacci_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_fibonacci(3.0);")
+        self.assertIn(
+            "is_fibonacci() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_fibonacci_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_fibonacci(true);")
+        self.assertIn(
+            "is_fibonacci() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_fibonacci_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_fibonacci(1, 2);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

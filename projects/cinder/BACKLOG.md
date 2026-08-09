@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
+## 1. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`) [claimed 2026-08-09T14:42:45Z]
 
 Build: teach the lexer to accept `_` as a digit-group separator in
 integer, float, and prefixed (hex/binary/octal) numeric literals — the

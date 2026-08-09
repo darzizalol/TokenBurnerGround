@@ -2307,6 +2307,56 @@ class TestIsHappyNumber(unittest.TestCase):
             run("is_happy_number(1, 2);")
 
 
+class TestIsTriangular(unittest.TestCase):
+    def test_is_triangular_degenerate_and_first_cases(self):
+        self.assertEqual(run("let result = is_triangular(0);").get("result"), True)
+        self.assertEqual(run("let result = is_triangular(1);").get("result"), True)
+
+    def test_is_triangular_of_members(self):
+        for value in (3, 6, 10, 15, 21):
+            self.assertEqual(
+                run(f"let result = is_triangular({value});").get("result"),
+                True,
+                f"expected {value} to be a triangular number",
+            )
+
+    def test_is_triangular_of_non_members(self):
+        for value in (2, 4, 5, 100):
+            self.assertEqual(
+                run(f"let result = is_triangular({value});").get("result"),
+                False,
+                f"expected {value} to not be a triangular number",
+            )
+
+    def test_is_triangular_negative_input_is_false(self):
+        self.assertEqual(
+            run("let result = is_triangular(-6);").get("result"), False
+        )
+
+    def test_is_triangular_of_large_triangular_number(self):
+        self.assertEqual(
+            run("let result = is_triangular(500500);").get("result"), True
+        )
+
+    def test_is_triangular_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_triangular(3.0);")
+        self.assertIn(
+            "is_triangular() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_triangular_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_triangular(true);")
+        self.assertIn(
+            "is_triangular() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_triangular_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_triangular(1, 2);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

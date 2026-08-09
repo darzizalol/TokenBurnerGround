@@ -1203,6 +1203,17 @@ def _is_happy_number(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _is_triangular(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_triangular", arguments, 1, line, column)
+    value = _require_int("is_triangular", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 8 * value + 1
+    root = math.isqrt(candidate)
+    return root * root == candidate
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -3147,6 +3158,7 @@ _BUILTINS = {
     "is_coprime": _is_coprime,
     "is_fibonacci": _is_fibonacci,
     "is_happy_number": _is_happy_number,
+    "is_triangular": _is_triangular,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
     "is_power_of_two": _is_power_of_two,

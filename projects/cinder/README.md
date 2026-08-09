@@ -164,7 +164,7 @@ while (i < 10) {
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
-  `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `random_int`, `random_choice`,
+  `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates, `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
@@ -272,15 +272,15 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: destructuring loop
-variables in list/map comprehensions (`[k + v for [k, v] in items(m)]`),
-building on the plain `for`-loop's own list-destructuring support.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `lerp` for linear
-interpolation between two numbers, map-destructuring `for`-loop
-variables (`for {a, b} in list_of_maps { ... }`), `is_emirp` to test
-whether a prime's digit-reversal is a different prime,
-list/map-destructuring function parameters (`fn f([a, b]) { ... }`,
-`fn f({a, b}) { ... }`), and `divisors` to list an integer's positive
-divisors. The backlog mixes language depth with stdlib breadth over
-time rather than running either in one long block. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `lerp` for linear
+interpolation between two numbers, sitting next to `clamp` as a simple
+numeric-range helper. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+map-destructuring `for`-loop variables (`for {a, b} in list_of_maps {
+... }`), `is_emirp` to test whether a prime's digit-reversal is a
+different prime, list/map-destructuring function parameters
+(`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), `divisors` to
+list an integer's positive divisors, and optional call chaining
+(`f?.()`) to round out the `?.`/`??`/`?.[` safe-navigation family.
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

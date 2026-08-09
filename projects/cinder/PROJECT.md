@@ -494,16 +494,26 @@ line of the body. Reuses the same `_destructure_list_pattern`/
 `_bind_map_destructure` (interpreter) helpers task 3 already shares
 across `let`/assignment/`for`, so once more this is plumbing — extending
 `FnDecl`/`FnExpr`'s parameter representation to carry an optional
-pattern instead of adding any new binding logic. And only much later,
-a bytecode VM if performance ever actually matters.
+pattern instead of adding any new binding logic. And as task 6,
+`divisors(n)` — a fresh breadth task after task 5's depth work,
+returning the sorted list of `n`'s positive divisors; sits next to
+`is_perfect_number`/`is_abundant`/`is_deficient` as the value-returning
+sibling of that cluster, all three of which already trial-divide to
+`sqrt(n)` and discard the individual divisors, keeping only their sum
+— `divisors` reuses that same walk but collects instead of summing.
+Unlike that cluster (which answers `false` for out-of-domain input),
+`n < 1` raises a domain error rather than returning an empty list,
+since there's no sensible "positive divisors of a non-positive number"
+answer, mirroring `log()`'s own type-vs-domain-error split. And only
+much later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
 tasks queued back-to-back is a signal to inject another language-depth
 task rather than just extending the streak further, the same threshold
-that placed the numeric-literal-underscores task above and that will
-place a future depth task again if breadth tasks stack up two-or-more
-deep after task 4.
+that placed the numeric-literal-underscores task above, and that
+placed task 6 as breadth right after task 5's depth work rather than
+stacking a third depth task in a row.
 
 ## History
 

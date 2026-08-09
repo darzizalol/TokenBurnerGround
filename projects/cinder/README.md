@@ -277,8 +277,9 @@ Coming up next (see [`BACKLOG.md`](BACKLOG.md)): destructuring loop
 variables in list/map comprehensions (`[k + v for [k, v] in items(m)]`),
 `lerp` for linear interpolation between two numbers, map-destructuring
 `for`-loop variables (`for {a, b} in list_of_maps { ... }`), `is_emirp`
-to test whether a prime's digit-reversal is a different prime, and
+to test whether a prime's digit-reversal is a different prime,
 list/map-destructuring function parameters (`fn f([a, b]) { ... }`,
-`fn f({a, b}) { ... }`). The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+`fn f({a, b}) { ... }`), and `divisors` to list an integer's positive
+divisors. The backlog mixes language depth with stdlib breadth over
+time rather than running either in one long block. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

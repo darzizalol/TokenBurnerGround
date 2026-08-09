@@ -417,6 +417,77 @@ Functions bullet needs the destructuring-parameter form mentioned, and
 
 ---
 
+## 6. Standard library: `divisors` — list an integer's positive divisors
+
+Build: add `divisors(n)` to `cinder/builtins.py`, registered right
+after `_is_deficient` (search for `def _is_deficient`) — it's the
+natural value-returning sibling of the `is_perfect_number`/
+`is_abundant`/`is_deficient` cluster, all three of which already do
+their own trial-division-to-`sqrt(n)` walk over divisor pairs and
+discard the individual divisors, keeping only their sum. This is a
+fresh breadth task queued after task 5's depth work (destructuring
+function parameters) per `PROJECT.md`'s breadth-vs-depth policy,
+restarting the alternation after two depth tasks (3, 5) sandwiched a
+single breadth task (4) between them.
+
+`divisors(n)` returns the sorted list of every positive integer that
+evenly divides `n`, including `1` and `n` itself. Mirror
+`_is_perfect_number`'s exact trial-division shape (loop `divisor` from
+`2` to `math.isqrt(value)` inclusive, and for each exact divisor
+collect both `divisor` and its complement `value // divisor` when they
+differ) but collect into a list instead of summing, seed the list with
+`1` the same way `_is_perfect_number` seeds `total = 1` (skip that seed
+when `value == 1`, since `1`'s only divisor is itself, not `1` twice),
+and `sorted(...)` the result before returning — the trial-division walk
+does not yield divisors in sorted order (it finds small/large pairs
+together), so sorting is required, not cosmetic.
+
+Model the arity/type-checking on `_is_perfect_number`'s structure: reuse
+`_require_arity("divisors", arguments, 1, line, column)` and
+`_require_int("divisors", arguments[0], line, column)`. Unlike
+`is_perfect_number`/`is_abundant`/`is_deficient` (which answer `false`
+for `value < 1` or `value < 2`), `n < 1` has no valid divisor list —
+`0` is divisible by everything and negative numbers don't fit the
+"positive divisors" contract — so raise a domain error instead of
+returning an empty list, mirroring `_log`'s own type-vs-domain-error
+split (search `def _log`): a non-int argument is a type error via
+`_require_int`, but `n < 1` is a separate domain error raised
+afterward, `CinderRuntimeError` matching `"divisors() requires a
+positive integer, domain error"`.
+
+Acceptance criteria:
+- `divisors(6);` is `[1, 2, 3, 6]` — the textbook case.
+- `divisors(1);` is `[1]` — the one-element edge case, no doubled `1`.
+- `divisors(13);` is `[1, 13]` — a prime has exactly two divisors.
+- `divisors(28);` is `[1, 2, 4, 7, 14, 28]` — a perfect number's
+  divisors (excluding `28` itself sum to `28`, confirming this shares
+  the same divisor set `is_perfect_number(28)` already validates as
+  `true`).
+- `divisors(100);` is `[1, 2, 4, 5, 10, 20, 25, 50, 100]` — a larger
+  composite with several divisor pairs, confirming results come back
+  sorted rather than in trial-division-discovery order.
+- `divisors(0);` and `divisors(-6);` both raise `CinderRuntimeError`
+  matching `"divisors() requires a positive integer, domain error"`.
+- `divisors(3.0);` (float) raises `CinderRuntimeError` matching
+  `"divisors() requires an int, got float"` — no implicit
+  float-to-int coercion, matching the rest of the integer-property
+  cluster.
+- `divisors(true);` (bool) raises `CinderRuntimeError` matching
+  `"divisors() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_deficient`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `divisors` added near `is_perfect_number`/`is_abundant`/
+`is_deficient`, and `PROJECT.md`'s roadmap paragraph needs it moved
+from backlog to landed — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

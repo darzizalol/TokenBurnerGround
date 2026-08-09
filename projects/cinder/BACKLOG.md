@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_fibonacci` — Fibonacci-membership predicate
+## 1. Standard library: `is_fibonacci` — Fibonacci-membership predicate [claimed 2026-08-09T14:18:24Z]
 
 Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
 after `is_coprime` (search for `def _is_coprime`). This is a fresh

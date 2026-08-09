@@ -92,7 +92,11 @@ while (i < 10) {
   `m.key ??= 1`; the RHS is only evaluated, and the target only written,
   when the current value is `nil`), the safe navigation operator `m?.key`
   (short-circuits to `nil` when `m` is `nil` instead of raising, single
-  level only, composes with `??` for `m?.key ?? default`), and bitwise
+  level only, composes with `??` for `m?.key ?? default`) and its
+  bracket form `obj?.[expr]` (same nil short-circuit, but with an
+  arbitrary index expression — works for computed map keys, e.g.
+  `m?.[key_var]`, and for lists, e.g. `xs?.[0]`/`xs?.[-1]`, neither of
+  which the dot form can express; read-only, no slicing), and bitwise
   operators `&`, `|`, `^`, `~`, `<<`, `>>` (int-only, with a clean runtime
   error on a negative shift count), and the exponentiation operator `**`
   (right-associative, binds tighter than `*`/`/`/`%` and looser than unary
@@ -260,17 +264,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_palindrome_list`
-extending the "reads the same both ways" predicate family to lists, and
-`is_coprime` to test whether two integers share no common divisor but
-`1`. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): safe navigation
-bracket indexing (`obj?.[expr]`, extending the existing `m?.key`
-short-circuit to computed keys and lists), `is_fibonacci` to test
-Fibonacci-sequence membership via a closed-form perfect-square check,
-`is_happy_number` to test the repeated-sum-of-squared-digits
-recurrence, numeric literal underscores (`1_000_000`) for readability,
-and `is_triangular` to test triangular-number membership via the same
-closed-form-perfect-square technique. The backlog mixes language depth
-with stdlib breadth over time rather than running either in one long
-block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_coprime` to test
+whether two integers share no common divisor but `1`, and safe
+navigation bracket indexing (`obj?.[expr]`, extending the existing
+`m?.key` short-circuit to computed keys and lists). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_fibonacci` to test Fibonacci-sequence
+membership via a closed-form perfect-square check, `is_happy_number` to
+test the repeated-sum-of-squared-digits recurrence, numeric literal
+underscores (`1_000_000`) for readability, `is_triangular` to test
+triangular-number membership via the same closed-form-perfect-square
+technique, destructuring loop variables in list/map comprehensions
+(`[k + v for [k, v] in items(m)]`), and `lerp` for linear interpolation
+between two numbers. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -1922,3 +1922,24 @@ for vision/architecture.
   errors) — clean merge, no bounces. `README.md`'s Builtins bullet and
   `PROJECT.md`'s roadmap paragraph still need updating — left to the
   Architect's next grooming pass.
+- **Language: safe navigation bracket indexing `obj?.[expr]`** — merged
+  2026-08-09T14:09:39Z via PR #214 (`feat/20260808-optional-bracket-
+  index`). Extended `_finish_optional_dot` (`cinder/parser.py`) to check
+  for a `[` after `?.` and, when present, parse a plain (non-slice)
+  index the same way `_finish_index` does before building the existing
+  generic `OptionalIndex` node — falling through to the prior
+  identifier-only path otherwise. No interpreter changes were needed:
+  `_evaluate_optional_index` already short-circuited to `nil` on a `nil`
+  receiver and delegated to `_index_get`, the same helper plain `[...]`
+  indexing already used for both lists (with negative-index
+  normalization) and maps. Slicing (`obj?.[a:b]`) is intentionally
+  unsupported and simply falls through to the existing `RBRACKET`
+  consume's normal `ParseError`; assignment through the bracket form was
+  already rejected for free by `_assignment`'s existing target-type
+  check. Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2376
+  tests passing plus CLI/REPL smoke tests covering computed keys,
+  negative indices, nil short-circuiting through nested chains, slice
+  rejection, and assignment rejection) — clean merge, no bounces.
+  `README.md`'s safe navigation bullet and `PROJECT.md`'s roadmap
+  paragraph still need updating — left to the Architect's next grooming
+  pass.

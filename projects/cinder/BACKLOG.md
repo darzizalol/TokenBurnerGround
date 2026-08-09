@@ -11,98 +11,14 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: safe navigation bracket indexing `obj?.[expr]` [DONE — merged PR #214, 2026-08-09T14:09:39Z]
-
-Build: extend the existing safe navigation operator — currently
-dot-only (`m?.key`, short-circuits to `nil` when `m` is `nil` instead of
-raising, single level only; search `QUESTION_DOT` in `cinder/parser.py`)
-— to also accept a bracket form, `obj?.[expr]`, the same relationship
-plain `.`/`[...]` already have for non-optional access (`_finish_dot`
-vs. `_finish_index` in `cinder/parser.py`). Concrete motivation: today
-`?.` only works for map string-key access shaped like an identifier
-(`m?.name`); it has no answer for a computed key (`m?.[key_var]`) or for
-a possibly-`nil` list (`xs?.[0]`), both of which currently have no
-optional-chaining option at all and must fall back to a manual `xs ==
-nil ? nil : xs[0]` ternary.
-
-This is a smaller task than it looks: the AST node and interpreter side
-already do all the work generically. `OptionalIndex` (`cinder/
-ast_nodes.py`) already carries an arbitrary `index: Expr`, not just an
-identifier-derived key — `_finish_optional_dot` (`cinder/parser.py`)
-just happens to always build that index from an `IDENTIFIER` token
-today. `_evaluate_optional_index` (`cinder/interpreter.py`, search `def
-_evaluate_optional_index`) already short-circuits to `nil` on a `nil`
-receiver and otherwise delegates to `_index_get`, the same helper
-`_evaluate_index` uses for plain `[...]` access — `_index_get` already
-handles both lists (with negative-index normalization) and maps. So
-**no interpreter changes are needed at all**; this is a parser-only
-task.
-
-In `_finish_optional_dot` (`cinder/parser.py`, search `def
-_finish_optional_dot`): after consuming the `?.` token, check
-`self._check(TokenType.LBRACKET)` first. If true, consume `[`, parse the
-index the same way `_finish_index` does for a plain (non-slice) index —
-call `self._ternary()` for the index expression, then consume `]` — and
-return `OptionalIndex(obj, index, dot.line, dot.column)`. If false, fall
-through to the existing identifier-based path unchanged. Do **not**
-support slicing in the bracket form (`obj?.[a:b]`) — plain index only;
-if a `:` follows the index expression where `]` is expected, let the
-existing `_consume(TokenType.RBRACKET, ...)` call raise its normal
-`ParseError`, the same way an unexpected token anywhere else does. No
-change is needed to keep `obj?.[expr]` out of assignment position:
-`_assignment` (`cinder/parser.py`) already only special-cases
-`Identifier`/`Index`/`ListLiteral` as valid targets and raises
-`"invalid assignment target"` for anything else, so an `OptionalIndex`
-built from the new bracket form is rejected automatically, exactly like
-the existing dot form already is (see
-`test_optional_dot_access_assignment_raises_parse_error` in
-`tests/test_parser.py`).
-
-Acceptance criteria:
-- `let m = {"a": 1}; m?.["a"];` is `1` — computed-key bracket form on a
-  non-nil map.
-- `let m = nil; m?.["a"];` is `nil` — short-circuits on `nil`, same as
-  the existing dot form.
-- `let xs = [10, 20, 30]; xs?.[1];` is `20` — bracket form works on
-  lists, which the dot form never could (`xs?.1` isn't valid syntax).
-- `let xs = nil; xs?.[0];` is `nil` — short-circuits for lists too.
-- `let key = "a"; let m = {"a": 1}; m?.[key];` is `1` — the index is an
-  arbitrary expression, not just a literal, confirming this isn't just
-  string-literal sugar.
-- `let m = {"a": 1}; m?.[key] ?? "default";` composes with `??`, same
-  as the dot form already does.
-- `let xs = [1, 2, 3]; xs?.[-1];` is `3` — negative-index normalization
-  still applies, since this goes through the same `_index_get` plain
-  indexing already uses.
-- `let m = {"a": 1}; m?.["a"] = 2;` raises `ParseError` ("invalid
-  assignment target") — bracket-form safe navigation is read-only, same
-  as the dot form.
-- `let m = {"a": 1}; m?.[0:1];` raises `ParseError` — no slicing through
-  the optional-bracket form.
-- Existing dot-form safe navigation (`m?.key`) and its own tests are
-  completely unaffected — this task only adds a new branch when `[`
-  follows `?.`.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_finish_optional_dot`), `tests/
-test_parser.py` (extend the `shape()`-based AST assertions alongside
-`test_optional_dot_access_desugars_to_optional_index`), `tests/
-test_interpreter.py` (execution-level tests for the map/list/nil/
-negative-index cases above). Once merged, `README.md`'s safe navigation
-bullet needs `obj?.[expr]` mentioned alongside `m?.key`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_fibonacci` — Fibonacci-membership predicate
+## 1. Standard library: `is_fibonacci` — Fibonacci-membership predicate
 
 Build: add `is_fibonacci(n)` to `cinder/builtins.py`, registered right
-after `is_coprime` (search for `def _is_coprime` — by the time this task
-is claimed, task 1 above will have landed and shifted line numbers).
-This is a fresh breadth task queued after task 1's depth work (safe
-navigation bracket indexing) per `PROJECT.md`'s breadth-vs-depth policy.
-A non-negative integer `n` is a Fibonacci number (`0, 1, 1, 2, 3, 5, 8,
+after `is_coprime` (search for `def _is_coprime`). This is a fresh
+breadth task queued after the safe navigation bracket indexing depth
+task (`obj?.[expr]`, merged as PR #214) per `PROJECT.md`'s
+breadth-vs-depth policy. A non-negative integer `n` is a Fibonacci
+number (`0, 1, 1, 2, 3, 5, 8,
 13, ...`) exactly when `5n² + 4` or `5n² - 4` is a perfect square — do
 **not** implement this by iterating/generating the sequence up to `n`,
 which would be needlessly slow for large `n` given Cinder's
@@ -154,11 +70,11 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_happy_number` — happy-number recurrence predicate
+## 2. Standard library: `is_happy_number` — happy-number recurrence predicate
 
 Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
 right after `is_fibonacci` (search for `def _is_fibonacci` — by the
-time this task is claimed, tasks 1-2 above will have landed and shifted
+time this task is claimed, task 1 above will have landed and shifted
 line numbers). A "happy number" is defined by a recurrence: replace `n`
 with the sum of the squares of its decimal digits, and repeat; `n` is
 happy if this process eventually reaches `1`, unhappy if it instead
@@ -222,7 +138,7 @@ task rather than a third predicate.
 
 ---
 
-## 4. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
+## 3. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
 
 Build: teach the lexer to accept `_` as a digit-group separator in
 integer, float, and prefixed (hex/binary/octal) numeric literals — the
@@ -306,11 +222,11 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `is_triangular` — triangular-number predicate
+## 4. Standard library: `is_triangular` — triangular-number predicate
 
 Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
 after `is_happy_number` (search for `def _is_happy_number` — by the
-time this task is claimed, tasks 1-4 above will have landed and shifted
+time this task is claimed, tasks 1-3 above will have landed and shifted
 line numbers). A non-negative integer `n` is a triangular number (`0,
 1, 3, 6, 10, 15, 21, ...`, the sum `1 + 2 + ... + k` for some `k >= 0`)
 exactly when `8n + 1` is a perfect square — the same closed-form,
@@ -318,7 +234,7 @@ exactly when `8n + 1` is a perfect square — the same closed-form,
 `_is_perfect_square` already use (compute `r = math.isqrt(candidate)`
 and check `r * r == candidate`), not an accumulating loop that adds
 `1, 2, 3, ...` until it reaches or passes `n`. This is a fresh breadth
-task queued after task 4's depth work (numeric literal underscores) per
+task queued after task 3's depth work (numeric literal underscores) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 Model the arity/type-checking on `_is_fibonacci`'s or
@@ -363,7 +279,7 @@ pass, not this task.
 
 ---
 
-## 6. Language: destructuring loop variables in list/map comprehensions
+## 5. Language: destructuring loop variables in list/map comprehensions
 
 Build: extend list comprehensions (`[expr for x in iterable]`) and map
 comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring
@@ -373,7 +289,7 @@ loop variable in place of the single identifier, mirroring the plain
 items(m) { ... }` works as a statement but `[k + v for [k, v] in
 items(m)]` has no comprehension equivalent and must fall back to a
 full statement-form loop building a list by hand with `push`. This is a
-depth task queued after task 5's breadth work (`is_triangular`) per
+depth task queued after task 4's breadth work (`is_triangular`) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 In `cinder/ast_nodes.py`: `ListComprehension` and `MapComprehension`
@@ -441,6 +357,63 @@ Likely files: `cinder/ast_nodes.py` (`ListComprehension`,
 mentioned, and `PROJECT.md`'s roadmap paragraph needs it moved from
 backlog to landed — leave both to the Architect's next grooming pass,
 not this task.
+
+---
+
+## 6. Standard library: `lerp` — linear interpolation
+
+Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
+after `clamp` (search for `def _clamp`) — the two are natural
+neighbors, both simple numeric-range helpers. This is a fresh breadth
+task queued after task 5's depth work (destructuring comprehension loop
+variables) per `PROJECT.md`'s breadth-vs-depth policy. `lerp(a, b, t)`
+linearly interpolates between `a` and `b` by fraction `t`: return
+`a + (b - a) * t`. Unlike `clamp`, do **not** clamp `t` to `[0, 1]` —
+`t` outside that range is valid and extrapolates past `a`/`b`, matching
+the conventional unclamped `lerp` found in most graphics/game-math
+libraries; a caller who wants clamping can compose it explicitly with
+the existing `clamp(t, 0, 1)` builtin.
+
+Model the arity/type-checking on `_clamp`'s structure: reuse
+`_require_arity("lerp", arguments, 3, line, column)`, then check all
+three arguments with `_is_numeric` the same way `_clamp` loops over
+`("first", n), ("second", lo), ("third", hi)` — raise
+`CinderRuntimeError` with a matching per-position message
+(`"lerp() requires a number as its {position} argument, got
+{type_name(value)}"`) for whichever of `a`/`b`/`t` (first/second/third)
+fails. No upper/lower-bound relationship check is needed between `a` and
+`b` (unlike `clamp`'s `lo <= hi` requirement) — `a > b` is a perfectly
+valid interpolation range (interpolating downward), so do not add a
+check that would reject it.
+
+Acceptance criteria:
+- `lerp(0, 10, 0.5);` is `5.0` — the textbook halfway case.
+- `lerp(0, 10, 0);` is `0` and `lerp(0, 10, 1);` is `10` — the
+  fraction's own endpoints return `a` and `b` exactly.
+- `lerp(10, 20, 2);` is `30` — `t` outside `[0, 1]` extrapolates rather
+  than clamping.
+- `lerp(0, 10, -1);` is `-10` — extrapolation works below `0` too.
+- `lerp(20, 10, 0.5);` is `15.0` — `a > b` (interpolating downward) is
+  valid, not an error.
+- `lerp(5, 5, 0.5);` is `5.0` — `a == b` still routes through the same
+  `a + (b - a) * t` formula rather than an `a == b` short-circuit, so
+  the result is float (`5 + 0 * 0.5`) even though the interpolated
+  value never moves; this confirms there's no special-cased early
+  return, just the one general formula.
+- `lerp("0", 10, 0.5);` raises `CinderRuntimeError` matching `"lerp()
+  requires a number as its first argument, got string"`; analogous
+  errors for a non-numeric second or third argument, matching `_clamp`'s
+  own per-position message convention.
+- Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `clamp`, see current
+line numbers — shift if earlier tasks this cycle landed first), `tests/
+test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
+`lerp` added near `clamp`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
 
 ---
 

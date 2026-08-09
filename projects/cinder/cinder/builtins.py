@@ -1401,6 +1401,18 @@ def _clamp(arguments: list, line: int, column: int) -> object:
     return n
 
 
+def _lerp(arguments: list, line: int, column: int) -> object:
+    _require_arity("lerp", arguments, 3, line, column)
+    a, b, t = arguments
+    for position, value in (("first", a), ("second", b), ("third", t)):
+        if not _is_numeric(value):
+            raise CinderRuntimeError(
+                f"lerp() requires a number as its {position} argument, got {type_name(value)}",
+                line, column,
+            )
+    return a + (b - a) * t
+
+
 def _round(arguments: list, line: int, column: int) -> object:
     if len(arguments) == 0:
         raise _arity_error("round", 1, 0, line, column)
@@ -3176,6 +3188,7 @@ _BUILTINS = {
     "min": _min,
     "max": _max,
     "clamp": _clamp,
+    "lerp": _lerp,
     "round": _round,
     "to_fixed": _to_fixed,
     "floor": _floor,

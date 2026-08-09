@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `lerp` — linear interpolation
+## 1. Standard library: `lerp` — linear interpolation [claimed 2026-08-09T19:30:25Z]
 
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural

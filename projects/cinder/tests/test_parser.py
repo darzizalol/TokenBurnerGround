@@ -814,6 +814,35 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse("[...[1, 2] for x in [1, 2]]")
 
+    def test_list_comprehension_destructure_two_names(self):
+        node = parse("[k for [k, v] in items(m)]")
+        self.assertIsInstance(node, ListComprehension)
+        self.assertIsNone(node.var_name)
+        self.assertEqual(node.names, ["k", "v"])
+        self.assertIsNone(node.rest)
+
+    def test_list_comprehension_destructure_single_name(self):
+        node = parse("[a for [a] in xs]")
+        self.assertEqual(node.names, ["a"])
+        self.assertIsNone(node.rest)
+
+    def test_list_comprehension_destructure_with_rest(self):
+        node = parse("[a for [a, ...rest] in xs]")
+        self.assertEqual(node.names, ["a"])
+        self.assertEqual(node.rest, "rest")
+
+    def test_list_comprehension_destructure_with_filter(self):
+        node = parse("[a for [a, b] in xs if a > 1]")
+        self.assertEqual(node.names, ["a", "b"])
+        self.assertEqual(
+            shape(node.condition),
+            ("Binary", ("Identifier", "a"), TokenType.GT, ("Literal", 1)),
+        )
+
+    def test_list_comprehension_destructure_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse("[x for [1, b] in xs]")
+
     def test_plain_list_literal_still_parses_after_comprehension_added(self):
         self.assertEqual(
             shape(parse("[1, 2, 3]")),
@@ -896,6 +925,30 @@ class TestListsAndMaps(unittest.TestCase):
     def test_map_comprehension_spread_head_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse("{...m for x in [1, 2]}")
+
+    def test_map_comprehension_destructure_two_names(self):
+        node = parse("{k: v for [k, v] in items(m)}")
+        self.assertIsInstance(node, MapComprehension)
+        self.assertIsNone(node.var_name)
+        self.assertEqual(node.names, ["k", "v"])
+        self.assertIsNone(node.rest)
+
+    def test_map_comprehension_destructure_with_rest(self):
+        node = parse("{a: rest for [a, ...rest] in xs}")
+        self.assertEqual(node.names, ["a"])
+        self.assertEqual(node.rest, "rest")
+
+    def test_map_comprehension_destructure_with_filter(self):
+        node = parse("{k: v for [k, v] in items(m) if v > 0}")
+        self.assertEqual(node.names, ["k", "v"])
+        self.assertEqual(
+            shape(node.condition),
+            ("Binary", ("Identifier", "v"), TokenType.GT, ("Literal", 0)),
+        )
+
+    def test_map_comprehension_destructure_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse("{x: x for [1, b] in xs}")
 
     def test_plain_map_literal_still_parses_after_comprehension_added(self):
         self.assertEqual(

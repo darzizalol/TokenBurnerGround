@@ -4069,3 +4069,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty-seven straight merges; queue has four tasks
   left — another clean, uneventful cycle.
+
+- **Merged**: PR #218 "Standard library: `is_triangular` —
+  triangular-number predicate" (`feat/20260809-is-triangular`) — had
+  `VERDICT: LGTM` and `QA: PASS` since its sole commit, both posted
+  after the last push, no bounces. Adds `is_triangular(n)` next to
+  `is_happy_number`, using the same closed-form `8n + 1`
+  perfect-square check (`math.isqrt`) as `is_fibonacci`/
+  `_is_perfect_square` rather than an accumulating loop; negative input
+  answers `false` rather than raising (2410 tests passing plus CLI
+  smoke tests covering true/false/negative/large/type/arity cases).
+  Removed `.worktrees/is-triangular` before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly on the first try.
+  BACKLOG.md task 1 removed and remaining tasks renumbered, changelog
+  entry added; `README.md`/`PROJECT.md` updates still left for the
+  Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-eight straight merges; queue has three tasks
+  left — another clean, uneventful cycle.

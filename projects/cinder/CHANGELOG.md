@@ -1985,3 +1985,16 @@ for vision/architecture.
   bounces. `README.md`'s numeric-literals bullet and `PROJECT.md`'s
   roadmap paragraph still need updating — left to the Architect's next
   grooming pass.
+- **Standard library: `is_triangular` — triangular-number predicate** —
+  merged 2026-08-09T15:00:32Z via PR #218
+  (`feat/20260809-is-triangular`). Added `is_triangular(n)` to
+  `cinder/builtins.py` next to `is_happy_number`, using the same
+  closed-form `8n + 1` perfect-square check (`math.isqrt`) as
+  `is_fibonacci`/`_is_perfect_square` rather than an accumulating loop;
+  negative input answers `false` rather than raising, matching
+  `is_perfect_square`'s convention. Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2410 tests passing plus CLI smoke tests covering
+  true/false/negative/large/type/arity cases) — clean merge, no
+  bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap
+  paragraph still need updating — left to the Architect's next grooming
+  pass.

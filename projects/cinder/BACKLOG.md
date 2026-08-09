@@ -11,64 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_triangular` — triangular-number predicate [claimed 2026-08-09T14:55:38Z]
-
-Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
-after `is_happy_number` (search for `def _is_happy_number` — by the
-time this task is claimed, tasks 1-2 above will have landed and shifted
-line numbers). A non-negative integer `n` is a triangular number (`0,
-1, 3, 6, 10, 15, 21, ...`, the sum `1 + 2 + ... + k` for some `k >= 0`)
-exactly when `8n + 1` is a perfect square — the same closed-form,
-`math.isqrt`-based exact-integer technique `is_fibonacci` and
-`_is_perfect_square` already use (compute `r = math.isqrt(candidate)`
-and check `r * r == candidate`), not an accumulating loop that adds
-`1, 2, 3, ...` until it reaches or passes `n`. This is a fresh breadth
-task queued after task 2's depth work (numeric literal underscores) per
-`PROJECT.md`'s breadth-vs-depth policy.
-
-Model the arity/type-checking on `_is_fibonacci`'s or
-`_is_happy_number`'s structure: reuse `_require_arity("is_triangular",
-arguments, 1, line, column)` and `_require_int("is_triangular",
-arguments[0], line, column)`. Negative input is not an error — mirror
-`_is_perfect_square`'s own convention of answering `false` on negative
-input rather than raising, since triangular numbers are only ever
-defined for `n >= 0`.
-
-Acceptance criteria:
-- `is_triangular(0);` is `true`, `is_triangular(1);` is `true` — the
-  degenerate (`k = 0`) and first (`k = 1`) cases.
-- `is_triangular(3);` is `true`, `is_triangular(6);` is `true`,
-  `is_triangular(10);` is `true`, `is_triangular(15);` is `true`,
-  `is_triangular(21);` is `true`.
-- `is_triangular(2);` is `false`, `is_triangular(4);` is `false`,
-  `is_triangular(5);` is `false`, `is_triangular(100);` is `false` —
-  non-members between/around real triangular numbers.
-- `is_triangular(-6);` is `false` — negative input answers `false`
-  rather than raising, matching `is_perfect_square`'s convention.
-- `is_triangular(500500);` is `true` — a larger, real triangular number
-  (sum `1` through `1000`), confirming the closed-form test rather than
-  an unrolled lookup table of small cases.
-- `is_triangular(3.0);` (float) raises `CinderRuntimeError` matching
-  `"is_triangular() requires an int, got float"` — no implicit
-  float-to-int coercion, matching the rest of the integer-property
-  cluster.
-- `is_triangular(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_triangular() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_happy_number`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_triangular` added near `is_perfect_square`/
-`is_fibonacci`, and `PROJECT.md`'s roadmap paragraph needs it moved
-from backlog to landed — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: destructuring loop variables in list/map comprehensions
+## 1. Language: destructuring loop variables in list/map comprehensions
 
 Build: extend list comprehensions (`[expr for x in iterable]`) and map
 comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring
@@ -149,7 +92,7 @@ not this task.
 
 ---
 
-## 3. Standard library: `lerp` — linear interpolation
+## 2. Standard library: `lerp` — linear interpolation
 
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural
@@ -206,7 +149,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
+## 3. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
 
 Build: `for`-loops already accept a list-destructuring loop variable
 (`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in
@@ -295,7 +238,7 @@ test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
 
 ---
 
-## 5. Standard library: `is_emirp` — emirp predicate
+## 4. Standard library: `is_emirp` — emirp predicate
 
 Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
 `_is_composite` (search for `def _is_composite`) — it's the natural

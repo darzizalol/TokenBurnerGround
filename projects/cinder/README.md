@@ -134,16 +134,19 @@ while (i < 10) {
   assignable); list literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   list comprehensions `[expr for x in iterable]` and `[expr for x in
-  iterable if cond]` (single non-destructuring loop variable, one optional
-  filter clause, no nesting; a fresh per-iteration scope so closures built
-  inside the comprehension capture their own iteration's binding);
+  iterable if cond]` (a single loop variable, one optional filter clause,
+  no nesting; a fresh per-iteration scope so closures built inside the
+  comprehension capture their own iteration's binding), including a
+  list-destructuring loop variable (`[k + v for [k, v] in items(m)]`,
+  same flat positional binding and optional trailing rest element as a
+  `for`-loop's own list-destructuring form);
   map literals accept spread elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; map
   comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
-  if cond}` (same shape as list comprehensions — single non-destructuring
-  loop variable, one optional filter clause, no nesting, fresh
-  per-iteration scope; colliding keys collapse to the last write, same as
-  a plain map literal); dot access
+  if cond}` (same shape as list comprehensions — one optional filter
+  clause, no nesting, fresh per-iteration scope, and the same
+  list-destructuring loop variable support; colliding keys collapse to
+  the last write, same as a plain map literal); dot access
   sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
   an assignment/`++`/`--`/compound-assign target (arithmetic and
   bitwise/shift alike, e.g. `m.key += 1`); only identifier-shaped keys
@@ -269,15 +272,13 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: numeric literal
-underscores (`1_000_000`, `0xFF_FF`, `3.14_159`) as a digit-group
-separator, and `is_triangular` to test triangular-number membership via
-the same closed-form-perfect-square technique as `is_fibonacci`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): destructuring loop
+Actively developed, nightly. Recently landed: destructuring loop
 variables in list/map comprehensions (`[k + v for [k, v] in items(m)]`),
-`lerp` for linear interpolation between two numbers, map-destructuring
-`for`-loop variables (`for {a, b} in list_of_maps { ... }`), `is_emirp`
-to test whether a prime's digit-reversal is a different prime,
+building on the plain `for`-loop's own list-destructuring support.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `lerp` for linear
+interpolation between two numbers, map-destructuring `for`-loop
+variables (`for {a, b} in list_of_maps { ... }`), `is_emirp` to test
+whether a prime's digit-reversal is a different prime,
 list/map-destructuring function parameters (`fn f([a, b]) { ... }`,
 `fn f({a, b}) { ... }`), and `divisors` to list an integer's positive
 divisors. The backlog mixes language depth with stdlib breadth over

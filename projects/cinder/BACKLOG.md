@@ -11,74 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_happy_number` — happy-number recurrence predicate [DONE — merged PR #216, 2026-08-09T14:34:55Z]
-
-Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
-right after `is_fibonacci` (search for `def _is_fibonacci`). A "happy
-number" is defined by a recurrence: replace `n`
-with the sum of the squares of its decimal digits, and repeat; `n` is
-happy if this process eventually reaches `1`, unhappy if it instead
-falls into a cycle that never includes `1` (every non-happy positive
-integer provably cycles rather than diverging — the classic example is
-`4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 -> 20 -> 4`, repeating forever).
-Detect the cycle with a `set` of previously-seen values: loop computing
-the next value, and at each step return `True` the moment the value
-becomes `1`, or return `False` the moment the value repeats a
-previously-seen one (add each new value to the set before computing the
-next). Do **not** cap the loop at a fixed iteration count as a
-cycle-detection substitute — that risks misclassifying a slow-to-cycle
-unhappy number as happy (or vice versa) if the cap is too low; the
-seen-set approach is exact and terminates on every input since the
-digit-square-sum of any number below `10^k` is bounded, forcing a
-revisit within finitely many steps.
-
-Model the arity/type-checking on `_is_fibonacci`'s or
-`_is_perfect_square`'s structure: reuse `_require_arity("is_happy_number",
-arguments, 1, line, column)` and `_require_int("is_happy_number",
-arguments[0], line, column)`. Negative input is not an error — mirror
-`_is_perfect_square`'s own convention of answering `false` on negative
-input rather than raising, since the digit-square-sum recurrence is
-only conventionally defined for non-negative integers.
-
-Acceptance criteria:
-- `is_happy_number(1);` is `true` — the base case, zero steps needed.
-- `is_happy_number(7);` is `true` — `7 -> 49 -> 97 -> 130 -> 10 -> 1`.
-- `is_happy_number(19);` is `true` — a slightly longer chain:
-  `19 -> 82 -> 68 -> 100 -> 1`.
-- `is_happy_number(4);` is `false` — falls into the canonical
-  `4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 -> 20 -> 4` cycle.
-- `is_happy_number(2);` is `false`, `is_happy_number(3);` is `false` —
-  both eventually reach the same `4`-cycle.
-- `is_happy_number(0);` is `false` — `0` maps to itself
-  (`0 -> 0`), an immediate one-value cycle that never includes `1`.
-- `is_happy_number(-7);` is `false` — negative input answers `false`
-  rather than raising, matching `is_perfect_square`'s convention.
-- `is_happy_number(97);` is `true` — a larger multi-digit happy number,
-  confirming the recurrence handles more than one digit-squaring pass.
-- `is_happy_number(3.0);` (float) raises `CinderRuntimeError` matching
-  `"is_happy_number() requires an int, got float"` — no implicit
-  float-to-int coercion, matching the rest of the integer-property
-  cluster.
-- `is_happy_number(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_happy_number() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_fibonacci`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `is_happy_number` added near `is_perfect_square`/`is_fibonacci`,
-and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task. This is the second breadth task queued back-to-back with
-`is_fibonacci`; per `PROJECT.md`'s breadth-vs-depth policy, the next
-grooming pass after this task is claimed should inject a language-depth
-task rather than a third predicate.
-
----
-
-## 2. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
+## 1. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`)
 
 Build: teach the lexer to accept `_` as a digit-group separator in
 integer, float, and prefixed (hex/binary/octal) numeric literals — the
@@ -162,7 +95,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `is_triangular` — triangular-number predicate
+## 2. Standard library: `is_triangular` — triangular-number predicate
 
 Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
 after `is_happy_number` (search for `def _is_happy_number` — by the
@@ -219,7 +152,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: destructuring loop variables in list/map comprehensions
+## 3. Language: destructuring loop variables in list/map comprehensions
 
 Build: extend list comprehensions (`[expr for x in iterable]`) and map
 comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring
@@ -229,7 +162,7 @@ loop variable in place of the single identifier, mirroring the plain
 items(m) { ... }` works as a statement but `[k + v for [k, v] in
 items(m)]` has no comprehension equivalent and must fall back to a
 full statement-form loop building a list by hand with `push`. This is a
-depth task queued after task 3's breadth work (`is_triangular`) per
+depth task queued after task 2's breadth work (`is_triangular`) per
 `PROJECT.md`'s breadth-vs-depth policy.
 
 In `cinder/ast_nodes.py`: `ListComprehension` and `MapComprehension`
@@ -300,12 +233,12 @@ not this task.
 
 ---
 
-## 5. Standard library: `lerp` — linear interpolation
+## 4. Standard library: `lerp` — linear interpolation
 
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural
 neighbors, both simple numeric-range helpers. This is a fresh breadth
-task queued after task 4's depth work (destructuring comprehension loop
+task queued after task 3's depth work (destructuring comprehension loop
 variables) per `PROJECT.md`'s breadth-vs-depth policy. `lerp(a, b, t)`
 linearly interpolates between `a` and `b` by fraction `t`: return
 `a + (b - a) * t`. Unlike `clamp`, do **not** clamp `t` to `[0, 1]` —
@@ -354,6 +287,95 @@ test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
 `lerp` added near `clamp`, and `PROJECT.md`'s roadmap paragraph needs it
 moved from backlog to landed — leave both to the Architect's next
 grooming pass, not this task.
+
+---
+
+## 5. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
+
+Build: `for`-loops already accept a list-destructuring loop variable
+(`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in
+`cinder/ast_nodes.py`), and `let` already accepts a map-destructuring
+pattern (`let {a, b} = expr;`, `DestructureLetStmt.is_map`) — but the
+two features were never crossed: there is no way to write
+`for {a, b} in list_of_maps { ... }` to destructure each map in an
+iterable of maps by key, so a caller who wants that today must fall
+back to `for m in list_of_maps { let a = m.a; let b = m.b; ... }`. This
+is the depth task queued after task 4's breadth work (`lerp`) per
+`PROJECT.md`'s breadth-vs-depth policy.
+
+In `cinder/ast_nodes.py`: `ForStmt` currently carries `names`/`rest`
+(list-pattern only) with no way to say "this pattern is a map pattern."
+Add an `is_map: bool = False` field, the same field
+`DestructureLetStmt` already has, defaulting to `False` so every
+existing `ForStmt` construction site (list-destructuring and plain
+identifier) is unaffected.
+
+In `cinder/parser.py`: `_destructure_let_statement` (search `def
+_destructure_let_statement`) currently inlines its map-pattern parsing
+directly in an `if is_map:` branch — consume `{`, read a
+comma-separated list of plain identifiers via
+`self._consume(TokenType.IDENTIFIER, "identifier in destructuring
+pattern")`, consume `}`. Extract that identifier-collecting loop (not
+the `{`/`}` consumption around it, since `_for_statement` needs its own
+brace handling) into a new helper `_destructure_map_pattern(self) ->
+list`, mirroring the existing `_destructure_list_pattern`'s shape
+(consumes its own delimiters, returns just `names` — no `rest`, since
+map patterns don't have one, matching `let {a, b} = expr;`'s own
+no-rest behavior). Call it from `_destructure_let_statement` in place
+of the inlined loop. Then in `_for_statement` (search `def
+_for_statement`), add an `elif self._check(TokenType.LBRACE):` branch
+alongside the existing `if self._check(TokenType.LBRACKET):` branch,
+calling `self._destructure_map_pattern()` to get `names` and setting a
+new local `is_map = True` (default `False` otherwise), and pass
+`is_map=is_map` through to the `ForStmt(...)` construction at the end
+of the function.
+
+In `cinder/interpreter.py`: `_execute_for` (search `def _execute_for`)
+currently does `if stmt.names is not None:
+self._bind_list_destructure(...) else: iter_env.define(stmt.var_name,
+item)`. Change the `if stmt.names is not None:` branch to check
+`stmt.is_map` first: when `True`, call the existing
+`self._bind_map_destructure(iter_env, stmt.names, item, stmt.line,
+stmt.column)` (already used by `DestructureLetStmt` and
+`DestructureAssign`, raises a clean `CinderRuntimeError` if `item` isn't
+a map or is missing an expected key); otherwise keep the existing
+`_bind_list_destructure` call unchanged.
+
+Acceptance criteria:
+- `for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}] { print(a + b); }`
+  prints `3` then `7` — the motivating case.
+- `for {a} in [{"a": 1}, {"a": 2}] { print(a); }` prints `1` then `2` —
+  a single-name pattern works too, not just multi-name.
+- `for {a} in [{"a": 1}, 5] { print(a); }` raises `CinderRuntimeError`
+  matching `"cannot destructure int as a map"` the moment the
+  non-map item is reached — same error `_bind_map_destructure` already
+  raises for `let {a} = 5;`, not a silent skip.
+- `for {a, b} in [{"a": 1}] { print(a); }` raises `CinderRuntimeError`
+  matching `"destructuring pattern expects key 'b', not found in map"`
+  — a map missing an expected key fails the same way `let {a, b} =
+  {"a": 1};` already does.
+- `for {a, ...rest} in [...]` raises a `ParseError` (expected an
+  identifier, found `...`) — map patterns have no rest element, exactly
+  like `let {a, ...rest} = expr;` already has none; nothing new needs
+  building for this, it falls out of `_destructure_map_pattern` only
+  ever consuming identifiers.
+- A labeled map-pattern loop works with `break`/`continue` targeting an
+  outer loop: `outer: for {a} in [{"a": 1}] { for x in [1] { break
+  outer; } }` exits cleanly.
+- Existing list-destructuring for-loops (`for [k, v] in items(m) {
+  ... }`) and plain-identifier for-loops are completely unaffected.
+- `let {a, b} = expr;`'s own existing map-destructuring behavior is
+  unaffected now that it calls the extracted `_destructure_map_pattern`
+  helper instead of its old inlined loop.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`ForStmt`), `cinder/parser.py`
+(`_destructure_let_statement`, new `_destructure_map_pattern`,
+`_for_statement`), `cinder/interpreter.py` (`_execute_for`), `tests/
+test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
+`for`-loop bullet needs the map-destructuring form mentioned, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
+— leave both to the Architect's next grooming pass, not this task.
 
 ---
 

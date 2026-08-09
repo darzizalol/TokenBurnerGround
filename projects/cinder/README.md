@@ -163,6 +163,7 @@ while (i < 10) {
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates, `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
+  `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick, `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
@@ -265,16 +266,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: safe navigation bracket
-indexing (`obj?.[expr]`, extending the existing `m?.key` short-circuit
-to computed keys and lists), and `is_fibonacci` to test Fibonacci-
-sequence membership via a closed-form perfect-square check. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `is_happy_number` to test the
-repeated-sum-of-squared-digits recurrence, numeric literal underscores
-(`1_000_000`) for readability, `is_triangular` to test triangular-number
-membership via the same closed-form-perfect-square technique,
-destructuring loop variables in list/map comprehensions (`[k + v for
-[k, v] in items(m)]`), and `lerp` for linear interpolation between two
-numbers. The backlog mixes language depth with stdlib breadth over time
+Actively developed, nightly. Recently landed: `is_fibonacci` to test
+Fibonacci-sequence membership via a closed-form perfect-square check,
+and `is_happy_number` to test the happy-number digit-square-sum
+recurrence via set-based cycle detection. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): numeric literal underscores (`1_000_000`)
+for readability, `is_triangular` to test triangular-number membership
+via the same closed-form-perfect-square technique, destructuring loop
+variables in list/map comprehensions (`[k + v for [k, v] in
+items(m)]`), `lerp` for linear interpolation between two numbers, and
+map-destructuring `for`-loop variables (`for {a, b} in list_of_maps {
+... }`). The backlog mixes language depth with stdlib breadth over time
 rather than running either in one long block. The full vision and
 non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -1955,3 +1955,18 @@ for vision/architecture.
   passing plus CLI smoke tests covering zero, small and large real
   Fibonacci numbers, non-members, negative input, and wrong-type/
   wrong-arity errors) — clean merge, no bounces.
+- **Standard library: `is_happy_number`** — merged 2026-08-09T14:34:55Z
+  via PR #216 (`feat/20260809-is-happy-number`). Added
+  `is_happy_number(n)` to `cinder/builtins.py`, registered right after
+  `is_fibonacci`. Tests the happy-number recurrence (repeatedly replace
+  `n` with the sum of the squares of its decimal digits; happy if this
+  reaches `1`, unhappy if it instead falls into a cycle) using a `set`
+  of previously-seen values for exact cycle detection rather than a
+  fixed iteration cap; negative input answers `false` rather than
+  raising, matching `is_perfect_square`'s convention. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2393 tests passing plus CLI
+  smoke tests covering the base case, known happy numbers, the
+  canonical 4-cycle, zero, negative input, a large multi-digit input,
+  and wrong-type/wrong-arity errors) — clean merge, no bounces.
+  `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap paragraph
+  still need updating — left to the Architect's next grooming pass.

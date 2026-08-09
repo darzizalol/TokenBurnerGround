@@ -1998,3 +1998,20 @@ for vision/architecture.
   bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap
   paragraph still need updating — left to the Architect's next grooming
   pass.
+- **Language: destructuring loop variables in list/map comprehensions**
+  — merged 2026-08-09T19:23:48Z via PR #219
+  (`feat/20260809-destructuring-comprehension`). Extended
+  `ListComprehension`/`MapComprehension` (`cinder/ast_nodes.py`) with
+  optional `names`/`rest` fields alongside `var_name`, mirroring
+  `ForStmt`; parser and interpreter reuse the existing
+  `_destructure_list_pattern()` and `_bind_list_destructure()` helpers
+  already shared by for-loops and `let`-destructuring, so error
+  behavior (non-list item, wrong pattern arity) matches the for-loop
+  exactly. Reviewer gave `VERDICT: LGTM` (with a non-blocking cosmetic
+  nit about a stray assertion in `test_destructure_with_filter`) and QA
+  gave `QA: PASS` (2427 tests passing plus CLI smoke tests covering
+  list/map comprehension destructuring, rest elements, `if` filters,
+  and non-list/wrong-arity error cases) — clean merge, no bounces.
+  `README.md`'s comprehension bullets and `PROJECT.md`'s roadmap
+  paragraph still need updating — left to the Architect's next grooming
+  pass.

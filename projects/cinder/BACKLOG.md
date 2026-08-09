@@ -11,88 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring loop variables in list/map comprehensions [claimed 2026-08-09T19:17:14Z]
-
-Build: extend list comprehensions (`[expr for x in iterable]`) and map
-comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring
-loop variable in place of the single identifier, mirroring the plain
-`for`-loop's own `for [k, v] in items(m) { ... }` support (`ForStmt`'s
-`names`/`rest` fields, `cinder/ast_nodes.py`) — today `for [k, v] in
-items(m) { ... }` works as a statement but `[k + v for [k, v] in
-items(m)]` has no comprehension equivalent and must fall back to a
-full statement-form loop building a list by hand with `push`. This is
-the depth task queued after `is_triangular` landed (breadth work) per
-`PROJECT.md`'s breadth-vs-depth policy.
-
-In `cinder/ast_nodes.py`: `ListComprehension` and `MapComprehension`
-currently carry a single `var_name: str` field. Add `names: "list |
-None" = None` and `rest: "str | None" = None` fields to both, the same
-shape `ForStmt` already uses, and make `var_name` accept `None` (used
-when `names` is set instead, exactly like `ForStmt.var_name` already
-can be `None`).
-
-In `cinder/parser.py`: `_list_comprehension` and `_map_comprehension`
-currently do `var_token = self._consume(TokenType.IDENTIFIER, "loop
-variable after 'for'")` unconditionally. Change both to check
-`self._check(TokenType.LBRACKET)` first — if true, call the existing
-`self._destructure_list_pattern()` helper (search `def
-_destructure_list_pattern`, already used by `_for_statement` for
-exactly this purpose) to get `names, rest`, and construct the
-`ListComprehension`/`MapComprehension` with `var_name=None,
-names=names, rest=rest`; otherwise fall through to the existing
-identifier-based path unchanged (`var_name=var_token.lexeme,
-names=None, rest=None`).
-
-In `cinder/interpreter.py`: `_evaluate_list_comprehension` and
-`_evaluate_map_comprehension` currently do `iter_env.define(expr.
-var_name, item)` unconditionally each iteration. Change both to mirror
-`_execute_for`'s own branch (search `def _execute_for`, look at its
-`if stmt.names is not None: self._bind_list_destructure(...)` vs.
-`else: iter_env.define(stmt.var_name, item)` split): if `expr.names is
-not None`, call the existing `self._bind_list_destructure(iter_env,
-expr.names, expr.rest, item, expr.line, expr.column)` helper (already
-used by `_execute_for` and `DestructureLetStmt`, raises a clean
-`CinderRuntimeError` if `item` isn't a list); otherwise keep the
-existing `iter_env.define(expr.var_name, item)` line unchanged.
-
-Acceptance criteria:
-- `[k + "=" + str(v) for [k, v] in items({"a": 1, "b": 2})]` produces
-  a list with `"a=1"` and `"b=2"` (order matches `items`' own key
-  order) — destructuring works for list comprehensions over map
-  entries, the motivating case.
-- `{k: v * 2 for [k, v] in items({"a": 1, "b": 2})}` produces `{"a": 2,
-  "b": 4}` — destructuring works for map comprehensions too.
-- `[a + b for [a, b] in [[1, 2], [3, 4], [5, 6]]]` is `[3, 7, 11]` —
-  works over a plain list of lists, not just `items()` output.
-- `[a for [a, ...rest] in [[1, 2, 3], [4, 5]]]` is `[1, 4]` and
-  `[rest for [a, ...rest] in [[1, 2, 3], [4, 5]]]` is `[[2, 3], [5]]` —
-  the trailing rest element works in comprehensions exactly as it does
-  in `for [a, ...rest] in ... { ... }`.
-- `[x for [a, b] in [[1, 2], 3]]` (a non-list element partway through
-  the iterable) raises `CinderRuntimeError` — same error `_bind_list_
-  destructure` already raises for `for [a, b] in ... { ... }` on a
-  non-list item, not a silent skip or Python-level crash.
-- The optional `if` filter clause still works after a destructuring
-  loop variable: `[a for [a, b] in [[1, 2], [3, 4]] if a > 1]` is
-  `[3]`, and the filter expression can reference the destructured
-  names.
-- Existing single-identifier comprehensions (`[x * 2 for x in xs]`,
-  `{x: x for x in xs}`) and their own tests are completely unaffected.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`ListComprehension`,
-`MapComprehension`), `cinder/parser.py` (`_list_comprehension`,
-`_map_comprehension`), `cinder/interpreter.py`
-(`_evaluate_list_comprehension`, `_evaluate_map_comprehension`),
-`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
-`README.md`'s comprehension bullets need the destructuring form
-mentioned, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Standard library: `lerp` — linear interpolation
+## 1. Standard library: `lerp` — linear interpolation
 
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural
@@ -149,7 +68,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
+## 2. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
 
 Build: `for`-loops already accept a list-destructuring loop variable
 (`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in
@@ -238,7 +157,7 @@ test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
 
 ---
 
-## 4. Standard library: `is_emirp` — emirp predicate
+## 3. Standard library: `is_emirp` — emirp predicate
 
 Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
 `_is_composite` (search for `def _is_composite`) — it's the natural
@@ -309,7 +228,7 @@ bullet needs `is_emirp` added near `is_prime`/`is_composite`, and
 
 ---
 
-## 5. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
+## 4. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
 
 Build: extend function-parameter parsing/binding — shared by named
 `fn` declarations, anonymous `fn` expressions, and parenthesized arrow
@@ -417,7 +336,7 @@ Functions bullet needs the destructuring-parameter form mentioned, and
 
 ---
 
-## 6. Standard library: `divisors` — list an integer's positive divisors
+## 5. Standard library: `divisors` — list an integer's positive divisors
 
 Build: add `divisors(n)` to `cinder/builtins.py`, registered right
 after `_is_deficient` (search for `def _is_deficient`) — it's the

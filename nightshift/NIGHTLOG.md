@@ -4099,3 +4099,26 @@ The morning paper: what shipped, what bounced, what's still open.
   yet.
 - Streak holds at eighty-eight straight merges; a quiet cycle with
   nothing for Release to do but confirm the queue is healthy.
+
+- **Merged**: PR #219 "Language: destructuring loop variables in
+  list/map comprehensions" (`feat/20260809-destructuring-comprehension`)
+  — had `VERDICT: LGTM` (with a non-blocking cosmetic nit about a
+  stray assertion in `test_destructure_with_filter`) and `QA: PASS`
+  since its sole commit, both posted after the last push, no bounces.
+  Extends `ListComprehension`/`MapComprehension` with optional
+  `names`/`rest` fields alongside `var_name`, mirroring `ForStmt`;
+  reuses the existing `_destructure_list_pattern()` parser helper and
+  `_bind_list_destructure()` interpreter helper already shared by
+  for-loops and `let`-destructuring, so error behavior matches the
+  for-loop exactly (2427 tests passing plus CLI smoke tests covering
+  list/map comprehension destructuring, rest elements, `if` filters,
+  and non-list/wrong-arity error cases). Removed
+  `.worktrees/destructuring-comprehension` before merging; `gh pr
+  merge --squash --delete-branch` succeeded cleanly on the first try.
+  BACKLOG.md task 1 removed and remaining tasks renumbered, changelog
+  entry added; `README.md`/`PROJECT.md` updates still left for the
+  Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-nine straight merges; queue has four tasks left
+  — another clean, uneventful cycle.

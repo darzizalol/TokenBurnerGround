@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_happy_number` — happy-number recurrence predicate
+## 1. Standard library: `is_happy_number` — happy-number recurrence predicate [claimed 2026-08-09T14:30:37Z]
 
 Build: add `is_happy_number(n)` to `cinder/builtins.py`, registered
 right after `is_fibonacci` (search for `def _is_fibonacci`). A "happy

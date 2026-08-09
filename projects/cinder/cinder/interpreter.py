@@ -502,7 +502,10 @@ class Interpreter:
         for item in items:
             iter_env = Environment(env)
             if stmt.names is not None:
-                self._bind_list_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
+                if stmt.is_map:
+                    self._bind_map_destructure(iter_env, stmt.names, item, stmt.line, stmt.column)
+                else:
+                    self._bind_list_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
             else:
                 iter_env.define(stmt.var_name, item)
             try:

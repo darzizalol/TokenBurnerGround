@@ -335,6 +335,7 @@ class ForStmt:
     label: "str | None" = None
     names: "list | None" = None
     rest: "str | None" = None
+    is_map: bool = False
 
 
 @dataclass(frozen=True)

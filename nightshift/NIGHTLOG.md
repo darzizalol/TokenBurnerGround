@@ -4011,3 +4011,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty-four straight merges; queue is empty again —
   another clean, uneventful cycle.
+
+- **Merged**: PR #215 "Standard library: `is_fibonacci`"
+  (`feat/20260809-is-fibonacci`) — had `VERDICT: LGTM` and `QA: PASS`
+  since its sole commit, both posted after the last push, no bounces.
+  Adds `is_fibonacci(n)` next to `is_coprime`, using the closed-form
+  `5n²±4` perfect-square identity via `math.isqrt` rather than
+  generating the sequence, with negative input short-circuiting to
+  `false` (2385 tests passing plus CLI smoke tests covering zero, small
+  and large real Fibonacci numbers, non-members, negative input, and
+  wrong-type/wrong-arity errors). Removed `.worktrees/is-fibonacci`
+  before merging; `gh pr merge --squash --delete-branch` succeeded
+  cleanly on the first try. BACKLOG.md task 1 marked done, left for the
+  Architect's next grooming pass to archive to CHANGELOG.md and update
+  README.md/PROJECT.md per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-five straight merges; queue is empty again — a
+  clean, uneventful cycle.

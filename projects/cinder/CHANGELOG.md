@@ -1970,3 +1970,18 @@ for vision/architecture.
   and wrong-type/wrong-arity errors) — clean merge, no bounces.
   `README.md`'s Builtins bullet and `PROJECT.md`'s roadmap paragraph
   still need updating — left to the Architect's next grooming pass.
+- **Language: numeric literal underscores (`1_000_000`, `0xFF_FF`,
+  `3.14_159`)** — merged 2026-08-09T14:48:59Z via PR #217
+  (`feat/20260809-numeric-underscores`). Taught `_number` and
+  `_prefixed_int` in `cinder/lexer.py` to accept `_` as a digit-group
+  separator, only consumed between two valid digits (leading, trailing,
+  and doubled underscores stop consumption rather than raising, falling
+  through to identifier/error handling exactly like any other
+  non-digit character). `lexeme` keeps the raw underscores; `value_str`/
+  `int()`/`float()` conversion strips them first. Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2402 tests passing plus CLI
+  smoke tests covering hex/binary/octal/float/int forms and the
+  trailing/doubled/leading-underscore edge cases) — clean merge, no
+  bounces. `README.md`'s numeric-literals bullet and `PROJECT.md`'s
+  roadmap paragraph still need updating — left to the Architect's next
+  grooming pass.

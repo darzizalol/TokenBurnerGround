@@ -11,91 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: numeric literal underscores (`1_000_000`, `0xFF_FF`, `3.14_159`) [claimed 2026-08-09T14:42:45Z]
-
-Build: teach the lexer to accept `_` as a digit-group separator in
-integer, float, and prefixed (hex/binary/octal) numeric literals — the
-same readability convenience Python's own literal syntax offers, e.g.
-`1_000_000`, `3.14_159`, `0xFF_FF`, `0b1010_0101`. This is a
-lexer-only, single-session depth task queued per `PROJECT.md`'s
-breadth-vs-depth policy after two stdlib-breadth tasks (`is_fibonacci`,
-`is_happy_number`) in a row above.
-
-In `_number` (`cinder/lexer.py`, search `def _number`): the digit-scan
-loops currently read `while self._peek().isdigit(): digits.append(self.
-_advance())` in two places (the integer-part loop and, inside the
-`is_float` branch, the fractional-part loop). Change the loop condition
-in both places to also accept `_`, but only append it to `digits` if it
-is *between* two digits — i.e. only consume the `_` (advancing past it
-without appending) when `self._peek() == "_"` and the *previous*
-character read was a digit and `self._peek_next()` is also a digit;
-otherwise the `_` is not part of the literal at all and scanning stops
-there (so `1_` lexes as the INT `1` followed by whatever `_` starts —
-an identifier token — exactly like today's behavior for any other
-trailing non-digit character; do not raise for a trailing/leading/
-doubled underscore, just stop consuming, matching how `_number` already
-treats `.` when not followed by a digit, see the existing `self._peek()
-== "." and self._peek_next().isdigit()` guard immediately below the
-integer-part loop). The float-literal decimal point check itself
-(`self._peek() == "." and self._peek_next().isdigit()`) needs no
-change — an underscore adjacent to the `.` (`1_.5` or `1._5`) simply
-isn't consumed by either digit-scan loop, so the number lexes as `1`
-(or `1_` per the rule above) followed by separate `.`/`5` tokens, which
-already produces a `ParseError` downstream since `.5` alone isn't a
-valid statement — no new lexer-level error is needed for that case.
-Strip underscores from the collected `digits` list before joining into
-`lexeme` for `int()`/`float()` conversion (`"".join(c for c in digits
-if c != "_")`), but keep them in the token's own `lexeme` field
-(`"".join(digits)`) so error messages and `str()`-of-token round-trip
-the original source text.
-
-In `_prefixed_int` (`cinder/lexer.py`, search `def _prefixed_int`):
-apply the same treatment to its digit-scan loop
-(`while self._peek().isalnum(): ...`) — accept `_` under the identical
-between-two-valid-digits rule (previous character consumed was a valid
-digit for this base, and `self._peek_next()` is also alnum), stopping
-consumption otherwise. Do **not** allow `_` immediately after the
-`0x`/`0b`/`0o` prefix (`0x_FF`) — there is no "previous digit" at that
-position, so the existing rule already excludes it with no extra code.
-Strip underscores before the `int(..., base)` conversion the same way,
-keep them in `lexeme`.
-
-Acceptance criteria:
-- `1_000_000;` evaluates as the `INT` `1000000`.
-- `3.14_159;` evaluates as the `FLOAT` `3.14159`.
-- `0xFF_FF;` evaluates as the `INT` `65535`, `0b1010_0101;` evaluates as
-  `165`, `0o17_7;` evaluates as `127`.
-- `1_2_3;` evaluates as `123` — multiple separators in one literal.
-- `1_;` lexes as `INT` `1` followed by a separate `_` identifier token
-  (a trailing underscore is not consumed into the number) — confirm via
-  a lexer-level token-list test, not just an end-to-end value, since
-  `1_;` alone as a statement is a `ParseError` (two statements butted
-  together with no operator) and that parse failure is the correct,
-  expected behavior here, not a bug to work around.
-- `1__0;` lexes as `INT` `1` followed by an `__0` identifier token (a
-  doubled underscore stops consumption at the first one, since the
-  character immediately after it is `_`, not a digit) — same
-  lexer-level token-list assertion approach as above.
-- `_1;` (leading underscore, no digit before it) lexes as a plain
-  identifier token `_1`, never reaching `_number` at all — confirms the
-  existing identifier-vs-number dispatch in the lexer's main loop is
-  untouched by this change.
-- Existing plain numeric literals without underscores (`42`, `3.14`,
-  `0xFF`) are completely unaffected — full existing lexer/parser/
-  interpreter test suite still passes unchanged.
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py` (`_number`, `_prefixed_int`), `tests/
-test_lexer.py` (token-list assertions for the separator, boundary, and
-rejection-via-non-consumption cases above). Once merged, `README.md`'s
-numeric-literals bullet (search "hex (`0x1F`)") needs the underscore
-form mentioned, and `PROJECT.md`'s roadmap paragraph needs it moved
-from backlog to landed — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `is_triangular` — triangular-number predicate
+## 1. Standard library: `is_triangular` — triangular-number predicate
 
 Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
 after `is_happy_number` (search for `def _is_happy_number` — by the
@@ -152,7 +68,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: destructuring loop variables in list/map comprehensions
+## 2. Language: destructuring loop variables in list/map comprehensions
 
 Build: extend list comprehensions (`[expr for x in iterable]`) and map
 comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring
@@ -233,7 +149,7 @@ not this task.
 
 ---
 
-## 4. Standard library: `lerp` — linear interpolation
+## 3. Standard library: `lerp` — linear interpolation
 
 Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
 after `clamp` (search for `def _clamp`) — the two are natural
@@ -290,7 +206,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
+## 4. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
 
 Build: `for`-loops already accept a list-destructuring loop variable
 (`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in

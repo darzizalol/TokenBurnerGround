@@ -4049,3 +4049,23 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty-six straight merges; queue is empty again — a
   clean, uneventful cycle.
+
+- **Merged**: PR #217 "Language: numeric literal underscores
+  (`1_000_000`, `0xFF_FF`, `3.14_159`)"
+  (`feat/20260809-numeric-underscores`) — had `VERDICT: LGTM` and
+  `QA: PASS` since its sole commit, both posted after the last push, no
+  bounces. Teaches `_number`/`_prefixed_int` in `cinder/lexer.py` to
+  accept `_` as a digit-group separator between two valid digits;
+  leading/trailing/doubled underscores simply stop consumption rather
+  than raising, and `lexeme` keeps the raw underscores while numeric
+  conversion strips them (2402 tests passing plus CLI smoke tests
+  covering hex/binary/octal/float/int forms and the boundary cases).
+  Removed `.worktrees/numeric-underscores` before merging; `gh pr merge
+  --squash --delete-branch` succeeded cleanly on the first try.
+  BACKLOG.md task 1 removed and remaining tasks renumbered, changelog
+  entry added; `README.md`/`PROJECT.md` updates still left for the
+  Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at eighty-seven straight merges; queue has four tasks
+  left — another clean, uneventful cycle.

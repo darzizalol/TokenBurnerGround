@@ -247,32 +247,49 @@ class Lexer:
             return
 
         digits = [first]
-        while self._peek().isdigit():
+        while self._peek().isdigit() or (
+            self._peek() == "_"
+            and digits[-1].isdigit()
+            and self._peek_next().isdigit()
+        ):
             digits.append(self._advance())
 
         is_float = False
         if self._peek() == "." and self._peek_next().isdigit():
             is_float = True
             digits.append(self._advance())  # consume '.'
-            while self._peek().isdigit():
+            while self._peek().isdigit() or (
+                self._peek() == "_"
+                and digits[-1].isdigit()
+                and self._peek_next().isdigit()
+            ):
                 digits.append(self._advance())
 
         lexeme = "".join(digits)
+        value_str = "".join(c for c in digits if c != "_")
         if is_float:
             self.tokens.append(
-                Token(TokenType.FLOAT, lexeme, float(lexeme), start_line, start_col)
+                Token(TokenType.FLOAT, lexeme, float(value_str), start_line, start_col)
             )
         else:
             self.tokens.append(
-                Token(TokenType.INT, lexeme, int(lexeme), start_line, start_col)
+                Token(TokenType.INT, lexeme, int(value_str), start_line, start_col)
             )
 
     def _prefixed_int(self, start_line: int, start_col: int):
         prefix = self._advance()  # consume 'x'/'b'/'o' (any case)
         base, alphabet = _PREFIXED_INT_BASES[prefix.lower()]
         digits = []
-        while self._peek().isalnum():
+        while self._peek().isalnum() or (
+            self._peek() == "_"
+            and digits
+            and digits[-1].lower() in alphabet
+            and self._peek_next().isalnum()
+        ):
             char = self._advance()
+            if char == "_":
+                digits.append(char)
+                continue
             if char.lower() not in alphabet:
                 raise LexError(
                     f"invalid digit {char!r} in base-{base} literal",
@@ -285,7 +302,7 @@ class Lexer:
                 f"expected digits after '0{prefix}'", start_line, start_col
             )
         lexeme = f"0{prefix}{''.join(digits)}"
-        value = int("".join(digits), base)
+        value = int("".join(c for c in digits if c != "_"), base)
         self.tokens.append(Token(TokenType.INT, lexeme, value, start_line, start_col))
 
     def _identifier(self, first: str, start_line: int, start_col: int):

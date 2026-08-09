@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_triangular` — triangular-number predicate
+## 1. Standard library: `is_triangular` — triangular-number predicate [claimed 2026-08-09T14:55:38Z]
 
 Build: add `is_triangular(n)` to `cinder/builtins.py`, registered right
 after `is_happy_number` (search for `def _is_happy_number` — by the

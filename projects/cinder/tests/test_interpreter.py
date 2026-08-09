@@ -393,6 +393,44 @@ class TestOptionalChaining(unittest.TestCase):
         with self.assertRaises(ParseError):
             run("let m = nil; m?.key += 1;")
 
+    def test_bracket_form_computed_key_on_map(self):
+        self.assertEqual(evaluate('{"a": 1}?.["a"]'), 1)
+
+    def test_bracket_form_short_circuits_to_nil_on_nil_map(self):
+        self.assertIsNone(evaluate('nil?.["a"]'))
+
+    def test_bracket_form_works_on_list(self):
+        self.assertEqual(evaluate("[10, 20, 30]?.[1]"), 20)
+
+    def test_bracket_form_short_circuits_to_nil_on_nil_list(self):
+        self.assertIsNone(evaluate("nil?.[0]"))
+
+    def test_bracket_form_index_is_arbitrary_expression(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let key = "a"; let m = {"a": 1}; let r = m?.[key];',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("r"), 1)
+
+    def test_bracket_form_composes_with_nil_coalescing(self):
+        self.assertEqual(evaluate('nil?.["a"] ?? "default"'), "default")
+
+    def test_bracket_form_negative_index_normalizes(self):
+        self.assertEqual(evaluate("[1, 2, 3]?.[-1]"), 3)
+
+    def test_bracket_form_assignment_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run('let m = {"a": 1}; m?.["a"] = 2;')
+
+    def test_bracket_form_slice_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run('let m = {"a": 1}; m?.[0:1];')
+
+    def test_dot_form_still_works_unaffected(self):
+        self.assertEqual(evaluate('{"key": 42}?.key'), 42)
+
 
 class TestTernary(unittest.TestCase):
     def test_true_condition_takes_then_branch(self):

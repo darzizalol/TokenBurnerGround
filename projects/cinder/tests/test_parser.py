@@ -1120,6 +1120,26 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("m?.a += 1;")
 
+    def test_optional_bracket_access_desugars_to_optional_index(self):
+        self.assertEqual(
+            shape(parse('m?.["a"]')),
+            ("OptionalIndex", ("Identifier", "m"), ("Literal", "a")),
+        )
+
+    def test_optional_bracket_access_accepts_arbitrary_expression(self):
+        self.assertEqual(
+            shape(parse("m?.[key]")),
+            ("OptionalIndex", ("Identifier", "m"), ("Identifier", "key")),
+        )
+
+    def test_optional_bracket_access_assignment_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('m?.["a"] = 5;')
+
+    def test_optional_bracket_access_slice_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse('m?.[0:1]')
+
     def test_map_literal_missing_colon_raises(self):
         with self.assertRaises(ParseError):
             parse('{"a" 1}')

@@ -1126,6 +1126,11 @@ class Parser:
 
     def _finish_optional_dot(self, obj: Expr) -> Expr:
         dot = self._advance()  # consume '?.'
+        if self._check(TokenType.LBRACKET):
+            self._advance()  # consume '['
+            index = self._ternary()
+            self._consume(TokenType.RBRACKET, "']' after index")
+            return OptionalIndex(obj, index, dot.line, dot.column)
         name_token = self._consume(TokenType.IDENTIFIER, "a property name after '?.'")
         key = Literal(name_token.lexeme, name_token.line, name_token.column)
         return OptionalIndex(obj, key, dot.line, dot.column)

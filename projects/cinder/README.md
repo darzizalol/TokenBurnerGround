@@ -34,7 +34,9 @@ while (i < 10) {
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
   inside `${...}`, stringified the same way `print`/`format` render values;
   integer literals may also be written in hex (`0x1F`), binary (`0b101`), or
-  octal (`0o17`)
+  octal (`0o17`); any numeric literal may use `_` as a digit-group separator
+  for readability (`1_000_000`, `0xFF_FF`, `3.14_159`), stripped before the
+  value is constructed
 - **Variables & scope**: `let` declarations, `const` declarations for
   immutable bindings (reassignment or `++`/`--`/compound-assignment on a
   `const` name raises a runtime error; a `let` may still be redeclared as
@@ -266,16 +268,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_fibonacci` to test
-Fibonacci-sequence membership via a closed-form perfect-square check,
-and `is_happy_number` to test the happy-number digit-square-sum
-recurrence via set-based cycle detection. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): numeric literal underscores (`1_000_000`)
-for readability, `is_triangular` to test triangular-number membership
-via the same closed-form-perfect-square technique, destructuring loop
-variables in list/map comprehensions (`[k + v for [k, v] in
-items(m)]`), `lerp` for linear interpolation between two numbers, and
-map-destructuring `for`-loop variables (`for {a, b} in list_of_maps {
-... }`). The backlog mixes language depth with stdlib breadth over time
-rather than running either in one long block. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_happy_number` to test
+the happy-number digit-square-sum recurrence via set-based cycle
+detection, and numeric literal underscores (`1_000_000`, `0xFF_FF`,
+`3.14_159`) as a digit-group separator. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_triangular` to test triangular-number
+membership via the same closed-form-perfect-square technique,
+destructuring loop variables in list/map comprehensions (`[k + v for
+[k, v] in items(m)]`), `lerp` for linear interpolation between two
+numbers, map-destructuring `for`-loop variables (`for {a, b} in
+list_of_maps { ... }`), and `is_emirp` to test whether a prime's
+digit-reversal is a different prime. The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

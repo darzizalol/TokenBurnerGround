@@ -74,6 +74,65 @@ class TestLiterals(unittest.TestCase):
         )
         self.assertEqual(tokens[0].literal, 255)
 
+    def test_integer_with_underscore_separators(self):
+        tokens = tokenize("1_000_000")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 1000000)
+        self.assertEqual(tokens[0].lexeme, "1_000_000")
+
+    def test_float_with_underscore_separators(self):
+        tokens = tokenize("3.14_159")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 3.14159)
+        self.assertEqual(tokens[0].lexeme, "3.14_159")
+
+    def test_hex_integer_with_underscore_separators(self):
+        tokens = tokenize("0xFF_FF")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 65535)
+        self.assertEqual(tokens[0].lexeme, "0xFF_FF")
+
+    def test_binary_integer_with_underscore_separators(self):
+        tokens = tokenize("0b1010_0101")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 165)
+
+    def test_octal_integer_with_underscore_separators(self):
+        tokens = tokenize("0o17_7")
+        self.assertEqual(types(tokens), [TokenType.INT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 127)
+
+    def test_integer_with_multiple_underscore_separators(self):
+        tokens = tokenize("1_2_3")
+        self.assertEqual(tokens[0].literal, 123)
+
+    def test_trailing_underscore_not_consumed_into_number(self):
+        # "1_;" lexes as INT 1 followed by a separate "_" identifier token.
+        tokens = tokenize("1_;")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.IDENTIFIER, TokenType.SEMICOLON, TokenType.EOF],
+        )
+        self.assertEqual(tokens[0].literal, 1)
+        self.assertEqual(tokens[0].lexeme, "1")
+        self.assertEqual(tokens[1].lexeme, "_")
+
+    def test_doubled_underscore_stops_at_first(self):
+        # "1__0;" lexes as INT 1 followed by an "__0" identifier token.
+        tokens = tokenize("1__0;")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.IDENTIFIER, TokenType.SEMICOLON, TokenType.EOF],
+        )
+        self.assertEqual(tokens[0].literal, 1)
+        self.assertEqual(tokens[0].lexeme, "1")
+        self.assertEqual(tokens[1].lexeme, "__0")
+
+    def test_leading_underscore_is_plain_identifier(self):
+        tokens = tokenize("_1")
+        self.assertEqual(types(tokens), [TokenType.IDENTIFIER, TokenType.EOF])
+        self.assertEqual(tokens[0].lexeme, "_1")
+
     def test_string_basic(self):
         tokens = tokenize('"hello"')
         self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])

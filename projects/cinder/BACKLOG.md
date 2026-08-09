@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
+## 1. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`) [claimed 2026-08-09T19:42:19Z]
 
 Build: `for`-loops already accept a list-destructuring loop variable
 (`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in

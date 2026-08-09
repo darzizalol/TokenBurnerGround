@@ -444,14 +444,26 @@ perfect square, the same `math.isqrt`-based exact-integer technique
 accumulating loop. Negative input answers `false` without raising,
 matching the rest of the cluster's convention. This is the next
 breadth task after task 4's depth work, restarting the same
-alternation the policy below describes. And only much later, a
+alternation the policy below describes. And as task 6, destructuring
+loop variables in list/map comprehensions (`[k + v for [k, v] in
+items(m)]`, `{k: v for [k, v] in items(m)}`) — the comprehension-form
+gap left over from when plain `for`-loops gained list-destructuring
+loop variables (`for [k, v] in items(m) { ... }`): `ListComprehension`/
+`MapComprehension` gain the same `names`/`rest` fields `ForStmt`
+already has, and reuse the exact same `_destructure_list_pattern`
+(parser) and `_bind_list_destructure` (interpreter) helpers `ForStmt`
+already calls, so this is pure plumbing with no new binding logic to
+design. This is the depth task the policy calls for right after a
+single breadth task (`is_triangular`), the same one-breadth-then-depth
+placement task 1 got after `is_coprime`. And only much later, a
 bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
 tasks queued back-to-back is a signal to inject another language-depth
 task rather than just extending the streak further, the same threshold
-that placed task 2 above and that will place a future task 5.
+that placed task 4 above and that will place a future depth task again
+if breadth tasks stack up two-or-more deep after task 6.
 
 ## History
 

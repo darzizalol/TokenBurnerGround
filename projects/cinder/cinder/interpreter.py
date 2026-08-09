@@ -599,7 +599,10 @@ class Interpreter:
         result: list = []
         for item in items:
             iter_env = Environment(env)
-            iter_env.define(expr.var_name, item)
+            if expr.names is not None:
+                self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
+            else:
+                iter_env.define(expr.var_name, item)
             if expr.condition is not None and not is_truthy(
                 self.evaluate(expr.condition, iter_env)
             ):
@@ -648,7 +651,10 @@ class Interpreter:
         result: dict = {}
         for item in items:
             iter_env = Environment(env)
-            iter_env.define(expr.var_name, item)
+            if expr.names is not None:
+                self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
+            else:
+                iter_env.define(expr.var_name, item)
             if expr.condition is not None and not is_truthy(
                 self.evaluate(expr.condition, iter_env)
             ):

@@ -106,11 +106,13 @@ class ListLiteral:
 @dataclass(frozen=True)
 class ListComprehension:
     element: "Expr"
-    var_name: str
+    var_name: "str | None"
     iterable: "Expr"
     condition: "Expr | None"
     line: int
     column: int
+    names: "list | None" = None
+    rest: "str | None" = None
 
 
 @dataclass(frozen=True)
@@ -124,11 +126,13 @@ class MapLiteral:
 class MapComprehension:
     key: "Expr"
     value: "Expr"
-    var_name: str
+    var_name: "str | None"
     iterable: "Expr"
     condition: "Expr | None"
     line: int
     column: int
+    names: "list | None" = None
+    rest: "str | None" = None
 
 
 @dataclass(frozen=True)

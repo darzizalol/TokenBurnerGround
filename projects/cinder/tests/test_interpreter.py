@@ -2470,6 +2470,38 @@ class TestListComprehension(unittest.TestCase):
         self.assertEqual(evaluate("[...[1, 2], 3]"), [1, 2, 3])
         self.assertEqual(evaluate("[]"), [])
 
+    def test_destructures_pairs_from_items(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let out = [k + "=" + str(v) for [k, v] in items({"a": 1, "b": 2})];',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("out"), ["a=1", "b=2"])
+
+    def test_destructures_over_list_of_lists(self):
+        self.assertEqual(
+            evaluate("[a + b for [a, b] in [[1, 2], [3, 4], [5, 6]]]"), [3, 7, 11]
+        )
+
+    def test_destructure_with_rest(self):
+        self.assertEqual(
+            evaluate("[a for [a, ...rest] in [[1, 2, 3], [4, 5]]]"), [1, 4]
+        )
+        self.assertEqual(
+            evaluate("[rest for [a, ...rest] in [[1, 2, 3], [4, 5]]]"),
+            [[2, 3], [5]],
+        )
+
+    def test_destructure_non_list_item_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("[x for [a, b] in [[1, 2], 3]]")
+
+    def test_destructure_with_filter(self):
+        self.assertEqual(
+            evaluate("[a for [a, b] in [[1, 2], [3, 4]] if a > 1]"), [3]
+        )
+
 
 class TestMapComprehension(unittest.TestCase):
     def test_basic_transform(self):
@@ -2526,6 +2558,25 @@ class TestMapComprehension(unittest.TestCase):
     def test_plain_map_literal_unaffected(self):
         self.assertEqual(evaluate('{"a": 1, "b": 2}'), {"a": 1, "b": 2})
         self.assertEqual(evaluate('{...{"a": 1}, "b": 2}'), {"a": 1, "b": 2})
+
+    def test_destructures_pairs_from_items(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let out = {k: v * 2 for [k, v] in items({"a": 1, "b": 2})};',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("out"), {"a": 2, "b": 4})
+
+    def test_destructure_non_list_item_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("{k: v for [k, v] in [[1, 2], 3]}")
+
+    def test_destructure_with_filter(self):
+        self.assertEqual(
+            evaluate('{k: v for [k, v] in [["a", 1], ["b", 2]] if v > 1}'),
+            {"b": 2},
+        )
         self.assertEqual(evaluate("{}"), {})
 
 

@@ -1205,7 +1205,13 @@ class Parser:
 
     def _list_comprehension(self, bracket: Token, element: Expr) -> Expr:
         self._advance()  # consume 'for'
-        var_token = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'")
+        var_name = None
+        names = None
+        rest = None
+        if self._check(TokenType.LBRACKET):
+            names, rest = self._destructure_list_pattern()
+        else:
+            var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
         self._consume(TokenType.IN, "'in' after loop variable")
         iterable = self._ternary()
         condition = None
@@ -1214,7 +1220,7 @@ class Parser:
             condition = self._ternary()
         self._consume(TokenType.RBRACKET, "']' after list comprehension")
         return ListComprehension(
-            element, var_token.lexeme, iterable, condition, bracket.line, bracket.column
+            element, var_name, iterable, condition, bracket.line, bracket.column, names=names, rest=rest
         )
 
     def _list_element(self) -> Expr:
@@ -1246,7 +1252,13 @@ class Parser:
     def _map_comprehension(self, brace: Token, entry: tuple) -> Expr:
         key, value = entry
         self._advance()  # consume 'for'
-        var_token = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'")
+        var_name = None
+        names = None
+        rest = None
+        if self._check(TokenType.LBRACKET):
+            names, rest = self._destructure_list_pattern()
+        else:
+            var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
         self._consume(TokenType.IN, "'in' after loop variable")
         iterable = self._ternary()
         condition = None
@@ -1257,11 +1269,13 @@ class Parser:
         return MapComprehension(
             key,
             value,
-            var_token.lexeme,
+            var_name,
             iterable,
             condition,
             brace.line,
             brace.column,
+            names=names,
+            rest=rest,
         )
 
     def _map_entry(self):

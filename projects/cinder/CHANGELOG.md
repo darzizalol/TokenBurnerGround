@@ -2015,3 +2015,17 @@ for vision/architecture.
   `README.md`'s comprehension bullets and `PROJECT.md`'s roadmap
   paragraph still need updating — left to the Architect's next grooming
   pass.
+- **Standard library: `lerp` — linear interpolation** — merged
+  2026-08-09T19:34:09Z via PR #220 (`feat/20260809-lerp`). Added
+  `lerp(a, b, t)` to `cinder/builtins.py` next to `clamp`, computing the
+  unclamped `a + (b - a) * t` (matching most graphics/game-math
+  libraries; a caller wanting clamping composes it explicitly via the
+  existing `clamp(t, 0, 1)`), with no `a == b` short-circuit and no
+  `lo <= hi`-style relationship check between `a`/`b` since `a > b` is a
+  valid downward interpolation. Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2438 tests passing plus CLI smoke tests covering the
+  halfway case, both `t` endpoints, extrapolation above 1 and below 0,
+  `a > b`, `a == b`, and non-numeric/wrong-arity error cases) — clean
+  merge, no bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s
+  roadmap paragraph still need updating — left to the Architect's next
+  grooming pass.

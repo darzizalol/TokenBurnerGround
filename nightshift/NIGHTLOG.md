@@ -4122,3 +4122,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at eighty-nine straight merges; queue has four tasks left
   — another clean, uneventful cycle.
+
+- **Merged**: PR #220 "Standard library: lerp — linear interpolation"
+  (`feat/20260809-lerp`) — had `VERDICT: LGTM` and `QA: PASS` since its
+  sole commit, both posted after the last push, no bounces. Adds
+  `lerp(a, b, t)` to `cinder/builtins.py` next to `clamp`, computing
+  the unclamped `a + (b - a) * t` with no `a == b` short-circuit and no
+  `lo <= hi`-style relationship check between `a`/`b` (2438 tests
+  passing plus CLI smoke tests covering the halfway case, both `t`
+  endpoints, extrapolation, `a > b`, `a == b`, and non-numeric/wrong-
+  arity error cases). Removed `.worktrees/lerp` before merging; `gh pr
+  merge --squash --delete-branch` succeeded cleanly on the first try.
+  BACKLOG.md task 1 removed and remaining tasks renumbered, changelog
+  entry added; `README.md`/`PROJECT.md` updates still left for the
+  Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at ninety straight merges; queue has three tasks left —
+  another clean, uneventful cycle.

@@ -11,64 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `lerp` — linear interpolation [claimed 2026-08-09T19:30:25Z]
-
-Build: add `lerp(a, b, t)` to `cinder/builtins.py`, registered right
-after `clamp` (search for `def _clamp`) — the two are natural
-neighbors, both simple numeric-range helpers. This is a fresh breadth
-task queued after task 1's depth work (destructuring comprehension loop
-variables) per `PROJECT.md`'s breadth-vs-depth policy. `lerp(a, b, t)`
-linearly interpolates between `a` and `b` by fraction `t`: return
-`a + (b - a) * t`. Unlike `clamp`, do **not** clamp `t` to `[0, 1]` —
-`t` outside that range is valid and extrapolates past `a`/`b`, matching
-the conventional unclamped `lerp` found in most graphics/game-math
-libraries; a caller who wants clamping can compose it explicitly with
-the existing `clamp(t, 0, 1)` builtin.
-
-Model the arity/type-checking on `_clamp`'s structure: reuse
-`_require_arity("lerp", arguments, 3, line, column)`, then check all
-three arguments with `_is_numeric` the same way `_clamp` loops over
-`("first", n), ("second", lo), ("third", hi)` — raise
-`CinderRuntimeError` with a matching per-position message
-(`"lerp() requires a number as its {position} argument, got
-{type_name(value)}"`) for whichever of `a`/`b`/`t` (first/second/third)
-fails. No upper/lower-bound relationship check is needed between `a` and
-`b` (unlike `clamp`'s `lo <= hi` requirement) — `a > b` is a perfectly
-valid interpolation range (interpolating downward), so do not add a
-check that would reject it.
-
-Acceptance criteria:
-- `lerp(0, 10, 0.5);` is `5.0` — the textbook halfway case.
-- `lerp(0, 10, 0);` is `0` and `lerp(0, 10, 1);` is `10` — the
-  fraction's own endpoints return `a` and `b` exactly.
-- `lerp(10, 20, 2);` is `30` — `t` outside `[0, 1]` extrapolates rather
-  than clamping.
-- `lerp(0, 10, -1);` is `-10` — extrapolation works below `0` too.
-- `lerp(20, 10, 0.5);` is `15.0` — `a > b` (interpolating downward) is
-  valid, not an error.
-- `lerp(5, 5, 0.5);` is `5.0` — `a == b` still routes through the same
-  `a + (b - a) * t` formula rather than an `a == b` short-circuit, so
-  the result is float (`5 + 0 * 0.5`) even though the interpolated
-  value never moves; this confirms there's no special-cased early
-  return, just the one general formula.
-- `lerp("0", 10, 0.5);` raises `CinderRuntimeError` matching `"lerp()
-  requires a number as its first argument, got string"`; analogous
-  errors for a non-numeric second or third argument, matching `_clamp`'s
-  own per-position message convention.
-- Wrong arity (not exactly 3 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `clamp`, see current
-line numbers — shift if earlier tasks this cycle landed first), `tests/
-test_builtins.py`. Once merged, `README.md`'s Builtins bullet needs
-`lerp` added near `clamp`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
+## 1. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`)
 
 Build: `for`-loops already accept a list-destructuring loop variable
 (`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in
@@ -157,7 +100,7 @@ test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
 
 ---
 
-## 3. Standard library: `is_emirp` — emirp predicate
+## 2. Standard library: `is_emirp` — emirp predicate
 
 Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
 `_is_composite` (search for `def _is_composite`) — it's the natural
@@ -228,7 +171,7 @@ bullet needs `is_emirp` added near `is_prime`/`is_composite`, and
 
 ---
 
-## 4. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
+## 3. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
 
 Build: extend function-parameter parsing/binding — shared by named
 `fn` declarations, anonymous `fn` expressions, and parenthesized arrow
@@ -336,7 +279,7 @@ Functions bullet needs the destructuring-parameter form mentioned, and
 
 ---
 
-## 5. Standard library: `divisors` — list an integer's positive divisors
+## 4. Standard library: `divisors` — list an integer's positive divisors
 
 Build: add `divisors(n)` to `cinder/builtins.py`, registered right
 after `_is_deficient` (search for `def _is_deficient`) — it's the

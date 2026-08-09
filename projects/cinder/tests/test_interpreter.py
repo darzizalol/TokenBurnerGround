@@ -1579,6 +1579,37 @@ class TestForDestructuring(unittest.TestCase):
         self.assertEqual(env.get("b"), 2)
         self.assertEqual(env.get("rest"), [3, 4])
 
+    def test_map_destructure_multi_name(self):
+        env = self._run(
+            'let out = []; '
+            'for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}] { push(out, a + b); }'
+        )
+        self.assertEqual(env.get("out"), [3, 7])
+
+    def test_map_destructure_single_name(self):
+        env = self._run('let out = []; for {a} in [{"a": 1}, {"a": 2}] { push(out, a); }')
+        self.assertEqual(env.get("out"), [1, 2])
+
+    def test_map_destructure_non_map_item_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            self._run('for {a} in [{"a": 1}, 5] { }')
+        self.assertEqual(ctx.exception.message, "cannot destructure int as a map")
+
+    def test_map_destructure_missing_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            self._run('for {a, b} in [{"a": 1}] { }')
+        self.assertEqual(
+            ctx.exception.message,
+            "destructuring pattern expects key 'b', not found in map",
+        )
+
+    def test_map_destructure_labeled_break_targets_outer_loop(self):
+        env = self._run(
+            'let seen = []; '
+            'outer: for {a} in [{"a": 1}] { for x in [1] { break outer; } push(seen, a); }'
+        )
+        self.assertEqual(env.get("seen"), [])
+
 
 class TestForCStatement(unittest.TestCase):
     def _run(self, source: str) -> Environment:

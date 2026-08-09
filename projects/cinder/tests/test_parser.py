@@ -2603,6 +2603,52 @@ class TestForDestructuring(unittest.TestCase):
             ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Identifier", "k")]))]),
         )
 
+    def test_for_map_destructure_two_names(self):
+        stmt = parse_stmts("for {a, b} in maps { }")[0]
+        self.assertIsInstance(stmt, ForStmt)
+        self.assertIsNone(stmt.var_name)
+        self.assertEqual(stmt.names, ["a", "b"])
+        self.assertIsNone(stmt.rest)
+        self.assertTrue(stmt.is_map)
+        self.assertEqual(shape(stmt.iterable), ("Identifier", "maps"))
+
+    def test_for_map_destructure_single_name(self):
+        stmt = parse_stmts("for {a} in maps { }")[0]
+        self.assertEqual(stmt.names, ["a"])
+        self.assertTrue(stmt.is_map)
+
+    def test_for_map_destructure_rejects_rest(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for {a, ...rest} in maps { }")
+
+    def test_for_map_destructure_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for {1, b} in maps { }")
+
+    def test_for_map_destructure_unclosed_brace_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for {a, b in maps { }")
+
+    def test_for_map_destructure_missing_in_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for {a, b} maps { }")
+
+    def test_for_map_destructure_carries_its_label(self):
+        stmt = parse_stmts("outer: for {a} in maps { break outer; }")[0]
+        self.assertEqual(stmt.label, "outer")
+        self.assertEqual(stmt.names, ["a"])
+        self.assertTrue(stmt.is_map)
+
+    def test_for_map_destructure_body_parses(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("for {a} in maps { print(a); }")[0].body),
+            ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Identifier", "a")]))]),
+        )
+
+    def test_for_list_destructure_is_map_false(self):
+        stmt = parse_stmts("for [k, v] in items(m) { }")[0]
+        self.assertFalse(stmt.is_map)
+
 
 class TestForCStatement(unittest.TestCase):
     def test_full_three_clause_for(self):

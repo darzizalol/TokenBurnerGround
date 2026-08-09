@@ -2999,6 +2999,45 @@ class TestClamp(unittest.TestCase):
             run("clamp(5, 0);")
 
 
+class TestLerp(unittest.TestCase):
+    def test_lerp_halfway(self):
+        self.assertEqual(run("let result = lerp(0, 10, 0.5);").get("result"), 5.0)
+
+    def test_lerp_t_zero_returns_a(self):
+        self.assertEqual(run("let result = lerp(0, 10, 0);").get("result"), 0)
+
+    def test_lerp_t_one_returns_b(self):
+        self.assertEqual(run("let result = lerp(0, 10, 1);").get("result"), 10)
+
+    def test_lerp_t_above_one_extrapolates(self):
+        self.assertEqual(run("let result = lerp(10, 20, 2);").get("result"), 30)
+
+    def test_lerp_t_below_zero_extrapolates(self):
+        self.assertEqual(run("let result = lerp(0, 10, -1);").get("result"), -10)
+
+    def test_lerp_a_greater_than_b(self):
+        self.assertEqual(run("let result = lerp(20, 10, 0.5);").get("result"), 15.0)
+
+    def test_lerp_a_equals_b(self):
+        self.assertEqual(run("let result = lerp(5, 5, 0.5);").get("result"), 5.0)
+
+    def test_lerp_non_numeric_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('lerp("0", 10, 0.5);')
+
+    def test_lerp_non_numeric_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('lerp(0, "10", 0.5);')
+
+    def test_lerp_non_numeric_third_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('lerp(0, 10, "0.5");')
+
+    def test_lerp_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("lerp(0, 10);")
+
+
 class TestRound(unittest.TestCase):
     def test_round_ties_to_even(self):
         self.assertEqual(run("let result = round(2.5);").get("result"), 2)

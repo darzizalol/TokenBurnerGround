@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring loop variables in list/map comprehensions [claimed 2026-08-09T15:09:44Z]
+## 1. Language: destructuring loop variables in list/map comprehensions [claimed 2026-08-09T19:17:14Z]
 
 Build: extend list comprehensions (`[expr for x in iterable]`) and map
 comprehensions (`{k: v for x in iterable}`) to accept a list-destructuring

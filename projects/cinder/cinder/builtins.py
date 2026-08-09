@@ -1188,6 +1188,21 @@ def _is_fibonacci(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _is_happy_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_happy_number", arguments, 1, line, column)
+    value = _require_int("is_happy_number", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    seen = set()
+    while value != 1:
+        if value in seen:
+            return False
+        seen.add(value)
+        value = sum(int(digit) ** 2 for digit in str(value))
+    return True
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -3131,6 +3146,7 @@ _BUILTINS = {
     "is_divisible": _is_divisible,
     "is_coprime": _is_coprime,
     "is_fibonacci": _is_fibonacci,
+    "is_happy_number": _is_happy_number,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
     "is_power_of_two": _is_power_of_two,

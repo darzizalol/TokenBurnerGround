@@ -190,6 +190,7 @@ while (i < 10) {
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
+  `divisors` to list an integer's positive divisors in sorted order,
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
@@ -279,13 +280,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list/map-destructuring
-function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`),
-extending the same destructuring patterns `let`/assignment/`for`-loops
-already accept to function parameters. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `divisors` to list an integer's positive
-divisors, optional call chaining (`f?.()`) to round out the
-`?.`/`??`/`?.[` safe-navigation family, `is_rotation` to test whether
+Actively developed, nightly. Recently landed: `divisors` to list an
+integer's positive divisors in sorted order, sitting next to
+`is_perfect_number`/`is_abundant`/`is_deficient` as the value-returning
+sibling of that cluster. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): optional call chaining (`f?.()`) to round out
+the `?.`/`??`/`?.[` safe-navigation family, `is_rotation` to test whether
 one string is a rotation of another, map-destructuring loop variables
 in list/map comprehensions (`[a + b for {a, b} in list_of_maps]`),
 closing the last corner the destructuring-loop-variable matrix leaves

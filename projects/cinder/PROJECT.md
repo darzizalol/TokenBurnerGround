@@ -498,21 +498,20 @@ real fix along the way: the first review round caught the new
 destructuring parameter branches skipping the `seen_default` ordering
 check plain identifier parameters already enforce, letting a
 defaulted parameter followed by a destructuring one parse and then
-crash at call time instead of failing cleanly at parse time — have
-since landed too.
+crash at call time instead of failing cleanly at parse time, and
+`divisors(n)` — a breadth task after the destructuring-function-parameters
+depth work, returning the sorted list of `n`'s positive divisors; sits next
+to `is_perfect_number`/`is_abundant`/`is_deficient` as the value-returning
+sibling of that cluster, all three of which already trial-divide to
+`sqrt(n)` and discard the individual divisors, keeping only their sum —
+`divisors` reuses that same walk but collects instead of summing. Unlike
+that cluster (which answers `false` for out-of-domain input), `n < 1`
+raises a domain error rather than returning an empty list, since there's
+no sensible "positive divisors of a non-positive number" answer, mirroring
+`log()`'s own type-vs-domain-error split — have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `divisors(n)` — a fresh breadth task
-after the destructuring-function-parameters depth work, returning the sorted list of `n`'s positive
-divisors; sits next to `is_perfect_number`/`is_abundant`/`is_deficient`
-as the value-returning sibling of that cluster, all three of which
-already trial-divide to `sqrt(n)` and discard the individual divisors,
-keeping only their sum — `divisors` reuses that same walk but collects
-instead of summing. Unlike that cluster (which answers `false` for
-out-of-domain input), `n < 1` raises a domain error rather than
-returning an empty list, since there's no sensible "positive divisors
-of a non-positive number" answer, mirroring `log()`'s own
-type-vs-domain-error split. And as task 2, optional call chaining
-(`f?.()`) — the depth task after task 1's breadth work, closing the
+as task 1, optional call chaining
+(`f?.()`) — the depth task after `divisors`' breadth work, closing the
 one position the existing `?.`/`??`/`?.[` safe-navigation family still
 doesn't cover: calling a possibly-`nil` value. `let f = nil; f();`
 currently raises `"nil is not callable"` with no nil-safe alternative
@@ -526,8 +525,8 @@ argument expressions, the same "stop the instant nil is seen" rule
 otherwise falls through to the same `call_value` plain calls already
 use. Single-level only, exactly like the rest of the `?.` family: it
 makes one call nil-safe, not an entire chain, so reaching further
-still means composing `?.`s (`m?.greet?.("Al")`). And as task 3,
-`is_rotation(a, b)` — a fresh breadth task after task 2's depth work,
+still means composing `?.`s (`m?.greet?.("Al")`). And as task 2,
+`is_rotation(a, b)` — a fresh breadth task after task 1's depth work,
 testing whether string `b` can be produced by rotating string `a`
 (moving some prefix to its end, e.g. `"abcd"` -> `"cdab"`), sitting
 next to `is_anagram`/`is_permutation` as a stricter two-string
@@ -535,9 +534,9 @@ predicate than `is_anagram`'s "same character multiset" test (two
 strings can be anagrams without one being an actual rotation of the
 other). Uses the standard doubled-string trick (`b in (a + a)` for
 equal-length `a`/`b`) rather than a hand-rolled character-shift loop.
-And as task 4, map-destructuring loop variables in list/map
+And as task 3, map-destructuring loop variables in list/map
 comprehensions (`[k + v for {a, b} in list_of_maps]`,
-`{a: b for {a, b} in list_of_maps}`) — the depth task after task 3's
+`{a: b for {a, b} in list_of_maps}`) — the depth task after task 2's
 breadth work, closing the one corner the destructuring-loop-variable
 matrix still leaves open: plain `for`-loops support both the
 list-pattern (`for [k, v] in items(m) { ... }`) and map-pattern
@@ -558,16 +557,16 @@ branch, and in `cinder/interpreter.py`'s `_evaluate_list_comprehension`/
 existing `_bind_map_destructure` helper alongside the existing
 `_bind_list_destructure` call — no new binding logic, pure plumbing
 reusing helpers every other destructuring position already shares.
-And as task 5, `is_balanced(s)` — a fresh breadth task after task 4's
+And as task 4, `is_balanced(s)` — a fresh breadth task after task 3's
 depth work, testing whether a string's `()`/`[]`/`{}` brackets are all
 properly matched and nested (non-bracket characters ignored), via a
 single left-to-right scan with a stack — the project's first
 stack-based parsing predicate, deliberately chosen to diversify the
 string-predicate cluster rather than add one more multiset/reversal
 delegation next to `is_anagram`/`is_permutation`/`is_pangram`. And as
-task 6, a rest element for map-destructuring patterns
+task 5, a rest element for map-destructuring patterns
 (`let {a, ...rest} = m;`, `for {a, ...rest} in list_of_maps { ... }`,
-`fn f({a, ...rest}) { ... }`) — the depth task after task 5's breadth
+`fn f({a, ...rest}) { ... }`) — the depth task after task 4's breadth
 work, closing the gap between the two destructuring pattern kinds:
 list patterns already accept an optional trailing `...rest` that
 collects whatever wasn't consumed by name, but map patterns have no
@@ -581,7 +580,15 @@ and `_bind_map_destructure` grows the same trailing-rest-collection
 step `_bind_list_destructure` already has. Deliberately scoped to
 exclude the plain-assignment map-destructuring form (`{a, b} = expr;`)
 since that form parses via its own inlined speculative parser rather
-than the shared helper this task changes.
+than the shared helper this task changes. And as task 6, `is_isogram(s)`
+— a fresh breadth task after task 5's depth work, testing whether a
+string has no letter repeated (case-insensitive, non-letter characters
+ignored entirely so they neither collide nor prevent one), sitting
+next to `is_blank`/`is_pangram` as a single-pass character-frequency
+check rather than another multiset-comparison delegation — like
+`is_balanced`, deliberately picked to keep diversifying the
+string-predicate cluster's implementation techniques instead of
+stacking more `is_anagram`-shaped siblings.
 And only much later, a bytecode VM if performance ever actually
 matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
@@ -591,19 +598,20 @@ tasks queued back-to-back is a signal to inject another language-depth
 task rather than just extending the streak further, the same threshold
 that placed the numeric-literal-underscores task above, and that
 placed the destructuring-function-parameters task as depth right after
-`is_emirp`'s breadth work, and that placed task 1 (`divisors`) as
+`is_emirp`'s breadth work, and that placed `divisors` as
 breadth right after that depth work rather than stacking a third depth
-task in a row, and that placed task 2 (optional call chaining) as
-depth right after task 1's breadth work in turn, and that placed
-task 3 (`is_rotation`) as a single breadth task after task 2's depth
+task in a row, and that placed task 1 (optional call chaining) as
+depth right after `divisors`' breadth work in turn, and that placed
+task 2 (`is_rotation`) as a single breadth task after task 1's depth
 work rather than immediately stacking a second predicate task behind
-it, and that placed task 4 (comprehension map-destructuring) as depth
-right after task 3's breadth work in turn, and that placed task 5
-(`is_balanced`) as breadth right after task 4's depth work in turn,
+it, and that placed task 3 (comprehension map-destructuring) as depth
+right after task 2's breadth work in turn, and that placed task 4
+(`is_balanced`) as breadth right after task 3's depth work in turn,
 the same one-breadth-then-depth placement the safe navigation bracket
-indexing task got after `is_coprime`, and that placed task 6
-(map-destructuring rest element) as depth right after task 5's breadth
-work in turn.
+indexing task got after `is_coprime`, and that placed task 5
+(map-destructuring rest element) as depth right after task 4's breadth
+work in turn, and that placed task 6 (`is_isogram`) as breadth right
+after task 5's depth work in turn.
 
 ## History
 

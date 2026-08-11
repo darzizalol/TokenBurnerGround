@@ -506,6 +506,70 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_isogram` — no-repeated-letter predicate
+
+Build: add `is_isogram(s)` to `cinder/builtins.py`, registered right
+after `_is_blank` (search for `def _is_blank`) — a fresh breadth task
+queued after task 5's depth work (map-destructuring rest element) per
+`PROJECT.md`'s breadth-vs-depth policy, and, like `is_balanced`,
+deliberately not another `is_anagram`-style multiset delegation:
+it's a single-pass character-frequency check instead.
+
+An isogram is a string in which no letter appears more than once,
+case-insensitive (`'A'` and `'a'` count as the same letter and
+collide). Non-letter characters — spaces, hyphens, digits, punctuation
+— are ignored entirely: they neither count toward a collision nor
+break one, so `"six-year-old"` is an isogram even though `-` repeats
+three times. Implement with a single scan: lowercase the string, keep
+only alphabetic characters (`char.isalpha()`), and compare the
+filtered length to the length of the `set` built from it — equal
+lengths means no letter repeated. No need for an explicit loop with
+early exit; the set-length comparison is the whole check, mirroring
+how `_is_pangram` reduces to a single `set` comparison rather than a
+hand-rolled scan.
+
+Model the arity/type-checking on `_is_blank`'s structure exactly:
+`_require_arity("is_isogram", arguments, 1, line, column)`, then a
+single non-`str` check raising `CinderRuntimeError` matching
+`"is_isogram() requires a string, got {type}"` (same one-argument
+message shape `_is_blank`/`_is_pangram` already use, not
+`_is_anagram`'s two-argument "first argument"/"second argument"
+phrasing — there's only one argument here).
+
+Acceptance criteria:
+- `is_isogram("lumberjacks");` is `true` — the motivating case, every
+  letter distinct.
+- `is_isogram("background");` is `true` and `is_isogram("downstream");`
+  is `true` — more all-distinct-letter words.
+- `is_isogram("isograms");` is `false` — `'s'` repeats.
+- `is_isogram("Alphabet");` is `false` — case-insensitive collision:
+  `'A'` and `'a'` count as the same letter.
+- `is_isogram("");` is `true` — the empty string has nothing to
+  collide.
+- `is_isogram("six-year-old");` is `true` — hyphens repeat freely
+  without counting as a collision, since only letters are considered.
+- `is_isogram("Emma");` is `false` — `'m'` repeats within a single
+  short word, not just across a longer one.
+- `is_isogram("12 34");` is `true` — a string with no letters at all
+  is trivially an isogram (nothing to collide).
+- `is_isogram(5);` raises `CinderRuntimeError` matching
+  `"is_isogram() requires a string, got int"`.
+- `is_isogram(true);` raises `CinderRuntimeError` matching
+  `"is_isogram() requires a string, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_blank`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_isogram` added near `is_blank`/`is_pangram`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to
+landed — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

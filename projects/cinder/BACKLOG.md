@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
+## 1. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`) [claimed 2026-08-11T20:08:18Z]
 
 Build: close the one corner the destructuring-loop-variable matrix
 still leaves open. Plain `for`-loops already support both forms of

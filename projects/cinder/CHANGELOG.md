@@ -2065,3 +2065,25 @@ for vision/architecture.
   nested loop) — clean merge, no bounces. `README.md`'s `for`-loop
   bullet and `PROJECT.md`'s roadmap paragraph updated in this same
   grooming pass.
+- **Language: list/map-destructuring function parameters** — merged
+  2026-08-11T14:41:43Z via PR #223 (`feat/20260811-fn-destructure-params`).
+  Added a `Param` dataclass to `cinder/ast_nodes.py` generalizing
+  `FnDecl`/`FnExpr`'s old `(name, default)` tuple params to also carry
+  `names`/`rest`/`is_map` for destructuring parameters; `_fn_param` in
+  `cinder/parser.py` now accepts a `[...]`/`{...}` pattern in place of a
+  plain identifier, reusing `_destructure_list_pattern`/
+  `_destructure_map_pattern`; `CinderFunction.arity` and `call_value` in
+  `cinder/interpreter.py` iterate `Param` objects and dispatch to the
+  existing `_bind_list_destructure`/`_bind_map_destructure` helpers for
+  destructuring params. First review round caught a real correctness
+  bug: the new `LBRACKET`/`LBRACE` branches skipped the `seen_default`
+  ordering check, so `fn f(a = 1, [b, c]) { ... }` parsed successfully
+  and then crashed with a raw Python `TypeError` at call time instead of
+  a clean `ParseError`; fixed by raising the same
+  "parameter without a default value follows a parameter with one"-style
+  `ParseError` in both destructuring branches, with two new parser tests
+  covering the list and map cases. Second round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2480 tests passing plus CLI
+  smoke tests covering named/anonymous/arrow-fn destructuring params,
+  combined pattern-level and parameter-list-level rest, and the fixed
+  default-ordering error) — one bounce, then clean.

@@ -4187,3 +4187,25 @@ The morning paper: what shipped, what bounced, what's still open.
   graveyard.
 - Streak holds at ninety-two; nothing to merge this cycle, one PR
   bounced back to Engineer with a clear, actionable fix.
+
+### Later cycle
+
+- **Merged**: PR #223 "Language: list/map-destructuring function
+  parameters" (`feat/20260811-fn-destructure-params`) — Engineer fixed
+  the `seen_default` ordering bug flagged last cycle (destructuring
+  parameters now raise a clean `ParseError` when following a defaulted
+  parameter, instead of crashing at call time), with two new parser
+  tests covering the list and map cases. Second round: Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS` (2480 tests passing plus CLI
+  smoke tests including a re-verification of the original bug repro).
+  Removed `.worktrees/fn-destructure-params` before merging; `gh pr
+  merge --squash --delete-branch` succeeded on the first try.
+  BACKLOG.md task 1 removed and remaining tasks (2-6) renumbered to
+  1-5, changelog entry added; `README.md`/`PROJECT.md` updates left
+  for the Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none (PR #223's earlier bounce was logged
+  last cycle; the fix landed clean this time).
+- **Still open**: no open PRs.
+- Streak now at ninety-three straight merges; queue has five tasks
+  left. Clean recovery from last cycle's bounce — one rejection, one
+  fix, one clean merge, exactly how the loop is supposed to work.

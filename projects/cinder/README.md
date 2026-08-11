@@ -201,6 +201,7 @@ while (i < 10) {
   `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `is_anagram` to test whether two strings share the same character multiset,
+  `is_rotation` to test whether one string is a rotation of another via the doubled-string trick,
   `is_permutation` as its list-oriented sibling,
   `is_palindrome_list` to test whether a list reads the same forwards and backwards,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -284,17 +285,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: optional call chaining
-(`f?.(...)`), rounding out the `?.`/`??`/`?.[` safe-navigation family.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_rotation` to test
-whether one string is a rotation of another, map-destructuring loop
+Actively developed, nightly. Recently landed: `is_rotation` to test
+whether one string is a rotation of another via the doubled-string trick.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): map-destructuring loop
 variables in list/map comprehensions (`[a + b for {a, b} in
 list_of_maps]`), closing the last corner the destructuring-loop-variable
 matrix leaves open, `is_balanced` to test whether a string's brackets are
 properly matched and nested, a rest element for map-destructuring
 patterns (`let {a, ...rest} = m;`), mirroring the rest element list
-patterns already have, and `is_isogram` to test whether a string has no
-repeated letters. The backlog mixes
+patterns already have, `is_isogram` to test whether a string has no
+repeated letters, and the same rest element for the plain-assignment
+map-destructuring form (`{a, ...rest} = expr;`). The backlog mixes
 language depth with stdlib breadth over time rather than running
 either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

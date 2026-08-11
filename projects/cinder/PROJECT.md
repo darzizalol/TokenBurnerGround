@@ -564,7 +564,24 @@ properly matched and nested (non-bracket characters ignored), via a
 single left-to-right scan with a stack — the project's first
 stack-based parsing predicate, deliberately chosen to diversify the
 string-predicate cluster rather than add one more multiset/reversal
-delegation next to `is_anagram`/`is_permutation`/`is_pangram`.
+delegation next to `is_anagram`/`is_permutation`/`is_pangram`. And as
+task 6, a rest element for map-destructuring patterns
+(`let {a, ...rest} = m;`, `for {a, ...rest} in list_of_maps { ... }`,
+`fn f({a, ...rest}) { ... }`) — the depth task after task 5's breadth
+work, closing the gap between the two destructuring pattern kinds:
+list patterns already accept an optional trailing `...rest` that
+collects whatever wasn't consumed by name, but map patterns have no
+equivalent today, silently discarding every key that isn't explicitly
+named instead of offering a way to capture them. Every AST node a map
+pattern reaches (`DestructureLetStmt`, `ForStmt`, `Param`) already
+carries an unused `rest` field shared with the list-pattern case, so
+this is mostly plumbing: `_destructure_map_pattern` grows the same
+`DOT_DOT_DOT`-checking shape `_destructure_list_pattern` already has,
+and `_bind_map_destructure` grows the same trailing-rest-collection
+step `_bind_list_destructure` already has. Deliberately scoped to
+exclude the plain-assignment map-destructuring form (`{a, b} = expr;`)
+since that form parses via its own inlined speculative parser rather
+than the shared helper this task changes.
 And only much later, a bytecode VM if performance ever actually
 matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
@@ -584,7 +601,9 @@ it, and that placed task 4 (comprehension map-destructuring) as depth
 right after task 3's breadth work in turn, and that placed task 5
 (`is_balanced`) as breadth right after task 4's depth work in turn,
 the same one-breadth-then-depth placement the safe navigation bracket
-indexing task got after `is_coprime`.
+indexing task got after `is_coprime`, and that placed task 6
+(map-destructuring rest element) as depth right after task 5's breadth
+work in turn.
 
 ## History
 

@@ -289,8 +289,10 @@ divisors, optional call chaining (`f?.()`) to round out the
 one string is a rotation of another, map-destructuring loop variables
 in list/map comprehensions (`[a + b for {a, b} in list_of_maps]`),
 closing the last corner the destructuring-loop-variable matrix leaves
-open, and `is_balanced` to test whether a string's brackets are
-properly matched and nested. The backlog mixes
+open, `is_balanced` to test whether a string's brackets are
+properly matched and nested, and a rest element for map-destructuring
+patterns (`let {a, ...rest} = m;`), mirroring the rest element list
+patterns already have. The backlog mixes
 language depth with stdlib breadth over time rather than running
 either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

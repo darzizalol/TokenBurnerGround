@@ -426,6 +426,155 @@ not this task.
 
 ---
 
+## 6. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
+
+Build: close the one gap left between the two destructuring pattern
+kinds. List-destructuring patterns (`let [a, ...rest] = expr;`,
+`for [k, v, ...rest] in xs { ... }`, `fn f([a, ...rest]) { ... }`)
+already accept an optional trailing rest element that collects
+whatever wasn't consumed by name, via `_destructure_list_pattern` in
+`cinder/parser.py` (search for it) and `_bind_list_destructure` in
+`cinder/interpreter.py`. Map-destructuring patterns have no equivalent
+today: `let {a, ...rest} = {"a": 1, "b": 2};` currently raises
+`ParseError` `"expected identifier in destructuring pattern, found
+'...'"` (verified by running `python3 -m cinder.cli eval 'let {a,
+...rest} = {"a": 1, "b": 2};'` from this project's directory) — there
+is no way to capture "every key I didn't name" the way list patterns
+already capture "every element I didn't name". This is the depth task
+after task 5's breadth work (`is_balanced`) per `PROJECT.md`'s
+breadth-vs-depth policy.
+
+The shared helper `_destructure_map_pattern` in `cinder/parser.py`
+(search for `def _destructure_map_pattern`) is called from exactly
+three places today — `_destructure_let_statement` (the `is_map`
+branch, `let {a, b} = expr;`), `_for_statement` (the `LBRACE` branch,
+`for {a, b} in list_of_maps { ... }`), and `_fn_param` (the `LBRACE`
+branch, `fn f({a, b}) { ... }`) — and every one of those three already
+has a `rest: "str | None" = None` field sitting unused on its AST node
+(`DestructureLetStmt.rest`, `ForStmt.rest`, `Param.rest`), since that
+field is shared with the list-pattern case and simply always gets
+`None` for a map pattern today. Note a fourth, deliberately
+out-of-scope caller: `_try_map_destructure_assign_statement` (the
+`{a, b} = expr;` plain-assignment form) does *not* call
+`_destructure_map_pattern` — it inlines its own speculative
+identifier-list parse for backtracking reasons (see its docstring),
+so it is untouched by this task; extending the assignment form to
+accept `...rest` is left for a future task. If the map-destructuring
+loop variables in comprehensions task has landed by the time this is
+picked up, `_list_comprehension`/`_map_comprehension`'s `LBRACE`
+branch will be a fourth in-scope caller of `_destructure_map_pattern`
+— thread it through exactly like the other three, below. If it hasn't
+landed yet (still queued, or graveyarded), there is nothing to update
+there.
+
+In `cinder/parser.py`: change `_destructure_map_pattern` to return
+`tuple[list, "str | None"]` instead of a bare `list`, mirroring
+`_destructure_list_pattern`'s existing shape (search for
+`def _destructure_list_pattern` and copy its exact
+`DOT_DOT_DOT`-checking structure): consume `{`; if the next token is
+`...`, parse a rest name via the same helper
+`_destructure_list_pattern` already uses for its own rest name
+(search `_destructure_rest_name`) and leave `names` empty, otherwise
+consume one identifier into `names` as today; then, on each `,`, if
+`rest` is already set raise the identical `ParseError`
+`f"rest element must be last in destructuring pattern, found
+{self._describe(token)}"` `_destructure_list_pattern` already raises
+for the equivalent case (verified by running `python3 -m cinder.cli
+eval 'let [a, ...rest, b] = [1,2,3];'`, which raises exactly that
+message today — reuse the message text verbatim), otherwise parse
+either another `...rest` or another identifier the same way; finally
+consume `}` and return `(names, rest)`. Update its three current call
+sites to unpack the tuple and thread `rest` into the AST node they
+build instead of leaving the field at its default `None`:
+`_destructure_let_statement`'s `is_map` branch (currently `names =
+self._destructure_map_pattern(); rest = None` — becomes `names, rest
+= self._destructure_map_pattern()`, then pass `rest=rest` into the
+`DestructureLetStmt(...)` call alongside the existing `is_map=True`),
+`_for_statement`'s `LBRACE` branch (currently `names =
+self._destructure_map_pattern(); is_map = True` — becomes `names,
+rest = self._destructure_map_pattern(); is_map = True`, reusing the
+`rest` local the function's `LBRACKET` branch already declares), and
+`_fn_param`'s `LBRACE` branch (currently `names =
+self._destructure_map_pattern()` then `return Param(name=None,
+names=names, is_map=True)` — becomes `names, rest =
+self._destructure_map_pattern()` then `return Param(name=None,
+names=names, rest=rest, is_map=True)`).
+
+In `cinder/interpreter.py`: change `_bind_map_destructure`'s signature
+from `(self, env, names, value, line, column, use_assign=False)` to
+`(self, env, names, rest, value, line, column, use_assign=False)`,
+inserting `rest` in the same position `_bind_list_destructure` already
+has it. After the existing per-name loop that binds each named key
+(unchanged — still raises `"destructuring pattern expects key {name!r},
+not found in map"` for a missing named key, still silently ignores
+extra keys when `rest is None`, exactly as today), add: if `rest is
+not None`, build a fresh dict of every entry whose key is not in
+`names` (`{k: v for k, v in value.items() if k not in names}` — a new
+map, not a view onto `value`, mirroring how `_bind_list_destructure`
+builds a fresh `list(value[len(names):])` rather than aliasing) and
+bind it via the existing `_bind_destructure_name(env, rest, remaining,
+line, column, use_assign)` helper, the same one both destructuring
+kinds already share. Update the three (or four, per the comprehension
+note above) call sites to pass their AST node's `rest` field
+positionally where the new parameter now sits: the `for`-loop
+call in `_execute_for` (search `self._bind_map_destructure(iter_env,
+stmt.names,`), the function-parameter call in the calling machinery
+(search `Interpreter()._bind_map_destructure(call_env, param.names,`),
+and the assignment-destructure call in `_evaluate_destructure_assign`
+(search `self._bind_map_destructure(env, expr.names,` — pass
+`expr.rest`, which is always `None` for the map form per
+`DestructureAssign`'s own docstring, so this is a signature-only
+change with no behavior change for that call site).
+
+Acceptance criteria:
+- `let {a, ...rest} = {"a": 1, "b": 2, "c": 3}; print(a); print(rest);`
+  prints `1` then `{"b": 2, "c": 3}`.
+- `let {a, b, ...rest} = {"a": 1, "b": 2}; print(rest);` prints `{}` —
+  no leftover keys still binds `rest` to an empty map, not an error.
+- `let {...rest} = {"a": 1, "b": 2}; print(rest);` prints
+  `{"a": 1, "b": 2}` — a pattern with only a rest element and no named
+  keys at all collects everything, mirroring `let [...rest] = xs;`.
+- `let {a} = {"a": 1, "b": 2}; print(a);` (no rest element) still
+  prints `1` with `"b"` silently ignored, completely unchanged from
+  today — the no-rest behavior must not regress.
+- `for {a, ...rest} in [{"a": 1, "b": 2}, {"a": 3, "c": 4}] { print(a);
+  print(rest); }` prints `1`, `{"b": 2}`, `3`, `{"c": 4}` — a fresh
+  rest map bound per iteration.
+- `fn f({a, ...rest}) { return rest; } print(f({"a": 1, "b": 2, "c":
+  3}));` prints `{"b": 2, "c": 3}`.
+- `let {a, ...rest, b} = {"a": 1};` (rest not last) raises
+  `CinderError` — a `ParseError` matching `"rest element must be last
+  in destructuring pattern, found 'b'"`, the identical message
+  list-pattern rest already raises for the equivalent case.
+- `let {a, ...rest} = 5;` (non-map value) still raises the existing
+  `CinderRuntimeError` matching `"cannot destructure int as a map"` —
+  the domain check runs before any rest logic, unchanged.
+- The plain-assignment map-destructuring form (`{a, b} = expr;`) is
+  completely unaffected — it does not gain `...rest` support in this
+  task (verified today: `{a, ...rest} = {"a": 1};` raises `ParseError`
+  `"expected ';' after expression, found ','"`, since it falls through
+  to `_block()` parsing rather than being recognized as a
+  destructuring pattern at all — that specific error text is
+  incidental, not a contract, and may change if a future task adds
+  `...rest` support there).
+- Existing map-destructuring without a rest element in every position
+  (`let {a, b} = m;`, `for {a, b} in maps { ... }`, `fn f({a, b}) { ...
+  }`, `{a, b} = m;`) and existing list-pattern rest
+  (`let [a, ...rest] = xs;` and friends) are completely unaffected by
+  this change.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_destructure_map_pattern` and its
+three call sites), `cinder/interpreter.py` (`_bind_map_destructure`
+and its three call sites), `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s destructuring
+bullets need the map-pattern rest element mentioned next to the
+existing list-pattern rest element, and `PROJECT.md`'s roadmap
+paragraph needs it moved from backlog to landed — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

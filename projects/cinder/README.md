@@ -126,7 +126,11 @@ while (i < 10) {
   parameter, no default/rest); both forms also accept a block body
   (`(params) => { ... }` and `x => { ... }`), parsed via ordinary
   block-statement rules with no implicit return of the last
-  expression — `return` stays explicit, same as any other block
+  expression — `return` stays explicit, same as any other block;
+  parameters accept list/map destructuring patterns too
+  (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), the same flat
+  positional/key-lookup binding `let`/`for`-loop destructuring already
+  use, combinable with default values and a trailing rest parameter
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -275,17 +279,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_emirp` to test
-whether a prime's decimal-digit reversal is a different prime, sitting
-next to `is_prime`/`is_composite`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): list/map-destructuring function
-parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), `divisors`
-to list an integer's positive divisors, optional call chaining
-(`f?.()`) to round out the `?.`/`??`/`?.[` safe-navigation family,
-`is_rotation` to test whether one string is a rotation of another, and
-map-destructuring loop variables in list/map comprehensions
-(`[a + b for {a, b} in list_of_maps]`), closing the last corner the
-destructuring-loop-variable matrix leaves open. The backlog mixes
+Actively developed, nightly. Recently landed: list/map-destructuring
+function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`),
+extending the same destructuring patterns `let`/assignment/`for`-loops
+already accept to function parameters. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `divisors` to list an integer's positive
+divisors, optional call chaining (`f?.()`) to round out the
+`?.`/`??`/`?.[` safe-navigation family, `is_rotation` to test whether
+one string is a rotation of another, map-destructuring loop variables
+in list/map comprehensions (`[a + b for {a, b} in list_of_maps]`),
+closing the last corner the destructuring-loop-variable matrix leaves
+open, and `is_balanced` to test whether a string's brackets are
+properly matched and nested. The backlog mixes
 language depth with stdlib breadth over time rather than running
 either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

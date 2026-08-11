@@ -19,10 +19,9 @@ natural value-returning sibling of the `is_perfect_number`/
 `is_abundant`/`is_deficient` cluster, all three of which already do
 their own trial-division-to-`sqrt(n)` walk over divisor pairs and
 discard the individual divisors, keeping only their sum. This is a
-fresh breadth task queued after task 5's depth work (destructuring
-function parameters) per `PROJECT.md`'s breadth-vs-depth policy,
-restarting the alternation after two depth tasks (3, 5) sandwiched a
-single breadth task (4) between them.
+fresh breadth task queued after the depth work that just landed
+(list/map-destructuring function parameters) per `PROJECT.md`'s
+breadth-vs-depth policy.
 
 `divisors(n)` returns the sorted list of every positive integer that
 evenly divides `n`, including `1` and `n` itself. Mirror
@@ -92,7 +91,7 @@ the one position they still don't: a *call*. Today `let f = nil;
 f();` raises `CinderRuntimeError` `"nil is not callable"` (search
 `is not callable` in `cinder/interpreter.py`'s `call_value`) with no
 way to say "call this only if it isn't nil" short of a manual
-`if f != nil { f(); }`. This is the depth task queued after task 4's
+`if f != nil { f(); }`. This is the depth task queued after task 1's
 breadth work (`divisors`) per `PROJECT.md`'s breadth-vs-depth policy.
 
 Like the rest of the `?.` family, this is single-level only — it does
@@ -193,7 +192,7 @@ right after `_is_anagram` (search for `def _is_anagram`) — it's a
 natural sibling in the two-string predicate family alongside
 `is_anagram`/`is_permutation`, one position more specific than
 `is_anagram`'s "same multiset of characters" test. This is a fresh
-breadth task queued after task 4's depth work (optional call chaining)
+breadth task queued after task 2's depth work (optional call chaining)
 per `PROJECT.md`'s breadth-vs-depth policy.
 
 A string `b` is a **rotation** of string `a` when `b` can be produced
@@ -265,7 +264,7 @@ before a comprehension's loop variable, never `TokenType.LBRACE` — so
 today `[a + b for {a, b} in list_of_maps]` raises `ParseError`
 `"expected loop variable after 'for', found '{'"` instead of
 destructuring each map in `list_of_maps` by key. This is the depth task queued after
-task 4's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
+task 3's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
 depth policy.
 
 This is pure plumbing — every helper it needs already exists and is
@@ -367,7 +366,7 @@ predicate, but a different flavor than its neighbors: `is_anagram`/
 `is_permutation`/`is_pangram`/`is_palindrome` are all direct
 delegations to a multiset/reversal comparison, whereas this is the
 project's first stack-based parsing predicate. This is a fresh breadth
-task queued after task 5's depth work (map-destructuring loop
+task queued after task 4's depth work (map-destructuring loop
 variables in comprehensions) per `PROJECT.md`'s breadth-vs-depth
 policy, deliberately picked to diversify the string-predicate cluster
 rather than add one more delegation-only member to it.

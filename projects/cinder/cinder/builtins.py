@@ -1236,6 +1236,24 @@ def _is_composite(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _is_emirp(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_emirp", arguments, 1, line, column)
+    value = _require_int("is_emirp", arguments[0], line, column)
+    if value < 2:
+        return False
+    for divisor in range(2, int(value ** 0.5) + 1):
+        if value % divisor == 0:
+            return False
+
+    reversed_value = int(str(value)[::-1])
+    if reversed_value == value:
+        return False
+    for divisor in range(2, int(reversed_value ** 0.5) + 1):
+        if reversed_value % divisor == 0:
+            return False
+    return True
+
+
 def _is_power_of_two(arguments: list, line: int, column: int) -> object:
     _require_arity("is_power_of_two", arguments, 1, line, column)
     value = _require_int("is_power_of_two", arguments[0], line, column)
@@ -3173,6 +3191,7 @@ _BUILTINS = {
     "is_triangular": _is_triangular,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
+    "is_emirp": _is_emirp,
     "is_power_of_two": _is_power_of_two,
     "is_palindrome_list": _is_palindrome_list,
     "digit_sum": _digit_sum,

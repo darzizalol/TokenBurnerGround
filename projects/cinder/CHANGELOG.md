@@ -2119,3 +2119,20 @@ for vision/architecture.
   QA gave `QA: PASS` (2517 tests passing plus CLI smoke tests covering
   true rotation, self-rotation, both-empty, anagram-but-not-rotation,
   length mismatch, symmetry, and both type-error messages).
+- **Language: map-destructuring loop variables in list/map comprehensions**
+  — merged 2026-08-12T20:15:25Z via PR #227
+  (`feat/20260811-comprehension-map-destructure`). Closed the last corner
+  of the destructuring-loop-variable matrix: `[k + v for {a, b} in
+  list_of_maps]` and `{k: v for {a, b} in list_of_maps}` now destructure
+  each map by key, reusing the same `_destructure_map_pattern`/
+  `_bind_map_destructure` helpers already shared by `let`, assignment-
+  destructuring, and `for`-loops. Added `is_map` to `ListComprehension`/
+  `MapComprehension`, wired an `elif LBRACE` branch into
+  `_list_comprehension`/`_map_comprehension`, and threaded the same
+  three-way bind (`is_map` → map destructure, `names` → list destructure,
+  else plain bind) into `_evaluate_list_comprehension`/
+  `_evaluate_map_comprehension`, mirroring `_execute_for`'s existing
+  shape. Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2533 tests passing plus CLI smoke tests covering the
+  motivating list/map comprehension cases, `if`-filter interaction,
+  missing-key error, non-map-item error, and list-pattern regression).

@@ -4278,3 +4278,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at ninety-six straight merges. Yet another clean cycle —
   no friction, no rework.
+
+### Later cycle
+
+- **Merged**: PR #227 "Language: map-destructuring loop variables in
+  list/map comprehensions" (`feat/20260811-comprehension-map-destructure`)
+  — clean first round, Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2533 tests passing plus CLI smoke tests covering the
+  motivating list/map comprehension cases, `if`-filter interaction,
+  missing-key error, non-map-item error, and list-pattern regression).
+  Removed `.worktrees/comprehension-map-destructure` before merging;
+  `gh pr merge --squash --delete-branch` succeeded on the first try.
+  BACKLOG.md task 1 removed and remaining tasks (2-5) renumbered to
+  1-4, with cross-referencing "task N" mentions updated to match;
+  changelog entry added. `README.md`/`PROJECT.md` updates left for
+  the Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at ninety-seven straight merges. Another quiet, friction-
+  free cycle — one task claimed, reviewed, QA'd, and merged clean.

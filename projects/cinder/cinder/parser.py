@@ -134,6 +134,7 @@ from cinder.ast_nodes import (
     MapComprehension,
     MapLiteral,
     OptionalIndex,
+    Param,
     ReturnStmt,
     SliceExpr,
     Spread,
@@ -633,7 +634,7 @@ class Parser:
                 rest_param = self._fn_rest_param()
             else:
                 params.append(self._fn_param(seen_default))
-                seen_default = seen_default or params[-1][1] is not None
+                seen_default = seen_default or params[-1].default is not None
             while self._check(TokenType.COMMA):
                 self._advance()
                 if rest_param is not None:
@@ -647,7 +648,7 @@ class Parser:
                     rest_param = self._fn_rest_param()
                 else:
                     params.append(self._fn_param(seen_default))
-                    seen_default = seen_default or params[-1][1] is not None
+                    seen_default = seen_default or params[-1].default is not None
         return params, rest_param
 
     def _fn_rest_param(self) -> str:
@@ -655,7 +656,27 @@ class Parser:
         name_token = self._consume(TokenType.IDENTIFIER, "parameter name after '...'")
         return name_token.lexeme
 
-    def _fn_param(self, seen_default: bool) -> tuple:
+    def _fn_param(self, seen_default: bool) -> Param:
+        if self._check(TokenType.LBRACKET):
+            bracket_token = self._peek()
+            names, rest = self._destructure_list_pattern()
+            if self._check(TokenType.EQ):
+                raise ParseError(
+                    "destructuring parameter cannot have a default value",
+                    bracket_token.line,
+                    bracket_token.column,
+                )
+            return Param(name=None, names=names, rest=rest)
+        if self._check(TokenType.LBRACE):
+            brace_token = self._peek()
+            names = self._destructure_map_pattern()
+            if self._check(TokenType.EQ):
+                raise ParseError(
+                    "destructuring parameter cannot have a default value",
+                    brace_token.line,
+                    brace_token.column,
+                )
+            return Param(name=None, names=names, is_map=True)
         name_token = self._consume(TokenType.IDENTIFIER, "parameter name")
         if self._check(TokenType.EQ):
             self._advance()
@@ -669,7 +690,7 @@ class Parser:
             )
         else:
             default = None
-        return (name_token.lexeme, default)
+        return Param(name=name_token.lexeme, default=default)
 
     def _return_statement(self) -> Stmt:
         return_token = self._advance()
@@ -1173,7 +1194,7 @@ class Parser:
                 self._consume(TokenType.FAT_ARROW, "'=>' after arrow function parameter")
                 body = self._arrow_body(token.line, token.column)
                 return FnExpr(
-                    [(token.lexeme, None)], None, body, token.line, token.column
+                    [Param(name=token.lexeme)], None, body, token.line, token.column
                 )
             self._advance()
             return Identifier(token.lexeme, token.line, token.column)

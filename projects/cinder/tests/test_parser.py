@@ -152,11 +152,17 @@ def shape(node):
 
 
 def params_shape(params):
-    """Structural view of an `FnDecl`/`FnExpr` params list."""
-    return [
-        (name, shape(default) if default is not None else None)
-        for name, default in params
-    ]
+    """Structural view of an `FnDecl`/`FnExpr` params list. A plain
+    identifier parameter renders as `(name, default_shape)`, same as before
+    `Param` existed; a destructuring parameter renders as
+    `("Param", names, rest, is_map)`."""
+    return [param_shape(param) for param in params]
+
+
+def param_shape(param):
+    if param.names is not None:
+        return ("Param", param.names, param.rest, param.is_map)
+    return (param.name, shape(param.default) if param.default is not None else None)
 
 
 def parse(source: str):
@@ -2159,6 +2165,100 @@ class TestFunctions(unittest.TestCase):
     def test_fn_rest_param_missing_name_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("fn f(...) { }")
+
+    def test_fn_declaration_with_list_destructuring_param(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn dist([x, y]) { return x; }")],
+            [
+                (
+                    "FnDecl",
+                    "dist",
+                    [("Param", ["x", "y"], None, False)],
+                    None,
+                    ("Block", [("ReturnStmt", ("Identifier", "x"))]),
+                )
+            ],
+        )
+
+    def test_fn_declaration_with_map_destructuring_param(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn describe({name, age}) { return name; }")],
+            [
+                (
+                    "FnDecl",
+                    "describe",
+                    [("Param", ["name", "age"], None, True)],
+                    None,
+                    ("Block", [("ReturnStmt", ("Identifier", "name"))]),
+                )
+            ],
+        )
+
+    def test_fn_declaration_with_list_destructuring_param_and_rest_element(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f([a, ...rest]) { return rest; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [("Param", ["a"], "rest", False)],
+                    None,
+                    ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
+                )
+            ],
+        )
+
+    def test_fn_declaration_with_destructuring_param_and_trailing_rest_param(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f([a, b], ...more) { return more; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [("Param", ["a", "b"], None, False)],
+                    "more",
+                    ("Block", [("ReturnStmt", ("Identifier", "more"))]),
+                )
+            ],
+        )
+
+    def test_fn_expression_with_list_destructuring_param(self):
+        self.assertEqual(
+            shape(parse("fn([a, b]) { return a; }")),
+            (
+                "FnExpr",
+                [("Param", ["a", "b"], None, False)],
+                None,
+                ("Block", [("ReturnStmt", ("Identifier", "a"))]),
+            ),
+        )
+
+    def test_arrow_function_with_list_destructuring_param(self):
+        self.assertEqual(
+            shape(parse("([a, b]) => a + b")),
+            (
+                "FnExpr",
+                [("Param", ["a", "b"], None, False)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Identifier", "b")),
+                        )
+                    ],
+                ),
+            ),
+        )
+
+    def test_list_destructuring_param_with_default_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f([a, b] = [1, 2]) { return a; }")
+
+    def test_map_destructuring_param_with_default_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('fn f({a, b} = {"a": 1, "b": 2}) { return a; }')
 
     def test_return_at_top_level_raises(self):
         with self.assertRaises(ParseError):

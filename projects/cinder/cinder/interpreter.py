@@ -149,7 +149,7 @@ class CinderFunction:
     @property
     def arity(self) -> int:
         """Minimum arity: the count of parameters with no default value."""
-        return sum(1 for _, default in self.decl.params if default is None)
+        return sum(1 for param in self.decl.params if param.default is None)
 
 
 class Builtin:
@@ -1121,12 +1121,20 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
         )
     call_env = Environment(callee.closure)
     try:
-        for index, (param_name, default) in enumerate(callee.decl.params):
+        for index, param in enumerate(callee.decl.params):
             if index < len(arguments):
                 value = arguments[index]
             else:
-                value = Interpreter().evaluate(default, call_env)
-            call_env.define(param_name, value)
+                value = Interpreter().evaluate(param.default, call_env)
+            if param.names is not None:
+                if param.is_map:
+                    Interpreter()._bind_map_destructure(call_env, param.names, value, line, column)
+                else:
+                    Interpreter()._bind_list_destructure(
+                        call_env, param.names, param.rest, value, line, column
+                    )
+            else:
+                call_env.define(param.name, value)
         if callee.decl.rest_param is not None:
             call_env.define(callee.decl.rest_param, list(arguments[len(callee.decl.params) :]))
         Interpreter().execute(callee.decl.body, call_env)

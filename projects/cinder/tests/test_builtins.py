@@ -6499,6 +6499,64 @@ class TestIsAnagram(unittest.TestCase):
             run('is_anagram("a", "b", "c");')
 
 
+class TestIsRotation(unittest.TestCase):
+    def test_is_rotation_true(self):
+        self.assertIs(
+            run('let result = is_rotation("abcd", "cdab");').get("result"), True
+        )
+
+    def test_is_rotation_same_string_true(self):
+        self.assertIs(
+            run('let result = is_rotation("abcd", "abcd");').get("result"), True
+        )
+
+    def test_is_rotation_both_empty_true(self):
+        self.assertIs(run('let result = is_rotation("", "");').get("result"), True)
+
+    def test_is_rotation_repeated_characters_true(self):
+        self.assertIs(
+            run('let result = is_rotation("aaaa", "aaaa");').get("result"), True
+        )
+
+    def test_is_rotation_anagram_but_not_rotation_false(self):
+        self.assertIs(
+            run('let result = is_rotation("abcd", "acbd");').get("result"), False
+        )
+
+    def test_is_rotation_different_lengths_false(self):
+        self.assertIs(
+            run('let result = is_rotation("abc", "abcd");').get("result"), False
+        )
+
+    def test_is_rotation_symmetric_true(self):
+        self.assertIs(
+            run('let result = is_rotation("abc", "cab");').get("result"), True
+        )
+        self.assertIs(
+            run('let result = is_rotation("cab", "abc");').get("result"), True
+        )
+
+    def test_is_rotation_of_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_rotation(5, "ab");')
+        self.assertIn("is_rotation", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_rotation_of_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_rotation("ab", 5);')
+        self.assertIn("is_rotation", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_rotation_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('is_rotation("a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('is_rotation("a", "b", "c");')
+
+
 class TestIsPermutation(unittest.TestCase):
     def test_is_permutation_reordered_true(self):
         self.assertIs(

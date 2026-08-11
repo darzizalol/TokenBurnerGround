@@ -645,6 +645,24 @@ def _is_anagram(arguments: list, line: int, column: int) -> object:
     return Counter(string1) == Counter(string2)
 
 
+def _is_rotation(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_rotation", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"is_rotation() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"is_rotation() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    if len(string1) != len(string2):
+        return False
+    return string2 in (string1 + string1)
+
+
 def _is_permutation(arguments: list, line: int, column: int) -> object:
     list1, list2 = _require_two_lists("is_permutation", arguments, line, column)
     if len(list1) != len(list2):
@@ -3328,6 +3346,7 @@ _BUILTINS = {
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
     "is_anagram": _is_anagram,
+    "is_rotation": _is_rotation,
     "is_permutation": _is_permutation,
     "is_pangram": _is_pangram,
     "is_upper": _is_upper,

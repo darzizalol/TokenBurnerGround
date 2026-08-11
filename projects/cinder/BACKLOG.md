@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_emirp` — emirp predicate
+## 1. Standard library: `is_emirp` — emirp predicate [claimed 2026-08-11T14:07:41Z]
 
 Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
 `_is_composite` (search for `def _is_composite`) — it's the natural

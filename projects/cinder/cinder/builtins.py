@@ -688,6 +688,26 @@ def _is_pangram(arguments: list, line: int, column: int) -> object:
     return set("abcdefghijklmnopqrstuvwxyz") <= set(value.lower())
 
 
+def _is_balanced(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_balanced", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_balanced() requires a string, got {type_name(value)}", line, column
+        )
+    openers = "([{"
+    closers = {")": "(", "]": "[", "}": "{"}
+    stack = []
+    for char in value:
+        if char in openers:
+            stack.append(char)
+        elif char in closers:
+            if not stack or stack[-1] != closers[char]:
+                return False
+            stack.pop()
+    return not stack
+
+
 def _is_upper(arguments: list, line: int, column: int) -> object:
     _require_arity("is_upper", arguments, 1, line, column)
     value = arguments[0]
@@ -3349,6 +3369,7 @@ _BUILTINS = {
     "is_rotation": _is_rotation,
     "is_permutation": _is_permutation,
     "is_pangram": _is_pangram,
+    "is_balanced": _is_balanced,
     "is_upper": _is_upper,
     "is_lower": _is_lower,
     "is_alpha": _is_alpha,

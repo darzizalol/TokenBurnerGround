@@ -6661,6 +6661,58 @@ class TestIsPangram(unittest.TestCase):
             run('is_pangram("a", "b");')
 
 
+class TestIsBalanced(unittest.TestCase):
+    def test_is_balanced_nested_mixed_types_true(self):
+        self.assertIs(
+            run('let result = is_balanced("(a[b]{c})");').get("result"), True
+        )
+
+    def test_is_balanced_empty_string_true(self):
+        self.assertIs(run('let result = is_balanced("");').get("result"), True)
+
+    def test_is_balanced_no_brackets_true(self):
+        self.assertIs(
+            run('let result = is_balanced("no brackets here");').get("result"), True
+        )
+
+    def test_is_balanced_interleaved_false(self):
+        self.assertIs(run('let result = is_balanced("([)]");').get("result"), False)
+
+    def test_is_balanced_unclosed_opener_false(self):
+        self.assertIs(run('let result = is_balanced("(");').get("result"), False)
+
+    def test_is_balanced_opener_less_closer_false(self):
+        self.assertIs(run('let result = is_balanced(")");').get("result"), False)
+
+    def test_is_balanced_three_levels_nested_true(self):
+        self.assertIs(
+            run('let result = is_balanced("{[()]}");').get("result"), True
+        )
+
+    def test_is_balanced_crossed_pairs_false(self):
+        self.assertIs(
+            run('let result = is_balanced("(a[b)c]");').get("result"), False
+        )
+
+    def test_is_balanced_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_balanced(5);")
+        self.assertIn("is_balanced", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_balanced_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_balanced(true);")
+        self.assertIn("is_balanced", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_balanced_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_balanced();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_balanced("a", "b");')
+
+
 class TestIsUpper(unittest.TestCase):
     def test_is_upper_all_upper_true(self):
         self.assertIs(run('let result = is_upper("ABC");').get("result"), True)

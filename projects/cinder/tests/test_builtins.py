@@ -2444,6 +2444,50 @@ class TestIsComposite(unittest.TestCase):
             run("is_composite();")
 
 
+class TestIsEmirp(unittest.TestCase):
+    def test_is_emirp_of_classic_pairs(self):
+        self.assertEqual(run("let result = is_emirp(13);").get("result"), True)
+        self.assertEqual(run("let result = is_emirp(17);").get("result"), True)
+        self.assertEqual(run("let result = is_emirp(31);").get("result"), True)
+        self.assertEqual(run("let result = is_emirp(79);").get("result"), True)
+        self.assertEqual(run("let result = is_emirp(97);").get("result"), True)
+
+    def test_is_emirp_of_larger_emirp(self):
+        self.assertEqual(run("let result = is_emirp(107);").get("result"), True)
+
+    def test_is_emirp_of_palindromic_primes_is_false(self):
+        self.assertEqual(run("let result = is_emirp(2);").get("result"), False)
+        self.assertEqual(run("let result = is_emirp(11);").get("result"), False)
+
+    def test_is_emirp_of_non_primes_is_false(self):
+        self.assertEqual(run("let result = is_emirp(4);").get("result"), False)
+        self.assertEqual(run("let result = is_emirp(15);").get("result"), False)
+        self.assertEqual(run("let result = is_emirp(20);").get("result"), False)
+
+    def test_is_emirp_below_prime_threshold_is_false(self):
+        self.assertEqual(run("let result = is_emirp(0);").get("result"), False)
+        self.assertEqual(run("let result = is_emirp(1);").get("result"), False)
+
+    def test_is_emirp_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_emirp(-13);").get("result"), False)
+
+    def test_is_emirp_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_emirp(3.0);")
+        self.assertIn("is_emirp", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_emirp_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_emirp(true);")
+        self.assertIn("is_emirp", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_emirp_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_emirp();")
+
+
 class TestIsPowerOfTwo(unittest.TestCase):
     def test_is_power_of_two_of_one(self):
         self.assertEqual(run("let result = is_power_of_two(1);").get("result"), True)

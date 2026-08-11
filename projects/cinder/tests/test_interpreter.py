@@ -432,6 +432,63 @@ class TestOptionalChaining(unittest.TestCase):
         self.assertEqual(evaluate('{"key": 42}?.key'), 42)
 
 
+class TestOptionalCallChaining(unittest.TestCase):
+    def test_nil_callee_short_circuits_to_nil(self):
+        self.assertIsNone(evaluate("nil?.()"))
+
+    def test_non_nil_callee_calls_through_with_arguments(self):
+        env = run("fn add(a, b) { return a + b; } let r = add?.(1, 2);")
+        self.assertEqual(env.get("r"), 3)
+
+    def test_composes_with_plain_dot_on_callee_side(self):
+        env = run(
+            'let m = {"greet": fn(name) { return "hi " + name; }}; '
+            'let r = m.greet?.("Al");'
+        )
+        self.assertEqual(env.get("r"), "hi Al")
+
+    def test_chains_after_optional_dot_on_nil_object(self):
+        env = run("let m = nil; let r = m?.greet?.(\"Al\");")
+        self.assertIsNone(env.get("r"))
+
+    def test_arguments_not_evaluated_when_callee_is_nil(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let calls = []; "
+            "fn effect() { push(calls, 1); return 1; } "
+            "let f = nil; "
+            "f?.(effect()); "
+            "let n = len(calls);",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("n"), 0)
+
+    def test_spread_argument_not_evaluated_when_callee_is_nil(self):
+        # must not raise despite the spread argument never being evaluated
+        run("let f = nil; let args = [1, 2]; f?.(...args);")
+
+    def test_non_nil_non_callable_still_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("5?.()")
+
+    def test_unterminated_arguments_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            evaluate("f?.(")
+
+    def test_plain_call_unaffected_by_shared_helper_extraction(self):
+        self.assertEqual(evaluate("(fn(a, b) { return a + b; })(1, 2)"), 3)
+
+    def test_plain_call_with_spread_unaffected(self):
+        env = run(
+            "fn add(a, b) { return a + b; } let args = [1, 2]; let r = add(...args);"
+        )
+        self.assertEqual(env.get("r"), 3)
+
+    def test_optional_index_unaffected_by_this_change(self):
+        self.assertIsNone(evaluate("nil?.key"))
+
+
 class TestTernary(unittest.TestCase):
     def test_true_condition_takes_then_branch(self):
         self.assertEqual(evaluate("true ? 1 : 2"), 1)

@@ -133,6 +133,7 @@ from cinder.ast_nodes import (
     Logical,
     MapComprehension,
     MapLiteral,
+    OptionalCall,
     OptionalIndex,
     Param,
     ReturnStmt,
@@ -1175,6 +1176,8 @@ class Parser:
 
     def _finish_optional_dot(self, obj: Expr) -> Expr:
         dot = self._advance()  # consume '?.'
+        if self._check(TokenType.LPAREN):
+            return self._finish_optional_call(obj)
         if self._check(TokenType.LBRACKET):
             self._advance()  # consume '['
             index = self._ternary()
@@ -1183,6 +1186,18 @@ class Parser:
         name_token = self._consume(TokenType.IDENTIFIER, "a property name after '?.'")
         key = Literal(name_token.lexeme, name_token.line, name_token.column)
         return OptionalIndex(obj, key, dot.line, dot.column)
+
+    def _finish_optional_call(self, callee: Expr) -> Expr:
+        self._advance()  # consume '('
+        paren = self._previous()
+        arguments = []
+        if not self._check(TokenType.RPAREN):
+            arguments.append(self._call_argument())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                arguments.append(self._call_argument())
+        self._consume(TokenType.RPAREN, "')' after arguments")
+        return OptionalCall(callee, arguments, paren.line, paren.column)
 
     def _primary(self) -> Expr:
         token = self._peek()

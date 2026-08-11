@@ -32,6 +32,7 @@ from cinder.ast_nodes import (
     Logical,
     MapComprehension,
     MapLiteral,
+    OptionalCall,
     OptionalIndex,
     ReturnStmt,
     SliceExpr,
@@ -65,6 +66,8 @@ def shape(node):
         return ("Grouping", shape(node.expression))
     if isinstance(node, Call):
         return ("Call", shape(node.callee), [shape(a) for a in node.arguments])
+    if isinstance(node, OptionalCall):
+        return ("OptionalCall", shape(node.callee), [shape(a) for a in node.arguments])
     if isinstance(node, Spread):
         return ("Spread", shape(node.expression))
     if isinstance(node, ListLiteral):
@@ -754,6 +757,48 @@ class TestCalls(unittest.TestCase):
                 ],
             ),
         )
+
+    def test_optional_call_no_arguments(self):
+        self.assertEqual(
+            shape(parse("f?.()")),
+            ("OptionalCall", ("Identifier", "f"), []),
+        )
+
+    def test_optional_call_with_arguments(self):
+        self.assertEqual(
+            shape(parse("f?.(1, 2)")),
+            ("OptionalCall", ("Identifier", "f"), [("Literal", 1), ("Literal", 2)]),
+        )
+
+    def test_optional_call_with_spread_argument(self):
+        self.assertEqual(
+            shape(parse("f?.(...args)")),
+            ("OptionalCall", ("Identifier", "f"), [("Spread", ("Identifier", "args"))]),
+        )
+
+    def test_optional_call_composes_with_plain_dot_callee(self):
+        self.assertEqual(
+            shape(parse('m.greet?.("Al")')),
+            (
+                "OptionalCall",
+                ("Index", ("Identifier", "m"), ("Literal", "greet")),
+                [("Literal", "Al")],
+            ),
+        )
+
+    def test_optional_call_chains_after_optional_dot(self):
+        self.assertEqual(
+            shape(parse('m?.greet?.("Al")')),
+            (
+                "OptionalCall",
+                ("OptionalIndex", ("Identifier", "m"), ("Literal", "greet")),
+                [("Literal", "Al")],
+            ),
+        )
+
+    def test_optional_call_unterminated_arguments_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("f?.(")
 
 
 class TestListsAndMaps(unittest.TestCase):

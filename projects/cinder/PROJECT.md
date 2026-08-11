@@ -460,42 +460,43 @@ interpolation between two numbers (`a + (b - a) * t`, unclamped — `t`
 outside `[0, 1]` extrapolates, matching the conventional graphics/
 game-math `lerp` rather than `clamp`'s bounded behavior), sitting next
 to `clamp` as a simple numeric-range helper rather than joining the
-integer-property predicate cluster.
+integer-property predicate cluster, and, as has map-destructuring
+`for`-loop variables (`for {a, b} in list_of_maps { ... }`) — the depth
+task after `lerp`'s breadth work, closing the other half of the gap
+`for`-loop destructuring left open: `let` already supports both list-
+and map-destructuring patterns, and plain `for`-loops already
+supported the list-pattern half (`for [k, v] in items(m) { ... }`), but
+there was no map-pattern `for`-loop to destructure an iterable of maps
+by key. `ForStmt` gained an `is_map` field (mirroring
+`DestructureLetStmt`'s own field of the same name), and the map-pattern
+parsing previously inlined in `_destructure_let_statement` was
+extracted into a shared `_destructure_map_pattern` helper so both call
+sites use it — reusing the existing `_bind_map_destructure` interpreter
+helper for the actual binding, the same one `let`/assignment-
+destructuring already called, so again pure plumbing with no new
+binding logic.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, map-destructuring `for`-loop variables (`for {a, b} in
-list_of_maps { ... }`) — the depth task after `lerp`'s breadth work,
-closing the other half of the gap `for`-loop destructuring left open: `let` already
-supports both list- and map-destructuring patterns, and plain
-`for`-loops already support the list-pattern half (`for [k, v] in
-items(m) { ... }`), but there is no map-pattern `for`-loop to
-destructure an iterable of maps by key.
-`ForStmt` gains an `is_map` field (mirroring `DestructureLetStmt`'s own
-field of the same name), and the map-pattern parsing already inlined in
-`_destructure_let_statement` gets extracted into a shared
-`_destructure_map_pattern` helper so both call sites use it — reusing
-the existing `_bind_map_destructure` interpreter helper for the actual
-binding, the same one `let`/assignment-destructuring already call, so
-again pure plumbing with no new binding logic. And as task 2,
-`is_emirp(n)` — a fresh breadth task after task 1's depth work, testing
-whether `n` is prime and its decimal-digit reversal is a *different*
-prime (e.g. `13`/`31`), sitting next to `is_prime`/`is_composite` as
-the third member of that cluster; inlines `is_composite`'s own
-trial-division loop and `reverse_int`'s digit-reversal rather than
-calling either function directly, since both take the builtin-dispatch
-`(arguments, line, column)` signature rather than a raw `int`. And as
-task 3, list/map-destructuring function parameters (`fn f([a, b]) {
-... }`, `fn f({a, b}) { ... }`) — the depth task after task 2's breadth
-work, extending the same destructuring patterns `let`, plain
-assignment, and `for`-loops already accept to one more binding
-position: a function parameter, so `fn dist([x, y]) { ... }` works
-directly instead of requiring a manual `let [x, y] = p;` as the first
-line of the body. Reuses the same `_destructure_list_pattern`/
-`_destructure_map_pattern` (parser) and `_bind_list_destructure`/
-`_bind_map_destructure` (interpreter) helpers task 1 already shares
-across `let`/assignment/`for`, so once more this is plumbing — extending
+as task 1, `is_emirp(n)` — a fresh breadth task after the map-
+destructuring `for`-loop depth work, testing whether `n` is prime and
+its decimal-digit reversal is a *different* prime (e.g. `13`/`31`),
+sitting next to `is_prime`/`is_composite` as the third member of that
+cluster; inlines `is_composite`'s own trial-division loop and
+`reverse_int`'s digit-reversal rather than calling either function
+directly, since both take the builtin-dispatch `(arguments, line,
+column)` signature rather than a raw `int`. And as task 2, list/map-
+destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a,
+b}) { ... }`) — the depth task after task 1's breadth work, extending
+the same destructuring patterns `let`, plain assignment, and
+`for`-loops already accept to one more binding position: a function
+parameter, so `fn dist([x, y]) { ... }` works directly instead of
+requiring a manual `let [x, y] = p;` as the first line of the body.
+Reuses the same `_destructure_list_pattern`/`_destructure_map_pattern`
+(parser) and `_bind_list_destructure`/`_bind_map_destructure`
+(interpreter) helpers the for-loop task already shares across
+`let`/assignment/`for`, so once more this is plumbing — extending
 `FnDecl`/`FnExpr`'s parameter representation to carry an optional
-pattern instead of adding any new binding logic. And as task 4,
-`divisors(n)` — a fresh breadth task after task 3's depth work,
+pattern instead of adding any new binding logic. And as task 3,
+`divisors(n)` — a fresh breadth task after task 2's depth work,
 returning the sorted list of `n`'s positive divisors; sits next to
 `is_perfect_number`/`is_abundant`/`is_deficient` as the value-returning
 sibling of that cluster, all three of which already trial-divide to
@@ -505,8 +506,8 @@ Unlike that cluster (which answers `false` for out-of-domain input),
 `n < 1` raises a domain error rather than returning an empty list,
 since there's no sensible "positive divisors of a non-positive number"
 answer, mirroring `log()`'s own type-vs-domain-error split. And as
-task 5, optional call chaining (`f?.()`) — the depth task after task
-4's breadth work, closing the one position the existing `?.`/`??`/
+task 4, optional call chaining (`f?.()`) — the depth task after task
+3's breadth work, closing the one position the existing `?.`/`??`/
 `?.[` safe-navigation family still doesn't cover: calling a possibly-
 `nil` value. `let f = nil; f();` currently raises `"nil is not
 callable"` with no nil-safe alternative short of a manual `if f != nil
@@ -520,17 +521,28 @@ expressions, the same "stop the instant nil is seen" rule
 otherwise falls through to the same `call_value` plain calls already
 use. Single-level only, exactly like the rest of the `?.` family: it
 makes one call nil-safe, not an entire chain, so reaching further
-still means composing `?.`s (`m?.greet?.("Al")`). And only much later,
-a bytecode VM if performance ever actually matters.
+still means composing `?.`s (`m?.greet?.("Al")`). And as task 5,
+`is_rotation(a, b)` — a fresh breadth task after task 4's depth work,
+testing whether string `b` can be produced by rotating string `a`
+(moving some prefix to its end, e.g. `"abcd"` -> `"cdab"`), sitting
+next to `is_anagram`/`is_permutation` as a stricter two-string
+predicate than `is_anagram`'s "same character multiset" test (two
+strings can be anagrams without one being an actual rotation of the
+other). Uses the standard doubled-string trick (`b in (a + a)` for
+equal-length `a`/`b`) rather than a hand-rolled character-shift loop.
+And only much later, a bytecode VM if performance ever actually
+matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
 tasks queued back-to-back is a signal to inject another language-depth
 task rather than just extending the streak further, the same threshold
 that placed the numeric-literal-underscores task above, and that
-placed task 4 as breadth right after task 3's depth work rather than
-stacking a third depth task in a row, and that placed task 5 as depth
-right after task 4's breadth work in turn.
+placed task 3 as breadth right after task 2's depth work rather than
+stacking a third depth task in a row, and that placed task 4 as depth
+right after task 3's breadth work in turn, and that placed task 5 as a
+single breadth task after task 4's depth work rather than immediately
+stacking a second predicate task behind it.
 
 ## History
 

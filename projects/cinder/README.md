@@ -55,7 +55,9 @@ while (i < 10) {
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
   (`for [k, v] in items(m) { ... }`, same flat positional binding and
-  optional trailing rest element as `let` list destructuring), a
+  optional trailing rest element as `let` list destructuring) and
+  map-destructuring loop variables (`for {a, b} in list_of_maps { ... }`,
+  same key-lookup binding as `let` map destructuring, no rest element), a
   C-style `for (init; cond; step) { ... }` loop
   (each clause optional; the loop variable gets a fresh binding per
   iteration so closures captured in the body see their own iteration's
@@ -272,15 +274,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `lerp` for linear
-interpolation between two numbers, sitting next to `clamp` as a simple
-numeric-range helper. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-map-destructuring `for`-loop variables (`for {a, b} in list_of_maps {
-... }`), `is_emirp` to test whether a prime's digit-reversal is a
-different prime, list/map-destructuring function parameters
-(`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), `divisors` to
-list an integer's positive divisors, and optional call chaining
-(`f?.()`) to round out the `?.`/`??`/`?.[` safe-navigation family.
+Actively developed, nightly. Recently landed: map-destructuring
+`for`-loop variables (`for {a, b} in list_of_maps { ... }`), crossing
+the existing list-destructuring `for`-loop with `let`'s existing
+map-destructuring pattern. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_emirp` to test whether a prime's
+digit-reversal is a different prime, list/map-destructuring function
+parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), `divisors`
+to list an integer's positive divisors, optional call chaining
+(`f?.()`) to round out the `?.`/`??`/`?.[` safe-navigation family, and
+`is_rotation` to test whether one string is a rotation of another.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

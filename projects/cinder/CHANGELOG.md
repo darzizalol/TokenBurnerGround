@@ -2029,3 +2029,23 @@ for vision/architecture.
   merge, no bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s
   roadmap paragraph still need updating — left to the Architect's next
   grooming pass.
+- **Language: map-destructuring `for`-loop variables** — merged
+  2026-08-09T19:49:41Z via PR #221 (`feat/20260809-for-map-destructure`).
+  Crossed the existing list-destructuring `for`-loop
+  (`for [k, v] in items(m) { ... }`) with the existing map-destructuring
+  `let` (`let {a, b} = expr;`): `ForStmt` (`cinder/ast_nodes.py`) gained
+  an `is_map` field mirroring `DestructureLetStmt`'s own flag, the
+  map-pattern identifier-collecting loop inlined in
+  `_destructure_let_statement` was extracted into a shared
+  `_destructure_map_pattern` parser helper reused by both `let {a, b} =
+  ...` and the new `for {a, b} in ...` branch, and `_execute_for` now
+  dispatches to the existing `_bind_map_destructure` interpreter helper
+  when `stmt.is_map`, reusing the same `CinderRuntimeError` messages
+  `let {a, b} = ...` already raises for a non-map item or a missing key
+  — pure plumbing, no new binding logic. Reviewer gave `VERDICT: LGTM`
+  and QA gave `QA: PASS` (2452 tests passing plus CLI smoke tests
+  covering the motivating multi-name case, single-name patterns,
+  non-map/missing-key errors, and a labeled `break outer` through a
+  nested loop) — clean merge, no bounces. `README.md`'s `for`-loop
+  bullet and `PROJECT.md`'s roadmap paragraph updated in this same
+  grooming pass.

@@ -11,96 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-destructuring `for`-loop variables (`for {a, b} in list_of_maps { ... }`) [claimed 2026-08-09T19:42:19Z]
-
-Build: `for`-loops already accept a list-destructuring loop variable
-(`for [k, v] in items(m) { ... }`, `ForStmt.names`/`rest` in
-`cinder/ast_nodes.py`), and `let` already accepts a map-destructuring
-pattern (`let {a, b} = expr;`, `DestructureLetStmt.is_map`) — but the
-two features were never crossed: there is no way to write
-`for {a, b} in list_of_maps { ... }` to destructure each map in an
-iterable of maps by key, so a caller who wants that today must fall
-back to `for m in list_of_maps { let a = m.a; let b = m.b; ... }`. This
-is the depth task queued after task 2's breadth work (`lerp`) per
-`PROJECT.md`'s breadth-vs-depth policy.
-
-In `cinder/ast_nodes.py`: `ForStmt` currently carries `names`/`rest`
-(list-pattern only) with no way to say "this pattern is a map pattern."
-Add an `is_map: bool = False` field, the same field
-`DestructureLetStmt` already has, defaulting to `False` so every
-existing `ForStmt` construction site (list-destructuring and plain
-identifier) is unaffected.
-
-In `cinder/parser.py`: `_destructure_let_statement` (search `def
-_destructure_let_statement`) currently inlines its map-pattern parsing
-directly in an `if is_map:` branch — consume `{`, read a
-comma-separated list of plain identifiers via
-`self._consume(TokenType.IDENTIFIER, "identifier in destructuring
-pattern")`, consume `}`. Extract that identifier-collecting loop (not
-the `{`/`}` consumption around it, since `_for_statement` needs its own
-brace handling) into a new helper `_destructure_map_pattern(self) ->
-list`, mirroring the existing `_destructure_list_pattern`'s shape
-(consumes its own delimiters, returns just `names` — no `rest`, since
-map patterns don't have one, matching `let {a, b} = expr;`'s own
-no-rest behavior). Call it from `_destructure_let_statement` in place
-of the inlined loop. Then in `_for_statement` (search `def
-_for_statement`), add an `elif self._check(TokenType.LBRACE):` branch
-alongside the existing `if self._check(TokenType.LBRACKET):` branch,
-calling `self._destructure_map_pattern()` to get `names` and setting a
-new local `is_map = True` (default `False` otherwise), and pass
-`is_map=is_map` through to the `ForStmt(...)` construction at the end
-of the function.
-
-In `cinder/interpreter.py`: `_execute_for` (search `def _execute_for`)
-currently does `if stmt.names is not None:
-self._bind_list_destructure(...) else: iter_env.define(stmt.var_name,
-item)`. Change the `if stmt.names is not None:` branch to check
-`stmt.is_map` first: when `True`, call the existing
-`self._bind_map_destructure(iter_env, stmt.names, item, stmt.line,
-stmt.column)` (already used by `DestructureLetStmt` and
-`DestructureAssign`, raises a clean `CinderRuntimeError` if `item` isn't
-a map or is missing an expected key); otherwise keep the existing
-`_bind_list_destructure` call unchanged.
-
-Acceptance criteria:
-- `for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}] { print(a + b); }`
-  prints `3` then `7` — the motivating case.
-- `for {a} in [{"a": 1}, {"a": 2}] { print(a); }` prints `1` then `2` —
-  a single-name pattern works too, not just multi-name.
-- `for {a} in [{"a": 1}, 5] { print(a); }` raises `CinderRuntimeError`
-  matching `"cannot destructure int as a map"` the moment the
-  non-map item is reached — same error `_bind_map_destructure` already
-  raises for `let {a} = 5;`, not a silent skip.
-- `for {a, b} in [{"a": 1}] { print(a); }` raises `CinderRuntimeError`
-  matching `"destructuring pattern expects key 'b', not found in map"`
-  — a map missing an expected key fails the same way `let {a, b} =
-  {"a": 1};` already does.
-- `for {a, ...rest} in [...]` raises a `ParseError` (expected an
-  identifier, found `...`) — map patterns have no rest element, exactly
-  like `let {a, ...rest} = expr;` already has none; nothing new needs
-  building for this, it falls out of `_destructure_map_pattern` only
-  ever consuming identifiers.
-- A labeled map-pattern loop works with `break`/`continue` targeting an
-  outer loop: `outer: for {a} in [{"a": 1}] { for x in [1] { break
-  outer; } }` exits cleanly.
-- Existing list-destructuring for-loops (`for [k, v] in items(m) {
-  ... }`) and plain-identifier for-loops are completely unaffected.
-- `let {a, b} = expr;`'s own existing map-destructuring behavior is
-  unaffected now that it calls the extracted `_destructure_map_pattern`
-  helper instead of its old inlined loop.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`ForStmt`), `cinder/parser.py`
-(`_destructure_let_statement`, new `_destructure_map_pattern`,
-`_for_statement`), `cinder/interpreter.py` (`_execute_for`), `tests/
-test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
-`for`-loop bullet needs the map-destructuring form mentioned, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
-— leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_emirp` — emirp predicate
+## 1. Standard library: `is_emirp` — emirp predicate
 
 Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
 `_is_composite` (search for `def _is_composite`) — it's the natural
@@ -171,7 +82,7 @@ bullet needs `is_emirp` added near `is_prime`/`is_composite`, and
 
 ---
 
-## 3. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
+## 2. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
 
 Build: extend function-parameter parsing/binding — shared by named
 `fn` declarations, anonymous `fn` expressions, and parenthesized arrow
@@ -279,7 +190,7 @@ Functions bullet needs the destructuring-parameter form mentioned, and
 
 ---
 
-## 4. Standard library: `divisors` — list an integer's positive divisors
+## 3. Standard library: `divisors` — list an integer's positive divisors
 
 Build: add `divisors(n)` to `cinder/builtins.py`, registered right
 after `_is_deficient` (search for `def _is_deficient`) — it's the
@@ -350,7 +261,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: optional call chaining (`f?.(...)`)
+## 4. Language: optional call chaining (`f?.(...)`)
 
 Build: extend the existing safe-navigation family — `m?.key` (dot
 property access), `obj?.[expr]` (bracket index access), both defined
@@ -451,6 +362,69 @@ test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
 safe-navigation bullet needs the call form mentioned, and
 `PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
 — leave both to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Standard library: `is_rotation` — string rotation predicate
+
+Build: add `is_rotation(a, b)` to `cinder/builtins.py`, registered
+right after `_is_anagram` (search for `def _is_anagram`) — it's a
+natural sibling in the two-string predicate family alongside
+`is_anagram`/`is_permutation`, one position more specific than
+`is_anagram`'s "same multiset of characters" test. This is a fresh
+breadth task queued after task 4's depth work (optional call chaining)
+per `PROJECT.md`'s breadth-vs-depth policy.
+
+A string `b` is a **rotation** of string `a` when `b` can be produced
+by moving some prefix of `a` to its end (e.g. `"abcd"` rotated by two
+positions gives `"cdab"`). This is stricter than `is_anagram`: two
+strings can share the exact same character multiset without one being
+an actual rotation of the other (e.g. `"abcd"`/`"acbd"` are anagrams
+but not rotations).
+
+Model the arity/type-checking on `_is_anagram`'s structure exactly:
+`_require_arity("is_rotation", arguments, 2, line, column)`, then
+check each argument is a `str` with its own position-specific error
+message (mirror `_is_anagram`'s separate "first argument"/"second
+argument" messages, don't collapse them into one). For the rotation
+test itself, use the standard doubled-string trick rather than
+hand-rolling a character-shift loop: two equal-length strings `a`/`b`
+are rotations of each other iff `b in (a + a)` (empty strings are a
+rotation of themselves — `"" in ("" + "")` is `True`, so no special
+case needed there); unequal-length strings are never rotations of each
+other, checked before the doubled-string test, not left to fall out of
+it.
+
+Acceptance criteria:
+- `is_rotation("abcd", "cdab");` is `true` — the motivating case,
+  rotated by two positions.
+- `is_rotation("abcd", "abcd");` is `true` — a string is trivially a
+  rotation of itself (zero-position rotation).
+- `is_rotation("", "");` is `true` — both empty is a rotation.
+- `is_rotation("aaaa", "aaaa");` is `true` — repeated-character strings
+  don't confuse the doubled-string check.
+- `is_rotation("abcd", "acbd");` is `false` — same character multiset
+  (an anagram) but not an actual rotation, confirming this is stricter
+  than `is_anagram`.
+- `is_rotation("abc", "abcd");` is `false` — different lengths can
+  never be rotations of each other.
+- `is_rotation("abc", "cab");` is `true` and `is_rotation("cab",
+  "abc");` is `true` — rotation is symmetric.
+- `is_rotation(5, "ab");` raises `CinderRuntimeError` matching
+  `"is_rotation() requires a string as its first argument, got int"`.
+- `is_rotation("ab", 5);` raises `CinderRuntimeError` matching
+  `"is_rotation() requires a string as its second argument, got int"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_anagram`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_rotation` added near `is_anagram`/`is_permutation`,
+and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
+landed — leave both to the Architect's next grooming pass, not this
+task.
 
 ---
 

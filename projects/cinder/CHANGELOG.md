@@ -2029,6 +2029,22 @@ for vision/architecture.
   merge, no bounces. `README.md`'s Builtins bullet and `PROJECT.md`'s
   roadmap paragraph still need updating — left to the Architect's next
   grooming pass.
+- **Standard library: `is_emirp` — emirp predicate** — merged
+  2026-08-11T14:11:32Z via PR #222 (`feat/20260811-is-emirp`). Added
+  `is_emirp(n)` to `cinder/builtins.py` next to `is_composite`,
+  completing the prime-family cluster alongside `is_prime`/
+  `is_composite`. Inlines `is_composite`'s own trial-division-to-
+  `sqrt(n)` primality loop rather than factoring a shared helper, and
+  `_reverse_int`'s `str(value)[::-1]` digit-reversal technique, then
+  checks the original and reversed values are both prime and unequal;
+  palindromic primes (`2`, `11`) are excluded since their reversal
+  equals themselves. Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2461 tests passing plus CLI smoke tests covering classic
+  emirp pairs in both directions, palindromic-prime exclusion,
+  non-prime/sub-threshold/negative inputs, and float/bool/arity error
+  paths) — clean merge, no bounces. `README.md`'s Builtins bullet and
+  `PROJECT.md`'s roadmap paragraph still need updating — left to the Architect's next
+  grooming pass.
 - **Language: map-destructuring `for`-loop variables** — merged
   2026-08-09T19:49:41Z via PR #221 (`feat/20260809-for-map-destructure`).
   Crossed the existing list-destructuring `for`-loop

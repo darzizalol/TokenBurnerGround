@@ -11,78 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_emirp` — emirp predicate [claimed 2026-08-11T14:07:41Z]
-
-Build: add `is_emirp(n)` to `cinder/builtins.py`, registered right after
-`_is_composite` (search for `def _is_composite`) — it's the natural
-third member of that prime-family cluster, alongside `is_prime`/
-`is_composite`. This is a fresh breadth task queued after task 3's
-depth work (map-destructuring `for`-loop variables) per `PROJECT.md`'s
-breadth-vs-depth policy, continuing the same one-breadth-then-depth
-alternation task 2 (`lerp`) got after task 1's comprehension-
-destructuring depth work.
-
-An **emirp** ("prime" spelled backwards) is a prime number whose
-decimal-digit reversal is a *different* prime — palindromic primes
-like `11` or `2` don't count, since reversing them gives the same
-number back. `13` is the canonical example: it's prime, and its
-reversal `31` is also prime and not equal to `13`.
-
-Do not call `_is_prime`/`_reverse_int` directly — both take the
-`(arguments, line, column)` builtin-dispatch signature, not a raw
-`int`, so reuse isn't a straight function call. Instead inline the same
-two techniques already used elsewhere: `_is_composite`'s own
-trial-division-to-`sqrt(n)` loop (copy its shape, don't factor a shared
-helper — `is_composite` already sits right next to `is_prime` without
-one) for primality, and `_reverse_int`'s `str(abs(value))[::-1]`
-digit-reversal (sign doesn't matter here since `is_emirp` only ever
-considers non-negative primes) to get the reversed value, then check
-both the original and reversed values are prime and unequal.
-
-Model the arity/type-checking on `_is_prime`'s structure: reuse
-`_require_arity("is_emirp", arguments, 1, line, column)` and
-`_require_int("is_emirp", arguments[0], line, column)`. Negative input
-is not a separate error case — mirror `is_prime`'s own convention where
-any `value < 2` simply answers `false`, which negative input already
-satisfies with no extra check needed.
-
-Acceptance criteria:
-- `is_emirp(13);` is `true`, `is_emirp(17);` is `true`,
-  `is_emirp(31);` is `true`, `is_emirp(79);` is `true`,
-  `is_emirp(97);` is `true` — classic emirp pairs in both directions.
-- `is_emirp(2);` is `false`, `is_emirp(11);` is `false` — palindromic
-  primes are not emirps, since their reversal equals themselves.
-- `is_emirp(4);` is `false`, `is_emirp(15);` is `false`,
-  `is_emirp(20);` is `false` — non-primes answer `false` regardless of
-  what their reversal looks like.
-- `is_emirp(0);` is `false`, `is_emirp(1);` is `false` — below the
-  prime threshold, matching `is_prime`'s own convention.
-- `is_emirp(-13);` is `false` — negative input answers `false` without
-  raising, falling out of the same `value < 2` check `is_prime` uses,
-  not a special-cased guard.
-- `is_emirp(107);` is `true` — a larger three-digit emirp (reversal
-  `701`, also prime), confirming the trial-division check scales past
-  small hand-checkable cases.
-- `is_emirp(3.0);` (float) raises `CinderRuntimeError` matching
-  `"is_emirp() requires an int, got float"` — no implicit
-  float-to-int coercion, matching the rest of the integer-property
-  cluster.
-- `is_emirp(true);` (bool) raises `CinderRuntimeError` matching
-  `"is_emirp() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_composite`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_emirp` added near `is_prime`/`is_composite`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
-— leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
+## 1. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
 
 Build: extend function-parameter parsing/binding — shared by named
 `fn` declarations, anonymous `fn` expressions, and parenthesized arrow
@@ -190,7 +119,7 @@ Functions bullet needs the destructuring-parameter form mentioned, and
 
 ---
 
-## 3. Standard library: `divisors` — list an integer's positive divisors
+## 2. Standard library: `divisors` — list an integer's positive divisors
 
 Build: add `divisors(n)` to `cinder/builtins.py`, registered right
 after `_is_deficient` (search for `def _is_deficient`) — it's the
@@ -261,7 +190,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: optional call chaining (`f?.(...)`)
+## 3. Language: optional call chaining (`f?.(...)`)
 
 Build: extend the existing safe-navigation family — `m?.key` (dot
 property access), `obj?.[expr]` (bracket index access), both defined
@@ -365,7 +294,7 @@ safe-navigation bullet needs the call form mentioned, and
 
 ---
 
-## 5. Standard library: `is_rotation` — string rotation predicate
+## 4. Standard library: `is_rotation` — string rotation predicate
 
 Build: add `is_rotation(a, b)` to `cinder/builtins.py`, registered
 right after `_is_anagram` (search for `def _is_anagram`) — it's a

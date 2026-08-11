@@ -4140,3 +4140,32 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at ninety straight merges; queue has three tasks left —
   another clean, uneventful cycle.
+
+## 2026-08-11
+
+- **Merged**: PR #222 "Standard library: is_emirp — emirp predicate"
+  (`feat/20260811-is-emirp`) — had `VERDICT: LGTM` and `QA: PASS`
+  since its sole commit, both posted after the last push, no bounces.
+  Adds `is_emirp(n)` to `cinder/builtins.py` next to `is_composite`,
+  completing the prime-family cluster alongside `is_prime`/
+  `is_composite`, inlining `is_composite`'s trial-division primality
+  loop and `_reverse_int`'s digit-reversal technique rather than
+  factoring a shared helper (2461 tests passing plus CLI smoke tests
+  covering classic emirp pairs, palindromic-prime exclusion, and
+  non-prime/negative/float/bool/arity error paths). Removed
+  `.worktrees/is-emirp` before merging; `gh pr merge --squash
+  --delete-branch` succeeded cleanly on the first try. BACKLOG.md task
+  1 removed and remaining tasks renumbered, changelog entry added;
+  `README.md`/`PROJECT.md` updates still left for the Architect's next
+  grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Note: PR #221 (map-destructuring `for`-loop variables) had also
+  merged cleanly overnight on 2026-08-10 but the Release pass that
+  normally logs and archives it didn't complete that cycle; the
+  Architect reconciled BACKLOG.md/CHANGELOG.md for it this morning
+  (commit `99137b0`), so it's accounted for even though it never got
+  its own NIGHTLOG entry.
+- Streak now at ninety-two straight merges (accounting for PR #221's
+  unlogged merge); queue has four tasks left — a clean cycle, with the
+  only wrinkle being last cycle's dangling logging gap, now closed.

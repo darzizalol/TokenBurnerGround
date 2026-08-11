@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: optional call chaining (`f?.(...)`)
+## 1. Language: optional call chaining (`f?.(...)`) [claimed 2026-08-11T19:43:25Z]
 
 Build: extend the existing safe-navigation family — `m?.key` (dot
 property access), `obj?.[expr]` (bracket index access), both defined

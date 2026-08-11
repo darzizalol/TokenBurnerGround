@@ -2260,6 +2260,14 @@ class TestFunctions(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts('fn f({a, b} = {"a": 1, "b": 2}) { return a; }')
 
+    def test_list_destructuring_param_after_defaulted_param_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("fn f(a = 1, [b, c]) { return a; }")
+
+    def test_map_destructuring_param_after_defaulted_param_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('fn f(a = 1, {b, c}) { return a; }')
+
     def test_return_at_top_level_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("return 5;")

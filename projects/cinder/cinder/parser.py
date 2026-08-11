@@ -659,6 +659,13 @@ class Parser:
     def _fn_param(self, seen_default: bool) -> Param:
         if self._check(TokenType.LBRACKET):
             bracket_token = self._peek()
+            if seen_default:
+                raise ParseError(
+                    "destructuring parameter without a default value "
+                    "follows a parameter with one",
+                    bracket_token.line,
+                    bracket_token.column,
+                )
             names, rest = self._destructure_list_pattern()
             if self._check(TokenType.EQ):
                 raise ParseError(
@@ -669,6 +676,13 @@ class Parser:
             return Param(name=None, names=names, rest=rest)
         if self._check(TokenType.LBRACE):
             brace_token = self._peek()
+            if seen_default:
+                raise ParseError(
+                    "destructuring parameter without a default value "
+                    "follows a parameter with one",
+                    brace_token.line,
+                    brace_token.column,
+                )
             names = self._destructure_map_pattern()
             if self._check(TokenType.EQ):
                 raise ParseError(

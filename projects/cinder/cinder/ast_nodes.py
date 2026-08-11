@@ -59,6 +59,14 @@ class Call:
 
 
 @dataclass(frozen=True)
+class OptionalCall:
+    callee: "Expr"
+    arguments: list
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Assign:
     name: str
     value: "Expr"

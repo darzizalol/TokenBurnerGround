@@ -76,6 +76,7 @@ from cinder.ast_nodes import (
     Logical,
     MapComprehension,
     MapLiteral,
+    OptionalCall,
     OptionalIndex,
     ReturnStmt,
     SliceExpr,
@@ -239,6 +240,8 @@ class Interpreter:
             return self._evaluate_destructure_assign(expr, env)
         if isinstance(expr, Call):
             return self._evaluate_call(expr, env)
+        if isinstance(expr, OptionalCall):
+            return self._evaluate_optional_call(expr, env)
         if isinstance(expr, ListLiteral):
             return self._evaluate_list_literal(expr, env)
         if isinstance(expr, ListComprehension):
@@ -554,8 +557,12 @@ class Interpreter:
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)
-        arguments = []
-        for arg in expr.arguments:
+        arguments = self._evaluate_call_arguments(expr.arguments, env)
+        return call_value(callee, arguments, expr.line, expr.column)
+
+    def _evaluate_call_arguments(self, arguments: list, env: Environment) -> list:
+        result = []
+        for arg in arguments:
             if isinstance(arg, Spread):
                 value = self.evaluate(arg.expression, env)
                 if not isinstance(value, list):
@@ -564,9 +571,16 @@ class Interpreter:
                         arg.line,
                         arg.column,
                     )
-                arguments.extend(value)
+                result.extend(value)
             else:
-                arguments.append(self.evaluate(arg, env))
+                result.append(self.evaluate(arg, env))
+        return result
+
+    def _evaluate_optional_call(self, expr: OptionalCall, env: Environment) -> object:
+        callee = self.evaluate(expr.callee, env)
+        if callee is None:
+            return None
+        arguments = self._evaluate_call_arguments(expr.arguments, env)
         return call_value(callee, arguments, expr.line, expr.column)
 
     def _evaluate_list_literal(self, expr: ListLiteral, env: Environment) -> list:

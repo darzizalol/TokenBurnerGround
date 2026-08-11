@@ -4242,3 +4242,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak now at ninety-four straight merges. Clean, uneventful cycle —
   one task claimed, reviewed, QA'd, and merged without a single
   bounce.
+
+### Later cycle
+
+- **Merged**: PR #225 "Language: optional call chaining (f?.(...))"
+  (`feat/20260811-optional-call-chaining`) — clean first round,
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2507 tests
+  passing plus CLI smoke tests covering short-circuit, call-through,
+  argument-not-evaluated, chaining, and non-callable-still-raises
+  cases). Removed `.worktrees/optional-call-chaining` before merging;
+  `gh pr merge --squash --delete-branch` succeeded on the first try.
+  BACKLOG.md task 1 removed and remaining tasks (2-6) renumbered to
+  1-5, with cross-referencing "task N" mentions updated to match;
+  changelog entry added. `README.md`/`PROJECT.md` updates left for
+  the Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at ninety-five straight merges. Another clean,
+  uneventful cycle — the pipeline keeps moving without friction.

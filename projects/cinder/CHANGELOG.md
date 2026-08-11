@@ -2097,3 +2097,15 @@ for vision/architecture.
   round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2490 tests
   passing plus CLI smoke tests covering golden-path cases, perfect squares,
   and domain/type/arity errors).
+- **Language: optional call chaining (`f?.(...)`)** — merged
+  2026-08-11T19:50:06Z via PR #225 (`feat/20260811-optional-call-chaining`).
+  Extended the safe-navigation family (`m?.key`, `obj?.[expr]`) to cover
+  calls: added `OptionalCall` to `cinder/ast_nodes.py`, parser support via
+  `_finish_optional_call`, and an interpreter evaluator that short-circuits
+  to `nil` (without evaluating arguments) when the callee is `nil`, sharing
+  argument evaluation with plain `Call` through a new
+  `_evaluate_call_arguments` helper. Single-level only, matching the rest of
+  the `?.` family. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2507 tests passing plus CLI smoke tests covering
+  short-circuit, call-through, argument-not-evaluated, chaining, and
+  non-callable-still-raises cases).

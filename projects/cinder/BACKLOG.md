@@ -11,120 +11,15 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: optional call chaining (`f?.(...)`) [claimed 2026-08-11T19:43:25Z]
-
-Build: extend the existing safe-navigation family — `m?.key` (dot
-property access), `obj?.[expr]` (bracket index access), both defined
-in `cinder/ast_nodes.py`'s `OptionalIndex` and parsed via
-`_finish_optional_dot` in `cinder/parser.py` (search both) — to cover
-the one position they still don't: a *call*. Today `let f = nil;
-f();` raises `CinderRuntimeError` `"nil is not callable"` (search
-`is not callable` in `cinder/interpreter.py`'s `call_value`) with no
-way to say "call this only if it isn't nil" short of a manual
-`if f != nil { f(); }`. This is the depth task queued after the
-breadth work that just landed (`divisors`) per `PROJECT.md`'s
-breadth-vs-depth policy.
-
-Like the rest of the `?.` family, this is single-level only — it does
-not make an entire chain nil-safe, just the one call it's written on;
-composing multiple `?.`s (`m?.greet?.("Al")`) is how a caller reaches
-further, exactly as `m?.a?.b` already requires a `?.` at each level
-rather than one `?.` propagating down the whole chain.
-
-In `cinder/ast_nodes.py`: add an `OptionalCall` dataclass right after
-`Call` (search `class Call`), same shape as `Call` — `callee: "Expr"`,
-`arguments: list`, `line: int`, `column: int` — since it needs no
-extra fields, just different evaluation semantics.
-
-In `cinder/parser.py`: `_call()`'s postfix loop (search `def _call`)
-dispatches `QUESTION_DOT` to `_finish_optional_dot`, which currently
-only branches on `LBRACKET` (bracket index) vs. falling through to an
-`IDENTIFIER` (dot property). Add a new `_finish_optional_call(self,
-callee: Expr) -> Expr` method mirroring `_finish_call`'s body exactly
-(consume `(`, parse zero or more comma-separated `_call_argument()`s,
-each of which may itself be a `...expr` `Spread` — reuse
-`_call_argument()` unchanged, don't reimplement spread parsing —
-consume `)`, return `OptionalCall(callee, arguments, paren.line,
-paren.column)` using the `(` token's own position, matching how
-`_finish_call` positions `Call` on the paren rather than the callee).
-Then in `_finish_optional_dot`, add a check for `self._check
-(TokenType.LPAREN)` before the existing `LBRACKET` check, and when it
-matches, `return self._finish_optional_call(obj)` instead of
-falling through to bracket/property parsing.
-
-In `cinder/interpreter.py`: add `_evaluate_optional_call(self, expr:
-OptionalCall, env: Environment) -> object`, mirroring
-`_evaluate_optional_index`'s short-circuit shape (evaluate `expr.
-callee`; if it's `None`, return `None` immediately *without*
-evaluating any argument expressions — same "don't touch the rest of
-the expression once nil is seen" rule `_evaluate_optional_index`
-already applies to its `index` operand) but for the non-nil path reuse
-`_evaluate_call`'s existing argument-evaluation loop (handles plain
-arguments and `Spread` arguments identically, raising the same
-`"cannot spread {type_name(value)} in a function call"` error) rather
-than duplicating it — extract that loop out of `_evaluate_call` into a
-small shared helper (e.g. `_evaluate_call_arguments(self, arguments:
-list, env: Environment) -> list`) that both `_evaluate_call` and
-`_evaluate_optional_call` call, then finish with the same
-`call_value(callee, arguments, expr.line, expr.column)` both paths
-already use. Wire the dispatch: `evaluate` (search `isinstance(expr,
-Call)`) needs a new `isinstance(expr, OptionalCall)` branch calling
-the new method, placed near the existing `Call`/`OptionalIndex`
-branches.
-
-Acceptance criteria:
-- `let f = nil; print(f?.());` prints `nil` — the motivating
-  short-circuit case, no `"nil is not callable"` error.
-- `fn add(a, b) { return a + b; } print(add?.(1, 2));` prints `3` — a
-  non-nil callee calls through normally with arguments intact.
-- `let m = {"greet": fn(name) { return "hi " + name; }}; print(m.greet
-  ?.("Al"));` prints `hi Al` — composes with a plain (non-optional)
-  `.` access on the callee side; only the call itself is optional here.
-- `let m = nil; print(m?.greet?.("Al"));` prints `nil` — chains two
-  `?.`s: `m?.greet` short-circuits to `nil` (existing single-level
-  `OptionalIndex` behavior), then `nil?.("Al")` short-circuits the
-  call too, since its callee evaluates to `nil`.
-- `let calls = []; fn effect() { push(calls, 1); return 1; } let f =
-  nil; f?.(effect()); print(len(calls));` prints `0` — argument
-  expressions are not evaluated when the callee is `nil`, matching
-  `OptionalIndex` not evaluating its `index` operand when `obj` is
-  `nil`.
-- `let f = nil; let args = [1, 2]; f?.(...args);` does not raise and
-  the spread argument is never evaluated (same non-evaluation rule as
-  the plain-argument case above).
-- `let f = 5; f?.();` raises `CinderRuntimeError` matching `"int is
-  not callable"` — only a `nil` callee short-circuits; any other
-  non-callable value still raises exactly like plain `Call` already
-  does, since `?.` guards against `nil`, not against "not a function."
-- `f?.(` with no closing `)` raises a `ParseError`, matching plain
-  `f(`'s own unterminated-argument-list behavior.
-- Existing plain `Call` (`f()`, `f(a, b)`, spread arguments
-  `f(...args)`) and existing `OptionalIndex` (`m?.key`,
-  `obj?.[expr]`) are completely unaffected by the shared-helper
-  extraction.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (new `OptionalCall`),
-`cinder/parser.py` (`_finish_optional_dot`, new
-`_finish_optional_call`), `cinder/interpreter.py` (`evaluate`
-dispatch, new `_evaluate_optional_call`, extracted
-`_evaluate_call_arguments` shared with `_evaluate_call`), `tests/
-test_parser.py`, `tests/test_interpreter.py`. Once merged, `README.md`'s
-safe-navigation bullet needs the call form mentioned, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
-— leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_rotation` — string rotation predicate
+## 1. Standard library: `is_rotation` — string rotation predicate
 
 Build: add `is_rotation(a, b)` to `cinder/builtins.py`, registered
 right after `_is_anagram` (search for `def _is_anagram`) — it's a
 natural sibling in the two-string predicate family alongside
 `is_anagram`/`is_permutation`, one position more specific than
 `is_anagram`'s "same multiset of characters" test. This is a fresh
-breadth task queued after task 1's depth work (optional call chaining)
-per `PROJECT.md`'s breadth-vs-depth policy.
+breadth task queued after the optional call chaining depth work that
+just landed, per `PROJECT.md`'s breadth-vs-depth policy.
 
 A string `b` is a **rotation** of string `a` when `b` can be produced
 by moving some prefix of `a` to its end (e.g. `"abcd"` rotated by two
@@ -179,7 +74,7 @@ task.
 
 ---
 
-## 3. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
+## 2. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
 
 Build: close the one corner the destructuring-loop-variable matrix
 still leaves open. Plain `for`-loops already support both forms of
@@ -195,7 +90,7 @@ before a comprehension's loop variable, never `TokenType.LBRACE` — so
 today `[a + b for {a, b} in list_of_maps]` raises `ParseError`
 `"expected loop variable after 'for', found '{'"` instead of
 destructuring each map in `list_of_maps` by key. This is the depth task queued after
-task 2's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
+task 1's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
 depth policy.
 
 This is pure plumbing — every helper it needs already exists and is
@@ -289,7 +184,7 @@ not this task.
 
 ---
 
-## 4. Standard library: `is_balanced` — balanced-brackets predicate
+## 3. Standard library: `is_balanced` — balanced-brackets predicate
 
 Build: add `is_balanced(s)` to `cinder/builtins.py`, registered right
 after `_is_pangram` (search for `def _is_pangram`) — a string
@@ -297,7 +192,7 @@ predicate, but a different flavor than its neighbors: `is_anagram`/
 `is_permutation`/`is_pangram`/`is_palindrome` are all direct
 delegations to a multiset/reversal comparison, whereas this is the
 project's first stack-based parsing predicate. This is a fresh breadth
-task queued after task 3's depth work (map-destructuring loop
+task queued after task 2's depth work (map-destructuring loop
 variables in comprehensions) per `PROJECT.md`'s breadth-vs-depth
 policy, deliberately picked to diversify the string-predicate cluster
 rather than add one more delegation-only member to it.
@@ -357,7 +252,7 @@ not this task.
 
 ---
 
-## 5. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
+## 4. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
 
 Build: close the one gap left between the two destructuring pattern
 kinds. List-destructuring patterns (`let [a, ...rest] = expr;`,
@@ -372,7 +267,7 @@ today: `let {a, ...rest} = {"a": 1, "b": 2};` currently raises
 ...rest} = {"a": 1, "b": 2};'` from this project's directory) — there
 is no way to capture "every key I didn't name" the way list patterns
 already capture "every element I didn't name". This is the depth task
-after task 4's breadth work (`is_balanced`) per `PROJECT.md`'s
+after task 3's breadth work (`is_balanced`) per `PROJECT.md`'s
 breadth-vs-depth policy.
 
 The shared helper `_destructure_map_pattern` in `cinder/parser.py`
@@ -506,11 +401,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_isogram` — no-repeated-letter predicate
+## 5. Standard library: `is_isogram` — no-repeated-letter predicate
 
 Build: add `is_isogram(s)` to `cinder/builtins.py`, registered right
 after `_is_blank` (search for `def _is_blank`) — a fresh breadth task
-queued after task 5's depth work (map-destructuring rest element) per
+queued after task 4's depth work (map-destructuring rest element) per
 `PROJECT.md`'s breadth-vs-depth policy, and, like `is_balanced`,
 deliberately not another `is_anagram`-style multiset delegation:
 it's a single-pass character-frequency check instead.

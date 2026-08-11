@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `divisors` — list an integer's positive divisors [claimed 2026-08-11T14:48:18Z]
+## 1. Standard library: `divisors` — list an integer's positive divisors [claimed 2026-08-11T19:29:29Z]
 
 Build: add `divisors(n)` to `cinder/builtins.py`, registered right
 after `_is_deficient` (search for `def _is_deficient`) — it's the

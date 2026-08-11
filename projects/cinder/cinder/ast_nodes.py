@@ -222,14 +222,27 @@ class InterpString:
 
 
 @dataclass(frozen=True)
+class Param:
+    """One function parameter. A plain identifier parameter sets only
+    `name`/`default` (`names=None`); a list-destructuring parameter sets
+    `name=None, names=names, rest=rest`; a map-destructuring parameter sets
+    `name=None, names=names, is_map=True`. Same field shape `ForStmt` uses
+    for its own pattern flexibility."""
+
+    name: "str | None"
+    default: "Expr | None" = None
+    names: "list | None" = None
+    rest: "str | None" = None
+    is_map: bool = False
+
+
+@dataclass(frozen=True)
 class FnExpr:
     """An anonymous `fn(params) { body }` function literal, usable as a value
     (e.g. passed directly to `map`/`filter`, or bound with `let`) — unlike
     `FnDecl`, which only appears at statement position and requires a name.
 
-    `params` is a `list[tuple[str, Expr | None]]`: each entry pairs a
-    parameter name with its default-value expression, or `None` if the
-    parameter has no default.
+    `params` is a `list[Param]` — see `Param`'s docstring for its shape.
 
     `rest_param` is the name of a trailing `...name` parameter, or `None` if
     the function has none — see `fn f(a, ...rest) { ... }`."""
@@ -357,7 +370,7 @@ class ForCStmt:
 @dataclass(frozen=True)
 class FnDecl:
     """`params` and `rest_param` are the same shape as `FnExpr`'s — see its
-    docstring."""
+    docstring and `Param`'s."""
 
     name: str
     params: list

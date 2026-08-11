@@ -1973,6 +1973,68 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(names, ["bad"])
 
 
+class TestDestructuringParams(unittest.TestCase):
+    def test_list_destructuring_param(self):
+        env = run(
+            "fn dist([x, y]) { return x * x + y * y; } "
+            "let result = dist([3, 4]);"
+        )
+        self.assertEqual(env.get("result"), 25)
+
+    def test_map_destructuring_param(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'fn describe({name, age}) { return name + " is " + str(age); } '
+            'let result = describe({"name": "Al", "age": 30});',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), "Al is 30")
+
+    def test_list_destructuring_param_with_rest_element(self):
+        env = run(
+            "fn f([a, ...rest]) { return rest; } let result = f([1, 2, 3]);"
+        )
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_list_destructuring_param_combined_with_trailing_rest_param(self):
+        env = run(
+            "fn f([a, b], ...more) { return [a, b, more]; } "
+            "let result = f([1, 2], 3, 4);"
+        )
+        self.assertEqual(env.get("result"), [1, 2, [3, 4]])
+
+    def test_anonymous_function_with_list_destructuring_param(self):
+        env = run(
+            "let f = fn([a, b]) { return a + b; }; let result = f([1, 2]);"
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_arrow_function_with_list_destructuring_param(self):
+        env = run("let result = (([a, b]) => a + b)([1, 2]);")
+        self.assertEqual(env.get("result"), 3)
+
+    def test_list_destructuring_param_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f([a, b]) { return a; } f(5);")
+        self.assertEqual(ctx.exception.message, "cannot destructure int as a list")
+
+    def test_map_destructuring_param_missing_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f({a, b}) { return a; } f({"a": 1});')
+        self.assertEqual(
+            ctx.exception.message,
+            "destructuring pattern expects key 'b', not found in map",
+        )
+
+    def test_plain_params_defaults_and_rest_still_work_alongside_destructuring(self):
+        env = run(
+            "fn f(a, b = 1, ...rest) { return [a, b, rest]; } "
+            "let result = f(9);"
+        )
+        self.assertEqual(env.get("result"), [9, 1, []])
+
+
 class TestArrowFunctions(unittest.TestCase):
     def test_one_param(self):
         env = run("let double = (x) => x * 2; let result = double(21);")

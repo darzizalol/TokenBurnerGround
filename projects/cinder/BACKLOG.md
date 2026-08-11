@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_rotation` — string rotation predicate
+## 1. Standard library: `is_rotation` — string rotation predicate [claimed 2026-08-11T19:56:20Z]
 
 Build: add `is_rotation(a, b)` to `cinder/builtins.py`, registered
 right after `_is_anagram` (search for `def _is_anagram`) — it's a

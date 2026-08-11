@@ -402,6 +402,100 @@ task.
 
 ---
 
+## 5. Standard library: `levenshtein_distance` — string edit distance
+
+Build: add `levenshtein_distance(a, b)` to `cinder/builtins.py`,
+registered right after `_is_permutation` (search for `def
+_is_permutation`) — the breadth task after task 4's depth work
+(plain-assignment map-destructuring rest element) per `PROJECT.md`'s
+breadth-vs-depth policy. It sits next to `is_anagram`/`is_rotation`/
+`is_permutation` as one more two-string comparison, but unlike that
+whole boolean-predicate cluster it returns a number: the minimum
+count of single-character insertions, deletions, and substitutions
+needed to turn `a` into `b` (the classic Levenshtein edit distance).
+This is the project's first dynamic-programming builtin, and a third
+distinct implementation technique for the string-comparison family
+alongside `is_balanced`'s stack scan and `is_isogram`'s frequency-set
+check — deliberately picked to keep diversifying rather than add one
+more `Counter`/doubled-string delegation.
+
+Implement with the standard row-by-row DP table, kept to a single
+rolling 1-D list rather than a full 2-D matrix (no need for the whole
+table, only the previous row, to compute the final distance):
+
+```python
+def _levenshtein_distance(arguments: list, line: int, column: int) -> object:
+    _require_arity("levenshtein_distance", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"levenshtein_distance() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"levenshtein_distance() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    previous_row = list(range(len(string2) + 1))
+    for i, char1 in enumerate(string1, start=1):
+        current_row = [i] + [0] * len(string2)
+        for j, char2 in enumerate(string2, start=1):
+            current_row[j] = min(
+                current_row[j - 1] + 1,
+                previous_row[j] + 1,
+                previous_row[j - 1] + (0 if char1 == char2 else 1),
+            )
+        previous_row = current_row
+    return previous_row[-1]
+```
+
+Model the arity/type-checking exactly on `_is_anagram`'s two-argument
+"first argument"/"second argument" message shape (not
+`_is_pangram`/`_is_balanced`'s single-argument phrasing — there are
+two arguments here), matching the code above verbatim.
+
+Acceptance criteria:
+- `levenshtein_distance("kitten", "sitting");` is `3` — the classic
+  textbook example (substitute `k`->`s`, `e`->`i`, insert `g`).
+- `levenshtein_distance("", "");` is `0` — two empty strings need no
+  edits.
+- `levenshtein_distance("abc", "");` is `3` and
+  `levenshtein_distance("", "abc");` is `3` — turning a string into
+  the empty one (or vice versa) costs one deletion/insertion per
+  character.
+- `levenshtein_distance("abc", "abc");` is `0` — identical strings
+  need no edits.
+- `levenshtein_distance("a", "b");` is `1` — a single substitution.
+- `levenshtein_distance("flaw", "lawn");` is `2` — a second
+  well-known example distinct from the textbook one (delete the
+  leading `f` to get `"law"`, then insert a trailing `n`).
+- `levenshtein_distance("abc", "abx");` is `1` — a single
+  substitution in the middle of otherwise-equal strings.
+- Not symmetric in general but *is* symmetric for this builtin (edit
+  distance is a metric): `levenshtein_distance("abc", "xyz");` equals
+  `levenshtein_distance("xyz", "abc");` (both `3`) — worth a test
+  since a buggy insert/delete-cost swap could break symmetry silently.
+- `levenshtein_distance(5, "a");` raises `CinderRuntimeError` matching
+  `"levenshtein_distance() requires a string as its first argument,
+  got int"`.
+- `levenshtein_distance("a", true);` raises `CinderRuntimeError`
+  matching `"levenshtein_distance() requires a string as its second
+  argument, got bool"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_permutation`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `levenshtein_distance` added near
+`is_anagram`/`is_rotation`/`is_permutation`, and `PROJECT.md`'s
+roadmap paragraph needs it moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

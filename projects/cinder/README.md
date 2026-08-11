@@ -149,14 +149,17 @@ while (i < 10) {
   comprehension capture their own iteration's binding), including a
   list-destructuring loop variable (`[k + v for [k, v] in items(m)]`,
   same flat positional binding and optional trailing rest element as a
-  `for`-loop's own list-destructuring form);
+  `for`-loop's own list-destructuring form) and a map-destructuring loop
+  variable (`[a + b for {a, b} in list_of_maps]`, same key-lookup
+  binding as a `for`-loop's own map-destructuring form, no rest element);
   map literals accept spread elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; map
   comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
   if cond}` (same shape as list comprehensions — one optional filter
   clause, no nesting, fresh per-iteration scope, and the same
-  list-destructuring loop variable support; colliding keys collapse to
-  the last write, same as a plain map literal); dot access
+  list-destructuring and map-destructuring loop variable support;
+  colliding keys collapse to the last write, same as a plain map
+  literal); dot access
   sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
   an assignment/`++`/`--`/compound-assign target (arithmetic and
   bitwise/shift alike, e.g. `m.key += 1`); only identifier-shaped keys
@@ -285,17 +288,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_rotation` to test
-whether one string is a rotation of another via the doubled-string trick.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): map-destructuring loop
+Actively developed, nightly. Recently landed: map-destructuring loop
 variables in list/map comprehensions (`[a + b for {a, b} in
 list_of_maps]`), closing the last corner the destructuring-loop-variable
-matrix leaves open, `is_balanced` to test whether a string's brackets are
-properly matched and nested, a rest element for map-destructuring
-patterns (`let {a, ...rest} = m;`), mirroring the rest element list
-patterns already have, `is_isogram` to test whether a string has no
-repeated letters, and the same rest element for the plain-assignment
-map-destructuring form (`{a, ...rest} = expr;`). The backlog mixes
-language depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+matrix left open. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_balanced` to test whether a string's brackets are properly matched
+and nested, a rest element for map-destructuring patterns
+(`let {a, ...rest} = m;`), mirroring the rest element list patterns
+already have, `is_isogram` to test whether a string has no repeated
+letters, the same rest element for the plain-assignment
+map-destructuring form (`{a, ...rest} = expr;`), and
+`levenshtein_distance` to compute the classic string edit distance.
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

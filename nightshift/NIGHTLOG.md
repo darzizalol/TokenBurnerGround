@@ -4169,3 +4169,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak now at ninety-two straight merges (accounting for PR #221's
   unlogged merge); queue has four tasks left — a clean cycle, with the
   only wrinkle being last cycle's dangling logging gap, now closed.
+
+### Later cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: none (no PR has hit 3 rejections yet).
+- **Still open**: PR #223 "Language: list/map-destructuring function
+  parameters" (`feat/20260811-fn-destructure-params`) — Reviewer found
+  a real correctness bug (`VERDICT: CHANGES REQUESTED`): the new
+  `LBRACKET`/`LBRACE` branches in `cinder/parser.py`'s `_fn_param`
+  skip the `seen_default` ordering check that the plain-identifier
+  branch enforces, so `fn f(a = 1, [b, c]) { ... }` parses instead of
+  raising `ParseError`, then crashes the interpreter with a raw
+  Python `TypeError` at call time instead of failing cleanly at parse
+  time. No QA verdict posted yet. Left for the next Engineer session
+  to fix on the same branch; one rejection so far, two more before the
+  graveyard.
+- Streak holds at ninety-two; nothing to merge this cycle, one PR
+  bounced back to Engineer with a clear, actionable fix.

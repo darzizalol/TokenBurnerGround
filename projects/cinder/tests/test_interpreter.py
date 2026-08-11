@@ -2652,6 +2652,30 @@ class TestListComprehension(unittest.TestCase):
             evaluate("[a for [a, b] in [[1, 2], [3, 4]] if a > 1]"), [3]
         )
 
+    def test_map_destructures_pairs_from_maps(self):
+        self.assertEqual(
+            evaluate('[a + b for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}]]'),
+            [3, 7],
+        )
+
+    def test_map_destructure_with_filter(self):
+        self.assertEqual(
+            evaluate('[a for {a, b} in [{"a": 1, "b": 2}] if b > 1]'), [1]
+        )
+
+    def test_map_destructure_missing_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('[a for {a} in [{"a": 1}, {"b": 2}]]')
+        self.assertEqual(
+            ctx.exception.message,
+            "destructuring pattern expects key 'a', not found in map",
+        )
+
+    def test_map_destructure_non_map_item_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("[a for {a} in [1, 2]]")
+        self.assertEqual(ctx.exception.message, "cannot destructure int as a map")
+
 
 class TestMapComprehension(unittest.TestCase):
     def test_basic_transform(self):
@@ -2728,6 +2752,25 @@ class TestMapComprehension(unittest.TestCase):
             {"b": 2},
         )
         self.assertEqual(evaluate("{}"), {})
+
+    def test_map_destructures_pairs_from_maps(self):
+        self.assertEqual(
+            evaluate('{a: b for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}]}'),
+            {1: 2, 3: 4},
+        )
+
+    def test_map_destructure_missing_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('{a: a for {a} in [{"a": 1}, {"b": 2}]}')
+        self.assertEqual(
+            ctx.exception.message,
+            "destructuring pattern expects key 'a', not found in map",
+        )
+
+    def test_map_destructure_non_map_item_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{a: a for {a} in [1, 2]}")
+        self.assertEqual(ctx.exception.message, "cannot destructure int as a map")
 
 
 class TestSlicing(unittest.TestCase):

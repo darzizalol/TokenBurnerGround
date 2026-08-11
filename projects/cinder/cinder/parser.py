@@ -1272,8 +1272,12 @@ class Parser:
         var_name = None
         names = None
         rest = None
+        is_map = False
         if self._check(TokenType.LBRACKET):
             names, rest = self._destructure_list_pattern()
+        elif self._check(TokenType.LBRACE):
+            names = self._destructure_map_pattern()
+            is_map = True
         else:
             var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
         self._consume(TokenType.IN, "'in' after loop variable")
@@ -1284,7 +1288,15 @@ class Parser:
             condition = self._ternary()
         self._consume(TokenType.RBRACKET, "']' after list comprehension")
         return ListComprehension(
-            element, var_name, iterable, condition, bracket.line, bracket.column, names=names, rest=rest
+            element,
+            var_name,
+            iterable,
+            condition,
+            bracket.line,
+            bracket.column,
+            names=names,
+            rest=rest,
+            is_map=is_map,
         )
 
     def _list_element(self) -> Expr:
@@ -1319,8 +1331,12 @@ class Parser:
         var_name = None
         names = None
         rest = None
+        is_map = False
         if self._check(TokenType.LBRACKET):
             names, rest = self._destructure_list_pattern()
+        elif self._check(TokenType.LBRACE):
+            names = self._destructure_map_pattern()
+            is_map = True
         else:
             var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
         self._consume(TokenType.IN, "'in' after loop variable")
@@ -1340,6 +1356,7 @@ class Parser:
             brace.column,
             names=names,
             rest=rest,
+            is_map=is_map,
         )
 
     def _map_entry(self):

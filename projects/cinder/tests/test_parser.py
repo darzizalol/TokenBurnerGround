@@ -894,6 +894,36 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse("[x for [1, b] in xs]")
 
+    def test_list_comprehension_map_destructure_two_names(self):
+        node = parse('[a for {a, b} in list_of_maps]')
+        self.assertIsInstance(node, ListComprehension)
+        self.assertIsNone(node.var_name)
+        self.assertEqual(node.names, ["a", "b"])
+        self.assertIsNone(node.rest)
+        self.assertTrue(node.is_map)
+
+    def test_list_comprehension_map_destructure_single_name(self):
+        node = parse('[a for {a} in list_of_maps]')
+        self.assertEqual(node.names, ["a"])
+        self.assertTrue(node.is_map)
+
+    def test_list_comprehension_map_destructure_with_filter(self):
+        node = parse('[a for {a, b} in list_of_maps if b > 1]')
+        self.assertEqual(node.names, ["a", "b"])
+        self.assertTrue(node.is_map)
+        self.assertEqual(
+            shape(node.condition),
+            ("Binary", ("Identifier", "b"), TokenType.GT, ("Literal", 1)),
+        )
+
+    def test_list_comprehension_map_destructure_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse("[x for {1, b} in list_of_maps]")
+
+    def test_list_comprehension_list_destructure_is_map_false(self):
+        node = parse("[k for [k, v] in items(m)]")
+        self.assertFalse(node.is_map)
+
     def test_plain_list_literal_still_parses_after_comprehension_added(self):
         self.assertEqual(
             shape(parse("[1, 2, 3]")),
@@ -996,6 +1026,31 @@ class TestListsAndMaps(unittest.TestCase):
             shape(node.condition),
             ("Binary", ("Identifier", "v"), TokenType.GT, ("Literal", 0)),
         )
+
+    def test_map_comprehension_map_destructure_two_names(self):
+        node = parse('{a: b for {a, b} in list_of_maps}')
+        self.assertIsInstance(node, MapComprehension)
+        self.assertIsNone(node.var_name)
+        self.assertEqual(node.names, ["a", "b"])
+        self.assertIsNone(node.rest)
+        self.assertTrue(node.is_map)
+
+    def test_map_comprehension_map_destructure_with_filter(self):
+        node = parse('{a: b for {a, b} in list_of_maps if b > 1}')
+        self.assertEqual(node.names, ["a", "b"])
+        self.assertTrue(node.is_map)
+        self.assertEqual(
+            shape(node.condition),
+            ("Binary", ("Identifier", "b"), TokenType.GT, ("Literal", 1)),
+        )
+
+    def test_map_comprehension_map_destructure_non_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse("{x: x for {1, b} in list_of_maps}")
+
+    def test_map_comprehension_list_destructure_is_map_false(self):
+        node = parse("{k: v for [k, v] in items(m)}")
+        self.assertFalse(node.is_map)
 
     def test_map_comprehension_destructure_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):

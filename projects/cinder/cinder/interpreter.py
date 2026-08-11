@@ -616,7 +616,9 @@ class Interpreter:
         result: list = []
         for item in items:
             iter_env = Environment(env)
-            if expr.names is not None:
+            if expr.is_map:
+                self._bind_map_destructure(iter_env, expr.names, item, expr.line, expr.column)
+            elif expr.names is not None:
                 self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
             else:
                 iter_env.define(expr.var_name, item)
@@ -668,7 +670,9 @@ class Interpreter:
         result: dict = {}
         for item in items:
             iter_env = Environment(env)
-            if expr.names is not None:
+            if expr.is_map:
+                self._bind_map_destructure(iter_env, expr.names, item, expr.line, expr.column)
+            elif expr.names is not None:
                 self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
             else:
                 iter_env.define(expr.var_name, item)

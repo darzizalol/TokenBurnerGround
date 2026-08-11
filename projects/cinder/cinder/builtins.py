@@ -1377,6 +1377,25 @@ def _is_deficient(arguments: list, line: int, column: int) -> object:
     return total < value
 
 
+def _divisors(arguments: list, line: int, column: int) -> object:
+    _require_arity("divisors", arguments, 1, line, column)
+    value = _require_int("divisors", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "divisors() requires a positive integer, domain error", line, column
+        )
+    if value == 1:
+        return [1]
+    result = [1, value]
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            result.append(divisor)
+            complement = value // divisor
+            if complement != divisor:
+                result.append(complement)
+    return sorted(result)
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3204,6 +3223,7 @@ _BUILTINS = {
     "is_perfect_number": _is_perfect_number,
     "is_abundant": _is_abundant,
     "is_deficient": _is_deficient,
+    "divisors": _divisors,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

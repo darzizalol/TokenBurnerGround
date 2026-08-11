@@ -2974,6 +2974,56 @@ class TestIsDeficient(unittest.TestCase):
             run("is_deficient();")
 
 
+class TestDivisors(unittest.TestCase):
+    def test_divisors_of_6(self):
+        self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])
+
+    def test_divisors_of_1(self):
+        self.assertEqual(run("let result = divisors(1);").get("result"), [1])
+
+    def test_divisors_of_13(self):
+        self.assertEqual(run("let result = divisors(13);").get("result"), [1, 13])
+
+    def test_divisors_of_28(self):
+        self.assertEqual(
+            run("let result = divisors(28);").get("result"), [1, 2, 4, 7, 14, 28]
+        )
+
+    def test_divisors_of_100(self):
+        self.assertEqual(
+            run("let result = divisors(100);").get("result"),
+            [1, 2, 4, 5, 10, 20, 25, 50, 100],
+        )
+
+    def test_divisors_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("divisors(0);")
+        self.assertIn(
+            "divisors() requires a positive integer, domain error", ctx.exception.message
+        )
+
+    def test_divisors_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("divisors(-6);")
+        self.assertIn(
+            "divisors() requires a positive integer, domain error", ctx.exception.message
+        )
+
+    def test_divisors_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("divisors(3.0);")
+        self.assertIn("divisors() requires an int, got float", ctx.exception.message)
+
+    def test_divisors_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("divisors(true);")
+        self.assertIn("divisors() requires an int, got bool", ctx.exception.message)
+
+    def test_divisors_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("divisors();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

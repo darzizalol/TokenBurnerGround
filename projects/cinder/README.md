@@ -100,7 +100,11 @@ while (i < 10) {
   bracket form `obj?.[expr]` (same nil short-circuit, but with an
   arbitrary index expression — works for computed map keys, e.g.
   `m?.[key_var]`, and for lists, e.g. `xs?.[0]`/`xs?.[-1]`, neither of
-  which the dot form can express; read-only, no slicing), and bitwise
+  which the dot form can express; read-only, no slicing), optional call
+  chaining `f?.(...)` (same nil short-circuit, applied to a call: yields
+  `nil` without evaluating the arguments when `f` is `nil`, single level
+  only like the rest of the `?.` family, composes with the others for
+  chains like `obj?.method?.()`), and bitwise
   operators `&`, `|`, `^`, `~`, `<<`, `>>` (int-only, with a clean runtime
   error on a negative shift count), and the exponentiation operator `**`
   (right-associative, binds tighter than `*`/`/`/`%` and looser than unary
@@ -280,19 +284,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `divisors` to list an
-integer's positive divisors in sorted order, sitting next to
-`is_perfect_number`/`is_abundant`/`is_deficient` as the value-returning
-sibling of that cluster. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): optional call chaining (`f?.()`) to round out
-the `?.`/`??`/`?.[` safe-navigation family, `is_rotation` to test whether
-one string is a rotation of another, map-destructuring loop variables
-in list/map comprehensions (`[a + b for {a, b} in list_of_maps]`),
-closing the last corner the destructuring-loop-variable matrix leaves
-open, `is_balanced` to test whether a string's brackets are
-properly matched and nested, and a rest element for map-destructuring
+Actively developed, nightly. Recently landed: optional call chaining
+(`f?.(...)`), rounding out the `?.`/`??`/`?.[` safe-navigation family.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_rotation` to test
+whether one string is a rotation of another, map-destructuring loop
+variables in list/map comprehensions (`[a + b for {a, b} in
+list_of_maps]`), closing the last corner the destructuring-loop-variable
+matrix leaves open, `is_balanced` to test whether a string's brackets are
+properly matched and nested, a rest element for map-destructuring
 patterns (`let {a, ...rest} = m;`), mirroring the rest element list
-patterns already have. The backlog mixes
+patterns already have, and `is_isogram` to test whether a string has no
+repeated letters. The backlog mixes
 language depth with stdlib breadth over time rather than running
 either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

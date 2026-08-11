@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`)
+## 1. Language: list/map-destructuring function parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`) [claimed 2026-08-11T14:23:42Z]
 
 Build: extend function-parameter parsing/binding — shared by named
 `fn` declarations, anonymous `fn` expressions, and parenthesized arrow

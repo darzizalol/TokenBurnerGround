@@ -357,6 +357,116 @@ task.
 
 ---
 
+## 5. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
+
+Build: close the one corner the destructuring-loop-variable matrix
+still leaves open. Plain `for`-loops already support both forms of
+destructuring loop variable — the list pattern
+(`for [k, v] in items(m) { ... }`) and, since the map-destructuring
+`for`-loop task landed, the map pattern
+(`for {a, b} in list_of_maps { ... }`) — and list/map comprehensions
+already gained the list-pattern half
+(`[k + v for [k, v] in items(m)]`, `{k: v for [k, v] in items(m)}`).
+But `_list_comprehension`/`_map_comprehension` in `cinder/parser.py`
+(search both) only ever check `self._check(TokenType.LBRACKET)`
+before a comprehension's loop variable, never `TokenType.LBRACE` — so
+today `[a + b for {a, b} in list_of_maps]` raises `ParseError`
+`"expected loop variable after 'for', found '{'"` instead of
+destructuring each map in `list_of_maps` by key. This is the depth task queued after
+task 4's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
+depth policy.
+
+This is pure plumbing — every helper it needs already exists and is
+already shared across `let`, assignment-destructuring, and `for`-loops;
+this task is purely about wiring comprehensions into that same set of
+helpers, exactly like the map-destructuring `for`-loop task did for
+plain `for`-loops.
+
+In `cinder/ast_nodes.py`: `ListComprehension` and `MapComprehension`
+(search both) currently carry `names: "list | None" = None` and
+`rest: "str | None" = None` but no `is_map` field. Add
+`is_map: bool = False` to both, mirroring `ForStmt`'s own field of the
+same name (`ForStmt` already has exactly this three-field shape:
+`names`, `rest`, `is_map`).
+
+In `cinder/parser.py`: in `_list_comprehension`, the existing block
+
+```python
+if self._check(TokenType.LBRACKET):
+    names, rest = self._destructure_list_pattern()
+else:
+    var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
+```
+
+gains an `elif self._check(TokenType.LBRACE):` branch between the two,
+calling the existing `_destructure_map_pattern()` helper (the same one
+`_for_statement` already calls) and setting a local `is_map = True`
+(default `False`), mirroring `_for_statement`'s own three-way branch
+exactly (search `_for_statement` for the reference shape — `LBRACKET`
+→ list pattern, `LBRACE` → map pattern + `is_map = True`, else → plain
+identifier). Thread `is_map` through to the returned
+`ListComprehension(...)` call's keyword arguments alongside the
+existing `names=names, rest=rest`. Apply the identical change to
+`_map_comprehension` (same branch shape, same `is_map` threading into
+the returned `MapComprehension(...)` call).
+
+In `cinder/interpreter.py`: `_evaluate_list_comprehension` currently
+does
+
+```python
+if expr.names is not None:
+    self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
+else:
+    iter_env.define(expr.var_name, item)
+```
+
+change the `if expr.names is not None:` branch to check `expr.is_map`
+first: `if expr.is_map: self._bind_map_destructure(iter_env,
+expr.names, item, expr.line, expr.column)` else (still under
+`expr.names is not None`) keep the existing
+`self._bind_list_destructure(...)` call unchanged, else (no pattern at
+all) keep the existing `iter_env.define(expr.var_name, item)` — same
+three-way shape `_execute_for` already uses for the equivalent
+`for`-loop binding (search `_execute_for`, reuse its exact branch
+order as the reference). Apply the identical change to
+`_evaluate_map_comprehension` (same three-way branch, same helper
+calls).
+
+Acceptance criteria:
+- `[a + b for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}]];` is
+  `[3, 7]` — the motivating list-comprehension case.
+- `{a: b for {a, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}]};` is
+  `{1: 2, 3: 4}` — the motivating map-comprehension case.
+- `[a for {a, b} in [{"a": 1, "b": 2}] if b > 1];` is `[1]` — the
+  optional `if` filter still works with a map-pattern loop variable,
+  same as it already does for the list-pattern and plain-identifier
+  forms.
+- `[a for {a} in [{"a": 1}, {"b": 2}]];` (a map missing the expected
+  key `"a"`) raises the same `CinderRuntimeError` `_bind_map_destructure`
+  already raises for `for {a} in [{"b": 2}] { ... }` and
+  `let {a} = {"b": 2};` — not a silent skip or crash.
+- `[a for {a} in [1, 2]];` (a non-map item where a map pattern was
+  declared) raises the same `CinderRuntimeError`
+  `_bind_map_destructure` already raises for a non-map value.
+- Existing list-pattern comprehension destructuring
+  (`[k + v for [k, v] in items(m)]`) and plain-identifier comprehension
+  loop variables (`[x * 2 for x in xs]`) are completely unaffected.
+- `for {a, b} in list_of_maps { ... }` (the plain-statement form) is
+  completely unaffected — this task only touches comprehensions.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`ListComprehension`,
+`MapComprehension`), `cinder/parser.py` (`_list_comprehension`,
+`_map_comprehension`), `cinder/interpreter.py`
+(`_evaluate_list_comprehension`, `_evaluate_map_comprehension`),
+`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
+`README.md`'s comprehension bullets need the map-pattern form
+mentioned, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -169,7 +169,8 @@ while (i < 10) {
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
-  integer parity/divisibility/primality/coprimality predicates, `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
+  integer parity/divisibility/primality/coprimality predicates, `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
+  `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_power_of_two` to test whether an integer is a power of two
@@ -274,16 +275,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map-destructuring
-`for`-loop variables (`for {a, b} in list_of_maps { ... }`), crossing
-the existing list-destructuring `for`-loop with `let`'s existing
-map-destructuring pattern. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_emirp` to test whether a prime's
-digit-reversal is a different prime, list/map-destructuring function
+Actively developed, nightly. Recently landed: `is_emirp` to test
+whether a prime's decimal-digit reversal is a different prime, sitting
+next to `is_prime`/`is_composite`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): list/map-destructuring function
 parameters (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), `divisors`
 to list an integer's positive divisors, optional call chaining
-(`f?.()`) to round out the `?.`/`??`/`?.[` safe-navigation family, and
-`is_rotation` to test whether one string is a rotation of another.
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+(`f?.()`) to round out the `?.`/`??`/`?.[` safe-navigation family,
+`is_rotation` to test whether one string is a rotation of another, and
+map-destructuring loop variables in list/map comprehensions
+(`[a + b for {a, b} in list_of_maps]`), closing the last corner the
+destructuring-loop-variable matrix leaves open. The backlog mixes
+language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

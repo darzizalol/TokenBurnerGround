@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_balanced` — balanced-brackets predicate
+## 1. Standard library: `is_balanced` — balanced-brackets predicate [claimed 2026-08-11T20:24:47Z]
 
 Build: add `is_balanced(s)` to `cinder/builtins.py`, registered right
 after `_is_pangram` (search for `def _is_pangram`) — a string

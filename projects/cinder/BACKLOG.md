@@ -11,70 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_rotation` — string rotation predicate [claimed 2026-08-11T19:56:20Z]
-
-Build: add `is_rotation(a, b)` to `cinder/builtins.py`, registered
-right after `_is_anagram` (search for `def _is_anagram`) — it's a
-natural sibling in the two-string predicate family alongside
-`is_anagram`/`is_permutation`, one position more specific than
-`is_anagram`'s "same multiset of characters" test. This is a fresh
-breadth task queued after the optional call chaining depth work that
-just landed, per `PROJECT.md`'s breadth-vs-depth policy.
-
-A string `b` is a **rotation** of string `a` when `b` can be produced
-by moving some prefix of `a` to its end (e.g. `"abcd"` rotated by two
-positions gives `"cdab"`). This is stricter than `is_anagram`: two
-strings can share the exact same character multiset without one being
-an actual rotation of the other (e.g. `"abcd"`/`"acbd"` are anagrams
-but not rotations).
-
-Model the arity/type-checking on `_is_anagram`'s structure exactly:
-`_require_arity("is_rotation", arguments, 2, line, column)`, then
-check each argument is a `str` with its own position-specific error
-message (mirror `_is_anagram`'s separate "first argument"/"second
-argument" messages, don't collapse them into one). For the rotation
-test itself, use the standard doubled-string trick rather than
-hand-rolling a character-shift loop: two equal-length strings `a`/`b`
-are rotations of each other iff `b in (a + a)` (empty strings are a
-rotation of themselves — `"" in ("" + "")` is `True`, so no special
-case needed there); unequal-length strings are never rotations of each
-other, checked before the doubled-string test, not left to fall out of
-it.
-
-Acceptance criteria:
-- `is_rotation("abcd", "cdab");` is `true` — the motivating case,
-  rotated by two positions.
-- `is_rotation("abcd", "abcd");` is `true` — a string is trivially a
-  rotation of itself (zero-position rotation).
-- `is_rotation("", "");` is `true` — both empty is a rotation.
-- `is_rotation("aaaa", "aaaa");` is `true` — repeated-character strings
-  don't confuse the doubled-string check.
-- `is_rotation("abcd", "acbd");` is `false` — same character multiset
-  (an anagram) but not an actual rotation, confirming this is stricter
-  than `is_anagram`.
-- `is_rotation("abc", "abcd");` is `false` — different lengths can
-  never be rotations of each other.
-- `is_rotation("abc", "cab");` is `true` and `is_rotation("cab",
-  "abc");` is `true` — rotation is symmetric.
-- `is_rotation(5, "ab");` raises `CinderRuntimeError` matching
-  `"is_rotation() requires a string as its first argument, got int"`.
-- `is_rotation("ab", 5);` raises `CinderRuntimeError` matching
-  `"is_rotation() requires a string as its second argument, got int"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_anagram`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_rotation` added near `is_anagram`/`is_permutation`,
-and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
+## 1. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
 
 Build: close the one corner the destructuring-loop-variable matrix
 still leaves open. Plain `for`-loops already support both forms of
@@ -90,7 +27,7 @@ before a comprehension's loop variable, never `TokenType.LBRACE` — so
 today `[a + b for {a, b} in list_of_maps]` raises `ParseError`
 `"expected loop variable after 'for', found '{'"` instead of
 destructuring each map in `list_of_maps` by key. This is the depth task queued after
-task 1's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
+the `is_rotation` breadth work per `PROJECT.md`'s breadth-vs-
 depth policy.
 
 This is pure plumbing — every helper it needs already exists and is
@@ -184,7 +121,7 @@ not this task.
 
 ---
 
-## 3. Standard library: `is_balanced` — balanced-brackets predicate
+## 2. Standard library: `is_balanced` — balanced-brackets predicate
 
 Build: add `is_balanced(s)` to `cinder/builtins.py`, registered right
 after `_is_pangram` (search for `def _is_pangram`) — a string
@@ -192,7 +129,7 @@ predicate, but a different flavor than its neighbors: `is_anagram`/
 `is_permutation`/`is_pangram`/`is_palindrome` are all direct
 delegations to a multiset/reversal comparison, whereas this is the
 project's first stack-based parsing predicate. This is a fresh breadth
-task queued after task 2's depth work (map-destructuring loop
+task queued after task 1's depth work (map-destructuring loop
 variables in comprehensions) per `PROJECT.md`'s breadth-vs-depth
 policy, deliberately picked to diversify the string-predicate cluster
 rather than add one more delegation-only member to it.
@@ -252,7 +189,7 @@ not this task.
 
 ---
 
-## 4. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
+## 3. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
 
 Build: close the one gap left between the two destructuring pattern
 kinds. List-destructuring patterns (`let [a, ...rest] = expr;`,
@@ -267,7 +204,7 @@ today: `let {a, ...rest} = {"a": 1, "b": 2};` currently raises
 ...rest} = {"a": 1, "b": 2};'` from this project's directory) — there
 is no way to capture "every key I didn't name" the way list patterns
 already capture "every element I didn't name". This is the depth task
-after task 3's breadth work (`is_balanced`) per `PROJECT.md`'s
+after task 2's breadth work (`is_balanced`) per `PROJECT.md`'s
 breadth-vs-depth policy.
 
 The shared helper `_destructure_map_pattern` in `cinder/parser.py`
@@ -401,11 +338,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_isogram` — no-repeated-letter predicate
+## 4. Standard library: `is_isogram` — no-repeated-letter predicate
 
 Build: add `is_isogram(s)` to `cinder/builtins.py`, registered right
 after `_is_blank` (search for `def _is_blank`) — a fresh breadth task
-queued after task 4's depth work (map-destructuring rest element) per
+queued after task 3's depth work (map-destructuring rest element) per
 `PROJECT.md`'s breadth-vs-depth policy, and, like `is_balanced`,
 deliberately not another `is_anagram`-style multiset delegation:
 it's a single-pass character-frequency check instead.

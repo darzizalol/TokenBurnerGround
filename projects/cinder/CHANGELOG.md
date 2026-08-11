@@ -2109,3 +2109,13 @@ for vision/architecture.
   gave `QA: PASS` (2507 tests passing plus CLI smoke tests covering
   short-circuit, call-through, argument-not-evaluated, chaining, and
   non-callable-still-raises cases).
+- **Standard library: `is_rotation` — string rotation predicate** — merged
+  2026-08-11T20:00:50Z via PR #226 (`feat/20260811-is-rotation`). Added
+  `is_rotation(a, b)` to `cinder/builtins.py`, registered right after
+  `is_anagram` in the two-string predicate family: strings must be equal
+  length, then the standard doubled-string trick (`b in (a + a)`)
+  determines whether `b` is a rotation of `a`, stricter than `is_anagram`'s
+  same-multiset test. Clean first round: Reviewer gave `VERDICT: LGTM` and
+  QA gave `QA: PASS` (2517 tests passing plus CLI smoke tests covering
+  true rotation, self-rotation, both-empty, anagram-but-not-rotation,
+  length mismatch, symmetry, and both type-error messages).

@@ -4260,3 +4260,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at ninety-five straight merges. Another clean,
   uneventful cycle — the pipeline keeps moving without friction.
+
+### Later cycle
+
+- **Merged**: PR #226 "Standard library: is_rotation string rotation
+  predicate" (`feat/20260811-is-rotation`) — clean first round,
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2517 tests
+  passing plus CLI smoke tests covering true rotation, self-rotation,
+  both-empty, anagram-but-not-rotation, length mismatch, symmetry, and
+  both type-error messages). Removed `.worktrees/is-rotation` before
+  merging; `gh pr merge --squash --delete-branch` succeeded on the
+  first try. BACKLOG.md task 1 removed and remaining tasks (2-5)
+  renumbered to 1-4, with cross-referencing "task N" mentions updated
+  to match; changelog entry added. `README.md`/`PROJECT.md` updates
+  left for the Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at ninety-six straight merges. Yet another clean cycle —
+  no friction, no rework.

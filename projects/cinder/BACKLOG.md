@@ -11,77 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `divisors` — list an integer's positive divisors [claimed 2026-08-11T19:29:29Z]
-
-Build: add `divisors(n)` to `cinder/builtins.py`, registered right
-after `_is_deficient` (search for `def _is_deficient`) — it's the
-natural value-returning sibling of the `is_perfect_number`/
-`is_abundant`/`is_deficient` cluster, all three of which already do
-their own trial-division-to-`sqrt(n)` walk over divisor pairs and
-discard the individual divisors, keeping only their sum. This is a
-fresh breadth task queued after the depth work that just landed
-(list/map-destructuring function parameters) per `PROJECT.md`'s
-breadth-vs-depth policy.
-
-`divisors(n)` returns the sorted list of every positive integer that
-evenly divides `n`, including `1` and `n` itself. Mirror
-`_is_perfect_number`'s exact trial-division shape (loop `divisor` from
-`2` to `math.isqrt(value)` inclusive, and for each exact divisor
-collect both `divisor` and its complement `value // divisor` when they
-differ) but collect into a list instead of summing, seed the list with
-`1` the same way `_is_perfect_number` seeds `total = 1` (skip that seed
-when `value == 1`, since `1`'s only divisor is itself, not `1` twice),
-and `sorted(...)` the result before returning — the trial-division walk
-does not yield divisors in sorted order (it finds small/large pairs
-together), so sorting is required, not cosmetic.
-
-Model the arity/type-checking on `_is_perfect_number`'s structure: reuse
-`_require_arity("divisors", arguments, 1, line, column)` and
-`_require_int("divisors", arguments[0], line, column)`. Unlike
-`is_perfect_number`/`is_abundant`/`is_deficient` (which answer `false`
-for `value < 1` or `value < 2`), `n < 1` has no valid divisor list —
-`0` is divisible by everything and negative numbers don't fit the
-"positive divisors" contract — so raise a domain error instead of
-returning an empty list, mirroring `_log`'s own type-vs-domain-error
-split (search `def _log`): a non-int argument is a type error via
-`_require_int`, but `n < 1` is a separate domain error raised
-afterward, `CinderRuntimeError` matching `"divisors() requires a
-positive integer, domain error"`.
-
-Acceptance criteria:
-- `divisors(6);` is `[1, 2, 3, 6]` — the textbook case.
-- `divisors(1);` is `[1]` — the one-element edge case, no doubled `1`.
-- `divisors(13);` is `[1, 13]` — a prime has exactly two divisors.
-- `divisors(28);` is `[1, 2, 4, 7, 14, 28]` — a perfect number's
-  divisors (excluding `28` itself sum to `28`, confirming this shares
-  the same divisor set `is_perfect_number(28)` already validates as
-  `true`).
-- `divisors(100);` is `[1, 2, 4, 5, 10, 20, 25, 50, 100]` — a larger
-  composite with several divisor pairs, confirming results come back
-  sorted rather than in trial-division-discovery order.
-- `divisors(0);` and `divisors(-6);` both raise `CinderRuntimeError`
-  matching `"divisors() requires a positive integer, domain error"`.
-- `divisors(3.0);` (float) raises `CinderRuntimeError` matching
-  `"divisors() requires an int, got float"` — no implicit
-  float-to-int coercion, matching the rest of the integer-property
-  cluster.
-- `divisors(true);` (bool) raises `CinderRuntimeError` matching
-  `"divisors() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_deficient`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `divisors` added near `is_perfect_number`/`is_abundant`/
-`is_deficient`, and `PROJECT.md`'s roadmap paragraph needs it moved
-from backlog to landed — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: optional call chaining (`f?.(...)`)
+## 1. Language: optional call chaining (`f?.(...)`)
 
 Build: extend the existing safe-navigation family — `m?.key` (dot
 property access), `obj?.[expr]` (bracket index access), both defined
@@ -91,8 +21,9 @@ the one position they still don't: a *call*. Today `let f = nil;
 f();` raises `CinderRuntimeError` `"nil is not callable"` (search
 `is not callable` in `cinder/interpreter.py`'s `call_value`) with no
 way to say "call this only if it isn't nil" short of a manual
-`if f != nil { f(); }`. This is the depth task queued after task 1's
-breadth work (`divisors`) per `PROJECT.md`'s breadth-vs-depth policy.
+`if f != nil { f(); }`. This is the depth task queued after the
+breadth work that just landed (`divisors`) per `PROJECT.md`'s
+breadth-vs-depth policy.
 
 Like the rest of the `?.` family, this is single-level only — it does
 not make an entire chain nil-safe, just the one call it's written on;
@@ -185,14 +116,14 @@ safe-navigation bullet needs the call form mentioned, and
 
 ---
 
-## 3. Standard library: `is_rotation` — string rotation predicate
+## 2. Standard library: `is_rotation` — string rotation predicate
 
 Build: add `is_rotation(a, b)` to `cinder/builtins.py`, registered
 right after `_is_anagram` (search for `def _is_anagram`) — it's a
 natural sibling in the two-string predicate family alongside
 `is_anagram`/`is_permutation`, one position more specific than
 `is_anagram`'s "same multiset of characters" test. This is a fresh
-breadth task queued after task 2's depth work (optional call chaining)
+breadth task queued after task 1's depth work (optional call chaining)
 per `PROJECT.md`'s breadth-vs-depth policy.
 
 A string `b` is a **rotation** of string `a` when `b` can be produced
@@ -248,7 +179,7 @@ task.
 
 ---
 
-## 4. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
+## 3. Language: map-destructuring loop variables in list/map comprehensions (`[k + v for {a, b} in list_of_maps]`)
 
 Build: close the one corner the destructuring-loop-variable matrix
 still leaves open. Plain `for`-loops already support both forms of
@@ -264,7 +195,7 @@ before a comprehension's loop variable, never `TokenType.LBRACE` — so
 today `[a + b for {a, b} in list_of_maps]` raises `ParseError`
 `"expected loop variable after 'for', found '{'"` instead of
 destructuring each map in `list_of_maps` by key. This is the depth task queued after
-task 3's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
+task 2's breadth work (`is_rotation`) per `PROJECT.md`'s breadth-vs-
 depth policy.
 
 This is pure plumbing — every helper it needs already exists and is
@@ -358,7 +289,7 @@ not this task.
 
 ---
 
-## 5. Standard library: `is_balanced` — balanced-brackets predicate
+## 4. Standard library: `is_balanced` — balanced-brackets predicate
 
 Build: add `is_balanced(s)` to `cinder/builtins.py`, registered right
 after `_is_pangram` (search for `def _is_pangram`) — a string
@@ -366,7 +297,7 @@ predicate, but a different flavor than its neighbors: `is_anagram`/
 `is_permutation`/`is_pangram`/`is_palindrome` are all direct
 delegations to a multiset/reversal comparison, whereas this is the
 project's first stack-based parsing predicate. This is a fresh breadth
-task queued after task 4's depth work (map-destructuring loop
+task queued after task 3's depth work (map-destructuring loop
 variables in comprehensions) per `PROJECT.md`'s breadth-vs-depth
 policy, deliberately picked to diversify the string-predicate cluster
 rather than add one more delegation-only member to it.
@@ -426,7 +357,7 @@ not this task.
 
 ---
 
-## 6. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
+## 5. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
 
 Build: close the one gap left between the two destructuring pattern
 kinds. List-destructuring patterns (`let [a, ...rest] = expr;`,
@@ -441,7 +372,7 @@ today: `let {a, ...rest} = {"a": 1, "b": 2};` currently raises
 ...rest} = {"a": 1, "b": 2};'` from this project's directory) — there
 is no way to capture "every key I didn't name" the way list patterns
 already capture "every element I didn't name". This is the depth task
-after task 5's breadth work (`is_balanced`) per `PROJECT.md`'s
+after task 4's breadth work (`is_balanced`) per `PROJECT.md`'s
 breadth-vs-depth policy.
 
 The shared helper `_destructure_map_pattern` in `cinder/parser.py`

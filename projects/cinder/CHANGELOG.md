@@ -2087,3 +2087,13 @@ for vision/architecture.
   smoke tests covering named/anonymous/arrow-fn destructuring params,
   combined pattern-level and parameter-list-level rest, and the fixed
   default-ordering error) — one bounce, then clean.
+- **Standard library: `divisors`** — merged 2026-08-11T19:35:51Z via PR #224
+  (`feat/20260811-divisors`). Added `divisors(n)` to `cinder/builtins.py`,
+  registered after `is_deficient`, returning the sorted list of every
+  positive integer that evenly divides `n` (including `1` and `n` itself).
+  Mirrors `_is_perfect_number`'s trial-division-to-`sqrt(n)` shape but
+  collects divisor pairs into a list instead of summing them; `n < 1` raises
+  a domain error since `0`/negatives have no valid divisor list. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2490 tests
+  passing plus CLI smoke tests covering golden-path cases, perfect squares,
+  and domain/type/arity errors).

@@ -553,6 +553,13 @@ branch, and in `cinder/interpreter.py`'s `_evaluate_list_comprehension`/
 existing `_bind_map_destructure` helper alongside the existing
 `_bind_list_destructure` call — no new binding logic, pure plumbing
 reusing helpers every other destructuring position already shares.
+And as task 6, `is_balanced(s)` — a fresh breadth task after task 5's
+depth work, testing whether a string's `()`/`[]`/`{}` brackets are all
+properly matched and nested (non-bracket characters ignored), via a
+single left-to-right scan with a stack — the project's first
+stack-based parsing predicate, deliberately chosen to diversify the
+string-predicate cluster rather than add one more multiset/reversal
+delegation next to `is_anagram`/`is_permutation`/`is_pangram`.
 And only much later, a bytecode VM if performance ever actually
 matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
@@ -566,7 +573,8 @@ stacking a third depth task in a row, and that placed task 3 as depth
 right after task 2's breadth work in turn, and that placed task 4 as a
 single breadth task after task 3's depth work rather than immediately
 stacking a second predicate task behind it, and that placed task 5 as
-depth right after task 4's breadth work in turn, the same
+depth right after task 4's breadth work in turn, and that placed
+task 6 as breadth right after task 5's depth work in turn, the same
 one-breadth-then-depth placement the safe navigation bracket indexing
 task got after `is_coprime`.
 

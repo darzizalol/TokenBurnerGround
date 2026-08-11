@@ -467,6 +467,74 @@ not this task.
 
 ---
 
+## 6. Standard library: `is_balanced` — balanced-brackets predicate
+
+Build: add `is_balanced(s)` to `cinder/builtins.py`, registered right
+after `_is_pangram` (search for `def _is_pangram`) — a string
+predicate, but a different flavor than its neighbors: `is_anagram`/
+`is_permutation`/`is_pangram`/`is_palindrome` are all direct
+delegations to a multiset/reversal comparison, whereas this is the
+project's first stack-based parsing predicate. This is a fresh breadth
+task queued after task 5's depth work (map-destructuring loop
+variables in comprehensions) per `PROJECT.md`'s breadth-vs-depth
+policy, deliberately picked to diversify the string-predicate cluster
+rather than add one more delegation-only member to it.
+
+`is_balanced(s)` tests whether every bracket in `s` — the three pairs
+`()`, `[]`, `{}` — is properly matched and nested; any other character
+(letters, digits, whitespace, punctuation) is ignored entirely, it is
+not a "does `s` contain only brackets" check. Implement with a single
+left-to-right scan and a Python `list` used as a stack: on an opening
+bracket (`(`, `[`, `{`), push it; on a closing bracket (`)`, `]`, `}`),
+if the stack is empty or its top does not match the corresponding
+opener, return `False` immediately; otherwise pop. After the scan,
+the string is balanced iff the stack is empty (a `False` if anything
+is still unclosed). A `dict` mapping each closer to its opener (e.g.
+`{")": "(", "]": "[", "}": "{"}`) keeps the match check a single
+lookup rather than a chain of `if`/`elif`s.
+
+Model the arity/type-checking on `_is_pangram`'s structure: reuse
+`_require_arity("is_balanced", arguments, 1, line, column)` and raise
+`CinderRuntimeError` matching `"is_balanced() requires a string, got
+{type}"` for a non-`str` argument (mirror `_is_pangram`'s own single-
+argument type-check message shape, not `_is_anagram`'s two-argument
+"first argument"/"second argument" phrasing — there's only one
+argument here).
+
+Acceptance criteria:
+- `is_balanced("(a[b]{c})");` is `true` — nested, mixed bracket types,
+  non-bracket characters ignored.
+- `is_balanced("");` is `true` — the empty string has nothing
+  unmatched.
+- `is_balanced("no brackets here");` is `true` — a string with no
+  bracket characters at all is trivially balanced.
+- `is_balanced("([)]");` is `false` — both bracket types individually
+  appear in matched pairs by count, but interleaved rather than
+  properly nested, confirming this is a real nesting check, not a
+  per-type count comparison.
+- `is_balanced("(");` and `is_balanced(")");` are both `false` — an
+  unclosed opener and an opener-less closer.
+- `is_balanced("{[()]}");` is `true` — three levels of proper nesting.
+- `is_balanced("(a[b)c]");` is `false` — a realistic-looking
+  interleaving (crossed pairs), not just a toy adjacent-swap case.
+- `is_balanced(5);` raises `CinderRuntimeError` matching
+  `"is_balanced() requires a string, got int"`.
+- `is_balanced(true);` raises `CinderRuntimeError` matching
+  `"is_balanced() requires a string, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_pangram`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_balanced` added near `is_anagram`/`is_permutation`/
+`is_pangram`, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

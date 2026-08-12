@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: rest element in plain-assignment map-destructuring (`{a, ...rest} = expr;`)
+## 1. Language: rest element in plain-assignment map-destructuring (`{a, ...rest} = expr;`) [claimed 2026-08-12T14:51Z]
 
 Build: close the gap the map-destructuring rest element task (rest
 element for map-destructuring `let`/`for`/`fn` patterns, landed via PR

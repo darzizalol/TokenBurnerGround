@@ -985,6 +985,10 @@ class TestDestructureAssignMap(unittest.TestCase):
     def test_map_literal_statement_unaffected(self):
         run('{"a": 1};')  # still an ExprStmt(MapLiteral), no destructuring attempted
 
+    def test_rest_element_not_supported_in_assignment_form(self):
+        with self.assertRaises(ParseError):
+            run('let a = 0; let rest = 0; {a, ...rest} = {"a": 1};')
+
 
 class TestDestructureLetMap(unittest.TestCase):
     def test_binds_two_names(self):
@@ -997,6 +1001,25 @@ class TestDestructureLetMap(unittest.TestCase):
         self.assertEqual(env.get("a"), 1)
         with self.assertRaises(KeyError):
             env.get("b")
+
+    def test_rest_binds_remaining_keys_as_map(self):
+        env = run('let {a, ...rest} = {"a": 1, "b": 2, "c": 3};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), {"b": 2, "c": 3})
+
+    def test_rest_binds_empty_map_when_nothing_left_over(self):
+        env = run('let {a, b, ...rest} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("rest"), {})
+
+    def test_rest_only_pattern_captures_everything(self):
+        env = run('let {...rest} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("rest"), {"a": 1, "b": 2})
+
+    def test_no_rest_element_behavior_unchanged(self):
+        env = run('let {a} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        with self.assertRaises(KeyError):
+            env.get("rest")
 
     def test_missing_named_key_raises(self):
         with self.assertRaises(CinderRuntimeError):
@@ -1660,6 +1683,16 @@ class TestForDestructuring(unittest.TestCase):
             "destructuring pattern expects key 'b', not found in map",
         )
 
+    def test_map_destructure_with_rest_fresh_per_iteration(self):
+        env = self._run(
+            'let firsts = []; let rests = []; '
+            'for {a, ...rest} in [{"a": 1, "b": 2}, {"a": 3, "c": 4}] { '
+            '  push(firsts, a); push(rests, rest); '
+            '}'
+        )
+        self.assertEqual(env.get("firsts"), [1, 3])
+        self.assertEqual(env.get("rests"), [{"b": 2}, {"c": 4}])
+
     def test_map_destructure_labeled_break_targets_outer_loop(self):
         env = self._run(
             'let seen = []; '
@@ -2053,6 +2086,13 @@ class TestDestructuringParams(unittest.TestCase):
             "fn f([a, ...rest]) { return rest; } let result = f([1, 2, 3]);"
         )
         self.assertEqual(env.get("result"), [2, 3])
+
+    def test_map_destructuring_param_with_rest_element(self):
+        env = run(
+            'fn f({a, ...rest}) { return rest; } '
+            'let result = f({"a": 1, "b": 2, "c": 3});'
+        )
+        self.assertEqual(env.get("result"), {"b": 2, "c": 3})
 
     def test_list_destructuring_param_combined_with_trailing_rest_param(self):
         env = run(
@@ -2676,6 +2716,16 @@ class TestListComprehension(unittest.TestCase):
             evaluate("[a for {a} in [1, 2]]")
         self.assertEqual(ctx.exception.message, "cannot destructure int as a map")
 
+    def test_map_destructure_with_rest(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let out = [a + len(rest) for {a, ...rest} in '
+            '[{"a": 1, "b": 2}, {"a": 3, "c": 4, "d": 5}]];',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("out"), [2, 5])
+
 
 class TestMapComprehension(unittest.TestCase):
     def test_basic_transform(self):
@@ -2771,6 +2821,15 @@ class TestMapComprehension(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError) as ctx:
             evaluate("{a: a for {a} in [1, 2]}")
         self.assertEqual(ctx.exception.message, "cannot destructure int as a map")
+
+    def test_map_destructure_with_rest(self):
+        self.assertEqual(
+            evaluate(
+                '{a: rest for {a, ...rest} in '
+                '[{"a": 1, "b": 2}, {"a": 3, "c": 4}]}'
+            ),
+            {1: {"b": 2}, 3: {"c": 4}},
+        )
 
 
 class TestSlicing(unittest.TestCase):

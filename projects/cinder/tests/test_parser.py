@@ -920,6 +920,12 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse("[x for {1, b} in list_of_maps]")
 
+    def test_list_comprehension_map_destructure_with_rest(self):
+        node = parse('[a for {a, ...rest} in list_of_maps]')
+        self.assertEqual(node.names, ["a"])
+        self.assertEqual(node.rest, "rest")
+        self.assertTrue(node.is_map)
+
     def test_list_comprehension_list_destructure_is_map_false(self):
         node = parse("[k for [k, v] in items(m)]")
         self.assertFalse(node.is_map)
@@ -1047,6 +1053,12 @@ class TestListsAndMaps(unittest.TestCase):
     def test_map_comprehension_map_destructure_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):
             parse("{x: x for {1, b} in list_of_maps}")
+
+    def test_map_comprehension_map_destructure_with_rest(self):
+        node = parse('{a: b for {a, b, ...rest} in list_of_maps}')
+        self.assertEqual(node.names, ["a", "b"])
+        self.assertEqual(node.rest, "rest")
+        self.assertTrue(node.is_map)
 
     def test_map_comprehension_list_destructure_is_map_false(self):
         node = parse("{k: v for [k, v] in items(m)}")
@@ -1928,9 +1940,47 @@ class TestStatements(unittest.TestCase):
             ],
         )
 
-    def test_destructure_let_map_rest_token_raises(self):
+    def test_destructure_let_map_rest(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {a, ...rest} = {"a": 1, "b": 2};')],
+            [
+                (
+                    "DestructureLetStmt",
+                    ["a"],
+                    (
+                        "MapLiteral",
+                        [
+                            (("Literal", "a"), ("Literal", 1)),
+                            (("Literal", "b"), ("Literal", 2)),
+                        ],
+                    ),
+                    True,
+                    "rest",
+                )
+            ],
+        )
+
+    def test_destructure_let_map_rest_only(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {...rest} = {"a": 1};')],
+            [
+                (
+                    "DestructureLetStmt",
+                    [],
+                    ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                    True,
+                    "rest",
+                )
+            ],
+        )
+
+    def test_destructure_let_map_rest_not_last_raises(self):
         with self.assertRaises(ParseError):
-            parse_stmts('let {...rest} = {"a": 1};')
+            parse_stmts('let {a, ...rest, b} = {"a": 1};')
+
+    def test_destructure_let_map_rest_missing_name_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('let {a, ...} = {"a": 1};')
 
     def test_destructure_let_map_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):
@@ -2302,6 +2352,20 @@ class TestFunctions(unittest.TestCase):
                     "FnDecl",
                     "f",
                     [("Param", ["a"], "rest", False)],
+                    None,
+                    ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
+                )
+            ],
+        )
+
+    def test_fn_declaration_with_map_destructuring_param_and_rest_element(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f({a, ...rest}) { return rest; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [("Param", ["a"], "rest", True)],
                     None,
                     ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
                 )
@@ -2825,9 +2889,15 @@ class TestForDestructuring(unittest.TestCase):
         self.assertEqual(stmt.names, ["a"])
         self.assertTrue(stmt.is_map)
 
-    def test_for_map_destructure_rejects_rest(self):
+    def test_for_map_destructure_with_rest(self):
+        stmt = parse_stmts("for {a, ...rest} in maps { }")[0]
+        self.assertEqual(stmt.names, ["a"])
+        self.assertEqual(stmt.rest, "rest")
+        self.assertTrue(stmt.is_map)
+
+    def test_for_map_destructure_rest_not_last_raises(self):
         with self.assertRaises(ParseError):
-            parse_stmts("for {a, ...rest} in maps { }")
+            parse_stmts("for {a, ...rest, b} in maps { }")
 
     def test_for_map_destructure_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):

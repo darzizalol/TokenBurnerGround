@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_automorphic` — n² ends with n predicate
+## 1. Standard library: `is_automorphic` — n² ends with n predicate [claimed 2026-08-12T20:20:25Z]
 
 Build: add `is_automorphic(n)` to `cinder/builtins.py`, registered
 right after `is_deficient` (search for `def _is_deficient`) — the

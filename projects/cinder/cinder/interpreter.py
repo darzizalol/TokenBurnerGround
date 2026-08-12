@@ -278,7 +278,7 @@ class Interpreter:
         if isinstance(stmt, DestructureLetStmt):
             value = self.evaluate(stmt.initializer, env)
             if stmt.is_map:
-                self._bind_map_destructure(env, stmt.names, value, stmt.line, stmt.column)
+                self._bind_map_destructure(env, stmt.names, stmt.rest, value, stmt.line, stmt.column)
                 return
             self._bind_list_destructure(env, stmt.names, stmt.rest, value, stmt.line, stmt.column)
             return
@@ -452,12 +452,13 @@ class Interpreter:
         self,
         env: Environment,
         names: list,
+        rest: "str | None",
         value: object,
         line: int,
         column: int,
         use_assign: bool = False,
     ) -> None:
-        """Binds `names` from `value`, the map-pattern counterpart to
+        """Binds `names`/`rest` from `value`, the map-pattern counterpart to
         `_bind_list_destructure`. Same `use_assign` split: `let`-style fresh
         bindings (`env.define`, the default) vs. assignment-destructuring
         (`env.assign` into names that must already exist, for
@@ -477,12 +478,15 @@ class Interpreter:
                     column,
                 )
             self._bind_destructure_name(env, name, value[name], line, column, use_assign)
+        if rest is not None:
+            remaining = {k: v for k, v in value.items() if k not in names}
+            self._bind_destructure_name(env, rest, remaining, line, column, use_assign)
 
     def _evaluate_destructure_assign(self, expr: DestructureAssign, env: Environment) -> object:
         value = self.evaluate(expr.value, env)
         if expr.is_map:
             self._bind_map_destructure(
-                env, expr.names, value, expr.line, expr.column, use_assign=True
+                env, expr.names, expr.rest, value, expr.line, expr.column, use_assign=True
             )
         else:
             self._bind_list_destructure(
@@ -506,7 +510,7 @@ class Interpreter:
             iter_env = Environment(env)
             if stmt.names is not None:
                 if stmt.is_map:
-                    self._bind_map_destructure(iter_env, stmt.names, item, stmt.line, stmt.column)
+                    self._bind_map_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
                 else:
                     self._bind_list_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
             else:
@@ -617,7 +621,7 @@ class Interpreter:
         for item in items:
             iter_env = Environment(env)
             if expr.is_map:
-                self._bind_map_destructure(iter_env, expr.names, item, expr.line, expr.column)
+                self._bind_map_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
             elif expr.names is not None:
                 self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
             else:
@@ -671,7 +675,7 @@ class Interpreter:
         for item in items:
             iter_env = Environment(env)
             if expr.is_map:
-                self._bind_map_destructure(iter_env, expr.names, item, expr.line, expr.column)
+                self._bind_map_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
             elif expr.names is not None:
                 self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
             else:
@@ -1146,7 +1150,7 @@ def call_value(callee: object, arguments: list, line: int, column: int) -> objec
                 value = Interpreter().evaluate(param.default, call_env)
             if param.names is not None:
                 if param.is_map:
-                    Interpreter()._bind_map_destructure(call_env, param.names, value, line, column)
+                    Interpreter()._bind_map_destructure(call_env, param.names, param.rest, value, line, column)
                 else:
                     Interpreter()._bind_list_destructure(
                         call_env, param.names, param.rest, value, line, column

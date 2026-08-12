@@ -291,8 +291,7 @@ class Parser:
 
     def _destructure_let_statement(self, let_token: Token, is_map: bool) -> Stmt:
         if is_map:
-            names = self._destructure_map_pattern()
-            rest = None
+            names, rest = self._destructure_map_pattern()
         else:
             names, rest = self._destructure_list_pattern()
         self._consume(TokenType.EQ, "'=' after destructuring pattern")
@@ -300,16 +299,31 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
 
-    def _destructure_map_pattern(self) -> list:
+    def _destructure_map_pattern(self) -> "tuple[list, str | None]":
         self._advance()  # consume '{'
-        names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
+        names = []
+        rest = None
+        if self._check(TokenType.DOT_DOT_DOT):
+            rest = self._destructure_rest_name()
+        else:
+            names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
         while self._check(TokenType.COMMA):
             self._advance()
-            names.append(
-                self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-            )
+            if rest is not None:
+                token = self._peek()
+                raise ParseError(
+                    f"rest element must be last in destructuring pattern, found {self._describe(token)}",
+                    token.line,
+                    token.column,
+                )
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._destructure_rest_name()
+            else:
+                names.append(
+                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+                )
         self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
-        return names
+        return names, rest
 
     def _destructure_list_pattern(self) -> "tuple[list, str | None]":
         self._advance()  # consume '['
@@ -486,7 +500,7 @@ class Parser:
         if self._check(TokenType.LBRACKET):
             names, rest = self._destructure_list_pattern()
         elif self._check(TokenType.LBRACE):
-            names = self._destructure_map_pattern()
+            names, rest = self._destructure_map_pattern()
             is_map = True
         else:
             var_name = self._consume(TokenType.IDENTIFIER, "identifier after 'for'").lexeme
@@ -684,14 +698,14 @@ class Parser:
                     brace_token.line,
                     brace_token.column,
                 )
-            names = self._destructure_map_pattern()
+            names, rest = self._destructure_map_pattern()
             if self._check(TokenType.EQ):
                 raise ParseError(
                     "destructuring parameter cannot have a default value",
                     brace_token.line,
                     brace_token.column,
                 )
-            return Param(name=None, names=names, is_map=True)
+            return Param(name=None, names=names, rest=rest, is_map=True)
         name_token = self._consume(TokenType.IDENTIFIER, "parameter name")
         if self._check(TokenType.EQ):
             self._advance()
@@ -1276,7 +1290,7 @@ class Parser:
         if self._check(TokenType.LBRACKET):
             names, rest = self._destructure_list_pattern()
         elif self._check(TokenType.LBRACE):
-            names = self._destructure_map_pattern()
+            names, rest = self._destructure_map_pattern()
             is_map = True
         else:
             var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
@@ -1335,7 +1349,7 @@ class Parser:
         if self._check(TokenType.LBRACKET):
             names, rest = self._destructure_list_pattern()
         elif self._check(TokenType.LBRACE):
-            names = self._destructure_map_pattern()
+            names, rest = self._destructure_map_pattern()
             is_map = True
         else:
             var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme

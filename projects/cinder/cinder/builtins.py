@@ -678,6 +678,32 @@ def _is_permutation(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _levenshtein_distance(arguments: list, line: int, column: int) -> object:
+    _require_arity("levenshtein_distance", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"levenshtein_distance() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"levenshtein_distance() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    previous_row = list(range(len(string2) + 1))
+    for i, char1 in enumerate(string1, start=1):
+        current_row = [i] + [0] * len(string2)
+        for j, char2 in enumerate(string2, start=1):
+            current_row[j] = min(
+                current_row[j - 1] + 1,
+                previous_row[j] + 1,
+                previous_row[j - 1] + (0 if char1 == char2 else 1),
+            )
+        previous_row = current_row
+    return previous_row[-1]
+
+
 def _is_pangram(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pangram", arguments, 1, line, column)
     value = arguments[0]
@@ -3379,6 +3405,7 @@ _BUILTINS = {
     "is_anagram": _is_anagram,
     "is_rotation": _is_rotation,
     "is_permutation": _is_permutation,
+    "levenshtein_distance": _levenshtein_distance,
     "is_pangram": _is_pangram,
     "is_balanced": _is_balanced,
     "is_upper": _is_upper,

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: chained comparison operators (`a < b < c`)
+## 1. Language: chained comparison operators (`a < b < c`) [claimed 2026-08-12T20:05:27Z]
 
 Build: the depth task after the just-landed `levenshtein_distance`
 breadth work (PR #232) per `PROJECT.md`'s breadth-vs-depth policy.

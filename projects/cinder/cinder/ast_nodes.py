@@ -77,8 +77,8 @@ class Assign:
 @dataclass(frozen=True)
 class DestructureAssign:
     """`[a, b] = expr;` (and the rest-element form `[a, ...rest] = expr;`), or
-    with `is_map=True` the map-pattern form `{a, b} = expr;` (no rest element
-    for that form — `rest` is always `None` when `is_map` is `True`) — the
+    with `is_map=True` the map-pattern form `{a, b} = expr;` (and its own
+    rest-element form `{a, ...rest} = expr;`) — the
     assignment counterpart to `DestructureLetStmt`: `names`/`rest` must
     already be bound (via `env.assign`, not `env.define`). Flat patterns
     only, mirroring `DestructureLetStmt`'s own "no nesting" rule; unlike that

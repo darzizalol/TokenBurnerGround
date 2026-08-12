@@ -1213,6 +1213,44 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("{1, 2} = {};")
 
+    def test_map_destructure_assignment_with_rest(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{a, ...rest} = {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        ["a"],
+                        "rest",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        True,
+                    ),
+                )
+            ],
+        )
+
+    def test_map_destructure_assignment_rest_only(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{...rest} = {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [],
+                        "rest",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        True,
+                    ),
+                )
+            ],
+        )
+
+    def test_map_destructure_assignment_rest_not_last_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('{a, ...rest, b} = {"a": 1};')
+
     def test_map_literal_statement_unaffected(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts('{"a": 1};')],

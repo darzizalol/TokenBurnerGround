@@ -985,9 +985,26 @@ class TestDestructureAssignMap(unittest.TestCase):
     def test_map_literal_statement_unaffected(self):
         run('{"a": 1};')  # still an ExprStmt(MapLiteral), no destructuring attempted
 
-    def test_rest_element_not_supported_in_assignment_form(self):
+    def test_rest_binds_remaining_keys_as_map(self):
+        env = run('let a = 0; let rest = 0; {a, ...rest} = {"a": 1, "b": 2, "c": 3};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), {"b": 2, "c": 3})
+
+    def test_rest_binds_empty_map_when_nothing_left_over(self):
+        env = run('let a = 0; let b = 0; let rest = 0; {a, b, ...rest} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("rest"), {})
+
+    def test_rest_only_pattern_captures_everything(self):
+        env = run('let rest = 0; {...rest} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("rest"), {"a": 1, "b": 2})
+
+    def test_no_rest_element_behavior_unchanged(self):
+        env = run('let a = 0; {a} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+
+    def test_rest_not_last_raises_parse_error(self):
         with self.assertRaises(ParseError):
-            run('let a = 0; let rest = 0; {a, ...rest} = {"a": 1};')
+            run('let a = 0; let rest = 0; {a, ...rest, b} = {"a": 1};')
 
 
 class TestDestructureLetMap(unittest.TestCase):

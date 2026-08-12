@@ -409,33 +409,56 @@ class Parser:
         return self._block()
 
     def _try_map_destructure_assign_statement(self) -> "Stmt | None":
-        """Speculatively parses `{a, b} = expr;` as a map-pattern
-        assignment-destructure, tried after the map-literal-expression
-        attempt in `_brace_statement` fails (or isn't followed by `;`) and
-        before falling back to `_block()`. Returns `None` — leaving `self.pos`
-        untouched for the caller to reset — on any shape mismatch (a
-        non-identifier pattern element, or no `=` after the closing `}`), so
-        `{1, 2};` and the like keep failing exactly as before via the
-        `_block()` fallback."""
+        """Speculatively parses `{a, b} = expr;` (optionally with a trailing
+        `...rest`) as a map-pattern assignment-destructure, tried after the
+        map-literal-expression attempt in `_brace_statement` fails (or isn't
+        followed by `;`) and before falling back to `_block()`. Returns
+        `None` — leaving `self.pos` untouched for the caller to reset — on
+        any shape mismatch (a non-identifier pattern element, or no `=`
+        after the closing `}`), so `{1, 2};` and the like keep failing
+        exactly as before via the `_block()` fallback.
+
+        A rest element that isn't last is a real syntax error, not a shape
+        mismatch: the token that violates it is recorded but the raise is
+        deferred until after the pattern otherwise parses cleanly, so it
+        isn't swallowed by this function's own `except ParseError` and
+        doesn't fall through to `_block()`'s unrelated error."""
 
         start = self.pos
+        rest_violation_token = None
         try:
             self._advance()  # consume '{'
-            names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
+            names = []
+            rest = None
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._destructure_rest_name()
+            else:
+                names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
             while self._check(TokenType.COMMA):
                 self._advance()
-                names.append(
-                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-                )
+                if rest is not None and rest_violation_token is None:
+                    rest_violation_token = self._peek()
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest = self._destructure_rest_name()
+                else:
+                    names.append(
+                        self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+                    )
             self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
             eq_token = self._consume(TokenType.EQ, "'=' after destructuring pattern")
         except ParseError:
             self.pos = start
             return None
+        if rest_violation_token is not None:
+            raise ParseError(
+                f"rest element must be last in destructuring pattern, found {self._describe(rest_violation_token)}",
+                rest_violation_token.line,
+                rest_violation_token.column,
+            )
         value = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after destructuring assignment")
         return ExprStmt(
-            DestructureAssign(names, None, value, eq_token.line, eq_token.column, is_map=True)
+            DestructureAssign(names, rest, value, eq_token.line, eq_token.column, is_map=True)
         )
 
     def _block(self) -> Stmt:

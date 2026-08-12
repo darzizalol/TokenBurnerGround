@@ -208,6 +208,16 @@ _INCREMENT_DECREMENT_OPS = {
 _LOOP_KEYWORDS = {TokenType.WHILE, TokenType.DO, TokenType.FOR}
 
 
+class _RestNotLast(Exception):
+    """Internal marker: a `...rest` wasn't the last element of a
+    speculatively-parsed map-destructuring assignment pattern. Deliberately
+    not a `ParseError` subclass so it can't be caught by the shape-mismatch
+    `except ParseError` in `Parser._try_map_destructure_assign_statement`."""
+
+    def __init__(self, token: Token):
+        self.token = token
+
+
 class Parser:
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
@@ -409,33 +419,60 @@ class Parser:
         return self._block()
 
     def _try_map_destructure_assign_statement(self) -> "Stmt | None":
-        """Speculatively parses `{a, b} = expr;` as a map-pattern
-        assignment-destructure, tried after the map-literal-expression
-        attempt in `_brace_statement` fails (or isn't followed by `;`) and
-        before falling back to `_block()`. Returns `None` — leaving `self.pos`
-        untouched for the caller to reset — on any shape mismatch (a
-        non-identifier pattern element, or no `=` after the closing `}`), so
-        `{1, 2};` and the like keep failing exactly as before via the
-        `_block()` fallback."""
+        """Speculatively parses `{a, b} = expr;` (optionally with a trailing
+        `...rest`) as a map-pattern assignment-destructure, tried after the
+        map-literal-expression attempt in `_brace_statement` fails (or isn't
+        followed by `;`) and before falling back to `_block()`. Returns
+        `None` — leaving `self.pos` untouched for the caller to reset — on
+        any shape mismatch (a non-identifier pattern element, or no `=`
+        after the closing `}`), so `{1, 2};` and the like keep failing
+        exactly as before via the `_block()` fallback.
+
+        A rest element that isn't last is a real syntax error, not a shape
+        mismatch: it's raised eagerly, as soon as the second element after
+        `rest` is seen, via a marker exception distinct from `ParseError` so
+        this function's own catch-all can't swallow it — the same failure
+        mode the deferred-raise version of this code had, where a
+        non-identifier token following the misplaced rest (e.g. `5`) raised
+        `ParseError` from the nested `_consume(IDENTIFIER, ...)` before the
+        deferred check ever ran, and fell through to `_block()`'s unrelated
+        error instead."""
 
         start = self.pos
         try:
             self._advance()  # consume '{'
-            names = [self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme]
+            names = []
+            rest = None
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._destructure_rest_name()
+            else:
+                names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
             while self._check(TokenType.COMMA):
                 self._advance()
-                names.append(
-                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-                )
+                if rest is not None:
+                    raise _RestNotLast(self._peek())
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest = self._destructure_rest_name()
+                else:
+                    names.append(
+                        self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+                    )
             self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
             eq_token = self._consume(TokenType.EQ, "'=' after destructuring pattern")
+        except _RestNotLast as violation:
+            token = violation.token
+            raise ParseError(
+                f"rest element must be last in destructuring pattern, found {self._describe(token)}",
+                token.line,
+                token.column,
+            ) from None
         except ParseError:
             self.pos = start
             return None
         value = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after destructuring assignment")
         return ExprStmt(
-            DestructureAssign(names, None, value, eq_token.line, eq_token.column, is_map=True)
+            DestructureAssign(names, rest, value, eq_token.line, eq_token.column, is_map=True)
         )
 
     def _block(self) -> Stmt:

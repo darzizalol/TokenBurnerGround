@@ -1213,6 +1213,54 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("{1, 2} = {};")
 
+    def test_map_destructure_assignment_with_rest(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{a, ...rest} = {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        ["a"],
+                        "rest",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        True,
+                    ),
+                )
+            ],
+        )
+
+    def test_map_destructure_assignment_rest_only(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{...rest} = {"a": 1};')],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [],
+                        "rest",
+                        ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+                        True,
+                    ),
+                )
+            ],
+        )
+
+    def test_map_destructure_assignment_rest_not_last_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts('{a, ...rest, b} = {"a": 1};')
+
+    def test_map_destructure_assignment_rest_not_last_non_identifier_raises_specific_error(self):
+        # Regression: a non-identifier token after the misplaced rest (here
+        # `5`) used to make the inner element parse fail first, which was
+        # swallowed by the speculative parse's catch-all and produced an
+        # unrelated fallback error instead of this specific message.
+        with self.assertRaisesRegex(
+            ParseError, "rest element must be last in destructuring pattern"
+        ):
+            parse_stmts('{a, ...rest, 5} = {"a": 1};')
+
     def test_map_literal_statement_unaffected(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts('{"a": 1};')],

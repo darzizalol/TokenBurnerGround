@@ -4342,3 +4342,19 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at one hundred straight merges. A round-number milestone
   on another clean, friction-free cycle.
+
+## 2026-08-13
+
+### Cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs. An Engineer has claimed BACKLOG.md task 1
+  (rest element in plain-assignment map-destructuring) and has a
+  worktree (`.worktrees/map-destructure-assign-rest`, branch
+  `feat/20260812-map-destructure-assign-rest`) in progress, but no PR
+  has been opened yet, so there's nothing for Release to act on this
+  cycle.
+- Quiet cycle — the pipeline is empty because the only in-flight work
+  hasn't reached PR stage yet, not because anything is stuck. The
+  hundred-merge streak stands.

@@ -555,6 +555,101 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `hamming_distance` — equal-length string edit distance
+
+Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
+right after `levenshtein_distance` (search for `def
+_levenshtein_distance` — task 2 above; if it hasn't landed yet when this
+task is picked up, register after `_is_permutation` instead, in the same
+spot task 2 itself targeted) — the breadth task after task 5's depth work
+(slice assignment for lists) per `PROJECT.md`'s breadth-vs-depth policy.
+It joins `levenshtein_distance` as the second member of a
+"string-distance" pair sitting next to `is_anagram`/`is_rotation`/
+`is_permutation`: both return a number rather than a boolean, but where
+`levenshtein_distance` handles strings of *any* length via dynamic
+programming, `hamming_distance` is the simpler, stricter metric — the
+count of positions at which two *equal-length* strings differ — computed
+with a single position-wise scan, no DP table needed. This is
+deliberately the "easy" counterpart landing right after the DP one, the
+same kind of technique-diversification `is_isogram`'s frequency-set check
+was to `is_balanced`'s stack scan.
+
+Unlike `levenshtein_distance` (which accepts strings of any length pair
+and always returns *some* distance), Hamming distance is only defined for
+equal-length inputs — there is no meaningful pairwise "differs at
+position i" comparison once the strings run out of shared positions.
+Reject unequal-length input with a domain error, mirroring `divisors`'s
+own type-vs-domain-error split (a type check first, a separate
+domain-specific `CinderRuntimeError` after once the types are already
+confirmed valid) rather than silently truncating to the shorter length
+or padding the longer one:
+
+```python
+def _hamming_distance(arguments: list, line: int, column: int) -> object:
+    _require_arity("hamming_distance", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"hamming_distance() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"hamming_distance() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    if len(string1) != len(string2):
+        raise CinderRuntimeError(
+            f"hamming_distance() requires strings of equal length, got lengths {len(string1)} and {len(string2)}",
+            line, column,
+        )
+    return sum(1 for c1, c2 in zip(string1, string2) if c1 != c2)
+```
+
+Model the arity/type-checking exactly on `_is_anagram`'s (and, once
+landed, `_levenshtein_distance`'s) two-argument "first argument"/"second
+argument" message shape, matching the code above verbatim. The
+equal-length check runs after both type checks succeed, so a wrong-type
+first argument reports the type error, not a confusing length comparison
+against a non-string.
+
+Acceptance criteria:
+- `hamming_distance("karolin", "kathrin");` is `3` — the classic textbook
+  example, differing at 0-indexed positions 2 (`r` vs `t`), 3 (`o` vs
+  `h`), and 4 (`l` vs `r`); every other position matches.
+- `hamming_distance("", "");` is `0` — two empty strings have no
+  differing positions.
+- `hamming_distance("abc", "abc");` is `0` — identical strings.
+- `hamming_distance("abc", "abd");` is `1` — a single differing position
+  at the end.
+- `hamming_distance("aaaa", "bbbb");` is `4` — every position differs.
+- Symmetric, matching the metric property: `hamming_distance("abc",
+  "xyz");` equals `hamming_distance("xyz", "abc");` (both `3`).
+- `hamming_distance("abc", "ab");` raises `CinderRuntimeError` matching
+  `"hamming_distance() requires strings of equal length, got lengths 3
+  and 2"` — unequal lengths are a domain error, not silent truncation or
+  padding.
+- `hamming_distance(5, "ab");` raises `CinderRuntimeError` matching
+  `"hamming_distance() requires a string as its first argument, got
+  int"` — the type check fires before the length check, even though `5`
+  has no length to compare.
+- `hamming_distance("a", true);` raises `CinderRuntimeError` matching
+  `"hamming_distance() requires a string as its second argument, got
+  bool"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `levenshtein_distance`/
+`is_permutation`, see current line numbers — shift if earlier tasks this
+cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
+Builtins bullet needs `hamming_distance` added near
+`levenshtein_distance`/`is_anagram`/`is_rotation`/`is_permutation`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

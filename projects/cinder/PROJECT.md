@@ -640,8 +640,15 @@ replacement value must itself be a list (no implicit coercion), and
 Python's own `obj[start:end] = value` list-slice-assignment semantics
 handle the length change (grow or shrink) once the normalized bounds
 are computed the same way `_evaluate_slice`'s read-side logic already
-does. And only much later, a bytecode VM if performance ever
-actually matters.
+does. And as task 6, `hamming_distance(a, b)` — a breadth task after
+task 5's depth work, the equal-length-only counterpart to
+`levenshtein_distance`: the count of positions at which two strings of
+the *same* length differ, via a single position-wise scan rather than a
+DP table, raising a domain error on unequal-length input instead of
+truncating or padding. Joins `levenshtein_distance` as the second member
+of a string-distance pair sitting next to
+`is_anagram`/`is_rotation`/`is_permutation`. And only much later, a
+bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -669,8 +676,9 @@ breadth right after that depth work in turn, and that placed task 1
 turn, that placed task 3 (chained comparison operators) as depth right
 after task 2's breadth work in turn, that placed task 4
 (`is_automorphic`) as breadth right after task 3's depth work in turn,
-and that placed task 5 (slice assignment for lists) as depth right
-after task 4's breadth work in turn.
+that placed task 5 (slice assignment for lists) as depth right
+after task 4's breadth work in turn, and that placed task 6
+(`hamming_distance`) as breadth right after task 5's depth work in turn.
 
 ## History
 

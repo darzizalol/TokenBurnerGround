@@ -6898,6 +6898,53 @@ class TestIsBlank(unittest.TestCase):
             run('is_blank(" ", " ");')
 
 
+class TestIsIsogram(unittest.TestCase):
+    def test_is_isogram_lumberjacks_true(self):
+        self.assertIs(run('let result = is_isogram("lumberjacks");').get("result"), True)
+
+    def test_is_isogram_background_true(self):
+        self.assertIs(run('let result = is_isogram("background");').get("result"), True)
+
+    def test_is_isogram_downstream_true(self):
+        self.assertIs(run('let result = is_isogram("downstream");').get("result"), True)
+
+    def test_is_isogram_repeated_letter_false(self):
+        self.assertIs(run('let result = is_isogram("isograms");').get("result"), False)
+
+    def test_is_isogram_case_insensitive_collision_false(self):
+        self.assertIs(run('let result = is_isogram("Alphabet");').get("result"), False)
+
+    def test_is_isogram_empty_string_true(self):
+        self.assertIs(run('let result = is_isogram("");').get("result"), True)
+
+    def test_is_isogram_hyphens_ignored_true(self):
+        self.assertIs(run('let result = is_isogram("six-year-old");').get("result"), True)
+
+    def test_is_isogram_short_word_repeat_false(self):
+        self.assertIs(run('let result = is_isogram("Emma");').get("result"), False)
+
+    def test_is_isogram_no_letters_true(self):
+        self.assertIs(run('let result = is_isogram("12 34");').get("result"), True)
+
+    def test_is_isogram_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_isogram(5);")
+        self.assertIn("is_isogram", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_isogram_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_isogram(true);")
+        self.assertIn("is_isogram", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_isogram_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_isogram();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_isogram("a", "b");')
+
+
 class TestIsAscii(unittest.TestCase):
     def test_is_ascii_letters_and_digits_true(self):
         self.assertIs(run('let result = is_ascii("hello");').get("result"), True)

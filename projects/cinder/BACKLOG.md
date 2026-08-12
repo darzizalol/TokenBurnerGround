@@ -409,6 +409,70 @@ task.
 
 ---
 
+## 5. Standard library: `is_automorphic` — n² ends with n predicate
+
+Build: add `is_automorphic(n)` to `cinder/builtins.py`, registered
+right after `is_deficient` (search for `def _is_deficient`) — the
+breadth task after task 4's depth work (chained comparison operators)
+per `PROJECT.md`'s breadth-vs-depth policy. It joins the
+`is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
+`is_abundant`/`is_deficient` integer-property cluster as one more
+digit-based classification: an integer `n` is automorphic when its
+square, written in decimal, ends with `n` itself (e.g. `5² = 25` ends
+in `5`; `6² = 36` ends in `6`; `25² = 625` ends in `25`; `76² = 5776`
+ends in `76`).
+
+Implement as a plain string check rather than modular arithmetic —
+`str(n * n).endswith(str(n))` — mirroring how `_is_palindrome_number`
+and `_is_armstrong` already work with `str(value)` rather than
+digit-by-digit math. Model the arity/type-checking exactly on
+`_is_armstrong`'s structure: `_require_arity("is_automorphic",
+arguments, 1, line, column)`, then `value = _require_int("is_automorphic",
+arguments[0], line, column)` (reusing the shared `_require_int` helper,
+same as `_is_perfect_square`/`_is_armstrong`/`_is_leap_year`/
+`_is_perfect_number`/`_is_abundant`/`_is_deficient` already do — do
+**not** hand-roll a separate `isinstance` check). Negative input
+returns `false` without raising, matching every sibling in this
+cluster's convention (`is_perfect_square`, `is_armstrong`,
+`is_perfect_number`, `is_abundant`, `is_deficient` all answer `false`
+on negative input rather than treating it as a domain error) — the
+`str(n * n).endswith(str(n))` check would also mishandle a negative
+`n`'s leading `-` if allowed through, so guard it the same way those
+five already guard theirs, before doing the string check.
+
+Acceptance criteria:
+- `is_automorphic(5);` is `true` — `5² = 25` ends in `5`.
+- `is_automorphic(6);` is `true` — `6² = 36` ends in `6`.
+- `is_automorphic(25);` is `true` — `25² = 625` ends in `25`.
+- `is_automorphic(76);` is `true` — `76² = 5776` ends in `76`.
+- `is_automorphic(0);` is `true` — `0² = 0` ends in `0`.
+- `is_automorphic(1);` is `true` — `1² = 1` ends in `1`.
+- `is_automorphic(7);` is `false` — `7² = 49` does not end in `7`.
+- `is_automorphic(10);` is `false` — `10² = 100` does not end in `10`.
+- `is_automorphic(-5);` is `false` — negative input answers `false`
+  without raising, matching the rest of the cluster.
+- `is_automorphic(5.0);` raises `CinderRuntimeError` matching
+  `"is_automorphic() requires an int, got float"` — the same message
+  shape `_require_int` already produces for every sibling in this
+  cluster.
+- `is_automorphic(true);` raises `CinderRuntimeError` matching
+  `"is_automorphic() requires an int, got bool"` — `_require_int`
+  already excludes `bool` from passing as an int, same as `is_int`'s
+  own bool-exclusion.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_deficient`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
+bullet needs `is_automorphic` added near
+`is_perfect_number`/`is_abundant`/`is_deficient`, and `PROJECT.md`'s
+roadmap paragraph needs it moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

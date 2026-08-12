@@ -46,19 +46,23 @@ while (i < 10) {
   an optional trailing rest element `let [a, b, ...rest] = expr;` that
   collects any remaining elements into a list, empty if none are left) and
   map destructuring (`let {a, b} = expr;`, binds each identifier by
-  looking it up as a key, extra unnamed keys ignored), plus plain
-  assignment forms of both for already-declared bindings — list
-  (`[a, b] = expr;`, same flat positional binding and optional trailing
-  rest element as the `let` form, e.g. the swap idiom `[a, b] = [b, a];`)
-  and map (`{a, b} = expr;`, same key-lookup binding as the `let` form)
+  looking it up as a key, extra unnamed keys ignored, plus the same kind
+  of optional trailing rest element `let {a, ...rest} = expr;` that
+  collects every key not already named into a map, empty if none are
+  left), plus plain assignment forms of both for already-declared
+  bindings — list (`[a, b] = expr;`, same flat positional binding and
+  optional trailing rest element as the `let` form, e.g. the swap idiom
+  `[a, b] = [b, a];`) and map (`{a, b} = expr;`, same key-lookup binding
+  as the `let` form, but no rest element yet — that's still backlog for
+  this one form)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
   (`for [k, v] in items(m) { ... }`, same flat positional binding and
   optional trailing rest element as `let` list destructuring) and
   map-destructuring loop variables (`for {a, b} in list_of_maps { ... }`,
-  same key-lookup binding as `let` map destructuring, no rest element), a
-  C-style `for (init; cond; step) { ... }` loop
+  same key-lookup binding as `let` map destructuring, including the same
+  optional trailing rest element), a C-style `for (init; cond; step) { ... }` loop
   (each clause optional; the loop variable gets a fresh binding per
   iteration so closures captured in the body see their own iteration's
   value), `break`/`continue` in all loop kinds, including labeled
@@ -134,7 +138,9 @@ while (i < 10) {
   parameters accept list/map destructuring patterns too
   (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), the same flat
   positional/key-lookup binding `let`/`for`-loop destructuring already
-  use, combinable with default values and a trailing rest parameter
+  use, including the same optional trailing rest element on either
+  pattern kind, combinable with default values and a trailing rest
+  parameter
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -151,8 +157,9 @@ while (i < 10) {
   same flat positional binding and optional trailing rest element as a
   `for`-loop's own list-destructuring form) and a map-destructuring loop
   variable (`[a + b for {a, b} in list_of_maps]`, same key-lookup
-  binding as a `for`-loop's own map-destructuring form, no rest element);
-  map literals accept spread elements too (`{...map1, "k": v}`), merging
+  binding as a `for`-loop's own map-destructuring form, including the
+  same optional trailing rest element); map literals accept spread
+  elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; map
   comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
   if cond}` (same shape as list comprehensions — one optional filter
@@ -208,6 +215,7 @@ while (i < 10) {
   `is_permutation` as its list-oriented sibling,
   `is_palindrome_list` to test whether a list reads the same forwards and backwards,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
+  `is_balanced` to test whether a string's `()`/`[]`/`{}` brackets are all properly matched and nested,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -288,17 +296,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map-destructuring loop
-variables in list/map comprehensions (`[a + b for {a, b} in
-list_of_maps]`), closing the last corner the destructuring-loop-variable
-matrix left open. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_balanced` to test whether a string's brackets are properly matched
-and nested, a rest element for map-destructuring patterns
-(`let {a, ...rest} = m;`), mirroring the rest element list patterns
-already have, `is_isogram` to test whether a string has no repeated
-letters, the same rest element for the plain-assignment
-map-destructuring form (`{a, ...rest} = expr;`), and
-`levenshtein_distance` to compute the classic string edit distance.
-The backlog mixes language depth with stdlib breadth over time rather
+Actively developed, nightly. Recently landed: `is_balanced` to test
+whether a string's brackets are properly matched and nested, and a rest
+element for map-destructuring patterns (`let {a, ...rest} = m;`,
+`for {a, ...rest} in list_of_maps { ... }`, `fn f({a, ...rest}) { ... }`,
+and the comprehension loop-variable forms), mirroring the rest element
+list patterns already have. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_isogram` to test whether a string has
+no repeated letters, the same rest element for the one remaining gap —
+the plain-assignment map-destructuring form (`{a, ...rest} = expr;`) —
+`levenshtein_distance` to compute the classic string edit distance,
+chained comparison operators (`a < b < c`), and `is_automorphic` to
+test whether an integer's square ends with the integer itself. The
+backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

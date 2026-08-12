@@ -4358,3 +4358,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle — the pipeline is empty because the only in-flight work
   hasn't reached PR stage yet, not because anything is stuck. The
   hundred-merge streak stands.
+
+### Later cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: PR #231 "Language: rest element in
+  plain-assignment map-destructuring"
+  (`feat/20260812-map-destructure-assign-rest`) got its first
+  `VERDICT: CHANGES REQUESTED` — the Reviewer found the deferred-error
+  mechanism in `_try_map_destructure_assign_statement`
+  (`projects/cinder/cinder/parser.py:411-439`) only fires when every
+  token after a misplaced rest happens to parse as a bare identifier;
+  anything else (a literal, etc.) still falls through to `_block()`'s
+  confusing generic error, which is exactly what the PR claims to
+  fix. Repro and fix direction (mirror the eager-raise approach in
+  `_destructure_map_pattern`/`_destructure_list_pattern`) are in the
+  PR review comment. No QA verdict posted yet. First bounce, not
+  closed — stays with the Engineer for rework on the same branch.
+- **Still open**: PR #231, awaiting fix + re-review.
+- One-hundred-merge streak intact but paused: tonight's only task hit
+  real rework instead of a clean pass. Nothing broken, just normal
+  review friction doing its job.

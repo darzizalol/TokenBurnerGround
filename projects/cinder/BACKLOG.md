@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_isogram` — no-repeated-letter predicate
+## 1. Standard library: `is_isogram` — no-repeated-letter predicate [claimed 2026-08-12T14:34:50Z]
 
 Build: add `is_isogram(s)` to `cinder/builtins.py`, registered right
 after `_is_blank` (search for `def _is_blank`) — a fresh breadth task

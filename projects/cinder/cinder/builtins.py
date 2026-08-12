@@ -778,6 +778,17 @@ def _is_blank(arguments: list, line: int, column: int) -> object:
     return value == "" or value.isspace()
 
 
+def _is_isogram(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_isogram", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_isogram() requires a string, got {type_name(value)}", line, column
+        )
+    letters = [char for char in value.lower() if char.isalpha()]
+    return len(letters) == len(set(letters))
+
+
 def _is_ascii(arguments: list, line: int, column: int) -> object:
     _require_arity("is_ascii", arguments, 1, line, column)
     value = arguments[0]
@@ -3377,6 +3388,7 @@ _BUILTINS = {
     "is_alnum": _is_alnum,
     "is_space": _is_space,
     "is_blank": _is_blank,
+    "is_isogram": _is_isogram,
     "is_ascii": _is_ascii,
     "is_numeric": _is_numeric_string,
     "is_sorted": _is_sorted,

@@ -8,6 +8,7 @@ from cinder.ast_nodes import (
     Block,
     BreakStmt,
     Call,
+    ChainedComparison,
     ConstStmt,
     ContinueStmt,
     DestructureAssign,
@@ -60,6 +61,12 @@ def shape(node):
         return ("Unary", node.operator.type, shape(node.operand))
     if isinstance(node, Binary):
         return ("Binary", shape(node.left), node.operator.type, shape(node.right))
+    if isinstance(node, ChainedComparison):
+        return (
+            "ChainedComparison",
+            [shape(o) for o in node.operands],
+            [op.type for op in node.operators],
+        )
     if isinstance(node, Logical):
         return ("Logical", shape(node.left), node.operator.type, shape(node.right))
     if isinstance(node, Grouping):
@@ -305,6 +312,64 @@ class TestPrecedence(unittest.TestCase):
                 ("Binary", ("Literal", 1), TokenType.LT, ("Literal", 2)),
                 TokenType.AND,
                 ("Binary", ("Literal", 3), TokenType.GT, ("Literal", 4)),
+            ),
+        )
+
+    def test_chained_ordering_comparison_produces_chained_comparison_node(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 < 2 < 3")),
+            (
+                "ChainedComparison",
+                [("Literal", 1), ("Literal", 2), ("Literal", 3)],
+                [TokenType.LT, TokenType.LT],
+            ),
+        )
+
+    def test_chained_comparison_allows_mixed_ordering_operators(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 < 2 <= 2 < 3")),
+            (
+                "ChainedComparison",
+                [("Literal", 1), ("Literal", 2), ("Literal", 2), ("Literal", 3)],
+                [TokenType.LT, TokenType.LTEQ, TokenType.LT],
+            ),
+        )
+
+    def test_single_comparison_stays_a_binary_node(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 < 2")),
+            ("Binary", ("Literal", 1), TokenType.LT, ("Literal", 2)),
+        )
+
+    def test_equality_chain_stays_left_folded_binary(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 == 1 == 1")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 1), TokenType.EQEQ, ("Literal", 1)),
+                TokenType.EQEQ,
+                ("Literal", 1),
+            ),
+        )
+
+    def test_mixed_ordering_and_equality_stays_left_folded_binary(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 < 2 == true")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 1), TokenType.LT, ("Literal", 2)),
+                TokenType.EQEQ,
+                ("Literal", True),
             ),
         )
 

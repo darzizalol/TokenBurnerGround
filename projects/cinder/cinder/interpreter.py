@@ -50,6 +50,7 @@ from cinder.ast_nodes import (
     Block,
     BreakStmt,
     Call,
+    ChainedComparison,
     ConstStmt,
     ContinueStmt,
     DestructureAssign,
@@ -234,6 +235,8 @@ class Interpreter:
             return self._evaluate_ternary(expr, env)
         if isinstance(expr, Binary):
             return self._evaluate_binary(expr, env)
+        if isinstance(expr, ChainedComparison):
+            return self._evaluate_chained_comparison(expr, env)
         if isinstance(expr, Assign):
             return self._evaluate_assign(expr, env)
         if isinstance(expr, DestructureAssign):
@@ -960,6 +963,17 @@ class Interpreter:
         left = self.evaluate(expr.left, env)
         right = self.evaluate(expr.right, env)
         return self._apply_binary_operator(expr.operator, left, right)
+
+    def _evaluate_chained_comparison(
+        self, expr: ChainedComparison, env: Environment
+    ) -> object:
+        left = self.evaluate(expr.operands[0], env)
+        for operator, operand in zip(expr.operators, expr.operands[1:]):
+            right = self.evaluate(operand, env)
+            if not self._compare(operator, left, right, operator.type):
+                return False
+            left = right
+        return True
 
     def _apply_binary_operator(self, operator: Token, left: object, right: object) -> object:
         op = operator.type

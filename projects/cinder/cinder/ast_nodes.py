@@ -39,6 +39,24 @@ class Binary:
 
 
 @dataclass(frozen=True)
+class ChainedComparison:
+    """`a < b < c` (and longer/mixed-ordering-operator chains).
+
+    `operands` holds the N+1 sub-expressions and `operators` the N ordering
+    Tokens between them (drawn purely from `<`/`<=`/`>`/`>=` — a chain mixing
+    in `==`/`!=` stays a left-folded `Binary` chain instead, unchanged from
+    before this node existed). Evaluates as `operands[0] operators[0]
+    operands[1] and operands[1] operators[1] operands[2] and ...`, each
+    operand evaluated exactly once and the whole chain short-circuiting on
+    the first `false` pairwise comparison."""
+
+    operands: list
+    operators: list
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Logical:
     left: "Expr"
     operator: Token
@@ -269,6 +287,7 @@ Expr = Union[
     Identifier,
     Unary,
     Binary,
+    ChainedComparison,
     Logical,
     Grouping,
     Call,

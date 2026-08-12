@@ -107,6 +107,7 @@ from cinder.ast_nodes import (
     Block,
     BreakStmt,
     Call,
+    ChainedComparison,
     ConstStmt,
     ContinueStmt,
     DestructureAssign,
@@ -155,6 +156,12 @@ from cinder.tokens import Token, TokenType
 _COMPARISON = {
     TokenType.EQEQ,
     TokenType.BANGEQ,
+    TokenType.LT,
+    TokenType.LTEQ,
+    TokenType.GT,
+    TokenType.GTEQ,
+}
+_ORDERING = {
     TokenType.LT,
     TokenType.LTEQ,
     TokenType.GT,
@@ -1087,12 +1094,21 @@ class Parser:
         return expr
 
     def _comparison(self) -> Expr:
-        expr = self._bitor()
+        operands = [self._bitor()]
+        operators = []
         while self._peek().type in _COMPARISON:
-            operator = self._advance()
-            right = self._bitor()
-            expr = Binary(expr, operator, right)
-        return expr
+            operators.append(self._advance())
+            operands.append(self._bitor())
+        if not operators:
+            return operands[0]
+        if len(operators) >= 2 and all(op.type in _ORDERING for op in operators):
+            return ChainedComparison(
+                operands, operators, operators[0].line, operators[0].column
+            )
+        result = operands[0]
+        for operator, right in zip(operators, operands[1:]):
+            result = Binary(result, operator, right)
+        return result
 
     def _bitor(self) -> Expr:
         expr = self._bitxor()

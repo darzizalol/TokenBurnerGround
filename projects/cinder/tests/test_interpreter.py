@@ -308,6 +308,45 @@ class TestComparisons(unittest.TestCase):
             evaluate('1 < "x"')
 
 
+class TestChainedComparisons(unittest.TestCase):
+    def test_two_operator_chain(self):
+        self.assertEqual(evaluate("1 < 2 < 3"), True)
+
+    def test_three_operator_chain(self):
+        self.assertEqual(evaluate("1 < 2 < 3 < 4"), True)
+
+    def test_short_circuits_on_first_failing_pair(self):
+        self.assertEqual(evaluate("3 < 2 < 100"), False)
+
+    def test_mixed_ordering_operators(self):
+        self.assertEqual(evaluate("1 < 2 <= 2 < 3"), True)
+
+    def test_operands_evaluated_exactly_once_and_short_circuit(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let calls = []; '
+            'fn track(label, value) { push(calls, label); return value; } '
+            'let result = track("a", 5) < track("b", 3) < track("c", 10);',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), False)
+        self.assertEqual(env.get("calls"), ["a", "b"])
+
+    def test_type_mismatch_mid_chain_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('1 < "a" < 3')
+
+    def test_equality_chain_unaffected(self):
+        self.assertEqual(evaluate("1 == 1 == 1"), False)
+
+    def test_not_equal_chain_unaffected(self):
+        self.assertEqual(evaluate("1 != 2 != 3"), True)
+
+    def test_mixed_ordering_and_equality_unaffected(self):
+        self.assertEqual(evaluate("1 < 2 == true"), True)
+
+
 class TestLogical(unittest.TestCase):
     def test_and_short_circuits_on_false(self):
         # right side would error if evaluated; short-circuit must prevent that

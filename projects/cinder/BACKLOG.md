@@ -11,71 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_automorphic` — n² ends with n predicate [claimed 2026-08-12T20:20:25Z]
-
-Build: add `is_automorphic(n)` to `cinder/builtins.py`, registered
-right after `is_deficient` (search for `def _is_deficient`) — the
-breadth task after the just-landed chained comparison operators depth
-work (PR #233) per `PROJECT.md`'s breadth-vs-depth policy. It joins the
-`is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
-`is_abundant`/`is_deficient` integer-property cluster as one more
-digit-based classification: an integer `n` is automorphic when its
-square, written in decimal, ends with `n` itself (e.g. `5² = 25` ends
-in `5`; `6² = 36` ends in `6`; `25² = 625` ends in `25`; `76² = 5776`
-ends in `76`).
-
-Implement as a plain string check rather than modular arithmetic —
-`str(n * n).endswith(str(n))` — mirroring how `_is_palindrome_number`
-and `_is_armstrong` already work with `str(value)` rather than
-digit-by-digit math. Model the arity/type-checking exactly on
-`_is_armstrong`'s structure: `_require_arity("is_automorphic",
-arguments, 1, line, column)`, then `value = _require_int("is_automorphic",
-arguments[0], line, column)` (reusing the shared `_require_int` helper,
-same as `_is_perfect_square`/`_is_armstrong`/`_is_leap_year`/
-`_is_perfect_number`/`_is_abundant`/`_is_deficient` already do — do
-**not** hand-roll a separate `isinstance` check). Negative input
-returns `false` without raising, matching every sibling in this
-cluster's convention (`is_perfect_square`, `is_armstrong`,
-`is_perfect_number`, `is_abundant`, `is_deficient` all answer `false`
-on negative input rather than treating it as a domain error) — the
-`str(n * n).endswith(str(n))` check would also mishandle a negative
-`n`'s leading `-` if allowed through, so guard it the same way those
-five already guard theirs, before doing the string check.
-
-Acceptance criteria:
-- `is_automorphic(5);` is `true` — `5² = 25` ends in `5`.
-- `is_automorphic(6);` is `true` — `6² = 36` ends in `6`.
-- `is_automorphic(25);` is `true` — `25² = 625` ends in `25`.
-- `is_automorphic(76);` is `true` — `76² = 5776` ends in `76`.
-- `is_automorphic(0);` is `true` — `0² = 0` ends in `0`.
-- `is_automorphic(1);` is `true` — `1² = 1` ends in `1`.
-- `is_automorphic(7);` is `false` — `7² = 49` does not end in `7`.
-- `is_automorphic(10);` is `false` — `10² = 100` does not end in `10`.
-- `is_automorphic(-5);` is `false` — negative input answers `false`
-  without raising, matching the rest of the cluster.
-- `is_automorphic(5.0);` raises `CinderRuntimeError` matching
-  `"is_automorphic() requires an int, got float"` — the same message
-  shape `_require_int` already produces for every sibling in this
-  cluster.
-- `is_automorphic(true);` raises `CinderRuntimeError` matching
-  `"is_automorphic() requires an int, got bool"` — `_require_int`
-  already excludes `bool` from passing as an int, same as `is_int`'s
-  own bool-exclusion.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_deficient`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_automorphic` added near
-`is_perfect_number`/`is_abundant`/`is_deficient`, and `PROJECT.md`'s
-roadmap paragraph needs it moved from backlog to landed — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: slice assignment for lists (`list[start:end] = other_list;`)
+## 1. Language: slice assignment for lists (`list[start:end] = other_list;`)
 
 Build: the depth task after task 1's breadth work (`is_automorphic`) per
 `PROJECT.md`'s breadth-vs-depth policy. `README.md`'s Data structures
@@ -221,12 +157,12 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `hamming_distance` — equal-length string edit distance
+## 2. Standard library: `hamming_distance` — equal-length string edit distance
 
 Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
 right after `levenshtein_distance` (search for `def
 _levenshtein_distance`, landed via PR #232) — the breadth task after
-task 2's depth work (slice assignment for lists) per `PROJECT.md`'s
+task 1's depth work (slice assignment for lists) per `PROJECT.md`'s
 breadth-vs-depth policy.
 It joins `levenshtein_distance` as the second member of a
 "string-distance" pair sitting next to `is_anagram`/`is_rotation`/
@@ -315,26 +251,26 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`)
+## 3. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`)
 
-Build: the depth task after task 3's breadth work (`hamming_distance`)
+Build: the depth task after task 2's breadth work (`hamming_distance`)
 per `PROJECT.md`'s breadth-vs-depth policy, and the direct follow-on to
-task 2 (slice assignment): task 2 deliberately scopes `SliceAssign` to
+task 1 (slice assignment): task 1 deliberately scopes `SliceAssign` to
 the step-less form only, rejecting a stepped target
 (`list[a:b:c] = value;`) with `ParseError` `"invalid assignment
 target"` and explicitly deferring the stepped case to "a future task"
-since it needs an exact length match rather than task 2's
-grow-or-shrink behavior. This task closes that gap. (Once task 2 has
+since it needs an exact length match rather than task 1's
+grow-or-shrink behavior. This task closes that gap. (Once task 1 has
 landed, verify the current behavior still matches this description
 before starting — `python3 -m cinder.cli eval 'let xs = [1, 2, 3];
 xs[0:3:2] = [9];'` should raise that `ParseError`.)
 
-In `cinder/ast_nodes.py`: `SliceAssign` (added by task 2, right after
+In `cinder/ast_nodes.py`: `SliceAssign` (added by task 1, right after
 `SliceExpr`) gains a fourth field, `step: "Expr | None"`, inserted
 between `end` and `value` to mirror `SliceExpr`'s own field order
 (`obj`, `start`, `end`, `step`).
 
-In `cinder/parser.py`'s `_assignment()`: replace task 2's
+In `cinder/parser.py`'s `_assignment()`: replace task 1's
 step-rejection branch —
 ```python
 if isinstance(expr, SliceExpr):
@@ -354,21 +290,21 @@ if isinstance(expr, SliceExpr):
         eq_token.line, eq_token.column,
     )
 ```
-Every other assignment form stays untouched, same as task 2 left them
+Every other assignment form stays untouched, same as task 1 left them
 — `xs[0:3:2] += y;`, `xs[0:3:2] ??= y;`, and `xs[0:3:2]++;` still raise
 `"invalid assignment target"` (their branches only match
 `Identifier`/`Index`, never `SliceExpr`, stepped or not).
 
 In `cinder/interpreter.py`, extend `_evaluate_slice_assign` (added by
-task 2) to evaluate and validate `step` the same way
+task 1) to evaluate and validate `step` the same way
 `_evaluate_slice`'s read-side logic already does (search for `def
 _evaluate_slice`: type-check via `isinstance(step, int) and not
 isinstance(step, bool)`, then reject `step == 0`), evaluated in source
 order right after `end` and before `value`. Compute
 `norm_start, norm_end, norm_step = slice(start, end,
-step).indices(len(obj))` (same call task 2 already makes, now passing
+step).indices(len(obj))` (same call task 1 already makes, now passing
 the real `step` instead of a hardcoded `None`). Then, instead of task
-3's plain `obj[norm_start:norm_end] = value`, assign through the
+2's plain `obj[norm_start:norm_end] = value`, assign through the
 3-argument slice and let Python's own extended-slice-assignment
 machinery enforce the length match, converting its `ValueError` into a
 `CinderRuntimeError`:
@@ -387,12 +323,12 @@ return value
 No manual "is this an extended slice" branch is needed — Python's
 `list.__setitem__` only enforces the exact-length rule when the
 effective step is not `1`, so a step-less call (`step=None`) or an
-explicit `step=1` both keep task 2's existing grow/shrink behavior
+explicit `step=1` both keep task 1's existing grow/shrink behavior
 automatically, and only `abs(norm_step) != 1` cases (or any step that
 normalizes away from a contiguous run) raise. The rest of
 `_evaluate_slice_assign` (the string-immutability check, the
 not-a-list check, the bound type checks, the value-must-be-a-list
-check) stays exactly as task 2 wrote it.
+check) stays exactly as task 1 wrote it.
 
 Acceptance criteria:
 - `let xs = [1, 2, 3, 4, 5, 6]; xs[0:6:2] = [9, 9, 9]; print(xs);`
@@ -409,7 +345,7 @@ Acceptance criteria:
   `[9, 9, 9, 9, 3]` — an *explicit* `step=1` still behaves like the
   step-less form (grows the list), since step `1` is never "extended"
   regardless of how it was spelled.
-- Task 2's own step-less acceptance criteria (growing, shrinking,
+- Task 1's own step-less acceptance criteria (growing, shrinking,
   omitted bounds, out-of-range clamping, negative bounds, the
   assignment-expression-evaluates-to-the-value convention, the
   non-list-value error, the string-immutability error) all still pass
@@ -433,7 +369,7 @@ Acceptance criteria:
   rejected at runtime once the target's actual type is known.
 - `let xs = [1, 2, 3]; xs[0:3:2] += [9];` and `xs[0:3:2]++;` both still
   raise `ParseError` matching `"invalid assignment target"` —
-  unaffected regression checks, same as task 2.
+  unaffected regression checks, same as task 1.
 - Read-side stepped slicing (`xs[0:6:2];` as an expression, not an
   assignment target) is completely unaffected — no `SliceAssign` node
   is ever built for it, same `SliceExpr` AST and behavior as before
@@ -451,13 +387,12 @@ task.
 
 ---
 
-## 5. Standard library: `is_harshad` — digit-sum divisibility predicate
+## 4. Standard library: `is_harshad` — digit-sum divisibility predicate
 
 Build: add `is_harshad(n)` to `cinder/builtins.py`, registered right
-after `is_deficient`/`is_automorphic` (search for `def
-_is_deficient`, then `def _is_automorphic` once task 1 has landed —
-whichever is currently last in the integer-property cluster) — the
-breadth task after task 4's depth work (extended slice assignment) per
+after `is_automorphic` (search for `def _is_automorphic`, the current
+last entry in the integer-property cluster) — the breadth task after
+task 3's depth work (extended slice assignment) per
 `PROJECT.md`'s breadth-vs-depth policy. A positive integer `n` is a
 Harshad (or Niven) number when it is evenly divisible by the sum of
 its own decimal digits, e.g. `18` is Harshad since `1 + 8 = 9` and `18
@@ -483,8 +418,7 @@ def _is_harshad(arguments: list, line: int, column: int) -> object:
     return value % digit_total == 0
 ```
 
-Model the arity/type-checking exactly on `_is_automorphic`'s (or, if
-task 1 hasn't landed yet, `_is_deficient`'s) structure:
+Model the arity/type-checking exactly on `_is_automorphic`'s structure:
 `_require_arity("is_harshad", arguments, 1, line, column)`, then
 `value = _require_int("is_harshad", arguments[0], line, column)`
 (reusing the shared `_require_int` helper — do **not** hand-roll a

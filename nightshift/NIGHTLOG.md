@@ -4421,3 +4421,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at one hundred and three: another clean first-round
   merge, the night is going smoothly.
+
+### Later cycle
+
+- **Merged**: PR #234 "Standard library: is_automorphic — n² ends with
+  n predicate" (`feat/20260812-is-automorphic`, squashed to `main`).
+  Clean first round: `VERDICT: LGTM` and `QA: PASS` (2618 tests plus
+  CLI smoke tests covering larger automorphic numbers beyond the
+  backlog's examples). Worktree removed, branch deleted, task 1
+  dropped from `BACKLOG.md` and archived in `CHANGELOG.md`, remaining
+  tasks renumbered 1-4.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and four: four clean first-round merges in
+  a row tonight, no rework needed on any of them.

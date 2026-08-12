@@ -2228,3 +2228,15 @@ for vision/architecture.
   passing plus CLI smoke tests covering ordering/mixed-ordering chains,
   the `==`/`!=` left-fold regression cases, and a `track()`
   side-effect-counter proof of single-evaluation/short-circuiting).
+- **Standard library: `is_automorphic`** — merged 2026-08-12T20:24:54Z via
+  PR #234 (`feat/20260812-is-automorphic`). Added `is_automorphic(n)` to
+  `cinder/builtins.py`, registered right after `is_deficient`, joining the
+  `is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
+  `is_abundant`/`is_deficient` integer-property cluster. Implemented as a
+  plain string check (`str(n * n).endswith(str(n))`) mirroring
+  `_is_palindrome_number`/`_is_armstrong`, with arity/type-checking modeled
+  on `_is_armstrong`'s structure and negative input answering `false`
+  without raising, matching every sibling in the cluster. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2618 tests
+  passing plus CLI smoke tests covering larger automorphic numbers not in
+  the backlog's examples, false cases, and both type/arity error paths).

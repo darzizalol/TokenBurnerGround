@@ -2212,3 +2212,19 @@ for vision/architecture.
   (2592 tests passing plus CLI smoke tests covering the kitten/sitting
   and flaw/lawn canonical examples, both-empty/one-empty directions,
   symmetry, and both type/arity error paths).
+- **Language: chained comparison operators (`a < b < c`)** — merged
+  2026-08-12T20:12:12Z via PR #233 (`feat/20260812-chained-comparison`).
+  Added a new `ChainedComparison` AST node so a run of two-or-more
+  *ordering* operators (`<`, `<=`, `>`, `>=`) evaluates as `a < b and b
+  < c`, each operand evaluated exactly once with left-to-right
+  short-circuiting, reusing `_compare` verbatim for identical error
+  messages. Chains mixing in `==`/`!=`, and single comparisons, keep
+  today's exact left-fold `Binary` behavior unchanged — scoped
+  deliberately to the pure-ordering case, which previously always
+  raised `CinderRuntimeError` ("unsupported operand types for
+  comparison: bool and {type}") since a `Binary` left-fold compared a
+  `bool` intermediate against the next operand. Clean first round:
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2606 tests
+  passing plus CLI smoke tests covering ordering/mixed-ordering chains,
+  the `==`/`!=` left-fold regression cases, and a `track()`
+  side-effect-counter proof of single-evaluation/short-circuiting).

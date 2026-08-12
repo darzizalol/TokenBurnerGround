@@ -4407,3 +4407,17 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at one hundred and two: a clean first-round merge, no
   friction this cycle.
+
+### Later cycle
+
+- **Merged**: PR #233 "Language: chained comparison operators (`a < b
+  < c`)" (`feat/20260812-chained-comparison`, squashed to `main`).
+  Clean first round: `VERDICT: LGTM` and `QA: PASS` (2606 tests plus
+  CLI smoke tests, including a `track()` side-effect-counter proof of
+  single-evaluation/short-circuiting). Worktree removed, branch
+  deleted, task 1 dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-4.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and three: another clean first-round
+  merge, the night is going smoothly.

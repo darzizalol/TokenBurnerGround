@@ -208,6 +208,16 @@ _INCREMENT_DECREMENT_OPS = {
 _LOOP_KEYWORDS = {TokenType.WHILE, TokenType.DO, TokenType.FOR}
 
 
+class _RestNotLast(Exception):
+    """Internal marker: a `...rest` wasn't the last element of a
+    speculatively-parsed map-destructuring assignment pattern. Deliberately
+    not a `ParseError` subclass so it can't be caught by the shape-mismatch
+    `except ParseError` in `Parser._try_map_destructure_assign_statement`."""
+
+    def __init__(self, token: Token):
+        self.token = token
+
+
 class Parser:
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
@@ -419,13 +429,16 @@ class Parser:
         exactly as before via the `_block()` fallback.
 
         A rest element that isn't last is a real syntax error, not a shape
-        mismatch: the token that violates it is recorded but the raise is
-        deferred until after the pattern otherwise parses cleanly, so it
-        isn't swallowed by this function's own `except ParseError` and
-        doesn't fall through to `_block()`'s unrelated error."""
+        mismatch: it's raised eagerly, as soon as the second element after
+        `rest` is seen, via a marker exception distinct from `ParseError` so
+        this function's own catch-all can't swallow it — the same failure
+        mode the deferred-raise version of this code had, where a
+        non-identifier token following the misplaced rest (e.g. `5`) raised
+        `ParseError` from the nested `_consume(IDENTIFIER, ...)` before the
+        deferred check ever ran, and fell through to `_block()`'s unrelated
+        error instead."""
 
         start = self.pos
-        rest_violation_token = None
         try:
             self._advance()  # consume '{'
             names = []
@@ -436,8 +449,8 @@ class Parser:
                 names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
             while self._check(TokenType.COMMA):
                 self._advance()
-                if rest is not None and rest_violation_token is None:
-                    rest_violation_token = self._peek()
+                if rest is not None:
+                    raise _RestNotLast(self._peek())
                 if self._check(TokenType.DOT_DOT_DOT):
                     rest = self._destructure_rest_name()
                 else:
@@ -446,15 +459,16 @@ class Parser:
                     )
             self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
             eq_token = self._consume(TokenType.EQ, "'=' after destructuring pattern")
+        except _RestNotLast as violation:
+            token = violation.token
+            raise ParseError(
+                f"rest element must be last in destructuring pattern, found {self._describe(token)}",
+                token.line,
+                token.column,
+            ) from None
         except ParseError:
             self.pos = start
             return None
-        if rest_violation_token is not None:
-            raise ParseError(
-                f"rest element must be last in destructuring pattern, found {self._describe(rest_violation_token)}",
-                rest_violation_token.line,
-                rest_violation_token.column,
-            )
         value = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after destructuring assignment")
         return ExprStmt(

@@ -4324,3 +4324,21 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at ninety-nine straight merges. Two clean tasks landed
   back-to-back this cycle — no rework, no friction.
+
+### Later cycle
+
+- **Merged**: PR #230 "Standard library: is_isogram no-repeated-letter
+  predicate" (`feat/20260812-is-isogram`) — clean first round, Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2572 tests passing plus
+  CLI smoke tests covering case-insensitive collisions, punctuation/
+  digits ignored, empty string, and both type/arity errors). Removed
+  `.worktrees/is-isogram` before merging; `gh pr merge --squash
+  --delete-branch` succeeded on the first try. BACKLOG.md task 1
+  removed and remaining tasks (2-5) renumbered to 1-4, with
+  cross-referencing "task N" mentions updated to match; changelog
+  entry added. `README.md`/`PROJECT.md` updates left for the
+  Architect's next grooming pass per the task's own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred straight merges. A round-number milestone
+  on another clean, friction-free cycle.

@@ -2165,3 +2165,16 @@ for vision/architecture.
   passing plus CLI smoke tests covering all five call sites, empty rest,
   fresh-per-iteration binding, rest-not-last, and the untouched
   plain-assignment form).
+- **Standard library: `is_isogram` — no-repeated-letter predicate** —
+  merged 2026-08-12T14:39:41Z via PR #230 (`feat/20260812-is-isogram`).
+  Added `is_isogram(s)` to `cinder/builtins.py`, registered right after
+  `is_blank`: lowercases the string, filters to alphabetic characters, and
+  compares the filtered length to the length of the `set` built from it —
+  equal lengths means no letter repeated. Non-letter characters (digits,
+  hyphens, spaces, punctuation) are ignored entirely, neither counting
+  toward nor breaking a collision. A single-pass character-frequency
+  check, distinct from the multiset/reversal delegations the rest of the
+  string-predicate cluster uses. Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2572 tests passing plus CLI
+  smoke tests covering case-insensitive collisions, punctuation/digits
+  ignored, empty string, and both type/arity errors).

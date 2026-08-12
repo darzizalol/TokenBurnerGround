@@ -11,71 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_isogram` — no-repeated-letter predicate [claimed 2026-08-12T14:34:50Z]
-
-Build: add `is_isogram(s)` to `cinder/builtins.py`, registered right
-after `_is_blank` (search for `def _is_blank`) — a fresh breadth task
-queued after the map-destructuring rest element depth work per
-`PROJECT.md`'s breadth-vs-depth policy, and, like `is_balanced`,
-deliberately not another `is_anagram`-style multiset delegation:
-it's a single-pass character-frequency check instead.
-
-An isogram is a string in which no letter appears more than once,
-case-insensitive (`'A'` and `'a'` count as the same letter and
-collide). Non-letter characters — spaces, hyphens, digits, punctuation
-— are ignored entirely: they neither count toward a collision nor
-break one, so `"six-year-old"` is an isogram even though `-` repeats
-three times. Implement with a single scan: lowercase the string, keep
-only alphabetic characters (`char.isalpha()`), and compare the
-filtered length to the length of the `set` built from it — equal
-lengths means no letter repeated. No need for an explicit loop with
-early exit; the set-length comparison is the whole check, mirroring
-how `_is_pangram` reduces to a single `set` comparison rather than a
-hand-rolled scan.
-
-Model the arity/type-checking on `_is_blank`'s structure exactly:
-`_require_arity("is_isogram", arguments, 1, line, column)`, then a
-single non-`str` check raising `CinderRuntimeError` matching
-`"is_isogram() requires a string, got {type}"` (same one-argument
-message shape `_is_blank`/`_is_pangram` already use, not
-`_is_anagram`'s two-argument "first argument"/"second argument"
-phrasing — there's only one argument here).
-
-Acceptance criteria:
-- `is_isogram("lumberjacks");` is `true` — the motivating case, every
-  letter distinct.
-- `is_isogram("background");` is `true` and `is_isogram("downstream");`
-  is `true` — more all-distinct-letter words.
-- `is_isogram("isograms");` is `false` — `'s'` repeats.
-- `is_isogram("Alphabet");` is `false` — case-insensitive collision:
-  `'A'` and `'a'` count as the same letter.
-- `is_isogram("");` is `true` — the empty string has nothing to
-  collide.
-- `is_isogram("six-year-old");` is `true` — hyphens repeat freely
-  without counting as a collision, since only letters are considered.
-- `is_isogram("Emma");` is `false` — `'m'` repeats within a single
-  short word, not just across a longer one.
-- `is_isogram("12 34");` is `true` — a string with no letters at all
-  is trivially an isogram (nothing to collide).
-- `is_isogram(5);` raises `CinderRuntimeError` matching
-  `"is_isogram() requires a string, got int"`.
-- `is_isogram(true);` raises `CinderRuntimeError` matching
-  `"is_isogram() requires a string, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_blank`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `is_isogram` added near `is_blank`/`is_pangram`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: rest element in plain-assignment map-destructuring (`{a, ...rest} = expr;`)
+## 1. Language: rest element in plain-assignment map-destructuring (`{a, ...rest} = expr;`)
 
 Build: close the gap the map-destructuring rest element task (rest
 element for map-destructuring `let`/`for`/`fn` patterns, landed via PR
@@ -86,7 +22,7 @@ in this task", since that form parses via its own inlined speculative
 parser (`_try_map_destructure_assign_statement` in `cinder/parser.py`,
 search for it) rather than the shared `_destructure_map_pattern`
 helper that task changed. This is that deferred follow-up — the depth
-task after task 1's breadth work (`is_isogram`) per `PROJECT.md`'s
+task after the `is_isogram` breadth work per `PROJECT.md`'s
 breadth-vs-depth policy. Verified today: `let a = 1; let rest = 2;
 {a, ...rest} = {"a": 1, "b": 2};` raises `ParseError` `"expected ';'
 after expression, found ','"` — the pattern parse silently bails out
@@ -185,11 +121,11 @@ task.
 
 ---
 
-## 3. Standard library: `levenshtein_distance` — string edit distance
+## 2. Standard library: `levenshtein_distance` — string edit distance
 
 Build: add `levenshtein_distance(a, b)` to `cinder/builtins.py`,
 registered right after `_is_permutation` (search for `def
-_is_permutation`) — the breadth task after task 2's depth work
+_is_permutation`) — the breadth task after task 1's depth work
 (plain-assignment map-destructuring rest element) per `PROJECT.md`'s
 breadth-vs-depth policy. It sits next to `is_anagram`/`is_rotation`/
 `is_permutation` as one more two-string comparison, but unlike that
@@ -279,9 +215,9 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: chained comparison operators (`a < b < c`)
+## 3. Language: chained comparison operators (`a < b < c`)
 
-Build: the depth task after task 3's breadth work (`levenshtein_distance`)
+Build: the depth task after task 2's breadth work (`levenshtein_distance`)
 per `PROJECT.md`'s breadth-vs-depth policy. `cinder/parser.py`'s
 `_comparison()` (search for `def _comparison`) currently left-folds any
 run of comparison operators into nested `Binary` nodes: `1 < 2 < 3`
@@ -409,11 +345,11 @@ task.
 
 ---
 
-## 5. Standard library: `is_automorphic` — n² ends with n predicate
+## 4. Standard library: `is_automorphic` — n² ends with n predicate
 
 Build: add `is_automorphic(n)` to `cinder/builtins.py`, registered
 right after `is_deficient` (search for `def _is_deficient`) — the
-breadth task after task 4's depth work (chained comparison operators)
+breadth task after task 3's depth work (chained comparison operators)
 per `PROJECT.md`'s breadth-vs-depth policy. It joins the
 `is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
 `is_abundant`/`is_deficient` integer-property cluster as one more

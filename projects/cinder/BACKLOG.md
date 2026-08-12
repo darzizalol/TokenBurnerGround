@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `levenshtein_distance` — string edit distance
+## 1. Standard library: `levenshtein_distance` — string edit distance [claimed 2026-08-12T19:52:45Z]
 
 Build: add `levenshtein_distance(a, b)` to `cinder/builtins.py`,
 registered right after `_is_permutation` (search for `def

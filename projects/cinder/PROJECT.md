@@ -609,25 +609,26 @@ to turn one into the other, e.g. `levenshtein_distance("kitten",
 whole cluster, returning a number rather than a boolean — the
 project's first dynamic-programming builtin, and a third distinct
 implementation technique for the string-comparison family alongside
-`is_balanced`'s stack scan and `is_isogram`'s frequency-set check.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, chained comparison operators (`a < b < c`, evaluating as `a
-< b and b < c` with each operand read exactly once and the whole
-chain short-circuiting) — the depth task after `levenshtein_distance`'s
+`is_balanced`'s stack scan and `is_isogram`'s frequency-set check, and
+chained comparison operators (`a < b < c`, evaluating as `a < b and b
+< c` with each operand read exactly once and the whole chain
+short-circuiting) — the depth task after `levenshtein_distance`'s
 breadth work, closing a real gap rather than adding sugar for its own
-sake: today `_comparison()` left-folds any run of comparison operators
-into nested `Binary` nodes, so `1 < 2 < 3` evaluates as `(1 < 2) < 3` =
-`true < 3`, which *always* raises `CinderRuntimeError` since `_compare`
-never accepts a `bool` operand — every existing 2-or-more
-ordering-operator chain has exactly one possible outcome today (a
-guaranteed error), so this is strictly additive, not a behavior change
-any program could be relying on. Deliberately scoped to the four
-ordering operators (`<`/`<=`/`>`/`>=`) only; runs that mix in `==`/`!=`
-keep today's left-fold behavior completely unchanged (chained
-equality, e.g. `1 == 1 == 1`, is well-defined today, just not
-obviously useful, and touching it isn't needed to fix the
-ordering-operator gap). And as task 2, `is_automorphic(n)` — a breadth
-task after task 1's depth work, testing whether an integer's square
+sake: before this landed, `_comparison()` left-folded any run of
+comparison operators into nested `Binary` nodes, so `1 < 2 < 3`
+evaluated as `(1 < 2) < 3` = `true < 3`, which always raised
+`CinderRuntimeError` since `_compare` never accepts a `bool` operand
+— every existing 2-or-more ordering-operator chain had exactly one
+possible outcome (a guaranteed error), so this was strictly additive,
+not a behavior change any program could have been relying on. Scoped
+to the four ordering operators (`<`/`<=`/`>`/`>=`) only; runs that mix
+in `==`/`!=` kept the left-fold behavior completely unchanged (chained
+equality, e.g. `1 == 1 == 1`, was already well-defined, just not
+obviously useful, and didn't need touching to fix the
+ordering-operator gap), have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`:
+as task 1, `is_automorphic(n)` — a breadth task after the chained
+comparison operators' depth work, testing whether an integer's square
 ends with the integer itself in decimal (e.g. `5 * 5 = 25` ends in
 `5`; `76 * 76 = 5776` ends in `76`), joining the
 `is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
@@ -635,8 +636,8 @@ ends with the integer itself in decimal (e.g. `5 * 5 = 25` ends in
 digit-based classification, implemented as a plain string check
 (`str(n * n).endswith(str(n))`) rather than modular arithmetic, the
 same style `is_palindrome_number`/`is_armstrong` already use. And as
-task 3, slice assignment for lists (`list[start:end] = other_list;`)
-— the depth task after task 2's breadth work, closing a gap
+task 2, slice assignment for lists (`list[start:end] = other_list;`)
+— the depth task after task 1's breadth work, closing a gap
 `README.md`'s Data structures bullet already flags explicitly ("not
 assignable"): today a `SliceExpr` on the left of `=` falls through
 `_assignment()`'s target checks straight to `"invalid assignment
@@ -650,17 +651,17 @@ value must itself be a list (no implicit coercion), and Python's own
 `obj[start:end] = value` list-slice-assignment semantics handle the
 length change (grow or shrink) once the normalized bounds are computed
 the same way `_evaluate_slice`'s read-side logic already does. And as
-task 4, `hamming_distance(a, b)` — a breadth task after task 3's depth
+task 3, `hamming_distance(a, b)` — a breadth task after task 2's depth
 work, the equal-length-only counterpart to `levenshtein_distance`: the
 count of positions at which two strings of the *same* length differ,
 via a single position-wise scan rather than a DP table, raising a
 domain error on unequal-length input instead of truncating or padding.
 Joins `levenshtein_distance` as the second member of a string-distance
 pair sitting next to `is_anagram`/`is_rotation`/`is_permutation`. And
-as task 5, extended slice assignment for lists
-(`list[start:end:step] = other_list;`) — the depth task after task 4's
-breadth work and the direct follow-on to task 3, closing the gap task
-3 deliberately deferred: a stepped slice target parses (once task 3
+as task 4, extended slice assignment for lists
+(`list[start:end:step] = other_list;`) — the depth task after task 3's
+breadth work and the direct follow-on to task 2, closing the gap task
+2 deliberately deferred: a stepped slice target parses (once task 2
 lands) but is rejected before it ever reaches the interpreter. This
 task lets it through and delegates the exact-length enforcement to
 Python's own extended-slice-assignment machinery
@@ -668,8 +669,17 @@ Python's own extended-slice-assignment machinery
 replacement's length doesn't match the slice's length for any step
 other than `1`), converting its `ValueError` into a
 `CinderRuntimeError` rather than reimplementing the length check by
-hand. And only much later, a bytecode VM if performance ever actually
-matters.
+hand. And as task 5, `is_harshad(n)` — a breadth task after task 4's
+depth work, testing whether a positive integer is divisible by the sum
+of its own decimal digits (e.g. `18` is Harshad since `1 + 8 = 9` and
+`18 % 9 == 0`; also called a Niven number), one more member of the
+integer-property cluster sitting next to `is_perfect_square`/
+`is_armstrong`/`is_automorphic`, computed with the same plain
+`sum(int(d) for d in str(abs(n)))` digit walk `digit_sum` already does
+inline (not by calling the `digit_sum` builtin's own argument-list
+wrapper) rather than via any modular-arithmetic shortcut, since the
+whole point is checking one number against its own digit sum. And
+only much later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -694,14 +704,16 @@ breadth right after that depth work in turn, and that placed the
 plain-assignment map-destructuring rest element task as depth right
 after `is_isogram`'s breadth work in turn, that placed
 `levenshtein_distance` as breadth right after that depth work in
-turn, that placed task 1 (chained comparison operators) as depth right
-after `levenshtein_distance`'s breadth work in turn, that placed task 2
-(`is_automorphic`) as breadth right after task 1's depth work in turn,
-that placed task 3 (slice assignment for lists) as depth right
-after task 2's breadth work in turn, that placed task 4
-(`hamming_distance`) as breadth right after task 3's depth work in
-turn, and that placed task 5 (extended slice assignment for lists) as
-depth right after task 4's breadth work in turn.
+turn, that placed chained comparison operators as depth right
+after `levenshtein_distance`'s breadth work in turn, that placed task 1
+(`is_automorphic`) as breadth right after that depth work in turn,
+that placed task 2 (slice assignment for lists) as depth right
+after task 1's breadth work in turn, that placed task 3
+(`hamming_distance`) as breadth right after task 2's depth work in
+turn, that placed task 4 (extended slice assignment for lists) as
+depth right after task 3's breadth work in turn, and that placed
+task 5 (`is_harshad`) as breadth right after task 4's depth work in
+turn.
 
 ## History
 

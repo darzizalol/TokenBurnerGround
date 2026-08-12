@@ -451,6 +451,83 @@ task.
 
 ---
 
+## 5. Standard library: `is_harshad` — digit-sum divisibility predicate
+
+Build: add `is_harshad(n)` to `cinder/builtins.py`, registered right
+after `is_deficient`/`is_automorphic` (search for `def
+_is_deficient`, then `def _is_automorphic` once task 1 has landed —
+whichever is currently last in the integer-property cluster) — the
+breadth task after task 4's depth work (extended slice assignment) per
+`PROJECT.md`'s breadth-vs-depth policy. A positive integer `n` is a
+Harshad (or Niven) number when it is evenly divisible by the sum of
+its own decimal digits, e.g. `18` is Harshad since `1 + 8 = 9` and `18
+% 9 == 0`; `19` is not, since `1 + 9 = 10` and `19 % 10 != 0`. It joins
+the `is_perfect_square`/`is_armstrong`/`is_leap_year`/
+`is_perfect_number`/`is_abundant`/`is_deficient`/`is_automorphic`
+integer-property cluster as one more digit-based classification.
+
+Compute the digit sum inline with the same plain walk `digit_sum`
+already uses internally — `sum(int(digit) for digit in
+str(abs(value)))` (search for `def _digit_sum` to copy its exact
+expression) — rather than calling the `digit_sum` builtin's own
+`(arguments, line, column)` wrapper, since that wrapper expects a
+Cinder argument list, not a bare Python int:
+
+```python
+def _is_harshad(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_harshad", arguments, 1, line, column)
+    value = _require_int("is_harshad", arguments[0], line, column)
+    if value < 1:
+        return False
+    digit_total = sum(int(digit) for digit in str(value))
+    return value % digit_total == 0
+```
+
+Model the arity/type-checking exactly on `_is_automorphic`'s (or, if
+task 1 hasn't landed yet, `_is_deficient`'s) structure:
+`_require_arity("is_harshad", arguments, 1, line, column)`, then
+`value = _require_int("is_harshad", arguments[0], line, column)`
+(reusing the shared `_require_int` helper — do **not** hand-roll a
+separate `isinstance` check). The `value < 1` guard matches
+`is_abundant`/`is_deficient`'s own convention of answering `false` on
+zero and negative input rather than raising a domain error — it also
+sidesteps a `ZeroDivisionError` that a bare digit-sum-of-zero would
+otherwise cause, since `digit_total` is only ever `0` when `value` is
+`0`, which this guard already excludes before the division runs.
+
+Acceptance criteria:
+- `is_harshad(18);` is `true` — `1 + 8 = 9`, `18 % 9 == 0`.
+- `is_harshad(19);` is `false` — `1 + 9 = 10`, `19 % 10 != 0`.
+- `is_harshad(1);` is `true` — every single nonzero digit divides
+  itself.
+- `is_harshad(12);` is `true` — `1 + 2 = 3`, `12 % 3 == 0`.
+- `is_harshad(11);` is `false` — `1 + 1 = 2`, `11 % 2 != 0`.
+- `is_harshad(100);` is `true` — `1 + 0 + 0 = 1`, `100 % 1 == 0`
+  (every integer is divisible by `1`).
+- `is_harshad(0);` is `false` — excluded by the `value < 1` guard
+  rather than raising a division-by-zero error.
+- `is_harshad(-18);` is `false` — negative input answers `false`
+  without raising, matching `is_abundant`/`is_deficient`'s convention.
+- `is_harshad(5.0);` raises `CinderRuntimeError` matching
+  `"is_harshad() requires an int, got float"` — the same message shape
+  `_require_int` already produces for every sibling in this cluster.
+- `is_harshad(true);` raises `CinderRuntimeError` matching
+  `"is_harshad() requires an int, got bool"` — `_require_int` already
+  excludes `bool` from passing as an int.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near
+`is_deficient`/`is_automorphic`, see current line numbers — shift if
+earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
+merged, `README.md`'s Builtins bullet needs `is_harshad` added near
+`is_perfect_number`/`is_abundant`/`is_deficient`/`is_automorphic`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
+— leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

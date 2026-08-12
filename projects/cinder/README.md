@@ -299,15 +299,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `levenshtein_distance` to
-compute the classic string edit distance. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): chained comparison operators
-(`a < b < c`), `is_automorphic` to test whether an integer's square ends
-with the integer itself, slice assignment for lists
+Actively developed, nightly. Recently landed: chained comparison
+operators (`a < b < c`, `a < b` and `b < c` each read once,
+short-circuiting). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_automorphic` to test whether an integer's square ends with the
+integer itself, slice assignment for lists
 (`list[start:end] = other_list;`), `hamming_distance` as
-`levenshtein_distance`'s equal-length-only counterpart, and extended
+`levenshtein_distance`'s equal-length-only counterpart, extended
 slice assignment for lists with a step
-(`list[start:end:step] = other_list;`). The backlog mixes language
-depth with stdlib breadth over time rather than running either in one
-long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+(`list[start:end:step] = other_list;`), and `is_harshad` to test
+whether an integer is divisible by the sum of its own decimal digits.
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

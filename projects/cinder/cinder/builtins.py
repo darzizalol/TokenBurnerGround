@@ -1452,6 +1452,14 @@ def _is_deficient(arguments: list, line: int, column: int) -> object:
     return total < value
 
 
+def _is_automorphic(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_automorphic", arguments, 1, line, column)
+    value = _require_int("is_automorphic", arguments[0], line, column)
+    if value < 0:
+        return False
+    return str(value * value).endswith(str(value))
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -3298,6 +3306,7 @@ _BUILTINS = {
     "is_perfect_number": _is_perfect_number,
     "is_abundant": _is_abundant,
     "is_deficient": _is_deficient,
+    "is_automorphic": _is_automorphic,
     "divisors": _divisors,
     "min": _min,
     "max": _max,

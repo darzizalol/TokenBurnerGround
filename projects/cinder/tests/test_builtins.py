@@ -2974,6 +2974,51 @@ class TestIsDeficient(unittest.TestCase):
             run("is_deficient();")
 
 
+class TestIsAutomorphic(unittest.TestCase):
+    def test_is_automorphic_of_5(self):
+        self.assertEqual(run("let result = is_automorphic(5);").get("result"), True)
+
+    def test_is_automorphic_of_6(self):
+        self.assertEqual(run("let result = is_automorphic(6);").get("result"), True)
+
+    def test_is_automorphic_of_25(self):
+        self.assertEqual(run("let result = is_automorphic(25);").get("result"), True)
+
+    def test_is_automorphic_of_76(self):
+        self.assertEqual(run("let result = is_automorphic(76);").get("result"), True)
+
+    def test_is_automorphic_of_zero(self):
+        self.assertEqual(run("let result = is_automorphic(0);").get("result"), True)
+
+    def test_is_automorphic_of_one(self):
+        self.assertEqual(run("let result = is_automorphic(1);").get("result"), True)
+
+    def test_is_automorphic_of_7_is_false(self):
+        self.assertEqual(run("let result = is_automorphic(7);").get("result"), False)
+
+    def test_is_automorphic_of_10_is_false(self):
+        self.assertEqual(run("let result = is_automorphic(10);").get("result"), False)
+
+    def test_is_automorphic_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_automorphic(-5);").get("result"), False)
+
+    def test_is_automorphic_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_automorphic(5.0);")
+        self.assertIn("is_automorphic", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_automorphic_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_automorphic(true);")
+        self.assertIn("is_automorphic", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_automorphic_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_automorphic();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

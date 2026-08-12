@@ -598,9 +598,23 @@ to turn one into the other, e.g. `levenshtein_distance("kitten",
 whole cluster, returning a number rather than a boolean — the
 project's first dynamic-programming builtin, and a third distinct
 implementation technique for the string-comparison family alongside
-`is_balanced`'s stack scan and `is_isogram`'s frequency-set check.
-And only much later, a bytecode VM if performance ever actually
-matters.
+`is_balanced`'s stack scan and `is_isogram`'s frequency-set check. And
+as task 6, chained comparison operators (`a < b < c`, evaluating as `a
+< b and b < c` with each operand read exactly once and the whole
+chain short-circuiting) — the depth task after task 5's breadth work,
+closing a real gap rather than adding sugar for its own sake: today
+`_comparison()` left-folds any run of comparison operators into nested
+`Binary` nodes, so `1 < 2 < 3` evaluates as `(1 < 2) < 3` = `true < 3`,
+which *always* raises `CinderRuntimeError` since `_compare` never
+accepts a `bool` operand — every existing 2-or-more ordering-operator
+chain has exactly one possible outcome today (a guaranteed error), so
+this is strictly additive, not a behavior change any program could be
+relying on. Deliberately scoped to the four ordering operators
+(`<`/`<=`/`>`/`>=`) only; runs that mix in `==`/`!=` keep today's
+left-fold behavior completely unchanged (chained equality, e.g. `1 ==
+1 == 1`, is well-defined today, just not obviously useful, and
+touching it isn't needed to fix the ordering-operator gap). And only
+much later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -623,9 +637,10 @@ placed task 2 (map-destructuring rest element) as depth right after
 task 1's breadth work in turn, and that placed task 3 (`is_isogram`)
 as breadth right after task 2's depth work in turn, and that placed
 task 4 (plain-assignment map-destructuring rest element) as depth
-right after task 3's breadth work in turn, and that placed task 5
+right after task 3's breadth work in turn, that placed task 5
 (`levenshtein_distance`) as breadth right after task 4's depth work in
-turn.
+turn, and that placed task 6 (chained comparison operators) as depth
+right after task 5's breadth work in turn.
 
 ## History
 

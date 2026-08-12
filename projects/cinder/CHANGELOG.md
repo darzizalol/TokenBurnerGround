@@ -2136,3 +2136,32 @@ for vision/architecture.
   `QA: PASS` (2533 tests passing plus CLI smoke tests covering the
   motivating list/map comprehension cases, `if`-filter interaction,
   missing-key error, non-map-item error, and list-pattern regression).
+- **Standard library: `is_balanced` — balanced-brackets predicate** —
+  merged 2026-08-12T14:24:48Z via PR #228 (`feat/20260811-is-balanced`).
+  Added `is_balanced(s)` to `cinder/builtins.py`, registered right after
+  `is_pangram`: a left-to-right scan with a stack, pushing openers and
+  popping-and-comparing against a `{closer: opener}` map on each closer,
+  balanced iff the stack is empty at the end. The project's first
+  stack-based parsing predicate, distinct from the multiset/reversal
+  delegations the rest of the string-predicate cluster uses. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2544 tests
+  passing plus CLI smoke tests covering nesting, empty string, no-brackets,
+  interleaved/crossed pairs, unclosed opener, opener-less closer, and both
+  type/arity errors).
+- **Language: rest element in map-destructuring patterns
+  (`let {a, ...rest} = m;`)** — merged 2026-08-12T14:24:53Z via PR #229
+  (`feat/20260812-map-destructure-rest`). Closed the last gap between the
+  two destructuring pattern kinds: `_destructure_map_pattern` in
+  `cinder/parser.py` now returns `(names, rest)` instead of a bare list,
+  mirroring `_destructure_list_pattern`'s existing `...rest` handling, and
+  all five call sites (`let`, `for`, `fn` params, list/map comprehensions)
+  thread the new `rest` field into their AST nodes. `_bind_map_destructure`
+  in `cinder/interpreter.py` gained a `rest` parameter that builds a fresh
+  dict of every key not named in the pattern, bound through the same
+  `_bind_destructure_name` helper the list-rest case already shares.
+  Plain-assignment map-destructuring (`{a, b} = expr;`) deliberately does
+  not gain `...rest` support here — left for a future task. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2549 tests
+  passing plus CLI smoke tests covering all five call sites, empty rest,
+  fresh-per-iteration binding, rest-not-last, and the untouched
+  plain-assignment form).

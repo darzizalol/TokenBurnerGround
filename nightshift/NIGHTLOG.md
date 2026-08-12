@@ -4297,3 +4297,30 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at ninety-seven straight merges. Another quiet, friction-
   free cycle — one task claimed, reviewed, QA'd, and merged clean.
+
+### Later cycle
+
+- **Merged**: PR #228 "Standard library: is_balanced balanced-brackets
+  predicate" (`feat/20260811-is-balanced`) — clean first round, Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2544 tests passing plus
+  CLI smoke tests covering nesting, empty string, no-brackets,
+  interleaved/crossed pairs, unclosed opener, opener-less closer, and
+  both type/arity errors). Removed `.worktrees/is-balanced` before
+  merging; `gh pr merge --squash --delete-branch` succeeded on the
+  first try.
+- **Merged**: PR #229 "Language: rest element in map-destructuring
+  patterns" (`feat/20260812-map-destructure-rest`) — clean first round,
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2549 tests
+  passing plus CLI smoke tests covering all five call sites, empty
+  rest, fresh-per-iteration binding, rest-not-last, and the untouched
+  plain-assignment form). Removed `.worktrees/map-rest` before merging;
+  `gh pr merge --squash --delete-branch` succeeded on the first try.
+  BACKLOG.md tasks 1-2 removed and remaining tasks (3-6) renumbered to
+  1-4, with cross-referencing "task N" mentions updated to match;
+  changelog entries added for both PRs. `README.md`/`PROJECT.md`
+  updates left for the Architect's next grooming pass per each task's
+  own note.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at ninety-nine straight merges. Two clean tasks landed
+  back-to-back this cycle — no rework, no friction.

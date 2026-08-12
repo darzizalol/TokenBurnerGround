@@ -4379,3 +4379,18 @@ The morning paper: what shipped, what bounced, what's still open.
 - One-hundred-merge streak intact but paused: tonight's only task hit
   real rework instead of a clean pass. Nothing broken, just normal
   review friction doing its job.
+
+### Later cycle
+
+- **Merged**: PR #231 "Language: rest element in plain-assignment
+  map-destructuring" (`feat/20260812-map-destructure-assign-rest`,
+  squashed to `main` as `49bdcdf`). The Engineer's fix for the
+  swallowed-error bug (eager raise via a `_RestNotLast` marker
+  exception, mirroring the sibling destructuring helpers) got a clean
+  second round: `VERDICT: LGTM` and `QA: PASS` (2580 tests). Worktree
+  removed, branch deleted, task 1 dropped from `BACKLOG.md` and
+  archived in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak resumes at one hundred and one: the rework from the earlier
+  cycle paid off cleanly, no further friction on the second pass.

@@ -11,124 +11,14 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: rest element in plain-assignment map-destructuring (`{a, ...rest} = expr;`) [claimed 2026-08-12T19:30Z]
-
-Build: close the gap the map-destructuring rest element task (rest
-element for map-destructuring `let`/`for`/`fn` patterns, landed via PR
-#229) deliberately left open. That task's own scope note says it
-explicitly: "the plain-assignment map-destructuring form (`{a, b} =
-expr;`) is completely unaffected — it does not gain `...rest` support
-in this task", since that form parses via its own inlined speculative
-parser (`_try_map_destructure_assign_statement` in `cinder/parser.py`,
-search for it) rather than the shared `_destructure_map_pattern`
-helper that task changed. This is that deferred follow-up — the depth
-task after the `is_isogram` breadth work per `PROJECT.md`'s
-breadth-vs-depth policy. Verified today: `let a = 1; let rest = 2;
-{a, ...rest} = {"a": 1, "b": 2};` raises `ParseError` `"expected ';'
-after expression, found ','"` — the pattern parse silently bails out
-of `_try_map_destructure_assign_statement` on the unexpected `...`
-token and falls through to the `_block()` fallback, which is what
-actually raises that (unrelated-looking) error.
-
-In `cinder/parser.py`: `_try_map_destructure_assign_statement`
-currently parses its identifier list with a fixed loop — one
-`self._consume(TokenType.IDENTIFIER, ...)`, then `while
-self._check(TokenType.COMMA): ... consume another IDENTIFIER`. Change
-it to accept an optional trailing `...rest`, mirroring
-`_destructure_assign_pattern`'s existing `rest = None` /
-`Spread`-detection shape (search for it, just above this function) for
-the *behavior* to replicate, but built the same speculative,
-token-by-token way this function already works (not by parsing a
-`ListLiteral`, since there is no map-literal equivalent to inspect):
-track a local `rest = None`; where the function currently does its
-first unconditional `_consume(TokenType.IDENTIFIER, ...)`, first check
-`self._check(TokenType.DOT_DOT_DOT)` — if so, call the existing
-`_destructure_rest_name()` helper (the same one
-`_destructure_list_pattern`/`_destructure_assign_pattern` already use)
-to set `rest` and leave `names` empty, otherwise consume one
-identifier into `names` as today; in the `while
-self._check(TokenType.COMMA)` loop, on each iteration check
-`DOT_DOT_DOT` the same way — if `rest` is already set, raise
-`ParseError` (do **not** let it get caught by this function's own
-`except ParseError: self.pos = start; return None` — let it propagate
-as a real syntax error instead, since by this point the pattern shape
-is unambiguous and a bare fallback to `_block()` would just produce a
-confusing unrelated error) with message `f"rest element must be last
-in destructuring pattern, found {self._describe(token)}"`, the
-identical message text `_destructure_list_pattern` and
-`_destructure_map_pattern` both already raise for the equivalent case
-— reuse it verbatim; otherwise call `_destructure_rest_name()` again.
-To make the "let this one specific error propagate, but still catch
-everything else for the silent-fallback contract" split clean, raise a
-distinct marker or simply move just that one `ParseError` raise
-outside the existing `try`/`except ParseError` block's coverage (e.g.
-finish the whole speculative pattern parse — identifiers, commas,
-`}`, `=` — inside the existing `try`, but only *validate* "rest must
-be last" and raise that specific error after the `try` block succeeds,
-once the pattern shape is already confirmed well-formed enough to
-commit to). Thread `rest` into the returned node: `DestructureAssign(names,
-rest, value, eq_token.line, eq_token.column, is_map=True)` (currently
-hardcodes `None` in that second position).
-
-In `cinder/ast_nodes.py`: update `DestructureAssign`'s docstring — it
-currently says "with `is_map=True` the map-pattern form `{a, b} =
-expr;` (no rest element for that form — `rest` is always `None` when
-`is_map` is `True`)"; that parenthetical is no longer true once this
-task lands, so remove or rewrite it to describe the map form the same
-way the list form already is (both may now carry a non-`None` `rest`).
-
-No `cinder/interpreter.py` changes needed: the map-destructuring rest
-element task already threads `expr.rest` through
-`_evaluate_destructure_assign`'s `is_map` branch into
-`_bind_map_destructure` (verify this is still true when you pick up
-this task).
-
-Acceptance criteria:
-- `let a = 1; let rest = 2; {a, ...rest} = {"a": 1, "b": 2, "c": 3};
-  print(a); print(rest);` prints `1` then `{"b": 2, "c": 3}`.
-- `let a = 1; let b = 2; let rest = 3; {a, b, ...rest} = {"a": 1, "b":
-  2}; print(rest);` prints `{}` — no leftover keys still binds `rest`
-  to an empty map, not an error.
-- `let rest = 1; {...rest} = {"a": 1, "b": 2}; print(rest);` prints
-  `{"a": 1, "b": 2}` — a pattern with only a rest element collects
-  everything, mirroring `let {...rest} = m;` and `[...rest] = xs;`.
-- `let a = 1; let b = 2; {a, b} = {"a": 1, "b": 2, "c": 3}; print(a);`
-  (no rest element) still prints `1` with `"c"` silently ignored,
-  completely unchanged from today — the no-rest behavior must not
-  regress.
-- `let a = 1; let rest = 2; {a, ...rest, b} = {"a": 1};` (rest not
-  last) raises `ParseError` matching `"rest element must be last in
-  destructuring pattern, found 'b'"` — a real syntax error, not a
-  silent fallback into `_block()` producing an unrelated message.
-- `let rest = 1; {...rest} = 5;` (non-map value) still raises the
-  existing `CinderRuntimeError` matching `"cannot destructure int as a
-  map"` — the domain check runs before any rest logic, unchanged.
-- Existing plain-assignment map-destructuring without a rest element
-  (`{a, b} = m;`) and every other destructuring form/position
-  (`let`/`for`/`fn` map patterns with and without rest, list-pattern
-  assignment rest `[a, ...rest] = xs;`) are completely unaffected by
-  this change.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py`
-(`_try_map_destructure_assign_statement`), `cinder/ast_nodes.py`
-(`DestructureAssign` docstring), `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s destructuring
-bullets need the plain-assignment map-pattern rest element mentioned,
-and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `levenshtein_distance` — string edit distance
+## 1. Standard library: `levenshtein_distance` — string edit distance
 
 Build: add `levenshtein_distance(a, b)` to `cinder/builtins.py`,
 registered right after `_is_permutation` (search for `def
-_is_permutation`) — the breadth task after task 1's depth work
-(plain-assignment map-destructuring rest element) per `PROJECT.md`'s
-breadth-vs-depth policy. It sits next to `is_anagram`/`is_rotation`/
-`is_permutation` as one more two-string comparison, but unlike that
+_is_permutation`) — the breadth task after the just-landed
+plain-assignment map-destructuring rest element depth work (PR #231)
+per `PROJECT.md`'s breadth-vs-depth policy. It sits next to
+`is_anagram`/`is_rotation`/`is_permutation` as one more two-string comparison, but unlike that
 whole boolean-predicate cluster it returns a number: the minimum
 count of single-character insertions, deletions, and substitutions
 needed to turn `a` into `b` (the classic Levenshtein edit distance).
@@ -215,9 +105,9 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: chained comparison operators (`a < b < c`)
+## 2. Language: chained comparison operators (`a < b < c`)
 
-Build: the depth task after task 2's breadth work (`levenshtein_distance`)
+Build: the depth task after task 1's breadth work (`levenshtein_distance`)
 per `PROJECT.md`'s breadth-vs-depth policy. `cinder/parser.py`'s
 `_comparison()` (search for `def _comparison`) currently left-folds any
 run of comparison operators into nested `Binary` nodes: `1 < 2 < 3`
@@ -345,11 +235,11 @@ task.
 
 ---
 
-## 4. Standard library: `is_automorphic` — n² ends with n predicate
+## 3. Standard library: `is_automorphic` — n² ends with n predicate
 
 Build: add `is_automorphic(n)` to `cinder/builtins.py`, registered
 right after `is_deficient` (search for `def _is_deficient`) — the
-breadth task after task 3's depth work (chained comparison operators)
+breadth task after task 2's depth work (chained comparison operators)
 per `PROJECT.md`'s breadth-vs-depth policy. It joins the
 `is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
 `is_abundant`/`is_deficient` integer-property cluster as one more
@@ -409,9 +299,9 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: slice assignment for lists (`list[start:end] = other_list;`)
+## 4. Language: slice assignment for lists (`list[start:end] = other_list;`)
 
-Build: the depth task after task 4's breadth work (`is_automorphic`) per
+Build: the depth task after task 3's breadth work (`is_automorphic`) per
 `PROJECT.md`'s breadth-vs-depth policy. `README.md`'s Data structures
 bullet already flags the gap explicitly: slicing
 (`list[start:end]`/`string[start:end]`, with an optional third `:step`)
@@ -555,13 +445,13 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `hamming_distance` — equal-length string edit distance
+## 5. Standard library: `hamming_distance` — equal-length string edit distance
 
 Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
 right after `levenshtein_distance` (search for `def
-_levenshtein_distance` — task 2 above; if it hasn't landed yet when this
+_levenshtein_distance` — task 1 above; if it hasn't landed yet when this
 task is picked up, register after `_is_permutation` instead, in the same
-spot task 2 itself targeted) — the breadth task after task 5's depth work
+spot task 1 itself targeted) — the breadth task after task 4's depth work
 (slice assignment for lists) per `PROJECT.md`'s breadth-vs-depth policy.
 It joins `levenshtein_distance` as the second member of a
 "string-distance" pair sitting next to `is_anagram`/`is_rotation`/

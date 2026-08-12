@@ -2178,3 +2178,22 @@ for vision/architecture.
   `VERDICT: LGTM` and QA gave `QA: PASS` (2572 tests passing plus CLI
   smoke tests covering case-insensitive collisions, punctuation/digits
   ignored, empty string, and both type/arity errors).
+- **Language: rest element in plain-assignment map-destructuring
+  (`{a, ...rest} = expr;`)** — merged 2026-08-12T19:46:40Z via PR #231
+  (`feat/20260812-map-destructure-assign-rest`). Closed the gap PR #229
+  deliberately left open: `_try_map_destructure_assign_statement` in
+  `cinder/parser.py` now accepts an optional trailing `...rest`, threading
+  it into `DestructureAssign.rest` the same way the `let`/`for`/`fn` map
+  patterns already do; no interpreter changes needed since
+  `_evaluate_destructure_assign` already threaded `expr.rest` through.
+  First round: Reviewer found the deferred rest-violation raise could be
+  swallowed by the function's own blanket `except ParseError: return None`
+  when a non-identifier token followed a misplaced rest (e.g.
+  `{a, ...rest, 5} = {};`), reproducing the exact confusing `_block()`
+  fallback error the PR claimed to eliminate — `VERDICT: CHANGES
+  REQUESTED`. Fixed by switching to an eager raise via a `_RestNotLast`
+  marker exception (not a `ParseError` subclass, so it can't be caught by
+  that same handler), mirroring the sibling `_destructure_map_pattern`/
+  `_destructure_list_pattern` eager-raise approach. Second round: `VERDICT:
+  LGTM` and `QA: PASS` (2580 tests passing plus CLI smoke tests covering
+  the fixed swallowed-error case and adjacent valid/invalid shapes).

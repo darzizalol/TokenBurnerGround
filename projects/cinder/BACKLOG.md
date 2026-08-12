@@ -446,6 +446,142 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`)
+
+Build: the depth task after task 4's breadth work (`hamming_distance`)
+per `PROJECT.md`'s breadth-vs-depth policy, and the direct follow-on to
+task 3 (slice assignment): task 3 deliberately scopes `SliceAssign` to
+the step-less form only, rejecting a stepped target
+(`list[a:b:c] = value;`) with `ParseError` `"invalid assignment
+target"` and explicitly deferring the stepped case to "a future task"
+since it needs an exact length match rather than task 3's
+grow-or-shrink behavior. This task closes that gap. (Once task 3 has
+landed, verify the current behavior still matches this description
+before starting — `python3 -m cinder.cli eval 'let xs = [1, 2, 3];
+xs[0:3:2] = [9];'` should raise that `ParseError`.)
+
+In `cinder/ast_nodes.py`: `SliceAssign` (added by task 3, right after
+`SliceExpr`) gains a fourth field, `step: "Expr | None"`, inserted
+between `end` and `value` to mirror `SliceExpr`'s own field order
+(`obj`, `start`, `end`, `step`).
+
+In `cinder/parser.py`'s `_assignment()`: replace task 3's
+step-rejection branch —
+```python
+if isinstance(expr, SliceExpr):
+    if expr.step is not None:
+        raise ParseError(
+            "invalid assignment target", eq_token.line, eq_token.column
+        )
+    return SliceAssign(
+        expr.obj, expr.start, expr.end, value, eq_token.line, eq_token.column
+    )
+```
+— with one that threads `expr.step` through instead of rejecting it:
+```python
+if isinstance(expr, SliceExpr):
+    return SliceAssign(
+        expr.obj, expr.start, expr.end, expr.step, value,
+        eq_token.line, eq_token.column,
+    )
+```
+Every other assignment form stays untouched, same as task 3 left them
+— `xs[0:3:2] += y;`, `xs[0:3:2] ??= y;`, and `xs[0:3:2]++;` still raise
+`"invalid assignment target"` (their branches only match
+`Identifier`/`Index`, never `SliceExpr`, stepped or not).
+
+In `cinder/interpreter.py`, extend `_evaluate_slice_assign` (added by
+task 3) to evaluate and validate `step` the same way
+`_evaluate_slice`'s read-side logic already does (search for `def
+_evaluate_slice`: type-check via `isinstance(step, int) and not
+isinstance(step, bool)`, then reject `step == 0`), evaluated in source
+order right after `end` and before `value`. Compute
+`norm_start, norm_end, norm_step = slice(start, end,
+step).indices(len(obj))` (same call task 3 already makes, now passing
+the real `step` instead of a hardcoded `None`). Then, instead of task
+3's plain `obj[norm_start:norm_end] = value`, assign through the
+3-argument slice and let Python's own extended-slice-assignment
+machinery enforce the length match, converting its `ValueError` into a
+`CinderRuntimeError`:
+```python
+try:
+    obj[norm_start:norm_end:norm_step] = value
+except ValueError:
+    target_len = len(range(norm_start, norm_end, norm_step))
+    raise CinderRuntimeError(
+        f"attempt to assign sequence of size {len(value)} to "
+        f"extended slice of size {target_len}",
+        expr.line, expr.column,
+    ) from None
+return value
+```
+No manual "is this an extended slice" branch is needed — Python's
+`list.__setitem__` only enforces the exact-length rule when the
+effective step is not `1`, so a step-less call (`step=None`) or an
+explicit `step=1` both keep task 3's existing grow/shrink behavior
+automatically, and only `abs(norm_step) != 1` cases (or any step that
+normalizes away from a contiguous run) raise. The rest of
+`_evaluate_slice_assign` (the string-immutability check, the
+not-a-list check, the bound type checks, the value-must-be-a-list
+check) stays exactly as task 3 wrote it.
+
+Acceptance criteria:
+- `let xs = [1, 2, 3, 4, 5, 6]; xs[0:6:2] = [9, 9, 9]; print(xs);`
+  prints `[9, 2, 9, 4, 9, 6]` — every other element (indices 0, 2, 4)
+  replaced in order.
+- `let xs = [1, 2, 3]; xs[::-1] = [7, 8, 9]; print(xs);` prints
+  `[9, 8, 7]` — a full-list reverse-order target assigns `7` to index
+  2, `8` to index 1, `9` to index 0.
+- `let xs = [1, 2, 3, 4]; xs[0:4:2] = [1];` raises `CinderRuntimeError`
+  matching `"attempt to assign sequence of size 1 to extended slice of
+  size 2"` — a length mismatch on a real extended slice is a domain
+  error, not silent truncation/padding or a grow/shrink.
+- `let xs = [1, 2, 3]; xs[0:2:1] = [9, 9, 9, 9]; print(xs);` prints
+  `[9, 9, 9, 9, 3]` — an *explicit* `step=1` still behaves like the
+  step-less form (grows the list), since step `1` is never "extended"
+  regardless of how it was spelled.
+- Task 3's own step-less acceptance criteria (growing, shrinking,
+  omitted bounds, out-of-range clamping, negative bounds, the
+  assignment-expression-evaluates-to-the-value convention, the
+  non-list-value error, the string-immutability error) all still pass
+  unchanged — this task only adds behavior for a non-1 step, it does
+  not change the step-less path.
+- `let xs = [1, 2, 3, 4, 5]; xs[0:5:2] = "ab";` raises
+  `CinderRuntimeError` matching `"slice assignment requires a list
+  value, got str"` — the value-must-be-a-list check still fires before
+  any length comparison, even though a 2-character string might
+  otherwise "fit" the 3-element target by accident of length.
+- `let xs = [1, 2, 3]; xs[0:3:"a"] = [1, 2, 3];` raises
+  `CinderRuntimeError` matching `"slice step must be an int, got
+  str"`.
+- `let xs = [1, 2, 3]; xs[0:3:0] = [1, 2, 3];` raises
+  `CinderRuntimeError` matching `"slice step must not be zero"`.
+- `let s = "abcdef"; s[0:6:2] = "xyz";` raises `CinderRuntimeError`
+  matching `"strings are immutable and do not support item
+  assignment"` — same message as the step-less string case; a stepped
+  slice target on a string is no longer a `ParseError` after this task
+  (it's now a legal *parse*, since lists accept it), but it's still
+  rejected at runtime once the target's actual type is known.
+- `let xs = [1, 2, 3]; xs[0:3:2] += [9];` and `xs[0:3:2]++;` both still
+  raise `ParseError` matching `"invalid assignment target"` —
+  unaffected regression checks, same as task 3.
+- Read-side stepped slicing (`xs[0:6:2];` as an expression, not an
+  assignment target) is completely unaffected — no `SliceAssign` node
+  is ever built for it, same `SliceExpr` AST and behavior as before
+  this task.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`SliceAssign` gains `step`),
+`cinder/parser.py` (`_assignment`'s `SliceExpr` branch),
+`cinder/interpreter.py` (`_evaluate_slice_assign`), `tests/test_parser.py`,
+`tests/test_interpreter.py`. Once merged, `README.md`'s Data structures
+bullet needs its slice-assignment note extended to mention the stepped
+form, and `PROJECT.md`'s roadmap paragraph needs it moved from backlog
+to landed — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

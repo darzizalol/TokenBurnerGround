@@ -217,6 +217,8 @@ while (i < 10) {
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
   `is_balanced` to test whether a string's `()`/`[]`/`{}` brackets are all properly matched and nested,
   `is_isogram` to test whether a string has no letter repeated (case-insensitive, non-letters ignored),
+  `levenshtein_distance` to compute the classic string edit distance (minimum single-character
+  insertions/deletions/substitutions to turn one string into another),
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -297,15 +299,15 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a rest element for the
-last remaining destructuring gap, the plain-assignment map-destructuring
-form (`{a, ...rest} = expr;`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `levenshtein_distance` to compute the
-classic string edit distance, chained comparison operators
+Actively developed, nightly. Recently landed: `levenshtein_distance` to
+compute the classic string edit distance. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): chained comparison operators
 (`a < b < c`), `is_automorphic` to test whether an integer's square ends
 with the integer itself, slice assignment for lists
-(`list[start:end] = other_list;`), and `hamming_distance` as
-`levenshtein_distance`'s equal-length-only counterpart. The backlog
-mixes language depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
+(`list[start:end] = other_list;`), `hamming_distance` as
+`levenshtein_distance`'s equal-length-only counterpart, and extended
+slice assignment for lists with a step
+(`list[start:end:step] = other_list;`). The backlog mixes language
+depth with stdlib breadth over time rather than running either in one
+long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

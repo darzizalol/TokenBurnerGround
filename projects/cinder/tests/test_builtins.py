@@ -6611,6 +6611,80 @@ class TestIsPermutation(unittest.TestCase):
             run("is_permutation([1], [2], [3]);")
 
 
+class TestLevenshteinDistance(unittest.TestCase):
+    def test_levenshtein_distance_kitten_sitting(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("kitten", "sitting");').get(
+                "result"
+            ),
+            3,
+        )
+
+    def test_levenshtein_distance_both_empty(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("", "");').get("result"), 0
+        )
+
+    def test_levenshtein_distance_empty_second(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("abc", "");').get("result"), 3
+        )
+
+    def test_levenshtein_distance_empty_first(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("", "abc");').get("result"), 3
+        )
+
+    def test_levenshtein_distance_identical_strings(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("abc", "abc");').get("result"), 0
+        )
+
+    def test_levenshtein_distance_single_substitution(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("a", "b");').get("result"), 1
+        )
+
+    def test_levenshtein_distance_flaw_lawn(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("flaw", "lawn");').get("result"), 2
+        )
+
+    def test_levenshtein_distance_middle_substitution(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("abc", "abx");').get("result"), 1
+        )
+
+    def test_levenshtein_distance_symmetric(self):
+        self.assertEqual(
+            run('let result = levenshtein_distance("abc", "xyz");').get("result"),
+            run('let result = levenshtein_distance("xyz", "abc");').get("result"),
+        )
+        self.assertEqual(
+            run('let result = levenshtein_distance("abc", "xyz");').get("result"), 3
+        )
+
+    def test_levenshtein_distance_of_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('levenshtein_distance(5, "a");')
+        self.assertIn("levenshtein_distance", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_levenshtein_distance_of_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('levenshtein_distance("a", true);')
+        self.assertIn("levenshtein_distance", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_levenshtein_distance_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('levenshtein_distance("a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('levenshtein_distance("a", "b", "c");')
+
+
 class TestIsPangram(unittest.TestCase):
     def test_is_pangram_canonical_true(self):
         self.assertIs(

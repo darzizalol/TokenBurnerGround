@@ -216,6 +216,7 @@ while (i < 10) {
   `is_palindrome_list` to test whether a list reads the same forwards and backwards,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
   `is_balanced` to test whether a string's `()`/`[]`/`{}` brackets are all properly matched and nested,
+  `is_isogram` to test whether a string has no letter repeated (case-insensitive, non-letters ignored),
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -296,18 +297,14 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_balanced` to test
-whether a string's brackets are properly matched and nested, and a rest
-element for map-destructuring patterns (`let {a, ...rest} = m;`,
-`for {a, ...rest} in list_of_maps { ... }`, `fn f({a, ...rest}) { ... }`,
-and the comprehension loop-variable forms), mirroring the rest element
-list patterns already have. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_isogram` to test whether a string has
-no repeated letters, the same rest element for the one remaining gap —
-the plain-assignment map-destructuring form (`{a, ...rest} = expr;`) —
-`levenshtein_distance` to compute the classic string edit distance,
-chained comparison operators (`a < b < c`), and `is_automorphic` to
-test whether an integer's square ends with the integer itself. The
-backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_isogram` to test
+whether a string has no repeated letters (case-insensitive, non-letters
+ignored). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a rest
+element for the one remaining destructuring gap — the plain-assignment
+map-destructuring form (`{a, ...rest} = expr;`) — `levenshtein_distance`
+to compute the classic string edit distance, chained comparison
+operators (`a < b < c`), `is_automorphic` to test whether an integer's
+square ends with the integer itself, and slice assignment for lists
+(`list[start:end] = other_list;`). The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

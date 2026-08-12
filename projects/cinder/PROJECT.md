@@ -572,27 +572,28 @@ step `_bind_list_destructure` already had. Deliberately scoped to
 exclude the plain-assignment map-destructuring form (`{a, b} = expr;`)
 since that form parses via its own inlined speculative parser rather
 than the shared helper this task changed — that form's own rest
-element is separate future work, queued below — have since landed too.
+element is separate future work, queued below — have since landed too,
+as has `is_isogram(s)` — a breadth task testing whether a string has no
+letter repeated (case-insensitive, non-letter characters ignored
+entirely so they neither collide nor prevent one), sitting next to
+`is_blank`/`is_pangram` as a single-pass character-frequency check
+rather than another multiset-comparison delegation — like `is_balanced`,
+deliberately picked to keep diversifying the string-predicate cluster's
+implementation techniques instead of stacking more `is_anagram`-shaped
+siblings.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `is_isogram(s)` — a breadth task testing whether a
-string has no letter repeated (case-insensitive, non-letter characters
-ignored entirely so they neither collide nor prevent one), sitting
-next to `is_blank`/`is_pangram` as a single-pass character-frequency
-check rather than another multiset-comparison delegation — like
-`is_balanced`, deliberately picked to keep diversifying the
-string-predicate cluster's implementation techniques instead of
-stacking more `is_anagram`-shaped siblings. And as task 2, a rest
-element for the plain-assignment map-destructuring form (`{a, ...rest}
-= expr;`) — the depth task after task 1's breadth work, closing the
-one gap the earlier map-destructuring-rest-element task deliberately
-left open: `let`/`for`/`fn`/comprehension map patterns already have a
-rest element, but the plain-assignment form (`{a, b} = expr;`) parses
-via its own inlined speculative parser
+as task 1, a rest element for the plain-assignment map-destructuring
+form (`{a, ...rest} = expr;`) — the depth task after `is_isogram`'s
+breadth work, closing the one gap the earlier
+map-destructuring-rest-element task deliberately left open:
+`let`/`for`/`fn`/comprehension map patterns already have a rest
+element, but the plain-assignment form (`{a, b} = expr;`) parses via
+its own inlined speculative parser
 (`_try_map_destructure_assign_statement`) rather than the shared
 `_destructure_map_pattern` helper that task changed, so it needs its
 own (smaller) grammar change to accept the same trailing `...rest`.
-And as task 3, `levenshtein_distance(a, b)` — a breadth task after
-task 2's depth work, computing the classic edit distance between two
+And as task 2, `levenshtein_distance(a, b)` — a breadth task after
+task 1's depth work, computing the classic edit distance between two
 strings (minimum single-character insertions/deletions/substitutions
 to turn one into the other, e.g. `levenshtein_distance("kitten",
 "sitting")` is `3`), sitting next to `is_anagram`/`is_rotation`/
@@ -601,9 +602,9 @@ whole cluster, returning a number rather than a boolean — the
 project's first dynamic-programming builtin, and a third distinct
 implementation technique for the string-comparison family alongside
 `is_balanced`'s stack scan and `is_isogram`'s frequency-set check. And
-as task 4, chained comparison operators (`a < b < c`, evaluating as `a
+as task 3, chained comparison operators (`a < b < c`, evaluating as `a
 < b and b < c` with each operand read exactly once and the whole
-chain short-circuiting) — the depth task after task 3's breadth work,
+chain short-circuiting) — the depth task after task 2's breadth work,
 closing a real gap rather than adding sugar for its own sake: today
 `_comparison()` left-folds any run of comparison operators into nested
 `Binary` nodes, so `1 < 2 < 3` evaluates as `(1 < 2) < 3` = `true < 3`,
@@ -616,7 +617,7 @@ relying on. Deliberately scoped to the four ordering operators
 left-fold behavior completely unchanged (chained equality, e.g. `1 ==
 1 == 1`, is well-defined today, just not obviously useful, and
 touching it isn't needed to fix the ordering-operator gap). And as
-task 5, `is_automorphic(n)` — a breadth task after task 4's depth
+task 4, `is_automorphic(n)` — a breadth task after task 3's depth
 work, testing whether an integer's square ends with the integer itself
 in decimal (e.g. `5 * 5 = 25` ends in `5`; `76 * 76 = 5776` ends in
 `76`), joining the `is_perfect_square`/`is_armstrong`/`is_leap_year`/
@@ -624,7 +625,22 @@ in decimal (e.g. `5 * 5 = 25` ends in `5`; `76 * 76 = 5776` ends in
 cluster as one more digit-based classification, implemented as a
 plain string check (`str(n * n).endswith(str(n))`) rather than modular
 arithmetic, the same style `is_palindrome_number`/`is_armstrong`
-already use. And only much later, a bytecode VM if performance ever
+already use. And as task 5, slice assignment for lists
+(`list[start:end] = other_list;`) — the depth task after task 4's
+breadth work, closing a gap `README.md`'s Data structures bullet
+already flags explicitly ("not assignable"): today a `SliceExpr` on
+the left of `=` falls through `_assignment()`'s target checks straight
+to `"invalid assignment target"`. Scoped to the step-less form only —
+a stepped target (`list[a:b:c] = value;`) stays a parse error, since
+Python-style extended-slice assignment requires an exact length match
+between target and replacement, a materially different contract than
+the simple form; string targets stay immutable, raising the same
+message plain single-index string assignment already does. The
+replacement value must itself be a list (no implicit coercion), and
+Python's own `obj[start:end] = value` list-slice-assignment semantics
+handle the length change (grow or shrink) once the normalized bounds
+are computed the same way `_evaluate_slice`'s read-side logic already
+does. And only much later, a bytecode VM if performance ever
 actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
@@ -645,14 +661,16 @@ that placed `is_balanced` as breadth right after that depth
 work in turn, the same one-breadth-then-depth placement the safe
 navigation bracket indexing task got after `is_coprime`, and that
 placed the map-destructuring rest element task as depth right after
-`is_balanced`'s breadth work in turn, and that placed task 1
-(`is_isogram`) as breadth right after that depth work in turn, and
-that placed task 2 (plain-assignment map-destructuring rest element)
-as depth right after task 1's breadth work in turn, that placed task 3
-(`levenshtein_distance`) as breadth right after task 2's depth work in
-turn, that placed task 4 (chained comparison operators) as depth right
-after task 3's breadth work in turn, and that placed task 5
-(`is_automorphic`) as breadth right after task 4's depth work in turn.
+`is_balanced`'s breadth work in turn, and that placed `is_isogram` as
+breadth right after that depth work in turn, and that placed task 1
+(plain-assignment map-destructuring rest element) as depth right after
+`is_isogram`'s breadth work in turn, that placed task 2
+(`levenshtein_distance`) as breadth right after task 1's depth work in
+turn, that placed task 3 (chained comparison operators) as depth right
+after task 2's breadth work in turn, that placed task 4
+(`is_automorphic`) as breadth right after task 3's depth work in turn,
+and that placed task 5 (slice assignment for lists) as depth right
+after task 4's breadth work in turn.
 
 ## History
 

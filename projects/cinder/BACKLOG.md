@@ -409,6 +409,152 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: slice assignment for lists (`list[start:end] = other_list;`)
+
+Build: the depth task after task 4's breadth work (`is_automorphic`) per
+`PROJECT.md`'s breadth-vs-depth policy. `README.md`'s Data structures
+bullet already flags the gap explicitly: slicing
+(`list[start:end]`/`string[start:end]`, with an optional third `:step`)
+is documented as "not assignable" today. Verify that's still true:
+`python3 -m cinder.cli eval 'let xs = [1, 2, 3]; xs[0:1] = [9]; print(xs);'`
+raises `ParseError` `"invalid assignment target"` — `_assignment()` in
+`cinder/parser.py` (search for `def _assignment`) only recognizes
+`Identifier`, `Index`, and `ListLiteral` (for plain-assignment
+destructuring) on the left of `=`; a `SliceExpr` (the node
+`self._ternary()` already produces for `xs[0:1]`, search for `class
+SliceExpr` in `cinder/ast_nodes.py`) falls through to the final `raise
+ParseError("invalid assignment target", ...)`.
+
+Scope this to the step-less form only — `list[start:end] = value;` — and
+reject a stepped slice target (`list[a:b:c] = value;`) as a parse error,
+explicitly deferring extended-slice assignment (which in Python requires
+the replacement to match the target's length exactly, a materially
+different and more error-prone contract than the simple form) to a
+future task. String targets stay immutable — `s[0:1] = "x";` must raise
+the same `"strings are immutable and do not support item assignment"`
+error plain single-index assignment on a string already raises (search
+for that exact message in `cinder/interpreter.py`'s `_index_set`), not a
+new/different message.
+
+In `cinder/ast_nodes.py`: add a new frozen dataclass `SliceAssign` right
+after `SliceExpr` (search for `class SliceExpr`, just before `Ternary`):
+`obj: "Expr"`, `start: "Expr | None"`, `end: "Expr | None"`, `value:
+"Expr"`, `line: int`, `column: int` — deliberately no `step` field, since
+stepped targets are rejected at parse time and never reach this node.
+
+In `cinder/parser.py`: in `_assignment()` (search for `def _assignment`),
+right after the existing `if isinstance(expr, Index): return
+IndexAssign(...)` branch and before the `ListLiteral` branch, add:
+```python
+if isinstance(expr, SliceExpr):
+    if expr.step is not None:
+        raise ParseError(
+            "invalid assignment target", eq_token.line, eq_token.column
+        )
+    return SliceAssign(
+        expr.obj, expr.start, expr.end, value, eq_token.line, eq_token.column
+    )
+```
+Add `SliceAssign` to the `from cinder.ast_nodes import (...)` block
+(alphabetical; `SliceExpr` is already imported there). Leave every other
+assignment form (`??=`, compound `+=`/etc., `++`/`--`) untouched — none
+of their branches match `SliceExpr` today (only `Identifier`/`Index`),
+so `xs[1:3] += y;`, `xs[1:3] ??= y;`, and `xs[1:3]++;` keep raising
+`"invalid assignment target"` exactly as before this task; extending
+those to slice targets is out of scope.
+
+In `cinder/interpreter.py`: add a dispatch arm for `SliceAssign` in
+`evaluate()` next to the existing `IndexAssign` arm, calling a new
+`_evaluate_slice_assign(expr, env)`. Implement it evaluating in source
+order — `obj`, then `start` (if present), then `end` (if present), then
+`value` — each exactly once:
+```python
+def _evaluate_slice_assign(self, expr: SliceAssign, env: Environment) -> object:
+    obj = self.evaluate(expr.obj, env)
+    start = self.evaluate(expr.start, env) if expr.start is not None else None
+    end = self.evaluate(expr.end, env) if expr.end is not None else None
+    value = self.evaluate(expr.value, env)
+    if isinstance(obj, str):
+        raise CinderRuntimeError(
+            "strings are immutable and do not support item assignment",
+            expr.line, expr.column,
+        )
+    if not isinstance(obj, list):
+        raise CinderRuntimeError(
+            f"{type_name(obj)} is not sliceable", expr.line, expr.column
+        )
+    for bound in (start, end):
+        if bound is not None and (
+            not isinstance(bound, int) or isinstance(bound, bool)
+        ):
+            raise CinderRuntimeError(
+                f"slice bound must be an int, got {type_name(bound)}",
+                expr.line, expr.column,
+            )
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"slice assignment requires a list value, got {type_name(value)}",
+            expr.line, expr.column,
+        )
+    norm_start, norm_end, _ = slice(start, end, None).indices(len(obj))
+    obj[norm_start:norm_end] = value
+    return value
+```
+The bound-type-check loop and `slice(...).indices(len(obj))` normalization
+mirror `_evaluate_slice`'s existing read-side logic verbatim (search for
+`def _evaluate_slice`) — reuse that shape, don't invent a different
+normalization. `obj[norm_start:norm_end] = value` is a plain Python list
+slice assignment, which already grows/shrinks `obj` in place when
+`value`'s length differs from the replaced range — no manual splicing
+needed. Add `SliceAssign` to `interpreter.py`'s own `from
+cinder.ast_nodes import (...)` block (alphabetical).
+
+Acceptance criteria:
+- `let xs = [1, 2, 3, 4, 5]; xs[1:3] = [9, 9, 9]; print(xs);` prints
+  `[1, 9, 9, 9, 4, 5]` — replacement longer than the replaced range
+  grows the list.
+- `let xs = [1, 2, 3, 4, 5]; xs[1:3] = []; print(xs);` prints
+  `[1, 4, 5]` — an empty replacement deletes the range.
+- `let xs = [1, 2, 3]; xs[:] = [9]; print(xs);` prints `[9]` — omitted
+  start/end (same as read-side slicing) spans the whole list.
+- `let xs = [1, 2, 3]; xs[5:10] = [9]; print(xs);` prints `[1, 2, 3, 9]`
+  — out-of-range bounds clamp exactly like read-side slicing, appending
+  at the end rather than raising.
+- `let xs = [1, 2, 3, 4, 5]; xs[-2:] = [9]; print(xs);` prints
+  `[1, 2, 3, 9]` — negative bounds normalize the same way read-side
+  slicing already does.
+- The assignment expression evaluates to the assigned value, matching
+  `xs[i] = v`'s existing return-the-value convention: `let xs = [1, 2,
+  3]; let result = (xs[0:1] = [9, 9]); print(result);` prints `[9, 9]`.
+- `let xs = [1, 2, 3]; xs[0:1] = 5;` raises `CinderRuntimeError` matching
+  `"slice assignment requires a list value, got int"` — no implicit
+  coercion of a non-list value, even an iterable-looking one like a
+  string.
+- `let s = "abc"; s[0:1] = "x";` raises `CinderRuntimeError` matching
+  `"strings are immutable and do not support item assignment"` — the
+  same message plain single-index string assignment already raises.
+- `let xs = [1, 2, 3]; xs[0:1:2] = [9];` raises `ParseError` matching
+  `"invalid assignment target"` — a stepped slice target is rejected at
+  parse time, never reaching the interpreter.
+- `let xs = [1, 2, 3]; xs[0:1] += [9];` and `xs[0:1]++;` both still
+  raise `ParseError` matching `"invalid assignment target"` — completely
+  unaffected regression checks, same as before this task.
+- Read-side slicing (`xs[0:1];` as an expression, not an assignment
+  target) is completely unaffected — no `SliceAssign` node is ever built
+  for it, same `SliceExpr` AST and behavior as before this task.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (new `SliceAssign` node),
+`cinder/parser.py` (`_assignment` and its import block),
+`cinder/interpreter.py` (`evaluate`, new `_evaluate_slice_assign`, and
+its import block), `tests/test_parser.py`, `tests/test_interpreter.py`.
+Once merged, `README.md`'s Data structures bullet needs its "not
+assignable" note updated to describe the step-less assignable form, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

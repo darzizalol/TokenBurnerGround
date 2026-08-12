@@ -53,8 +53,8 @@ while (i < 10) {
   bindings — list (`[a, b] = expr;`, same flat positional binding and
   optional trailing rest element as the `let` form, e.g. the swap idiom
   `[a, b] = [b, a];`) and map (`{a, b} = expr;`, same key-lookup binding
-  as the `let` form, but no rest element yet — that's still backlog for
-  this one form)
+  as the `let` form, including the same optional trailing rest element
+  `{a, ...rest} = expr;`)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
@@ -297,14 +297,15 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_isogram` to test
-whether a string has no repeated letters (case-insensitive, non-letters
-ignored). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a rest
-element for the one remaining destructuring gap — the plain-assignment
-map-destructuring form (`{a, ...rest} = expr;`) — `levenshtein_distance`
-to compute the classic string edit distance, chained comparison
-operators (`a < b < c`), `is_automorphic` to test whether an integer's
-square ends with the integer itself, and slice assignment for lists
-(`list[start:end] = other_list;`). The backlog mixes language depth
-with stdlib breadth over time rather than running either in one long
-block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: a rest element for the
+last remaining destructuring gap, the plain-assignment map-destructuring
+form (`{a, ...rest} = expr;`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `levenshtein_distance` to compute the
+classic string edit distance, chained comparison operators
+(`a < b < c`), `is_automorphic` to test whether an integer's square ends
+with the integer itself, slice assignment for lists
+(`list[start:end] = other_list;`), and `hamming_distance` as
+`levenshtein_distance`'s equal-length-only counterpart. The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

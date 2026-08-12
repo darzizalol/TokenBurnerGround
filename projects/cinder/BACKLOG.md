@@ -79,7 +79,7 @@ not this task.
 
 ---
 
-## 2. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`)
+## 2. Language: rest element in map-destructuring patterns (`let {a, ...rest} = m;`) [claimed 2026-08-12T14:10:37Z]
 
 Build: close the one gap left between the two destructuring pattern
 kinds. List-destructuring patterns (`let [a, ...rest] = expr;`,

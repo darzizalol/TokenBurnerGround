@@ -2197,3 +2197,18 @@ for vision/architecture.
   `_destructure_list_pattern` eager-raise approach. Second round: `VERDICT:
   LGTM` and `QA: PASS` (2580 tests passing plus CLI smoke tests covering
   the fixed swallowed-error case and adjacent valid/invalid shapes).
+- **Standard library: `levenshtein_distance` — string edit distance** —
+  merged 2026-08-12T19:57:12Z via PR #232
+  (`feat/20260812-levenshtein-distance`). Added `levenshtein_distance(a,
+  b)` to `cinder/builtins.py`, registered right after `is_permutation`:
+  standard row-by-row DP kept to a single rolling 1-D list rather than a
+  full 2-D matrix, since only the previous row is needed to compute the
+  final distance. Arity/type-checking modeled verbatim on `is_anagram`'s
+  two-argument "first argument"/"second argument" message shape. The
+  project's first dynamic-programming builtin, and a third distinct
+  implementation technique for the string-comparison family alongside
+  `is_balanced`'s stack scan and `is_isogram`'s frequency-set check.
+  Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS`
+  (2592 tests passing plus CLI smoke tests covering the kitten/sitting
+  and flaw/lawn canonical examples, both-empty/one-empty directions,
+  symmetry, and both type/arity error paths).

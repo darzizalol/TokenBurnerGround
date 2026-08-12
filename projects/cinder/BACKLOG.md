@@ -11,104 +11,11 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `levenshtein_distance` — string edit distance [claimed 2026-08-12T19:52:45Z]
+## 1. Language: chained comparison operators (`a < b < c`)
 
-Build: add `levenshtein_distance(a, b)` to `cinder/builtins.py`,
-registered right after `_is_permutation` (search for `def
-_is_permutation`) — the breadth task after the just-landed
-plain-assignment map-destructuring rest element depth work (PR #231)
-per `PROJECT.md`'s breadth-vs-depth policy. It sits next to
-`is_anagram`/`is_rotation`/`is_permutation` as one more two-string comparison, but unlike that
-whole boolean-predicate cluster it returns a number: the minimum
-count of single-character insertions, deletions, and substitutions
-needed to turn `a` into `b` (the classic Levenshtein edit distance).
-This is the project's first dynamic-programming builtin, and a third
-distinct implementation technique for the string-comparison family
-alongside `is_balanced`'s stack scan and `is_isogram`'s frequency-set
-check — deliberately picked to keep diversifying rather than add one
-more `Counter`/doubled-string delegation.
-
-Implement with the standard row-by-row DP table, kept to a single
-rolling 1-D list rather than a full 2-D matrix (no need for the whole
-table, only the previous row, to compute the final distance):
-
-```python
-def _levenshtein_distance(arguments: list, line: int, column: int) -> object:
-    _require_arity("levenshtein_distance", arguments, 2, line, column)
-    string1, string2 = arguments
-    if not isinstance(string1, str):
-        raise CinderRuntimeError(
-            f"levenshtein_distance() requires a string as its first argument, got {type_name(string1)}",
-            line, column,
-        )
-    if not isinstance(string2, str):
-        raise CinderRuntimeError(
-            f"levenshtein_distance() requires a string as its second argument, got {type_name(string2)}",
-            line, column,
-        )
-    previous_row = list(range(len(string2) + 1))
-    for i, char1 in enumerate(string1, start=1):
-        current_row = [i] + [0] * len(string2)
-        for j, char2 in enumerate(string2, start=1):
-            current_row[j] = min(
-                current_row[j - 1] + 1,
-                previous_row[j] + 1,
-                previous_row[j - 1] + (0 if char1 == char2 else 1),
-            )
-        previous_row = current_row
-    return previous_row[-1]
-```
-
-Model the arity/type-checking exactly on `_is_anagram`'s two-argument
-"first argument"/"second argument" message shape (not
-`_is_pangram`/`_is_balanced`'s single-argument phrasing — there are
-two arguments here), matching the code above verbatim.
-
-Acceptance criteria:
-- `levenshtein_distance("kitten", "sitting");` is `3` — the classic
-  textbook example (substitute `k`->`s`, `e`->`i`, insert `g`).
-- `levenshtein_distance("", "");` is `0` — two empty strings need no
-  edits.
-- `levenshtein_distance("abc", "");` is `3` and
-  `levenshtein_distance("", "abc");` is `3` — turning a string into
-  the empty one (or vice versa) costs one deletion/insertion per
-  character.
-- `levenshtein_distance("abc", "abc");` is `0` — identical strings
-  need no edits.
-- `levenshtein_distance("a", "b");` is `1` — a single substitution.
-- `levenshtein_distance("flaw", "lawn");` is `2` — a second
-  well-known example distinct from the textbook one (delete the
-  leading `f` to get `"law"`, then insert a trailing `n`).
-- `levenshtein_distance("abc", "abx");` is `1` — a single
-  substitution in the middle of otherwise-equal strings.
-- Not symmetric in general but *is* symmetric for this builtin (edit
-  distance is a metric): `levenshtein_distance("abc", "xyz");` equals
-  `levenshtein_distance("xyz", "abc");` (both `3`) — worth a test
-  since a buggy insert/delete-cost swap could break symmetry silently.
-- `levenshtein_distance(5, "a");` raises `CinderRuntimeError` matching
-  `"levenshtein_distance() requires a string as its first argument,
-  got int"`.
-- `levenshtein_distance("a", true);` raises `CinderRuntimeError`
-  matching `"levenshtein_distance() requires a string as its second
-  argument, got bool"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_permutation`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py`. Once merged, `README.md`'s Builtins
-bullet needs `levenshtein_distance` added near
-`is_anagram`/`is_rotation`/`is_permutation`, and `PROJECT.md`'s
-roadmap paragraph needs it moved from backlog to landed — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: chained comparison operators (`a < b < c`)
-
-Build: the depth task after task 1's breadth work (`levenshtein_distance`)
-per `PROJECT.md`'s breadth-vs-depth policy. `cinder/parser.py`'s
+Build: the depth task after the just-landed `levenshtein_distance`
+breadth work (PR #232) per `PROJECT.md`'s breadth-vs-depth policy.
+`cinder/parser.py`'s
 `_comparison()` (search for `def _comparison`) currently left-folds any
 run of comparison operators into nested `Binary` nodes: `1 < 2 < 3`
 parses as `Binary(Binary(1, <, 2), <, 3)`, which *evaluates* as
@@ -235,11 +142,11 @@ task.
 
 ---
 
-## 3. Standard library: `is_automorphic` — n² ends with n predicate
+## 2. Standard library: `is_automorphic` — n² ends with n predicate
 
 Build: add `is_automorphic(n)` to `cinder/builtins.py`, registered
 right after `is_deficient` (search for `def _is_deficient`) — the
-breadth task after task 2's depth work (chained comparison operators)
+breadth task after task 1's depth work (chained comparison operators)
 per `PROJECT.md`'s breadth-vs-depth policy. It joins the
 `is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
 `is_abundant`/`is_deficient` integer-property cluster as one more
@@ -299,9 +206,9 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: slice assignment for lists (`list[start:end] = other_list;`)
+## 3. Language: slice assignment for lists (`list[start:end] = other_list;`)
 
-Build: the depth task after task 3's breadth work (`is_automorphic`) per
+Build: the depth task after task 2's breadth work (`is_automorphic`) per
 `PROJECT.md`'s breadth-vs-depth policy. `README.md`'s Data structures
 bullet already flags the gap explicitly: slicing
 (`list[start:end]`/`string[start:end]`, with an optional third `:step`)
@@ -445,14 +352,13 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `hamming_distance` — equal-length string edit distance
+## 4. Standard library: `hamming_distance` — equal-length string edit distance
 
 Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
 right after `levenshtein_distance` (search for `def
-_levenshtein_distance` — task 1 above; if it hasn't landed yet when this
-task is picked up, register after `_is_permutation` instead, in the same
-spot task 1 itself targeted) — the breadth task after task 4's depth work
-(slice assignment for lists) per `PROJECT.md`'s breadth-vs-depth policy.
+_levenshtein_distance`, landed via PR #232) — the breadth task after
+task 3's depth work (slice assignment for lists) per `PROJECT.md`'s
+breadth-vs-depth policy.
 It joins `levenshtein_distance` as the second member of a
 "string-distance" pair sitting next to `is_anagram`/`is_rotation`/
 `is_permutation`: both return a number rather than a boolean, but where

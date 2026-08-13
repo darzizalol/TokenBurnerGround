@@ -415,6 +415,388 @@ grooming pass, not this task.
 
 ---
 
+## 5. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
+
+Build: the depth task after tasks 3 and 4 stacked two breadth tasks
+(`is_perfect_cube`, `aliquot_sum`) back to back, per `PROJECT.md`'s
+breadth-vs-depth policy. Every function call today binds arguments to
+parameters purely positionally — `fn greet(name, greeting = "hi") {
+...}` can only be called `greet("Ada")`/`greet("Ada", "yo")`, never
+`greet(greeting: "yo", name: "Ada")`. This adds trailing keyword
+arguments, matched by parameter name, mirroring Python's own
+positional-then-keyword calling convention. Verify the gap:
+`python3 -m cinder.cli eval 'fn f(a, b) { return a - b; } print(f(b: 1, a: 5));'`
+currently raises `ParseError` `"')' after arguments"` (the parser sees
+`IDENTIFIER COLON` where it only expects an expression).
+
+Scope is deliberately narrow: keyword arguments work only for
+user-defined Cinder functions (`fn` declarations, anonymous `fn`
+expressions, and arrow functions — anything that becomes a
+`CinderFunction`), **not** for builtins (`map`, `filter`, `abs`, etc.),
+which stay purely positional with their existing hand-rolled arity
+checks. Calling a builtin with a keyword argument raises a clean
+`CinderRuntimeError` rather than silently mis-binding. A keyword
+argument can only target a plain named parameter — not a
+list/map-destructuring parameter (`fn f({a, b}) { ... }`, which has no
+single name to address) and not the trailing rest parameter (`fn f(a,
+...rest) { ... }`, likewise nameless from the caller's perspective) —
+both already fall out naturally as "no such keyword" errors below,
+needing no special-casing.
+
+**Lexing/parsing** (`cinder/parser.py`): the only new grammar is
+`IDENTIFIER COLON expr` in call-argument position, unambiguous with one
+token of lookahead — `_call_argument` (search for `def _call_argument`)
+never otherwise sees `IDENTIFIER` immediately followed by `COLON` (a
+ternary's `:` is preceded by `?`; slice colons only appear inside `[...]`
+indexing, a different grammar position entirely). Add a new AST node
+right above `Call` in `cinder/ast_nodes.py` (same file/region as
+`Spread`, which this mirrors — neither joins the `Expr` Union since both
+are only valid inside an argument/element list, never as a standalone
+expression):
+
+```python
+@dataclass(frozen=True)
+class KeywordArg:
+    """A `name: expr` argument inside a call's argument list; `Call.arguments`/
+    `OptionalCall.arguments` mix these with plain `Expr`s and `Spread`s."""
+
+    name: str
+    value: "Expr"
+    line: int
+    column: int
+```
+
+Import it in `cinder/parser.py` next to the existing `Spread` import.
+Change `_call_argument` to:
+
+```python
+def _call_argument(self) -> Expr:
+    if self._check(TokenType.DOT_DOT_DOT):
+        dots = self._advance()
+        return Spread(self._ternary(), dots.line, dots.column)
+    if (
+        self._check(TokenType.IDENTIFIER)
+        and self._peek_next().type == TokenType.COLON
+    ):
+        name_token = self._advance()
+        self._advance()  # consume ':'
+        return KeywordArg(
+            name_token.lexeme, self._ternary(), name_token.line, name_token.column
+        )
+    return self._ternary()
+```
+
+(`_peek_next` already exists — search for `def _peek_next`, and see its
+use at the `_statement` labeled-loop lookahead for the same
+one-token-ahead technique.) Then, in **both** `_finish_call` and
+`_finish_optional_call` (search for both names — they build `arguments`
+with near-identical `append`-then-`while COMMA` loops), enforce that once
+a keyword argument has appeared, every later argument in that call must
+also be one — mirror this shape into each loop:
+
+```python
+        arguments = []
+        seen_keyword = False
+        if not self._check(TokenType.RPAREN):
+            arguments.append(self._call_argument())
+            seen_keyword = isinstance(arguments[-1], KeywordArg)
+            while self._check(TokenType.COMMA):
+                self._advance()
+                argument = self._call_argument()
+                if seen_keyword and not isinstance(argument, KeywordArg):
+                    raise ParseError(
+                        "positional argument follows keyword argument",
+                        paren.line,
+                        paren.column,
+                    )
+                seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
+                arguments.append(argument)
+```
+
+(`_finish_optional_call` computes `paren` one line later than
+`_finish_call` does — keep using whichever local already holds the `(`
+token in that function, no need to introduce a new one.) A spread
+argument (`...xs`) is allowed before keyword arguments in the same call
+(it only ever fills positional slots) — this rule only forbids a plain
+*positional* or *spread* argument coming **after** a keyword one.
+
+**Evaluation** (`cinder/interpreter.py`): `_evaluate_call_arguments`
+(search for `def _evaluate_call_arguments`) currently returns a flat
+`list` of evaluated positional values. Change it to return
+`tuple[list, dict]` — positional values plus a `name -> value` keyword
+map:
+
+```python
+def _evaluate_call_arguments(self, arguments: list, env: Environment) -> "tuple[list, dict]":
+    positional = []
+    keywords: dict = {}
+    for arg in arguments:
+        if isinstance(arg, KeywordArg):
+            if arg.name in keywords:
+                raise CinderRuntimeError(
+                    f"duplicate keyword argument {arg.name!r} in call",
+                    arg.line,
+                    arg.column,
+                )
+            keywords[arg.name] = self.evaluate(arg.value, env)
+        elif isinstance(arg, Spread):
+            value = self.evaluate(arg.expression, env)
+            if not isinstance(value, list):
+                raise CinderRuntimeError(
+                    f"cannot spread {type_name(value)} in a function call",
+                    arg.line,
+                    arg.column,
+                )
+            positional.extend(value)
+        else:
+            positional.append(self.evaluate(arg, env))
+    return positional, keywords
+```
+
+Update its two callers, `_evaluate_call`/`_evaluate_optional_call`
+(search for both — same file, right below), to unpack the tuple and pass
+both through to `call_value`:
+
+```python
+def _evaluate_call(self, expr: Call, env: Environment) -> object:
+    callee = self.evaluate(expr.callee, env)
+    arguments, keywords = self._evaluate_call_arguments(expr.arguments, env)
+    return call_value(callee, arguments, expr.line, expr.column, keywords)
+```
+
+(same edit shape for `_evaluate_optional_call`, right after its existing
+`if callee is None: return None` short-circuit). No other caller of
+`_evaluate_call_arguments` exists. Every *other* caller of `call_value`
+in the codebase (`map`/`filter`/`reduce`/every other builtin that
+invokes a callback) already builds a plain positional Python list by
+hand and never touches `KeywordArg` — those call sites are unaffected
+and need no changes, since `call_value`'s new `keywords` parameter
+defaults to `None`.
+
+**Binding** (`cinder/interpreter.py`, `call_value` — search for `def
+call_value`, the shared function-invocation entry point): add a
+`keywords: "dict | None" = None` parameter. Reject keywords outright for
+builtins (they stay positional-only):
+
+```python
+def call_value(
+    callee: object, arguments: list, line: int, column: int, keywords: "dict | None" = None
+) -> object:
+    if isinstance(callee, Builtin):
+        if keywords:
+            raise CinderRuntimeError(
+                f"{callee.name}() does not accept keyword arguments", line, column
+            )
+        return callee.call(arguments, line, column)
+    if not isinstance(callee, CinderFunction):
+        raise CinderRuntimeError(f"{type_name(callee)} is not callable", line, column)
+    keywords = keywords or {}
+```
+
+Leave the existing `min_arity`/`max_arity` arity-error block (the
+`if len(arguments) < min_arity or ...` check right after) **completely
+untouched** when `keywords` is empty — that is the overwhelming common
+case and its exact error-message text (`"expects at least/at most/{n}
+argument(s), got {m}"`) is already covered by existing tests; don't
+risk it. Instead, wrap that whole existing block in `if not keywords:`
+and add a new `else:` branch alongside it for the keyword-argument path:
+
+```python
+    min_arity = callee.arity
+    max_arity = None if callee.decl.rest_param else len(callee.decl.params)
+    if not keywords:
+        if len(arguments) < min_arity or (max_arity is not None and len(arguments) > max_arity):
+            # ... existing message-building/raise, unchanged ...
+    else:
+        if max_arity is not None and len(arguments) > max_arity:
+            raise CinderRuntimeError(
+                f"{callee.name}() expects at most {max_arity} argument(s), got {len(arguments)}",
+                line,
+                column,
+            )
+        named_params = {p.name for p in callee.decl.params if p.name is not None}
+        unexpected = sorted(set(keywords) - named_params)
+        if unexpected:
+            raise CinderRuntimeError(
+                f"{callee.name}() got an unexpected keyword argument {unexpected[0]!r}",
+                line,
+                column,
+            )
+        missing = []
+        for index, param in enumerate(callee.decl.params):
+            if index < len(arguments):
+                if param.name is not None and param.name in keywords:
+                    raise CinderRuntimeError(
+                        f"{callee.name}() got multiple values for parameter {param.name!r}",
+                        line,
+                        column,
+                    )
+                continue
+            if param.default is not None:
+                continue
+            if param.name is not None and param.name in keywords:
+                continue
+            missing.append(param.name if param.name is not None else "<pattern>")
+        if missing:
+            names = ", ".join(repr(name) for name in missing)
+            raise CinderRuntimeError(
+                f"{callee.name}() missing required argument(s): {names}",
+                line,
+                column,
+            )
+```
+
+Finally, in the parameter-binding loop right below (the `for index,
+param in enumerate(callee.decl.params):` loop that currently does `value
+= arguments[index] if index < len(arguments) else
+Interpreter().evaluate(param.default, call_env)`), insert one new branch
+so a keyword-supplied value is used when there's no positional value at
+that index:
+
+```python
+        for index, param in enumerate(callee.decl.params):
+            if index < len(arguments):
+                value = arguments[index]
+            elif param.name is not None and param.name in keywords:
+                value = keywords[param.name]
+            else:
+                value = Interpreter().evaluate(param.default, call_env)
+            ...  # rest of the loop body (destructure-bind or call_env.define) unchanged
+```
+
+This one `elif` is the only change to that loop, and it's a no-op
+(never taken) whenever `keywords` is empty — so it changes nothing about
+purely-positional calls, keyword-argument-free or not. Nothing else in
+`call_value` (the `rest_param` handling, the `try`/`_ReturnSignal`/
+`CinderRuntimeError` frame-append machinery) needs to change.
+
+Acceptance criteria:
+- `fn greet(name, greeting = "hi") { return greeting + ", " + name; }
+  print(greet(name: "Ada", greeting: "yo"));` prints `yo, Ada`.
+- `fn f(a, b) { return a - b; } print(f(b: 1, a: 5));` prints `4` — all
+  arguments by keyword, order-independent, matching declaration-order
+  binding rather than call-site order.
+- `fn f(a, b) { return a - b; } print(f(5, b: 1));` prints `4` — mixing
+  leading positional with trailing keyword.
+- `fn f(a, b = 10) { return a + b; } print(f(a: 3));` prints `13` — a
+  keyword-omitted trailing parameter still falls back to its default.
+- `fn f(a, b) { return a; } f(1, a: 2);` raises `CinderRuntimeError`
+  matching `"f() got multiple values for parameter 'a'"` — `a` supplied
+  both positionally (index 0) and by keyword.
+- `fn f(a) { return a; } f(a: 1, z: 2);` raises `CinderRuntimeError`
+  matching `"f() got an unexpected keyword argument 'z'"`.
+- `fn f(a, b) { return a; } f(a: 1);` raises `CinderRuntimeError`
+  matching `"f() missing required argument(s): 'b'"`.
+- `fn f(a: 1);` (i.e. `1: 2` — a positional argument after a keyword
+  one) raises `ParseError` matching `"positional argument follows
+  keyword argument"` — for example
+  `fn f(a, b) { return a; } f(a: 1, 2);`.
+- `map([1, 2, 3], x => x * 2);` and every other existing builtin-call
+  test continue to pass unmodified — builtins never see a non-empty
+  `keywords` dict from ordinary Cinder source, and internal
+  `call_value(fn, [item], line, column)` call sites (no `keywords`
+  argument at all) are unaffected by this change.
+- `abs(x: -5);` raises `CinderRuntimeError` matching `"abs() does not
+  accept keyword arguments"` — builtins reject keyword arguments
+  outright rather than silently ignoring or mis-binding them.
+- `fn f({a, b}) { return a; } f(a: 1);` raises `CinderRuntimeError`
+  matching `"f() got an unexpected keyword argument 'a'"` — a
+  destructuring parameter has no addressable name, so any keyword
+  targeting it (even one that happens to share a key name inside the
+  pattern) is simply unrecognized, not specially rejected.
+- `fn f(a, ...rest) { return a; } f(a: 1, rest: 2);` raises
+  `CinderRuntimeError` matching `"f() got an unexpected keyword
+  argument 'rest'"` — the rest parameter is likewise not
+  keyword-addressable.
+- Every existing purely-positional call (no keyword arguments anywhere
+  in the call) behaves identically to before this task, including the
+  exact wording of every pre-existing arity-error message — this is
+  purely additive syntax.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (new `KeywordArg`), `cinder/parser.py`
+(`_call_argument`, `_finish_call`, `_finish_optional_call`, the `Spread`
+import), `cinder/interpreter.py` (`_evaluate_call_arguments`,
+`_evaluate_call`, `_evaluate_optional_call`, `call_value`),
+`tests/test_parser.py`, `tests/test_interpreter.py`. Once merged,
+`README.md`'s Functions bullet needs a keyword-argument mention, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `is_pronic` — oblong-number predicate
+
+Build: the breadth task after task 5's depth work (keyword arguments in
+function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add
+`is_pronic(n)` to `cinder/builtins.py`, registered right after
+`is_perfect_cube` (search for `def _is_perfect_cube`, the current last
+entry in the integer-property cluster once task 5's neighbor, task 3,
+lands — this task only depends on task 3, not task 5). A pronic (or
+oblong, or heteromecic) number is an integer expressible as `k * (k +
+1)` for some non-negative integer `k` — e.g. `6 = 2 * 3`, `12 = 3 * 4`,
+`20 = 4 * 5` — one more root/product-based classification alongside
+`is_perfect_square`/`is_perfect_cube` in that same cluster. Compute it
+the same exact-integer way `is_perfect_square` does (`math.isqrt`, no
+floating-point square root): for non-negative `n`, `k =
+math.isqrt(n)` always lands on the unique integer with `k * k <= n <
+(k + 1) * (k + 1)`, so `n` is pronic exactly when `k * (k + 1) == n`
+(no need to also check `k - 1`, since pronic numbers are never
+adjacent to another pronic number closely enough for `isqrt` to
+land one short — verified by the acceptance criteria below).
+
+```python
+def _is_pronic(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_pronic", arguments, 1, line, column)
+    value = _require_int("is_pronic", arguments[0], line, column)
+    if value < 0:
+        return False
+    root = math.isqrt(value)
+    return root * (root + 1) == value
+```
+
+Model the arity/type-checking exactly on `is_perfect_square`'s own
+structure: `_require_arity`, then `_require_int` (reusing the shared
+helper — do **not** hand-roll a separate `isinstance` check). The
+`value < 0` guard answers `false` on negative input rather than raising
+a domain error, matching `is_perfect_square`/`is_leap_year`'s own
+convention (no pronic number is ever negative, since `k * (k + 1) >= 0`
+for every `k >= 0`).
+
+Acceptance criteria:
+- `is_pronic(0);` is `true` — `0 * 1 == 0`.
+- `is_pronic(2);` is `true` — `1 * 2 == 2`.
+- `is_pronic(6);` is `true` — `2 * 3 == 6`.
+- `is_pronic(12);` is `true` — `3 * 4 == 12`.
+- `is_pronic(20);` is `true` — `4 * 5 == 20`.
+- `is_pronic(30);` is `true` — `5 * 6 == 30`.
+- `is_pronic(1);` is `false` — no integer `k` satisfies `k * (k + 1) ==
+  1`.
+- `is_pronic(5);` is `false`.
+- `is_pronic(9);` is `false` — a perfect square that is not also
+  pronic (no integer is ever both, except neither `0` nor any other
+  value coincides for this pair).
+- `is_pronic(-6);` is `false` — negative input answers `false` without
+  raising.
+- `is_pronic(5.0);` raises `CinderRuntimeError` matching
+  `"is_pronic() requires an int, got float"` — the same message shape
+  `_require_int` already produces for every sibling in this cluster.
+- `is_pronic(true);` raises `CinderRuntimeError` matching
+  `"is_pronic() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near
+`is_perfect_square`/`is_perfect_cube`, see current line numbers — shift
+if earlier tasks this cycle landed first), `tests/test_builtins.py`.
+Once merged, `README.md`'s Builtins bullet needs `is_pronic` added near
+`is_perfect_square`/`is_perfect_cube`, and `PROJECT.md`'s roadmap
+paragraph needs it moved from backlog to landed — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

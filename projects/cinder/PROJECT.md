@@ -710,8 +710,26 @@ sum of `n`'s own proper divisors (e.g. `6`'s sum to `6`, confirming it's
 perfect), reusing the same `sqrt(n)`-bounded trial-division shape that
 whole cluster already shares, with a domain error on `n < 1` mirroring
 `divisors`'s own convention rather than the predicate cluster's
-answer-`false` one. And only much later, a bytecode VM if performance
-ever actually matters.
+answer-`false` one. And as task 7, keyword arguments in function calls
+(`f(a: 1, b: 2)`) — the depth task queued this grooming pass after
+tasks 5 and 6 (`is_perfect_cube`, `aliquot_sum`) stacked two breadth
+tasks back to back, matching the same two-in-a-row signal noted below.
+Every call today binds purely positionally; this adds trailing
+keyword arguments matched by parameter name, Python-style, scoped to
+user-defined `CinderFunction`s only — builtins stay positional-only and
+raise cleanly if handed one. A keyword argument can target only a
+plain named parameter, never a list/map-destructuring parameter or the
+trailing rest parameter, both of which simply have no name a caller
+could address; that restriction falls out for free from matching
+against parameter names rather than needing its own check. And as task
+8, `is_pronic(n)` — a breadth task after task 7's depth work, testing
+whether an integer is expressible as `k * (k + 1)` for some
+non-negative integer `k` (a pronic/oblong number, e.g. `6 = 2 * 3`,
+`12 = 3 * 4`), one more root-based classification sitting next to
+`is_perfect_square`/`is_perfect_cube`, computed the same exact-integer
+`math.isqrt` way `is_perfect_square` already does rather than a
+floating-point approximation. And only much later, a bytecode VM if
+performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -749,12 +767,15 @@ that placed task 4 (map-destructuring key rename) as depth right
 after task 3's breadth work in turn, that placed task 5
 (`is_perfect_cube`) as breadth right after task 4's depth work in
 turn, and that placed task 6 (`aliquot_sum`) as a second breadth task
-right after task 5's in turn — queued this grooming pass ahead of a
+right after task 5's in turn — queued that grooming pass ahead of a
 depth task rather than immediately after task 4's depth work, since the
 backlog needed restocking faster than the alternation would otherwise
-call for; the next grooming pass should inject a depth task before
-adding further breadth ones, per the same two-predicates-in-a-row
-signal.
+call for — that placed task 7 (keyword arguments in function calls) as
+the depth task this grooming pass calls for once tasks 5 and 6 stacked
+two breadth tasks in a row, per that same signal, and that placed task
+8 (`is_pronic`) as breadth right after task 7's depth work in turn. The
+next grooming pass should keep alternating breadth/depth from here
+absent another restocking-speed reason to break it.
 
 ## History
 

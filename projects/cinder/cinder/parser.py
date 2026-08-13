@@ -317,6 +317,15 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
 
+    def _destructure_map_pattern_entry(self) -> "tuple[str, str]":
+        key = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+        if self._check(TokenType.COLON):
+            self._advance()
+            binding = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+        else:
+            binding = key
+        return key, binding
+
     def _destructure_map_pattern(self) -> "tuple[list, str | None]":
         self._advance()  # consume '{'
         names = []
@@ -324,7 +333,7 @@ class Parser:
         if self._check(TokenType.DOT_DOT_DOT):
             rest = self._destructure_rest_name()
         else:
-            names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
+            names.append(self._destructure_map_pattern_entry())
         while self._check(TokenType.COMMA):
             self._advance()
             if rest is not None:
@@ -337,9 +346,7 @@ class Parser:
             if self._check(TokenType.DOT_DOT_DOT):
                 rest = self._destructure_rest_name()
             else:
-                names.append(
-                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-                )
+                names.append(self._destructure_map_pattern_entry())
         self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
         return names, rest
 
@@ -454,7 +461,7 @@ class Parser:
             if self._check(TokenType.DOT_DOT_DOT):
                 rest = self._destructure_rest_name()
             else:
-                names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
+                names.append(self._destructure_map_pattern_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
                 if rest is not None:
@@ -462,9 +469,7 @@ class Parser:
                 if self._check(TokenType.DOT_DOT_DOT):
                     rest = self._destructure_rest_name()
                 else:
-                    names.append(
-                        self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-                    )
+                    names.append(self._destructure_map_pattern_entry())
             self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
             eq_token = self._consume(TokenType.EQ, "'=' after destructuring pattern")
         except _RestNotLast as violation:

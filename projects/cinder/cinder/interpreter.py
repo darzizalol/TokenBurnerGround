@@ -476,16 +476,18 @@ class Interpreter:
                 line,
                 column,
             )
-        for name in names:
-            if name not in value:
+        seen_keys = set()
+        for key, binding in names:
+            seen_keys.add(key)
+            if key not in value:
                 raise CinderRuntimeError(
-                    f"destructuring pattern expects key {name!r}, not found in map",
+                    f"destructuring pattern expects key {key!r}, not found in map",
                     line,
                     column,
                 )
-            self._bind_destructure_name(env, name, value[name], line, column, use_assign)
+            self._bind_destructure_name(env, binding, value[key], line, column, use_assign)
         if rest is not None:
-            remaining = {k: v for k, v in value.items() if k not in names}
+            remaining = {k: v for k, v in value.items() if k not in seen_keys}
             self._bind_destructure_name(env, rest, remaining, line, column, use_assign)
 
     def _evaluate_destructure_assign(self, expr: DestructureAssign, env: Environment) -> object:

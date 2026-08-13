@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: slice assignment for lists (`list[start:end] = other_list;`)
+## 1. Language: slice assignment for lists (`list[start:end] = other_list;`) [claimed 2026-08-13T14:07:01Z]
 
 Build: the depth task after task 1's breadth work (`is_automorphic`) per
 `PROJECT.md`'s breadth-vs-depth policy. `README.md`'s Data structures

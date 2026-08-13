@@ -2924,11 +2924,60 @@ class TestSlicing(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate('[1, 2, 3]["a":2]')
 
-    def test_slice_assignment_raises_parse_error(self):
+    def test_slice_assignment_grows_list_when_replacement_is_longer(self):
+        env = run("let xs = [1, 2, 3, 4, 5]; xs[1:3] = [9, 9, 9];")
+        self.assertEqual(env.get("xs"), [1, 9, 9, 9, 4, 5])
+
+    def test_slice_assignment_with_empty_list_deletes_range(self):
+        env = run("let xs = [1, 2, 3, 4, 5]; xs[1:3] = [];")
+        self.assertEqual(env.get("xs"), [1, 4, 5])
+
+    def test_slice_assignment_omitted_bounds_spans_whole_list(self):
+        env = run("let xs = [1, 2, 3]; xs[:] = [9];")
+        self.assertEqual(env.get("xs"), [9])
+
+    def test_slice_assignment_out_of_range_bounds_clamp(self):
+        env = run("let xs = [1, 2, 3]; xs[5:10] = [9];")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 9])
+
+    def test_slice_assignment_negative_bounds_normalize(self):
+        env = run("let xs = [1, 2, 3, 4, 5]; xs[-2:] = [9];")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 9])
+
+    def test_slice_assignment_evaluates_to_assigned_value(self):
+        env = run("let xs = [1, 2, 3]; let result = (xs[0:1] = [9, 9]);")
+        self.assertEqual(env.get("result"), [9, 9])
+
+    def test_slice_assignment_non_list_value_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "slice assignment requires a list value, got int"
+        ):
+            run("let xs = [1, 2, 3]; xs[0:1] = 5;")
+
+    def test_slice_assignment_on_string_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "strings are immutable and do not support item assignment",
+        ):
+            run('let s = "abc"; s[0:1] = "x";')
+
+    def test_stepped_slice_assignment_raises_parse_error(self):
         from cinder.errors import ParseError
 
         with self.assertRaises(ParseError):
-            run("[1, 2, 3][1:2] = [9];")
+            run("[1, 2, 3][0:1:2] = [9];")
+
+    def test_slice_compound_assign_still_raises_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            run("[1, 2, 3][0:1] += [9];")
+
+    def test_slice_increment_still_raises_parse_error(self):
+        from cinder.errors import ParseError
+
+        with self.assertRaises(ParseError):
+            run("[1, 2, 3][0:1]++;")
 
     def test_slice_step_skips_elements(self):
         self.assertEqual(evaluate("[1, 2, 3, 4, 5][::2]"), [1, 3, 5])

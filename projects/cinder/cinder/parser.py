@@ -138,6 +138,7 @@ from cinder.ast_nodes import (
     OptionalIndex,
     Param,
     ReturnStmt,
+    SliceAssign,
     SliceExpr,
     Spread,
     Stmt,
@@ -974,6 +975,14 @@ class Parser:
             if isinstance(expr, Index):
                 return IndexAssign(
                     expr.obj, expr.index, value, eq_token.line, eq_token.column
+                )
+            if isinstance(expr, SliceExpr):
+                if expr.step is not None:
+                    raise ParseError(
+                        "invalid assignment target", eq_token.line, eq_token.column
+                    )
+                return SliceAssign(
+                    expr.obj, expr.start, expr.end, value, eq_token.line, eq_token.column
                 )
             if isinstance(expr, ListLiteral):
                 names, rest = self._destructure_assign_pattern(expr, eq_token)

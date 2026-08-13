@@ -80,6 +80,7 @@ from cinder.ast_nodes import (
     OptionalCall,
     OptionalIndex,
     ReturnStmt,
+    SliceAssign,
     SliceExpr,
     Spread,
     Stmt,
@@ -259,6 +260,8 @@ class Interpreter:
             return self._evaluate_optional_index(expr, env)
         if isinstance(expr, SliceExpr):
             return self._evaluate_slice(expr, env)
+        if isinstance(expr, SliceAssign):
+            return self._evaluate_slice_assign(expr, env)
         if isinstance(expr, IndexAssign):
             return self._evaluate_index_assign(expr, env)
         if isinstance(expr, IndexCompoundAssign):
@@ -800,6 +803,40 @@ class Interpreter:
         if isinstance(obj, str):
             return "".join(obj[i] for i in indices)
         return [obj[i] for i in indices]
+
+    def _evaluate_slice_assign(self, expr: SliceAssign, env: Environment) -> object:
+        obj = self.evaluate(expr.obj, env)
+        start = self.evaluate(expr.start, env) if expr.start is not None else None
+        end = self.evaluate(expr.end, env) if expr.end is not None else None
+        value = self.evaluate(expr.value, env)
+        if isinstance(obj, str):
+            raise CinderRuntimeError(
+                "strings are immutable and do not support item assignment",
+                expr.line,
+                expr.column,
+            )
+        if not isinstance(obj, list):
+            raise CinderRuntimeError(
+                f"{type_name(obj)} is not sliceable", expr.line, expr.column
+            )
+        for bound in (start, end):
+            if bound is not None and (
+                not isinstance(bound, int) or isinstance(bound, bool)
+            ):
+                raise CinderRuntimeError(
+                    f"slice bound must be an int, got {type_name(bound)}",
+                    expr.line,
+                    expr.column,
+                )
+        if not isinstance(value, list):
+            raise CinderRuntimeError(
+                f"slice assignment requires a list value, got {type_name(value)}",
+                expr.line,
+                expr.column,
+            )
+        norm_start, norm_end, _ = slice(start, end, None).indices(len(obj))
+        obj[norm_start:norm_end] = value
+        return value
 
     def _evaluate_index_assign(self, expr: IndexAssign, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)

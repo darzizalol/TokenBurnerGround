@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_perfect_cube` — integer cube-root predicate
+## 1. Standard library: `is_perfect_cube` — integer cube-root predicate [claimed 2026-08-13T20:20:21Z]
 
 Build: the breadth task after last cycle's depth work (map-destructuring
 key rename, landed via PR #239) per `PROJECT.md`'s breadth-vs-depth

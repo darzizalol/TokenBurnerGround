@@ -2961,11 +2961,51 @@ class TestSlicing(unittest.TestCase):
         ):
             run('let s = "abc"; s[0:1] = "x";')
 
-    def test_stepped_slice_assignment_raises_parse_error(self):
-        from cinder.errors import ParseError
+    def test_extended_slice_assignment_replaces_stepped_positions(self):
+        env = run(
+            "let xs = [1, 2, 3, 4, 5, 6]; xs[0:6:2] = [9, 9, 9];"
+        )
+        self.assertEqual(env.get("xs"), [9, 2, 9, 4, 9, 6])
 
-        with self.assertRaises(ParseError):
-            run("[1, 2, 3][0:1:2] = [9];")
+    def test_extended_slice_assignment_negative_step_reverses_target(self):
+        env = run("let xs = [1, 2, 3]; xs[::-1] = [7, 8, 9];")
+        self.assertEqual(env.get("xs"), [9, 8, 7])
+
+    def test_extended_slice_assignment_length_mismatch_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"attempt to assign sequence of size 1 to extended slice of size 2",
+        ):
+            run("let xs = [1, 2, 3, 4]; xs[0:4:2] = [1];")
+
+    def test_slice_assignment_explicit_step_one_still_grows(self):
+        env = run("let xs = [1, 2, 3]; xs[0:2:1] = [9, 9, 9, 9];")
+        self.assertEqual(env.get("xs"), [9, 9, 9, 9, 3])
+
+    def test_extended_slice_assignment_non_list_value_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "slice assignment requires a list value, got str"
+        ):
+            run('let xs = [1, 2, 3, 4, 5]; xs[0:5:2] = "ab";')
+
+    def test_slice_assignment_non_int_step_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "slice step must be an int, got str"
+        ):
+            run('let xs = [1, 2, 3]; xs[0:3:"a"] = [1, 2, 3];')
+
+    def test_slice_assignment_zero_step_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "slice step must not be zero"
+        ):
+            run("let xs = [1, 2, 3]; xs[0:3:0] = [1, 2, 3];")
+
+    def test_stepped_slice_assignment_on_string_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "strings are immutable and do not support item assignment",
+        ):
+            run('let s = "abcdef"; s[0:6:2] = "xyz";')
 
     def test_slice_compound_assign_still_raises_parse_error(self):
         from cinder.errors import ParseError
@@ -3014,10 +3054,11 @@ class TestSlicing(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate("5[::2]")
 
-    def test_slice_with_step_assignment_raises_parse_error(self):
-        from cinder.errors import ParseError
-
-        with self.assertRaises(ParseError):
+    def test_slice_with_step_assignment_raises_length_mismatch(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"attempt to assign sequence of size 1 to extended slice of size 2",
+        ):
             run("[1, 2, 3][::2] = [9];")
 
 

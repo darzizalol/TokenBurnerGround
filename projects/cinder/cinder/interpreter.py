@@ -808,6 +808,7 @@ class Interpreter:
         obj = self.evaluate(expr.obj, env)
         start = self.evaluate(expr.start, env) if expr.start is not None else None
         end = self.evaluate(expr.end, env) if expr.end is not None else None
+        step = self.evaluate(expr.step, env) if expr.step is not None else None
         value = self.evaluate(expr.value, env)
         if isinstance(obj, str):
             raise CinderRuntimeError(
@@ -828,14 +829,33 @@ class Interpreter:
                     expr.line,
                     expr.column,
                 )
+        if step is not None:
+            if not isinstance(step, int) or isinstance(step, bool):
+                raise CinderRuntimeError(
+                    f"slice step must be an int, got {type_name(step)}",
+                    expr.line,
+                    expr.column,
+                )
+            if step == 0:
+                raise CinderRuntimeError(
+                    "slice step must not be zero", expr.line, expr.column
+                )
         if not isinstance(value, list):
             raise CinderRuntimeError(
                 f"slice assignment requires a list value, got {type_name(value)}",
                 expr.line,
                 expr.column,
             )
-        norm_start, norm_end, _ = slice(start, end, None).indices(len(obj))
-        obj[norm_start:norm_end] = value
+        norm_start, norm_end, norm_step = slice(start, end, step).indices(len(obj))
+        try:
+            obj[start:end:step] = value
+        except ValueError:
+            target_len = len(range(norm_start, norm_end, norm_step))
+            raise CinderRuntimeError(
+                f"attempt to assign sequence of size {len(value)} to "
+                f"extended slice of size {target_len}",
+                expr.line, expr.column,
+            ) from None
         return value
 
     def _evaluate_index_assign(self, expr: IndexAssign, env: Environment) -> object:

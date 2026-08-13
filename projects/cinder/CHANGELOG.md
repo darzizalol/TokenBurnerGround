@@ -2240,3 +2240,18 @@ for vision/architecture.
   round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2618 tests
   passing plus CLI smoke tests covering larger automorphic numbers not in
   the backlog's examples, false cases, and both type/arity error paths).
+- **Language: slice assignment for lists (`list[start:end] = other_list;`)**
+  — merged 2026-08-13T14:14:41Z via PR #235 (`feat/20260813-slice-assign`).
+  Added a `SliceAssign` AST node, a parser branch in `_assignment()`, and
+  `_evaluate_slice_assign` in `cinder/interpreter.py`, mirroring the
+  read-side `_evaluate_slice` bound-normalization logic verbatim so
+  read/write slicing never diverge. Scoped to the step-less form only —
+  a stepped slice target (`list[a:b:c] = value;`) still raises
+  `ParseError` `"invalid assignment target"`, explicitly deferred to a
+  future task (see backlog's extended-slice-assignment task). String
+  targets still raise the existing `"strings are immutable and do not
+  support item assignment"` error. Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2630 tests passing plus CLI
+  smoke tests covering growth, shrink, omitted bounds, negative-bound
+  normalization, out-of-range clamping, return-value semantics, and the
+  non-list-value/string-target/stepped-slice error paths).

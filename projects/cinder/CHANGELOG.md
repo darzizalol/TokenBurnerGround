@@ -2305,3 +2305,16 @@ for vision/architecture.
   smoke tests covering rename across all five forms, rename+rest,
   missing-binding-after-colon ParseError, and repeated-rename
   last-binding-wins).
+- **Standard library: `is_perfect_cube` — integer cube-root predicate** —
+  merged 2026-08-13T20:24:43Z via PR #240
+  (`feat/20260813-is-perfect-cube`). Added `is_perfect_cube(n)` to
+  `cinder/builtins.py`, registered right after `is_harshad` in the
+  integer-property cluster. Computes an exact integer cube root via
+  binary search on the magnitude (`_integer_cube_root`), avoiding the
+  float-drift risk of `round(n ** (1/3))`, then restores sign symmetry —
+  unlike `is_perfect_square`, negative input is accepted (`-8` is a
+  perfect cube via `(-2) ** 3`). Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2681 tests passing plus CLI
+  smoke tests covering positive/negative/zero cubes, non-cubes on both
+  signs, a 10^36 bignum case, and the float/bool/wrong-arity error
+  paths).

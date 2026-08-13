@@ -11,96 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_perfect_cube` — integer cube-root predicate [claimed 2026-08-13T20:20:21Z]
-
-Build: the breadth task after last cycle's depth work (map-destructuring
-key rename, landed via PR #239) per `PROJECT.md`'s breadth-vs-depth
-policy. A positive, negative,
-or zero integer `n` is a perfect cube when some integer `k` satisfies
-`k ** 3 == n` (e.g. `27 = 3**3`, `-8 = (-2)**3`, `0 = 0**3`). It joins the
-`is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
-`is_abundant`/`is_deficient`/`is_automorphic`/`is_harshad`
-integer-property cluster as one more digit/root-based classification —
-register it right after `is_harshad` (search for `def _is_harshad`, the
-current last entry in the cluster — landed via PR #238).
-
-Unlike `is_perfect_square` (which excludes negative input, since no real
-square root of a negative number is an integer), cube roots of negative
-numbers *are* real and integral — `-8`'s cube root is `-2` — so this
-predicate must accept negative input rather than short-circuiting to
-`false` the way `is_perfect_square` does. There is no `math.icbrt` in the
-standard library (unlike `math.isqrt` for squares), and a floating-point
-`round(n ** (1/3))` risks exactly the rounding-error problem
-`math.isqrt` was chosen to avoid for squares — so compute an exact
-integer cube root via binary search on the magnitude, then restore the
-sign:
-
-```python
-def _integer_cube_root(magnitude: int) -> int:
-    if magnitude == 0:
-        return 0
-    low, high = 0, magnitude
-    while low < high:
-        mid = (low + high + 1) // 2
-        if mid ** 3 <= magnitude:
-            low = mid
-        else:
-            high = mid - 1
-    return low
-
-
-def _is_perfect_cube(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_perfect_cube", arguments, 1, line, column)
-    value = _require_int("is_perfect_cube", arguments[0], line, column)
-    magnitude = abs(value)
-    root = _integer_cube_root(magnitude)
-    return root ** 3 == magnitude
-```
-
-`_integer_cube_root` operates on the non-negative magnitude only, so its
-own result is always non-negative; the predicate doesn't need to
-reconstruct the signed root at all, since cubing preserves sign
-symmetry: `magnitude` is a perfect cube iff `abs(value)` is, for either
-sign of `value`. Model the arity/type-checking exactly on
-`_is_harshad`/`_is_perfect_square`'s structure: `_require_arity`, then
-`_require_int` (reusing the shared helper — do **not** hand-roll a
-separate `isinstance` check).
-
-Acceptance criteria:
-- `is_perfect_cube(27);` is `true` — `3 ** 3 == 27`.
-- `is_perfect_cube(1);` is `true` — `1 ** 3 == 1`.
-- `is_perfect_cube(0);` is `true` — `0 ** 3 == 0`.
-- `is_perfect_cube(-8);` is `true` — `(-2) ** 3 == -8`, unlike
-  `is_perfect_square`, negative input is not automatically `false`.
-- `is_perfect_cube(-27);` is `true` — `(-3) ** 3 == -27`.
-- `is_perfect_cube(8);` is `true` — `2 ** 3 == 8`.
-- `is_perfect_cube(9);` is `false` — no integer cubes to `9`.
-- `is_perfect_cube(-9);` is `false` — no integer cubes to `-9` either.
-- `is_perfect_cube(1000000);` is `true` — `100 ** 3 == 1000000`, a case
-  large enough that a naive `round(n ** (1/3))` float approach could
-  plausibly drift off by one, proving the binary-search approach is
-  exact.
-- `is_perfect_cube(5.0);` raises `CinderRuntimeError` matching
-  `"is_perfect_cube() requires an int, got float"` — the same message
-  shape `_require_int` already produces for every sibling in this
-  cluster.
-- `is_perfect_cube(true);` raises `CinderRuntimeError` matching
-  `"is_perfect_cube() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near
-`is_harshad`/`is_perfect_square`, see current line numbers — shift if
-earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
-merged, `README.md`'s Builtins bullet needs `is_perfect_cube` added near
-`is_perfect_square`/`is_armstrong`/`is_automorphic`/`is_harshad`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `aliquot_sum` — sum of an integer's proper divisors
+## 1. Standard library: `aliquot_sum` — sum of an integer's proper divisors
 
 Build: a fresh breadth task alongside task 1 (`is_perfect_cube`), both
 following last cycle's depth work (map-destructuring key rename, landed
@@ -189,7 +100,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
+## 2. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
 
 Build: the depth task after tasks 1 and 2 stacked two breadth tasks
 (`is_perfect_cube`, `aliquot_sum`) back to back, per `PROJECT.md`'s
@@ -499,7 +410,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_pronic` — oblong-number predicate
+## 3. Standard library: `is_pronic` — oblong-number predicate
 
 Build: the breadth task after task 3's depth work (keyword arguments in
 function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add
@@ -571,7 +482,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
+## 4. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
 
 Build: the depth task after task 4's breadth work (`is_pronic`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —
@@ -840,7 +751,7 @@ task.
 
 ---
 
-## 6. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
+## 5. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
 
 Build: the breadth task after task 5's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth

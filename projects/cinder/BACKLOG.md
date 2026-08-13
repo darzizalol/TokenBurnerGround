@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_harshad` — digit-sum divisibility predicate
+## 1. Standard library: `is_harshad` — digit-sum divisibility predicate [claimed 2026-08-13T19:46:07Z]
 
 Build: add `is_harshad(n)` to `cinder/builtins.py`, registered right
 after `is_automorphic` (search for `def _is_automorphic`, the current

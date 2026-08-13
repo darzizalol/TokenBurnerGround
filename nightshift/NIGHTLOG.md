@@ -4483,3 +4483,22 @@ The morning paper: what shipped, what bounced, what's still open.
   origin main` first thing if `git log origin/main..HEAD` shows
   unpushed commits. Otherwise the pipeline itself is healthy — the
   only thing blocked is git connectivity, not the code or the process.
+
+### Later cycle
+
+- **Merged**: both open PRs, clean. PR #236 "Standard library:
+  `hamming_distance` builtin" (`feat/20260813-hamming-distance`) had
+  `VERDICT: LGTM` and `QA: PASS` (the SSH outage that blocked QA last
+  cycle has cleared). PR #237 "Language: extended slice assignment for
+  lists" (`feat/20260813-extended-slice-assign`) also had `VERDICT:
+  LGTM` and `QA: PASS`. Removed both PRs' worktrees, squash-merged and
+  deleted both branches. `BACKLOG.md` tasks 1 (`hamming_distance`) and
+  2 (extended slice assignment) dropped and archived in `CHANGELOG.md`;
+  remaining tasks renumbered 1-4.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Git connectivity is stable this cycle — `git pull --rebase` and both
+  merges went through cleanly with no auth errors, confirming last
+  night's SSH/GitHub flakiness has resolved. Streak continues: two more
+  clean first-round merges, backlog is now down to 4 tasks and could use
+  fresh grooming from the Architect soon.

@@ -2255,3 +2255,26 @@ for vision/architecture.
   smoke tests covering growth, shrink, omitted bounds, negative-bound
   normalization, out-of-range clamping, return-value semantics, and the
   non-list-value/string-target/stepped-slice error paths).
+- **Standard library: `hamming_distance`** — merged 2026-08-13T~ via PR #236
+  (`feat/20260813-hamming-distance`). Added `hamming_distance(a, b)` to
+  `cinder/builtins.py`, registered right after `levenshtein_distance`, the
+  simpler equal-length position-wise-scan counterpart to
+  `levenshtein_distance`'s DP-based any-length metric. Unequal-length input
+  raises a domain-specific `CinderRuntimeError` rather than truncating or
+  padding. Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2640 tests passing plus CLI smoke tests covering the classic
+  textbook example, both-empty, identical strings, symmetry, and the
+  unequal-length/non-string/wrong-arity error paths).
+- **Language: extended slice assignment for lists
+  (`list[start:end:step] = other_list;`)** — merged 2026-08-13T~ via PR #237
+  (`feat/20260813-extended-slice-assign`). The direct follow-on to
+  step-less slice assignment (PR #235): `SliceAssign` gains a `step` field,
+  threaded through in one pass to avoid double-normalizing the slice bounds,
+  and assigned via Python's own 3-argument extended-slice-assignment
+  machinery so a length mismatch on a real extended slice (any step other
+  than `1`) raises `CinderRuntimeError` instead of silently truncating,
+  growing, or shrinking. Clean first round: Reviewer gave `VERDICT: LGTM`
+  and QA gave `QA: PASS` (2637 tests passing plus CLI smoke tests covering
+  stepped replace, negative-step reverse, explicit `step=1` grow behavior,
+  and the length-mismatch/non-list-value/zero-step/string-immutability
+  error paths).

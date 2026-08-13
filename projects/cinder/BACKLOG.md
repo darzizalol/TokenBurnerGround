@@ -11,241 +11,12 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `hamming_distance` — equal-length string edit distance [claimed 2026-08-13T14:33:58Z]
-
-Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
-right after `levenshtein_distance` (search for `def
-_levenshtein_distance`, landed via PR #232) — the breadth task after
-slice assignment for lists' depth work (landed via PR #235) per
-`PROJECT.md`'s breadth-vs-depth policy.
-It joins `levenshtein_distance` as the second member of a
-"string-distance" pair sitting next to `is_anagram`/`is_rotation`/
-`is_permutation`: both return a number rather than a boolean, but where
-`levenshtein_distance` handles strings of *any* length via dynamic
-programming, `hamming_distance` is the simpler, stricter metric — the
-count of positions at which two *equal-length* strings differ — computed
-with a single position-wise scan, no DP table needed. This is
-deliberately the "easy" counterpart landing right after the DP one, the
-same kind of technique-diversification `is_isogram`'s frequency-set check
-was to `is_balanced`'s stack scan.
-
-Unlike `levenshtein_distance` (which accepts strings of any length pair
-and always returns *some* distance), Hamming distance is only defined for
-equal-length inputs — there is no meaningful pairwise "differs at
-position i" comparison once the strings run out of shared positions.
-Reject unequal-length input with a domain error, mirroring `divisors`'s
-own type-vs-domain-error split (a type check first, a separate
-domain-specific `CinderRuntimeError` after once the types are already
-confirmed valid) rather than silently truncating to the shorter length
-or padding the longer one:
-
-```python
-def _hamming_distance(arguments: list, line: int, column: int) -> object:
-    _require_arity("hamming_distance", arguments, 2, line, column)
-    string1, string2 = arguments
-    if not isinstance(string1, str):
-        raise CinderRuntimeError(
-            f"hamming_distance() requires a string as its first argument, got {type_name(string1)}",
-            line, column,
-        )
-    if not isinstance(string2, str):
-        raise CinderRuntimeError(
-            f"hamming_distance() requires a string as its second argument, got {type_name(string2)}",
-            line, column,
-        )
-    if len(string1) != len(string2):
-        raise CinderRuntimeError(
-            f"hamming_distance() requires strings of equal length, got lengths {len(string1)} and {len(string2)}",
-            line, column,
-        )
-    return sum(1 for c1, c2 in zip(string1, string2) if c1 != c2)
-```
-
-Model the arity/type-checking exactly on `_is_anagram`'s (and, once
-landed, `_levenshtein_distance`'s) two-argument "first argument"/"second
-argument" message shape, matching the code above verbatim. The
-equal-length check runs after both type checks succeed, so a wrong-type
-first argument reports the type error, not a confusing length comparison
-against a non-string.
-
-Acceptance criteria:
-- `hamming_distance("karolin", "kathrin");` is `3` — the classic textbook
-  example, differing at 0-indexed positions 2 (`r` vs `t`), 3 (`o` vs
-  `h`), and 4 (`l` vs `r`); every other position matches.
-- `hamming_distance("", "");` is `0` — two empty strings have no
-  differing positions.
-- `hamming_distance("abc", "abc");` is `0` — identical strings.
-- `hamming_distance("abc", "abd");` is `1` — a single differing position
-  at the end.
-- `hamming_distance("aaaa", "bbbb");` is `4` — every position differs.
-- Symmetric, matching the metric property: `hamming_distance("abc",
-  "xyz");` equals `hamming_distance("xyz", "abc");` (both `3`).
-- `hamming_distance("abc", "ab");` raises `CinderRuntimeError` matching
-  `"hamming_distance() requires strings of equal length, got lengths 3
-  and 2"` — unequal lengths are a domain error, not silent truncation or
-  padding.
-- `hamming_distance(5, "ab");` raises `CinderRuntimeError` matching
-  `"hamming_distance() requires a string as its first argument, got
-  int"` — the type check fires before the length check, even though `5`
-  has no length to compare.
-- `hamming_distance("a", true);` raises `CinderRuntimeError` matching
-  `"hamming_distance() requires a string as its second argument, got
-  bool"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `levenshtein_distance`/
-`is_permutation`, see current line numbers — shift if earlier tasks this
-cycle landed first), `tests/test_builtins.py`. Once merged, `README.md`'s
-Builtins bullet needs `hamming_distance` added near
-`levenshtein_distance`/`is_anagram`/`is_rotation`/`is_permutation`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`) [claimed 2026-08-13T19:24:23Z]
-
-Build: the depth task after task 1's breadth work (`hamming_distance`)
-per `PROJECT.md`'s breadth-vs-depth policy, and the direct follow-on to
-slice assignment for lists (landed via PR #235): that task deliberately
-scopes `SliceAssign` to the step-less form only, rejecting a stepped
-target (`list[a:b:c] = value;`) with `ParseError` `"invalid assignment
-target"` and explicitly deferring the stepped case to "a future task"
-since it needs an exact length match rather than its own grow-or-shrink
-behavior. This task closes that gap. (Verify the current behavior still
-matches this description before starting — `python3 -m cinder.cli eval
-'let xs = [1, 2, 3]; xs[0:3:2] = [9];'` should raise that `ParseError`.)
-
-In `cinder/ast_nodes.py`: `SliceAssign` (added by slice assignment,
-PR #235, right after `SliceExpr`) gains a fourth field, `step: "Expr | None"`, inserted
-between `end` and `value` to mirror `SliceExpr`'s own field order
-(`obj`, `start`, `end`, `step`).
-
-In `cinder/parser.py`'s `_assignment()`: replace slice assignment's
-step-rejection branch —
-```python
-if isinstance(expr, SliceExpr):
-    if expr.step is not None:
-        raise ParseError(
-            "invalid assignment target", eq_token.line, eq_token.column
-        )
-    return SliceAssign(
-        expr.obj, expr.start, expr.end, value, eq_token.line, eq_token.column
-    )
-```
-— with one that threads `expr.step` through instead of rejecting it:
-```python
-if isinstance(expr, SliceExpr):
-    return SliceAssign(
-        expr.obj, expr.start, expr.end, expr.step, value,
-        eq_token.line, eq_token.column,
-    )
-```
-Every other assignment form stays untouched, same as slice assignment
-left them — `xs[0:3:2] += y;`, `xs[0:3:2] ??= y;`, and `xs[0:3:2]++;` still raise
-`"invalid assignment target"` (their branches only match
-`Identifier`/`Index`, never `SliceExpr`, stepped or not).
-
-In `cinder/interpreter.py`, extend `_evaluate_slice_assign` (added by
-slice assignment, PR #235) to evaluate and validate `step` the same way
-`_evaluate_slice`'s read-side logic already does (search for `def
-_evaluate_slice`: type-check via `isinstance(step, int) and not
-isinstance(step, bool)`, then reject `step == 0`), evaluated in source
-order right after `end` and before `value`. Compute
-`norm_start, norm_end, norm_step = slice(start, end,
-step).indices(len(obj))` (same call slice assignment already makes, now
-passing the real `step` instead of a hardcoded `None`). Then, instead of
-slice assignment's plain `obj[norm_start:norm_end] = value`, assign through the
-3-argument slice and let Python's own extended-slice-assignment
-machinery enforce the length match, converting its `ValueError` into a
-`CinderRuntimeError`:
-```python
-try:
-    obj[norm_start:norm_end:norm_step] = value
-except ValueError:
-    target_len = len(range(norm_start, norm_end, norm_step))
-    raise CinderRuntimeError(
-        f"attempt to assign sequence of size {len(value)} to "
-        f"extended slice of size {target_len}",
-        expr.line, expr.column,
-    ) from None
-return value
-```
-No manual "is this an extended slice" branch is needed — Python's
-`list.__setitem__` only enforces the exact-length rule when the
-effective step is not `1`, so a step-less call (`step=None`) or an
-explicit `step=1` both keep slice assignment's existing grow/shrink
-behavior automatically, and only `abs(norm_step) != 1` cases (or any step
-that normalizes away from a contiguous run) raise. The rest of
-`_evaluate_slice_assign` (the string-immutability check, the
-not-a-list check, the bound type checks, the value-must-be-a-list
-check) stays exactly as slice assignment wrote it.
-
-Acceptance criteria:
-- `let xs = [1, 2, 3, 4, 5, 6]; xs[0:6:2] = [9, 9, 9]; print(xs);`
-  prints `[9, 2, 9, 4, 9, 6]` — every other element (indices 0, 2, 4)
-  replaced in order.
-- `let xs = [1, 2, 3]; xs[::-1] = [7, 8, 9]; print(xs);` prints
-  `[9, 8, 7]` — a full-list reverse-order target assigns `7` to index
-  2, `8` to index 1, `9` to index 0.
-- `let xs = [1, 2, 3, 4]; xs[0:4:2] = [1];` raises `CinderRuntimeError`
-  matching `"attempt to assign sequence of size 1 to extended slice of
-  size 2"` — a length mismatch on a real extended slice is a domain
-  error, not silent truncation/padding or a grow/shrink.
-- `let xs = [1, 2, 3]; xs[0:2:1] = [9, 9, 9, 9]; print(xs);` prints
-  `[9, 9, 9, 9, 3]` — an *explicit* `step=1` still behaves like the
-  step-less form (grows the list), since step `1` is never "extended"
-  regardless of how it was spelled.
-- Slice assignment's own step-less acceptance criteria (growing, shrinking,
-  omitted bounds, out-of-range clamping, negative bounds, the
-  assignment-expression-evaluates-to-the-value convention, the
-  non-list-value error, the string-immutability error) all still pass
-  unchanged — this task only adds behavior for a non-1 step, it does
-  not change the step-less path.
-- `let xs = [1, 2, 3, 4, 5]; xs[0:5:2] = "ab";` raises
-  `CinderRuntimeError` matching `"slice assignment requires a list
-  value, got str"` — the value-must-be-a-list check still fires before
-  any length comparison, even though a 2-character string might
-  otherwise "fit" the 3-element target by accident of length.
-- `let xs = [1, 2, 3]; xs[0:3:"a"] = [1, 2, 3];` raises
-  `CinderRuntimeError` matching `"slice step must be an int, got
-  str"`.
-- `let xs = [1, 2, 3]; xs[0:3:0] = [1, 2, 3];` raises
-  `CinderRuntimeError` matching `"slice step must not be zero"`.
-- `let s = "abcdef"; s[0:6:2] = "xyz";` raises `CinderRuntimeError`
-  matching `"strings are immutable and do not support item
-  assignment"` — same message as the step-less string case; a stepped
-  slice target on a string is no longer a `ParseError` after this task
-  (it's now a legal *parse*, since lists accept it), but it's still
-  rejected at runtime once the target's actual type is known.
-- `let xs = [1, 2, 3]; xs[0:3:2] += [9];` and `xs[0:3:2]++;` both still
-  raise `ParseError` matching `"invalid assignment target"` —
-  unaffected regression checks, same as slice assignment.
-- Read-side stepped slicing (`xs[0:6:2];` as an expression, not an
-  assignment target) is completely unaffected — no `SliceAssign` node
-  is ever built for it, same `SliceExpr` AST and behavior as before
-  this task.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`SliceAssign` gains `step`),
-`cinder/parser.py` (`_assignment`'s `SliceExpr` branch),
-`cinder/interpreter.py` (`_evaluate_slice_assign`), `tests/test_parser.py`,
-`tests/test_interpreter.py`. Once merged, `README.md`'s Data structures
-bullet needs its slice-assignment note extended to mention the stepped
-form, and `PROJECT.md`'s roadmap paragraph needs it moved from backlog
-to landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 3. Standard library: `is_harshad` — digit-sum divisibility predicate
+## 1. Standard library: `is_harshad` — digit-sum divisibility predicate
 
 Build: add `is_harshad(n)` to `cinder/builtins.py`, registered right
 after `is_automorphic` (search for `def _is_automorphic`, the current
 last entry in the integer-property cluster) — the breadth task after
-task 2's depth work (extended slice assignment) per
+extended slice assignment for lists' depth work (landed via PR #237) per
 `PROJECT.md`'s breadth-vs-depth policy. A positive integer `n` is a
 Harshad (or Niven) number when it is evenly divisible by the sum of
 its own decimal digits, e.g. `18` is Harshad since `1 + 8 = 9` and `18
@@ -315,9 +86,9 @@ merged, `README.md`'s Builtins bullet needs `is_harshad` added near
 
 ---
 
-## 4. Language: map-destructuring key rename (`let {a: x, b} = expr;`)
+## 2. Language: map-destructuring key rename (`let {a: x, b} = expr;`)
 
-Build: the depth task after task 3's breadth work (`is_harshad`) per
+Build: the depth task after task 1's breadth work (`is_harshad`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every map-destructuring form —
 `let {a, b} = expr;`, plain assignment `{a, b} = expr;`, `for {a, b} in
 list_of_maps { ... }`, function params `fn f({a, b}) { ... }`, and both
@@ -468,9 +239,9 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_perfect_cube` — integer cube-root predicate
+## 3. Standard library: `is_perfect_cube` — integer cube-root predicate
 
-Build: the breadth task after task 4's depth work (map-destructuring key
+Build: the breadth task after task 2's depth work (map-destructuring key
 rename) per `PROJECT.md`'s breadth-vs-depth policy. A positive, negative,
 or zero integer `n` is a perfect cube when some integer `k` satisfies
 `k ** 3 == n` (e.g. `27 = 3**3`, `-8 = (-2)**3`, `0 = 0**3`). It joins the
@@ -478,7 +249,7 @@ or zero integer `n` is a perfect cube when some integer `k` satisfies
 `is_abundant`/`is_deficient`/`is_automorphic`/`is_harshad`
 integer-property cluster as one more digit/root-based classification —
 register it right after `is_harshad` (search for `def _is_harshad`, the
-current last entry in the cluster once task 3 lands).
+current last entry in the cluster once task 1 lands).
 
 Unlike `is_perfect_square` (which excludes negative input, since no real
 square root of a negative number is an integer), cube roots of negative
@@ -556,9 +327,9 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `aliquot_sum` — sum of an integer's proper divisors
+## 4. Standard library: `aliquot_sum` — sum of an integer's proper divisors
 
-Build: a fresh breadth task after task 5's depth work (map-destructuring
+Build: a fresh breadth task after task 2's depth work (map-destructuring
 key rename), added this grooming pass to keep the backlog stocked ahead
 of tonight's pace. Add `aliquot_sum(n)` to `cinder/builtins.py`,
 registered right after `divisors` (search for `def _divisors`) — the

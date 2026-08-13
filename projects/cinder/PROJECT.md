@@ -728,8 +728,35 @@ non-negative integer `k` (a pronic/oblong number, e.g. `6 = 2 * 3`,
 `12 = 3 * 4`), one more root-based classification sitting next to
 `is_perfect_square`/`is_perfect_cube`, computed the same exact-integer
 `math.isqrt` way `is_perfect_square` already does rather than a
-floating-point approximation. And only much later, a bytecode VM if
-performance ever actually matters.
+floating-point approximation. And as task 9 (renumbered task 6 in
+`BACKLOG.md`, since tasks 1-3 above have since landed), default values
+in list-destructuring patterns (`let [a, b = 5] = expr;`) — the depth
+task after task 8's breadth work, extending the same "use a fallback
+when nothing was supplied" convention function parameters already have
+(`fn f(a, b = 1) { ... }`) down into list-destructuring patterns
+themselves: today every list-pattern form (`let`, plain assignment,
+`for`, function params, both comprehension loop-variable forms)
+requires the source list to have exactly as many elements as the
+pattern (or, with a `...rest`, at least that many), with no way to
+supply a fallback for a position the source list didn't reach.
+Deliberately scoped to list patterns only (map patterns already have a
+distinct, meaningful "missing key" domain error, not an obvious gap to
+fill the same way) and to the `let`/`for`/param/comprehension forms
+only, not the plain-assignment form (`[a, b] = expr;`), since that
+form's pattern is parsed by first parsing an ordinary list literal,
+whose elements never accept `=` at that precedence — teaching it to
+would be a materially different, riskier parser change than this task.
+And as task 10 (task 7 in `BACKLOG.md`), `collatz_length(n)` — a
+breadth task after task 9's depth work, counting the number of steps
+the Collatz (3n+1) recurrence takes to reach `1` from a positive
+integer `n` (repeatedly halving `n` if even, or replacing it with `3n +
+1` if odd), sitting next to `is_happy_number` as the same
+iterate-a-recurrence-and-count technique, but returning a step count
+rather than a boolean, so no cycle detection is needed (unlike
+`is_happy_number`, the Collatz conjecture — unproven in general, but
+true for every integer ever checked, well within Cinder int range — is
+that this process always terminates at `1`). And only much later, a
+bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -773,9 +800,15 @@ backlog needed restocking faster than the alternation would otherwise
 call for — that placed task 7 (keyword arguments in function calls) as
 the depth task this grooming pass calls for once tasks 5 and 6 stacked
 two breadth tasks in a row, per that same signal, and that placed task
-8 (`is_pronic`) as breadth right after task 7's depth work in turn. The
-next grooming pass should keep alternating breadth/depth from here
-absent another restocking-speed reason to break it.
+8 (`is_pronic`) as breadth right after task 7's depth work in turn. This
+grooming pass (after tasks 1-3 landed and renumbered the backlog) added
+task 9 (default values in list-destructuring patterns, `BACKLOG.md`
+task 6) as the depth task after task 8's breadth work in turn, and task
+10 (`collatz_length`, `BACKLOG.md` task 7) as breadth right after that
+depth work in turn — restocking the backlog back up to a comfortable
+seven-task buffer rather than letting it run down to the five-task
+minimum. The next grooming pass should keep alternating breadth/depth
+from here absent another restocking-speed reason to break it.
 
 ## History
 

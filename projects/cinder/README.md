@@ -146,11 +146,15 @@ while (i < 10) {
   and list writes), plus read-only string indexing, and slicing
   `list[start:end]`/`string[start:end]` with an optional third `:step`
   component (`list[start:end:step]`/`string[start:end:step]`, Python-style,
-  out-of-range bounds clamp, negative step reverses direction); step-less
-  slice assignment on lists (`list[start:end] = other_list;`, growing or
+  out-of-range bounds clamp, negative step reverses direction); slice
+  assignment on lists (`list[start:end] = other_list;`, growing or
   shrinking the list to fit the replacement's length, same bound
-  normalization as the read side; a stepped target (`list[a:b:c] = ...;`)
-  still raises `ParseError`, and string targets remain immutable); list
+  normalization as the read side), including a stepped target
+  (`list[start:end:step] = other_list;`, delegating to Python's own
+  extended-slice-assignment length enforcement — the replacement must be
+  exactly the slice's length for any step other than `1`, raising a clean
+  runtime error rather than silently truncating/padding; string targets
+  remain immutable); list
   literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   list comprehensions `[expr for x in iterable]` and `[expr for x in
@@ -224,6 +228,8 @@ while (i < 10) {
   `levenshtein_distance` to compute the classic string edit distance (minimum single-character
   insertions/deletions/substitutions to turn one string into another),
   `is_automorphic` to test whether an integer's square ends with the integer itself in decimal,
+  `hamming_distance` to count differing positions between two equal-length strings,
+  `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -304,16 +310,14 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: step-less slice assignment
-for lists (`list[start:end] = other_list;`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `hamming_distance` as
-`levenshtein_distance`'s equal-length-only counterpart, extended
-slice assignment for lists with a step
-(`list[start:end:step] = other_list;`), `is_harshad` to test whether
-an integer is divisible by the sum of its own decimal digits,
-map-destructuring key rename (`let {a: x, b} = expr;`),
-`is_perfect_cube` to test whether an integer is a perfect cube, and
-`aliquot_sum` to sum an integer's proper divisors.
+Actively developed, nightly. Recently landed: `hamming_distance`,
+extended (stepped) slice assignment for lists
+(`list[start:end:step] = other_list;`), and `is_harshad`. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): map-destructuring key rename
+(`let {a: x, b} = expr;`), `is_perfect_cube` to test whether an integer
+is a perfect cube, `aliquot_sum` to sum an integer's proper divisors,
+keyword arguments in function calls (`f(a: 1, b: 2)`), and `is_pronic`
+to test whether an integer is expressible as `k * (k + 1)`.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

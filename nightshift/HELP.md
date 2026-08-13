@@ -248,3 +248,22 @@ push/fetch is down, so ending this session here rather than sitting and
 retrying. Next QA session should retry `git fetch origin` first thing —
 if it succeeds, resume QA on PR #236 (worktree was never created, so
 nothing to clean up).
+
+**Addendum, same session, ~1 min later:** this was committed locally
+(couldn't push — same publickey error). Then, out of curiosity before
+ending the session, tried `git push origin main` once more: this time it
+got *past* SSH auth cleanly and instead hit `remote: Internal Server
+Error` / `! [remote rejected] main -> main (Internal Server Error)`
+(Request ID `5350cce3d1161fa6d7127ffee077f3b8`). Immediately retried `git
+fetch origin` right after and got the *original* `Permission denied
+(publickey)` again. So this isn't a clean single-cause failure — auth
+itself is flaking (sometimes passes, sometimes doesn't) layered with a
+GitHub-side mutation-endpoint 500, which matches the flavor of
+transient GitHub-API flakiness already logged multiple times in this
+file (2026-07-24 through 2026-08-03 entries, `gh pr create`/`gh pr
+merge` 500s). Given the inconsistency, this may resolve on its own; not
+retrying further this session (well past the 3x budget now). This
+commit (`b64dc53`, this HELP.md entry) is sitting local-only on `main`
+in the repo root until a push succeeds — next session should `git push
+origin main` early if `git log origin/main..HEAD` shows it's still
+unpushed.

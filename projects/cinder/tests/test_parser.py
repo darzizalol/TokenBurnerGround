@@ -36,6 +36,7 @@ from cinder.ast_nodes import (
     OptionalCall,
     OptionalIndex,
     ReturnStmt,
+    SliceAssign,
     SliceExpr,
     Spread,
     SwitchStmt,
@@ -123,6 +124,14 @@ def shape(node):
             "IndexAssign",
             shape(node.obj),
             shape(node.index),
+            shape(node.value),
+        )
+    if isinstance(node, SliceAssign):
+        return (
+            "SliceAssign",
+            shape(node.obj),
+            shape(node.start) if node.start is not None else None,
+            shape(node.end) if node.end is not None else None,
             shape(node.value),
         )
     if isinstance(node, IndexCompoundAssign):
@@ -1522,9 +1531,39 @@ class TestListsAndMaps(unittest.TestCase):
             ("Index", ("Identifier", "xs"), ("Literal", 1)),
         )
 
-    def test_slice_assignment_target_raises_parse_error(self):
+    def test_slice_assignment_target_parses_as_slice_assign(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("xs[1:2] = [9];")[0]),
+            (
+                "ExprStmt",
+                (
+                    "SliceAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 1),
+                    ("Literal", 2),
+                    ("ListLiteral", [("Literal", 9)]),
+                ),
+            ),
+        )
+
+    def test_slice_assignment_target_omitted_bounds(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("xs[:] = [9];")[0]),
+            (
+                "ExprStmt",
+                (
+                    "SliceAssign",
+                    ("Identifier", "xs"),
+                    None,
+                    None,
+                    ("ListLiteral", [("Literal", 9)]),
+                ),
+            ),
+        )
+
+    def test_stepped_slice_assignment_target_raises_parse_error(self):
         with self.assertRaises(ParseError):
-            parse_stmts("xs[1:2] = [9];")
+            parse_stmts("xs[1:2:3] = [9];")
 
 
 class TestStringInterpolation(unittest.TestCase):

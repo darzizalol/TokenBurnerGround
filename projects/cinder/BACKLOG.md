@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-destructuring key rename (`let {a: x, b} = expr;`)
+## 1. Language: map-destructuring key rename (`let {a: x, b} = expr;`) [claimed 2026-08-13T20:03:35Z]
 
 Build: the depth task after task 1's breadth work (`is_harshad`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every map-destructuring form —

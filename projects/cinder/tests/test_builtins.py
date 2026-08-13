@@ -3019,6 +3019,48 @@ class TestIsAutomorphic(unittest.TestCase):
             run("is_automorphic();")
 
 
+class TestIsHarshad(unittest.TestCase):
+    def test_is_harshad_of_18(self):
+        self.assertEqual(run("let result = is_harshad(18);").get("result"), True)
+
+    def test_is_harshad_of_19_is_false(self):
+        self.assertEqual(run("let result = is_harshad(19);").get("result"), False)
+
+    def test_is_harshad_of_1(self):
+        self.assertEqual(run("let result = is_harshad(1);").get("result"), True)
+
+    def test_is_harshad_of_12(self):
+        self.assertEqual(run("let result = is_harshad(12);").get("result"), True)
+
+    def test_is_harshad_of_11_is_false(self):
+        self.assertEqual(run("let result = is_harshad(11);").get("result"), False)
+
+    def test_is_harshad_of_100(self):
+        self.assertEqual(run("let result = is_harshad(100);").get("result"), True)
+
+    def test_is_harshad_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_harshad(0);").get("result"), False)
+
+    def test_is_harshad_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_harshad(-18);").get("result"), False)
+
+    def test_is_harshad_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_harshad(5.0);")
+        self.assertIn("is_harshad", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_harshad_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_harshad(true);")
+        self.assertIn("is_harshad", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_harshad_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_harshad();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

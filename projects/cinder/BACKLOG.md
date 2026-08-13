@@ -105,7 +105,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`)
+## 2. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`) [claimed 2026-08-13T19:24:23Z]
 
 Build: the depth task after task 1's breadth work (`hamming_distance`)
 per `PROJECT.md`'s breadth-vs-depth policy, and the direct follow-on to

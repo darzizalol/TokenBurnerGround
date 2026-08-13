@@ -215,3 +215,36 @@ merge` failure, don't just trust `gh pr view`'s `merged`/`state` fields —
 `git pull --rebase origin main` and check whether the commit landed
 anyway before logging it as blocked, since GitHub's merge endpoint can
 apparently fail *after* writing to the base branch.
+
+---
+
+## 2026-08-13T14:39:40Z — QA
+
+What's wrong: SSH auth to `git@github.com` started failing mid-session with
+`Permission denied (publickey)`. The session's very first step (`git pull
+--rebase origin main`) succeeded cleanly. Minutes later, trying to fetch
+PR #236's branch for QA (`git fetch origin` / `git worktree add --detach
+.worktrees/qa-pr236 origin/feat/20260813-hamming-distance`) failed with
+`Permission denied (publickey)`. `ssh-add -l` reports "Could not open a
+connection to your authentication agent" — no `SSH_AUTH_SOCK`/agent
+available in this session. `git config core.sshCommand` is unset (no
+custom key override), so this is the default `ssh` using whatever agent
+identity was available — which evidently went away between the start-of-session
+pull and this fetch.
+
+What I tried: `git fetch origin` (fail), `ssh-add -l` (no agent), `git
+fetch origin` again (fail, same error), `git pull --rebase origin main`
+again (fail, same error) — 3 identical failures, stopped per the
+3x-repeat token-discipline rule rather than continuing to retry.
+
+What I did instead: paged the human via `notify.sh` since this smells
+like an expired/unloaded SSH key or a dropped `ssh-agent` — something
+only human hands can fix (re-add the key to the agent, or check if the
+deploy key/PAT-backed SSH key expired). PR #236 (`hamming_distance`
+builtin) has `VERDICT: LGTM` and is otherwise ready for QA but could not
+be tested — no worktree could be created to check it out. No other open
+PRs to check this session. Nothing else for the QA role to do while git
+push/fetch is down, so ending this session here rather than sitting and
+retrying. Next QA session should retry `git fetch origin` first thing —
+if it succeeds, resume QA on PR #236 (worktree was never created, so
+nothing to clean up).

@@ -649,90 +649,54 @@ coercion), and Python's own `obj[start:end] = value` list-slice-assignment
 semantics handle the length change (grow or shrink) once the normalized
 bounds are computed the same way `_evaluate_slice`'s read-side logic
 already does — have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, `hamming_distance(a, b)` — a breadth task after slice
-assignment's depth work, the equal-length-only counterpart to
-`levenshtein_distance`: the count of positions at which two strings of
-the *same* length differ, via a single position-wise scan rather than a
-DP table, raising a domain error on unequal-length input instead of
-truncating or padding. Joins `levenshtein_distance` as the second member
-of a string-distance pair sitting next to
-`is_anagram`/`is_rotation`/`is_permutation`. And as task 2, extended
-slice assignment for lists (`list[start:end:step] = other_list;`) — the
-depth task after task 1's breadth work and the direct follow-on to slice
-assignment, closing the gap slice assignment deliberately deferred: a
-stepped slice target parses but is rejected before it ever reaches the
-interpreter. This task lets it through and delegates the exact-length
-enforcement to Python's own extended-slice-assignment machinery
-(`obj[start:end:step] = value`, which already raises when the
-replacement's length doesn't match the slice's length for any step
-other than `1`), converting its `ValueError` into a
-`CinderRuntimeError` rather than reimplementing the length check by
-hand. And as task 3, `is_harshad(n)` — a breadth task after task 2's
-depth work, testing whether a positive integer is divisible by the sum
-of its own decimal digits (e.g. `18` is Harshad since `1 + 8 = 9` and
-`18 % 9 == 0`; also called a Niven number), one more member of the
-integer-property cluster sitting next to `is_perfect_square`/
-`is_armstrong`/`is_automorphic`, computed with the same plain
-`sum(int(d) for d in str(abs(n)))` digit walk `digit_sum` already does
-inline (not by calling the `digit_sum` builtin's own argument-list
-wrapper) rather than via any modular-arithmetic shortcut, since the
-whole point is checking one number against its own digit sum. And as
-task 4, map-destructuring key rename (`let {a: x, b} = expr;`) — the
-depth task after task 3's breadth work, closing the one gap every
-map-destructuring form (`let`, plain assignment, `for`, function
-params, both comprehension loop-variable forms) still shares: each
-binds a variable under the *same* name as the map key it reads, with
-no way to bind under a different local name the way JS destructuring's
-`const {a: x} = obj` can. All five forms already funnel through one
-shared parser helper (`_destructure_map_pattern`, plus its inlined
-twin for the plain-assignment form) and one shared interpreter helper
-(`_bind_map_destructure`), so this is a centralized change: `names`
-becomes a list of `(key, binding)` pairs, `binding` defaulting to `key`
-when no `:` rename is written, rather than five separate per-form
-edits. And as task 5, `is_perfect_cube(n)` — a breadth task after
-task 4's depth work, testing whether an integer is a perfect cube
-(`k ** 3 == n` for some integer `k`, e.g. `27 = 3**3`), one more
-member of the integer-property cluster sitting next to
-`is_perfect_square`, but — unlike `is_perfect_square` — accepting
-negative input as potentially `true` (`-8 = (-2)**3`), since cube
-roots of negative numbers are real and integral where square roots
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the four tasks
+that used to occupy this slot, `hamming_distance`, extended slice
+assignment for lists, `is_harshad`, and map-destructuring key rename,
+have all since landed and are covered in the "have since landed"
+history above; this grooming pass dropped their now-redundant
+not-yet-scoped descriptions from this section rather than leaving them
+to drift further out of sync):
+as task 1, `is_perfect_cube(n)` — a breadth task testing whether an
+integer is a perfect cube (`k ** 3 == n` for some integer `k`, e.g.
+`27 = 3**3`), one more member of the integer-property cluster sitting
+next to `is_perfect_square`, but — unlike `is_perfect_square` —
+accepting negative input as potentially `true` (`-8 = (-2)**3`), since
+cube roots of negative numbers are real and integral where square roots
 aren't; computed via a hand-rolled exact-integer binary-search cube
 root (no `math.icbrt` exists in the standard library, and a
 floating-point `round(n ** (1/3))` risks the same rounding-error
 problem `math.isqrt` was chosen to avoid for squares) rather than a
-float approximation. And as task 6, `aliquot_sum(n)` — a breadth task
-queued this grooming pass to keep the backlog stocked ahead of the
-night's pace, the number-returning sibling of `divisors`'s
-list-returning walk and the value-returning counterpart to the
+float approximation. And as task 2, `aliquot_sum(n)` — a breadth task,
+the number-returning sibling of `divisors`'s list-returning walk and
+the value-returning counterpart to the
 `is_perfect_number`/`is_abundant`/`is_deficient` predicate cluster: the
 sum of `n`'s own proper divisors (e.g. `6`'s sum to `6`, confirming it's
 perfect), reusing the same `sqrt(n)`-bounded trial-division shape that
 whole cluster already shares, with a domain error on `n < 1` mirroring
 `divisors`'s own convention rather than the predicate cluster's
-answer-`false` one. And as task 7, keyword arguments in function calls
-(`f(a: 1, b: 2)`) — the depth task queued this grooming pass after
-tasks 5 and 6 (`is_perfect_cube`, `aliquot_sum`) stacked two breadth
-tasks back to back, matching the same two-in-a-row signal noted below.
-Every call today binds purely positionally; this adds trailing
-keyword arguments matched by parameter name, Python-style, scoped to
-user-defined `CinderFunction`s only — builtins stay positional-only and
-raise cleanly if handed one. A keyword argument can target only a
-plain named parameter, never a list/map-destructuring parameter or the
-trailing rest parameter, both of which simply have no name a caller
-could address; that restriction falls out for free from matching
-against parameter names rather than needing its own check. And as task
-8, `is_pronic(n)` — a breadth task after task 7's depth work, testing
+answer-`false` one. And as task 3, keyword arguments in function calls
+(`f(a: 1, b: 2)`) — the depth task queued after tasks 1 and 2
+(`is_perfect_cube`, `aliquot_sum`) stacked two breadth tasks back to
+back, matching the same two-in-a-row signal noted below. Every call
+today binds purely positionally; this adds trailing keyword arguments
+matched by parameter name, Python-style, scoped to user-defined
+`CinderFunction`s only — builtins stay positional-only and raise
+cleanly if handed one. A keyword argument can target only a plain named
+parameter, never a list/map-destructuring parameter or the trailing
+rest parameter, both of which simply have no name a caller could
+address; that restriction falls out for free from matching against
+parameter names rather than needing its own check. And as task 4,
+`is_pronic(n)` — a breadth task after task 3's depth work, testing
 whether an integer is expressible as `k * (k + 1)` for some
 non-negative integer `k` (a pronic/oblong number, e.g. `6 = 2 * 3`,
 `12 = 3 * 4`), one more root-based classification sitting next to
 `is_perfect_square`/`is_perfect_cube`, computed the same exact-integer
 `math.isqrt` way `is_perfect_square` already does rather than a
-floating-point approximation. And as task 9 (renumbered task 6 in
-`BACKLOG.md`, since tasks 1-3 above have since landed), default values
-in list-destructuring patterns (`let [a, b = 5] = expr;`) — the depth
-task after task 8's breadth work, extending the same "use a fallback
-when nothing was supplied" convention function parameters already have
+floating-point approximation. And as task 5, default values in
+list-destructuring patterns (`let [a, b = 5] = expr;`) — the depth task
+after task 4's breadth work, extending the same "use a fallback when
+nothing was supplied" convention function parameters already have
 (`fn f(a, b = 1) { ... }`) down into list-destructuring patterns
 themselves: today every list-pattern form (`let`, plain assignment,
 `for`, function params, both comprehension loop-variable forms)
@@ -746,69 +710,35 @@ only, not the plain-assignment form (`[a, b] = expr;`), since that
 form's pattern is parsed by first parsing an ordinary list literal,
 whose elements never accept `=` at that precedence — teaching it to
 would be a materially different, riskier parser change than this task.
-And as task 10 (task 7 in `BACKLOG.md`), `collatz_length(n)` — a
-breadth task after task 9's depth work, counting the number of steps
-the Collatz (3n+1) recurrence takes to reach `1` from a positive
-integer `n` (repeatedly halving `n` if even, or replacing it with `3n +
-1` if odd), sitting next to `is_happy_number` as the same
-iterate-a-recurrence-and-count technique, but returning a step count
-rather than a boolean, so no cycle detection is needed (unlike
-`is_happy_number`, the Collatz conjecture — unproven in general, but
-true for every integer ever checked, well within Cinder int range — is
-that this process always terminates at `1`). And only much later, a
-bytecode VM if performance ever actually matters.
-The Architect should keep scoping these into `BACKLOG.md` incrementally —
-do not jump ahead of the current layer, and should keep watching this
-same breadth-vs-depth balance: two or more single-builtin predicate
-tasks queued back-to-back is a signal to inject another language-depth
-task rather than just extending the streak further, the same threshold
-that placed the numeric-literal-underscores task above, and that
-placed the destructuring-function-parameters task as depth right after
-`is_emirp`'s breadth work, and that placed `divisors` as
-breadth right after that depth work rather than stacking a third depth
-task in a row, and that placed optional call chaining as
-depth right after `divisors`' breadth work in turn, and that placed
-`is_rotation` as a single breadth task after the optional call
-chaining depth work rather than immediately stacking a second predicate
-task behind it, and that placed the comprehension map-destructuring
-task as depth right after `is_rotation`'s breadth work in turn, and
-that placed `is_balanced` as breadth right after that depth
-work in turn, the same one-breadth-then-depth placement the safe
-navigation bracket indexing task got after `is_coprime`, and that
-placed the map-destructuring rest element task as depth right after
-`is_balanced`'s breadth work in turn, and that placed `is_isogram` as
-breadth right after that depth work in turn, and that placed the
-plain-assignment map-destructuring rest element task as depth right
-after `is_isogram`'s breadth work in turn, that placed
-`levenshtein_distance` as breadth right after that depth work in
-turn, that placed chained comparison operators as depth right
-after `levenshtein_distance`'s breadth work in turn, that placed
-`is_automorphic` as breadth right after that depth work in turn,
-that placed slice assignment for lists as depth right after
-`is_automorphic`'s breadth work in turn, that placed task 1
-(`hamming_distance`) as breadth right after slice assignment's depth
-work in turn, that placed task 2 (extended slice assignment for lists)
-as depth right after task 1's breadth work in turn, that placed task 3
-(`is_harshad`) as breadth right after task 2's depth work in turn,
-that placed task 4 (map-destructuring key rename) as depth right
-after task 3's breadth work in turn, that placed task 5
-(`is_perfect_cube`) as breadth right after task 4's depth work in
-turn, and that placed task 6 (`aliquot_sum`) as a second breadth task
-right after task 5's in turn — queued that grooming pass ahead of a
-depth task rather than immediately after task 4's depth work, since the
-backlog needed restocking faster than the alternation would otherwise
-call for — that placed task 7 (keyword arguments in function calls) as
-the depth task this grooming pass calls for once tasks 5 and 6 stacked
-two breadth tasks in a row, per that same signal, and that placed task
-8 (`is_pronic`) as breadth right after task 7's depth work in turn. This
-grooming pass (after tasks 1-3 landed and renumbered the backlog) added
-task 9 (default values in list-destructuring patterns, `BACKLOG.md`
-task 6) as the depth task after task 8's breadth work in turn, and task
-10 (`collatz_length`, `BACKLOG.md` task 7) as breadth right after that
-depth work in turn — restocking the backlog back up to a comfortable
-seven-task buffer rather than letting it run down to the five-task
-minimum. The next grooming pass should keep alternating breadth/depth
-from here absent another restocking-speed reason to break it.
+And as task 6, `collatz_length(n)` — a breadth task after task 5's
+depth work, counting the number of steps the Collatz (3n+1) recurrence
+takes to reach `1` from a positive integer `n` (repeatedly halving `n`
+if even, or replacing it with `3n + 1` if odd), sitting next to
+`is_happy_number` as the same iterate-a-recurrence-and-count technique,
+but returning a step count rather than a boolean, so no cycle detection
+is needed (unlike `is_happy_number`, the Collatz conjecture — unproven
+in general, but true for every integer ever checked, well within
+Cinder int range — is that this process always terminates at `1`). And
+only much later, a bytecode VM if performance ever actually matters.
+The Architect should keep scoping these into `BACKLOG.md` incrementally
+— do not jump ahead of the current layer, and should keep watching the
+same breadth-vs-depth balance that has governed every grooming pass so
+far: two or more single-builtin predicate tasks queued back-to-back is
+a signal to inject a language-depth task rather than extending the
+streak further (most recently, this is what placed task 3, keyword
+arguments, right after tasks 1 and 2 stacked two breadth tasks in a
+row), and a depth task landing is usually followed by one breadth task
+before the next depth task is queued, occasionally two in a row when
+the backlog needs restocking faster than strict alternation would
+otherwise allow (as happened when `aliquot_sum` was added alongside
+`is_perfect_cube` to keep pace with a fast night). This pass found the
+backlog already at a healthy 6 ready tasks (map-destructuring key
+rename having landed via PR #239) and left it as-is rather than padding
+it further — 6 comfortably clears the 5-task minimum, and inventing a
+7th task purely to hit a round number would risk under-scoping it. The
+next grooming pass should keep alternating breadth/depth from here,
+restocking toward 6-7 tasks whenever a merge drops the count within
+reach of the 5-task floor.
 
 ## History
 

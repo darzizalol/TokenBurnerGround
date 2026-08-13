@@ -13,8 +13,9 @@ a later task while an earlier one is unclaimed/open.
 
 ## 1. Standard library: `is_perfect_cube` — integer cube-root predicate
 
-Build: the breadth task after task 1's depth work (map-destructuring key
-rename) per `PROJECT.md`'s breadth-vs-depth policy. A positive, negative,
+Build: the breadth task after last cycle's depth work (map-destructuring
+key rename, landed via PR #239) per `PROJECT.md`'s breadth-vs-depth
+policy. A positive, negative,
 or zero integer `n` is a perfect cube when some integer `k` satisfies
 `k ** 3 == n` (e.g. `27 = 3**3`, `-8 = (-2)**3`, `0 = 0**3`). It joins the
 `is_perfect_square`/`is_armstrong`/`is_leap_year`/`is_perfect_number`/
@@ -101,9 +102,10 @@ leave both to the Architect's next grooming pass, not this task.
 
 ## 2. Standard library: `aliquot_sum` — sum of an integer's proper divisors
 
-Build: a fresh breadth task after task 1's depth work (map-destructuring
-key rename), added this grooming pass to keep the backlog stocked ahead
-of tonight's pace. Add `aliquot_sum(n)` to `cinder/builtins.py`,
+Build: a fresh breadth task alongside task 1 (`is_perfect_cube`), both
+following last cycle's depth work (map-destructuring key rename, landed
+via PR #239), added this grooming pass to keep the backlog stocked
+ahead of tonight's pace. Add `aliquot_sum(n)` to `cinder/builtins.py`,
 registered right after `divisors` (search for `def _divisors`) — the
 number-returning sibling of `divisors`'s list-returning trial-division
 walk, and the value-returning counterpart to the
@@ -189,7 +191,7 @@ grooming pass, not this task.
 
 ## 3. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
 
-Build: the depth task after tasks 2 and 3 stacked two breadth tasks
+Build: the depth task after tasks 1 and 2 stacked two breadth tasks
 (`is_perfect_cube`, `aliquot_sum`) back to back, per `PROJECT.md`'s
 breadth-vs-depth policy. Every function call today binds arguments to
 parameters purely positionally — `fn greet(name, greeting = "hi") {
@@ -499,12 +501,12 @@ leave both to the Architect's next grooming pass, not this task.
 
 ## 4. Standard library: `is_pronic` — oblong-number predicate
 
-Build: the breadth task after task 4's depth work (keyword arguments in
+Build: the breadth task after task 3's depth work (keyword arguments in
 function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add
 `is_pronic(n)` to `cinder/builtins.py`, registered right after
 `is_perfect_cube` (search for `def _is_perfect_cube`, the current last
-entry in the integer-property cluster once task 4's neighbor, task 2,
-lands — this task only depends on task 2, not task 4). A pronic (or
+entry in the integer-property cluster once task 1 (`is_perfect_cube`)
+lands — this task only depends on task 1, not task 3). A pronic (or
 oblong, or heteromecic) number is an integer expressible as `k * (k +
 1)` for some non-negative integer `k` — e.g. `6 = 2 * 3`, `12 = 3 * 4`,
 `20 = 4 * 5` — one more root/product-based classification alongside
@@ -571,7 +573,7 @@ Architect's next grooming pass, not this task.
 
 ## 5. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
 
-Build: the depth task after task 5's breadth work (`is_pronic`) per
+Build: the depth task after task 4's breadth work (`is_pronic`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —
 `let [a, b] = expr;`, plain assignment `[a, b] = expr;`, `for [a, b] in
 list_of_pairs { ... }`, function params `fn f([a, b]) { ... }`, and both
@@ -606,8 +608,9 @@ All four in-scope forms share one parser entry point,
 `_destructure_list_pattern` (search for `def _destructure_list_pattern`
 in `cinder/parser.py`), and one interpreter entry point,
 `_bind_list_destructure` (search for `def _bind_list_destructure` in
-`cinder/interpreter.py`) — the same centralization task 1 (map rename)
-relied on for the map-pattern side. Note `_bind_list_destructure` is
+`cinder/interpreter.py`) — the same centralization the map-destructuring
+key rename task (PR #239) relied on for the map-pattern side. Note
+`_bind_list_destructure` is
 *also* called for the out-of-scope plain-assignment form (from
 `_evaluate_destructure_assign`), so its `names` parameter's shape must
 stay uniform across both parsing paths even though only one produces
@@ -768,10 +771,10 @@ param.rest, value, line, column)` call site (in the `if param.names is
 not None: ... else: ...` dispatch, right after parameter-value
 selection) already forwards `param.names` opaquely, so it benefits from
 element-level defaults automatically once `_fn_param` starts producing
-the new pair shape. (If task 4, keyword arguments, has landed by the
+the new pair shape. (If task 3, keyword arguments, has landed by the
 time this task is picked up, that value-selection block will look
 slightly different — it'll also check `keywords` — but the destructure-bind
-call right below it is unaffected either way, per task 4's own note that
+call right below it is unaffected either way, per task 3's own note that
 its `keywords` change doesn't touch that part of the loop.)
 
 Acceptance criteria:
@@ -839,7 +842,7 @@ task.
 
 ## 6. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
 
-Build: the breadth task after task 6's depth work (default values in
+Build: the breadth task after task 5's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
 policy. For a positive integer `n`, the Collatz (3n+1) recurrence
 repeatedly replaces `n` with `n / 2` if `n` is even, or `3n + 1` if

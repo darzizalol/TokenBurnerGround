@@ -49,12 +49,16 @@ while (i < 10) {
   looking it up as a key, extra unnamed keys ignored, plus the same kind
   of optional trailing rest element `let {a, ...rest} = expr;` that
   collects every key not already named into a map, empty if none are
-  left), plus plain assignment forms of both for already-declared
+  left, and an optional per-key rename `let {a: x, b} = expr;` binding
+  the value under key `a` to local name `x` instead of `a`, combinable
+  with the rest element and freely mixable with un-renamed keys in the
+  same pattern), plus plain assignment forms of both for already-declared
   bindings — list (`[a, b] = expr;`, same flat positional binding and
   optional trailing rest element as the `let` form, e.g. the swap idiom
   `[a, b] = [b, a];`) and map (`{a, b} = expr;`, same key-lookup binding
   as the `let` form, including the same optional trailing rest element
-  `{a, ...rest} = expr;`)
+  `{a, ...rest} = expr;` and the same optional per-key rename
+  `{a: x, b} = expr;`)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
@@ -62,7 +66,8 @@ while (i < 10) {
   optional trailing rest element as `let` list destructuring) and
   map-destructuring loop variables (`for {a, b} in list_of_maps { ... }`,
   same key-lookup binding as `let` map destructuring, including the same
-  optional trailing rest element), a C-style `for (init; cond; step) { ... }` loop
+  optional trailing rest element and per-key rename,
+  `for {a: x, b} in list_of_maps { ... }`), a C-style `for (init; cond; step) { ... }` loop
   (each clause optional; the loop variable gets a fresh binding per
   iteration so closures captured in the body see their own iteration's
   value), `break`/`continue` in all loop kinds, including labeled
@@ -139,8 +144,9 @@ while (i < 10) {
   (`fn f([a, b]) { ... }`, `fn f({a, b}) { ... }`), the same flat
   positional/key-lookup binding `let`/`for`-loop destructuring already
   use, including the same optional trailing rest element on either
-  pattern kind, combinable with default values and a trailing rest
-  parameter
+  pattern kind and the same optional per-key rename on map patterns
+  (`fn f({a: x, b}) { ... }`), combinable with default values and a
+  trailing rest parameter
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -166,7 +172,7 @@ while (i < 10) {
   `for`-loop's own list-destructuring form) and a map-destructuring loop
   variable (`[a + b for {a, b} in list_of_maps]`, same key-lookup
   binding as a `for`-loop's own map-destructuring form, including the
-  same optional trailing rest element); map literals accept spread
+  same optional trailing rest element and per-key rename); map literals accept spread
   elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; map
   comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
@@ -310,14 +316,15 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `hamming_distance`,
-extended (stepped) slice assignment for lists
-(`list[start:end:step] = other_list;`), and `is_harshad`. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): map-destructuring key rename
-(`let {a: x, b} = expr;`), `is_perfect_cube` to test whether an integer
-is a perfect cube, `aliquot_sum` to sum an integer's proper divisors,
-keyword arguments in function calls (`f(a: 1, b: 2)`), and `is_pronic`
-to test whether an integer is expressible as `k * (k + 1)`.
+Actively developed, nightly. Recently landed: `is_harshad`, and
+map-destructuring key rename (`let {a: x, b} = expr;`, across every
+destructuring form). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_perfect_cube` to test whether an integer is a perfect cube,
+`aliquot_sum` to sum an integer's proper divisors, keyword arguments in
+function calls (`f(a: 1, b: 2)`), `is_pronic` to test whether an integer
+is expressible as `k * (k + 1)`, default values in list-destructuring
+patterns (`let [a, b = 5] = expr;`), and `collatz_length` to count the
+steps the Collatz recurrence takes to reach `1`.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

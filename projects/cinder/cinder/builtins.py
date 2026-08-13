@@ -1481,6 +1481,15 @@ def _is_automorphic(arguments: list, line: int, column: int) -> object:
     return str(value * value).endswith(str(value))
 
 
+def _is_harshad(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_harshad", arguments, 1, line, column)
+    value = _require_int("is_harshad", arguments[0], line, column)
+    if value < 1:
+        return False
+    digit_total = sum(int(digit) for digit in str(value))
+    return value % digit_total == 0
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -3328,6 +3337,7 @@ _BUILTINS = {
     "is_abundant": _is_abundant,
     "is_deficient": _is_deficient,
     "is_automorphic": _is_automorphic,
+    "is_harshad": _is_harshad,
     "divisors": _divisors,
     "min": _min,
     "max": _max,

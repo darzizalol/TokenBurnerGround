@@ -977,12 +977,9 @@ class Parser:
                     expr.obj, expr.index, value, eq_token.line, eq_token.column
                 )
             if isinstance(expr, SliceExpr):
-                if expr.step is not None:
-                    raise ParseError(
-                        "invalid assignment target", eq_token.line, eq_token.column
-                    )
                 return SliceAssign(
-                    expr.obj, expr.start, expr.end, value, eq_token.line, eq_token.column
+                    expr.obj, expr.start, expr.end, expr.step, value,
+                    eq_token.line, eq_token.column,
                 )
             if isinstance(expr, ListLiteral):
                 names, rest = self._destructure_assign_pattern(expr, eq_token)

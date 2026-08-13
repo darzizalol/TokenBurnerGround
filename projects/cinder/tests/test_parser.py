@@ -132,6 +132,7 @@ def shape(node):
             shape(node.obj),
             shape(node.start) if node.start is not None else None,
             shape(node.end) if node.end is not None else None,
+            shape(node.step) if node.step is not None else None,
             shape(node.value),
         )
     if isinstance(node, IndexCompoundAssign):
@@ -1541,6 +1542,7 @@ class TestListsAndMaps(unittest.TestCase):
                     ("Identifier", "xs"),
                     ("Literal", 1),
                     ("Literal", 2),
+                    None,
                     ("ListLiteral", [("Literal", 9)]),
                 ),
             ),
@@ -1556,14 +1558,27 @@ class TestListsAndMaps(unittest.TestCase):
                     ("Identifier", "xs"),
                     None,
                     None,
+                    None,
                     ("ListLiteral", [("Literal", 9)]),
                 ),
             ),
         )
 
-    def test_stepped_slice_assignment_target_raises_parse_error(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("xs[1:2:3] = [9];")
+    def test_stepped_slice_assignment_target_parses_with_step(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("xs[1:2:3] = [9];")[0]),
+            (
+                "ExprStmt",
+                (
+                    "SliceAssign",
+                    ("Identifier", "xs"),
+                    ("Literal", 1),
+                    ("Literal", 2),
+                    ("Literal", 3),
+                    ("ListLiteral", [("Literal", 9)]),
+                ),
+            ),
+        )
 
 
 class TestStringInterpolation(unittest.TestCase):

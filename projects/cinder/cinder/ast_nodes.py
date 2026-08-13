@@ -234,6 +234,7 @@ class SliceAssign:
     obj: "Expr"
     start: "Expr | None"
     end: "Expr | None"
+    step: "Expr | None"
     value: "Expr"
     line: int
     column: int

@@ -16,8 +16,8 @@ a later task while an earlier one is unclaimed/open.
 Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
 right after `levenshtein_distance` (search for `def
 _levenshtein_distance`, landed via PR #232) — the breadth task after
-task 1's depth work (slice assignment for lists) per `PROJECT.md`'s
-breadth-vs-depth policy.
+slice assignment for lists' depth work (landed via PR #235) per
+`PROJECT.md`'s breadth-vs-depth policy.
 It joins `levenshtein_distance` as the second member of a
 "string-distance" pair sitting next to `is_anagram`/`is_rotation`/
 `is_permutation`: both return a number rather than a boolean, but where
@@ -107,24 +107,23 @@ leave both to the Architect's next grooming pass, not this task.
 
 ## 2. Language: extended slice assignment for lists (`list[start:end:step] = other_list;`)
 
-Build: the depth task after task 2's breadth work (`hamming_distance`)
+Build: the depth task after task 1's breadth work (`hamming_distance`)
 per `PROJECT.md`'s breadth-vs-depth policy, and the direct follow-on to
-task 1 (slice assignment): task 1 deliberately scopes `SliceAssign` to
-the step-less form only, rejecting a stepped target
-(`list[a:b:c] = value;`) with `ParseError` `"invalid assignment
+slice assignment for lists (landed via PR #235): that task deliberately
+scopes `SliceAssign` to the step-less form only, rejecting a stepped
+target (`list[a:b:c] = value;`) with `ParseError` `"invalid assignment
 target"` and explicitly deferring the stepped case to "a future task"
-since it needs an exact length match rather than task 1's
-grow-or-shrink behavior. This task closes that gap. (Once task 1 has
-landed, verify the current behavior still matches this description
-before starting — `python3 -m cinder.cli eval 'let xs = [1, 2, 3];
-xs[0:3:2] = [9];'` should raise that `ParseError`.)
+since it needs an exact length match rather than its own grow-or-shrink
+behavior. This task closes that gap. (Verify the current behavior still
+matches this description before starting — `python3 -m cinder.cli eval
+'let xs = [1, 2, 3]; xs[0:3:2] = [9];'` should raise that `ParseError`.)
 
-In `cinder/ast_nodes.py`: `SliceAssign` (added by task 1, right after
-`SliceExpr`) gains a fourth field, `step: "Expr | None"`, inserted
+In `cinder/ast_nodes.py`: `SliceAssign` (added by slice assignment,
+PR #235, right after `SliceExpr`) gains a fourth field, `step: "Expr | None"`, inserted
 between `end` and `value` to mirror `SliceExpr`'s own field order
 (`obj`, `start`, `end`, `step`).
 
-In `cinder/parser.py`'s `_assignment()`: replace task 1's
+In `cinder/parser.py`'s `_assignment()`: replace slice assignment's
 step-rejection branch —
 ```python
 if isinstance(expr, SliceExpr):
@@ -144,21 +143,21 @@ if isinstance(expr, SliceExpr):
         eq_token.line, eq_token.column,
     )
 ```
-Every other assignment form stays untouched, same as task 1 left them
-— `xs[0:3:2] += y;`, `xs[0:3:2] ??= y;`, and `xs[0:3:2]++;` still raise
+Every other assignment form stays untouched, same as slice assignment
+left them — `xs[0:3:2] += y;`, `xs[0:3:2] ??= y;`, and `xs[0:3:2]++;` still raise
 `"invalid assignment target"` (their branches only match
 `Identifier`/`Index`, never `SliceExpr`, stepped or not).
 
 In `cinder/interpreter.py`, extend `_evaluate_slice_assign` (added by
-task 1) to evaluate and validate `step` the same way
+slice assignment, PR #235) to evaluate and validate `step` the same way
 `_evaluate_slice`'s read-side logic already does (search for `def
 _evaluate_slice`: type-check via `isinstance(step, int) and not
 isinstance(step, bool)`, then reject `step == 0`), evaluated in source
 order right after `end` and before `value`. Compute
 `norm_start, norm_end, norm_step = slice(start, end,
-step).indices(len(obj))` (same call task 1 already makes, now passing
-the real `step` instead of a hardcoded `None`). Then, instead of task
-2's plain `obj[norm_start:norm_end] = value`, assign through the
+step).indices(len(obj))` (same call slice assignment already makes, now
+passing the real `step` instead of a hardcoded `None`). Then, instead of
+slice assignment's plain `obj[norm_start:norm_end] = value`, assign through the
 3-argument slice and let Python's own extended-slice-assignment
 machinery enforce the length match, converting its `ValueError` into a
 `CinderRuntimeError`:
@@ -177,12 +176,12 @@ return value
 No manual "is this an extended slice" branch is needed — Python's
 `list.__setitem__` only enforces the exact-length rule when the
 effective step is not `1`, so a step-less call (`step=None`) or an
-explicit `step=1` both keep task 1's existing grow/shrink behavior
-automatically, and only `abs(norm_step) != 1` cases (or any step that
-normalizes away from a contiguous run) raise. The rest of
+explicit `step=1` both keep slice assignment's existing grow/shrink
+behavior automatically, and only `abs(norm_step) != 1` cases (or any step
+that normalizes away from a contiguous run) raise. The rest of
 `_evaluate_slice_assign` (the string-immutability check, the
 not-a-list check, the bound type checks, the value-must-be-a-list
-check) stays exactly as task 1 wrote it.
+check) stays exactly as slice assignment wrote it.
 
 Acceptance criteria:
 - `let xs = [1, 2, 3, 4, 5, 6]; xs[0:6:2] = [9, 9, 9]; print(xs);`
@@ -199,7 +198,7 @@ Acceptance criteria:
   `[9, 9, 9, 9, 3]` — an *explicit* `step=1` still behaves like the
   step-less form (grows the list), since step `1` is never "extended"
   regardless of how it was spelled.
-- Task 1's own step-less acceptance criteria (growing, shrinking,
+- Slice assignment's own step-less acceptance criteria (growing, shrinking,
   omitted bounds, out-of-range clamping, negative bounds, the
   assignment-expression-evaluates-to-the-value convention, the
   non-list-value error, the string-immutability error) all still pass
@@ -223,7 +222,7 @@ Acceptance criteria:
   rejected at runtime once the target's actual type is known.
 - `let xs = [1, 2, 3]; xs[0:3:2] += [9];` and `xs[0:3:2]++;` both still
   raise `ParseError` matching `"invalid assignment target"` —
-  unaffected regression checks, same as task 1.
+  unaffected regression checks, same as slice assignment.
 - Read-side stepped slicing (`xs[0:6:2];` as an expression, not an
   assignment target) is completely unaffected — no `SliceAssign` node
   is ever built for it, same `SliceExpr` AST and behavior as before
@@ -246,7 +245,7 @@ task.
 Build: add `is_harshad(n)` to `cinder/builtins.py`, registered right
 after `is_automorphic` (search for `def _is_automorphic`, the current
 last entry in the integer-property cluster) — the breadth task after
-task 3's depth work (extended slice assignment) per
+task 2's depth work (extended slice assignment) per
 `PROJECT.md`'s breadth-vs-depth policy. A positive integer `n` is a
 Harshad (or Niven) number when it is evenly divisible by the sum of
 its own decimal digits, e.g. `18` is Harshad since `1 + 8 = 9` and `18
@@ -318,7 +317,7 @@ merged, `README.md`'s Builtins bullet needs `is_harshad` added near
 
 ## 4. Language: map-destructuring key rename (`let {a: x, b} = expr;`)
 
-Build: the depth task after task 4's breadth work (`is_harshad`) per
+Build: the depth task after task 3's breadth work (`is_harshad`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every map-destructuring form —
 `let {a, b} = expr;`, plain assignment `{a, b} = expr;`, `for {a, b} in
 list_of_maps { ... }`, function params `fn f({a, b}) { ... }`, and both
@@ -471,7 +470,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ## 5. Standard library: `is_perfect_cube` — integer cube-root predicate
 
-Build: the breadth task after task 5's depth work (map-destructuring key
+Build: the breadth task after task 4's depth work (map-destructuring key
 rename) per `PROJECT.md`'s breadth-vs-depth policy. A positive, negative,
 or zero integer `n` is a perfect cube when some integer `k` satisfies
 `k ** 3 == n` (e.g. `27 = 3**3`, `-8 = (-2)**3`, `0 = 0**3`). It joins the
@@ -479,7 +478,7 @@ or zero integer `n` is a perfect cube when some integer `k` satisfies
 `is_abundant`/`is_deficient`/`is_automorphic`/`is_harshad`
 integer-property cluster as one more digit/root-based classification —
 register it right after `is_harshad` (search for `def _is_harshad`, the
-current last entry in the cluster once task 4 lands).
+current last entry in the cluster once task 3 lands).
 
 Unlike `is_perfect_square` (which excludes negative input, since no real
 square root of a negative number is an integer), cube roots of negative
@@ -554,6 +553,94 @@ merged, `README.md`'s Builtins bullet needs `is_perfect_cube` added near
 `is_perfect_square`/`is_armstrong`/`is_automorphic`/`is_harshad`, and
 `PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
 leave both to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `aliquot_sum` — sum of an integer's proper divisors
+
+Build: a fresh breadth task after task 5's depth work (map-destructuring
+key rename), added this grooming pass to keep the backlog stocked ahead
+of tonight's pace. Add `aliquot_sum(n)` to `cinder/builtins.py`,
+registered right after `divisors` (search for `def _divisors`) — the
+number-returning sibling of `divisors`'s list-returning trial-division
+walk, and the value-returning counterpart to the
+`is_perfect_number`/`is_abundant`/`is_deficient` cluster, all four of
+which already trial-divide to `sqrt(n)` and differ only in what they do
+with the divisors found (sum-and-compare for the three predicates,
+collect-and-sort for `divisors`, sum-and-return here). The proper
+divisors of `n` are every positive divisor of `n` except `n` itself
+(e.g. `6`'s proper divisors are `1, 2, 3`, summing to `6`; `n` is
+perfect/abundant/deficient exactly when `aliquot_sum(n)` is equal
+to/greater than/less than `n`, so this builtin makes that comparison
+inspectable instead of only answerable as a boolean):
+
+```python
+def _aliquot_sum(arguments: list, line: int, column: int) -> object:
+    _require_arity("aliquot_sum", arguments, 1, line, column)
+    value = _require_int("aliquot_sum", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "aliquot_sum() requires a positive integer, domain error", line, column
+        )
+    if value == 1:
+        return 0
+    total = 1
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            total += divisor
+            complement = value // divisor
+            if complement != divisor:
+                total += complement
+    return total
+```
+
+Model the arity/type-checking and the domain-error-on-`n < 1` split
+exactly on `divisors`'s own structure (search for `def _divisors`) —
+not the predicate cluster's "answer `false` on out-of-domain input"
+convention, since there is no sensible "aliquot sum of a non-positive
+number" answer, matching `divisors`'s own reasoning for the same choice.
+Note the loop starts `total` at `1` (since `1` always divides `value`
+for `value > 1`) and special-cases `value == 1` to return `0` directly
+(the loop's `range(2, math.isqrt(1) + 1)` is empty and `1`'s only
+positive divisor is itself, which is excluded — a proper divisor sum of
+`0`, not `1`), mirroring `is_perfect_number`/`is_abundant`/
+`is_deficient`'s own `total = 1 if value > 1 else 0` guard against
+double-counting `1` as its own proper divisor.
+
+Acceptance criteria:
+- `aliquot_sum(6);` is `6` — `1 + 2 + 3 = 6`, confirming `6` is perfect
+  (matches `is_perfect_number(6)` being `true`).
+- `aliquot_sum(12);` is `16` — `1 + 2 + 3 + 4 + 6 = 16`, confirming `12`
+  is abundant (matches `is_abundant(12)` being `true`).
+- `aliquot_sum(8);` is `7` — `1 + 2 + 4 = 7`, confirming `8` is
+  deficient (matches `is_deficient(8)` being `true`).
+- `aliquot_sum(1);` is `0` — `1` has no proper divisors other than
+  itself, which is excluded.
+- `aliquot_sum(2);` is `1` — every prime's proper-divisor sum is `1`.
+- `aliquot_sum(28);` is `28` — `1 + 2 + 4 + 7 + 14 = 28`, the next
+  perfect number after `6`.
+- `aliquot_sum(0);` raises `CinderRuntimeError` matching
+  `"aliquot_sum() requires a positive integer, domain error"` — same
+  message shape `divisors()` already produces for the same input.
+- `aliquot_sum(-6);` raises `CinderRuntimeError` matching
+  `"aliquot_sum() requires a positive integer, domain error"`.
+- `aliquot_sum(5.0);` raises `CinderRuntimeError` matching
+  `"aliquot_sum() requires an int, got float"` — the same message shape
+  `_require_int` already produces for every sibling in this cluster.
+- `aliquot_sum(true);` raises `CinderRuntimeError` matching
+  `"aliquot_sum() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near
+`divisors`/`is_perfect_number`/`is_abundant`/`is_deficient`, see current
+line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
+needs `aliquot_sum` added near `divisors`/`is_perfect_number`/
+`is_abundant`/`is_deficient`, and `PROJECT.md`'s roadmap paragraph needs
+it moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
 
 ---
 

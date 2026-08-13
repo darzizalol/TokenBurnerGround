@@ -146,8 +146,12 @@ while (i < 10) {
   and list writes), plus read-only string indexing, and slicing
   `list[start:end]`/`string[start:end]` with an optional third `:step`
   component (`list[start:end:step]`/`string[start:end:step]`, Python-style,
-  out-of-range bounds clamp, negative step reverses direction, not
-  assignable); list literals accept spread elements
+  out-of-range bounds clamp, negative step reverses direction); step-less
+  slice assignment on lists (`list[start:end] = other_list;`, growing or
+  shrinking the list to fit the replacement's length, same bound
+  normalization as the read side; a stepped target (`list[a:b:c] = ...;`)
+  still raises `ParseError`, and string targets remain immutable); list
+  literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   list comprehensions `[expr for x in iterable]` and `[expr for x in
   iterable if cond]` (a single loop variable, one optional filter clause,
@@ -300,16 +304,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_automorphic` to test
-whether an integer's square ends with the integer itself in decimal.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): slice assignment for
-lists (`list[start:end] = other_list;`), `hamming_distance` as
+Actively developed, nightly. Recently landed: step-less slice assignment
+for lists (`list[start:end] = other_list;`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `hamming_distance` as
 `levenshtein_distance`'s equal-length-only counterpart, extended
 slice assignment for lists with a step
 (`list[start:end:step] = other_list;`), `is_harshad` to test whether
 an integer is divisible by the sum of its own decimal digits,
-map-destructuring key rename (`let {a: x, b} = expr;`), and
-`is_perfect_cube` to test whether an integer is a perfect cube.
+map-destructuring key rename (`let {a: x, b} = expr;`),
+`is_perfect_cube` to test whether an integer is a perfect cube, and
+`aliquot_sum` to sum an integer's proper divisors.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

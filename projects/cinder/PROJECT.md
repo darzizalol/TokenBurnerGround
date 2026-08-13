@@ -633,42 +633,42 @@ joining the `is_perfect_square`/`is_armstrong`/`is_leap_year`/
 `is_perfect_number`/`is_abundant`/`is_deficient` integer-property cluster
 as one more digit-based classification, implemented as a plain string
 check (`str(n * n).endswith(str(n))`) rather than modular arithmetic, the
-same style `is_palindrome_number`/`is_armstrong` already use.
+same style `is_palindrome_number`/`is_armstrong` already use, and, as has
+slice assignment for lists (`list[start:end] = other_list;`) — the depth
+task after `is_automorphic`'s breadth work, closing a gap `README.md`'s
+Data structures bullet used to flag explicitly ("not assignable"): a
+`SliceExpr` on the left of `=` used to fall through `_assignment()`'s
+target checks straight to `"invalid assignment target"`. Scoped to the
+step-less form only — a stepped target (`list[a:b:c] = value;`) still
+stays a parse error, since Python-style extended-slice assignment
+requires an exact length match between target and replacement, a
+materially different contract than the simple form; string targets stay
+immutable, raising the same message plain single-index string assignment
+already does. The replacement value must itself be a list (no implicit
+coercion), and Python's own `obj[start:end] = value` list-slice-assignment
+semantics handle the length change (grow or shrink) once the normalized
+bounds are computed the same way `_evaluate_slice`'s read-side logic
+already does — have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`:
-as task 1, slice assignment for lists (`list[start:end] = other_list;`)
-— the depth task after `is_automorphic`'s breadth work, closing a gap
-`README.md`'s Data structures bullet already flags explicitly ("not
-assignable"): today a `SliceExpr` on the left of `=` falls through
-`_assignment()`'s target checks straight to `"invalid assignment
-target"`. Scoped to the step-less form only — a stepped target
-(`list[a:b:c] = value;`) stays a parse error, since Python-style
-extended-slice assignment requires an exact length match between
-target and replacement, a materially different contract than the
-simple form; string targets stay immutable, raising the same message
-plain single-index string assignment already does. The replacement
-value must itself be a list (no implicit coercion), and Python's own
-`obj[start:end] = value` list-slice-assignment semantics handle the
-length change (grow or shrink) once the normalized bounds are computed
-the same way `_evaluate_slice`'s read-side logic already does. And as
-task 2, `hamming_distance(a, b)` — a breadth task after task 1's depth
-work, the equal-length-only counterpart to `levenshtein_distance`: the
-count of positions at which two strings of the *same* length differ,
-via a single position-wise scan rather than a DP table, raising a
-domain error on unequal-length input instead of truncating or padding.
-Joins `levenshtein_distance` as the second member of a string-distance
-pair sitting next to `is_anagram`/`is_rotation`/`is_permutation`. And
-as task 3, extended slice assignment for lists
-(`list[start:end:step] = other_list;`) — the depth task after task 2's
-breadth work and the direct follow-on to task 1, closing the gap task
-1 deliberately deferred: a stepped slice target parses (once task 1
-lands) but is rejected before it ever reaches the interpreter. This
-task lets it through and delegates the exact-length enforcement to
-Python's own extended-slice-assignment machinery
+as task 1, `hamming_distance(a, b)` — a breadth task after slice
+assignment's depth work, the equal-length-only counterpart to
+`levenshtein_distance`: the count of positions at which two strings of
+the *same* length differ, via a single position-wise scan rather than a
+DP table, raising a domain error on unequal-length input instead of
+truncating or padding. Joins `levenshtein_distance` as the second member
+of a string-distance pair sitting next to
+`is_anagram`/`is_rotation`/`is_permutation`. And as task 2, extended
+slice assignment for lists (`list[start:end:step] = other_list;`) — the
+depth task after task 1's breadth work and the direct follow-on to slice
+assignment, closing the gap slice assignment deliberately deferred: a
+stepped slice target parses but is rejected before it ever reaches the
+interpreter. This task lets it through and delegates the exact-length
+enforcement to Python's own extended-slice-assignment machinery
 (`obj[start:end:step] = value`, which already raises when the
 replacement's length doesn't match the slice's length for any step
 other than `1`), converting its `ValueError` into a
 `CinderRuntimeError` rather than reimplementing the length check by
-hand. And as task 4, `is_harshad(n)` — a breadth task after task 3's
+hand. And as task 3, `is_harshad(n)` — a breadth task after task 2's
 depth work, testing whether a positive integer is divisible by the sum
 of its own decimal digits (e.g. `18` is Harshad since `1 + 8 = 9` and
 `18 % 9 == 0`; also called a Niven number), one more member of the
@@ -678,8 +678,8 @@ integer-property cluster sitting next to `is_perfect_square`/
 inline (not by calling the `digit_sum` builtin's own argument-list
 wrapper) rather than via any modular-arithmetic shortcut, since the
 whole point is checking one number against its own digit sum. And as
-task 5, map-destructuring key rename (`let {a: x, b} = expr;`) — the
-depth task after task 4's breadth work, closing the one gap every
+task 4, map-destructuring key rename (`let {a: x, b} = expr;`) — the
+depth task after task 3's breadth work, closing the one gap every
 map-destructuring form (`let`, plain assignment, `for`, function
 params, both comprehension loop-variable forms) still shares: each
 binds a variable under the *same* name as the map key it reads, with
@@ -690,8 +690,8 @@ twin for the plain-assignment form) and one shared interpreter helper
 (`_bind_map_destructure`), so this is a centralized change: `names`
 becomes a list of `(key, binding)` pairs, `binding` defaulting to `key`
 when no `:` rename is written, rather than five separate per-form
-edits. And as task 6, `is_perfect_cube(n)` — a breadth task after
-task 5's depth work, testing whether an integer is a perfect cube
+edits. And as task 5, `is_perfect_cube(n)` — a breadth task after
+task 4's depth work, testing whether an integer is a perfect cube
 (`k ** 3 == n` for some integer `k`, e.g. `27 = 3**3`), one more
 member of the integer-property cluster sitting next to
 `is_perfect_square`, but — unlike `is_perfect_square` — accepting
@@ -701,8 +701,17 @@ aren't; computed via a hand-rolled exact-integer binary-search cube
 root (no `math.icbrt` exists in the standard library, and a
 floating-point `round(n ** (1/3))` risks the same rounding-error
 problem `math.isqrt` was chosen to avoid for squares) rather than a
-float approximation. And only much later, a bytecode VM if
-performance ever actually matters.
+float approximation. And as task 6, `aliquot_sum(n)` — a breadth task
+queued this grooming pass to keep the backlog stocked ahead of the
+night's pace, the number-returning sibling of `divisors`'s
+list-returning walk and the value-returning counterpart to the
+`is_perfect_number`/`is_abundant`/`is_deficient` predicate cluster: the
+sum of `n`'s own proper divisors (e.g. `6`'s sum to `6`, confirming it's
+perfect), reusing the same `sqrt(n)`-bounded trial-division shape that
+whole cluster already shares, with a domain error on `n < 1` mirroring
+`divisors`'s own convention rather than the predicate cluster's
+answer-`false` one. And only much later, a bytecode VM if performance
+ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching this
 same breadth-vs-depth balance: two or more single-builtin predicate
@@ -730,16 +739,22 @@ after `is_isogram`'s breadth work in turn, that placed
 turn, that placed chained comparison operators as depth right
 after `levenshtein_distance`'s breadth work in turn, that placed
 `is_automorphic` as breadth right after that depth work in turn,
-that placed task 1 (slice assignment for lists) as depth right
-after `is_automorphic`'s breadth work in turn, that placed task 2
-(`hamming_distance`) as breadth right after task 1's depth work in
-turn, that placed task 3 (extended slice assignment for lists) as
-depth right after task 2's breadth work in turn, that placed task 4
-(`is_harshad`) as breadth right after task 3's depth work in turn,
-that placed task 5 (map-destructuring key rename) as depth right
-after task 4's breadth work in turn, and that placed task 6
-(`is_perfect_cube`) as breadth right after task 5's depth work in
-turn.
+that placed slice assignment for lists as depth right after
+`is_automorphic`'s breadth work in turn, that placed task 1
+(`hamming_distance`) as breadth right after slice assignment's depth
+work in turn, that placed task 2 (extended slice assignment for lists)
+as depth right after task 1's breadth work in turn, that placed task 3
+(`is_harshad`) as breadth right after task 2's depth work in turn,
+that placed task 4 (map-destructuring key rename) as depth right
+after task 3's breadth work in turn, that placed task 5
+(`is_perfect_cube`) as breadth right after task 4's depth work in
+turn, and that placed task 6 (`aliquot_sum`) as a second breadth task
+right after task 5's in turn — queued this grooming pass ahead of a
+depth task rather than immediately after task 4's depth work, since the
+backlog needed restocking faster than the alternation would otherwise
+call for; the next grooming pass should inject a depth task before
+adding further breadth ones, per the same two-predicates-in-a-row
+signal.
 
 ## History
 

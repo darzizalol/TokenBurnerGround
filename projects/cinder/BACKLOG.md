@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `hamming_distance` — equal-length string edit distance
+## 1. Standard library: `hamming_distance` — equal-length string edit distance [claimed 2026-08-13T14:33:58Z]
 
 Build: add `hamming_distance(a, b)` to `cinder/builtins.py`, registered
 right after `levenshtein_distance` (search for `def

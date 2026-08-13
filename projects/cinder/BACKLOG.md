@@ -11,160 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map-destructuring key rename (`let {a: x, b} = expr;`) [claimed 2026-08-13T20:03:35Z]
-
-Build: the depth task after task 1's breadth work (`is_harshad`) per
-`PROJECT.md`'s breadth-vs-depth policy. Every map-destructuring form —
-`let {a, b} = expr;`, plain assignment `{a, b} = expr;`, `for {a, b} in
-list_of_maps { ... }`, function params `fn f({a, b}) { ... }`, and both
-comprehension loop-variable forms — currently binds each name to a
-variable of the *same* name as the map key it reads (`{a, b}` always
-declares `a` and `b`). There is no way to bind under a different local
-name, unlike JS destructuring's `const {a: x} = obj`. Verify the gap:
-`python3 -m cinder.cli eval 'let {a: x} = {"a": 1}; print(x);'` currently
-raises `ParseError` `"'}' after destructuring pattern"` (the parser sees
-`IDENTIFIER COLON` where it only expects `IDENTIFIER COMMA`/`RBRACE`).
-
-All five forms share two parser entry points and one interpreter entry
-point, so the change is centralized rather than five separate edits:
-`_destructure_map_pattern` (search for `def _destructure_map_pattern` in
-`cinder/parser.py`) is called by `let`, `for`, params, and both
-comprehensions; `_try_map_destructure_assign_statement` (search for that
-name, same file) has its own inlined copy of the same identifier-list
-loop for the plain-assignment form; both feed `names`/`rest` straight
-into `_bind_map_destructure` (search for `def _bind_map_destructure` in
-`cinder/interpreter.py`), the single place that actually reads keys out
-of the map and binds variables. Changing what `names` holds and how
-`_bind_map_destructure` consumes it is the whole feature — none of the
-five call sites need their own changes.
-
-Change `names` from a flat `list[str]` (map key doubles as binding name)
-to a `list[tuple[str, str]]` of `(key, binding)` pairs, `binding`
-defaulting to `key` when no rename is written. Add a shared parsing
-helper right above `_destructure_map_pattern`:
-
-```python
-def _destructure_map_pattern_entry(self) -> "tuple[str, str]":
-    key = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-    if self._check(TokenType.COLON):
-        self._advance()
-        binding = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-    else:
-        binding = key
-    return key, binding
-```
-
-In `_destructure_map_pattern`, replace both
-`names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)`
-lines (the initial entry and the one inside the `while COMMA` loop) with
-`names.append(self._destructure_map_pattern_entry())`. Do the same for
-the two matching lines inside
-`_try_map_destructure_assign_statement`'s own `try` block. Nothing else
-in either function changes — the rest-element handling, the
-rest-must-be-last check (`_RestNotLast` in the assignment form), and the
-trailing `}`/`=` consumption are all untouched, since they operate on
-`names` as an opaque list either way.
-
-In `_bind_map_destructure`, unpack the pairs and use the *key* for the
-map lookup and the *binding* for the environment write, and use a set of
-keys (not the tuple list itself) to compute the rest element's leftover
-keys:
-
-```python
-def _bind_map_destructure(
-    self,
-    env: Environment,
-    names: list,
-    rest: "str | None",
-    value: object,
-    line: int,
-    column: int,
-    use_assign: bool = False,
-) -> None:
-    if not isinstance(value, dict):
-        raise CinderRuntimeError(
-            f"cannot destructure {type_name(value)} as a map",
-            line,
-            column,
-        )
-    seen_keys = set()
-    for key, binding in names:
-        seen_keys.add(key)
-        if key not in value:
-            raise CinderRuntimeError(
-                f"destructuring pattern expects key {key!r}, not found in map",
-                line,
-                column,
-            )
-        self._bind_destructure_name(env, binding, value[key], line, column, use_assign)
-    if rest is not None:
-        remaining = {k: v for k, v in value.items() if k not in seen_keys}
-        self._bind_destructure_name(env, rest, remaining, line, column, use_assign)
-```
-
-The error message keeps referencing the *key* (what's missing from the
-map), not the binding name, since that's what a reader needs to fix.
-`DestructureLetStmt`/`DestructureAssign`/`ForStmt`/`Param`/
-`ListComprehension`/`MapComprehension` in `cinder/ast_nodes.py` need no
-field changes — `names: list` already accepts either shape, and every
-consumer of `.names` (grep confirms only `_bind_map_destructure` and
-`_bind_list_destructure` read it, dispatched by each node's own `is_map`
-flag) already routes map-mode data through the function above.
-
-No rename support is added to *list*-pattern destructuring
-(`let [a, b] = expr;`) — list patterns are purely positional, so
-"rename" has no meaning there; this task only touches
-`_destructure_map_pattern`/`_try_map_destructure_assign_statement`/
-`_bind_map_destructure`.
-
-Test-shape ripple: every existing `test_parser.py` assertion that checks
-a map-destructure node's `.names` as a flat list of plain strings (e.g.
-`["a", "b"]` for `{a, b} = ...;`) now needs updating to the pair form
-(`[("a", "a"), ("b", "b")]`) — search `test_parser.py` for
-`is_map=True` sites and the surrounding `DestructureLetStmt`/
-`DestructureAssign` shape tuples that precede them; the `shape()`/
-`stmt_shape()` helpers themselves need no changes since they just
-forward whatever `.names` holds. This is a mechanical, no-behavior-change
-update for every pre-existing plain-name test; only the *new* rename
-tests exercise the actual feature.
-
-Acceptance criteria:
-- `let {a: x, b} = {"a": 1, "b": 2}; print(x); print(b);` prints `1`
-  then `2` — `a`'s value binds to `x`, `b` binds to itself (no rename).
-- `{a: x} = {"a": 5}; print(x);` (plain-assignment form, `x` already
-  declared via `let x = 0;` beforehand) prints `5`.
-- `for {a: x, b} in [{"a": 1, "b": 2}, {"a": 3, "b": 4}] { print(x + b); }`
-  prints `3` then `7`.
-- `fn f({a: x}) { return x; } print(f({"a": 9}));` prints `9`.
-- `print([x for {a: x} in [{"a": 1}, {"a": 2}]]);` prints `[1, 2]`.
-- `let {a: x, ...rest} = {"a": 1, "b": 2, "c": 3}; print(x); print(rest);`
-  prints `1` then `{"b": 2, "c": 3}` — the rest element still collects by
-  *key*, unaffected by the earlier rename.
-- `let {a: x} = {"b": 1};` raises `CinderRuntimeError` matching
-  `"destructuring pattern expects key 'a', not found in map"` — the
-  error names the source key, not the binding `x`.
-- Plain, non-renamed patterns (`let {a, b} = expr;` and every other
-  existing form) behave identically to before this task — this is purely
-  additive syntax.
-- `let {a: x, a: y} = {"a": 1};` (same key renamed twice) is not
-  specially rejected — it parses and runs like any other repeated-name
-  destructuring pattern already does today (last binding wins, no new
-  validation added for this task).
-- Full test suite passes, including the updated `.names` shape
-  assertions described above.
-
-Likely files: `cinder/parser.py` (new `_destructure_map_pattern_entry`,
-both call sites), `cinder/interpreter.py` (`_bind_map_destructure`),
-`tests/test_parser.py` (shape assertions plus new rename tests),
-`tests/test_interpreter.py` (new rename tests for `let`/assignment/
-`for`/params/comprehensions). Once merged, `README.md`'s destructuring
-bullets need a rename mention added to each of the five forms, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_perfect_cube` — integer cube-root predicate
+## 1. Standard library: `is_perfect_cube` — integer cube-root predicate
 
 Build: the breadth task after task 1's depth work (map-destructuring key
 rename) per `PROJECT.md`'s breadth-vs-depth policy. A positive, negative,
@@ -252,7 +99,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `aliquot_sum` — sum of an integer's proper divisors
+## 2. Standard library: `aliquot_sum` — sum of an integer's proper divisors
 
 Build: a fresh breadth task after task 1's depth work (map-destructuring
 key rename), added this grooming pass to keep the backlog stocked ahead
@@ -340,7 +187,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
+## 3. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
 
 Build: the depth task after tasks 2 and 3 stacked two breadth tasks
 (`is_perfect_cube`, `aliquot_sum`) back to back, per `PROJECT.md`'s
@@ -650,7 +497,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_pronic` — oblong-number predicate
+## 4. Standard library: `is_pronic` — oblong-number predicate
 
 Build: the breadth task after task 4's depth work (keyword arguments in
 function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add
@@ -722,7 +569,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
+## 5. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
 
 Build: the depth task after task 5's breadth work (`is_pronic`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —
@@ -990,7 +837,7 @@ task.
 
 ---
 
-## 7. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
+## 6. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
 
 Build: the breadth task after task 6's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth

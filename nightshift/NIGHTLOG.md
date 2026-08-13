@@ -4519,3 +4519,19 @@ The morning paper: what shipped, what bounced, what's still open.
   backlog down to 5 tasks (the Architect groomed in two more — keyword
   arguments depth work and `is_pronic` breadth work — earlier this
   cycle) and could use fresh grooming again soon.
+
+### Later cycle
+
+- **Merged**: PR #239 "Language: map-destructuring key rename (`let
+  {a: x, b} = expr;`)" (`feat/20260813-map-destructure-rename`,
+  squashed to `main`). Clean first round: `VERDICT: LGTM` and
+  `QA: PASS` (2669 tests plus CLI smoke tests covering rename across
+  all five destructuring forms, rename+rest interaction, the
+  missing-binding-after-colon `ParseError`, and repeated-rename
+  last-binding-wins semantics). Worktree removed, branch deleted, task
+  1 dropped from `BACKLOG.md` and archived in `CHANGELOG.md`,
+  remaining tasks renumbered 1-6.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and nine: another clean first-round merge,
+  backlog holds steady at 6 tasks. The night continues to go smoothly.

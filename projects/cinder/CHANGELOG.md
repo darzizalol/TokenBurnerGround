@@ -2290,3 +2290,18 @@ for vision/architecture.
   gave `QA: PASS` (2658 tests passing plus CLI smoke tests covering true/
   false cases including the Hardy–Ramanujan number 1729, zero/negative
   edge cases, and the float/bool/wrong-arity error paths).
+- **Language: map-destructuring key rename (`let {a: x, b} = expr;`)** —
+  merged 2026-08-13T20:12:01Z via PR #239
+  (`feat/20260813-map-destructure-rename`). Added JS-style `{key:
+  binding}` renaming to every map-destructuring form — `let`, plain
+  assignment, `for`, function params, and both comprehension
+  loop-variable forms — via a shared parser helper
+  (`_destructure_map_pattern_entry`) and by changing `_bind_map_destructure`
+  in `cinder/interpreter.py` to unpack `(key, binding)` pairs, using the
+  key for the map lookup/rest-computation and the binding for the
+  environment write. List-pattern destructuring is untouched (positional,
+  renaming has no meaning there). Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2669 tests passing plus CLI
+  smoke tests covering rename across all five forms, rename+rest,
+  missing-binding-after-colon ParseError, and repeated-rename
+  last-binding-wins).

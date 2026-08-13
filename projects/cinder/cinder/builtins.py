@@ -704,6 +704,27 @@ def _levenshtein_distance(arguments: list, line: int, column: int) -> object:
     return previous_row[-1]
 
 
+def _hamming_distance(arguments: list, line: int, column: int) -> object:
+    _require_arity("hamming_distance", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"hamming_distance() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"hamming_distance() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    if len(string1) != len(string2):
+        raise CinderRuntimeError(
+            f"hamming_distance() requires strings of equal length, got lengths {len(string1)} and {len(string2)}",
+            line, column,
+        )
+    return sum(1 for c1, c2 in zip(string1, string2) if c1 != c2)
+
+
 def _is_pangram(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pangram", arguments, 1, line, column)
     value = arguments[0]
@@ -3415,6 +3436,7 @@ _BUILTINS = {
     "is_rotation": _is_rotation,
     "is_permutation": _is_permutation,
     "levenshtein_distance": _levenshtein_distance,
+    "hamming_distance": _hamming_distance,
     "is_pangram": _is_pangram,
     "is_balanced": _is_balanced,
     "is_upper": _is_upper,

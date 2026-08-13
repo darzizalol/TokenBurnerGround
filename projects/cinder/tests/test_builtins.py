@@ -6730,6 +6730,73 @@ class TestLevenshteinDistance(unittest.TestCase):
             run('levenshtein_distance("a", "b", "c");')
 
 
+class TestHammingDistance(unittest.TestCase):
+    def test_hamming_distance_karolin_kathrin(self):
+        self.assertEqual(
+            run('let result = hamming_distance("karolin", "kathrin");').get(
+                "result"
+            ),
+            3,
+        )
+
+    def test_hamming_distance_both_empty(self):
+        self.assertEqual(
+            run('let result = hamming_distance("", "");').get("result"), 0
+        )
+
+    def test_hamming_distance_identical_strings(self):
+        self.assertEqual(
+            run('let result = hamming_distance("abc", "abc");').get("result"), 0
+        )
+
+    def test_hamming_distance_single_substitution(self):
+        self.assertEqual(
+            run('let result = hamming_distance("abc", "abd");').get("result"), 1
+        )
+
+    def test_hamming_distance_every_position_differs(self):
+        self.assertEqual(
+            run('let result = hamming_distance("aaaa", "bbbb");').get("result"), 4
+        )
+
+    def test_hamming_distance_symmetric(self):
+        self.assertEqual(
+            run('let result = hamming_distance("abc", "xyz");').get("result"),
+            run('let result = hamming_distance("xyz", "abc");').get("result"),
+        )
+        self.assertEqual(
+            run('let result = hamming_distance("abc", "xyz");').get("result"), 3
+        )
+
+    def test_hamming_distance_unequal_length_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('hamming_distance("abc", "ab");')
+        self.assertIn(
+            "hamming_distance() requires strings of equal length, got lengths 3 and 2",
+            ctx.exception.message,
+        )
+
+    def test_hamming_distance_of_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('hamming_distance(5, "ab");')
+        self.assertIn("hamming_distance", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_hamming_distance_of_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('hamming_distance("a", true);')
+        self.assertIn("hamming_distance", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_hamming_distance_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('hamming_distance("a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('hamming_distance("a", "b", "c");')
+
+
 class TestIsPangram(unittest.TestCase):
     def test_is_pangram_canonical_true(self):
         self.assertIs(

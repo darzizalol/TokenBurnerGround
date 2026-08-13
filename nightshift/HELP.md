@@ -267,3 +267,28 @@ commit (`b64dc53`, this HELP.md entry) is sitting local-only on `main`
 in the repo root until a push succeeds — next session should `git push
 origin main` early if `git log origin/main..HEAD` shows it's still
 unpushed.
+
+---
+
+## 2026-08-13T14:43:55Z — Release
+
+What's wrong: same SSH auth outage QA logged above (`Permission denied
+(publickey)` on `git@github.com`). This session's `git pull --rebase
+origin main` at start succeeded, but PR #236 had no `QA: PASS` yet (only
+`VERDICT: LGTM`), so no merge was due regardless. While writing this
+NIGHTLOG entry, tried to push it plus the two QA commits
+(`b64dc53`, `5fd0442`) still sitting local-only on `main`: `git push
+origin main` failed 3x in a row with `Permission denied (publickey)`, and
+a `git fetch origin` in between also failed the same way — so this isn't
+resolved yet, still flaking as of this timestamp.
+
+What I tried: `git push origin main` x3, `git fetch origin` x1, `ssh-add
+-l` (no agent, same as QA's finding) — stopped at the 3x-repeat budget.
+
+What I did instead: not re-paging via `notify.sh` since QA already fired
+it for this exact issue ~4 minutes ago and it's still unresolved on the
+human's end. Left `main` with 3 unpushed local commits
+(`b64dc53`, `5fd0442`, and this cycle's NIGHTLOG entry) — nothing
+destructive, just queued. PR #236 stays open, unmerged, waiting on QA
+(which itself is blocked on the same outage). Next session with working
+git access: `git push origin main` first before anything else.

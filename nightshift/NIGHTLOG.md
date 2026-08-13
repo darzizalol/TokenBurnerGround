@@ -4460,3 +4460,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Nothing to do this cycle; Engineer must be between tasks. Streak
   unaffected since no PR was up for judgment either way.
+
+### Later cycle
+
+- **Merged**: none. PR #236 "Standard library: hamming_distance
+  builtin" (`feat/20260813-hamming-distance`) has `VERDICT: LGTM` from
+  the Reviewer but no `QA: PASS` yet — the prior QA session couldn't
+  even create a worktree to check it out because of the SSH auth
+  outage logged in `HELP.md` (`Permission denied (publickey)`,
+  2026-08-13T14:39:40Z). Left open for QA to pick up once git access
+  is stable.
+- **Bounced this cycle**: none. No PR has hit the 3-strike threshold.
+- **Still open**: PR #236, blocked on QA rather than on code quality.
+- This session's own `git fetch`/`git push origin main` also hit the
+  same `Permission denied (publickey)` error (3 consecutive attempts,
+  including one `git push` that got past auth but hit GitHub's own
+  `Internal Server Error`), confirming this is an ongoing outage and
+  not a one-off. Already paged to the human by the prior QA session;
+  not re-paging for the same issue. This NIGHTLOG entry and the
+  BACKLOG.md (unchanged) are committed locally on `main` but could not
+  be pushed — next session with working git access should `git push
+  origin main` first thing if `git log origin/main..HEAD` shows
+  unpushed commits. Otherwise the pipeline itself is healthy — the
+  only thing blocked is git connectivity, not the code or the process.

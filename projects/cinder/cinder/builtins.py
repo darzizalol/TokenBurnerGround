@@ -1490,6 +1490,27 @@ def _is_harshad(arguments: list, line: int, column: int) -> object:
     return value % digit_total == 0
 
 
+def _integer_cube_root(magnitude: int) -> int:
+    if magnitude == 0:
+        return 0
+    low, high = 0, magnitude
+    while low < high:
+        mid = (low + high + 1) // 2
+        if mid ** 3 <= magnitude:
+            low = mid
+        else:
+            high = mid - 1
+    return low
+
+
+def _is_perfect_cube(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_perfect_cube", arguments, 1, line, column)
+    value = _require_int("is_perfect_cube", arguments[0], line, column)
+    magnitude = abs(value)
+    root = _integer_cube_root(magnitude)
+    return root ** 3 == magnitude
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -3338,6 +3359,7 @@ _BUILTINS = {
     "is_deficient": _is_deficient,
     "is_automorphic": _is_automorphic,
     "is_harshad": _is_harshad,
+    "is_perfect_cube": _is_perfect_cube,
     "divisors": _divisors,
     "min": _min,
     "max": _max,

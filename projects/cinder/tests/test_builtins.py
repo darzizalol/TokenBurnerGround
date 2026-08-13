@@ -3061,6 +3061,53 @@ class TestIsHarshad(unittest.TestCase):
             run("is_harshad();")
 
 
+class TestIsPerfectCube(unittest.TestCase):
+    def test_is_perfect_cube_of_27(self):
+        self.assertEqual(run("let result = is_perfect_cube(27);").get("result"), True)
+
+    def test_is_perfect_cube_of_1(self):
+        self.assertEqual(run("let result = is_perfect_cube(1);").get("result"), True)
+
+    def test_is_perfect_cube_of_0(self):
+        self.assertEqual(run("let result = is_perfect_cube(0);").get("result"), True)
+
+    def test_is_perfect_cube_of_negative_8(self):
+        self.assertEqual(run("let result = is_perfect_cube(-8);").get("result"), True)
+
+    def test_is_perfect_cube_of_negative_27(self):
+        self.assertEqual(run("let result = is_perfect_cube(-27);").get("result"), True)
+
+    def test_is_perfect_cube_of_8(self):
+        self.assertEqual(run("let result = is_perfect_cube(8);").get("result"), True)
+
+    def test_is_perfect_cube_of_9_is_false(self):
+        self.assertEqual(run("let result = is_perfect_cube(9);").get("result"), False)
+
+    def test_is_perfect_cube_of_negative_9_is_false(self):
+        self.assertEqual(run("let result = is_perfect_cube(-9);").get("result"), False)
+
+    def test_is_perfect_cube_of_large_bignum(self):
+        self.assertEqual(
+            run("let result = is_perfect_cube(1000000);").get("result"), True
+        )
+
+    def test_is_perfect_cube_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_cube(5.0);")
+        self.assertIn("is_perfect_cube", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_perfect_cube_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_cube(true);")
+        self.assertIn("is_perfect_cube", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_perfect_cube_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_perfect_cube();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

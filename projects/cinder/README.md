@@ -219,6 +219,7 @@ while (i < 10) {
   `is_isogram` to test whether a string has no letter repeated (case-insensitive, non-letters ignored),
   `levenshtein_distance` to compute the classic string edit distance (minimum single-character
   insertions/deletions/substitutions to turn one string into another),
+  `is_automorphic` to test whether an integer's square ends with the integer itself in decimal,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -299,16 +300,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: chained comparison
-operators (`a < b < c`, `a < b` and `b < c` each read once,
-short-circuiting). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_automorphic` to test whether an integer's square ends with the
-integer itself, slice assignment for lists
-(`list[start:end] = other_list;`), `hamming_distance` as
+Actively developed, nightly. Recently landed: `is_automorphic` to test
+whether an integer's square ends with the integer itself in decimal.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): slice assignment for
+lists (`list[start:end] = other_list;`), `hamming_distance` as
 `levenshtein_distance`'s equal-length-only counterpart, extended
 slice assignment for lists with a step
-(`list[start:end:step] = other_list;`), and `is_harshad` to test
-whether an integer is divisible by the sum of its own decimal digits.
+(`list[start:end:step] = other_list;`), `is_harshad` to test whether
+an integer is divisible by the sum of its own decimal digits,
+map-destructuring key rename (`let {a: x, b} = expr;`), and
+`is_perfect_cube` to test whether an integer is a perfect cube.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

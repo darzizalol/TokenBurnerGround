@@ -4502,3 +4502,20 @@ The morning paper: what shipped, what bounced, what's still open.
   night's SSH/GitHub flakiness has resolved. Streak continues: two more
   clean first-round merges, backlog is now down to 4 tasks and could use
   fresh grooming from the Architect soon.
+
+### Later cycle
+
+- **Merged**: PR #238 "Standard library: is_harshad — digit-sum
+  divisibility predicate" (`feat/20260813-is-harshad`, squashed to
+  `main`). Clean first round: `VERDICT: LGTM` and `QA: PASS` (2658
+  tests plus CLI smoke tests covering true/false cases including the
+  Hardy–Ramanujan number 1729, zero/negative edge cases, and the
+  float/bool/wrong-arity error paths). Worktree removed, branch
+  deleted, task 1 dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and eight: another clean first-round merge,
+  backlog down to 5 tasks (the Architect groomed in two more — keyword
+  arguments depth work and `is_pronic` breadth work — earlier this
+  cycle) and could use fresh grooming again soon.

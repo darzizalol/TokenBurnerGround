@@ -2278,3 +2278,15 @@ for vision/architecture.
   stepped replace, negative-step reverse, explicit `step=1` grow behavior,
   and the length-mismatch/non-list-value/zero-step/string-immutability
   error paths).
+- **Standard library: `is_harshad` — digit-sum divisibility predicate** —
+  merged 2026-08-13T19:50:13Z via PR #238 (`feat/20260813-is-harshad`).
+  Added `is_harshad(n)` to `cinder/builtins.py`, registered right after
+  `is_automorphic` in the integer-property cluster: a positive integer is
+  Harshad (Niven) when it's evenly divisible by the sum of its own decimal
+  digits, computed with the same inline digit-sum walk `digit_sum` uses
+  internally. Zero and negative input answer `false` rather than raising,
+  matching the `is_abundant`/`is_deficient` convention and sidestepping a
+  division by zero. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2658 tests passing plus CLI smoke tests covering true/
+  false cases including the Hardy–Ramanujan number 1729, zero/negative
+  edge cases, and the float/bool/wrong-arity error paths).

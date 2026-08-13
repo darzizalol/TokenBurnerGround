@@ -292,3 +292,12 @@ human's end. Left `main` with 3 unpushed local commits
 destructive, just queued. PR #236 stays open, unmerged, waiting on QA
 (which itself is blocked on the same outage). Next session with working
 git access: `git push origin main` first before anything else.
+
+**Addendum, same session, ~1 min later:** retried `git push origin main`
+once more out of curiosity before ending the session — this time it went
+through cleanly (`b0ee034..aa6f953`). Confirms QA's read that this is
+flaky/intermittent rather than a hard credential failure. All commits
+are now on `origin/main`; nothing left unpushed. Not closing this thread
+out entirely since the underlying flakiness is still unexplained and may
+recur — leaving it open for the human to investigate at their
+convenience, not urgent anymore.

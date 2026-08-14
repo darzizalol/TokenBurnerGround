@@ -70,6 +70,7 @@ from cinder.ast_nodes import (
     IndexCompoundAssign,
     IndexNilCoalesceAssign,
     InterpString,
+    KeywordArg,
     LetStmt,
     ListComprehension,
     ListLiteral,
@@ -569,13 +570,22 @@ class Interpreter:
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)
-        arguments = self._evaluate_call_arguments(expr.arguments, env)
-        return call_value(callee, arguments, expr.line, expr.column)
+        arguments, keywords = self._evaluate_call_arguments(expr.arguments, env)
+        return call_value(callee, arguments, expr.line, expr.column, keywords)
 
-    def _evaluate_call_arguments(self, arguments: list, env: Environment) -> list:
-        result = []
+    def _evaluate_call_arguments(self, arguments: list, env: Environment) -> "tuple[list, dict]":
+        positional = []
+        keywords: dict = {}
         for arg in arguments:
-            if isinstance(arg, Spread):
+            if isinstance(arg, KeywordArg):
+                if arg.name in keywords:
+                    raise CinderRuntimeError(
+                        f"duplicate keyword argument {arg.name!r} in call",
+                        arg.line,
+                        arg.column,
+                    )
+                keywords[arg.name] = self.evaluate(arg.value, env)
+            elif isinstance(arg, Spread):
                 value = self.evaluate(arg.expression, env)
                 if not isinstance(value, list):
                     raise CinderRuntimeError(
@@ -583,17 +593,17 @@ class Interpreter:
                         arg.line,
                         arg.column,
                     )
-                result.extend(value)
+                positional.extend(value)
             else:
-                result.append(self.evaluate(arg, env))
-        return result
+                positional.append(self.evaluate(arg, env))
+        return positional, keywords
 
     def _evaluate_optional_call(self, expr: OptionalCall, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)
         if callee is None:
             return None
-        arguments = self._evaluate_call_arguments(expr.arguments, env)
-        return call_value(callee, arguments, expr.line, expr.column)
+        arguments, keywords = self._evaluate_call_arguments(expr.arguments, env)
+        return call_value(callee, arguments, expr.line, expr.column, keywords)
 
     def _evaluate_list_literal(self, expr: ListLiteral, env: Environment) -> list:
         result: list = []
@@ -1188,37 +1198,84 @@ class Interpreter:
         return left >= right
 
 
-def call_value(callee: object, arguments: list, line: int, column: int) -> object:
+def call_value(
+    callee: object, arguments: list, line: int, column: int, keywords: "dict | None" = None
+) -> object:
     """Invoke a callable Cinder value (`Builtin` or `CinderFunction`) with already-evaluated arguments.
 
     Shared by `Interpreter._evaluate_call` and any builtin (e.g. `map`/`filter`)
     that needs to invoke a Cinder function value passed to it.
     """
     if isinstance(callee, Builtin):
+        if keywords:
+            raise CinderRuntimeError(
+                f"{callee.name}() does not accept keyword arguments", line, column
+            )
         return callee.call(arguments, line, column)
     if not isinstance(callee, CinderFunction):
         raise CinderRuntimeError(f"{type_name(callee)} is not callable", line, column)
+    keywords = keywords or {}
     min_arity = callee.arity
     max_arity = None if callee.decl.rest_param else len(callee.decl.params)
-    if len(arguments) < min_arity or (max_arity is not None and len(arguments) > max_arity):
-        if max_arity is None:
-            expected = f"at least {min_arity}"
-        elif min_arity == max_arity:
-            expected = f"{min_arity}"
-        elif len(arguments) < min_arity:
-            expected = f"at least {min_arity}"
-        else:
-            expected = f"at most {max_arity}"
-        raise CinderRuntimeError(
-            f"{callee.name}() expects {expected} argument(s), got {len(arguments)}",
-            line,
-            column,
-        )
+    if not keywords:
+        if len(arguments) < min_arity or (max_arity is not None and len(arguments) > max_arity):
+            if max_arity is None:
+                expected = f"at least {min_arity}"
+            elif min_arity == max_arity:
+                expected = f"{min_arity}"
+            elif len(arguments) < min_arity:
+                expected = f"at least {min_arity}"
+            else:
+                expected = f"at most {max_arity}"
+            raise CinderRuntimeError(
+                f"{callee.name}() expects {expected} argument(s), got {len(arguments)}",
+                line,
+                column,
+            )
+    else:
+        if max_arity is not None and len(arguments) > max_arity:
+            raise CinderRuntimeError(
+                f"{callee.name}() expects at most {max_arity} argument(s), got {len(arguments)}",
+                line,
+                column,
+            )
+        named_params = {p.name for p in callee.decl.params if p.name is not None}
+        unexpected = sorted(set(keywords) - named_params)
+        if unexpected:
+            raise CinderRuntimeError(
+                f"{callee.name}() got an unexpected keyword argument {unexpected[0]!r}",
+                line,
+                column,
+            )
+        missing = []
+        for index, param in enumerate(callee.decl.params):
+            if index < len(arguments):
+                if param.name is not None and param.name in keywords:
+                    raise CinderRuntimeError(
+                        f"{callee.name}() got multiple values for parameter {param.name!r}",
+                        line,
+                        column,
+                    )
+                continue
+            if param.default is not None:
+                continue
+            if param.name is not None and param.name in keywords:
+                continue
+            missing.append(param.name if param.name is not None else "<pattern>")
+        if missing:
+            names = ", ".join(repr(name) for name in missing)
+            raise CinderRuntimeError(
+                f"{callee.name}() missing required argument(s): {names}",
+                line,
+                column,
+            )
     call_env = Environment(callee.closure)
     try:
         for index, param in enumerate(callee.decl.params):
             if index < len(arguments):
                 value = arguments[index]
+            elif param.name is not None and param.name in keywords:
+                value = keywords[param.name]
             else:
                 value = Interpreter().evaluate(param.default, call_env)
             if param.names is not None:

@@ -2523,6 +2523,74 @@ class TestSpreadCallArguments(unittest.TestCase):
         self.assertIn("expects 3 argument(s), got 1", str(ctx.exception))
 
 
+class TestKeywordCallArguments(unittest.TestCase):
+    def test_all_keyword_arguments_order_independent(self):
+        env = run(
+            "fn greet(name, greeting = \"hi\") { return greeting + \", \" + name; } "
+            "let result = greet(name: \"Ada\", greeting: \"yo\");"
+        )
+        self.assertEqual(env.get("result"), "yo, Ada")
+
+    def test_keyword_arguments_bind_by_declaration_order(self):
+        env = run(
+            "fn f(a, b) { return a - b; } let result = f(b: 1, a: 5);"
+        )
+        self.assertEqual(env.get("result"), 4)
+
+    def test_leading_positional_with_trailing_keyword(self):
+        env = run(
+            "fn f(a, b) { return a - b; } let result = f(5, b: 1);"
+        )
+        self.assertEqual(env.get("result"), 4)
+
+    def test_keyword_omitted_trailing_parameter_uses_default(self):
+        env = run(
+            "fn f(a, b = 10) { return a + b; } let result = f(a: 3);"
+        )
+        self.assertEqual(env.get("result"), 13)
+
+    def test_duplicate_positional_and_keyword_raises_multiple_values(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a, b) { return a; } f(1, a: 2);")
+        self.assertIn("f() got multiple values for parameter 'a'", str(ctx.exception))
+
+    def test_unexpected_keyword_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a) { return a; } f(a: 1, z: 2);")
+        self.assertIn("f() got an unexpected keyword argument 'z'", str(ctx.exception))
+
+    def test_missing_required_argument_via_keyword_call_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a, b) { return a; } f(a: 1);")
+        self.assertIn("f() missing required argument(s): 'b'", str(ctx.exception))
+
+    def test_destructuring_parameter_has_no_addressable_keyword_name(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f([a, b]) { return a; } f(a: 1);")
+        self.assertIn("f() got an unexpected keyword argument 'a'", str(ctx.exception))
+
+    def test_map_destructuring_parameter_has_no_addressable_keyword_name(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f({a, b}) { return a; } f(a: 1);")
+        self.assertIn("f() got an unexpected keyword argument 'a'", str(ctx.exception))
+
+    def test_rest_parameter_has_no_addressable_keyword_name(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a, ...rest) { return a; } f(a: 1, rest: 2);")
+        self.assertIn(
+            "f() got an unexpected keyword argument 'rest'", str(ctx.exception)
+        )
+
+    def test_duplicate_keyword_argument_in_same_call_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a) { return a; } f(a: 1, a: 2);')
+        self.assertIn("duplicate keyword argument 'a' in call", str(ctx.exception))
+
+    def test_existing_purely_positional_calls_unaffected(self):
+        env = run("fn f(a, b) { return a + b; } let result = f(1, 2);")
+        self.assertEqual(env.get("result"), 3)
+
+
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):
         self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])

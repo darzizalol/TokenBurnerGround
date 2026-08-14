@@ -26,6 +26,7 @@ from cinder.ast_nodes import (
     IndexCompoundAssign,
     IndexNilCoalesceAssign,
     InterpString,
+    KeywordArg,
     LetStmt,
     ListComprehension,
     ListLiteral,
@@ -78,6 +79,8 @@ def shape(node):
         return ("OptionalCall", shape(node.callee), [shape(a) for a in node.arguments])
     if isinstance(node, Spread):
         return ("Spread", shape(node.expression))
+    if isinstance(node, KeywordArg):
+        return ("KeywordArg", node.name, shape(node.value))
     if isinstance(node, ListLiteral):
         return ("ListLiteral", [shape(e) for e in node.elements])
     if isinstance(node, ListComprehension):
@@ -832,6 +835,62 @@ class TestCalls(unittest.TestCase):
                 ],
             ),
         )
+
+    def test_call_with_keyword_argument(self):
+        self.assertEqual(
+            shape(parse("f(a: 1)")),
+            ("Call", ("Identifier", "f"), [("KeywordArg", "a", ("Literal", 1))]),
+        )
+
+    def test_call_with_mixed_positional_and_keyword_arguments(self):
+        self.assertEqual(
+            shape(parse("f(1, b: 2)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [("Literal", 1), ("KeywordArg", "b", ("Literal", 2))],
+            ),
+        )
+
+    def test_call_with_multiple_keyword_arguments(self):
+        self.assertEqual(
+            shape(parse("f(b: 1, a: 5)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [
+                    ("KeywordArg", "b", ("Literal", 1)),
+                    ("KeywordArg", "a", ("Literal", 5)),
+                ],
+            ),
+        )
+
+    def test_call_with_spread_before_keyword_argument(self):
+        self.assertEqual(
+            shape(parse("f(...xs, a: 1)")),
+            (
+                "Call",
+                ("Identifier", "f"),
+                [
+                    ("Spread", ("Identifier", "xs")),
+                    ("KeywordArg", "a", ("Literal", 1)),
+                ],
+            ),
+        )
+
+    def test_call_positional_argument_after_keyword_argument_raises_parse_error(self):
+        with self.assertRaisesRegex(ParseError, "positional argument follows keyword argument"):
+            parse("f(a: 1, 2)")
+
+    def test_optional_call_with_keyword_argument(self):
+        self.assertEqual(
+            shape(parse("f?.(a: 1)")),
+            ("OptionalCall", ("Identifier", "f"), [("KeywordArg", "a", ("Literal", 1))]),
+        )
+
+    def test_optional_call_positional_argument_after_keyword_argument_raises_parse_error(self):
+        with self.assertRaisesRegex(ParseError, "positional argument follows keyword argument"):
+            parse("f?.(a: 1, 2)")
 
     def test_optional_call_no_arguments(self):
         self.assertEqual(

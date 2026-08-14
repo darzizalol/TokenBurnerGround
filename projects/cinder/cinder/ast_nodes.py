@@ -69,6 +69,17 @@ class Grouping:
 
 
 @dataclass(frozen=True)
+class KeywordArg:
+    """A `name: expr` argument inside a call's argument list; `Call.arguments`/
+    `OptionalCall.arguments` mix these with plain `Expr`s and `Spread`s."""
+
+    name: str
+    value: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Call:
     callee: "Expr"
     arguments: list

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pronic` — oblong-number predicate
+## 1. Standard library: `is_pronic` — oblong-number predicate [claimed 2026-08-14T14:58:11Z]
 
 Build: the breadth task after task 3's depth work (keyword arguments in
 function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add

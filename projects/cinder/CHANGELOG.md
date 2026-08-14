@@ -2362,3 +2362,21 @@ for vision/architecture.
   (2725 tests passing plus CLI smoke tests covering true/false cases,
   a huge pronic product with no overflow/precision issues, and the
   float/string type-error paths).
+- **Language: default values in list-destructuring patterns
+  (`let [a, b = 5] = expr;`)** — merged 2026-08-14T19:59:14Z via PR #244
+  (`feat/20260814-list-destructure-defaults`). Extended `let`/`for`/
+  function-param/comprehension list-destructuring patterns to accept a
+  trailing `= expr` per element, evaluated left-to-right in the binding
+  `Environment` so a later default can see an earlier bound name (e.g.
+  `let [a, b = a + 1] = [5];` binds `b` to `6`). Changed
+  `_destructure_list_pattern`'s `names` shape from flat `list[str]` to
+  `list[tuple[str, Expr | None]]`, mirroring `_fn_param`'s own
+  `seen_default`-tracking convention for defaults-must-trail ordering;
+  `_bind_list_destructure` fills missing trailing values from their
+  defaults. Plain-assignment form (`[a, b] = expr;`) intentionally left
+  untouched — still a `ParseError`, out of scope per the task's own
+  scope note. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2743 tests passing plus CLI smoke tests covering
+  rest-pattern interaction, cross-form parity across let/for/params/
+  comprehensions, and the out-of-scope plain-assignment form's
+  unchanged parse error).

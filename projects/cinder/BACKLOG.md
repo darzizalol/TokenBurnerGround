@@ -11,276 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`) [claimed 2026-08-14T19:48:13Z]
-
-Build: the depth task after task 4's breadth work (`is_pronic`) per
-`PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —
-`let [a, b] = expr;`, plain assignment `[a, b] = expr;`, `for [a, b] in
-list_of_pairs { ... }`, function params `fn f([a, b]) { ... }`, and both
-comprehension loop-variable forms — currently requires the source list
-to have *exactly* as many elements as the pattern names (or, with a
-`...rest`, at least that many); there is no way to say "use this value
-if the source list didn't have one", unlike function parameters, which
-already support `fn f(a, b = 1) { ... }`. Verify the gap:
-`python3 -m cinder.cli eval 'let [a, b = 5] = [1]; print(a); print(b);'`
-currently raises `CinderRuntimeError` `"destructuring pattern expects 2
-elements, got 1"` (`cinder/interpreter.py`'s `_bind_list_destructure`
-has no concept of an optional trailing name).
-
-Scoped to **list** patterns only — map patterns already have a
-different, well-defined behavior for a "missing" key (`"destructuring
-pattern expects key 'x', not found in map"`, a domain error, not a
-gap), so adding defaults there is a separate design decision, left for
-a future task if wanted. Also scoped to the **`let`/`for`/param/
-comprehension forms only**, not the plain-assignment form
-(`[a, b] = expr;`) — that form parses its pattern by first parsing an
-ordinary `ListLiteral` (`_destructure_assign_pattern`, called from
-`_brace_statement`'s sibling logic after `_assignment()` succeeds) and
-list-literal elements parse via `_list_element`, which calls `_ternary()`
-(search for `def _list_element` — confirms `b = 5` is not a valid
-list-element expression at that precedence, so `[a, b = 5] = expr;`
-would already be a `ParseError` before ever reaching
-`_destructure_assign_pattern`; teaching that form to accept per-element
-defaults would mean special-casing `=` inside `_list_element` itself,
-a materially different, riskier change than this task's scope).
-
-All four in-scope forms share one parser entry point,
-`_destructure_list_pattern` (search for `def _destructure_list_pattern`
-in `cinder/parser.py`), and one interpreter entry point,
-`_bind_list_destructure` (search for `def _bind_list_destructure` in
-`cinder/interpreter.py`) — the same centralization the map-destructuring
-key rename task (PR #239) relied on for the map-pattern side. Note
-`_bind_list_destructure` is
-*also* called for the out-of-scope plain-assignment form (from
-`_evaluate_destructure_assign`), so its `names` parameter's shape must
-stay uniform across both parsing paths even though only one produces
-real defaults.
-
-Change `names` from a flat `list[str]` to a `list[tuple[str, "Expr |
-None"]]` of `(name, default)` pairs, `default` being `None` when no `=
-expr` was written. Add a shared parsing helper right above
-`_destructure_list_pattern`, mirroring `_fn_param`'s own
-`seen_default`-tracking convention for plain function parameters
-(search for `def _fn_param`, the `seen_default` parameter and the
-"destructuring parameter without a default value follows a parameter
-with one" `ParseError` it raises — same ordering rule, applied one
-level down to pattern *elements* instead of whole parameters):
-
-```python
-def _destructure_list_pattern_entry(self, seen_default: bool) -> "tuple[str, Expr | None]":
-    name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
-    if self._check(TokenType.EQ):
-        self._advance()
-        default = self._ternary()
-        return name_token.lexeme, default
-    if seen_default:
-        raise ParseError(
-            "element without a default value follows an element with one "
-            "in destructuring pattern",
-            name_token.line,
-            name_token.column,
-        )
-    return name_token.lexeme, None
-```
-
-In `_destructure_list_pattern`, replace both
-`names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)`
-lines (the initial entry and the one inside the `while COMMA` loop)
-with a call to the new helper, tracking `seen_default` the same way
-`_fn_param_list` does:
-
-```python
-    def _destructure_list_pattern(self) -> "tuple[list, str | None]":
-        self._advance()  # consume '['
-        names = []
-        rest = None
-        seen_default = False
-        if self._check(TokenType.DOT_DOT_DOT):
-            rest = self._destructure_rest_name()
-        else:
-            names.append(self._destructure_list_pattern_entry(seen_default))
-            seen_default = names[-1][1] is not None
-        while self._check(TokenType.COMMA):
-            self._advance()
-            if rest is not None:
-                token = self._peek()
-                raise ParseError(
-                    f"rest element must be last in destructuring pattern, found {self._describe(token)}",
-                    token.line,
-                    token.column,
-                )
-            if self._check(TokenType.DOT_DOT_DOT):
-                rest = self._destructure_rest_name()
-            else:
-                names.append(self._destructure_list_pattern_entry(seen_default))
-                seen_default = seen_default or names[-1][1] is not None
-        self._consume(TokenType.RBRACKET, "']' after destructuring pattern")
-        return names, rest
-```
-
-This automatically covers `let`, `for`, list-comprehension loop
-variables, and function-parameter destructuring (`_fn_param`'s
-`LBRACKET` branch calls `_destructure_list_pattern` directly — search
-for the call site, it needs no changes itself). `_fn_param`'s *existing*
-rejection of a whole-pattern default (`fn f([a, b] = [1, 2])`, the
-`if self._check(TokenType.EQ): raise ParseError("destructuring
-parameter cannot have a default value", ...)` block right after the
-`_destructure_list_pattern()` call) stays completely untouched and
-unaffected — that check fires on the `=` *after* the closing `]`, while
-this task's new per-element defaults are consumed *inside* the brackets,
-so the two features don't interact; `fn f([a, b = 1]) { ... }` (a
-per-element default) is accepted by this task, `fn f([a, b] = [1, 2])
-{ ... }` (a whole-pattern default) still isn't, by design.
-
-In `_destructure_assign_pattern` (the plain-assignment form's own
-pattern builder, kept out of scope for real defaults per the note
-above), change the one line `names.append(element.name)` to
-`names.append((element.name, None))` so its output shape matches the
-new `(name, default)` pair convention `_bind_list_destructure` now
-expects uniformly, regardless of which parsing path produced it.
-
-In `_bind_list_destructure`, unpack the pairs, compute how many names
-are *required* (those with no default — defaults are enforced trailing
-by the parser, so this is just "everything before the first default"),
-and fill in missing trailing values from their defaults, evaluated in
-`env` in pattern order (so a later default *can* see an earlier
-pattern name already bound in the same `env` — e.g. `let [a, b = a + 1]
-= [5];` binds `b` to `6`, since `a` is `env.define`'d before `b`'s
-default is evaluated; this is a deliberate, useful consequence of
-left-to-right processing, not a special case):
-
-```python
-def _bind_list_destructure(
-    self,
-    env: Environment,
-    names: list,
-    rest: "str | None",
-    value: object,
-    line: int,
-    column: int,
-    use_assign: bool = False,
-) -> None:
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"cannot destructure {type_name(value)} as a list",
-            line,
-            column,
-        )
-    required = sum(1 for _, default in names if default is None)
-    has_defaults = required < len(names)
-    if rest is not None:
-        if len(value) < required:
-            raise CinderRuntimeError(
-                f"destructuring pattern expects at least {required} elements, "
-                f"got {len(value)}",
-                line,
-                column,
-            )
-        for index, (name, default) in enumerate(names):
-            item = value[index] if index < len(value) else self.evaluate(default, env)
-            self._bind_destructure_name(env, name, item, line, column, use_assign)
-        self._bind_destructure_name(
-            env, rest, list(value[len(names):]), line, column, use_assign
-        )
-        return
-    if len(value) < required or len(value) > len(names):
-        if has_defaults:
-            raise CinderRuntimeError(
-                f"destructuring pattern expects between {required} and {len(names)} "
-                f"elements, got {len(value)}",
-                line,
-                column,
-            )
-        raise CinderRuntimeError(
-            f"destructuring pattern expects {len(names)} elements, got {len(value)}",
-            line,
-            column,
-        )
-    for index, (name, default) in enumerate(names):
-        item = value[index] if index < len(value) else self.evaluate(default, env)
-        self._bind_destructure_name(env, name, item, line, column, use_assign)
-```
-
-Note when no name in the pattern has a default, `required == len(names)`
-and `has_defaults` is `False`, so both branches raise the *exact* same
-message text as today — this is purely additive for every pre-existing
-pattern. `_bind_destructure_name` itself needs no changes. `call_value`
-(search for `def call_value`) needs **no changes at all** — its
-existing `Interpreter()._bind_list_destructure(call_env, param.names,
-param.rest, value, line, column)` call site (in the `if param.names is
-not None: ... else: ...` dispatch, right after parameter-value
-selection) already forwards `param.names` opaquely, so it benefits from
-element-level defaults automatically once `_fn_param` starts producing
-the new pair shape. (If task 3, keyword arguments, has landed by the
-time this task is picked up, that value-selection block will look
-slightly different — it'll also check `keywords` — but the destructure-bind
-call right below it is unaffected either way, per task 3's own note that
-its `keywords` change doesn't touch that part of the loop.)
-
-Acceptance criteria:
-- `let [a, b = 5] = [1]; print(a); print(b);` prints `1` then `5` — `b`
-  has no source value, so its default is used.
-- `let [a, b = 5] = [1, 2]; print(b);` prints `2` — a default is only
-  used when the source list doesn't reach that position.
-- `let [a, b = a + 1] = [5]; print(b);` prints `6` — a later default
-  can reference an earlier pattern name already bound in the same
-  `let`.
-- `[a, b] = [b, a];` (no defaults anywhere) behaves identically to
-  before this task — purely additive syntax.
-- `for [a, b = 0] in [[1], [2, 3]] { print(a + b); }` prints `1` then
-  `5` — the destructuring loop-variable form gets defaults too.
-- `fn f([a, b = 10]) { return a + b; } print(f([1]));` prints `11`.
-- `print([a + b for [a, b = 100] in [[1], [2, 3]]]);` prints
-  `[101, 5]`.
-- `let [a = 1, ...rest] = []; print(a); print(rest);` prints `1` then
-  `[]` — a default combines with a trailing rest element; the rest
-  collects nothing since the source list was empty.
-- `let [a, b = 1] = [];` raises `CinderRuntimeError` matching
-  `"destructuring pattern expects between 1 and 2 elements, got 0"` —
-  `a` has no default so it's still required, but the message accounts
-  for the range a default makes possible, not a single fixed count.
-- `let [a, b = 1] = [1, 2, 3];` raises `CinderRuntimeError` matching
-  `"destructuring pattern expects between 1 and 2 elements, got 3"` —
-  too many elements and no rest to absorb the extra one.
-- `let [a, b = 1, ...rest] = [];` raises `CinderRuntimeError` matching
-  `"destructuring pattern expects at least 1 elements, got 0"` — the
-  rest-present branch's message, distinct from the no-rest "between X
-  and Y" wording above: with a rest element there's no upper bound to
-  report, only the lower one.
-- `let [a] = [1, 2];` (no defaults) raises `CinderRuntimeError` matching
-  `"destructuring pattern expects 1 elements, got 2"` — the exact,
-  unchanged pre-existing message text for a pattern with no defaults.
-- `fn f([a = 1, b]) { return a; }` raises `ParseError` matching
-  `"element without a default value follows an element with one in
-  destructuring pattern"` — a required element after a defaulted one.
-- `fn f([a, b] = [1, 2]) { ... }` (a whole-pattern default, not a
-  per-element one) still raises `ParseError` matching `"destructuring
-  parameter cannot have a default value"` — unaffected by this task.
-- `[a, b = 5] = [1];` (the plain-assignment form) raises `ParseError`
-  — per-element defaults are out of scope for that form; it still
-  fails the same way it does today (as an invalid list-literal element
-  before even reaching destructuring-pattern validation).
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (new
-`_destructure_list_pattern_entry`, `_destructure_list_pattern`,
-`_destructure_assign_pattern`'s one-line shape fix),
-`cinder/interpreter.py` (`_bind_list_destructure`), `tests/test_parser.py`
-(shape assertions for every list-pattern — i.e. `is_map=False` —
-`DestructureLetStmt`/`ForStmt`/`Param`/`ListComprehension`/
-`MapComprehension` site changes from flat strings like `["a"]` to pair
-form `[("a", None)]`, plus new default-value tests; search for
-`"DestructureLetStmt"` and similar in `stmt_shape`/`shape` call sites),
-`tests/test_interpreter.py` (new default-value tests for `let`/
-assignment/`for`/params/comprehensions). Once merged, `README.md`'s
-destructuring bullets need a defaults mention added for list patterns,
-and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
+## 1. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
 
 Build: the breadth task after task 5's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
@@ -358,7 +89,7 @@ next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_strong_number` — sum of digit factorials equals the number
+## 2. Standard library: `is_strong_number` — sum of digit factorials equals the number
 
 Build: a second breadth task after task 5's `collatz_length`, restocking
 the backlog back past its 5-task floor rather than strictly alternating
@@ -432,7 +163,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: unary `+` operator (`+expr`)
+## 3. Language: unary `+` operator (`+expr`)
 
 Build: a language-depth task closing a real asymmetry in the unary
 operator set. Every other classic unary operator is implemented —
@@ -586,7 +317,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `num_divisors` — count of an integer's positive divisors
+## 4. Standard library: `num_divisors` — count of an integer's positive divisors
 
 Build: the breadth task after task 5's depth work (unary `+`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
@@ -667,7 +398,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
+## 5. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
 
 Build: the depth task after task 5's breadth work (`num_divisors`) per
 `PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to

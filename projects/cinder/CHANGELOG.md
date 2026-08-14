@@ -2318,3 +2318,16 @@ for vision/architecture.
   smoke tests covering positive/negative/zero cubes, non-cubes on both
   signs, a 10^36 bignum case, and the float/bool/wrong-arity error
   paths).
+- **Standard library: `aliquot_sum` — sum of an integer's proper
+  divisors** — merged 2026-08-14T14:27:10Z via PR #241
+  (`feat/20260814-aliquot-sum`). Added `aliquot_sum(n)` to
+  `cinder/builtins.py`, registered right after `divisors`: the
+  value-returning counterpart to `is_perfect_number`/`is_abundant`/
+  `is_deficient`'s boolean comparisons, sharing the same sqrt-walk
+  trial-division pattern as `_divisors` but summing instead of
+  collecting. Domain error on `n < 1` and `n == 1` special-cased to `0`,
+  mirroring `divisors`'s own error-handling convention. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2692
+  tests passing plus CLI smoke tests covering perfect/abundant/
+  deficient/prime cases and the domain/float/bool/wrong-arity error
+  paths).

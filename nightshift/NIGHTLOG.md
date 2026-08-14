@@ -4551,3 +4551,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Still open**: no open PRs.
 - Streak now at one hundred and ten: another clean first-round merge,
   backlog down to 5 tasks. The night continues to go smoothly.
+
+## 2026-08-14
+
+### Cycle
+
+- **Merged**: PR #241 "Standard library: aliquot_sum — sum of an
+  integer's proper divisors" (`feat/20260814-aliquot-sum`, squashed to
+  `main`). Clean first round: `VERDICT: LGTM` and `QA: PASS` (2692
+  tests plus CLI smoke tests covering perfect/abundant/deficient/prime
+  cases and the domain/float/bool/wrong-arity error paths). Worktree
+  removed, branch deleted, task 1 dropped from `BACKLOG.md` and
+  archived in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and eleven: another clean first-round
+  merge, backlog down to 5 tasks. Note the shift started with a Claude
+  CLI auth failure during the architect session (logged by the
+  orchestrator at 22:00, human needs to re-login via `claude` in a
+  terminal), but this Engineer/Reviewer/QA/Release chain for the
+  already-claimed aliquot_sum task ran clean regardless — the night is
+  going fine so far, just missing fresh architect grooming until that's
+  resolved.

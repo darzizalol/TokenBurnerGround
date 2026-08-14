@@ -11,96 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `aliquot_sum` — sum of an integer's proper divisors [claimed 2026-08-14T14:22:36Z]
-
-Build: a fresh breadth task alongside task 1 (`is_perfect_cube`), both
-following last cycle's depth work (map-destructuring key rename, landed
-via PR #239), added this grooming pass to keep the backlog stocked
-ahead of tonight's pace. Add `aliquot_sum(n)` to `cinder/builtins.py`,
-registered right after `divisors` (search for `def _divisors`) — the
-number-returning sibling of `divisors`'s list-returning trial-division
-walk, and the value-returning counterpart to the
-`is_perfect_number`/`is_abundant`/`is_deficient` cluster, all four of
-which already trial-divide to `sqrt(n)` and differ only in what they do
-with the divisors found (sum-and-compare for the three predicates,
-collect-and-sort for `divisors`, sum-and-return here). The proper
-divisors of `n` are every positive divisor of `n` except `n` itself
-(e.g. `6`'s proper divisors are `1, 2, 3`, summing to `6`; `n` is
-perfect/abundant/deficient exactly when `aliquot_sum(n)` is equal
-to/greater than/less than `n`, so this builtin makes that comparison
-inspectable instead of only answerable as a boolean):
-
-```python
-def _aliquot_sum(arguments: list, line: int, column: int) -> object:
-    _require_arity("aliquot_sum", arguments, 1, line, column)
-    value = _require_int("aliquot_sum", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "aliquot_sum() requires a positive integer, domain error", line, column
-        )
-    if value == 1:
-        return 0
-    total = 1
-    for divisor in range(2, math.isqrt(value) + 1):
-        if value % divisor == 0:
-            total += divisor
-            complement = value // divisor
-            if complement != divisor:
-                total += complement
-    return total
-```
-
-Model the arity/type-checking and the domain-error-on-`n < 1` split
-exactly on `divisors`'s own structure (search for `def _divisors`) —
-not the predicate cluster's "answer `false` on out-of-domain input"
-convention, since there is no sensible "aliquot sum of a non-positive
-number" answer, matching `divisors`'s own reasoning for the same choice.
-Note the loop starts `total` at `1` (since `1` always divides `value`
-for `value > 1`) and special-cases `value == 1` to return `0` directly
-(the loop's `range(2, math.isqrt(1) + 1)` is empty and `1`'s only
-positive divisor is itself, which is excluded — a proper divisor sum of
-`0`, not `1`), mirroring `is_perfect_number`/`is_abundant`/
-`is_deficient`'s own `total = 1 if value > 1 else 0` guard against
-double-counting `1` as its own proper divisor.
-
-Acceptance criteria:
-- `aliquot_sum(6);` is `6` — `1 + 2 + 3 = 6`, confirming `6` is perfect
-  (matches `is_perfect_number(6)` being `true`).
-- `aliquot_sum(12);` is `16` — `1 + 2 + 3 + 4 + 6 = 16`, confirming `12`
-  is abundant (matches `is_abundant(12)` being `true`).
-- `aliquot_sum(8);` is `7` — `1 + 2 + 4 = 7`, confirming `8` is
-  deficient (matches `is_deficient(8)` being `true`).
-- `aliquot_sum(1);` is `0` — `1` has no proper divisors other than
-  itself, which is excluded.
-- `aliquot_sum(2);` is `1` — every prime's proper-divisor sum is `1`.
-- `aliquot_sum(28);` is `28` — `1 + 2 + 4 + 7 + 14 = 28`, the next
-  perfect number after `6`.
-- `aliquot_sum(0);` raises `CinderRuntimeError` matching
-  `"aliquot_sum() requires a positive integer, domain error"` — same
-  message shape `divisors()` already produces for the same input.
-- `aliquot_sum(-6);` raises `CinderRuntimeError` matching
-  `"aliquot_sum() requires a positive integer, domain error"`.
-- `aliquot_sum(5.0);` raises `CinderRuntimeError` matching
-  `"aliquot_sum() requires an int, got float"` — the same message shape
-  `_require_int` already produces for every sibling in this cluster.
-- `aliquot_sum(true);` raises `CinderRuntimeError` matching
-  `"aliquot_sum() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near
-`divisors`/`is_perfect_number`/`is_abundant`/`is_deficient`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py`. Once merged, `README.md`'s Builtins bullet
-needs `aliquot_sum` added near `divisors`/`is_perfect_number`/
-`is_abundant`/`is_deficient`, and `PROJECT.md`'s roadmap paragraph needs
-it moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
+## 1. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
 
 Build: the depth task after tasks 1 and 2 stacked two breadth tasks
 (`is_perfect_cube`, `aliquot_sum`) back to back, per `PROJECT.md`'s
@@ -410,7 +321,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_pronic` — oblong-number predicate
+## 2. Standard library: `is_pronic` — oblong-number predicate
 
 Build: the breadth task after task 3's depth work (keyword arguments in
 function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add
@@ -482,7 +393,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
+## 3. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
 
 Build: the depth task after task 4's breadth work (`is_pronic`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —
@@ -751,7 +662,7 @@ task.
 
 ---
 
-## 5. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
+## 4. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
 
 Build: the breadth task after task 5's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
@@ -829,7 +740,7 @@ next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_strong_number` — sum of digit factorials equals the number
+## 5. Standard library: `is_strong_number` — sum of digit factorials equals the number
 
 Build: a second breadth task after task 5's `collatz_length`, restocking
 the backlog back past its 5-task floor rather than strictly alternating

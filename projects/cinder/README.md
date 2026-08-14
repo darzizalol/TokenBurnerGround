@@ -236,6 +236,7 @@ while (i < 10) {
   `is_automorphic` to test whether an integer's square ends with the integer itself in decimal,
   `hamming_distance` to count differing positions between two equal-length strings,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
+  `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -290,7 +291,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (2000+ tests) covers every layer — lexer, parser, interpreter,
+The suite (2600+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -316,15 +317,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_harshad`, and
-map-destructuring key rename (`let {a: x, b} = expr;`, across every
-destructuring form). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_perfect_cube` to test whether an integer is a perfect cube,
+Actively developed, nightly. Recently landed: map-destructuring key
+rename (`let {a: x, b} = expr;`, across every destructuring form), and
+`is_perfect_cube` to test whether an integer is a perfect cube (negative
+inputs allowed). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
 `aliquot_sum` to sum an integer's proper divisors, keyword arguments in
 function calls (`f(a: 1, b: 2)`), `is_pronic` to test whether an integer
 is expressible as `k * (k + 1)`, default values in list-destructuring
-patterns (`let [a, b = 5] = expr;`), and `collatz_length` to count the
-steps the Collatz recurrence takes to reach `1`.
+patterns (`let [a, b = 5] = expr;`), `collatz_length` to count the
+steps the Collatz recurrence takes to reach `1`, and `is_strong_number`
+to test whether an integer equals the sum of its own digits' factorials.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

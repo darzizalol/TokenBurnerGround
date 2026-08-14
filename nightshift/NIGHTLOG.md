@@ -4591,3 +4591,15 @@ The morning paper: what shipped, what bounced, what's still open.
   grooming (blocked on the CLI auth issue from earlier tonight), but
   the Engineer/Reviewer/QA/Release chain keeps landing already-claimed
   work cleanly — the night continues to go smoothly.
+
+## 2026-08-15
+
+- **Merged**: none this cycle.
+- **Bounced**: none this cycle.
+- **Still open**: PR #243 "Standard library: is_pronic — oblong-number
+  predicate" (`feat/20260814-is-pronic`) — single commit pushed
+  2026-08-14T14:59:12Z, no Reviewer or QA comments/reviews posted yet,
+  so no verdict lines to act on. Left for the next cycle.
+- Quiet start to the night: nothing for Release to do yet since #243
+  hasn't been through Reviewer or QA. `git pull --rebase` was clean, no
+  `STATUS: STOP` in `HELP.md`.

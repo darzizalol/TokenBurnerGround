@@ -251,6 +251,7 @@ while (i < 10) {
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
+  `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -331,16 +332,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_pronic` to test whether
-an integer is expressible as `k * (k + 1)`, and default values in
-list-destructuring patterns (`let [a, b = 5] = expr;`). Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `collatz_length` to count the
-steps the Collatz recurrence takes to reach `1`, `is_strong_number` to
+Actively developed, nightly. Recently landed: default values in
+list-destructuring patterns (`let [a, b = 5] = expr;`), and
+`collatz_length` to count the steps the Collatz recurrence takes to
+reach `1`. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `is_strong_number` to
 test whether an integer equals the sum of its own digits' factorials,
 unary `+` to close the last gap in the unary operator set,
 `num_divisors` to count an integer's positive divisors, default
-values in map-destructuring patterns (`let {a, b = 5} = expr;`), and
-`prime_factors` to list an integer's prime factors with multiplicity.
+values in map-destructuring patterns (`let {a, b = 5} = expr;`),
+`prime_factors` to list an integer's prime factors with multiplicity,
+and hole elements in list-destructuring patterns
+(`let [a, , c] = expr;`) to skip an unwanted position.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

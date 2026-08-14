@@ -2873,6 +2873,48 @@ class TestIsArmstrong(unittest.TestCase):
             run("is_armstrong();")
 
 
+class TestIsStrongNumber(unittest.TestCase):
+    def test_is_strong_number_of_one(self):
+        self.assertEqual(run("let result = is_strong_number(1);").get("result"), True)
+
+    def test_is_strong_number_of_two(self):
+        self.assertEqual(run("let result = is_strong_number(2);").get("result"), True)
+
+    def test_is_strong_number_of_145(self):
+        self.assertEqual(run("let result = is_strong_number(145);").get("result"), True)
+
+    def test_is_strong_number_of_40585(self):
+        self.assertEqual(run("let result = is_strong_number(40585);").get("result"), True)
+
+    def test_is_strong_number_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_strong_number(0);").get("result"), False)
+
+    def test_is_strong_number_of_three_is_false(self):
+        self.assertEqual(run("let result = is_strong_number(3);").get("result"), False)
+
+    def test_is_strong_number_of_25_is_false(self):
+        self.assertEqual(run("let result = is_strong_number(25);").get("result"), False)
+
+    def test_is_strong_number_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_strong_number(-145);").get("result"), False)
+
+    def test_is_strong_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_strong_number(5.0);")
+        self.assertIn("is_strong_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_strong_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_strong_number(true);")
+        self.assertIn("is_strong_number", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_strong_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_strong_number();")
+
+
 class TestIsLeapYear(unittest.TestCase):
     def test_is_leap_year_of_2000(self):
         self.assertEqual(run("let result = is_leap_year(2000);").get("result"), True)

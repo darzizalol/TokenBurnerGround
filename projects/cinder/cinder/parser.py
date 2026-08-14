@@ -351,14 +351,31 @@ class Parser:
         self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
         return names, rest
 
+    def _destructure_list_pattern_entry(self, seen_default: bool) -> "tuple[str, Expr | None]":
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
+        if self._check(TokenType.EQ):
+            self._advance()
+            default = self._ternary()
+            return name_token.lexeme, default
+        if seen_default:
+            raise ParseError(
+                "element without a default value follows an element with one "
+                "in destructuring pattern",
+                name_token.line,
+                name_token.column,
+            )
+        return name_token.lexeme, None
+
     def _destructure_list_pattern(self) -> "tuple[list, str | None]":
         self._advance()  # consume '['
         names = []
         rest = None
+        seen_default = False
         if self._check(TokenType.DOT_DOT_DOT):
             rest = self._destructure_rest_name()
         else:
-            names.append(self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme)
+            names.append(self._destructure_list_pattern_entry(seen_default))
+            seen_default = names[-1][1] is not None
         while self._check(TokenType.COMMA):
             self._advance()
             if rest is not None:
@@ -371,9 +388,8 @@ class Parser:
             if self._check(TokenType.DOT_DOT_DOT):
                 rest = self._destructure_rest_name()
             else:
-                names.append(
-                    self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-                )
+                names.append(self._destructure_list_pattern_entry(seen_default))
+                seen_default = seen_default or names[-1][1] is not None
         self._consume(TokenType.RBRACKET, "']' after destructuring pattern")
         return names, rest
 
@@ -403,7 +419,7 @@ class Parser:
                     )
                 rest = element.expression.name
             elif isinstance(element, Identifier):
-                names.append(element.name)
+                names.append((element.name, None))
             else:
                 raise ParseError(
                     "invalid assignment target", eq_token.line, eq_token.column

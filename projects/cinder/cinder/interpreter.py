@@ -409,27 +409,38 @@ class Interpreter:
                 line,
                 column,
             )
+        required = sum(1 for _, default in names if default is None)
+        has_defaults = required < len(names)
         if rest is not None:
-            if len(value) < len(names):
+            if len(value) < required:
                 raise CinderRuntimeError(
-                    f"destructuring pattern expects at least {len(names)} elements, "
+                    f"destructuring pattern expects at least {required} elements, "
                     f"got {len(value)}",
                     line,
                     column,
                 )
-            for name, item in zip(names, value):
+            for index, (name, default) in enumerate(names):
+                item = value[index] if index < len(value) else self.evaluate(default, env)
                 self._bind_destructure_name(env, name, item, line, column, use_assign)
             self._bind_destructure_name(
                 env, rest, list(value[len(names):]), line, column, use_assign
             )
             return
-        if len(value) != len(names):
+        if len(value) < required or len(value) > len(names):
+            if has_defaults:
+                raise CinderRuntimeError(
+                    f"destructuring pattern expects between {required} and {len(names)} "
+                    f"elements, got {len(value)}",
+                    line,
+                    column,
+                )
             raise CinderRuntimeError(
                 f"destructuring pattern expects {len(names)} elements, got {len(value)}",
                 line,
                 column,
             )
-        for name, item in zip(names, value):
+        for index, (name, default) in enumerate(names):
+            item = value[index] if index < len(value) else self.evaluate(default, env)
             self._bind_destructure_name(env, name, item, line, column, use_assign)
 
     def _bind_destructure_name(

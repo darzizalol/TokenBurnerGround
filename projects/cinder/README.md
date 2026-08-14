@@ -219,6 +219,8 @@ while (i < 10) {
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
   `divisors` to list an integer's positive divisors in sorted order,
+  `aliquot_sum` to sum an integer's own proper divisors (the value-returning counterpart to
+  `is_perfect_number`/`is_abundant`/`is_deficient`),
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
@@ -317,16 +319,15 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map-destructuring key
-rename (`let {a: x, b} = expr;`, across every destructuring form), and
-`is_perfect_cube` to test whether an integer is a perfect cube (negative
-inputs allowed). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`aliquot_sum` to sum an integer's proper divisors, keyword arguments in
-function calls (`f(a: 1, b: 2)`), `is_pronic` to test whether an integer
-is expressible as `k * (k + 1)`, default values in list-destructuring
-patterns (`let [a, b = 5] = expr;`), `collatz_length` to count the
-steps the Collatz recurrence takes to reach `1`, and `is_strong_number`
-to test whether an integer equals the sum of its own digits' factorials.
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_perfect_cube` to test
+whether an integer is a perfect cube (negative inputs allowed), and
+`aliquot_sum` to sum an integer's own proper divisors. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): keyword arguments in function calls
+(`f(a: 1, b: 2)`), `is_pronic` to test whether an integer is expressible
+as `k * (k + 1)`, default values in list-destructuring patterns
+(`let [a, b = 5] = expr;`), `collatz_length` to count the steps the
+Collatz recurrence takes to reach `1`, and `is_strong_number` to test
+whether an integer equals the sum of its own digits' factorials. The
+backlog mixes language depth with stdlib breadth over time rather than
+running either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

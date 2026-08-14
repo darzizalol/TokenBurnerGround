@@ -1003,22 +1003,22 @@ class TestListsAndMaps(unittest.TestCase):
         node = parse("[k for [k, v] in items(m)]")
         self.assertIsInstance(node, ListComprehension)
         self.assertIsNone(node.var_name)
-        self.assertEqual(node.names, ["k", "v"])
+        self.assertEqual(node.names, [("k", None), ("v", None)])
         self.assertIsNone(node.rest)
 
     def test_list_comprehension_destructure_single_name(self):
         node = parse("[a for [a] in xs]")
-        self.assertEqual(node.names, ["a"])
+        self.assertEqual(node.names, [("a", None)])
         self.assertIsNone(node.rest)
 
     def test_list_comprehension_destructure_with_rest(self):
         node = parse("[a for [a, ...rest] in xs]")
-        self.assertEqual(node.names, ["a"])
+        self.assertEqual(node.names, [("a", None)])
         self.assertEqual(node.rest, "rest")
 
     def test_list_comprehension_destructure_with_filter(self):
         node = parse("[a for [a, b] in xs if a > 1]")
-        self.assertEqual(node.names, ["a", "b"])
+        self.assertEqual(node.names, [("a", None), ("b", None)])
         self.assertEqual(
             shape(node.condition),
             ("Binary", ("Identifier", "a"), TokenType.GT, ("Literal", 1)),
@@ -1151,17 +1151,17 @@ class TestListsAndMaps(unittest.TestCase):
         node = parse("{k: v for [k, v] in items(m)}")
         self.assertIsInstance(node, MapComprehension)
         self.assertIsNone(node.var_name)
-        self.assertEqual(node.names, ["k", "v"])
+        self.assertEqual(node.names, [("k", None), ("v", None)])
         self.assertIsNone(node.rest)
 
     def test_map_comprehension_destructure_with_rest(self):
         node = parse("{a: rest for [a, ...rest] in xs}")
-        self.assertEqual(node.names, ["a"])
+        self.assertEqual(node.names, [("a", None)])
         self.assertEqual(node.rest, "rest")
 
     def test_map_comprehension_destructure_with_filter(self):
         node = parse("{k: v for [k, v] in items(m) if v > 0}")
-        self.assertEqual(node.names, ["k", "v"])
+        self.assertEqual(node.names, [("k", None), ("v", None)])
         self.assertEqual(
             shape(node.condition),
             ("Binary", ("Identifier", "v"), TokenType.GT, ("Literal", 0)),
@@ -1245,7 +1245,7 @@ class TestListsAndMaps(unittest.TestCase):
                     "ExprStmt",
                     (
                         "DestructureAssign",
-                        ["a", "b"],
+                        [("a", None), ("b", None)],
                         None,
                         ("ListLiteral", [("Identifier", "b"), ("Identifier", "a")]),
                         False,
@@ -1262,7 +1262,7 @@ class TestListsAndMaps(unittest.TestCase):
                     "ExprStmt",
                     (
                         "DestructureAssign",
-                        ["a", "b"],
+                        [("a", None), ("b", None)],
                         "rest",
                         (
                             "ListLiteral",
@@ -1278,6 +1278,10 @@ class TestListsAndMaps(unittest.TestCase):
                 )
             ],
         )
+
+    def test_list_destructure_assignment_default_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("[a, b = 5] = [1];")
 
     def test_list_destructure_assignment_literal_element_raises_parse_error(self):
         with self.assertRaises(ParseError):
@@ -2063,7 +2067,7 @@ class TestStatements(unittest.TestCase):
             [
                 (
                     "DestructureLetStmt",
-                    ["a", "b"],
+                    [("a", None), ("b", None)],
                     ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
                     False,
                     None,
@@ -2074,7 +2078,7 @@ class TestStatements(unittest.TestCase):
     def test_destructure_let_statement_single_name(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("let [a] = [1];")],
-            [("DestructureLetStmt", ["a"], ("ListLiteral", [("Literal", 1)]), False, None)],
+            [("DestructureLetStmt", [("a", None)], ("ListLiteral", [("Literal", 1)]), False, None)],
         )
 
     def test_destructure_let_list_rest(self):
@@ -2083,7 +2087,7 @@ class TestStatements(unittest.TestCase):
             [
                 (
                     "DestructureLetStmt",
-                    ["a", "b"],
+                    [("a", None), ("b", None)],
                     (
                         "ListLiteral",
                         [("Literal", 1), ("Literal", 2), ("Literal", 3), ("Literal", 4)],
@@ -2107,6 +2111,24 @@ class TestStatements(unittest.TestCase):
                 )
             ],
         )
+
+    def test_destructure_let_list_default(self):
+        stmt = parse_stmts("let [a, b = 5] = [1];")[0]
+        names = [(name, shape(default) if default is not None else None) for name, default in stmt.names]
+        self.assertEqual(names, [("a", None), ("b", ("Literal", 5))])
+        self.assertEqual(shape(stmt.initializer), ("ListLiteral", [("Literal", 1)]))
+        self.assertIsNone(stmt.rest)
+
+    def test_destructure_let_list_default_with_rest(self):
+        stmt = parse_stmts("let [a = 1, ...rest] = [];")[0]
+        names = [(name, shape(default) if default is not None else None) for name, default in stmt.names]
+        self.assertEqual(names, [("a", ("Literal", 1))])
+        self.assertEqual(shape(stmt.initializer), ("ListLiteral", []))
+        self.assertEqual(stmt.rest, "rest")
+
+    def test_destructure_let_list_required_after_default_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a = 1, b] = [1, 2];")
 
     def test_destructure_let_list_rest_not_last_raises(self):
         with self.assertRaises(ParseError):
@@ -2573,7 +2595,7 @@ class TestFunctions(unittest.TestCase):
                 (
                     "FnDecl",
                     "dist",
-                    [("Param", ["x", "y"], None, False)],
+                    [("Param", [("x", None), ("y", None)], None, False)],
                     None,
                     ("Block", [("ReturnStmt", ("Identifier", "x"))]),
                 )
@@ -2601,7 +2623,7 @@ class TestFunctions(unittest.TestCase):
                 (
                     "FnDecl",
                     "f",
-                    [("Param", ["a"], "rest", False)],
+                    [("Param", [("a", None)], "rest", False)],
                     None,
                     ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
                 )
@@ -2629,7 +2651,7 @@ class TestFunctions(unittest.TestCase):
                 (
                     "FnDecl",
                     "f",
-                    [("Param", ["a", "b"], None, False)],
+                    [("Param", [("a", None), ("b", None)], None, False)],
                     "more",
                     ("Block", [("ReturnStmt", ("Identifier", "more"))]),
                 )
@@ -2641,7 +2663,7 @@ class TestFunctions(unittest.TestCase):
             shape(parse("fn([a, b]) { return a; }")),
             (
                 "FnExpr",
-                [("Param", ["a", "b"], None, False)],
+                [("Param", [("a", None), ("b", None)], None, False)],
                 None,
                 ("Block", [("ReturnStmt", ("Identifier", "a"))]),
             ),
@@ -2652,7 +2674,7 @@ class TestFunctions(unittest.TestCase):
             shape(parse("([a, b]) => a + b")),
             (
                 "FnExpr",
-                [("Param", ["a", "b"], None, False)],
+                [("Param", [("a", None), ("b", None)], None, False)],
                 None,
                 (
                     "Block",
@@ -2665,6 +2687,14 @@ class TestFunctions(unittest.TestCase):
                 ),
             ),
         )
+
+    def test_fn_declaration_with_list_destructuring_param_element_default(self):
+        stmt = parse_stmts("fn f([a, b = 10]) { return a; }")[0]
+        param = stmt.params[0]
+        names = [(name, shape(default) if default is not None else None) for name, default in param.names]
+        self.assertEqual(names, [("a", None), ("b", ("Literal", 10))])
+        self.assertIsNone(param.rest)
+        self.assertFalse(param.is_map)
 
     def test_list_destructuring_param_with_default_raises(self):
         with self.assertRaises(ParseError):
@@ -3081,7 +3111,7 @@ class TestForDestructuring(unittest.TestCase):
         stmt = parse_stmts("for [k, v] in items(m) { }")[0]
         self.assertIsInstance(stmt, ForStmt)
         self.assertIsNone(stmt.var_name)
-        self.assertEqual(stmt.names, ["k", "v"])
+        self.assertEqual(stmt.names, [("k", None), ("v", None)])
         self.assertIsNone(stmt.rest)
         self.assertEqual(
             shape(stmt.iterable),
@@ -3090,13 +3120,18 @@ class TestForDestructuring(unittest.TestCase):
 
     def test_for_list_destructure_single_name(self):
         stmt = parse_stmts("for [a] in xs { }")[0]
-        self.assertEqual(stmt.names, ["a"])
+        self.assertEqual(stmt.names, [("a", None)])
         self.assertIsNone(stmt.rest)
 
     def test_for_list_destructure_with_rest(self):
         stmt = parse_stmts("for [first, ...rest] in xs { }")[0]
-        self.assertEqual(stmt.names, ["first"])
+        self.assertEqual(stmt.names, [("first", None)])
         self.assertEqual(stmt.rest, "rest")
+
+    def test_for_list_destructure_element_default(self):
+        stmt = parse_stmts("for [a, b = 0] in xs { }")[0]
+        names = [(name, shape(default) if default is not None else None) for name, default in stmt.names]
+        self.assertEqual(names, [("a", None), ("b", ("Literal", 0))])
 
     def test_for_list_destructure_rest_not_last_raises(self):
         with self.assertRaises(ParseError):
@@ -3117,7 +3152,7 @@ class TestForDestructuring(unittest.TestCase):
     def test_for_list_destructure_carries_its_label(self):
         stmt = parse_stmts("outer: for [k, v] in items(m) { break outer; }")[0]
         self.assertEqual(stmt.label, "outer")
-        self.assertEqual(stmt.names, ["k", "v"])
+        self.assertEqual(stmt.names, [("k", None), ("v", None)])
 
     def test_for_list_destructure_body_parses(self):
         self.assertEqual(

@@ -914,6 +914,76 @@ class TestDestructureLet(unittest.TestCase):
             env.get("a")
 
 
+class TestDestructureListDefaults(unittest.TestCase):
+    def test_default_used_when_source_missing_element(self):
+        env = run("let [a, b = 5] = [1];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 5)
+
+    def test_default_not_used_when_source_has_element(self):
+        env = run("let [a, b = 5] = [1, 2];")
+        self.assertEqual(env.get("b"), 2)
+
+    def test_later_default_sees_earlier_bound_name(self):
+        env = run("let [a, b = a + 1] = [5];")
+        self.assertEqual(env.get("b"), 6)
+
+    def test_plain_assignment_unaffected_by_defaults_support(self):
+        env = run("let a = 0; let b = 0; [a, b] = [b, a];")
+        self.assertEqual(env.get("a"), 0)
+        self.assertEqual(env.get("b"), 0)
+
+    def test_for_loop_element_default(self):
+        env = run(
+            "let total = 0; "
+            "for [a, b = 0] in [[1], [2, 3]] { total = total + a + b; }"
+        )
+        self.assertEqual(env.get("total"), 6)
+
+    def test_fn_param_element_default(self):
+        env = run("fn f([a, b = 10]) { return a + b; } let r = f([1]);")
+        self.assertEqual(env.get("r"), 11)
+
+    def test_comprehension_element_default(self):
+        env = run(
+            "let r = [a + b for [a, b = 100] in [[1], [2, 3]]];"
+        )
+        self.assertEqual(env.get("r"), [101, 5])
+
+    def test_default_combines_with_trailing_rest(self):
+        env = run("let [a = 1, ...rest] = [];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), [])
+
+    def test_too_few_elements_with_required_before_default_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"destructuring pattern expects between 1 and 2 elements, got 0",
+        ):
+            run("let [a, b = 1] = [];")
+
+    def test_too_many_elements_with_default_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"destructuring pattern expects between 1 and 2 elements, got 3",
+        ):
+            run("let [a, b = 1] = [1, 2, 3];")
+
+    def test_rest_pattern_too_few_required_elements_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"destructuring pattern expects at least 1 elements, got 0",
+        ):
+            run("let [a, b = 1, ...rest] = [];")
+
+    def test_no_defaults_message_unchanged(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"destructuring pattern expects 1 elements, got 2",
+        ):
+            run("let [a] = [1, 2];")
+
+
 class TestDestructureAssign(unittest.TestCase):
     def test_swap_idiom(self):
         env = run("let a = 1; let b = 2; [a, b] = [b, a];")

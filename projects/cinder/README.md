@@ -227,6 +227,7 @@ while (i < 10) {
   `digit_sum` to sum an integer's decimal digits (sign ignored),
   `is_perfect_square` to test whether an integer is a perfect square,
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
+  `is_strong_number` to test whether an integer equals the sum of its own digits' factorials,
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
   `divisors` to list an integer's positive divisors in sorted order,
@@ -332,18 +333,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: default values in
-list-destructuring patterns (`let [a, b = 5] = expr;`), and
-`collatz_length` to count the steps the Collatz recurrence takes to
-reach `1`. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `is_strong_number` to
-test whether an integer equals the sum of its own digits' factorials,
-unary `+` to close the last gap in the unary operator set,
-`num_divisors` to count an integer's positive divisors, default
-values in map-destructuring patterns (`let {a, b = 5} = expr;`),
-`prime_factors` to list an integer's prime factors with multiplicity,
-and hole elements in list-destructuring patterns
-(`let [a, , c] = expr;`) to skip an unwanted position.
+Actively developed, nightly. Recently landed: `collatz_length` to
+count the steps the Collatz recurrence takes to reach `1`, and
+`is_strong_number` to test whether an integer equals the sum of its
+own digits' factorials. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): unary `+` to close the last gap in
+the unary operator set, `num_divisors` to count an integer's positive
+divisors, default values in map-destructuring patterns
+(`let {a, b = 5} = expr;`), `prime_factors` to list an integer's prime
+factors with multiplicity, hole elements in list-destructuring
+patterns (`let [a, , c] = expr;`) to skip an unwanted position, and
+`is_squarefree` to test whether an integer has no repeated prime
+factor.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

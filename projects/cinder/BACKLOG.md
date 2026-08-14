@@ -725,6 +725,82 @@ not this task.
 
 ---
 
+## 6. Standard library: `is_squarefree` — no repeated prime factor
+
+Build: the breadth task after task 5's depth work (hole elements in
+list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
+policy, restocking the backlog back to 6 tasks now that
+`is_strong_number` has landed and dropped the count to the 5-task
+floor. Add `is_squarefree(n)` to `cinder/builtins.py`, registered right
+after `is_pronic` (search for `def _is_pronic`, the current last entry
+in the integer-property predicate cluster before the divisor cluster
+begins) — a positive integer is squarefree when no perfect square
+greater than `1` divides it evenly, equivalently when none of its
+prime factors repeats (e.g. `6 = 2 * 3` is squarefree, `12 = 2 * 2 * 3`
+is not, since `4` divides it). This is the natural predicate neighbor
+to `is_prime`/`is_composite` (which classify `n` as a whole) and the
+soon-to-land `prime_factors` (task 4, which lists factors with
+multiplicity) — `is_squarefree` answers "does any factor repeat?"
+without needing to build the full factor list, via the same
+`sqrt(n)`-bounded trial-division shape `is_prime`/`is_composite`
+already use, checking `divisor * divisor` divisibility directly rather
+than a fixed divisor:
+
+```python
+def _is_squarefree(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_squarefree", arguments, 1, line, column)
+    value = _require_int("is_squarefree", arguments[0], line, column)
+    if value < 1:
+        return False
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % (divisor * divisor) == 0:
+            return False
+    return True
+```
+
+Model the arity/type-checking exactly on `is_prime`/`is_pronic`'s own
+structure: `_require_arity`, then `_require_int` (reusing the shared
+helper — do **not** hand-roll a separate `isinstance` check). `n < 1`
+returns `false` rather than raising, matching the boolean-predicate
+cluster's own convention (`is_prime`, `is_pronic`, `is_harshad`, etc. —
+*not* the divisor cluster's type-vs-domain-error convention, since this
+builtin returns a boolean, not a number). `value == 1` is a genuine
+`true` case handled for free by the loop: `math.isqrt(1) + 1 == 2`, so
+`range(2, 2)` is empty and the function falls through to `return True`
+— `1` has no prime factors at all, so vacuously none of them repeats.
+
+Acceptance criteria:
+- `is_squarefree(1);` is `true` — vacuously squarefree, the empty-loop
+  case above.
+- `is_squarefree(6);` is `true` — `6 = 2 * 3`, no repeated factor.
+- `is_squarefree(30);` is `true` — `30 = 2 * 3 * 5`.
+- `is_squarefree(4);` is `false` — `4 = 2 * 2`, divisible by the
+  perfect square `4`.
+- `is_squarefree(12);` is `false` — `12 = 2 * 2 * 3`, divisible by `4`.
+- `is_squarefree(45);` is `false` — `45 = 3 * 3 * 5`, divisible by `9`.
+- `is_squarefree(0);` is `false` — below the domain floor.
+- `is_squarefree(-6);` is `false` — negative input, same convention as
+  `is_prime`/`is_pronic`.
+- `is_squarefree(5.0);` raises `CinderRuntimeError` matching
+  `"is_squarefree() requires an int, got float"` — the same message
+  shape `_require_int` already produces for every sibling in this
+  cluster.
+- `is_squarefree(true);` raises `CinderRuntimeError` matching
+  `"is_squarefree() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_pronic`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py` (model on the `is_pronic` test class,
+search for `test_is_pronic_of_`). Once merged, `README.md`'s Builtins
+bullet needs `is_squarefree` added near `is_prime`/`is_pronic`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
+— leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

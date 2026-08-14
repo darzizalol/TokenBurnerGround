@@ -1437,6 +1437,14 @@ def _is_armstrong(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) ** power for digit in digits) == value
 
 
+def _is_strong_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_strong_number", arguments, 1, line, column)
+    value = _require_int("is_strong_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    return sum(math.factorial(int(digit)) for digit in str(value)) == value
+
+
 def _is_leap_year(arguments: list, line: int, column: int) -> object:
     _require_arity("is_leap_year", arguments, 1, line, column)
     value = _require_int("is_leap_year", arguments[0], line, column)
@@ -3397,6 +3405,7 @@ _BUILTINS = {
     "is_palindrome_number": _is_palindrome_number,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
+    "is_strong_number": _is_strong_number,
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,
     "is_abundant": _is_abundant,

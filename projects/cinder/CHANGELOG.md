@@ -2349,3 +2349,16 @@ for vision/architecture.
   binding, defaults, duplicate/unexpected/missing keyword errors,
   positional-after-keyword parse errors, and destructuring/rest/builtin
   rejection).
+- **Standard library: `is_pronic` — oblong-number predicate** — merged
+  2026-08-14T19:39:34Z via PR #243 (`feat/20260814-is-pronic`). Added
+  `is_pronic(n)` to `cinder/builtins.py`, registered right after
+  `is_perfect_cube`: an integer `n` is pronic (oblong) when `n = k *
+  (k + 1)` for some non-negative integer `k`, computed the same
+  exact-integer way as `is_perfect_square` (`math.isqrt`, no
+  floating-point square root) with a single `root * (root + 1) ==
+  value` check. Negative input answers `false` without raising,
+  matching `is_perfect_square`/`is_leap_year`'s own convention. Clean
+  first round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS`
+  (2725 tests passing plus CLI smoke tests covering true/false cases,
+  a huge pronic product with no overflow/precision issues, and the
+  float/string type-error paths).

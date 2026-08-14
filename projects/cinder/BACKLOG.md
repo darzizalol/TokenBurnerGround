@@ -11,79 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pronic` — oblong-number predicate [claimed 2026-08-14T14:58:11Z]
-
-Build: the breadth task after task 3's depth work (keyword arguments in
-function calls) per `PROJECT.md`'s breadth-vs-depth policy. Add
-`is_pronic(n)` to `cinder/builtins.py`, registered right after
-`is_perfect_cube` (search for `def _is_perfect_cube`, the current last
-entry in the integer-property cluster once task 1 (`is_perfect_cube`)
-lands — this task only depends on task 1, not task 3). A pronic (or
-oblong, or heteromecic) number is an integer expressible as `k * (k +
-1)` for some non-negative integer `k` — e.g. `6 = 2 * 3`, `12 = 3 * 4`,
-`20 = 4 * 5` — one more root/product-based classification alongside
-`is_perfect_square`/`is_perfect_cube` in that same cluster. Compute it
-the same exact-integer way `is_perfect_square` does (`math.isqrt`, no
-floating-point square root): for non-negative `n`, `k =
-math.isqrt(n)` always lands on the unique integer with `k * k <= n <
-(k + 1) * (k + 1)`, so `n` is pronic exactly when `k * (k + 1) == n`
-(no need to also check `k - 1`, since pronic numbers are never
-adjacent to another pronic number closely enough for `isqrt` to
-land one short — verified by the acceptance criteria below).
-
-```python
-def _is_pronic(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_pronic", arguments, 1, line, column)
-    value = _require_int("is_pronic", arguments[0], line, column)
-    if value < 0:
-        return False
-    root = math.isqrt(value)
-    return root * (root + 1) == value
-```
-
-Model the arity/type-checking exactly on `is_perfect_square`'s own
-structure: `_require_arity`, then `_require_int` (reusing the shared
-helper — do **not** hand-roll a separate `isinstance` check). The
-`value < 0` guard answers `false` on negative input rather than raising
-a domain error, matching `is_perfect_square`/`is_leap_year`'s own
-convention (no pronic number is ever negative, since `k * (k + 1) >= 0`
-for every `k >= 0`).
-
-Acceptance criteria:
-- `is_pronic(0);` is `true` — `0 * 1 == 0`.
-- `is_pronic(2);` is `true` — `1 * 2 == 2`.
-- `is_pronic(6);` is `true` — `2 * 3 == 6`.
-- `is_pronic(12);` is `true` — `3 * 4 == 12`.
-- `is_pronic(20);` is `true` — `4 * 5 == 20`.
-- `is_pronic(30);` is `true` — `5 * 6 == 30`.
-- `is_pronic(1);` is `false` — no integer `k` satisfies `k * (k + 1) ==
-  1`.
-- `is_pronic(5);` is `false`.
-- `is_pronic(9);` is `false` — a perfect square that is not also
-  pronic (no integer is ever both, except neither `0` nor any other
-  value coincides for this pair).
-- `is_pronic(-6);` is `false` — negative input answers `false` without
-  raising.
-- `is_pronic(5.0);` raises `CinderRuntimeError` matching
-  `"is_pronic() requires an int, got float"` — the same message shape
-  `_require_int` already produces for every sibling in this cluster.
-- `is_pronic(true);` raises `CinderRuntimeError` matching
-  `"is_pronic() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near
-`is_perfect_square`/`is_perfect_cube`, see current line numbers — shift
-if earlier tasks this cycle landed first), `tests/test_builtins.py`.
-Once merged, `README.md`'s Builtins bullet needs `is_pronic` added near
-`is_perfect_square`/`is_perfect_cube`, and `PROJECT.md`'s roadmap
-paragraph needs it moved from backlog to landed — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
+## 1. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
 
 Build: the depth task after task 4's breadth work (`is_pronic`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —
@@ -352,7 +280,7 @@ task.
 
 ---
 
-## 3. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
+## 2. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
 
 Build: the breadth task after task 5's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
@@ -430,7 +358,7 @@ next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_strong_number` — sum of digit factorials equals the number
+## 3. Standard library: `is_strong_number` — sum of digit factorials equals the number
 
 Build: a second breadth task after task 5's `collatz_length`, restocking
 the backlog back past its 5-task floor rather than strictly alternating
@@ -504,7 +432,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: unary `+` operator (`+expr`)
+## 4. Language: unary `+` operator (`+expr`)
 
 Build: a language-depth task closing a real asymmetry in the unary
 operator set. Every other classic unary operator is implemented —
@@ -658,7 +586,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `num_divisors` — count of an integer's positive divisors
+## 5. Standard library: `num_divisors` — count of an integer's positive divisors
 
 Build: the breadth task after task 5's depth work (unary `+`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog

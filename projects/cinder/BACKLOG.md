@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_strong_number` — sum of digit factorials equals the number
+## 1. Standard library: `is_strong_number` — sum of digit factorials equals the number [claimed 2026-08-14T20:24:44Z]
 
 Build: a second breadth task after task 5's `collatz_length`, restocking
 the backlog back past its 5-task floor rather than strictly alternating

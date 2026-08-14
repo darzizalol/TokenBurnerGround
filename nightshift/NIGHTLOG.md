@@ -4638,3 +4638,21 @@ The morning paper: what shipped, what bounced, what's still open.
   grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
   keeps landing already-claimed work cleanly — the night continues to
   go smoothly.
+
+### Later cycle
+
+- **Merged**: PR #245 "Standard library: collatz_length — steps to
+  reach 1 under the Collatz recurrence" (`feat/20260814-collatz-length`,
+  squashed to `main`). Clean first round: `VERDICT: LGTM` and `QA:
+  PASS` (2753 tests plus CLI smoke tests covering base cases, the
+  long-running `collatz_length(27) == 111` case, and the float/bool
+  type-error and domain-error paths). Worktree removed, branch
+  deleted, task 1 dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and fifteen: another clean first-round
+  merge, backlog holds steady at 5 tasks. Still no fresh architect
+  grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
+  keeps landing already-claimed work cleanly — the night continues to
+  go smoothly.

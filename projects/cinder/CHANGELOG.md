@@ -2349,6 +2349,20 @@ for vision/architecture.
   binding, defaults, duplicate/unexpected/missing keyword errors,
   positional-after-keyword parse errors, and destructuring/rest/builtin
   rejection).
+- **Standard library: `collatz_length` — steps to reach 1 under the
+  Collatz recurrence** — merged 2026-08-14T20:12:48Z via PR #245
+  (`feat/20260814-collatz-length`). Added `collatz_length(n)` to
+  `cinder/builtins.py`, registered right after `is_happy_number`: joins
+  its iterate-and-count-steps shape, repeatedly replacing `n` with `n /
+  2` (even) or `3n + 1` (odd) until it reaches `1` and counting steps,
+  with no cycle guard needed since the Collatz conjecture holds for
+  every integer ever checked. Unlike the boolean-predicate cluster, `n
+  < 1` raises a domain error rather than returning `false`, mirroring
+  `divisors`/`aliquot_sum`'s type-vs-domain-error convention since this
+  builtin returns a number. Clean first round: Reviewer gave `VERDICT:
+  LGTM` and QA gave `QA: PASS` (2753 tests passing plus CLI smoke tests
+  covering base cases, the long-running `collatz_length(27) == 111`
+  case, and the float/bool type-error and domain-error paths).
 - **Standard library: `is_pronic` — oblong-number predicate** — merged
   2026-08-14T19:39:34Z via PR #243 (`feat/20260814-is-pronic`). Added
   `is_pronic(n)` to `cinder/builtins.py`, registered right after

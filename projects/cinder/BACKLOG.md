@@ -11,85 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence [claimed 2026-08-14T20:08:21Z]
-
-Build: the breadth task after task 5's depth work (default values in
-list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
-policy. For a positive integer `n`, the Collatz (3n+1) recurrence
-repeatedly replaces `n` with `n / 2` if `n` is even, or `3n + 1` if
-`n` is odd, until it reaches `1`; `collatz_length(n)` returns the
-number of steps that takes (e.g. `6 -> 3 -> 10 -> 5 -> 16 -> 8 -> 4 ->
-2 -> 1` is 8 steps). It joins `is_happy_number`'s
-iterate-and-count-steps technique (search for `def _is_happy_number`,
-the natural neighbor to register next to — same "keep applying a
-recurrence until a stopping condition" shape, just counting steps
-instead of tracking a `seen` set for cycle detection, since the
-Collatz conjecture — unproven but true for every integer ever
-checked, including anything reachable via a 64-bit Cinder int — is
-that this process always reaches `1`, never cycles, so no cycle guard
-is needed):
-
-```python
-def _collatz_length(arguments: list, line: int, column: int) -> object:
-    _require_arity("collatz_length", arguments, 1, line, column)
-    value = _require_int("collatz_length", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "collatz_length() requires a positive integer, domain error", line, column
-        )
-    steps = 0
-    n = value
-    while n != 1:
-        n = n // 2 if n % 2 == 0 else 3 * n + 1
-        steps += 1
-    return steps
-```
-
-Model the arity/type-checking exactly on `is_happy_number`'s own
-structure: `_require_arity`, then `_require_int` (reusing the shared
-helper — do **not** hand-roll a separate `isinstance` check). Unlike
-`is_happy_number` (which answers `false` on out-of-domain input), `n <
-1` raises a domain error rather than returning a number — there is no
-sensible Collatz step count for zero or negative input (the recurrence
-isn't defined there), mirroring `divisors`/`aliquot_sum`'s own
-type-vs-domain-error convention rather than the boolean-predicate
-cluster's answer-`false` one, since this builtin returns a number, not
-a boolean.
-
-Acceptance criteria:
-- `collatz_length(1);` is `0` — already at `1`, zero steps needed.
-- `collatz_length(2);` is `1` — `2 -> 1`.
-- `collatz_length(4);` is `2` — `4 -> 2 -> 1`.
-- `collatz_length(6);` is `8` — `6 -> 3 -> 10 -> 5 -> 16 -> 8 -> 4 -> 2
-  -> 1`.
-- `collatz_length(27);` is `111` — the famous long-running example for
-  a small starting value, a case large enough to catch an off-by-one
-  in the loop's step counting.
-- `collatz_length(0);` raises `CinderRuntimeError` matching
-  `"collatz_length() requires a positive integer, domain error"`.
-- `collatz_length(-6);` raises `CinderRuntimeError` matching
-  `"collatz_length() requires a positive integer, domain error"`.
-- `collatz_length(5.0);` raises `CinderRuntimeError` matching
-  `"collatz_length() requires an int, got float"` — the same message
-  shape `_require_int` already produces for every sibling in this
-  cluster.
-- `collatz_length(true);` raises `CinderRuntimeError` matching
-  `"collatz_length() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near
-`is_happy_number`/`is_fibonacci`, see current line numbers — shift if
-earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
-merged, `README.md`'s Builtins bullet needs `collatz_length` added near
-`is_happy_number`/`is_fibonacci`, and `PROJECT.md`'s roadmap paragraph
-needs it moved from backlog to landed — leave both to the Architect's
-next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_strong_number` — sum of digit factorials equals the number
+## 1. Standard library: `is_strong_number` — sum of digit factorials equals the number
 
 Build: a second breadth task after task 5's `collatz_length`, restocking
 the backlog back past its 5-task floor rather than strictly alternating
@@ -163,7 +85,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: unary `+` operator (`+expr`)
+## 2. Language: unary `+` operator (`+expr`)
 
 Build: a language-depth task closing a real asymmetry in the unary
 operator set. Every other classic unary operator is implemented —
@@ -317,7 +239,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `num_divisors` — count of an integer's positive divisors
+## 3. Standard library: `num_divisors` — count of an integer's positive divisors
 
 Build: the breadth task after task 5's depth work (unary `+`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
@@ -398,7 +320,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
+## 4. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
 
 Build: the depth task after task 5's breadth work (`num_divisors`) per
 `PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to
@@ -590,7 +512,7 @@ task.
 
 ---
 
-## 6. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+## 5. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
 
 Build: the breadth task after task 5's depth work (default values in
 map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,

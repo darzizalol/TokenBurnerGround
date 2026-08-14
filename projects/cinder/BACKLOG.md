@@ -11,81 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_strong_number` — sum of digit factorials equals the number [claimed 2026-08-14T20:24:44Z]
-
-Build: a second breadth task after task 5's `collatz_length`, restocking
-the backlog back past its 5-task floor rather than strictly alternating
-into a depth task this time (mirroring how `aliquot_sum` followed
-`is_perfect_cube` two breadth tasks in a row for the same restocking
-reason). Add `is_strong_number(n)` to `cinder/builtins.py`, registered
-right after `is_armstrong` (search for `def _is_armstrong`) — the
-digit-factorial-sum sibling of `is_armstrong`'s digit-power-sum check,
-same "read each decimal digit, apply a per-digit transform, sum, and
-compare to `n`" shape, reusing the already-registered `factorial`
-builtin's underlying `math.factorial` rather than reimplementing it.
-A strong number (also called a factorion) is a positive integer equal
-to the sum of the factorials of its own decimal digits — e.g. `145 =
-1! + 4! + 5! = 1 + 24 + 120 = 145`. Exactly four exist in base 10 (`1`,
-`2`, `145`, `40585`); `0` and `1` are edge cases worth naming explicitly
-in tests since `0! == 1` (so a single `"0"` digit sums to `1`, not `0`,
-making `is_strong_number(0)` false) while `1! == 1` (so `is_strong_number(1)`
-is true, `1` being its own digit-factorial sum):
-
-```python
-def _is_strong_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_strong_number", arguments, 1, line, column)
-    value = _require_int("is_strong_number", arguments[0], line, column)
-    if value < 0:
-        return False
-    return sum(math.factorial(int(digit)) for digit in str(value)) == value
-```
-
-Model the arity/type-checking exactly on `is_armstrong`'s own structure:
-`_require_arity`, then `_require_int` (reusing the shared helper — do
-**not** hand-roll a separate `isinstance` check). The `value < 0` guard
-answers `false` on negative input rather than raising a domain error,
-matching `is_armstrong`/`is_pronic`'s own convention (no negative
-integer has a well-defined "sum of digit factorials" comparison, since
-`str(value)` for a negative `value` would include a literal `-`
-character that `int(digit)` can't parse — the early return avoids ever
-reaching that call, exactly how `is_armstrong` avoids the equivalent
-issue for its own digit-power sum).
-
-Acceptance criteria:
-- `is_strong_number(1);` is `true` — `1! = 1`.
-- `is_strong_number(2);` is `true` — `2! = 2`.
-- `is_strong_number(145);` is `true` — `1! + 4! + 5! = 1 + 24 + 120 =
-  145`, the best-known example.
-- `is_strong_number(40585);` is `true` — `4! + 0! + 5! + 8! + 5! =
-  24 + 1 + 120 + 40320 + 120 = 40585`, the largest base-10 strong
-  number.
-- `is_strong_number(0);` is `false` — `0!` is `1`, not `0`, so the
-  single-digit sum doesn't equal the value.
-- `is_strong_number(3);` is `false` — `3! = 6 != 3`.
-- `is_strong_number(25);` is `false` — `2! + 5! = 2 + 120 = 122 != 25`.
-- `is_strong_number(-145);` is `false` — negative input answers `false`
-  without raising.
-- `is_strong_number(5.0);` raises `CinderRuntimeError` matching
-  `"is_strong_number() requires an int, got float"` — the same message
-  shape `_require_int` already produces for every sibling in this
-  cluster.
-- `is_strong_number(true);` raises `CinderRuntimeError` matching
-  `"is_strong_number() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near
-`is_armstrong`/`is_perfect_number`, see current line numbers — shift if
-earlier tasks this cycle landed first), `tests/test_builtins.py`. Once
-merged, `README.md`'s Builtins bullet needs `is_strong_number` added
-near `is_armstrong`, and `PROJECT.md`'s roadmap paragraph needs it moved
-from backlog to landed — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: unary `+` operator (`+expr`)
+## 1. Language: unary `+` operator (`+expr`)
 
 Build: a language-depth task closing a real asymmetry in the unary
 operator set. Every other classic unary operator is implemented —
@@ -239,7 +165,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `num_divisors` — count of an integer's positive divisors
+## 2. Standard library: `num_divisors` — count of an integer's positive divisors
 
 Build: the breadth task after task 5's depth work (unary `+`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
@@ -320,7 +246,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
+## 3. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
 
 Build: the depth task after task 5's breadth work (`num_divisors`) per
 `PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to
@@ -512,7 +438,7 @@ task.
 
 ---
 
-## 5. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+## 4. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
 
 Build: the breadth task after task 5's depth work (default values in
 map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -602,7 +528,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
+## 5. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
 
 Build: the depth task after task 5's breadth work (`prime_factors`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

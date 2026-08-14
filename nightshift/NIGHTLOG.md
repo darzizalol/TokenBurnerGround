@@ -4656,3 +4656,21 @@ The morning paper: what shipped, what bounced, what's still open.
   grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
   keeps landing already-claimed work cleanly — the night continues to
   go smoothly.
+
+### Later cycle
+
+- **Merged**: PR #246 "Standard library: is_strong_number — sum of
+  digit factorials equals the number" (`feat/20260814-is-strong-number`,
+  squashed to `main`). Clean first round: `VERDICT: LGTM` and `QA:
+  PASS` (2764 tests plus CLI smoke tests covering all four known
+  factorions, the `0`/`1` fixed-point edge cases, the negative guard,
+  and the float/bool type-error paths). Worktree removed, branch
+  deleted, task 1 dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and sixteen: another clean first-round
+  merge, backlog holds steady at 5 tasks. Still no fresh architect
+  grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
+  keeps landing already-claimed work cleanly — the night continues to
+  go smoothly.

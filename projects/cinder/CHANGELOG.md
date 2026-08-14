@@ -2394,3 +2394,19 @@ for vision/architecture.
   rest-pattern interaction, cross-form parity across let/for/params/
   comprehensions, and the out-of-scope plain-assignment form's
   unchanged parse error).
+- **Standard library: `is_strong_number` — sum of digit factorials
+  equals the number** — merged 2026-08-14T20:28:58Z via PR #246
+  (`feat/20260814-is-strong-number`). Added `is_strong_number(n)` to
+  `cinder/builtins.py`, registered right after `is_armstrong`: the
+  digit-factorial-sum sibling of `is_armstrong`'s digit-power-sum
+  check, reusing the already-registered `factorial` builtin's
+  underlying `math.factorial` rather than reimplementing it. A strong
+  number (factorion) is a positive integer equal to the sum of the
+  factorials of its own decimal digits; exactly four exist in base 10
+  (`1`, `2`, `145`, `40585`). Negative input answers `false` without
+  raising, matching `is_armstrong`/`is_pronic`'s own convention (avoids
+  `int(digit)` choking on a literal `-` character). Clean first round:
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2764 tests
+  passing plus CLI smoke tests covering all four known factorions, the
+  `0`/`1` fixed-point edge cases, the negative guard, and the
+  float/bool type-error paths).

@@ -3113,6 +3113,54 @@ class TestIsPerfectCube(unittest.TestCase):
             run("is_perfect_cube();")
 
 
+class TestIsPronic(unittest.TestCase):
+    def test_is_pronic_of_0(self):
+        self.assertEqual(run("let result = is_pronic(0);").get("result"), True)
+
+    def test_is_pronic_of_2(self):
+        self.assertEqual(run("let result = is_pronic(2);").get("result"), True)
+
+    def test_is_pronic_of_6(self):
+        self.assertEqual(run("let result = is_pronic(6);").get("result"), True)
+
+    def test_is_pronic_of_12(self):
+        self.assertEqual(run("let result = is_pronic(12);").get("result"), True)
+
+    def test_is_pronic_of_20(self):
+        self.assertEqual(run("let result = is_pronic(20);").get("result"), True)
+
+    def test_is_pronic_of_30(self):
+        self.assertEqual(run("let result = is_pronic(30);").get("result"), True)
+
+    def test_is_pronic_of_1_is_false(self):
+        self.assertEqual(run("let result = is_pronic(1);").get("result"), False)
+
+    def test_is_pronic_of_5_is_false(self):
+        self.assertEqual(run("let result = is_pronic(5);").get("result"), False)
+
+    def test_is_pronic_of_9_is_false(self):
+        self.assertEqual(run("let result = is_pronic(9);").get("result"), False)
+
+    def test_is_pronic_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_pronic(-6);").get("result"), False)
+
+    def test_is_pronic_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pronic(5.0);")
+        self.assertIn("is_pronic", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_pronic_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pronic(true);")
+        self.assertIn("is_pronic", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_pronic_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_pronic();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

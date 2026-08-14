@@ -1511,6 +1511,15 @@ def _is_perfect_cube(arguments: list, line: int, column: int) -> object:
     return root ** 3 == magnitude
 
 
+def _is_pronic(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_pronic", arguments, 1, line, column)
+    value = _require_int("is_pronic", arguments[0], line, column)
+    if value < 0:
+        return False
+    root = math.isqrt(value)
+    return root * (root + 1) == value
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -3379,6 +3388,7 @@ _BUILTINS = {
     "is_automorphic": _is_automorphic,
     "is_harshad": _is_harshad,
     "is_perfect_cube": _is_perfect_cube,
+    "is_pronic": _is_pronic,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
     "min": _min,

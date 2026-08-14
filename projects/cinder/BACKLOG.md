@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`)
+## 1. Language: default values in list-destructuring patterns (`let [a, b = 5] = expr;`) [claimed 2026-08-14T19:48:13Z]
 
 Build: the depth task after task 4's breadth work (`is_pronic`) per
 `PROJECT.md`'s breadth-vs-depth policy. Every list-destructuring form —

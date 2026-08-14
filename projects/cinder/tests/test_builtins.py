@@ -2312,6 +2312,57 @@ class TestIsHappyNumber(unittest.TestCase):
             run("is_happy_number(1, 2);")
 
 
+class TestCollatzLength(unittest.TestCase):
+    def test_collatz_length_of_one_is_zero(self):
+        self.assertEqual(run("let result = collatz_length(1);").get("result"), 0)
+
+    def test_collatz_length_of_two(self):
+        self.assertEqual(run("let result = collatz_length(2);").get("result"), 1)
+
+    def test_collatz_length_of_four(self):
+        self.assertEqual(run("let result = collatz_length(4);").get("result"), 2)
+
+    def test_collatz_length_of_six(self):
+        self.assertEqual(run("let result = collatz_length(6);").get("result"), 8)
+
+    def test_collatz_length_of_twenty_seven(self):
+        self.assertEqual(run("let result = collatz_length(27);").get("result"), 111)
+
+    def test_collatz_length_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_length(0);")
+        self.assertIn(
+            "collatz_length() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_collatz_length_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_length(-6);")
+        self.assertIn(
+            "collatz_length() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_collatz_length_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_length(5.0);")
+        self.assertIn(
+            "collatz_length() requires an int, got float", ctx.exception.message
+        )
+
+    def test_collatz_length_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_length(true);")
+        self.assertIn(
+            "collatz_length() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_collatz_length_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("collatz_length(1, 2);")
+
+
 class TestIsTriangular(unittest.TestCase):
     def test_is_triangular_degenerate_and_first_cases(self):
         self.assertEqual(run("let result = is_triangular(0);").get("result"), True)

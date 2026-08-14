@@ -1299,6 +1299,21 @@ def _is_happy_number(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _collatz_length(arguments: list, line: int, column: int) -> object:
+    _require_arity("collatz_length", arguments, 1, line, column)
+    value = _require_int("collatz_length", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "collatz_length() requires a positive integer, domain error", line, column
+        )
+    steps = 0
+    n = value
+    while n != 1:
+        n = n // 2 if n % 2 == 0 else 3 * n + 1
+        steps += 1
+    return steps
+
+
 def _is_triangular(arguments: list, line: int, column: int) -> object:
     _require_arity("is_triangular", arguments, 1, line, column)
     value = _require_int("is_triangular", arguments[0], line, column)
@@ -3369,6 +3384,7 @@ _BUILTINS = {
     "is_coprime": _is_coprime,
     "is_fibonacci": _is_fibonacci,
     "is_happy_number": _is_happy_number,
+    "collatz_length": _collatz_length,
     "is_triangular": _is_triangular,
     "is_prime": _is_prime,
     "is_composite": _is_composite,

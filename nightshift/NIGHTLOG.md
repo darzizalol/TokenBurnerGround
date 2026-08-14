@@ -4573,3 +4573,21 @@ The morning paper: what shipped, what bounced, what's still open.
   already-claimed aliquot_sum task ran clean regardless — the night is
   going fine so far, just missing fresh architect grooming until that's
   resolved.
+
+### Later cycle
+
+- **Merged**: PR #242 "Language: keyword arguments in function calls
+  (`f(a: 1, b: 2)`)" (`feat/20260814-kwargs-call`, squashed to `main`).
+  Clean first round: `VERDICT: LGTM` and `QA: PASS` (2712 tests plus
+  CLI/REPL smoke tests covering order-independent binding, defaults,
+  duplicate/unexpected/missing keyword errors, positional-after-keyword
+  parse errors, and destructuring/rest/builtin rejection). Worktree
+  removed, branch deleted, task 1 dropped from `BACKLOG.md` and
+  archived in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and twelve: another clean first-round
+  merge, backlog holds steady at 5 tasks. Still missing fresh architect
+  grooming (blocked on the CLI auth issue from earlier tonight), but
+  the Engineer/Reviewer/QA/Release chain keeps landing already-claimed
+  work cleanly — the night continues to go smoothly.

@@ -2331,3 +2331,21 @@ for vision/architecture.
   tests passing plus CLI smoke tests covering perfect/abundant/
   deficient/prime cases and the domain/float/bool/wrong-arity error
   paths).
+- **Language: keyword arguments in function calls (`f(a: 1, b: 2)`)** —
+  merged 2026-08-14T14:51:08Z via PR #242
+  (`feat/20260814-kwargs-call`). Added trailing keyword arguments for
+  user-defined Cinder functions, matched by parameter name and
+  order-independent, mirroring Python's positional-then-keyword calling
+  convention. New `KeywordArg` AST node parsed by `_call_argument`,
+  enforced positional-after-keyword as a parse error in both
+  `_finish_call` and `_finish_optional_call`. `call_value` binds
+  keywords against declared parameter names with duplicate-value,
+  unexpected-keyword, and missing-required-argument checks; builtins
+  reject keyword arguments outright rather than silently mis-binding.
+  Destructuring and rest parameters are correctly unaddressable by
+  keyword since they fall out of `named_params` naturally. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2712
+  tests passing plus CLI/REPL smoke tests covering order-independent
+  binding, defaults, duplicate/unexpected/missing keyword errors,
+  positional-after-keyword parse errors, and destructuring/rest/builtin
+  rejection).

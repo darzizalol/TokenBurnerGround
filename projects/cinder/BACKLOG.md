@@ -590,6 +590,96 @@ task.
 
 ---
 
+## 6. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+
+Build: the breadth task after task 5's depth work (default values in
+map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
+restocking the backlog back to 6 tasks now that `is_pronic` (which used
+to sit at the top of this file) has landed and dropped the count to the
+5-task floor. Add `prime_factors(n)` to `cinder/builtins.py`, registered
+right after `aliquot_sum` (search for `def _aliquot_sum`, the current
+last entry in the divisor cluster) — the natural neighbor to
+`divisors`/`is_prime`/`is_composite`: where `divisors` finds every
+factor of `n` and `is_prime`/`is_composite` classify `n` as a whole,
+`prime_factors` decomposes `n` into its prime building blocks, with
+multiplicity, in ascending order (e.g. `12 -> [2, 2, 3]`, `360 -> [2,
+2, 2, 3, 3, 5]`). Unlike `divisors`/`aliquot_sum`/`num_divisors`, which
+all pair divisors up to `sqrt(n)` against the fixed original value,
+this uses the standard trial-division *factorization* technique:
+strip small prime factors out of a shrinking copy of `n` as you find
+them, so a repeated factor (like `2` dividing `12` twice) is recorded
+each time it divides evenly, not just once:
+
+```python
+def _prime_factors(arguments: list, line: int, column: int) -> object:
+    _require_arity("prime_factors", arguments, 1, line, column)
+    value = _require_int("prime_factors", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "prime_factors() requires a positive integer, domain error", line, column
+        )
+    result = []
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        while remaining % divisor == 0:
+            result.append(divisor)
+            remaining //= divisor
+        divisor += 1
+    if remaining > 1:
+        result.append(remaining)
+    return result
+```
+
+Model the arity/type-checking exactly on `divisors`/`aliquot_sum`'s own
+structure: `_require_arity`, then `_require_int` (reusing the shared
+helper — do **not** hand-roll a separate `isinstance` check). `n < 1`
+raises a domain error rather than returning a list, mirroring
+`divisors`/`aliquot_sum`'s own type-vs-domain-error convention.
+`prime_factors(1)` is the one case worth calling out explicitly: the
+`while divisor * divisor <= remaining` loop never runs (`2 * 2 > 1`)
+and the trailing `if remaining > 1` guard is also false (`remaining`
+is still `1`), so the function returns `[]` — `1` has no prime
+factors, which is mathematically correct, not a bug to guard against
+with a special case the way `divisors(1)` special-cases its own `[1]`
+result.
+
+Acceptance criteria:
+- `prime_factors(1);` is `[]` — `1` has no prime factors.
+- `prime_factors(2);` is `[2]` — a prime is its own sole factor.
+- `prime_factors(12);` is `[2, 2, 3]` — `2 * 2 * 3 = 12`, `2` appearing
+  twice since it divides `12` twice.
+- `prime_factors(97);` is `[97]` — `97` is itself prime, caught by the
+  trailing `if remaining > 1` guard since the loop's `divisor * divisor`
+  never reaches `97` before `divisor` would have to exceed
+  `sqrt(97) ≈ 9.8`.
+- `prime_factors(360);` is `[2, 2, 2, 3, 3, 5]` — `2**3 * 3**2 * 5 =
+  360`, a case with two different repeated prime factors, exercising
+  the inner `while` loop's repeat-stripping for more than one prime.
+- `prime_factors(0);` raises `CinderRuntimeError` matching
+  `"prime_factors() requires a positive integer, domain error"`.
+- `prime_factors(-12);` raises `CinderRuntimeError` matching
+  `"prime_factors() requires a positive integer, domain error"`.
+- `prime_factors(5.0);` raises `CinderRuntimeError` matching
+  `"prime_factors() requires an int, got float"` — the same message
+  shape `_require_int` already produces for every sibling in this
+  cluster.
+- `prime_factors(true);` raises `CinderRuntimeError` matching
+  `"prime_factors() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near
+`divisors`/`aliquot_sum`, see current line numbers — shift if earlier
+tasks this cycle landed first), `tests/test_builtins.py`. Once merged,
+`README.md`'s Builtins bullet needs `prime_factors` added near
+`divisors`/`aliquot_sum`, and `PROJECT.md`'s roadmap paragraph needs it
+moved from backlog to landed — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

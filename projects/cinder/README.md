@@ -44,7 +44,13 @@ while (i < 10) {
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting, plus
   an optional trailing rest element `let [a, b, ...rest] = expr;` that
-  collects any remaining elements into a list, empty if none are left) and
+  collects any remaining elements into a list, empty if none are left,
+  and an optional default value per element `let [a, b = 5] = expr;`,
+  used when the source list doesn't reach that position, evaluated
+  left-to-right so a later default can see an earlier bound name, e.g.
+  `let [a, b = a + 1] = [5];` binds `b` to `6`; scoped to `let`, `for`,
+  function params, and comprehension loop variables — the plain-assignment
+  form `[a, b] = expr;` does not support defaults) and
   map destructuring (`let {a, b} = expr;`, binds each identifier by
   looking it up as a key, extra unnamed keys ignored, plus the same kind
   of optional trailing rest element `let {a, ...rest} = expr;` that
@@ -244,6 +250,7 @@ while (i < 10) {
   `hamming_distance` to count differing positions between two equal-length strings,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
+  `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
@@ -324,16 +331,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: keyword arguments in
-function calls (`f(a: 1, b: 2)`), and `is_pronic` to test whether an
-integer is expressible as `k * (k + 1)`. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): default values in list-destructuring
-patterns (`let [a, b = 5] = expr;`), `collatz_length` to count the
+Actively developed, nightly. Recently landed: `is_pronic` to test whether
+an integer is expressible as `k * (k + 1)`, and default values in
+list-destructuring patterns (`let [a, b = 5] = expr;`). Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `collatz_length` to count the
 steps the Collatz recurrence takes to reach `1`, `is_strong_number` to
 test whether an integer equals the sum of its own digits' factorials,
 unary `+` to close the last gap in the unary operator set,
-`num_divisors` to count an integer's positive divisors, and default
-values in map-destructuring patterns (`let {a, b = 5} = expr;`). The
-backlog mixes language depth with stdlib breadth over time rather than
-running either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+`num_divisors` to count an integer's positive divisors, default
+values in map-destructuring patterns (`let {a, b = 5} = expr;`), and
+`prime_factors` to list an integer's prime factors with multiplicity.
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

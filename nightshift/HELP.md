@@ -301,3 +301,7 @@ are now on `origin/main`; nothing left unpushed. Not closing this thread
 out entirely since the underlying flakiness is still unexplained and may
 recur — leaving it open for the human to investigate at their
 convenience, not urgent anymore.
+
+## 2026-08-14 22:00:29 — orchestrator
+Claude CLI authentication failed during the architect session (see logs/20260814-220016-architect.log).
+Human: run 'claude' in a terminal and re-login. No agent can fix this.

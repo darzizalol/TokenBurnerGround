@@ -3158,6 +3158,56 @@ class TestDivisors(unittest.TestCase):
             run("divisors();")
 
 
+class TestAliquotSum(unittest.TestCase):
+    def test_aliquot_sum_of_6_is_perfect(self):
+        self.assertEqual(run("let result = aliquot_sum(6);").get("result"), 6)
+
+    def test_aliquot_sum_of_12_is_abundant(self):
+        self.assertEqual(run("let result = aliquot_sum(12);").get("result"), 16)
+
+    def test_aliquot_sum_of_8_is_deficient(self):
+        self.assertEqual(run("let result = aliquot_sum(8);").get("result"), 7)
+
+    def test_aliquot_sum_of_1(self):
+        self.assertEqual(run("let result = aliquot_sum(1);").get("result"), 0)
+
+    def test_aliquot_sum_of_2(self):
+        self.assertEqual(run("let result = aliquot_sum(2);").get("result"), 1)
+
+    def test_aliquot_sum_of_28_is_perfect(self):
+        self.assertEqual(run("let result = aliquot_sum(28);").get("result"), 28)
+
+    def test_aliquot_sum_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("aliquot_sum(0);")
+        self.assertIn(
+            "aliquot_sum() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_aliquot_sum_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("aliquot_sum(-6);")
+        self.assertIn(
+            "aliquot_sum() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_aliquot_sum_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("aliquot_sum(5.0);")
+        self.assertIn("aliquot_sum() requires an int, got float", ctx.exception.message)
+
+    def test_aliquot_sum_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("aliquot_sum(true);")
+        self.assertIn("aliquot_sum() requires an int, got bool", ctx.exception.message)
+
+    def test_aliquot_sum_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("aliquot_sum();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

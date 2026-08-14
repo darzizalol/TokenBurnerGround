@@ -1530,6 +1530,25 @@ def _divisors(arguments: list, line: int, column: int) -> object:
     return sorted(result)
 
 
+def _aliquot_sum(arguments: list, line: int, column: int) -> object:
+    _require_arity("aliquot_sum", arguments, 1, line, column)
+    value = _require_int("aliquot_sum", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "aliquot_sum() requires a positive integer, domain error", line, column
+        )
+    if value == 1:
+        return 0
+    total = 1
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            total += divisor
+            complement = value // divisor
+            if complement != divisor:
+                total += complement
+    return total
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3361,6 +3380,7 @@ _BUILTINS = {
     "is_harshad": _is_harshad,
     "is_perfect_cube": _is_perfect_cube,
     "divisors": _divisors,
+    "aliquot_sum": _aliquot_sum,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

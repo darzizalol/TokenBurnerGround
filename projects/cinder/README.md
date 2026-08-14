@@ -324,16 +324,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `aliquot_sum` to sum an
-integer's own proper divisors, and keyword arguments in function calls
-(`f(a: 1, b: 2)`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
-default values in list-destructuring patterns (`let [a, b = 5] =
-expr;`), `collatz_length` to count the steps the Collatz recurrence
-takes to reach `1`, `is_strong_number` to test whether an integer
-equals the sum of its own digits' factorials, unary `+` to close
-the last gap in the unary operator set, and `num_divisors` to count
-an integer's positive divisors. The backlog mixes language
-depth with stdlib breadth over time rather than running either in one
-long block. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: keyword arguments in
+function calls (`f(a: 1, b: 2)`), and `is_pronic` to test whether an
+integer is expressible as `k * (k + 1)`. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): default values in list-destructuring
+patterns (`let [a, b = 5] = expr;`), `collatz_length` to count the
+steps the Collatz recurrence takes to reach `1`, `is_strong_number` to
+test whether an integer equals the sum of its own digits' factorials,
+unary `+` to close the last gap in the unary operator set,
+`num_divisors` to count an integer's positive divisors, and default
+values in map-destructuring patterns (`let {a, b = 5} = expr;`). The
+backlog mixes language depth with stdlib breadth over time rather than
+running either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

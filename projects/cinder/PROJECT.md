@@ -676,24 +676,24 @@ cleanly if handed one. A keyword argument can target only a plain named
 parameter, never a list/map-destructuring parameter or the trailing
 rest parameter, both of which simply have no name a caller could
 address; that restriction falls out for free from matching against
-parameter names rather than needing its own check.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, keyword arguments, has since landed and is
-covered in the "have since landed" history above; this grooming pass
-dropped its now-redundant not-yet-scoped description from this section
-rather than leaving it to drift further out of sync):
-as task 1, `is_pronic(n)` — a breadth task after the keyword-arguments
-depth work, testing
-whether an integer is expressible as `k * (k + 1)` for some
+parameter names rather than needing its own check, and, as has
+`is_pronic(n)` — a breadth task after the keyword-arguments depth work,
+testing whether an integer is expressible as `k * (k + 1)` for some
 non-negative integer `k` (a pronic/oblong number, e.g. `6 = 2 * 3`,
 `12 = 3 * 4`), one more root-based classification sitting next to
 `is_perfect_square`/`is_perfect_cube`, computed the same exact-integer
 `math.isqrt` way `is_perfect_square` already does rather than a
-floating-point approximation. And as task 2, default values in
+floating-point approximation.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
+used to occupy this slot, `is_pronic`, has since landed and is covered
+in the "have since landed" history above; this grooming pass dropped
+its now-redundant not-yet-scoped description from this section rather
+than leaving it to drift further out of sync):
+as task 1, default values in
 list-destructuring patterns (`let [a, b = 5] = expr;`) — the depth task
-after task 1's breadth work, extending the same "use a fallback when
-nothing was supplied" convention function parameters already have
+after `is_pronic`'s breadth work, extending the same "use a fallback
+when nothing was supplied" convention function parameters already have
 (`fn f(a, b = 1) { ... }`) down into list-destructuring patterns
 themselves: today every list-pattern form (`let`, plain assignment,
 `for`, function params, both comprehension loop-variable forms)
@@ -702,31 +702,33 @@ pattern (or, with a `...rest`, at least that many), with no way to
 supply a fallback for a position the source list didn't reach.
 Deliberately scoped to list patterns only (map patterns already have a
 distinct, meaningful "missing key" domain error, not an obvious gap to
-fill the same way) and to the `let`/`for`/param/comprehension forms
-only, not the plain-assignment form (`[a, b] = expr;`), since that
-form's pattern is parsed by first parsing an ordinary list literal,
-whose elements never accept `=` at that precedence — teaching it to
-would be a materially different, riskier parser change than this task.
-And as task 3, `collatz_length(n)` — a breadth task after task 2's
-depth work, counting the number of steps the Collatz (3n+1) recurrence
-takes to reach `1` from a positive integer `n` (repeatedly halving `n`
-if even, or replacing it with `3n + 1` if odd), sitting next to
-`is_happy_number` as the same iterate-a-recurrence-and-count technique,
-but returning a step count rather than a boolean, so no cycle detection
-is needed (unlike `is_happy_number`, the Collatz conjecture — unproven
-in general, but true for every integer ever checked, well within
-Cinder int range — is that this process always terminates at `1`). And
-as task 4, `is_strong_number(n)` — a second breadth task stacked right
-after task 3, restocking the backlog back past its 5-task floor rather
-than alternating into a depth task that time (the same restocking
-rationale that placed `aliquot_sum` alongside `is_perfect_cube`
-earlier): a positive integer equal to the sum of the factorials of its
-own decimal digits (a factorion, e.g. `145 = 1! + 4! + 5!`), joining
-`is_armstrong` in the digit-transform-and-sum-and-compare cluster but
-using `factorial` per digit instead of a fixed power, and reusing the
+fill the same way — see task 6 below, which does extend map patterns
+too, once this task has established the convention) and to the
+`let`/`for`/param/comprehension forms only, not the plain-assignment
+form (`[a, b] = expr;`), since that form's pattern is parsed by first
+parsing an ordinary list literal, whose elements never accept `=` at
+that precedence — teaching it to would be a materially different,
+riskier parser change than this task. And as task 2, `collatz_length(n)`
+— a breadth task after task 1's depth work, counting the number of
+steps the Collatz (3n+1) recurrence takes to reach `1` from a positive
+integer `n` (repeatedly halving `n` if even, or replacing it with
+`3n + 1` if odd), sitting next to `is_happy_number` as the same
+iterate-a-recurrence-and-count technique, but returning a step count
+rather than a boolean, so no cycle detection is needed (unlike
+`is_happy_number`, the Collatz conjecture — unproven in general, but
+true for every integer ever checked, well within Cinder int range — is
+that this process always terminates at `1`). And as task 3,
+`is_strong_number(n)` — a second breadth task stacked right after
+task 2, restocking the backlog back past its 5-task floor rather than
+alternating into a depth task that time (the same restocking rationale
+that placed `aliquot_sum` alongside `is_perfect_cube` earlier): a
+positive integer equal to the sum of the factorials of its own decimal
+digits (a factorion, e.g. `145 = 1! + 4! + 5!`), joining `is_armstrong`
+in the digit-transform-and-sum-and-compare cluster but using
+`factorial` per digit instead of a fixed power, and reusing the
 already-registered `factorial` builtin's `math.factorial` rather than
-reimplementing it. And as task 5, unary `+` (`+expr`) — the depth task
-after task 4's second breadth builtin in a row, closing a real
+reimplementing it. And as task 4, unary `+` (`+expr`) — the depth task
+after task 3's second breadth builtin in a row, closing a real
 asymmetry in the unary operator set: `-`/`not`/`~` are all implemented
 but plain unary `+` isn't (`_UNARY` in `cinder/parser.py` simply never
 included `TokenType.PLUS`), and the doubled-token case is asymmetric
@@ -734,34 +736,47 @@ too — `--5` already evaluates to `5` today via an explicit `MINUSMINUS`
 re-split, but `++5` has no equivalent `PLUSPLUS` handling. No new AST
 node is needed (`Unary` already carries an arbitrary operator token),
 so this is a small, self-contained change confined to `_UNARY`/`_unary`
-in the parser and one new branch in `_evaluate_unary`. And as task 6,
-`num_divisors(n)` — a breadth task after task 5's depth work, counting
+in the parser and one new branch in `_evaluate_unary`. And as task 5,
+`num_divisors(n)` — a breadth task after task 4's depth work, counting
 an integer's positive divisors via the same `sqrt(n)`-bounded
 trial-division shape `divisors`/`aliquot_sum` already share, sitting
 next to both as the count-returning sibling of that trio (`divisors`
 collects them, `aliquot_sum` sums the proper ones, `num_divisors`
-counts them all including `n` itself). And only much later, a bytecode
+counts them all including `n` itself). And as task 6, default values
+in map-destructuring patterns (`let {a, b = 5} = expr;`) — the depth
+task after task 5's breadth work, the map-pattern counterpart to task 1
+explicitly deferred there: today every map-pattern form raises when a
+key is absent rather than falling back to a default. Unlike task 1,
+this one *does* reach the plain-assignment form (`{a, b} = expr;`) for
+free — the map-pattern plain-assignment path already reuses the same
+`_destructure_map_pattern_entry` parser helper as every other form,
+unlike the list-pattern plain-assignment path, which parses through an
+unrelated `ListLiteral` route. Map-pattern entries also have no
+positional ordering (matching is by key, not position), so unlike task
+1's list-pattern defaults there is no "a required entry can't follow a
+defaulted one" restriction to enforce. And only much later, a bytecode
 VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally
 — do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
 far: two or more single-builtin predicate tasks queued back-to-back is
 a signal to inject a language-depth task rather than extending the
-streak further (most recently, this is what placed task 5, unary `+`,
-right after task 4, `is_strong_number`, stacked a second breadth
+streak further (most recently, this is what placed task 4, unary `+`,
+right after task 3, `is_strong_number`, stacked a second breadth
 builtin in a row), and a depth task landing is usually followed by one
 breadth task before the next depth task is queued, occasionally two in
 a row when the backlog needs restocking faster than strict alternation
 would otherwise allow (as happened when `aliquot_sum` was added
 alongside `is_perfect_cube`, and again when `is_strong_number` was
 added alongside `collatz_length`). This pass found the backlog back
-down to its 5-task floor (keyword arguments having landed via PR #242,
+down to its 5-task floor (`is_pronic` having landed via PR #243,
 dropping the count from 6 to 5) and restocked it to 6 by adding task 6,
-`num_divisors`, continuing alternation with a single breadth task after
-task 5's depth work rather than stacking a second one, per the policy
-above. The next grooming pass should continue alternating breadth/depth,
-restocking toward 6-7 tasks whenever a merge drops the count within
-reach of the 5-task floor.
+default values in map-destructuring patterns, continuing alternation
+with a single depth task after task 5's breadth work rather than
+stacking a second breadth task, per the policy above. The next grooming
+pass should continue alternating breadth/depth, restocking toward 6-7
+tasks whenever a merge drops the count within reach of the 5-task
+floor.
 
 ## History
 

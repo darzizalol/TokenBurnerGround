@@ -146,7 +146,12 @@ while (i < 10) {
   use, including the same optional trailing rest element on either
   pattern kind and the same optional per-key rename on map patterns
   (`fn f({a: x, b}) { ... }`), combinable with default values and a
-  trailing rest parameter
+  trailing rest parameter; calls to user-defined functions accept
+  trailing keyword arguments matched by parameter name and
+  order-independent (`f(a: 1, b: 2)`), Python-style, usable together
+  with leading positional arguments but not before them; builtins stay
+  positional-only and reject keyword arguments, and destructuring/rest
+  parameters have no name a keyword argument could address
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -319,15 +324,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_perfect_cube` to test
-whether an integer is a perfect cube (negative inputs allowed), and
-`aliquot_sum` to sum an integer's own proper divisors. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): keyword arguments in function calls
-(`f(a: 1, b: 2)`), `is_pronic` to test whether an integer is expressible
-as `k * (k + 1)`, default values in list-destructuring patterns
-(`let [a, b = 5] = expr;`), `collatz_length` to count the steps the
-Collatz recurrence takes to reach `1`, and `is_strong_number` to test
-whether an integer equals the sum of its own digits' factorials. The
-backlog mixes language depth with stdlib breadth over time rather than
-running either in one long block. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: `aliquot_sum` to sum an
+integer's own proper divisors, and keyword arguments in function calls
+(`f(a: 1, b: 2)`). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
+default values in list-destructuring patterns (`let [a, b = 5] =
+expr;`), `collatz_length` to count the steps the Collatz recurrence
+takes to reach `1`, `is_strong_number` to test whether an integer
+equals the sum of its own digits' factorials, unary `+` to close
+the last gap in the unary operator set, and `num_divisors` to count
+an integer's positive divisors. The backlog mixes language
+depth with stdlib breadth over time rather than running either in one
+long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

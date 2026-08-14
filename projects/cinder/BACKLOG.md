@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `aliquot_sum` — sum of an integer's proper divisors
+## 1. Standard library: `aliquot_sum` — sum of an integer's proper divisors [claimed 2026-08-14T14:22:36Z]
 
 Build: a fresh breadth task alongside task 1 (`is_perfect_cube`), both
 following last cycle's depth work (map-destructuring key rename, landed

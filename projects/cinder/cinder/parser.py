@@ -127,6 +127,7 @@ from cinder.ast_nodes import (
     IndexCompoundAssign,
     IndexNilCoalesceAssign,
     InterpString,
+    KeywordArg,
     LetStmt,
     ListComprehension,
     ListLiteral,
@@ -1212,11 +1213,21 @@ class Parser:
     def _finish_call(self, callee: Expr) -> Expr:
         paren = self._previous()
         arguments = []
+        seen_keyword = False
         if not self._check(TokenType.RPAREN):
             arguments.append(self._call_argument())
+            seen_keyword = isinstance(arguments[-1], KeywordArg)
             while self._check(TokenType.COMMA):
                 self._advance()
-                arguments.append(self._call_argument())
+                argument = self._call_argument()
+                if seen_keyword and not isinstance(argument, KeywordArg):
+                    raise ParseError(
+                        "positional argument follows keyword argument",
+                        paren.line,
+                        paren.column,
+                    )
+                seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
+                arguments.append(argument)
         self._consume(TokenType.RPAREN, "')' after arguments")
         return Call(callee, arguments, paren.line, paren.column)
 
@@ -1224,6 +1235,15 @@ class Parser:
         if self._check(TokenType.DOT_DOT_DOT):
             dots = self._advance()
             return Spread(self._ternary(), dots.line, dots.column)
+        if (
+            self._check(TokenType.IDENTIFIER)
+            and self._peek_next().type == TokenType.COLON
+        ):
+            name_token = self._advance()
+            self._advance()  # consume ':'
+            return KeywordArg(
+                name_token.lexeme, self._ternary(), name_token.line, name_token.column
+            )
         return self._ternary()
 
     def _finish_index(self, obj: Expr) -> Expr:
@@ -1269,11 +1289,21 @@ class Parser:
         self._advance()  # consume '('
         paren = self._previous()
         arguments = []
+        seen_keyword = False
         if not self._check(TokenType.RPAREN):
             arguments.append(self._call_argument())
+            seen_keyword = isinstance(arguments[-1], KeywordArg)
             while self._check(TokenType.COMMA):
                 self._advance()
-                arguments.append(self._call_argument())
+                argument = self._call_argument()
+                if seen_keyword and not isinstance(argument, KeywordArg):
+                    raise ParseError(
+                        "positional argument follows keyword argument",
+                        paren.line,
+                        paren.column,
+                    )
+                seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
+                arguments.append(argument)
         self._consume(TokenType.RPAREN, "')' after arguments")
         return OptionalCall(callee, arguments, paren.line, paren.column)
 

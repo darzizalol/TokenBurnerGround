@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence
+## 1. Standard library: `collatz_length` — steps to reach 1 under the Collatz recurrence [claimed 2026-08-14T20:08:21Z]
 
 Build: the breadth task after task 5's depth work (default values in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth

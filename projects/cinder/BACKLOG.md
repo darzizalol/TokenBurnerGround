@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: keyword arguments in function calls (`f(a: 1, b: 2)`)
+## 1. Language: keyword arguments in function calls (`f(a: 1, b: 2)`) [claimed 2026-08-14T14:41:05Z]
 
 Build: the depth task after tasks 1 and 2 stacked two breadth tasks
 (`is_perfect_cube`, `aliquot_sum`) back to back, per `PROJECT.md`'s

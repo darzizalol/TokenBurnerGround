@@ -315,6 +315,21 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_unary_plus(self):
+        self.assertEqual(shape(parse("+1")), ("Unary", TokenType.PLUS, ("Literal", 1)))
+
+    def test_double_unary_plus_resplits_plusplus_token(self):
+        self.assertEqual(
+            shape(parse("++1")),
+            ("Unary", TokenType.PLUS, ("Unary", TokenType.PLUS, ("Literal", 1))),
+        )
+
+    def test_unary_plus_composes_with_unary_minus(self):
+        self.assertEqual(
+            shape(parse("-+1")),
+            ("Unary", TokenType.MINUS, ("Unary", TokenType.PLUS, ("Literal", 1))),
+        )
+
     def test_comparison_binds_tighter_than_and(self):
         from cinder.tokens import TokenType
 

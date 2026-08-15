@@ -5,7 +5,7 @@ Precedence, loosest to tightest:
     > ternary (?:, right-assoc)
     > ?? (nullish-coalescing, right-assoc) > or > and > in / not in
     > comparisons (== != < <= > >=) > | > ^ > & > << >> >
-    + - > * / % > unary (- not ~)
+    + - > * / % > unary (- + not ~)
 with parenthesized grouping and call expressions binding tightest of all.
 
 `??` reuses the `Logical` AST node (like `and`/`or`) since it also
@@ -33,7 +33,9 @@ the same single-evaluation reason. The lexer's doubled-`-` lookahead means
 `--5` (prefix double negation, no space) now lexes as one `MINUSMINUS`
 token instead of two `MINUS`; `_unary` re-splits it back into nested
 `Unary(MINUS, ...)` nodes since a leading `--` can never be a postfix
-decrement (there's nothing before it to decrement).
+decrement (there's nothing before it to decrement). `++5` gets the
+identical treatment via `PLUSPLUS`, re-split into nested
+`Unary(PLUS, ...)` nodes, for the same reason.
 
 Statement grammar: a program is a list of statements, each one of
 `let IDENTIFIER = <expr>;` (LetStmt), `let [IDENTIFIER, ...] = <expr>;` or
@@ -171,7 +173,7 @@ _ORDERING = {
 }
 _TERM = {TokenType.PLUS, TokenType.MINUS}
 _FACTOR = {TokenType.STAR, TokenType.SLASH, TokenType.SLASHSLASH, TokenType.PERCENT}
-_UNARY = {TokenType.MINUS, TokenType.NOT, TokenType.TILDE}
+_UNARY = {TokenType.MINUS, TokenType.PLUS, TokenType.NOT, TokenType.TILDE}
 _BITSHIFT = {TokenType.LSHIFT, TokenType.RSHIFT}
 _COMPOUND_ASSIGN_OPS = {
     TokenType.PLUSEQ: TokenType.PLUS,
@@ -1204,6 +1206,14 @@ class Parser:
             token = self._advance()
             minus = Token(TokenType.MINUS, "-", None, token.line, token.column)
             return Unary(minus, Unary(minus, self._unary()))
+        if self._check(TokenType.PLUSPLUS):
+            # Same re-split as MINUSMINUS above: a leading `++` in
+            # expression position can never be a postfix increment (there's
+            # nothing before it to increment), so it unambiguously means
+            # doubled unary plus.
+            token = self._advance()
+            plus = Token(TokenType.PLUS, "+", None, token.line, token.column)
+            return Unary(plus, Unary(plus, self._unary()))
         if self._peek().type in _UNARY:
             operator = self._advance()
             operand = self._unary()

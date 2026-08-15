@@ -1005,6 +1005,14 @@ class Interpreter:
                     expr.operator.column,
                 )
             return -operand
+        if expr.operator.type == TokenType.PLUS:
+            if not isinstance(operand, _NUMERIC) or isinstance(operand, bool):
+                raise CinderRuntimeError(
+                    f"unary '+' requires a number, got {type_name(operand)}",
+                    expr.operator.line,
+                    expr.operator.column,
+                )
+            return +operand
         if expr.operator.type == TokenType.NOT:
             return not is_truthy(operand)
         if expr.operator.type == TokenType.TILDE:

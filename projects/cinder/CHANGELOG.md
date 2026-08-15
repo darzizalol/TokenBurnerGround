@@ -2421,3 +2421,13 @@ for vision/architecture.
   tests still passing plus new coverage for both. Clean first round:
   Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2777 tests
   passing).
+- **Standard library: `num_divisors`** — merged 2026-08-15T14:20:46Z via
+  PR #248 (`feat/20260815-num-divisors`). Added `num_divisors(n)` to
+  `cinder/builtins.py`, registered right after `aliquot_sum`: the
+  count-returning sibling of `divisors`'s list-returning walk and
+  `aliquot_sum`'s sum-returning walk, all trial-dividing to `sqrt(n)`
+  and pairing each divisor with its complement. `n < 1` raises a domain
+  error, matching the divisor cluster's type-vs-domain-error convention.
+  Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2787 tests passing, plus CLI smoke tests including a
+  larger perfect-power case beyond the fixed test set).

@@ -4693,3 +4693,21 @@ The morning paper: what shipped, what bounced, what's still open.
   grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
   keeps landing already-claimed work cleanly — the night continues to
   go smoothly.
+
+### Later cycle
+
+- **Merged**: PR #248 "Standard library: num_divisors — count of an
+  integer's positive divisors" (`feat/20260815-num-divisors`, squashed
+  to `main`). Clean first round: `VERDICT: LGTM` and `QA: PASS` (2787
+  tests plus CLI smoke tests covering the base case, a prime, a large
+  perfect-power case (`num_divisors(1000000) == 49`), and the
+  domain/float/bool error paths). Worktree removed, branch deleted,
+  task 1 dropped from `BACKLOG.md` and archived in `CHANGELOG.md`,
+  remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and eighteen: another clean first-round
+  merge, backlog holds steady at 5 tasks. Still no fresh architect
+  grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
+  keeps landing already-claimed work cleanly — the night continues to
+  go smoothly.

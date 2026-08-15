@@ -11,88 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `num_divisors` — count of an integer's positive divisors [claimed 2026-08-15T14:16:08Z]
-
-Build: the breadth task after task 5's depth work (unary `+`) per
-`PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
-back to 6 tasks now that keyword arguments (the task that used to sit
-at the top of this file) has landed and dropped the count to the
-5-task floor. Add `num_divisors(n)` to `cinder/builtins.py`, registered
-right after `aliquot_sum` (search for `def _aliquot_sum`, the current
-last entry in the divisor cluster) — the count-returning sibling of
-`divisors`'s list-returning walk and `aliquot_sum`'s sum-returning walk,
-all three of which already trial-divide to `sqrt(n)` pairing each
-divisor with its complement; `num_divisors` just counts instead of
-collecting or summing:
-
-```python
-def _num_divisors(arguments: list, line: int, column: int) -> object:
-    _require_arity("num_divisors", arguments, 1, line, column)
-    value = _require_int("num_divisors", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "num_divisors() requires a positive integer, domain error", line, column
-        )
-    if value == 1:
-        return 1
-    count = 2  # 1 and value itself
-    for divisor in range(2, math.isqrt(value) + 1):
-        if value % divisor == 0:
-            count += 1
-            complement = value // divisor
-            if complement != divisor:
-                count += 1
-    return count
-```
-
-Model the arity/type-checking exactly on `divisors`/`aliquot_sum`'s own
-structure: `_require_arity`, then `_require_int` (reusing the shared
-helper — do **not** hand-roll a separate `isinstance` check). `n < 1`
-raises a domain error rather than returning a count, mirroring
-`divisors`/`aliquot_sum`'s own type-vs-domain-error convention rather
-than the boolean-predicate cluster's answer-`false` one, since this
-builtin returns a number, not a boolean. The `value == 1` special case
-matches `divisors`/`aliquot_sum`'s own early-return (avoids the
-`range(2, math.isqrt(1) + 1)` loop trivially running zero times and
-undercounting — `1`'s only divisor is itself, counted once, not the
-`count = 2` starting assumption every other value gets).
-
-Acceptance criteria:
-- `num_divisors(1);` is `1` — `1`'s only divisor is itself.
-- `num_divisors(7);` is `2` — a prime has exactly two divisors, `1`
-  and itself.
-- `num_divisors(6);` is `4` — `1, 2, 3, 6`.
-- `num_divisors(28);` is `6` — `1, 2, 4, 7, 14, 28` (also a perfect
-  number, a useful cross-check against `divisors(28)`'s existing
-  length).
-- `num_divisors(36);` is `9` — a perfect square, exercising the
-  `complement == divisor` dedup path (`6` is only counted once even
-  though it pairs with itself).
-- `num_divisors(0);` raises `CinderRuntimeError` matching
-  `"num_divisors() requires a positive integer, domain error"`.
-- `num_divisors(-6);` raises `CinderRuntimeError` matching
-  `"num_divisors() requires a positive integer, domain error"`.
-- `num_divisors(5.0);` raises `CinderRuntimeError` matching
-  `"num_divisors() requires an int, got float"` — the same message
-  shape `_require_int` already produces for every sibling in this
-  cluster.
-- `num_divisors(true);` raises `CinderRuntimeError` matching
-  `"num_divisors() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near
-`divisors`/`aliquot_sum`, see current line numbers — shift if earlier
-tasks this cycle landed first), `tests/test_builtins.py`. Once merged,
-`README.md`'s Builtins bullet needs `num_divisors` added near
-`divisors`/`aliquot_sum`, and `PROJECT.md`'s roadmap paragraph needs it
-moved from backlog to landed — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
+## 1. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
 
 Build: the depth task after task 5's breadth work (`num_divisors`) per
 `PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to
@@ -284,7 +203,7 @@ task.
 
 ---
 
-## 3. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+## 2. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
 
 Build: the breadth task after task 5's depth work (default values in
 map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -374,7 +293,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
+## 3. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
 
 Build: the depth task after task 5's breadth work (`prime_factors`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -571,7 +490,7 @@ not this task.
 
 ---
 
-## 5. Standard library: `is_squarefree` — no repeated prime factor
+## 4. Standard library: `is_squarefree` — no repeated prime factor
 
 Build: the breadth task after task 5's depth work (hole elements in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
@@ -647,7 +566,7 @@ bullet needs `is_squarefree` added near `is_prime`/`is_pronic`, and
 
 ---
 
-## 6. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
+## 5. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
 
 Build: the depth task after task 5's breadth work (`is_squarefree`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog

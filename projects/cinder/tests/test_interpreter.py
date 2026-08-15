@@ -649,6 +649,57 @@ class TestUnaryAndGrouping(unittest.TestCase):
     def test_double_unary_minus(self):
         self.assertEqual(evaluate("--5"), 5)
 
+    def test_unary_plus(self):
+        self.assertEqual(evaluate("+5"), 5)
+        self.assertEqual(evaluate("+5.5"), 5.5)
+        self.assertEqual(evaluate("+0"), 0)
+
+    def test_unary_plus_composes_with_unary_minus(self):
+        self.assertEqual(evaluate("-+5"), -5)
+
+    def test_double_unary_plus(self):
+        self.assertEqual(evaluate("++5"), 5)
+
+    def test_unary_plus_operand_of_binary_plus(self):
+        self.assertEqual(evaluate("2 + +3"), 5)
+
+    def test_unary_plus_on_grouping(self):
+        self.assertEqual(evaluate("+(-5)"), -5)
+
+    def test_unary_plus_on_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("+true")
+        self.assertEqual(
+            ctx.exception.message, "unary '+' requires a number, got bool"
+        )
+
+    def test_unary_plus_on_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('+"abc"')
+        self.assertEqual(
+            ctx.exception.message, "unary '+' requires a number, got string"
+        )
+
+    def test_unary_plus_on_nil_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("+nil")
+        self.assertEqual(
+            ctx.exception.message, "unary '+' requires a number, got nil"
+        )
+
+    def test_unary_plus_on_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("+[1, 2]")
+        self.assertEqual(
+            ctx.exception.message, "unary '+' requires a number, got list"
+        )
+
+    def test_postfix_increment_decrement_unaffected(self):
+        env = run("let x = 5; x++;")
+        self.assertEqual(env.get("x"), 6)
+        env = run("let x = 5; x--;")
+        self.assertEqual(env.get("x"), 4)
+
     def test_not_true_is_false(self):
         self.assertEqual(evaluate("not true"), False)
 

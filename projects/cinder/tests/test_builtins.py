@@ -3354,6 +3354,55 @@ class TestAliquotSum(unittest.TestCase):
             run("aliquot_sum();")
 
 
+class TestPrimeFactors(unittest.TestCase):
+    def test_prime_factors_of_1(self):
+        self.assertEqual(run("let result = prime_factors(1);").get("result"), [])
+
+    def test_prime_factors_of_2(self):
+        self.assertEqual(run("let result = prime_factors(2);").get("result"), [2])
+
+    def test_prime_factors_of_12(self):
+        self.assertEqual(run("let result = prime_factors(12);").get("result"), [2, 2, 3])
+
+    def test_prime_factors_of_97_is_prime(self):
+        self.assertEqual(run("let result = prime_factors(97);").get("result"), [97])
+
+    def test_prime_factors_of_360(self):
+        self.assertEqual(
+            run("let result = prime_factors(360);").get("result"), [2, 2, 2, 3, 3, 5]
+        )
+
+    def test_prime_factors_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("prime_factors(0);")
+        self.assertIn(
+            "prime_factors() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_prime_factors_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("prime_factors(-12);")
+        self.assertIn(
+            "prime_factors() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_prime_factors_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("prime_factors(5.0);")
+        self.assertIn("prime_factors() requires an int, got float", ctx.exception.message)
+
+    def test_prime_factors_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("prime_factors(true);")
+        self.assertIn("prime_factors() requires an int, got bool", ctx.exception.message)
+
+    def test_prime_factors_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("prime_factors();")
+
+
 class TestNumDivisors(unittest.TestCase):
     def test_num_divisors_of_1(self):
         self.assertEqual(run("let result = num_divisors(1);").get("result"), 1)

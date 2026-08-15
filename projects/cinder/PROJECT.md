@@ -785,29 +785,27 @@ neighbor to `is_prime`/`is_composite` and `prime_factors` — answering
 "does any factor repeat?" via the same `sqrt(n)`-bounded
 trial-division shape `is_prime`/`is_composite` already use, checking
 `divisor * divisor` divisibility directly rather than building the
-full factor list — have since landed too.
+full factor list, and optional catch bindings (`try { ... } catch { ... }`,
+no `(name)` required) — the depth task after `is_squarefree`'s breadth
+work: today `catch` always required a parenthesized binding name
+(`catch (err) { ... }`) even when the handler never reads the error
+message, forcing a throwaway name for the common "just recover, don't
+inspect" case. `_try_statement` in `cinder/parser.py` now treats the
+`(name)` after `catch` as optional — parsed only when the next token is
+`(`, leaving `TryStmt.catch_name` `None` otherwise (the field was
+already typed `str | None`, so no AST change was needed) — and
+`_execute_try` in `cinder/interpreter.py` only calls
+`catch_env.define(...)` when `catch_name` isn't `None`, running the
+catch block in a plain child environment otherwise — have since landed
+too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, `is_squarefree`, has since landed via PR
-#252 and is covered in the "have since landed" history above; this
-grooming pass dropped its now-redundant not-yet-scoped description
-from this section rather than leaving it to drift further out of
-sync):
-as task 1, optional catch bindings (`try { ... } catch { ... }`, no
-`(name)` required) — the depth task after `is_squarefree`'s breadth
-work: today `catch` always requires
-a parenthesized binding name (`catch (err) { ... }`) even when the
-handler never reads the error message, forcing a throwaway name for
-the common "just recover, don't inspect" case (`try { risky(); } catch
-(e) { print("failed"); }` never uses `e`). `_try_statement` in
-`cinder/parser.py` should treat the `(name)` after `catch` as optional
-— parse it only when the next token is `(`, leaving
-`TryStmt.catch_name` `None` otherwise (the field is already typed
-`str | None`, so no AST change is needed), and `_execute_try` in
-`cinder/interpreter.py` should only call `catch_env.define(...)` when
-`catch_name` isn't `None`, running the catch block in a plain child
-environment otherwise. And as task 2, `is_amicable(a, b)` — a breadth
-task after task 1's depth work, restocking the backlog back to 6
+used to occupy this slot, optional catch bindings, has since landed via
+PR #253 and is covered in the "have since landed" history above; this
+grooming pass dropped its now-redundant not-yet-scoped description from
+this section rather than leaving it to drift further out of sync):
+as task 1, `is_amicable(a, b)` — a breadth
+task after the optional-catch-bindings depth work, restocking the backlog back to 6
 tasks: the two-argument predicate sibling to
 `is_perfect_number`/`is_abundant`/`is_deficient` (the same way
 `is_coprime`/`is_divisible` are the two-argument siblings of the
@@ -822,8 +820,8 @@ than call the dispatch-signature builtin" approach `is_emirp` already
 takes with `is_composite`/`reverse_int`), and explicitly excludes
 `a == b` even though a perfect number would otherwise trivially pass —
 amicability is defined only between two *distinct* integers. And as
-task 3, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth task
-after task 2's breadth work, restocking the backlog back to 6 tasks:
+task 2, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth task
+after task 1's breadth work, restocking the backlog back to 6 tasks:
 Cinder already ships `pipe(f, g, h)`/`compose(f, g, h)` builtins that
 thread a value through a *fixed list* of unary functions, but has no
 operator-level sugar for the common one-shot or ad-hoc-chain case,
@@ -842,8 +840,8 @@ also used by `map`/`filter`/`pipe`/`compose`) rather than adding a new
 node or a bespoke call path — the new `PIPE_ARROW` token for `|>` is
 the only genuinely new piece, checked in the lexer before the existing
 `|=`/`|` fallback so bitwise-or and its compound assignment stay
-unaffected. And as task 4, `is_semiprime(n)` — a breadth task after
-task 3's depth work, restocking the backlog back to 6 tasks: testing
+unaffected. And as task 3, `is_semiprime(n)` — a breadth task after
+task 2's depth work, restocking the backlog back to 6 tasks: testing
 whether `n` is the product of exactly two primes counted with
 multiplicity (`4 = 2 * 2`, `6 = 2 * 3`, `15 = 3 * 5`), the third member
 of the `is_prime`/`is_composite`/`is_semiprime` classification trio —
@@ -852,9 +850,9 @@ of the `is_prime`/`is_composite`/`is_semiprime` classification trio —
 superset `is_semiprime` narrows). Walks the same "peel small factors,
 then check what's left" shape `prime_factors` already uses, but counts
 instead of collecting, bailing out early once the count exceeds two so
-highly composite inputs stay cheap. And as task 5, uninitialized `let`
+highly composite inputs stay cheap. And as task 4, uninitialized `let`
 declarations (`let x;`, defaulting to `nil`) — the depth task after
-task 4's breadth work, restocking the backlog back to 6 tasks: today
+task 3's breadth work, restocking the backlog back to 6 tasks: today
 every `let` requires an initializer (`cinder/parser.py`'s
 `_let_statement` unconditionally consumes `=` right after the
 identifier), forcing a throwaway placeholder value (`let x = nil;`)
@@ -870,8 +868,8 @@ purpose of `const`, and `_for_statement`'s C-style init clause already
 reuses `_let_statement`, so `for (let i; i < 3; i++) { ... }` becomes
 parseable for free too, though it correctly raises a runtime type
 error on the first comparison rather than being a useful thing to
-write. And as task 6, `is_powerful_number(n)` — a breadth task after
-task 5's depth work, restocking the backlog back to 6 tasks: testing
+write. And as task 5, `is_powerful_number(n)` — a breadth task after
+task 4's depth work, restocking the backlog back to 6 tasks: testing
 whether every prime factor of `n` appears with exponent `2` or more
 (equivalently, `n` can be written as `a^2 * b^3`), the natural
 counterpart to the already-landed `is_squarefree` — where
@@ -881,7 +879,22 @@ requires every prime factor to repeat. Walks the same
 `prime_factors` already use, peeling each prime factor's full
 multiplicity in an inner loop and failing fast the moment any factor's
 count comes up short of `2`, then checking that nothing above the
-`sqrt` bound was left over uncounted. And only much later, a bytecode
+`sqrt` bound was left over uncounted. And as task 6, single-quoted
+string literals (`'...'` as an alternate delimiter to double quotes) —
+the depth task after task 5's breadth work, restocking the backlog back
+to 6 tasks: today `cinder/lexer.py`'s `_string` only recognizes `"`, so
+a string containing a literal `"` must escape it even though the far
+more common real-world need is a string that quotes something.
+Generalizes `_string` to take the opening quote character as a
+parameter (used everywhere the method currently hardcodes `'"'` as the
+terminator check), dispatches both `"` and `'` to it from `tokenize`,
+and adds `'` to the shared `_ESCAPES` table alongside the existing `"`
+entry so `\'` is a valid escape inside either delimiter. The `${...}`
+interpolation machinery, `has_interp`/`INTERP_STRING` split, and
+unterminated-string detection are already delimiter-agnostic and need
+no changes; no parser or interpreter changes at all, since both
+delimiters produce the same `STRING`/`INTERP_STRING` tokens carrying
+the same parsed Python `str` value. And only much later, a bytecode
 VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally
 — do not jump ahead of the current layer, and should keep watching the
@@ -896,14 +909,13 @@ when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (`is_squarefree` having landed via PR #252, dropping
-the count from 6 to 5) and restocked it to 6 by adding task 6,
-`is_powerful_number`, continuing alternation with a breadth task after
-task 5's depth work (uninitialized `let` declarations) rather than
-stacking a second depth task, per the policy above. The next grooming
-pass should continue alternating breadth/depth, restocking toward 6-7
-tasks whenever a merge drops the count within reach of the 5-task
-floor.
+its 5-task floor (optional catch bindings having landed via PR #253,
+dropping the count from 6 to 5) and restocked it to 6 by adding task 6,
+single-quoted string literals, continuing alternation with a depth task
+after task 5's breadth work (`is_powerful_number`) rather than stacking
+a second breadth task, per the policy above. The next grooming pass
+should continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor.
 
 ## History
 

@@ -90,7 +90,9 @@ while (i < 10) {
   to target an enclosing loop from a nested one,
   `try { ... } catch (name) { ... }` for recovering from runtime errors
   (the caught message binds to `name`; `break`/`continue`/`return` still
-  propagate through uncaught), an optional `finally { ... }` block (at
+  propagate through uncaught), an optional catch binding
+  (`try { ... } catch { ... }`, no `(name)` required, for handlers that
+  don't need to inspect the caught message), an optional `finally { ... }` block (at
   least one of `catch`/`finally` is required) that always runs on the way
   out of the `try`, whether it succeeded, was caught, or is propagating
   uncaught, a `throw expr;` statement for raising user-defined errors
@@ -350,19 +352,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `prime_factors` to list an
-integer's prime factors with multiplicity, hole elements in
+Actively developed, nightly. Recently landed: hole elements in
 list-destructuring patterns (`let [a, , c] = expr;`) to skip an unwanted
-position, and `is_squarefree` to test whether an integer has no repeated
-prime factor. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): an optional
-catch binding (`try { ... } catch { ... }`, no `(name)` required) for
-handlers that don't need the caught message, `is_amicable` to test whether
-two integers' proper-divisor sums point at each other, a pipe operator
-(`a |> f` as sugar for `f(a)`), `is_semiprime` to test whether an
+position, `is_squarefree` to test whether an integer has no repeated
+prime factor, and an optional catch binding (`try { ... } catch { ... }`,
+no `(name)` required) for handlers that don't need the caught message.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_amicable` to test
+whether two integers' proper-divisor sums point at each other, a pipe
+operator (`a |> f` as sugar for `f(a)`), `is_semiprime` to test whether an
 integer is the product of exactly two primes, uninitialized `let`
-declarations (`let x;`, defaulting to `nil`), and `is_powerful_number`
+declarations (`let x;`, defaulting to `nil`), `is_powerful_number`
 to test whether every prime factor of an integer appears with
-exponent `2` or more.
+exponent `2` or more, and single-quoted string literals (`'...'`) as an
+alternate delimiter to double quotes.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

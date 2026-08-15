@@ -2447,3 +2447,17 @@ for vision/architecture.
   not a present-but-falsy value; whole-pattern defaults on fn params
   remain rejected. Clean first round: Reviewer gave `VERDICT: LGTM` and
   QA gave `QA: PASS` (2806 tests passing).
+- **Standard library: `prime_factors`** — merged 2026-08-15T14:54:10Z via
+  PR #250 (`feat/20260815-prime-factors`). Added `prime_factors(n)` to
+  `cinder/builtins.py`, registered right after `aliquot_sum`: unlike
+  `divisors`/`aliquot_sum`/`num_divisors`, which pair divisors up to
+  `sqrt(n)` against the fixed original value, this uses standard trial
+  division to strip small prime factors out of a shrinking copy of `n`,
+  recording each repeated factor with multiplicity in ascending order
+  (`12 -> [2, 2, 3]`, `360 -> [2, 2, 2, 3, 3, 5]`). `n < 1` raises a
+  domain error, matching the divisor cluster's type-vs-domain-error
+  convention; `prime_factors(1)` returns `[]` with no special-casing
+  needed since both loop guards fall through naturally. Clean first
+  round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2816
+  tests passing, plus CLI smoke tests covering larger inputs like
+  `1000000` and the prime `999983`).

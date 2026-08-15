@@ -3492,6 +3492,47 @@ class TestNumDivisors(unittest.TestCase):
             run("num_divisors();")
 
 
+class TestIsAmicable(unittest.TestCase):
+    def test_is_amicable_smallest_pair(self):
+        self.assertEqual(run("let result = is_amicable(220, 284);").get("result"), True)
+
+    def test_is_amicable_order_independent(self):
+        self.assertEqual(run("let result = is_amicable(284, 220);").get("result"), True)
+
+    def test_is_amicable_second_pair(self):
+        self.assertEqual(run("let result = is_amicable(1184, 1210);").get("result"), True)
+
+    def test_is_amicable_perfect_number_rejected(self):
+        self.assertEqual(run("let result = is_amicable(6, 6);").get("result"), False)
+
+    def test_is_amicable_not_a_pair(self):
+        self.assertEqual(run("let result = is_amicable(220, 100);").get("result"), False)
+
+    def test_is_amicable_zero_below_domain_floor(self):
+        self.assertEqual(run("let result = is_amicable(0, 5);").get("result"), False)
+
+    def test_is_amicable_negative_input(self):
+        self.assertEqual(run("let result = is_amicable(-6, 5);").get("result"), False)
+
+    def test_is_amicable_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_amicable(220, 5.0);")
+        self.assertIn(
+            "is_amicable() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_amicable_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_amicable(true, 220);")
+        self.assertIn(
+            "is_amicable() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_amicable_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_amicable(220);")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

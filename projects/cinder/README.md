@@ -255,6 +255,7 @@ while (i < 10) {
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
+  `is_amicable` to test whether two distinct integers' proper-divisor sums point at each other,
   `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `is_anagram` to test whether two strings share the same character multiset,
@@ -352,19 +353,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: hole elements in
-list-destructuring patterns (`let [a, , c] = expr;`) to skip an unwanted
-position, `is_squarefree` to test whether an integer has no repeated
-prime factor, and an optional catch binding (`try { ... } catch { ... }`,
-no `(name)` required) for handlers that don't need the caught message.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_amicable` to test
-whether two integers' proper-divisor sums point at each other, a pipe
-operator (`a |> f` as sugar for `f(a)`), `is_semiprime` to test whether an
-integer is the product of exactly two primes, uninitialized `let`
-declarations (`let x;`, defaulting to `nil`), `is_powerful_number`
-to test whether every prime factor of an integer appears with
-exponent `2` or more, and single-quoted string literals (`'...'`) as an
-alternate delimiter to double quotes.
+Actively developed, nightly. Recently landed: `is_squarefree` to test
+whether an integer has no repeated prime factor, an optional catch
+binding (`try { ... } catch { ... }`, no `(name)` required) for handlers
+that don't need the caught message, and `is_amicable` to test whether
+two distinct integers' proper-divisor sums point at each other.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a pipe operator (`a |>
+f` as sugar for `f(a)`), `is_semiprime` to test whether an integer is
+the product of exactly two primes, uninitialized `let` declarations
+(`let x;`, defaulting to `nil`), `is_powerful_number` to test whether
+every prime factor of an integer appears with exponent `2` or more,
+single-quoted string literals (`'...'`) as an alternate delimiter to
+double quotes, and `is_repdigit` to test whether every decimal digit of
+an integer is the same.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

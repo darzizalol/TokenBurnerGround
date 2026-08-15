@@ -750,19 +750,11 @@ path, which parses through an unrelated `ListLiteral` route.
 Map-pattern entries also have no positional ordering (matching is by
 key, not position), so unlike the list-pattern version's ordering rule
 there is no "a required entry can't follow a defaulted one" restriction
-to enforce.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, default values in map-destructuring patterns,
-has since landed via PR #249 and is covered in the "have since landed"
-history above; this grooming pass dropped its now-redundant
-not-yet-scoped description from this section rather than leaving it to
-drift further out of sync):
-as task 1, `prime_factors(n)` — a breadth task after the map-pattern
-defaults' depth work, listing
-an integer's prime factors with multiplicity in ascending order (e.g.
-`12 -> [2, 2, 3]`, `360 -> [2, 2, 2, 3, 3, 5]`), the natural neighbor
-to `divisors`/`is_prime`/`is_composite` — where `divisors` finds every
+to enforce, and, as has `prime_factors(n)` — a breadth task after the
+map-pattern defaults' depth work, listing an integer's prime factors
+with multiplicity in ascending order (e.g. `12 -> [2, 2, 3]`,
+`360 -> [2, 2, 2, 3, 3, 5]`), the natural neighbor to
+`divisors`/`is_prime`/`is_composite` — where `divisors` finds every
 factor of `n` and `is_prime`/`is_composite` classify `n` as a whole,
 this decomposes `n` into its prime building blocks, walking the
 standard trial-division *factorization* technique (stripping small
@@ -772,29 +764,36 @@ sqrt-bounded divisor-pairing shape `divisors`/`aliquot_sum`/
 factor (like `2` dividing `12` twice) each time it divides evenly, not
 just once. `prime_factors(1)` is `[]` — `1` has no prime factors,
 mathematically, not a case needing a special-cased guard the way
-`divisors(1)`'s own `[1]` result does. And as task 2, hole elements in
-list-destructuring patterns (`let [a, , c] = expr;`) — the depth task
-after task 1's breadth work, closing the last gap in the
-destructuring-pattern cluster: every list-pattern form can already
-bind a name, rename nothing (list patterns have no rename syntax),
-collect a rest, or fall back to a default, but there is no way to skip
-an unwanted position outright the way JavaScript's array-destructuring
-elision does. Scoped, like the list-destructuring-defaults task before
-it, to the `let`/`for`/param/comprehension forms only (via
+`divisors(1)`'s own `[1]` result does.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
+used to occupy this slot, `prime_factors`, has since landed via PR #250
+and is covered in the "have since landed" history above; this grooming
+pass dropped its now-redundant not-yet-scoped description from this
+section rather than leaving it to drift further out of sync):
+as task 1, hole elements in list-destructuring patterns
+(`let [a, , c] = expr;`) — the depth task after `prime_factors`'s
+breadth work, closing the last gap in the destructuring-pattern
+cluster: every list-pattern form can already bind a name, rename
+nothing (list patterns have no rename syntax), collect a rest, or fall
+back to a default, but there is no way to skip an unwanted position
+outright the way JavaScript's array-destructuring elision does. Scoped,
+like the list-destructuring-defaults task before it, to the
+`let`/`for`/param/comprehension forms only (via
 `_destructure_list_pattern_entry`), not the plain-assignment form, for
 the identical reason: that form's pattern is parsed through an
 ordinary `ListLiteral`, which has no notion of an empty element. And
-as task 3, `is_squarefree(n)` — a breadth task after task 2's depth
+as task 2, `is_squarefree(n)` — a breadth task after task 1's depth
 work, testing whether `n` has no repeated prime factor (equivalently,
 is not divisible by any perfect square greater than `1`, e.g. `6 = 2 *
 3` is squarefree, `12 = 2 * 2 * 3` isn't), the natural predicate
-neighbor to `is_prime`/`is_composite` and the soon-to-land
+neighbor to `is_prime`/`is_composite` and the already-landed
 `prime_factors` — answering "does any factor repeat?" via the same
 `sqrt(n)`-bounded trial-division shape `is_prime`/`is_composite`
 already use, checking `divisor * divisor` divisibility directly rather
-than building the full factor list. And as task 4, optional catch
+than building the full factor list. And as task 3, optional catch
 bindings (`try { ... } catch { ... }`, no `(name)` required) — the
-depth task after task 3's breadth work: today `catch` always requires
+depth task after task 2's breadth work: today `catch` always requires
 a parenthesized binding name (`catch (err) { ... }`) even when the
 handler never reads the error message, forcing a throwaway name for
 the common "just recover, don't inspect" case (`try { risky(); } catch
@@ -805,8 +804,8 @@ the common "just recover, don't inspect" case (`try { risky(); } catch
 `str | None`, so no AST change is needed), and `_execute_try` in
 `cinder/interpreter.py` should only call `catch_env.define(...)` when
 `catch_name` isn't `None`, running the catch block in a plain child
-environment otherwise. And as task 5, `is_amicable(a, b)` — a breadth
-task after task 4's depth work, restocking the backlog back to 6
+environment otherwise. And as task 4, `is_amicable(a, b)` — a breadth
+task after task 3's depth work, restocking the backlog back to 6
 tasks: the two-argument predicate sibling to
 `is_perfect_number`/`is_abundant`/`is_deficient` (the same way
 `is_coprime`/`is_divisible` are the two-argument siblings of the
@@ -821,8 +820,8 @@ than call the dispatch-signature builtin" approach `is_emirp` already
 takes with `is_composite`/`reverse_int`), and explicitly excludes
 `a == b` even though a perfect number would otherwise trivially pass —
 amicability is defined only between two *distinct* integers. And as
-task 6, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth task
-after task 5's breadth work, restocking the backlog back to 6 tasks:
+task 5, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth task
+after task 4's breadth work, restocking the backlog back to 6 tasks:
 Cinder already ships `pipe(f, g, h)`/`compose(f, g, h)` builtins that
 thread a value through a *fixed list* of unary functions, but has no
 operator-level sugar for the common one-shot or ad-hoc-chain case,
@@ -841,8 +840,18 @@ also used by `map`/`filter`/`pipe`/`compose`) rather than adding a new
 node or a bespoke call path — the new `PIPE_ARROW` token for `|>` is
 the only genuinely new piece, checked in the lexer before the existing
 `|=`/`|` fallback so bitwise-or and its compound assignment stay
-unaffected. And only much later, a bytecode VM if performance ever
-actually matters.
+unaffected. And as task 6, `is_semiprime(n)` — a breadth task after
+task 5's depth work, restocking the backlog back to 6 tasks: testing
+whether `n` is the product of exactly two primes counted with
+multiplicity (`4 = 2 * 2`, `6 = 2 * 3`, `15 = 3 * 5`), the third member
+of the `is_prime`/`is_composite`/`is_semiprime` classification trio —
+`is_prime` answers "exactly one prime factor", `is_semiprime` answers
+"exactly two", `is_composite` answers "more than one" (a strict
+superset `is_semiprime` narrows). Walks the same "peel small factors,
+then check what's left" shape `prime_factors` already uses, but counts
+instead of collecting, bailing out early once the count exceeds two so
+highly composite inputs stay cheap. And only much later, a bytecode VM
+if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally
 — do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -856,14 +865,13 @@ when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (default values in map-destructuring patterns having
-landed via PR #249, dropping the count from 6 to 5) and restocked it to
-6 by adding task 6, the pipe operator, continuing alternation with a
-single depth task after task 5's breadth work (`is_amicable`) rather
-than stacking a second breadth task, per the policy above. The next
-grooming pass should continue alternating breadth/depth, restocking
-toward 6-7 tasks whenever a merge drops the count within reach of the
-5-task floor.
+its 5-task floor (`prime_factors` having landed via PR #250, dropping
+the count from 6 to 5) and restocked it to 6 by adding task 6,
+`is_semiprime`, continuing alternation with a single breadth task after
+task 5's depth work (the pipe operator) rather than stacking a second
+depth task, per the policy above. The next grooming pass should
+continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor.
 
 ## History
 

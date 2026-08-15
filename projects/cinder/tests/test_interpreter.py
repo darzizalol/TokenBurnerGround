@@ -1035,6 +1035,74 @@ class TestDestructureListDefaults(unittest.TestCase):
             run("let [a] = [1, 2];")
 
 
+class TestDestructureMapDefaults(unittest.TestCase):
+    def test_default_used_when_key_missing(self):
+        env = run('let {a, b = 5} = {"a": 1};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 5)
+
+    def test_default_not_used_when_key_present(self):
+        env = run('let {a, b = 5} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("b"), 2)
+
+    def test_later_default_sees_earlier_bound_name(self):
+        env = run('let {a, b = a + 1} = {"a": 5};')
+        self.assertEqual(env.get("b"), 6)
+
+    def test_key_rename_and_default_combine(self):
+        env = run('let {a: x = 10} = {};')
+        self.assertEqual(env.get("x"), 10)
+
+    def test_defaulted_entry_before_required_no_ordering_restriction(self):
+        env = run('let {a: x = 1, b} = {"b": 2};')
+        self.assertEqual(env.get("x"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_no_defaults_unaffected(self):
+        env = run('let {a} = {"a": 1};')
+        self.assertEqual(env.get("a"), 1)
+
+    def test_for_loop_entry_default(self):
+        env = run(
+            'let total = 0; '
+            'for {a, b = 0} in [{"a": 1}, {"a": 2, "b": 3}] { total = total + a + b; }'
+        )
+        self.assertEqual(env.get("total"), 6)
+
+    def test_fn_param_entry_default(self):
+        env = run('fn f({a, b = 10}) { return a + b; } let r = f({"a": 1});')
+        self.assertEqual(env.get("r"), 11)
+
+    def test_comprehension_entry_default(self):
+        env = run(
+            'let r = [a + b for {a, b = 100} in [{"a": 1}, {"a": 2, "b": 3}]];'
+        )
+        self.assertEqual(env.get("r"), [101, 5])
+
+    def test_default_combines_with_trailing_rest(self):
+        env = run('let {a = 1, ...rest} = {};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), {})
+
+    def test_plain_assignment_gains_defaults(self):
+        env = run('let a = 0; let b = 0; {a, b = 5} = {"a": 1};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 5)
+
+    def test_required_key_still_missing_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"destructuring pattern expects key 'a', not found in map",
+        ):
+            run('let {a, b = 1} = {};')
+
+    def test_whole_pattern_default_still_rejected(self):
+        with self.assertRaisesRegex(
+            ParseError, "destructuring parameter cannot have a default value"
+        ):
+            run('fn f({a, b} = {"a": 1, "b": 2}) { }')
+
+
 class TestDestructureAssign(unittest.TestCase):
     def test_swap_idiom(self):
         env = run("let a = 1; let b = 2; [a, b] = [b, a];")

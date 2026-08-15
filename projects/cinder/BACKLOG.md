@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
+## 1. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`) [claimed 2026-08-15T14:29:38Z]
 
 Build: the depth task after task 5's breadth work (`num_divisors`) per
 `PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to

@@ -683,6 +683,109 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other
+
+Build: the breadth task after task 5's depth work (optional catch
+binding) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
+backlog back to 6 tasks now that `num_divisors` has landed and dropped
+the count to the 5-task floor. Add `is_amicable(a, b)` to
+`cinder/builtins.py`, registered right after `num_divisors` (search for
+`def _num_divisors`, the current last entry in the divisor cluster) —
+the two-argument predicate sibling to `is_perfect_number`/`is_abundant`/
+`is_deficient`, the same way `is_coprime`/`is_divisible` are the
+two-argument siblings of the single-argument `is_prime`/`is_even`/
+`is_odd` cluster. Two positive integers `a != b` are an *amicable pair*
+when each one's own proper-divisor sum equals the other (e.g. `220`'s
+proper divisors sum to `284`, and `284`'s proper divisors sum back to
+`220`) — the classical two-number generalization of a perfect number
+(where a single number's proper-divisor sum equals *itself*).
+
+Like `is_emirp` (which inlines `is_composite`'s trial-division loop and
+`reverse_int`'s digit reversal rather than calling either builtin
+directly, since both take the `(arguments, line, column)` dispatch
+signature, not a raw `int`), this needs its own private
+`int -> int` helper mirroring `_aliquot_sum`'s trial-division body
+exactly (including its `value == 1 -> 0` special case, since the
+general `range(2, math.isqrt(value) + 1)` loop alone would wrongly
+leave the running total at its seed value of `1` for that input),
+called twice — once per argument:
+
+```python
+def _is_amicable(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_amicable", arguments, 2, line, column)
+    a = _require_int("is_amicable", arguments[0], line, column)
+    b = _require_int("is_amicable", arguments[1], line, column)
+    if a < 1 or b < 1 or a == b:
+        return False
+
+    def _aliquot_sum_value(value: int) -> int:
+        if value == 1:
+            return 0
+        total = 1
+        for divisor in range(2, math.isqrt(value) + 1):
+            if value % divisor == 0:
+                total += divisor
+                complement = value // divisor
+                if complement != divisor:
+                    total += complement
+        return total
+
+    return _aliquot_sum_value(a) == b and _aliquot_sum_value(b) == a
+```
+
+Model the arity/type-checking exactly on `is_coprime`/`is_divisible`'s
+own two-argument structure: `_require_arity` with `2`, then
+`_require_int` on each argument in order (reusing the shared helper —
+do **not** hand-roll a separate `isinstance` check). Domain handling
+follows the *predicate* cluster's convention (`is_perfect_number`/
+`is_abundant`/`is_deficient`, all of which return `false` for `value <
+1` rather than raising) — **not** the divisor cluster's
+type-vs-domain-error convention (`divisors`/`aliquot_sum`/
+`num_divisors`, which raise on `n < 1`) — since `is_amicable` returns a
+boolean, not a number. The `a == b` short-circuit is deliberate: a
+perfect number like `6` trivially satisfies
+`_aliquot_sum_value(6) == 6` in both directions, but the classical
+definition of an amicable pair requires two *distinct* integers, so a
+number is never amicable with itself even when its own proper-divisor
+sum loops back to itself.
+
+Acceptance criteria:
+- `is_amicable(220, 284);` is `true` — the smallest known amicable
+  pair: `220`'s proper divisors (`1, 2, 4, 5, 10, 11, 20, 22, 44, 55,
+  110`) sum to `284`, and `284`'s proper divisors (`1, 2, 4, 71, 142`)
+  sum to `220`.
+- `is_amicable(284, 220);` is `true` — order-independent, since the
+  check is symmetric in its two arguments.
+- `is_amicable(1184, 1210);` is `true` — the second-smallest known
+  amicable pair, exercising a second concrete case beyond `220`/`284`.
+- `is_amicable(6, 6);` is `false` — `6` is a perfect number
+  (`_aliquot_sum_value(6) == 6`), but the `a == b` guard rejects it
+  before either sum is even computed: a number is never amicable with
+  itself.
+- `is_amicable(220, 100);` is `false` — `220`'s proper-divisor sum is
+  `284`, not `100`.
+- `is_amicable(0, 5);` is `false` — below the domain floor.
+- `is_amicable(-6, 5);` is `false` — negative input, same convention as
+  `is_perfect_number`/`is_abundant`/`is_deficient`.
+- `is_amicable(220, 5.0);` raises `CinderRuntimeError` matching
+  `"is_amicable() requires an int, got float"` — the same message shape
+  `_require_int` already produces for every sibling in this cluster.
+- `is_amicable(true, 220);` raises `CinderRuntimeError` matching
+  `"is_amicable() requires an int, got bool"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `num_divisors`, see
+current line numbers — shift if earlier tasks this cycle landed first),
+`tests/test_builtins.py` (model on the `is_perfect_number`/`is_coprime`
+test classes). Once merged, `README.md`'s Builtins bullet needs
+`is_amicable` added near `divisors`/`aliquot_sum`/`num_divisors`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
+— leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

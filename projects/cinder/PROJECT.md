@@ -730,21 +730,23 @@ set: `-`/`not`/`~` were all implemented but plain unary `+` wasn't
 but `++5` had no equivalent `PLUSPLUS` handling. No new AST node was
 needed (`Unary` already carries an arbitrary operator token), so it
 was a small, self-contained change confined to `_UNARY`/`_unary` in
-the parser and one new branch in `_evaluate_unary`.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, unary `+`, has since landed and is covered
-in the "have since landed" history above; this grooming pass dropped
-its now-redundant not-yet-scoped description from this section rather
-than leaving it to drift further out of sync):
-as task 1, `num_divisors(n)` — a breadth task after unary `+`'s depth
-work, counting an integer's positive divisors via the same
+the parser and one new branch in `_evaluate_unary`, and, as has
+`num_divisors(n)` — a breadth task after unary `+`'s depth work,
+counting an integer's positive divisors via the same
 `sqrt(n)`-bounded trial-division shape `divisors`/`aliquot_sum` already
 share, sitting next to both as the count-returning sibling of that
 trio (`divisors` collects them, `aliquot_sum` sums the proper ones,
-`num_divisors` counts them all including `n` itself). And as task 2,
-default values in map-destructuring patterns (`let {a, b = 5} =
-expr;`) — the depth task after task 1's breadth work, the map-pattern
+`num_divisors` counts them all including `n` itself), have since
+landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
+used to occupy this slot, `num_divisors`, has since landed and is
+covered in the "have since landed" history above; this grooming pass
+dropped its now-redundant not-yet-scoped description from this section
+rather than leaving it to drift further out of sync):
+as task 1, default values in map-destructuring patterns (`let {a, b =
+5} = expr;`) — the depth task after `num_divisors`'s breadth work, the
+map-pattern
 counterpart to the list-destructuring-defaults task: today every
 map-pattern form raises when a key is absent rather than falling back
 to a default. Unlike the list-pattern version, this one *does* reach
@@ -755,8 +757,8 @@ unlike the list-pattern plain-assignment path, which parses through an
 unrelated `ListLiteral` route. Map-pattern entries also have no
 positional ordering (matching is by key, not position), so unlike the
 list-pattern version's ordering rule there is no "a required entry
-can't follow a defaulted one" restriction to enforce. And as task 3,
-`prime_factors(n)` — a breadth task after task 2's depth work, listing
+can't follow a defaulted one" restriction to enforce. And as task 2,
+`prime_factors(n)` — a breadth task after task 1's depth work, listing
 an integer's prime factors with multiplicity in ascending order (e.g.
 `12 -> [2, 2, 3]`, `360 -> [2, 2, 2, 3, 3, 5]`), the natural neighbor
 to `divisors`/`is_prime`/`is_composite` — where `divisors` finds every
@@ -769,9 +771,9 @@ sqrt-bounded divisor-pairing shape `divisors`/`aliquot_sum`/
 factor (like `2` dividing `12` twice) each time it divides evenly, not
 just once. `prime_factors(1)` is `[]` — `1` has no prime factors,
 mathematically, not a case needing a special-cased guard the way
-`divisors(1)`'s own `[1]` result does. And as task 4, hole elements in
+`divisors(1)`'s own `[1]` result does. And as task 3, hole elements in
 list-destructuring patterns (`let [a, , c] = expr;`) — the depth task
-after task 3's breadth work, closing the last gap in the
+after task 2's breadth work, closing the last gap in the
 destructuring-pattern cluster: every list-pattern form can already
 bind a name, rename nothing (list patterns have no rename syntax),
 collect a rest, or fall back to a default, but there is no way to skip
@@ -781,7 +783,7 @@ it, to the `let`/`for`/param/comprehension forms only (via
 `_destructure_list_pattern_entry`), not the plain-assignment form, for
 the identical reason: that form's pattern is parsed through an
 ordinary `ListLiteral`, which has no notion of an empty element. And
-as task 5, `is_squarefree(n)` — a breadth task after task 4's depth
+as task 4, `is_squarefree(n)` — a breadth task after task 3's depth
 work, testing whether `n` has no repeated prime factor (equivalently,
 is not divisible by any perfect square greater than `1`, e.g. `6 = 2 *
 3` is squarefree, `12 = 2 * 2 * 3` isn't), the natural predicate
@@ -789,21 +791,36 @@ neighbor to `is_prime`/`is_composite` and the soon-to-land
 `prime_factors` — answering "does any factor repeat?" via the same
 `sqrt(n)`-bounded trial-division shape `is_prime`/`is_composite`
 already use, checking `divisor * divisor` divisibility directly rather
-than building the full factor list. And as task 6, optional catch
+than building the full factor list. And as task 5, optional catch
 bindings (`try { ... } catch { ... }`, no `(name)` required) — the
-depth task after task 5's breadth work, restocking the backlog back to
-6 tasks: today `catch` always requires a parenthesized binding name
-(`catch (err) { ... }`) even when the handler never reads the error
-message, forcing a throwaway name for the common "just recover, don't
-inspect" case (`try { risky(); } catch (e) { print("failed"); }` never
-uses `e`). `_try_statement` in `cinder/parser.py` should treat the
-`(name)` after `catch` as optional — parse it only when the next token
-is `(`, leaving `TryStmt.catch_name` `None` otherwise (the field is
-already typed `str | None`, so no AST change is needed), and
-`_execute_try` in `cinder/interpreter.py` should only call
-`catch_env.define(...)` when `catch_name` isn't `None`, running the
-catch block in a plain child environment otherwise. And only much
-later, a bytecode VM if performance ever actually matters.
+depth task after task 4's breadth work: today `catch` always requires
+a parenthesized binding name (`catch (err) { ... }`) even when the
+handler never reads the error message, forcing a throwaway name for
+the common "just recover, don't inspect" case (`try { risky(); } catch
+(e) { print("failed"); }` never uses `e`). `_try_statement` in
+`cinder/parser.py` should treat the `(name)` after `catch` as optional
+— parse it only when the next token is `(`, leaving
+`TryStmt.catch_name` `None` otherwise (the field is already typed
+`str | None`, so no AST change is needed), and `_execute_try` in
+`cinder/interpreter.py` should only call `catch_env.define(...)` when
+`catch_name` isn't `None`, running the catch block in a plain child
+environment otherwise. And as task 6, `is_amicable(a, b)` — a breadth
+task after task 5's depth work, restocking the backlog back to 6
+tasks: the two-argument predicate sibling to
+`is_perfect_number`/`is_abundant`/`is_deficient` (the same way
+`is_coprime`/`is_divisible` are the two-argument siblings of the
+single-argument `is_prime`/`is_even`/`is_odd` cluster), testing
+whether two distinct positive integers' proper-divisor sums point at
+each other (e.g. `220`'s proper divisors sum to `284`, and `284`'s sum
+back to `220`) — the classical two-number generalization of a perfect
+number, where a single number's proper-divisor sum loops back to
+itself. Inlines its own private aliquot-sum helper mirroring
+`_aliquot_sum`'s trial-division body exactly (the same "inline rather
+than call the dispatch-signature builtin" approach `is_emirp` already
+takes with `is_composite`/`reverse_int`), and explicitly excludes
+`a == b` even though a perfect number would otherwise trivially pass —
+amicability is defined only between two *distinct* integers. And only
+much later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally
 — do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -817,13 +834,13 @@ when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (unary `+` having landed via PR #247, dropping the
-count from 6 to 5) and restocked it to 6 by adding task 6, optional
-catch bindings, continuing alternation with a single depth task after
-task 5's breadth work rather than stacking a second breadth task, per
-the policy above. The next grooming pass should continue alternating
-breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
-count within reach of the 5-task floor.
+its 5-task floor (`num_divisors` having landed via PR #248, dropping
+the count from 6 to 5) and restocked it to 6 by adding task 6,
+`is_amicable`, continuing alternation with a single breadth task after
+task 5's depth work (optional catch bindings) rather than stacking a
+second depth task, per the policy above. The next grooming pass should
+continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor.
 
 ## History
 

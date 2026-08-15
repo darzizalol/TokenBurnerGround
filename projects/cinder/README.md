@@ -236,6 +236,8 @@ while (i < 10) {
   `divisors` to list an integer's positive divisors in sorted order,
   `aliquot_sum` to sum an integer's own proper divisors (the value-returning counterpart to
   `is_perfect_number`/`is_abundant`/`is_deficient`),
+  `num_divisors` to count an integer's positive divisors including itself
+  (the count-returning sibling of `divisors`/`aliquot_sum`),
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
@@ -336,22 +338,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_pronic` to test
-whether an integer is expressible as `k * (k + 1)`, default values in
-list-destructuring patterns (`let [a, b = 5] = expr;`),
-`collatz_length` to count the steps the Collatz recurrence takes to
-reach `1`, `is_strong_number` to test whether an integer equals the
-sum of its own digits' factorials, and unary `+` to close the last gap
-in the unary operator set. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `num_divisors` to count an integer's
-positive divisors, default values in map-destructuring patterns
-(`let {a, b = 5} = expr;`), `prime_factors` to list an integer's prime
-factors with multiplicity, hole elements in list-destructuring
-patterns (`let [a, , c] = expr;`) to skip an unwanted position,
-`is_squarefree` to test whether an integer has no repeated prime
-factor, and an optional catch binding (`try { ... } catch { ... }`,
-no `(name)` required) for handlers that don't need the caught
-message.
+Actively developed, nightly. Recently landed: `collatz_length` to
+count the steps the Collatz recurrence takes to reach `1`,
+`is_strong_number` to test whether an integer equals the sum of its
+own digits' factorials, unary `+` to close the last gap in the unary
+operator set, and `num_divisors` to count an integer's positive
+divisors including itself. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): default values in map-destructuring
+patterns (`let {a, b = 5} = expr;`), `prime_factors` to list an
+integer's prime factors with multiplicity, hole elements in
+list-destructuring patterns (`let [a, , c] = expr;`) to skip an
+unwanted position, `is_squarefree` to test whether an integer has no
+repeated prime factor, an optional catch binding
+(`try { ... } catch { ... }`, no `(name)` required) for handlers that
+don't need the caught message, and `is_amicable` to test whether two
+integers' proper-divisor sums point at each other.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

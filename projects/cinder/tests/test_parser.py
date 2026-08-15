@@ -1031,6 +1031,11 @@ class TestListsAndMaps(unittest.TestCase):
         self.assertEqual(node.names, [("a", None)])
         self.assertEqual(node.rest, "rest")
 
+    def test_list_comprehension_destructure_hole(self):
+        node = parse("[a + c for [a, , c] in xs]")
+        self.assertEqual(node.names, [("a", None), (None, None), ("c", None)])
+        self.assertIsNone(node.rest)
+
     def test_list_comprehension_destructure_with_filter(self):
         node = parse("[a for [a, b] in xs if a > 1]")
         self.assertEqual(node.names, [("a", None), ("b", None)])
@@ -2152,6 +2157,33 @@ class TestStatements(unittest.TestCase):
         self.assertEqual(shape(stmt.initializer), ("ListLiteral", []))
         self.assertEqual(stmt.rest, "rest")
 
+    def test_destructure_let_list_hole(self):
+        stmt = parse_stmts("let [a, , c] = [1, 2, 3];")[0]
+        self.assertEqual(stmt.names, [("a", None), (None, None), ("c", None)])
+        self.assertEqual(shape(stmt.initializer), ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]))
+        self.assertIsNone(stmt.rest)
+
+    def test_destructure_let_list_leading_hole(self):
+        stmt = parse_stmts("let [, b] = [1, 2];")[0]
+        self.assertEqual(stmt.names, [(None, None), ("b", None)])
+
+    def test_destructure_let_list_hole_with_rest(self):
+        stmt = parse_stmts("let [a, , ...rest] = [1, 2, 3, 4];")[0]
+        self.assertEqual(stmt.names, [("a", None), (None, None)])
+        self.assertEqual(stmt.rest, "rest")
+
+    def test_destructure_let_list_hole_after_default_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a = 1, , c] = [9];")
+
+    def test_destructure_let_list_trailing_comma_still_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [a, b, ] = [1, 2, 3];")
+
+    def test_destructure_let_list_empty_pattern_still_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("let [] = [1];")
+
     def test_destructure_let_list_required_after_default_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let [a = 1, b] = [1, 2];")
@@ -2683,6 +2715,20 @@ class TestFunctions(unittest.TestCase):
             ],
         )
 
+    def test_fn_declaration_with_list_destructuring_param_hole(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f([a, , c]) { return a; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [("Param", [("a", None), (None, None), ("c", None)], None, False)],
+                    None,
+                    ("Block", [("ReturnStmt", ("Identifier", "a"))]),
+                )
+            ],
+        )
+
     def test_fn_declaration_with_map_destructuring_param_and_rest_element(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("fn f({a, ...rest}) { return rest; }")],
@@ -3202,6 +3248,10 @@ class TestForDestructuring(unittest.TestCase):
         stmt = parse_stmts("for [a, b = 0] in xs { }")[0]
         names = [(name, shape(default) if default is not None else None) for name, default in stmt.names]
         self.assertEqual(names, [("a", None), ("b", ("Literal", 0))])
+
+    def test_for_list_destructure_hole(self):
+        stmt = parse_stmts("for [a, , c] in xs { }")[0]
+        self.assertEqual(stmt.names, [("a", None), (None, None), ("c", None)])
 
     def test_for_list_destructure_rest_not_last_raises(self):
         with self.assertRaises(ParseError):

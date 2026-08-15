@@ -357,7 +357,17 @@ class Parser:
         self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
         return names, rest
 
-    def _destructure_list_pattern_entry(self, seen_default: bool) -> "tuple[str, Expr | None]":
+    def _destructure_list_pattern_entry(self, seen_default: bool) -> "tuple[str | None, Expr | None]":
+        if self._check(TokenType.COMMA):
+            if seen_default:
+                token = self._peek()
+                raise ParseError(
+                    "element without a default value follows an element with one "
+                    "in destructuring pattern",
+                    token.line,
+                    token.column,
+                )
+            return None, None
         name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
         if self._check(TokenType.EQ):
             self._advance()

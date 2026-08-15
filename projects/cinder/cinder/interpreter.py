@@ -421,7 +421,8 @@ class Interpreter:
                 )
             for index, (name, default) in enumerate(names):
                 item = value[index] if index < len(value) else self.evaluate(default, env)
-                self._bind_destructure_name(env, name, item, line, column, use_assign)
+                if name is not None:
+                    self._bind_destructure_name(env, name, item, line, column, use_assign)
             self._bind_destructure_name(
                 env, rest, list(value[len(names):]), line, column, use_assign
             )
@@ -441,7 +442,8 @@ class Interpreter:
             )
         for index, (name, default) in enumerate(names):
             item = value[index] if index < len(value) else self.evaluate(default, env)
-            self._bind_destructure_name(env, name, item, line, column, use_assign)
+            if name is not None:
+                self._bind_destructure_name(env, name, item, line, column, use_assign)
 
     def _bind_destructure_name(
         self,

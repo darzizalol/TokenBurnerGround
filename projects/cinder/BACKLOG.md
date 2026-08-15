@@ -558,6 +558,98 @@ pass, not this task.
 
 ---
 
+## 6. Language: uninitialized `let` declarations (`let x;`, defaults to `nil`)
+
+Build: the depth task after task 5's breadth work (`is_semiprime`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
+6 tasks now that hole elements in list-destructuring patterns has
+landed via PR #251, dropping the count to the 5-task floor. Today
+every `let` declaration requires an initializer —
+`cinder/parser.py`'s `_let_statement` unconditionally calls
+`self._consume(TokenType.EQ, "'=' after variable name")` right after
+the identifier — so there is no way to declare a variable and assign
+it later, forcing a throwaway placeholder value (`let x = nil;`,
+`let total = 0;`) purely to satisfy the parser even when the real
+initial value is only known conditionally (e.g. set inside a following
+`if`/`else`). Verify the gap: `python3 -m cinder.cli eval 'let x;
+print(x);'` currently raises `ParseError` `"expected '=' after
+variable name, found ';'"`.
+
+**Parsing** (`cinder/parser.py`): in `_let_statement`, after consuming
+the identifier, only require `=` plus an initializer expression when
+the next token isn't `;` — otherwise default the initializer to a
+bare `nil` literal:
+
+```python
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
+        if self._check(TokenType.SEMICOLON):
+            initializer: Expr = Literal(None, name_token.line, name_token.column)
+        else:
+            self._consume(TokenType.EQ, "'=' after variable name")
+            initializer = self._assignment()
+        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
+        return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
+```
+
+No AST change is needed — `LetStmt.initializer` is already a plain
+`Expr`, and `Literal(None, ...)` is exactly the node the parser
+already builds for the `nil` keyword itself (search `token.type ==
+TokenType.NIL` in `_primary`), so the interpreter's existing `LetStmt`
+branch in `execute` (`env.define(stmt.name, self.evaluate(stmt.initializer,
+env))`) needs no changes at all.
+
+`const` is deliberately **not** touched — `_const_statement` keeps
+requiring an initializer unconditionally, since an immutable binding
+that starts out unassigned would defeat the purpose of `const` (there
+would be no way to ever give it a real value); this is already locked
+in by the existing `test_const_missing_initializer_raises` test, which
+must keep passing unmodified.
+
+This also affects the C-style `for` loop's init clause for free, since
+`_for_statement` already calls `self._let_statement()` to parse it
+(search `init = self._let_statement()  # consumes its own trailing
+';'`) — `for (let i; i < 3; i++) { ... }` becomes parseable, though it
+correctly raises a runtime type error on the first comparison (`nil <
+3`) rather than being a useful thing to write; no special-casing is
+needed for this to behave correctly.
+
+Acceptance criteria:
+- `let x; print(x);` prints `nil` — a bare `let x;` binds `x` to
+  `nil`.
+- `let x; x = 5; print(x);` prints `5` — the binding is mutable and
+  assignable afterward, same as any other `let`.
+- `let x = 1; print(x);` still prints `1` — the initialized form is
+  completely unchanged.
+- `let ran = false; if (true) { let x; x = 1; ran = x == 1; }
+  print(ran);` prints `true` — a realistic use case: declare, then
+  conditionally assign inside a branch.
+- `fn f() { let x; return x; } print(f());` prints `nil` — works
+  inside function bodies too, not just top-level.
+- `const x;` still raises `ParseError` — unaffected, confirms `const`
+  did not accidentally inherit the optional-initializer behavior.
+- `let x 1;` (a genuinely missing `=` before a non-`;` token) still
+  raises the same `ParseError` ("expected '=' after variable name") it
+  does today — confirms this isn't silently accepted.
+- `let x = 1` (missing trailing `;`) still raises `ParseError` —
+  unaffected.
+- Every pre-existing `let`/destructuring-`let` test continues to pass
+  unmodified.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_let_statement`),
+`tests/test_parser.py` (search `test_let_statement`,
+`test_let_missing_equals_raises` — add a new shape test for the bare
+`let x;` form asserting the initializer is `("Literal", None)`),
+`tests/test_interpreter.py` (new tests modeled on the acceptance
+criteria above, search for `def test_let_` or `class ... Let`). Once
+merged, `README.md`'s Variables & scope bullet needs a mention of
+uninitialized `let` declarations added near the existing `let`/`const`
+description, and `PROJECT.md`'s roadmap paragraph needs it moved from
+backlog to landed — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

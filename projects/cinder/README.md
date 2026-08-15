@@ -43,7 +43,10 @@ while (i < 10) {
   `const` and vice versa in the same scope), assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting, plus
-  an optional trailing rest element `let [a, b, ...rest] = expr;` that
+  a hole element to skip an unwanted position (`let [a, , c] = expr;`,
+  scoped to `let`, `for`, function params, and comprehension loop
+  variables, not the plain-assignment form), an optional trailing rest
+  element `let [a, b, ...rest] = expr;` that
   collects any remaining elements into a list, empty if none are left,
   and an optional default value per element `let [a, b = 5] = expr;`,
   used when the source list doesn't reach that position, evaluated
@@ -244,6 +247,8 @@ while (i < 10) {
   `is_perfect_number`/`is_abundant`/`is_deficient`),
   `num_divisors` to count an integer's positive divisors including itself
   (the count-returning sibling of `divisors`/`aliquot_sum`),
+  `prime_factors` to list an integer's prime factors with multiplicity in
+  ascending order,
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
@@ -344,19 +349,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: unary `+` to close the
-last gap in the unary operator set, `num_divisors` to count an
-integer's positive divisors including itself, and default values in
+Actively developed, nightly. Recently landed: `num_divisors` to count an
+integer's positive divisors including itself, default values in
 map-destructuring patterns (`let {a, b = 5} = expr;`, landed on every
 map-pattern form including plain assignment via their shared parser
-entry point). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`prime_factors` to list an integer's prime factors with multiplicity,
-hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
-to skip an unwanted position, `is_squarefree` to test whether an
+entry point), `prime_factors` to list an integer's prime factors with
+multiplicity, and hole elements in list-destructuring patterns
+(`let [a, , c] = expr;`) to skip an unwanted position. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `is_squarefree` to test whether an
 integer has no repeated prime factor, an optional catch binding
 (`try { ... } catch { ... }`, no `(name)` required) for handlers that
-don't need the caught message, and `is_amicable` to test whether two
-integers' proper-divisor sums point at each other.
+don't need the caught message, `is_amicable` to test whether two
+integers' proper-divisor sums point at each other, a pipe operator
+(`a |> f` as sugar for `f(a)`), `is_semiprime` to test whether an
+integer is the product of exactly two primes, and uninitialized `let`
+declarations (`let x;`, defaulting to `nil`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

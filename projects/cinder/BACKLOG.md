@@ -11,161 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: unary `+` operator (`+expr`) [claimed 2026-08-15T14:01:54Z]
-
-Build: a language-depth task closing a real asymmetry in the unary
-operator set. Every other classic unary operator is implemented —
-`-` (arithmetic negation), `not` (logical), `~` (bitwise complement) —
-but plain unary `+` isn't. Verify the gap:
-`python3 -m cinder.cli eval 'print(+5);'` currently raises `ParseError`
-`"expected an expression, found '+'"` (`cinder/parser.py`'s
-`_UNARY = {TokenType.MINUS, TokenType.NOT, TokenType.TILDE}`, search
-for `_UNARY = {`, simply never included `TokenType.PLUS`). The gap is
-also asymmetric with the doubled-token case already handled for minus:
-`python3 -m cinder.cli eval 'print(--5);'` already evaluates to `5`
-today (`_unary`, search for `def _unary`, explicitly re-splits a
-lexer-merged `MINUSMINUS` token into nested `Unary(MINUS, ...)` nodes,
-per the comment at the top of `cinder/parser.py`, lines 27-36), but
-`python3 -m cinder.cli eval 'print(++5);'` raises `ParseError`
-`"expected an expression, found '++'"` — there's no equivalent
-`PLUSPLUS` re-split.
-
-Not in scope: this does **not** touch the statement-only postfix
-`x++`/`x--` sugar (`_INCREMENT_DECREMENT_OPS`, `_expr_or_incdec`,
-search for both) at all — that machinery only fires *after*
-`_assignment()` already returned a complete `Identifier`/`Index`
-expression, checking for a *trailing* `PLUSPLUS`/`MINUSMINUS` token;
-this task only ever adds handling for a *leading* `PLUS`/`PLUSPLUS`
-token at the start of `_unary()`, an entirely different parse
-position, so the two can't collide (confirmed: `x++;`/`x--;` still
-parse exactly as before, since `_unary()` never runs on the `x` token
-itself — `x` is a plain `IDENTIFIER`, not a unary-operator token).
-Also not in scope: no new AST node — `Unary` (`cinder/ast_nodes.py`)
-already carries an arbitrary operator `Token`, so no changes are
-needed there at all.
-
-**Parsing** (`cinder/parser.py`): add `TokenType.PLUS` to `_UNARY`:
-
-```python
-_UNARY = {TokenType.MINUS, TokenType.PLUS, TokenType.NOT, TokenType.TILDE}
-```
-
-This alone makes `_unary`'s existing generic branch
-(`if self._peek().type in _UNARY: operator = self._advance(); operand
-= self._unary(); return Unary(operator, operand)`) handle a single
-`+expr` for free — no other change needed for that case. Then, mirror
-the existing `MINUSMINUS` re-split branch (the first `if` in `_unary`)
-with an equivalent `PLUSPLUS` branch, for the same reason stated in
-that branch's own comment: a leading `++` in expression position can
-never be a postfix increment, since there's nothing before it to
-increment, so it unambiguously means double unary plus:
-
-```python
-def _unary(self) -> Expr:
-    if self._check(TokenType.MINUSMINUS):
-        token = self._advance()
-        minus = Token(TokenType.MINUS, "-", None, token.line, token.column)
-        return Unary(minus, Unary(minus, self._unary()))
-    if self._check(TokenType.PLUSPLUS):
-        token = self._advance()
-        plus = Token(TokenType.PLUS, "+", None, token.line, token.column)
-        return Unary(plus, Unary(plus, self._unary()))
-    if self._peek().type in _UNARY:
-        operator = self._advance()
-        operand = self._unary()
-        return Unary(operator, operand)
-    return self._call()
-```
-
-Update the file's top-of-file grammar docstring (lines 1-9) — the
-precedence line currently reads `+ - > * / % > unary (- not ~)`;
-change to `+ - > * / % > unary (- + not ~)`. Also extend the
-`MINUSMINUS` explanation paragraph (lines 27-36) with one sentence
-noting `PLUSPLUS` gets the identical treatment for the identical
-reason, so the doc doesn't go stale relative to the code.
-
-**Evaluation** (`cinder/interpreter.py`): `_evaluate_unary` (search for
-`def _evaluate_unary`) currently branches on `MINUS`/`NOT`/`TILDE`. Add
-a `PLUS` branch, modeled exactly on the existing `MINUS` branch's
-type-checking (reusing `_NUMERIC`/`type_name`, already imported/defined
-in this module — no new imports needed), rejecting `bool` the same way
-`MINUS` does (`isinstance(operand, bool)` is checked separately since
-`bool` is a Python `int` subclass):
-
-```python
-    def _evaluate_unary(self, expr: Unary, env: Environment) -> object:
-        operand = self.evaluate(expr.operand, env)
-        if expr.operator.type == TokenType.MINUS:
-            if not isinstance(operand, _NUMERIC) or isinstance(operand, bool):
-                raise CinderRuntimeError(
-                    f"unary '-' requires a number, got {type_name(operand)}",
-                    expr.operator.line,
-                    expr.operator.column,
-                )
-            return -operand
-        if expr.operator.type == TokenType.PLUS:
-            if not isinstance(operand, _NUMERIC) or isinstance(operand, bool):
-                raise CinderRuntimeError(
-                    f"unary '+' requires a number, got {type_name(operand)}",
-                    expr.operator.line,
-                    expr.operator.column,
-                )
-            return +operand
-        if expr.operator.type == TokenType.NOT:
-            return not is_truthy(operand)
-        ...  # TILDE branch unchanged
-```
-
-`+operand` is a true no-op for `int`/`float` (Python's own unary `+`
-is identity for both) — this exists purely so `+expr` type-checks and
-composes with the rest of the unary chain (`-+5`, `++5`), not to
-transform the value.
-
-Acceptance criteria:
-- `print(+5);` prints `5`.
-- `print(+5.5);` prints `5.5`.
-- `print(+0);` prints `0`.
-- `print(-+5);` prints `-5` — unary plus composes with unary minus,
-  doesn't cancel or flip it.
-- `print(++5);` prints `5` — the doubled-token `PLUSPLUS` re-split
-  case, mirroring `--5` already printing `5` today.
-- `print(2 + +3);` prints `5` — binary `+` followed by a unary `+`
-  operand (space-separated so they lex as two distinct `PLUS` tokens,
-  not one merged `PLUSPLUS`).
-- `print(+(-5));` prints `-5` — parenthesized grouping under unary
-  plus is unaffected.
-- `print(+true);` raises `CinderRuntimeError` matching `"unary '+'
-  requires a number, got bool"`.
-- `print(+"abc");` raises `CinderRuntimeError` matching `"unary '+'
-  requires a number, got string"`.
-- `print(+nil);` raises `CinderRuntimeError` matching `"unary '+'
-  requires a number, got nil"`.
-- `print(+[1, 2]);` raises `CinderRuntimeError` matching `"unary '+'
-  requires a number, got list"`.
-- `let x = 5; x++; print(x);` still prints `6` and `let x = 5; x--;
-  print(x);` still prints `4` — the pre-existing postfix `x++`/`x--`
-  statement sugar is completely unaffected by this task (different
-  parse position, per the Not-in-scope discussion above).
-- Every pre-existing unary-minus/`not`/`~` test continues to pass
-  unmodified — this task only adds a new branch/token to each
-  function, changing nothing about the existing ones.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_UNARY`, `_unary`, top-of-file
-grammar docstring), `cinder/interpreter.py` (`_evaluate_unary`),
-`tests/test_parser.py` (shape assertions for `+5`/`++5`/`-+5`, modeled
-on the existing `("Unary", TokenType.MINUS, ...)` shape assertions —
-search for `"Unary"` in the shape helper), `tests/test_interpreter.py`
-(new cases in `TestUnaryAndGrouping`, modeled on `test_unary_minus`/
-`test_double_unary_minus`, plus error-path tests modeled on
-`test_unary_minus_on_string_raises`). Once merged, `README.md`'s
-Operators bullet needs a unary-`+` mention, and `PROJECT.md`'s roadmap
-paragraph needs it moved from backlog to landed — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `num_divisors` — count of an integer's positive divisors
+## 1. Standard library: `num_divisors` — count of an integer's positive divisors
 
 Build: the breadth task after task 5's depth work (unary `+`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
@@ -246,7 +92,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
+## 2. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`)
 
 Build: the depth task after task 5's breadth work (`num_divisors`) per
 `PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to
@@ -438,7 +284,7 @@ task.
 
 ---
 
-## 4. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+## 3. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
 
 Build: the breadth task after task 5's depth work (default values in
 map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -528,7 +374,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
+## 4. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
 
 Build: the depth task after task 5's breadth work (`prime_factors`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -725,7 +571,7 @@ not this task.
 
 ---
 
-## 6. Standard library: `is_squarefree` — no repeated prime factor
+## 5. Standard library: `is_squarefree` — no repeated prime factor
 
 Build: the breadth task after task 5's depth work (hole elements in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth

@@ -4674,3 +4674,22 @@ The morning paper: what shipped, what bounced, what's still open.
   grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
   keeps landing already-claimed work cleanly — the night continues to
   go smoothly.
+
+### Later cycle
+
+- **Merged**: PR #247 "Language: unary `+` operator (`+expr`)"
+  (`feat/20260815-unary-plus`, squashed to `main`). Clean first round:
+  `VERDICT: LGTM` and `QA: PASS` (2777 tests plus CLI smoke tests
+  covering basic unary plus, composition with unary minus (`-+5`,
+  `++5`), the `PLUSPLUS` doubled-token re-split, the unaffected
+  postfix `x++`/`x--` sugar, and all four rejected-operand-type error
+  paths). Worktree removed, branch deleted, task 1 dropped from
+  `BACKLOG.md` and archived in `CHANGELOG.md`, remaining tasks
+  renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and seventeen: another clean first-round
+  merge, backlog holds steady at 5 tasks. Still no fresh architect
+  grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
+  keeps landing already-claimed work cleanly — the night continues to
+  go smoothly.

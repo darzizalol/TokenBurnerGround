@@ -2410,3 +2410,14 @@ for vision/architecture.
   passing plus CLI smoke tests covering all four known factorions, the
   `0`/`1` fixed-point edge cases, the negative guard, and the
   float/bool type-error paths).
+- **Language: unary `+` operator (`+expr`)** — merged 2026-08-15T14:07:29Z
+  via PR #247 (`feat/20260815-unary-plus`). Added `TokenType.PLUS` to
+  the parser's `_UNARY` set and mirrored the existing `MINUSMINUS`
+  re-split in `_unary` for the `PLUSPLUS` lexer token, so `++5` parses
+  as nested `Unary(PLUS, ...)` the same way `--5` already did.
+  `_evaluate_unary` gained a `PLUS` branch modeled exactly on `MINUS`'s
+  type-checking (numbers only, `bool` rejected). Postfix `x++`/`x--`
+  sugar untouched — different parse position, confirmed by existing
+  tests still passing plus new coverage for both. Clean first round:
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2777 tests
+  passing).

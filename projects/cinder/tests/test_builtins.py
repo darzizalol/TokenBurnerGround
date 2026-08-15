@@ -3254,6 +3254,48 @@ class TestIsPronic(unittest.TestCase):
             run("is_pronic();")
 
 
+class TestIsSquarefree(unittest.TestCase):
+    def test_is_squarefree_of_1(self):
+        self.assertEqual(run("let result = is_squarefree(1);").get("result"), True)
+
+    def test_is_squarefree_of_6(self):
+        self.assertEqual(run("let result = is_squarefree(6);").get("result"), True)
+
+    def test_is_squarefree_of_30(self):
+        self.assertEqual(run("let result = is_squarefree(30);").get("result"), True)
+
+    def test_is_squarefree_of_4_is_false(self):
+        self.assertEqual(run("let result = is_squarefree(4);").get("result"), False)
+
+    def test_is_squarefree_of_12_is_false(self):
+        self.assertEqual(run("let result = is_squarefree(12);").get("result"), False)
+
+    def test_is_squarefree_of_45_is_false(self):
+        self.assertEqual(run("let result = is_squarefree(45);").get("result"), False)
+
+    def test_is_squarefree_of_0_is_false(self):
+        self.assertEqual(run("let result = is_squarefree(0);").get("result"), False)
+
+    def test_is_squarefree_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_squarefree(-6);").get("result"), False)
+
+    def test_is_squarefree_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_squarefree(5.0);")
+        self.assertIn("is_squarefree", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_squarefree_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_squarefree(true);")
+        self.assertIn("is_squarefree", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_squarefree_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_squarefree();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

@@ -1581,6 +1581,26 @@ def _aliquot_sum(arguments: list, line: int, column: int) -> object:
     return total
 
 
+def _prime_factors(arguments: list, line: int, column: int) -> object:
+    _require_arity("prime_factors", arguments, 1, line, column)
+    value = _require_int("prime_factors", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "prime_factors() requires a positive integer, domain error", line, column
+        )
+    result = []
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        while remaining % divisor == 0:
+            result.append(divisor)
+            remaining //= divisor
+        divisor += 1
+    if remaining > 1:
+        result.append(remaining)
+    return result
+
+
 def _num_divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("num_divisors", arguments, 1, line, column)
     value = _require_int("num_divisors", arguments[0], line, column)
@@ -3435,6 +3455,7 @@ _BUILTINS = {
     "is_pronic": _is_pronic,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
+    "prime_factors": _prime_factors,
     "num_divisors": _num_divisors,
     "min": _min,
     "max": _max,

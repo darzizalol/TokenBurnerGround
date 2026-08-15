@@ -233,7 +233,7 @@ class TestHistoryPersistence(unittest.TestCase):
 class TestCompleter(unittest.TestCase):
     def test_unambiguous_prefix_completes_at_state_zero(self):
         completer = _make_completer(create_global_environment())
-        self.assertEqual(completer("pri", 0), "print")
+        self.assertEqual(completer("prin", 0), "print")
 
     def test_ambiguous_prefix_yields_each_match_in_sorted_order_then_none(self):
         completer = _make_completer(create_global_environment())

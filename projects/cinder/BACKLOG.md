@@ -574,6 +574,109 @@ not this task.
 
 ---
 
+## 6. Standard library: `is_powerful_number` — every prime factor appears with exponent 2 or more
+
+Build: the breadth task after task 5's depth work (uninitialized `let`
+declarations) per `PROJECT.md`'s breadth-vs-depth policy, restocking
+the backlog back to 6 tasks now that `is_squarefree` has landed via PR
+#252, dropping the count to the 5-task floor. Add
+`is_powerful_number(n)` to `cinder/builtins.py`, registered right
+after `is_squarefree` (search for `def _is_squarefree`, immediately
+before `divisors` in the numeric-predicate cluster) — the natural
+counterpart to `is_squarefree`: a positive integer is squarefree when
+*no* prime factor repeats, and powerful when *every* prime factor
+repeats (appears with exponent `2` or higher). Equivalently, `n` is
+powerful exactly when it can be written as `a^2 * b^3` for positive
+integers `a`, `b` — e.g. `36 = 2^2 * 3^2` is powerful, `12 = 2^2 * 3^1`
+isn't (the `3` only appears once). Verify the gap: `python3 -m
+cinder.cli eval 'print(is_powerful_number(36));'` currently raises
+`CinderRuntimeError` `"undefined name 'is_powerful_number'"` — no such
+builtin exists yet.
+
+```python
+def _is_powerful_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_powerful_number", arguments, 1, line, column)
+    value = _require_int("is_powerful_number", arguments[0], line, column)
+    if value < 1:
+        return False
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            count = 0
+            while remaining % divisor == 0:
+                remaining //= divisor
+                count += 1
+            if count < 2:
+                return False
+        divisor += 1
+    return remaining == 1
+```
+
+Model the arity/type-checking exactly on `is_squarefree`/`is_semiprime`'s
+own structure: `_require_arity`, then `_require_int` (reusing the
+shared helper — do **not** hand-roll a separate `isinstance` check).
+`n < 1` returns `false` rather than raising, matching the
+boolean-predicate cluster's own convention (`is_squarefree`,
+`is_semiprime`, `is_prime`, etc. — **not** the divisor cluster's
+type-vs-domain-error convention, since this builtin returns a boolean,
+not a number). `is_powerful_number(1)` is `true` — `1` has no prime
+factors at all, so the "every prime factor repeats" condition holds
+vacuously, the same convention `prime_factors(1) == []` already
+establishes for "no factors to violate the rule." The inner `while`
+loop peels each prime factor's *full* multiplicity before moving to
+the next divisor (unlike `is_semiprime`'s single-division-per-iteration
+peel, since counting per-factor multiplicity is exactly the property
+being tested here rather than a total factor count), failing fast the
+instant any factor's count comes up short of `2` rather than finishing
+the factorization first; the trailing `remaining == 1` check catches
+the case where a large prime factor above the `sqrt` bound is left
+over with only its first power counted, which is the same "peel small
+factors, then check what's left" tail case `is_semiprime`/
+`prime_factors` already handle.
+
+Acceptance criteria:
+- `is_powerful_number(1);` is `true` — vacuously powerful, no prime
+  factors to violate the rule.
+- `is_powerful_number(4);` is `true` — `4 = 2^2`.
+- `is_powerful_number(8);` is `true` — `8 = 2^3`, exponent above `2`
+  still counts.
+- `is_powerful_number(9);` is `true` — `9 = 3^2`.
+- `is_powerful_number(36);` is `true` — `36 = 2^2 * 3^2`, the smallest
+  powerful number with two distinct prime factors.
+- `is_powerful_number(72);` is `true` — `72 = 2^3 * 3^2`, mixed
+  exponents both `>= 2`.
+- `is_powerful_number(2);` is `false` — prime, exponent `1`.
+- `is_powerful_number(12);` is `false` — `12 = 2^2 * 3^1`, the `3`
+  keeps exponent `1` even though `2` doesn't; exercises the fast-fail
+  branch.
+- `is_powerful_number(4 * 999983);` is `false` — exercises the tail
+  `remaining == 1` check: the small part (`2^2`) passes the per-factor
+  check, but the large leftover prime factor above the `sqrt` bound
+  (`999983`, exponent `1`) fails it.
+- `is_powerful_number(0);` is `false` — below the domain floor.
+- `is_powerful_number(-4);` is `false` — negative input, same
+  convention as `is_squarefree`/`is_semiprime`.
+- `is_powerful_number(4.0);` raises `CinderRuntimeError` matching
+  `"is_powerful_number() requires an int, got float"` — the same
+  message shape `_require_int` already produces for every sibling in
+  this cluster.
+- `is_powerful_number(true);` raises `CinderRuntimeError` matching
+  `"is_powerful_number() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_squarefree`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py` (model on the `TestIsSquarefree`/
+`TestIsSemiprime` test classes). Once merged, `README.md`'s Builtins
+bullet needs `is_powerful_number` added near `is_squarefree`, and
+`PROJECT.md`'s roadmap paragraph needs it moved from backlog to landed
+— leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

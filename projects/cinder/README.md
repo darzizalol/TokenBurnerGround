@@ -225,6 +225,7 @@ while (i < 10) {
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates, `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
+  `is_squarefree` to test whether an integer has no repeated prime factor,
   `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
@@ -349,21 +350,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `num_divisors` to count an
-integer's positive divisors including itself, default values in
-map-destructuring patterns (`let {a, b = 5} = expr;`, landed on every
-map-pattern form including plain assignment via their shared parser
-entry point), `prime_factors` to list an integer's prime factors with
-multiplicity, and hole elements in list-destructuring patterns
-(`let [a, , c] = expr;`) to skip an unwanted position. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): `is_squarefree` to test whether an
-integer has no repeated prime factor, an optional catch binding
-(`try { ... } catch { ... }`, no `(name)` required) for handlers that
-don't need the caught message, `is_amicable` to test whether two
-integers' proper-divisor sums point at each other, a pipe operator
+Actively developed, nightly. Recently landed: `prime_factors` to list an
+integer's prime factors with multiplicity, hole elements in
+list-destructuring patterns (`let [a, , c] = expr;`) to skip an unwanted
+position, and `is_squarefree` to test whether an integer has no repeated
+prime factor. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): an optional
+catch binding (`try { ... } catch { ... }`, no `(name)` required) for
+handlers that don't need the caught message, `is_amicable` to test whether
+two integers' proper-divisor sums point at each other, a pipe operator
 (`a |> f` as sugar for `f(a)`), `is_semiprime` to test whether an
-integer is the product of exactly two primes, and uninitialized `let`
-declarations (`let x;`, defaulting to `nil`).
+integer is the product of exactly two primes, uninitialized `let`
+declarations (`let x;`, defaulting to `nil`), and `is_powerful_number`
+to test whether every prime factor of an integer appears with
+exponent `2` or more.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

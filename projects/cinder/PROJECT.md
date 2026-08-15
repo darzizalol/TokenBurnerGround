@@ -764,7 +764,7 @@ sqrt-bounded divisor-pairing shape `divisors`/`aliquot_sum`/
 factor (like `2` dividing `12` twice) each time it divides evenly, not
 just once. `prime_factors(1)` is `[]` — `1` has no prime factors,
 mathematically, not a case needing a special-cased guard the way
-`divisors(1)`'s own `[1]` result does, and hole elements in
+`divisors(1)`'s own `[1]` result does, hole elements in
 list-destructuring patterns (`let [a, , c] = expr;`) — the depth task
 after `prime_factors`'s breadth work, closing the last gap in the
 destructuring-pattern cluster: every list-pattern form could already
@@ -776,27 +776,26 @@ list-destructuring-defaults task before it, to the
 `let`/`for`/param/comprehension forms only (via
 `_destructure_list_pattern_entry`), not the plain-assignment form, for
 the identical reason: that form's pattern is parsed through an
-ordinary `ListLiteral`, which has no notion of an empty element — have
-since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, hole elements in list-destructuring
-patterns, has since landed via PR #251 and is covered in the "have
-since landed" history above; this grooming pass dropped its
-now-redundant not-yet-scoped description from this section rather
-than leaving it to drift further out of sync):
-as task 1, `is_squarefree(n)` — a breadth task after task 5's depth
-work (hole elements in list-destructuring patterns), testing whether
-`n` has no repeated prime factor (equivalently,
+ordinary `ListLiteral`, which has no notion of an empty element, and
+`is_squarefree(n)` — a breadth task after the hole-elements depth
+work, testing whether `n` has no repeated prime factor (equivalently,
 is not divisible by any perfect square greater than `1`, e.g. `6 = 2 *
 3` is squarefree, `12 = 2 * 2 * 3` isn't), the natural predicate
-neighbor to `is_prime`/`is_composite` and the already-landed
-`prime_factors` — answering "does any factor repeat?" via the same
-`sqrt(n)`-bounded trial-division shape `is_prime`/`is_composite`
-already use, checking `divisor * divisor` divisibility directly rather
-than building the full factor list. And as task 2, optional catch
-bindings (`try { ... } catch { ... }`, no `(name)` required) — the
-depth task after task 1's breadth work: today `catch` always requires
+neighbor to `is_prime`/`is_composite` and `prime_factors` — answering
+"does any factor repeat?" via the same `sqrt(n)`-bounded
+trial-division shape `is_prime`/`is_composite` already use, checking
+`divisor * divisor` divisibility directly rather than building the
+full factor list — have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
+used to occupy this slot, `is_squarefree`, has since landed via PR
+#252 and is covered in the "have since landed" history above; this
+grooming pass dropped its now-redundant not-yet-scoped description
+from this section rather than leaving it to drift further out of
+sync):
+as task 1, optional catch bindings (`try { ... } catch { ... }`, no
+`(name)` required) — the depth task after `is_squarefree`'s breadth
+work: today `catch` always requires
 a parenthesized binding name (`catch (err) { ... }`) even when the
 handler never reads the error message, forcing a throwaway name for
 the common "just recover, don't inspect" case (`try { risky(); } catch
@@ -807,8 +806,8 @@ the common "just recover, don't inspect" case (`try { risky(); } catch
 `str | None`, so no AST change is needed), and `_execute_try` in
 `cinder/interpreter.py` should only call `catch_env.define(...)` when
 `catch_name` isn't `None`, running the catch block in a plain child
-environment otherwise. And as task 3, `is_amicable(a, b)` — a breadth
-task after task 2's depth work, restocking the backlog back to 6
+environment otherwise. And as task 2, `is_amicable(a, b)` — a breadth
+task after task 1's depth work, restocking the backlog back to 6
 tasks: the two-argument predicate sibling to
 `is_perfect_number`/`is_abundant`/`is_deficient` (the same way
 `is_coprime`/`is_divisible` are the two-argument siblings of the
@@ -823,8 +822,8 @@ than call the dispatch-signature builtin" approach `is_emirp` already
 takes with `is_composite`/`reverse_int`), and explicitly excludes
 `a == b` even though a perfect number would otherwise trivially pass —
 amicability is defined only between two *distinct* integers. And as
-task 4, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth task
-after task 3's breadth work, restocking the backlog back to 6 tasks:
+task 3, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth task
+after task 2's breadth work, restocking the backlog back to 6 tasks:
 Cinder already ships `pipe(f, g, h)`/`compose(f, g, h)` builtins that
 thread a value through a *fixed list* of unary functions, but has no
 operator-level sugar for the common one-shot or ad-hoc-chain case,
@@ -843,8 +842,8 @@ also used by `map`/`filter`/`pipe`/`compose`) rather than adding a new
 node or a bespoke call path — the new `PIPE_ARROW` token for `|>` is
 the only genuinely new piece, checked in the lexer before the existing
 `|=`/`|` fallback so bitwise-or and its compound assignment stay
-unaffected. And as task 5, `is_semiprime(n)` — a breadth task after
-task 4's depth work, restocking the backlog back to 6 tasks: testing
+unaffected. And as task 4, `is_semiprime(n)` — a breadth task after
+task 3's depth work, restocking the backlog back to 6 tasks: testing
 whether `n` is the product of exactly two primes counted with
 multiplicity (`4 = 2 * 2`, `6 = 2 * 3`, `15 = 3 * 5`), the third member
 of the `is_prime`/`is_composite`/`is_semiprime` classification trio —
@@ -853,9 +852,9 @@ of the `is_prime`/`is_composite`/`is_semiprime` classification trio —
 superset `is_semiprime` narrows). Walks the same "peel small factors,
 then check what's left" shape `prime_factors` already uses, but counts
 instead of collecting, bailing out early once the count exceeds two so
-highly composite inputs stay cheap. And as task 6, uninitialized `let`
+highly composite inputs stay cheap. And as task 5, uninitialized `let`
 declarations (`let x;`, defaulting to `nil`) — the depth task after
-task 5's breadth work, restocking the backlog back to 6 tasks: today
+task 4's breadth work, restocking the backlog back to 6 tasks: today
 every `let` requires an initializer (`cinder/parser.py`'s
 `_let_statement` unconditionally consumes `=` right after the
 identifier), forcing a throwaway placeholder value (`let x = nil;`)
@@ -871,8 +870,19 @@ purpose of `const`, and `_for_statement`'s C-style init clause already
 reuses `_let_statement`, so `for (let i; i < 3; i++) { ... }` becomes
 parseable for free too, though it correctly raises a runtime type
 error on the first comparison rather than being a useful thing to
-write. And only much later, a bytecode VM if performance ever actually
-matters.
+write. And as task 6, `is_powerful_number(n)` — a breadth task after
+task 5's depth work, restocking the backlog back to 6 tasks: testing
+whether every prime factor of `n` appears with exponent `2` or more
+(equivalently, `n` can be written as `a^2 * b^3`), the natural
+counterpart to the already-landed `is_squarefree` — where
+`is_squarefree` rejects any repeated prime factor, `is_powerful_number`
+requires every prime factor to repeat. Walks the same
+`sqrt(remaining)`-bounded trial-division shape `is_semiprime`/
+`prime_factors` already use, peeling each prime factor's full
+multiplicity in an inner loop and failing fast the moment any factor's
+count comes up short of `2`, then checking that nothing above the
+`sqrt` bound was left over uncounted. And only much later, a bytecode
+VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally
 — do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -886,14 +896,14 @@ when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (hole elements in list-destructuring patterns having
-landed via PR #251, dropping the count from 6 to 5) and restocked it
-to 6 by adding task 6, uninitialized `let` declarations, continuing
-alternation with a depth task after task 5's breadth work
-(`is_semiprime`) rather than stacking a second breadth task, per the
-policy above. The next grooming pass should continue alternating
-breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
-count within reach of the 5-task floor.
+its 5-task floor (`is_squarefree` having landed via PR #252, dropping
+the count from 6 to 5) and restocked it to 6 by adding task 6,
+`is_powerful_number`, continuing alternation with a breadth task after
+task 5's depth work (uninitialized `let` declarations) rather than
+stacking a second depth task, per the policy above. The next grooming
+pass should continue alternating breadth/depth, restocking toward 6-7
+tasks whenever a merge drops the count within reach of the 5-task
+floor.
 
 ## History
 

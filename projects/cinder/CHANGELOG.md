@@ -2431,3 +2431,19 @@ for vision/architecture.
   Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave
   `QA: PASS` (2787 tests passing, plus CLI smoke tests including a
   larger perfect-power case beyond the fixed test set).
+- **Language: default values in map-destructuring patterns** — merged
+  2026-08-15T14:35:04Z via PR #249
+  (`feat/20260815-map-destructure-defaults`). Extended
+  `_destructure_map_pattern_entry` (`cinder/parser.py`) to parse an
+  optional `= expr` default after each entry, and
+  `_bind_map_destructure` (`cinder/interpreter.py`) to evaluate it in
+  pattern order when a key is missing from the source map — so
+  `let {a, b = 5} = {"a": 1}` binds `b` to `5`, and a later default can
+  reference an earlier binding (`let {a, b = a + 1} = {"a": 5}`). Since
+  all five map-pattern forms (`let`, plain assignment, `for`, fn params,
+  comprehensions) already share this one parser entry point, every form
+  gained defaults for free, including plain assignment, unlike the
+  list-pattern version. A default only fires on a genuinely missing key,
+  not a present-but-falsy value; whole-pattern defaults on fn params
+  remain rejected. Clean first round: Reviewer gave `VERDICT: LGTM` and
+  QA gave `QA: PASS` (2806 tests passing).

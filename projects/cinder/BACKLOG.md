@@ -11,199 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values in map-destructuring patterns (`let {a, b = 5} = expr;`) [claimed 2026-08-15T14:29:38Z]
-
-Build: the depth task after task 5's breadth work (`num_divisors`) per
-`PROJECT.md`'s breadth-vs-depth policy — restocking the backlog back to
-6 tasks now that `is_pronic` has landed and dropped the count to the
-5-task floor. This is the map-pattern counterpart to task 1 (default
-values in *list*-destructuring patterns), explicitly flagged there as
-"a separate design decision, left for a future task if wanted" since
-map patterns have a different existing "missing key" behavior. Today
-every map-destructuring form — `let {a, b} = expr;`, plain assignment
-`{a, b} = expr;`, `for {a, b} in list_of_maps { ... }`, function params
-`fn f({a, b}) { ... }`, and both comprehension loop-variable forms —
-raises when the source map doesn't have one of the pattern's keys; there
-is no way to say "use this value if the key wasn't present", unlike list
-patterns (once task 1 lands) or function parameters, both of which
-support a fallback for "nothing was supplied". Verify the gap:
-`python3 -m cinder.cli eval 'let {a, b = 5} = {"a": 1}; print(a); print(b);'`
-currently raises `CinderRuntimeError` `"destructuring pattern expects
-key 'b', not found in map"` (`cinder/interpreter.py`'s
-`_bind_map_destructure` has no concept of an optional entry).
-
-All five in-scope forms — including, notably, the **plain-assignment**
-form (`{a, b} = expr;`), unlike task 1's list-pattern version which
-explicitly excludes it — share one parser entry point,
-`_destructure_map_pattern_entry` (search for `def
-_destructure_map_pattern_entry` in `cinder/parser.py`), called both from
-`_destructure_map_pattern` (the `let`/`for`/param/comprehension path)
-*and* directly from `_try_map_destructure_assign_statement` (the
-plain-assignment path, search for `def
-_try_map_destructure_assign_statement`) — unlike the list-pattern case,
-where the plain-assignment form parses through an unrelated
-`ListLiteral`/`_destructure_assign_pattern` path that couldn't accept
-`=` inside an element, the map-pattern plain-assignment form already
-routes through the exact same entry-parsing helper as every other form.
-Adding default parsing to that one helper therefore extends **all five**
-forms for free — no additional scoping exclusion needed, and no risky
-parser surgery on a different code path. The single interpreter entry
-point is `_bind_map_destructure` (search for `def _bind_map_destructure`
-in `cinder/interpreter.py`), shared by all five forms including
-plain-assignment (`use_assign=True`).
-
-Unlike list patterns, map-pattern entries have **no positional
-ordering** — matching is by key, not position — so there is no
-`seen_default`-style "a required entry can't follow a defaulted one"
-restriction to enforce; a default may appear anywhere among a pattern's
-entries in any order, since nothing about pattern-source-position
-comparison exists for maps in the first place.
-
-Change `_destructure_map_pattern_entry`'s return type from a flat
-`tuple[str, str]` of `(key, binding)` to a `tuple[str, str, "Expr |
-None"]` of `(key, binding, default)`, `default` being `None` when no
-`= expr` was written, parsed *after* the optional `: binding` rename so
-`{a: x = 5}` (rename plus default together) works:
-
-```python
-def _destructure_map_pattern_entry(self) -> "tuple[str, str, Expr | None]":
-    key = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-    if self._check(TokenType.COLON):
-        self._advance()
-        binding = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
-    else:
-        binding = key
-    default = None
-    if self._check(TokenType.EQ):
-        self._advance()
-        default = self._ternary()
-    return key, binding, default
-```
-
-`_destructure_map_pattern` and `_try_map_destructure_assign_statement`
-need **no changes at all** beyond this — both already just call
-`self._destructure_map_pattern_entry()` and append its return value
-opaquely to `names`, so they pick up the triple shape automatically.
-`_fn_param`'s existing rejection of a *whole-pattern* default (`fn
-f({a, b} = {"a": 1})`, the `if self._check(TokenType.EQ): raise
-ParseError("destructuring parameter cannot have a default value", ...)`
-block right after the `_destructure_map_pattern()` call) stays
-completely untouched — that check fires on the `=` *after* the closing
-`}`, while this task's per-entry defaults are consumed *inside* the
-braces, exactly the same non-interaction task 1 established for list
-patterns: `fn f({a, b = 1}) { ... }` (a per-entry default) is accepted
-by this task, `fn f({a, b} = {"a": 1, "b": 2}) { ... }` (a whole-pattern
-default) still isn't, by design.
-
-In `_bind_map_destructure`, unpack the triples and fill in a missing
-key's value from its default when present, evaluated in `env` in
-pattern order (so a later default *can* see an earlier pattern name
-already bound in the same `env` — e.g. `let {a, b = a + 1} = {"a": 5};`
-binds `b` to `6`, mirroring task 1's identical left-to-right rule for
-list patterns):
-
-```python
-def _bind_map_destructure(
-    self,
-    env: Environment,
-    names: list,
-    rest: "str | None",
-    value: object,
-    line: int,
-    column: int,
-    use_assign: bool = False,
-) -> None:
-    if not isinstance(value, dict):
-        raise CinderRuntimeError(
-            f"cannot destructure {type_name(value)} as a map",
-            line,
-            column,
-        )
-    seen_keys = set()
-    for key, binding, default in names:
-        seen_keys.add(key)
-        if key in value:
-            item = value[key]
-        elif default is not None:
-            item = self.evaluate(default, env)
-        else:
-            raise CinderRuntimeError(
-                f"destructuring pattern expects key {key!r}, not found in map",
-                line,
-                column,
-            )
-        self._bind_destructure_name(env, binding, item, line, column, use_assign)
-    if rest is not None:
-        remaining = {k: v for k, v in value.items() if k not in seen_keys}
-        self._bind_destructure_name(env, rest, remaining, line, column, use_assign)
-```
-
-Note when no entry in the pattern has a default, every `key in value`
-check that fails falls straight to the same pre-existing `raise` with
-the exact same message text as today — this is purely additive for
-every pre-existing pattern. `_bind_destructure_name` itself needs no
-changes. `call_value` (search for `def call_value`) needs **no changes
-at all** — its existing `Interpreter()._bind_map_destructure(call_env,
-param.names, param.rest, value, line, column)` call site already
-forwards `param.names` opaquely, exactly like task 1's list-pattern
-equivalent.
-
-Acceptance criteria:
-- `let {a, b = 5} = {"a": 1}; print(a); print(b);` prints `1` then `5`
-  — `b`'s key is absent from the source map, so its default is used.
-- `let {a, b = 5} = {"a": 1, "b": 2}; print(b);` prints `2` — a default
-  is only used when the source map's key is actually absent, not when
-  present with a falsy-looking value.
-- `let {a, b = a + 1} = {"a": 5}; print(b);` prints `6` — a later
-  default can reference an earlier pattern name already bound in the
-  same `let`.
-- `let {a: x = 10} = {}; print(x);` prints `10` — key rename and a
-  default combine on the same entry.
-- `let {a: x = 1, b} = {"b": 2}; print(x); print(b);` prints `1` then
-  `2` — a defaulted entry may appear *before* a required one with no
-  ordering restriction (map patterns match by key, not position, unlike
-  task 1's list-pattern ordering rule).
-- `let {a} = {"a": 1};` (no defaults) behaves identically to before this
-  task — purely additive syntax.
-- `for {a, b = 0} in [{"a": 1}, {"a": 2, "b": 3}] { print(a + b); }`
-  prints `1` then `5`.
-- `fn f({a, b = 10}) { return a + b; } print(f({"a": 1}));` prints `11`.
-- `print([a + b for {a, b = 100} in [{"a": 1}, {"a": 2, "b": 3}]]);`
-  prints `[101, 5]`.
-- `let {a = 1, ...rest} = {}; print(a); print(rest);` prints `1` then
-  `{}` — a default combines with a trailing rest entry; the rest
-  collects nothing since the source map was empty.
-- `let a = 0; let b = 0; {a, b = 5} = {"a": 1}; print(a); print(b);`
-  prints `1` then `5` — the plain-assignment form gains defaults too,
-  unlike task 1's list-pattern version, since both share
-  `_destructure_map_pattern_entry`.
-- `let {a, b = 1} = {};` raises `CinderRuntimeError` matching
-  `"destructuring pattern expects key 'a', not found in map"` — `a` has
-  no default so it's still required; the exact, unchanged pre-existing
-  message text for a required key that's actually missing.
-- `fn f({a, b} = {"a": 1, "b": 2}) { ... }` (a whole-pattern default,
-  not a per-entry one) still raises `ParseError` matching
-  `"destructuring parameter cannot have a default value"` — unaffected
-  by this task.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_destructure_map_pattern_entry`),
-`cinder/interpreter.py` (`_bind_map_destructure`), `tests/test_parser.py`
-(shape assertions for every map-pattern site — flip 2-tuples like
-`[("a", "a")]` to 3-tuples like `[("a", "a", None)]`; search for
-`"DestructureLetStmt"`, `"DestructureAssign"`, `"Param"`, and the raw
-`stmt.names`/`node.names` assertions such as `test_for_map_destructure_*`
-and `test_map_comprehension_*`, plus new default-value tests),
-`tests/test_interpreter.py` (new default-value tests for `let`/plain
-assignment/`for`/params/comprehensions). Once merged, `README.md`'s
-destructuring bullets need a defaults-for-map-patterns mention added,
-and `PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+## 1. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
 
 Build: the breadth task after task 5's depth work (default values in
 map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -293,7 +101,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
+## 2. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
 
 Build: the depth task after task 5's breadth work (`prime_factors`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -490,7 +298,7 @@ not this task.
 
 ---
 
-## 4. Standard library: `is_squarefree` — no repeated prime factor
+## 3. Standard library: `is_squarefree` — no repeated prime factor
 
 Build: the breadth task after task 5's depth work (hole elements in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
@@ -566,7 +374,7 @@ bullet needs `is_squarefree` added near `is_prime`/`is_pronic`, and
 
 ---
 
-## 5. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
+## 4. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
 
 Build: the depth task after task 5's breadth work (`is_squarefree`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
@@ -683,7 +491,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other
+## 5. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other
 
 Build: the breadth task after task 5's depth work (optional catch
 binding) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

@@ -4711,3 +4711,22 @@ The morning paper: what shipped, what bounced, what's still open.
   grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
   keeps landing already-claimed work cleanly — the night continues to
   go smoothly.
+
+### Later cycle
+
+- **Merged**: PR #249 "Language: default values in map-destructuring
+  patterns" (`feat/20260815-map-destructure-defaults`, squashed to
+  `main`). Clean first round: `VERDICT: LGTM` and `QA: PASS` (2806
+  tests plus CLI smoke tests covering default-skipped-on-falsy-present,
+  later-default-seeing-earlier-binding, key-rename+default, rest
+  interaction, the plain-assignment form gaining defaults for free, and
+  the still-rejected whole-pattern-default case). Worktree removed,
+  branch deleted, task 1 dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred and nineteen: another clean first-round
+  merge, backlog holds steady at 5 tasks. Still no fresh architect
+  grooming yet tonight, but the Engineer/Reviewer/QA/Release chain
+  keeps landing already-claimed work cleanly — the night continues to
+  go smoothly.

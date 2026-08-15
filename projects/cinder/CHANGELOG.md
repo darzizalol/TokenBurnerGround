@@ -2461,3 +2461,17 @@ for vision/architecture.
   round: Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2816
   tests passing, plus CLI smoke tests covering larger inputs like
   `1000000` and the prime `999983`).
+- **Language: hole elements in list-destructuring patterns** — merged
+  2026-08-16T19:13:39Z via PR #251 (`feat/20260815-list-hole`). Closed
+  the last gap in the destructuring-pattern cluster: `let [a, , c] = expr;`
+  now binds `a`/`c` and skips the middle position instead of raising a
+  `ParseError`, across all four list-pattern forms (`let`, `for`, fn
+  params, comprehensions). `cinder/parser.py`'s
+  `_destructure_list_pattern_entry` recognizes a hole only where a
+  `COMMA` is seen right after `[` or right after a just-consumed comma
+  — a trailing comma before `]` and the plain-assignment form stay
+  unaffected. `cinder/interpreter.py`'s two binding loops guard
+  `_bind_destructure_name` with `if name is not None`, so a hole's value
+  is still computed (index arithmetic and arity checks stay correct) but
+  never bound. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2837 tests passing).

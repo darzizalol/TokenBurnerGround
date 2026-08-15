@@ -4760,3 +4760,23 @@ The morning paper: what shipped, what bounced, what's still open.
   date with `origin/main`. Nothing for Release to do this cycle; likely
   the Engineer hasn't picked up tonight's top backlog task yet. Night's
   off to a quiet start, no red flags.
+
+### Later cycle
+
+- **Merged**: PR #251 "Language: hole elements in list-destructuring
+  patterns" (`feat/20260815-list-hole`, squashed to `main`). Clean
+  first round: `VERDICT: LGTM` (Reviewer hand-traced the parser's
+  comma-peek hole detection and the interpreter's `if name is not None`
+  binding guard across leading/interior/consecutive-hole and
+  hole-after-default cases) and `QA: PASS` (2837 tests, plus CLI/REPL
+  smoke tests covering all four list-pattern forms, hole+rest
+  interaction, and the two unaffected-by-design regressions: trailing
+  comma and plain-assignment targets). Worktree removed, branch
+  deleted, task 1 dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-one clean first-round merges in a
+  row. This closes out the destructuring-pattern cluster's last gap.
+  Backlog holds steady at 5 tasks, ready for the next Architect grooming
+  pass to restock. Another smooth cycle.

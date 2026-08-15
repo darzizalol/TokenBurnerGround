@@ -11,204 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`) [claimed 2026-08-15T19:05:58Z]
-
-Build: the depth task after task 5's breadth work (`prime_factors`) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
-6 tasks now that `collatz_length` has landed and dropped the count to
-the 5-task floor. This closes the last gap in the destructuring-pattern
-cluster: every list-pattern form can already bind a name, collect a
-rest (`...rest`), or fall back to a default when the source runs short
-(`a = 5`), but there is no way to skip a position outright — `let [a,
-b, c] = [1, 2, 3]; ` must bind all three names even if the caller only
-wants `a` and `c`, forcing a throwaway binding for `b`. JavaScript's
-array-destructuring elision (`const [a, , c] = arr;`) is the model:
-an empty slot between commas silently discards that position's value
-instead of requiring a name for it. Verify the gap: `python3 -m
-cinder.cli eval 'let [a, , c] = [1, 2, 3]; print(a); print(c);'`
-currently raises `ParseError` `"expected identifier in destructuring
-pattern, found ','"` (`cinder/parser.py`'s `_destructure_list_pattern_entry`,
-search for `def _destructure_list_pattern_entry`, unconditionally
-consumes an `IDENTIFIER` token with no path for an empty slot).
-
-Not in scope: the plain-assignment form (`[a, , c] = expr;`) — for the
-same reason task 1 (default values in list-destructuring patterns,
-already landed) excluded it: that form's pattern is parsed by first
-parsing an ordinary `ListLiteral` (`_destructure_assign_pattern`,
-search for `def _destructure_assign_pattern`), whose elements are
-ordinary expressions with no notion of an empty slot at that
-precedence — teaching it one would be a materially different, riskier
-parser change than this task takes on. Map-destructuring patterns are
-also out of scope — they already have no positional concept at all
-(matching is by key), so "skip a position" doesn't apply to them the
-way it does to list patterns.
-
-**Design — a hole is an empty slot strictly between two commas, or
-between the opening `[` and the first comma (a *leading* hole).** A
-hole is recognized only when the entry-parsing function is asked to
-parse an entry and finds a `COMMA` sitting right there instead of an
-`IDENTIFIER` — which, given how the caller loop is structured, can
-only happen right after `[` (leading hole) or right after a comma that
-was just consumed (interior hole). A comma immediately followed by `]`
-(a trailing comma, or the pattern's very last slot) is deliberately
-**not** treated as a hole and keeps today's exact behavior — it still
-raises the same pre-existing `ParseError` it does today, since the
-entry-parsing function only special-cases `COMMA`, never `RBRACKET`.
-This sidesteps two ambiguities for free: a trailing hole right before
-`]` stays unsupported (no new "does a trailing comma mean anything"
-question to answer), and a completely empty pattern `let [] = expr;`
-is untouched (it still hits the same pre-existing error it does today,
-since the very first entry parse sees `RBRACKET`, not `COMMA`).
-
-**Parsing** (`cinder/parser.py`): change
-`_destructure_list_pattern_entry`'s return type from `tuple[str, Expr
-| None]` to `tuple[str | None, Expr | None]` — `None` for the name
-means a hole. Add the `COMMA` check as the very first thing the
-function does, before it tries to consume an `IDENTIFIER`, and — this
-is the part worth getting right — keep the *existing* `seen_default`
-check active for a hole exactly like it is for a named entry, so a
-hole can never sit after a defaulted entry either (a hole is a
-no-default entry just like a required name is; letting it skip the
-ordering check would let a required position drift past a defaulted
-one positionally, which is exactly the bug the ordering check exists
-to prevent — the `required = sum(1 for _, default in names if default
-is None)` bounds math in `_bind_list_destructure` depends on every
-no-default entry, holes included, forming a contiguous prefix):
-
-```python
-def _destructure_list_pattern_entry(self, seen_default: bool) -> "tuple[str | None, Expr | None]":
-    if self._check(TokenType.COMMA):
-        if seen_default:
-            token = self._peek()
-            raise ParseError(
-                "element without a default value follows an element with one "
-                "in destructuring pattern",
-                token.line,
-                token.column,
-            )
-        return None, None
-    name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
-    if self._check(TokenType.EQ):
-        self._advance()
-        default = self._ternary()
-        return name_token.lexeme, default
-    if seen_default:
-        raise ParseError(
-            "element without a default value follows an element with one "
-            "in destructuring pattern",
-            name_token.line,
-            name_token.column,
-        )
-    return name_token.lexeme, None
-```
-
-`_destructure_list_pattern` (search for `def _destructure_list_pattern`,
-just above the entry function) needs **no changes at all** — it
-already just calls `_destructure_list_pattern_entry(seen_default)` in
-three places (the unconditional first-entry call, and the two calls
-inside the `while self._check(TokenType.COMMA):` loop body) and
-appends the result to `names` opaquely; it already only ever inspects
-`names[-1][1]` (the default), never `names[-1][0]` (the name), to
-update `seen_default`, so a hole's `None` name flows through untouched.
-`_destructure_let_statement`, `_for_statement`, `_fn_param`, and both
-comprehension call sites (search for `_destructure_list_pattern()`,
-five call sites total) need **no changes at all** either — all five
-already forward `names` opaquely to a `DestructureLetStmt`/`ForStmt`/
-`Param`/comprehension node, exactly the same "no changes needed"
-pattern task 1 (list-destructuring defaults) established for these
-same call sites.
-
-**Evaluation** (`cinder/interpreter.py`): in `_bind_list_destructure`
-(search for `def _bind_list_destructure`), both binding loops —
-the `rest is not None` branch and the plain branch right after it —
-currently end with an unconditional
-`self._bind_destructure_name(env, name, item, line, column, use_assign)`
-call. Guard both with `if name is not None:` so a hole's item is
-computed (to advance past its position and keep index arithmetic
-correct for later elements) but never bound to anything:
-
-```python
-        if rest is not None:
-            ...
-            for index, (name, default) in enumerate(names):
-                item = value[index] if index < len(value) else self.evaluate(default, env)
-                if name is not None:
-                    self._bind_destructure_name(env, name, item, line, column, use_assign)
-            self._bind_destructure_name(
-                env, rest, list(value[len(names):]), line, column, use_assign
-            )
-            return
-        ...
-        for index, (name, default) in enumerate(names):
-            item = value[index] if index < len(value) else self.evaluate(default, env)
-            if name is not None:
-                self._bind_destructure_name(env, name, item, line, column, use_assign)
-```
-
-Because the parser's `seen_default` guard (above) keeps every
-no-default entry — holes included — in a contiguous prefix, `required`
-(the count of no-default entries) is still exactly the number of
-positions that must exist in `value`, so `index < len(value)` is
-always `True` whenever `default is None` (hole or otherwise); the
-`self.evaluate(default, env)` branch is never reached for a hole, so
-there's no risk of ever calling `self.evaluate(None, env)`. No other
-function in `_bind_list_destructure`'s vicinity needs changes — the
-`required`/`has_defaults`/length-check logic above these loops already
-operates purely on `default is None`, agnostic to whether `name` is
-also `None`.
-
-Acceptance criteria:
-- `let [a, , c] = [1, 2, 3]; print(a); print(c);` prints `1` then `3`
-  — the middle position is discarded, no binding created for it.
-- `let [, b] = [1, 2]; print(b);` prints `2` — a leading hole.
-- `let [a, ...rest] = [1, 2, 3];` (no holes) behaves identically to
-  before this task — purely additive syntax.
-- `let [a, , ...rest] = [1, 2, 3, 4]; print(a); print(rest);` prints
-  `1` then `[3, 4]` — a hole combines with a trailing rest; the
-  discarded position is not included in `rest`.
-- `for [a, , c] in [[1, 2, 3], [4, 5, 6]] { print(a + c); }` prints `4`
-  then `10`.
-- `fn f([a, , c]) { return a + c; } print(f([1, 2, 3]));` prints `4`.
-- `print([a + c for [a, , c] in [[1, 2, 3]]]);` prints `[4]`.
-- `let [a, , c] = [1, 2];` raises `CinderRuntimeError` matching
-  `"destructuring pattern expects 3 elements, got 2"` — a hole still
-  occupies a required position; the source list must be long enough to
-  reach it even though nothing is bound there.
-- `let [a = 1, , c] = [9];` raises `ParseError` matching `"element
-  without a default value follows an element with one in destructuring
-  pattern"` — a hole is a no-default entry, so it cannot follow a
-  defaulted one, same ordering rule a named required entry already
-  enforces.
-- `let [a, b, ] = [1, 2, 3];` still raises the exact same `ParseError`
-  it does today (unchanged — a comma immediately before `]` is never
-  treated as a hole).
-- `let [] = [1];` still raises the exact same `ParseError` it does
-  today (unchanged — the first entry parse sees `]`, not a comma).
-- `[a, , c] = [1, 2, 3];` (plain-assignment form) still raises
-  `ParseError` matching `"invalid assignment target"` (unaffected by
-  this task — out of scope, per the Not-in-scope discussion above).
-- Every pre-existing list-destructuring test (rest elements, defaults,
-  renames are map-only so not applicable here, plain assignment)
-  continues to pass unmodified.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_destructure_list_pattern_entry`),
-`cinder/interpreter.py` (`_bind_list_destructure`), `tests/test_parser.py`
-(shape assertions for `let`/`for`/param/comprehension list patterns —
-search for `"DestructureLetStmt"`, `"ForStmt"`, `"Param"`, and the raw
-`stmt.names`/`node.names` assertions; flip a few existing 2-tuples to
-include a `(None, None)` hole entry, plus new hole-specific shape
-tests), `tests/test_interpreter.py` (new hole-binding tests across all
-four in-scope forms, plus the ordering-violation `ParseError` test and
-the unchanged-trailing-comma/empty-pattern regression tests). Once
-merged, `README.md`'s destructuring bullets need a hole-elements
-mention added, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Standard library: `is_squarefree` — no repeated prime factor
+## 1. Standard library: `is_squarefree` — no repeated prime factor
 
 Build: the breadth task after task 5's depth work (hole elements in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth
@@ -284,7 +87,7 @@ bullet needs `is_squarefree` added near `is_prime`/`is_pronic`, and
 
 ---
 
-## 3. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
+## 2. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
 
 Build: the depth task after task 5's breadth work (`is_squarefree`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
@@ -401,7 +204,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other
+## 3. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other
 
 Build: the breadth task after task 5's depth work (optional catch
 binding) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -504,7 +307,7 @@ test classes). Once merged, `README.md`'s Builtins bullet needs
 
 ---
 
-## 5. Language: pipe operator (`a |> f` as sugar for `f(a)`)
+## 4. Language: pipe operator (`a |> f` as sugar for `f(a)`)
 
 Build: the depth task after task 5's breadth work (`is_amicable`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -662,7 +465,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_semiprime` — product of exactly two primes
+## 5. Standard library: `is_semiprime` — product of exactly two primes
 
 Build: the breadth task after task 5's depth work (pipe operator) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

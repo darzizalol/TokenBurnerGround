@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: unary `+` operator (`+expr`)
+## 1. Language: unary `+` operator (`+expr`) [claimed 2026-08-15T14:01:54Z]
 
 Build: a language-depth task closing a real asymmetry in the unary
 operator set. Every other classic unary operator is implemented —

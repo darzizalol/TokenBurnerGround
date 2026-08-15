@@ -3667,9 +3667,36 @@ class TestTryCatch(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("try { 1; }")
 
-    def test_bare_catch_without_name_raises(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("try { 1; } catch { }")
+    def test_bare_catch_without_name_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("try { 1; } catch { 2; }")],
+            [
+                (
+                    "TryStmt",
+                    ("Block", [("ExprStmt", ("Literal", 1))]),
+                    None,
+                    ("Block", [("ExprStmt", ("Literal", 2))]),
+                    None,
+                )
+            ],
+        )
+
+    def test_bare_catch_with_finally_shape(self):
+        self.assertEqual(
+            [
+                stmt_shape(s)
+                for s in parse_stmts("try { 1; } catch { 2; } finally { 3; }")
+            ],
+            [
+                (
+                    "TryStmt",
+                    ("Block", [("ExprStmt", ("Literal", 1))]),
+                    None,
+                    ("Block", [("ExprStmt", ("Literal", 2))]),
+                    ("Block", [("ExprStmt", ("Literal", 3))]),
+                )
+            ],
+        )
 
     def test_try_body_must_be_block(self):
         with self.assertRaises(ParseError):

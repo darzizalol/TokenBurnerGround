@@ -381,7 +381,8 @@ class Interpreter:
                 if stmt.catch_block is None:
                     raise
                 catch_env = Environment(env)
-                catch_env.define(stmt.catch_name, error.message)
+                if stmt.catch_name is not None:
+                    catch_env.define(stmt.catch_name, error.message)
                 self.execute(stmt.catch_block, catch_env)
         finally:
             if stmt.finally_block is not None:

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_squarefree` — no repeated prime factor
+## 1. Standard library: `is_squarefree` — no repeated prime factor [claimed 2026-08-15T19:22:14Z]
 
 Build: the breadth task after task 5's depth work (hole elements in
 list-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other
+## 1. Standard library: `is_amicable` — two integers whose proper-divisor sums point at each other [claimed 2026-08-15T19:49:04Z]
 
 Build: the breadth task after task 5's depth work (optional catch
 binding) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

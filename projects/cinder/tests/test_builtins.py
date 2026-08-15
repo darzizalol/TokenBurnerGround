@@ -3354,6 +3354,53 @@ class TestAliquotSum(unittest.TestCase):
             run("aliquot_sum();")
 
 
+class TestNumDivisors(unittest.TestCase):
+    def test_num_divisors_of_1(self):
+        self.assertEqual(run("let result = num_divisors(1);").get("result"), 1)
+
+    def test_num_divisors_of_7_is_prime(self):
+        self.assertEqual(run("let result = num_divisors(7);").get("result"), 2)
+
+    def test_num_divisors_of_6(self):
+        self.assertEqual(run("let result = num_divisors(6);").get("result"), 4)
+
+    def test_num_divisors_of_28(self):
+        self.assertEqual(run("let result = num_divisors(28);").get("result"), 6)
+
+    def test_num_divisors_of_36_is_perfect_square(self):
+        self.assertEqual(run("let result = num_divisors(36);").get("result"), 9)
+
+    def test_num_divisors_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("num_divisors(0);")
+        self.assertIn(
+            "num_divisors() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_num_divisors_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("num_divisors(-6);")
+        self.assertIn(
+            "num_divisors() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_num_divisors_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("num_divisors(5.0);")
+        self.assertIn("num_divisors() requires an int, got float", ctx.exception.message)
+
+    def test_num_divisors_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("num_divisors(true);")
+        self.assertIn("num_divisors() requires an int, got bool", ctx.exception.message)
+
+    def test_num_divisors_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("num_divisors();")
+
+
 class TestMin(unittest.TestCase):
     def test_min_of_several_arguments(self):
         self.assertEqual(run("let result = min(3, 1, 2);").get("result"), 1)

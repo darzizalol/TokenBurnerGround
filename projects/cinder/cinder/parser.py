@@ -877,9 +877,11 @@ class Parser:
         catch_block = None
         if self._check(TokenType.CATCH):
             self._advance()
-            self._consume(TokenType.LPAREN, "'(' after 'catch'")
-            name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
-            self._consume(TokenType.RPAREN, "')' after catch name")
+            if self._check(TokenType.LPAREN):
+                self._advance()
+                name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
+                self._consume(TokenType.RPAREN, "')' after catch name")
+                catch_name = name_token.lexeme
             if not self._check(TokenType.LBRACE):
                 token = self._peek()
                 raise ParseError(
@@ -887,7 +889,6 @@ class Parser:
                     token.line,
                     token.column,
                 )
-            catch_name = name_token.lexeme
             catch_block = self._block()
         finally_block = None
         if self._check(TokenType.FINALLY):

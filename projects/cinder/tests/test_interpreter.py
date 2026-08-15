@@ -3487,6 +3487,38 @@ class TestTryCatch(unittest.TestCase):
         self.assertIsInstance(env.get("inner"), str)
         self.assertIsInstance(env.get("outer"), str)
 
+    def test_nameless_catch_recovers(self):
+        env = run('let ran = 0; try { let x = 1 / 0; } catch { ran = 1; }')
+        self.assertEqual(env.get("ran"), 1)
+
+    def test_nameless_catch_with_finally_runs_both(self):
+        env = run(
+            "let caught = 0; let done = 0; "
+            "try { let x = 1 / 0; } catch { caught = 1; } "
+            "finally { done = 1; }"
+        )
+        self.assertEqual(env.get("caught"), 1)
+        self.assertEqual(env.get("done"), 1)
+
+    def test_nameless_catch_does_not_run_when_no_error(self):
+        env = run("let ran = 0; try { 1; } catch { ran = 1; }")
+        self.assertEqual(env.get("ran"), 0)
+
+    def test_nameless_catch_block_does_not_leak_scope(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('try { let x = 1 / 0; } catch { let y = 1; } y;')
+
+    def test_nameless_catch_binds_no_implicit_name(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('try { let x = 1 / 0; } catch { e; }')
+
+    def test_return_inside_nameless_catch_returns_from_function(self):
+        env = run(
+            "fn f() { try { let x = 1 / 0; } catch { return 1; } return 2; } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
 
 class TestTryFinally(unittest.TestCase):
     def _run(self, source: str) -> Environment:

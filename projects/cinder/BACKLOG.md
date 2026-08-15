@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
+## 1. Language: optional catch binding (`try { ... } catch { ... }`, no name required) [claimed 2026-08-15T19:35:17Z]
 
 Build: the depth task after task 5's breadth work (`is_squarefree`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog

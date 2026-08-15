@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `prime_factors` — an integer's prime factors, with multiplicity
+## 1. Standard library: `prime_factors` — an integer's prime factors, with multiplicity [claimed 2026-08-15T14:49:06Z]
 
 Build: the breadth task after task 5's depth work (default values in
 map-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,

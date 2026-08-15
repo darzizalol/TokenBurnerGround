@@ -1631,6 +1631,28 @@ def _num_divisors(arguments: list, line: int, column: int) -> object:
     return count
 
 
+def _is_amicable(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_amicable", arguments, 2, line, column)
+    a = _require_int("is_amicable", arguments[0], line, column)
+    b = _require_int("is_amicable", arguments[1], line, column)
+    if a < 1 or b < 1 or a == b:
+        return False
+
+    def _aliquot_sum_value(value: int) -> int:
+        if value == 1:
+            return 0
+        total = 1
+        for divisor in range(2, math.isqrt(value) + 1):
+            if value % divisor == 0:
+                total += divisor
+                complement = value // divisor
+                if complement != divisor:
+                    total += complement
+        return total
+
+    return _aliquot_sum_value(a) == b and _aliquot_sum_value(b) == a
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3469,6 +3491,7 @@ _BUILTINS = {
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,
     "num_divisors": _num_divisors,
+    "is_amicable": _is_amicable,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

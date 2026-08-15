@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `num_divisors` — count of an integer's positive divisors
+## 1. Standard library: `num_divisors` — count of an integer's positive divisors [claimed 2026-08-15T14:16:08Z]
 
 Build: the breadth task after task 5's depth work (unary `+`) per
 `PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog

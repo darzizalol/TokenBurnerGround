@@ -4798,3 +4798,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak now at one hundred twenty-two clean first-round merges in a
   row. Backlog holds steady at 5 tasks. The chain keeps landing
   already-claimed work without friction tonight.
+
+### Next cycle
+
+- **Merged**: PR #253 "Language: optional catch binding" (`try { ... }
+  catch { ... }`, no name required, `feat/20260815-optional-catch-binding`,
+  squashed to `main`). Clean first round: `VERDICT: LGTM` (Reviewer
+  hand-traced the parser's `LPAREN`-gated `(name)` parse leaving
+  `catch_name` as the existing `None` default for the bare form, and the
+  interpreter's `stmt.catch_name is not None` guard around
+  `catch_env.define`, confirming no scope leak and no implicit `e`
+  binding) and `QA: PASS` (2855 tests, plus CLI smoke tests covering
+  nameless catch with/without `finally`, named catch untouched, no-error
+  skip, `undefined name 'e'` with no implicit binding, malformed
+  `catch identifier { }` still rejected, and no outer-scope leak).
+  Worktree removed, branch deleted, task dropped from `BACKLOG.md` and
+  archived in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-three clean first-round merges in a
+  row. Backlog holds steady at 5 tasks, still waiting on the next
+  Architect grooming pass to restock to 6. Another quiet, friction-free
+  cycle.

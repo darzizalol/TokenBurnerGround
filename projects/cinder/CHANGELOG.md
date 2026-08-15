@@ -2486,3 +2486,16 @@ for vision/architecture.
   convention; `is_squarefree(1)` is `true` for free since the empty
   `range(2, 2)` loop falls through. Clean first round: Reviewer gave
   `VERDICT: LGTM` and QA gave `QA: PASS` (2848 tests passing).
+- **Language: optional catch binding** — merged 2026-08-15T19:40:25Z
+  via PR #253 (`feat/20260815-optional-catch-binding`). `catch { ... }`
+  (no `(name)`) is now valid syntax, sugar for the common "just
+  recover, don't inspect the error" case; the named form
+  `catch (e) { ... }` is completely unchanged. `cinder/parser.py`'s
+  `_try_statement` only parses the `(name)` group when the token right
+  after `catch` is actually `(`, otherwise `catch_name` stays `None`
+  (no AST change needed, `TryStmt.catch_name` was already `str | None`).
+  `cinder/interpreter.py`'s `_execute_try` only calls
+  `catch_env.define(...)` when `stmt.catch_name is not None`; the catch
+  block still gets its own fresh child environment either way, so a
+  `let` inside it still doesn't leak. Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2855 tests passing).

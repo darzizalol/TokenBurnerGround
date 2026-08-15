@@ -1035,6 +1035,71 @@ class TestDestructureListDefaults(unittest.TestCase):
             run("let [a] = [1, 2];")
 
 
+class TestDestructureListHoles(unittest.TestCase):
+    def test_interior_hole_discards_middle_position(self):
+        env = run("let [a, , c] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("c"), 3)
+        with self.assertRaises(KeyError):
+            env.get("b")
+
+    def test_leading_hole(self):
+        env = run("let [, b] = [1, 2];")
+        self.assertEqual(env.get("b"), 2)
+
+    def test_no_holes_behaves_as_before(self):
+        env = run("let [a, ...rest] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), [2, 3])
+
+    def test_hole_combines_with_trailing_rest(self):
+        env = run("let [a, , ...rest] = [1, 2, 3, 4];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), [3, 4])
+
+    def test_for_loop_hole(self):
+        env = run(
+            "let total = 0; "
+            "for [a, , c] in [[1, 2, 3], [4, 5, 6]] { total = total + a + c; }"
+        )
+        self.assertEqual(env.get("total"), 14)
+
+    def test_fn_param_hole(self):
+        env = run("fn f([a, , c]) { return a + c; } let r = f([1, 2, 3]);")
+        self.assertEqual(env.get("r"), 4)
+
+    def test_comprehension_hole(self):
+        env = run("let r = [a + c for [a, , c] in [[1, 2, 3]]];")
+        self.assertEqual(env.get("r"), [4])
+
+    def test_hole_still_occupies_required_position(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"destructuring pattern expects 3 elements, got 2",
+        ):
+            run("let [a, , c] = [1, 2];")
+
+    def test_hole_after_default_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in destructuring pattern",
+        ):
+            run("let [a = 1, , c] = [9];")
+
+    def test_trailing_comma_unaffected(self):
+        with self.assertRaises(ParseError):
+            run("let [a, b, ] = [1, 2, 3];")
+
+    def test_empty_pattern_unaffected(self):
+        with self.assertRaises(ParseError):
+            run("let [] = [1];")
+
+    def test_plain_assignment_hole_unaffected(self):
+        with self.assertRaises(ParseError):
+            run("let a = 0; let c = 0; [a, , c] = [1, 2, 3];")
+
+
 class TestDestructureMapDefaults(unittest.TestCase):
     def test_default_used_when_key_missing(self):
         env = run('let {a, b = 5} = {"a": 1};')

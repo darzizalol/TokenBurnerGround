@@ -2499,3 +2499,15 @@ for vision/architecture.
   block still gets its own fresh child environment either way, so a
   `let` inside it still doesn't leak. Clean first round: Reviewer gave
   `VERDICT: LGTM` and QA gave `QA: PASS` (2855 tests passing).
+- **Standard library: `is_amicable`** — merged 2026-08-16T00:00:00Z via
+  PR #254 (`feat/20260815-is-amicable`). Two positive integers `a != b`
+  are an amicable pair when each one's own proper-divisor sum equals
+  the other (e.g. `220`/`284`, `1184`/`1210`); a private
+  `_aliquot_sum_value` helper mirrors `_aliquot_sum`'s trial-division
+  body, called once per argument. `a == b` is rejected up front so a
+  perfect number like `6` is never amicable with itself even though its
+  own proper-divisor sum loops back to itself; domain handling
+  (`< 1` → `false`) follows the boolean-predicate cluster's convention,
+  not the divisor cluster's raise-on-invalid one. Clean first round:
+  Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2865 tests
+  passing).

@@ -4820,3 +4820,26 @@ The morning paper: what shipped, what bounced, what's still open.
   row. Backlog holds steady at 5 tasks, still waiting on the next
   Architect grooming pass to restock to 6. Another quiet, friction-free
   cycle.
+
+### Next cycle
+
+- **Merged**: PR #254 "Standard library: `is_amicable` — two integers
+  whose proper-divisor sums point at each other"
+  (`feat/20260815-is-amicable`, squashed to `main`). Clean first round:
+  `VERDICT: LGTM` (Reviewer independently verified the `220`/`284` and
+  `1184`/`1210` amicable pairs, confirmed the `a == b` guard correctly
+  rejects perfect numbers like `6` before either sum is computed, and
+  noted the private `_aliquot_sum_value` helper's duplication of
+  `_aliquot_sum`'s trial-division body matches this file's existing
+  pattern rather than being a new violation) and `QA: PASS` (2865
+  tests, plus CLI/REPL smoke tests covering both known pairs,
+  order-independence, the perfect-number trap, a non-pair, domain
+  floor, negative input, and float/bool type errors). Worktree
+  removed, branch deleted, task dropped from `BACKLOG.md` and archived
+  in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-four clean first-round merges in a
+  row. Backlog holds steady at 5 tasks, still waiting on the next
+  Architect grooming pass to restock to 6. Another smooth, uneventful
+  cycle.

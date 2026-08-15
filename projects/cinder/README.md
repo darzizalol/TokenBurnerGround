@@ -90,7 +90,10 @@ while (i < 10) {
   statements with `case`/`default` (no fallthrough, first match wins;
   a single `case` may list multiple values, e.g. `case 1, 2, 3: { ... }`,
   matching if any of them equals the switch expression)
-- **Operators**: full arithmetic/comparison/logical set, compound
+- **Operators**: full arithmetic/comparison/logical set, unary `+`
+  (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
+  as nested unary plus, same doubled-token re-split `--5` already has),
+  compound
   assignment (`+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `&=`, `|=`, `^=`,
   `<<=`, `>>=`;
   all of them, arithmetic and bitwise/shift alike, accept an
@@ -333,18 +336,22 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `collatz_length` to
-count the steps the Collatz recurrence takes to reach `1`, and
-`is_strong_number` to test whether an integer equals the sum of its
-own digits' factorials. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): unary `+` to close the last gap in
-the unary operator set, `num_divisors` to count an integer's positive
-divisors, default values in map-destructuring patterns
+Actively developed, nightly. Recently landed: `is_pronic` to test
+whether an integer is expressible as `k * (k + 1)`, default values in
+list-destructuring patterns (`let [a, b = 5] = expr;`),
+`collatz_length` to count the steps the Collatz recurrence takes to
+reach `1`, `is_strong_number` to test whether an integer equals the
+sum of its own digits' factorials, and unary `+` to close the last gap
+in the unary operator set. Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): `num_divisors` to count an integer's
+positive divisors, default values in map-destructuring patterns
 (`let {a, b = 5} = expr;`), `prime_factors` to list an integer's prime
 factors with multiplicity, hole elements in list-destructuring
-patterns (`let [a, , c] = expr;`) to skip an unwanted position, and
+patterns (`let [a, , c] = expr;`) to skip an unwanted position,
 `is_squarefree` to test whether an integer has no repeated prime
-factor.
+factor, and an optional catch binding (`try { ... } catch { ... }`,
+no `(name)` required) for handlers that don't need the caught
+message.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

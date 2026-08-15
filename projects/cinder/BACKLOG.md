@@ -647,6 +647,123 @@ bullet needs `is_squarefree` added near `is_prime`/`is_pronic`, and
 
 ---
 
+## 6. Language: optional catch binding (`try { ... } catch { ... }`, no name required)
+
+Build: the depth task after task 5's breadth work (`is_squarefree`) per
+`PROJECT.md`'s breadth-vs-depth policy — also restocking the backlog
+back to 6 tasks now that unary `+` (the task that used to sit at the
+top of this file) has landed and dropped the count to the 5-task
+floor. Today `catch` always requires a parenthesized binding name —
+`try { ... } catch (name) { ... }` — even when the handler never reads
+the caught error message, forcing a throwaway name for the common
+"just recover, don't inspect" case. Verify the gap: `python3 -m
+cinder.cli eval 'try { throw "boom"; } catch { print("caught"); }'`
+currently raises `ParseError` `"expected '(' after 'catch', found
+'{'"` (`cinder/parser.py`'s `_try_statement`, search for `def
+_try_statement`, unconditionally consumes `(`, an identifier, and `)`
+right after the `catch` keyword).
+
+**Parsing** (`cinder/parser.py`): in `_try_statement`, right after
+`self._advance()` consumes the `catch` token, only parse the
+`(name)` group when the next token is actually `(` — otherwise leave
+`catch_name` as `None` and fall straight through to the body-block
+check:
+
+```python
+        catch_name = None
+        catch_block = None
+        if self._check(TokenType.CATCH):
+            self._advance()
+            if self._check(TokenType.LPAREN):
+                self._advance()
+                name_token = self._consume(
+                    TokenType.IDENTIFIER, "identifier after 'catch ('"
+                )
+                self._consume(TokenType.RPAREN, "')' after catch name")
+                catch_name = name_token.lexeme
+            if not self._check(TokenType.LBRACE):
+                token = self._peek()
+                raise ParseError(
+                    f"expected '{{' before catch body, found {self._describe(token)}",
+                    token.line,
+                    token.column,
+                )
+            catch_block = self._block()
+```
+
+No AST change is needed — `TryStmt.catch_name` (`cinder/ast_nodes.py`)
+is already typed `str | None`; today's parser just never actually
+produces the `None` case. Every other branch of `_try_statement`
+(`finally` parsing, the `catch_block is None and finally_block is
+None` "expected 'catch' or 'finally'" check, the final `TryStmt(...)`
+construction) needs no changes at all.
+
+**Evaluation** (`cinder/interpreter.py`): in `_execute_try` (search for
+`def _execute_try`), guard the existing `catch_env.define(...)` call
+so it only runs when a name was actually written — the catch block
+still gets its own fresh child environment either way (so a `let`
+declared inside it doesn't leak into the surrounding scope), it just
+has nothing pre-bound when there's no name:
+
+```python
+            except CinderRuntimeError as error:
+                if stmt.catch_block is None:
+                    raise
+                catch_env = Environment(env)
+                if stmt.catch_name is not None:
+                    catch_env.define(stmt.catch_name, error.message)
+                self.execute(stmt.catch_block, catch_env)
+```
+
+Acceptance criteria:
+- `try { throw "boom"; } catch { print("caught"); }` prints `caught` —
+  the catch block runs with no name bound.
+- `try { throw "boom"; } catch { print("caught"); } finally { print("done"); }`
+  prints `caught` then `done` — `finally` still runs afterward,
+  unaffected by the missing name.
+- `try { throw "boom"; } catch (e) { print(e); }` still prints `boom`
+  — the named form is completely unchanged.
+- `let ran = 0; try { 1; } catch { ran = 1; }` leaves `ran` at `0` — a
+  nameless catch block still only runs when an error was actually
+  thrown, same as the named form.
+- `try { throw "x"; } catch { let y = 1; } y;` raises
+  `CinderRuntimeError` matching `undefined name 'y'` — the catch
+  block's own child environment doesn't leak into the surrounding
+  scope, same as the named form.
+- `try { throw "x"; } catch { e; }` raises `CinderRuntimeError`
+  matching `undefined name 'e'` — confirms no binding is created under
+  any implicit name when `(name)` is omitted.
+- `fn f() { try { throw "x"; } catch { return 1; } return 2; } print(f());`
+  prints `1` — `return` inside a nameless catch block still propagates
+  out of the function, same as the named form.
+- `try { print(1); }` (neither `catch` nor `finally`) still raises the
+  exact same `ParseError` it does today, `"expected 'catch' or
+  'finally' after try block, found ..."` — unaffected.
+- `try { print(1); } catch (e)` (missing body) still raises the exact
+  same `ParseError` it does today — unaffected, since the `LBRACE`
+  check after the optional `(name)` group is unchanged.
+- Every pre-existing try/catch/finally test (nested try/catch, catch
+  inside a loop/function, error-inside-catch-not-re-caught, finally
+  ordering) continues to pass unmodified.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_try_statement`),
+`cinder/interpreter.py` (`_execute_try`), `tests/test_parser.py`
+(shape assertions — search for `test_try_catch_shape`,
+`test_try_catch_empty_bodies`, `test_try_catch_finally_shape`, plus a
+new nameless-catch shape test asserting `catch_name` is `None`),
+`tests/test_interpreter.py` (new nameless-catch tests modeled on the
+existing `test_catch_binds_error_message_and_recovers`,
+`test_catch_block_does_not_run_when_no_error`,
+`test_catch_name_not_visible_after_try_catch` cluster, search for
+`class ... Try` or `def test_catch_`). Once merged, `README.md`'s
+Control flow bullet needs a nameless-catch mention added next to the
+existing `try`/`catch`/`finally` description, and `PROJECT.md`'s
+roadmap paragraph needs it moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

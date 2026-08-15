@@ -720,69 +720,68 @@ factorials of its own decimal digits (a factorion, e.g. `145 = 1! + 4!
 + 5!`), joining `is_armstrong` in the digit-transform-and-sum-and-compare
 cluster but using `factorial` per digit instead of a fixed power, and
 reusing the already-registered `factorial` builtin's `math.factorial`
-rather than reimplementing it.
+rather than reimplementing it, and, as has unary `+` (`+expr`) — the
+depth task after two breadth builtins stacked in a row (`collatz_length`,
+`is_strong_number`), closing a real asymmetry in the unary operator
+set: `-`/`not`/`~` were all implemented but plain unary `+` wasn't
+(`_UNARY` in `cinder/parser.py` simply never included
+`TokenType.PLUS`), and the doubled-token case was asymmetric too —
+`--5` already evaluated to `5` via an explicit `MINUSMINUS` re-split,
+but `++5` had no equivalent `PLUSPLUS` handling. No new AST node was
+needed (`Unary` already carries an arbitrary operator token), so it
+was a small, self-contained change confined to `_UNARY`/`_unary` in
+the parser and one new branch in `_evaluate_unary`.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, `is_strong_number`, has since landed and is
-covered in the "have since landed" history above; this grooming pass
-dropped its now-redundant not-yet-scoped description from this section
-rather than leaving it to drift further out of sync):
-as task 1, unary `+` (`+expr`) — the depth task after two breadth
-builtins in a row (`collatz_length`, `is_strong_number`), closing a
-real asymmetry in the unary operator set: `-`/`not`/`~` are all
-implemented but plain unary `+` isn't (`_UNARY` in `cinder/parser.py`
-simply never included `TokenType.PLUS`), and the doubled-token case is
-asymmetric too — `--5` already evaluates to `5` today via an explicit
-`MINUSMINUS` re-split, but `++5` has no equivalent `PLUSPLUS` handling.
-No new AST node is needed (`Unary` already carries an arbitrary
-operator token), so this is a small, self-contained change confined to
-`_UNARY`/`_unary` in the parser and one new branch in
-`_evaluate_unary`. And as task 2, `num_divisors(n)` — a breadth task
-after task 1's depth work, counting an integer's positive divisors via
-the same `sqrt(n)`-bounded trial-division shape `divisors`/
-`aliquot_sum` already share, sitting next to both as the
-count-returning sibling of that trio (`divisors` collects them,
-`aliquot_sum` sums the proper ones, `num_divisors` counts them all
-including `n` itself). And as task 3, default values in
-map-destructuring patterns (`let {a, b = 5} = expr;`) — the depth task
-after task 2's breadth work, the map-pattern counterpart to the
-list-destructuring-defaults task: today every map-pattern form raises
-when a key is absent rather than falling back to a default. Unlike the
-list-pattern version, this one *does* reach the plain-assignment form
-(`{a, b} = expr;`) for free — the map-pattern plain-assignment path
-already reuses the same `_destructure_map_pattern_entry` parser helper
-as every other form, unlike the list-pattern plain-assignment path,
-which parses through an unrelated `ListLiteral` route. Map-pattern
-entries also have no positional ordering (matching is by key, not
-position), so unlike the list-pattern version's ordering rule there is
-no "a required entry can't follow a defaulted one" restriction to
-enforce. And as task 4, `prime_factors(n)` — a breadth task after
-task 3's depth work, listing an integer's prime factors with
-multiplicity in ascending order (e.g. `12 -> [2, 2, 3]`, `360 -> [2, 2,
-2, 3, 3, 5]`), the natural neighbor to `divisors`/`is_prime`/
-`is_composite` — where `divisors` finds every factor of `n` and
-`is_prime`/`is_composite` classify `n` as a whole, this decomposes `n`
-into its prime building blocks, walking the standard trial-division
-*factorization* technique (stripping small prime factors out of a
-shrinking copy of `n`) rather than the sqrt-bounded divisor-pairing
-shape `divisors`/`aliquot_sum`/`num_divisors` share, since
-factorization needs to record a repeated factor (like `2` dividing
-`12` twice) each time it divides evenly, not just once.
-`prime_factors(1)` is `[]` — `1` has no prime factors, mathematically,
-not a case needing a special-cased guard the way `divisors(1)`'s own
-`[1]` result does. And as task 5, hole elements in list-destructuring
-patterns (`let [a, , c] = expr;`) — the depth task after task 4's
-breadth work, closing the last gap in the destructuring-pattern
-cluster: every list-pattern form can already bind a name, rename
-nothing (list patterns have no rename syntax), collect a rest, or fall
-back to a default, but there is no way to skip an unwanted position
-outright the way JavaScript's array-destructuring elision does.
-Scoped, like the list-destructuring-defaults task before it, to the
-`let`/`for`/param/comprehension forms only (via
-`_destructure_list_pattern_entry`), not the plain-assignment form,
-for the identical reason: that form's pattern is parsed through an
+used to occupy this slot, unary `+`, has since landed and is covered
+in the "have since landed" history above; this grooming pass dropped
+its now-redundant not-yet-scoped description from this section rather
+than leaving it to drift further out of sync):
+as task 1, `num_divisors(n)` — a breadth task after unary `+`'s depth
+work, counting an integer's positive divisors via the same
+`sqrt(n)`-bounded trial-division shape `divisors`/`aliquot_sum` already
+share, sitting next to both as the count-returning sibling of that
+trio (`divisors` collects them, `aliquot_sum` sums the proper ones,
+`num_divisors` counts them all including `n` itself). And as task 2,
+default values in map-destructuring patterns (`let {a, b = 5} =
+expr;`) — the depth task after task 1's breadth work, the map-pattern
+counterpart to the list-destructuring-defaults task: today every
+map-pattern form raises when a key is absent rather than falling back
+to a default. Unlike the list-pattern version, this one *does* reach
+the plain-assignment form (`{a, b} = expr;`) for free — the map-pattern
+plain-assignment path already reuses the same
+`_destructure_map_pattern_entry` parser helper as every other form,
+unlike the list-pattern plain-assignment path, which parses through an
+unrelated `ListLiteral` route. Map-pattern entries also have no
+positional ordering (matching is by key, not position), so unlike the
+list-pattern version's ordering rule there is no "a required entry
+can't follow a defaulted one" restriction to enforce. And as task 3,
+`prime_factors(n)` — a breadth task after task 2's depth work, listing
+an integer's prime factors with multiplicity in ascending order (e.g.
+`12 -> [2, 2, 3]`, `360 -> [2, 2, 2, 3, 3, 5]`), the natural neighbor
+to `divisors`/`is_prime`/`is_composite` — where `divisors` finds every
+factor of `n` and `is_prime`/`is_composite` classify `n` as a whole,
+this decomposes `n` into its prime building blocks, walking the
+standard trial-division *factorization* technique (stripping small
+prime factors out of a shrinking copy of `n`) rather than the
+sqrt-bounded divisor-pairing shape `divisors`/`aliquot_sum`/
+`num_divisors` share, since factorization needs to record a repeated
+factor (like `2` dividing `12` twice) each time it divides evenly, not
+just once. `prime_factors(1)` is `[]` — `1` has no prime factors,
+mathematically, not a case needing a special-cased guard the way
+`divisors(1)`'s own `[1]` result does. And as task 4, hole elements in
+list-destructuring patterns (`let [a, , c] = expr;`) — the depth task
+after task 3's breadth work, closing the last gap in the
+destructuring-pattern cluster: every list-pattern form can already
+bind a name, rename nothing (list patterns have no rename syntax),
+collect a rest, or fall back to a default, but there is no way to skip
+an unwanted position outright the way JavaScript's array-destructuring
+elision does. Scoped, like the list-destructuring-defaults task before
+it, to the `let`/`for`/param/comprehension forms only (via
+`_destructure_list_pattern_entry`), not the plain-assignment form, for
+the identical reason: that form's pattern is parsed through an
 ordinary `ListLiteral`, which has no notion of an empty element. And
-as task 6, `is_squarefree(n)` — a breadth task after task 5's depth
+as task 5, `is_squarefree(n)` — a breadth task after task 4's depth
 work, testing whether `n` has no repeated prime factor (equivalently,
 is not divisible by any perfect square greater than `1`, e.g. `6 = 2 *
 3` is squarefree, `12 = 2 * 2 * 3` isn't), the natural predicate
@@ -790,25 +789,38 @@ neighbor to `is_prime`/`is_composite` and the soon-to-land
 `prime_factors` — answering "does any factor repeat?" via the same
 `sqrt(n)`-bounded trial-division shape `is_prime`/`is_composite`
 already use, checking `divisor * divisor` divisibility directly rather
-than building the full factor list. And only much later, a bytecode VM
-if performance ever actually matters.
+than building the full factor list. And as task 6, optional catch
+bindings (`try { ... } catch { ... }`, no `(name)` required) — the
+depth task after task 5's breadth work, restocking the backlog back to
+6 tasks: today `catch` always requires a parenthesized binding name
+(`catch (err) { ... }`) even when the handler never reads the error
+message, forcing a throwaway name for the common "just recover, don't
+inspect" case (`try { risky(); } catch (e) { print("failed"); }` never
+uses `e`). `_try_statement` in `cinder/parser.py` should treat the
+`(name)` after `catch` as optional — parse it only when the next token
+is `(`, leaving `TryStmt.catch_name` `None` otherwise (the field is
+already typed `str | None`, so no AST change is needed), and
+`_execute_try` in `cinder/interpreter.py` should only call
+`catch_env.define(...)` when `catch_name` isn't `None`, running the
+catch block in a plain child environment otherwise. And only much
+later, a bytecode VM if performance ever actually matters.
 The Architect should keep scoping these into `BACKLOG.md` incrementally
 — do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
 far: two or more single-builtin predicate tasks queued back-to-back is
 a signal to inject a language-depth task rather than extending the
-streak further (most recently, this is what placed task 1, unary `+`,
-right after `collatz_length`/`is_strong_number` stacked two breadth
-builtins in a row), and a depth task landing is usually followed by one
-breadth task before the next depth task is queued, occasionally two in
-a row when the backlog needs restocking faster than strict alternation
-would otherwise allow (as happened when `aliquot_sum` was added
-alongside `is_perfect_cube`, and again when `is_strong_number` was
-added alongside `collatz_length`). This pass found the backlog back
-down to its 5-task floor (`is_strong_number` having landed via PR #246,
-dropping the count from 6 to 5) and restocked it to 6 by adding task 6,
-`is_squarefree`, continuing alternation with a single breadth task
-after task 5's depth work rather than stacking a second depth task, per
+streak further (most recently, this is what placed unary `+` right
+after `collatz_length`/`is_strong_number` stacked two breadth builtins
+in a row), and a depth task landing is usually followed by one breadth
+task before the next depth task is queued, occasionally two in a row
+when the backlog needs restocking faster than strict alternation would
+otherwise allow (as happened when `aliquot_sum` was added alongside
+`is_perfect_cube`, and again when `is_strong_number` was added
+alongside `collatz_length`). This pass found the backlog back down to
+its 5-task floor (unary `+` having landed via PR #247, dropping the
+count from 6 to 5) and restocked it to 6 by adding task 6, optional
+catch bindings, continuing alternation with a single depth task after
+task 5's breadth work rather than stacking a second breadth task, per
 the policy above. The next grooming pass should continue alternating
 breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
 count within reach of the 5-task floor.

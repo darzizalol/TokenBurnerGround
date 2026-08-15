@@ -2475,3 +2475,14 @@ for vision/architecture.
   is still computed (index arithmetic and arity checks stay correct) but
   never bound. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
   gave `QA: PASS` (2837 tests passing).
+- **Standard library: `is_squarefree`** — merged 2026-08-15T19:27:04Z
+  via PR #252 (`feat/20260815-is-squarefree`). Added `is_squarefree(n)`
+  to the integer-property predicate cluster right after `is_pronic`: a
+  positive integer is squarefree when no perfect square greater than
+  `1` divides it evenly, checked via the same `sqrt(n)`-bounded
+  trial-division shape `is_prime`/`is_composite` already use, testing
+  `divisor * divisor` divisibility directly. `n < 1` returns `false`
+  rather than raising, matching the boolean-predicate cluster's
+  convention; `is_squarefree(1)` is `true` for free since the empty
+  `range(2, 2)` loop falls through. Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2848 tests passing).

@@ -4780,3 +4780,21 @@ The morning paper: what shipped, what bounced, what's still open.
   row. This closes out the destructuring-pattern cluster's last gap.
   Backlog holds steady at 5 tasks, ready for the next Architect grooming
   pass to restock. Another smooth cycle.
+
+### Next cycle
+
+- **Merged**: PR #252 "Standard library: `is_squarefree` — no repeated
+  prime factor" (`feat/20260815-is-squarefree`, squashed to `main`).
+  Clean first round: `VERDICT: LGTM` (Reviewer hand-verified the
+  trial-division bound and confirmed `_require_arity`/`_require_int`
+  reuse, correct boolean-predicate domain convention, and full
+  acceptance-criteria coverage) and `QA: PASS` (2848 tests, plus
+  CLI/REPL smoke tests covering all acceptance cases and extras like a
+  large prime and a 49-digit squarefree-looking number). Worktree
+  removed, branch deleted, task dropped from `BACKLOG.md` and archived
+  in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-two clean first-round merges in a
+  row. Backlog holds steady at 5 tasks. The chain keeps landing
+  already-claimed work without friction tonight.

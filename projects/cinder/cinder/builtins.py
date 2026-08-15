@@ -1581,6 +1581,25 @@ def _aliquot_sum(arguments: list, line: int, column: int) -> object:
     return total
 
 
+def _num_divisors(arguments: list, line: int, column: int) -> object:
+    _require_arity("num_divisors", arguments, 1, line, column)
+    value = _require_int("num_divisors", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "num_divisors() requires a positive integer, domain error", line, column
+        )
+    if value == 1:
+        return 1
+    count = 2  # 1 and value itself
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            count += 1
+            complement = value // divisor
+            if complement != divisor:
+                count += 1
+    return count
+
+
 def _min(arguments: list, line: int, column: int) -> object:
     if not arguments:
         raise CinderRuntimeError("min() expects at least 1 argument, got 0", line, column)
@@ -3416,6 +3435,7 @@ _BUILTINS = {
     "is_pronic": _is_pronic,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
+    "num_divisors": _num_divisors,
     "min": _min,
     "max": _max,
     "clamp": _clamp,

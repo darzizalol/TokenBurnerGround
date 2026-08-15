@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
+## 1. Language: hole elements in list-destructuring patterns (`let [a, , c] = expr;`) [claimed 2026-08-15T19:05:58Z]
 
 Build: the depth task after task 5's breadth work (`prime_factors`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

@@ -594,6 +594,164 @@ test classes). Once merged, `README.md`'s Builtins bullet needs
 
 ---
 
+## 6. Language: pipe operator (`a |> f` as sugar for `f(a)`)
+
+Build: the depth task after task 5's breadth work (`is_amicable`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
+6 tasks now that default values in map-destructuring patterns has
+landed via PR #249, dropping the count to the 5-task floor. Cinder
+already ships `pipe(f, g, h)` and `compose(f, g, h)` builtins that
+return a new function threading a single value left-to-right (`pipe`)
+or right-to-left (`compose`) through a fixed list of unary functions,
+but there is no operator-level sugar for the common one-shot case: to
+pipe a value through a single function today you write `f(a)`, and to
+chain two calls you either nest them (`g(f(a))`, reading
+inside-out) or build a throwaway piped function
+(`pipe(f, g)(a)`) just to call it once. Verify the gap: `python3 -m
+cinder.cli eval 'fn double(x) { return x * 2; } print(5 |> double);'`
+currently raises `ParseError` `"expected an expression, found '>'"` —
+the lexer has no `|>` token, so `|` lexes as the bitwise-or `PIPE`
+token and `>` is left dangling where an expression was expected.
+
+**Semantics**: `a |> f` evaluates `a`, evaluates `f`, then calls the
+result of `f` with the result of `a` as its sole argument — exactly
+`f(a)`, but written left-to-right. Both sides are ordinary expressions,
+evaluated exactly once each, so `a |> f(1)` is **not** `f(1, a)`
+Elixir-style — `f(1)` evaluates first (calling `f` with just `1`), and
+*its return value* is what gets called with `a`. This is a deliberate,
+useful consequence of reusing plain expression evaluation on the right
+rather than restricting it to a bare function reference: it composes
+naturally with `curry`, e.g. `3 |> curry(add, 2)(5)` evaluates
+`curry(add, 2)(5)` to a partially-applied one-argument function first,
+then calls it with `3`. Chaining is left-associative:
+`a |> f |> g` is `(a |> f) |> g`, i.e. `g(f(a))` — matching `pipe`'s
+own left-to-right order, not `compose`'s right-to-left one (the name
+`|>` unambiguously suggests "pipe," not "compose").
+
+**Precedence**: `|>` binds looser than every operator from `??`
+(nullish-coalescing) down through the bitwise/arithmetic tiers, but
+tighter than the ternary `? :` and assignment — the loosest of the
+"value-producing" binary operators, just above the two forms that
+build a whole expression around another expression. This lets a
+piped chain be used directly as a condition or assigned value without
+parentheses: `let y = a |> f;`, `cond ? a |> f : b`. Left-associative,
+via a `while`-loop entry exactly like `_or`/`_and`, not a
+right-recursive one like `??`.
+
+**Lexing** (`cinder/lexer.py`): add `PIPE_ARROW` to `TokenType` in
+`cinder/tokens.py` (near `PIPE`/`PIPEEQ`, following the descriptive-name
+convention `FAT_ARROW`/`QUESTION_DOT` already use rather than a
+char-concatenated one). In `_op_or_compound_assign`, add a check for
+`char == "|" and self._match(">")` alongside the existing `char == "*"`/
+`char == "/"` two-char special cases at the top of the function, before
+the generic compound-assign (`|=`) and simple (`|`) fallback paths:
+
+```python
+if char == "|" and self._match(">"):
+    self.tokens.append(Token(TokenType.PIPE_ARROW, "|>", None, start_line, start_col))
+    return
+```
+
+No change needed to `_COMPOUND_ASSIGN_TOKENS` or the `_match("=")`/`else`
+fallback below it — `|=` and bare `|` still reach those unchanged for
+every input that isn't `|>`.
+
+**Parsing** (`cinder/parser.py`): no new AST node — `|>` reuses `Binary`
+exactly like `IN`/`NOT_IN` already do, dispatched purely by
+`operator.type` at evaluation time. Add a new precedence level between
+`_ternary` and `_nullish`:
+
+```python
+def _pipe(self) -> Expr:
+    expr = self._nullish()
+    while self._check(TokenType.PIPE_ARROW):
+        operator = self._advance()
+        right = self._nullish()
+        expr = Binary(expr, operator, right)
+    return expr
+```
+
+and change `_ternary`'s first line from `expr = self._nullish()` to
+`expr = self._pipe()` (search for `def _ternary`, right at the top of
+the method) — its two recursive `self._ternary()` calls for the `then`/
+`else` branches need no changes, since they already route through the
+new level for free. No other precedence method changes.
+
+**Evaluation** (`cinder/interpreter.py`): in `_apply_binary_operator`
+(search for `def _apply_binary_operator`), add a branch dispatching to
+the module-level `call_value` helper (already used by `_evaluate_call`
+and by builtins like `map`/`filter`/`pipe`/`compose` to invoke a Cinder
+function value from Python):
+
+```python
+if op == TokenType.PIPE_ARROW:
+    return call_value(right, [left], operator.line, operator.column)
+```
+
+Placed anywhere in the `if`/`elif` chain (order doesn't matter — each
+branch checks a distinct `op` value); grouping it near the top by the
+other non-arithmetic operators (`IN`/`NOT_IN`) reads best. `left`/
+`right` are already evaluated by `_evaluate_binary` before
+`_apply_binary_operator` is called (line ~1055-1057), exactly like
+every other operator — no special-casing needed there. `call_value`
+already raises `"<type> is not callable"` when `right` isn't callable
+and the normal arity-mismatch message when it doesn't accept exactly
+one argument, so both error paths are free.
+
+Acceptance criteria:
+- `fn double(x) { return x * 2; } print(5 |> double);` prints `10`.
+- `fn double(x) { return x * 2; } fn inc(x) { return x + 1; }
+  print(5 |> double |> inc);` prints `11` — `double(5)` is `10`,
+  `inc(10)` is `11`; confirms left-associative, left-to-right chaining
+  (matching `pipe`, not `compose`).
+- `print(-5 |> abs);` prints `5` — works with a builtin, not just
+  user-defined functions.
+- `fn add(a, b) { return a + b; } print(3 |> curry(add, 2)(5));`
+  prints `8` — the right side is evaluated as a full expression first
+  (`curry(add, 2)(5)` produces a one-argument partial application),
+  *then* called with the left side; not Elixir-style argument
+  insertion.
+- `let y = 5 |> abs; print(y);` prints `5` — usable directly as a `let`
+  initializer with no parentheses needed, confirming the precedence
+  sits above assignment's right-hand side.
+- `print(true ? 5 |> abs : 0);` prints `5` — usable directly inside a
+  ternary branch with no parentheses, confirming the precedence sits
+  below `? :`.
+- `print(5());` (unrelated call-on-a-non-function case) still raises
+  `CinderRuntimeError` matching `"int is not callable"`, unchanged —
+  confirms `call_value`'s existing error path is untouched, only
+  reused.
+- `print(5 |> 3);` raises `CinderRuntimeError` matching
+  `"int is not callable"` — the same message, reached via the new
+  operator instead of a direct call.
+- `fn one() { return 1; } print(5 |> one);` raises `CinderRuntimeError`
+  matching `"one() expects 0 argument(s), got 1"` — ordinary arity
+  checking still applies to the implicit one-argument call.
+- `print(5 |>);` raises `ParseError` (missing right operand) — the
+  same "expected an expression" family of error every other binary
+  operator already raises when its right side is missing, not a crash.
+- `let x = 5; x |= 3; print(x);` prints `7` — bitwise-or compound
+  assignment (`|=`) is completely unaffected, confirming the lexer's
+  new `|>` branch doesn't shadow the existing `|=`/`|` paths for any
+  input that isn't literally `|>`.
+- `print(5 | 3);` prints `7` — bare bitwise-or is unaffected.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (`PIPE_ARROW`), `cinder/lexer.py`
+(`_op_or_compound_assign`), `cinder/parser.py` (new `_pipe`, one-line
+change in `_ternary`), `cinder/interpreter.py`
+(`_apply_binary_operator`), `tests/test_lexer.py` (new `|>` tokenizing
+tests alongside the existing `|`/`|=` ones), `tests/test_parser.py`
+(shape assertions for the new precedence level, search for
+`test_ternary` / `test_nullish` for the sibling pattern to follow),
+`tests/test_interpreter.py` (the pipe/chaining/error-path tests above).
+Once merged, `README.md`'s Operators bullet needs a `|>` mention added
+near the `pipe`/`compose` builtins it complements, and `PROJECT.md`'s
+roadmap paragraph needs it moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

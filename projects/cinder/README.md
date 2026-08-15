@@ -55,16 +55,22 @@ while (i < 10) {
   looking it up as a key, extra unnamed keys ignored, plus the same kind
   of optional trailing rest element `let {a, ...rest} = expr;` that
   collects every key not already named into a map, empty if none are
-  left, and an optional per-key rename `let {a: x, b} = expr;` binding
+  left, an optional per-key rename `let {a: x, b} = expr;` binding
   the value under key `a` to local name `x` instead of `a`, combinable
   with the rest element and freely mixable with un-renamed keys in the
-  same pattern), plus plain assignment forms of both for already-declared
-  bindings — list (`[a, b] = expr;`, same flat positional binding and
-  optional trailing rest element as the `let` form, e.g. the swap idiom
-  `[a, b] = [b, a];`) and map (`{a, b} = expr;`, same key-lookup binding
-  as the `let` form, including the same optional trailing rest element
-  `{a, ...rest} = expr;` and the same optional per-key rename
-  `{a: x, b} = expr;`)
+  same pattern, and an optional default value per key
+  `let {a, b = 5} = expr;`, used only when the key is missing from the
+  source map (a present-but-falsy value does not trigger it), evaluated
+  in pattern order so a later default can see an earlier bound name,
+  e.g. `let {a, b = a + 1} = {"a": 5};` binds `b` to `6`; combinable
+  with rename (`let {a: x = 5} = expr;`) and, unlike the list-pattern
+  version, supported on every map-pattern form including plain
+  assignment, since all five share one parser entry point), plus plain
+  assignment forms of both for already-declared bindings — list
+  (`[a, b] = expr;`, same flat positional binding and optional trailing
+  rest element as the `let` form, e.g. the swap idiom `[a, b] = [b, a];`)
+  and map (`{a, b} = expr;`, same key-lookup binding, rest element,
+  per-key rename, and per-key default as the `let` form)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
@@ -338,18 +344,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `collatz_length` to
-count the steps the Collatz recurrence takes to reach `1`,
-`is_strong_number` to test whether an integer equals the sum of its
-own digits' factorials, unary `+` to close the last gap in the unary
-operator set, and `num_divisors` to count an integer's positive
-divisors including itself. Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): default values in map-destructuring
-patterns (`let {a, b = 5} = expr;`), `prime_factors` to list an
-integer's prime factors with multiplicity, hole elements in
-list-destructuring patterns (`let [a, , c] = expr;`) to skip an
-unwanted position, `is_squarefree` to test whether an integer has no
-repeated prime factor, an optional catch binding
+Actively developed, nightly. Recently landed: unary `+` to close the
+last gap in the unary operator set, `num_divisors` to count an
+integer's positive divisors including itself, and default values in
+map-destructuring patterns (`let {a, b = 5} = expr;`, landed on every
+map-pattern form including plain assignment via their shared parser
+entry point). Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`prime_factors` to list an integer's prime factors with multiplicity,
+hole elements in list-destructuring patterns (`let [a, , c] = expr;`)
+to skip an unwanted position, `is_squarefree` to test whether an
+integer has no repeated prime factor, an optional catch binding
 (`try { ... } catch { ... }`, no `(name)` required) for handlers that
 don't need the caught message, and `is_amicable` to test whether two
 integers' proper-divisor sums point at each other.

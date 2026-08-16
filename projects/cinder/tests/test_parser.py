@@ -2084,6 +2084,12 @@ class TestStatements(unittest.TestCase):
             [("LetStmt", "x", ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2)))],
         )
 
+    def test_let_statement_no_initializer(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let x;")],
+            [("LetStmt", "x", ("Literal", None))],
+        )
+
     def test_expr_statement(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("1 + 2;")],

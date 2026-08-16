@@ -2836,6 +2836,54 @@ class TestIsPalindromeNumber(unittest.TestCase):
             run("is_palindrome_number();")
 
 
+class TestIsRepdigit(unittest.TestCase):
+    def test_is_repdigit_of_zero(self):
+        self.assertEqual(run("let result = is_repdigit(0);").get("result"), True)
+
+    def test_is_repdigit_of_single_digit(self):
+        self.assertEqual(run("let result = is_repdigit(5);").get("result"), True)
+
+    def test_is_repdigit_of_two_same_digits(self):
+        self.assertEqual(run("let result = is_repdigit(11);").get("result"), True)
+
+    def test_is_repdigit_of_three_same_digits(self):
+        self.assertEqual(run("let result = is_repdigit(222);").get("result"), True)
+
+    def test_is_repdigit_of_four_same_digits(self):
+        self.assertEqual(run("let result = is_repdigit(4444);").get("result"), True)
+
+    def test_is_repdigit_of_five_digit_repdigit(self):
+        self.assertEqual(run("let result = is_repdigit(99999);").get("result"), True)
+
+    def test_is_repdigit_of_two_distinct_digits(self):
+        self.assertEqual(run("let result = is_repdigit(10);").get("result"), False)
+
+    def test_is_repdigit_of_palindrome_but_not_repdigit(self):
+        self.assertEqual(run("let result = is_repdigit(121);").get("result"), False)
+
+    def test_is_repdigit_of_one_digit_and_zeros(self):
+        self.assertEqual(run("let result = is_repdigit(1000);").get("result"), False)
+
+    def test_is_repdigit_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_repdigit(-11);").get("result"), False)
+
+    def test_is_repdigit_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_repdigit(5.0);")
+        self.assertIn("is_repdigit", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_repdigit_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_repdigit(true);")
+        self.assertIn("is_repdigit", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_repdigit_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_repdigit();")
+
+
 class TestIsPerfectSquare(unittest.TestCase):
     def test_is_perfect_square_of_zero(self):
         self.assertEqual(run("let result = is_perfect_square(0);").get("result"), True)

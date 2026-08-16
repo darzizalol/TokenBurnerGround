@@ -1438,6 +1438,14 @@ def _is_palindrome_number(arguments: list, line: int, column: int) -> object:
     return str(value) == str(value)[::-1]
 
 
+def _is_repdigit(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_repdigit", arguments, 1, line, column)
+    value = _require_int("is_repdigit", arguments[0], line, column)
+    if value < 0:
+        return False
+    return len(set(str(value))) == 1
+
+
 def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     _require_arity("is_perfect_square", arguments, 1, line, column)
     value = _require_int("is_perfect_square", arguments[0], line, column)
@@ -3515,6 +3523,7 @@ _BUILTINS = {
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,
+    "is_repdigit": _is_repdigit,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_strong_number": _is_strong_number,

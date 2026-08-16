@@ -3349,6 +3349,59 @@ class TestIsSquarefree(unittest.TestCase):
             run("is_squarefree();")
 
 
+class TestIsPowerfulNumber(unittest.TestCase):
+    def test_is_powerful_number_of_1(self):
+        self.assertEqual(run("let result = is_powerful_number(1);").get("result"), True)
+
+    def test_is_powerful_number_of_4(self):
+        self.assertEqual(run("let result = is_powerful_number(4);").get("result"), True)
+
+    def test_is_powerful_number_of_8(self):
+        self.assertEqual(run("let result = is_powerful_number(8);").get("result"), True)
+
+    def test_is_powerful_number_of_9(self):
+        self.assertEqual(run("let result = is_powerful_number(9);").get("result"), True)
+
+    def test_is_powerful_number_of_36(self):
+        self.assertEqual(run("let result = is_powerful_number(36);").get("result"), True)
+
+    def test_is_powerful_number_of_72(self):
+        self.assertEqual(run("let result = is_powerful_number(72);").get("result"), True)
+
+    def test_is_powerful_number_of_2_is_false(self):
+        self.assertEqual(run("let result = is_powerful_number(2);").get("result"), False)
+
+    def test_is_powerful_number_of_12_is_false(self):
+        self.assertEqual(run("let result = is_powerful_number(12);").get("result"), False)
+
+    def test_is_powerful_number_of_large_leftover_prime_is_false(self):
+        self.assertEqual(
+            run("let result = is_powerful_number(4 * 999983);").get("result"), False
+        )
+
+    def test_is_powerful_number_of_0_is_false(self):
+        self.assertEqual(run("let result = is_powerful_number(0);").get("result"), False)
+
+    def test_is_powerful_number_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_powerful_number(-4);").get("result"), False)
+
+    def test_is_powerful_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_powerful_number(4.0);")
+        self.assertIn("is_powerful_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_powerful_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_powerful_number(true);")
+        self.assertIn("is_powerful_number", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_powerful_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_powerful_number();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

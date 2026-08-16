@@ -1574,6 +1574,25 @@ def _is_squarefree(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _is_powerful_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_powerful_number", arguments, 1, line, column)
+    value = _require_int("is_powerful_number", arguments[0], line, column)
+    if value < 1:
+        return False
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            count = 0
+            while remaining % divisor == 0:
+                remaining //= divisor
+                count += 1
+            if count < 2:
+                return False
+        divisor += 1
+    return remaining == 1
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -3508,6 +3527,7 @@ _BUILTINS = {
     "is_perfect_cube": _is_perfect_cube,
     "is_pronic": _is_pronic,
     "is_squarefree": _is_squarefree,
+    "is_powerful_number": _is_powerful_number,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,

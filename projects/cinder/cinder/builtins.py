@@ -1997,6 +1997,30 @@ def _mean(arguments: list, line: int, column: int) -> object:
     return total / len(value)
 
 
+def _geometric_mean(arguments: list, line: int, column: int) -> object:
+    _require_arity("geometric_mean", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"geometric_mean() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("geometric_mean() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"geometric_mean() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        if element <= 0:
+            raise CinderRuntimeError(
+                "geometric_mean() requires all elements to be positive", line, column
+            )
+    product = 1
+    for element in value:
+        product = product * element
+    return product ** (1 / len(value))
+
+
 def _median(arguments: list, line: int, column: int) -> object:
     _require_arity("median", arguments, 1, line, column)
     value = arguments[0]
@@ -3563,6 +3587,7 @@ _BUILTINS = {
     "sum_by": _sum_by,
     "product": _product,
     "mean": _mean,
+    "geometric_mean": _geometric_mean,
     "median": _median,
     "variance": _variance,
     "std_dev": _std_dev,

@@ -2511,3 +2511,15 @@ for vision/architecture.
   not the divisor cluster's raise-on-invalid one. Clean first round:
   Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2865 tests
   passing).
+- **Language: pipe operator (`a |> f` as sugar for `f(a)`)** — merged
+  2026-08-16T14:08:56Z via PR #255 (`feat/20260815-pipe-operator`).
+  Added a new `PIPE_ARROW` (`|>`) token in `cinder/lexer.py`, checked
+  ahead of the `_COMPOUND_ASSIGN_TOKENS` fallback so it doesn't shadow
+  `|`/`|=`; a new `_pipe` precedence level in `cinder/parser.py` between
+  `_ternary` and `_nullish`, left-associative so `a |> f |> g` is
+  `(a |> f) |> g`; and evaluation in `cinder/interpreter.py` that reuses
+  `call_value` for the implicit call, evaluating both sides fully as
+  ordinary expressions before calling — so `a |> curry(add, 2)` is not
+  Elixir-style argument-splicing, it calls whatever `curry(add, 2)`
+  returns with `a`. Clean first round: Reviewer gave `VERDICT: LGTM` and
+  QA gave `QA: PASS` (2883 tests passing).

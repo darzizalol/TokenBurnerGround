@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_semiprime` — product of exactly two primes
+## 1. Standard library: `is_semiprime` — product of exactly two primes [claimed 2026-08-16T14:18:06Z]
 
 Build: the breadth task after task 5's depth work (pipe operator) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

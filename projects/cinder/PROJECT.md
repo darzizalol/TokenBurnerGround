@@ -899,31 +899,27 @@ raising `LexError` "expected digits after exponent" if that run comes
 up empty; an exponent always forces `is_float = True` even with no `.`
 present, and `float(value_str)` needed no changes since Python's own
 parser already handles the full exponent grammar once underscores are
-stripped — have since landed too.
+stripped, and `geometric_mean(list)` — the nth root of a list's
+product, joining `mean`/`median`/`variance`/`std_dev`/`mode` as the
+statistics cluster's first non-arithmetic-mean member, reusing the
+exact same `isinstance`/non-empty/`_is_numeric`-per-element validation
+shape those four already share plus one added domain restriction
+(every element must be strictly positive, checked only after
+confirming numeric-ness, raising a domain error rather than leaking a
+non-real result for zero or negative input, the same convention
+`log()` already applies to its own positive-input requirement) — have
+since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy slot 1 here, scientific notation, has since landed via
-PR #261 and is covered in the "have since landed" history immediately
+used to occupy slot 1 here, `geometric_mean`, has since landed via
+PR #262 and is covered in the "have since landed" history immediately
 above; this grooming pass dropped its now-redundant not-yet-scoped
 description from this section, renumbered the remaining five down to
 slots 1-5, and appended a freshly-scoped task 6 restocking the backlog
 back past its 5-task floor):
-as task 1, `geometric_mean(list)` — a
-breadth task after scientific notation's depth work: the nth root of the product of a list's elements, the natural
-second member of the statistics cluster (`mean`, `median`, `variance`,
-`std_dev`, `mode`) alongside the arithmetic mean already in `mean` —
-that cluster has grown five members deep without ever adding a second
-kind of "average." Reuses the exact same `isinstance`/non-empty/
-`_is_numeric`-per-element validation shape `mean`/`median`/`variance`
-already share, adding one domain restriction on top: every element
-must be strictly positive (checked only after confirming it's numeric,
-so a non-numeric element always reports first), since a geometric mean
-over zero or negative inputs has no real-valued result in Cinder's
-numeric tower — the same "raise a domain error rather than leak a
-`nan`" convention `log()` already applies to its own positive-input
-requirement. And as task 2, postfix `++`/`--` as a first-class
-assignment expression — the depth task after task 1's breadth work:
-today `++`/`--` are recognized
+as task 1, postfix `++`/`--` as a first-class
+assignment expression — the depth task after `geometric_mean`'s
+breadth work: today `++`/`--` are recognized
 only by a one-off parser helper (`_expr_or_incdec`) reachable from
 exactly three places — a bare `x++;` statement and the `for`-loop's
 init/step clauses — while every *other* assignment-flavored operator
@@ -944,8 +940,8 @@ exactly as today) or reachability from `_ternary()`-rooted positions
 like call arguments (`print(x++)` stays a `ParseError`, matching
 `print(x = 5)`'s own existing restriction) — only closes the one gap
 where `++`/`--` uniquely lagged behind every sibling assignment
-operator. And as task 3, `digit_product(n)` — a breadth task after
-task 2's depth work: the
+operator. And as task 2, `digit_product(n)` — a breadth task after
+task 1's depth work: the
 multiplicative counterpart to `digit_sum`, the same relationship
 `product` already has to `sum` at the list level — `digit_sum` sums an
 integer's decimal digits, `digit_product` multiplies them instead.
@@ -955,7 +951,7 @@ before iterating, so it needs no new domain-handling decision of its
 own. A single-digit integer (including `0`) is trivially its own
 digit product; any `0` digit anywhere in the number collapses the
 whole product to `0`, which is the correct answer, not a case to guard
-against. And as task 4, trailing commas in list/map literals, call
+against. And as task 3, trailing commas in list/map literals, call
 arguments, and function parameter lists (`[1, 2,]`, `{"a": 1,}`,
 `f(1, 2,)`, `fn f(a, b,) { ... }`) — the depth task after
 `digit_product`'s breadth work, closing an ergonomics gap in all four
@@ -972,7 +968,7 @@ is willing to accept, not what AST shape it produces. Deliberately
 scoped to just those four sites, not destructuring patterns or
 comprehension bodies, which are separate call sites with their own
 comma-loops and are left for a future task if still wanted. And as
-task 5, `is_evil(n)`/`is_odious(n)` — a breadth task after task 4's
+task 4, `is_evil(n)`/`is_odious(n)` — a breadth task after task 3's
 depth work, restocking the backlog back to 6 tasks now that
 `is_repdigit` has landed via PR #260: binary popcount-parity
 predicates, classifying every non-negative integer by whether its
@@ -986,9 +982,9 @@ only in which parity is accepted — the same bundling `is_int`/`is_float`
 and `is_subset`/`is_superset` already got — and negative input raises a
 domain error rather than answering `false`, since Python's
 two's-complement `bin()` output on a negative number would silently
-count the wrong thing rather than answering honestly. And as task 6,
+count the wrong thing rather than answering honestly. And as task 5,
 list concatenation via `+` (`[1, 2] + [3, 4]` is `[1, 2, 3, 4]`) — a
-depth task after task 5's breadth work, restocking the backlog back to
+depth task after task 4's breadth work, restocking the backlog back to
 6 tasks now that scientific notation has landed via PR #261:
 `_apply_binary_operator`'s `PLUS` branch in `cinder/interpreter.py`
 already special-cases numbers and strings but falls through to an
@@ -1003,7 +999,22 @@ Because compound assignment desugars `+=` to an ordinary `Binary`/
 `PLUS` node and reuses this same function, `xs += [3, 4]` starts
 working for free the moment this branch lands, no separate change
 needed. No lexer or parser changes: `+` is already tokenized and
-already reaches this function for every operand type. And only much
+already reaches this function for every operand type. And as task 6,
+`harmonic_mean(list)` — a breadth task after task 5's depth work,
+restocking the backlog back to 6 tasks now that `geometric_mean` has
+landed via PR #262: the third member of the classical Pythagorean
+means trio (arithmetic, geometric, harmonic), completing the statistics
+cluster's "kinds of average" alongside `mean`/`geometric_mean` rather
+than extending `median`/`variance`/`std_dev`/`mode`'s own distribution-
+shape concerns a second time. `n / sum(1/x for x in list)` — reuses the
+exact same `isinstance`/non-empty/`_is_numeric`-per-element validation
+shape `mean`/`geometric_mean` already share, plus the identical
+strictly-positive domain restriction `geometric_mean` already enforces
+(a zero element makes the reciprocal sum undefined via division by
+zero, and a negative element makes the harmonic mean not meaningfully
+comparable to its arithmetic/geometric siblings under the AM-GM-HM
+inequality), raising the same domain-error shape rather than leaking a
+`ZeroDivisionError` or a sign-confused result. And only much
 later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1018,23 +1029,23 @@ when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). The previous pass found the backlog back
-down to its 5-task floor (`is_repdigit` having landed via PR #260,
-dropping the count from 6 to 5, dropping its and single-quoted
-strings' now-landed descriptions from the "what remains plausible"
-section above into the "have since landed" history, and renumbering
-the remaining four tasks from 3-6 down to 1-4, with trailing commas
-renumbered from 6 to 5) and restocked it to 6 by adding task 6,
-`is_evil`/`is_odious`, continuing alternation with a breadth task
-after task 5's depth work (trailing commas) rather than stacking a
-second depth task. This pass found the backlog back down to its
-5-task floor again (scientific notation having landed via PR #261,
+down to its 5-task floor again (scientific notation having landed via
+PR #261, dropping the count from 6 to 5, dropping its now-landed
+description from the "what remains plausible" section above into the
+"have since landed" history, and renumbering the remaining five tasks
+from 2-6 down to 1-5, with `is_evil`/`is_odious` renumbered from 6 to
+5) and restocked it to 6 by adding task 6, list concatenation via `+`,
+continuing alternation with a depth task after task 5's breadth work
+(`is_evil`/`is_odious`) rather than stacking a second breadth task,
+per the policy above. This pass found the backlog back down to its
+5-task floor again (`geometric_mean` having landed via PR #262,
 dropping the count from 6 to 5, dropping its now-landed description
 from the "what remains plausible" section above into the "have since
 landed" history, and renumbering the remaining five tasks from 2-6
-down to 1-5, with `is_evil`/`is_odious` renumbered from 6 to 5) and
-restocked it to 6 by adding task 6, list concatenation via `+`,
-continuing alternation with a depth task after task 5's breadth work
-(`is_evil`/`is_odious`) rather than stacking a second breadth task,
+down to 1-5, with list concatenation via `+` renumbered from 6 to 5)
+and restocked it to 6 by adding task 6, `harmonic_mean`, continuing
+alternation with a breadth task after task 5's depth work (list
+concatenation via `+`) rather than stacking a second breadth task,
 per the policy above. The next grooming pass should continue
 alternating breadth/depth, restocking toward 6-7 tasks whenever a
 merge drops the count within reach of the 5-task floor.

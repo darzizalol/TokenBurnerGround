@@ -540,6 +540,112 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
+
+Build: the breadth task after task 5's depth work (list concatenation
+via `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
+backlog back to 6 tasks now that `geometric_mean` has landed via
+PR #262, dropping the count to the 5-task floor. Add `harmonic_mean`
+to `cinder/builtins.py`, registered right after `geometric_mean`
+(search for `def _geometric_mean`, immediately before `_median`) — the
+statistics cluster (`mean`, `median`, `variance`, `std_dev`, `mode`)
+grew a second "kind of average" when `geometric_mean` landed; the
+classical Pythagorean means come in threes (arithmetic, geometric,
+harmonic), and `harmonic_mean` is the one still missing. Verify the
+gap: `python3 -m cinder.cli eval 'print(harmonic_mean([1, 2, 4]));'`
+currently raises `CinderRuntimeError` `"undefined name
+'harmonic_mean'"` — no such builtin exists yet.
+
+```python
+def _harmonic_mean(arguments: list, line: int, column: int) -> object:
+    _require_arity("harmonic_mean", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"harmonic_mean() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("harmonic_mean() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"harmonic_mean() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        if element <= 0:
+            raise CinderRuntimeError(
+                "harmonic_mean() requires all elements to be positive", line, column
+            )
+    reciprocal_sum = 0
+    for element in value:
+        reciprocal_sum = reciprocal_sum + 1 / element
+    return len(value) / reciprocal_sum
+```
+
+Model this directly on `_geometric_mean`'s own structure: same
+`isinstance(value, list)` check, same non-empty check, same per-element
+`_is_numeric` check followed by the same strictly-positive domain
+check (checked only after confirming an element is numeric, so a
+non-numeric element always reports first, exactly as `geometric_mean`
+already does) — copy that validation loop verbatim rather than
+inventing a new shape for it. The one substantive difference is the
+final computation: `geometric_mean` multiplies elements then takes an
+nth root, `harmonic_mean` sums reciprocals then divides `len(value)` by
+that sum. Positivity is required for the same reason `geometric_mean`
+requires it, plus one more: a zero element makes the reciprocal sum
+undefined (division by zero on `1 / element`), and a negative element
+would make the result not comparable to its arithmetic/geometric
+siblings under the AM-GM-HM inequality (`harmonic_mean <=
+geometric_mean <= mean` for any list of positive numbers) — so this
+follows the exact same "raise a domain error rather than leak a
+`ZeroDivisionError` or a sign-confused result" convention
+`geometric_mean` already established, not a new decision. A
+single-element list is trivially its own harmonic mean (the loop runs
+once, `len(value) / (1 / value[0])` reduces to `value[0]`), the same
+trivial-degenerate-case convention `mean`/`geometric_mean` already
+establish.
+
+Acceptance criteria:
+- `harmonic_mean([1]);` is `1` — single-element list, trivially itself.
+- `harmonic_mean([2, 2, 2, 2]);` is `2` — a constant list's harmonic
+  mean equals the constant, same as `mean`/`geometric_mean` on a
+  constant list.
+- `harmonic_mean([1, 4]);` is `1.6` — matches the classical two-element
+  identity `2ab / (a + b)` (`2 * 1 * 4 / (1 + 4) == 1.6`), a useful
+  cross-check independent of the general `n / sum(1/x)` formula.
+- `harmonic_mean([1, 2, 4]);` is approximately `1.7142857142857142`
+  (`3 / (1 + 0.5 + 0.25)`).
+- For `[1, 2, 4]`, `harmonic_mean(...) <= geometric_mean(...) <=
+  mean(...)` all hold (`1.714... <= 2.0 <= 2.333...`) — the AM-GM-HM
+  inequality, confirming the three statistics-cluster "averages" are
+  internally consistent with each other, not just individually correct.
+- `harmonic_mean([]);` raises `CinderRuntimeError` matching
+  `"harmonic_mean() requires a non-empty list"`.
+- `harmonic_mean([1, "a"]);` raises `CinderRuntimeError` matching
+  `"harmonic_mean() requires a list of numbers, got string"`.
+- `harmonic_mean([1, 0]);` raises `CinderRuntimeError` matching
+  `"harmonic_mean() requires all elements to be positive"` — zero
+  excluded (undefined via division by zero), not silently treated as
+  infinite or skipped.
+- `harmonic_mean([1, -2]);` raises the same domain-error message —
+  negative excluded, same convention as `geometric_mean`.
+- `harmonic_mean(5);` raises `CinderRuntimeError` matching
+  `"harmonic_mean() requires a list, got int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `geometric_mean`, see
+current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py` (model on the `TestGeometricMean` test
+class, search `class TestGeometricMean`). Once merged, `README.md`'s
+Builtins bullet needs `harmonic_mean` added near `mean`/
+`geometric_mean`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s roadmap paragraph needs this moved from backlog to
+landed — leave all three to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

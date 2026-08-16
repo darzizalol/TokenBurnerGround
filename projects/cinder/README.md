@@ -229,7 +229,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -367,18 +367,20 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_repdigit` to test
-whether every decimal digit of an integer is the same, and scientific
-notation for float literals (`1e3`, `1.5e-2`, `2E+10`).
+Actively developed, nightly. Recently landed: scientific notation for
+float literals (`1e3`, `1.5e-2`, `2E+10`), and `geometric_mean` to
+compute the nth root of a list's product, the statistics cluster's
+first non-arithmetic-mean member.
 Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`geometric_mean` to compute the nth root of a list's product,
 postfix `++`/`--` as a first-class assignment expression (usable as a
 `let` initializer or chained-assignment RHS, not just a bare statement
 or `for`-loop clause), `digit_product` as `digit_sum`'s multiplicative
 counterpart, trailing commas in list/map literals, call arguments, and
 function parameter lists, `is_evil`/`is_odious` binary
-popcount-parity predicates, and list concatenation via `+` (closing the
-gap between the existing `concat()` builtin and infix syntax).
+popcount-parity predicates, list concatenation via `+` (closing the
+gap between the existing `concat()` builtin and infix syntax), and
+`harmonic_mean` to complete the classical arithmetic/geometric/harmonic
+Pythagorean means trio.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

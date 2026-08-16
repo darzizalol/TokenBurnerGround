@@ -4947,3 +4947,25 @@ The morning paper: what shipped, what bounced, what's still open.
   `STATUS: STOP`. One worktree (`.worktrees/single-quote-strings`) is
   still active holding PR #259's branch, left in place since the PR
   itself is still open. Quiet cycle, nothing to do but wait on QA.
+
+### Next cycle
+
+- **Merged**: PR #259 "Language: single-quoted string literals as an
+  alternate delimiter" (`feat/20260816-single-quote-strings`, squashed
+  to `main`). Clean first round: `VERDICT: LGTM` (Reviewer verified
+  `_string`'s new `quote` parameter is used consistently for both the
+  terminator check and dispatch, `\'` added to `_ESCAPES` alongside
+  `\"`, manually exercised quoted-dialogue, interpolation, unterminated,
+  and invalid-escape cases against the branch, and confirmed the full
+  2924-test suite passes) and `QA: PASS` (2924 tests from a detached
+  worktree, plus CLI/REPL smoke tests covering unescaped-double-inside-
+  single, escaped single quotes, unterminated string, invalid escape,
+  and an empty `''` literal — no regressions on the existing
+  double-quoted path). Worktree removed, branch deleted, task dropped
+  from `BACKLOG.md` and archived in `CHANGELOG.md`, remaining tasks
+  renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-nine clean first-round merges in a
+  row. Backlog holds steady at 5 tasks, waiting on the next Architect
+  grooming pass to restock to 6. Clean night, no friction anywhere.

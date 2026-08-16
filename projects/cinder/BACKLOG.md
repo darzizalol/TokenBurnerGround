@@ -11,106 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: single-quoted string literals (`'...'` as an alternate delimiter) [claimed 2026-08-16T15:00:34Z]
-
-Build: the depth task after task 5's breadth work (`is_powerful_number`)
-per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
-to 6 tasks now that optional catch binding has landed via PR #253,
-dropping the count to the 5-task floor. Today `cinder/lexer.py`'s
-`_string` method only recognizes `"` as a string delimiter — `char ==
-'"'` is the sole dispatch in `tokenize`, so a string literal can never
-contain a literal `"` without escaping it (`"she said \"hi\""`), even
-though the far more common case in real code is a string that quotes
-something (contractions, quoted dialogue, shell-ish snippets). Verify
-the gap: `python3 -m cinder.cli eval "print('hi');"` currently raises
-`LexError` `"unrecognized character \"'\""` — there is no handling for
-`'` at all today, it isn't even a partially-supported delimiter.
-
-**Lexing** (`cinder/lexer.py`): make `_string` delimiter-aware instead
-of hardcoding `"` twice (as the terminator check and in the opening
-dispatch). Change its signature to take the opening quote character,
-and use that everywhere `'"'` currently appears inside the method body:
-
-```python
-def _string(self, start_line: int, start_col: int, quote: str):
-    start_pos = self.pos - 1  # position of the opening quote
-    ...
-    while True:
-        ...
-        if self._peek() == quote:
-            self._advance()
-            break
-        ...
-```
-
-In `tokenize`, dispatch both quote characters to it:
-
-```python
-if char == '"' or char == "'":
-    self._string(start_line, start_col, quote=char)
-```
-
-Add `'` to `_ESCAPES` alongside the existing `'"'` entry (`_ESCAPES =
-{"n": "\n", "t": "\t", "\\": "\\", '"': '"', "'": "'"}`) so `\'` is a
-valid escape inside *either* delimiter, not just inside single-quoted
-strings — mirroring how `\"` already works inside both today (it's
-just a redundant-but-harmless escape inside a single-quoted string).
-This is the only change to `_ESCAPES`; `\n`/`\t`/`\\` stay exactly as
-they are, and both delimiters keep sharing the identical escape table
-rather than each getting its own.
-
-Everything else about `_string` — the `$` `${...}` interpolation
-handling, the `has_interp` / `INTERP_STRING` vs `STRING` token split,
-`_interp_placeholder`, unterminated-string detection — is delimiter-
-agnostic already and needs no changes; a single-quoted string
-interpolates exactly like a double-quoted one. No parser or
-interpreter changes at all: both delimiters produce the same
-`STRING`/`INTERP_STRING` tokens carrying the same parsed Python `str`
-value, so everything downstream (string methods, `+`/`*`, comparisons,
-`print`/`format`) is already delimiter-blind by construction.
-
-Acceptance criteria:
-- `print('hello');` prints `hello` — single-quoted strings work as a
-  plain literal.
-- `print('she said "hi"');` prints `she said "hi"` — a single-quoted
-  string may contain an unescaped double quote.
-- `print("it's fine");` prints `it's fine` — unchanged: a double-quoted
-  string may already contain an unescaped single quote (this criterion
-  just confirms the new dispatch didn't regress it).
-- `print('it\'s fine');` prints `it's fine` — `\'` is a valid escape
-  inside a single-quoted string.
-- `print("say \"hi\"");` still prints `say "hi"` — `\"` inside a
-  double-quoted string is unchanged.
-- `print('a\nb');` prints two lines, `a` then `b` — the existing escape
-  table (`\n`/`\t`/`\\`) works identically inside single quotes.
-- `let name = "world"; print('hello, ${name}!');` prints `hello,
-  world!` — `${...}` interpolation works inside single-quoted strings,
-  identically to double-quoted ones.
-- `print('unterminated);` (no closing `'`) raises `LexError` matching
-  `"unterminated string"` — same error shape the double-quoted form
-  already raises for a missing closing `"`.
-- `print('bad \z escape');` raises `LexError` matching `"invalid escape
-  sequence '\\z'"` — same error shape as the double-quoted form for an
-  unrecognized escape.
-- `print("plain double-quoted still works");` prints unchanged —
-  confirms the double-quoted path is untouched by the refactor.
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py` (`_string`, `tokenize`'s dispatch,
-`_ESCAPES`), `tests/test_lexer.py` (new single-quote tests alongside
-`test_string_basic`/`test_string_escapes`, search `class TestStrings`
-— mirror each existing double-quoted case with a single-quoted one),
-`tests/test_interpreter.py` or `tests/test_lexer.py`'s
-`TestStringInterpolation` class (a single-quoted interpolation case).
-Once merged, `README.md`'s Values bullet needs a mention that strings
-may be single- or double-quoted added near the existing interpolation
-description, and `PROJECT.md`'s roadmap paragraph needs it moved from
-backlog to landed — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Standard library: `is_repdigit` — every decimal digit is the same
+## 1. Standard library: `is_repdigit` — every decimal digit is the same
 
 Build: the breadth task after task 5's depth work (single-quoted string
 literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -191,7 +92,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`)
+## 2. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`)
 
 Build: the depth task after task 5's breadth work (`is_repdigit`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -298,7 +199,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `geometric_mean` — the nth root of a list's product
+## 3. Standard library: `geometric_mean` — the nth root of a list's product
 
 Build: the breadth task after task 5's depth work (scientific notation
 for float literals) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -398,7 +299,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
+## 4. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
 
 Build: the depth task after task 5's breadth work (`geometric_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -560,7 +461,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
+## 5. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
 
 Build: the breadth task after task 5's depth work (postfix `++`/`--`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

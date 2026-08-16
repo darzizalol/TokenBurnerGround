@@ -2553,3 +2553,15 @@ for vision/architecture.
   `false` rather than raising, matching the boolean-predicate cluster's
   convention. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
   gave `QA: PASS` (2916 tests passing).
+- **Language: single-quoted string literals (`'...'` as an alternate
+  delimiter)** — merged 2026-08-16T19:12:17Z via PR #259
+  (`feat/20260816-single-quote-strings`). `_string` in `cinder/lexer.py`
+  now takes the opening quote character as a parameter instead of
+  hardcoding `"` for both the terminator check and `tokenize`'s
+  dispatch, so `'` is recognized as a second string delimiter; `\'` was
+  added to `_ESCAPES` alongside the existing `\"` entry. Interpolation,
+  escapes, and error shapes are shared and unchanged between both
+  delimiters since `_string` was already delimiter-agnostic apart from
+  the two hardcoded quote checks — no parser or interpreter changes.
+  Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave
+  `QA: PASS` (2924 tests passing).

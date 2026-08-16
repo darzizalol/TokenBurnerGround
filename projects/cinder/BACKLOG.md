@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_repdigit` — every decimal digit is the same
+## 1. Standard library: `is_repdigit` — every decimal digit is the same [claimed 2026-08-16T19:20:35Z]
 
 Build: the breadth task after task 5's depth work (single-quoted string
 literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

@@ -2532,3 +2532,14 @@ for vision/architecture.
   `n < 2` returns `false` rather than raising, matching the
   boolean-predicate cluster's convention. Clean first round: Reviewer
   gave `VERDICT: LGTM` and QA gave `QA: PASS` (2897 tests passing).
+- **Language: uninitialized `let` declarations (`let x;`, defaults to
+  `nil`)** — merged 2026-08-16T14:35:41Z via PR #257
+  (`feat/20260816-uninitialized-let`). `_let_statement` in
+  `cinder/parser.py` now defaults the initializer to a bare `nil`
+  literal when `let NAME` is immediately followed by `;`, instead of
+  unconditionally requiring `= expr`; `const` is untouched (still
+  requires an initializer), and the C-style `for` loop's init clause
+  now also accepts an uninitialized `let i` for free, though it still
+  raises a runtime type error on the first comparison since `i` is
+  never assigned before the condition runs. Clean first round: Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2902 tests passing).

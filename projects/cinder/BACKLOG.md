@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
+## 1. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar [claimed 2026-08-16T20:01:13Z]
 
 Build: the depth task after task 5's breadth work (`geometric_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

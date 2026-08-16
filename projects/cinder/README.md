@@ -231,8 +231,9 @@ while (i < 10) {
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
   `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_coprime`
-  integer parity/divisibility/primality/coprimality predicates, `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
+  integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
+  `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
   `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
@@ -359,19 +360,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: an optional catch
-binding (`try { ... } catch { ... }`, no `(name)` required) for handlers
-that don't need the caught message, `is_amicable` to test whether
-two distinct integers' proper-divisor sums point at each other, and a
-pipe operator `a |> f` as sugar for `f(a)`.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_semiprime` to test
-whether an integer is the product of exactly two primes, uninitialized
-`let` declarations (`let x;`, defaulting to `nil`), `is_powerful_number`
+Actively developed, nightly. Recently landed: a pipe operator `a |> f`
+as sugar for `f(a)`, and `is_semiprime` to test whether an integer is
+the product of exactly two primes.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): uninitialized `let`
+declarations (`let x;`, defaulting to `nil`), `is_powerful_number`
 to test whether every prime factor of an integer appears with exponent
 `2` or more, single-quoted string literals (`'...'`) as an alternate
 delimiter to double quotes, `is_repdigit` to test whether every decimal
-digit of an integer is the same, and scientific notation for float
-literals (`1e3`, `1.5e-2`).
+digit of an integer is the same, scientific notation for float
+literals (`1e3`, `1.5e-2`), and `geometric_mean` to compute the nth
+root of a list's product.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

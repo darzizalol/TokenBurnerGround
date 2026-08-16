@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_powerful_number` — every prime factor appears with exponent 2 or more
+## 1. Standard library: `is_powerful_number` — every prime factor appears with exponent 2 or more [claimed 2026-08-16T14:48:42Z]
 
 Build: the breadth task after task 5's depth work (uninitialized `let`
 declarations) per `PROJECT.md`'s breadth-vs-depth policy, restocking

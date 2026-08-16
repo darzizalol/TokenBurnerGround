@@ -4990,3 +4990,27 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak now at one hundred thirty clean first-round merges in a row.
   Backlog holds steady at 5 tasks, waiting on the next Architect
   grooming pass to restock to 6. Another quiet, friction-free cycle.
+
+### Next cycle
+
+- **Merged**: PR #261 "Language: scientific notation for float literals
+  (`1e3`, `1.5e-2`, `2E+10`)" (`feat/20260816-scientific-notation`,
+  squashed to `main`). Clean first round: `VERDICT: LGTM` (Reviewer
+  verified the commit-only-if-clearly-exponent gate correctly avoids
+  misparsing `1.foo`/bare trailing `e`, underscore handling in the
+  exponent digits reuses the existing mantissa/fraction gate, sign-
+  without-digits raises `LexError` as expected, manually checked
+  `1e+3.5` doesn't greedily eat a post-exponent fraction, and confirmed
+  the full 2948-test suite passes) and `QA: PASS` (2948 tests from a
+  detached worktree, all `examples/*.cin` matched their `.expected`
+  files, plus CLI smoke tests covering signed/uppercase exponents,
+  underscore separators in the exponent and alongside the mantissa, the
+  `1e+` and `1e` edge cases, and confirming hex/bin/oct literals are
+  unaffected). Worktree removed, branch deleted, task dropped from
+  `BACKLOG.md` and archived in `CHANGELOG.md`, remaining tasks
+  renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred thirty-one clean first-round merges in a
+  row. Backlog holds steady at 5 tasks, waiting on the next Architect
+  grooming pass to restock to 6. Another clean, friction-free cycle.

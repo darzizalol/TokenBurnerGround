@@ -2575,3 +2575,15 @@ for vision/architecture.
   string has exactly one character. Pure string/set check on
   `str(value)` — no trial division needed. Clean first round: Reviewer
   gave `VERDICT: LGTM` and QA gave `QA: PASS` (2937 tests passing).
+- **Language: scientific notation for float literals (`1e3`, `1.5e-2`,
+  `2E+10`)** — merged 2026-08-16T19:40:30Z via PR #261
+  (`feat/20260816-scientific-notation`). `_number` in `cinder/lexer.py`
+  gained an optional exponent-suffix block after the existing
+  fractional-part handling: an `e`/`E` followed by a digit or `+`/`-`
+  sign commits to consuming an exponent, reusing the same underscore-
+  separator gate as the mantissa/fraction digit runs, and raises
+  `LexError` (`"expected digits after exponent"`) if no digits follow.
+  An exponent always forces `is_float = True`. No parser or interpreter
+  changes — `float(value_str)` already parses the full grammar once
+  underscores are stripped. Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2948 tests passing).

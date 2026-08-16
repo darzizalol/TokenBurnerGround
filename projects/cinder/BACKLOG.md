@@ -11,114 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`) [claimed 2026-08-16T19:34:37Z]
-
-Build: the depth task after task 5's breadth work (`is_repdigit`) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
-6 tasks now that the pipe operator has landed via PR #255, dropping
-the count to the 5-task floor. Today `cinder/lexer.py`'s `_number`
-only recognizes plain digits and an optional `.`-led fractional part —
-there is no handling of an `e`/`E` exponent suffix at all. Verify the
-gap: `python3 -m cinder.cli eval 'print(1e3);'` currently raises
-`ParseError` `"expected ')' after arguments, found 'e3'"` — the lexer
-never attempts to recognize the exponent as part of the number, so
-`1e3` lexes as an `INT` token `1` immediately followed by a separate
-`IDENTIFIER` token `e3`, which then breaks `print`'s call-argument
-parsing.
-
-**Lexing** (`cinder/lexer.py`): in `_number`, after the existing
-optional fractional-part block (`if self._peek() == "." and
-self._peek_next().isdigit(): ...`), add an optional exponent-suffix
-block:
-
-```python
-        if self._peek().lower() == "e" and (
-            self._peek_next().isdigit() or self._peek_next() in "+-"
-        ):
-            is_float = True
-            digits.append(self._advance())  # consume 'e'/'E'
-            if self._peek() in "+-":
-                digits.append(self._advance())  # consume sign
-            exponent_start = len(digits)
-            while self._peek().isdigit() or (
-                self._peek() == "_"
-                and digits[-1].isdigit()
-                and self._peek_next().isdigit()
-            ):
-                digits.append(self._advance())
-            if len(digits) == exponent_start:
-                raise LexError(
-                    "expected digits after exponent", start_line, start_col
-                )
-```
-
-Only begin consuming when `e`/`E` is followed by a digit or a `+`/`-`
-sign — this avoids misreading a bare trailing `e` (an identifier
-glued onto a number with no space, however unlikely) as the start of
-an exponent it can never complete. Once committed, the digit run
-reuses the exact same underscore-separator condition the integer and
-fractional digit runs already use above it in the same method, and an
-empty run raises `LexError` with the message `"expected digits after
-exponent"` — the same "commit to a suffix, then require what must
-follow it" shape `_prefixed_int` already uses for its own `"expected
-digits after '0{prefix}'"` error.
-
-An exponent always forces `is_float = True`, even with no `.` present
-— `1e3` is the float `1000.0`, matching Python/JS convention, not the
-int `1000`. No other change is needed: the existing `value_str =
-"".join(c for c in digits if c != "_")` then `float(value_str)`
-construction at the bottom of `_number` already handles it, since
-Python's own `float()` parses the full `1e3`/`1.5e-2`/`2e+10` exponent
-grammar once underscores are stripped — this is the same reason the
-existing underscore-stripping already works for the plain
-integer/fractional digit runs. No parser or interpreter changes at
-all: the result is still an ordinary `FLOAT` token carrying a plain
-Python `float`, indistinguishable downstream from one written with a
-decimal point.
-
-Acceptance criteria:
-- `print(1e3);` prints `1000.0` — a bare integer mantissa with an
-  exponent still produces a float.
-- `print(1.5e2);` prints `150.0`.
-- `print(1.5e-2);` prints `0.015` — a negative exponent.
-- `print(2E+3);` prints `2000.0` — uppercase `E` and an explicit `+`
-  sign both work.
-- `print(1_000e3);` prints `1000000.0` — underscore separators in the
-  mantissa keep working alongside an exponent.
-- `print(1e1_0);` prints `10000000000.0` — underscore separators also
-  work within the exponent digits themselves.
-- `print(0e0);` prints `0.0`.
-- `tokenize("1e3")` (in a lexer-level test) produces a single `FLOAT`
-  token with `literal == 1000.0` and `lexeme == "1e3"`, not an `INT`
-  followed by an `IDENTIFIER`.
-- `print(1.foo);` (a `.` NOT followed by a digit) still lexes as
-  `INT`, `DOT`, `IDENTIFIER` — confirms this task didn't touch the
-  pre-existing fractional-part gating, only added a new block after
-  it.
-- `1e;` (an `e` with nothing usable after it — not a digit, not
-  `+`/`-`) lexes as `INT` `1` followed by a separate `IDENTIFIER` `e`,
-  same as today — confirms the lookahead gate correctly declines to
-  commit when there's no plausible exponent to consume.
-- `1e+;` (committed via the `+` sign, but no digit follows) raises
-  `LexError` matching `"expected digits after exponent"`.
-- `1e+x;` raises the same `LexError` — confirms the error fires even
-  when a non-digit token character follows the sign, not just at
-  end-of-input.
-- Every pre-existing integer/float/hex/binary/octal lexer test
-  continues to pass unmodified.
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py` (`_number`), `tests/test_lexer.py`
-(new tests alongside `test_float`/`test_float_with_underscore_separators`,
-search `class TestLiterals`). Once merged, `README.md`'s Values bullet
-needs a mention that float literals accept scientific notation added
-near the existing underscore-separator mention, and `PROJECT.md`'s
-roadmap paragraph needs it moved from backlog to landed — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `geometric_mean` — the nth root of a list's product
+## 1. Standard library: `geometric_mean` — the nth root of a list's product
 
 Build: the breadth task after task 5's depth work (scientific notation
 for float literals) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -218,7 +111,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
+## 2. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
 
 Build: the depth task after task 5's breadth work (`geometric_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -380,7 +273,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
+## 3. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
 
 Build: the breadth task after task 5's depth work (postfix `++`/`--`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -446,7 +339,7 @@ task.
 
 ---
 
-## 5. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+## 4. Language: trailing commas in list/map literals, call arguments, and function parameter lists
 
 Build: the depth task after task 5's breadth work (`digit_product`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -552,7 +445,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
+## 5. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
 
 Build: the breadth task after task 5's depth work (trailing commas) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

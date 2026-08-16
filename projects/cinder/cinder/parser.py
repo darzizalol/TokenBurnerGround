@@ -297,8 +297,11 @@ class Parser:
         if self._check(TokenType.LBRACE):
             return self._destructure_let_statement(let_token, is_map=True)
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
-        self._consume(TokenType.EQ, "'=' after variable name")
-        initializer = self._assignment()
+        if self._check(TokenType.SEMICOLON):
+            initializer: Expr = Literal(None, name_token.line, name_token.column)
+        else:
+            self._consume(TokenType.EQ, "'=' after variable name")
+            initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
 

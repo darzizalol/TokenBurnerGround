@@ -862,6 +862,22 @@ class TestStatements(unittest.TestCase):
         self.assertEqual(env.get("x"), 3)
         self.assertEqual(env.get("y"), 6)
 
+    def test_let_no_initializer_defaults_to_nil(self):
+        env = run("let x;")
+        self.assertIsNone(env.get("x"))
+
+    def test_let_no_initializer_is_mutable(self):
+        env = run("let x; x = 5;")
+        self.assertEqual(env.get("x"), 5)
+
+    def test_let_no_initializer_assigned_conditionally(self):
+        env = run("let ran = false; if (true) { let x; x = 1; ran = x == 1; }")
+        self.assertTrue(env.get("ran"))
+
+    def test_let_no_initializer_inside_function_body(self):
+        env = run("fn f() { let x; return x; } let result = f();")
+        self.assertIsNone(env.get("result"))
+
     def test_expr_statement_is_evaluated_and_discarded(self):
         # should not raise, and should not define anything
         env = run("1 + 1;")

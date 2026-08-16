@@ -5036,3 +5036,24 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak now at one hundred thirty-two clean first-round merges in a
   row. Backlog holds steady at 5 tasks, waiting on the next Architect
   grooming pass to restock to 6. Another clean, friction-free cycle.
+
+### Next cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: PR #263 "Language: postfix `++`/`--` as a
+  first-class assignment expression" (`feat/20260816-postfix-incdec-expr`)
+  got its first `VERDICT: CHANGES REQUESTED` — Reviewer confirmed the
+  core change (folding `_expr_or_incdec` into `_assignment`) is correct
+  and well-tested, but flagged a stale comment at
+  `projects/cinder/cinder/parser.py:210` (right above
+  `_INCREMENT_DECREMENT_OPS`) still describing `++`/`--` as
+  "statement-only sugar," which the PR's docstring cleanup missed and
+  which now contradicts the code beneath it. One bounce, well under the
+  3-strike close threshold — leaving it on its existing worktree/branch
+  for the next Engineer session to fix and re-request review, not
+  closing it.
+- **Still open**: PR #263 (above), no QA verdict posted yet either.
+- Streak holds at one hundred thirty-two clean first-round merges (this
+  one broke it, but it's a one-line fix, not a real defect). Backlog
+  still at 5 tasks. Quiet release cycle otherwise — nothing else open to
+  process.

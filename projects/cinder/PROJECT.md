@@ -839,16 +839,9 @@ answers "exactly two", `is_composite` answers "more than one" (a strict
 superset `is_semiprime` narrows). Walks the same "peel small factors,
 then check what's left" shape `prime_factors` already uses, but counts
 instead of collecting, bailing out early once the count exceeds two so
-highly composite inputs stay cheap — have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, `is_semiprime`, has since landed via PR #256
-and is covered in the "have since landed" history above; this grooming
-pass dropped its now-redundant not-yet-scoped description from this
-section rather than leaving it to drift further out of sync):
-as task 1, uninitialized `let` declarations (`let x;`, defaulting to
-`nil`) — the depth task after `is_semiprime`'s breadth work: today
-every `let` requires an
+highly composite inputs stay cheap, and uninitialized `let`
+declarations (`let x;`, defaulting to `nil`) — the depth task after
+`is_semiprime`'s breadth work: today every `let` requires an
 initializer (`cinder/parser.py`'s `_let_statement` unconditionally
 consumes `=` right after the identifier), forcing a throwaway
 placeholder value (`let x = nil;`) purely to satisfy the parser even
@@ -863,8 +856,16 @@ out unassigned would defeat the purpose of `const`, and
 `_for_statement`'s C-style init clause already reuses `_let_statement`,
 so `for (let i; i < 3; i++) { ... }` becomes parseable for free too,
 though it correctly raises a runtime type error on the first comparison
-rather than being a useful thing to write. And as task 2,
-`is_powerful_number(n)` — a breadth task after task 1's depth work:
+rather than being a useful thing to write — have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
+used to occupy this slot, uninitialized `let` declarations, has since
+landed via PR #257 and is covered in the "have since landed" history
+above; this grooming pass dropped its now-redundant not-yet-scoped
+description from this section rather than leaving it to drift further
+out of sync):
+as task 1, `is_powerful_number(n)` — a breadth task after the
+uninitialized-`let` depth work:
 testing whether every prime factor of `n` appears with exponent `2` or
 more (equivalently, `n` can be written as `a^2 * b^3`), the natural
 counterpart to the already-landed `is_squarefree` — where
@@ -874,9 +875,9 @@ requires every prime factor to repeat. Walks the same
 `prime_factors` already use, peeling each prime factor's full
 multiplicity in an inner loop and failing fast the moment any factor's
 count comes up short of `2`, then checking that nothing above the
-`sqrt` bound was left over uncounted. And as task 3, single-quoted
+`sqrt` bound was left over uncounted. And as task 2, single-quoted
 string literals (`'...'` as an alternate delimiter to double quotes) —
-the depth task after task 2's breadth work: today `cinder/lexer.py`'s
+the depth task after task 1's breadth work: today `cinder/lexer.py`'s
 `_string` only recognizes `"`, so a string containing a literal `"`
 must escape it even though the far more common real-world need is a
 string that quotes something. Generalizes `_string` to take the
@@ -889,7 +890,7 @@ either delimiter. The `${...}` interpolation machinery,
 are already delimiter-agnostic and need no changes; no parser or
 interpreter changes at all, since both delimiters produce the same
 `STRING`/`INTERP_STRING` tokens carrying the same parsed Python `str`
-value. And as task 4, `is_repdigit(n)` — a breadth task after task 3's
+value. And as task 3, `is_repdigit(n)` — a breadth task after task 2's
 depth work: testing whether every decimal digit of a non-negative
 integer is the same (`11`, `222`, `4444`), a digit-based predicate
 joining `is_palindrome_number`/`is_armstrong`/`is_harshad`/
@@ -905,8 +906,8 @@ number trivially has every digit equal); negative inputs return `false`
 rather than raising, the same boolean-predicate domain convention every
 sibling in this cluster uses. Implementation is a one-liner once the
 sign is handled: `len(set(str(value))) == 1`, no trial division or
-`sqrt` bound needed. And as task 5, scientific notation for float
-literals (`1e3`, `1.5e-2`, `2E+10`) — the depth task after task 4's
+`sqrt` bound needed. And as task 4, scientific notation for float
+literals (`1e3`, `1.5e-2`, `2E+10`) — the depth task after task 3's
 breadth work: today `cinder/lexer.py`'s `_number` only recognizes plain digits and an
 optional `.`-led fractional part, with no handling of an `e`/`E`
 exponent suffix at all, so `1e3` lexes as an `INT` token `1` immediately
@@ -939,9 +940,8 @@ own `float()` already parses the full `1e3`/`1.5e-2`/`2e+10` exponent
 grammar once underscores are stripped. No parser or interpreter changes
 are needed — the result is still an ordinary `FLOAT` token carrying a
 plain Python `float`, indistinguishable downstream from one written
-with a decimal point. And as task 6, `geometric_mean(list)` — a
-breadth task after task 5's depth work, restocking the backlog back to
-6 tasks: the nth root of the product of a list's elements, the natural
+with a decimal point. And as task 5, `geometric_mean(list)` — a
+breadth task after task 4's depth work: the nth root of the product of a list's elements, the natural
 second member of the statistics cluster (`mean`, `median`, `variance`,
 `std_dev`, `mode`) alongside the arithmetic mean already in `mean` —
 that cluster has grown five members deep without ever adding a second
@@ -953,7 +953,30 @@ so a non-numeric element always reports first), since a geometric mean
 over zero or negative inputs has no real-valued result in Cinder's
 numeric tower — the same "raise a domain error rather than leak a
 `nan`" convention `log()` already applies to its own positive-input
-requirement. And only much later, a bytecode VM if performance ever
+requirement. And as task 6, postfix `++`/`--` as a first-class
+assignment expression — the depth task after task 5's breadth work,
+restocking the backlog back to 6 tasks: today `++`/`--` are recognized
+only by a one-off parser helper (`_expr_or_incdec`) reachable from
+exactly three places — a bare `x++;` statement and the `for`-loop's
+init/step clauses — while every *other* assignment-flavored operator
+(`=`, the compound-assign family, `??=`) is recognized directly inside
+`_assignment` itself and so is already usable as a `let` initializer,
+a chained-assignment RHS, or a parenthesized sub-expression. `let y =
+x++;` is a `ParseError` today even though the exactly analogous `let y
+= x += 1;` already works. Folds `_expr_or_incdec`'s existing
+`Identifier`/`Index`-target check and `Assign`/`IndexCompoundAssign`
+desugaring directly into `_assignment` as one more branch alongside
+the `EQ`/`QQEQ`/`_COMPOUND_ASSIGN_OPS` checks already there, then
+deletes `_expr_or_incdec` and points its three former call sites at
+`_assignment` directly. No interpreter changes: the reused desugaring
+already evaluates to the new (post-increment) value, the same as every
+compound-assign sibling, so this needs no new value-semantics decision.
+Deliberately does not change precedence (`-x++;` stays a `ParseError`,
+exactly as today) or reachability from `_ternary()`-rooted positions
+like call arguments (`print(x++)` stays a `ParseError`, matching
+`print(x = 5)`'s own existing restriction) — only closes the one gap
+where `++`/`--` uniquely lagged behind every sibling assignment
+operator. And only much later, a bytecode VM if performance ever
 actually matters. The Architect should keep scoping these into
 `BACKLOG.md` incrementally — do not jump ahead of the current layer,
 and should keep watching the same breadth-vs-depth balance that has
@@ -968,14 +991,14 @@ the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (`is_semiprime` having landed via PR #256, dropping
-the count from 6 to 5) and restocked it to 6 by adding task 6,
-`geometric_mean`, continuing alternation with a breadth task after task
-5's depth work (scientific notation for float literals) rather than
-stacking a second depth task, per the policy above. The next grooming
-pass should continue alternating breadth/depth, restocking toward 6-7
-tasks whenever a merge drops the count within reach of the 5-task
-floor.
+its 5-task floor (uninitialized `let` declarations having landed via
+PR #257, dropping the count from 6 to 5) and restocked it to 6 by
+adding task 6, postfix `++`/`--` as a first-class assignment
+expression, continuing alternation with a depth task after task 5's
+breadth work (`geometric_mean`) rather than stacking a second breadth
+task, per the policy above. The next grooming pass should continue
+alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
+drops the count within reach of the 5-task floor.
 
 ## History
 

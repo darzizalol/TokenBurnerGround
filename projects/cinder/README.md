@@ -334,7 +334,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (2600+ tests) covers every layer — lexer, parser, interpreter,
+The suite (2900+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -360,17 +360,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a pipe operator `a |> f`
-as sugar for `f(a)`, and `is_semiprime` to test whether an integer is
-the product of exactly two primes.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): uninitialized `let`
-declarations (`let x;`, defaulting to `nil`), `is_powerful_number`
+Actively developed, nightly. Recently landed: `is_semiprime` to test
+whether an integer is the product of exactly two primes, and
+uninitialized `let` declarations (`let x;`, defaulting to `nil`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_powerful_number`
 to test whether every prime factor of an integer appears with exponent
 `2` or more, single-quoted string literals (`'...'`) as an alternate
 delimiter to double quotes, `is_repdigit` to test whether every decimal
 digit of an integer is the same, scientific notation for float
-literals (`1e3`, `1.5e-2`), and `geometric_mean` to compute the nth
-root of a list's product.
+literals (`1e3`, `1.5e-2`), `geometric_mean` to compute the nth root of
+a list's product, and postfix `++`/`--` as a first-class assignment
+expression (usable as a `let` initializer or chained-assignment RHS,
+not just a bare statement or `for`-loop clause).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

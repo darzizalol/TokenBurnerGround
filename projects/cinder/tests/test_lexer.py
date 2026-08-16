@@ -537,6 +537,26 @@ class TestOperators(unittest.TestCase):
         # A lone `&` still lexes as AMP, not AMPEQ.
         self.assertEqual(types(tokenize("a & 1")), [TokenType.IDENTIFIER, TokenType.AMP, TokenType.INT, TokenType.EOF])
 
+    def test_pipe_arrow_lexes_as_single_token(self):
+        # `|>` must lex as one PIPE_ARROW token, not PIPE then GT.
+        tokens = tokenize("a |> b")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.IDENTIFIER, TokenType.PIPE_ARROW, TokenType.IDENTIFIER, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "|>")
+
+    def test_pipe_arrow_does_not_shadow_pipe_or_pipeeq(self):
+        # A lone `|` still lexes as PIPE, and `|=` still lexes as PIPEEQ.
+        self.assertEqual(
+            types(tokenize("a | b")),
+            [TokenType.IDENTIFIER, TokenType.PIPE, TokenType.IDENTIFIER, TokenType.EOF],
+        )
+        self.assertEqual(
+            types(tokenize("a |= b")),
+            [TokenType.IDENTIFIER, TokenType.PIPEEQ, TokenType.IDENTIFIER, TokenType.EOF],
+        )
+
     def test_shift_compound_assignment_operators(self):
         tokens = tokenize("a <<= 1; b >>= 2;")
         self.assertEqual(

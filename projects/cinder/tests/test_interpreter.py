@@ -528,6 +528,78 @@ class TestOptionalCallChaining(unittest.TestCase):
         self.assertIsNone(evaluate("nil?.key"))
 
 
+class TestPipeOperator(unittest.TestCase):
+    def test_pipes_value_into_user_defined_function(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "fn double(x) { return x * 2; } let r = 5 |> double;",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("r"), 10)
+
+    def test_chained_pipes_are_left_associative(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "fn double(x) { return x * 2; } fn inc(x) { return x + 1; } "
+            "let r = 5 |> double |> inc;",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("r"), 11)
+
+    def test_pipes_into_a_builtin(self):
+        from cinder.builtins import create_global_environment
+
+        env = run("let r = -5 |> abs;", create_global_environment())
+        self.assertEqual(env.get("r"), 5)
+
+    def test_right_side_evaluated_as_full_expression_before_call(self):
+        # `3 |> curry(add, 2)(5)` evaluates `curry(add, 2)(5)` to a
+        # one-argument partial application first, then calls it with `3` —
+        # not Elixir-style argument insertion.
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "fn add(a, b) { return a + b; } let r = 3 |> curry(add, 2)(5);",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("r"), 8)
+
+    def test_usable_as_let_initializer_without_parens(self):
+        from cinder.builtins import create_global_environment
+
+        env = run("let y = 5 |> abs;", create_global_environment())
+        self.assertEqual(env.get("y"), 5)
+
+    def test_usable_inside_ternary_branch_without_parens(self):
+        from cinder.builtins import create_global_environment
+
+        env = run("let r = true ? 5 |> abs : 0;", create_global_environment())
+        self.assertEqual(env.get("r"), 5)
+
+    def test_non_callable_right_side_raises_not_callable(self):
+        with self.assertRaisesRegex(CinderRuntimeError, r"int is not callable"):
+            evaluate("5 |> 3")
+
+    def test_arity_mismatch_on_implicit_call_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"one\(\) expects 0 argument\(s\), got 1"
+        ):
+            run("fn one() { return 1; } let r = 5 |> one;")
+
+    def test_missing_right_operand_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            evaluate("5 |>")
+
+    def test_pipe_eq_compound_assignment_unaffected(self):
+        env = run("let x = 5; x |= 3;")
+        self.assertEqual(env.get("x"), 7)
+
+    def test_bitwise_or_unaffected(self):
+        self.assertEqual(evaluate("5 | 3"), 7)
+
+
 class TestTernary(unittest.TestCase):
     def test_true_condition_takes_then_branch(self):
         self.assertEqual(evaluate("true ? 1 : 2"), 1)

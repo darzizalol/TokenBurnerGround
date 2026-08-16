@@ -1081,7 +1081,7 @@ class Parser:
         return expr
 
     def _ternary(self) -> Expr:
-        expr = self._nullish()
+        expr = self._pipe()
         if self._check(TokenType.QUESTION):
             question_token = self._advance()
             then_expr = self._ternary()
@@ -1090,6 +1090,14 @@ class Parser:
             return Ternary(
                 expr, then_expr, else_expr, question_token.line, question_token.column
             )
+        return expr
+
+    def _pipe(self) -> Expr:
+        expr = self._nullish()
+        while self._check(TokenType.PIPE_ARROW):
+            operator = self._advance()
+            right = self._nullish()
+            expr = Binary(expr, operator, right)
         return expr
 
     def _nullish(self) -> Expr:

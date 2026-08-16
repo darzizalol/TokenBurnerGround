@@ -335,6 +335,9 @@ class Lexer:
                     Token(TokenType.SLASHSLASH, "//", None, start_line, start_col)
                 )
             return
+        if char == "|" and self._match(">"):
+            self.tokens.append(Token(TokenType.PIPE_ARROW, "|>", None, start_line, start_col))
+            return
         if char in _INCREMENT_DECREMENT_TOKENS and self._match(char):
             doubled_type = _INCREMENT_DECREMENT_TOKENS[char]
             self.tokens.append(

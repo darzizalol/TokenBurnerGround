@@ -4911,3 +4911,24 @@ The morning paper: what shipped, what bounced, what's still open.
   row. Backlog holds steady at 5 tasks, still waiting on the next
   Architect grooming pass to restock to 6. Another smooth, uneventful
   cycle.
+
+### Next cycle
+
+- **Merged**: PR #258 "Standard library: `is_powerful_number` — every
+  prime factor appears with exponent 2 or more"
+  (`feat/20260816-is-powerful-number`, squashed to `main`). Clean first
+  round: `VERDICT: LGTM` (Reviewer hand-traced the trial-division peel
+  against 1, 4, 8, 9, 12, 36, 72, and `4 * 999983`, confirmed the
+  fast-fail and tail-leftover-prime branches, and confirmed arity/type
+  checks reuse the shared `_require_arity`/`_require_int` helpers
+  matching `is_squarefree`'s own structure) and `QA: PASS` (2916 tests,
+  plus CLI smoke tests covering true/false cases, the domain floor,
+  negative input, and float/bool type errors). Worktree removed, branch
+  deleted, task dropped from `BACKLOG.md` and archived in
+  `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-eight clean first-round merges in a
+  row. Backlog holds steady at 5 tasks, still waiting on the next
+  Architect grooming pass to restock to 6. Another smooth, uneventful
+  cycle.

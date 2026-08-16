@@ -2543,3 +2543,13 @@ for vision/architecture.
   raises a runtime type error on the first comparison since `i` is
   never assigned before the condition runs. Clean first round: Reviewer
   gave `VERDICT: LGTM` and QA gave `QA: PASS` (2902 tests passing).
+- **Standard library: `is_powerful_number` — every prime factor appears
+  with exponent 2 or more** — merged 2026-08-16T14:53Z via PR #258
+  (`feat/20260816-is-powerful-number`). Added `is_powerful_number(n)` to
+  `cinder/builtins.py`, registered right after `is_squarefree`: a
+  trial-division peel that fully divides out each factor's multiplicity
+  and fails fast on a count below `2`, with a trailing `remaining == 1`
+  check catching a leftover prime above the sqrt bound. `n < 1` returns
+  `false` rather than raising, matching the boolean-predicate cluster's
+  convention. Clean first round: Reviewer gave `VERDICT: LGTM` and QA
+  gave `QA: PASS` (2916 tests passing).

@@ -142,6 +142,23 @@ class TestLiterals(unittest.TestCase):
         tokens = tokenize(r'"a\nb\tc\\d\"e"')
         self.assertEqual(tokens[0].literal, "a\nb\tc\\d\"e")
 
+    def test_single_quoted_string_basic(self):
+        tokens = tokenize("'hello'")
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, "hello")
+
+    def test_single_quoted_string_may_contain_unescaped_double_quote(self):
+        tokens = tokenize('\'she said "hi"\'')
+        self.assertEqual(tokens[0].literal, 'she said "hi"')
+
+    def test_double_quoted_string_may_contain_unescaped_single_quote(self):
+        tokens = tokenize('"it\'s fine"')
+        self.assertEqual(tokens[0].literal, "it's fine")
+
+    def test_single_quoted_string_escapes(self):
+        tokens = tokenize(r"'a\nb\tc\\d\'e'")
+        self.assertEqual(tokens[0].literal, "a\nb\tc\\d'e")
+
     def test_identifier(self):
         tokens = tokenize("foo_bar1")
         self.assertEqual(types(tokens), [TokenType.IDENTIFIER, TokenType.EOF])
@@ -765,6 +782,13 @@ class TestStringInterpolation(unittest.TestCase):
         self.assertEqual(raw, "1/0")
         self.assertEqual((line, col), (1, 4))
 
+    def test_interpolation_inside_single_quoted_string(self):
+        tokens = tokenize("'hello, ${name}!'")
+        self.assertEqual(types(tokens), [TokenType.INTERP_STRING, TokenType.EOF])
+        self.assertEqual(
+            tokens[0].literal, ["hello, ", ("expr", "name", 1, 11), "!"]
+        )
+
 
 class TestErrors(unittest.TestCase):
     def test_unterminated_string(self):
@@ -785,6 +809,23 @@ class TestErrors(unittest.TestCase):
             tokenize('let x = 1;\n"unterminated')
         self.assertEqual(ctx.exception.line, 2)
         self.assertEqual(ctx.exception.column, 1)
+
+    def test_unterminated_single_quoted_string(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("'unterminated")
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+        self.assertTrue(ctx.exception.unterminated)
+
+    def test_invalid_escape_sequence(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize(r'"bad \z escape"')
+        self.assertIn("invalid escape sequence '\\z'", str(ctx.exception))
+
+    def test_invalid_escape_sequence_single_quoted(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize(r"'bad \z escape'")
+        self.assertIn("invalid escape sequence '\\z'", str(ctx.exception))
 
     def test_unrecognized_character(self):
         with self.assertRaises(LexError) as ctx:

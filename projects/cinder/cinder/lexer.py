@@ -39,6 +39,7 @@ _ESCAPES = {
     "t": "\t",
     "\\": "\\",
     '"': '"',
+    "'": "'",
 }
 
 _PREFIXED_INT_BASES = {
@@ -68,8 +69,8 @@ class Lexer:
             start_line, start_col = self.line, self.column
             char = self._advance()
 
-            if char == '"':
-                self._string(start_line, start_col)
+            if char == '"' or char == "'":
+                self._string(start_line, start_col, quote=char)
             elif char.isdigit():
                 self._number(char, start_line, start_col)
             elif char.isalpha() or char == "_":
@@ -160,7 +161,7 @@ class Lexer:
                 break
             self._advance()
 
-    def _string(self, start_line: int, start_col: int):
+    def _string(self, start_line: int, start_col: int, quote: str):
         start_pos = self.pos - 1  # position of the opening quote
         parts: list = []  # str segments and ("expr", raw, line, col) placeholders
         chars = []
@@ -170,7 +171,7 @@ class Lexer:
                 raise LexError(
                     "unterminated string", start_line, start_col, unterminated=True
                 )
-            if self._peek() == '"':
+            if self._peek() == quote:
                 self._advance()
                 break
             if self._peek() == "$" and self._peek_next() == "{":

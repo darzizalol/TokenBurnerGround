@@ -527,6 +527,112 @@ task.
 
 ---
 
+## 6. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+
+Build: the depth task after task 5's breadth work (`digit_product`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
+6 tasks now that single-quoted string literals landed via PR #259,
+dropping the count to the 5-task floor. All four of `cinder/parser.py`'s
+comma-separated-list parsers — `_list_literal`, `_map_literal`,
+`_finish_call` (call arguments), and `_fn_param_list` (function
+parameters) — share the identical shape: parse one element, then `while
+self._check(TokenType.COMMA): self._advance(); <parse another element>`,
+with no check that a comma might be the *last* thing before the closing
+delimiter. A trailing comma — convenient when reordering elements or
+diffing cleanly line-per-element, and already how every mainstream
+scripting language (JS, Python, Rust) treats these four positions —
+today hard-fails instead of being silently accepted. Verify the gap,
+one failure per site:
+```sh
+python3 -m cinder.cli eval 'print([1, 2, 3,]);'
+# -> ParseError: expected an expression, found ']'
+python3 -m cinder.cli eval 'print({"a": 1, "b": 2,});'
+# -> ParseError: expected an expression, found '}'
+python3 -m cinder.cli eval 'fn f(a, b) { return a + b; } print(f(1, 2,));'
+# -> ParseError: expected an expression, found ')'
+python3 -m cinder.cli eval 'fn f(a, b,) { return a + b; } print(f(1, 2));'
+# -> ParseError: expected parameter name, found ')'
+```
+
+**Parsing** (`cinder/parser.py`): in each of the four comma-loops, after
+consuming the comma, check whether the very next token is that site's
+closing delimiter and `break` instead of parsing another element — the
+same "peek before committing to another element" shape, applied one
+token later than usual. For `_list_literal`:
+```python
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if self._check(TokenType.RBRACKET):
+                    break
+                elements.append(self._list_element())
+```
+`_map_literal` takes the identical shape with `TokenType.RBRACE` and
+`pairs.append(self._map_entry())`; `_finish_call` with
+`TokenType.RPAREN` and `arguments.append(self._call_argument())`
+(dropping the `seen_keyword` bookkeeping update for the loop iteration
+that never happens — no other change to that function's keyword-arg
+ordering check); `_fn_param_list` with `TokenType.RPAREN` and
+`params.append(self._fn_param(seen_default))` inside its own
+comma-loop. `_fn_param_list`'s rest-parameter branch needs no special
+handling: a trailing comma after `...rest` (`fn f(a, ...rest,)`) hits
+the same early `RPAREN` check and breaks cleanly before ever reaching
+the existing "rest parameter must be the last parameter" guard, so it's
+accepted — a comma with genuinely nothing meaningful after it, not a
+second parameter smuggled in after the rest one.
+
+Out of scope, deliberately: this task does **not** touch destructuring
+patterns (`let [a, b,] = expr;`, `let {a, b,} = expr;`, `for [a, b,] in
+...`, destructuring function parameters `fn f([a, b,]) { ... }`) or
+list/map comprehension bodies — `_destructure_list_pattern`/
+`_destructure_map_pattern` and the comprehension parsers are separate
+call sites with their own comma-loops, not shared with the four covered
+here, and folding them in would widen this beyond one focused session;
+leave them as a candidate for a future, separately-scoped task if
+still desired. Single-element trailing commas (`[1,]`, `{"a": 1,}`,
+`f(1,)`, `fn f(a,) { ... }`) are in scope and must work the same as the
+multi-element case — the `break` fires right after the one comma
+regardless of how many elements preceded it.
+
+Acceptance criteria:
+- `print([1, 2, 3,]);` prints the list `[1, 2, 3]` — no longer a
+  `ParseError`.
+- `print([1,]);` prints `[1]` — single-element trailing comma.
+- `print([]);` still parses as an empty list (unaffected — no comma at
+  all in this case, confirms the empty-literal path wasn't touched).
+- `print({"a": 1, "b": 2,});` prints the map `{"a": 1, "b": 2}`.
+- `print({"a": 1,});` prints `{"a": 1}` — single-entry trailing comma.
+- `print({});` still parses as an empty map (unaffected).
+- `fn f(a, b) { return a + b; } print(f(1, 2,));` prints `3`.
+- `fn f(a) { return a; } print(f(1,));` prints `1`.
+- `fn f(a, b,) { return a + b; } print(f(1, 2));` prints `3` — trailing
+  comma in the parameter list, not just the call.
+- `fn f(a,) { return a; } print(f(1));` prints `1`.
+- `fn f(a, ...rest,) { return rest; } print(f(1, 2, 3));` prints
+  `[2, 3]` — trailing comma after a rest parameter is accepted.
+- `fn f(a, ...rest, b) { return a; }` still raises `ParseError` matching
+  `"rest parameter must be the last parameter"` — confirms a *real*
+  parameter after the rest one is still rejected, only a bare trailing
+  comma with nothing after it is now accepted.
+- `[1, , 3];` (an empty slot between two commas, not a single trailing
+  comma) still raises `ParseError` matching `"expected an expression,
+  found ','"` — confirms this task only special-cases a comma
+  immediately before the closing delimiter, not comma runs in general.
+- Every pre-existing list/map-literal, call-argument, and
+  function-parameter test continues to pass unmodified, including
+  spread elements/arguments/rest parameters and keyword arguments
+  without a trailing comma.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_list_literal`, `_map_literal`,
+`_finish_call`, `_fn_param_list`), `tests/test_parser.py` (model on
+`class TestCalls` and `class TestListsAndMaps`, search both). Once
+merged, `README.md`'s Values/Calls-adjacent bullets need a mention that
+trailing commas are accepted in these four positions, and `PROJECT.md`'s
+roadmap paragraph needs this moved from backlog to landed — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

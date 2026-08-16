@@ -985,28 +985,45 @@ before iterating, so it needs no new domain-handling decision of its
 own. A single-digit integer (including `0`) is trivially its own
 digit product; any `0` digit anywhere in the number collapses the
 whole product to `0`, which is the correct answer, not a case to guard
-against. And only much later, a bytecode VM if performance ever
-actually matters. The Architect should keep scoping these into
-`BACKLOG.md` incrementally — do not jump ahead of the current layer,
-and should keep watching the same breadth-vs-depth balance that has
-governed every grooming pass so far: two or more single-builtin
-predicate tasks queued back-to-back is a signal to inject a
-language-depth task rather than extending the streak further (most
-recently, this is what placed unary `+` right after
-`collatz_length`/`is_strong_number` stacked two breadth builtins in a
-row), and a depth task landing is usually followed by one breadth task
-before the next depth task is queued, occasionally two in a row when
-the backlog needs restocking faster than strict alternation would
+against. And as task 6, trailing commas in list/map literals, call
+arguments, and function parameter lists (`[1, 2,]`, `{"a": 1,}`,
+`f(1, 2,)`, `fn f(a, b,) { ... }`) — the depth task after
+`digit_product`'s breadth work, closing an ergonomics gap in all four
+of `cinder/parser.py`'s comma-separated-list parsers at once, since
+they share the identical "parse an element, then loop while a comma
+follows" shape: today a comma immediately before the closing delimiter
+is a hard `ParseError` rather than being silently accepted, unlike
+every mainstream scripting language's take on these same four
+positions. Each site gets the same one-line fix — after consuming the
+comma, check whether the next token is that site's own closing
+delimiter and break instead of trying to parse another element — with
+no interpreter changes at all, since this only widens what the parser
+is willing to accept, not what AST shape it produces. Deliberately
+scoped to just those four sites, not destructuring patterns or
+comprehension bodies, which are separate call sites with their own
+comma-loops and are left for a future task if still wanted. And only
+much later, a bytecode VM if performance ever actually matters. The
+Architect should keep scoping these into `BACKLOG.md` incrementally —
+do not jump ahead of the current layer, and should keep watching the
+same breadth-vs-depth balance that has governed every grooming pass so
+far: two or more single-builtin predicate tasks queued back-to-back is
+a signal to inject a language-depth task rather than extending the
+streak further (most recently, this is what placed unary `+` right
+after `collatz_length`/`is_strong_number` stacked two breadth builtins
+in a row), and a depth task landing is usually followed by one breadth
+task before the next depth task is queued, occasionally two in a row
+when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (`is_powerful_number` having landed via PR #258,
-dropping the count from 6 to 5) and restocked it to 6 by adding task 6,
-`digit_product`, continuing alternation with a breadth task after task
-5's depth work (postfix `++`/`--`) rather than stacking a second depth
-task, per the policy above. The next grooming pass should continue
-alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
-drops the count within reach of the 5-task floor.
+its 5-task floor (single-quoted string literals having landed via PR
+#259, dropping the count from 6 to 5 and renumbering `digit_product`
+from task 6 down to task 5) and restocked it to 6 by adding task 6,
+trailing commas, continuing alternation with a depth task after task
+5's breadth work (`digit_product`) rather than stacking a second
+breadth task, per the policy above. The next grooming pass should
+continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor.
 
 ## History
 

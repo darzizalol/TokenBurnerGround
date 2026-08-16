@@ -2587,3 +2587,15 @@ for vision/architecture.
   changes — `float(value_str)` already parses the full grammar once
   underscores are stripped. Clean first round: Reviewer gave
   `VERDICT: LGTM` and QA gave `QA: PASS` (2948 tests passing).
+- **Standard library: `geometric_mean` — the nth root of a list's
+  product** — merged 2026-08-16T19:53:21Z via PR #262
+  (`feat/20260816-geometric-mean`). `_geometric_mean` in
+  `cinder/builtins.py`, registered right after `_mean`, is the
+  statistics cluster's first non-arithmetic average: arity/type
+  checking mirrors `mean`/`median`/`variance` (`_require_arity`,
+  `isinstance(value, list)`, non-empty, `_is_numeric` per element), plus
+  one extra requirement checked only after the numeric check — every
+  element must be strictly positive, raising a domain error rather than
+  dividing by zero or requiring complex arithmetic, the same convention
+  `log()` already uses. Clean first round: Reviewer gave
+  `VERDICT: LGTM` and QA gave `QA: PASS` (2960 tests passing).

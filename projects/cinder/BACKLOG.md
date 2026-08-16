@@ -11,107 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `geometric_mean` — the nth root of a list's product [claimed 2026-08-16T19:49:20Z]
-
-Build: the breadth task after task 5's depth work (scientific notation
-for float literals) per `PROJECT.md`'s breadth-vs-depth policy,
-restocking the backlog back to 6 tasks now that `is_semiprime` has
-landed via PR #256, dropping the count to the 5-task floor. Add
-`geometric_mean(list)` to `cinder/builtins.py`, registered right after
-`_mean` (search for `def _mean`, immediately before `_median`) — the
-statistics cluster (`mean`, `median`, `variance`, `std_dev`, `mode`)
-has never grown a second kind of "average" alongside the arithmetic
-one already in `mean`; the geometric mean is that natural second
-member: the nth root of the product of `n` numbers, rather than their
-sum divided by `n`. Verify the gap: `python3 -m cinder.cli eval
-'print(geometric_mean([4, 9]));'` currently raises
-`CinderRuntimeError` `"undefined name 'geometric_mean'"` — no such
-builtin exists yet.
-
-```python
-def _geometric_mean(arguments: list, line: int, column: int) -> object:
-    _require_arity("geometric_mean", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"geometric_mean() requires a list, got {type_name(value)}", line, column
-        )
-    if not value:
-        raise CinderRuntimeError("geometric_mean() requires a non-empty list", line, column)
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"geometric_mean() requires a list of numbers, got {type_name(element)}", line, column
-            )
-        if element <= 0:
-            raise CinderRuntimeError(
-                "geometric_mean() requires all elements to be positive", line, column
-            )
-    product = 1
-    for element in value:
-        product = product * element
-    return product ** (1 / len(value))
-```
-
-Model the arity/type-checking exactly on `mean`/`median`/`variance`'s
-own structure: `_require_arity`, then the same `isinstance(value,
-list)` / non-empty / `_is_numeric`-per-element checks that whole
-cluster already shares (reusing the shared `_is_numeric` helper — do
-**not** hand-roll a separate `isinstance` check). Unlike the rest of
-that cluster, this builtin adds one more requirement on top: every
-element must be strictly positive, checked only *after* confirming the
-element is numeric (so a non-numeric element always reports the
-"requires a list of numbers" error, never the positivity one) — a
-geometric mean over zero or negative inputs either divides by zero or
-requires complex arithmetic to stay mathematically defined, and
-Cinder's numeric tower has no complex type, so this domain restriction
-is the same "raise a domain error rather than leak a nonsensical or
-`nan` result" convention `log()` already applies to its own
-positive-input requirement. A single-element list is trivially its own
-geometric mean, matching `mean`/`median`'s own single-element
-convention.
-
-Acceptance criteria:
-- `geometric_mean([4, 9]);` is `6.0` — `sqrt(36)`.
-- `geometric_mean([2, 8]);` is `4.0` — `sqrt(16)`.
-- `geometric_mean([3, 27]);` is `9.0` — `sqrt(81)`.
-- `geometric_mean([5, 5]);` is `5.0` — equal elements collapse to
-  themselves.
-- `geometric_mean([7]);` is `7.0` — a single-element list is trivially
-  its own geometric mean, same convention as `mean`/`median`.
-- `geometric_mean([]);` raises `CinderRuntimeError` matching
-  `"geometric_mean() requires a non-empty list"`.
-- `geometric_mean([1, 0]);` raises `CinderRuntimeError` matching
-  `"geometric_mean() requires all elements to be positive"` — zero is
-  not allowed.
-- `geometric_mean([4, -9]);` raises the same positivity
-  `CinderRuntimeError` — a negative element is not allowed even though
-  this particular pair's product happens to be positive.
-- `geometric_mean([1, "a"]);` raises `CinderRuntimeError` matching
-  `"geometric_mean() requires a list of numbers, got string"` — a
-  non-numeric element is reported before the positivity check ever
-  runs on it.
-- `geometric_mean("abc");` raises `CinderRuntimeError` matching
-  `"geometric_mean() requires a list, got string"` — wrong argument
-  type entirely, not just a bad element.
-- `geometric_mean(true);` raises the same not-a-list
-  `CinderRuntimeError`, `"got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `mean`, see current
-line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py` (model on the `TestMean`/`TestMedian` test
-classes, search `class TestMean`). Once merged, `README.md`'s Builtins
-bullet needs `geometric_mean` added near `mean`/`median`/`variance`/
-`std_dev`/`mode`, and `PROJECT.md`'s roadmap paragraph needs it moved
-from backlog to landed — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
+## 1. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
 
 Build: the depth task after task 5's breadth work (`geometric_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -273,7 +173,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
+## 2. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
 
 Build: the breadth task after task 5's depth work (postfix `++`/`--`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -339,7 +239,7 @@ task.
 
 ---
 
-## 4. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+## 3. Language: trailing commas in list/map literals, call arguments, and function parameter lists
 
 Build: the depth task after task 5's breadth work (`digit_product`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -445,7 +345,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
+## 4. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
 
 Build: the breadth task after task 5's depth work (trailing commas) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -547,7 +447,7 @@ task.
 
 ---
 
-## 6. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
+## 5. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
 
 Build: the depth task after task 5's breadth work (`is_evil`/`is_odious`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

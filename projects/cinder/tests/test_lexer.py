@@ -106,6 +106,65 @@ class TestLiterals(unittest.TestCase):
         tokens = tokenize("1_2_3")
         self.assertEqual(tokens[0].literal, 123)
 
+    def test_float_scientific_notation_integer_mantissa(self):
+        tokens = tokenize("1e3")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 1000.0)
+        self.assertEqual(tokens[0].lexeme, "1e3")
+
+    def test_float_scientific_notation_decimal_mantissa(self):
+        tokens = tokenize("1.5e2")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 150.0)
+
+    def test_float_scientific_notation_negative_exponent(self):
+        tokens = tokenize("1.5e-2")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 0.015)
+
+    def test_float_scientific_notation_uppercase_e_and_plus_sign(self):
+        tokens = tokenize("2E+3")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 2000.0)
+
+    def test_float_scientific_notation_underscore_in_mantissa(self):
+        tokens = tokenize("1_000e3")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 1000000.0)
+
+    def test_float_scientific_notation_underscore_in_exponent(self):
+        tokens = tokenize("1e1_0")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 10000000000.0)
+
+    def test_float_scientific_notation_zero(self):
+        tokens = tokenize("0e0")
+        self.assertEqual(types(tokens), [TokenType.FLOAT, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 0.0)
+
+    def test_float_requires_digit_after_dot_unaffected_by_exponent(self):
+        tokens = tokenize("1.foo")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.DOT, TokenType.IDENTIFIER, TokenType.EOF],
+        )
+
+    def test_bare_trailing_e_not_consumed_as_exponent(self):
+        tokens = tokenize("1e")
+        self.assertEqual(
+            types(tokens), [TokenType.INT, TokenType.IDENTIFIER, TokenType.EOF]
+        )
+
+    def test_exponent_sign_without_digits_raises(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("1e+")
+        self.assertEqual(ctx.exception.message, "expected digits after exponent")
+
+    def test_exponent_sign_followed_by_non_digit_raises(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize("1e+x")
+        self.assertEqual(ctx.exception.message, "expected digits after exponent")
+
     def test_trailing_underscore_not_consumed_into_number(self):
         # "1_;" lexes as INT 1 followed by a separate "_" identifier token.
         tokens = tokenize("1_;")

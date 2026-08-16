@@ -266,6 +266,25 @@ class Lexer:
             ):
                 digits.append(self._advance())
 
+        if self._peek().lower() == "e" and (
+            self._peek_next().isdigit() or self._peek_next() in "+-"
+        ):
+            is_float = True
+            digits.append(self._advance())  # consume 'e'/'E'
+            if self._peek() in "+-":
+                digits.append(self._advance())  # consume sign
+            exponent_start = len(digits)
+            while self._peek().isdigit() or (
+                self._peek() == "_"
+                and digits[-1].isdigit()
+                and self._peek_next().isdigit()
+            ):
+                digits.append(self._advance())
+            if len(digits) == exponent_start:
+                raise LexError(
+                    "expected digits after exponent", start_line, start_col
+                )
+
         lexeme = "".join(digits)
         value_str = "".join(c for c in digits if c != "_")
         if is_float:

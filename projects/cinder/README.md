@@ -36,8 +36,11 @@ while (i < 10) {
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
   inside `${...}`, stringified the same way `print`/`format` render values;
   integer literals may also be written in hex (`0x1F`), binary (`0b101`), or
-  octal (`0o17`); any numeric literal may use `_` as a digit-group separator
-  for readability (`1_000_000`, `0xFF_FF`, `3.14_159`), stripped before the
+  octal (`0o17`); float literals accept scientific notation (`1e3`,
+  `1.5e-2`, `2E+10`; an exponent always makes the literal a float, even
+  with no `.` present, so `1e3` is `1000.0` not the int `1000`); any
+  numeric literal may use `_` as a digit-group separator
+  for readability (`1_000_000`, `0xFF_FF`, `3.14_159`, `1_000e1_0`), stripped before the
   value is constructed
 - **Variables & scope**: `let` declarations, `const` declarations for
   immutable bindings (reassignment or `++`/`--`/compound-assignment on a
@@ -364,19 +367,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: single-quoted string
-literals (`'...'`) as an alternate delimiter to double quotes, and
-`is_repdigit` to test whether every decimal digit of an integer is the
-same.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): scientific notation
-for float literals (`1e3`, `1.5e-2`),
+Actively developed, nightly. Recently landed: `is_repdigit` to test
+whether every decimal digit of an integer is the same, and scientific
+notation for float literals (`1e3`, `1.5e-2`, `2E+10`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
 `geometric_mean` to compute the nth root of a list's product,
 postfix `++`/`--` as a first-class assignment expression (usable as a
 `let` initializer or chained-assignment RHS, not just a bare statement
 or `for`-loop clause), `digit_product` as `digit_sum`'s multiplicative
 counterpart, trailing commas in list/map literals, call arguments, and
-function parameter lists, and `is_evil`/`is_odious` binary
-popcount-parity predicates.
+function parameter lists, `is_evil`/`is_odious` binary
+popcount-parity predicates, and list concatenation via `+` (closing the
+gap between the existing `concat()` builtin and infix syntax).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

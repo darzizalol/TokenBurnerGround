@@ -811,66 +811,62 @@ itself. Inlines its own private aliquot-sum helper mirroring
 than call the dispatch-signature builtin" approach `is_emirp` already
 takes with `is_composite`/`reverse_int`), and explicitly excludes
 `a == b` even though a perfect number would otherwise trivially pass —
-amicability is defined only between two *distinct* integers — have
-since landed too.
+amicability is defined only between two *distinct* integers — and a
+pipe operator (`a |> f` as sugar for `f(a)`) — the depth task after
+`is_amicable`'s breadth work: Cinder already ships `pipe(f, g, h)`/
+`compose(f, g, h)` builtins that thread a value through a *fixed list*
+of unary functions, but had no operator-level sugar for the common
+one-shot or ad-hoc-chain case, forcing either inside-out nesting
+(`g(f(a))`) or a throwaway `pipe(f, g)(a)` call built just to be
+invoked once. `a |> f` evaluates both sides as ordinary expressions and
+calls the right's value with the left's value as its sole argument —
+deliberately not Elixir-style argument insertion, so `a |> f(1)` calls
+`f(1)` first and calls *that result* with `a`, composing naturally with
+`curry` (`3 |> curry(add, 2)(5)`). Slots into the precedence chain
+between `_ternary` and `_nullish` (looser than every value-producing
+binary operator, tighter than `? :`/assignment), left-associative like
+`_or`/`_and`, reusing the existing `Binary` AST node and the
+already-shared `call_value` helper rather than adding a new node or a
+bespoke call path — the new `PIPE_ARROW` token for `|>` was the only
+genuinely new piece, checked in the lexer before the existing `|=`/`|`
+fallback so bitwise-or and its compound assignment stay unaffected —
+have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, `is_amicable`, has since landed via PR #254
-and is covered in the "have since landed" history above; this grooming
-pass dropped its now-redundant not-yet-scoped description from this
-section rather than leaving it to drift further out of sync):
-as task 1, a pipe operator (`a |> f` as sugar for `f(a)`) — the depth
-task after `is_amicable`'s breadth work, restocking the backlog back to
-6 tasks: Cinder already ships `pipe(f, g, h)`/`compose(f, g, h)` builtins that
-thread a value through a *fixed list* of unary functions, but has no
-operator-level sugar for the common one-shot or ad-hoc-chain case,
-forcing either inside-out nesting (`g(f(a))`) or a throwaway
-`pipe(f, g)(a)` call built just to be invoked once. `a |> f` evaluates
-both sides as ordinary expressions and calls the right's value with the
-left's value as its sole argument — deliberately not Elixir-style
-argument insertion, so `a |> f(1)` calls `f(1)` first and calls *that
-result* with `a`, composing naturally with `curry`
-(`3 |> curry(add, 2)(5)`). Slots into the precedence chain between
-`_ternary` and `_nullish` (looser than every value-producing binary
-operator, tighter than `? :`/assignment), left-associative like
-`_or`/`_and`. Reuses the existing `Binary` AST node and the
-already-shared `call_value` helper (`_evaluate_call`'s own machinery,
-also used by `map`/`filter`/`pipe`/`compose`) rather than adding a new
-node or a bespoke call path — the new `PIPE_ARROW` token for `|>` is
-the only genuinely new piece, checked in the lexer before the existing
-`|=`/`|` fallback so bitwise-or and its compound assignment stay
-unaffected. And as task 2, `is_semiprime(n)` — a breadth task after
-task 1's depth work, restocking the backlog back to 6 tasks: testing
-whether `n` is the product of exactly two primes counted with
-multiplicity (`4 = 2 * 2`, `6 = 2 * 3`, `15 = 3 * 5`), the third member
-of the `is_prime`/`is_composite`/`is_semiprime` classification trio —
-`is_prime` answers "exactly one prime factor", `is_semiprime` answers
-"exactly two", `is_composite` answers "more than one" (a strict
-superset `is_semiprime` narrows). Walks the same "peel small factors,
-then check what's left" shape `prime_factors` already uses, but counts
-instead of collecting, bailing out early once the count exceeds two so
-highly composite inputs stay cheap. And as task 3, uninitialized `let`
-declarations (`let x;`, defaulting to `nil`) — the depth task after
-task 2's breadth work, restocking the backlog back to 6 tasks: today
-every `let` requires an initializer (`cinder/parser.py`'s
-`_let_statement` unconditionally consumes `=` right after the
-identifier), forcing a throwaway placeholder value (`let x = nil;`)
-purely to satisfy the parser even when the real value is only known
-conditionally, e.g. set inside a following `if`/`else`. Only requires
-`=` and an initializer expression when the token right after the
-identifier isn't `;` — otherwise defaults the initializer to a bare
-`Literal(None, ...)` node, exactly what the parser already builds for
-the `nil` keyword itself, so the interpreter's existing `LetStmt`
-evaluation path needs no changes. `const` is deliberately untouched —
-an immutable binding that starts out unassigned would defeat the
-purpose of `const`, and `_for_statement`'s C-style init clause already
-reuses `_let_statement`, so `for (let i; i < 3; i++) { ... }` becomes
-parseable for free too, though it correctly raises a runtime type
-error on the first comparison rather than being a useful thing to
-write. And as task 4, `is_powerful_number(n)` — a breadth task after
-task 3's depth work, restocking the backlog back to 6 tasks: testing
-whether every prime factor of `n` appears with exponent `2` or more
-(equivalently, `n` can be written as `a^2 * b^3`), the natural
+used to occupy this slot, the pipe operator, has since landed via PR
+#255 and is covered in the "have since landed" history above; this
+grooming pass dropped its now-redundant not-yet-scoped description from
+this section rather than leaving it to drift further out of sync):
+as task 1, `is_semiprime(n)` — a breadth task restocking the backlog
+back to 6 tasks: testing whether `n` is the product of exactly two
+primes counted with multiplicity (`4 = 2 * 2`, `6 = 2 * 3`, `15 = 3 *
+5`), the third member of the `is_prime`/`is_composite`/`is_semiprime`
+classification trio — `is_prime` answers "exactly one prime factor",
+`is_semiprime` answers "exactly two", `is_composite` answers "more than
+one" (a strict superset `is_semiprime` narrows). Walks the same "peel
+small factors, then check what's left" shape `prime_factors` already
+uses, but counts instead of collecting, bailing out early once the
+count exceeds two so highly composite inputs stay cheap. And as task 2,
+uninitialized `let` declarations (`let x;`, defaulting to `nil`) — the
+depth task after task 1's breadth work: today every `let` requires an
+initializer (`cinder/parser.py`'s `_let_statement` unconditionally
+consumes `=` right after the identifier), forcing a throwaway
+placeholder value (`let x = nil;`) purely to satisfy the parser even
+when the real value is only known conditionally, e.g. set inside a
+following `if`/`else`. Only requires `=` and an initializer expression
+when the token right after the identifier isn't `;` — otherwise
+defaults the initializer to a bare `Literal(None, ...)` node, exactly
+what the parser already builds for the `nil` keyword itself, so the
+interpreter's existing `LetStmt` evaluation path needs no changes.
+`const` is deliberately untouched — an immutable binding that starts
+out unassigned would defeat the purpose of `const`, and
+`_for_statement`'s C-style init clause already reuses `_let_statement`,
+so `for (let i; i < 3; i++) { ... }` becomes parseable for free too,
+though it correctly raises a runtime type error on the first comparison
+rather than being a useful thing to write. And as task 3,
+`is_powerful_number(n)` — a breadth task after task 2's depth work:
+testing whether every prime factor of `n` appears with exponent `2` or
+more (equivalently, `n` can be written as `a^2 * b^3`), the natural
 counterpart to the already-landed `is_squarefree` — where
 `is_squarefree` rejects any repeated prime factor, `is_powerful_number`
 requires every prime factor to repeat. Walks the same
@@ -878,63 +874,95 @@ requires every prime factor to repeat. Walks the same
 `prime_factors` already use, peeling each prime factor's full
 multiplicity in an inner loop and failing fast the moment any factor's
 count comes up short of `2`, then checking that nothing above the
-`sqrt` bound was left over uncounted. And as task 5, single-quoted
+`sqrt` bound was left over uncounted. And as task 4, single-quoted
 string literals (`'...'` as an alternate delimiter to double quotes) —
-the depth task after task 4's breadth work, restocking the backlog back
-to 6 tasks: today `cinder/lexer.py`'s `_string` only recognizes `"`, so
-a string containing a literal `"` must escape it even though the far
-more common real-world need is a string that quotes something.
-Generalizes `_string` to take the opening quote character as a
-parameter (used everywhere the method currently hardcodes `'"'` as the
-terminator check), dispatches both `"` and `'` to it from `tokenize`,
-and adds `'` to the shared `_ESCAPES` table alongside the existing `"`
-entry so `\'` is a valid escape inside either delimiter. The `${...}`
-interpolation machinery, `has_interp`/`INTERP_STRING` split, and
-unterminated-string detection are already delimiter-agnostic and need
-no changes; no parser or interpreter changes at all, since both
-delimiters produce the same `STRING`/`INTERP_STRING` tokens carrying
-the same parsed Python `str` value. And as task 6, `is_repdigit(n)` — a
-breadth task after task 5's depth work, restocking the backlog back to 6
-tasks: testing whether every decimal digit of a non-negative integer is
-the same (`11`, `222`, `4444`), a digit-based predicate joining
-`is_palindrome_number`/`is_armstrong`/`is_harshad`/`is_strong_number` in
-the digit-transform cluster rather than extending the recent
-prime-factorization run (`is_semiprime`, `is_powerful_number`) a third
-time — deliberately varying the sub-theme within the breadth slot once a
-cluster runs two deep, the same way the policy already varies the
-breadth/depth balance itself. A single-digit integer (including `0`)
-counts as trivially repdigit, matching `is_palindrome_number`'s own
-single-digit convention (a one-character string trivially reads the
-same forwards and backwards; a one-digit number trivially has every
-digit equal); negative inputs return `false` rather than raising, the
-same boolean-predicate domain convention every sibling in this cluster
-uses. Implementation is a one-liner once the sign is handled:
-`len(set(str(value))) == 1`, no trial division or `sqrt` bound needed.
-And only much later, a bytecode VM if performance ever actually matters.
-The Architect should keep scoping these into `BACKLOG.md` incrementally
-— do not jump ahead of the current layer, and should keep watching the
-same breadth-vs-depth balance that has governed every grooming pass so
-far: two or more single-builtin predicate tasks queued back-to-back is
-a signal to inject a language-depth task rather than extending the
-streak further (most recently, this is what placed unary `+` right
-after `collatz_length`/`is_strong_number` stacked two breadth builtins
-in a row), and a depth task landing is usually followed by one breadth
-task before the next depth task is queued, occasionally two in a row
-when the backlog needs restocking faster than strict alternation would
+the depth task after task 3's breadth work: today `cinder/lexer.py`'s
+`_string` only recognizes `"`, so a string containing a literal `"`
+must escape it even though the far more common real-world need is a
+string that quotes something. Generalizes `_string` to take the
+opening quote character as a parameter (used everywhere the method
+currently hardcodes `'"'` as the terminator check), dispatches both `"`
+and `'` to it from `tokenize`, and adds `'` to the shared `_ESCAPES`
+table alongside the existing `"` entry so `\'` is a valid escape inside
+either delimiter. The `${...}` interpolation machinery,
+`has_interp`/`INTERP_STRING` split, and unterminated-string detection
+are already delimiter-agnostic and need no changes; no parser or
+interpreter changes at all, since both delimiters produce the same
+`STRING`/`INTERP_STRING` tokens carrying the same parsed Python `str`
+value. And as task 5, `is_repdigit(n)` — a breadth task after task 4's
+depth work: testing whether every decimal digit of a non-negative
+integer is the same (`11`, `222`, `4444`), a digit-based predicate
+joining `is_palindrome_number`/`is_armstrong`/`is_harshad`/
+`is_strong_number` in the digit-transform cluster rather than extending
+the recent prime-factorization run (`is_semiprime`, `is_powerful_number`)
+a third time — deliberately varying the sub-theme within the breadth
+slot once a cluster runs two deep, the same way the policy already
+varies the breadth/depth balance itself. A single-digit integer
+(including `0`) counts as trivially repdigit, matching
+`is_palindrome_number`'s own single-digit convention (a one-character
+string trivially reads the same forwards and backwards; a one-digit
+number trivially has every digit equal); negative inputs return `false`
+rather than raising, the same boolean-predicate domain convention every
+sibling in this cluster uses. Implementation is a one-liner once the
+sign is handled: `len(set(str(value))) == 1`, no trial division or
+`sqrt` bound needed. And as task 6, scientific notation for float
+literals (`1e3`, `1.5e-2`, `2E+10`) — the depth task after task 5's
+breadth work, restocking the backlog back to 6 tasks: today
+`cinder/lexer.py`'s `_number` only recognizes plain digits and an
+optional `.`-led fractional part, with no handling of an `e`/`E`
+exponent suffix at all, so `1e3` lexes as an `INT` token `1` immediately
+followed by a separate `IDENTIFIER` token `e3` — confirmed by `python3
+-m cinder.cli eval 'print(1e3);'` raising `ParseError` "expected ')'
+after arguments, found 'e3'" from `print`'s own call-argument parsing,
+not any exponent-specific error, since the lexer never even attempts to
+recognize the exponent as part of the number. After the existing
+optional-fractional-part block in `_number`, add an optional
+exponent-suffix block, following the same "peek, commit, then require
+what must follow" shape `_prefixed_int` already uses for its own
+mandatory-digits-after-prefix rule: only begin consuming when
+`self._peek().lower() == "e"` and the following character is either a
+digit or a `+`/`-` sign (avoiding misreading a bare trailing `e` — e.g.
+an identifier immediately after a number with no space, however
+unlikely — as the start of an exponent it can never complete), then
+unconditionally consume the `e`/`E`, an optional `+`/`-` sign, and a
+digit run reusing the exact same underscore-separator condition
+(`self._peek() == "_" and digits[-1].isdigit() and
+self._peek_next().isdigit()`) the integer and fractional digit runs
+already use, raising `LexError` "expected digits after exponent" if
+that run comes up empty — mirroring `_prefixed_int`'s own "expected
+digits after '0{prefix}'" error shape for the same "committed to a
+suffix, then found nothing there" case. An exponent always forces
+`is_float = True`, even with no `.` present (`1e3` is the float
+`1000.0`, matching Python/JS convention, not the int `1000`) — the
+existing `value_str = "".join(c for c in digits if c != "_")` then
+`float(value_str)` construction needs no changes at all, since Python's
+own `float()` already parses the full `1e3`/`1.5e-2`/`2e+10` exponent
+grammar once underscores are stripped. No parser or interpreter changes
+are needed — the result is still an ordinary `FLOAT` token carrying a
+plain Python `float`, indistinguishable downstream from one written
+with a decimal point. And only much later, a bytecode VM if performance
+ever actually matters. The Architect should keep scoping these into
+`BACKLOG.md` incrementally — do not jump ahead of the current layer,
+and should keep watching the same breadth-vs-depth balance that has
+governed every grooming pass so far: two or more single-builtin
+predicate tasks queued back-to-back is a signal to inject a
+language-depth task rather than extending the streak further (most
+recently, this is what placed unary `+` right after
+`collatz_length`/`is_strong_number` stacked two breadth builtins in a
+row), and a depth task landing is usually followed by one breadth task
+before the next depth task is queued, occasionally two in a row when
+the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
 alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (`is_amicable` having landed via PR #254, dropping the
-count from 6 to 5) and restocked it to 6 by adding task 6, `is_repdigit`,
-continuing alternation with a breadth task after task 5's depth work
-(single-quoted string literals) rather than stacking a depth task, per
-the policy above — and, within that breadth slot, choosing a digit-based
-predicate over a third prime-factorization-flavored one, since
-`is_semiprime` and `is_powerful_number` already sit back-to-back
-earlier in the current backlog and a sub-theme running two deep is
-itself worth varying. The next grooming pass should continue
-alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
-drops the count within reach of the 5-task floor.
+its 5-task floor (the pipe operator having landed via PR #255, dropping
+the count from 6 to 5) and restocked it to 6 by adding task 6,
+scientific notation for float literals, continuing alternation with a
+depth task after task 5's breadth work (`is_repdigit`) rather than
+stacking a third breadth task, per the policy above. The next grooming
+pass should continue alternating breadth/depth, restocking toward 6-7
+tasks whenever a merge drops the count within reach of the 5-task
+floor.
 
 ## History
 

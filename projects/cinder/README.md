@@ -140,7 +140,13 @@ while (i < 10) {
   minus, so `-2 ** 2` is `4`; guards against the same edge cases the `pow()`
   builtin does, e.g. `0 ** -1` and complex results from a negative base with
   a fractional exponent both raise a clean runtime error instead of leaking
-  a raw Python exception or a complex number)
+  a raw Python exception or a complex number), and the pipe operator
+  `a |> f` (sugar for `f(a)`; evaluates both sides as ordinary expressions
+  and calls the right's value with the left's value as its sole argument —
+  not Elixir-style argument insertion, so `a |> f(1)` calls `f(1)` first
+  and calls *that result* with `a`, composing with `curry`, e.g.
+  `3 |> curry(add, 2)(5)`; left-associative, looser than every
+  value-producing binary operator but tighter than `? :`/assignment)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -353,19 +359,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_squarefree` to test
-whether an integer has no repeated prime factor, an optional catch
+Actively developed, nightly. Recently landed: an optional catch
 binding (`try { ... } catch { ... }`, no `(name)` required) for handlers
-that don't need the caught message, and `is_amicable` to test whether
-two distinct integers' proper-divisor sums point at each other.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a pipe operator (`a |>
-f` as sugar for `f(a)`), `is_semiprime` to test whether an integer is
-the product of exactly two primes, uninitialized `let` declarations
-(`let x;`, defaulting to `nil`), `is_powerful_number` to test whether
-every prime factor of an integer appears with exponent `2` or more,
-single-quoted string literals (`'...'`) as an alternate delimiter to
-double quotes, and `is_repdigit` to test whether every decimal digit of
-an integer is the same.
+that don't need the caught message, `is_amicable` to test whether
+two distinct integers' proper-divisor sums point at each other, and a
+pipe operator `a |> f` as sugar for `f(a)`.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_semiprime` to test
+whether an integer is the product of exactly two primes, uninitialized
+`let` declarations (`let x;`, defaulting to `nil`), `is_powerful_number`
+to test whether every prime factor of an integer appears with exponent
+`2` or more, single-quoted string literals (`'...'`) as an alternate
+delimiter to double quotes, `is_repdigit` to test whether every decimal
+digit of an integer is the same, and scientific notation for float
+literals (`1e3`, `1.5e-2`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -4283,6 +4283,68 @@ class TestMean(unittest.TestCase):
             run("mean();")
 
 
+class TestGeometricMean(unittest.TestCase):
+    def test_geometric_mean_of_two_elements(self):
+        result = run("let result = geometric_mean([4, 9]);").get("result")
+        self.assertEqual(result, 6.0)
+
+    def test_geometric_mean_of_two_and_eight(self):
+        result = run("let result = geometric_mean([2, 8]);").get("result")
+        self.assertEqual(result, 4.0)
+
+    def test_geometric_mean_of_three_and_twenty_seven(self):
+        result = run("let result = geometric_mean([3, 27]);").get("result")
+        self.assertEqual(result, 9.0)
+
+    def test_geometric_mean_of_equal_elements(self):
+        result = run("let result = geometric_mean([5, 5]);").get("result")
+        self.assertEqual(result, 5.0)
+
+    def test_geometric_mean_of_single_element_list(self):
+        result = run("let result = geometric_mean([7]);").get("result")
+        self.assertEqual(result, 7.0)
+
+    def test_geometric_mean_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("geometric_mean([]);")
+        self.assertIn("geometric_mean() requires a non-empty list", ctx.exception.message)
+
+    def test_geometric_mean_with_zero_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("geometric_mean([1, 0]);")
+        self.assertIn(
+            "geometric_mean() requires all elements to be positive", ctx.exception.message
+        )
+
+    def test_geometric_mean_with_negative_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("geometric_mean([4, -9]);")
+        self.assertIn(
+            "geometric_mean() requires all elements to be positive", ctx.exception.message
+        )
+
+    def test_geometric_mean_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('geometric_mean([1, "a"]);')
+        self.assertIn(
+            "geometric_mean() requires a list of numbers, got string", ctx.exception.message
+        )
+
+    def test_geometric_mean_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('geometric_mean("abc");')
+        self.assertIn("geometric_mean() requires a list, got string", ctx.exception.message)
+
+    def test_geometric_mean_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("geometric_mean(true);")
+        self.assertIn("geometric_mean() requires a list, got bool", ctx.exception.message)
+
+    def test_geometric_mean_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("geometric_mean();")
+
+
 class TestMedian(unittest.TestCase):
     def test_median_of_odd_length_list(self):
         result = run("let result = median([1, 3, 2]);").get("result")

@@ -2565,3 +2565,13 @@ for vision/architecture.
   the two hardcoded quote checks — no parser or interpreter changes.
   Clean first round: Reviewer gave `VERDICT: LGTM` and QA gave
   `QA: PASS` (2924 tests passing).
+- **Standard library: `is_repdigit`** — every decimal digit is the same
+  — merged 2026-08-16T19:25:06Z via PR #260
+  (`feat/20260816-is-repdigit`). Registered in `cinder/builtins.py`
+  right after `is_palindrome_number`; models its arity/type checking
+  on that builtin (`_require_arity`, `_require_int`), returns `false`
+  for negative input rather than raising, and treats any single-digit
+  value (including `0`) as trivially a repdigit since its decimal
+  string has exactly one character. Pure string/set check on
+  `str(value)` — no trial division needed. Clean first round: Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2937 tests passing).

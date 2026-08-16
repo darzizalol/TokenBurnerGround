@@ -11,88 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_repdigit` — every decimal digit is the same [claimed 2026-08-16T19:20:35Z]
-
-Build: the breadth task after task 5's depth work (single-quoted string
-literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
-backlog back to 6 tasks now that `is_amicable` has landed via PR #254,
-dropping the count to the 5-task floor. Add `is_repdigit(n)` to
-`cinder/builtins.py`, registered right after `is_palindrome_number`
-(search for `def _is_palindrome_number`, immediately before
-`is_perfect_square`) — a positive integer is a repdigit when every one
-of its decimal digits is the same character (`11`, `222`, `4444`), a
-digit-transform predicate joining `is_palindrome_number`/`is_armstrong`/
-`is_harshad`/`is_strong_number` rather than a fourth
-prime-factorization-flavored predicate: the recently-landed
-`is_semiprime` and this backlog's `is_powerful_number` (task 2) already
-sit back-to-back in the same trial-division style, so this task
-deliberately varies the sub-theme within the breadth slot instead of
-extending that run further.
-Verify the gap: `python3 -m cinder.cli eval 'print(is_repdigit(222));'`
-currently raises `CinderRuntimeError` `"undefined name 'is_repdigit'"` —
-no such builtin exists yet.
-
-```python
-def _is_repdigit(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_repdigit", arguments, 1, line, column)
-    value = _require_int("is_repdigit", arguments[0], line, column)
-    if value < 0:
-        return False
-    return len(set(str(value))) == 1
-```
-
-Model the arity/type-checking exactly on `is_palindrome_number`'s own
-structure: `_require_arity`, then `_require_int` (reusing the shared
-helper — do **not** hand-roll a separate `isinstance` check). Negative
-inputs return `false` rather than raising, matching the
-boolean-predicate cluster's own convention (`is_palindrome_number`,
-`is_armstrong`, `is_strong_number`, etc. — *not* the divisor cluster's
-type-vs-domain-error convention, since this builtin returns a boolean,
-not a number). A single-digit integer, including `0`, is trivially a
-repdigit — `str(value)` is one character long, so `set(...)` has exactly
-one element — the same "trivially true for the degenerate one-element
-case" convention `is_palindrome_number` already establishes (a
-one-character string trivially reads the same forwards and backwards).
-No trial division or `sqrt` bound is needed here, unlike
-`is_semiprime`/`is_powerful_number` — this is a pure string/set check on
-the decimal representation, closer in shape to
-`is_palindrome_number`/`is_armstrong` than to the prime-factorization
-cluster.
-
-Acceptance criteria:
-- `is_repdigit(0);` is `true` — single digit, trivially repdigit.
-- `is_repdigit(5);` is `true` — single digit.
-- `is_repdigit(11);` is `true`.
-- `is_repdigit(222);` is `true`.
-- `is_repdigit(4444);` is `true`.
-- `is_repdigit(99999);` is `true` — five-digit repdigit.
-- `is_repdigit(10);` is `false` — two distinct digits.
-- `is_repdigit(121);` is `false` — palindrome, but not every digit is
-  the same, exercises the distinction from `is_palindrome_number`.
-- `is_repdigit(1000);` is `false` — one `1` and three `0`s.
-- `is_repdigit(-11);` is `false` — negative input, same convention as
-  `is_palindrome_number`.
-- `is_repdigit(5.0);` raises `CinderRuntimeError` matching
-  `"is_repdigit() requires an int, got float"` — the same message shape
-  `_require_int` already produces for every sibling in this cluster.
-- `is_repdigit(true);` raises `CinderRuntimeError` matching
-  `"is_repdigit() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_palindrome_number`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py` (model on the `TestIsPalindromeNumber`
-test class, search for `class TestIsPalindromeNumber`). Once merged,
-`README.md`'s Builtins bullet needs `is_repdigit` added near
-`is_palindrome_number`/`is_armstrong`, and `PROJECT.md`'s roadmap
-paragraph needs it moved from backlog to landed — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`)
+## 1. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`)
 
 Build: the depth task after task 5's breadth work (`is_repdigit`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -199,7 +118,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `geometric_mean` — the nth root of a list's product
+## 2. Standard library: `geometric_mean` — the nth root of a list's product
 
 Build: the breadth task after task 5's depth work (scientific notation
 for float literals) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -299,7 +218,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
+## 3. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar
 
 Build: the depth task after task 5's breadth work (`geometric_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -461,7 +380,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
+## 4. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
 
 Build: the breadth task after task 5's depth work (postfix `++`/`--`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -527,7 +446,7 @@ task.
 
 ---
 
-## 6. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+## 5. Language: trailing commas in list/map literals, call arguments, and function parameter lists
 
 Build: the depth task after task 5's breadth work (`digit_product`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

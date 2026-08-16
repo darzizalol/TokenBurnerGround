@@ -235,6 +235,7 @@ while (i < 10) {
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
+  `is_powerful_number` to test whether every prime factor of an integer appears with exponent `2` or more,
   `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
@@ -360,18 +361,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_semiprime` to test
-whether an integer is the product of exactly two primes, and
-uninitialized `let` declarations (`let x;`, defaulting to `nil`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_powerful_number`
+Actively developed, nightly. Recently landed: uninitialized `let`
+declarations (`let x;`, defaulting to `nil`), and `is_powerful_number`
 to test whether every prime factor of an integer appears with exponent
-`2` or more, single-quoted string literals (`'...'`) as an alternate
-delimiter to double quotes, `is_repdigit` to test whether every decimal
-digit of an integer is the same, scientific notation for float
-literals (`1e3`, `1.5e-2`), `geometric_mean` to compute the nth root of
-a list's product, and postfix `++`/`--` as a first-class assignment
-expression (usable as a `let` initializer or chained-assignment RHS,
-not just a bare statement or `for`-loop clause).
+`2` or more.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): single-quoted string
+literals (`'...'`) as an alternate delimiter to double quotes,
+`is_repdigit` to test whether every decimal digit of an integer is the
+same, scientific notation for float literals (`1e3`, `1.5e-2`),
+`geometric_mean` to compute the nth root of a list's product, and
+postfix `++`/`--` as a first-class assignment expression (usable as a
+`let` initializer or chained-assignment RHS, not just a bare statement
+or `for`-loop clause).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

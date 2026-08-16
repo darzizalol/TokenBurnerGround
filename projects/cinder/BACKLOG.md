@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: pipe operator (`a |> f` as sugar for `f(a)`) [claimed 2026-08-15T20:01:31Z]
+## 1. Language: pipe operator (`a |> f` as sugar for `f(a)`) [claimed 2026-08-16T14:02:37Z]
 
 Build: the depth task after task 5's breadth work (`is_amicable`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

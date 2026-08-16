@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: uninitialized `let` declarations (`let x;`, defaults to `nil`)
+## 1. Language: uninitialized `let` declarations (`let x;`, defaults to `nil`) [claimed 2026-08-16T14:31:51Z]
 
 Build: the depth task after task 5's breadth work (`is_semiprime`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

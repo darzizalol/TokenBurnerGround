@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: single-quoted string literals (`'...'` as an alternate delimiter)
+## 1. Language: single-quoted string literals (`'...'` as an alternate delimiter) [claimed 2026-08-16T15:00:34Z]
 
 Build: the depth task after task 5's breadth work (`is_powerful_number`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

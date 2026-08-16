@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `geometric_mean` — the nth root of a list's product
+## 1. Standard library: `geometric_mean` — the nth root of a list's product [claimed 2026-08-16T19:49:20Z]
 
 Build: the breadth task after task 5's depth work (scientific notation
 for float literals) per `PROJECT.md`'s breadth-vs-depth policy,

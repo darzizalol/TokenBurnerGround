@@ -552,6 +552,108 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
+
+Build: the breadth task after task 5's depth work (trailing commas) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that `is_repdigit` has landed via PR #260, dropping the count to
+the 5-task floor. Add `is_evil(n)`/`is_odious(n)` to `cinder/builtins.py`,
+registered right after `is_power_of_two` (search for `def
+_is_power_of_two`, immediately before `_is_palindrome_list`) —
+`is_power_of_two` is currently the only builtin that reasons about a
+number's binary representation rather than its decimal one, via the `n &
+(n - 1) == 0` bit trick; evil/odious numbers are the natural next member
+of that same "binary bit-trick" family, classifying every non-negative
+integer by whether its binary representation has an even ("evil") or odd
+("odious") count of `1` bits (its popcount) — together a complete two-way
+partition of the non-negative integers, the same "every input lands in
+exactly one bucket" shape `is_perfect_number`/`is_abundant`/`is_deficient`
+already established for divisor sums. Verify the gap: `python3 -m
+cinder.cli eval 'print(is_evil(3));'` currently raises
+`CinderRuntimeError` `"undefined name 'is_evil'"` — no such builtin exists
+yet.
+
+```python
+def _is_evil(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_evil", arguments, 1, line, column)
+    value = _require_int("is_evil", arguments[0], line, column)
+    if value < 0:
+        raise CinderRuntimeError(
+            "is_evil() requires a non-negative integer, domain error", line, column
+        )
+    return bin(value).count("1") % 2 == 0
+
+
+def _is_odious(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_odious", arguments, 1, line, column)
+    value = _require_int("is_odious", arguments[0], line, column)
+    if value < 0:
+        raise CinderRuntimeError(
+            "is_odious() requires a non-negative integer, domain error", line, column
+        )
+    return bin(value).count("1") % 2 == 1
+```
+
+Model the arity/type-checking exactly on `is_power_of_two`'s own
+structure: `_require_arity`, then `_require_int` (reusing the shared
+helper — do **not** hand-roll a separate `isinstance` check). Unlike
+`is_power_of_two` (which answers `false` for non-positive input rather
+than raising), negative input here raises a domain error instead —
+popcount parity is only well-defined for a finite non-negative bit
+pattern; Python's own two's-complement-style `bin(-5) == '-0b101'` would
+silently count the `1`s in the magnitude only, producing a well-typed but
+mathematically meaningless answer for a negative input rather than an
+honest error, so this follows `divisors`'/`log()`'s "raise a domain error
+rather than leak a wrong-looking result" convention instead of
+`is_power_of_two`'s "false" one. `0` is a valid input (`bin(0) ==
+'0b0'`, zero `1` bits, even, so `is_evil(0)` is `true`) — the trivial
+base case, not a domain edge to guard against. Bundle both predicates in
+this one task since each is a one-line delegation to the same
+`bin(value).count("1") % 2` expression differing only in which parity it
+accepts — matching how `is_int`/`is_float` and `is_subset`/`is_superset`
+were each bundled as a single task earlier in this backlog's history,
+rather than as two separate breadth tasks back to back (which the
+breadth-vs-depth policy already treats as a signal to inject a depth
+task instead).
+
+Acceptance criteria:
+- `is_evil(0);` is `true` — zero `1` bits, even.
+- `is_evil(3);` is `true` — `0b11`, two `1` bits.
+- `is_evil(5);` is `true` — `0b101`, two `1` bits.
+- `is_evil(6);` is `true` — `0b110`, two `1` bits.
+- `is_evil(1);` is `false` — `0b1`, one `1` bit (odd).
+- `is_odious(1);` is `true`.
+- `is_odious(2);` is `true` — `0b10`, one `1` bit.
+- `is_odious(4);` is `true` — `0b100`, one `1` bit.
+- `is_odious(3);` is `false`.
+- For every integer `0` through `31`, `is_evil(n) != is_odious(n)` — the
+  two predicates are exact complements over the same domain (test via a
+  loop or an explicit list of both buckets).
+- `is_evil(1024);` is `false` — `0b10000000000`, one `1` bit (odious).
+- `is_evil(-1);` raises `CinderRuntimeError` matching `"is_evil()
+  requires a non-negative integer, domain error"`.
+- `is_odious(-4);` raises `CinderRuntimeError` matching `"is_odious()
+  requires a non-negative integer, domain error"`.
+- `is_evil(5.0);` raises `CinderRuntimeError` matching `"is_evil()
+  requires an int, got float"` — the same message shape `_require_int`
+  already produces elsewhere.
+- `is_odious(true);` raises `CinderRuntimeError` matching `"is_odious()
+  requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column, for both builtins.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register both near `is_power_of_two`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py` (model on the `TestIsPowerOfTwo` test
+class, search `class TestIsPowerOfTwo`). Once merged, `README.md`'s
+Builtins bullet needs `is_evil`/`is_odious` added near `is_power_of_two`,
+and `PROJECT.md`'s roadmap paragraph needs this moved from backlog to
+landed — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -866,47 +866,40 @@ requires every prime factor to repeat, walking the same
 `prime_factors` already use, peeling each prime factor's full
 multiplicity in an inner loop and failing fast the moment any factor's
 count comes up short of `2`, then checking that nothing above the
-`sqrt` bound was left over uncounted.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy this slot, `is_powerful_number`, has since landed via
-PR #258 and is covered in the "have since landed" history above; this
-grooming pass dropped its now-redundant not-yet-scoped description from
-this section rather than leaving it to drift further out of sync):
-as task 1, single-quoted string literals (`'...'` as an alternate
-delimiter to double quotes) — the depth task after `is_powerful_number`'s
-breadth work: today `cinder/lexer.py`'s
-`_string` only recognizes `"`, so a string containing a literal `"`
-must escape it even though the far more common real-world need is a
-string that quotes something. Generalizes `_string` to take the
-opening quote character as a parameter (used everywhere the method
-currently hardcodes `'"'` as the terminator check), dispatches both `"`
-and `'` to it from `tokenize`, and adds `'` to the shared `_ESCAPES`
-table alongside the existing `"` entry so `\'` is a valid escape inside
-either delimiter. The `${...}` interpolation machinery,
+`sqrt` bound was left over uncounted, as has single-quoted string
+literals (`'...'` as an alternate delimiter to double quotes) —
+generalizing `cinder/lexer.py`'s `_string` to take the opening quote
+character as a parameter instead of hardcoding `"`, dispatching both
+`"` and `'` to it from `tokenize`, and adding `'` to the shared
+`_ESCAPES` table alongside the existing `"` entry so `\'` is a valid
+escape inside either delimiter; the `${...}` interpolation machinery,
 `has_interp`/`INTERP_STRING` split, and unterminated-string detection
-are already delimiter-agnostic and need no changes; no parser or
-interpreter changes at all, since both delimiters produce the same
+were already delimiter-agnostic and needed no changes, nor did the
+parser or interpreter, since both delimiters produce the same
 `STRING`/`INTERP_STRING` tokens carrying the same parsed Python `str`
-value. And as task 2, `is_repdigit(n)` — a breadth task after task 1's
-depth work: testing whether every decimal digit of a non-negative
-integer is the same (`11`, `222`, `4444`), a digit-based predicate
-joining `is_palindrome_number`/`is_armstrong`/`is_harshad`/
+value, and `is_repdigit(n)` — testing whether every decimal digit of a
+non-negative integer is the same (`11`, `222`, `4444`), a digit-based
+predicate joining `is_palindrome_number`/`is_armstrong`/`is_harshad`/
 `is_strong_number` in the digit-transform cluster rather than extending
-the recent prime-factorization run (`is_semiprime`, `is_powerful_number`)
-a third time — deliberately varying the sub-theme within the breadth
-slot once a cluster runs two deep, the same way the policy already
-varies the breadth/depth balance itself. A single-digit integer
-(including `0`) counts as trivially repdigit, matching
-`is_palindrome_number`'s own single-digit convention (a one-character
-string trivially reads the same forwards and backwards; a one-digit
-number trivially has every digit equal); negative inputs return `false`
-rather than raising, the same boolean-predicate domain convention every
-sibling in this cluster uses. Implementation is a one-liner once the
-sign is handled: `len(set(str(value))) == 1`, no trial division or
-`sqrt` bound needed. And as task 3, scientific notation for float
-literals (`1e3`, `1.5e-2`, `2E+10`) — the depth task after task 2's
-breadth work: today `cinder/lexer.py`'s `_number` only recognizes plain digits and an
+the prime-factorization run (`is_semiprime`, `is_powerful_number`) a
+third time; a single-digit integer (including `0`) counts as trivially
+repdigit, matching `is_palindrome_number`'s own single-digit convention,
+negative inputs return `false` rather than raising, and the
+implementation is a one-liner once the sign is handled:
+`len(set(str(value))) == 1`, no trial division or `sqrt` bound needed —
+have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the two tasks
+that used to occupy slots 1-2 here, single-quoted string literals and
+`is_repdigit`, have since landed via PR #259 and PR #260 and are covered
+in the "have since landed" history immediately above; this grooming pass
+dropped their now-redundant not-yet-scoped descriptions from this
+section, renumbered the remaining four down to slots 1-4, and appended
+a freshly-scoped task 6 restocking the backlog back past its 5-task
+floor):
+as task 1, scientific notation for float
+literals (`1e3`, `1.5e-2`, `2E+10`) — the depth task after
+`is_repdigit`'s breadth work: today `cinder/lexer.py`'s `_number` only recognizes plain digits and an
 optional `.`-led fractional part, with no handling of an `e`/`E`
 exponent suffix at all, so `1e3` lexes as an `INT` token `1` immediately
 followed by a separate `IDENTIFIER` token `e3` — confirmed by `python3
@@ -938,8 +931,8 @@ own `float()` already parses the full `1e3`/`1.5e-2`/`2e+10` exponent
 grammar once underscores are stripped. No parser or interpreter changes
 are needed — the result is still an ordinary `FLOAT` token carrying a
 plain Python `float`, indistinguishable downstream from one written
-with a decimal point. And as task 4, `geometric_mean(list)` — a
-breadth task after task 3's depth work: the nth root of the product of a list's elements, the natural
+with a decimal point. And as task 2, `geometric_mean(list)` — a
+breadth task after task 1's depth work: the nth root of the product of a list's elements, the natural
 second member of the statistics cluster (`mean`, `median`, `variance`,
 `std_dev`, `mode`) alongside the arithmetic mean already in `mean` —
 that cluster has grown five members deep without ever adding a second
@@ -951,8 +944,8 @@ so a non-numeric element always reports first), since a geometric mean
 over zero or negative inputs has no real-valued result in Cinder's
 numeric tower — the same "raise a domain error rather than leak a
 `nan`" convention `log()` already applies to its own positive-input
-requirement. And as task 5, postfix `++`/`--` as a first-class
-assignment expression — the depth task after task 4's breadth work:
+requirement. And as task 3, postfix `++`/`--` as a first-class
+assignment expression — the depth task after task 2's breadth work:
 today `++`/`--` are recognized
 only by a one-off parser helper (`_expr_or_incdec`) reachable from
 exactly three places — a bare `x++;` statement and the `for`-loop's
@@ -974,8 +967,8 @@ exactly as today) or reachability from `_ternary()`-rooted positions
 like call arguments (`print(x++)` stays a `ParseError`, matching
 `print(x = 5)`'s own existing restriction) — only closes the one gap
 where `++`/`--` uniquely lagged behind every sibling assignment
-operator. And as task 6, `digit_product(n)` — a breadth task after
-task 5's depth work, restocking the backlog back to 6 tasks: the
+operator. And as task 4, `digit_product(n)` — a breadth task after
+task 3's depth work: the
 multiplicative counterpart to `digit_sum`, the same relationship
 `product` already has to `sum` at the list level — `digit_sum` sums an
 integer's decimal digits, `digit_product` multiplies them instead.
@@ -985,7 +978,7 @@ before iterating, so it needs no new domain-handling decision of its
 own. A single-digit integer (including `0`) is trivially its own
 digit product; any `0` digit anywhere in the number collapses the
 whole product to `0`, which is the correct answer, not a case to guard
-against. And as task 6, trailing commas in list/map literals, call
+against. And as task 5, trailing commas in list/map literals, call
 arguments, and function parameter lists (`[1, 2,]`, `{"a": 1,}`,
 `f(1, 2,)`, `fn f(a, b,) { ... }`) — the depth task after
 `digit_product`'s breadth work, closing an ergonomics gap in all four
@@ -1001,8 +994,23 @@ no interpreter changes at all, since this only widens what the parser
 is willing to accept, not what AST shape it produces. Deliberately
 scoped to just those four sites, not destructuring patterns or
 comprehension bodies, which are separate call sites with their own
-comma-loops and are left for a future task if still wanted. And only
-much later, a bytecode VM if performance ever actually matters. The
+comma-loops and are left for a future task if still wanted. And as
+task 6, `is_evil(n)`/`is_odious(n)` — a breadth task after task 5's
+depth work, restocking the backlog back to 6 tasks now that
+`is_repdigit` has landed via PR #260: binary popcount-parity
+predicates, classifying every non-negative integer by whether its
+binary representation has an even ("evil") or odd ("odious") count of
+`1` bits, sitting next to `is_power_of_two` as the second member of the
+"reasons about binary representation" family rather than the decimal
+digit-transform cluster `is_repdigit`/`digit_product` belong to. Each
+is a one-line delegation to `bin(value).count("1") % 2`, bundled as one
+task since they're exact complements of the same expression differing
+only in which parity is accepted — the same bundling `is_int`/`is_float`
+and `is_subset`/`is_superset` already got — and negative input raises a
+domain error rather than answering `false`, since Python's
+two's-complement `bin()` output on a negative number would silently
+count the wrong thing rather than answering honestly. And only much
+later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -1015,13 +1023,22 @@ task before the next depth task is queued, occasionally two in a row
 when the backlog needs restocking faster than strict alternation would
 otherwise allow (as happened when `aliquot_sum` was added alongside
 `is_perfect_cube`, and again when `is_strong_number` was added
-alongside `collatz_length`). This pass found the backlog back down to
-its 5-task floor (single-quoted string literals having landed via PR
-#259, dropping the count from 6 to 5 and renumbering `digit_product`
-from task 6 down to task 5) and restocked it to 6 by adding task 6,
-trailing commas, continuing alternation with a depth task after task
-5's breadth work (`digit_product`) rather than stacking a second
-breadth task, per the policy above. The next grooming pass should
+alongside `collatz_length`). The previous pass found the backlog back
+down to its 5-task floor (single-quoted string literals having landed
+via PR #259, dropping the count from 6 to 5 and renumbering
+`digit_product` from task 6 down to task 5) and restocked it to 6 by
+adding task 6, trailing commas, continuing alternation with a depth
+task after task 5's breadth work (`digit_product`) rather than
+stacking a second breadth task. This pass found the backlog back down
+to its 5-task floor again (`is_repdigit` having landed via PR #260,
+dropping the count from 6 to 5, dropping its and single-quoted
+strings' now-landed descriptions from the "what remains plausible"
+section above into the "have since landed" history, and renumbering
+the remaining four tasks from 3-6 down to 1-4, with trailing commas
+renumbered from 6 to 5) and restocked it to 6 by adding task 6,
+`is_evil`/`is_odious`, continuing alternation with a breadth task
+after task 5's depth work (trailing commas) rather than stacking a
+second depth task, per the policy above. The next grooming pass should
 continue alternating breadth/depth, restocking toward 6-7 tasks
 whenever a merge drops the count within reach of the 5-task floor.
 

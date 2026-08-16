@@ -30,7 +30,9 @@ while (i < 10) {
 ## Features (implemented and tested)
 
 - **Values**: numbers, strings, booleans, `nil`; `nil`/`false` are falsy,
-  everything else (including `0` and `""`) is truthy; strings support
+  everything else (including `0` and `""`) is truthy; strings may be
+  delimited by either double or single quotes (`"..."`/`'...'`,
+  interchangeably, `\"`/`\'` both valid escapes) and support
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
   inside `${...}`, stringified the same way `print`/`format` render values;
   integer literals may also be written in hex (`0x1F`), binary (`0b101`), or
@@ -282,7 +284,8 @@ while (i < 10) {
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
   `swap_case` to flip each character's case,
-  `is_positive`/`is_negative`/`is_zero` to test a number's sign, and type predicates
+  `is_positive`/`is_negative`/`is_zero` to test a number's sign,
+  `is_repdigit` to test whether every decimal digit of an integer is the same, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -361,18 +364,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: uninitialized `let`
-declarations (`let x;`, defaulting to `nil`), and `is_powerful_number`
-to test whether every prime factor of an integer appears with exponent
-`2` or more.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): single-quoted string
-literals (`'...'`) as an alternate delimiter to double quotes,
+Actively developed, nightly. Recently landed: single-quoted string
+literals (`'...'`) as an alternate delimiter to double quotes, and
 `is_repdigit` to test whether every decimal digit of an integer is the
-same, scientific notation for float literals (`1e3`, `1.5e-2`),
-`geometric_mean` to compute the nth root of a list's product, and
+same.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): scientific notation
+for float literals (`1e3`, `1.5e-2`),
+`geometric_mean` to compute the nth root of a list's product,
 postfix `++`/`--` as a first-class assignment expression (usable as a
 `let` initializer or chained-assignment RHS, not just a bare statement
-or `for`-loop clause).
+or `for`-loop clause), `digit_product` as `digit_sum`'s multiplicative
+counterpart, trailing commas in list/map literals, call arguments, and
+function parameter lists, and `is_evil`/`is_odious` binary
+popcount-parity predicates.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

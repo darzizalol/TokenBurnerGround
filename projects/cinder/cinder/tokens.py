@@ -73,6 +73,7 @@ class TokenType(Enum):
     PERCENTEQ = auto()
     AMP = auto()
     PIPE = auto()
+    PIPE_ARROW = auto()
     CARET = auto()
     TILDE = auto()
     LSHIFT = auto()

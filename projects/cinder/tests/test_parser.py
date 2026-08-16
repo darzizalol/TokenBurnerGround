@@ -802,6 +802,54 @@ class TestNullishCoalescing(unittest.TestCase):
         )
 
 
+class TestPipeOperator(unittest.TestCase):
+    def test_basic_pipe(self):
+        self.assertEqual(
+            shape(parse("a |> f")),
+            ("Binary", ("Identifier", "a"), TokenType.PIPE_ARROW, ("Identifier", "f")),
+        )
+
+    def test_pipe_left_associative(self):
+        # `a |> f |> g` parses as `(a |> f) |> g`.
+        self.assertEqual(
+            shape(parse("a |> f |> g")),
+            (
+                "Binary",
+                ("Binary", ("Identifier", "a"), TokenType.PIPE_ARROW, ("Identifier", "f")),
+                TokenType.PIPE_ARROW,
+                ("Identifier", "g"),
+            ),
+        )
+
+    def test_pipe_binds_looser_than_nullish(self):
+        # `a ?? b |> f` parses as `(a ?? b) |> f`.
+        self.assertEqual(
+            shape(parse("a ?? b |> f")),
+            (
+                "Binary",
+                ("Logical", ("Identifier", "a"), TokenType.QUESTION_QUESTION, ("Identifier", "b")),
+                TokenType.PIPE_ARROW,
+                ("Identifier", "f"),
+            ),
+        )
+
+    def test_pipe_binds_tighter_than_ternary(self):
+        # `a |> f ? b : c` parses as `(a |> f) ? b : c`.
+        self.assertEqual(
+            shape(parse("a |> f ? b : c")),
+            (
+                "Ternary",
+                ("Binary", ("Identifier", "a"), TokenType.PIPE_ARROW, ("Identifier", "f")),
+                ("Identifier", "b"),
+                ("Identifier", "c"),
+            ),
+        )
+
+    def test_pipe_missing_right_operand_raises(self):
+        with self.assertRaises(ParseError):
+            parse("a |>")
+
+
 class TestCalls(unittest.TestCase):
     def test_call_with_arguments(self):
         self.assertEqual(

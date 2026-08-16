@@ -1109,6 +1109,8 @@ class Interpreter:
             return contains_value(right, left, operator.line, operator.column)
         if op == TokenType.NOT_IN:
             return not contains_value(right, left, operator.line, operator.column)
+        if op == TokenType.PIPE_ARROW:
+            return call_value(right, [left], operator.line, operator.column)
         if op in (
             TokenType.AMP,
             TokenType.PIPE,

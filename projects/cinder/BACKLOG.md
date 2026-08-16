@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`)
+## 1. Language: scientific notation for float literals (`1e3`, `1.5e-2`, `2E+10`) [claimed 2026-08-16T19:34:37Z]
 
 Build: the depth task after task 5's breadth work (`is_repdigit`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

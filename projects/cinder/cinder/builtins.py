@@ -1347,6 +1347,26 @@ def _is_composite(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _is_semiprime(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_semiprime", arguments, 1, line, column)
+    value = _require_int("is_semiprime", arguments[0], line, column)
+    if value < 2:
+        return False
+    remaining = value
+    factor_count = 0
+    divisor = 2
+    while divisor * divisor <= remaining:
+        while remaining % divisor == 0:
+            remaining //= divisor
+            factor_count += 1
+            if factor_count > 2:
+                return False
+        divisor += 1
+    if remaining > 1:
+        factor_count += 1
+    return factor_count == 2
+
+
 def _is_emirp(arguments: list, line: int, column: int) -> object:
     _require_arity("is_emirp", arguments, 1, line, column)
     value = _require_int("is_emirp", arguments[0], line, column)
@@ -3468,6 +3488,7 @@ _BUILTINS = {
     "is_triangular": _is_triangular,
     "is_prime": _is_prime,
     "is_composite": _is_composite,
+    "is_semiprime": _is_semiprime,
     "is_emirp": _is_emirp,
     "is_power_of_two": _is_power_of_two,
     "is_palindrome_list": _is_palindrome_list,

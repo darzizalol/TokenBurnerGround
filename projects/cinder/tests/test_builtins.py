@@ -2500,6 +2500,59 @@ class TestIsComposite(unittest.TestCase):
             run("is_composite();")
 
 
+class TestIsSemiprime(unittest.TestCase):
+    def test_is_semiprime_of_square_of_smallest_prime(self):
+        self.assertEqual(run("let result = is_semiprime(4);").get("result"), True)
+
+    def test_is_semiprime_of_product_of_distinct_primes(self):
+        self.assertEqual(run("let result = is_semiprime(6);").get("result"), True)
+
+    def test_is_semiprime_of_odd_square(self):
+        self.assertEqual(run("let result = is_semiprime(9);").get("result"), True)
+
+    def test_is_semiprime_of_larger_square(self):
+        self.assertEqual(run("let result = is_semiprime(25);").get("result"), True)
+
+    def test_is_semiprime_of_distinct_odd_primes(self):
+        self.assertEqual(run("let result = is_semiprime(15);").get("result"), True)
+
+    def test_is_semiprime_of_prime_is_false(self):
+        self.assertEqual(run("let result = is_semiprime(2);").get("result"), False)
+
+    def test_is_semiprime_of_three_factor_composite_is_false(self):
+        self.assertEqual(run("let result = is_semiprime(12);").get("result"), False)
+
+    def test_is_semiprime_of_one_is_false(self):
+        self.assertEqual(run("let result = is_semiprime(1);").get("result"), False)
+
+    def test_is_semiprime_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_semiprime(0);").get("result"), False)
+
+    def test_is_semiprime_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_semiprime(-6);").get("result"), False)
+
+    def test_is_semiprime_of_large_product_of_two_large_primes(self):
+        self.assertEqual(
+            run("let result = is_semiprime(999983 * 999979);").get("result"), True
+        )
+
+    def test_is_semiprime_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_semiprime(5.0);")
+        self.assertIn("is_semiprime", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_semiprime_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_semiprime(true);")
+        self.assertIn("is_semiprime", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_semiprime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_semiprime();")
+
+
 class TestIsEmirp(unittest.TestCase):
     def test_is_emirp_of_classic_pairs(self):
         self.assertEqual(run("let result = is_emirp(13);").get("result"), True)

@@ -2523,3 +2523,12 @@ for vision/architecture.
   Elixir-style argument-splicing, it calls whatever `curry(add, 2)`
   returns with `a`. Clean first round: Reviewer gave `VERDICT: LGTM` and
   QA gave `QA: PASS` (2883 tests passing).
+- **Standard library: `is_semiprime` — product of exactly two primes** —
+  merged 2026-08-16T14:22:26Z via PR #256 (`feat/20260816-is-semiprime`).
+  Added `is_semiprime(n)` to `cinder/builtins.py`, registered right
+  after `is_composite`: trial-division factor counting with an early
+  `factor_count > 2` bailout, the third member of the
+  `is_prime`/`is_composite`/`is_semiprime` classification trio.
+  `n < 2` returns `false` rather than raising, matching the
+  boolean-predicate cluster's convention. Clean first round: Reviewer
+  gave `VERDICT: LGTM` and QA gave `QA: PASS` (2897 tests passing).

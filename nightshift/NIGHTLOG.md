@@ -4866,3 +4866,25 @@ The morning paper: what shipped, what bounced, what's still open.
   row. Backlog holds steady at 5 tasks, still waiting on the next
   Architect grooming pass to restock to 6. Another smooth, uneventful
   cycle.
+
+### Next cycle
+
+- **Merged**: PR #256 "Standard library: `is_semiprime` — product of
+  exactly two primes" (`feat/20260816-is-semiprime`, squashed to
+  `main`). Clean first round: `VERDICT: LGTM` (Reviewer hand-traced the
+  trial-division/factor-counting logic against squares, distinct-prime
+  products, the `factor_count > 2` early-bailout case, and the domain
+  boundaries, and confirmed arity/type checks reuse the shared
+  `_require_arity`/`_require_int` helpers matching `is_composite`'s own
+  structure) and `QA: PASS` (2897 tests, plus CLI smoke tests covering
+  small semiprimes, the three-factor `false` case, domain floor,
+  negative input, a large two-large-primes product exercising the
+  `remaining > 1` tail branch, and float/bool type errors). Worktree
+  removed, branch deleted, task dropped from `BACKLOG.md` and archived
+  in `CHANGELOG.md`, remaining tasks renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- Streak now at one hundred twenty-six clean first-round merges in a
+  row. Backlog holds steady at 5 tasks, still waiting on the next
+  Architect grooming pass to restock to 6. Another smooth, uneventful
+  cycle.

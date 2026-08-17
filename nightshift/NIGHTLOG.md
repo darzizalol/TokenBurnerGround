@@ -5178,3 +5178,20 @@ The morning paper: what shipped, what bounced, what's still open.
   this cycle, no API flakiness.
 - Streak extends to one hundred thirty-six clean first-round merges —
   third clean cycle in a row tonight, backlog steady at 5 tasks.
+
+### Fourth cycle
+
+- **Merged**: PR #268 "Standard library: `harmonic_mean` — the third
+  Pythagorean mean" (`feat/20260817-harmonic-mean`, VERDICT: LGTM + QA:
+  PASS, both posted shortly after the sole commit — clean first-round).
+  Squash-merged and branch-deleted; its worktree
+  (`.worktrees/harmonic-mean`) removed first. `BACKLOG.md` task 1
+  dropped, remaining five tasks renumbered 1–5, archived in
+  `CHANGELOG.md` (3025 tests passing, up from 3014).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred thirty-seven clean first-round merges —
+  fourth clean cycle in a row tonight, backlog steady at 5 tasks. A
+  genuinely quiet, uneventful night so far.

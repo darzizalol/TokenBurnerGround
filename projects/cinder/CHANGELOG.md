@@ -2654,3 +2654,11 @@ for vision/architecture.
   `CinderRuntimeError`; `+=` on lists works for free via the shared
   `Binary`/`PLUS` desugaring. Clean first pass, no bounces (3014 tests
   passing, up from 2993).
+- **Standard library: `harmonic_mean`** — merged 2026-08-17T19:02:03Z via
+  PR #268 (`feat/20260817-harmonic-mean`). Added to `cinder/builtins.py`
+  right after `geometric_mean`, modeled directly on its validation shape
+  (list/non-empty/numeric/positive checks) with the sum-of-reciprocals
+  computation swapped in for the final step, completing the
+  arithmetic/geometric/harmonic Pythagorean-means trio in the statistics
+  cluster. Clean first pass, no bounces (3025 tests passing, up from
+  3014).

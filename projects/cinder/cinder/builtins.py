@@ -2050,6 +2050,30 @@ def _geometric_mean(arguments: list, line: int, column: int) -> object:
     return product ** (1 / len(value))
 
 
+def _harmonic_mean(arguments: list, line: int, column: int) -> object:
+    _require_arity("harmonic_mean", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"harmonic_mean() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("harmonic_mean() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"harmonic_mean() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        if element <= 0:
+            raise CinderRuntimeError(
+                "harmonic_mean() requires all elements to be positive", line, column
+            )
+    reciprocal_sum = 0
+    for element in value:
+        reciprocal_sum = reciprocal_sum + 1 / element
+    return len(value) / reciprocal_sum
+
+
 def _median(arguments: list, line: int, column: int) -> object:
     _require_arity("median", arguments, 1, line, column)
     value = arguments[0]
@@ -3620,6 +3644,7 @@ _BUILTINS = {
     "product": _product,
     "mean": _mean,
     "geometric_mean": _geometric_mean,
+    "harmonic_mean": _harmonic_mean,
     "median": _median,
     "variance": _variance,
     "std_dev": _std_dev,

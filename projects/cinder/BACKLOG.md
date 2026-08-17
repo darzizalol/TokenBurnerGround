@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+## 1. Language: trailing commas in list/map literals, call arguments, and function parameter lists [claimed 2026-08-17T18:04:43Z]
 
 Build: the depth task after task 5's breadth work (`digit_product`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
+## 1. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic [claimed 2026-08-17T18:56:44Z]
 
 Build: the breadth task after task 5's depth work (list concatenation
 via `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

@@ -1393,6 +1393,26 @@ def _is_power_of_two(arguments: list, line: int, column: int) -> object:
     return (value & (value - 1)) == 0
 
 
+def _is_evil(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_evil", arguments, 1, line, column)
+    value = _require_int("is_evil", arguments[0], line, column)
+    if value < 0:
+        raise CinderRuntimeError(
+            "is_evil() requires a non-negative integer, domain error", line, column
+        )
+    return bin(value).count("1") % 2 == 0
+
+
+def _is_odious(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_odious", arguments, 1, line, column)
+    value = _require_int("is_odious", arguments[0], line, column)
+    if value < 0:
+        raise CinderRuntimeError(
+            "is_odious() requires a non-negative integer, domain error", line, column
+        )
+    return bin(value).count("1") % 2 == 1
+
+
 def _is_palindrome_list(arguments: list, line: int, column: int) -> object:
     _require_arity("is_palindrome_list", arguments, 1, line, column)
     value = arguments[0]
@@ -3551,6 +3571,8 @@ _BUILTINS = {
     "is_semiprime": _is_semiprime,
     "is_emirp": _is_emirp,
     "is_power_of_two": _is_power_of_two,
+    "is_evil": _is_evil,
+    "is_odious": _is_odious,
     "is_palindrome_list": _is_palindrome_list,
     "digit_sum": _digit_sum,
     "digit_product": _digit_product,

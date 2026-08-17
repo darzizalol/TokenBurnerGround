@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: trailing commas in destructuring patterns
+## 1. Language: trailing commas in destructuring patterns [claimed 2026-08-17T19:11:46Z]
 
 Build: the depth task after task 5's breadth work (`harmonic_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

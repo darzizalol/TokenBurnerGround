@@ -243,7 +243,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -359,7 +359,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (2900+ tests) covers every layer — lexer, parser, interpreter,
+The suite (3000+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -387,20 +387,23 @@ projects/cinder/
 
 Actively developed, nightly. Recently landed: trailing commas in
 list/map literals, call arguments, and function parameter lists,
-`is_evil`/`is_odious` binary popcount-parity predicates, and list
+`is_evil`/`is_odious` binary popcount-parity predicates, list
 concatenation via `+` (closing the gap between the existing `concat()`
-builtin and infix syntax the same way `*` already does for repetition).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `harmonic_mean` to
-complete the classical arithmetic/geometric/harmonic Pythagorean means
-trio, trailing commas in destructuring patterns
-(`let`/`for`/function-parameter/comprehension patterns and the
-plain-assignment map form), closing the one gap the earlier
-trailing-commas task deliberately left open, `multiplicative_persistence`
-— the loop-driven counterpart to `digital_root`'s closed-form additive
-reduction, since no closed form exists for repeated digit
-*multiplication*, comma-separated multiple variable declarations in a
-single `let`/`const` statement (`let a = 1, b = 2;`), and `cbrt` — real
-cube root, the domain-unrestricted sibling to `sqrt`.
+builtin and infix syntax the same way `*` already does for repetition),
+and `harmonic_mean`, completing the classical arithmetic/geometric/harmonic
+Pythagorean means trio. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+trailing commas in destructuring patterns (`let`/`for`/function-parameter/
+comprehension patterns and the plain-assignment map form), closing the
+one gap the earlier trailing-commas task deliberately left open,
+`multiplicative_persistence` — the loop-driven counterpart to
+`digital_root`'s closed-form additive reduction, since no closed form
+exists for repeated digit *multiplication*, comma-separated multiple
+variable declarations in a single `let`/`const` statement
+(`let a = 1, b = 2;`), `cbrt` — real cube root, the domain-unrestricted
+sibling to `sqrt`, nested list-in-list destructuring patterns
+(`let [a, [b, c]] = [1, [2, 3]];`), and `is_perfect_power` — the general
+closure of `is_perfect_square`/`is_perfect_cube` ("is there *any*
+integer exponent `k >= 2`").
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

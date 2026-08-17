@@ -981,31 +981,27 @@ and `*` already treated `list * int` as repetition in the very same
 function. Because compound assignment desugars `+=` to an ordinary
 `Binary`/`PLUS` node and reuses this same function, `xs += [3, 4]`
 started working for free the moment this branch landed, no separate
-change needed — have since landed too.
+change needed — have since landed too. `harmonic_mean(list)` — the
+third member of the classical Pythagorean means trio (arithmetic,
+geometric, harmonic), completing the statistics cluster's "kinds of
+average" alongside `mean`/`geometric_mean`: `n / sum(1/x for x in
+list)`, reusing the exact same `isinstance`/non-empty/`_is_numeric`-
+per-element validation shape `mean`/`geometric_mean` already share,
+plus the identical strictly-positive domain restriction
+`geometric_mean` already enforces — has since landed via PR #268 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-5 exactly — the task that
-used to occupy slot 1 here, list concatenation via `+`, has since
-landed via PR #267 and is covered in the "have since landed" history
+(numbering here matches `BACKLOG.md` tasks 1-2 of its current 1-6 —
+the task that used to occupy slot 1 here, `harmonic_mean`, has since
+landed via PR #268 and is covered in the "have since landed" history
 immediately above; this grooming pass dropped its now-redundant
-not-yet-scoped description from this section, renumbered the remaining
-five down to slots 1-5, and appended one freshly-scoped task, 6,
-restocking the backlog back to its 6-task target):
-as task 1, `harmonic_mean(list)` — a breadth task, originally scoped
-restocking the backlog back to 6 tasks once `geometric_mean` had
-landed via PR #262: the third member of the classical Pythagorean
-means trio (arithmetic, geometric, harmonic), completing the statistics
-cluster's "kinds of average" alongside `mean`/`geometric_mean` rather
-than extending `median`/`variance`/`std_dev`/`mode`'s own distribution-
-shape concerns a second time. `n / sum(1/x for x in list)` — reuses the
-exact same `isinstance`/non-empty/`_is_numeric`-per-element validation
-shape `mean`/`geometric_mean` already share, plus the identical
-strictly-positive domain restriction `geometric_mean` already enforces
-(a zero element makes the reciprocal sum undefined via division by
-zero, and a negative element makes the harmonic mean not meaningfully
-comparable to its arithmetic/geometric siblings under the AM-GM-HM
-inequality), raising the same domain-error shape rather than leaking a
-`ZeroDivisionError` or a sign-confused result. And as task 2, trailing
-commas in destructuring patterns (`let [a, b,] = expr;`,
+not-yet-scoped description from this section and renumbered the
+remaining two down to slots 1-2. Tasks 3-6 — comma-separated
+`let`/`const` declarations, `cbrt`, nested list-in-list destructuring
+patterns, and `is_perfect_power` — are fully scoped in `BACKLOG.md`
+itself and are not duplicated here, the same treatment tasks past slot
+3 have gotten since this section stopped trying to keep prose in lockstep
+with every backlog slot):
+as task 1, trailing commas in destructuring patterns (`let [a, b,] = expr;`,
 `let {a, b,} = expr;`, `for [a, b,] in ...`, `for {a, b,} in ...`,
 destructuring function parameters, both comprehension loop-variable
 forms, and the plain-assignment map form `{a, b,} = expr;`) — a depth
@@ -1035,8 +1031,8 @@ a hole regardless of position. The plain-assignment **list** form
 `ListLiteral` already parsed by `_list_literal` (that landed task's own
 site), so it already accepts a trailing comma for free, the same way
 `xs += [3, 4]` started working for free once list-plus-`+` landed. And
-as task 3, `multiplicative_persistence(n)` — a breadth task after task
-2's depth work, restocking the backlog back to 6 tasks now
+as task 2, `multiplicative_persistence(n)` — a breadth task after task
+1's depth work, restocking the backlog back to 6 tasks now
 that `digit_product` has landed via PR #264: the number of times a
 number's own decimal digits must be repeatedly multiplied together
 before the result drops to a single digit (e.g. `39 -> 27 -> 14 -> 4`,
@@ -1147,7 +1143,29 @@ changed, so it lands "for free" across every list-pattern call site
 (`let`, plain assignment, `for`, function params, both comprehension
 forms) the same way those did. The next grooming pass should continue
 alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
-drops the count within reach of the 5-task floor.
+drops the count within reach of the 5-task floor. This pass found the
+backlog back down to its 5-task floor again (`harmonic_mean` having
+landed via PR #268, dropping the count from 6 to 5, dropping its
+now-landed description from the "what remains plausible" section above
+into the "have since landed" history, and renumbering the remaining
+five tasks from 2-6 down to 1-5, with trailing commas in destructuring
+patterns renumbered from 2 to 1, `multiplicative_persistence` from 3 to
+2, comma-separated `let`/`const` declarations from 4 to 3, `cbrt` from 5
+to 4, and nested list-in-list destructuring patterns from 6 to 5) and
+restocked it to 6 by adding task 6, `is_perfect_power`, continuing
+alternation with a breadth task after task 5's depth work (nested
+list-in-list destructuring patterns) rather than stacking a second
+depth task, per the policy above — the general closure of
+`is_perfect_square`/`is_perfect_cube`/`is_powerful_number`, answering
+"is there any integer exponent `k >= 2` and base `m` with `m ** k ==
+n`" via a new general `_integer_kth_root` binary-search helper
+(generalizing the existing `_integer_cube_root` from a fixed `** 3` to
+a parameter `k`, added alongside rather than refactored in place) and a
+bit-length-bounded search over candidate exponents, admitting negative
+input only through odd exponents the same way `is_perfect_cube` already
+does. The next grooming pass should continue alternating breadth/depth,
+restocking toward 6-7 tasks whenever a merge drops the count within
+reach of the 5-task floor.
 
 ## History
 

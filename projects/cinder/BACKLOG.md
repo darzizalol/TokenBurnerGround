@@ -608,6 +608,108 @@ task.
 
 ---
 
+## 6. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
+
+Build: the breadth task after task 5's depth work (nested list-in-list
+destructuring patterns), restocking the backlog back to 6 tasks now
+that `harmonic_mean` has landed via PR #268, dropping the count to the
+5-task floor. `is_perfect_square`/`is_perfect_cube`/`is_powerful_number`
+each test a fixed or per-prime-factor exponent; nothing yet answers "is
+there *any* integer exponent `k >= 2` and base `m` with `m ** k ==
+n`" — the general perfect-power test both narrower predicates are
+special cases of. Verify the gap: `python3 -m cinder.cli eval
+'print(is_perfect_power(16));'` currently raises `CinderRuntimeError`
+`"undefined name 'is_perfect_power'"` — no such builtin exists yet.
+
+Add to `cinder/builtins.py`, registered right after `is_powerful_number`
+(search `def _is_powerful_number`, immediately before `_divisors`):
+
+```python
+def _integer_kth_root(magnitude: int, k: int) -> int:
+    if magnitude == 0:
+        return 0
+    low, high = 0, magnitude
+    while low < high:
+        mid = (low + high + 1) // 2
+        if mid ** k <= magnitude:
+            low = mid
+        else:
+            high = mid - 1
+    return low
+
+
+def _is_perfect_power(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_perfect_power", arguments, 1, line, column)
+    value = _require_int("is_perfect_power", arguments[0], line, column)
+    if abs(value) <= 1:
+        return True
+    magnitude = abs(value)
+    for k in range(2, magnitude.bit_length() + 1):
+        root = _integer_kth_root(magnitude, k)
+        if root ** k == magnitude:
+            if value > 0:
+                return True
+            if k % 2 == 1:
+                return True
+    return False
+```
+
+`_integer_kth_root` is a new, general sibling of the existing
+`_integer_cube_root` helper (same binary-search shape, generalized from
+a fixed `** 3` to a parameter `k`) — leave `_integer_cube_root` and
+`_is_perfect_cube` themselves untouched, this task adds a new helper
+rather than refactoring the existing one, keeping the diff additive
+only. `0` and `±1` are handled as a trivial base case up front (`0 =
+0 ** 2`, `1 = 1 ** 2`, `-1 = (-1) ** 3`) since the bit-length-driven `k`
+loop below would otherwise produce an empty range for both. For
+`magnitude >= 2`, `magnitude.bit_length()` is a safe inclusive upper
+bound on `k` to search (`2 ** magnitude.bit_length() > magnitude`
+always, so no smaller base than `1` can still satisfy `root ** k ==
+magnitude` past that point). A negative `value` can only be produced by
+an *odd* `k` (an even power of any integer is non-negative), so the
+even-`k` branch is silently skipped rather than returning early —
+mirroring how `is_perfect_cube` already accepts negative input
+(`-8`) while `is_perfect_square` does not, generalized to "only the
+`k`s where a negative result is possible."
+
+Acceptance criteria:
+- `is_perfect_power(0);` is `true` — `0 = 0 ** 2`.
+- `is_perfect_power(1);` is `true` — `1 = 1 ** 2`.
+- `is_perfect_power(-1);` is `true` — `-1 = (-1) ** 3`.
+- `is_perfect_power(4);` is `true` (`2 ** 2`).
+- `is_perfect_power(8);` is `true` (`2 ** 3`).
+- `is_perfect_power(9);` is `true` (`3 ** 2`).
+- `is_perfect_power(16);` is `true` (`2 ** 4`, also `4 ** 2`).
+- `is_perfect_power(64);` is `true` (`2 ** 6`, `4 ** 3`, `8 ** 2`).
+- `is_perfect_power(-8);` is `true` (`(-2) ** 3`).
+- `is_perfect_power(-27);` is `true` (`(-3) ** 3`).
+- `is_perfect_power(-4);` is `false` — `4` is only reachable via an
+  even exponent (`2 ** 2`), which can never produce a negative result.
+- `is_perfect_power(-9);` is `false` — same reasoning as `-4`.
+- `is_perfect_power(2);` is `false`.
+- `is_perfect_power(6);` is `false`.
+- `is_perfect_power(17);` is `false`.
+- `is_perfect_power(-100);` is `false`.
+- `is_perfect_power(5.0);` raises `CinderRuntimeError` matching
+  `"is_perfect_power() requires an int, got float"`.
+- `is_perfect_power(true);` raises `CinderRuntimeError` matching
+  `"is_perfect_power() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_powerful_number`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py` (model on `class TestIsPerfectCube` and
+`class TestIsPowerfulNumber`, search either name). Once merged,
+`README.md`'s Builtins bullet needs `is_perfect_power` added near
+`is_powerful_number`/`is_perfect_cube`, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s roadmap paragraph needs this moved
+from backlog to landed — leave all three to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

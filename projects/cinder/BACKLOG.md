@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
+## 1. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum` [claimed 2026-08-17T14:20:56Z]
 
 Build: the breadth task after task 5's depth work (postfix `++`/`--`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

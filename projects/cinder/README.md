@@ -259,6 +259,7 @@ while (i < 10) {
   (letters only, digits only, alphanumeric only, whitespace only, ASCII-only, Unicode-numeric),
   `is_blank` to test whether a string is empty or whitespace-only (the one case `is_space` excludes),
   `digit_sum` to sum an integer's decimal digits (sign ignored),
+  `digit_product` to multiply an integer's decimal digits together (sign ignored, any `0` digit collapses the result to `0`),
   `is_perfect_square` to test whether an integer is a perfect square,
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
   `is_strong_number` to test whether an integer equals the sum of its own digits' factorials,
@@ -373,23 +374,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `geometric_mean` to
-compute the nth root of a list's product, the statistics cluster's
-first non-arithmetic-mean member, and postfix `++`/`--` as a
+Actively developed, nightly. Recently landed: postfix `++`/`--` as a
 first-class assignment expression (usable as a `let` initializer or
 chained-assignment RHS, not just a bare statement or `for`-loop
-clause).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`digit_product` as `digit_sum`'s multiplicative
-counterpart, trailing commas in list/map literals, call arguments, and
-function parameter lists, `is_evil`/`is_odious` binary
-popcount-parity predicates, list concatenation via `+` (closing the
-gap between the existing `concat()` builtin and infix syntax),
-`harmonic_mean` to complete the classical arithmetic/geometric/harmonic
-Pythagorean means trio, and trailing commas in destructuring patterns
-(`let`/`for`/function-parameter/comprehension patterns and the
-plain-assignment map form), closing the one gap the earlier trailing-
-commas task deliberately left open.
+clause), and `digit_product` as `digit_sum`'s multiplicative
+counterpart (any `0` digit collapses the result to `0`).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): trailing commas in
+list/map literals, call arguments, and function parameter lists,
+`is_evil`/`is_odious` binary popcount-parity predicates, list
+concatenation via `+` (closing the gap between the existing `concat()`
+builtin and infix syntax), `harmonic_mean` to complete the classical
+arithmetic/geometric/harmonic Pythagorean means trio, trailing commas
+in destructuring patterns (`let`/`for`/function-parameter/comprehension
+patterns and the plain-assignment map form), closing the one gap the
+earlier trailing-commas task deliberately left open, and
+`multiplicative_persistence` — the loop-driven counterpart to
+`digital_root`'s closed-form additive reduction, since no closed form
+exists for repeated digit *multiplication*.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

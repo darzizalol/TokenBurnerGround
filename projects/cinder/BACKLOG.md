@@ -11,215 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: trailing commas in list/map literals, call arguments, and function parameter lists [claimed 2026-08-17T18:04:43Z]
-
-Build: the depth task after task 5's breadth work (`digit_product`) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
-6 tasks now that single-quoted string literals landed via PR #259,
-dropping the count to the 5-task floor. All four of `cinder/parser.py`'s
-comma-separated-list parsers — `_list_literal`, `_map_literal`,
-`_finish_call` (call arguments), and `_fn_param_list` (function
-parameters) — share the identical shape: parse one element, then `while
-self._check(TokenType.COMMA): self._advance(); <parse another element>`,
-with no check that a comma might be the *last* thing before the closing
-delimiter. A trailing comma — convenient when reordering elements or
-diffing cleanly line-per-element, and already how every mainstream
-scripting language (JS, Python, Rust) treats these four positions —
-today hard-fails instead of being silently accepted. Verify the gap,
-one failure per site:
-```sh
-python3 -m cinder.cli eval 'print([1, 2, 3,]);'
-# -> ParseError: expected an expression, found ']'
-python3 -m cinder.cli eval 'print({"a": 1, "b": 2,});'
-# -> ParseError: expected an expression, found '}'
-python3 -m cinder.cli eval 'fn f(a, b) { return a + b; } print(f(1, 2,));'
-# -> ParseError: expected an expression, found ')'
-python3 -m cinder.cli eval 'fn f(a, b,) { return a + b; } print(f(1, 2));'
-# -> ParseError: expected parameter name, found ')'
-```
-
-**Parsing** (`cinder/parser.py`): in each of the four comma-loops, after
-consuming the comma, check whether the very next token is that site's
-closing delimiter and `break` instead of parsing another element — the
-same "peek before committing to another element" shape, applied one
-token later than usual. For `_list_literal`:
-```python
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if self._check(TokenType.RBRACKET):
-                    break
-                elements.append(self._list_element())
-```
-`_map_literal` takes the identical shape with `TokenType.RBRACE` and
-`pairs.append(self._map_entry())`; `_finish_call` with
-`TokenType.RPAREN` and `arguments.append(self._call_argument())`
-(dropping the `seen_keyword` bookkeeping update for the loop iteration
-that never happens — no other change to that function's keyword-arg
-ordering check); `_fn_param_list` with `TokenType.RPAREN` and
-`params.append(self._fn_param(seen_default))` inside its own
-comma-loop. `_fn_param_list`'s rest-parameter branch needs no special
-handling: a trailing comma after `...rest` (`fn f(a, ...rest,)`) hits
-the same early `RPAREN` check and breaks cleanly before ever reaching
-the existing "rest parameter must be the last parameter" guard, so it's
-accepted — a comma with genuinely nothing meaningful after it, not a
-second parameter smuggled in after the rest one.
-
-Out of scope, deliberately: this task does **not** touch destructuring
-patterns (`let [a, b,] = expr;`, `let {a, b,} = expr;`, `for [a, b,] in
-...`, destructuring function parameters `fn f([a, b,]) { ... }`) or
-list/map comprehension bodies — `_destructure_list_pattern`/
-`_destructure_map_pattern` and the comprehension parsers are separate
-call sites with their own comma-loops, not shared with the four covered
-here, and folding them in would widen this beyond one focused session;
-leave them as a candidate for a future, separately-scoped task if
-still desired. Single-element trailing commas (`[1,]`, `{"a": 1,}`,
-`f(1,)`, `fn f(a,) { ... }`) are in scope and must work the same as the
-multi-element case — the `break` fires right after the one comma
-regardless of how many elements preceded it.
-
-Acceptance criteria:
-- `print([1, 2, 3,]);` prints the list `[1, 2, 3]` — no longer a
-  `ParseError`.
-- `print([1,]);` prints `[1]` — single-element trailing comma.
-- `print([]);` still parses as an empty list (unaffected — no comma at
-  all in this case, confirms the empty-literal path wasn't touched).
-- `print({"a": 1, "b": 2,});` prints the map `{"a": 1, "b": 2}`.
-- `print({"a": 1,});` prints `{"a": 1}` — single-entry trailing comma.
-- `print({});` still parses as an empty map (unaffected).
-- `fn f(a, b) { return a + b; } print(f(1, 2,));` prints `3`.
-- `fn f(a) { return a; } print(f(1,));` prints `1`.
-- `fn f(a, b,) { return a + b; } print(f(1, 2));` prints `3` — trailing
-  comma in the parameter list, not just the call.
-- `fn f(a,) { return a; } print(f(1));` prints `1`.
-- `fn f(a, ...rest,) { return rest; } print(f(1, 2, 3));` prints
-  `[2, 3]` — trailing comma after a rest parameter is accepted.
-- `fn f(a, ...rest, b) { return a; }` still raises `ParseError` matching
-  `"rest parameter must be the last parameter"` — confirms a *real*
-  parameter after the rest one is still rejected, only a bare trailing
-  comma with nothing after it is now accepted.
-- `[1, , 3];` (an empty slot between two commas, not a single trailing
-  comma) still raises `ParseError` matching `"expected an expression,
-  found ','"` — confirms this task only special-cases a comma
-  immediately before the closing delimiter, not comma runs in general.
-- Every pre-existing list/map-literal, call-argument, and
-  function-parameter test continues to pass unmodified, including
-  spread elements/arguments/rest parameters and keyword arguments
-  without a trailing comma.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_list_literal`, `_map_literal`,
-`_finish_call`, `_fn_param_list`), `tests/test_parser.py` (model on
-`class TestCalls` and `class TestListsAndMaps`, search both). Once
-merged, `README.md`'s Values/Calls-adjacent bullets need a mention that
-trailing commas are accepted in these four positions, and `PROJECT.md`'s
-roadmap paragraph needs this moved from backlog to landed — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates [claimed 2026-08-17T18:16:37Z]
-
-Build: the breadth task after task 5's depth work (trailing commas) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
-tasks now that `is_repdigit` has landed via PR #260, dropping the count to
-the 5-task floor. Add `is_evil(n)`/`is_odious(n)` to `cinder/builtins.py`,
-registered right after `is_power_of_two` (search for `def
-_is_power_of_two`, immediately before `_is_palindrome_list`) —
-`is_power_of_two` is currently the only builtin that reasons about a
-number's binary representation rather than its decimal one, via the `n &
-(n - 1) == 0` bit trick; evil/odious numbers are the natural next member
-of that same "binary bit-trick" family, classifying every non-negative
-integer by whether its binary representation has an even ("evil") or odd
-("odious") count of `1` bits (its popcount) — together a complete two-way
-partition of the non-negative integers, the same "every input lands in
-exactly one bucket" shape `is_perfect_number`/`is_abundant`/`is_deficient`
-already established for divisor sums. Verify the gap: `python3 -m
-cinder.cli eval 'print(is_evil(3));'` currently raises
-`CinderRuntimeError` `"undefined name 'is_evil'"` — no such builtin exists
-yet.
-
-```python
-def _is_evil(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_evil", arguments, 1, line, column)
-    value = _require_int("is_evil", arguments[0], line, column)
-    if value < 0:
-        raise CinderRuntimeError(
-            "is_evil() requires a non-negative integer, domain error", line, column
-        )
-    return bin(value).count("1") % 2 == 0
-
-
-def _is_odious(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_odious", arguments, 1, line, column)
-    value = _require_int("is_odious", arguments[0], line, column)
-    if value < 0:
-        raise CinderRuntimeError(
-            "is_odious() requires a non-negative integer, domain error", line, column
-        )
-    return bin(value).count("1") % 2 == 1
-```
-
-Model the arity/type-checking exactly on `is_power_of_two`'s own
-structure: `_require_arity`, then `_require_int` (reusing the shared
-helper — do **not** hand-roll a separate `isinstance` check). Unlike
-`is_power_of_two` (which answers `false` for non-positive input rather
-than raising), negative input here raises a domain error instead —
-popcount parity is only well-defined for a finite non-negative bit
-pattern; Python's own two's-complement-style `bin(-5) == '-0b101'` would
-silently count the `1`s in the magnitude only, producing a well-typed but
-mathematically meaningless answer for a negative input rather than an
-honest error, so this follows `divisors`'/`log()`'s "raise a domain error
-rather than leak a wrong-looking result" convention instead of
-`is_power_of_two`'s "false" one. `0` is a valid input (`bin(0) ==
-'0b0'`, zero `1` bits, even, so `is_evil(0)` is `true`) — the trivial
-base case, not a domain edge to guard against. Bundle both predicates in
-this one task since each is a one-line delegation to the same
-`bin(value).count("1") % 2` expression differing only in which parity it
-accepts — matching how `is_int`/`is_float` and `is_subset`/`is_superset`
-were each bundled as a single task earlier in this backlog's history,
-rather than as two separate breadth tasks back to back (which the
-breadth-vs-depth policy already treats as a signal to inject a depth
-task instead).
-
-Acceptance criteria:
-- `is_evil(0);` is `true` — zero `1` bits, even.
-- `is_evil(3);` is `true` — `0b11`, two `1` bits.
-- `is_evil(5);` is `true` — `0b101`, two `1` bits.
-- `is_evil(6);` is `true` — `0b110`, two `1` bits.
-- `is_evil(1);` is `false` — `0b1`, one `1` bit (odd).
-- `is_odious(1);` is `true`.
-- `is_odious(2);` is `true` — `0b10`, one `1` bit.
-- `is_odious(4);` is `true` — `0b100`, one `1` bit.
-- `is_odious(3);` is `false`.
-- For every integer `0` through `31`, `is_evil(n) != is_odious(n)` — the
-  two predicates are exact complements over the same domain (test via a
-  loop or an explicit list of both buckets).
-- `is_evil(1024);` is `false` — `0b10000000000`, one `1` bit (odious).
-- `is_evil(-1);` raises `CinderRuntimeError` matching `"is_evil()
-  requires a non-negative integer, domain error"`.
-- `is_odious(-4);` raises `CinderRuntimeError` matching `"is_odious()
-  requires a non-negative integer, domain error"`.
-- `is_evil(5.0);` raises `CinderRuntimeError` matching `"is_evil()
-  requires an int, got float"` — the same message shape `_require_int`
-  already produces elsewhere.
-- `is_odious(true);` raises `CinderRuntimeError` matching `"is_odious()
-  requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column, for both builtins.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register both near `is_power_of_two`,
-see current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py` (model on the `TestIsPowerOfTwo` test
-class, search `class TestIsPowerOfTwo`). Once merged, `README.md`'s
-Builtins bullet needs `is_evil`/`is_odious` added near `is_power_of_two`,
-and `PROJECT.md`'s roadmap paragraph needs this moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 3. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
+## 1. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
 
 Build: the depth task after task 5's breadth work (`is_evil`/`is_odious`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -312,7 +104,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
+## 2. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
 
 Build: the breadth task after task 5's depth work (list concatenation
 via `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -418,7 +210,7 @@ this task.
 
 ---
 
-## 5. Language: trailing commas in destructuring patterns
+## 3. Language: trailing commas in destructuring patterns
 
 Build: the depth task after task 5's breadth work (`harmonic_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -566,7 +358,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
+## 4. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
 
 Build: the breadth task after task 5's depth work (trailing commas in
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,

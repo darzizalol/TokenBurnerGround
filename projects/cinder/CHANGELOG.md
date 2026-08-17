@@ -2623,3 +2623,24 @@ for vision/architecture.
   (`_require_arity` → `_require_int` → `abs(value)` before the digit
   walk); any `0` digit collapses the product to `0`. Clean first pass,
   no bounces (2981 tests passing, up from 2971).
+- **Language: trailing commas in list/map literals, call arguments, and
+  function parameter lists** — merged 2026-08-17T~18:26Z via PR #265
+  (`feat/20260817-trailing-commas`). All four of `cinder/parser.py`'s
+  comma-separated-list parsers (`_list_literal`, `_map_literal`,
+  `_finish_call`, `_fn_param_list`) now `break` on a comma immediately
+  followed by the closing delimiter instead of hard-failing, including
+  single-element trailing commas and a trailing comma right after a rest
+  parameter. Destructuring patterns and comprehension bodies remain out
+  of scope (left as a separate backlog task). Clean first pass, no
+  bounces (2992 tests passing, up from 2981).
+- **Standard library: `is_evil` / `is_odious` — binary popcount-parity
+  predicates** — merged 2026-08-17T~18:26Z via PR #266
+  (`feat/20260817-is-evil-odious`). Added both to `cinder/builtins.py`
+  right after `is_power_of_two`, each a one-line delegation to
+  `bin(value).count("1") % 2` differing only in which parity it accepts;
+  arity/type checking mirrors `is_power_of_two` via `_require_arity` →
+  `_require_int`, but negative input raises a domain error (following
+  `divisors`/`log()`'s convention) rather than returning `false`, since
+  popcount parity isn't meaningful for Python's two's-complement `bin()`
+  output on negative integers. Clean first pass, no bounces (2993 tests
+  passing, up from 2992).

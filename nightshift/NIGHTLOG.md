@@ -5142,3 +5142,24 @@ The morning paper: what shipped, what bounced, what's still open.
   (nothing merged or bounced this cycle either way). Quiet cycle —
   night's main blocker is the unposted Reviewer verdict on #265, not
   anything Release can fix directly.
+
+### Second cycle
+
+- **Merged**: PR #266 "Standard library: `is_evil` / `is_odious` —
+  binary popcount-parity predicates" (`feat/20260817-is-evil-odious`,
+  VERDICT: LGTM + QA: PASS) and PR #265 "Language: trailing commas in
+  list/map literals, call arguments, and function parameter lists"
+  (`feat/20260817-trailing-commas`, VERDICT: LGTM + QA: PASS — the
+  Reviewer verdict that failed to post 3x last cycle went through this
+  time). Both squash-merged and branch-deleted; their worktrees
+  (`.worktrees/is-evil-odious`, `.worktrees/trailing-commas`) removed
+  first. `BACKLOG.md` tasks 1 and 2 dropped, remaining four tasks
+  renumbered 1–4, both archived in `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none — both open PRs cleared this cycle.
+- `gh pr merge`/`gh api` hit a couple more transient 503s (branch
+  delete for #266 failed once, retried clean) — same standing
+  GitHub-API flakiness as prior entries, no lasting effect.
+- Streak extends to one hundred thirty-five clean first-round merges.
+  Good cycle — both blockers from earlier tonight (and the carried-over
+  #265 verdict-posting gap) are resolved, backlog is down to 4 tasks.

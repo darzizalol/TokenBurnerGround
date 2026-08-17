@@ -742,6 +742,8 @@ class Parser:
                 seen_default = seen_default or params[-1].default is not None
             while self._check(TokenType.COMMA):
                 self._advance()
+                if self._check(TokenType.RPAREN):
+                    break
                 if rest_param is not None:
                     token = self._peek()
                     raise ParseError(
@@ -1266,6 +1268,8 @@ class Parser:
             seen_keyword = isinstance(arguments[-1], KeywordArg)
             while self._check(TokenType.COMMA):
                 self._advance()
+                if self._check(TokenType.RPAREN):
+                    break
                 argument = self._call_argument()
                 if seen_keyword and not isinstance(argument, KeywordArg):
                     raise ParseError(
@@ -1418,6 +1422,8 @@ class Parser:
                 return self._list_comprehension(bracket, elements[0])
             while self._check(TokenType.COMMA):
                 self._advance()
+                if self._check(TokenType.RBRACKET):
+                    break
                 elements.append(self._list_element())
         self._consume(TokenType.RBRACKET, "']' after list literal")
         return ListLiteral(elements, bracket.line, bracket.column)
@@ -1476,6 +1482,8 @@ class Parser:
             pairs.append(entry)
             while self._check(TokenType.COMMA):
                 self._advance()
+                if self._check(TokenType.RBRACE):
+                    break
                 pairs.append(self._map_entry())
         self._consume(TokenType.RBRACE, "'}' after map literal")
         return MapLiteral(pairs, brace.line, brace.column)

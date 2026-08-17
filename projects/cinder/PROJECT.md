@@ -939,51 +939,50 @@ the sign before iterating, so it needs no new domain-handling decision
 of its own. A single-digit integer (including `0`) is trivially its own
 digit product; any `0` digit anywhere in the number collapses the
 whole product to `0`, which is the correct answer, not a case to guard
-against — have since landed too.
+against, and trailing commas in list/map literals, call arguments, and
+function parameter lists (`[1, 2,]`, `{"a": 1,}`, `f(1, 2,)`, `fn f(a,
+b,) { ... }`) — the depth task after `digit_product`'s breadth work,
+closing an ergonomics gap in all four of `cinder/parser.py`'s
+comma-separated-list parsers at once, since they share the identical
+"parse an element, then loop while a comma follows" shape: a comma
+immediately before the closing delimiter used to be a hard `ParseError`
+rather than being silently accepted, unlike every mainstream scripting
+language's take on these same four positions. Each site got the same
+one-line fix — after consuming the comma, check whether the next token
+is that site's own closing delimiter and break instead of trying to
+parse another element — with no interpreter changes at all, since this
+only widened what the parser was willing to accept, not what AST shape
+it produces. Deliberately scoped to just those four sites, not
+destructuring patterns or comprehension bodies, which are separate call
+sites with their own comma-loops and were left for a future task
+(trailing commas in destructuring patterns, covered further below), and
+`is_evil(n)`/`is_odious(n)` — a breadth task after that depth work:
+binary popcount-parity predicates, classifying every non-negative
+integer by whether its binary representation has an even ("evil") or
+odd ("odious") count of `1` bits, sitting next to `is_power_of_two` as
+the second member of the "reasons about binary representation" family
+rather than the decimal digit-transform cluster `is_repdigit`/
+`digit_product` belong to. Each is a one-line delegation to
+`bin(value).count("1") % 2`, bundled as one task since they're exact
+complements of the same expression differing only in which parity is
+accepted — the same bundling `is_int`/`is_float` and `is_subset`/
+`is_superset` already got — and negative input raises a domain error
+rather than answering `false`, since Python's two's-complement `bin()`
+output on a negative number would silently count the wrong thing
+rather than answering honestly — have since landed too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy slot 1 here, `digit_product`, has since landed via
-PR #264 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant not-yet-scoped
-description from this section, renumbered the remaining five down to
-slots 1-5, and appended a freshly-scoped task 6 restocking the backlog
-back past its 5-task floor):
-as task 1, trailing commas in list/map literals, call
-arguments, and function parameter lists (`[1, 2,]`, `{"a": 1,}`,
-`f(1, 2,)`, `fn f(a, b,) { ... }`) — the depth task after
-`digit_product`'s breadth work, closing an ergonomics gap in all four
-of `cinder/parser.py`'s comma-separated-list parsers at once, since
-they share the identical "parse an element, then loop while a comma
-follows" shape: today a comma immediately before the closing delimiter
-is a hard `ParseError` rather than being silently accepted, unlike
-every mainstream scripting language's take on these same four
-positions. Each site gets the same one-line fix — after consuming the
-comma, check whether the next token is that site's own closing
-delimiter and break instead of trying to parse another element — with
-no interpreter changes at all, since this only widens what the parser
-is willing to accept, not what AST shape it produces. Deliberately
-scoped to just those four sites, not destructuring patterns or
-comprehension bodies, which are separate call sites with their own
-comma-loops and are left for a future task if still wanted (task 5
-below is that future task). And as
-task 2, `is_evil(n)`/`is_odious(n)` — a breadth task after task 1's
-depth work, restocking the backlog back to 6 tasks now that
-`is_repdigit` has landed via PR #260: binary popcount-parity
-predicates, classifying every non-negative integer by whether its
-binary representation has an even ("evil") or odd ("odious") count of
-`1` bits, sitting next to `is_power_of_two` as the second member of the
-"reasons about binary representation" family rather than the decimal
-digit-transform cluster `is_repdigit`/`digit_product` belong to. Each
-is a one-line delegation to `bin(value).count("1") % 2`, bundled as one
-task since they're exact complements of the same expression differing
-only in which parity is accepted — the same bundling `is_int`/`is_float`
-and `is_subset`/`is_superset` already got — and negative input raises a
-domain error rather than answering `false`, since Python's
-two's-complement `bin()` output on a negative number would silently
-count the wrong thing rather than answering honestly. And as task 3,
-list concatenation via `+` (`[1, 2] + [3, 4]` is `[1, 2, 3, 4]`) — a
-depth task after task 2's breadth work, restocking the backlog back to
-6 tasks now that scientific notation has landed via PR #261:
+(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the two tasks
+that used to occupy slots 1-2 here, trailing commas in list/map
+literals/calls/params and `is_evil`/`is_odious`, have since landed via
+PR #265 and PR #266 in the same cycle and are covered in the "have
+since landed" history immediately above; this grooming pass dropped
+their now-redundant not-yet-scoped descriptions from this section,
+renumbered the remaining four down to slots 1-4, and appended two
+freshly-scoped tasks, 5 and 6, restocking the backlog back past its
+5-task floor in one pass since two tasks landed at once this cycle):
+as task 1, list concatenation via `+` (`[1, 2] + [3, 4]` is `[1, 2, 3,
+4]`) — a depth task restocking the backlog back to 6 tasks now that
+scientific notation has landed via PR #261:
 `_apply_binary_operator`'s `PLUS` branch in `cinder/interpreter.py`
 already special-cases numbers and strings but falls through to an
 "unsupported operand types" error for two lists, even though `*`
@@ -997,8 +996,8 @@ Because compound assignment desugars `+=` to an ordinary `Binary`/
 `PLUS` node and reuses this same function, `xs += [3, 4]` starts
 working for free the moment this branch lands, no separate change
 needed. No lexer or parser changes: `+` is already tokenized and
-already reaches this function for every operand type. And as task 4,
-`harmonic_mean(list)` — a breadth task after task 3's depth work,
+already reaches this function for every operand type. And as task 2,
+`harmonic_mean(list)` — a breadth task after task 1's depth work,
 restocking the backlog back to 6 tasks now that `geometric_mean` has
 landed via PR #262: the third member of the classical Pythagorean
 means trio (arithmetic, geometric, harmonic), completing the statistics
@@ -1012,22 +1011,24 @@ strictly-positive domain restriction `geometric_mean` already enforces
 zero, and a negative element makes the harmonic mean not meaningfully
 comparable to its arithmetic/geometric siblings under the AM-GM-HM
 inequality), raising the same domain-error shape rather than leaking a
-`ZeroDivisionError` or a sign-confused result. And as task 5, trailing
+`ZeroDivisionError` or a sign-confused result. And as task 3, trailing
 commas in destructuring patterns (`let [a, b,] = expr;`,
 `let {a, b,} = expr;`, `for [a, b,] in ...`, `for {a, b,} in ...`,
 destructuring function parameters, both comprehension loop-variable
 forms, and the plain-assignment map form `{a, b,} = expr;`) — a depth
-task after task 4's breadth work, restocking the backlog back to 6
+task after task 2's breadth work, restocking the backlog back to 6
 tasks now that postfix `++`/`--` has landed via PR #263: this is
-exactly the "future, separately-scoped task" task 1 flagged and
-deferred. `_destructure_list_pattern`, `_destructure_map_pattern`, and
+exactly the "future, separately-scoped task" the trailing-commas-in-
+list/map-literals task (landed via PR #265, described in the "have
+since landed" history above) flagged and deferred.
+`_destructure_list_pattern`, `_destructure_map_pattern`, and
 `_try_map_destructure_assign_statement` each have their own
-comma-loop, structurally identical to task 1's four sites and with the
-identical gap; each gets the same one-line "peek the closing
+comma-loop, structurally identical to that landed task's four sites and
+with the identical gap; each gets the same one-line "peek the closing
 delimiter after the comma, break" fix, placed before the existing
 "rest element must be last" check so a trailing comma right after a
 rest element (`let [a, ...rest,] = expr;`) is accepted rather than
-tripping that check, the same ordering task 1 used for
+tripping that check, the same ordering that landed task used for
 `_fn_param_list`'s own rest-parameter case. One real subtlety: list
 patterns' existing "hole" element (`let [a, , c] = expr;`) means a
 pattern ending "hole, then trailing comma" (`let [a, ,] = expr;`) falls
@@ -1038,11 +1039,11 @@ hits the new check on its second comma and breaks — so `let [a, ,] =
 intentional behavior change from today's `ParseError`, since a hole is
 a hole regardless of position. The plain-assignment **list** form
 (`[a, b,] = expr;`) needs no change at all: it validates an ordinary
-`ListLiteral` already parsed by `_list_literal` (task 1's own site), so
-it already accepts a trailing comma for free once task 1 lands, the
-same way `xs += [3, 4]` started working for free once list-plus-`+`
-landed. And as task 6, `multiplicative_persistence(n)` — a breadth task
-after task 5's depth work, restocking the backlog back to 6 tasks now
+`ListLiteral` already parsed by `_list_literal` (that landed task's own
+site), so it already accepts a trailing comma for free, the same way
+`xs += [3, 4]` started working for free once list-plus-`+` landed. And
+as task 4, `multiplicative_persistence(n)` — a breadth task after task
+3's depth work, restocking the backlog back to 6 tasks now
 that `digit_product` has landed via PR #264: the number of times a
 number's own decimal digits must be repeatedly multiplied together
 before the result drops to a single digit (e.g. `39 -> 27 -> 14 -> 4`,
@@ -1117,10 +1118,27 @@ patterns renumbered from 6 to 5) and restocked it to 6 by adding task
 6, `multiplicative_persistence`, continuing alternation with a breadth
 task after task 5's depth work (trailing commas in destructuring
 patterns) rather than stacking a second depth task, per the policy
-above. The next grooming
-pass should continue alternating breadth/depth, restocking toward 6-7
-tasks whenever a merge drops the count within reach of the 5-task
-floor.
+above. This pass found the backlog down past its 5-task floor to just 4
+(both trailing commas in list/map literals/calls/params and
+`is_evil`/`is_odious` landed via PR #265 and PR #266 in the same cycle,
+dropping the count from 6 to 4 in one jump, dropping both their
+now-landed descriptions from the "what remains plausible" section above
+into the "have since landed" history, and renumbering the remaining
+four tasks from 3-6 down to 1-4, with list concatenation via `+`
+renumbered from 3 to 1, `harmonic_mean` from 4 to 2, trailing commas in
+destructuring patterns from 5 to 3, and `multiplicative_persistence`
+from 6 to 4) and restocked it the rest of the way to 6 by adding two
+tasks at once — the same "restock faster than strict alternation"
+move `aliquot_sum`/`is_perfect_cube` and `collatz_length`/
+`is_strong_number` already used when a single merge dropped the count
+by more than one: task 5, comma-separated multiple variable
+declarations in a single `let`/`const` statement (`let a = 1, b = 2;`),
+a depth task continuing alternation after task 4's breadth work
+(`multiplicative_persistence`), and task 6, `cbrt`, a breadth task
+after task 5's depth work, per the same alternation policy. The next
+grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor.
 
 ## History
 

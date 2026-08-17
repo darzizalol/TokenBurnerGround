@@ -123,7 +123,11 @@ while (i < 10) {
   arguments/ternary branches are unchanged, so `-x++;` and `print(x++)`
   still raise, matching `print(x = 5)`'s own restriction), `*` repetition
   for `str * int`/`list * int` (Python repetition
-  semantics), floor division `//` (same precedence tier as `/`/`%`,
+  semantics), list concatenation via `+` (`[1, 2] + [3, 4]` is
+  `[1, 2, 3, 4]`, a fresh non-mutating list, closing the gap between the
+  existing `concat()` builtin and infix syntax the same way `*` already
+  does for repetition; `+=` on a list target works for free through the
+  same desugaring), floor division `//` (same precedence tier as `/`/`%`,
   floors toward negative infinity rather than truncating, e.g.
   `-7 // 2` is `-4`),
   `in` for membership tests (lists, strings, maps) and its negated sibling
@@ -188,7 +192,11 @@ while (i < 10) {
   order-independent (`f(a: 1, b: 2)`), Python-style, usable together
   with leading positional arguments but not before them; builtins stay
   positional-only and reject keyword arguments, and destructuring/rest
-  parameters have no name a keyword argument could address
+  parameters have no name a keyword argument could address; list/map
+  literals, call arguments, and function parameter lists all accept an
+  optional trailing comma before the closing delimiter (`[1, 2,]`,
+  `{"a": 1,}`, `f(1, 2,)`, `fn f(a, b,) { ... }`, including a trailing
+  comma right after a rest parameter)
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -251,7 +259,10 @@ while (i < 10) {
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_power_of_two` to test whether an integer is a power of two
-  via the `n & (n - 1) == 0` bit trick, `is_palindrome` to test whether a string reads the same forwards
+  via the `n & (n - 1) == 0` bit trick,
+  `is_evil`/`is_odious` to test the parity of an integer's binary popcount
+  (even/odd count of `1` bits, negative input raises a domain error),
+  `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
   `is_upper`/`is_lower` to test whether a string is entirely upper/lowercase,
@@ -374,23 +385,22 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: postfix `++`/`--` as a
-first-class assignment expression (usable as a `let` initializer or
-chained-assignment RHS, not just a bare statement or `for`-loop
-clause), and `digit_product` as `digit_sum`'s multiplicative
-counterpart (any `0` digit collapses the result to `0`).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): trailing commas in
+Actively developed, nightly. Recently landed: trailing commas in
 list/map literals, call arguments, and function parameter lists,
-`is_evil`/`is_odious` binary popcount-parity predicates, list
+`is_evil`/`is_odious` binary popcount-parity predicates, and list
 concatenation via `+` (closing the gap between the existing `concat()`
-builtin and infix syntax), `harmonic_mean` to complete the classical
-arithmetic/geometric/harmonic Pythagorean means trio, trailing commas
-in destructuring patterns (`let`/`for`/function-parameter/comprehension
-patterns and the plain-assignment map form), closing the one gap the
-earlier trailing-commas task deliberately left open, and
-`multiplicative_persistence` — the loop-driven counterpart to
-`digital_root`'s closed-form additive reduction, since no closed form
-exists for repeated digit *multiplication*.
+builtin and infix syntax the same way `*` already does for repetition).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `harmonic_mean` to
+complete the classical arithmetic/geometric/harmonic Pythagorean means
+trio, trailing commas in destructuring patterns
+(`let`/`for`/function-parameter/comprehension patterns and the
+plain-assignment map form), closing the one gap the earlier
+trailing-commas task deliberately left open, `multiplicative_persistence`
+— the loop-driven counterpart to `digital_root`'s closed-form additive
+reduction, since no closed form exists for repeated digit
+*multiplication*, comma-separated multiple variable declarations in a
+single `let`/`const` statement (`let a = 1, b = 2;`), and `cbrt` — real
+cube root, the domain-unrestricted sibling to `sqrt`.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

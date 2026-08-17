@@ -582,6 +582,138 @@ the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Language: nested list-in-list destructuring patterns
+
+Build: the depth task after task 5's breadth work (`cbrt`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
+6 tasks now that list concatenation via `+` has landed via PR #267,
+dropping the count to the 5-task floor. Every list-pattern position
+(`let`, plain assignment, `for`, function params, both comprehension
+loop-variable forms) currently requires each element to be a plain
+identifier (optionally with a rename-free default, or a hole) — nothing
+in a list pattern can itself be a nested pattern, so destructuring one
+level into a list-of-lists still needs a manual second `let`:
+```sh
+python3 -m cinder.cli eval 'let [a, [b, c]] = [1, [2, 3]]; print(b);'
+# -> ParseError: expected identifier in destructuring pattern, found '['
+```
+Two functions are shared by every list-pattern call site and are the
+only things that need to change — everywhere else picks the fix up for
+free, the same "shared helper" shape rest elements/defaults/holes
+already exploited:
+
+**Parsing** (`cinder/parser.py`): `_destructure_list_pattern_entry`
+currently only accepts `TokenType.IDENTIFIER` (or a bare `COMMA` for a
+hole) at the position where a pattern element starts. Add a third
+branch, checked before the `IDENTIFIER` consume: if the next token is
+`TokenType.LBRACKET`, recursively call `self._destructure_list_pattern()`
+to parse a nested pattern (itself capable of nesting further, for free,
+since it terminates in the same three cases), then apply the exact same
+optional-`= default`/`seen_default` logic the identifier branch already
+has, storing the entry's first tuple slot as the nested `(names, rest)`
+pair instead of a `str`:
+```python
+    def _destructure_list_pattern_entry(self, seen_default: bool) -> tuple:
+        if self._check(TokenType.COMMA):
+            if seen_default:
+                raise ParseError(...)  # unchanged
+            return None, None
+        if self._check(TokenType.LBRACKET):
+            nested_names, nested_rest = self._destructure_list_pattern()
+            pattern = (nested_names, nested_rest)
+            if self._check(TokenType.EQ):
+                self._advance()
+                return pattern, self._ternary()
+            if seen_default:
+                raise ParseError(...)  # same message as the identifier branch
+            return pattern, None
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
+        ...  # unchanged
+```
+`_destructure_assign_pattern` (the plain-assignment list form, `[a, b] =
+expr;`, which validates an already-parsed `ListLiteral`'s elements
+rather than parsing a pattern grammar directly) gets the matching
+addition: alongside its existing `isinstance(element, Identifier)` and
+`isinstance(element, Spread)` branches, add
+`isinstance(element, ListLiteral)`, recursing into
+`self._destructure_assign_pattern(element, eq_token)` to validate the
+nested literal as a pattern too, and appending `((nested_names,
+nested_rest), None)`. Unlike defaults/holes (which needed genuinely new
+grammar — a bare `=` or an empty slot inside an ordinary list-literal
+expression — and were deliberately left unsupported here for that
+reason), a nested `[...]` is already valid, unambiguous `ListLiteral`
+expression syntax, so this is a small, safe extension rather than a
+"materially different, riskier parser change" the way those two were.
+
+**Binding** (`cinder/interpreter.py`): `_bind_list_destructure`'s two
+per-element loops both do `if name is not None:
+self._bind_destructure_name(env, name, item, line, column, use_assign)`.
+Add a branch ahead of that check: `if isinstance(name, tuple):` — the
+nested-pattern case — recurse: `nested_names, nested_rest = name;
+self._bind_list_destructure(env, nested_names, nested_rest, item, line,
+column, use_assign)`, else fall through to the existing
+`_bind_destructure_name` call unchanged. Both loops (the `rest is not
+None` branch and the no-rest branch) need the same three-way
+`None`/`tuple`/`str` check. No other function needs to change: the
+length/arity error messages, default-evaluation, and rest-collection
+logic in `_bind_list_destructure` are all unaffected by what a `name`
+slot actually contains, and a non-list value reaching the recursive
+call naturally raises the existing `"cannot destructure {type} as a
+list"` error from the top of the recursive call, with no new check
+needed.
+
+Deliberately out of scope: nesting a *map* pattern inside a list
+pattern (`let [a, {b, c}] = ...`) or a list pattern inside a *map*
+pattern (`let {a: [b, c]} = ...`) — list-in-list only this task, the
+same narrow-then-extend scoping the rest-element and default-value
+families already used (list side first, map side as separate later
+tasks). A `{` at a list-pattern element position keeps raising
+`ParseError` exactly as it does today, not silently accepted.
+
+Acceptance criteria:
+- `let [a, [b, c]] = [1, [2, 3]]; print(a); print(b); print(c);` prints
+  `1`, `2`, `3`.
+- `let [[a, b], c] = [[1, 2], 3]; print(a); print(b); print(c);` prints
+  `1`, `2`, `3` — nesting in the first position works the same as the
+  last.
+- `let [a, [b, [c, d]]] = [1, [2, [3, 4]]]; print(d);` prints `4` —
+  arbitrary nesting depth, not just one level.
+- `let [a, [b, ...brest]] = [1, [2, 3, 4]]; print(brest);` prints
+  `[3, 4]` — a rest element inside a nested pattern.
+- `let [a, [b, c] = [0, 0]] = [1]; print(b); print(c);` prints `0` then
+  `0` — a default value on a nested-pattern slot, itself then
+  destructured normally.
+- `let [[a, , c]] = [[1, 2, 3]]; print(a); print(c);` prints `1` then
+  `3` — a hole inside a nested pattern.
+- `let [a, [b, c]] = [1, 2];` raises `CinderRuntimeError` matching
+  `"cannot destructure int as a list"` — a non-list value at a nested
+  position fails the same way a non-list top-level value already does.
+- `[a, [b, c]] = [1, [2, 3]]; print(b);` prints `2` — the plain-assignment
+  form (pre-declare `a`, `b`, `c` with `let` first).
+- `for [a, [b, c]] in [[1, [2, 3]]] { print(b); }` prints `2`.
+- `fn f([a, [b, c]]) { return b + c; } print(f([1, [2, 3]]));` prints `5`.
+- `print([b for [a, [b, c]] in [[1, [2, 3]]]]);` prints `[2]`.
+- `let [a, {b, c}] = [1, {"b": 2}];` still raises `ParseError` matching
+  `"expected identifier in destructuring pattern, found '{'"` — map
+  nesting inside a list pattern stays unsupported, not silently broken
+  differently.
+- Every pre-existing destructuring test (defaults, holes, rest elements,
+  all five forms, both list and map patterns) continues to pass
+  unmodified, without nesting.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_destructure_list_pattern_entry`,
+`_destructure_assign_pattern`), `cinder/interpreter.py`
+(`_bind_list_destructure`), `tests/test_parser.py` and
+`tests/test_interpreter.py` (model on the existing hole-element and
+rest-element destructuring test classes). Once merged, `README.md`'s
+destructuring bullets need a sentence on nested list patterns, and
+`PROJECT.md`'s roadmap paragraph needs this moved from backlog to
+landed — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

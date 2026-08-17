@@ -969,36 +969,29 @@ accepted — the same bundling `is_int`/`is_float` and `is_subset`/
 `is_superset` already got — and negative input raises a domain error
 rather than answering `false`, since Python's two's-complement `bin()`
 output on a negative number would silently count the wrong thing
-rather than answering honestly — have since landed too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 exactly — the two tasks
-that used to occupy slots 1-2 here, trailing commas in list/map
-literals/calls/params and `is_evil`/`is_odious`, have since landed via
-PR #265 and PR #266 in the same cycle and are covered in the "have
-since landed" history immediately above; this grooming pass dropped
-their now-redundant not-yet-scoped descriptions from this section,
-renumbered the remaining four down to slots 1-4, and appended two
-freshly-scoped tasks, 5 and 6, restocking the backlog back past its
-5-task floor in one pass since two tasks landed at once this cycle):
-as task 1, list concatenation via `+` (`[1, 2] + [3, 4]` is `[1, 2, 3,
-4]`) — a depth task restocking the backlog back to 6 tasks now that
-scientific notation has landed via PR #261:
-`_apply_binary_operator`'s `PLUS` branch in `cinder/interpreter.py`
-already special-cases numbers and strings but falls through to an
-"unsupported operand types" error for two lists, even though `*`
-already treats `list * int` as repetition in the very same function and
-the `concat()` builtin already does list-plus-list as a function call —
+rather than answering honestly, and list concatenation via `+`
+(`[1, 2] + [3, 4]` is `[1, 2, 3, 4]`): one new
+`isinstance(left, list) and isinstance(right, list): return left +
+right` branch in `_apply_binary_operator`'s `PLUS` case
+(`cinder/interpreter.py`), reusing Python's own non-mutating list `+`,
+matching `_repeat_op`'s existing non-mutating convention for `*` —
 the same "builtin exists, infix syntax doesn't" gap `**` closed for
-`pow()`. One new `isinstance(left, list) and isinstance(right, list):
-return left + right` branch, reusing Python's own non-mutating list
-`+`, matching `_repeat_op`'s existing non-mutating convention for `*`.
-Because compound assignment desugars `+=` to an ordinary `Binary`/
-`PLUS` node and reuses this same function, `xs += [3, 4]` starts
-working for free the moment this branch lands, no separate change
-needed. No lexer or parser changes: `+` is already tokenized and
-already reaches this function for every operand type. And as task 2,
-`harmonic_mean(list)` — a breadth task after task 1's depth work,
-restocking the backlog back to 6 tasks now that `geometric_mean` has
+`pow()`, since `concat()` already did list-plus-list as a function call
+and `*` already treated `list * int` as repetition in the very same
+function. Because compound assignment desugars `+=` to an ordinary
+`Binary`/`PLUS` node and reuses this same function, `xs += [3, 4]`
+started working for free the moment this branch landed, no separate
+change needed — have since landed too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-5 exactly — the task that
+used to occupy slot 1 here, list concatenation via `+`, has since
+landed via PR #267 and is covered in the "have since landed" history
+immediately above; this grooming pass dropped its now-redundant
+not-yet-scoped description from this section, renumbered the remaining
+five down to slots 1-5, and appended one freshly-scoped task, 6,
+restocking the backlog back to its 6-task target):
+as task 1, `harmonic_mean(list)` — a breadth task, originally scoped
+restocking the backlog back to 6 tasks once `geometric_mean` had
 landed via PR #262: the third member of the classical Pythagorean
 means trio (arithmetic, geometric, harmonic), completing the statistics
 cluster's "kinds of average" alongside `mean`/`geometric_mean` rather
@@ -1011,12 +1004,12 @@ strictly-positive domain restriction `geometric_mean` already enforces
 zero, and a negative element makes the harmonic mean not meaningfully
 comparable to its arithmetic/geometric siblings under the AM-GM-HM
 inequality), raising the same domain-error shape rather than leaking a
-`ZeroDivisionError` or a sign-confused result. And as task 3, trailing
+`ZeroDivisionError` or a sign-confused result. And as task 2, trailing
 commas in destructuring patterns (`let [a, b,] = expr;`,
 `let {a, b,} = expr;`, `for [a, b,] in ...`, `for {a, b,} in ...`,
 destructuring function parameters, both comprehension loop-variable
 forms, and the plain-assignment map form `{a, b,} = expr;`) — a depth
-task after task 2's breadth work, restocking the backlog back to 6
+task after task 1's breadth work, restocking the backlog back to 6
 tasks now that postfix `++`/`--` has landed via PR #263: this is
 exactly the "future, separately-scoped task" the trailing-commas-in-
 list/map-literals task (landed via PR #265, described in the "have
@@ -1042,8 +1035,8 @@ a hole regardless of position. The plain-assignment **list** form
 `ListLiteral` already parsed by `_list_literal` (that landed task's own
 site), so it already accepts a trailing comma for free, the same way
 `xs += [3, 4]` started working for free once list-plus-`+` landed. And
-as task 4, `multiplicative_persistence(n)` — a breadth task after task
-3's depth work, restocking the backlog back to 6 tasks now
+as task 3, `multiplicative_persistence(n)` — a breadth task after task
+2's depth work, restocking the backlog back to 6 tasks now
 that `digit_product` has landed via PR #264: the number of times a
 number's own decimal digits must be repeatedly multiplied together
 before the result drops to a single digit (e.g. `39 -> 27 -> 14 -> 4`,
@@ -1135,10 +1128,26 @@ by more than one: task 5, comma-separated multiple variable
 declarations in a single `let`/`const` statement (`let a = 1, b = 2;`),
 a depth task continuing alternation after task 4's breadth work
 (`multiplicative_persistence`), and task 6, `cbrt`, a breadth task
-after task 5's depth work, per the same alternation policy. The next
-grooming pass should continue alternating breadth/depth, restocking
-toward 6-7 tasks whenever a merge drops the count within reach of the
-5-task floor.
+after task 5's depth work, per the same alternation policy. This pass
+found the backlog back down to its 5-task floor again (list
+concatenation via `+` having landed via PR #267, dropping the count
+from 6 to 5, dropping its now-landed description from the "what
+remains plausible" section above into the "have since landed" history,
+and renumbering the remaining five tasks from 2-6 down to 1-5, with
+comma-separated `let`/`const` declarations renumbered from 5 to 4 and
+`cbrt` from 6 to 5) and restocked it to 6 by adding task 6, nested
+list-in-list destructuring patterns (`let [a, [b, c]] = [1, [2, 3]];`),
+continuing alternation with a depth task after task 5's breadth work
+(`cbrt`) rather than stacking a second breadth task, per the policy
+above — scoped to list-in-list nesting only (not map nesting either
+direction), reusing the same two shared-helper functions
+(`_destructure_list_pattern_entry`/`_bind_list_destructure`) every
+prior list-pattern extension (rest elements, defaults, holes) already
+changed, so it lands "for free" across every list-pattern call site
+(`let`, plain assignment, `for`, function params, both comprehension
+forms) the same way those did. The next grooming pass should continue
+alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
+drops the count within reach of the 5-task floor.
 
 ## History
 

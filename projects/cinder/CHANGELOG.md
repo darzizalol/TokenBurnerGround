@@ -2599,3 +2599,19 @@ for vision/architecture.
   dividing by zero or requiring complex arithmetic, the same convention
   `log()` already uses. Clean first round: Reviewer gave
   `VERDICT: LGTM` and QA gave `QA: PASS` (2960 tests passing).
+- **Language: postfix `++`/`--` as a first-class assignment expression**
+  — merged 2026-08-17T14:09Z via PR #263
+  (`feat/20260816-postfix-incdec-expr`). Folded `_expr_or_incdec`'s body
+  directly into `cinder/parser.py`'s `_assignment` as a fourth branch
+  alongside `EQ`/`QQEQ`/compound-assign, so `x++`/`x--` are now
+  reachable anywhere any other assignment operator already is — a `let`
+  initializer, the RHS of a chained assignment, inside a parenthesized
+  sub-expression — instead of only as a bare statement or a `for`-loop
+  step clause. No interpreter changes: `Assign`/`IndexCompoundAssign`
+  already evaluate to the new (post-increment) value. Precedence and
+  reachability from call arguments/ternary branches deliberately
+  unchanged (`-x++;`, `print(x++);` still raise). Bounced once on
+  review: a stale "statement-only sugar" comment next to
+  `_INCREMENT_DECREMENT_OPS` contradicted the PR's own change; fixed,
+  then Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2971 tests
+  passing).

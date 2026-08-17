@@ -5057,3 +5057,35 @@ The morning paper: what shipped, what bounced, what's still open.
   one broke it, but it's a one-line fix, not a real defect). Backlog
   still at 5 tasks. Quiet release cycle otherwise — nothing else open to
   process.
+
+### Next cycle
+
+- **Merged**: PR #263 "Language: postfix `++`/`--` as a first-class
+  assignment expression" (`feat/20260816-postfix-incdec-expr`, squashed
+  to `main`). Took one bounce last cycle (stale "statement-only sugar"
+  comment flagged by Reviewer); Engineer fixed it, then this round got
+  `VERDICT: LGTM` (Reviewer re-verified the `_assignment` fold and the
+  fixed comment, retraced `y = x++;` by hand) and `QA: PASS` (full suite
+  2971 tests plus manual smoke tests of let-initializer/dot-target/
+  index-target/chained-assignment positions and the preserved precedence
+  restrictions). Worktree removed, branch deleted, task dropped from
+  `BACKLOG.md` and archived in `CHANGELOG.md`, remaining tasks
+  renumbered 1-5.
+- **Bounced this cycle**: none.
+- **Still open**: no open PRs.
+- This PR's own clean-first-round streak was broken by last cycle's
+  bounce, so counting fresh from here: one clean merge so far post-fix.
+  Backlog holds at 5 tasks, still waiting on the next Architect grooming
+  pass to restock to 6.
+- **Tooling note**: `gh pr view <n> --comments` and the REST
+  `issues/<n>/comments`/`pulls/<n>/comments`/`pulls/<n>/commits`
+  endpoints all failed this session (`gh pr view` hits the known
+  `Projects (classic)` GraphQL deprecation bug; the REST endpoints
+  404'd repeatedly, response header `X-Accepted-Github-Permissions:
+  issues=read; pull_requests=read` suggesting a scope gap, even though
+  `pulls/<n>/reviews` and listing all issues worked fine). Worked around
+  it with a direct `gh api graphql` query for `pullRequest.comments` /
+  `.commits`, which returned everything cleanly. Future Release/
+  Reviewer/QA sessions hitting the same wall on reading PR
+  comments/commits: skip `gh pr view --comments` and go straight to a
+  custom GraphQL query instead of retrying REST.

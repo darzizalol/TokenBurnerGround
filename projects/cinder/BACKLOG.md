@@ -11,169 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: postfix `++`/`--` as a first-class assignment expression, not statement-only sugar [claimed 2026-08-16T20:01:13Z]
-
-Build: the depth task after task 5's breadth work (`geometric_mean`) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
-tasks now that uninitialized `let` declarations landed via PR #257,
-dropping the count to the 5-task floor. `cinder/parser.py`'s own module
-docstring (search for "statement-only sugar", right above
-`_assignment`) spells out today's deliberate restriction: `x++`/`x--`
-are recognized only by a one-off helper, `_expr_or_incdec`, called from
-exactly three places — `_expr_statement` (a bare `x++;` statement) and
-the C-style `for` loop's init/step clauses — rather than from
-`_assignment` itself, "so they're unreachable from any expression
-context." That restriction has become an inconsistency, not a
-deliberate language design choice: every *other* assignment-flavored
-operator (`=`, `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `&=`, `|=`,
-`^=`, `<<=`, `>>=`, `??=`) already *is* reachable as a `let` initializer,
-as the RHS of a chained assignment, and inside a parenthesized
-sub-expression, because `_assignment` itself recognizes them. `++`/`--`
-are the one assignment-flavored form still walled off from all of that.
-Verify the gap — every one of these already works today with `+=` in
-place of `++`, but fails with `++`:
-```sh
-python3 -m cinder.cli eval 'let x = 1; let y = x++; print(y);'
-# -> ParseError: expected ';' after variable declaration, found '++'
-python3 -m cinder.cli eval 'let x = 1; let y = 0; y = x++; print(y);'
-# -> ParseError: expected ';' after expression, found '++'
-python3 -m cinder.cli eval 'let x = 1; let y = (x++); print(y);'
-# -> ParseError: expected ')' after expression, found '++'
-python3 -m cinder.cli eval 'let x = 1; let y = x += 1; print(y);'
-# -> prints 2, no error — the exact sibling form this task brings ++/-- up to parity with
-```
-
-**Parsing** (`cinder/parser.py`): fold `_expr_or_incdec`'s body directly
-into `_assignment`, as one more `if` branch alongside the existing
-`EQ`/`QQEQ`/`_COMPOUND_ASSIGN_OPS` checks (order among these four
-branches doesn't matter — they dispatch on disjoint token types):
-
-```python
-    def _assignment(self) -> Expr:
-        expr = self._ternary()
-        if self._check(TokenType.EQ):
-            ...  # unchanged
-        if self._check(TokenType.QQEQ):
-            ...  # unchanged
-        if self._peek().type in _COMPOUND_ASSIGN_OPS:
-            ...  # unchanged
-        if self._peek().type in _INCREMENT_DECREMENT_OPS:
-            op_token = self._advance()
-            binary_operator = Token(
-                _INCREMENT_DECREMENT_OPS[op_token.type],
-                op_token.lexeme[0],
-                None,
-                op_token.line,
-                op_token.column,
-            )
-            one = Literal(1, op_token.line, op_token.column)
-            if isinstance(expr, Identifier):
-                return Assign(
-                    expr.name,
-                    Binary(expr, binary_operator, one),
-                    op_token.line,
-                    op_token.column,
-                )
-            if isinstance(expr, Index):
-                return IndexCompoundAssign(
-                    expr.obj, expr.index, binary_operator, one,
-                    op_token.line, op_token.column,
-                )
-            raise ParseError(
-                "invalid assignment target", op_token.line, op_token.column
-            )
-        return expr
-```
-
-This is a straight relocation of the existing body of
-`_expr_or_incdec` (currently at the bottom of the file, right above
-`_assignment`) — same `Identifier`/`Index` target check, same
-`Assign`/`IndexCompoundAssign` desugaring, same "invalid assignment
-target" error for anything else (a literal, a call result, a
-parenthesized expression, etc. — unchanged, still a `ParseError`).
-Once folded in, `_expr_or_incdec` has no remaining callers needing its
-own name — delete it, and change its three call sites
-(`_expr_statement`, and the `for`-loop init/step clauses in
-`_for_c_statement`) to call `self._assignment()` directly instead,
-exactly as every other statement-position expression already does.
-**No interpreter changes at all**: this task changes only where the
-parser is *willing to look* for `++`/`--`, not what AST node it builds
-or how that node evaluates — `Assign`/`IndexCompoundAssign` already
-evaluate to the new (post-increment) value, the same as every sibling
-compound-assign operator already does (confirmed above: `y = x += 1;`
-already prints `2`, not `1`), so `x++` used as an expression yields the
-incremented value too, not a C-style pre-increment snapshot of the old
-one — the natural, zero-extra-code consequence of reusing the exact
-same desugaring, not a new design decision this task has to invent.
-
-Out of scope, deliberately: this task does **not** change *precedence*
-— `++`/`--` are still recognized at the same (loosest, assignment-level)
-point in the grammar as today, just from more call sites. `-x++;`
-already raises `"invalid assignment target"` today (`_unary` parses
-`-x` into a single `Unary` node before `_expr_or_incdec` ever sees a
-trailing `++`, and `Unary` isn't an `Identifier`/`Index`) and must keep
-doing so — making postfix `++`/`--` bind tighter than unary prefix
-operators (C's actual precedence) is a separate, riskier parser change
-this task does not take on. Likewise, `++`/`--` still must not become
-reachable from call arguments, index expressions, ternary branches, or
-any other `_ternary()`-rooted position — none of the *other*
-assignment operators are reachable there either (`print(x = 5)` is
-`ParseError` today and must stay that way), so extending only `++`/`--`
-into those positions would be a new inconsistency in the opposite
-direction, not a fix for this one.
-
-Also update the `cinder/parser.py` module docstring paragraph
-(currently: `"x++"/"x--" are statement-only sugar for "x += 1"/"x -=
-1" (not an expression form: "let b = a++;" is unparseable), handled in
-"_expr_statement" rather than "_assignment" so they're unreachable
-from any expression context.'`) to describe the new, corrected
-behavior instead of the restriction this task removes; the two
-sentences right after it about the lexer's doubled-`-`/doubled-`+`
-prefix re-split (`--5`, `++5`) are unaffected and stay as-is.
-
-Acceptance criteria:
-- `let x = 1; let y = x++; print(x); print(y);` prints `2` then `2` —
-  `x++` works as a `let` initializer, and yields the new value.
-- `let x = 1; let y = 0; y = x++; print(x); print(y);` prints `2` then
-  `2` — `x++` works as the RHS of a chained assignment.
-- `let x = 1; let y = (x++); print(y);` prints `2` — works inside a
-  parenthesized sub-expression.
-- `let x = 5; let y = x--; print(x); print(y);` prints `4` then `4` —
-  `--` gets the same treatment as `++`.
-- `let xs = [1]; let y = xs[0]++; print(xs[0]); print(y);` prints `2`
-  then `2` — an `Index` target works the same new-value way, via
-  `IndexCompoundAssign`.
-- `let x = 1; x++; print(x);` still prints `2` — the existing bare-
-  statement form is unaffected.
-- `for (let i = 0; i < 3; i++) { print(i); }` still prints `0`, `1`,
-  `2` — the existing for-loop step-clause form is unaffected.
-- `for (let i = 0; i < 3; i = i + 1) { }` (an ordinary assignment step,
-  no `++`) still works unchanged — confirms the `_for_c_statement`
-  call-site swap to `_assignment()` didn't regress the non-incdec path.
-- `5++;` still raises `ParseError` matching `"invalid assignment
-  target"` — an invalid target is still rejected, from every call site,
-  not just the original one.
-- `-x++;` still raises the same `"invalid assignment target"` error —
-  confirms this task deliberately left precedence unchanged.
-- `print(x++);` still raises `ParseError` (still unreachable from a
-  call argument) — confirms `++`/`--` stayed at assignment-expression
-  reachability, matching `=`/`+=`'s own existing `print(x = 5)`
-  restriction, not creeping further into `_ternary()`-rooted positions.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_assignment`, delete
-`_expr_or_incdec`, `_expr_statement`, `_for_c_statement`, the module
-docstring), `tests/test_parser.py` and/or `tests/test_interpreter.py`
-(wherever the existing statement-form `x++`/for-loop tests live —
-search `INCREMENT_DECREMENT` or `x++`  — add the new expression-position
-cases alongside them, plus the unchanged-precedence/unchanged-
-reachability regression cases). Once merged, `PROJECT.md`'s roadmap
-paragraph needs this moved from backlog to landed — leave that to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
+## 1. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum`
 
 Build: the breadth task after task 5's depth work (postfix `++`/`--`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -239,7 +77,7 @@ task.
 
 ---
 
-## 3. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+## 2. Language: trailing commas in list/map literals, call arguments, and function parameter lists
 
 Build: the depth task after task 5's breadth work (`digit_product`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -345,7 +183,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
+## 3. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
 
 Build: the breadth task after task 5's depth work (trailing commas) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -447,7 +285,7 @@ task.
 
 ---
 
-## 5. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
+## 4. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
 
 Build: the depth task after task 5's breadth work (`is_evil`/`is_odious`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -540,7 +378,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
+## 5. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
 
 Build: the breadth task after task 5's depth work (list concatenation
 via `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

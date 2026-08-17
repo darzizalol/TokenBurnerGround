@@ -58,6 +58,21 @@ class TestArithmetic(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate('-"x"')
 
+    def test_list_plus_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('[1, 2] + "a"')
+        self.assertIn("unsupported operand types for '+': list and string", str(ctx.exception))
+
+    def test_list_plus_int_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("[1, 2] + 3")
+        self.assertIn("unsupported operand types for '+': list and int", str(ctx.exception))
+
+    def test_list_plus_map_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('[1, 2] + {"a": 1}')
+        self.assertIn("unsupported operand types for '+': list and map", str(ctx.exception))
+
 
 class TestFloorDivision(unittest.TestCase):
     def test_basic(self):
@@ -282,6 +297,34 @@ class TestRepetition(unittest.TestCase):
     def test_numeric_multiplication_unchanged(self):
         self.assertEqual(evaluate("3 * 4"), 12)
         self.assertEqual(evaluate("2.5 * 2"), 5.0)
+
+
+class TestListConcatenation(unittest.TestCase):
+    def test_two_lists(self):
+        self.assertEqual(evaluate("[1, 2] + [3, 4]"), [1, 2, 3, 4])
+
+    def test_empty_left(self):
+        self.assertEqual(evaluate("[] + [1]"), [1])
+
+    def test_empty_right(self):
+        self.assertEqual(evaluate("[1] + []"), [1])
+
+    def test_both_empty(self):
+        self.assertEqual(evaluate("[] + []"), [])
+
+    def test_does_not_mutate_inputs(self):
+        env = run("let a = [1, 2]; let b = [3, 4]; let c = a + b;")
+        self.assertEqual(env.get("a"), [1, 2])
+        self.assertEqual(env.get("b"), [3, 4])
+        self.assertEqual(env.get("c"), [1, 2, 3, 4])
+
+    def test_compound_assignment(self):
+        env = run("let xs = [1, 2]; xs += [3, 4];")
+        self.assertEqual(env.get("xs"), [1, 2, 3, 4])
+
+    def test_left_associative(self):
+        env = run("let xs = [1]; xs = xs + [2] + [3];")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
 
 
 class TestComparisons(unittest.TestCase):

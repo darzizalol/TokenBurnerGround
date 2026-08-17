@@ -24,12 +24,16 @@ evaluate the object/index sub-expressions twice) so `obj`/`index` are each
 evaluated exactly once at runtime and their values reused for both the
 read and the write.
 
-`x++`/`x--` are statement-only sugar for `x += 1`/`x -= 1` (not an
-expression form: `let b = a++;` is unparseable), handled in `_expr_statement`
-rather than `_assignment` so they're unreachable from any expression
-context. Like the bitwise/shift compound-assign set, both an `Identifier`
-and an `Index` target are accepted, the latter via `IndexCompoundAssign` for
-the same single-evaluation reason. The lexer's doubled-`-` lookahead means
+`x++`/`x--` desugar into `x += 1`/`x -= 1` (evaluating to the new,
+post-increment value, like every other compound-assign operator) and are
+recognized directly in `_assignment`, so they're reachable from any
+expression context an ordinary assignment is: a `let` initializer, the RHS
+of a chained assignment, or a parenthesized sub-expression — while still
+staying at assignment-level precedence and reachability, e.g. `print(x++)`
+is still a `ParseError`, matching `print(x = 5)`. Like the bitwise/shift
+compound-assign set, both an `Identifier` and an `Index` target are
+accepted, the latter via `IndexCompoundAssign` for the same
+single-evaluation reason. The lexer's doubled-`-` lookahead means
 `--5` (prefix double negation, no space) now lexes as one `MINUSMINUS`
 token instead of two `MINUS`; `_unary` re-splits it back into nested
 `Unary(MINUS, ...)` nodes since a leading `--` can never be a postfix
@@ -207,7 +211,7 @@ _INDEX_TARGET_COMPOUND_ASSIGN_OPS = {
     TokenType.LSHIFTEQ,
     TokenType.RSHIFTEQ,
 }
-# `x++`/`x--` statement-only sugar for `x += 1`/`x -= 1`: unlike the
+# `x++`/`x--` desugar into `x += 1`/`x -= 1`: unlike the
 # arithmetic compound-assign ops above, these accept both `Identifier` and
 # `Index` targets (an `Index` target desugars into `IndexCompoundAssign`,
 # same as the bitwise/shift compound-assign ops, to evaluate `obj`/`index`
@@ -622,7 +626,7 @@ class Parser:
         elif self._check(TokenType.LET):
             init = self._let_statement()  # consumes its own trailing ';'
         else:
-            init = ExprStmt(self._expr_or_incdec())
+            init = ExprStmt(self._assignment())
             self._consume(TokenType.SEMICOLON, "';' after for-loop init")
         if self._check(TokenType.SEMICOLON):
             condition = None
@@ -632,7 +636,7 @@ class Parser:
         if self._check(TokenType.RPAREN):
             step = None
         else:
-            step = ExprStmt(self._expr_or_incdec())
+            step = ExprStmt(self._assignment())
         self._consume(TokenType.RPAREN, "')' after for-loop clauses")
         if not self._check(TokenType.LBRACE):
             token = self._peek()
@@ -965,47 +969,9 @@ class Parser:
         return SwitchStmt(scrutinee, cases, default, switch_token.line, switch_token.column)
 
     def _expr_statement(self) -> Stmt:
-        expr = self._expr_or_incdec()
+        expr = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after expression")
         return ExprStmt(expr)
-
-    def _expr_or_incdec(self) -> Expr:
-        """An assignment expression, optionally followed by a postfix
-        `++`/`--` (statement-only sugar for `+= 1`/`-= 1`). Shared by
-        `_expr_statement` and the C-style for-loop's init/step clauses,
-        neither of which consumes a trailing `;` itself here."""
-        expr = self._assignment()
-        if self._peek().type in _INCREMENT_DECREMENT_OPS:
-            op_token = self._advance()
-            binary_operator = Token(
-                _INCREMENT_DECREMENT_OPS[op_token.type],
-                op_token.lexeme[0],
-                None,
-                op_token.line,
-                op_token.column,
-            )
-            one = Literal(1, op_token.line, op_token.column)
-            if isinstance(expr, Identifier):
-                expr = Assign(
-                    expr.name,
-                    Binary(expr, binary_operator, one),
-                    op_token.line,
-                    op_token.column,
-                )
-            elif isinstance(expr, Index):
-                expr = IndexCompoundAssign(
-                    expr.obj,
-                    expr.index,
-                    binary_operator,
-                    one,
-                    op_token.line,
-                    op_token.column,
-                )
-            else:
-                raise ParseError(
-                    "invalid assignment target", op_token.line, op_token.column
-                )
-        return expr
 
     def _assignment(self) -> Expr:
         expr = self._ternary()
@@ -1075,6 +1041,35 @@ class Parser:
                     expr.index,
                     binary_operator,
                     value,
+                    op_token.line,
+                    op_token.column,
+                )
+            raise ParseError(
+                "invalid assignment target", op_token.line, op_token.column
+            )
+        if self._peek().type in _INCREMENT_DECREMENT_OPS:
+            op_token = self._advance()
+            binary_operator = Token(
+                _INCREMENT_DECREMENT_OPS[op_token.type],
+                op_token.lexeme[0],
+                None,
+                op_token.line,
+                op_token.column,
+            )
+            one = Literal(1, op_token.line, op_token.column)
+            if isinstance(expr, Identifier):
+                return Assign(
+                    expr.name,
+                    Binary(expr, binary_operator, one),
+                    op_token.line,
+                    op_token.column,
+                )
+            if isinstance(expr, Index):
+                return IndexCompoundAssign(
+                    expr.obj,
+                    expr.index,
+                    binary_operator,
+                    one,
                     op_token.line,
                     op_token.column,
                 )

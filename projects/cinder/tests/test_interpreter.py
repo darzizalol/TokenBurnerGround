@@ -1865,14 +1865,55 @@ class TestIncrementDecrement(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_program(tokenize("5++;"))
 
-    def test_used_as_expression_value_is_unparseable(self):
-        with self.assertRaises(ParseError):
-            parse_program(tokenize("let b = a++;"))
-
     def test_plus_and_minus_and_compound_assign_unaffected(self):
         self.assertEqual(evaluate("1 + 2"), 3)
         env = run("let a = 1; a += 1;")
         self.assertEqual(env.get("a"), 2)
+
+    def test_used_as_let_initializer(self):
+        env = run("let x = 1; let y = x++;")
+        self.assertEqual(env.get("x"), 2)
+        self.assertEqual(env.get("y"), 2)
+
+    def test_used_as_chained_assignment_rhs(self):
+        env = run("let x = 1; let y = 0; y = x++;")
+        self.assertEqual(env.get("x"), 2)
+        self.assertEqual(env.get("y"), 2)
+
+    def test_used_inside_parenthesized_subexpression(self):
+        env = run("let x = 1; let y = (x++);")
+        self.assertEqual(env.get("x"), 2)
+        self.assertEqual(env.get("y"), 2)
+
+    def test_minus_minus_used_as_let_initializer(self):
+        env = run("let x = 5; let y = x--;")
+        self.assertEqual(env.get("x"), 4)
+        self.assertEqual(env.get("y"), 4)
+
+    def test_index_target_used_as_let_initializer(self):
+        env = run("let xs = [1]; let y = xs[0]++;")
+        self.assertEqual(env.get("xs"), [2])
+        self.assertEqual(env.get("y"), 2)
+
+    def test_bare_statement_form_unaffected(self):
+        env = run("let x = 1; x++;")
+        self.assertEqual(env.get("x"), 2)
+
+    def test_for_loop_step_clause_unaffected(self):
+        env = run("let total = 0; for (let i = 0; i < 3; i++) { total = total + i; }")
+        self.assertEqual(env.get("total"), 3)
+
+    def test_for_loop_non_incdec_step_unaffected(self):
+        env = run("let total = 0; for (let i = 0; i < 3; i = i + 1) { total = total + i; }")
+        self.assertEqual(env.get("total"), 3)
+
+    def test_precedence_unchanged_negation_then_increment_raises(self):
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("let x = 1; -x++;"))
+
+    def test_still_unreachable_from_call_argument(self):
+        with self.assertRaises(ParseError):
+            parse_program(tokenize("let x = 1; print(x++);"))
 
 
 class TestIfStatement(unittest.TestCase):

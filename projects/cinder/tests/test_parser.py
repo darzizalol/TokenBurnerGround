@@ -2057,12 +2057,32 @@ class TestIncrementDecrement(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("(1 + 2)--;")
 
-    def test_used_as_value_is_unparseable(self):
-        # `++`/`--` is statement-only sugar, not an expression: using it as a
-        # value is rejected (whether by an explicit lvalue check or simply
-        # because the grammar never reaches it inside an expression).
+    def test_used_as_let_initializer_desugars_same_as_statement_form(self):
+        # ++/-- are recognized directly in _assignment, so they're reachable
+        # as a let initializer now, desugaring identically to the
+        # statement-position form.
+        stmts = parse_stmts("let b = a++;")
+        self.assertEqual(
+            stmt_shape(stmts[0]),
+            (
+                "LetStmt",
+                "b",
+                ("Assign", "a", ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Literal", 1))),
+            ),
+        )
+
+    def test_still_unreachable_from_call_argument(self):
+        # Call arguments are parsed at _ternary-rooted reachability, same as
+        # every other assignment operator (print(x = 5) is also a
+        # ParseError) — ++/-- must not creep further than that.
         with self.assertRaises(ParseError):
-            parse_stmts("let b = a++;")
+            parse_stmts("print(a++);")
+
+    def test_precedence_unchanged_binds_looser_than_unary(self):
+        # -x++ still raises: _unary parses "-x" into a single Unary node
+        # before ++ is ever seen, and Unary isn't an Identifier/Index target.
+        with self.assertRaises(ParseError):
+            parse_stmts("-x++;")
 
     def test_plus_and_minus_and_compound_assign_unaffected(self):
         # Regression: plain `+`/`-` and `+=`/`-=` still parse exactly as

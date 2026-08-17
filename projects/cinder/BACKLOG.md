@@ -117,7 +117,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
+## 2. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates [claimed 2026-08-17T18:16:37Z]
 
 Build: the breadth task after task 5's depth work (trailing commas) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

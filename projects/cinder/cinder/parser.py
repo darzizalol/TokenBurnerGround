@@ -211,7 +211,7 @@ _INDEX_TARGET_COMPOUND_ASSIGN_OPS = {
     TokenType.LSHIFTEQ,
     TokenType.RSHIFTEQ,
 }
-# `x++`/`x--` statement-only sugar for `x += 1`/`x -= 1`: unlike the
+# `x++`/`x--` desugar into `x += 1`/`x -= 1`: unlike the
 # arithmetic compound-assign ops above, these accept both `Identifier` and
 # `Index` targets (an `Index` target desugars into `IndexCompoundAssign`,
 # same as the bitwise/shift compound-assign ops, to evaluate `obj`/`index`

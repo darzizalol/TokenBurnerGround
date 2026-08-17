@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
+## 1. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax [claimed 2026-08-17T18:40:40Z]
 
 Build: the depth task after task 5's breadth work (`is_evil`/`is_odious`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

@@ -2723,6 +2723,45 @@ class TestDigitSum(unittest.TestCase):
             run("digit_sum();")
 
 
+class TestDigitProduct(unittest.TestCase):
+    def test_digit_product_of_zero(self):
+        self.assertEqual(run("let result = digit_product(0);").get("result"), 0)
+
+    def test_digit_product_of_single_digit(self):
+        self.assertEqual(run("let result = digit_product(5);").get("result"), 5)
+
+    def test_digit_product_of_multiple_digits(self):
+        self.assertEqual(run("let result = digit_product(23);").get("result"), 6)
+
+    def test_digit_product_of_three_digits(self):
+        self.assertEqual(run("let result = digit_product(123);").get("result"), 6)
+
+    def test_digit_product_of_repeated_digits(self):
+        self.assertEqual(run("let result = digit_product(999);").get("result"), 729)
+
+    def test_digit_product_with_zero_digit_collapses_to_zero(self):
+        self.assertEqual(run("let result = digit_product(10);").get("result"), 0)
+
+    def test_digit_product_of_negative_ignores_sign(self):
+        self.assertEqual(run("let result = digit_product(-23);").get("result"), 6)
+
+    def test_digit_product_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("digit_product(5.0);")
+        self.assertIn("digit_product", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_digit_product_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("digit_product(true);")
+        self.assertIn("digit_product", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_digit_product_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("digit_product();")
+
+
 class TestReverseInt(unittest.TestCase):
     def test_reverse_int_of_zero(self):
         self.assertEqual(run("let result = reverse_int(0);").get("result"), 0)

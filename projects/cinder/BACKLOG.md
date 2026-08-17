@@ -11,100 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax [claimed 2026-08-17T18:40:40Z]
-
-Build: the depth task after task 5's breadth work (`is_evil`/`is_odious`)
-per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
-to 6 tasks now that scientific notation for float literals has landed
-via PR #261, dropping the count to the 5-task floor. `cinder/
-interpreter.py`'s `_apply_binary_operator` already special-cases `+` for
-two shapes — `_is_number(left) and _is_number(right)` and `isinstance(
-left, str) and isinstance(right, str)` — falling through to an
-"unsupported operand types" error for everything else, including two
-lists. Meanwhile `*` already treats `list * int`/`int * list` as
-repetition (`_repeat_op`, right above `_numeric_op` in the same file),
-so lists already participate in one infix arithmetic operator; `+` is
-the one still missing, even though the `concat()` builtin already does
-exactly this as a function call (`cinder/builtins.py`, search `def
-_concat`) — the same "builtin already exists, infix syntax doesn't"
-gap `**` closed for `pow()`, and pipe closed for chained calls. Verify
-the gap:
-```sh
-python3 -m cinder.cli eval 'print([1, 2] + [3, 4]);'
-# -> CinderRuntimeError: unsupported operand types for '+': list and list
-python3 -m cinder.cli eval 'print(concat([1, 2], [3, 4]));'
-# -> [1, 2, 3, 4] -- the exact same result, only reachable today via the builtin
-```
-
-In `_apply_binary_operator`'s `TokenType.PLUS` branch (`cinder/
-interpreter.py`, right after the existing `isinstance(left, str) and
-isinstance(right, str)` check and before the final `raise`), add one
-more branch:
-```python
-            if isinstance(left, list) and isinstance(right, list):
-                return left + right
-```
-Python's own list `+` already builds a fresh list without mutating
-either operand — the same non-mutating convention `_repeat_op` already
-established for `list * int` (see `test_list_repetition_does_not_mutate_
-input` in `tests/test_interpreter.py`), so no extra copying logic is
-needed. Mixed-type operands (`[1, 2] + "a"`, `[1, 2] + 3`, `[1, 2] +
-{"a": 1}`) must keep raising the existing "unsupported operand types"
-error — this task adds exactly one new accepted shape, list-plus-list,
-not a general coercion. Because compound assignment desugars `+=` to an
-ordinary `Binary` node with a `PLUS` operator and reuses
-`_apply_binary_operator` (confirmed: `cinder/parser.py`'s
-`_COMPOUND_ASSIGN_OPS` maps `PLUSEQ` to `PLUS`, no separate evaluation
-path), `xs += [3, 4]` starts working the same moment this branch lands
-— a zero-extra-code consequence of reusing the same dispatch, not a
-second change to make. No parser or lexer changes at all: `+` is
-already tokenized and already reaches `_apply_binary_operator` for
-every operand type, this only widens what that function accepts.
-
-Acceptance criteria:
-- `[1, 2] + [3, 4];` is `[1, 2, 3, 4]`.
-- `[] + [1];` is `[1]` and `[1] + [];` is `[1]` — an empty operand on
-  either side.
-- `[] + [];` is `[]`.
-- `let a = [1, 2]; let b = [3, 4]; let c = a + b; print(a); print(b);
-  print(c);` prints `[1, 2]`, `[3, 4]`, `[1, 2, 3, 4]` — neither
-  original list is mutated, matching `_repeat_op`'s existing
-  non-mutating convention.
-- `let xs = [1, 2]; xs += [3, 4]; print(xs);` prints `[1, 2, 3, 4]` —
-  `+=` on a list works for free via the shared `Binary`/`PLUS`
-  desugaring, no separate code path.
-- `let xs = [1]; xs = xs + [2] + [3]; print(xs);` is `[1, 2, 3]` — `+`
-  stays left-associative for lists, same as it already is for numbers
-  and strings.
-- `[1, 2] + "a";` still raises `CinderRuntimeError` matching
-  `"unsupported operand types for '+': list and string"`.
-- `[1, 2] + 3;` still raises the same error shape, `"list and int"` —
-  confirms this doesn't get swept into `*`'s repetition behavior.
-- `[1, 2] + {"a": 1};` still raises the same error shape, `"list and
-  map"`.
-- `1 + 2;` is still `3` and `"a" + "b";` is still `"ab"` — the two
-  existing `+` shapes are unaffected by the new branch.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
-`TokenType.PLUS` branch), `tests/test_interpreter.py` (model the new
-list-plus-list cases on the existing `TestRepetition` class, which
-covers `*`'s analogous list special-casing — search `class
-TestRepetition`; add the mixed-type-still-raises cases near the
-existing `+` error-shape assertions, search `TestArithmetic`),
-`tests/test_errors.py` (existing `"unsupported operand types for
-'+'"` assertions there are int/string cases and stay unmodified — no
-new error-message assertions needed there since this task doesn't
-change any error message, only adds one non-error branch). Once
-merged, `README.md`'s Operators bullet needs a mention that `+` also
-concatenates two lists (non-mutating, same as `concat()`), alongside
-the existing `*` repetition mention, and `PROJECT.md`'s roadmap
-paragraph needs this moved from backlog to landed — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
+## 1. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
 
 Build: the breadth task after task 5's depth work (list concatenation
 via `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -210,7 +117,7 @@ this task.
 
 ---
 
-## 3. Language: trailing commas in destructuring patterns
+## 2. Language: trailing commas in destructuring patterns
 
 Build: the depth task after task 5's breadth work (`harmonic_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -358,7 +265,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
+## 3. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
 
 Build: the breadth task after task 5's depth work (trailing commas in
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -448,7 +355,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
+## 4. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
 
 Build: the depth task after task 4's breadth work
 (`multiplicative_persistence`) per `PROJECT.md`'s breadth-vs-depth
@@ -604,7 +511,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
+## 5. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
 
 Build: the breadth task after task 5's depth work (comma-separated
 `let`/`const` declarations), restocking the backlog the rest of the way

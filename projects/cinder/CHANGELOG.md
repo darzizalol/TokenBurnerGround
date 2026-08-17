@@ -2644,3 +2644,13 @@ for vision/architecture.
   popcount parity isn't meaningful for Python's two's-complement `bin()`
   output on negative integers. Clean first pass, no bounces (2993 tests
   passing, up from 2992).
+- **Language: list concatenation via `+`** — merged 2026-08-17T~18:45Z via
+  PR #267 (`feat/20260818-list-plus-concat`). Added a
+  `isinstance(left, list) and isinstance(right, list)` branch to
+  `cinder/interpreter.py`'s `_apply_binary_operator` `PLUS` case,
+  returning `left + right` (a fresh list, non-mutating), closing the gap
+  between the existing `concat()` builtin and infix syntax the same way
+  `*` already does for list repetition. Mixed-type operands still raise
+  `CinderRuntimeError`; `+=` on lists works for free via the shared
+  `Binary`/`PLUS` desugaring. Clean first pass, no bounces (3014 tests
+  passing, up from 2993).

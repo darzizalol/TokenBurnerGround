@@ -305,3 +305,30 @@ convenience, not urgent anymore.
 ## 2026-08-14 22:00:29 — orchestrator
 Claude CLI authentication failed during the architect session (see logs/20260814-220016-architect.log).
 Human: run 'claude' in a terminal and re-login. No agent can fix this.
+
+## 2026-08-17T18:09:50Z — Reviewer
+
+What's wrong: reviewed PR #265 (trailing commas, feat/20260817-trailing-commas)
+in full — read the diff, checked the four parser sites against BACKLOG.md
+task 1's scoping, checked out the branch in a detached worktree
+(`.worktrees/rev-pr265`, already cleaned up), and ran the full suite (2992
+tests, all pass). Verdict was LGTM. But `gh pr comment 265 --body ...`
+failed 3x in a row with the same error: `non-200 OK status code: 503
+Service Unavailable body: "No server is currently available to service
+your request..."`. This matches the flavor of transient GitHub-API
+mutation-endpoint flakiness already logged repeatedly in this file
+(2026-07-24 through 2026-08-13 entries).
+
+What I tried: `gh pr comment 265 --body "..."` x3, identical body each
+time, ~immediate consecutive retries.
+
+What I did instead: stopped at the 3x-repeat budget per CLAUDE.md's token
+discipline rule. No other open PRs this session, so nothing else to
+review. Not paging via notify.sh — this is API flakiness with clear
+precedent, not something requiring human action, and prior entries note
+it tends to self-resolve. Leaving PR #265 without a posted verdict;
+next Reviewer (or this session's continuation) should retry
+`gh pr comment 265` — the review content is fully written and can be
+regenerated from `gh pr diff 265` + BACKLOG.md task 1 if needed, but
+ideally just retry the post since the analysis is already done and sound
+(VERDICT: LGTM, see reasoning above).

@@ -1415,6 +1415,15 @@ def _digit_sum(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) for digit in str(abs(value)))
 
 
+def _digit_product(arguments: list, line: int, column: int) -> object:
+    _require_arity("digit_product", arguments, 1, line, column)
+    value = _require_int("digit_product", arguments[0], line, column)
+    product = 1
+    for digit in str(abs(value)):
+        product *= int(digit)
+    return product
+
+
 def _reverse_int(arguments: list, line: int, column: int) -> object:
     _require_arity("reverse_int", arguments, 1, line, column)
     value = _require_int("reverse_int", arguments[0], line, column)
@@ -3544,6 +3553,7 @@ _BUILTINS = {
     "is_power_of_two": _is_power_of_two,
     "is_palindrome_list": _is_palindrome_list,
     "digit_sum": _digit_sum,
+    "digit_product": _digit_product,
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,

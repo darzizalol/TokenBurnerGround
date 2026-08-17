@@ -945,6 +945,18 @@ class TestCalls(unittest.TestCase):
         with self.assertRaisesRegex(ParseError, "positional argument follows keyword argument"):
             parse("f(a: 1, 2)")
 
+    def test_call_with_trailing_comma(self):
+        self.assertEqual(
+            shape(parse("f(1, 2,)")),
+            ("Call", ("Identifier", "f"), [("Literal", 1), ("Literal", 2)]),
+        )
+
+    def test_call_with_single_argument_trailing_comma(self):
+        self.assertEqual(
+            shape(parse("f(1,)")),
+            ("Call", ("Identifier", "f"), [("Literal", 1)]),
+        )
+
     def test_optional_call_with_keyword_argument(self):
         self.assertEqual(
             shape(parse("f?.(a: 1)")),
@@ -1007,6 +1019,19 @@ class TestListsAndMaps(unittest.TestCase):
 
     def test_empty_list_literal(self):
         self.assertEqual(shape(parse("[]")), ("ListLiteral", []))
+
+    def test_list_literal_with_trailing_comma(self):
+        self.assertEqual(
+            shape(parse("[1, 2, 3,]")),
+            ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+        )
+
+    def test_list_literal_with_single_element_trailing_comma(self):
+        self.assertEqual(shape(parse("[1,]")), ("ListLiteral", [("Literal", 1)]))
+
+    def test_list_literal_empty_slot_between_commas_still_raises(self):
+        with self.assertRaisesRegex(ParseError, "expected an expression, found ','"):
+            parse("[1, , 3]")
 
     def test_list_literal_with_spread(self):
         self.assertEqual(
@@ -1184,6 +1209,24 @@ class TestListsAndMaps(unittest.TestCase):
 
     def test_empty_map_literal(self):
         self.assertEqual(shape(parse("{}")), ("MapLiteral", []))
+
+    def test_map_literal_with_trailing_comma(self):
+        self.assertEqual(
+            shape(parse('{"a": 1, "b": 2,}')),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "a"), ("Literal", 1)),
+                    (("Literal", "b"), ("Literal", 2)),
+                ],
+            ),
+        )
+
+    def test_map_literal_with_single_entry_trailing_comma(self):
+        self.assertEqual(
+            shape(parse('{"a": 1,}')),
+            ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+        )
 
     def test_map_comprehension(self):
         self.assertEqual(
@@ -2710,6 +2753,52 @@ class TestFunctions(unittest.TestCase):
             ],
         )
 
+    def test_fn_declaration_with_trailing_comma(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f(a, b,) { return a + b; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [("a", None), ("b", None)],
+                    None,
+                    (
+                        "Block",
+                        [
+                            (
+                                "ReturnStmt",
+                                ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Identifier", "b")),
+                            )
+                        ],
+                    ),
+                )
+            ],
+        )
+
+    def test_fn_declaration_with_single_param_trailing_comma(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f(a,) { return a; }")],
+            [("FnDecl", "f", [("a", None)], None, ("Block", [("ReturnStmt", ("Identifier", "a"))]))],
+        )
+
+    def test_fn_declaration_with_trailing_comma_after_rest_param(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("fn f(a, ...rest,) { return rest; }")],
+            [
+                (
+                    "FnDecl",
+                    "f",
+                    [("a", None)],
+                    "rest",
+                    ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
+                )
+            ],
+        )
+
+    def test_fn_real_param_after_rest_param_still_raises(self):
+        with self.assertRaisesRegex(ParseError, "rest parameter must be the last parameter"):
+            parse_stmts("fn f(a, ...rest, b) { return a; }")
+
     def test_fn_expression_with_rest_param(self):
         self.assertEqual(
             shape(parse("fn(a, ...rest) { return rest; }")),
@@ -3090,15 +3179,14 @@ class TestArrowFunctions(unittest.TestCase):
         # to plain grouping, not error.
         self.assertEqual(shape(parse("(x)")), ("Grouping", ("Identifier", "x")))
 
-    def test_malformed_arrow_param_list_raises(self):
-        # Trailing comma with no parameter after it: falls back to the
-        # grouping-expression path (per `_try_arrow_function`'s unconditional
-        # backtrack), which itself fails to find a `)` immediately after the
-        # bare `x` — this documents whichever error actually surfaces rather
-        # than asserting the `fn`-side parameter error in advance.
-        with self.assertRaises(ParseError) as ctx:
-            parse_stmts("let result = (x, ) => x;")
-        self.assertIn("')'", str(ctx.exception))
+    def test_arrow_param_list_with_trailing_comma_parses(self):
+        # Arrow functions share `_fn_param_list` with `fn` declarations/
+        # expressions, so the trailing comma accepted there is accepted here
+        # too, rather than falling back to a failed grouping-expression parse.
+        self.assertEqual(
+            shape(parse("(x, ) => x")),
+            ("FnExpr", [("x", None)], None, ("Block", [("ReturnStmt", ("Identifier", "x"))])),
+        )
 
     def test_arrow_block_body_parses(self):
         self.assertEqual(

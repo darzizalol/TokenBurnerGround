@@ -2640,6 +2640,73 @@ class TestIsPowerOfTwo(unittest.TestCase):
             run("is_power_of_two();")
 
 
+class TestIsEvilIsOdious(unittest.TestCase):
+    def test_is_evil_of_zero(self):
+        self.assertEqual(run("let result = is_evil(0);").get("result"), True)
+
+    def test_is_evil_of_small_evils(self):
+        self.assertEqual(run("let result = is_evil(3);").get("result"), True)
+        self.assertEqual(run("let result = is_evil(5);").get("result"), True)
+        self.assertEqual(run("let result = is_evil(6);").get("result"), True)
+
+    def test_is_evil_of_odious_is_false(self):
+        self.assertEqual(run("let result = is_evil(1);").get("result"), False)
+        self.assertEqual(run("let result = is_evil(1024);").get("result"), False)
+
+    def test_is_odious_of_small_odious(self):
+        self.assertEqual(run("let result = is_odious(1);").get("result"), True)
+        self.assertEqual(run("let result = is_odious(2);").get("result"), True)
+        self.assertEqual(run("let result = is_odious(4);").get("result"), True)
+
+    def test_is_odious_of_evil_is_false(self):
+        self.assertEqual(run("let result = is_odious(3);").get("result"), False)
+
+    def test_is_evil_and_is_odious_are_exact_complements(self):
+        for n in range(32):
+            self.assertNotEqual(
+                run(f"let result = is_evil({n});").get("result"),
+                run(f"let result = is_odious({n});").get("result"),
+            )
+
+    def test_is_evil_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_evil(-1);")
+        self.assertIn(
+            "is_evil() requires a non-negative integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_is_odious_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_odious(-4);")
+        self.assertIn(
+            "is_odious() requires a non-negative integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_is_evil_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_evil(5.0);")
+        self.assertIn("is_evil", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_odious_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_odious(true);")
+        self.assertIn("is_odious", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_evil_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_evil();")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_is_odious_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_odious();")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestIsPalindromeList(unittest.TestCase):
     def test_is_palindrome_list_true(self):
         self.assertIs(

@@ -4451,6 +4451,68 @@ class TestGeometricMean(unittest.TestCase):
             run("geometric_mean();")
 
 
+class TestHarmonicMean(unittest.TestCase):
+    def test_harmonic_mean_of_single_element_list(self):
+        result = run("let result = harmonic_mean([1]);").get("result")
+        self.assertEqual(result, 1)
+
+    def test_harmonic_mean_of_constant_list(self):
+        result = run("let result = harmonic_mean([2, 2, 2, 2]);").get("result")
+        self.assertEqual(result, 2)
+
+    def test_harmonic_mean_of_one_and_four(self):
+        result = run("let result = harmonic_mean([1, 4]);").get("result")
+        self.assertEqual(result, 1.6)
+
+    def test_harmonic_mean_of_one_two_four(self):
+        result = run("let result = harmonic_mean([1, 2, 4]);").get("result")
+        self.assertAlmostEqual(result, 1.7142857142857142)
+
+    def test_harmonic_mean_am_gm_hm_inequality(self):
+        results = run(
+            "let h = harmonic_mean([1, 2, 4]);"
+            "let g = geometric_mean([1, 2, 4]);"
+            "let m = mean([1, 2, 4]);"
+        )
+        self.assertLessEqual(results.get("h"), results.get("g"))
+        self.assertLessEqual(results.get("g"), results.get("m"))
+
+    def test_harmonic_mean_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("harmonic_mean([]);")
+        self.assertIn("harmonic_mean() requires a non-empty list", ctx.exception.message)
+
+    def test_harmonic_mean_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('harmonic_mean([1, "a"]);')
+        self.assertIn(
+            "harmonic_mean() requires a list of numbers, got string", ctx.exception.message
+        )
+
+    def test_harmonic_mean_with_zero_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("harmonic_mean([1, 0]);")
+        self.assertIn(
+            "harmonic_mean() requires all elements to be positive", ctx.exception.message
+        )
+
+    def test_harmonic_mean_with_negative_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("harmonic_mean([1, -2]);")
+        self.assertIn(
+            "harmonic_mean() requires all elements to be positive", ctx.exception.message
+        )
+
+    def test_harmonic_mean_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("harmonic_mean(5);")
+        self.assertIn("harmonic_mean() requires a list, got int", ctx.exception.message)
+
+    def test_harmonic_mean_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("harmonic_mean();")
+
+
 class TestMedian(unittest.TestCase):
     def test_median_of_odd_length_list(self):
         result = run("let result = median([1, 3, 2]);").get("result")

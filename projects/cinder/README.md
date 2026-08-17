@@ -114,9 +114,15 @@ while (i < 10) {
   `<<=`, `>>=`;
   all of them, arithmetic and bitwise/shift alike, accept an
   index-expression target too, e.g. `xs[0] += 1`, `m.key &= 3`),
-  increment/decrement statement sugar `x++;`/`x--;` (identifier or
-  index-expression target, e.g. `xs[0]++;`; statement-only, not usable as a
-  value), `*` repetition for `str * int`/`list * int` (Python repetition
+  postfix `x++`/`x--` as a first-class assignment expression (identifier or
+  index-expression target, e.g. `xs[0]++;`; usable anywhere any other
+  assignment operator already is — a `let` initializer (`let y = x++;`), a
+  chained-assignment RHS, or inside a parenthesized sub-expression —
+  evaluating to the post-increment/-decrement value, same as the
+  compound-assign family; precedence and reachability from call
+  arguments/ternary branches are unchanged, so `-x++;` and `print(x++)`
+  still raise, matching `print(x = 5)`'s own restriction), `*` repetition
+  for `str * int`/`list * int` (Python repetition
   semantics), floor division `//` (same precedence tier as `/`/`%`,
   floors toward negative infinity rather than truncating, e.g.
   `-7 // 2` is `-4`),
@@ -367,20 +373,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: scientific notation for
-float literals (`1e3`, `1.5e-2`, `2E+10`), and `geometric_mean` to
+Actively developed, nightly. Recently landed: `geometric_mean` to
 compute the nth root of a list's product, the statistics cluster's
-first non-arithmetic-mean member.
+first non-arithmetic-mean member, and postfix `++`/`--` as a
+first-class assignment expression (usable as a `let` initializer or
+chained-assignment RHS, not just a bare statement or `for`-loop
+clause).
 Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-postfix `++`/`--` as a first-class assignment expression (usable as a
-`let` initializer or chained-assignment RHS, not just a bare statement
-or `for`-loop clause), `digit_product` as `digit_sum`'s multiplicative
+`digit_product` as `digit_sum`'s multiplicative
 counterpart, trailing commas in list/map literals, call arguments, and
 function parameter lists, `is_evil`/`is_odious` binary
 popcount-parity predicates, list concatenation via `+` (closing the
-gap between the existing `concat()` builtin and infix syntax), and
+gap between the existing `concat()` builtin and infix syntax),
 `harmonic_mean` to complete the classical arithmetic/geometric/harmonic
-Pythagorean means trio.
+Pythagorean means trio, and trailing commas in destructuring patterns
+(`let`/`for`/function-parameter/comprehension patterns and the
+plain-assignment map form), closing the one gap the earlier trailing-
+commas task deliberately left open.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

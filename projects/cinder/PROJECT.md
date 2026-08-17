@@ -908,40 +908,40 @@ shape those four already share plus one added domain restriction
 confirming numeric-ness, raising a domain error rather than leaking a
 non-real result for zero or negative input, the same convention
 `log()` already applies to its own positive-input requirement) — have
-since landed too.
+since landed too, as has postfix `++`/`--` as a first-class assignment
+expression — the depth task after `geometric_mean`'s breadth work:
+`++`/`--` used to be recognized only by a one-off parser helper
+(`_expr_or_incdec`) reachable from exactly three places — a bare
+`x++;` statement and the `for`-loop's init/step clauses — while every
+*other* assignment-flavored operator (`=`, the compound-assign family,
+`??=`) was recognized directly inside `_assignment` itself and so was
+already usable as a `let` initializer, a chained-assignment RHS, or a
+parenthesized sub-expression; `let y = x++;` used to be a `ParseError`
+even though the exactly analogous `let y = x += 1;` already worked.
+Folded `_expr_or_incdec`'s existing `Identifier`/`Index`-target check
+and `Assign`/`IndexCompoundAssign` desugaring directly into
+`_assignment` as one more branch alongside the
+`EQ`/`QQEQ`/`_COMPOUND_ASSIGN_OPS` checks already there, then deleted
+`_expr_or_incdec` and pointed its three former call sites at
+`_assignment` directly — no interpreter changes, since the reused
+desugaring already evaluates to the new (post-increment) value, the
+same as every compound-assign sibling. Deliberately left precedence
+unchanged (`-x++;` still a `ParseError`) and reachability from
+`_ternary()`-rooted positions like call arguments (`print(x++)` still
+a `ParseError`, matching `print(x = 5)`'s own existing restriction) —
+only closed the one gap where `++`/`--` uniquely lagged behind every
+sibling assignment operator.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 exactly — the task that
-used to occupy slot 1 here, `geometric_mean`, has since landed via
-PR #262 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant not-yet-scoped
-description from this section, renumbered the remaining five down to
-slots 1-5, and appended a freshly-scoped task 6 restocking the backlog
-back past its 5-task floor):
-as task 1, postfix `++`/`--` as a first-class
-assignment expression — the depth task after `geometric_mean`'s
-breadth work: today `++`/`--` are recognized
-only by a one-off parser helper (`_expr_or_incdec`) reachable from
-exactly three places — a bare `x++;` statement and the `for`-loop's
-init/step clauses — while every *other* assignment-flavored operator
-(`=`, the compound-assign family, `??=`) is recognized directly inside
-`_assignment` itself and so is already usable as a `let` initializer,
-a chained-assignment RHS, or a parenthesized sub-expression. `let y =
-x++;` is a `ParseError` today even though the exactly analogous `let y
-= x += 1;` already works. Folds `_expr_or_incdec`'s existing
-`Identifier`/`Index`-target check and `Assign`/`IndexCompoundAssign`
-desugaring directly into `_assignment` as one more branch alongside
-the `EQ`/`QQEQ`/`_COMPOUND_ASSIGN_OPS` checks already there, then
-deletes `_expr_or_incdec` and points its three former call sites at
-`_assignment` directly. No interpreter changes: the reused desugaring
-already evaluates to the new (post-increment) value, the same as every
-compound-assign sibling, so this needs no new value-semantics decision.
-Deliberately does not change precedence (`-x++;` stays a `ParseError`,
-exactly as today) or reachability from `_ternary()`-rooted positions
-like call arguments (`print(x++)` stays a `ParseError`, matching
-`print(x = 5)`'s own existing restriction) — only closes the one gap
-where `++`/`--` uniquely lagged behind every sibling assignment
-operator. And as task 2, `digit_product(n)` — a breadth task after
-task 1's depth work: the
+used to occupy slot 1 here, postfix `++`/`--` as a first-class
+assignment expression, has since landed via PR #263 and is covered in
+the "have since landed" history immediately above; this grooming pass
+dropped its now-redundant not-yet-scoped description from this
+section, renumbered the remaining five down to slots 1-5, and appended
+a freshly-scoped task 6 restocking the backlog back past its 5-task
+floor):
+as task 1, `digit_product(n)` — a breadth task after
+postfix `++`/`--`'s depth work: the
 multiplicative counterpart to `digit_sum`, the same relationship
 `product` already has to `sum` at the list level — `digit_sum` sums an
 integer's decimal digits, `digit_product` multiplies them instead.
@@ -951,7 +951,7 @@ before iterating, so it needs no new domain-handling decision of its
 own. A single-digit integer (including `0`) is trivially its own
 digit product; any `0` digit anywhere in the number collapses the
 whole product to `0`, which is the correct answer, not a case to guard
-against. And as task 3, trailing commas in list/map literals, call
+against. And as task 2, trailing commas in list/map literals, call
 arguments, and function parameter lists (`[1, 2,]`, `{"a": 1,}`,
 `f(1, 2,)`, `fn f(a, b,) { ... }`) — the depth task after
 `digit_product`'s breadth work, closing an ergonomics gap in all four
@@ -967,8 +967,9 @@ no interpreter changes at all, since this only widens what the parser
 is willing to accept, not what AST shape it produces. Deliberately
 scoped to just those four sites, not destructuring patterns or
 comprehension bodies, which are separate call sites with their own
-comma-loops and are left for a future task if still wanted. And as
-task 4, `is_evil(n)`/`is_odious(n)` — a breadth task after task 3's
+comma-loops and are left for a future task if still wanted (task 6
+below is that future task). And as
+task 3, `is_evil(n)`/`is_odious(n)` — a breadth task after task 2's
 depth work, restocking the backlog back to 6 tasks now that
 `is_repdigit` has landed via PR #260: binary popcount-parity
 predicates, classifying every non-negative integer by whether its
@@ -982,9 +983,9 @@ only in which parity is accepted — the same bundling `is_int`/`is_float`
 and `is_subset`/`is_superset` already got — and negative input raises a
 domain error rather than answering `false`, since Python's
 two's-complement `bin()` output on a negative number would silently
-count the wrong thing rather than answering honestly. And as task 5,
+count the wrong thing rather than answering honestly. And as task 4,
 list concatenation via `+` (`[1, 2] + [3, 4]` is `[1, 2, 3, 4]`) — a
-depth task after task 4's breadth work, restocking the backlog back to
+depth task after task 3's breadth work, restocking the backlog back to
 6 tasks now that scientific notation has landed via PR #261:
 `_apply_binary_operator`'s `PLUS` branch in `cinder/interpreter.py`
 already special-cases numbers and strings but falls through to an
@@ -999,8 +1000,8 @@ Because compound assignment desugars `+=` to an ordinary `Binary`/
 `PLUS` node and reuses this same function, `xs += [3, 4]` starts
 working for free the moment this branch lands, no separate change
 needed. No lexer or parser changes: `+` is already tokenized and
-already reaches this function for every operand type. And as task 6,
-`harmonic_mean(list)` — a breadth task after task 5's depth work,
+already reaches this function for every operand type. And as task 5,
+`harmonic_mean(list)` — a breadth task after task 4's depth work,
 restocking the backlog back to 6 tasks now that `geometric_mean` has
 landed via PR #262: the third member of the classical Pythagorean
 means trio (arithmetic, geometric, harmonic), completing the statistics
@@ -1014,7 +1015,36 @@ strictly-positive domain restriction `geometric_mean` already enforces
 zero, and a negative element makes the harmonic mean not meaningfully
 comparable to its arithmetic/geometric siblings under the AM-GM-HM
 inequality), raising the same domain-error shape rather than leaking a
-`ZeroDivisionError` or a sign-confused result. And only much
+`ZeroDivisionError` or a sign-confused result. And as task 6, trailing
+commas in destructuring patterns (`let [a, b,] = expr;`,
+`let {a, b,} = expr;`, `for [a, b,] in ...`, `for {a, b,} in ...`,
+destructuring function parameters, both comprehension loop-variable
+forms, and the plain-assignment map form `{a, b,} = expr;`) — a depth
+task after task 5's breadth work, restocking the backlog back to 6
+tasks now that postfix `++`/`--` has landed via PR #263: this is
+exactly the "future, separately-scoped task" task 2 flagged and
+deferred. `_destructure_list_pattern`, `_destructure_map_pattern`, and
+`_try_map_destructure_assign_statement` each have their own
+comma-loop, structurally identical to task 2's four sites and with the
+identical gap; each gets the same one-line "peek the closing
+delimiter after the comma, break" fix, placed before the existing
+"rest element must be last" check so a trailing comma right after a
+rest element (`let [a, ...rest,] = expr;`) is accepted rather than
+tripping that check, the same ordering task 2 used for
+`_fn_param_list`'s own rest-parameter case. One real subtlety: list
+patterns' existing "hole" element (`let [a, , c] = expr;`) means a
+pattern ending "hole, then trailing comma" (`let [a, ,] = expr;`) falls
+through the new check on its first comma (since a `COMMA` — not the
+closing bracket — follows it) and registers as an ordinary hole, then
+hits the new check on its second comma and breaks — so `let [a, ,] =
+[1, 2];` newly parses as `a` bound plus one skipped position, a narrow,
+intentional behavior change from today's `ParseError`, since a hole is
+a hole regardless of position. The plain-assignment **list** form
+(`[a, b,] = expr;`) needs no change at all: it validates an ordinary
+`ListLiteral` already parsed by `_list_literal` (task 2's own site), so
+it already accepts a trailing comma for free once task 2 lands, the
+same way `xs += [3, 4]` started working for free once list-plus-`+`
+landed. And only much
 later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1046,9 +1076,24 @@ down to 1-5, with list concatenation via `+` renumbered from 6 to 5)
 and restocked it to 6 by adding task 6, `harmonic_mean`, continuing
 alternation with a breadth task after task 5's depth work (list
 concatenation via `+`) rather than stacking a second breadth task,
-per the policy above. The next grooming pass should continue
-alternating breadth/depth, restocking toward 6-7 tasks whenever a
-merge drops the count within reach of the 5-task floor.
+per the policy above. This pass found the backlog back down to its
+5-task floor again (postfix `++`/`--` as a first-class assignment
+expression having landed via PR #263, dropping the count from 6 to 5,
+dropping its now-landed description from the "what remains plausible"
+section above into the "have since landed" history, and renumbering
+the remaining five tasks from 2-6 down to 1-5, with `harmonic_mean`
+renumbered from 6 to 5) and restocked it to 6 by adding task 6,
+trailing commas in destructuring patterns, continuing alternation with
+a depth task after task 5's breadth work (`harmonic_mean`) rather than
+stacking a second breadth task, per the policy above — and, unlike
+every other task added by a grooming pass so far, this one didn't need
+inventing from scratch: task 2 (trailing commas in list/map literals,
+call arguments, and function parameter lists) explicitly named it as
+deferred future work when it landed, so this pass just picked that
+thread back up now that task 2 itself has shipped. The next grooming
+pass should continue alternating breadth/depth, restocking toward 6-7
+tasks whenever a merge drops the count within reach of the 5-task
+floor.
 
 ## History
 

@@ -2615,3 +2615,11 @@ for vision/architecture.
   `_INCREMENT_DECREMENT_OPS` contradicted the PR's own change; fixed,
   then Reviewer gave `VERDICT: LGTM` and QA gave `QA: PASS` (2971 tests
   passing).
+- **Standard library: `digit_product` — the multiplicative counterpart to
+  `digit_sum`** — merged 2026-08-17T~14:26Z via PR #264
+  (`feat/20260817-digit-product`). Added `digit_product(n)` to
+  `cinder/builtins.py`, registered right after `digit_sum`, modeled
+  exactly on its arity/type-check/sign-discard structure
+  (`_require_arity` → `_require_int` → `abs(value)` before the digit
+  walk); any `0` digit collapses the product to `0`. Clean first pass,
+  no bounces (2981 tests passing, up from 2971).

@@ -11,73 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `digit_product` — the multiplicative counterpart to `digit_sum` [claimed 2026-08-17T14:20:56Z]
-
-Build: the breadth task after task 5's depth work (postfix `++`/`--`)
-per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
-to 6 tasks now that `is_powerful_number` has landed via PR #258,
-dropping the count to the 5-task floor. Add `digit_product(n)` to
-`cinder/builtins.py`, registered right after `digit_sum` (search for
-`def _digit_sum`, immediately before `_reverse_int`) — `digit_sum`
-sums an integer's decimal digits; `digit_product` is its natural
-multiplicative sibling, the same relationship `product` already has to
-`sum` at the list level. Verify the gap: `python3 -m cinder.cli eval
-'print(digit_product(23));'` currently raises `CinderRuntimeError`
-`"undefined name 'digit_product'"` — no such builtin exists yet.
-
-```python
-def _digit_product(arguments: list, line: int, column: int) -> object:
-    _require_arity("digit_product", arguments, 1, line, column)
-    value = _require_int("digit_product", arguments[0], line, column)
-    product = 1
-    for digit in str(abs(value)):
-        product *= int(digit)
-    return product
-```
-
-Model the arity/type-checking exactly on `digit_sum`'s own structure:
-`_require_arity`, then `_require_int` (reusing the shared helper — do
-**not** hand-roll a separate `isinstance` check), then `abs(value)` to
-normalize away the sign before walking digits, mirroring how
-`digit_sum` already discards the sign via the same `str(abs(value))`
-call rather than raising on negative input or letting a leading `-`
-character corrupt the digit walk. A single-digit integer, including
-`0`, is trivially its own digit product — the loop runs once and
-returns that digit — the same trivial-degenerate-case convention
-`digit_sum`/`is_palindrome_number` already establish. Any digit `0`
-anywhere in the number collapses the whole product to `0`, which is
-the correct mathematical answer, not a special case to guard against.
-
-Acceptance criteria:
-- `digit_product(0);` is `0` — single digit, trivially itself.
-- `digit_product(5);` is `5` — single digit.
-- `digit_product(23);` is `6` — `2 * 3`.
-- `digit_product(123);` is `6` — `1 * 2 * 3`.
-- `digit_product(999);` is `729` — `9 * 9 * 9`.
-- `digit_product(10);` is `0` — a `0` digit collapses the product.
-- `digit_product(-23);` is `6` — sign is discarded first, same
-  convention as `digit_sum(-23)` returning `5`.
-- `digit_product(5.0);` raises `CinderRuntimeError` matching
-  `"digit_product() requires an int, got float"` — the same message
-  shape `_require_int` already produces for `digit_sum`.
-- `digit_product(true);` raises `CinderRuntimeError` matching
-  `"digit_product() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `digit_sum`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py` (model on the `TestDigitSum` test class,
-search `class TestDigitSum`). Once merged, `README.md`'s Builtins
-bullet needs `digit_product` added near `digit_sum`/`reverse_int`, and
-`PROJECT.md`'s roadmap paragraph needs it moved from backlog to
-landed — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: trailing commas in list/map literals, call arguments, and function parameter lists
+## 1. Language: trailing commas in list/map literals, call arguments, and function parameter lists
 
 Build: the depth task after task 5's breadth work (`digit_product`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -183,7 +117,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
+## 2. Standard library: `is_evil` / `is_odious` — binary popcount-parity predicates
 
 Build: the breadth task after task 5's depth work (trailing commas) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -285,7 +219,7 @@ task.
 
 ---
 
-## 4. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
+## 3. Language: list concatenation via `+`, closing the gap between the existing `concat()` builtin and infix syntax
 
 Build: the depth task after task 5's breadth work (`is_evil`/`is_odious`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -378,7 +312,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
+## 4. Standard library: `harmonic_mean` — the third Pythagorean mean, completing arithmetic/geometric/harmonic
 
 Build: the breadth task after task 5's depth work (list concatenation
 via `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -484,7 +418,7 @@ this task.
 
 ---
 
-## 6. Language: trailing commas in destructuring patterns
+## 5. Language: trailing commas in destructuring patterns
 
 Build: the depth task after task 5's breadth work (`harmonic_mean`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

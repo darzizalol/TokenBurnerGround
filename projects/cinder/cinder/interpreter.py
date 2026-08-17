@@ -1078,6 +1078,8 @@ class Interpreter:
                 return left + right
             if isinstance(left, str) and isinstance(right, str):
                 return left + right
+            if isinstance(left, list) and isinstance(right, list):
+                return left + right
             raise CinderRuntimeError(
                 f"unsupported operand types for '+': {type_name(left)} and {type_name(right)}",
                 operator.line,

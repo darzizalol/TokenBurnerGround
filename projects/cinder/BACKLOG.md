@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
+## 1. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube` [claimed 2026-08-18T19:48:34Z]
 
 Build: the breadth task after task 5's depth work (nested list-in-list
 destructuring patterns), restocking the backlog back to 6 tasks now

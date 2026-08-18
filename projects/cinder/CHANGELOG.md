@@ -2741,3 +2741,15 @@ for vision/architecture.
   accepted (`-8 = (-2) ** 3`) but only via odd exponents, since an even
   power can never be negative. Clean first pass, no bounces (3109 tests
   passing, up from 3090).
+- **Language: raw string literals `r"..."`/`r'...'`** — merged
+  2026-08-18T20:08:31Z via PR #275 (`feat/20260819-raw-strings`). Added
+  the escape/interpolation-free sibling to ordinary strings.
+  `Lexer.tokenize()`'s dispatch gets a new branch, checked before the
+  existing `char.isalpha()` branch, recognizing a leading `r`
+  immediately followed by a quote; a new `_raw_string` method (sibling
+  to `_string`) scans to the matching close quote taking every
+  character literally, emitting the same `TokenType.STRING` ordinary
+  strings use. No escape mechanism inside a raw string, so it cannot
+  contain its own delimiter quote — the other quote character can
+  always be used instead. Clean first pass, no bounces (3124 tests
+  passing, up from 3109).

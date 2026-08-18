@@ -11,123 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings [claimed 2026-08-18T20:02:04Z]
-
-Build: the depth task after task 5's breadth work (`is_perfect_power`)
-per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
-to 6 tasks now that trailing commas in destructuring patterns has
-landed via PR #269, dropping the count to the 5-task floor. Every
-string literal today (`cinder/lexer.py`'s `_string`) processes
-backslash escapes (`\n`, `\t`, `\\`, `\"`, `\'`) and `${...}`
-interpolation, with no way to write a string whose backslashes and
-`${` sequences are taken completely literally — exactly the gap a
-`r"..."`/`r'...'` raw-string prefix closes in most mainstream
-scripting languages, useful for regex-like patterns and Windows-style
-paths (`r"C:\Users\name"`) without doubling every backslash. Verify the
-gap:
-```sh
-python3 -m cinder.cli eval 'print(r"a\nb");'
-# -> ParseError: expected ')' after arguments, found '"a\\nb"'
-```
-This happens because `Lexer.tokenize()`'s dispatch (search
-`char.isalpha() or char == "_"`) sends a leading `r` straight into
-`_identifier`, producing an `IDENTIFIER` token `r` immediately followed
-by an ordinary `STRING` token — two adjacent tokens with nothing
-between them, which the parser then chokes on as if `r` were a
-function-call callee, the same failure shape any other
-`identifier"string"` juxtaposition already produces today (not a bug
-specific to `r`).
-
-**Lexing**: add a new dispatch branch in `Lexer.tokenize()`, checked
-*before* the existing `char.isalpha()` branch, that recognizes the raw
-string prefix specifically — `char == "r"` immediately followed by `"`
-or `'` with no separating whitespace (`self._peek()` is a quote right
-after consuming `r`):
-```python
-            if char == '"' or char == "'":
-                self._string(start_line, start_col, quote=char)
-            elif char == "r" and self._peek() in ('"', "'"):
-                quote = self._advance()
-                self._raw_string(start_line, start_col, quote=quote)
-            elif char.isdigit():
-```
-This ordering is safe for ordinary identifiers: `r` can only reach this
-branch when the *very next* character is a quote, which is exactly the
-case where `r` standing alone as an identifier would already be a
-syntax error today (an identifier immediately followed by a string
-literal, no operator between them) — so no currently-valid program
-changes meaning. An identifier that merely starts with `r`
-(`read`, `result`, `r2`) never matches, since its second character
-isn't a quote, and a bare variable named `r` (`let r = 5; print(r);`)
-is untouched, since nothing there is followed by a quote either.
-
-Add `_raw_string`, a sibling to the existing `_string` (`cinder/lexer.py`,
-right after `_string`), reusing the same unterminated-string error and
-line/column tracking but with the escape and interpolation handling
-stripped out — every character up to the matching close quote is taken
-literally, including backslashes and `${`:
-```python
-    def _raw_string(self, start_line: int, start_col: int, quote: str):
-        start_pos = self.pos - 2  # position of the 'r' prefix
-        chars = []
-        while True:
-            if self._at_end():
-                raise LexError(
-                    "unterminated string", start_line, start_col, unterminated=True
-                )
-            if self._peek() == quote:
-                self._advance()
-                break
-            chars.append(self._advance())
-        lexeme = self.source[start_pos : self.pos]
-        self.tokens.append(
-            Token(TokenType.STRING, lexeme, "".join(chars), start_line, start_col)
-        )
-```
-Emits the same `TokenType.STRING` ordinary strings use (not a new
-token type or a new interpreter-level value kind) since a raw string
-is still just a string value once lexed — only how its *source text*
-maps to that value differs, mirroring how hex/binary/octal integer
-literals (`0x1F`/`0b101`/`0o17`) all still produce a plain `int`, not a
-distinct value kind. There is no escape mechanism inside a raw string,
-so (like Python's own raw strings) a raw string cannot contain its own
-delimiter quote at all — `r"say \"hi\""` is not expressible; the other
-quote character can always be used instead (`r'say "hi"'`), which is
-an accepted, documented limitation, not a bug to work around this task.
-
-Acceptance criteria:
-- `print(r"a\nb");` prints `a\nb` literally — four characters
-  (backslash, `n`, not a newline), confirming escapes are not
-  processed.
-- `print(r'C:\Users\name');` prints `C:\Users\name` literally, single-quoted
-  form works the same as double-quoted.
-- `print(r"${1 + 2}");` prints `${1 + 2}` literally, confirming
-  interpolation is not processed.
-- `print(r"");` prints an empty string.
-- `let r = 5; print(r + 1);` prints `6` — a bare identifier named `r`
-  not immediately followed by a quote is unaffected.
-- `print(type(r"abc"));` is `"string"` — same runtime type as an
-  ordinary string literal.
-- `r"unterminated` (no closing quote) raises `LexError` matching
-  `"unterminated string"`, same as an ordinary unterminated string.
-- `print("a\nb");` (no `r` prefix) still prints `a`, newline, `b` —
-  ordinary string escape processing is completely unaffected.
-- Full test suite passes.
-
-Likely files: `cinder/lexer.py` (`tokenize()`'s dispatch, new
-`_raw_string` method next to `_string`), `tests/test_lexer.py` (model on
-whatever test class covers `class TestStrings`/ordinary string escapes,
-search for `_string`/`unterminated string`), possibly
-`tests/test_interpreter.py` for one end-to-end `eval` case. Once
-merged, `README.md`'s Values bullet needs a mention of raw string
-literals near the existing string-escapes/interpolation sentence, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s roadmap
-paragraph needs this moved from backlog to landed — leave all three to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_undulating` — digit-alternation classification
+## 1. Standard library: `is_undulating` — digit-alternation classification
 
 Build: the breadth task after task 5's depth work (raw string literals)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -213,7 +97,7 @@ this task.
 
 ---
 
-## 3. Language: range literal `a..b` — sugar over the existing `range()` builtin
+## 2. Language: range literal `a..b` — sugar over the existing `range()` builtin
 
 Build: the depth task after task 4's breadth work (`is_undulating`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -378,7 +262,7 @@ task.
 
 ---
 
-## 4. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
+## 3. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
 
 Build: the breadth task after task 5's depth work (range literal `a..b`)
 per `PROJECT.md`'s breadth-vs-depth policy, continuing the two-tasks-
@@ -471,7 +355,7 @@ this task.
 
 ---
 
-## 5. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
+## 4. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
 
 Build: the depth task after task 5's breadth work (`is_kaprekar`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -586,7 +470,7 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `is_achilles` — powerful but not itself a perfect power
+## 5. Standard library: `is_achilles` — powerful but not itself a perfect power
 
 Build: the breadth task after task 5's depth work (map literal shorthand
 properties) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

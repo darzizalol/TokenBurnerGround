@@ -116,6 +116,7 @@ from cinder.ast_nodes import (
     ChainedComparison,
     ConstStmt,
     ContinueStmt,
+    DeclSeq,
     DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
@@ -300,22 +301,40 @@ class Parser:
             return self._destructure_let_statement(let_token, is_map=False)
         if self._check(TokenType.LBRACE):
             return self._destructure_let_statement(let_token, is_map=True)
+        declarations = [self._one_let_declaration(let_token)]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            declarations.append(self._one_let_declaration(let_token))
+        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
+        if len(declarations) == 1:
+            return declarations[0]
+        return DeclSeq(declarations, let_token.line, let_token.column)
+
+    def _one_let_declaration(self, let_token: Token) -> LetStmt:
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
-        if self._check(TokenType.SEMICOLON):
+        if self._check(TokenType.SEMICOLON) or self._check(TokenType.COMMA):
             initializer: Expr = Literal(None, name_token.line, name_token.column)
         else:
             self._consume(TokenType.EQ, "'=' after variable name")
             initializer = self._assignment()
-        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
+        return LetStmt(name_token.lexeme, initializer, name_token.line, name_token.column)
 
     def _const_statement(self) -> Stmt:
         const_token = self._advance()
+        declarations = [self._one_const_declaration(const_token)]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            declarations.append(self._one_const_declaration(const_token))
+        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
+        if len(declarations) == 1:
+            return declarations[0]
+        return DeclSeq(declarations, const_token.line, const_token.column)
+
+    def _one_const_declaration(self, const_token: Token) -> ConstStmt:
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'const'")
         self._consume(TokenType.EQ, "'=' after variable name")
         initializer = self._assignment()
-        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        return ConstStmt(name_token.lexeme, initializer, const_token.line, const_token.column)
+        return ConstStmt(name_token.lexeme, initializer, name_token.line, name_token.column)
 
     def _destructure_let_statement(self, let_token: Token, is_map: bool) -> Stmt:
         if is_map:

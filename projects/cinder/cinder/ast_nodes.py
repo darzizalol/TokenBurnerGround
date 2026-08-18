@@ -364,6 +364,13 @@ class Block:
 
 
 @dataclass(frozen=True)
+class DeclSeq:
+    declarations: list
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class IfStmt:
     condition: "Expr"
     then_branch: "Stmt"

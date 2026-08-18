@@ -2687,3 +2687,20 @@ for vision/architecture.
   walk `digit_product` uses rather than calling its dispatch-signature
   builtin directly. Clean first pass, no bounces (3058 tests passing, up
   from 3048).
+- **Language: comma-separated multiple variable declarations in a single
+  `let`/`const` statement** — merged 2026-08-18T14:42:57Z via PR #271
+  (`feat/20260818-decl-seq`). Added a new `DeclSeq` AST node
+  (`cinder/ast_nodes.py`) executed against the *same* `Environment` as
+  its declarations rather than a fresh child one (unlike `Block`), so
+  `let a = 1, b = a + 1;` lands both names in the caller's scope with
+  later initializers able to see earlier names; `_let_statement`/
+  `_const_statement` factor their single-declaration body into a shared
+  per-name helper looped on a trailing comma, collapsing back to a plain
+  `LetStmt`/`ConstStmt` for the single-declaration case so no existing
+  call site changes shape. `for (let i = 0, j = 3; ...)` started working
+  for free since `_execute_for_c` already dispatches generically.
+  Reviewer flagged a non-blocking, inert side effect: `LetStmt`/
+  `ConstStmt.line/column` now stamp from the identifier token rather
+  than the `let`/`const` keyword, for every declaration, not just
+  comma-separated ones — nothing reads those fields at runtime. Clean
+  first pass, no bounces (3069 tests passing, up from 3058).

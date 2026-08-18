@@ -11,163 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: comma-separated multiple variable declarations in a single `let`/`const` statement [claimed 2026-08-18T14:34:58Z]
-
-Build: the depth task after task 4's breadth work
-(`multiplicative_persistence`) per `PROJECT.md`'s breadth-vs-depth
-policy, restocking the backlog back toward its 6-task target now that
-both `feat/20260817-trailing-commas` (PR #265) and
-`feat/20260817-is-evil-odious` (PR #266) landed in the same cycle,
-dropping the count from 6 to 4 at once — two tasks are being added this
-pass to restock past the 5-task floor, the same "restock faster than
-strict alternation" move the roadmap history already documents for
-`aliquot_sum`/`is_perfect_cube` and `collatz_length`/`is_strong_number`.
-Today every `let`/`const` statement declares exactly one name:
-`cinder/parser.py`'s `_let_statement`/`_const_statement` each consume
-one `IDENTIFIER`, an optional (`let`) or required (`const`) `=
-initializer`, then go straight to `;` — a comma there is a hard
-`ParseError`, unlike most C-family languages, which let a single `let`/
-`var`/`const` introduce several names at once. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let a = 1, b = 2; print(a); print(b);'
-# -> ParseError: expected ';' after variable declaration, found ','
-python3 -m cinder.cli eval 'let a, b; print(a); print(b);'
-# -> ParseError: expected '=' after variable name, found ','
-python3 -m cinder.cli eval 'const a = 1, b = 2; print(a); print(b);'
-# -> ParseError: expected ';' after variable declaration, found ','
-```
-
-**The key design constraint**: the two declared names must land in the
-*same* scope a single `let a = 1;` would use, not a nested one — so this
-cannot be implemented by wrapping multiple `LetStmt`s in the existing
-`Block` node, since `execute()`'s `Block` case (`cinder/interpreter.py`)
-opens a fresh child `Environment` before running its statements, which
-would make `b` invisible the instant the statement ends. Add a new,
-narrower AST node instead — `DeclSeq` in `cinder/ast_nodes.py`, next to
-`Block`:
-```python
-@dataclass(frozen=True)
-class DeclSeq:
-    declarations: list
-    line: int
-    column: int
-```
-and one new `execute()` branch in `cinder/interpreter.py`, next to the
-existing `Block` case, that deliberately does *not* open a new
-`Environment`:
-```python
-        if isinstance(stmt, DeclSeq):
-            for declaration in stmt.declarations:
-                self.execute(declaration, env)
-            return
-```
-Since each `declaration` is an ordinary `LetStmt`/`ConstStmt`, and
-`execute()`'s existing `LetStmt`/`ConstStmt` cases already call
-`env.define(...)`/`env.define_const(...)` directly on whatever `env`
-they're given, running them in sequence against the *same* `env` — not
-a per-declaration child one — is exactly what makes both names end up
-side by side in the caller's scope.
-
-**Parsing**: factor `_let_statement`'s existing single-declaration body
-(identifier, optional `=` initializer, defaulting to a `nil` `Literal`
-when omitted — the uninitialized-`let` behavior already landed) out
-into a small helper, then loop it on a trailing comma:
-```python
-    def _let_statement(self) -> Stmt:
-        let_token = self._advance()
-        if self._check(TokenType.LBRACKET):
-            return self._destructure_let_statement(let_token, is_map=False)
-        if self._check(TokenType.LBRACE):
-            return self._destructure_let_statement(let_token, is_map=True)
-        declarations = [self._one_let_declaration(let_token)]
-        while self._check(TokenType.COMMA):
-            self._advance()
-            declarations.append(self._one_let_declaration(let_token))
-        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        if len(declarations) == 1:
-            return declarations[0]
-        return DeclSeq(declarations, let_token.line, let_token.column)
-
-    def _one_let_declaration(self, let_token: Token) -> LetStmt:
-        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
-        if self._check(TokenType.SEMICOLON) or self._check(TokenType.COMMA):
-            initializer: Expr = Literal(None, name_token.line, name_token.column)
-        else:
-            self._consume(TokenType.EQ, "'=' after variable name")
-            initializer = self._assignment()
-        return LetStmt(name_token.lexeme, initializer, let_token.line, let_token.column)
-```
-`_const_statement` gets the identical shape, except its per-declaration
-helper unconditionally requires `= initializer` (no `check(COMMA)`/
-`check(SEMICOLON)` bypass) — `const` already has no uninitialized form
-today, and this task doesn't add one. Returning the lone `LetStmt`/
-`ConstStmt` directly when there's exactly one declaration (rather than
-always wrapping in `DeclSeq`) keeps every existing single-declaration
-call site — including `_for_c_statement`'s `init = self._let_statement()`
-— seeing exactly the same `Stmt` shape it does today, so nothing else
-needs to change to avoid a regression.
-
-**A verified, free side effect, not extra work**: `_for_c_statement`'s
-C-style for-loop init clause already calls `self._let_statement()`
-directly, and `_execute_for_c` already runs `self.execute(stmt.init,
-loop_env)` generically — it never pattern-matches on `LetStmt`
-specifically, it just executes whatever statement `init` is and then
-copies the resulting `loop_env._values` wholesale into each iteration's
-environment. Since `DeclSeq` is executed by this same generic
-`self.execute(...)` dispatch, `for (let i = 0, j = 3; i < j; i = i + 1)
-{ ... }` starts working the moment this lands, with no change to
-`_execute_for_c` itself — the same "reuses existing generic dispatch,
-nothing else to touch" shape `xs += [3, 4]` got for free once list
-`+` landed.
-
-Acceptance criteria:
-- `let a = 1, b = 2; print(a); print(b);` prints `1` then `2`.
-- `let a, b; print(a); print(b);` prints `nil` then `nil` — each
-  omitted initializer defaults independently, same as a single
-  `let a;` already does.
-- `let a = 1, b; print(a); print(b);` prints `1` then `nil` — mixing
-  initialized and uninitialized declarations in the same statement.
-- `let a = 1, b = a + 1; print(b);` prints `2` — a later initializer in
-  the same statement can already see an earlier name, evaluated
-  left-to-right, the same convention list/map-destructuring defaults
-  already established.
-- `let a = 1, b = 2; a = 3; print(a); print(b);` prints `3` then `2` —
-  confirms both names land in the *same* scope a single `let` would,
-  not a nested `Block` scope, and both stay visible and mutable after
-  the statement.
-- `const a = 1, b = 2; print(a); print(b);` prints `1` then `2`.
-- `const a = 1, b = 2; a = 3;` raises `CinderRuntimeError` matching the
-  existing const-reassignment message — confirms both bindings are
-  real `const`s, not silently `let`.
-- `const a = 1, b;` raises `ParseError` matching `"'=' after variable
-  name"` — `const` still requires every declaration to have its own
-  initializer, comma-separated or not.
-- `for (let i = 0, j = 3; i < j; i = i + 1) { print(i); print(j); }`
-  prints `0`/`3`, `1`/`3`, `2`/`3` on three lines — the C-style
-  for-loop free side effect above.
-- `let [a, b] = [1, 2];` and `let {a, b} = {"a": 1, "b": 2};` still work
-  exactly as before, unaffected (the comma-loop only wraps the plain
-  single-identifier form; `_destructure_let_statement` returns before
-  reaching it).
-- Every pre-existing single-declaration `let`/`const`/uninitialized-`let`
-  test continues to pass unmodified.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (new `DeclSeq`), `cinder/parser.py`
-(`_let_statement`, `_const_statement`, new `_one_let_declaration`/
-equivalent const helper), `cinder/interpreter.py` (`execute()`'s new
-`DeclSeq` branch, placed near the `Block` case but explicitly not
-opening a new `Environment`), `tests/test_parser.py` and
-`tests/test_interpreter.py` (model on `class TestAssignment`, `class
-TestForCStatement`, and whatever test currently covers uninitialized
-`let`). Once merged, `README.md`'s Variables & scope bullet needs a
-mention of comma-separated multi-declaration, and `PROJECT.md`'s
-roadmap paragraph needs this moved from backlog to landed — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
+## 1. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
 
 Build: the breadth task after task 5's depth work (comma-separated
 `let`/`const` declarations), restocking the backlog the rest of the way
@@ -238,7 +82,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: nested list-in-list destructuring patterns
+## 2. Language: nested list-in-list destructuring patterns
 
 Build: the depth task after task 5's breadth work (`cbrt`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -370,7 +214,7 @@ task.
 
 ---
 
-## 4. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
+## 3. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
 
 Build: the breadth task after task 5's depth work (nested list-in-list
 destructuring patterns), restocking the backlog back to 6 tasks now
@@ -472,7 +316,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
+## 4. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
 
 Build: the depth task after task 5's breadth work (`is_perfect_power`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -588,7 +432,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_undulating` — digit-alternation classification
+## 5. Standard library: `is_undulating` — digit-alternation classification
 
 Build: the breadth task after task 5's depth work (raw string literals)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

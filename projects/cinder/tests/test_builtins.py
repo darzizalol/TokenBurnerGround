@@ -4130,6 +4130,40 @@ class TestSqrt(unittest.TestCase):
             run("sqrt();")
 
 
+class TestCbrt(unittest.TestCase):
+    def test_cbrt_of_perfect_cube_is_float(self):
+        result = run("let result = cbrt(27);").get("result")
+        self.assertEqual(result, 3.0)
+        self.assertIsInstance(result, float)
+
+    def test_cbrt_of_perfect_cube_eight(self):
+        self.assertEqual(run("let result = cbrt(8);").get("result"), 2.0)
+
+    def test_cbrt_of_zero(self):
+        self.assertEqual(run("let result = cbrt(0);").get("result"), 0.0)
+
+    def test_cbrt_of_negative_perfect_cube(self):
+        self.assertEqual(run("let result = cbrt(-27);").get("result"), -3.0)
+
+    def test_cbrt_of_non_perfect_cube(self):
+        self.assertAlmostEqual(run("let result = cbrt(2);").get("result"), 1.2599210498948732)
+
+    def test_cbrt_of_negative_non_perfect_cube(self):
+        self.assertAlmostEqual(run("let result = cbrt(-2);").get("result"), -1.2599210498948732)
+
+    def test_cbrt_of_non_numeric_raises(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cbrt\\(\\) requires a number, got string"):
+            run('cbrt("a");')
+
+    def test_cbrt_of_bool_raises(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cbrt\\(\\) requires a number, got bool"):
+            run("cbrt(true);")
+
+    def test_cbrt_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("cbrt();")
+
+
 class TestSin(unittest.TestCase):
     def test_sin_of_zero(self):
         result = run("let result = sin(0);").get("result")

@@ -1000,32 +1000,15 @@ literals/calls/params trailing-commas task used, including the
 documented side effect that a hole immediately before the closing
 delimiter (`let [a, ,] = [1, 2];`) is now accepted the same way a
 trailing comma after a real element is — has since landed via PR #269
-too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` task 1 of its current 1-6 — the
-task that used to occupy slot 1 here, trailing commas in destructuring
-patterns, has since landed via PR #269 and is covered in the "have
-since landed" history immediately above; this grooming pass dropped
-its now-redundant not-yet-scoped description from this section and
-renumbered the remaining one down to slot 1. Tasks 2-6 — comma-separated
-`let`/`const` declarations, `cbrt`, nested list-in-list destructuring
-patterns, `is_perfect_power`, and raw string literals `r"..."`/`r'...'`
-— are fully scoped in `BACKLOG.md` itself and are not duplicated here,
-the same treatment tasks past slot 1 have gotten since this section
-stopped trying to keep prose in lockstep with every backlog slot):
-as task 1, `multiplicative_persistence(n)` — a breadth task after the
-depth work that used to occupy this slot (trailing commas in
-destructuring patterns, now landed and moved to the "have since landed"
-history above), restocking the backlog back to 6 tasks at the time it
-was queued, now that `digit_product` has landed via PR #264: the number of times a
-number's own decimal digits must be repeatedly multiplied together
-before the result drops to a single digit (e.g. `39 -> 27 -> 14 -> 4`,
-three multiplications, so `multiplicative_persistence(39)` is `3`), the
+too. `multiplicative_persistence(n)` — the number of times a number's
+own decimal digits must be repeatedly multiplied together before the
+result drops to a single digit (e.g. `39 -> 27 -> 14 -> 4`, three
+multiplications, so `multiplicative_persistence(39)` is `3`), the
 natural loop-driven counterpart to `digital_root`'s closed-form
-additive reduction — unlike `digital_root`'s `1 + (n - 1) % 9` shortcut,
-no closed form exists for the multiplicative case, so this genuinely
-needs an iterative loop, not a formula. Inlines its own per-digit-
-multiply step (the same `abs(value)`-then-walk-digits shape
+additive reduction — unlike `digital_root`'s `1 + (n - 1) % 9`
+shortcut, no closed form exists for the multiplicative case, so this
+genuinely needed an iterative loop, not a formula. Inlines its own
+per-digit-multiply step (the same `abs(value)`-then-walk-digits shape
 `digit_product` itself uses) rather than calling the `digit_product`
 builtin directly, the same "inline rather than call the
 dispatch-signature builtin" approach `is_emirp`/`is_amicable` already
@@ -1035,7 +1018,18 @@ convention (not re-derived every step, since the running product is
 already non-negative once the first step completes); any single-digit
 input (`-9` through `9` after the sign is dropped) has persistence `0`
 — the loop's trivial already-terminated base case, not a domain edge to
-guard against. And only much
+guard against — has since landed via PR #270 too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
+occupy slot 1 here, `multiplicative_persistence`, has since landed via
+PR #270 and is covered in the "have since landed" history immediately
+above; this grooming pass dropped its now-redundant description from
+this section. Tasks 1-5 — comma-separated `let`/`const` declarations,
+`cbrt`, nested list-in-list destructuring patterns, `is_perfect_power`,
+and raw string literals `r"..."`/`r'...'` — are fully scoped in
+`BACKLOG.md` itself and are not duplicated here, the same treatment
+tasks past slot 1 have gotten since this section stopped trying to keep
+prose in lockstep with every backlog slot). And only much
 later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1170,7 +1164,25 @@ processing entirely, closing the gap for patterns and Windows-style
 paths that would otherwise need every backslash doubled. The next
 grooming pass should continue alternating breadth/depth, restocking
 toward 6-7 tasks whenever a merge drops the count within reach of the
-5-task floor.
+5-task floor. This pass found the backlog back down to its 5-task floor
+again (`multiplicative_persistence` having landed via PR #270, dropping
+the count from 6 to 5, dropping its now-landed description from the
+"what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining five tasks from 2-6 down to 1-5,
+with comma-separated `let`/`const` declarations renumbered from 2 to 1,
+`cbrt` from 3 to 2, nested list-in-list destructuring patterns from 4
+to 3, `is_perfect_power` from 5 to 4, and raw string literals from 6 to
+5) and restocked it to 6 by adding task 6, `is_undulating`, continuing
+alternation with a breadth task after task 5's depth work (raw string
+literals) rather than stacking a second depth task, per the policy
+above — testing whether an integer's decimal digits strictly alternate
+between exactly two distinct values (e.g. `121`, `2323`), one more
+digit-pattern classification sitting next to `is_repdigit`/
+`is_palindrome_number`, requiring at least three digits and two
+distinct digits so that neither a too-short number nor a repdigit can
+qualify. The next grooming pass should continue alternating
+breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
+count within reach of the 5-task floor.
 
 ## History
 

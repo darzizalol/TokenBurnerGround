@@ -295,6 +295,7 @@ while (i < 10) {
   `is_amicable` to test whether two distinct integers' proper-divisor sums point at each other,
   `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
+  `multiplicative_persistence` to count how many times an integer's digits must be repeatedly multiplied together before the result drops to a single digit,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_rotation` to test whether one string is a rotation of another via the doubled-string trick,
   `is_permutation` as its list-oriented sibling,
@@ -391,25 +392,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: list concatenation via `+`
-(closing the gap between the existing `concat()` builtin and infix
-syntax the same way `*` already does for repetition), `harmonic_mean`,
-completing the classical arithmetic/geometric/harmonic Pythagorean means
-trio, and trailing commas in destructuring patterns (`let`/`for`/
-function-parameter/comprehension patterns and the plain-assignment map
-form), closing the one gap the earlier literals/calls/params
-trailing-commas task deliberately left open. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `multiplicative_persistence` — the
-loop-driven counterpart to `digital_root`'s closed-form additive
-reduction, since no closed form exists for repeated digit
-*multiplication*, comma-separated multiple variable declarations in a
-single `let`/`const` statement (`let a = 1, b = 2;`), `cbrt` — real
-cube root, the domain-unrestricted sibling to `sqrt`, nested
-list-in-list destructuring patterns (`let [a, [b, c]] = [1, [2, 3]];`),
-`is_perfect_power` — the general closure of
+Actively developed, nightly. Recently landed: trailing commas in
+destructuring patterns (`let`/`for`/function-parameter/comprehension
+patterns and the plain-assignment map form), closing the one gap the
+earlier literals/calls/params trailing-commas task deliberately left
+open, and `multiplicative_persistence` — the loop-driven counterpart to
+`digital_root`'s closed-form additive reduction, since no closed form
+exists for repeated digit *multiplication*. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): comma-separated multiple variable
+declarations in a single `let`/`const` statement (`let a = 1, b = 2;`),
+`cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`,
+nested list-in-list destructuring patterns (`let [a, [b, c]] = [1, [2,
+3]];`), `is_perfect_power` — the general closure of
 `is_perfect_square`/`is_perfect_cube` ("is there *any* integer exponent
-`k >= 2`"), and raw string literals `r"..."`/`r'...'` — the
-escape/interpolation-free sibling to ordinary strings.
+`k >= 2`"), raw string literals `r"..."`/`r'...'` — the
+escape/interpolation-free sibling to ordinary strings, and
+`is_undulating` — testing whether an integer's digits strictly
+alternate between exactly two distinct values (e.g. `121`, `2323`).
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

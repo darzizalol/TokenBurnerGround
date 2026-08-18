@@ -1050,16 +1050,24 @@ nesting works for free across all five list-pattern call sites (`let`,
 plain assignment, `for`, function params, both comprehension forms)
 since they all funnel through the same shared helpers, and composes
 correctly with existing rest/default/hole handling at any nesting depth
-— has since landed via PR #273 too.
+— has since landed via PR #273 too. `is_perfect_power(n)` — the general
+closure of `is_perfect_square`/`is_perfect_cube`/`is_powerful_number`,
+answering "is there any integer exponent `k >= 2` and base `m` with
+`m ** k == n`" via a new general `_integer_kth_root` binary-search helper
+(generalizing the existing `_integer_cube_root` from a fixed `** 3` to a
+parameter `k`, added alongside rather than refactored in place) and a
+bit-length-bounded search over candidate exponents, admitting negative
+input only through odd exponents the same way `is_perfect_cube` already
+does — has since landed via PR #274 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
-occupy slot 1 here, nested list-in-list destructuring patterns, has
-since landed via PR #273 and is covered in the "have since landed"
-history immediately above; this grooming pass dropped its now-redundant
-description from this section. Tasks 1-6 — `is_perfect_power`, raw
-string literals `r"..."`/`r'...'`, `is_undulating`, a range literal
-`a..b`, `is_kaprekar`, and map literal shorthand properties `{a, b}` as
-sugar for `{"a": a, "b": b}` — are fully scoped in `BACKLOG.md` itself
+occupy slot 1 here, `is_perfect_power`, has since landed via PR #274 and
+is covered in the "have since landed" history immediately above; this
+grooming pass dropped its now-redundant description from this section.
+Tasks 1-6 — raw string literals `r"..."`/`r'...'`, `is_undulating`, a
+range literal `a..b`, `is_kaprekar`, map literal shorthand properties
+`{a, b}` as sugar for `{"a": a, "b": b}`, and `is_achilles` (powerful but
+not itself a perfect power) — are fully scoped in `BACKLOG.md` itself
 and are not duplicated here, the same treatment tasks past slot 1 have
 gotten since this section stopped trying to keep prose in lockstep with
 every backlog slot). And only much
@@ -1255,6 +1263,31 @@ identifier-plus-lookahead technique `_call_argument` already uses for
 keyword arguments, scoped away from map comprehensions for free since
 `for` fails the same `COMMA`/`RBRACE` lookahead that triggers the
 shorthand branch. The next grooming pass should continue alternating
+breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
+count within reach of the 5-task floor. This pass found the backlog back
+down to its 5-task floor again (`is_perfect_power` having landed via PR
+#274, dropping the count from 6 to 5, dropping its now-landed
+description from the "what remains plausible" section above into the
+"have since landed" history, and renumbering the remaining five tasks
+from 2-6 down to 1-5, with raw string literals renumbered from 2 to 1,
+`is_undulating` from 3 to 2, the range literal from 4 to 3, `is_kaprekar`
+from 5 to 4, and map literal shorthand properties from 6 to 5) and
+restocked it to 6 by adding task 6, `is_achilles`, continuing alternation
+with a breadth task after task 5's depth work (map literal shorthand
+properties) rather than stacking a second depth task, per the policy
+above — the gap between `is_powerful_number` and `is_perfect_power`:
+powerful (every prime factor's exponent `>= 2`) but *not* itself a
+perfect power of any single base/exponent pair (e.g. `72 = 2^3 * 3^2`,
+exponents `3` and `2`, `gcd(3, 2) == 1`). Reuses the exact factorization
+loop `is_powerful_number` already has, tracking the running `gcd` of
+each prime's exponent alongside the existing "every exponent `>= 2`"
+check rather than calling `is_perfect_power` as a second pass — a number
+is a perfect power exactly when the `gcd` of its prime exponents exceeds
+`1` (the number is then that `gcd`-th power of the product of each prime
+raised to `exponent / gcd`), so checking `gcd == 1` after the powerful
+check both closes the gap and naturally excludes single-prime-factor
+powers (`8 = 2^3`) for free, since a lone prime's own exponent becomes
+the `gcd` outright. The next grooming pass should continue alternating
 breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
 count within reach of the 5-task floor.
 

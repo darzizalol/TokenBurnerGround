@@ -586,6 +586,109 @@ pass, not this task.
 
 ---
 
+## 6. Standard library: `is_achilles` — powerful but not itself a perfect power
+
+Build: the breadth task after task 5's depth work (map literal shorthand
+properties) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
+backlog back to 6 tasks now that `is_perfect_power` has landed via PR
+#274, dropping the count to the 5-task floor. `is_powerful_number`
+(`cinder/builtins.py`) tests whether every prime factor of an integer
+appears with exponent `2` or more; `is_perfect_power` tests whether an
+integer is `m ** k` for some base `m` and exponent `k >= 2`. Every
+perfect power greater than 1 is powerful, but not every powerful number
+is a perfect power — `72 = 2^3 * 3^2` is powerful (both exponents `>=
+2`) yet no single base/exponent pair produces it (it is not a perfect
+square, cube, or any higher power). Numbers in exactly this gap are
+called Achilles numbers (OEIS A052486), and nothing in the existing
+cluster tests it. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_achilles(72));'
+# -> CinderRuntimeError: undefined name 'is_achilles'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_powerful_number`
+(search `def _is_powerful_number`, immediately before `_integer_kth_root`):
+```python
+def _is_achilles(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_achilles", arguments, 1, line, column)
+    value = _require_int("is_achilles", arguments[0], line, column)
+    if value < 2:
+        return False
+    remaining = value
+    divisor = 2
+    exponent_gcd = 0
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            count = 0
+            while remaining % divisor == 0:
+                remaining //= divisor
+                count += 1
+            if count < 2:
+                return False
+            exponent_gcd = math.gcd(exponent_gcd, count)
+        divisor += 1
+    if remaining > 1:
+        return False
+    return exponent_gcd == 1
+```
+This is `_is_powerful_number`'s own factorization loop (same structure,
+same `count < 2: return False` powerful-check) with one addition: the
+running `math.gcd` of every prime's exponent. A number is a perfect
+power exactly when the `gcd` of its prime-factorization exponents
+exceeds `1` (it then equals that `gcd`-th power of the product of each
+prime raised to `exponent / gcd`) — so `exponent_gcd == 1` after the
+powerful check both confirms "not a perfect power" and naturally
+excludes single-prime-factor powers like `8 = 2^3` for free, since a
+lone prime's own exponent becomes the `gcd` outright (`math.gcd(0, 3) ==
+3`, not `1`). No need to call `_is_perfect_power` as a separate second
+pass — the same loop and the same intermediate state (each prime's
+exponent) answer both questions at once, avoiding factoring `value`
+twice. `math.gcd` is already imported in `cinder/builtins.py` (used
+throughout the number-theory cluster, e.g. `gcd`/`lcm`). `value < 2`
+returns `false` up front rather than raising, matching
+`is_powerful_number`'s own convention for non-positive input (`0`, `1`,
+and negatives all fail the "has any prime factorization" precondition
+the same way).
+
+Acceptance criteria:
+- `is_achilles(72);` is `true` — `2^3 * 3^2`, `gcd(3, 2) == 1`.
+- `is_achilles(108);` is `true` — `2^2 * 3^3`, `gcd(2, 3) == 1`.
+- `is_achilles(200);` is `true` — `2^3 * 5^2`, `gcd(3, 2) == 1`.
+- `is_achilles(500);` is `true` — `2^2 * 5^3`, `gcd(2, 3) == 1`.
+- `is_achilles(8);` is `false` — `2^3`, a single prime factor, so
+  `exponent_gcd == 3` (a perfect cube, not an Achilles number).
+- `is_achilles(36);` is `false` — `2^2 * 3^2`, `gcd(2, 2) == 2` (a
+  perfect square).
+- `is_achilles(4);` is `false` — `2^2`, single prime factor, perfect
+  square.
+- `is_achilles(12);` is `false` — `2^2 * 3^1`, exponent `1` on `3` fails
+  the powerful check.
+- `is_achilles(1);` is `false` — below the `n >= 2` floor.
+- `is_achilles(0);` is `false`.
+- `is_achilles(-72);` is `false` — negative input, following
+  `is_powerful_number`'s existing convention rather than raising.
+- `is_achilles(30);` is `false` — squarefree, no exponent reaches `2` at
+  all (fails on the very first prime factor).
+- `is_achilles(5.0);` raises `CinderRuntimeError` matching
+  `"is_achilles() requires an int, got float"`.
+- `is_achilles(true);` raises `CinderRuntimeError` matching
+  `"is_achilles() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_powerful_number`,
+see current line numbers — shift if earlier tasks this cycle landed
+first), `tests/test_builtins.py` (model on `class TestIsPowerfulNumber`
+and `class TestIsPerfectPower`, search either name). Once merged,
+`README.md`'s Builtins bullet needs `is_achilles` added near
+`is_powerful_number`/`is_perfect_power`, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s roadmap paragraph needs this moved
+from backlog to landed — leave all three to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -35,6 +35,11 @@ while (i < 10) {
   interchangeably, `\"`/`\'` both valid escapes) and support
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
   inside `${...}`, stringified the same way `print`/`format` render values;
+  raw string literals (`r"..."`/`r'...'`) skip escape and interpolation
+  processing entirely — every character up to the matching close quote is
+  taken literally, useful for regex-like patterns and Windows-style paths
+  that would otherwise need every backslash doubled (a raw string cannot
+  contain its own delimiter quote; use the other quote character instead);
   integer literals may also be written in hex (`0x1F`), binary (`0b101`), or
   octal (`0o17`); float literals accept scientific notation (`1e3`,
   `1.5e-2`, `2E+10`; an exponent always makes the literal a float, even
@@ -403,29 +408,29 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_perfect_power` — the
-general closure of `is_perfect_square`/`is_perfect_cube`/
-`is_powerful_number` ("is there *any* integer exponent `k >= 2`"), and
-before that `cbrt` — real cube root, the domain-unrestricted sibling to
-`sqrt` (negative input returns a negative result instead of raising,
-unlike `sqrt`'s complex-number guard), and nested list-in-list
-destructuring patterns (`let [a, [b, c]] = [1, [2, 3]];`, to any depth,
-composing with rest/default/hole elements; map-in-list nesting stays out
-of scope). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): raw string
-literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to
-ordinary strings, `is_undulating` — testing whether an integer's digits
-strictly alternate between exactly two distinct values (e.g. `121`,
-`2323`), a range literal `a..b` — sugar over the existing `range()`
-builtin usable directly in a `for` loop (`for i in 1..5 { ... }`),
-`is_kaprekar` — testing whether a number's square splits into two parts
-that sum back to the number (e.g. `45`: `45 ** 2 == 2025`, `20 + 25 ==
-45`), map literal shorthand properties `{a, b}` — sugar for `{"a": a,
-"b": b}`, the construction-side inverse of the map-destructuring
-shorthand `let {a, b} = expr;` already has, and `is_achilles` — testing
-whether an integer is powerful (every prime factor has exponent `>= 2`)
-but *not* itself a perfect power, the gap between `is_powerful_number`
-and `is_perfect_power` (e.g. `72 = 2^3 * 3^2`: powerful, but no single
-base/exponent pair produces it). The backlog mixes
-language depth with stdlib breadth over time rather than running either
-in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: raw string literals
+`r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary
+strings, and before that `is_perfect_power` — the general closure of
+`is_perfect_square`/`is_perfect_cube`/`is_powerful_number` ("is there
+*any* integer exponent `k >= 2`"), and before that `cbrt` — real cube
+root, the domain-unrestricted sibling to `sqrt` (negative input returns a
+negative result instead of raising, unlike `sqrt`'s complex-number
+guard). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_undulating`
+— testing whether an integer's digits strictly alternate between exactly
+two distinct values (e.g. `121`, `2323`), a range literal `a..b` — sugar
+over the existing `range()` builtin usable directly in a `for` loop
+(`for i in 1..5 { ... }`), `is_kaprekar` — testing whether a number's
+square splits into two parts that sum back to the number (e.g. `45`: `45
+** 2 == 2025`, `20 + 25 == 45`), map literal shorthand properties `{a,
+b}` — sugar for `{"a": a, "b": b}`, the construction-side inverse of the
+map-destructuring shorthand `let {a, b} = expr;` already has,
+`is_achilles` — testing whether an integer is powerful (every prime
+factor has exponent `>= 2`) but *not* itself a perfect power, the gap
+between `is_powerful_number` and `is_perfect_power` (e.g. `72 = 2^3 *
+3^2`: powerful, but no single base/exponent pair produces it), and named
+function expressions `fn name(params) { ... }` — letting an anonymous
+function refer to itself by its own name from inside its body, without
+depending on whatever outer variable (if any) it happens to be assigned
+to. The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

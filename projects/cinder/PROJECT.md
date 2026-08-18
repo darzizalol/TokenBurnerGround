@@ -1289,7 +1289,32 @@ check both closes the gap and naturally excludes single-prime-factor
 powers (`8 = 2^3`) for free, since a lone prime's own exponent becomes
 the `gcd` outright. The next grooming pass should continue alternating
 breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
-count within reach of the 5-task floor.
+count within reach of the 5-task floor. This pass found the backlog back
+down to its 5-task floor again (raw string literals `r"..."`/`r'...'`
+having landed via PR #275, dropping the count from 6 to 5, dropping its
+now-landed description from the "what remains plausible" section above
+into the "have since landed" history, and renumbering the remaining five
+tasks from 2-6 down to 1-5, with `is_undulating` renumbered from 2 to 1,
+the range literal from 3 to 2, `is_kaprekar` from 4 to 3, map literal
+shorthand properties from 5 to 4, and `is_achilles` from 6 to 5) and
+restocked it to 6 by adding task 6, named function expressions (`fn
+name(params) { ... }`), continuing alternation with a depth task after
+task 5's breadth work (`is_achilles`) rather than stacking a second
+breadth task, per the policy above — closing the self-reference gap
+anonymous `fn` expressions have always had: today a recursive anonymous
+function can only call itself by closing over whatever outer variable it
+happens to be assigned to (`let f = fn(n) { ... f(n - 1) ... };`, which
+works only as long as that specific outer binding is never reassigned or
+skipped, e.g. when the function is passed straight into a call argument).
+An identifier immediately after `fn` at expression position was already
+a guaranteed `ParseError` before this task, so the new `fn name(params)
+{ ... }` syntax claims previously-invalid territory only; the name is
+bound fresh into each call's own environment (not the enclosing scope),
+so it never leaks outside calls to that specific function value, mirroring
+how a same-named parameter can shadow it within one call. The next
+grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor.
 
 ## History
 

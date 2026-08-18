@@ -573,6 +573,121 @@ this task.
 
 ---
 
+## 6. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
+
+Build: the depth task after task 5's breadth work (`is_kaprekar`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that nested list-in-list destructuring patterns landed via PR
+#273, dropping the count to the 5-task floor. Map-pattern *destructuring*
+already has a shorthand — `let {a, b} = expr;` binds `a`/`b` by looking
+up those keys — but *constructing* a map has no equivalent inverse: today
+`{a, b}` (an existing local `a`/`b` you want keyed by their own names) is
+always a `ParseError`, forcing the verbose `{"a": a, "b": b}` every time.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let a = 1; let b = 2; print({a, b});'
+# -> ParseError: expected ':' after map key, found ','
+```
+Confirm this exact program was already a guaranteed `ParseError` before
+this task in both ways the parser could read it: at statement position
+`{a, b};` fails the same way (map-literal attempt hits the same missing
+colon; the block-statement fallback then also fails, since `a` isn't
+followed by `;`), and inside a call/expression position like
+`print({a, b})` there is no block-vs-map ambiguity to fall back to at
+all — `{a, b}` there is unconditionally the map-literal attempt, and it
+already raises the identical `"expected ':' after map key"` error. So no
+currently-valid Cinder program's meaning changes.
+
+**Important existing behavior to build on top of, not around**: an
+ordinary map literal's key position is a full expression, evaluated at
+runtime — `{a: 5}` with `let a = 1;` already produces `{1: 5}` (an
+*integer* key `1`, `a`'s value, not the string `"a"`). Shorthand `{a}` is
+therefore genuinely new sugar, not a restatement of existing behavior: it
+uses the identifier's own *name* as a string key while still reading its
+*value* for the map value — the same name-as-key/value-as-value split
+`let {a, b} = expr;` already uses in the destructuring direction, just
+inverted.
+
+Add the shorthand branch to `_map_entry` in `cinder/parser.py` (the
+`_map_pair`/`_map_comprehension`/`_map_literal` trio right after it are
+unchanged):
+```python
+    def _map_entry(self):
+        if self._check(TokenType.DOT_DOT_DOT):
+            dots = self._advance()
+            return Spread(self._ternary(), dots.line, dots.column)
+        if self._check(TokenType.IDENTIFIER) and self._peek_next().type in (
+            TokenType.COMMA,
+            TokenType.RBRACE,
+        ):
+            name = self._advance()
+            key = Literal(name.lexeme, name.line, name.column)
+            value = Identifier(name.lexeme, name.line, name.column)
+            return (key, value)
+        return self._map_pair()
+```
+`Literal`/`Identifier` are both already imported in `cinder/parser.py`
+(used throughout). This is the same "identifier immediately followed by
+a specific lookahead token" technique `_call_argument` already uses to
+recognize keyword arguments (`self._check(TokenType.IDENTIFIER) and
+self._peek_next().type == TokenType.COLON`), just checking for
+`COMMA`/`RBRACE` instead of `COLON` — and checking those specific two
+tokens, not "anything but `:`", is what keeps this from misfiring: an
+identifier followed by `for` (map comprehension source, `{a for a in
+xs}`) or anything else falls straight through to the existing
+`_map_pair()` path unchanged, so map comprehensions need no exclusion
+logic of their own — the lookahead condition already keeps this scoped
+to plain map literals only, for free. `_evaluate_map_literal`
+(`cinder/interpreter.py`) needs no changes at all: it already evaluates
+each pair's `key_expr`/`value_expr` generically, so a shorthand pair's
+`Literal`/`Identifier` nodes are indistinguishable at runtime from any
+other map entry.
+
+Acceptance criteria:
+- `let a = 1; let b = 2; print({a, b});` prints `{"a": 1, "b": 2}`.
+- `let a = 1; print({a});` prints `{"a": 1}` — single shorthand entry.
+- `let a = 1; print({a,});` prints `{"a": 1}` — shorthand plus trailing
+  comma still works (existing trailing-comma handling is untouched).
+- `let a = 1; print({a: 5});` still prints `{1: 5}` — an identifier
+  immediately followed by `:` is completely unaffected, still an
+  ordinary key expression (`a`'s *value*, not its name).
+- `let a = 1; let b = 2; print({a, "c": 3, b});` prints
+  `{"a": 1, "c": 3, "b": 2}` — shorthand and ordinary `key: value` pairs
+  freely mix in one literal, in either order.
+- `let a = 1; print({a, ...{"b": 2}});` prints `{"a": 1, "b": 2}` —
+  shorthand composes with the existing spread entry.
+- `let a = 1; print({["b" for b in [a]]: 1});` — not a real case, skip;
+  instead confirm `[a for a in [1, 2]]` (list comprehension) still
+  parses unaffected, and `{a for a in [1, 2]}`
+  raises the same `ParseError` it already did (`"expected ':' after map
+  key, found 'for'"` or equivalent) — map comprehensions are untouched,
+  since `for` fails the `COMMA`/`RBRACE` lookahead.
+- `print({});` still prints `{}` — empty map literal unaffected (no
+  identifier to even reach the new branch).
+- `{a, b};` — a shorthand map literal used as a bare statement — prints
+  nothing but does not raise (same as any other map-literal-expression
+  statement today, e.g. `{"a": 1};`).
+- An undefined shorthand name raises the ordinary `"undefined name"`
+  `CinderRuntimeError`, e.g. `{undefined_var};` — no special-cased error
+  message, since the value side is an ordinary `Identifier` evaluation.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_map_entry`), `tests/test_parser.py`
+(model on `class` containing `test_map_literal_with_spread`/
+`test_map_literal`, search either name, plus add shorthand-vs-comprehension
+and shorthand-vs-explicit-key regression cases near
+`test_plain_map_literal_still_parses_after_comprehension_added`),
+`tests/test_interpreter.py` (model on whatever covers
+`test_map_literal_statement_unaffected`, search that name, for an
+end-to-end `eval` case). Once merged, `README.md`'s map-literal
+description needs a mention of the shorthand near the existing spread
+entry (`{...m}`) description, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
+backlog to landed — leave all three to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

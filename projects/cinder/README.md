@@ -51,7 +51,10 @@ while (i < 10) {
   left-to-right so a later initializer can see an earlier declared name,
   e.g. `let a = 1, b = a + 1;` binds `b` to `2`), assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
-  in `let` (`let [a, b] = expr;`, flat positional binding, no nesting, plus
+  in `let` (`let [a, b] = expr;`, positional binding that may itself nest
+  (`let [a, [b, c]] = [1, [2, 3]];`, to any depth, composing with rest/
+  default/hole elements at any nesting level; map-in-list nesting either
+  direction is not supported and remains a `ParseError`), plus
   a hole element to skip an unwanted position (`let [a, , c] = expr;`,
   scoped to `let`, `for`, function params, and comprehension loop
   variables, not the plain-assignment form), an optional trailing rest
@@ -397,23 +400,25 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: comma-separated multiple
-variable declarations in a single `let`/`const` statement
-(`let a = 1, b = 2;`), and `cbrt` — real cube root, the
-domain-unrestricted sibling to `sqrt` (negative input returns a negative
-result instead of raising, unlike `sqrt`'s complex-number guard). Coming
-up next (see [`BACKLOG.md`](BACKLOG.md)): nested list-in-list
-destructuring patterns (`let [a, [b, c]] = [1, [2, 3]];`),
-`is_perfect_power` — the general closure of
+Actively developed, nightly. Recently landed: `cbrt` — real cube root,
+the domain-unrestricted sibling to `sqrt` (negative input returns a
+negative result instead of raising, unlike `sqrt`'s complex-number
+guard), and nested list-in-list destructuring patterns (`let [a, [b, c]]
+= [1, [2, 3]];`, to any depth, composing with rest/default/hole elements;
+map-in-list nesting stays out of scope). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_perfect_power` — the general closure of
 `is_perfect_square`/`is_perfect_cube` ("is there *any* integer exponent
 `k >= 2`"), raw string literals `r"..."`/`r'...'` — the
 escape/interpolation-free sibling to ordinary strings, `is_undulating` —
 testing whether an integer's digits strictly alternate between exactly
 two distinct values (e.g. `121`, `2323`), a range literal `a..b` — sugar
 over the existing `range()` builtin usable directly in a `for` loop
-(`for i in 1..5 { ... }`), and `is_kaprekar` — testing whether a
+(`for i in 1..5 { ... }`), `is_kaprekar` — testing whether a
 number's square splits into two parts that sum back to the number
-(e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`). The backlog mixes
+(e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`), and map literal
+shorthand properties `{a, b}` — sugar for `{"a": a, "b": b}`, the
+construction-side inverse of the map-destructuring shorthand `let {a, b}
+= expr;` already has. The backlog mixes
 language depth with stdlib breadth over time rather than running either
 in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

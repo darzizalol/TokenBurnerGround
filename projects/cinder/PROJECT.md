@@ -1039,17 +1039,28 @@ a real cube root exists for every real number, so `cbrt(-8)` returns
 value)`, computing the root of the magnitude and reapplying the original
 sign, since Python's own `** (1/3)` on a negative base would otherwise
 raise or return a complex result depending on type — has since landed
-via PR #272 too.
+via PR #272 too. Nested list-in-list destructuring patterns (`let [a,
+[b, c]] = [1, [2, 3]];`) — the depth task after `cbrt`'s breadth work,
+scoped to list-in-list nesting only (map nesting either direction stays
+out of scope, still a `ParseError`): added a nested-pattern branch to
+`_destructure_list_pattern_entry`/`_destructure_assign_pattern`
+(`cinder/parser.py`) and a matching `isinstance(name, tuple)` branch in
+both loops of `_bind_list_destructure` (`cinder/interpreter.py`) —
+nesting works for free across all five list-pattern call sites (`let`,
+plain assignment, `for`, function params, both comprehension forms)
+since they all funnel through the same shared helpers, and composes
+correctly with existing rest/default/hole handling at any nesting depth
+— has since landed via PR #273 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 — the two tasks that used
-to occupy slots 1-2 here, comma-separated `let`/`const` declarations and
-`cbrt`, have since landed via PR #271 and PR #272 and are covered in the
-"have since landed" history immediately above; this grooming pass
-dropped their now-redundant descriptions from this section. Tasks 1-6 —
-nested list-in-list destructuring patterns, `is_perfect_power`, raw
+(numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
+occupy slot 1 here, nested list-in-list destructuring patterns, has
+since landed via PR #273 and is covered in the "have since landed"
+history immediately above; this grooming pass dropped its now-redundant
+description from this section. Tasks 1-6 — `is_perfect_power`, raw
 string literals `r"..."`/`r'...'`, `is_undulating`, a range literal
-`a..b`, and `is_kaprekar` — are fully scoped in `BACKLOG.md` itself and
-are not duplicated here, the same treatment tasks past slot 1 have
+`a..b`, `is_kaprekar`, and map literal shorthand properties `{a, b}` as
+sugar for `{"a": a, "b": b}` — are fully scoped in `BACKLOG.md` itself
+and are not duplicated here, the same treatment tasks past slot 1 have
 gotten since this section stopped trying to keep prose in lockstep with
 every backlog slot). And only much
 later, a bytecode VM if performance ever actually matters. The
@@ -1226,9 +1237,26 @@ whose square splits into two parts that sum back to itself, e.g. `45`:
 `2025` → `20 + 25 == 45`), a breadth task after task 5's depth work,
 placed next to `is_automorphic` in `cinder/builtins.py` since automorphic
 numbers are the fixed special case of a Kaprekar split at the digit
-boundary matching `n`'s own length. The next grooming pass should
-continue alternating breadth/depth, restocking toward 6-7 tasks whenever
-a merge drops the count within reach of the 5-task floor.
+boundary matching `n`'s own length. This pass found the backlog back
+down to its 5-task floor again (nested list-in-list destructuring
+patterns having landed via PR #273, dropping the count from 6 to 5,
+dropping its now-landed description from the "what remains plausible"
+section above into the "have since landed" history, and renumbering the
+remaining five tasks from 2-6 down to 1-5, with `is_perfect_power`
+renumbered from 2 to 1, raw string literals from 3 to 2, `is_undulating`
+from 4 to 3, the range literal from 5 to 4, and `is_kaprekar` from 6 to
+5) and restocked it to 6 by adding task 6, map literal shorthand
+properties `{a, b}` as sugar for `{"a": a, "b": b}`, continuing
+alternation with a depth task after task 5's breadth work (`is_kaprekar`)
+rather than stacking a second breadth task, per the policy above — the
+construction-side inverse of the map-destructuring shorthand `let {a, b}
+= expr;` already has, recognized in `_map_entry` via the same
+identifier-plus-lookahead technique `_call_argument` already uses for
+keyword arguments, scoped away from map comprehensions for free since
+`for` fails the same `COMMA`/`RBRACE` lookahead that triggers the
+shorthand branch. The next grooming pass should continue alternating
+breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
+count within reach of the 5-task floor.
 
 ## History
 

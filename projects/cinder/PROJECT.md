@@ -989,51 +989,35 @@ list)`, reusing the exact same `isinstance`/non-empty/`_is_numeric`-
 per-element validation shape `mean`/`geometric_mean` already share,
 plus the identical strictly-positive domain restriction
 `geometric_mean` already enforces — has since landed via PR #268 too.
-What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-2 of its current 1-6 —
-the task that used to occupy slot 1 here, `harmonic_mean`, has since
-landed via PR #268 and is covered in the "have since landed" history
-immediately above; this grooming pass dropped its now-redundant
-not-yet-scoped description from this section and renumbered the
-remaining two down to slots 1-2. Tasks 3-6 — comma-separated
-`let`/`const` declarations, `cbrt`, nested list-in-list destructuring
-patterns, and `is_perfect_power` — are fully scoped in `BACKLOG.md`
-itself and are not duplicated here, the same treatment tasks past slot
-3 have gotten since this section stopped trying to keep prose in lockstep
-with every backlog slot):
-as task 1, trailing commas in destructuring patterns (`let [a, b,] = expr;`,
+Trailing commas in destructuring patterns (`let [a, b,] = expr;`,
 `let {a, b,} = expr;`, `for [a, b,] in ...`, `for {a, b,} in ...`,
 destructuring function parameters, both comprehension loop-variable
-forms, and the plain-assignment map form `{a, b,} = expr;`) — a depth
-task after task 1's breadth work, restocking the backlog back to 6
-tasks now that postfix `++`/`--` has landed via PR #263: this is
-exactly the "future, separately-scoped task" the trailing-commas-in-
-list/map-literals task (landed via PR #265, described in the "have
-since landed" history above) flagged and deferred.
-`_destructure_list_pattern`, `_destructure_map_pattern`, and
-`_try_map_destructure_assign_statement` each have their own
-comma-loop, structurally identical to that landed task's four sites and
-with the identical gap; each gets the same one-line "peek the closing
-delimiter after the comma, break" fix, placed before the existing
-"rest element must be last" check so a trailing comma right after a
-rest element (`let [a, ...rest,] = expr;`) is accepted rather than
-tripping that check, the same ordering that landed task used for
-`_fn_param_list`'s own rest-parameter case. One real subtlety: list
-patterns' existing "hole" element (`let [a, , c] = expr;`) means a
-pattern ending "hole, then trailing comma" (`let [a, ,] = expr;`) falls
-through the new check on its first comma (since a `COMMA` — not the
-closing bracket — follows it) and registers as an ordinary hole, then
-hits the new check on its second comma and breaks — so `let [a, ,] =
-[1, 2];` newly parses as `a` bound plus one skipped position, a narrow,
-intentional behavior change from today's `ParseError`, since a hole is
-a hole regardless of position. The plain-assignment **list** form
-(`[a, b,] = expr;`) needs no change at all: it validates an ordinary
-`ListLiteral` already parsed by `_list_literal` (that landed task's own
-site), so it already accepts a trailing comma for free, the same way
-`xs += [3, 4]` started working for free once list-plus-`+` landed. And
-as task 2, `multiplicative_persistence(n)` — a breadth task after task
-1's depth work, restocking the backlog back to 6 tasks now
-that `digit_product` has landed via PR #264: the number of times a
+forms, and the plain-assignment map form `{a, b,} = expr;`) — closing
+each of `_destructure_list_pattern`'s/`_destructure_map_pattern`'s/
+`_try_map_destructure_assign_statement`'s own comma-loops with the same
+"peek the closing delimiter after the comma, break" fix the earlier
+literals/calls/params trailing-commas task used, including the
+documented side effect that a hole immediately before the closing
+delimiter (`let [a, ,] = [1, 2];`) is now accepted the same way a
+trailing comma after a real element is — has since landed via PR #269
+too.
+What remains plausible, not yet scoped beyond current `BACKLOG.md`
+(numbering here matches `BACKLOG.md` task 1 of its current 1-6 — the
+task that used to occupy slot 1 here, trailing commas in destructuring
+patterns, has since landed via PR #269 and is covered in the "have
+since landed" history immediately above; this grooming pass dropped
+its now-redundant not-yet-scoped description from this section and
+renumbered the remaining one down to slot 1. Tasks 2-6 — comma-separated
+`let`/`const` declarations, `cbrt`, nested list-in-list destructuring
+patterns, `is_perfect_power`, and raw string literals `r"..."`/`r'...'`
+— are fully scoped in `BACKLOG.md` itself and are not duplicated here,
+the same treatment tasks past slot 1 have gotten since this section
+stopped trying to keep prose in lockstep with every backlog slot):
+as task 1, `multiplicative_persistence(n)` — a breadth task after the
+depth work that used to occupy this slot (trailing commas in
+destructuring patterns, now landed and moved to the "have since landed"
+history above), restocking the backlog back to 6 tasks at the time it
+was queued, now that `digit_product` has landed via PR #264: the number of times a
 number's own decimal digits must be repeatedly multiplied together
 before the result drops to a single digit (e.g. `39 -> 27 -> 14 -> 4`,
 three multiplications, so `multiplicative_persistence(39)` is `3`), the
@@ -1165,7 +1149,28 @@ bit-length-bounded search over candidate exponents, admitting negative
 input only through odd exponents the same way `is_perfect_cube` already
 does. The next grooming pass should continue alternating breadth/depth,
 restocking toward 6-7 tasks whenever a merge drops the count within
-reach of the 5-task floor.
+reach of the 5-task floor. This pass found the backlog back down to its
+5-task floor again (trailing commas in destructuring patterns having
+landed via PR #269, dropping the count from 6 to 5, dropping its
+now-landed description from the "what remains plausible" section above
+into the "have since landed" history, and renumbering the remaining
+five tasks from 2-6 down to 1-5, with `multiplicative_persistence`
+renumbered from 2 to 1, comma-separated `let`/`const` declarations from
+3 to 2, `cbrt` from 4 to 3, nested list-in-list destructuring patterns
+from 5 to 4, and `is_perfect_power` from 6 to 5) and restocked it to 6
+by adding task 6, raw string literals `r"..."`/`r'...'`, continuing
+alternation with a depth task after task 5's breadth work
+(`is_perfect_power`) rather than stacking a second breadth task, per the
+policy above — a new lexer dispatch branch recognizing an `r` prefix
+immediately followed by a quote (safe because that exact adjacency is
+already a guaranteed syntax error today, so no currently-valid program
+changes meaning) and a new `_raw_string` scanning method, sibling to the
+existing `_string`, that skips escape and `${...}`-interpolation
+processing entirely, closing the gap for patterns and Windows-style
+paths that would otherwise need every backslash doubled. The next
+grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor.
 
 ## History
 

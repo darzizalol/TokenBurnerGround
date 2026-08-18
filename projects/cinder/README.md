@@ -78,7 +78,13 @@ while (i < 10) {
   (`[a, b] = expr;`, same flat positional binding and optional trailing
   rest element as the `let` form, e.g. the swap idiom `[a, b] = [b, a];`)
   and map (`{a, b} = expr;`, same key-lookup binding, rest element,
-  per-key rename, and per-key default as the `let` form)
+  per-key rename, and per-key default as the `let` form); every
+  destructuring pattern form (`let`, `for`, function params, both
+  comprehension loop-variable forms, and the plain-assignment map form)
+  accepts an optional trailing comma before its closing `]`/`}`
+  (`let [a, b,] = expr;`, `let {a, b,} = expr;`), matching the trailing
+  comma already accepted in list/map literals, call arguments, and
+  function parameter lists
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   and maps (over keys), plus list-destructuring loop variables
@@ -385,25 +391,25 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: trailing commas in
-list/map literals, call arguments, and function parameter lists,
-`is_evil`/`is_odious` binary popcount-parity predicates, list
-concatenation via `+` (closing the gap between the existing `concat()`
-builtin and infix syntax the same way `*` already does for repetition),
-and `harmonic_mean`, completing the classical arithmetic/geometric/harmonic
-Pythagorean means trio. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-trailing commas in destructuring patterns (`let`/`for`/function-parameter/
-comprehension patterns and the plain-assignment map form), closing the
-one gap the earlier trailing-commas task deliberately left open,
-`multiplicative_persistence` — the loop-driven counterpart to
-`digital_root`'s closed-form additive reduction, since no closed form
-exists for repeated digit *multiplication*, comma-separated multiple
-variable declarations in a single `let`/`const` statement
-(`let a = 1, b = 2;`), `cbrt` — real cube root, the domain-unrestricted
-sibling to `sqrt`, nested list-in-list destructuring patterns
-(`let [a, [b, c]] = [1, [2, 3]];`), and `is_perfect_power` — the general
-closure of `is_perfect_square`/`is_perfect_cube` ("is there *any*
-integer exponent `k >= 2`").
+Actively developed, nightly. Recently landed: list concatenation via `+`
+(closing the gap between the existing `concat()` builtin and infix
+syntax the same way `*` already does for repetition), `harmonic_mean`,
+completing the classical arithmetic/geometric/harmonic Pythagorean means
+trio, and trailing commas in destructuring patterns (`let`/`for`/
+function-parameter/comprehension patterns and the plain-assignment map
+form), closing the one gap the earlier literals/calls/params
+trailing-commas task deliberately left open. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `multiplicative_persistence` — the
+loop-driven counterpart to `digital_root`'s closed-form additive
+reduction, since no closed form exists for repeated digit
+*multiplication*, comma-separated multiple variable declarations in a
+single `let`/`const` statement (`let a = 1, b = 2;`), `cbrt` — real
+cube root, the domain-unrestricted sibling to `sqrt`, nested
+list-in-list destructuring patterns (`let [a, [b, c]] = [1, [2, 3]];`),
+`is_perfect_power` — the general closure of
+`is_perfect_square`/`is_perfect_cube` ("is there *any* integer exponent
+`k >= 2`"), and raw string literals `r"..."`/`r'...'` — the
+escape/interpolation-free sibling to ordinary strings.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

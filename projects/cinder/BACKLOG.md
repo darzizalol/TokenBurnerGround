@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
+## 1. Language: comma-separated multiple variable declarations in a single `let`/`const` statement [claimed 2026-08-18T14:34:58Z]
 
 Build: the depth task after task 4's breadth work
 (`multiplicative_persistence`) per `PROJECT.md`'s breadth-vs-depth

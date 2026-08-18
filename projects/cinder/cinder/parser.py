@@ -396,6 +396,22 @@ class Parser:
                     token.column,
                 )
             return None, None
+        if self._check(TokenType.LBRACKET):
+            nested_names, nested_rest = self._destructure_list_pattern()
+            pattern = (nested_names, nested_rest)
+            if self._check(TokenType.EQ):
+                self._advance()
+                default = self._ternary()
+                return pattern, default
+            if seen_default:
+                token = self._peek()
+                raise ParseError(
+                    "element without a default value follows an element with one "
+                    "in destructuring pattern",
+                    token.line,
+                    token.column,
+                )
+            return pattern, None
         name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
         if self._check(TokenType.EQ):
             self._advance()
@@ -466,6 +482,9 @@ class Parser:
                 rest = element.expression.name
             elif isinstance(element, Identifier):
                 names.append((element.name, None))
+            elif isinstance(element, ListLiteral):
+                nested_names, nested_rest = self._destructure_assign_pattern(element, eq_token)
+                names.append(((nested_names, nested_rest), None))
             else:
                 raise ParseError(
                     "invalid assignment target", eq_token.line, eq_token.column

@@ -1398,9 +1398,28 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("[1, 2] = [3, 4];")
 
-    def test_list_destructure_assignment_nested_pattern_raises_parse_error(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("[[a, b], c] = [[1, 2], 3];")
+    def test_list_destructure_assignment_nested_pattern_parses(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("[[a, b], c] = [[1, 2], 3];")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [(([("a", None), ("b", None)], None), None), ("c", None)],
+                        None,
+                        (
+                            "ListLiteral",
+                            [
+                                ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
+                                ("Literal", 3),
+                            ],
+                        ),
+                        False,
+                    ),
+                )
+            ],
+        )
 
     def test_list_destructure_assignment_rest_not_last_raises_parse_error(self):
         with self.assertRaises(ParseError):

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
+## 1. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt` [claimed 2026-08-18T19:17:41Z]
 
 Build: the breadth task after task 5's depth work (comma-separated
 `let`/`const` declarations), restocking the backlog the rest of the way

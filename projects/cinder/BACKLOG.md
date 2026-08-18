@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
+## 1. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings [claimed 2026-08-18T20:02:04Z]
 
 Build: the depth task after task 5's breadth work (`is_perfect_power`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

@@ -1644,6 +1644,35 @@ def _is_powerful_number(arguments: list, line: int, column: int) -> object:
     return remaining == 1
 
 
+def _integer_kth_root(magnitude: int, k: int) -> int:
+    if magnitude == 0:
+        return 0
+    low, high = 0, magnitude
+    while low < high:
+        mid = (low + high + 1) // 2
+        if mid ** k <= magnitude:
+            low = mid
+        else:
+            high = mid - 1
+    return low
+
+
+def _is_perfect_power(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_perfect_power", arguments, 1, line, column)
+    value = _require_int("is_perfect_power", arguments[0], line, column)
+    if abs(value) <= 1:
+        return True
+    magnitude = abs(value)
+    for k in range(2, magnitude.bit_length() + 1):
+        root = _integer_kth_root(magnitude, k)
+        if root ** k == magnitude:
+            if value > 0:
+                return True
+            if k % 2 == 1:
+                return True
+    return False
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -3642,6 +3671,7 @@ _BUILTINS = {
     "is_pronic": _is_pronic,
     "is_squarefree": _is_squarefree,
     "is_powerful_number": _is_powerful_number,
+    "is_perfect_power": _is_perfect_power,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,

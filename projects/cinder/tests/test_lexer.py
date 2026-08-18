@@ -218,6 +218,38 @@ class TestLiterals(unittest.TestCase):
         tokens = tokenize(r"'a\nb\tc\\d\'e'")
         self.assertEqual(tokens[0].literal, "a\nb\tc\\d'e")
 
+    def test_raw_string_double_quoted_escapes_not_processed(self):
+        tokens = tokenize(r'r"a\nb"')
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, "a\\nb")
+
+    def test_raw_string_single_quoted(self):
+        tokens = tokenize(r"r'C:\Users\name'")
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, r"C:\Users\name")
+
+    def test_raw_string_interpolation_not_processed(self):
+        tokens = tokenize('r"${1 + 2}"')
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, "${1 + 2}")
+
+    def test_raw_string_empty(self):
+        tokens = tokenize('r""')
+        self.assertEqual(tokens[0].literal, "")
+
+    def test_raw_string_lexeme_includes_prefix(self):
+        tokens = tokenize(r'r"a\nb"')
+        self.assertEqual(tokens[0].lexeme, r'r"a\nb"')
+
+    def test_bare_identifier_r_unaffected(self):
+        tokens = tokenize("let r = 5; print(r + 1);")
+        self.assertNotIn(TokenType.STRING, types(tokens))
+
+    def test_identifier_starting_with_r_unaffected(self):
+        tokens = tokenize("result")
+        self.assertEqual(types(tokens), [TokenType.IDENTIFIER, TokenType.EOF])
+        self.assertEqual(tokens[0].lexeme, "result")
+
     def test_identifier(self):
         tokens = tokenize("foo_bar1")
         self.assertEqual(types(tokens), [TokenType.IDENTIFIER, TokenType.EOF])
@@ -874,6 +906,14 @@ class TestErrors(unittest.TestCase):
             tokenize("'unterminated")
         self.assertEqual(ctx.exception.line, 1)
         self.assertEqual(ctx.exception.column, 1)
+        self.assertTrue(ctx.exception.unterminated)
+
+    def test_unterminated_raw_string(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize('r"unterminated')
+        self.assertEqual(ctx.exception.line, 1)
+        self.assertEqual(ctx.exception.column, 1)
+        self.assertIn("unterminated string", str(ctx.exception))
         self.assertTrue(ctx.exception.unterminated)
 
     def test_invalid_escape_sequence(self):

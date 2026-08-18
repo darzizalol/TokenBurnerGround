@@ -262,6 +262,27 @@ class TestStringInterpolation(unittest.TestCase):
         self.assertEqual((ctx.exception.line, ctx.exception.column), (1, 5))
 
 
+class TestRawStringLiterals(unittest.TestCase):
+    def test_escapes_not_processed(self):
+        self.assertEqual(evaluate(r'r"a\nb"'), "a\\nb")
+
+    def test_single_quoted_windows_path(self):
+        self.assertEqual(evaluate(r"r'C:\Users\name'"), r"C:\Users\name")
+
+    def test_interpolation_not_processed(self):
+        self.assertEqual(evaluate('r"${1 + 2}"'), "${1 + 2}")
+
+    def test_empty_raw_string(self):
+        self.assertEqual(evaluate('r""'), "")
+
+    def test_bare_identifier_r_unaffected(self):
+        env = run("let r = 5; let result = r + 1;")
+        self.assertEqual(env.get("result"), 6)
+
+    def test_ordinary_string_escapes_still_processed(self):
+        self.assertEqual(evaluate(r'"a\nb"'), "a\nb")
+
+
 class TestRepetition(unittest.TestCase):
     def test_string_times_int(self):
         self.assertEqual(evaluate('"ab" * 3'), "ababab")

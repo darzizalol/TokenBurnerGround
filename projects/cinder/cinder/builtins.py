@@ -1905,6 +1905,16 @@ def _sqrt(arguments: list, line: int, column: int) -> object:
     return math.sqrt(value)
 
 
+def _cbrt(arguments: list, line: int, column: int) -> object:
+    _require_arity("cbrt", arguments, 1, line, column)
+    value = arguments[0]
+    if not _is_numeric(value):
+        raise CinderRuntimeError(
+            f"cbrt() requires a number, got {type_name(value)}", line, column
+        )
+    return math.copysign(abs(value) ** (1 / 3), value)
+
+
 def _sin(arguments: list, line: int, column: int) -> object:
     _require_arity("sin", arguments, 1, line, column)
     value = arguments[0]
@@ -3647,6 +3657,7 @@ _BUILTINS = {
     "ceil": _ceil,
     "pow": _pow,
     "sqrt": _sqrt,
+    "cbrt": _cbrt,
     "sin": _sin,
     "cos": _cos,
     "tan": _tan,

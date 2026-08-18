@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_undulating` — digit-alternation classification
+## 1. Standard library: `is_undulating` — digit-alternation classification [claimed 2026-08-18T20:18:39Z]
 
 Build: the breadth task after task 5's depth work (raw string literals)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

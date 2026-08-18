@@ -2729,3 +2729,15 @@ for vision/architecture.
   non-blocking nit: `_destructure_assign_pattern`'s docstring is now
   stale (still describes only plain identifiers/rest). Clean first
   pass, no bounces (3090 tests passing, up from 3078).
+- **Standard library: `is_perfect_power`** — merged 2026-08-18T19:53:40Z
+  via PR #274 (`feat/20260818-is-perfect-power`). Added
+  `is_perfect_power` to
+  `cinder/builtins.py`, registered right after `is_powerful_number`,
+  generalizing `is_perfect_square`/`is_perfect_cube`/`is_powerful_number`'s
+  fixed-exponent checks into "is there any integer `k >= 2` and base `m`
+  with `m ** k == n`". Introduces `_integer_kth_root`, a general
+  binary-search sibling of the existing fixed-exponent
+  `_integer_cube_root`, leaving the latter untouched. Negative input is
+  accepted (`-8 = (-2) ** 3`) but only via odd exponents, since an even
+  power can never be negative. Clean first pass, no bounces (3109 tests
+  passing, up from 3090).

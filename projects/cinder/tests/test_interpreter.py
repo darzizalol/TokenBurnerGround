@@ -1095,6 +1095,24 @@ class TestDestructureLet(unittest.TestCase):
         with self.assertRaises(KeyError):
             env.get("a")
 
+    def test_trailing_comma_binds_two_names(self):
+        env = run("let [a, b,] = [1, 2];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_single_element_trailing_comma(self):
+        env = run("let [a,] = [1];")
+        self.assertEqual(env.get("a"), 1)
+
+    def test_rest_element_then_trailing_comma(self):
+        env = run("let [a, ...rest,] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), [2, 3])
+
+    def test_real_element_after_rest_still_raises(self):
+        with self.assertRaises(ParseError):
+            run("let [a, ...rest, b] = [1, 2, 3];")
+
 
 class TestDestructureListDefaults(unittest.TestCase):
     def test_default_used_when_source_missing_element(self):
@@ -1218,9 +1236,19 @@ class TestDestructureListHoles(unittest.TestCase):
         ):
             run("let [a = 1, , c] = [9];")
 
-    def test_trailing_comma_unaffected(self):
-        with self.assertRaises(ParseError):
-            run("let [a, b, ] = [1, 2, 3];")
+    def test_trailing_comma_now_accepted(self):
+        env = run("let [a, b, ] = [1, 2];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_hole_then_trailing_comma_accepted(self):
+        # `[a, ,]` has two commas: the break-on-trailing-comma check runs
+        # before the next element is parsed, so the first comma's next
+        # token is the second comma (not `]`) and falls through to the
+        # existing hole logic same as a middle hole would, while the
+        # second comma's next token is `]` and triggers the new break.
+        env = run("let [a, ,] = [1, 2];")
+        self.assertEqual(env.get("a"), 1)
 
     def test_empty_pattern_unaffected(self):
         with self.assertRaises(ParseError):
@@ -1434,6 +1462,11 @@ class TestDestructureAssignMap(unittest.TestCase):
         env = run('let x = 0; {a: x} = {"a": 5};')
         self.assertEqual(env.get("x"), 5)
 
+    def test_trailing_comma_binds_two_names(self):
+        env = run('let a = 0; let b = 0; {a, b,} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
 
 class TestDestructureLetMap(unittest.TestCase):
     def test_binds_two_names(self):
@@ -1531,6 +1564,20 @@ class TestDestructureLetMap(unittest.TestCase):
         env = run('let {a: x, a: y} = {"a": 1};')
         self.assertEqual(env.get("x"), 1)
         self.assertEqual(env.get("y"), 1)
+
+    def test_trailing_comma_binds_two_names(self):
+        env = run('let {a, b,} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_single_entry_trailing_comma(self):
+        env = run('let {a,} = {"a": 1};')
+        self.assertEqual(env.get("a"), 1)
+
+    def test_rest_entry_then_trailing_comma(self):
+        env = run('let {a, ...rest,} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("rest"), {"b": 2})
 
 
 class TestAssignment(unittest.TestCase):
@@ -2216,6 +2263,21 @@ class TestForDestructuring(unittest.TestCase):
         )
         self.assertEqual(env.get("seen"), [])
 
+    def test_list_destructure_trailing_comma(self):
+        env = self._run(
+            'let ks = []; let vs = []; '
+            'for [k, v,] in items({"a": 1}) { push(ks, k); push(vs, v); }'
+        )
+        self.assertEqual(env.get("ks"), ["a"])
+        self.assertEqual(env.get("vs"), [1])
+
+    def test_map_destructure_trailing_comma(self):
+        env = self._run(
+            'let out = []; '
+            'for {a, b,} in [{"a": 1, "b": 2}] { push(out, a + b); }'
+        )
+        self.assertEqual(env.get("out"), [3])
+
 
 class TestForCStatement(unittest.TestCase):
     def _run(self, source: str) -> Environment:
@@ -2650,6 +2712,17 @@ class TestDestructuringParams(unittest.TestCase):
             "let result = f(9);"
         )
         self.assertEqual(env.get("result"), [9, 1, []])
+
+    def test_list_destructuring_param_trailing_comma(self):
+        env = run("fn f([a, b,]) { return a + b; } let result = f([1, 2]);")
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_destructuring_param_trailing_comma(self):
+        env = run(
+            'fn f({a, b,}) { return a + b; } '
+            'let result = f({"a": 1, "b": 2});'
+        )
+        self.assertEqual(env.get("result"), 3)
 
 
 class TestArrowFunctions(unittest.TestCase):
@@ -3317,6 +3390,20 @@ class TestListComprehension(unittest.TestCase):
     def test_map_destructure_key_rename(self):
         self.assertEqual(
             evaluate('[x for {a: x} in [{"a": 1}, {"a": 2}]]'), [1, 2]
+        )
+
+    def test_list_destructure_trailing_comma(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let out = [k for [k, v,] in items({"a": 1})];',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("out"), ["a"])
+
+    def test_map_destructure_trailing_comma(self):
+        self.assertEqual(
+            evaluate('[a for {a, b,} in [{"a": 1, "b": 2}]]'), [1]
         )
 
 

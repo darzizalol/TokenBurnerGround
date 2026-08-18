@@ -1462,6 +1462,17 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("{1, 2} = {};")
 
+    def test_map_destructure_assignment_trailing_comma_accepted(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('{a, b,} = {"a": 1, "b": 2};')],
+            [stmt_shape(parse_stmts('{a, b} = {"a": 1, "b": 2};')[0])],
+        )
+
+    def test_map_destructure_assignment_rest_trailing_comma_accepted(self):
+        expr = parse_stmts('{a, ...rest,} = {"a": 1};')[0].expression
+        self.assertEqual(expr.names, [("a", "a", None)])
+        self.assertEqual(expr.rest, "rest")
+
     def test_map_destructure_assignment_with_rest(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts('{a, ...rest} = {"a": 1};')],
@@ -2293,9 +2304,23 @@ class TestStatements(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("let [a = 1, , c] = [9];")
 
-    def test_destructure_let_list_trailing_comma_still_raises(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("let [a, b, ] = [1, 2, 3];")
+    def test_destructure_let_list_trailing_comma_accepted(self):
+        stmt = parse_stmts("let [a, b,] = [1, 2];")[0]
+        self.assertEqual(stmt.names, [("a", None), ("b", None)])
+        self.assertIsNone(stmt.rest)
+
+    def test_destructure_let_list_single_element_trailing_comma(self):
+        stmt = parse_stmts("let [a,] = [1];")[0]
+        self.assertEqual(stmt.names, [("a", None)])
+
+    def test_destructure_let_list_rest_trailing_comma_accepted(self):
+        stmt = parse_stmts("let [a, ...rest,] = [1, 2, 3];")[0]
+        self.assertEqual(stmt.names, [("a", None)])
+        self.assertEqual(stmt.rest, "rest")
+
+    def test_destructure_let_list_hole_then_trailing_comma_accepted(self):
+        stmt = parse_stmts("let [a, ,] = [1, 2];")[0]
+        self.assertEqual(stmt.names, [("a", None), (None, None)])
 
     def test_destructure_let_list_empty_pattern_still_raises(self):
         with self.assertRaises(ParseError):
@@ -2396,6 +2421,23 @@ class TestStatements(unittest.TestCase):
                 )
             ],
         )
+
+    def test_destructure_let_map_trailing_comma_accepted(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {a, b,} = {"a": 1, "b": 2};')],
+            [stmt_shape(parse_stmts('let {a, b} = {"a": 1, "b": 2};')[0])],
+        )
+
+    def test_destructure_let_map_single_entry_trailing_comma(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts('let {a,} = {"a": 1};')],
+            [stmt_shape(parse_stmts('let {a} = {"a": 1};')[0])],
+        )
+
+    def test_destructure_let_map_rest_trailing_comma_accepted(self):
+        stmt = parse_stmts('let {a, ...rest,} = {"a": 1, "b": 2};')[0]
+        self.assertEqual(stmt.names, [("a", "a", None)])
+        self.assertEqual(stmt.rest, "rest")
 
     def test_destructure_let_map_rest_not_last_raises(self):
         with self.assertRaises(ParseError):

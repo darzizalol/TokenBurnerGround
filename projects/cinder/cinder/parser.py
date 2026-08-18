@@ -350,6 +350,8 @@ class Parser:
             names.append(self._destructure_map_pattern_entry())
         while self._check(TokenType.COMMA):
             self._advance()
+            if self._check(TokenType.RBRACE):
+                break
             if rest is not None:
                 token = self._peek()
                 raise ParseError(
@@ -401,6 +403,8 @@ class Parser:
             seen_default = names[-1][1] is not None
         while self._check(TokenType.COMMA):
             self._advance()
+            if self._check(TokenType.RBRACKET):
+                break
             if rest is not None:
                 token = self._peek()
                 raise ParseError(
@@ -504,6 +508,8 @@ class Parser:
                 names.append(self._destructure_map_pattern_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
+                if self._check(TokenType.RBRACE):
+                    break
                 if rest is not None:
                     raise _RestNotLast(self._peek())
                 if self._check(TokenType.DOT_DOT_DOT):

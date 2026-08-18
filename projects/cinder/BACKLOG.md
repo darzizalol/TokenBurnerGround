@@ -11,97 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root` [claimed 2026-08-18T14:22:14Z]
-
-Build: the breadth task after task 5's depth work (trailing commas in
-destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
-restocking the backlog back to 6 tasks now that `digit_product` has
-landed via PR #264, dropping the count to the 5-task floor. Add
-`multiplicative_persistence(n)` to `cinder/builtins.py`, registered
-right after `digit_product` (search for `def _digit_product`,
-immediately before `_reverse_int`) — the number of times a number's own
-decimal digits must be repeatedly multiplied together before the
-result drops to a single digit, e.g. `39 -> 27 -> 14 -> 4` is three
-multiplications, so `multiplicative_persistence(39)` is `3`. This is
-the natural loop-driven counterpart to `digital_root`'s closed-form
-*additive* reduction (`1 + (n - 1) % 9`): no closed form exists for the
-multiplicative case, so this genuinely needs an iterative loop rather
-than a formula — the first builtin in the digit-transform cluster that
-does. Verify the gap: `python3 -m cinder.cli eval
-'print(multiplicative_persistence(39));'` currently raises
-`CinderRuntimeError` `"undefined name 'multiplicative_persistence'"` —
-no such builtin exists yet.
-
-```python
-def _multiplicative_persistence(arguments: list, line: int, column: int) -> object:
-    _require_arity("multiplicative_persistence", arguments, 1, line, column)
-    value = _require_int("multiplicative_persistence", arguments[0], line, column)
-    value = abs(value)
-    steps = 0
-    while value >= 10:
-        product = 1
-        for digit in str(value):
-            product *= int(digit)
-        value = product
-        steps += 1
-    return steps
-```
-
-Model the arity/type-checking on `digit_product`'s own structure:
-`_require_arity`, then `_require_int`. Discard the sign via `abs()`
-exactly once, up front — not re-derived every iteration, since the
-running product is already non-negative once the first step completes
-(matching `digit_sum`/`digit_product`'s own "discard sign once" shape,
-just applied before a loop instead of before a single pass). Each
-iteration's digit-multiply step inlines the same per-digit walk
-`digit_product` itself uses rather than calling the `digit_product`
-builtin directly — the established "inline rather than call the
-dispatch-signature builtin" approach `is_emirp`/`is_amicable` already
-take with `is_composite`/`reverse_int`/`_aliquot_sum`, needed here
-because `digit_product`'s registered form takes the builtin-dispatch
-`(arguments, line, column)` signature, not a raw `int`. Any `0` digit
-inside a step collapses that step's product to `0`, which then
-terminates the loop on the very next check (`0 < 10`) — the correct
-behavior, not a case needing a guard, mirroring how `digit_product`
-itself treats a `0` digit as collapsing the whole product rather than
-as an error.
-
-Acceptance criteria:
-- `multiplicative_persistence(0);` is `0` — single digit, already
-  terminated.
-- `multiplicative_persistence(4);` is `0` — any single digit `0`-`9` is
-  its own trivial base case.
-- `multiplicative_persistence(10);` is `1` — `1 * 0 = 0`, one step (a
-  `0` digit collapses the product immediately).
-- `multiplicative_persistence(39);` is `3` — `39 -> 27 -> 14 -> 4`.
-- `multiplicative_persistence(999);` is `4` — `999 -> 729 -> 126 -> 12
-  -> 2`.
-- `multiplicative_persistence(77);` is `4` — `77 -> 49 -> 36 -> 18 ->
-  8`.
-- `multiplicative_persistence(-39);` is `3` — same as `39`, sign
-  discarded, matching `digit_sum`/`digit_product`'s own convention.
-- `multiplicative_persistence(5.0);` raises `CinderRuntimeError`
-  matching `"multiplicative_persistence() requires an int, got float"`
-  — the same message shape `_require_int` already produces elsewhere.
-- `multiplicative_persistence(true);` raises `CinderRuntimeError`
-  matching `"multiplicative_persistence() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `digit_product`, see
-current line numbers — shift if earlier tasks this cycle landed
-first), `tests/test_builtins.py` (model on the `TestDigitProduct` test
-class, search `class TestDigitProduct`). Once merged, `README.md`'s
-Builtins bullet needs `multiplicative_persistence` added near
-`digit_sum`/`digit_product`/`digital_root`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s roadmap paragraph needs this
-moved from backlog to landed — leave all three to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
+## 1. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
 
 Build: the depth task after task 4's breadth work
 (`multiplicative_persistence`) per `PROJECT.md`'s breadth-vs-depth
@@ -257,7 +167,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
+## 2. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
 
 Build: the breadth task after task 5's depth work (comma-separated
 `let`/`const` declarations), restocking the backlog the rest of the way
@@ -328,7 +238,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: nested list-in-list destructuring patterns
+## 3. Language: nested list-in-list destructuring patterns
 
 Build: the depth task after task 5's breadth work (`cbrt`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -460,7 +370,7 @@ task.
 
 ---
 
-## 5. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
+## 4. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
 
 Build: the breadth task after task 5's depth work (nested list-in-list
 destructuring patterns), restocking the backlog back to 6 tasks now
@@ -562,7 +472,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
+## 5. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
 
 Build: the depth task after task 5's breadth work (`is_perfect_power`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

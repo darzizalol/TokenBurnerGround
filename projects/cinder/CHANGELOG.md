@@ -2676,3 +2676,14 @@ for vision/architecture.
   delimiter (`let [a, ,] = [1, 2];`) is now accepted the same way a
   trailing comma after a real element is. Clean first pass, no bounces
   (3048 tests passing, up from 3025).
+- **Standard library: `multiplicative_persistence`** — merged
+  2026-08-18T14:26:29Z via PR #270
+  (`feat/20260818-multiplicative-persistence`). Added
+  `_multiplicative_persistence` to `cinder/builtins.py`, registered right
+  after `digit_product`/before `reverse_int` — the loop-driven counterpart
+  to `digital_root`'s closed-form additive reduction, since no closed
+  form exists for the multiplicative case. Sign discarded once via
+  `abs()` before the loop; each step inlines the same per-digit-multiply
+  walk `digit_product` uses rather than calling its dispatch-signature
+  builtin directly. Clean first pass, no bounces (3058 tests passing, up
+  from 3048).

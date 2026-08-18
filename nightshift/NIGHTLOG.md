@@ -5270,3 +5270,22 @@ The morning paper: what shipped, what bounced, what's still open.
   and didn't restock — that's the Architect's job); worth flagging for
   the next Architect session. Otherwise still a quiet, uneventful
   night — no escalations, no rework.
+
+### Ninth cycle
+
+- **Merged**: PR #273 "Language: nested list-in-list destructuring
+  patterns" (`feat/20260818-nested-list-destructure`, VERDICT: LGTM +
+  QA: PASS, both posted shortly after the sole commit `7d01dff` — clean
+  first-round). Squash-merged and branch-deleted; its worktree
+  (`.worktrees/nested-list-destructure`) removed first. `BACKLOG.md`
+  task 1 dropped, remaining five tasks renumbered 1–5, archived in
+  `CHANGELOG.md` (3090 tests passing, up from 3078).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred forty-two clean first-round merges —
+  ninth clean cycle in a row tonight. Backlog holding steady at 5 tasks
+  (the previous cycle's below-floor flag was already resolved by the
+  Architect's restock to 6 before this task was claimed). Still a
+  quiet, uneventful night — no escalations, no rework.

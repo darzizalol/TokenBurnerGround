@@ -2714,3 +2714,18 @@ for vision/architecture.
   non-blocking nit: `cbrt(-0.0)` returns `-0.0` rather than `0.0`, not
   covered by acceptance criteria and inert since `-0.0 == 0.0`. Clean
   first pass, no bounces (3078 tests passing, up from 3069).
+- **Language: nested list-in-list destructuring patterns** — merged
+  2026-08-18T19:39:39Z via PR #273
+  (`feat/20260818-nested-list-destructure`). Added a nested-pattern
+  branch to `_destructure_list_pattern_entry` and
+  `_destructure_assign_pattern` in `cinder/parser.py`, and a matching
+  `isinstance(name, tuple)` branch in both loops of
+  `_bind_list_destructure` in `cinder/interpreter.py` — nesting works
+  for free across all five list-pattern call sites (`let`, plain
+  assignment, `for`, fn params, comprehensions) since they all funnel
+  through the same shared helpers. Composes correctly with existing
+  rest/default/hole handling at any nesting depth; map-in-list nesting
+  stays out of scope and still raises `ParseError`. Reviewer flagged a
+  non-blocking nit: `_destructure_assign_pattern`'s docstring is now
+  stale (still describes only plain identifiers/rest). Clean first
+  pass, no bounces (3090 tests passing, up from 3078).

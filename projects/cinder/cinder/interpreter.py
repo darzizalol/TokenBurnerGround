@@ -53,6 +53,7 @@ from cinder.ast_nodes import (
     ChainedComparison,
     ConstStmt,
     ContinueStmt,
+    DeclSeq,
     DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
@@ -296,6 +297,10 @@ class Interpreter:
             block_env = Environment(env)
             for inner in stmt.statements:
                 self.execute(inner, block_env)
+            return
+        if isinstance(stmt, DeclSeq):
+            for declaration in stmt.declarations:
+                self.execute(declaration, env)
             return
         if isinstance(stmt, IfStmt):
             if is_truthy(self.evaluate(stmt.condition, env)):

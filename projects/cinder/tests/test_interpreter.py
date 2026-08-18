@@ -952,6 +952,40 @@ class TestStatements(unittest.TestCase):
         env = run("let x = 1; let x = 2;")
         self.assertEqual(env.get("x"), 2)
 
+    def test_let_comma_separated_declares_both(self):
+        env = run("let a = 1, b = 2;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_let_comma_separated_uninitialized_default_independently(self):
+        env = run("let a, b;")
+        self.assertIsNone(env.get("a"))
+        self.assertIsNone(env.get("b"))
+
+    def test_let_comma_separated_mixed_initialized_and_not(self):
+        env = run("let a = 1, b;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertIsNone(env.get("b"))
+
+    def test_let_comma_separated_later_sees_earlier(self):
+        env = run("let a = 1, b = a + 1;")
+        self.assertEqual(env.get("b"), 2)
+
+    def test_let_comma_separated_lands_in_same_scope(self):
+        env = run("let a = 1, b = 2; a = 3;")
+        self.assertEqual(env.get("a"), 3)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_let_comma_separated_three_names(self):
+        env = run("let a = 1, b = 2, c = 3;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_let_single_declaration_unaffected_by_comma_support(self):
+        env = run("let x = 1 + 2;")
+        self.assertEqual(env.get("x"), 3)
+
 
 class TestConst(unittest.TestCase):
     def test_const_declares_and_lookup_works(self):
@@ -1026,6 +1060,19 @@ class TestConst(unittest.TestCase):
     def test_const_redeclare_same_scope_still_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("const x = 1; const x = 2; x = 3;")
+
+    def test_const_comma_separated_declares_both(self):
+        env = run("const a = 1, b = 2;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_const_comma_separated_reassignment_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("const a = 1, b = 2; a = 3;")
+
+    def test_const_comma_separated_missing_initializer_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run("const a = 1, b;")
 
 
 class TestDestructureLet(unittest.TestCase):
@@ -2318,6 +2365,13 @@ class TestForCStatement(unittest.TestCase):
     def test_init_let_scoped_to_loop_only(self):
         with self.assertRaises(CinderRuntimeError):
             run("for (let i = 0; i < 3; i++) { } i;")
+
+    def test_comma_separated_init_declares_both_loop_variables(self):
+        env = self._run(
+            "let log = []; "
+            "for (let i = 0, j = 3; i < j; i = i + 1) { push(log, i); push(log, j); }"
+        )
+        self.assertEqual(env.get("log"), [0, 3, 1, 3, 2, 3])
 
     def test_foreach_unaffected_regression(self):
         env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")

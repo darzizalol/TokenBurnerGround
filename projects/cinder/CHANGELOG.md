@@ -2662,3 +2662,17 @@ for vision/architecture.
   arithmetic/geometric/harmonic Pythagorean-means trio in the statistics
   cluster. Clean first pass, no bounces (3025 tests passing, up from
   3014).
+- **Language: trailing commas in destructuring patterns** — merged
+  2026-08-18T14:11Z via PR #269
+  (`feat/20260817-trailing-commas-destructure`). Added a
+  `if self._check(RBRACKET/RBRACE): break` guard to each of
+  `cinder/parser.py`'s three destructuring comma-loops
+  (`_destructure_map_pattern`, `_destructure_list_pattern`,
+  `_try_map_destructure_assign_statement`), placed before the "rest must
+  be last" check, extending task 2's trailing-comma support (list/map
+  literals, call arguments, function parameters) to `let`/`for`/fn-param/
+  comprehension destructuring patterns and the plain map-assign form. A
+  documented side effect: a hole immediately before the closing
+  delimiter (`let [a, ,] = [1, 2];`) is now accepted the same way a
+  trailing comma after a real element is. Clean first pass, no bounces
+  (3048 tests passing, up from 3025).

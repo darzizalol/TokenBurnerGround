@@ -11,155 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: trailing commas in destructuring patterns [claimed 2026-08-18T14:02:50Z]
-
-Build: the depth task after task 5's breadth work (`harmonic_mean`) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
-6 tasks now that postfix `++`/`--` as a first-class assignment
-expression has landed via PR #263, dropping the count to the 5-task
-floor. Task 2 in this same backlog (trailing commas in list/map
-literals, call arguments, and function parameter lists) deliberately
-scoped out destructuring patterns and left them "as a candidate for a
-future, separately-scoped task if still desired" — this is that task.
-`cinder/parser.py`'s `_destructure_list_pattern` (`let`/`for`/function
-params/comprehension loop variables, list-pattern half),
-`_destructure_map_pattern` (the same forms, map-pattern half), and
-`_try_map_destructure_assign_statement` (the plain-assignment map form,
-`{a, b} = expr;`) each have their own comma-loop, structurally
-identical to the four sites task 2 already fixed, with the same gap: a
-comma immediately before the closing delimiter is a hard `ParseError`
-instead of being silently accepted. Verify the gap (task 2 must have
-landed first, so `_list_literal`/`_map_literal` already accept trailing
-commas — every failure below is specifically the destructuring-pattern
-parsers, not the literal parsers):
-```sh
-python3 -m cinder.cli eval 'let [a, b,] = [1, 2]; print(a); print(b);'
-# -> ParseError: expected identifier in destructuring pattern, found ']'
-python3 -m cinder.cli eval 'let {a, b,} = {"a": 1, "b": 2}; print(a); print(b);'
-# -> ParseError: expected identifier in destructuring pattern, found '}'
-python3 -m cinder.cli eval 'let a = 0; let b = 0; {a, b,} = {"a": 1, "b": 2}; print(a); print(b);'
-# -> ParseError: expected ';' after expression, found ',' (the trailing comma
-#    inside `_try_map_destructure_assign_statement` breaks its own
-#    try/except ParseError -> return None fallback, so `_brace_statement`
-#    falls all the way through to `_block()`, which produces this
-#    unrelated-looking error trying to parse `{a, b,} = ...` as statements)
-python3 -m cinder.cli eval 'for [k, v,] in items({"a": 1}) { print(k); print(v); }'
-# -> ParseError: expected identifier in destructuring pattern, found ']'
-python3 -m cinder.cli eval 'fn f([a, b,]) { return a + b; } print(f([1, 2]));'
-# -> ParseError: expected identifier in destructuring pattern, found ']'
-python3 -m cinder.cli eval 'print([k for [k, v,] in items({"a": 1})]);'
-# -> ParseError: expected identifier in destructuring pattern, found ']'
-```
-Note: the plain-assignment **list**-destructure form (`[a, b,] = expr;`)
-is not one of the sites above and needs no change here — it parses its
-pattern by first parsing an ordinary `ListLiteral` via `_list_literal`
-(task 2's own site) and then validating its elements in
-`_destructure_assign_pattern`, so once task 2 lands, `[a, b,] = expr;`
-already works for free the same way `xs += [3, 4]` started working for
-free once list-plus-`+` landed — nothing to touch in this task.
-
-**Parsing**: in each of the three sites' comma-loops, after consuming
-the comma, check whether the very next token is that site's closing
-delimiter and `break` instead of trying to parse another pattern
-element — the exact same shape task 2 used, placed *before* the
-existing "a rest element must be last" check so a trailing comma right
-after a rest element (`let [a, ...rest,] = expr;`,
-`let {a, ...rest,} = expr;`) breaks cleanly instead of tripping that
-check, mirroring how task 2 handled `fn f(a, ...rest,) { ... }` for
-`_fn_param_list`. For `_destructure_list_pattern`:
-```python
-        while self._check(TokenType.COMMA):
-            self._advance()
-            if self._check(TokenType.RBRACKET):
-                break
-            if rest is not None:
-                token = self._peek()
-                raise ParseError(...)
-            ...
-```
-`_destructure_map_pattern` takes the identical shape with
-`TokenType.RBRACE`; `_try_map_destructure_assign_statement`'s own
-inlined loop (inside its `try` block, alongside the `_RestNotLast`
-marker-exception handling already there) gets the same `RBRACE` check
-in the same position.
-
-One real edge case to get right, not just a mechanical copy-paste: list
-patterns already support a "hole" element (`let [a, , c] = expr;`,
-`_destructure_list_pattern_entry` treats a `COMMA` appearing where an
-element is expected as an empty slot rather than raising). Because the
-new break check runs *before* the next element is parsed, a pattern
-ending in "hole then trailing comma" (`let [a, ,] = [1, 2];` — two
-commas, nothing named after the second one) is *not* caught by the
-break on the first of those two commas (the token right after it is
-another `COMMA`, not `]`), so it falls through to the existing hole
-logic and registers as an ordinary hole, and *is* caught by the break
-on the second comma (the token right after it is `]`). Net effect:
-`let [a, ,] = [1, 2];` newly parses successfully as `a` bound to `1`
-and a second, skipped position — the same result `let [a, ,] =` would
-already give for a *middle* hole, just applied to the last position —
-rather than continuing to raise `ParseError` as it does today. This is
-an intentional, narrow behavior change (call it out in the PR body) and
-is the correct reading: a hole is a hole regardless of position, and
-the trailing comma after it is the same optional decoration the rest of
-this task adds everywhere else. Map patterns have no hole concept, so
-no equivalent case exists on that side.
-
-Acceptance criteria:
-- `let [a, b,] = [1, 2]; print(a); print(b);` prints `1` then `2` — no
-  longer a `ParseError`.
-- `let [a,] = [1]; print(a);` prints `1` — single-element trailing
-  comma.
-- `let [a, ...rest,] = [1, 2, 3]; print(a); print(rest);` prints `1`
-  then `[2, 3]` — trailing comma right after a rest element is
-  accepted, not treated as a second element following the rest one.
-- `let [a, ...rest, b] = [1, 2, 3];` still raises `ParseError` matching
-  `"rest element must be last in destructuring pattern"` — confirms a
-  *real* element after the rest one is still rejected, only a bare
-  trailing comma with nothing after it is now accepted.
-- `let [a, ,] = [1, 2]; print(a);` prints `1` — the hole-then-trailing-
-  comma edge case above, now accepted rather than raising.
-- `let {a, b,} = {"a": 1, "b": 2}; print(a); print(b);` prints `1` then
-  `2`.
-- `let {a,} = {"a": 1}; print(a);` prints `1` — single-entry trailing
-  comma.
-- `let {a, ...rest,} = {"a": 1, "b": 2}; print(a); print(rest);` prints
-  `1` then `{"b": 2}` — trailing comma right after a map rest element.
-- `let a = 0; let b = 0; {a, b,} = {"a": 1, "b": 2}; print(a); print(b);`
-  prints `1` then `2` — the plain-assignment map form.
-- `for [k, v,] in items({"a": 1}) { print(k); print(v); }` prints `a`
-  then `1`.
-- `for {a, b,} in [{"a": 1, "b": 2}] { print(a); print(b); }` prints `1`
-  then `2`.
-- `fn f([a, b,]) { return a + b; } print(f([1, 2]));` prints `3`.
-- `fn f({a, b,}) { return a + b; } print(f({"a": 1, "b": 2}));` prints
-  `3`.
-- `print([k for [k, v,] in items({"a": 1})]);` prints `["a"]`.
-- `print([a for {a, b,} in [{"a": 1, "b": 2}]]);` prints `[1]`.
-- `let [a, b,] = [1, 2]; print(a); print(b);` (the plain-list-assignment
-  free-ride case from task 2) prints `1` then `2` — confirms it works
-  without any change in this task.
-- Every pre-existing destructuring test (defaults, holes, rest
-  elements, renames, all five forms — `let`, plain assignment, `for`,
-  function params, both comprehension loop-variable forms) continues to
-  pass unmodified, without a trailing comma.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_destructure_list_pattern`,
-`_destructure_map_pattern`, `_try_map_destructure_assign_statement`),
-`tests/test_parser.py` and `tests/test_interpreter.py` (model on the
-existing destructuring test classes — search `class TestDestructureLet`,
-`class TestDestructureLetMap`, `class TestDestructureAssignMap`,
-`class TestForDestructuring`, `class TestDestructuringParams`). Once
-merged, `README.md`'s destructuring bullets don't strictly need a new
-sentence (trailing commas are a silent parser acceptance, not a new
-capability worth a separate callout, the same treatment task 2's
-merge gave `README.md`), but `PROJECT.md`'s roadmap paragraph needs
-this moved from backlog to landed — leave that to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
+## 1. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
 
 Build: the breadth task after task 5's depth work (trailing commas in
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -249,7 +101,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
+## 2. Language: comma-separated multiple variable declarations in a single `let`/`const` statement
 
 Build: the depth task after task 4's breadth work
 (`multiplicative_persistence`) per `PROJECT.md`'s breadth-vs-depth
@@ -405,7 +257,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
+## 3. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`
 
 Build: the breadth task after task 5's depth work (comma-separated
 `let`/`const` declarations), restocking the backlog the rest of the way
@@ -476,7 +328,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: nested list-in-list destructuring patterns
+## 4. Language: nested list-in-list destructuring patterns
 
 Build: the depth task after task 5's breadth work (`cbrt`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -608,7 +460,7 @@ task.
 
 ---
 
-## 6. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
+## 5. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
 
 Build: the breadth task after task 5's depth work (nested list-in-list
 destructuring patterns), restocking the backlog back to 6 tasks now

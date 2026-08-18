@@ -2829,6 +2829,59 @@ class TestDigitProduct(unittest.TestCase):
             run("digit_product();")
 
 
+class TestMultiplicativePersistence(unittest.TestCase):
+    def test_multiplicative_persistence_of_zero(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(0);").get("result"), 0
+        )
+
+    def test_multiplicative_persistence_of_single_digit(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(4);").get("result"), 0
+        )
+
+    def test_multiplicative_persistence_with_zero_digit_terminates_in_one_step(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(10);").get("result"), 1
+        )
+
+    def test_multiplicative_persistence_of_39(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(39);").get("result"), 3
+        )
+
+    def test_multiplicative_persistence_of_999(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(999);").get("result"), 4
+        )
+
+    def test_multiplicative_persistence_of_77(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(77);").get("result"), 4
+        )
+
+    def test_multiplicative_persistence_of_negative_ignores_sign(self):
+        self.assertEqual(
+            run("let result = multiplicative_persistence(-39);").get("result"), 3
+        )
+
+    def test_multiplicative_persistence_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("multiplicative_persistence(5.0);")
+        self.assertIn("multiplicative_persistence", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_multiplicative_persistence_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("multiplicative_persistence(true);")
+        self.assertIn("multiplicative_persistence", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_multiplicative_persistence_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("multiplicative_persistence();")
+
+
 class TestReverseInt(unittest.TestCase):
     def test_reverse_int_of_zero(self):
         self.assertEqual(run("let result = reverse_int(0);").get("result"), 0)

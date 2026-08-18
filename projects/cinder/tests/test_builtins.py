@@ -116,6 +116,10 @@ class TestType(unittest.TestCase):
         env = run("let result = type(print);")
         self.assertEqual(env.get("result"), "function")
 
+    def test_type_of_raw_string_is_string(self):
+        env = run('let result = type(r"abc");')
+        self.assertEqual(env.get("result"), "string")
+
 
 class TestStr(unittest.TestCase):
     def test_str_of_int(self):

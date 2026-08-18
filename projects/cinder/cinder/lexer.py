@@ -71,6 +71,9 @@ class Lexer:
 
             if char == '"' or char == "'":
                 self._string(start_line, start_col, quote=char)
+            elif char == "r" and self._peek() in ('"', "'"):
+                quote = self._advance()
+                self._raw_string(start_line, start_col, quote=quote)
             elif char.isdigit():
                 self._number(char, start_line, start_col)
             elif char.isalpha() or char == "_":
@@ -209,6 +212,23 @@ class Lexer:
             self.tokens.append(
                 Token(TokenType.INTERP_STRING, lexeme, parts, start_line, start_col)
             )
+
+    def _raw_string(self, start_line: int, start_col: int, quote: str):
+        start_pos = self.pos - 2  # position of the 'r' prefix
+        chars = []
+        while True:
+            if self._at_end():
+                raise LexError(
+                    "unterminated string", start_line, start_col, unterminated=True
+                )
+            if self._peek() == quote:
+                self._advance()
+                break
+            chars.append(self._advance())
+        lexeme = self.source[start_pos : self.pos]
+        self.tokens.append(
+            Token(TokenType.STRING, lexeme, "".join(chars), start_line, start_col)
+        )
 
     def _interp_placeholder(self, str_start_line: int, str_start_col: int) -> tuple:
         """Scan a `${...}` placeholder's raw expression text, tracking brace

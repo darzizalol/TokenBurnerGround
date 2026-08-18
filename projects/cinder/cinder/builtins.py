@@ -1489,6 +1489,17 @@ def _is_repdigit(arguments: list, line: int, column: int) -> object:
     return len(set(str(value))) == 1
 
 
+def _is_undulating(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_undulating", arguments, 1, line, column)
+    value = _require_int("is_undulating", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    if len(digits) < 3 or digits[0] == digits[1]:
+        return False
+    return all(digit == digits[i % 2] for i, digit in enumerate(digits))
+
+
 def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     _require_arity("is_perfect_square", arguments, 1, line, column)
     value = _require_int("is_perfect_square", arguments[0], line, column)
@@ -3658,6 +3669,7 @@ _BUILTINS = {
     "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,
     "is_repdigit": _is_repdigit,
+    "is_undulating": _is_undulating,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_strong_number": _is_strong_number,

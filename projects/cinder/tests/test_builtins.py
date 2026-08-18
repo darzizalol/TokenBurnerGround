@@ -3609,6 +3609,74 @@ class TestIsPowerfulNumber(unittest.TestCase):
             run("is_powerful_number();")
 
 
+class TestIsPerfectPower(unittest.TestCase):
+    def test_is_perfect_power_of_0(self):
+        self.assertEqual(run("let result = is_perfect_power(0);").get("result"), True)
+
+    def test_is_perfect_power_of_1(self):
+        self.assertEqual(run("let result = is_perfect_power(1);").get("result"), True)
+
+    def test_is_perfect_power_of_negative_1(self):
+        self.assertEqual(run("let result = is_perfect_power(-1);").get("result"), True)
+
+    def test_is_perfect_power_of_4(self):
+        self.assertEqual(run("let result = is_perfect_power(4);").get("result"), True)
+
+    def test_is_perfect_power_of_8(self):
+        self.assertEqual(run("let result = is_perfect_power(8);").get("result"), True)
+
+    def test_is_perfect_power_of_9(self):
+        self.assertEqual(run("let result = is_perfect_power(9);").get("result"), True)
+
+    def test_is_perfect_power_of_16(self):
+        self.assertEqual(run("let result = is_perfect_power(16);").get("result"), True)
+
+    def test_is_perfect_power_of_64(self):
+        self.assertEqual(run("let result = is_perfect_power(64);").get("result"), True)
+
+    def test_is_perfect_power_of_negative_8(self):
+        self.assertEqual(run("let result = is_perfect_power(-8);").get("result"), True)
+
+    def test_is_perfect_power_of_negative_27(self):
+        self.assertEqual(run("let result = is_perfect_power(-27);").get("result"), True)
+
+    def test_is_perfect_power_of_negative_4_is_false(self):
+        self.assertEqual(run("let result = is_perfect_power(-4);").get("result"), False)
+
+    def test_is_perfect_power_of_negative_9_is_false(self):
+        self.assertEqual(run("let result = is_perfect_power(-9);").get("result"), False)
+
+    def test_is_perfect_power_of_2_is_false(self):
+        self.assertEqual(run("let result = is_perfect_power(2);").get("result"), False)
+
+    def test_is_perfect_power_of_6_is_false(self):
+        self.assertEqual(run("let result = is_perfect_power(6);").get("result"), False)
+
+    def test_is_perfect_power_of_17_is_false(self):
+        self.assertEqual(run("let result = is_perfect_power(17);").get("result"), False)
+
+    def test_is_perfect_power_of_negative_100_is_false(self):
+        self.assertEqual(
+            run("let result = is_perfect_power(-100);").get("result"), False
+        )
+
+    def test_is_perfect_power_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_power(5.0);")
+        self.assertIn("is_perfect_power", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_perfect_power_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_perfect_power(true);")
+        self.assertIn("is_perfect_power", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_perfect_power_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_perfect_power();")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

@@ -447,6 +447,264 @@ this task.
 
 ---
 
+## 5. Language: range literal `a..b` — sugar over the existing `range()` builtin
+
+Build: the depth task after task 4's breadth work (`is_undulating`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that comma-separated `let`/`const` declarations and `cbrt` have
+both landed via PR #271 and PR #272, dropping the count from 6 to 4 in
+one stretch (two merges, no grooming pass in between). The `range()`
+builtin (`cinder/builtins.py`) already builds `[start, start+1, ...,
+stop-1]` from two int arguments, but there is no literal syntax for it —
+every bounded `for` loop over a numeric range needs the clunky
+`for i in range(1, 5) { ... }` rather than a direct `for i in 1..5 {
+... }`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'for i in 1..5 { print(i); }'
+# -> ParseError: expected ')' after arguments, found '.'
+```
+(the `1` parses fine as the `for`-loop's iterable expression, then `..`
+is unrecognized — today `.` only ever starts an ordinary single-dot
+member access or, when immediately followed by two more dots, an
+existing `...` spread/rest token; nothing currently recognizes exactly
+two dots in a row.)
+
+**Lexing** (`cinder/lexer.py`): `_dot` currently distinguishes only `.`
+(single) from `...` (three, spread/rest) — nothing else reaches this
+method, since `tokenize()`'s dispatch only calls `_dot` when the just-
+consumed character was itself a single `.`. Add a middle branch, checked
+after the existing three-dot check and before the plain-`.` fallback,
+for exactly two dots:
+```python
+    def _dot(self, start_line: int, start_col: int):
+        if self._peek() == "." and self._peek_next() == ".":
+            self._advance()
+            self._advance()
+            self.tokens.append(
+                Token(TokenType.DOT_DOT_DOT, "...", None, start_line, start_col)
+            )
+        elif self._peek() == ".":
+            self._advance()
+            self.tokens.append(
+                Token(TokenType.DOT_DOT, "..", None, start_line, start_col)
+            )
+        else:
+            self.tokens.append(Token(TokenType.DOT, ".", None, start_line, start_col))
+```
+No existing valid program changes meaning: two dots in a row (`1..5`)
+was already a guaranteed `ParseError` before this task (an ordinary
+`.` member-access immediately followed by another `.` with no property
+name between them), so claiming that exact adjacency for a new token is
+safe. Add `DOT_DOT = auto()` to `cinder/tokens.py`, next to `DOT`/
+`DOT_DOT_DOT`.
+
+**Parsing** (`cinder/parser.py`): add a new AST node `RangeExpr` in
+`cinder/ast_nodes.py`, sibling to `SliceExpr` (same frozen-dataclass
+shape, no `step`/`obj` — just the two bounds):
+```python
+@dataclass(frozen=True)
+class RangeExpr:
+    start: "Expr"
+    end: "Expr"
+    line: int
+    column: int
+```
+Register it in the `Expr` union alongside `SliceExpr`. Insert a new
+precedence level between `_membership` and `_comparison` — `_membership`
+already calls `_comparison()` for both its operands, so no change is
+needed there; `_comparison()` itself currently calls `self._bitor()` in
+two places (building its `operands` list) — change both to
+`self._range_expr()`, and add:
+```python
+    def _range_expr(self) -> Expr:
+        expr = self._bitor()
+        if self._check(TokenType.DOT_DOT):
+            dots = self._advance()
+            end = self._bitor()
+            return RangeExpr(expr, end, dots.line, dots.column)
+        return expr
+```
+Non-associative (an `if`, not a `while`) — `1..5..10` is deliberately a
+`ParseError` (`"expected end of input, found '..'"` at the second
+`..`), the same way a bare `1 < 2 < 3` would be were it not for
+`ChainedComparison`'s special handling elsewhere; ranges get no
+equivalent chaining. This placement makes `..` bind looser than
+arithmetic/bitwise operators (so `1 + 1..5 * 2` is `2..10`) but tighter
+than comparisons, `in`, `and`/`or`, and assignment — so
+`for i in 1..5 { ... }` parses `1..5` as one range expression before
+`in`'s membership-loop machinery ever sees it (the `for`-loop's iterable
+expression is parsed via the ordinary top-level expression chain, same
+as any other expression), and `x in 1..5` (testing whether `x` falls in
+the range) works too, since `_membership` parses its right operand via
+`_comparison()`, which now includes the new range level.
+
+**Interpreter** (`cinder/interpreter.py`): add a dispatch branch in
+`evaluate()`, alongside the existing `SliceExpr` branch:
+```python
+        if isinstance(expr, RangeExpr):
+            return self._evaluate_range(expr, env)
+```
+And the method itself, reusing the exact int-validation and
+list-construction `_range` (`cinder/builtins.py`) already does rather
+than duplicating it — call `_range` directly with the evaluated bounds
+as its `arguments` list, so both spellings share one implementation and
+one error message:
+```python
+    def _evaluate_range(self, expr: RangeExpr, env: Environment) -> object:
+        start = self.evaluate(expr.start, env)
+        end = self.evaluate(expr.end, env)
+        from cinder.builtins import _range  # local: builtins.py imports
+        # from interpreter.py at module level already, so a top-level
+        # import the other way round here would be circular; importing
+        # inside the method instead defers it until both modules have
+        # finished loading, which is safe.
+        return _range([start, end], expr.line, expr.column)
+```
+`cinder/interpreter.py` does not import `cinder/builtins.py` today —
+confirm this is still true before writing the import (`grep -n "^from
+cinder.builtins\|^import cinder.builtins" cinder/interpreter.py`
+should currently print nothing); if some other task already added a
+top-level import in the meantime, reuse it instead of adding a second,
+local one, but check it isn't circular first. This means `1..5` and
+`range(1, 5)` are exactly equivalent, including
+identical error messages (`"range() requires int arguments, got
+{type}"`) on a non-int bound — deliberate, since introducing a second,
+subtly-different error message for the same underlying operation would
+be a maintenance trap, not a feature.
+
+Acceptance criteria:
+- `print(1..5);` prints `[1, 2, 3, 4]` — same as `range(1, 5)`, end
+  exclusive.
+- `for i in 1..5 { print(i); }` prints `1`, `2`, `3`, `4`, one per line.
+- `print(0..0);` prints `[]` — empty range, same as `range(0, 0)`.
+- `print(x in 1..5);` with `let x = 3;` prints `true`; with `let x =
+  5;` prints `false` (end exclusive, matching `range()`).
+- `print(1 + 1..5 * 2);` prints `[2, 3, ..., 9]` (i.e. `range(2, 10)`)
+  — arithmetic on both bounds evaluates before `..` is applied.
+- `print(5..1);` prints `[]` — descending bounds produce an empty list,
+  same as `range(5, 1)` (no implicit reversal).
+- `1..2.5;` raises `CinderRuntimeError` matching `"range() requires int
+  arguments, got float"` — same error `range(1, 2.5)` already raises.
+- `1..5..10;` raises `ParseError` — ranges do not chain.
+- `let xs = [x for x in 1..5]; print(xs);` prints `[1, 2, 3, 4]` — usable
+  as a comprehension source, since it's just an ordinary expression
+  producing a list.
+- `print(range(1, 5) == 1..5);` prints `true` (or the language's
+  existing list-equality behavior — confirm which comparison operator
+  the test suite already uses for list equality and match it) — the two
+  spellings are the same value.
+- A single dot (`m.key`) and a real spread/rest (`...rest`, `f(...args)`)
+  are both completely unaffected — every existing dot-access and
+  spread/rest test continues to pass unmodified.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (`DOT_DOT`), `cinder/lexer.py`
+(`_dot`), `cinder/ast_nodes.py` (`RangeExpr`), `cinder/parser.py`
+(`_comparison`, new `_range_expr`), `cinder/interpreter.py` (`evaluate`,
+new `_evaluate_range`), `tests/test_lexer.py`, `tests/test_parser.py`,
+`tests/test_interpreter.py` (model on whatever test classes cover
+`SliceExpr`/slicing, search `class TestSlic`). Once merged, `README.md`'s
+Operators bullet needs a mention of the range literal near the existing
+`in`/slicing operators, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s roadmap paragraph needs this moved from backlog to
+landed — leave all three to the Architect's next grooming pass, not this
+task.
+
+---
+
+## 6. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
+
+Build: the breadth task after task 5's depth work (range literal `a..b`)
+per `PROJECT.md`'s breadth-vs-depth policy, continuing the two-tasks-
+at-once restock started by task 5 (see task 5's own restock note — two
+merges, comma-separated `let`/`const` declarations and `cbrt`, dropped
+the backlog from 6 to 4 in one stretch with no grooming pass in
+between, so this pass adds both a depth and a breadth task to get back
+to 6). A Kaprekar number is a positive integer `n` whose square, when
+split into a right part and a left part at some digit boundary, sums
+back to `n` — e.g. `45`: `45 ** 2 == 2025`, split as `20` and `25`,
+`20 + 25 == 45`. Nothing in the existing digit-pattern/number-theory
+cluster (`is_automorphic`, `is_harshad`, `is_perfect_cube`, ...) tests
+this; `is_automorphic` (`str(value * value).endswith(str(value))`) is
+actually the fixed special case of a Kaprekar split at the boundary
+where the right part has exactly as many digits as `n` itself, so this
+task is a natural generalization sitting right next to it. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(is_kaprekar(45));'
+# -> CinderRuntimeError: undefined name 'is_kaprekar'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_automorphic`
+(search `def _is_automorphic`, immediately before `_is_harshad`):
+```python
+def _is_kaprekar(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_kaprekar", arguments, 1, line, column)
+    value = _require_int("is_kaprekar", arguments[0], line, column)
+    if value < 1:
+        return False
+    square = value * value
+    digits = str(square)
+    for split in range(1, len(digits) + 1):
+        right = square % (10 ** split)
+        left = square // (10 ** split)
+        if right != 0 and left + right == value:
+            return True
+    return False
+```
+The `right != 0` guard skips vacuous splits (a leading-zero right part,
+e.g. `n=10`, `square=100`: the `split=2` boundary gives `right=0,
+left=1`, which is not a real two-part split); the loop runs `split` up
+to and including `len(digits)` (not stopping one short) so the
+whole-square/zero-left split is reachable too — this is what makes `1`
+qualify (`1 ** 2 == 1`, `split=1` gives `right=1, left=0`,
+`0 + 1 == 1`) without a separate trivial-case branch, matching the
+standard sequence (OEIS A006886: `1, 9, 45, 55, 99, 297, 703, 999,
+...`). `value < 1` returns `false` up front rather than raising,
+matching the digit-pattern cluster's existing convention for `0`/
+negative input (`is_repdigit`, `is_palindrome_number`, `is_harshad`
+all do the same) rather than the "negative can legitimately be true"
+convention `is_perfect_cube`/`is_perfect_power` use — a Kaprekar split
+has no meaningful negative case, the same reasoning `is_undulating`
+(task 4 elsewhere in this file) already used for the same choice.
+
+Acceptance criteria:
+- `is_kaprekar(1);` is `true` — trivial split (`0 + 1 == 1`).
+- `is_kaprekar(9);` is `true` (`81` → `8 + 1 == 9`).
+- `is_kaprekar(45);` is `true` (`2025` → `20 + 25 == 45`).
+- `is_kaprekar(55);` is `true` (`3025` → `30 + 25 == 55`).
+- `is_kaprekar(99);` is `true` (`9801` → `98 + 01 == 99`).
+- `is_kaprekar(297);` is `true` (`88209` → `88 + 209 == 297`).
+- `is_kaprekar(703);` is `true` (`494209` → `494 + 209 == 703`).
+- `is_kaprekar(999);` is `true` (`998001` → `998 + 001 == 999`).
+- `is_kaprekar(2223);` is `true` (`4941729` → `494 + 1729 == 2223`).
+- `is_kaprekar(0);` is `false` — below the `n >= 1` floor.
+- `is_kaprekar(10);` is `false` — `100`'s only nontrivial split has a
+  zero right part.
+- `is_kaprekar(2);` is `false` (`4`, no split sums to `2`).
+- `is_kaprekar(100);` is `false`.
+- `is_kaprekar(-45);` is `false` — negative input, following the
+  cluster's existing convention rather than raising.
+- `is_kaprekar(5.0);` raises `CinderRuntimeError` matching
+  `"is_kaprekar() requires an int, got float"`.
+- `is_kaprekar(true);` raises `CinderRuntimeError` matching
+  `"is_kaprekar() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_automorphic`, see
+current line numbers — shift if task 5 lands first this cycle),
+`tests/test_builtins.py` (model on `class TestIsAutomorphic` and `class
+TestIsHarshad`, search either name). Once merged, `README.md`'s
+Builtins bullet needs `is_kaprekar` added near `is_automorphic`/
+`is_harshad`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s roadmap paragraph needs this moved from backlog to
+landed — leave all three to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -1018,18 +1018,40 @@ convention (not re-derived every step, since the running product is
 already non-negative once the first step completes); any single-digit
 input (`-9` through `9` after the sign is dropped) has persistence `0`
 — the loop's trivial already-terminated base case, not a domain edge to
-guard against — has since landed via PR #270 too.
+guard against — has since landed via PR #270 too. Comma-separated
+multiple variable declarations in a single `let`/`const` statement
+(`let a = 1, b = 2;`, `const x = 1, y = 2;`) — the depth task after
+`multiplicative_persistence`'s breadth work: `_let_statement`/
+`_const_statement` (`cinder/parser.py`) each parse one declaration, then
+loop on a trailing `COMMA` to parse more, wrapping more than one into a
+new `DeclSeq` statement node (`cinder/ast_nodes.py`) that the
+interpreter executes by running each declaration in turn against the
+current environment — no change needed to `LetStmt`/`ConstStmt`
+themselves, since `DeclSeq` is purely a thin sequencing wrapper around
+the existing per-declaration node, and a single declaration (the
+overwhelmingly common case) still produces a bare `LetStmt`/`ConstStmt`
+with no wrapper at all, so no existing test needed updating — has since
+landed via PR #271 too. `cbrt(x)` — the domain-unrestricted sibling to
+`sqrt`, a breadth task after comma-separated declarations' depth work:
+unlike `sqrt`, which raises on negative input to avoid a complex result,
+a real cube root exists for every real number, so `cbrt(-8)` returns
+`-2.0` rather than raising — `math.copysign(abs(value) ** (1 / 3),
+value)`, computing the root of the magnitude and reapplying the original
+sign, since Python's own `** (1/3)` on a negative base would otherwise
+raise or return a complex result depending on type — has since landed
+via PR #272 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, `multiplicative_persistence`, has since landed via
-PR #270 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant description from
-this section. Tasks 1-5 — comma-separated `let`/`const` declarations,
-`cbrt`, nested list-in-list destructuring patterns, `is_perfect_power`,
-and raw string literals `r"..."`/`r'...'` — are fully scoped in
-`BACKLOG.md` itself and are not duplicated here, the same treatment
-tasks past slot 1 have gotten since this section stopped trying to keep
-prose in lockstep with every backlog slot). And only much
+(numbering here matches `BACKLOG.md` tasks 1-6 — the two tasks that used
+to occupy slots 1-2 here, comma-separated `let`/`const` declarations and
+`cbrt`, have since landed via PR #271 and PR #272 and are covered in the
+"have since landed" history immediately above; this grooming pass
+dropped their now-redundant descriptions from this section. Tasks 1-6 —
+nested list-in-list destructuring patterns, `is_perfect_power`, raw
+string literals `r"..."`/`r'...'`, `is_undulating`, a range literal
+`a..b`, and `is_kaprekar` — are fully scoped in `BACKLOG.md` itself and
+are not duplicated here, the same treatment tasks past slot 1 have
+gotten since this section stopped trying to keep prose in lockstep with
+every backlog slot). And only much
 later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1182,7 +1204,31 @@ digit-pattern classification sitting next to `is_repdigit`/
 distinct digits so that neither a too-short number nor a repdigit can
 qualify. The next grooming pass should continue alternating
 breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
-count within reach of the 5-task floor.
+count within reach of the 5-task floor. This pass found the backlog
+down past its 5-task floor to just 4 (comma-separated `let`/`const`
+declarations and `cbrt` landed via PR #271 and PR #272 in two separate
+cycles with no grooming pass in between, dropping the count from 6 to 4
+one task at a time, dropping both their now-landed descriptions from
+the "what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining four tasks from 3-6 down to 1-4,
+with nested list-in-list destructuring patterns renumbered from 3 to 1,
+`is_perfect_power` from 4 to 2, raw string literals from 5 to 3, and
+`is_undulating` from 6 to 4) and restocked it the rest of the way to 6
+by adding two tasks at once — the same "restock faster than strict
+alternation" move used before whenever a gap of more than one task
+opened up: task 5, a range literal `a..b` (sugar over the existing
+`range()` builtin, e.g. `for i in 1..5 { ... }` instead of `for i in
+range(1, 5) { ... }`), a depth task continuing alternation after task
+4's breadth work (`is_undulating`), reusing `range()`'s own int
+validation and list construction rather than duplicating it so both
+spellings share one error message; and task 6, `is_kaprekar` (a number
+whose square splits into two parts that sum back to itself, e.g. `45`:
+`2025` → `20 + 25 == 45`), a breadth task after task 5's depth work,
+placed next to `is_automorphic` in `cinder/builtins.py` since automorphic
+numbers are the fixed special case of a Kaprekar split at the digit
+boundary matching `n`'s own length. The next grooming pass should
+continue alternating breadth/depth, restocking toward 6-7 tasks whenever
+a merge drops the count within reach of the 5-task floor.
 
 ## History
 

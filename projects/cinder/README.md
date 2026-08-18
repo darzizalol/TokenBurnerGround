@@ -45,7 +45,11 @@ while (i < 10) {
 - **Variables & scope**: `let` declarations, `const` declarations for
   immutable bindings (reassignment or `++`/`--`/compound-assignment on a
   `const` name raises a runtime error; a `let` may still be redeclared as
-  `const` and vice versa in the same scope), assignment, blocks with proper
+  `const` and vice versa in the same scope), comma-separated multiple
+  declarations in a single `let`/`const` statement (`let a = 1, b = 2;`,
+  `const x = 1, y = 2;`, each with its own initializer, evaluated
+  left-to-right so a later initializer can see an earlier declared name,
+  e.g. `let a = 1, b = a + 1;` binds `b` to `2`), assignment, blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, flat positional binding, no nesting, plus
   a hole element to skip an unwanted position (`let [a, , c] = expr;`,
@@ -254,7 +258,8 @@ while (i < 10) {
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
   `pad_start`, `pad_end`, `pad_center`, `truncate`, `to_fixed`, math builtins `abs`, `sign`, `min`, `max`, `round`, `floor`,
-  `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
+  `ceil`, `pow`, `sqrt`, `cbrt` (real cube root, domain-unrestricted unlike `sqrt` — negative input returns a negative
+  result instead of raising), `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
@@ -392,23 +397,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: trailing commas in
-destructuring patterns (`let`/`for`/function-parameter/comprehension
-patterns and the plain-assignment map form), closing the one gap the
-earlier literals/calls/params trailing-commas task deliberately left
-open, and `multiplicative_persistence` — the loop-driven counterpart to
-`digital_root`'s closed-form additive reduction, since no closed form
-exists for repeated digit *multiplication*. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): comma-separated multiple variable
-declarations in a single `let`/`const` statement (`let a = 1, b = 2;`),
-`cbrt` — real cube root, the domain-unrestricted sibling to `sqrt`,
-nested list-in-list destructuring patterns (`let [a, [b, c]] = [1, [2,
-3]];`), `is_perfect_power` — the general closure of
+Actively developed, nightly. Recently landed: comma-separated multiple
+variable declarations in a single `let`/`const` statement
+(`let a = 1, b = 2;`), and `cbrt` — real cube root, the
+domain-unrestricted sibling to `sqrt` (negative input returns a negative
+result instead of raising, unlike `sqrt`'s complex-number guard). Coming
+up next (see [`BACKLOG.md`](BACKLOG.md)): nested list-in-list
+destructuring patterns (`let [a, [b, c]] = [1, [2, 3]];`),
+`is_perfect_power` — the general closure of
 `is_perfect_square`/`is_perfect_cube` ("is there *any* integer exponent
 `k >= 2`"), raw string literals `r"..."`/`r'...'` — the
-escape/interpolation-free sibling to ordinary strings, and
-`is_undulating` — testing whether an integer's digits strictly
-alternate between exactly two distinct values (e.g. `121`, `2323`).
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+escape/interpolation-free sibling to ordinary strings, `is_undulating` —
+testing whether an integer's digits strictly alternate between exactly
+two distinct values (e.g. `121`, `2323`), a range literal `a..b` — sugar
+over the existing `range()` builtin usable directly in a `for` loop
+(`for i in 1..5 { ... }`), and `is_kaprekar` — testing whether a
+number's square splits into two parts that sum back to the number
+(e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`). The backlog mixes
+language depth with stdlib breadth over time rather than running either
+in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

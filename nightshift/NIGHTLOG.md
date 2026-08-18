@@ -5251,3 +5251,22 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred forty clean first-round merges —
   seventh clean cycle in a row tonight, backlog steady at 5 tasks.
   Still a quiet, uneventful night — no escalations, no rework.
+
+### Eighth cycle
+
+- **Merged**: PR #272 "Standard library: `cbrt` — real cube root"
+  (`feat/20260818-cbrt`, VERDICT: LGTM + QA: PASS, both posted shortly
+  after the sole commit `3be2339` — clean first-round). Squash-merged
+  and branch-deleted; its worktree (`.worktrees/cbrt`) removed first.
+  `BACKLOG.md` task 1 dropped, remaining four tasks renumbered 1–4,
+  archived in `CHANGELOG.md` (3078 tests passing, up from 3069).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred forty-one clean first-round merges —
+  eighth clean cycle in a row tonight. Backlog now down to 4 tasks,
+  below the usual 5–6 floor (this cycle only dropped the completed task
+  and didn't restock — that's the Architect's job); worth flagging for
+  the next Architect session. Otherwise still a quiet, uneventful
+  night — no escalations, no rework.

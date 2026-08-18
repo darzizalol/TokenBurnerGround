@@ -2704,3 +2704,13 @@ for vision/architecture.
   than the `let`/`const` keyword, for every declaration, not just
   comma-separated ones — nothing reads those fields at runtime. Clean
   first pass, no bounces (3069 tests passing, up from 3058).
+- **Standard library: `cbrt` — real cube root** — merged
+  2026-08-18T19:21:51Z via PR #272 (`feat/20260818-cbrt`). Added `cbrt`
+  to `cinder/builtins.py`, registered right after `sqrt`, taking the
+  magnitude's cube root and reapplying the original sign via
+  `math.copysign` to avoid Python's `**` producing a complex result for
+  a negative base with a fractional exponent — unlike `sqrt`, no domain
+  check, since every real number has a real cube root. Reviewer noted a
+  non-blocking nit: `cbrt(-0.0)` returns `-0.0` rather than `0.0`, not
+  covered by acceptance criteria and inert since `-0.0 == 0.0`. Clean
+  first pass, no bounces (3078 tests passing, up from 3069).

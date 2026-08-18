@@ -11,78 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cbrt` — real cube root, the domain-unrestricted sibling to `sqrt` [claimed 2026-08-18T19:17:41Z]
-
-Build: the breadth task after task 5's depth work (comma-separated
-`let`/`const` declarations), restocking the backlog the rest of the way
-back to its 6-task target in the same pass task 5 started (see task 5's
-own build note on why two tasks were added at once this cycle). Add
-`cbrt` to `cinder/builtins.py`, registered right after `_sqrt` (search
-`def _sqrt`, immediately before `_sin`) — the math-builtins cluster
-(`sqrt`, `sin`, `cos`, `tan`, `log`, `pow`, ...) has a square root but no
-cube root, even though cube roots are real and defined for *every* real
-number, negative ones included, unlike square roots. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(cbrt(27));'
-# -> CinderRuntimeError: undefined name 'cbrt'
-```
-
-**The one correctness trap, verified directly against Python**: the
-naive `value ** (1 / 3)` does *not* give a real result for a negative
-base — Python's `**` returns a complex number the moment the base is
-negative and the exponent is a non-integer float:
-```sh
-python3 -c "print((-8) ** (1 / 3))"
-# -> (1.0000000000000002+1.7320508075688772j)
-```
-So `cbrt(-8)` must not be implemented as a bare `value ** (1 / 3)`; it
-needs to take the magnitude's cube root and reapply the original sign,
-the same `math.copysign` shape already used elsewhere in this file for
-sign-preserving math:
-```python
-def _cbrt(arguments: list, line: int, column: int) -> object:
-    _require_arity("cbrt", arguments, 1, line, column)
-    value = arguments[0]
-    if not _is_numeric(value):
-        raise CinderRuntimeError(
-            f"cbrt() requires a number, got {type_name(value)}", line, column
-        )
-    return math.copysign(abs(value) ** (1 / 3), value)
-```
-Unlike `_sqrt`, there is no domain check to add — every real number has
-a real cube root, so `cbrt` accepts negative input the same way
-`is_perfect_cube` already treats negative integers as potentially
-`true` (`-8 = (-2)**3`), rather than raising the way `sqrt(-1)` does.
-
-Acceptance criteria:
-- `cbrt(27);` is `3.0` (a float, matching `sqrt`'s own always-float
-  return convention).
-- `cbrt(8);` is `2.0`.
-- `cbrt(0);` is `0.0`.
-- `cbrt(-27);` is `-3.0` — a real, negative result, not a `ParseError`,
-  not a complex number, not the positive magnitude.
-- `cbrt(2);` is approximately `1.2599210498948732`.
-- `cbrt(-2);` is approximately `-1.2599210498948732` — same magnitude
-  as `cbrt(2)`, sign flipped.
-- `cbrt("a");` raises `CinderRuntimeError` matching `"cbrt() requires a
-  number, got string"`.
-- `cbrt(true);` raises `CinderRuntimeError` matching `"cbrt() requires
-  a number, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `sqrt`, see current
-line numbers — shift if task 5 landed first), `tests/test_builtins.py`
-(model on `class TestSqrt`, search `class TestSqrt`). Once merged,
-`README.md`'s Builtins bullet needs `cbrt` added near `sqrt`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s roadmap
-paragraph needs this moved from backlog to landed — leave all three to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: nested list-in-list destructuring patterns
+## 1. Language: nested list-in-list destructuring patterns
 
 Build: the depth task after task 5's breadth work (`cbrt`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -214,7 +143,7 @@ task.
 
 ---
 
-## 3. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
+## 2. Standard library: `is_perfect_power` — the general closure of `is_perfect_square`/`is_perfect_cube`
 
 Build: the breadth task after task 5's depth work (nested list-in-list
 destructuring patterns), restocking the backlog back to 6 tasks now
@@ -316,7 +245,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
+## 3. Language: raw string literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary strings
 
 Build: the depth task after task 5's breadth work (`is_perfect_power`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
@@ -432,7 +361,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_undulating` — digit-alternation classification
+## 4. Standard library: `is_undulating` — digit-alternation classification
 
 Build: the breadth task after task 5's depth work (raw string literals)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back

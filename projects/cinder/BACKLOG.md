@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root`
+## 1. Standard library: `multiplicative_persistence` — the loop-driven counterpart to `digital_root` [claimed 2026-08-18T14:22:14Z]
 
 Build: the breadth task after task 5's depth work (trailing commas in
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,

@@ -145,6 +145,7 @@ from cinder.ast_nodes import (
     OptionalCall,
     OptionalIndex,
     Param,
+    RangeExpr,
     ReturnStmt,
     SliceAssign,
     SliceExpr,
@@ -1191,11 +1192,11 @@ class Parser:
         return expr
 
     def _comparison(self) -> Expr:
-        operands = [self._bitor()]
+        operands = [self._range_expr()]
         operators = []
         while self._peek().type in _COMPARISON:
             operators.append(self._advance())
-            operands.append(self._bitor())
+            operands.append(self._range_expr())
         if not operators:
             return operands[0]
         if len(operators) >= 2 and all(op.type in _ORDERING for op in operators):
@@ -1206,6 +1207,14 @@ class Parser:
         for operator, right in zip(operators, operands[1:]):
             result = Binary(result, operator, right)
         return result
+
+    def _range_expr(self) -> Expr:
+        expr = self._bitor()
+        if self._check(TokenType.DOT_DOT):
+            dots = self._advance()
+            end = self._bitor()
+            return RangeExpr(expr, end, dots.line, dots.column)
+        return expr
 
     def _bitor(self) -> Expr:
         expr = self._bitxor()

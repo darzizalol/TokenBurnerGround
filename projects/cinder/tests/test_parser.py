@@ -36,6 +36,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     OptionalCall,
     OptionalIndex,
+    RangeExpr,
     ReturnStmt,
     SliceAssign,
     SliceExpr,
@@ -122,6 +123,8 @@ def shape(node):
             shape(node.end) if node.end is not None else None,
             shape(node.step) if node.step is not None else None,
         )
+    if isinstance(node, RangeExpr):
+        return ("RangeExpr", shape(node.start), shape(node.end))
     if isinstance(node, IndexAssign):
         return (
             "IndexAssign",
@@ -1745,6 +1748,43 @@ class TestListsAndMaps(unittest.TestCase):
         self.assertEqual(
             shape(parse("xs[1]")),
             ("Index", ("Identifier", "xs"), ("Literal", 1)),
+        )
+
+    def test_range_literal(self):
+        self.assertEqual(
+            shape(parse("1..5")),
+            ("RangeExpr", ("Literal", 1), ("Literal", 5)),
+        )
+
+    def test_range_binds_looser_than_arithmetic(self):
+        self.assertEqual(
+            shape(parse("1 + 1..5 * 2")),
+            (
+                "RangeExpr",
+                ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 1)),
+                ("Binary", ("Literal", 5), TokenType.STAR, ("Literal", 2)),
+            ),
+        )
+
+    def test_range_binds_tighter_than_membership(self):
+        self.assertEqual(
+            shape(parse("x in 1..5")),
+            (
+                "Binary",
+                ("Identifier", "x"),
+                TokenType.IN,
+                ("RangeExpr", ("Literal", 1), ("Literal", 5)),
+            ),
+        )
+
+    def test_range_does_not_chain(self):
+        with self.assertRaises(ParseError):
+            parse("1..5..10")
+
+    def test_dot_dot_dot_unaffected_by_range_grammar(self):
+        self.assertEqual(
+            shape(parse("f(...args)")),
+            ("Call", ("Identifier", "f"), [("Spread", ("Identifier", "args"))]),
         )
 
     def test_slice_assignment_target_parses_as_slice_assign(self):

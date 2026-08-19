@@ -252,6 +252,14 @@ class SliceAssign:
 
 
 @dataclass(frozen=True)
+class RangeExpr:
+    start: "Expr"
+    end: "Expr"
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class Ternary:
     condition: "Expr"
     then_expr: "Expr"
@@ -321,6 +329,7 @@ Expr = Union[
     IndexAssign,
     SliceExpr,
     SliceAssign,
+    RangeExpr,
     Ternary,
     FnExpr,
     InterpString,

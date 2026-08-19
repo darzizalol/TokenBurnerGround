@@ -427,6 +427,11 @@ class Lexer:
             self.tokens.append(
                 Token(TokenType.DOT_DOT_DOT, "...", None, start_line, start_col)
             )
+        elif self._peek() == ".":
+            self._advance()
+            self.tokens.append(
+                Token(TokenType.DOT_DOT, "..", None, start_line, start_col)
+            )
         else:
             self.tokens.append(Token(TokenType.DOT, ".", None, start_line, start_col))
 

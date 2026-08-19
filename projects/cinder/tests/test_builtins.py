@@ -3047,6 +3047,57 @@ class TestIsRepdigit(unittest.TestCase):
             run("is_repdigit();")
 
 
+class TestIsUndulating(unittest.TestCase):
+    def test_is_undulating_of_three_digits(self):
+        self.assertEqual(run("let result = is_undulating(121);").get("result"), True)
+
+    def test_is_undulating_of_four_digits(self):
+        self.assertEqual(run("let result = is_undulating(2323);").get("result"), True)
+
+    def test_is_undulating_of_five_digits(self):
+        self.assertEqual(run("let result = is_undulating(12121);").get("result"), True)
+
+    def test_is_undulating_with_zero_digit(self):
+        self.assertEqual(run("let result = is_undulating(101);").get("result"), True)
+
+    def test_is_undulating_of_repdigit_is_false(self):
+        self.assertEqual(run("let result = is_undulating(111);").get("result"), False)
+
+    def test_is_undulating_of_two_digits_is_false(self):
+        self.assertEqual(run("let result = is_undulating(11);").get("result"), False)
+
+    def test_is_undulating_of_single_digit_is_false(self):
+        self.assertEqual(run("let result = is_undulating(1);").get("result"), False)
+
+    def test_is_undulating_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_undulating(0);").get("result"), False)
+
+    def test_is_undulating_of_non_alternating_three_digits(self):
+        self.assertEqual(run("let result = is_undulating(123);").get("result"), False)
+
+    def test_is_undulating_breaks_at_fourth_digit(self):
+        self.assertEqual(run("let result = is_undulating(1210);").get("result"), False)
+
+    def test_is_undulating_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_undulating(-121);").get("result"), False)
+
+    def test_is_undulating_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_undulating(5.0);")
+        self.assertIn("is_undulating", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_undulating_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_undulating(true);")
+        self.assertIn("is_undulating", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_undulating_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_undulating();")
+
+
 class TestIsPerfectSquare(unittest.TestCase):
     def test_is_perfect_square_of_zero(self):
         self.assertEqual(run("let result = is_perfect_square(0);").get("result"), True)

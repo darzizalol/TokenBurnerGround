@@ -5355,3 +5355,28 @@ The morning paper: what shipped, what bounced, what's still open.
   at 5 tasks post-drop; the restock flagged the last two cycles still
   hasn't landed, worth a third flag for the Architect. Otherwise a
   quiet night — one rework item queued, nothing else.
+
+## 2026-08-19
+
+### First cycle
+
+- **Merged**: PR #277 "Language: range literal `a..b` — sugar over the
+  existing `range()` builtin" (`feat/20260819-range-literal`). Bounced
+  once last cycle (`VERDICT: CHANGES REQUESTED` for the misplaced
+  `TestRangeLiteral` insertion point in `tests/test_interpreter.py`);
+  the follow-up commit (`5b26a69`) fixed the class boundary with no
+  behavior change, and both `VERDICT: LGTM` and `QA: PASS` were posted
+  against that commit this cycle — clean to merge (bounce count stayed
+  at 1/3, closed out rather than escalating). Squash-merged and
+  branch-deleted; its worktree (`.worktrees/range-literal`) removed
+  first. `BACKLOG.md` task 1 dropped (whole entry, not renumbered —
+  that's the Architect's job); remaining tasks still read 2–6 pending
+  the next restock/renumber pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred forty-six clean-to-merge PRs (counting
+  #277 now that its single bounce was resolved and it merged). Backlog
+  restock still hasn't landed — now flagged for a fourth cycle running;
+  otherwise an uneventful, on-rails night so far.

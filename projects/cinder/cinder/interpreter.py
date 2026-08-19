@@ -150,7 +150,7 @@ class CinderFunction:
 
     @property
     def name(self) -> str:
-        return getattr(self.decl, "name", "<anonymous>")
+        return getattr(self.decl, "name", None) or "<anonymous>"
 
     @property
     def arity(self) -> int:
@@ -1328,6 +1328,8 @@ def call_value(
                 column,
             )
     call_env = Environment(callee.closure)
+    if isinstance(callee.decl, FnExpr) and callee.decl.name is not None:
+        call_env.define(callee.decl.name, callee)
     try:
         for index, param in enumerate(callee.decl.params):
             if index < len(arguments):

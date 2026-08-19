@@ -707,8 +707,11 @@ class Parser:
 
     def _fn_expression(self) -> Expr:
         fn_token = self._advance()
+        name = None
+        if self._check(TokenType.IDENTIFIER):
+            name = self._advance().lexeme
         params, rest_param, body = self._fn_params_and_body()
-        return FnExpr(params, rest_param, body, fn_token.line, fn_token.column)
+        return FnExpr(params, rest_param, body, fn_token.line, fn_token.column, name)
 
     def _try_arrow_function(self) -> "FnExpr | None":
         """Speculatively parses `(params) => expr` or `(params) => { ... }`

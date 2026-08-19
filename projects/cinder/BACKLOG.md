@@ -97,7 +97,7 @@ this task.
 
 ---
 
-## 2. Language: range literal `a..b` — sugar over the existing `range()` builtin
+## 2. Language: range literal `a..b` — sugar over the existing `range()` builtin [claimed 2026-08-19T14:02:47Z]
 
 Build: the depth task after task 4's breadth work (`is_undulating`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

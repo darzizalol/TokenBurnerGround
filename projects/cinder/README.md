@@ -283,6 +283,8 @@ while (i < 10) {
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
   `is_powerful_number` to test whether every prime factor of an integer appears with exponent `2` or more,
+  `is_achilles` to test whether an integer is powerful but not itself a perfect power
+  (the gap between `is_powerful_number` and `is_perfect_power`, e.g. `72 = 2^3 * 3^2`),
   `is_perfect_power` to test whether an integer equals `m ** k` for some integer base `m` and exponent `k >= 2`
   (the general closure of `is_perfect_square`/`is_perfect_cube`/`is_powerful_number`, negative input admitted only
   through odd exponents),
@@ -419,19 +421,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map literal shorthand
+Actively developed, nightly. Recently landed: `is_achilles` — testing
+whether an integer is powerful (every prime factor has exponent `>= 2`)
+but *not* itself a perfect power, the gap between `is_powerful_number`
+and `is_perfect_power` (e.g. `72 = 2^3 * 3^2`: powerful, but no single
+base/exponent pair produces it), and before that map literal shorthand
 properties `{a, b}` — sugar for `{"a": a, "b": b}`, the construction-side
 inverse of the map-destructuring shorthand `let {a, b} = expr;` already
 has, and before that `is_kaprekar` — testing whether a number's square
 splits into two parts that sum back to the number (e.g. `45`: `45 ** 2 ==
-2025`, `20 + 25 == 45`), and before that a range literal `a..b` — sugar
-over the existing `range()` builtin usable directly in a `for` loop
-(`for i in 1..5 { ... }`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_achilles` — testing whether an integer
-is powerful (every prime factor has exponent `>= 2`) but *not* itself a
-perfect power, the gap between `is_powerful_number` and
-`is_perfect_power` (e.g. `72 = 2^3 * 3^2`: powerful, but no single
-base/exponent pair produces it), named function expressions
+2025`, `20 + 25 == 45`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): named function expressions
 `fn name(params) { ... }` — letting an anonymous function refer to itself
 by its own name from inside its body, without depending on whatever
 outer variable (if any) it happens to be assigned to, `is_pernicious` —
@@ -442,10 +442,13 @@ include their upper bound (`for i in 1..=5 { ... }` instead of the
 easy-to-get-wrong `1..6`), `is_sphenic` — testing whether an integer is
 the product of three distinct primes (e.g. `30 = 2 * 3 * 5`), the natural
 next member of the "product of primes" family alongside `is_semiprime`'s
-"product of exactly two", and triple-quoted string literals
+"product of exactly two", triple-quoted string literals
 `"""..."""`/`'''...'''` — ending only at three consecutive matching quote
 characters, so quote-heavy text (embedded dialogue, JSON snippets) needs
-no per-quote escaping. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The full
-vision and non-goals live in
+no per-quote escaping, and `is_circular_prime` — testing whether every
+rotation of an integer's decimal digits is also prime (e.g. `197`/`971`/
+`719`), combining `is_emirp`'s primality-plus-digit-transformation shape
+with `is_rotation`'s rotate-and-compare technique. The backlog mixes
+language depth with stdlib breadth over time rather than running either
+in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

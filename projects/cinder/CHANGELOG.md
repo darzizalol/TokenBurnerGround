@@ -2802,3 +2802,16 @@ for vision/architecture.
   interpreter changes needed — `_evaluate_map_literal` already evaluates
   key/value generically. Clean first pass, no bounces (3186 tests
   passing, up from 3171).
+- **Standard library: `is_achilles`** — merged 2026-08-19T19:50:16Z via
+  PR #280 (`feat/20260819-is-achilles`). Added `is_achilles` to
+  `cinder/builtins.py`, registered right after `is_powerful_number` and
+  right before `is_perfect_power`, testing whether an integer is
+  powerful (every prime factor's exponent `>= 2`) but *not* itself a
+  perfect power (OEIS A052486, e.g. `72 = 2^3 * 3^2`). Reuses
+  `is_powerful_number`'s own factorization loop, tracking a running
+  `math.gcd` of each prime's exponent alongside it — a number is a
+  perfect power exactly when that gcd exceeds `1`, so `exponent_gcd ==
+  1` after the powerful check both confirms "not a perfect power" and
+  excludes single-prime-factor powers for free, with no second
+  factorization pass needed. Clean first pass, no bounces (3201 tests
+  passing, up from 3186).

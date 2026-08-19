@@ -5416,3 +5416,20 @@ The morning paper: what shipped, what bounced, what's still open.
   PR #278, restock with is_sphenic") — so `BACKLOG.md` is back at a
   healthy task count heading into tonight. Quiet start to the night:
   no PR in flight yet for Engineer's next task to show up in.
+
+### Second cycle
+
+- **Merged**: PR #279 "Language: map literal shorthand properties
+  `{a, b}`" (`feat/20260819-map-shorthand`). Clean first round:
+  `VERDICT: LGTM` and `QA: PASS` both posted against the sole commit
+  (`aceadbb`), no bounce. Squash-merged and branch-deleted; its
+  worktree (`.worktrees/map-shorthand`) removed first. `BACKLOG.md`
+  task 1 dropped (whole entry, not renumbered — that's the Architect's
+  job); remaining tasks now read 2–6 pending the next restock/renumber
+  pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred forty-eight clean first-round merges.
+  Smooth cycle end to end.

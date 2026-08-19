@@ -3724,6 +3724,60 @@ class TestIsPowerfulNumber(unittest.TestCase):
             run("is_powerful_number();")
 
 
+class TestIsAchilles(unittest.TestCase):
+    def test_is_achilles_of_72(self):
+        self.assertEqual(run("let result = is_achilles(72);").get("result"), True)
+
+    def test_is_achilles_of_108(self):
+        self.assertEqual(run("let result = is_achilles(108);").get("result"), True)
+
+    def test_is_achilles_of_200(self):
+        self.assertEqual(run("let result = is_achilles(200);").get("result"), True)
+
+    def test_is_achilles_of_500(self):
+        self.assertEqual(run("let result = is_achilles(500);").get("result"), True)
+
+    def test_is_achilles_of_8_is_false(self):
+        self.assertEqual(run("let result = is_achilles(8);").get("result"), False)
+
+    def test_is_achilles_of_36_is_false(self):
+        self.assertEqual(run("let result = is_achilles(36);").get("result"), False)
+
+    def test_is_achilles_of_4_is_false(self):
+        self.assertEqual(run("let result = is_achilles(4);").get("result"), False)
+
+    def test_is_achilles_of_12_is_false(self):
+        self.assertEqual(run("let result = is_achilles(12);").get("result"), False)
+
+    def test_is_achilles_of_1_is_false(self):
+        self.assertEqual(run("let result = is_achilles(1);").get("result"), False)
+
+    def test_is_achilles_of_0_is_false(self):
+        self.assertEqual(run("let result = is_achilles(0);").get("result"), False)
+
+    def test_is_achilles_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_achilles(-72);").get("result"), False)
+
+    def test_is_achilles_of_30_is_false(self):
+        self.assertEqual(run("let result = is_achilles(30);").get("result"), False)
+
+    def test_is_achilles_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_achilles(5.0);")
+        self.assertIn("is_achilles", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_achilles_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_achilles(true);")
+        self.assertIn("is_achilles", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_achilles_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_achilles();")
+
+
 class TestIsPerfectPower(unittest.TestCase):
     def test_is_perfect_power_of_0(self):
         self.assertEqual(run("let result = is_perfect_power(0);").get("result"), True)

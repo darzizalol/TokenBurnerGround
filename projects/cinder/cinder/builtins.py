@@ -1670,6 +1670,29 @@ def _is_powerful_number(arguments: list, line: int, column: int) -> object:
     return remaining == 1
 
 
+def _is_achilles(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_achilles", arguments, 1, line, column)
+    value = _require_int("is_achilles", arguments[0], line, column)
+    if value < 2:
+        return False
+    remaining = value
+    divisor = 2
+    exponent_gcd = 0
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            count = 0
+            while remaining % divisor == 0:
+                remaining //= divisor
+                count += 1
+            if count < 2:
+                return False
+            exponent_gcd = math.gcd(exponent_gcd, count)
+        divisor += 1
+    if remaining > 1:
+        return False
+    return exponent_gcd == 1
+
+
 def _integer_kth_root(magnitude: int, k: int) -> int:
     if magnitude == 0:
         return 0
@@ -3699,6 +3722,7 @@ _BUILTINS = {
     "is_pronic": _is_pronic,
     "is_squarefree": _is_squarefree,
     "is_powerful_number": _is_powerful_number,
+    "is_achilles": _is_achilles,
     "is_perfect_power": _is_perfect_power,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,

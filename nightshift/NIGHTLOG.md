@@ -5380,3 +5380,22 @@ The morning paper: what shipped, what bounced, what's still open.
   #277 now that its single bounce was resolved and it merged). Backlog
   restock still hasn't landed — now flagged for a fourth cycle running;
   otherwise an uneventful, on-rails night so far.
+
+### Second cycle
+
+- **Merged**: PR #278 "Standard library: `is_kaprekar` — numbers whose
+  square splits back into themselves" (`feat/20260819-is-kaprekar`).
+  Clean first round: `VERDICT: LGTM` and `QA: PASS` both posted against
+  the sole commit (`411a806`), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/is-kaprekar`) removed
+  first. `BACKLOG.md` task 1 dropped (whole entry, not renumbered —
+  that's the Architect's job); remaining tasks still read 2–6 pending
+  the next restock/renumber pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred forty-seven clean first-round merges.
+  Backlog restock still hasn't landed — now flagged for a fifth cycle
+  running (task 1 just dropped further shrinks the active count);
+  otherwise another quiet, on-rails cycle.

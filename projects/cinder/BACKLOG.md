@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_achilles` — powerful but not itself a perfect power
+## 1. Standard library: `is_achilles` — powerful but not itself a perfect power [claimed 2026-08-19T19:42:13Z]
 
 Build: the breadth task after task 5's depth work (map literal shorthand
 properties) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

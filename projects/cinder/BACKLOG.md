@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
+## 1. Standard library: `is_kaprekar` — numbers whose square splits back into themselves [claimed 2026-08-19T14:34:19Z]
 
 Build: the breadth task after task 5's depth work (range literal `a..b`)
 per `PROJECT.md`'s breadth-vs-depth policy, continuing the two-tasks-

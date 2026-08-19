@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: named function expressions (`fn name(params) { ... }`) for self-referencing anonymous functions
+## 1. Language: named function expressions (`fn name(params) { ... }`) for self-referencing anonymous functions [claimed 2026-08-19T19:57:54Z]
 
 Build: the depth task after task 5's breadth work (`is_achilles`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

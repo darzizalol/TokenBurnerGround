@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
+## 1. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
 
 Build: the breadth task after task 5's depth work (range literal `a..b`)
 per `PROJECT.md`'s breadth-vs-depth policy, continuing the two-tasks-
@@ -104,7 +104,7 @@ this task.
 
 ---
 
-## 3. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
+## 2. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
 
 Build: the depth task after task 5's breadth work (`is_kaprekar`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -219,7 +219,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `is_achilles` — powerful but not itself a perfect power
+## 3. Standard library: `is_achilles` — powerful but not itself a perfect power
 
 Build: the breadth task after task 5's depth work (map literal shorthand
 properties) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -322,7 +322,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: named function expressions (`fn name(params) { ... }`) for self-referencing anonymous functions
+## 4. Language: named function expressions (`fn name(params) { ... }`) for self-referencing anonymous functions
 
 Build: the depth task after task 5's breadth work (`is_achilles`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -492,7 +492,7 @@ description, its "Status & roadmap" section needs updating, and
 
 ---
 
-## 6. Standard library: `is_pernicious` — a number whose binary popcount is itself prime
+## 5. Standard library: `is_pernicious` — a number whose binary popcount is itself prime
 
 Build: the breadth task after task 5's depth work (named function
 expressions) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -564,13 +564,171 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `is_odious`, see
-current line numbers — shift if task 1's range literal lands first this
-cycle), `tests/test_builtins.py` (model on `class TestIsEvil` and `class
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestIsEvil` and `class
 TestIsOdious`, search either name). Once merged, `README.md`'s Builtins
 bullet needs `is_pernicious` added near `is_evil`/`is_odious`, its
 "Status & roadmap" section needs updating, and `PROJECT.md`'s roadmap
 paragraph needs this moved from backlog to landed — leave all three to
 the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)`
+
+Build: the depth task after task 5's breadth work (`is_pernicious`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that the exclusive range literal `a..b` has landed via PR
+#277, dropping the count to the 5-task floor. `a..b` (`RangeExpr`,
+`cinder/parser.py`/`cinder/interpreter.py`) already desugars to
+`range(a, b)` — exclusive of `b`, matching the two-argument `range()`
+builtin it sits on top of — but there is no inclusive spelling: writing
+a loop that must include its upper bound (`for i in 1..=5 { ... }` to
+print `1` through `5`) forces either `1..6` (off-by-one, easy to get
+wrong at the call site) or the more verbose `range(1, 6)`. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'for i in 1..=5 { print(i); }'
+# -> ParseError: <eval>:1:13: expected an expression, found '='
+```
+This is a guaranteed `ParseError` today (`DOT_DOT` immediately followed
+by `=` — the lexer emits a bare `DOT_DOT` token and the parser's
+`_range_expr` then tries to parse an expression starting with `=`, which
+fails), so no currently-valid Cinder program's meaning changes.
+
+**Lexing** (`cinder/lexer.py`): `_dot` already special-cases two
+successive `.` characters (as opposed to one or three) into a
+`DOT_DOT` token — extend that branch to check for a trailing `=`
+first, the same way `_lt`'s own `<<`-vs-`<<=` branch already checks for
+a trailing `=` after recognizing `<<`:
+```python
+    def _dot(self, start_line: int, start_col: int):
+        if self._peek() == "." and self._peek_next() == ".":
+            self._advance()
+            self._advance()
+            self.tokens.append(
+                Token(TokenType.DOT_DOT_DOT, "...", None, start_line, start_col)
+            )
+        elif self._peek() == ".":
+            self._advance()
+            if self._match("="):
+                self.tokens.append(
+                    Token(TokenType.DOT_DOT_EQ, "..=", None, start_line, start_col)
+                )
+            else:
+                self.tokens.append(
+                    Token(TokenType.DOT_DOT, "..", None, start_line, start_col)
+                )
+        else:
+            self.tokens.append(Token(TokenType.DOT, ".", None, start_line, start_col))
+```
+`_match` is already the shared one-character-lookahead-and-consume
+helper every other compound-operator branch in this file uses (see
+`_lt`/`_bang`/`_question`). Add `DOT_DOT_EQ = auto()` to
+`cinder/tokens.py`'s `TokenType` enum, next to the existing `DOT_DOT`/
+`DOT_DOT_DOT` pair.
+
+**AST** (`cinder/ast_nodes.py`): add an optional `inclusive` field to
+`RangeExpr`, appended last (after `column`) so every existing positional
+`RangeExpr(start, end, line, column)` call site keeps working unchanged,
+defaulting to exclusive — the same technique task 4's `FnExpr.name`
+field used:
+```python
+@dataclass(frozen=True)
+class RangeExpr:
+    start: "Expr"
+    end: "Expr"
+    line: int
+    column: int
+    inclusive: bool = False
+```
+
+**Parsing** (`cinder/parser.py`): `_range_expr` accepts either token,
+recording which one matched:
+```python
+    def _range_expr(self) -> Expr:
+        expr = self._bitor()
+        if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
+            dots = self._advance()
+            end = self._bitor()
+            inclusive = dots.type is TokenType.DOT_DOT_EQ
+            return RangeExpr(expr, end, dots.line, dots.column, inclusive)
+        return expr
+```
+
+**Interpreter** (`cinder/interpreter.py`): `_evaluate_range` bumps the
+end bound by one before delegating to the existing `_range` builtin,
+but only when it is safe to do so — an invalid end value (wrong type,
+or a `bool`, which `isinstance(x, int)` would otherwise wrongly accept)
+must still reach `_range`'s own validation unchanged, so its error
+message stays identical regardless of which spelling was used:
+```python
+    def _evaluate_range(self, expr: RangeExpr, env: Environment) -> object:
+        start = self.evaluate(expr.start, env)
+        end = self.evaluate(expr.end, env)
+        if expr.inclusive and isinstance(end, int) and not isinstance(end, bool):
+            end = end + 1
+        from cinder.builtins import _range  # local: see note above this method
+        return _range([start, end], expr.line, expr.column)
+```
+No changes needed to `_range` itself — reusing its existing validation
+and list construction is what keeps both spellings sharing one error
+message, the same reuse `range()`/`a..b` already established for each
+other.
+
+**Tests** (`tests/test_parser.py`): `shape()`'s `RangeExpr` branch
+(search `if isinstance(node, RangeExpr):`) currently returns a 2-tuple —
+extend it to a 3-tuple with `inclusive` appended last:
+```python
+    if isinstance(node, RangeExpr):
+        return ("RangeExpr", shape(node.start), shape(node.end), node.inclusive)
+```
+All 4 existing `"RangeExpr"` shape assertions in `class
+TestListsAndMaps` (search `def test_range_literal`,
+`test_range_binds_looser_than_arithmetic`,
+`test_range_binds_tighter_than_membership`) need a trailing `False`
+appended — they all exercise the exclusive `..` spelling.
+
+Acceptance criteria:
+- `let out = []; for i in 1..=5 { out = out + [i]; } print(out);`
+  prints `[1, 2, 3, 4, 5]` — inclusive of the upper bound.
+- `let out = []; for i in 1..5 { out = out + [i]; } print(out);` still
+  prints `[1, 2, 3, 4]` — the existing exclusive spelling is unaffected.
+- `print(5..=5);` prints `[5]` — a single-element inclusive range when
+  both bounds are equal (`5..5` stays `[]`, unaffected).
+- `print(5..=1);` prints `[]` — descending bounds produce an empty list,
+  same as `a..b` already does, since `range(5, 2)` is empty.
+- `print(1..=3 in [1, 2, 3]);` raises the ordinary `"list is not
+  comparable"`-style membership error unaffected by this task — instead
+  confirm `3 in 1..=5` evaluates the range first then tests membership,
+  printing `true` (mirrors the existing `x in 1..5` precedence test).
+- `1..="5";` raises `CinderRuntimeError` matching `"range() requires int
+  arguments, got string"` — an invalid end value still reaches `_range`'s
+  own validation unchanged, not silently coerced by the `+ 1` bump.
+- `true..=5;` raises `CinderRuntimeError` matching `"range() requires
+  int arguments, got bool"` — a `bool` start is rejected the same way
+  `a..b` already rejects it.
+- `1..=5..=10;` raises `ParseError` — ranges still don't chain, matching
+  `a..b`'s existing `test_range_does_not_chain` behavior.
+- `f(...args)` — an unrelated three-dot spread call — is unaffected by
+  the new two-dot-plus-equals lexer branch (`test_dot_dot_dot_unaffected_by_range_grammar`
+  stays green).
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (`DOT_DOT_EQ`), `cinder/lexer.py`
+(`_dot`), `cinder/ast_nodes.py` (`RangeExpr`), `cinder/parser.py`
+(`_range_expr`), `cinder/interpreter.py` (`_evaluate_range`),
+`tests/test_lexer.py` (model on whatever covers `DOT_DOT`/`DOT_DOT_DOT`
+tokenization, search `DOT_DOT`), `tests/test_parser.py` (`shape()`'s
+`RangeExpr` branch plus its 4 existing assertions, `class
+TestListsAndMaps`), `tests/test_interpreter.py` (`class
+TestRangeLiteral`, search that name, for end-to-end `eval` cases
+covering inclusion, descending bounds, and the type-error passthrough).
+Once merged, `README.md`'s range-literal description needs a mention of
+the inclusive spelling right next to the existing `a..b` description,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+roadmap paragraph needs this moved from backlog to landed — leave all
+three to the Architect's next grooming pass, not this task.
 
 ---
 

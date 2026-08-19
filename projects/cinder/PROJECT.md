@@ -1058,22 +1058,29 @@ answering "is there any integer exponent `k >= 2` and base `m` with
 parameter `k`, added alongside rather than refactored in place) and a
 bit-length-bounded search over candidate exponents, admitting negative
 input only through odd exponents the same way `is_perfect_cube` already
-does — has since landed via PR #274 too.
+does — has since landed via PR #274 too. An exclusive range literal
+`a..b` (sugar over the existing `range()` builtin, usable directly as a
+`for`-loop source, e.g. `for i in 1..5 { ... }` instead of `for i in
+range(1, 5) { ... }`) — reusing `range()`'s own int validation and list
+construction rather than duplicating either, so both spellings share one
+error message — has since landed via PR #277 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 — the tasks that used to
-occupy slots 1-2 here, raw string literals and `is_undulating`, have
-since landed via PR #275 and PR #276 and are covered in the "have since
-landed" history immediately above; this grooming pass dropped their now-
-redundant descriptions from this section.
-Tasks 1-6 — a range literal `a..b` (claimed, in progress as PR #277),
-`is_kaprekar`, map literal shorthand properties `{a, b}` as sugar for
-`{"a": a, "b": b}`, `is_achilles` (powerful but not itself a perfect
-power), named function expressions (`fn name(params) { ... }`), and
-`is_pernicious` (a number whose binary popcount is itself prime) — are
-fully scoped in `BACKLOG.md` itself and are not duplicated here, the
-same treatment tasks past slot 1 have gotten since this section stopped
-trying to keep prose in lockstep with every backlog slot). And only much
-later, a bytecode VM if performance ever actually matters. The
+(numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
+occupy slot 1 here, the range literal `a..b`, has since landed via PR
+#277 and is covered in the "have since landed" history immediately
+above; this grooming pass dropped its now-redundant description from
+this section.
+Tasks 1-5 — `is_kaprekar`, map literal shorthand properties `{a, b}` as
+sugar for `{"a": a, "b": b}`, `is_achilles` (powerful but not itself a
+perfect power), named function expressions (`fn name(params) { ... }`),
+and `is_pernicious` (a number whose binary popcount is itself prime) —
+plus task 6, an inclusive range literal `a..=b` (sugar for `range(a, b +
+1)`, the natural sibling of `a..b` now that the exclusive spelling has
+landed) — are fully scoped in `BACKLOG.md` itself and are not duplicated
+here, the same treatment tasks past slot 1 have gotten since this
+section stopped trying to keep prose in lockstep with every backlog
+slot). And only much later, a bytecode VM if performance ever actually
+matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -1344,7 +1351,37 @@ Reviewer-cycle matter, not a backlog-grooming one, so it is left as-is;
 the top of `BACKLOG.md` stays task 1 until that PR lands or is closed.
 The next grooming pass should continue alternating breadth/depth,
 restocking toward 6-7 tasks whenever a merge drops the count within
-reach of the 5-task floor.
+reach of the 5-task floor. This pass found the backlog back down to its
+5-task floor again (the range literal `a..b`'s one open-PR-`CHANGES
+REQUESTED` round noted last pass was resolved with a follow-up commit
+that fixed the misplaced test-class insertion point with no behavior
+change, and it landed via PR #277 this cycle, dropping the count from 6
+to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with
+`is_kaprekar` renumbered from 2 to 1, map literal shorthand properties
+from 3 to 2, `is_achilles` from 4 to 3, named function expressions from
+5 to 4, and `is_pernicious` from 6 to 5) and restocked it to 6 by adding
+task 6, an inclusive range literal `a..=b`, continuing alternation with
+a depth task after task 5's breadth work (`is_pernicious`) rather than
+stacking a second breadth task, per the policy above — the natural
+sibling of `a..b` now that the exclusive spelling exists: today writing
+a loop that must include its upper bound (`for i in 1..=5 { ... }` to
+cover `1` through `5`) forces either an easy-to-get-wrong `1..6` or the
+more verbose `range(1, 6)`. Adds a new `DOT_DOT_EQ` token (the lexer's
+`_dot` already special-cases exactly two dots into `DOT_DOT`; this
+checks for a trailing `=` the same way `_lt`'s `<<`-vs-`<<=` branch
+already does for a different operator) and an `inclusive` flag on
+`RangeExpr` (defaulting `False`, appended last after `column` so every
+existing positional `RangeExpr(...)` call site is unaffected, the same
+technique task 4's `FnExpr.name` field used), bumping the evaluated end
+bound by one only when it is already a valid non-bool int — an invalid
+end value still reaches the existing `_range` builtin's own validation
+unchanged, so both spellings continue sharing one error message, the
+same reuse `a..b` already established with `range()` itself. The next
+grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor.
 
 ## History
 

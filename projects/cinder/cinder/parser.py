@@ -1579,6 +1579,14 @@ class Parser:
         if self._check(TokenType.DOT_DOT_DOT):
             dots = self._advance()
             return Spread(self._ternary(), dots.line, dots.column)
+        if self._check(TokenType.IDENTIFIER) and self._peek_next().type in (
+            TokenType.COMMA,
+            TokenType.RBRACE,
+        ):
+            name = self._advance()
+            key = Literal(name.lexeme, name.line, name.column)
+            value = Identifier(name.lexeme, name.line, name.column)
+            return (key, value)
         return self._map_pair()
 
     def _map_pair(self) -> tuple:

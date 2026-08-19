@@ -1328,6 +1328,65 @@ class TestListsAndMaps(unittest.TestCase):
             ),
         )
 
+    def test_map_literal_shorthand_property(self):
+        self.assertEqual(
+            shape(parse("{a, b}")),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "a"), ("Identifier", "a")),
+                    (("Literal", "b"), ("Identifier", "b")),
+                ],
+            ),
+        )
+
+    def test_map_literal_shorthand_single_entry(self):
+        self.assertEqual(
+            shape(parse("{a}")),
+            ("MapLiteral", [(("Literal", "a"), ("Identifier", "a"))]),
+        )
+
+    def test_map_literal_shorthand_with_trailing_comma(self):
+        self.assertEqual(
+            shape(parse("{a,}")),
+            ("MapLiteral", [(("Literal", "a"), ("Identifier", "a"))]),
+        )
+
+    def test_map_literal_shorthand_mixed_with_explicit_pairs(self):
+        self.assertEqual(
+            shape(parse('{a, "c": 3, b}')),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "a"), ("Identifier", "a")),
+                    (("Literal", "c"), ("Literal", 3)),
+                    (("Literal", "b"), ("Identifier", "b")),
+                ],
+            ),
+        )
+
+    def test_map_literal_shorthand_composes_with_spread(self):
+        self.assertEqual(
+            shape(parse('{a, ...m}')),
+            (
+                "MapLiteral",
+                [
+                    (("Literal", "a"), ("Identifier", "a")),
+                    ("Spread", ("Identifier", "m")),
+                ],
+            ),
+        )
+
+    def test_map_literal_explicit_key_unaffected_by_shorthand(self):
+        self.assertEqual(
+            shape(parse("{a: 5}")),
+            ("MapLiteral", [(("Identifier", "a"), ("Literal", 5))]),
+        )
+
+    def test_map_literal_shorthand_lookahead_does_not_misfire_on_comprehension(self):
+        with self.assertRaises(ParseError):
+            parse("{a for a in [1, 2]}")
+
     def test_index_get(self):
         self.assertEqual(
             shape(parse("xs[0]")),

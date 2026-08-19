@@ -329,7 +329,8 @@ while (i < 10) {
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
-  `is_repdigit` to test whether every decimal digit of an integer is the same, and type predicates
+  `is_repdigit` to test whether every decimal digit of an integer is the same,
+  `is_undulating` to test whether an integer's decimal digits strictly alternate between exactly two distinct values, and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -408,29 +409,29 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: raw string literals
+Actively developed, nightly. Recently landed: `is_undulating` — testing
+whether an integer's digits strictly alternate between exactly two
+distinct values (e.g. `121`, `2323`), and before that raw string literals
 `r"..."`/`r'...'` — the escape/interpolation-free sibling to ordinary
 strings, and before that `is_perfect_power` — the general closure of
 `is_perfect_square`/`is_perfect_cube`/`is_powerful_number` ("is there
-*any* integer exponent `k >= 2`"), and before that `cbrt` — real cube
-root, the domain-unrestricted sibling to `sqrt` (negative input returns a
-negative result instead of raising, unlike `sqrt`'s complex-number
-guard). Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_undulating`
-— testing whether an integer's digits strictly alternate between exactly
-two distinct values (e.g. `121`, `2323`), a range literal `a..b` — sugar
-over the existing `range()` builtin usable directly in a `for` loop
-(`for i in 1..5 { ... }`), `is_kaprekar` — testing whether a number's
-square splits into two parts that sum back to the number (e.g. `45`: `45
-** 2 == 2025`, `20 + 25 == 45`), map literal shorthand properties `{a,
-b}` — sugar for `{"a": a, "b": b}`, the construction-side inverse of the
+*any* integer exponent `k >= 2`"). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): a range literal `a..b` — sugar over the
+existing `range()` builtin usable directly in a `for` loop (`for i in
+1..5 { ... }`), `is_kaprekar` — testing whether a number's square splits
+into two parts that sum back to the number (e.g. `45`: `45 ** 2 ==
+2025`, `20 + 25 == 45`), map literal shorthand properties `{a, b}` —
+sugar for `{"a": a, "b": b}`, the construction-side inverse of the
 map-destructuring shorthand `let {a, b} = expr;` already has,
 `is_achilles` — testing whether an integer is powerful (every prime
 factor has exponent `>= 2`) but *not* itself a perfect power, the gap
 between `is_powerful_number` and `is_perfect_power` (e.g. `72 = 2^3 *
-3^2`: powerful, but no single base/exponent pair produces it), and named
+3^2`: powerful, but no single base/exponent pair produces it), named
 function expressions `fn name(params) { ... }` — letting an anonymous
 function refer to itself by its own name from inside its body, without
 depending on whatever outer variable (if any) it happens to be assigned
-to. The backlog mixes language depth with stdlib breadth over time rather
+to, and `is_pernicious` — testing whether an integer's binary popcount is
+itself prime, the sibling of `is_evil`/`is_odious`'s popcount-parity
+check. The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

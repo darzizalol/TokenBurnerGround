@@ -1060,17 +1060,19 @@ bit-length-bounded search over candidate exponents, admitting negative
 input only through odd exponents the same way `is_perfect_cube` already
 does — has since landed via PR #274 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
-occupy slot 1 here, `is_perfect_power`, has since landed via PR #274 and
-is covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-6 — raw string literals `r"..."`/`r'...'`, `is_undulating`, a
-range literal `a..b`, `is_kaprekar`, map literal shorthand properties
-`{a, b}` as sugar for `{"a": a, "b": b}`, and `is_achilles` (powerful but
-not itself a perfect power) — are fully scoped in `BACKLOG.md` itself
-and are not duplicated here, the same treatment tasks past slot 1 have
-gotten since this section stopped trying to keep prose in lockstep with
-every backlog slot). And only much
+(numbering here matches `BACKLOG.md` tasks 1-6 — the tasks that used to
+occupy slots 1-2 here, raw string literals and `is_undulating`, have
+since landed via PR #275 and PR #276 and are covered in the "have since
+landed" history immediately above; this grooming pass dropped their now-
+redundant descriptions from this section.
+Tasks 1-6 — a range literal `a..b` (claimed, in progress as PR #277),
+`is_kaprekar`, map literal shorthand properties `{a, b}` as sugar for
+`{"a": a, "b": b}`, `is_achilles` (powerful but not itself a perfect
+power), named function expressions (`fn name(params) { ... }`), and
+`is_pernicious` (a number whose binary popcount is itself prime) — are
+fully scoped in `BACKLOG.md` itself and are not duplicated here, the
+same treatment tasks past slot 1 have gotten since this section stopped
+trying to keep prose in lockstep with every backlog slot). And only much
 later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1314,7 +1316,35 @@ so it never leaks outside calls to that specific function value, mirroring
 how a same-named parameter can shadow it within one call. The next
 grooming pass should continue alternating breadth/depth, restocking
 toward 6-7 tasks whenever a merge drops the count within reach of the
-5-task floor.
+5-task floor. This pass found the backlog back down to its 5-task floor
+again (`is_undulating` having landed via PR #276, dropping the count
+from 6 to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with the
+range literal renumbered from 3 to 1, `is_kaprekar` from 4 to 2, map
+literal shorthand properties from 5 to 3, `is_achilles` from 6 to 4, and
+named function expressions from 7 to 5) and restocked it to 6 by adding
+task 6, `is_pernicious`, continuing alternation with a breadth task
+after task 5's depth work (named function expressions) rather than
+stacking a second depth task, per the policy above — a bit-pattern
+classification sitting right next to `is_evil`/`is_odious`: those two
+already test the *parity* of an integer's binary popcount (count of `1`
+bits), and this asks a different question of the same popcount, whether
+it is itself *prime* (e.g. `7` is `111` in binary, popcount `3`, and `3`
+is prime, so `is_pernicious(7)` is `true`). Reuses `_is_prime`'s own
+trial-division loop shape, applied to the popcount rather than the input
+value directly, and follows `is_evil`/`is_odious`'s convention of
+raising a domain error on negative input (a popcount is only meaningful
+for a non-negative integer) rather than the "return false" convention
+most other digit/bit predicates use. Also noted while grooming: task 1
+(the range literal) has been claimed since 2026-08-19T14:02:47Z and has
+an open PR (#277) that picked up one round of `CHANGES REQUESTED` this
+cycle for a misplaced test-class insertion point — that is an Engineer/
+Reviewer-cycle matter, not a backlog-grooming one, so it is left as-is;
+the top of `BACKLOG.md` stays task 1 until that PR lands or is closed.
+The next grooming pass should continue alternating breadth/depth,
+restocking toward 6-7 tasks whenever a merge drops the count within
+reach of the 5-task floor.
 
 ## History
 

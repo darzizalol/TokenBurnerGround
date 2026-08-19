@@ -1082,30 +1082,36 @@ running `gcd` of exponents instead of a second `is_perfect_power` pass —
 has since landed via PR #280 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, `is_achilles`, has since landed via PR #280 and is
-covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-5 — named function expressions (`fn name(params) { ... }`),
-`is_pernicious` (a number whose binary popcount is itself prime), an
-inclusive range literal `a..=b` (sugar for `range(a, b + 1)`, the natural
-sibling of `a..b` now that the exclusive spelling has landed), `is_sphenic`
-(an integer that is the product of three distinct primes, e.g. `30 = 2 *
-3 * 5`, the natural next member of the "product of primes" family
-alongside `is_semiprime`'s "product of exactly two"), and triple-quoted
-string literals `"""..."""`/`'''...'''` (ending only at three consecutive
-matching quote characters, so quote-heavy content like embedded dialogue
-or JSON snippets needs no per-quote escaping; reuses the exact
-`STRING`/`INTERP_STRING` tokens ordinary strings already produce, so no
-parser/AST/interpreter changes are needed, only `Lexer.tokenize`'s
-dispatch and `_string`'s termination check) — plus task 6,
-`is_circular_prime` (a prime where every rotation of its decimal digits
-is also prime, e.g. `197`/`971`/`719`, combining `is_emirp`'s
-prime-plus-digit-transformation shape with `is_rotation`'s rotate-and-
-compare technique, just generating every rotation from one number instead
-of comparing two given strings) — are fully scoped in `BACKLOG.md` itself
-and are not duplicated here, the same treatment tasks past slot 1 have
-gotten since this section stopped trying to keep prose in lockstep with
-every backlog slot). And only much later, a bytecode VM
+occupy slot 1 here, named function expressions, has since landed via PR
+#281 and is covered in the "have since landed" history immediately above;
+this grooming pass dropped its now-redundant description from this
+section. Tasks 1-5 — `is_pernicious` (a number whose binary popcount is
+itself prime), an inclusive range literal `a..=b` (sugar for
+`range(a, b + 1)`, the natural sibling of `a..b` now that the exclusive
+spelling has landed), `is_sphenic` (an integer that is the product of
+three distinct primes, e.g. `30 = 2 * 3 * 5`, the natural next member of
+the "product of primes" family alongside `is_semiprime`'s "product of
+exactly two"), triple-quoted string literals `"""..."""`/`'''...'''`
+(ending only at three consecutive matching quote characters, so
+quote-heavy content like embedded dialogue or JSON snippets needs no
+per-quote escaping; reuses the exact `STRING`/`INTERP_STRING` tokens
+ordinary strings already produce, so no parser/AST/interpreter changes
+are needed, only `Lexer.tokenize`'s dispatch and `_string`'s termination
+check), and `is_circular_prime` (a prime where every rotation of its
+decimal digits is also prime, e.g. `197`/`971`/`719`, combining
+`is_emirp`'s prime-plus-digit-transformation shape with `is_rotation`'s
+rotate-and-compare technique, just generating every rotation from one
+number instead of comparing two given strings) — plus task 6, missing
+string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, and a fixed-width
+`\uXXXX` Unicode escape — `_ESCAPES` has recognized only five escapes
+since strings were first implemented, so every other escape with an
+obvious meaning has always been a guaranteed `LexError`; the
+one-character escapes are a pure dict extension, `\uXXXX` needs its own
+branch and helper but reuses `_string`'s existing character-scanning
+primitives) — are fully scoped in `BACKLOG.md` itself and are not
+duplicated here, the same treatment tasks past slot 1 have gotten since
+this section stopped trying to keep prose in lockstep with every backlog
+slot). And only much later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1468,7 +1474,33 @@ digit transformation" shape with `is_rotation`'s existing rotate-and-
 compare technique, neither of which alone covers testing every rotation
 of a single generated number against itself. The next grooming pass
 should continue alternating breadth/depth, restocking toward 6-7 tasks
-whenever a merge drops the count within reach of the 5-task floor.
+whenever a merge drops the count within reach of the 5-task floor. This
+pass found the backlog back down to its 5-task floor again (named
+function expressions having landed cleanly via PR #281 with no bounce,
+dropping the count from 6 to 5, dropping its now-landed description from
+the "what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining five tasks from 2-6 down to 1-5,
+with `is_pernicious` renumbered from 2 to 1, the inclusive range literal
+from 3 to 2, `is_sphenic` from 4 to 3, triple-quoted string literals from
+5 to 4, and `is_circular_prime` from 6 to 5) and restocked it to 6 by
+adding task 6, missing string escape sequences (`\r`, `\0`, `\b`, `\f`,
+`\v`, and a fixed-width `\uXXXX` Unicode escape), continuing alternation
+with a depth task after task 5's breadth work (`is_circular_prime`)
+rather than stacking a second breadth task, per the policy above —
+`Lexer._ESCAPES` has recognized only five escapes (`\n`, `\t`, `\\`, `\"`,
+`\'`) since strings were first implemented, so every other escape a
+literal might reasonably contain, including ones with obvious meanings
+like carriage return or a Unicode code point outside what the source
+file's own encoding can type directly, has always been a guaranteed
+`LexError`. The five one-character escapes are a pure `_ESCAPES` dict
+extension; `\uXXXX` needs its own branch and helper method since it
+consumes four additional characters rather than mapping to a fixed
+string, but reuses the same `_peek`/`_advance`/`_at_end` cursor primitives
+`_string` already scans with, no new scanning mechanism. Raw strings stay
+untouched by design, since skipping escape processing entirely is their
+whole purpose. The next grooming pass should continue alternating
+breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
+count within reach of the 5-task floor.
 
 ## History
 

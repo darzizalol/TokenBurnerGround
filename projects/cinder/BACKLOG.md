@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `is_pernicious` — a number whose binary popcount is itself prime
+## 1. Standard library: `is_pernicious` — a number whose binary popcount is itself prime
 
 Build: the breadth task after task 5's depth work (named function
 expressions) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -93,7 +93,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)`
+## 2. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)`
 
 Build: the depth task after task 5's breadth work (`is_pernicious`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -251,7 +251,7 @@ three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_sphenic` — a number that is the product of three distinct primes
+## 3. Standard library: `is_sphenic` — a number that is the product of three distinct primes
 
 Build: the breadth task after task 5's depth work (inclusive range literal
 `a..=b`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog
@@ -341,7 +341,7 @@ leave all three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: triple-quoted string literals `"""..."""`/`'''...'''`
+## 4. Language: triple-quoted string literals `"""..."""`/`'''...'''`
 
 Build: the depth task after task 5's breadth work (`is_sphenic`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -467,7 +467,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
+## 5. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
 
 Build: the breadth task after task 5's depth work (triple-quoted string
 literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -556,6 +556,145 @@ name). Once merged, `README.md`'s Builtins bullet needs `is_circular_prime`
 added near `is_emirp`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s roadmap paragraph needs this moved from backlog to landed —
 leave all three to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`)
+
+Build: the depth task after task 5's breadth work (`is_circular_prime`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that named function expressions has landed via PR #281, dropping
+the count to the 5-task floor. `Lexer._ESCAPES` (`cinder/lexer.py`) only
+recognizes five escape sequences today — `\n`, `\t`, `\\`, `\"`, `\'` — so
+every other common escape a string literal might reasonably contain is a
+guaranteed `LexError`, including ones with obvious, unambiguous meanings:
+carriage return, the NUL byte, backspace, form feed, vertical tab, and any
+Unicode code point outside what can be typed directly in the source file.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print("a\rb");'
+# -> <eval>:1:7: invalid escape sequence '\r'
+python3 -m cinder.cli eval 'print("café");'
+# -> <eval>:1:7: invalid escape sequence '\u'
+```
+This is a guaranteed `LexError` today for every escape this task adds, so no
+currently-valid Cinder program's meaning changes.
+
+**Simple one-character escapes** (`cinder/lexer.py`): `_ESCAPES` (search
+`_ESCAPES = {`, right after the `_COMPOUND_ASSIGN_TOKENS` dict near the top
+of the file) is a flat `dict[str, str]` already consulted by `_string`'s
+`\`-escape branch — extend it with the five missing standard escapes,
+matching Python's/C's own spelling for each:
+```python
+_ESCAPES = {
+    "n": "\n",
+    "t": "\t",
+    "r": "\r",
+    "0": "\0",
+    "b": "\b",
+    "f": "\f",
+    "v": "\v",
+    "\\": "\\",
+    '"': '"',
+    "'": "'",
+}
+```
+No other change is needed for these five — `_string`'s existing
+`if escape not in _ESCAPES: raise LexError(...)` / `chars.append(_ESCAPES[escape])`
+pair (search `escape not in _ESCAPES`) already handles any key added to the
+dict.
+
+**Unicode escape `\uXXXX`** (`cinder/lexer.py`): exactly four hex digits,
+the same fixed-width spelling Python/JavaScript/C# all use for their basic
+(non-surrogate-pair) Unicode escape — no variable-width `\u{...}` form.
+This one needs its own branch rather than a `_ESCAPES` entry, since it
+consumes four additional characters instead of mapping to a fixed string.
+In `_string`'s `\`-escape handling (search `escape = self._advance()`,
+right where `_ESCAPES` is consulted), branch on `escape == "u"` before the
+`_ESCAPES` lookup:
+```python
+                escape = self._advance()
+                if escape == "u":
+                    chars.append(self._unicode_escape(start_line, start_col))
+                elif escape not in _ESCAPES:
+                    raise LexError(
+                        f"invalid escape sequence '\\{escape}'", start_line, start_col
+                    )
+                else:
+                    chars.append(_ESCAPES[escape])
+```
+Add a new method right after `_string` (search `def _raw_string`, insert
+before it):
+```python
+    def _unicode_escape(self, start_line: int, start_col: int) -> str:
+        digits = []
+        for _ in range(4):
+            if self._at_end() or self._peek() not in "0123456789abcdefABCDEF":
+                raise LexError(
+                    "invalid unicode escape sequence, expected 4 hex digits after '\\u'",
+                    start_line,
+                    start_col,
+                )
+            digits.append(self._advance())
+        return chr(int("".join(digits), 16))
+```
+`_peek()`/`_advance()`/`_at_end()` are the same character-scanning primitives
+`_string` itself already uses throughout, so this reuses the lexer's
+existing cursor rather than introducing a second way to walk `self.source`.
+An incomplete or non-hex sequence (`"\u12"`, `"\u12zz"`, a string ending
+right after `\u`) raises before consuming anything it shouldn't — `_peek()`
+returning past-EOF or a non-hex character stops the loop immediately at
+whichever digit position failed, leaving `self.pos` wherever it stopped
+(irrelevant, since raising a `LexError` abandons tokenization entirely, the
+same way every other lexer error already does; no caller resumes scanning
+after one).
+
+**Raw strings are untouched** (`_raw_string`, search `def _raw_string`):
+raw strings deliberately skip all escape processing by design (that's their
+entire purpose — see the raw-string-literals task in the "Done" history),
+so `r"\r"` keeps meaning the two literal characters backslash-then-`r`,
+unaffected by this task.
+
+Acceptance criteria:
+- `print("a\rb");` prints `a`, a carriage return, `b` (assert on the raw
+  string value in a lexer/interpreter test rather than terminal rendering).
+- `print("a\0b");` prints `a`, a NUL byte, `b`.
+- `print("a\bb");` prints `a`, a backspace, `b`.
+- `print("a\fb");` prints `a`, a form feed, `b`.
+- `print("a\vb");` prints `a`, a vertical tab, `b`.
+- `print("café");` prints `café` — a Unicode code point outside ASCII,
+  built from a 4-hex-digit escape.
+- `print("é");` (uppercase hex digits) also prints `é` — hex digits are
+  case-insensitive, matching Python's/JavaScript's own `\u` escape.
+- `print('a\rb');` — single-quoted strings get the same six escapes as
+  double-quoted ones, since both delimiters share the same `_string` method.
+- `"\u12";` (too few hex digits before the closing quote) raises `LexError`
+  matching `"invalid unicode escape sequence, expected 4 hex digits after
+  '\\u'"`.
+- `"\u12zz";` (non-hex character among the four) raises `LexError` with the
+  same message.
+- `"bad \z escape";` still raises `LexError` matching `"invalid escape
+  sequence '\\z'"` — an unrecognized one-character escape is unaffected by
+  this task (confirms `test_invalid_escape_sequence` stays green unchanged).
+- `r"a\rb";` — a raw string's `\r` is unaffected, still the two literal
+  characters backslash and `r`, not a carriage return (confirms
+  `test_raw_string_double_quoted_escapes_not_processed`-style behavior is
+  unaffected).
+- Interpolation still works alongside the new escapes:
+  `let x = 5; print("é: ${x}");` prints `é: 5`.
+- Full test suite passes.
+
+Likely files: `cinder/lexer.py` (`_ESCAPES`, `_string`, new
+`_unicode_escape` method), `tests/test_lexer.py` (`class TestLiterals`,
+search `def test_string_escapes` for where the escape tests sit, add
+`test_string_escapes_carriage_return_null_backspace_formfeed_verticaltab`
+and a handful of `test_unicode_escape_*` cases nearby; `class TestErrors`,
+search `def test_invalid_escape_sequence`, add the two malformed-`\u` cases
+there). Once merged, `README.md`'s string-literals bullet (search "valid
+escapes") needs the new escapes mentioned alongside `\n`/`\t`/`\\`/`\"`/`\'`,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s roadmap
+paragraph needs this moved from backlog to landed — leave all three to the
+Architect's next grooming pass, not this task.
 
 ---
 

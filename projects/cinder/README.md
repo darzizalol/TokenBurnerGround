@@ -331,6 +331,7 @@ while (i < 10) {
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
+  `is_kaprekar` to test whether a number's square splits into two parts that sum back to the number,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
   `is_repdigit` to test whether every decimal digit of an integer is the same,
@@ -413,29 +414,31 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a range literal `a..b` —
-sugar over the existing `range()` builtin usable directly in a `for`
-loop (`for i in 1..5 { ... }`), and before that `is_undulating` —
-testing whether an integer's digits strictly alternate between exactly
-two distinct values (e.g. `121`, `2323`), and before that raw string
-literals `r"..."`/`r'...'` — the escape/interpolation-free sibling to
-ordinary strings. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_kaprekar` — testing whether a number's square splits into two parts
-that sum back to the number (e.g. `45`: `45 ** 2 == 2025`, `20 + 25 ==
-45`), map literal shorthand properties `{a, b}` — sugar for `{"a": a,
-"b": b}`, the construction-side inverse of the map-destructuring
-shorthand `let {a, b} = expr;` already has, `is_achilles` — testing
-whether an integer is powerful (every prime factor has exponent `>= 2`)
-but *not* itself a perfect power, the gap between `is_powerful_number`
-and `is_perfect_power` (e.g. `72 = 2^3 * 3^2`: powerful, but no single
-base/exponent pair produces it), named function expressions `fn
-name(params) { ... }` — letting an anonymous function refer to itself by
-its own name from inside its body, without depending on whatever outer
-variable (if any) it happens to be assigned to, `is_pernicious` —
-testing whether an integer's binary popcount is itself prime, the
-sibling of `is_evil`/`is_odious`'s popcount-parity check, and an
-inclusive range literal `a..=b` — the natural sibling of `a..b` for
-loops that must include their upper bound (`for i in 1..=5 { ... }`
-instead of the easy-to-get-wrong `1..6`). The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `is_kaprekar` — testing
+whether a number's square splits into two parts that sum back to the
+number (e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`), and before that a
+range literal `a..b` — sugar over the existing `range()` builtin usable
+directly in a `for` loop (`for i in 1..5 { ... }`), and before that
+`is_undulating` — testing whether an integer's digits strictly alternate
+between exactly two distinct values (e.g. `121`, `2323`). Coming up next
+(see [`BACKLOG.md`](BACKLOG.md)): map literal shorthand properties
+`{a, b}` — sugar for `{"a": a, "b": b}`, the construction-side inverse of
+the map-destructuring shorthand `let {a, b} = expr;` already has,
+`is_achilles` — testing whether an integer is powerful (every prime
+factor has exponent `>= 2`) but *not* itself a perfect power, the gap
+between `is_powerful_number` and `is_perfect_power` (e.g. `72 = 2^3 *
+3^2`: powerful, but no single base/exponent pair produces it), named
+function expressions `fn name(params) { ... }` — letting an anonymous
+function refer to itself by its own name from inside its body, without
+depending on whatever outer variable (if any) it happens to be assigned
+to, `is_pernicious` — testing whether an integer's binary popcount is
+itself prime, the sibling of `is_evil`/`is_odious`'s popcount-parity
+check, an inclusive range literal `a..=b` — the natural sibling of
+`a..b` for loops that must include their upper bound (`for i in 1..=5
+{ ... }` instead of the easy-to-get-wrong `1..6`), and `is_sphenic` —
+testing whether an integer is the product of three distinct primes (e.g.
+`30 = 2 * 3 * 5`), the natural next member of the "product of primes"
+family alongside `is_semiprime`'s "product of exactly two". The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

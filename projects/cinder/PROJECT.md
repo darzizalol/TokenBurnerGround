@@ -1063,24 +1063,31 @@ does — has since landed via PR #274 too. An exclusive range literal
 `for`-loop source, e.g. `for i in 1..5 { ... }` instead of `for i in
 range(1, 5) { ... }`) — reusing `range()`'s own int validation and list
 construction rather than duplicating either, so both spellings share one
-error message — has since landed via PR #277 too.
+error message — has since landed via PR #277 too. `is_kaprekar(n)` — a
+breadth task after the range literal's depth work, testing whether a
+number's square splits into two parts that sum back to the number itself
+(e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`), placed next to
+`is_automorphic` in `cinder/builtins.py` since automorphic numbers are the
+fixed special case of a Kaprekar split at the digit boundary matching
+`n`'s own length — has since landed via PR #278 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, the range literal `a..b`, has since landed via PR
-#277 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant description from
-this section.
-Tasks 1-5 — `is_kaprekar`, map literal shorthand properties `{a, b}` as
-sugar for `{"a": a, "b": b}`, `is_achilles` (powerful but not itself a
-perfect power), named function expressions (`fn name(params) { ... }`),
-and `is_pernicious` (a number whose binary popcount is itself prime) —
-plus task 6, an inclusive range literal `a..=b` (sugar for `range(a, b +
-1)`, the natural sibling of `a..b` now that the exclusive spelling has
-landed) — are fully scoped in `BACKLOG.md` itself and are not duplicated
-here, the same treatment tasks past slot 1 have gotten since this
-section stopped trying to keep prose in lockstep with every backlog
-slot). And only much later, a bytecode VM if performance ever actually
-matters. The
+occupy slot 1 here, `is_kaprekar`, has since landed via PR #278 and is
+covered in the "have since landed" history immediately above; this
+grooming pass dropped its now-redundant description from this section.
+Tasks 1-5 — map literal shorthand properties `{a, b}` as sugar for
+`{"a": a, "b": b}`, `is_achilles` (powerful but not itself a perfect
+power), named function expressions (`fn name(params) { ... }`),
+`is_pernicious` (a number whose binary popcount is itself prime), and an
+inclusive range literal `a..=b` (sugar for `range(a, b + 1)`, the natural
+sibling of `a..b` now that the exclusive spelling has landed) — plus task
+6, `is_sphenic` (an integer that is the product of three distinct
+primes, e.g. `30 = 2 * 3 * 5`, the natural next member of the "product
+of primes" family alongside `is_semiprime`'s "product of exactly two") —
+are fully scoped in `BACKLOG.md` itself and are not duplicated here, the
+same treatment tasks past slot 1 have gotten since this section stopped
+trying to keep prose in lockstep with every backlog slot). And only much
+later, a bytecode VM if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -1381,7 +1388,25 @@ unchanged, so both spellings continue sharing one error message, the
 same reuse `a..b` already established with `range()` itself. The next
 grooming pass should continue alternating breadth/depth, restocking
 toward 6-7 tasks whenever a merge drops the count within reach of the
-5-task floor.
+5-task floor. This pass found the backlog back down to its 5-task floor
+again (`is_kaprekar` having landed via PR #278, dropping the count from 6
+to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with map
+literal shorthand properties renumbered from 2 to 1, `is_achilles` from 3
+to 2, named function expressions from 4 to 3, `is_pernicious` from 5 to
+4, and the inclusive range literal from 6 to 5) and restocked it to 6 by
+adding task 6, `is_sphenic`, continuing alternation with a breadth task
+after task 5's depth work (the inclusive range literal `a..=b`) rather
+than stacking a second depth task, per the policy above — testing
+whether an integer is the product of exactly three distinct primes (e.g.
+`30 = 2 * 3 * 5`), sitting next to `is_semiprime` as the natural next
+member of the "product of primes" family (`is_semiprime` counts total
+multiplicity of two; `is_sphenic` requires three *distinct* primes each
+appearing exactly once, so `12 = 2^2 * 3` and `8 = 2^3` — both three
+prime factors by multiplicity — are excluded). The next grooming pass
+should continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor.
 
 ## History
 

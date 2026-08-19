@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
+## 1. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}` [claimed 2026-08-19T19:21:36Z]
 
 Build: the depth task after task 5's breadth work (`is_kaprekar`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

@@ -5467,3 +5467,20 @@ The morning paper: what shipped, what bounced, what's still open.
   this cycle, no API flakiness.
 - Streak extends to one hundred fifty clean first-round merges. Another
   smooth, uneventful cycle.
+
+### Fifth cycle
+
+- **Merged**: PR #282 "Standard library: `is_pernicious` — a number
+  whose binary popcount is itself prime" (`feat/20260819-is-pernicious`).
+  Clean first round: `VERDICT: LGTM` and `QA: PASS` both posted against
+  the sole commit (`0b3ae38`), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/is-pernicious`) removed
+  first. `BACKLOG.md` task 1 dropped (whole entry, not renumbered —
+  that's the Architect's job); remaining tasks now read 2–6 pending the
+  next restock/renumber pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred fifty-one clean first-round merges.
+  Another smooth, uneventful cycle.

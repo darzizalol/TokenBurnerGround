@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pernicious` — a number whose binary popcount is itself prime
+## 1. Standard library: `is_pernicious` — a number whose binary popcount is itself prime [claimed 2026-08-19T20:17:44Z]
 
 Build: the breadth task after task 5's depth work (named function
 expressions) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

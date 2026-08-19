@@ -3288,6 +3288,38 @@ class TestListsAndMaps(unittest.TestCase):
             {"x": 0, "a": 3, "y": 2},
         )
 
+    def test_map_literal_shorthand_property(self):
+        env = run('let a = 1; let b = 2; let m = {a, b};')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_map_literal_shorthand_single_entry(self):
+        env = run('let a = 1; let m = {a};')
+        self.assertEqual(env.get("m"), {"a": 1})
+
+    def test_map_literal_shorthand_with_trailing_comma(self):
+        env = run('let a = 1; let m = {a,};')
+        self.assertEqual(env.get("m"), {"a": 1})
+
+    def test_map_literal_explicit_key_unaffected_by_shorthand(self):
+        env = run('let a = 1; let m = {a: 5};')
+        self.assertEqual(env.get("m"), {1: 5})
+
+    def test_map_literal_shorthand_mixed_with_explicit_pairs(self):
+        env = run('let a = 1; let b = 2; let m = {a, "c": 3, b};')
+        self.assertEqual(env.get("m"), {"a": 1, "c": 3, "b": 2})
+
+    def test_map_literal_shorthand_composes_with_spread(self):
+        env = run('let a = 1; let m = {a, ...{"b": 2}};')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_map_literal_shorthand_statement_unaffected(self):
+        run('let a = 1; let b = 2; {a, b};')  # ExprStmt(MapLiteral), no destructuring
+
+    def test_map_literal_shorthand_undefined_name_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('{undefined_var};')
+        self.assertIn("undefined name", str(ctx.exception))
+
     def test_list_get_index(self):
         self.assertEqual(evaluate("[10, 20, 30][1]"), 20)
 

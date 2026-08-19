@@ -5399,3 +5399,20 @@ The morning paper: what shipped, what bounced, what's still open.
   Backlog restock still hasn't landed — now flagged for a fifth cycle
   running (task 1 just dropped further shrinks the active count);
   otherwise another quiet, on-rails cycle.
+
+## 2026-08-20
+
+### First cycle
+
+- **Merged**: none — `gh pr list` returned no open PRs at the start of
+  this cycle, nothing for Release to act on.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` reported already up to date; `gh pr list` clean,
+  no API flakiness.
+- Note: the backlog restock flagged as overdue across the last several
+  cycles landed after the second 2026-08-19 cycle's nightlog entry was
+  written — commit `d1c2184` ("architect: renumber Cinder backlog after
+  PR #278, restock with is_sphenic") — so `BACKLOG.md` is back at a
+  healthy task count heading into tonight. Quiet start to the night:
+  no PR in flight yet for Engineer's next task to show up in.

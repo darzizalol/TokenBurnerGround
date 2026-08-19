@@ -11,93 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_undulating` — digit-alternation classification [claimed 2026-08-18T20:18:39Z]
-
-Build: the breadth task after task 5's depth work (raw string literals)
-per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back
-to 6 tasks now that `multiplicative_persistence` has landed via PR
-#270, dropping the count to the 5-task floor. The digit-pattern cluster
-in `cinder/builtins.py` (`is_repdigit`, `is_palindrome_number`,
-`is_armstrong`, `is_harshad`, `is_automorphic`) has no test for
-*alternation* — a number whose decimal digits strictly alternate
-between exactly two distinct values, like `121` or `2323`, sometimes
-called an "undulating number". Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_undulating(121));'
-# -> CinderRuntimeError: undefined name 'is_undulating'
-```
-
-Add to `cinder/builtins.py`, registered right after `is_repdigit`
-(search `def _is_repdigit`, immediately before `_is_perfect_square`):
-
-```python
-def _is_undulating(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_undulating", arguments, 1, line, column)
-    value = _require_int("is_undulating", arguments[0], line, column)
-    if value < 0:
-        return False
-    digits = str(value)
-    if len(digits) < 3 or digits[0] == digits[1]:
-        return False
-    return all(digit == digits[i % 2] for i, digit in enumerate(digits))
-```
-
-**The two things that make this well-defined, not ambiguous**: a
-genuine undulation needs at least three digits (`11` merely repeats one
-digit twice — it is not "alternating" in any meaningful sense, and
-`is_repdigit` already covers the same-digit case), and the two digits
-in the pattern must actually be distinct (`111` is a repdigit, not an
-undulation, even though it trivially "alternates" between one value and
-itself). Both are checked up front (`len(digits) < 3 or digits[0] ==
-digits[1]`) before the alternation scan runs, so a short or
-constant-digit input returns `false` in one step rather than the scan
-vacuously succeeding. Negative input returns `false` rather than
-raising, the same convention `is_palindrome_number`/`is_repdigit`/
-`is_armstrong`/`is_strong_number` already use for this digit-pattern
-cluster (unlike `is_perfect_cube`/`is_perfect_power`, where a negative
-result is sometimes legitimately `true` — a digit-pattern property has
-no comparable negative case worth special-casing).
-
-Acceptance criteria:
-- `is_undulating(121);` is `true` — three digits, alternating 1-2-1.
-- `is_undulating(2323);` is `true` — four digits, alternating 2-3-2-3.
-- `is_undulating(12121);` is `true` — five digits, longer alternation.
-- `is_undulating(101);` is `true` — alternating 1-0-1; zero is a valid
-  alternating digit.
-- `is_undulating(111);` is `false` — three digits but only one distinct
-  value (a repdigit, not an undulation).
-- `is_undulating(11);` is `false` — only two digits, below the
-  three-digit minimum.
-- `is_undulating(1);` is `false` — single digit.
-- `is_undulating(0);` is `false` — single digit.
-- `is_undulating(123);` is `false` — three digits, none repeat, not an
-  alternating pattern.
-- `is_undulating(1210);` is `false` — four digits, matches the
-  alternating pattern for the first three (1-2-1) then breaks at the
-  fourth (`0`, not `2`).
-- `is_undulating(-121);` is `false` — negative input, following the
-  cluster's existing convention rather than raising.
-- `is_undulating(5.0);` raises `CinderRuntimeError` matching
-  `"is_undulating() requires an int, got float"`.
-- `is_undulating(true);` raises `CinderRuntimeError` matching
-  `"is_undulating() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_repdigit`, see
-current line numbers — shift if earlier tasks this cycle landed first),
-`tests/test_builtins.py` (model on `class TestIsRepdigit` and `class
-TestIsPalindromeNumber`, search either name). Once merged, `README.md`'s
-Builtins bullet needs `is_undulating` added near `is_repdigit`/
-`is_palindrome_number`, its "Status & roadmap" section needs updating,
-and `PROJECT.md`'s roadmap paragraph needs this moved from backlog to
-landed — leave all three to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Language: range literal `a..b` — sugar over the existing `range()` builtin [claimed 2026-08-19T14:02:47Z]
+## 1. Language: range literal `a..b` — sugar over the existing `range()` builtin [claimed 2026-08-19T14:02:47Z]
 
 Build: the depth task after task 4's breadth work (`is_undulating`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -262,7 +176,7 @@ task.
 
 ---
 
-## 3. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
+## 2. Standard library: `is_kaprekar` — numbers whose square splits back into themselves
 
 Build: the breadth task after task 5's depth work (range literal `a..b`)
 per `PROJECT.md`'s breadth-vs-depth policy, continuing the two-tasks-
@@ -355,7 +269,7 @@ this task.
 
 ---
 
-## 4. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
+## 3. Language: map literal shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}`
 
 Build: the depth task after task 5's breadth work (`is_kaprekar`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -470,7 +384,7 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `is_achilles` — powerful but not itself a perfect power
+## 4. Standard library: `is_achilles` — powerful but not itself a perfect power
 
 Build: the breadth task after task 5's depth work (map literal shorthand
 properties) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -573,7 +487,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: named function expressions (`fn name(params) { ... }`) for self-referencing anonymous functions
+## 5. Language: named function expressions (`fn name(params) { ... }`) for self-referencing anonymous functions
 
 Build: the depth task after task 5's breadth work (`is_achilles`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

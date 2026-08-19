@@ -2753,3 +2753,13 @@ for vision/architecture.
   contain its own delimiter quote — the other quote character can
   always be used instead. Clean first pass, no bounces (3124 tests
   passing, up from 3109).
+- **Standard library: `is_undulating`** — merged 2026-08-19T14:11:47Z
+  via PR #276 (`feat/20260818-is-undulating`). Added `is_undulating` to
+  `cinder/builtins.py`, registered right after `is_repdigit`, testing
+  whether an integer's decimal digits strictly alternate between
+  exactly two distinct values (e.g. `121`, `2323`). Follows the
+  digit-pattern cluster's existing conventions: negative input returns
+  `false` rather than raising, and both the three-digit minimum and
+  distinct-first-two-digits checks run up front before the alternation
+  scan. Clean first pass, no bounces (3138 tests passing, up from
+  3124).

@@ -303,13 +303,19 @@ class FnExpr:
     `params` is a `list[Param]` — see `Param`'s docstring for its shape.
 
     `rest_param` is the name of a trailing `...name` parameter, or `None` if
-    the function has none — see `fn f(a, ...rest) { ... }`."""
+    the function has none — see `fn f(a, ...rest) { ... }`.
+
+    `name` is the function's own self-reference name for `fn name(...) {
+    ... }`, or `None` for the plain anonymous `fn(...) { ... }` form —
+    see `_fn_expression` in `parser.py` and `CinderFunction.name` in
+    `interpreter.py`."""
 
     params: list
     rest_param: "str | None"
     body: "Block"
     line: int
     column: int
+    name: "str | None" = None
 
 
 Expr = Union[

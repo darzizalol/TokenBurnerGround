@@ -2733,6 +2733,50 @@ class TestFunctions(unittest.TestCase):
         )
         self.assertEqual(env.get("result"), 15)
 
+    def test_named_function_expression_self_reference_recursion(self):
+        env = run(
+            "let f = fn fact(n) { return n <= 1 ? 1 : n * fact(n - 1); }; "
+            "let result = f(5);"
+        )
+        self.assertEqual(env.get("result"), 120)
+
+    def test_named_function_expression_self_reference_survives_reassignment(self):
+        env = run(
+            "let g = fn fact(n) { return n <= 1 ? 1 : n * fact(n - 1); }; "
+            "let h = g; g = nil; "
+            "let result = h(5);"
+        )
+        self.assertEqual(env.get("result"), 120)
+
+    def test_named_function_expression_works_as_call_argument(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let result = map([1, 2, 3], fn double(x) { return x * 2; });",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), [2, 4, 6])
+
+    def test_named_function_expression_parameter_shadows_self_binding(self):
+        env = run("let f = fn f(f) { return f + 1; }; let result = f(10);")
+        self.assertEqual(env.get("result"), 11)
+
+    def test_fn_declaration_at_statement_position_unaffected(self):
+        env = run("fn standalone() { return 1; } let result = standalone();")
+        self.assertEqual(env.get("result"), 1)
+
+    def test_named_function_expression_arity_error_uses_given_name(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"fact\(\) expects 1 argument\(s\), got 0"
+        ):
+            run("let f = fn fact(n) { return n; }; f();")
+
+    def test_anonymous_function_expression_arity_error_still_says_anonymous(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"<anonymous>\(\) expects 1 argument\(s\), got 0"
+        ):
+            run("let f = fn(n) { return n; }; f();")
+
     def test_direct_runtime_error_has_empty_frames(self):
         with self.assertRaises(CinderRuntimeError) as ctx:
             run('1 + "a";')

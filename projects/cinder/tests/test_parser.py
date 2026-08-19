@@ -168,7 +168,7 @@ def shape(node):
             shape(node.else_expr),
         )
     if isinstance(node, FnExpr):
-        return ("FnExpr", params_shape(node.params), node.rest_param, stmt_shape(node.body))
+        return ("FnExpr", params_shape(node.params), node.rest_param, stmt_shape(node.body), node.name)
     if isinstance(node, InterpString):
         return (
             "InterpString",
@@ -2784,7 +2784,7 @@ class TestFunctions(unittest.TestCase):
     def test_fn_expression_no_params(self):
         self.assertEqual(
             shape(parse("fn() { return 1; }")),
-            ("FnExpr", [], None, ("Block", [("ReturnStmt", ("Literal", 1))])),
+            ("FnExpr", [], None, ("Block", [("ReturnStmt", ("Literal", 1))]), None),
         )
 
     def test_fn_expression_with_params(self):
@@ -2803,6 +2803,7 @@ class TestFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -2819,6 +2820,7 @@ class TestFunctions(unittest.TestCase):
                         [("x", None)],
                         None,
                         ("Block", [("ReturnStmt", ("Identifier", "x"))]),
+                        None,
                     ),
                 ],
             ),
@@ -2827,6 +2829,44 @@ class TestFunctions(unittest.TestCase):
     def test_fn_expression_missing_body_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let f = fn();")
+
+    def test_named_fn_expression_no_params(self):
+        self.assertEqual(
+            shape(parse("fn fact() { return 1; }")),
+            ("FnExpr", [], None, ("Block", [("ReturnStmt", ("Literal", 1))]), "fact"),
+        )
+
+    def test_named_fn_expression_with_params(self):
+        self.assertEqual(
+            shape(parse("fn fact(n) { return n; }")),
+            (
+                "FnExpr",
+                [("n", None)],
+                None,
+                ("Block", [("ReturnStmt", ("Identifier", "n"))]),
+                "fact",
+            ),
+        )
+
+    def test_arrow_function_stays_anonymous(self):
+        self.assertEqual(
+            shape(parse("n => n + 1")),
+            (
+                "FnExpr",
+                [("n", None)],
+                None,
+                (
+                    "Block",
+                    [
+                        (
+                            "ReturnStmt",
+                            ("Binary", ("Identifier", "n"), TokenType.PLUS, ("Literal", 1)),
+                        )
+                    ],
+                ),
+                None,
+            ),
+        )
 
     def test_fn_declaration_with_default_param(self):
         self.assertEqual(
@@ -2878,6 +2918,7 @@ class TestFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -2967,6 +3008,7 @@ class TestFunctions(unittest.TestCase):
                 [("a", None)],
                 "rest",
                 ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
+                None,
             ),
         )
 
@@ -3105,6 +3147,7 @@ class TestFunctions(unittest.TestCase):
                 [("Param", [("a", None), ("b", None)], None, False)],
                 None,
                 ("Block", [("ReturnStmt", ("Identifier", "a"))]),
+                None,
             ),
         )
 
@@ -3124,6 +3167,7 @@ class TestFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3172,7 +3216,7 @@ class TestArrowFunctions(unittest.TestCase):
     def test_arrow_no_params(self):
         self.assertEqual(
             shape(parse("() => 42")),
-            ("FnExpr", [], None, ("Block", [("ReturnStmt", ("Literal", 42))])),
+            ("FnExpr", [], None, ("Block", [("ReturnStmt", ("Literal", 42))]), None),
         )
 
     def test_arrow_one_param(self):
@@ -3191,6 +3235,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3210,6 +3255,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3229,6 +3275,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3240,6 +3287,7 @@ class TestArrowFunctions(unittest.TestCase):
                 [("a", None)],
                 "rest",
                 ("Block", [("ReturnStmt", ("Identifier", "rest"))]),
+                None,
             ),
         )
 
@@ -3264,6 +3312,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3280,6 +3329,7 @@ class TestArrowFunctions(unittest.TestCase):
                         [("x", None)],
                         None,
                         ("Block", [("ReturnStmt", ("Identifier", "x"))]),
+                        None,
                     ),
                 ],
             ),
@@ -3315,10 +3365,12 @@ class TestArrowFunctions(unittest.TestCase):
                                         )
                                     ],
                                 ),
+                                None,
                             ),
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3345,7 +3397,7 @@ class TestArrowFunctions(unittest.TestCase):
         # too, rather than falling back to a failed grouping-expression parse.
         self.assertEqual(
             shape(parse("(x, ) => x")),
-            ("FnExpr", [("x", None)], None, ("Block", [("ReturnStmt", ("Identifier", "x"))])),
+            ("FnExpr", [("x", None)], None, ("Block", [("ReturnStmt", ("Identifier", "x"))]), None),
         )
 
     def test_arrow_block_body_parses(self):
@@ -3366,6 +3418,7 @@ class TestArrowFunctions(unittest.TestCase):
                         ("ReturnStmt", ("Identifier", "y")),
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3387,6 +3440,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3417,6 +3471,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3441,6 +3496,7 @@ class TestArrowFunctions(unittest.TestCase):
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3476,11 +3532,13 @@ class TestArrowFunctions(unittest.TestCase):
                                             )
                                         ],
                                     ),
+                                    None,
                                 ),
                             ),
                         )
                     ],
                 ),
+                None,
             ),
         )
 
@@ -3495,6 +3553,7 @@ class TestArrowFunctions(unittest.TestCase):
                 [("x", None)],
                 None,
                 ("Block", [("ReturnStmt", ("Identifier", "x"))]),
+                None,
             ),
         )
 

@@ -1069,25 +1069,36 @@ number's square splits into two parts that sum back to the number itself
 (e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`), placed next to
 `is_automorphic` in `cinder/builtins.py` since automorphic numbers are the
 fixed special case of a Kaprekar split at the digit boundary matching
-`n`'s own length — has since landed via PR #278 too.
+`n`'s own length — has since landed via PR #278 too. Map literal
+shorthand properties `{a, b}` as sugar for `{"a": a, "b": b}` — the
+construction-side inverse of the map-destructuring shorthand `let {a, b}
+= expr;` already had, recognized in `_map_entry` via the same
+identifier-plus-lookahead technique `_call_argument` already uses for
+keyword arguments — has since landed via PR #279 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, `is_kaprekar`, has since landed via PR #278 and is
-covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-5 — map literal shorthand properties `{a, b}` as sugar for
-`{"a": a, "b": b}`, `is_achilles` (powerful but not itself a perfect
-power), named function expressions (`fn name(params) { ... }`),
-`is_pernicious` (a number whose binary popcount is itself prime), and an
-inclusive range literal `a..=b` (sugar for `range(a, b + 1)`, the natural
-sibling of `a..b` now that the exclusive spelling has landed) — plus task
-6, `is_sphenic` (an integer that is the product of three distinct
-primes, e.g. `30 = 2 * 3 * 5`, the natural next member of the "product
-of primes" family alongside `is_semiprime`'s "product of exactly two") —
-are fully scoped in `BACKLOG.md` itself and are not duplicated here, the
-same treatment tasks past slot 1 have gotten since this section stopped
-trying to keep prose in lockstep with every backlog slot). And only much
-later, a bytecode VM if performance ever actually matters. The
+occupy slot 1 here, map literal shorthand properties, has since landed
+via PR #279 and is covered in the "have since landed" history
+immediately above; this grooming pass dropped its now-redundant
+description from this section.
+Tasks 1-5 — `is_achilles` (powerful but not itself a perfect power),
+named function expressions (`fn name(params) { ... }`), `is_pernicious`
+(a number whose binary popcount is itself prime), an inclusive range
+literal `a..=b` (sugar for `range(a, b + 1)`, the natural sibling of
+`a..b` now that the exclusive spelling has landed), and `is_sphenic` (an
+integer that is the product of three distinct primes, e.g. `30 = 2 * 3 *
+5`, the natural next member of the "product of primes" family alongside
+`is_semiprime`'s "product of exactly two") — plus task 6, triple-quoted
+string literals `"""..."""`/`'''...'''` (ending only at three consecutive
+matching quote characters, so quote-heavy content like embedded dialogue
+or JSON snippets needs no per-quote escaping; reuses the exact
+`STRING`/`INTERP_STRING` tokens ordinary strings already produce, so no
+parser/AST/interpreter changes are needed, only `Lexer.tokenize`'s
+dispatch and `_string`'s termination check) — are fully scoped in
+`BACKLOG.md` itself and are not duplicated here, the same treatment tasks
+past slot 1 have gotten since this section stopped trying to keep prose
+in lockstep with every backlog slot). And only much later, a bytecode VM
+if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
 same breadth-vs-depth balance that has governed every grooming pass so
@@ -1406,7 +1417,33 @@ multiplicity of two; `is_sphenic` requires three *distinct* primes each
 appearing exactly once, so `12 = 2^2 * 3` and `8 = 2^3` — both three
 prime factors by multiplicity — are excluded). The next grooming pass
 should continue alternating breadth/depth, restocking toward 6-7 tasks
-whenever a merge drops the count within reach of the 5-task floor.
+whenever a merge drops the count within reach of the 5-task floor. This
+pass found the backlog back down to its 5-task floor again (map literal
+shorthand properties `{a, b}` having landed via PR #279, dropping the
+count from 6 to 5, dropping its now-landed description from the "what
+remains plausible" section above into the "have since landed" history,
+and renumbering the remaining five tasks from 2-6 down to 1-5, with
+`is_achilles` renumbered from 2 to 1, named function expressions from 3
+to 2, `is_pernicious` from 4 to 3, the inclusive range literal from 5 to
+4, and `is_sphenic` from 6 to 5) and restocked it to 6 by adding task 6,
+triple-quoted string literals `"""..."""`/`'''...'''`, continuing
+alternation with a depth task after task 5's breadth work (`is_sphenic`)
+rather than stacking a second breadth task, per the policy above —
+closing a real gap, but not the one it looks like at first: ordinary
+strings already tolerate a literal embedded newline (`Lexer._advance`
+tracks line/column across any character, so a real newline inside
+`"..."` already lexes and prints across two lines), so the actual gap is
+quote-heavy content, not multi-line content — today embedding the
+delimiter's own quote character requires escaping every occurrence,
+which a triple-quoted string (only terminated by three consecutive
+matching quotes) avoids entirely. Reuses the exact `STRING`/
+`INTERP_STRING` tokens ordinary strings already emit, so escapes and
+`${...}` interpolation keep working unchanged and no parser, AST, or
+interpreter change is needed — the whole task is a two-line change to
+`Lexer._string`'s termination check plus a lookahead in `tokenize`'s
+dispatch. The next grooming pass should continue alternating
+breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
+count within reach of the 5-task floor.
 
 ## History
 

@@ -246,7 +246,12 @@ while (i < 10) {
   binding as a `for`-loop's own map-destructuring form, including the
   same optional trailing rest element and per-key rename); map literals accept spread
   elements too (`{...map1, "k": v}`), merging
-  left to right with later keys/spreads winning on conflict; map
+  left to right with later keys/spreads winning on conflict; shorthand
+  properties (`let a = 1, b = 2; print({a, b});` is `{"a": 1, "b": 2}`,
+  each bare identifier expanding to `"name": name`, the construction-side
+  inverse of the `let {a, b} = expr;` destructuring shorthand), freely
+  mixable with explicit `key: value` entries, spread, and trailing commas
+  in the same literal; map
   comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
   if cond}` (same shape as list comprehensions — one optional filter
   clause, no nesting, fresh per-iteration scope, and the same
@@ -414,31 +419,33 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_kaprekar` — testing
-whether a number's square splits into two parts that sum back to the
-number (e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`), and before that a
-range literal `a..b` — sugar over the existing `range()` builtin usable
-directly in a `for` loop (`for i in 1..5 { ... }`), and before that
-`is_undulating` — testing whether an integer's digits strictly alternate
-between exactly two distinct values (e.g. `121`, `2323`). Coming up next
-(see [`BACKLOG.md`](BACKLOG.md)): map literal shorthand properties
-`{a, b}` — sugar for `{"a": a, "b": b}`, the construction-side inverse of
-the map-destructuring shorthand `let {a, b} = expr;` already has,
-`is_achilles` — testing whether an integer is powerful (every prime
-factor has exponent `>= 2`) but *not* itself a perfect power, the gap
-between `is_powerful_number` and `is_perfect_power` (e.g. `72 = 2^3 *
-3^2`: powerful, but no single base/exponent pair produces it), named
-function expressions `fn name(params) { ... }` — letting an anonymous
-function refer to itself by its own name from inside its body, without
-depending on whatever outer variable (if any) it happens to be assigned
-to, `is_pernicious` — testing whether an integer's binary popcount is
-itself prime, the sibling of `is_evil`/`is_odious`'s popcount-parity
-check, an inclusive range literal `a..=b` — the natural sibling of
-`a..b` for loops that must include their upper bound (`for i in 1..=5
-{ ... }` instead of the easy-to-get-wrong `1..6`), and `is_sphenic` —
-testing whether an integer is the product of three distinct primes (e.g.
-`30 = 2 * 3 * 5`), the natural next member of the "product of primes"
-family alongside `is_semiprime`'s "product of exactly two". The backlog
-mixes language depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
+Actively developed, nightly. Recently landed: map literal shorthand
+properties `{a, b}` — sugar for `{"a": a, "b": b}`, the construction-side
+inverse of the map-destructuring shorthand `let {a, b} = expr;` already
+has, and before that `is_kaprekar` — testing whether a number's square
+splits into two parts that sum back to the number (e.g. `45`: `45 ** 2 ==
+2025`, `20 + 25 == 45`), and before that a range literal `a..b` — sugar
+over the existing `range()` builtin usable directly in a `for` loop
+(`for i in 1..5 { ... }`). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_achilles` — testing whether an integer
+is powerful (every prime factor has exponent `>= 2`) but *not* itself a
+perfect power, the gap between `is_powerful_number` and
+`is_perfect_power` (e.g. `72 = 2^3 * 3^2`: powerful, but no single
+base/exponent pair produces it), named function expressions
+`fn name(params) { ... }` — letting an anonymous function refer to itself
+by its own name from inside its body, without depending on whatever
+outer variable (if any) it happens to be assigned to, `is_pernicious` —
+testing whether an integer's binary popcount is itself prime, the
+sibling of `is_evil`/`is_odious`'s popcount-parity check, an inclusive
+range literal `a..=b` — the natural sibling of `a..b` for loops that must
+include their upper bound (`for i in 1..=5 { ... }` instead of the
+easy-to-get-wrong `1..6`), `is_sphenic` — testing whether an integer is
+the product of three distinct primes (e.g. `30 = 2 * 3 * 5`), the natural
+next member of the "product of primes" family alongside `is_semiprime`'s
+"product of exactly two", and triple-quoted string literals
+`"""..."""`/`'''...'''` — ending only at three consecutive matching quote
+characters, so quote-heavy text (embedded dialogue, JSON snippets) needs
+no per-quote escaping. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The full
+vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

@@ -2763,3 +2763,42 @@ for vision/architecture.
   distinct-first-two-digits checks run up front before the alternation
   scan. Clean first pass, no bounces (3138 tests passing, up from
   3124).
+- **Language: range literal `a..b` — sugar over the existing `range()`
+  builtin** — merged 2026-08-19T14:24:43Z via PR #277
+  (`feat/20260819-range-literal`). Added `RangeExpr`
+  (`cinder/ast_nodes.py`) and `_range_expr` (`cinder/parser.py`, sitting
+  between membership and bitwise-or in precedence), desugaring `a..b` to
+  a call into the existing `_range` builtin so both spellings share one
+  error message and one validation path. Exclusive of `b`, matching
+  `range()`'s own two-argument semantics; usable directly as a `for`-loop
+  source (`for i in 1..5 { ... }`). Reviewer's first pass gave `VERDICT:
+  CHANGES REQUESTED` — the new `TestRangeLiteral` test class had been
+  spliced into the middle of the existing `TestSlicing` class body,
+  mislabeling ~14 unrelated slice-assignment tests; Engineer fixed the
+  insertion point with no behavior change, then Reviewer gave `VERDICT:
+  LGTM` and QA gave `QA: PASS` — one bounce, clean merge after (3140
+  tests passing, up from 3138).
+- **Standard library: `is_kaprekar`** — merged 2026-08-19T14:39:06Z via
+  PR #278 (`feat/20260819-is-kaprekar`). Added `is_kaprekar` to
+  `cinder/builtins.py`, registered right after `is_automorphic`
+  (automorphic numbers are the fixed special case of a Kaprekar split at
+  the digit boundary matching `n`'s own length), testing whether a
+  number's square splits into two parts that sum back to the number
+  itself (e.g. `45`: `45 ** 2 == 2025`, `20 + 25 == 45`). Handles
+  leading-zero right parts via `right != 0` (verified by hand for `99`,
+  `999`, `2223`). Clean first pass, no bounces (3171 tests passing, up
+  from 3140).
+- **Language: map literal shorthand properties `{a, b}`** — merged
+  2026-08-19T19:28:00Z via PR #279 (`feat/20260819-map-shorthand`).
+  `_map_entry` (`cinder/parser.py`) adds a one-token lookahead
+  (`IDENTIFIER` followed by `COMMA`/`RBRACE`) building the shorthand
+  `(Literal(name), Identifier(name))` pair, the same technique
+  `_call_argument` already uses for keyword arguments — the
+  construction-side inverse of the map-destructuring shorthand
+  `let {a, b} = expr;` already had. Composes with explicit `key: value`
+  entries, spread, and trailing commas in the same literal; map
+  comprehensions are unaffected since they always require an explicit
+  `key: value` before `for`, failing the shorthand's lookahead. No
+  interpreter changes needed — `_evaluate_map_literal` already evaluates
+  key/value generically. Clean first pass, no bounces (3186 tests
+  passing, up from 3171).

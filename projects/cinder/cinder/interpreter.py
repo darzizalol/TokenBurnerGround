@@ -81,6 +81,7 @@ from cinder.ast_nodes import (
     MapLiteral,
     OptionalCall,
     OptionalIndex,
+    RangeExpr,
     ReturnStmt,
     SliceAssign,
     SliceExpr,
@@ -262,6 +263,8 @@ class Interpreter:
             return self._evaluate_optional_index(expr, env)
         if isinstance(expr, SliceExpr):
             return self._evaluate_slice(expr, env)
+        if isinstance(expr, RangeExpr):
+            return self._evaluate_range(expr, env)
         if isinstance(expr, SliceAssign):
             return self._evaluate_slice_assign(expr, env)
         if isinstance(expr, IndexAssign):
@@ -848,6 +851,16 @@ class Interpreter:
         if isinstance(obj, str):
             return "".join(obj[i] for i in indices)
         return [obj[i] for i in indices]
+
+    def _evaluate_range(self, expr: RangeExpr, env: Environment) -> object:
+        start = self.evaluate(expr.start, env)
+        end = self.evaluate(expr.end, env)
+        from cinder.builtins import _range  # local: builtins.py imports
+        # from interpreter.py at module level already, so a top-level
+        # import the other way round here would be circular; importing
+        # inside the method instead defers it until both modules have
+        # finished loading, which is safe.
+        return _range([start, end], expr.line, expr.column)
 
     def _evaluate_slice_assign(self, expr: SliceAssign, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)

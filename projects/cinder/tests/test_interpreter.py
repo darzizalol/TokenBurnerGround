@@ -3729,6 +3729,7 @@ class TestSlicing(unittest.TestCase):
         ):
             run('let s = "abc"; s[0:1] = "x";')
 
+
     def test_extended_slice_assignment_replaces_stepped_positions(self):
         env = run(
             "let xs = [1, 2, 3, 4, 5, 6]; xs[0:6:2] = [9, 9, 9];"
@@ -3828,6 +3829,54 @@ class TestSlicing(unittest.TestCase):
             r"attempt to assign sequence of size 1 to extended slice of size 2",
         ):
             run("[1, 2, 3][::2] = [9];")
+
+
+class TestRangeLiteral(unittest.TestCase):
+    def test_range_produces_list_matching_range_builtin(self):
+        self.assertEqual(evaluate("1..5"), [1, 2, 3, 4])
+
+    def test_range_empty_when_bounds_equal(self):
+        self.assertEqual(evaluate("0..0"), [])
+
+    def test_range_descending_bounds_produce_empty_list(self):
+        self.assertEqual(evaluate("5..1"), [])
+
+    def test_range_usable_in_for_loop(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            run("for i in 1..5 { print(i); }", create_global_environment())
+        self.assertEqual(stdout.getvalue(), "1\n2\n3\n4\n")
+
+    def test_range_in_membership_test(self):
+        self.assertEqual(evaluate("3 in 1..5"), True)
+        self.assertEqual(evaluate("5 in 1..5"), False)
+
+    def test_range_binds_looser_than_arithmetic(self):
+        self.assertEqual(evaluate("1 + 1..5 * 2"), [2, 3, 4, 5, 6, 7, 8, 9])
+
+    def test_range_equals_range_builtin(self):
+        from cinder.builtins import create_global_environment
+
+        env = run("let result = range(1, 5) == 1..5;", create_global_environment())
+        self.assertEqual(env.get("result"), True)
+
+    def test_range_usable_as_comprehension_source(self):
+        self.assertEqual(evaluate("[x for x in 1..5]"), [1, 2, 3, 4])
+
+    def test_range_non_int_bound_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) requires int arguments, got float"
+        ):
+            evaluate("1..2.5")
+
+    def test_range_does_not_chain(self):
+        with self.assertRaises(ParseError):
+            run("1..5..10;")
 
 
 class TestTryCatch(unittest.TestCase):

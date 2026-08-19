@@ -3432,6 +3432,66 @@ class TestIsAutomorphic(unittest.TestCase):
             run("is_automorphic();")
 
 
+class TestIsKaprekar(unittest.TestCase):
+    def test_is_kaprekar_of_1(self):
+        self.assertEqual(run("let result = is_kaprekar(1);").get("result"), True)
+
+    def test_is_kaprekar_of_9(self):
+        self.assertEqual(run("let result = is_kaprekar(9);").get("result"), True)
+
+    def test_is_kaprekar_of_45(self):
+        self.assertEqual(run("let result = is_kaprekar(45);").get("result"), True)
+
+    def test_is_kaprekar_of_55(self):
+        self.assertEqual(run("let result = is_kaprekar(55);").get("result"), True)
+
+    def test_is_kaprekar_of_99(self):
+        self.assertEqual(run("let result = is_kaprekar(99);").get("result"), True)
+
+    def test_is_kaprekar_of_297(self):
+        self.assertEqual(run("let result = is_kaprekar(297);").get("result"), True)
+
+    def test_is_kaprekar_of_703(self):
+        self.assertEqual(run("let result = is_kaprekar(703);").get("result"), True)
+
+    def test_is_kaprekar_of_999(self):
+        self.assertEqual(run("let result = is_kaprekar(999);").get("result"), True)
+
+    def test_is_kaprekar_of_2223(self):
+        self.assertEqual(run("let result = is_kaprekar(2223);").get("result"), True)
+
+    def test_is_kaprekar_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_kaprekar(0);").get("result"), False)
+
+    def test_is_kaprekar_of_10_is_false(self):
+        self.assertEqual(run("let result = is_kaprekar(10);").get("result"), False)
+
+    def test_is_kaprekar_of_2_is_false(self):
+        self.assertEqual(run("let result = is_kaprekar(2);").get("result"), False)
+
+    def test_is_kaprekar_of_100_is_false(self):
+        self.assertEqual(run("let result = is_kaprekar(100);").get("result"), False)
+
+    def test_is_kaprekar_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_kaprekar(-45);").get("result"), False)
+
+    def test_is_kaprekar_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_kaprekar(5.0);")
+        self.assertIn("is_kaprekar", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_kaprekar_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_kaprekar(true);")
+        self.assertIn("is_kaprekar", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_kaprekar_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_kaprekar();")
+
+
 class TestIsHarshad(unittest.TestCase):
     def test_is_harshad_of_18(self):
         self.assertEqual(run("let result = is_harshad(18);").get("result"), True)

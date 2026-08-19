@@ -1586,6 +1586,21 @@ def _is_automorphic(arguments: list, line: int, column: int) -> object:
     return str(value * value).endswith(str(value))
 
 
+def _is_kaprekar(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_kaprekar", arguments, 1, line, column)
+    value = _require_int("is_kaprekar", arguments[0], line, column)
+    if value < 1:
+        return False
+    square = value * value
+    digits = str(square)
+    for split in range(1, len(digits) + 1):
+        right = square % (10 ** split)
+        left = square // (10 ** split)
+        if right != 0 and left + right == value:
+            return True
+    return False
+
+
 def _is_harshad(arguments: list, line: int, column: int) -> object:
     _require_arity("is_harshad", arguments, 1, line, column)
     value = _require_int("is_harshad", arguments[0], line, column)
@@ -3678,6 +3693,7 @@ _BUILTINS = {
     "is_abundant": _is_abundant,
     "is_deficient": _is_deficient,
     "is_automorphic": _is_automorphic,
+    "is_kaprekar": _is_kaprekar,
     "is_harshad": _is_harshad,
     "is_perfect_cube": _is_perfect_cube,
     "is_pronic": _is_pronic,

@@ -2711,6 +2711,47 @@ class TestIsEvilIsOdious(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestIsPernicious(unittest.TestCase):
+    def test_is_pernicious_true_cases(self):
+        self.assertEqual(run("let result = is_pernicious(3);").get("result"), True)
+        self.assertEqual(run("let result = is_pernicious(5);").get("result"), True)
+        self.assertEqual(run("let result = is_pernicious(6);").get("result"), True)
+        self.assertEqual(run("let result = is_pernicious(7);").get("result"), True)
+        self.assertEqual(run("let result = is_pernicious(9);").get("result"), True)
+
+    def test_is_pernicious_false_cases(self):
+        self.assertEqual(run("let result = is_pernicious(0);").get("result"), False)
+        self.assertEqual(run("let result = is_pernicious(1);").get("result"), False)
+        self.assertEqual(run("let result = is_pernicious(2);").get("result"), False)
+        self.assertEqual(run("let result = is_pernicious(8);").get("result"), False)
+        self.assertEqual(run("let result = is_pernicious(15);").get("result"), False)
+
+    def test_is_pernicious_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pernicious(-3);")
+        self.assertIn(
+            "is_pernicious() requires a non-negative integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_is_pernicious_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pernicious(5.0);")
+        self.assertIn("is_pernicious", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_pernicious_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pernicious(true);")
+        self.assertIn("is_pernicious", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_pernicious_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pernicious();")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestIsPalindromeList(unittest.TestCase):
     def test_is_palindrome_list_true(self):
         self.assertIs(

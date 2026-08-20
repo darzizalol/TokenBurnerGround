@@ -32,7 +32,8 @@ while (i < 10) {
 - **Values**: numbers, strings, booleans, `nil`; `nil`/`false` are falsy,
   everything else (including `0` and `""`) is truthy; strings may be
   delimited by either double or single quotes (`"..."`/`'...'`,
-  interchangeably, `\"`/`\'` both valid escapes) and support
+  interchangeably, `\"`/`\'` both valid escapes, plus `\n`/`\t`/`\\`/`\r`/
+  `\0`/`\b`/`\f`/`\v` and a fixed-width `\uXXXX` Unicode escape) and support
   interpolation (`"hello, ${name}!"`, `"${1 + 2}"`) with arbitrary expressions
   inside `${...}`, stringified the same way `print`/`format` render values;
   raw string literals (`r"..."`/`r'...'`) skip escape and interpolation
@@ -439,21 +440,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_circular_prime` —
-testing whether every rotation of an integer's decimal digits is also
+Actively developed, nightly. Recently landed: missing string escape
+sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a fixed-width `\uXXXX` Unicode
+escape — closing the gap left by `_ESCAPES` recognizing only five escapes
+since strings were first implemented, and before that `is_circular_prime`
+— testing whether every rotation of an integer's decimal digits is also
 prime (e.g. `197`/`971`/`719`), combining `is_emirp`'s
 primality-plus-digit-transformation shape with `is_rotation`'s
 rotate-and-compare technique, and before that triple-quoted string
 literals `"""..."""`/`'''...'''` — ending only at three consecutive
 matching quote characters, so quote-heavy text (embedded dialogue, JSON
-snippets) needs no per-quote escaping, and before that `is_sphenic` —
-testing whether an integer is the product of three distinct primes (e.g.
-`30 = 2 * 3 * 5`), the natural next member of the "product of primes"
-family alongside `is_semiprime`'s "product of exactly two". Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): missing string escape sequences
-`\r`/`\0`/`\b`/`\f`/`\v` plus a fixed-width `\uXXXX` Unicode escape —
-closing the gap left by `_ESCAPES` recognizing only five escapes since
-strings were first implemented, `is_sad_number` — the direct complement
+snippets) needs no per-quote escaping. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `is_sad_number` — the direct complement
 of `is_happy_number` (every non-negative integer either reaches `1`
 under the digit-square-sum recurrence or cycles forever without doing
 so, never both), built by inverting `is_happy_number`'s own
@@ -465,9 +463,13 @@ the natural sibling of `multiplicative_persistence`, counting the
 number of repeated digit-summing steps needed to reduce an integer to a
 single digit, map concatenation via `+` (`{...} + {...}`) — the
 map-typed sibling of list concatenation, giving the existing `merge()`
-builtin an infix spelling, and `is_pentagonal` — the closed-form
+builtin an infix spelling, `is_pentagonal` — the closed-form
 figurate-number sibling of `is_triangular`, testing membership in the
 pentagonal numbers `1, 5, 12, 22, 35, ...` via the same `math.isqrt`
-perfect-square technique. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
+perfect-square technique, and nested map-in-map destructuring patterns
+(`let {a, b: {c, d}} = {...}`) — the deferred other half of the nested
+list-in-list destructuring task, giving map patterns the same nesting
+support list patterns already have. The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

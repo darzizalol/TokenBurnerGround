@@ -1109,19 +1109,24 @@ combining `is_emirp`'s primality-plus-digit-transformation shape with
 `is_rotation`'s rotate-and-compare technique, inlining a local
 trial-division primality helper rather than calling `is_prime`/`is_emirp`
 directly since both take the builtin-dispatch `(arguments, line, column)`
-signature rather than a raw `int` — has since landed via PR #286 too.
+signature rather than a raw `int` — has since landed via PR #286 too, and
+missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, and a
+fixed-width `\uXXXX` Unicode escape) — extending `Lexer._ESCAPES` with
+the five missing one-character escapes and a `_unicode_escape` method
+reusing `_string`'s existing cursor primitives, raw strings unaffected by
+design — has since landed via PR #287 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, `is_circular_prime`, has since landed via PR #286 and
-is covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-5 — missing string escape sequences, `is_sad_number`,
-comma-separated multiple statements in expression-statement position,
-`additive_persistence`, and map concatenation via `+` — plus task 6,
-`is_pentagonal`, are fully scoped in `BACKLOG.md` itself and are not
-duplicated here, the same treatment tasks past slot 1 have gotten since
-this section stopped trying to keep prose in lockstep with every backlog
-slot). And only much later, a bytecode VM
+(numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
+occupy slot 1 here, missing string escape sequences, has since landed via
+PR #287 and is covered in the "have since landed" history immediately
+above; this grooming pass dropped its now-redundant description from this
+section. Tasks 1-6 — `is_sad_number`, comma-separated multiple statements
+in expression-statement position, `additive_persistence`, map
+concatenation via `+`, `is_pentagonal`, and nested map-in-map
+destructuring patterns — are fully scoped in `BACKLOG.md` itself and are
+not duplicated here, the same treatment tasks past slot 1 have gotten
+since this section stopped trying to keep prose in lockstep with every
+backlog slot). And only much later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1617,6 +1622,32 @@ with one added modular-residue check (`root % 6 == 5`) that
 `is_triangular`'s own simpler perfect-square test doesn't need, since
 solving the pentagonal-number formula for its index `k` leaves a
 divisibility-by-6 condition that solving the triangular one doesn't. The
+next grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor. This pass found the backlog back down to its 5-task floor
+again (missing string escape sequences having landed via PR #287,
+dropping the count from 6 to 5, dropping its now-landed description from
+the "what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining five tasks (previously labeled
+1, 3, 4, 5, 6, with no task 2 after the prior string-escapes drop) down
+to a clean 1-5, with comma-separated multiple statements renumbered from
+3 to 2, `additive_persistence` from 4 to 3, map concatenation via `+`
+from 5 to 4, and `is_pentagonal` from 6 to 5 (`is_sad_number` stayed at
+1) and
+restocked it to 6 by adding task 6, nested map-in-map destructuring
+patterns (`let {a, b: {c, d}} = {...}`), continuing alternation with a
+depth task after task 5's breadth work (`is_pentagonal`) rather than
+stacking a second breadth task, per the policy above — the deferred other
+half of the nested list-in-list destructuring task (PR #273), which was
+explicitly scoped to list-in-list nesting only and left map-in-map as a
+documented future gap; `_destructure_map_pattern_entry`
+(`cinder/parser.py`) gets the same nested-`{`-in-`binding`-position branch
+`_destructure_list_pattern_entry` already has for nested `[`, and
+`_bind_map_destructure` (`cinder/interpreter.py`) gets the matching
+`isinstance(binding, tuple)` recursive-bind branch
+`_bind_list_destructure` already has — both mirroring existing patterns
+exactly, with map-in-list and list-in-map nesting staying explicitly out
+of scope on both sides, matching the precedent the original task set. The
 next grooming pass should continue alternating breadth/depth, restocking
 toward 6-7 tasks whenever a merge drops the count within reach of the
 5-task floor.

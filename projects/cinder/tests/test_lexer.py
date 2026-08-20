@@ -241,6 +241,51 @@ class TestLiterals(unittest.TestCase):
         tokens = tokenize(r'r"a\nb"')
         self.assertEqual(tokens[0].lexeme, r'r"a\nb"')
 
+    def test_triple_double_quoted_string_may_contain_unescaped_double_quotes(self):
+        tokens = tokenize('"""she said "hi" to "me" today"""')
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 'she said "hi" to "me" today')
+
+    def test_triple_single_quoted_string_may_contain_unescaped_quotes(self):
+        tokens = tokenize("'''it's a \"quoted\" word'''")
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, 'it\'s a "quoted" word')
+
+    def test_triple_quoted_string_literal_newline(self):
+        tokens = tokenize('"""line one\nline two"""')
+        self.assertEqual(tokens[0].literal, "line one\nline two")
+
+    def test_triple_quoted_string_interpolation(self):
+        tokens = tokenize('"""value: ${x}!"""')
+        self.assertEqual(types(tokens), [TokenType.INTERP_STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal[0], "value: ")
+        self.assertEqual(tokens[0].literal[2], "!")
+
+    def test_triple_quoted_string_escapes(self):
+        tokens = tokenize(r'"""a\tb"""')
+        self.assertEqual(tokens[0].literal, "a\tb")
+
+    def test_triple_quoted_string_unterminated_raises(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize('"""unterminated')
+        self.assertEqual(ctx.exception.message, "unterminated string")
+
+    def test_triple_quoted_string_empty(self):
+        tokens = tokenize('""""""')
+        self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
+        self.assertEqual(tokens[0].literal, "")
+
+    def test_raw_triple_quote_unaffected(self):
+        # Raw strings don't support triple-quoting; the raw-string branch is
+        # untouched, so the first quote still closes it, and the rest
+        # re-lexes as further tokens (pre-existing, out-of-scope-to-fix
+        # behavior — not a regression introduced by this task).
+        tokens = tokenize('r"""raw triple"""')
+        self.assertEqual(
+            types(tokens), [TokenType.STRING, TokenType.STRING, TokenType.STRING, TokenType.EOF]
+        )
+        self.assertEqual([t.literal for t in tokens[:3]], ["", "raw triple", ""])
+
     def test_bare_identifier_r_unaffected(self):
         tokens = tokenize("let r = 5; print(r + 1);")
         self.assertNotIn(TokenType.STRING, types(tokens))

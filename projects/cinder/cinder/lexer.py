@@ -70,7 +70,12 @@ class Lexer:
             char = self._advance()
 
             if char == '"' or char == "'":
-                self._string(start_line, start_col, quote=char)
+                if self._peek() == char and self._peek_next() == char:
+                    self._advance()
+                    self._advance()
+                    self._string(start_line, start_col, quote=char, triple=True)
+                else:
+                    self._string(start_line, start_col, quote=char)
             elif char == "r" and self._peek() in ('"', "'"):
                 quote = self._advance()
                 self._raw_string(start_line, start_col, quote=quote)
@@ -164,8 +169,9 @@ class Lexer:
                 break
             self._advance()
 
-    def _string(self, start_line: int, start_col: int, quote: str):
-        start_pos = self.pos - 1  # position of the opening quote
+    def _string(self, start_line: int, start_col: int, quote: str, triple: bool = False):
+        start_pos = self.pos - (3 if triple else 1)  # position of the opening quote(s)
+        delimiter = quote * 3 if triple else quote
         parts: list = []  # str segments and ("expr", raw, line, col) placeholders
         chars = []
         has_interp = False
@@ -174,8 +180,9 @@ class Lexer:
                 raise LexError(
                     "unterminated string", start_line, start_col, unterminated=True
                 )
-            if self._peek() == quote:
-                self._advance()
+            if self.source[self.pos : self.pos + len(delimiter)] == delimiter:
+                for _ in delimiter:
+                    self._advance()
                 break
             if self._peek() == "$" and self._peek_next() == "{":
                 has_interp = True

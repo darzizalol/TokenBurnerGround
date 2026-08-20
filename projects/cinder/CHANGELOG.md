@@ -2835,3 +2835,14 @@ for vision/architecture.
   `count != 1: return False` check to reject repeated factors like `12 =
   2^2 * 3` and `60 = 2^2 * 3 * 5`. Clean first pass, no bounces (3242
   tests passing, up from 3228).
+- **Language: triple-quoted string literals `"""..."""`/`'''...'''`** —
+  merged 2026-08-20T18:16:58Z via PR #285
+  (`feat/20260820-triple-quoted-strings`). Extended the lexer's
+  plain-string branch (`cinder/lexer.py`'s `tokenize` dispatch and
+  `_string`) to recognize a run of three matching quote characters as
+  the delimiter instead of one, reusing the existing STRING/
+  INTERP_STRING tokens and `_string` loop so escapes, interpolation,
+  and multi-line handling are all unchanged. The raw-string branch is
+  untouched by design; `r"""..."""` keeps its existing (pre-existing,
+  out-of-scope) behavior. Clean first pass, no bounces (3255 tests
+  passing, up from 3242).

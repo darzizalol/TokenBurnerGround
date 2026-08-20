@@ -201,6 +201,22 @@ class TestLiterals(unittest.TestCase):
         tokens = tokenize(r'"a\nb\tc\\d\"e"')
         self.assertEqual(tokens[0].literal, "a\nb\tc\\d\"e")
 
+    def test_string_escapes_carriage_return_null_backspace_formfeed_verticaltab(self):
+        tokens = tokenize(r'"a\rb\0c\bd\fe\vf"')
+        self.assertEqual(tokens[0].literal, "a\rb\0c\bd\fe\vf")
+
+    def test_unicode_escape(self):
+        tokens = tokenize('"caf\\u00e9"')
+        self.assertEqual(tokens[0].literal, "caf" + chr(0xE9))
+
+    def test_unicode_escape_uppercase_hex_digits(self):
+        tokens = tokenize('"\\u00C9"')
+        self.assertEqual(tokens[0].literal, chr(0xC9))
+
+    def test_unicode_escape_single_quoted(self):
+        tokens = tokenize("'caf\\u00e9'")
+        self.assertEqual(tokens[0].literal, "caf" + chr(0xE9))
+
     def test_single_quoted_string_basic(self):
         tokens = tokenize("'hello'")
         self.assertEqual(types(tokens), [TokenType.STRING, TokenType.EOF])
@@ -999,6 +1015,22 @@ class TestErrors(unittest.TestCase):
         with self.assertRaises(LexError) as ctx:
             tokenize(r"'bad \z escape'")
         self.assertIn("invalid escape sequence '\\z'", str(ctx.exception))
+
+    def test_invalid_unicode_escape_too_few_hex_digits(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize(r'"\u12"')
+        self.assertIn(
+            "invalid unicode escape sequence, expected 4 hex digits after '\\u'",
+            str(ctx.exception),
+        )
+
+    def test_invalid_unicode_escape_non_hex_digit(self):
+        with self.assertRaises(LexError) as ctx:
+            tokenize(r'"\u12zz"')
+        self.assertIn(
+            "invalid unicode escape sequence, expected 4 hex digits after '\\u'",
+            str(ctx.exception),
+        )
 
     def test_unrecognized_character(self):
         with self.assertRaises(LexError) as ctx:

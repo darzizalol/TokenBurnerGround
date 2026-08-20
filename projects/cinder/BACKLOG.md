@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
+## 1. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime [claimed 2026-08-20T18:27:53Z]
 
 Build: the breadth task after task 5's depth work (triple-quoted string
 literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

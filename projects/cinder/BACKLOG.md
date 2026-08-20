@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)`
+## 1. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)` [claimed 2026-08-20T14:05:22Z]
 
 Build: the depth task after task 5's breadth work (`is_pernicious`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

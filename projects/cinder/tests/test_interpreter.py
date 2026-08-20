@@ -283,6 +283,27 @@ class TestRawStringLiterals(unittest.TestCase):
         self.assertEqual(evaluate(r'"a\nb"'), "a\nb")
 
 
+class TestTripleQuotedStringLiterals(unittest.TestCase):
+    def test_embedded_double_quotes_unescaped(self):
+        self.assertEqual(
+            evaluate('"""she said "hi" to "me" today"""'),
+            'she said "hi" to "me" today',
+        )
+
+    def test_embedded_mixed_quotes_unescaped(self):
+        self.assertEqual(evaluate("'''it's a \"quoted\" word'''"), 'it\'s a "quoted" word')
+
+    def test_interpolation_still_works(self):
+        env = run('let x = 5; let msg = """value: ${x}!""";')
+        self.assertEqual(env.get("msg"), "value: 5!")
+
+    def test_escapes_still_work(self):
+        self.assertEqual(evaluate(r'"""a\tb"""'), "a\tb")
+
+    def test_empty_triple_quoted_string(self):
+        self.assertEqual(evaluate('""""""'), "")
+
+
 class TestRepetition(unittest.TestCase):
     def test_string_times_int(self):
         self.assertEqual(evaluate('"ab" * 3'), "ababab")

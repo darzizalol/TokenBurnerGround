@@ -2316,6 +2316,53 @@ class TestIsHappyNumber(unittest.TestCase):
             run("is_happy_number(1, 2);")
 
 
+class TestIsSadNumber(unittest.TestCase):
+    def test_is_sad_number_of_cycle_members(self):
+        for value in (2, 3, 4):
+            self.assertEqual(
+                run(f"let result = is_sad_number({value});").get("result"),
+                True,
+                f"expected {value} to be a sad number",
+            )
+
+    def test_is_sad_number_of_one_is_false(self):
+        self.assertEqual(run("let result = is_sad_number(1);").get("result"), False)
+
+    def test_is_sad_number_of_happy_numbers_is_false(self):
+        for value in (7, 19, 97):
+            self.assertEqual(
+                run(f"let result = is_sad_number({value});").get("result"),
+                False,
+                f"expected {value} to not be a sad number",
+            )
+
+    def test_is_sad_number_of_zero_is_true(self):
+        self.assertEqual(run("let result = is_sad_number(0);").get("result"), True)
+
+    def test_is_sad_number_negative_input_is_false(self):
+        self.assertEqual(
+            run("let result = is_sad_number(-7);").get("result"), False
+        )
+
+    def test_is_sad_number_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_sad_number(5.0);")
+        self.assertIn(
+            "is_sad_number() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_sad_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_sad_number(true);")
+        self.assertIn(
+            "is_sad_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_sad_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_sad_number(1, 2);")
+
+
 class TestCollatzLength(unittest.TestCase):
     def test_collatz_length_of_one_is_zero(self):
         self.assertEqual(run("let result = collatz_length(1);").get("result"), 0)

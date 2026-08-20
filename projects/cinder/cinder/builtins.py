@@ -1299,6 +1299,21 @@ def _is_happy_number(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _is_sad_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_sad_number", arguments, 1, line, column)
+    value = _require_int("is_sad_number", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    seen = set()
+    while value != 1:
+        if value in seen:
+            return True
+        seen.add(value)
+        value = sum(int(digit) ** 2 for digit in str(value))
+    return False
+
+
 def _collatz_length(arguments: list, line: int, column: int) -> object:
     _require_arity("collatz_length", arguments, 1, line, column)
     value = _require_int("collatz_length", arguments[0], line, column)
@@ -3753,6 +3768,7 @@ _BUILTINS = {
     "is_coprime": _is_coprime,
     "is_fibonacci": _is_fibonacci,
     "is_happy_number": _is_happy_number,
+    "is_sad_number": _is_sad_number,
     "collatz_length": _collatz_length,
     "is_triangular": _is_triangular,
     "is_prime": _is_prime,

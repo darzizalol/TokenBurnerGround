@@ -37,6 +37,11 @@ _INCREMENT_DECREMENT_TOKENS = {
 _ESCAPES = {
     "n": "\n",
     "t": "\t",
+    "r": "\r",
+    "0": "\0",
+    "b": "\b",
+    "f": "\f",
+    "v": "\v",
     "\\": "\\",
     '"': '"',
     "'": "'",
@@ -202,11 +207,14 @@ class Lexer:
                         unterminated=True,
                     )
                 escape = self._advance()
-                if escape not in _ESCAPES:
+                if escape == "u":
+                    chars.append(self._unicode_escape(start_line, start_col))
+                elif escape not in _ESCAPES:
                     raise LexError(
                         f"invalid escape sequence '\\{escape}'", start_line, start_col
                     )
-                chars.append(_ESCAPES[escape])
+                else:
+                    chars.append(_ESCAPES[escape])
             else:
                 chars.append(char)
         parts.append("".join(chars))
@@ -219,6 +227,18 @@ class Lexer:
             self.tokens.append(
                 Token(TokenType.INTERP_STRING, lexeme, parts, start_line, start_col)
             )
+
+    def _unicode_escape(self, start_line: int, start_col: int) -> str:
+        digits = []
+        for _ in range(4):
+            if self._at_end() or self._peek() not in "0123456789abcdefABCDEF":
+                raise LexError(
+                    "invalid unicode escape sequence, expected 4 hex digits after '\\u'",
+                    start_line,
+                    start_col,
+                )
+            digits.append(self._advance())
+        return chr(int("".join(digits), 16))
 
     def _raw_string(self, start_line: int, start_col: int, quote: str):
         start_pos = self.pos - 2  # position of the 'r' prefix

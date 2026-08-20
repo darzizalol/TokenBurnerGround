@@ -252,6 +252,10 @@ class TestStringInterpolation(unittest.TestCase):
     def test_plain_string_with_no_placeholders_is_unchanged(self):
         self.assertEqual(evaluate('"no placeholders here"'), "no placeholders here")
 
+    def test_unicode_escape_alongside_placeholder(self):
+        env = run('let x = 5; let msg = "\\u00e9: ${x}";')
+        self.assertEqual(env.get("msg"), chr(0xE9) + ": 5")
+
     def test_nested_list_result_stringifies_without_extra_flattening(self):
         self.assertEqual(evaluate('"${[[1, 2]]}"'), "[[1, 2]]")
 

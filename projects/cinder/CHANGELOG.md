@@ -2827,3 +2827,11 @@ for vision/architecture.
   (`cinder/interpreter.py`'s `_evaluate_range`). `a..b` (exclusive)
   is unaffected. Clean first pass, no bounces (3228 tests passing,
   up from 3217).
+- **Standard library: `is_sphenic`** — merged 2026-08-20T14:27:40Z via PR
+  #284 (`feat/20260820-is-sphenic`). Added `_is_sphenic`
+  (`cinder/builtins.py`), testing whether an integer is the product of
+  exactly three distinct primes each appearing exactly once (`30 = 2 * 3
+  * 5`), reusing `_is_semiprime`'s factorization loop shape with an added
+  `count != 1: return False` check to reject repeated factors like `12 =
+  2^2 * 3` and `60 = 2^2 * 3 * 5`. Clean first pass, no bounces (3242
+  tests passing, up from 3228).

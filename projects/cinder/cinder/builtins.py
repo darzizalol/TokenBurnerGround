@@ -1410,6 +1410,26 @@ def _is_emirp(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _is_circular_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_circular_prime", arguments, 1, line, column)
+    value = _require_int("is_circular_prime", arguments[0], line, column)
+    if value < 2:
+        return False
+
+    def _trial_division_is_prime(candidate: int) -> bool:
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return False
+        return True
+
+    digits = str(value)
+    for index in range(len(digits)):
+        rotated = int(digits[index:] + digits[:index])
+        if not _trial_division_is_prime(rotated):
+            return False
+    return True
+
+
 def _is_power_of_two(arguments: list, line: int, column: int) -> object:
     _require_arity("is_power_of_two", arguments, 1, line, column)
     value = _require_int("is_power_of_two", arguments[0], line, column)
@@ -3740,6 +3760,7 @@ _BUILTINS = {
     "is_semiprime": _is_semiprime,
     "is_sphenic": _is_sphenic,
     "is_emirp": _is_emirp,
+    "is_circular_prime": _is_circular_prime,
     "is_power_of_two": _is_power_of_two,
     "is_evil": _is_evil,
     "is_odious": _is_odious,

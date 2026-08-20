@@ -2652,6 +2652,53 @@ class TestIsEmirp(unittest.TestCase):
             run("is_emirp();")
 
 
+class TestIsCircularPrime(unittest.TestCase):
+    def test_is_circular_prime_of_single_digit(self):
+        self.assertEqual(run("let result = is_circular_prime(2);").get("result"), True)
+
+    def test_is_circular_prime_of_repdigit(self):
+        self.assertEqual(run("let result = is_circular_prime(11);").get("result"), True)
+
+    def test_is_circular_prime_of_two_digit_pairs(self):
+        self.assertEqual(run("let result = is_circular_prime(13);").get("result"), True)
+        self.assertEqual(run("let result = is_circular_prime(17);").get("result"), True)
+
+    def test_is_circular_prime_of_three_digit(self):
+        self.assertEqual(run("let result = is_circular_prime(197);").get("result"), True)
+
+    def test_is_circular_prime_of_non_prime_is_false(self):
+        self.assertEqual(run("let result = is_circular_prime(4);").get("result"), False)
+
+    def test_is_circular_prime_of_bad_rotation_is_false(self):
+        self.assertEqual(run("let result = is_circular_prime(19);").get("result"), False)
+
+    def test_is_circular_prime_of_leading_zero_rotation_is_false(self):
+        self.assertEqual(run("let result = is_circular_prime(103);").get("result"), False)
+
+    def test_is_circular_prime_below_prime_threshold_is_false(self):
+        self.assertEqual(run("let result = is_circular_prime(0);").get("result"), False)
+        self.assertEqual(run("let result = is_circular_prime(1);").get("result"), False)
+
+    def test_is_circular_prime_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_circular_prime(-13);").get("result"), False)
+
+    def test_is_circular_prime_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_circular_prime(5.0);")
+        self.assertIn("is_circular_prime", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_circular_prime_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_circular_prime(true);")
+        self.assertIn("is_circular_prime", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_circular_prime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_circular_prime();")
+
+
 class TestIsPowerOfTwo(unittest.TestCase):
     def test_is_power_of_two_of_one(self):
         self.assertEqual(run("let result = is_power_of_two(1);").get("result"), True)

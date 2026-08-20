@@ -2846,3 +2846,12 @@ for vision/architecture.
   untouched by design; `r"""..."""` keeps its existing (pre-existing,
   out-of-scope) behavior. Clean first pass, no bounces (3255 tests
   passing, up from 3242).
+- **Standard library: `is_circular_prime` — a prime where every digit
+  rotation is also prime** — merged 2026-08-20T18:33:13Z via PR #286
+  (`feat/20260820-is-circular-prime`). Added `_is_circular_prime` to
+  `cinder/builtins.py` right after `_is_emirp`, rotating a number's
+  decimal digits via string slicing and trial-dividing each rotation
+  with a local `_trial_division_is_prime` helper; leading-zero
+  rotations (e.g. `103` → `"031"`) collapse correctly via `int()`
+  since any digit-`0` value is guaranteed a rotation ending in `0`.
+  Clean first pass, no bounces (3267 tests passing, up from 3255).

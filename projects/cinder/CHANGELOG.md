@@ -2815,3 +2815,15 @@ for vision/architecture.
   excludes single-prime-factor powers for free, with no second
   factorization pass needed. Clean first pass, no bounces (3201 tests
   passing, up from 3186).
+- **Language: inclusive range literal `a..=b`** — merged
+  2026-08-20T14:11:19Z via PR #283 (`feat/20260820-inclusive-range`).
+  Added a `DOT_DOT_EQ` token (`cinder/lexer.py`'s `_dot`, mirroring how
+  `_lt` already checks for a trailing `=` on `<<`), an `inclusive: bool
+  = False` field on `RangeExpr` (`cinder/ast_nodes.py`), parser support
+  for either spelling (`cinder/parser.py`'s `_range_expr`), and an
+  interpreter bump of the end bound by one when inclusive, only for a
+  non-bool int so invalid end values still reach `range()`'s own
+  validation with an unchanged error message
+  (`cinder/interpreter.py`'s `_evaluate_range`). `a..b` (exclusive)
+  is unaffected. Clean first pass, no bounces (3228 tests passing,
+  up from 3217).

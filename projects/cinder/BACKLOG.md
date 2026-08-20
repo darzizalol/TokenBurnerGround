@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`)
+## 1. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`) [claimed 2026-08-20T18:41:45Z]
 
 Build: the depth task after task 5's breadth work (`is_circular_prime`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

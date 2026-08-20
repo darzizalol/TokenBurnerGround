@@ -2855,3 +2855,11 @@ for vision/architecture.
   rotations (e.g. `103` → `"031"`) collapse correctly via `int()`
   since any digit-`0` value is guaranteed a rotation ending in `0`.
   Clean first pass, no bounces (3267 tests passing, up from 3255).
+- **Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`,
+  `\uXXXX`)** — merged 2026-08-20T18:47:36Z via PR #287
+  (`feat/20260820-string-escapes`). Extended `Lexer._ESCAPES`
+  (`cinder/lexer.py`) with the five missing one-character escapes and added
+  a `_unicode_escape` method for `\uXXXX` (exactly 4 hex digits,
+  case-insensitive), reusing `_string`'s existing cursor primitives; raw
+  strings are unaffected by design. Clean first pass, no bounces (3274
+  tests passing, up from 3267).

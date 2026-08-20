@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_sphenic` — a number that is the product of three distinct primes
+## 1. Standard library: `is_sphenic` — a number that is the product of three distinct primes [claimed 2026-08-20T14:23:12Z]
 
 Build: the breadth task after task 5's depth work (inclusive range literal
 `a..=b`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog

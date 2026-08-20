@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: triple-quoted string literals `"""..."""`/`'''...'''`
+## 1. Language: triple-quoted string literals `"""..."""`/`'''...'''` [claimed 2026-08-20T18:09:58Z]
 
 Build: the depth task after task 5's breadth work (`is_sphenic`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

@@ -2863,3 +2863,12 @@ for vision/architecture.
   case-insensitive), reusing `_string`'s existing cursor primitives; raw
   strings are unaffected by design. Clean first pass, no bounces (3274
   tests passing, up from 3267).
+- **Standard library: `is_sad_number` — the complement of
+  `is_happy_number`** — merged 2026-08-21T19:04:10Z via PR #288
+  (`feat/20260820-is-sad-number`). Added `_is_sad_number` to
+  `cinder/builtins.py` right after `_is_happy_number`, inverting that
+  function's own loop at exactly its two exit points (cycle found →
+  `True`, reach `1` → `False`) rather than negating a call to it, so the
+  negative-input domain guard stays its own explicit `False` rather than
+  an implicit consequence of blind negation. Clean first pass, no bounces
+  (3282 tests passing, up from 3274).

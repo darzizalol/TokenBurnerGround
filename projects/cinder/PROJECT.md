@@ -1103,19 +1103,25 @@ of three matching quote characters as the delimiter instead of one,
 reusing the existing STRING/INTERP_STRING tokens and `_string` loop so
 escapes, interpolation, and multi-line handling are all unchanged, with
 the raw-string branch untouched by design — has since landed via PR #285
-too.
+too, and `is_circular_prime(n)` — testing whether every rotation of an
+integer's decimal digits is also prime (e.g. `197`/`971`/`719`),
+combining `is_emirp`'s primality-plus-digit-transformation shape with
+`is_rotation`'s rotate-and-compare technique, inlining a local
+trial-division primality helper rather than calling `is_prime`/`is_emirp`
+directly since both take the builtin-dispatch `(arguments, line, column)`
+signature rather than a raw `int` — has since landed via PR #286 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, triple-quoted string literals, has since landed via
-PR #285 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant description from
-this section. Tasks 1-5 — `is_circular_prime`, missing string escape
-sequences, `is_sad_number`, comma-separated multiple statements in
-expression-statement position, and `additive_persistence` — plus task 6,
-map concatenation via `+` — are fully scoped in `BACKLOG.md` itself and
-are not duplicated here, the same treatment tasks past slot 1 have
-gotten since this section stopped trying to keep prose in lockstep with
-every backlog slot). And only much later, a bytecode VM
+occupy slot 1 here, `is_circular_prime`, has since landed via PR #286 and
+is covered in the "have since landed" history immediately above; this
+grooming pass dropped its now-redundant description from this section.
+Tasks 1-5 — missing string escape sequences, `is_sad_number`,
+comma-separated multiple statements in expression-statement position,
+`additive_persistence`, and map concatenation via `+` — plus task 6,
+`is_pentagonal`, are fully scoped in `BACKLOG.md` itself and are not
+duplicated here, the same treatment tasks past slot 1 have gotten since
+this section stopped trying to keep prose in lockstep with every backlog
+slot). And only much later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1592,7 +1598,28 @@ imported, since `cinder/builtins.py` imports from `cinder/interpreter.py`
 and not the reverse), and every compound-assign form (`+=` on an
 identifier, index, or dot-access target) gets map support for free
 through the same desugaring into `_apply_binary_operator` that already
-carries list `+=`.
+carries list `+=`. This pass found the backlog back down to its 5-task
+floor again (`is_circular_prime` having landed cleanly via PR #286 with
+no bounce, dropping the count from 6 to 5, dropping its now-landed
+description from the "what remains plausible" section above into the
+"have since landed" history, and renumbering the remaining five tasks
+from 2-6 down to 1-5, with missing string escape sequences renumbered
+from 2 to 1, `is_sad_number` from 3 to 2, comma-separated multiple
+statements from 4 to 3, `additive_persistence` from 5 to 4, and map
+concatenation via `+` from 6 to 5) and restocked it to 6 by adding task
+6, `is_pentagonal`, continuing alternation with a breadth task after task
+5's depth work (map concatenation via `+`) rather than stacking a second
+depth task, per the policy above — the next figurate-number predicate
+after `is_triangular`, testing membership in the pentagonal numbers
+(`1, 5, 12, 22, 35, ...`) via the same `math.isqrt`-based closed-form
+technique `is_triangular`/`is_fibonacci`/`is_perfect_square` already use,
+with one added modular-residue check (`root % 6 == 5`) that
+`is_triangular`'s own simpler perfect-square test doesn't need, since
+solving the pentagonal-number formula for its index `k` leaves a
+divisibility-by-6 condition that solving the triangular one doesn't. The
+next grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor.
 
 ## History
 

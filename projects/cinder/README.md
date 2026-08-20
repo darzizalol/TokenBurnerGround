@@ -359,7 +359,8 @@ while (i < 10) {
   as the third popcount-based predicate, negative input raises the same domain error they do),
   `is_sphenic` to test whether an integer is the product of three distinct primes (e.g. `30 = 2 * 3 * 5`,
   the natural next member of the "product of primes" family alongside `is_semiprime`'s "product of exactly two"),
-  and type predicates
+  `is_circular_prime` to test whether every rotation of an integer's decimal digits is also prime
+  (e.g. `197`/`971`/`719`), and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -438,35 +439,35 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: triple-quoted string
+Actively developed, nightly. Recently landed: `is_circular_prime` —
+testing whether every rotation of an integer's decimal digits is also
+prime (e.g. `197`/`971`/`719`), combining `is_emirp`'s
+primality-plus-digit-transformation shape with `is_rotation`'s
+rotate-and-compare technique, and before that triple-quoted string
 literals `"""..."""`/`'''...'''` — ending only at three consecutive
 matching quote characters, so quote-heavy text (embedded dialogue, JSON
 snippets) needs no per-quote escaping, and before that `is_sphenic` —
 testing whether an integer is the product of three distinct primes (e.g.
 `30 = 2 * 3 * 5`), the natural next member of the "product of primes"
-family alongside `is_semiprime`'s "product of exactly two", and before
-that an inclusive range literal `a..=b` — the natural sibling of `a..b`
-for loops that must include their upper bound (`for i in 1..=5 { ... }`
-instead of the easy-to-get-wrong `1..6`). Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_circular_prime` — testing whether every
-rotation of an integer's decimal digits is also prime (e.g.
-`197`/`971`/`719`), combining `is_emirp`'s primality-plus-digit-
-transformation shape with `is_rotation`'s rotate-and-compare technique,
-missing string escape sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a
-fixed-width `\uXXXX` Unicode escape — closing the gap left by `_ESCAPES`
-recognizing only five escapes since strings were first implemented,
-`is_sad_number` — the direct complement of `is_happy_number` (every
-non-negative integer either reaches `1` under the digit-square-sum
-recurrence or cycles forever without doing so, never both), built by
-inverting `is_happy_number`'s own cycle-detection loop rather than
-negating a call to it, comma-separated multiple statements in
-expression-statement position (`a = 1, b = 2;`) — the plain-statement
-counterpart to the comma-separated multiple declarations `let`/`const`
-already support, `additive_persistence` — the natural sibling of
-`multiplicative_persistence`, counting the number of repeated
-digit-summing steps needed to reduce an integer to a single digit, and
-map concatenation via `+` (`{...} + {...}`) — the map-typed sibling of
-list concatenation, giving the existing `merge()` builtin an infix
-spelling. The backlog mixes language depth with stdlib breadth over time rather than
-running either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+family alongside `is_semiprime`'s "product of exactly two". Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): missing string escape sequences
+`\r`/`\0`/`\b`/`\f`/`\v` plus a fixed-width `\uXXXX` Unicode escape —
+closing the gap left by `_ESCAPES` recognizing only five escapes since
+strings were first implemented, `is_sad_number` — the direct complement
+of `is_happy_number` (every non-negative integer either reaches `1`
+under the digit-square-sum recurrence or cycles forever without doing
+so, never both), built by inverting `is_happy_number`'s own
+cycle-detection loop rather than negating a call to it, comma-separated
+multiple statements in expression-statement position (`a = 1, b = 2;`)
+— the plain-statement counterpart to the comma-separated multiple
+declarations `let`/`const` already support, `additive_persistence` —
+the natural sibling of `multiplicative_persistence`, counting the
+number of repeated digit-summing steps needed to reduce an integer to a
+single digit, map concatenation via `+` (`{...} + {...}`) — the
+map-typed sibling of list concatenation, giving the existing `merge()`
+builtin an infix spelling, and `is_pentagonal` — the closed-form
+figurate-number sibling of `is_triangular`, testing membership in the
+pentagonal numbers `1, 5, 12, 22, 35, ...` via the same `math.isqrt`
+perfect-square technique. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

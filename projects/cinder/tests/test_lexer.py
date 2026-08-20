@@ -619,6 +619,20 @@ class TestOperators(unittest.TestCase):
             [TokenType.INT, TokenType.DOT_DOT, TokenType.INT, TokenType.EOF],
         )
 
+    def test_dot_dot_eq_does_not_collide_with_dot_dot(self):
+        # "..=" must lex as one DOT_DOT_EQ token, not DOT_DOT then EQ.
+        tokens = tokenize("..=")
+        self.assertEqual(types(tokens), [TokenType.DOT_DOT_EQ, TokenType.EOF])
+        self.assertEqual(tokens[0].lexeme, "..=")
+        # "1..=5" lexes as INT DOT_DOT_EQ INT.
+        self.assertEqual(
+            types(tokenize("1..=5")),
+            [TokenType.INT, TokenType.DOT_DOT_EQ, TokenType.INT, TokenType.EOF],
+        )
+        # Plain ".." and "..." are unaffected.
+        self.assertEqual(types(tokenize("..")), [TokenType.DOT_DOT, TokenType.EOF])
+        self.assertEqual(types(tokenize("...")), [TokenType.DOT_DOT_DOT, TokenType.EOF])
+
     def test_compound_assignment_operators(self):
         source = "+= -= *= /= %="
         expected = [

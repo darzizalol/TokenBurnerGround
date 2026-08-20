@@ -1213,10 +1213,11 @@ class Parser:
 
     def _range_expr(self) -> Expr:
         expr = self._bitor()
-        if self._check(TokenType.DOT_DOT):
+        if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
             dots = self._advance()
             end = self._bitor()
-            return RangeExpr(expr, end, dots.line, dots.column)
+            inclusive = dots.type is TokenType.DOT_DOT_EQ
+            return RangeExpr(expr, end, dots.line, dots.column, inclusive)
         return expr
 
     def _bitor(self) -> Expr:

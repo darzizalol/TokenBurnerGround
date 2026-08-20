@@ -855,6 +855,8 @@ class Interpreter:
     def _evaluate_range(self, expr: RangeExpr, env: Environment) -> object:
         start = self.evaluate(expr.start, env)
         end = self.evaluate(expr.end, env)
+        if expr.inclusive and isinstance(end, int) and not isinstance(end, bool):
+            end = end + 1
         from cinder.builtins import _range  # local: builtins.py imports
         # from interpreter.py at module level already, so a top-level
         # import the other way round here would be circular; importing

@@ -2557,6 +2557,57 @@ class TestIsSemiprime(unittest.TestCase):
             run("is_semiprime();")
 
 
+class TestIsSphenic(unittest.TestCase):
+    def test_is_sphenic_of_smallest_sphenic_number(self):
+        self.assertEqual(run("let result = is_sphenic(30);").get("result"), True)
+
+    def test_is_sphenic_of_2_3_7(self):
+        self.assertEqual(run("let result = is_sphenic(42);").get("result"), True)
+
+    def test_is_sphenic_of_3_5_7(self):
+        self.assertEqual(run("let result = is_sphenic(105);").get("result"), True)
+
+    def test_is_sphenic_of_7_11_13(self):
+        self.assertEqual(run("let result = is_sphenic(1001);").get("result"), True)
+
+    def test_is_sphenic_of_single_repeated_prime_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(8);").get("result"), False)
+
+    def test_is_sphenic_of_one_repeated_factor_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(12);").get("result"), False)
+
+    def test_is_sphenic_of_three_distinct_primes_with_repeat_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(60);").get("result"), False)
+
+    def test_is_sphenic_of_single_prime_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(7);").get("result"), False)
+
+    def test_is_sphenic_of_one_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(1);").get("result"), False)
+
+    def test_is_sphenic_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(0);").get("result"), False)
+
+    def test_is_sphenic_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_sphenic(-30);").get("result"), False)
+
+    def test_is_sphenic_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_sphenic(5.0);")
+        self.assertIn("is_sphenic", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_sphenic_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_sphenic(true);")
+        self.assertIn("is_sphenic", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_sphenic_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_sphenic();")
+
+
 class TestIsEmirp(unittest.TestCase):
     def test_is_emirp_of_classic_pairs(self):
         self.assertEqual(run("let result = is_emirp(13);").get("result"), True)

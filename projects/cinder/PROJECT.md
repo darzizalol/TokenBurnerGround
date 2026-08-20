@@ -1095,19 +1095,27 @@ everything else — has since landed via PR #283 too, and `is_sphenic(n)` —
 an integer that is the product of three distinct primes (e.g.
 `30 = 2 * 3 * 5`), the natural next member of the "product of primes"
 family alongside `is_semiprime`'s "product of exactly two" — has since
-landed via PR #284 too.
+landed via PR #284 too, and triple-quoted string literals
+(`"""..."""`/`'''...'''`, ending only at three consecutive matching
+quote characters so quote-heavy or multi-line text needs no per-quote
+escaping) — extending the lexer's plain-string branch to recognize a run
+of three matching quote characters as the delimiter instead of one,
+reusing the existing STRING/INTERP_STRING tokens and `_string` loop so
+escapes, interpolation, and multi-line handling are all unchanged, with
+the raw-string branch untouched by design — has since landed via PR #285
+too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, `is_sphenic`, has since landed via PR #284 and is
-covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-5 — triple-quoted string literals, `is_circular_prime`, missing
-string escape sequences, `is_sad_number`, and comma-separated multiple
-statements in expression-statement position — plus task 6,
-`additive_persistence` — are fully scoped in `BACKLOG.md` itself and are
-not duplicated here, the same treatment tasks past slot 1 have gotten
-since this section stopped trying to keep prose in lockstep with every
-backlog slot). And only much later, a bytecode VM
+occupy slot 1 here, triple-quoted string literals, has since landed via
+PR #285 and is covered in the "have since landed" history immediately
+above; this grooming pass dropped its now-redundant description from
+this section. Tasks 1-5 — `is_circular_prime`, missing string escape
+sequences, `is_sad_number`, comma-separated multiple statements in
+expression-statement position, and `additive_persistence` — plus task 6,
+map concatenation via `+` — are fully scoped in `BACKLOG.md` itself and
+are not duplicated here, the same treatment tasks past slot 1 have
+gotten since this section stopped trying to keep prose in lockstep with
+every backlog slot). And only much later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1563,7 +1571,28 @@ reuses `multiplicative_persistence`'s own step-counting loop shape
 (`abs()` first to discard sign, loop while `>= 10`, increment a counter)
 with digit-summing in place of digit-multiplying. The next grooming pass
 should continue alternating breadth/depth, restocking toward 6-7 tasks
-whenever a merge drops the count within reach of the 5-task floor.
+whenever a merge drops the count within reach of the 5-task floor. This
+pass found the backlog back down to its 5-task floor again (triple-quoted
+string literals having landed cleanly via PR #285 with no bounce,
+dropping the count from 6 to 5, dropping its now-landed description from
+the "what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining five tasks from 2-6 down to 1-5,
+with `is_circular_prime` renumbered from 2 to 1, missing string escape
+sequences from 3 to 2, `is_sad_number` from 4 to 3, comma-separated
+multiple statements from 5 to 4, and `additive_persistence` from 6 to 5)
+and restocked it to 6 by adding task 6, map concatenation via `+`
+(`{...} + {...}`), continuing alternation with a depth task after task
+5's breadth work (`additive_persistence`) rather than stacking a second
+breadth task, per the policy above — maps are Cinder's fourth container
+type and the only one whose combining builtin (`merge()`) still lacks an
+infix operator form, unlike `concat()`/list `+` which already closed
+that exact gap for lists; `merge()`'s own right-biased shallow-merge body
+is reused verbatim in the new `PLUS` branch case (inlined rather than
+imported, since `cinder/builtins.py` imports from `cinder/interpreter.py`
+and not the reverse), and every compound-assign form (`+=` on an
+identifier, index, or dot-access target) gets map support for free
+through the same desugaring into `_apply_binary_operator` that already
+carries list `+=`.
 
 ## History
 

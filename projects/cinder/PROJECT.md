@@ -1085,15 +1085,20 @@ reusing `is_evil`/`is_odious`'s own `bin(value).count("1")` popcount
 computation and `is_prime`'s own trial-division loop, placed right after
 `is_odious` in `cinder/builtins.py` since all three predicates classify a
 number by a property of its popcount rather than the number itself — has
-since landed via PR #282 too.
+since landed via PR #282 too, and an inclusive range literal `a..=b`
+(sugar for `range(a, b + 1)`, the natural sibling of `a..b` for loops
+that must include their upper bound) — a new `DOT_DOT_EQ` token, an
+`inclusive` flag on `RangeExpr` defaulting `False`, and an interpreter
+bump of the evaluated end bound by one only when it is already a valid
+non-bool int, reusing the existing `_range` builtin's own validation for
+everything else — has since landed via PR #283 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, `is_pernicious`, has since landed via PR #282 and is
-covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-5 — an inclusive range literal `a..=b` (sugar for
-`range(a, b + 1)`, the natural sibling of `a..b` now that the exclusive
-spelling has landed), `is_sphenic` (an integer that is the product of
+(numbering here matches `BACKLOG.md` tasks 1-4 — the task that used to
+occupy slot 1 here, the inclusive range literal `a..=b`, has since landed
+via PR #283 and is covered in the "have since landed" history immediately
+above; this grooming pass dropped its now-redundant description from this
+section.
+Tasks 1-4 — `is_sphenic` (an integer that is the product of
 three distinct primes, e.g. `30 = 2 * 3 * 5`, the natural next member of
 the "product of primes" family alongside `is_semiprime`'s "product of
 exactly two"), triple-quoted string literals `"""..."""`/`'''...'''`
@@ -1113,14 +1118,19 @@ since strings were first implemented, so every other escape with an
 obvious meaning has always been a guaranteed `LexError`; the
 one-character escapes are a pure dict extension, `\uXXXX` needs its own
 branch and helper but reuses `_string`'s existing character-scanning
-primitives) — plus task 6, `is_sad_number` (the direct complement of
+primitives) — plus task 5, `is_sad_number` (the direct complement of
 `is_happy_number` over the same non-negative-integer domain — every such
 integer either reaches `1` under repeated digit-square-summing or cycles
 forever without reaching it, never both or neither — built by inverting
 `is_happy_number`'s own cycle-detection loop at its two exit points
 rather than computing a blind `not is_happy_number(...)`, so the existing
 "negative input answers false rather than raising" convention carries
-over explicitly instead of vanishing behind a negation) — are fully
+over explicitly instead of vanishing behind a negation), and task 6,
+comma-separated multiple statements in expression-statement position
+(`a = 1, b = 2;` — the plain-statement counterpart to the comma-separated
+multiple declarations `let`/`const` already support, reusing the exact
+same `ExprStmt`/`DeclSeq` nodes so only `_expr_statement`'s parsing loop
+changes, no new AST or interpreter handling) — are fully
 scoped in `BACKLOG.md` itself and are not duplicated here, the same
 treatment tasks past slot 1 have gotten since this section stopped
 trying to keep prose in lockstep with every backlog slot). And only much
@@ -1532,7 +1542,32 @@ to it, so the existing "negative input answers false" convention stays
 explicit in the new function's own domain guard instead of riding along
 implicitly through a blind `not`. The next grooming pass should continue
 alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
-drops the count within reach of the 5-task floor.
+drops the count within reach of the 5-task floor. This pass found the
+backlog back down to its 5-task floor again (the inclusive range literal
+`a..=b` having landed cleanly via PR #283 with no bounce, dropping the
+count from 6 to 5, dropping its now-landed description from the "what
+remains plausible" section above into the "have since landed" history,
+and renumbering the remaining five tasks from 2-6 down to 1-5, with
+`is_sphenic` renumbered from 2 to 1, triple-quoted string literals from 3
+to 2, `is_circular_prime` from 4 to 3, missing string escape sequences
+from 5 to 4, and `is_sad_number` from 6 to 5) and restocked it to 6 by
+adding task 6, comma-separated multiple statements in expression-statement
+position (`a = 1, b = 2;`), continuing alternation with a depth task
+after task 5's breadth work (`is_sad_number`) rather than stacking a
+second breadth task, per the policy above — the plain-statement
+counterpart to the comma-separated multiple declarations `let`/`const`
+already support: `let a = 1, b = 2;` has worked for several nights now,
+but the equivalent for already-declared names (`a = 1, b = 2;`) or any
+other bare expression statement has always been a guaranteed
+`ParseError`, since `_expr_statement` only ever parsed one expression
+before demanding `;`. Reuses the exact `ExprStmt`/`DeclSeq` nodes
+`_let_statement` already built for this same shape — the interpreter's
+`DeclSeq` handler has no assumption that its statements are
+declarations, it just executes each in order — so this is a parser-only
+change with no new AST node, no lexer change, and no interpreter change.
+The next grooming pass should continue alternating breadth/depth,
+restocking toward 6-7 tasks whenever a merge drops the count within
+reach of the 5-task floor.
 
 ## History
 

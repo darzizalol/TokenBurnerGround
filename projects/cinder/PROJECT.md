@@ -1091,50 +1091,23 @@ that must include their upper bound) — a new `DOT_DOT_EQ` token, an
 `inclusive` flag on `RangeExpr` defaulting `False`, and an interpreter
 bump of the evaluated end bound by one only when it is already a valid
 non-bool int, reusing the existing `_range` builtin's own validation for
-everything else — has since landed via PR #283 too.
+everything else — has since landed via PR #283 too, and `is_sphenic(n)` —
+an integer that is the product of three distinct primes (e.g.
+`30 = 2 * 3 * 5`), the natural next member of the "product of primes"
+family alongside `is_semiprime`'s "product of exactly two" — has since
+landed via PR #284 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
-(numbering here matches `BACKLOG.md` tasks 1-4 — the task that used to
-occupy slot 1 here, the inclusive range literal `a..=b`, has since landed
-via PR #283 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant description from this
-section.
-Tasks 1-4 — `is_sphenic` (an integer that is the product of
-three distinct primes, e.g. `30 = 2 * 3 * 5`, the natural next member of
-the "product of primes" family alongside `is_semiprime`'s "product of
-exactly two"), triple-quoted string literals `"""..."""`/`'''...'''`
-(ending only at three consecutive matching quote characters, so
-quote-heavy content like embedded dialogue or JSON snippets needs no
-per-quote escaping; reuses the exact `STRING`/`INTERP_STRING` tokens
-ordinary strings already produce, so no parser/AST/interpreter changes
-are needed, only `Lexer.tokenize`'s dispatch and `_string`'s termination
-check), `is_circular_prime` (a prime where every rotation of its
-decimal digits is also prime, e.g. `197`/`971`/`719`, combining
-`is_emirp`'s prime-plus-digit-transformation shape with `is_rotation`'s
-rotate-and-compare technique, just generating every rotation from one
-number instead of comparing two given strings), and missing string
-escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, and a fixed-width
-`\uXXXX` Unicode escape — `_ESCAPES` has recognized only five escapes
-since strings were first implemented, so every other escape with an
-obvious meaning has always been a guaranteed `LexError`; the
-one-character escapes are a pure dict extension, `\uXXXX` needs its own
-branch and helper but reuses `_string`'s existing character-scanning
-primitives) — plus task 5, `is_sad_number` (the direct complement of
-`is_happy_number` over the same non-negative-integer domain — every such
-integer either reaches `1` under repeated digit-square-summing or cycles
-forever without reaching it, never both or neither — built by inverting
-`is_happy_number`'s own cycle-detection loop at its two exit points
-rather than computing a blind `not is_happy_number(...)`, so the existing
-"negative input answers false rather than raising" convention carries
-over explicitly instead of vanishing behind a negation), and task 6,
-comma-separated multiple statements in expression-statement position
-(`a = 1, b = 2;` — the plain-statement counterpart to the comma-separated
-multiple declarations `let`/`const` already support, reusing the exact
-same `ExprStmt`/`DeclSeq` nodes so only `_expr_statement`'s parsing loop
-changes, no new AST or interpreter handling) — are fully
-scoped in `BACKLOG.md` itself and are not duplicated here, the same
-treatment tasks past slot 1 have gotten since this section stopped
-trying to keep prose in lockstep with every backlog slot). And only much
-later, a bytecode VM
+(numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
+occupy slot 1 here, `is_sphenic`, has since landed via PR #284 and is
+covered in the "have since landed" history immediately above; this
+grooming pass dropped its now-redundant description from this section.
+Tasks 1-5 — triple-quoted string literals, `is_circular_prime`, missing
+string escape sequences, `is_sad_number`, and comma-separated multiple
+statements in expression-statement position — plus task 6,
+`additive_persistence` — are fully scoped in `BACKLOG.md` itself and are
+not duplicated here, the same treatment tasks past slot 1 have gotten
+since this section stopped trying to keep prose in lockstep with every
+backlog slot). And only much later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1567,7 +1540,30 @@ declarations, it just executes each in order — so this is a parser-only
 change with no new AST node, no lexer change, and no interpreter change.
 The next grooming pass should continue alternating breadth/depth,
 restocking toward 6-7 tasks whenever a merge drops the count within
-reach of the 5-task floor.
+reach of the 5-task floor. This pass found the backlog back down to its
+5-task floor again (`is_sphenic` having landed cleanly via PR #284 with
+no bounce, dropping the count from 6 to 5, dropping its now-landed
+description from the "what remains plausible" section above into the
+"have since landed" history, and renumbering the remaining five tasks
+from 2-6 down to 1-5, with triple-quoted string literals renumbered from
+2 to 1, `is_circular_prime` from 3 to 2, missing string escape sequences
+from 4 to 3, `is_sad_number` from 5 to 4, and comma-separated multiple
+statements from 6 to 5) and restocked it to 6 by adding task 6,
+`additive_persistence`, continuing alternation with a breadth task after
+task 5's depth work (comma-separated multiple statements) rather than
+stacking a second depth task, per the policy above — the natural sibling
+of `multiplicative_persistence` (already sitting next to `digit_sum`/
+`digital_root`/`reverse_int`), counting the number of repeated
+digit-summing steps needed to reduce `n` to a single digit (e.g.
+`199 -> 19 -> 10 -> 1`, three steps) rather than returning the final
+single-digit value the way `digital_root` already does via its
+closed-form `1 + (n - 1) % 9` identity — `additive_persistence` needs the
+actual iteration count, which the closed form doesn't expose, so it
+reuses `multiplicative_persistence`'s own step-counting loop shape
+(`abs()` first to discard sign, loop while `>= 10`, increment a counter)
+with digit-summing in place of digit-multiplying. The next grooming pass
+should continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor.
 
 ## History
 

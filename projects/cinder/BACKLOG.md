@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Language: triple-quoted string literals `"""..."""`/`'''...'''`
+## 1. Language: triple-quoted string literals `"""..."""`/`'''...'''`
 
 Build: the depth task after task 5's breadth work (`is_sphenic`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -137,7 +137,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
+## 2. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
 
 Build: the breadth task after task 5's depth work (triple-quoted string
 literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -229,7 +229,7 @@ leave all three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`)
+## 3. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`)
 
 Build: the depth task after task 5's breadth work (`is_circular_prime`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -368,7 +368,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_sad_number` — the complement of `is_happy_number`
+## 4. Standard library: `is_sad_number` — the complement of `is_happy_number`
 
 Build: the breadth task after task 5's depth work (missing string escape
 sequences) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -450,7 +450,7 @@ not this task.
 
 ---
 
-## 6. Language: comma-separated multiple statements in expression-statement position (`a = 1, b = 2;`)
+## 5. Language: comma-separated multiple statements in expression-statement position (`a = 1, b = 2;`)
 
 Build: the depth task after task 5's breadth work (`is_sad_number`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -545,6 +545,79 @@ comma-separated expression statements, its "Status & roadmap" section needs
 updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
 backlog to landed — leave all three to the Architect's next grooming pass,
 not this task.
+
+---
+
+## 6. Standard library: `additive_persistence` — steps of repeated digit-summing to reach one digit
+
+Build: the breadth task after task 5's depth work (comma-separated
+expression statements) per `PROJECT.md`'s breadth-vs-depth policy,
+restocking the backlog back to 6 tasks now that `is_sphenic` has landed
+via PR #284, dropping the count to the 5-task floor.
+`multiplicative_persistence` (`cinder/builtins.py`) already counts the
+number of repeated digit-*multiplying* steps needed to reduce `n` to a
+single digit; `digital_root` already computes the *value* a number
+reduces to under repeated digit-*summing*, but via a closed-form
+identity (`1 + (n - 1) % 9`) that never actually counts iterations.
+Nothing today answers "how many summing steps does that take?" — the
+natural sibling `multiplicative_persistence` is missing on the additive
+side. `199` reduces `199 -> 19 -> 10 -> 1`, three steps; `9876` reduces
+`9876 -> 30 -> 3`, two steps. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(additive_persistence(199));'
+# -> CinderRuntimeError: undefined name 'additive_persistence'
+```
+
+Add to `cinder/builtins.py`, registered right after `_multiplicative_persistence`
+(search `def _multiplicative_persistence`, immediately before `_reverse_int`):
+```python
+def _additive_persistence(arguments: list, line: int, column: int) -> object:
+    _require_arity("additive_persistence", arguments, 1, line, column)
+    value = _require_int("additive_persistence", arguments[0], line, column)
+    value = abs(value)
+    steps = 0
+    while value >= 10:
+        value = sum(int(digit) for digit in str(value))
+        steps += 1
+    return steps
+```
+This is `_multiplicative_persistence`'s own loop shape (search `def
+_multiplicative_persistence`) — `abs()` the input once up front to discard
+sign the same way `digit_sum`/`digital_root`/`multiplicative_persistence`
+all already do, loop while `value >= 10` incrementing a step counter —
+with the loop body's digit-*product* swapped for a digit-*sum*
+(`sum(int(digit) for digit in str(value))`, the same summing expression
+`digit_sum` itself uses), rather than computing `digital_root` and a step
+count as two separate passes over the same reduction.
+
+Acceptance criteria:
+- `additive_persistence(0);` is `0`, `additive_persistence(9);` is `0` —
+  already single-digit, no steps needed.
+- `additive_persistence(99);` is `2` — `99 -> 18 -> 9`.
+- `additive_persistence(199);` is `3` — `199 -> 19 -> 10 -> 1`.
+- `additive_persistence(9876);` is `2` — `9876 -> 30 -> 3`.
+- `additive_persistence(-199);` is `3` — sign discarded via `abs()` up
+  front, matching `digit_sum`/`digital_root`/`multiplicative_persistence`'s
+  own sign-discarding convention (not `reverse_int`'s sign-preserving
+  one, since this returns a step count, not a number built from the
+  input's own digits).
+- `additive_persistence(5.0);` raises `CinderRuntimeError` matching
+  `"additive_persistence() requires an int, got float"`.
+- `additive_persistence(true);` raises `CinderRuntimeError` matching
+  `"additive_persistence() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near
+`multiplicative_persistence`, see current line numbers — shift if earlier
+tasks this cycle land first), `tests/test_builtins.py` (model on `class
+TestMultiplicativePersistence`, search that name). Once merged,
+`README.md`'s Builtins bullet needs `additive_persistence` added near
+`multiplicative_persistence`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
+backlog to landed — leave all three to the Architect's next grooming
+pass, not this task.
 
 ---
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_sad_number` — the complement of `is_happy_number`
+## 1. Standard library: `is_sad_number` — the complement of `is_happy_number` [claimed 2026-08-20T19:00:14Z]
 
 Build: the breadth task after task 5's depth work (missing string escape
 sequences) per `PROJECT.md`'s breadth-vs-depth policy, restocking the

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)`
+## 1. Language: inclusive range literal `a..=b` as sugar for `range(a, b + 1)`
 
 Build: the depth task after task 5's breadth work (`is_pernicious`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -169,7 +169,7 @@ three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_sphenic` — a number that is the product of three distinct primes
+## 2. Standard library: `is_sphenic` — a number that is the product of three distinct primes
 
 Build: the breadth task after task 5's depth work (inclusive range literal
 `a..=b`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog
@@ -259,7 +259,7 @@ leave all three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: triple-quoted string literals `"""..."""`/`'''...'''`
+## 3. Language: triple-quoted string literals `"""..."""`/`'''...'''`
 
 Build: the depth task after task 5's breadth work (`is_sphenic`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -385,7 +385,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
+## 4. Standard library: `is_circular_prime` — a prime where every digit rotation is also prime
 
 Build: the breadth task after task 5's depth work (triple-quoted string
 literals) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
@@ -477,7 +477,7 @@ leave all three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`)
+## 5. Language: missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, `\uXXXX`)
 
 Build: the depth task after task 5's breadth work (`is_circular_prime`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -613,6 +613,88 @@ escapes") needs the new escapes mentioned alongside `\n`/`\t`/`\\`/`\"`/`\'`,
 its "Status & roadmap" section needs updating, and `PROJECT.md`'s roadmap
 paragraph needs this moved from backlog to landed — leave all three to the
 Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `is_sad_number` — the complement of `is_happy_number`
+
+Build: the breadth task after task 5's depth work (missing string escape
+sequences) per `PROJECT.md`'s breadth-vs-depth policy, restocking the
+backlog back to 6 tasks now that `is_pernicious` has landed via PR #282,
+dropping the count to the 5-task floor. `is_happy_number` (`cinder/builtins.py`)
+already implements the "repeatedly sum the squares of the digits, does it
+reach 1?" iteration and returns `false` both for numbers that cycle instead
+of reaching 1 (e.g. `4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 -> 20 -> 4`, back
+where it started) and for out-of-domain input (negative numbers) — collapsing
+two different reasons for "not happy" into one boolean. `is_evil`/`is_odious`
+already establish the pattern of a same-cycle predicate pair, one asking the
+positive question and the other its direct complement over the same domain;
+`is_composite` is not that pattern (its own domain floor of 4 makes it *not*
+a strict negation of `is_prime`), but `is_sad_number` should be the direct
+complement — every non-negative integer is either happy or sad, no third
+case. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_sad_number(4));'
+# -> CinderRuntimeError: undefined name 'is_sad_number'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_happy_number`
+(search `def _is_happy_number`, immediately before `_collatz_length`):
+```python
+def _is_sad_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_sad_number", arguments, 1, line, column)
+    value = _require_int("is_sad_number", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    seen = set()
+    while value != 1:
+        if value in seen:
+            return True
+        seen.add(value)
+        value = sum(int(digit) ** 2 for digit in str(value))
+    return False
+```
+This is `_is_happy_number`'s own loop (search `def _is_happy_number`),
+inverted at exactly its two exit points — `value in seen` (a cycle found
+without ever reaching 1) now returns `True` instead of `False`, and falling
+out of the `while` loop by reaching `1` now returns `False` instead of
+`True` — rather than computing `not _is_happy_number(...)`, so a negative
+argument keeps returning `False` from its own explicit domain guard, the
+same "not happy" input handling `is_happy_number` uses, instead of silently
+becoming "sad" through blind negation of a function whose own negative-input
+convention is invisible from the outside.
+
+Acceptance criteria:
+- `is_sad_number(4);` is `true` — `4 -> 16 -> 37 -> 58 -> 89 -> 145 -> 42 ->
+  20 -> 4`, cycles without ever reaching `1`.
+- `is_sad_number(2);` is `true`, `is_sad_number(3);` is `true` — both
+  eventually join the same 8-number cycle `4` belongs to.
+- `is_sad_number(1);` is `false` — already `1`.
+- `is_sad_number(7);` is `false`, `is_sad_number(19);` is `false`,
+  `is_sad_number(97);` is `false` — each is a known happy number
+  (`is_happy_number`'s own true-case fixtures), so the complement holds.
+- `is_sad_number(0);` is `true` — `0 -> 0`, an immediate one-element cycle
+  (mirrors `is_happy_number(0)` being `false`).
+- `is_sad_number(-7);` is `false` — negative input, matching
+  `is_happy_number`'s own "not a valid domain, answer false rather than
+  raise" convention, not a strict boolean negation of it.
+- `is_sad_number(5.0);` raises `CinderRuntimeError` matching
+  `"is_sad_number() requires an int, got float"`.
+- `is_sad_number(true);` raises `CinderRuntimeError` matching
+  `"is_sad_number() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_happy_number`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestIsHappyNumber`, search that
+name). Once merged, `README.md`'s Builtins bullet needs `is_sad_number`
+added near `is_happy_number`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
+backlog to landed — leave all three to the Architect's next grooming pass,
+not this task.
 
 ---
 

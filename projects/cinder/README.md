@@ -347,7 +347,9 @@ while (i < 10) {
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
   `is_repdigit` to test whether every decimal digit of an integer is the same,
-  `is_undulating` to test whether an integer's decimal digits strictly alternate between exactly two distinct values, and type predicates
+  `is_undulating` to test whether an integer's decimal digits strictly alternate between exactly two distinct values,
+  `is_pernicious` to test whether an integer's binary popcount is itself prime (sits next to `is_evil`/`is_odious`
+  as the third popcount-based predicate, negative input raises the same domain error they do), and type predicates
   `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -426,34 +428,37 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: named function expressions
-`fn name(params) { ... }` — letting an anonymous function refer to itself
-by its own name from inside its body, without depending on whatever outer
-variable (if any) it happens to be assigned to, and before that
-`is_achilles` — testing whether an integer is powerful (every prime factor
-has exponent `>= 2`) but *not* itself a perfect power, the gap between
-`is_powerful_number` and `is_perfect_power` (e.g. `72 = 2^3 * 3^2`:
-powerful, but no single base/exponent pair produces it), and before that
-map literal shorthand properties `{a, b}` — sugar for `{"a": a, "b": b}`,
-the construction-side inverse of the map-destructuring shorthand
-`let {a, b} = expr;` already has. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_pernicious` — testing whether an
-integer's binary popcount is itself prime, the sibling of
-`is_evil`/`is_odious`'s popcount-parity check, an inclusive range literal
-`a..=b` — the natural sibling of `a..b` for loops that must include their
-upper bound (`for i in 1..=5 { ... }` instead of the easy-to-get-wrong
-`1..6`), `is_sphenic` — testing whether an integer is the product of
-three distinct primes (e.g. `30 = 2 * 3 * 5`), the natural next member of
-the "product of primes" family alongside `is_semiprime`'s "product of
+Actively developed, nightly. Recently landed: `is_pernicious` — testing
+whether an integer's binary popcount is itself prime, the third member of
+`is_evil`/`is_odious`'s popcount-based predicate family, and before that
+named function expressions `fn name(params) { ... }` — letting an
+anonymous function refer to itself by its own name from inside its body,
+without depending on whatever outer variable (if any) it happens to be
+assigned to, and before that `is_achilles` — testing whether an integer
+is powerful (every prime factor has exponent `>= 2`) but *not* itself a
+perfect power, the gap between `is_powerful_number` and
+`is_perfect_power` (e.g. `72 = 2^3 * 3^2`: powerful, but no single
+base/exponent pair produces it). Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): an inclusive range literal `a..=b` — the
+natural sibling of `a..b` for loops that must include their upper bound
+(`for i in 1..=5 { ... }` instead of the easy-to-get-wrong `1..6`),
+`is_sphenic` — testing whether an integer is the product of three
+distinct primes (e.g. `30 = 2 * 3 * 5`), the natural next member of the
+"product of primes" family alongside `is_semiprime`'s "product of
 exactly two", triple-quoted string literals `"""..."""`/`'''...'''` —
 ending only at three consecutive matching quote characters, so
 quote-heavy text (embedded dialogue, JSON snippets) needs no per-quote
 escaping, `is_circular_prime` — testing whether every rotation of an
 integer's decimal digits is also prime (e.g. `197`/`971`/`719`),
 combining `is_emirp`'s primality-plus-digit-transformation shape with
-`is_rotation`'s rotate-and-compare technique, and missing string escape
+`is_rotation`'s rotate-and-compare technique, missing string escape
 sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a fixed-width `\uXXXX` Unicode
 escape — closing the gap left by `_ESCAPES` recognizing only five escapes
-since strings were first implemented. The backlog mixes language depth
-with stdlib breadth over time rather than running either in one long
-block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+since strings were first implemented, and `is_sad_number` — the direct
+complement of `is_happy_number` (every non-negative integer either
+reaches `1` under the digit-square-sum recurrence or cycles forever
+without doing so, never both), built by inverting `is_happy_number`'s own
+cycle-detection loop rather than negating a call to it. The backlog mixes
+language depth with stdlib breadth over time rather than running either
+in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

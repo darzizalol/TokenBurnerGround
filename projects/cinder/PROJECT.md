@@ -1079,14 +1079,19 @@ testing whether an integer is powerful (every prime factor's exponent
 `>= 2`) but not itself a perfect power (OEIS A052486, e.g. `72 = 2^3 *
 3^2`), reusing `is_powerful_number`'s own factorization loop with a
 running `gcd` of exponents instead of a second `is_perfect_power` pass —
-has since landed via PR #280 too.
+has since landed via PR #280 too, and `is_pernicious(n)` — testing
+whether a number's binary popcount (count of set bits) is itself prime,
+reusing `is_evil`/`is_odious`'s own `bin(value).count("1")` popcount
+computation and `is_prime`'s own trial-division loop, placed right after
+`is_odious` in `cinder/builtins.py` since all three predicates classify a
+number by a property of its popcount rather than the number itself — has
+since landed via PR #282 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-5 — the task that used to
-occupy slot 1 here, named function expressions, has since landed via PR
-#281 and is covered in the "have since landed" history immediately above;
-this grooming pass dropped its now-redundant description from this
-section. Tasks 1-5 — `is_pernicious` (a number whose binary popcount is
-itself prime), an inclusive range literal `a..=b` (sugar for
+occupy slot 1 here, `is_pernicious`, has since landed via PR #282 and is
+covered in the "have since landed" history immediately above; this
+grooming pass dropped its now-redundant description from this section.
+Tasks 1-5 — an inclusive range literal `a..=b` (sugar for
 `range(a, b + 1)`, the natural sibling of `a..b` now that the exclusive
 spelling has landed), `is_sphenic` (an integer that is the product of
 three distinct primes, e.g. `30 = 2 * 3 * 5`, the natural next member of
@@ -1097,21 +1102,29 @@ quote-heavy content like embedded dialogue or JSON snippets needs no
 per-quote escaping; reuses the exact `STRING`/`INTERP_STRING` tokens
 ordinary strings already produce, so no parser/AST/interpreter changes
 are needed, only `Lexer.tokenize`'s dispatch and `_string`'s termination
-check), and `is_circular_prime` (a prime where every rotation of its
+check), `is_circular_prime` (a prime where every rotation of its
 decimal digits is also prime, e.g. `197`/`971`/`719`, combining
 `is_emirp`'s prime-plus-digit-transformation shape with `is_rotation`'s
 rotate-and-compare technique, just generating every rotation from one
-number instead of comparing two given strings) — plus task 6, missing
-string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, and a fixed-width
+number instead of comparing two given strings), and missing string
+escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, and a fixed-width
 `\uXXXX` Unicode escape — `_ESCAPES` has recognized only five escapes
 since strings were first implemented, so every other escape with an
 obvious meaning has always been a guaranteed `LexError`; the
 one-character escapes are a pure dict extension, `\uXXXX` needs its own
 branch and helper but reuses `_string`'s existing character-scanning
-primitives) — are fully scoped in `BACKLOG.md` itself and are not
-duplicated here, the same treatment tasks past slot 1 have gotten since
-this section stopped trying to keep prose in lockstep with every backlog
-slot). And only much later, a bytecode VM
+primitives) — plus task 6, `is_sad_number` (the direct complement of
+`is_happy_number` over the same non-negative-integer domain — every such
+integer either reaches `1` under repeated digit-square-summing or cycles
+forever without reaching it, never both or neither — built by inverting
+`is_happy_number`'s own cycle-detection loop at its two exit points
+rather than computing a blind `not is_happy_number(...)`, so the existing
+"negative input answers false rather than raising" convention carries
+over explicitly instead of vanishing behind a negation) — are fully
+scoped in `BACKLOG.md` itself and are not duplicated here, the same
+treatment tasks past slot 1 have gotten since this section stopped
+trying to keep prose in lockstep with every backlog slot). And only much
+later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1500,7 +1513,26 @@ string, but reuses the same `_peek`/`_advance`/`_at_end` cursor primitives
 untouched by design, since skipping escape processing entirely is their
 whole purpose. The next grooming pass should continue alternating
 breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
-count within reach of the 5-task floor.
+count within reach of the 5-task floor. This pass found the backlog back
+down to its 5-task floor again (`is_pernicious` having landed cleanly via
+PR #282 with no bounce, dropping the count from 6 to 5, dropping its
+now-landed description from the "what remains plausible" section above
+into the "have since landed" history, and renumbering the remaining five
+tasks from 2-6 down to 1-5, with the inclusive range literal renumbered
+from 2 to 1, `is_sphenic` from 3 to 2, triple-quoted string literals from
+4 to 3, `is_circular_prime` from 5 to 4, and missing string escape
+sequences from 6 to 5) and restocked it to 6 by adding task 6,
+`is_sad_number`, continuing alternation with a breadth task after task
+5's depth work (missing string escape sequences) rather than stacking a
+second depth task, per the policy above — the direct complement of
+`is_happy_number` (every non-negative integer is either happy or sad,
+never both, never neither), built by inverting `is_happy_number`'s own
+cycle-detection loop at its two exit points rather than negating a call
+to it, so the existing "negative input answers false" convention stays
+explicit in the new function's own domain guard instead of riding along
+implicitly through a blind `not`. The next grooming pass should continue
+alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
+drops the count within reach of the 5-task floor.
 
 ## History
 

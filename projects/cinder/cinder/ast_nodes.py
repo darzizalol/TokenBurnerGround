@@ -257,6 +257,7 @@ class RangeExpr:
     end: "Expr"
     line: int
     column: int
+    inclusive: bool = False
 
 
 @dataclass(frozen=True)

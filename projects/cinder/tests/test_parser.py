@@ -124,7 +124,7 @@ def shape(node):
             shape(node.step) if node.step is not None else None,
         )
     if isinstance(node, RangeExpr):
-        return ("RangeExpr", shape(node.start), shape(node.end))
+        return ("RangeExpr", shape(node.start), shape(node.end), node.inclusive)
     if isinstance(node, IndexAssign):
         return (
             "IndexAssign",
@@ -1812,7 +1812,7 @@ class TestListsAndMaps(unittest.TestCase):
     def test_range_literal(self):
         self.assertEqual(
             shape(parse("1..5")),
-            ("RangeExpr", ("Literal", 1), ("Literal", 5)),
+            ("RangeExpr", ("Literal", 1), ("Literal", 5), False),
         )
 
     def test_range_binds_looser_than_arithmetic(self):
@@ -1822,6 +1822,7 @@ class TestListsAndMaps(unittest.TestCase):
                 "RangeExpr",
                 ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 1)),
                 ("Binary", ("Literal", 5), TokenType.STAR, ("Literal", 2)),
+                False,
             ),
         )
 
@@ -1832,13 +1833,23 @@ class TestListsAndMaps(unittest.TestCase):
                 "Binary",
                 ("Identifier", "x"),
                 TokenType.IN,
-                ("RangeExpr", ("Literal", 1), ("Literal", 5)),
+                ("RangeExpr", ("Literal", 1), ("Literal", 5), False),
             ),
         )
 
     def test_range_does_not_chain(self):
         with self.assertRaises(ParseError):
             parse("1..5..10")
+
+    def test_inclusive_range_literal(self):
+        self.assertEqual(
+            shape(parse("1..=5")),
+            ("RangeExpr", ("Literal", 1), ("Literal", 5), True),
+        )
+
+    def test_inclusive_range_does_not_chain(self):
+        with self.assertRaises(ParseError):
+            parse("1..=5..=10")
 
     def test_dot_dot_dot_unaffected_by_range_grammar(self):
         self.assertEqual(

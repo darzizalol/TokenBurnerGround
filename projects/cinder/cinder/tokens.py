@@ -95,6 +95,7 @@ class TokenType(Enum):
     SEMICOLON = auto()
     DOT = auto()
     DOT_DOT = auto()
+    DOT_DOT_EQ = auto()
     DOT_DOT_DOT = auto()
     COLON = auto()
     QUESTION = auto()

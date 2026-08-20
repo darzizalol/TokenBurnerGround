@@ -3954,6 +3954,37 @@ class TestRangeLiteral(unittest.TestCase):
         with self.assertRaises(ParseError):
             run("1..5..10;")
 
+    def test_inclusive_range_includes_upper_bound(self):
+        self.assertEqual(evaluate("1..=5"), [1, 2, 3, 4, 5])
+
+    def test_exclusive_range_unaffected_by_inclusive_addition(self):
+        self.assertEqual(evaluate("1..5"), [1, 2, 3, 4])
+
+    def test_inclusive_range_single_element_when_bounds_equal(self):
+        self.assertEqual(evaluate("5..=5"), [5])
+
+    def test_inclusive_range_descending_bounds_produce_empty_list(self):
+        self.assertEqual(evaluate("5..=1"), [])
+
+    def test_inclusive_range_in_membership_test(self):
+        self.assertEqual(evaluate("3 in 1..=5"), True)
+
+    def test_inclusive_range_non_int_end_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) requires int arguments, got string"
+        ):
+            evaluate('1..="5"')
+
+    def test_inclusive_range_bool_start_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) requires int arguments, got bool"
+        ):
+            evaluate("true..=5")
+
+    def test_inclusive_range_does_not_chain(self):
+        with self.assertRaises(ParseError):
+            run("1..=5..=10;")
+
 
 class TestTryCatch(unittest.TestCase):
     def test_catch_binds_error_message_and_recovers(self):

@@ -1367,6 +1367,31 @@ def _is_semiprime(arguments: list, line: int, column: int) -> object:
     return factor_count == 2
 
 
+def _is_sphenic(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_sphenic", arguments, 1, line, column)
+    value = _require_int("is_sphenic", arguments[0], line, column)
+    if value < 2:
+        return False
+    remaining = value
+    distinct_count = 0
+    divisor = 2
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            count = 0
+            while remaining % divisor == 0:
+                remaining //= divisor
+                count += 1
+            if count != 1:
+                return False
+            distinct_count += 1
+            if distinct_count > 3:
+                return False
+        divisor += 1
+    if remaining > 1:
+        distinct_count += 1
+    return distinct_count == 3
+
+
 def _is_emirp(arguments: list, line: int, column: int) -> object:
     _require_arity("is_emirp", arguments, 1, line, column)
     value = _require_int("is_emirp", arguments[0], line, column)
@@ -3713,6 +3738,7 @@ _BUILTINS = {
     "is_prime": _is_prime,
     "is_composite": _is_composite,
     "is_semiprime": _is_semiprime,
+    "is_sphenic": _is_sphenic,
     "is_emirp": _is_emirp,
     "is_power_of_two": _is_power_of_two,
     "is_evil": _is_evil,

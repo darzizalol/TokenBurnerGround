@@ -11,6 +11,7 @@ from cinder.ast_nodes import (
     ChainedComparison,
     ConstStmt,
     ContinueStmt,
+    DeclSeq,
     DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
@@ -209,6 +210,8 @@ def stmt_shape(node):
         return ("DestructureLetStmt", node.names, shape(node.initializer), node.is_map, node.rest)
     if isinstance(node, ExprStmt):
         return ("ExprStmt", shape(node.expression))
+    if isinstance(node, DeclSeq):
+        return ("DeclSeq", [stmt_shape(s) for s in node.declarations])
     if isinstance(node, Block):
         return ("Block", [stmt_shape(s) for s in node.statements])
     if isinstance(node, FnDecl):
@@ -2297,6 +2300,26 @@ class TestStatements(unittest.TestCase):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("1 + 2;")],
             [("ExprStmt", ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 2)))],
+        )
+
+    def test_expr_statement_no_comma_stays_bare_expr_stmt(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a = 1;")],
+            [("ExprStmt", ("Assign", "a", ("Literal", 1)))],
+        )
+
+    def test_expr_statement_comma_separated_becomes_decl_seq(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a = 1, b = 2;")],
+            [
+                (
+                    "DeclSeq",
+                    [
+                        ("ExprStmt", ("Assign", "a", ("Literal", 1))),
+                        ("ExprStmt", ("Assign", "b", ("Literal", 2))),
+                    ],
+                )
+            ],
         )
 
     def test_multiple_statements(self):

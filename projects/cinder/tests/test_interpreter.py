@@ -1033,6 +1033,43 @@ class TestStatements(unittest.TestCase):
         self.assertEqual(env.get("x"), 3)
 
 
+class TestExprStatementCommaSeparated(unittest.TestCase):
+    def test_two_assignments_both_take_effect(self):
+        env = run("let a; let b; a = 1, b = 2;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_left_to_right_evaluation_order(self):
+        env = run("let a = 0, b = 0; a = 1, b = a + 1;")
+        self.assertEqual(env.get("b"), 2)
+
+    def test_index_assignment_targets_in_sequence(self):
+        env = run("let xs = [0, 0]; xs[0] = 1, xs[1] = 2;")
+        self.assertEqual(env.get("xs"), [1, 2])
+
+    def test_single_expression_statement_unaffected_by_comma_support(self):
+        env = run("let a; a = 1;")
+        self.assertEqual(env.get("a"), 1)
+
+    def test_non_assignment_expression_in_sequence(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let calls = []; push(calls, 1), push(calls, 2);",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("calls"), [1, 2])
+
+    def test_trailing_comma_still_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            run("let a; let b; a = 1, b = 2,;")
+
+    def test_composes_with_if_single_statement_body(self):
+        env = run("let a; let b; if (true) a = 1, b = 2;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+
 class TestConst(unittest.TestCase):
     def test_const_declares_and_lookup_works(self):
         env = run("const x = 5;")

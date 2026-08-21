@@ -1019,9 +1019,15 @@ class Parser:
         return SwitchStmt(scrutinee, cases, default, switch_token.line, switch_token.column)
 
     def _expr_statement(self) -> Stmt:
-        expr = self._assignment()
+        first = self._assignment()
+        statements = [ExprStmt(first)]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            statements.append(ExprStmt(self._assignment()))
         self._consume(TokenType.SEMICOLON, "';' after expression")
-        return ExprStmt(expr)
+        if len(statements) == 1:
+            return statements[0]
+        return DeclSeq(statements, first.line, first.column)
 
     def _assignment(self) -> Expr:
         expr = self._ternary()

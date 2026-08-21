@@ -1284,6 +1284,20 @@ def _is_fibonacci(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _is_lucas_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_lucas_number", arguments, 1, line, column)
+    value = _require_int("is_lucas_number", arguments[0], line, column)
+    if value < 1:
+        return False
+    if value in (1, 2):
+        return True
+
+    previous, current = 1, 3  # L(1), L(2)
+    while current < value:
+        previous, current = current, previous + current
+    return current == value
+
+
 def _is_happy_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_happy_number", arguments, 1, line, column)
     value = _require_int("is_happy_number", arguments[0], line, column)
@@ -3789,6 +3803,7 @@ _BUILTINS = {
     "is_divisible": _is_divisible,
     "is_coprime": _is_coprime,
     "is_fibonacci": _is_fibonacci,
+    "is_lucas_number": _is_lucas_number,
     "is_happy_number": _is_happy_number,
     "is_sad_number": _is_sad_number,
     "collatz_length": _collatz_length,

@@ -2269,6 +2269,55 @@ class TestIsFibonacci(unittest.TestCase):
             run("is_fibonacci(1, 2);")
 
 
+class TestIsLucasNumber(unittest.TestCase):
+    def test_is_lucas_number_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_lucas_number(0);").get("result"), False)
+
+    def test_is_lucas_number_of_seed_values(self):
+        self.assertEqual(run("let result = is_lucas_number(1);").get("result"), True)
+        self.assertEqual(run("let result = is_lucas_number(2);").get("result"), True)
+
+    def test_is_lucas_number_of_members(self):
+        for value in (3, 4, 7, 11, 18, 29):
+            self.assertEqual(
+                run(f"let result = is_lucas_number({value});").get("result"),
+                True,
+                f"expected {value} to be a Lucas number",
+            )
+
+    def test_is_lucas_number_of_non_members(self):
+        for value in (5, 6, 10, 100):
+            self.assertEqual(
+                run(f"let result = is_lucas_number({value});").get("result"),
+                False,
+                f"expected {value} to not be a Lucas number",
+            )
+
+    def test_is_lucas_number_of_larger_lucas_number(self):
+        self.assertEqual(run("let result = is_lucas_number(76);").get("result"), True)
+
+    def test_is_lucas_number_negative_input_is_false(self):
+        self.assertEqual(run("let result = is_lucas_number(-5);").get("result"), False)
+
+    def test_is_lucas_number_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_lucas_number(5.0);")
+        self.assertIn(
+            "is_lucas_number() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_lucas_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_lucas_number(true);")
+        self.assertIn(
+            "is_lucas_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_lucas_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_lucas_number(1, 2);")
+
+
 class TestIsHappyNumber(unittest.TestCase):
     def test_is_happy_number_of_one(self):
         self.assertEqual(run("let result = is_happy_number(1);").get("result"), True)

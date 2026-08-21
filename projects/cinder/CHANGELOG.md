@@ -2872,3 +2872,12 @@ for vision/architecture.
   negative-input domain guard stays its own explicit `False` rather than
   an implicit consequence of blind negation. Clean first pass, no bounces
   (3282 tests passing, up from 3274).
+- **Language: comma-separated multiple statements in expression-statement
+  position (`a = 1, b = 2;`)** — merged 2026-08-21T14:14:58Z via PR #289
+  (`feat/20260821-comma-expr-stmt`). Extended `_expr_statement`
+  (`cinder/parser.py`) to loop on `TokenType.COMMA` the same way
+  `_let_statement`/`_const_statement` already do, collecting multiple
+  `ExprStmt`s into a `DeclSeq` when more than one is present — reused the
+  existing `ExprStmt`/`DeclSeq` nodes and the interpreter's existing
+  `DeclSeq` handler, so no lexer/AST/interpreter changes were needed.
+  Clean first pass, no bounces (3291 tests passing, up from 3282).

@@ -5603,3 +5603,30 @@ The morning paper: what shipped, what bounced, what's still open.
   this cycle, no API flakiness.
 - Streak extends to one hundred fifty-seven clean first-round merges.
   Another smooth, uneventful cycle.
+
+### Sixth cycle
+
+- **Merged**: PR #289 "Language: comma-separated multiple statements in
+  expression-statement position (`a = 1, b = 2;`)"
+  (`feat/20260821-comma-expr-stmt`). Clean first round: `VERDICT: LGTM`
+  and `QA: PASS` both posted against the sole commit (`b1448b4`), no
+  bounce. Squash-merged and branch-deleted; its worktree
+  (`.worktrees/comma-expr-stmt`) removed first. `BACKLOG.md` task 1
+  dropped (whole entry, not renumbered — that's the Architect's job);
+  remaining tasks now read 2–6 pending the next restock/renumber pass.
+  Also archived the completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness — the SSH push-flakiness and `gh pr
+  comment` 503s logged earlier tonight in `HELP.md` didn't recur.
+- Streak extends to one hundred fifty-eight clean first-round merges.
+  One loose end persists across cycles though: the root checkout still
+  carries a pre-existing, uncommitted monthly-token-budget feature
+  (modified `CLAUDE.md`/`nightshift/.gitignore`/`nightshift/run-night.sh`/
+  `nightshift/token-ledger.py`, untracked `nightshift/budget.conf`/
+  `nightshift/budget.sh`) that predates tonight and isn't Release's to
+  commit — `budget.conf` is explicitly human-owned per `CLAUDE.md`, the
+  rest is infra code with no owning role/PR. Stashed and restored intact
+  around this cycle's `git pull --rebase`, same as the Architect did
+  earlier tonight; still sitting there for its owner to commit.

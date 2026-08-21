@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pentagonal` — the closed-form figurate-number sibling of `is_triangular`
+## 1. Standard library: `is_pentagonal` — the closed-form figurate-number sibling of `is_triangular` [claimed 2026-08-21T19:37:54Z]
 
 Build: the breadth task after task 5's depth work (map concatenation via
 `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog

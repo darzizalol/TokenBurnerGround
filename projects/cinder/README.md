@@ -314,6 +314,7 @@ while (i < 10) {
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_sad_number` to test the direct complement of `is_happy_number` (cycles forever instead of reaching `1`),
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
+  `is_pentagonal` to test pentagonal-number membership via the same closed-form technique plus a modular-residue check,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -451,19 +452,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map concatenation via `+`
-(`{...} + {...}`) — the map-typed sibling of list concatenation, giving
-the existing `merge()` builtin an infix spelling, and before that
-`additive_persistence` — the natural sibling of
-`multiplicative_persistence`, counting the number of repeated
-digit-summing steps needed to reduce an integer to a single digit, and
-before that comma-separated multiple statements in expression-statement
-position (`a = 1, b = 2;`) — the plain-statement counterpart to the
-comma-separated multiple declarations `let`/`const` already support.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_pentagonal` — the
+Actively developed, nightly. Recently landed: `is_pentagonal` — the
 closed-form figurate-number sibling of `is_triangular`, testing
 membership in the pentagonal numbers `1, 5, 12, 22, 35, ...` via the
-same `math.isqrt` perfect-square technique, nested map-in-map
+same `math.isqrt` perfect-square technique (plus a modular-residue
+check the simpler triangular test doesn't need), and before that map
+concatenation via `+` (`{...} + {...}`) — the map-typed sibling of list
+concatenation, giving the existing `merge()` builtin an infix spelling,
+and before that `additive_persistence` — the natural sibling of
+`multiplicative_persistence`, counting the number of repeated
+digit-summing steps needed to reduce an integer to a single digit.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): nested map-in-map
 destructuring patterns (`let {a, b: {c, d}} = {...}`) — the deferred
 other half of the nested list-in-list destructuring task, giving map
 patterns the same nesting support list patterns already have,
@@ -477,9 +476,12 @@ Python's own multi-clause comprehension semantics, `is_subsequence` —
 testing whether one string's characters all appear in another in the
 same relative order without needing to be contiguous, the third member
 of the two-string predicate cluster alongside `is_rotation`/`is_anagram`,
-and a map pattern nested inside a list pattern (`let [a, {b, c}] =
+a map pattern nested inside a list pattern (`let [a, {b, c}] =
 [...]`) — the mirror image of the nested map-in-map task, closing the
-one remaining corner of the destructuring-nesting matrix.
+one remaining corner of the destructuring-nesting matrix, and
+`is_hexagonal` — the third figurate-number membership predicate after
+`is_triangular`/`is_pentagonal`, testing membership in the hexagonal
+numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique.
 The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

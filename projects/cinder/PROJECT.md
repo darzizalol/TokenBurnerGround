@@ -1769,7 +1769,31 @@ the same structural reason map-in-list nesting already does on the
 map-pattern side: that form's list pattern is parsed by validating an
 already-built `ListLiteral`'s elements, which has no notion of a nested
 map pattern any more than the nested-map-in-map task's own
-plain-assignment form has of a nested list one.
+plain-assignment form has of a nested list one. The next grooming pass
+should continue alternating breadth/depth, restocking toward 6-7 tasks
+whenever a merge drops the count within reach of the 5-task floor. This
+pass found the backlog back down to its 5-task floor again
+(`is_pentagonal` having landed cleanly via PR #292 with no bounce,
+dropping the count from 6 to 5, dropping its now-landed description from
+the "what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining five tasks from 2-6 down to 1-5,
+with nested map-in-map destructuring patterns renumbered from 2 to 1,
+`is_lucas_number` from 3 to 2, multiple `for` clauses in list/map
+comprehensions from 4 to 3, `is_subsequence` from 5 to 4, and a map
+pattern nested inside a list pattern from 6 to 5) and restocked it to 6
+by adding task 6, `is_hexagonal`, continuing alternation with a breadth
+task after task 5's depth work (a map pattern nested inside a list
+pattern) rather than stacking a second depth task, per the policy above
+— the third figurate-number membership predicate after
+`is_triangular`/`is_pentagonal`, testing membership in the hexagonal
+numbers (`1, 6, 15, 28, 45, 66, ...`) via the same
+`math.isqrt`-based closed-form technique those two already use, with its
+own modular-residue check (`root % 4 == 3`) analogous to
+`is_pentagonal`'s `root % 6 == 5` — the quadratic solving `H(k) = k(2k -
+1) = n` for `k` leaves a divisibility-by-4 condition, just as solving
+the pentagonal formula leaves one by 6, while the simpler triangular
+formula needs no such check since its root is always odd by
+construction.
 
 ## History
 

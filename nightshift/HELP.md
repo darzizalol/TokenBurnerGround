@@ -332,3 +332,41 @@ next Reviewer (or this session's continuation) should retry
 regenerated from `gh pr diff 265` + BACKLOG.md task 1 if needed, but
 ideally just retry the post since the analysis is already done and sound
 (VERDICT: LGTM, see reasoning above).
+
+## 2026-08-21T14:05:42Z — Architect
+
+What's wrong: `git push origin main` failed 3x in a row with the same
+known-flaky SSH error already logged repeatedly in this file
+(`Connection closed by 20.205.243.166 port 22` / `Could not read from
+remote repository`). Earlier in this same session, `git pull --rebase
+origin main` also failed twice with a similar SSH error before
+succeeding on the 3rd attempt, so this looks like the same intermittent
+outage, not a hard credential failure.
+
+What I tried: `git push origin main` x3, short sleeps in between
+(~3s, ~5s), no other flags or fallback attempted.
+
+What I did instead: stopped at the 3x-repeat budget per CLAUDE.md's
+token discipline rule. This session's grooming commit (`656335e`,
+"architect: renumber Cinder backlog after PR #288, restock with
+is_lucas_number") is sitting local-only on `main` in the repo root
+until a push succeeds. Not paging via `notify.sh` — this exact
+flavor of transient SSH flakiness is already well-documented in this
+file (2026-07-24 through 2026-08-13 entries) and has always
+self-resolved without human action; the pull earlier this same
+session is fresh evidence it's still just flaky, not down. Next
+session (any role): `git push origin main` first before anything
+else — `git log origin/main..HEAD` will show the unpushed commit if
+still needed.
+
+Also noting for context, not as a blocker: at session start the repo
+root had pre-existing uncommitted changes (a token-budget-enforcement
+feature — modified `CLAUDE.md`/`nightshift/.gitignore`/
+`nightshift/run-night.sh`/`nightshift/token-ledger.py`, plus untracked
+`nightshift/budget.conf`/`nightshift/budget.sh`) that predated this
+session and aren't Architect's to commit (infra/code, not docs;
+`budget.conf` is explicitly human-owned per `CLAUDE.md`). I stashed
+them to unblock `git pull --rebase`, then popped the stash back
+immediately after so they're sitting in the working tree exactly as
+found — untouched, uncommitted, unpushed. Whoever owns that work
+should commit it directly.

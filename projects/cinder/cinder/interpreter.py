@@ -1110,6 +1110,10 @@ class Interpreter:
                 return left + right
             if isinstance(left, list) and isinstance(right, list):
                 return left + right
+            if isinstance(left, dict) and isinstance(right, dict):
+                result = dict(left)
+                result.update(right)
+                return result
             raise CinderRuntimeError(
                 f"unsupported operand types for '+': {type_name(left)} and {type_name(right)}",
                 operator.line,

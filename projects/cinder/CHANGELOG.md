@@ -2923,3 +2923,14 @@ for vision/architecture.
   map-in-map only — list-in-map and map-in-list nesting both continue to
   raise `ParseError`. Clean first pass, no bounces (3335 tests passing, up
   from 3321).
+- **Standard library: `is_lucas_number`** — merged 2026-08-21T20:13:21Z via
+  PR #294 (`feat/20260821-is-lucas-number`). Added `_is_lucas_number` to
+  `cinder/builtins.py`, registered right after `_is_fibonacci`. Generates
+  and compares iteratively (`L(n) = L(n-1) + L(n-2)`, seed `L(0)=2,
+  L(1)=1`) since Lucas numbers have no clean closed-form membership test
+  the way Fibonacci's perfect-square identity gives it — the same shape
+  `is_kaprekar`/`is_harshad` already use. `1` and `2` are explicit special
+  cases since the sequence dips from `L(0)=2` to `L(1)=1` before climbing,
+  which a plain "advance while below target" loop from `L(0)` would skip
+  past. `0` and negatives return `false`. Clean first pass, no bounces
+  (3344 tests passing, up from 3335).

@@ -522,7 +522,13 @@ class Interpreter:
                     line,
                     column,
                 )
-            self._bind_destructure_name(env, binding, item, line, column, use_assign)
+            if isinstance(binding, tuple):
+                nested_names, nested_rest = binding
+                self._bind_map_destructure(
+                    env, nested_names, nested_rest, item, line, column, use_assign
+                )
+            else:
+                self._bind_destructure_name(env, binding, item, line, column, use_assign)
         if rest is not None:
             remaining = {k: v for k, v in value.items() if k not in seen_keys}
             self._bind_destructure_name(env, rest, remaining, line, column, use_assign)

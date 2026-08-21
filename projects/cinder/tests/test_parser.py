@@ -1602,6 +1602,22 @@ class TestListsAndMaps(unittest.TestCase):
         self.assertTrue(expr.is_map)
         self.assertEqual(shape(expr.value), ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]))
 
+    def test_map_destructure_assignment_nested_pattern_parses(self):
+        expr = parse_stmts('{a, b: {c, d}} = {"a": 1};')[0].expression
+        names = [
+            (key, binding, shape(default) if default is not None else None)
+            for key, binding, default in expr.names
+        ]
+        self.assertEqual(
+            names,
+            [
+                ("a", "a", None),
+                ("b", ([("c", "c", None), ("d", "d", None)], None), None),
+            ],
+        )
+        self.assertIsNone(expr.rest)
+        self.assertTrue(expr.is_map)
+
     def test_map_destructure_assignment_rest_not_last_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse_stmts('{a, ...rest, b} = {"a": 1};')

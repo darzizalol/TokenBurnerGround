@@ -1120,16 +1120,23 @@ reaches `1` under the digit-square-sum recurrence or cycles forever
 without doing so, never both), built by inverting `is_happy_number`'s own
 cycle-detection loop (returning `true` on cycle detection instead of
 `false`, `false` on reaching `1` instead of `true`) rather than negating
-a call to it — has since landed via PR #288 too.
+a call to it — has since landed via PR #288 too, and comma-separated
+multiple statements in expression-statement position (`a = 1, b = 2;`)
+— the plain-statement counterpart to the comma-separated multiple
+declarations `let`/`const` already support, extending `_expr_statement`
+to loop on `TokenType.COMMA` the same way and reusing the existing
+`ExprStmt`/`DeclSeq` nodes and interpreter handler with no lexer/AST/
+interpreter changes needed — has since landed via PR #289 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
-occupy slot 1 here, `is_sad_number`, has since landed via PR #288 and is
+occupy slot 1 here, comma-separated multiple statements in
+expression-statement position, has since landed via PR #289 and is
 covered in the "have since landed" history immediately above; this
 grooming pass dropped its now-redundant description from this section.
-Tasks 1-6 — comma-separated multiple statements in expression-statement
-position, `additive_persistence`, map concatenation via `+`,
-`is_pentagonal`, nested map-in-map destructuring patterns, and
-`is_lucas_number` — are fully scoped in `BACKLOG.md` itself and are not
+Tasks 1-6 — `additive_persistence`, map concatenation via `+`,
+`is_pentagonal`, nested map-in-map destructuring patterns,
+`is_lucas_number`, and multiple `for` clauses in list/map comprehensions
+— are fully scoped in `BACKLOG.md` itself and are not
 duplicated here, the same treatment tasks past slot 1 have gotten since
 this section stopped trying to keep prose in lockstep with every backlog
 slot). And only much later, a bytecode VM
@@ -1677,7 +1684,33 @@ from `L(0) = 2` down to `L(1) = 1` before climbing monotonically from
 `L(2) = 3` onward, unlike Fibonacci's own non-decreasing-from-the-start
 shape). The next grooming pass should continue alternating breadth/depth,
 restocking toward 6-7 tasks whenever a merge drops the count within reach
-of the 5-task floor.
+of the 5-task floor. This pass found the backlog back down to its 5-task
+floor again (comma-separated multiple statements in expression-statement
+position having landed cleanly via PR #289 with no bounce, dropping the
+count from 6 to 5, dropping its now-landed description from the "what
+remains plausible" section above into the "have since landed" history,
+and renumbering the remaining five tasks from 2-6 down to 1-5, with
+`additive_persistence` renumbered from 2 to 1, map concatenation via `+`
+from 3 to 2, `is_pentagonal` from 4 to 3, nested map-in-map destructuring
+patterns from 5 to 4, and `is_lucas_number` from 6 to 5) and restocked it
+to 6 by adding task 6, multiple `for` clauses in list/map comprehensions
+(`[x + y for x in xs for y in ys]`), continuing alternation with a depth
+task after task 5's breadth work (`is_lucas_number`) rather than stacking
+a second breadth task, per the policy above — both comprehension forms
+(`_list_comprehension`/`_map_comprehension`, `cinder/parser.py`) have only
+ever parsed a single `for` clause with an optional trailing `if`, so a
+second `for` in either form is a guaranteed `ParseError` today; this adds
+a new `ComprehensionClause` AST node and an `extra_clauses` field appended
+last on both existing comprehension nodes (the same
+append-a-defaulted-field technique `FnExpr.name`/`RangeExpr.inclusive`
+already used), a shared `_comprehension_clause` parser helper factoring
+out the per-clause parsing both methods already duplicate, and a recursive
+interpreter helper walking the full clause chain so each clause's `if`
+filters before any later clause runs, matching Python's own multi-clause
+comprehension semantics including last-write-wins on a map-key collision
+across clause combinations. The next grooming pass should continue
+alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
+drops the count within reach of the 5-task floor.
 
 ## History
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `additive_persistence` — steps of repeated digit-summing to reach one digit
+## 1. Standard library: `additive_persistence` — steps of repeated digit-summing to reach one digit
 
 Build: the breadth task after task 5's depth work (comma-separated
 expression statements) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -84,7 +84,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: map concatenation via `+` (`{...} + {...}`)
+## 2. Language: map concatenation via `+` (`{...} + {...}`)
 
 Build: the depth task after task 5's breadth work (`additive_persistence`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -214,7 +214,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_pentagonal` — the closed-form figurate-number sibling of `is_triangular`
+## 3. Standard library: `is_pentagonal` — the closed-form figurate-number sibling of `is_triangular`
 
 Build: the breadth task after task 5's depth work (map concatenation via
 `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog
@@ -300,7 +300,7 @@ task.
 
 ---
 
-## 5. Language: nested map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`)
+## 4. Language: nested map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`)
 
 Build: the depth task after task 5's breadth work (`is_pentagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -452,7 +452,7 @@ next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
+## 5. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
 
 Build: the breadth task after task 5's depth work (nested map-in-map
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -538,6 +538,216 @@ added near `is_fibonacci`, its "Status & roadmap" section needs updating,
 and `PROJECT.md`'s roadmap paragraph needs this moved from backlog to
 landed — leave all three to the Architect's next grooming pass, not this
 task.
+
+---
+
+## 6. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
+
+Build: the depth task after task 5's breadth work (`is_lucas_number`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that comma-separated expression statements has landed via PR
+#289, dropping the count to the 5-task floor. Both comprehension forms
+(`_list_comprehension`/`_map_comprehension`, `cinder/parser.py`) already
+parse exactly one `for` clause with an optional trailing `if` filter — a
+single loop variable (or list/map destructuring pattern), one `in
+<iterable>`, one optional `if <condition>`. Python-style comprehensions
+allow chaining multiple `for` clauses to iterate a cartesian product
+(`[x + y for x in xs for y in ys]`, outer-to-inner in written order, each
+clause optionally filtered by its own `if`, later clauses' conditions and
+bodies able to see earlier clauses' loop variables), but Cinder has no
+second-clause support at all today — the parser stops dead at the first
+extra `for`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print([x + y for x in [1, 2] for y in [10, 20]]);'
+# -> <eval>:1:30: expected ']' after list comprehension, found 'for'
+python3 -m cinder.cli eval 'print({x: y for x in ["a", "b"] for y in [1, 2]});'
+# -> <eval>:1:33: expected '}' after map comprehension, found 'for'
+```
+This is a guaranteed `ParseError` today for every comprehension with more
+than one `for` clause, so no currently-valid Cinder program's meaning
+changes.
+
+Add a new frozen dataclass `ComprehensionClause` to `cinder/ast_nodes.py`,
+right before `ListComprehension`, holding exactly the per-clause fields
+`ListComprehension`/`MapComprehension` already have individually:
+```python
+@dataclass(frozen=True)
+class ComprehensionClause:
+    var_name: "str | None"
+    iterable: "Expr"
+    condition: "Expr | None"
+    line: int
+    column: int
+    names: "list | None" = None
+    rest: "str | None" = None
+    is_map: bool = False
+```
+Give `ListComprehension` and `MapComprehension` one new field each,
+appended last (after `is_map`, defaulting to `None`) so every existing
+positional construction call site is unaffected, the same technique
+`FnExpr.name`/`RangeExpr.inclusive` already used to extend a node without
+breaking callers:
+```python
+    extra_clauses: "list[ComprehensionClause] | None" = None
+```
+In `cinder/parser.py`, extract the "parse one `for`-clause" logic
+`_list_comprehension`/`_map_comprehension` each already inline (the
+`var_name`/`names`/`rest`/`is_map` branch, `self._consume(TokenType.IN,
+...)`, `iterable = self._ternary()`, the optional `if` block) into one
+shared helper used by both, and by both the primary clause and any extra
+ones:
+```python
+    def _comprehension_clause(self) -> "ComprehensionClause":
+        var_name = None
+        names = None
+        rest = None
+        is_map = False
+        if self._check(TokenType.LBRACKET):
+            names, rest = self._destructure_list_pattern()
+        elif self._check(TokenType.LBRACE):
+            names, rest = self._destructure_map_pattern()
+            is_map = True
+        else:
+            var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
+        self._consume(TokenType.IN, "'in' after loop variable")
+        iterable = self._ternary()
+        condition = None
+        if self._check(TokenType.IF):
+            self._advance()
+            condition = self._ternary()
+        return ComprehensionClause(
+            var_name, iterable, condition, self._previous().line, self._previous().column,
+            names=names, rest=rest, is_map=is_map,
+        )
+```
+Then in both `_list_comprehension` (after its existing `self._advance()  #
+consume 'for'` and before `self._consume(TokenType.RBRACKET, ...)`) and
+`_map_comprehension` (mirrored, before `self._consume(TokenType.RBRACE,
+...)`), replace the inlined per-clause parsing with one call to
+`_comprehension_clause()` for the primary clause (unpacking its fields
+into the existing `var_name`/`names`/`rest`/`is_map`/`iterable`/`condition`
+locals the rest of each method already uses to build the `ListComprehension`/
+`MapComprehension` constructor call — no other line in either method
+changes), followed by a loop collecting any further clauses:
+```python
+        extra_clauses = []
+        while self._check(TokenType.FOR):
+            self._advance()  # consume 'for'
+            extra_clauses.append(self._comprehension_clause())
+```
+and pass `extra_clauses=extra_clauses or None` into both constructor
+calls, alongside the existing `names=`/`rest=`/`is_map=` keyword
+arguments.
+
+In `cinder/interpreter.py`, both `_evaluate_list_comprehension` and
+`_evaluate_map_comprehension` currently inline "evaluate the iterable,
+type-check it into `items`, loop binding one item per iteration, skip on
+a falsy `condition`" as one flat loop. Extract the shared "resolve one
+clause's items" and "bind one item into a clause's pattern" pieces (the
+existing `isinstance(iterable, dict)`/`isinstance(iterable, (list, str))`
+type-check block and the existing `if expr.is_map: ... elif expr.names is
+not None: ... else: ...` binding block, both already duplicated verbatim
+between the two methods) into two small helpers taking a
+`ComprehensionClause`-shaped object (both `ListComprehension`/
+`MapComprehension` and `ComprehensionClause` itself already have the
+right attribute names, so no adapter is needed), then add one recursive
+helper that walks a full clause list — the primary clause plus
+`extra_clauses` — running the innermost callback once every clause's
+binding and filter have passed:
+```python
+    def _comprehension_items(self, clause, env):
+        iterable = self.evaluate(clause.iterable, env)
+        if isinstance(iterable, dict):
+            return list(iterable.keys())
+        if isinstance(iterable, (list, str)):
+            return list(iterable)
+        raise CinderRuntimeError(
+            f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
+            clause.line, clause.column,
+        )
+
+    def _bind_comprehension_clause(self, clause, item, env):
+        if clause.is_map:
+            self._bind_map_destructure(env, clause.names, clause.rest, item, clause.line, clause.column)
+        elif clause.names is not None:
+            self._bind_list_destructure(env, clause.names, clause.rest, item, clause.line, clause.column)
+        else:
+            env.define(clause.var_name, item)
+
+    def _run_comprehension_clauses(self, clauses, index, env, on_match):
+        clause = clauses[index]
+        for item in self._comprehension_items(clause, env):
+            iter_env = Environment(env)
+            self._bind_comprehension_clause(clause, item, iter_env)
+            if clause.condition is not None and not is_truthy(
+                self.evaluate(clause.condition, iter_env)
+            ):
+                continue
+            if index + 1 == len(clauses):
+                on_match(iter_env)
+            else:
+                self._run_comprehension_clauses(clauses, index + 1, iter_env, on_match)
+```
+`_evaluate_list_comprehension` becomes: build the primary `ComprehensionClause`
+from `expr`'s own flat fields, prepend it to `expr.extra_clauses or []`,
+and call `_run_comprehension_clauses` with an `on_match` that appends
+`self.evaluate(expr.element, final_env)` to the result list.
+`_evaluate_map_comprehension` mirrors it, with an `on_match` that
+evaluates `expr.key`/`expr.value`, runs the existing `_is_valid_key`
+check unchanged, and assigns into the result dict — later clause
+combinations overwrite earlier ones on a key collision, matching plain
+Python dict-comprehension semantics and requiring no new conflict logic.
+
+Acceptance criteria:
+- `print([x + y for x in [1, 2] for y in [10, 20]]);` prints
+  `[11, 21, 12, 22]` — cartesian product, first `for` outermost, matching
+  Python's own iteration order.
+- `print([[x, y] for x in [1, 2] for y in [1, 2] if x != y]);` prints
+  `[[1, 2], [2, 1]]` — a second clause's `if` filters using that clause's
+  own loop variable.
+- `print({x: y for x in ["a", "b"] for y in [1, 2]});` prints
+  `{"a": 2, "b": 2}` — a later clause combination overwrites an earlier
+  one on a map-key collision, the same "last write wins" rule plain map
+  literals already have.
+- `print([x for x in [1, 2] for y in []]);` prints `[]` — an empty inner
+  iterable yields no results at all, regardless of the outer iterable.
+- `print([x + y + z for x in [1] for y in [10] for z in [100]]);` prints
+  `[111]` — three clauses deep, not just two.
+- `print([a + b for [a] in [[1], [2]] for b in [10, 20]]);` prints
+  `[11, 21, 12, 22]` — a destructuring pattern in a non-final clause
+  still binds correctly for the clauses after it.
+- `print([[x, y] for x in [1, 2, 3] if x > 1 for y in [10, 20]]);` prints
+  `[[2, 10], [2, 20], [3, 10], [3, 20]]` — a condition on a non-final
+  clause filters before any later clause runs at all, not just before
+  that clause's own body.
+- `print([x for x in [1, 2, 3]]);` and `print({x: x * 2 for x in [1, 2]});`
+  (single-clause forms) are unchanged — still print `[1, 2, 3]` and
+  `{1: 2, 2: 4}` respectively, confirming `extra_clauses=None` regression
+  behavior is identical to before this task.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (new `ComprehensionClause`, new
+`extra_clauses` field on both existing comprehension nodes),
+`cinder/parser.py` (`_comprehension_clause` new shared helper,
+`_list_comprehension`/`_map_comprehension` updated to use it plus a
+trailing `while self._check(TokenType.FOR)` loop), `cinder/interpreter.py`
+(`_comprehension_items`/`_bind_comprehension_clause`/
+`_run_comprehension_clauses` new helpers, `_evaluate_list_comprehension`/
+`_evaluate_map_comprehension` rewritten atop them),
+`tests/test_parser.py` (the `shape()` helper's existing
+`ListComprehension`/`MapComprehension` branches, search `"ListComprehension"`/
+`"MapComprehension"`, need an `extra_clauses` entry added to their tuples,
+plus every existing shape-assertion call site for these two nodes updated
+to match; add new parser-shape tests for a two-clause comprehension),
+`tests/test_interpreter.py` (existing `class TestListComprehension`/
+`class TestMapComprehension`, search those names, stay green unchanged as
+the single-clause regression proof; add new test methods for the
+multi-clause cases in the acceptance criteria above, in the same
+classes). Once merged, `README.md`'s comprehension-related bullets need a
+multi-clause mention added, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
+backlog to landed — leave all three to the Architect's next grooming
+pass, not this task.
 
 ---
 

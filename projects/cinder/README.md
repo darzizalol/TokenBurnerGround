@@ -59,7 +59,11 @@ while (i < 10) {
   declarations in a single `let`/`const` statement (`let a = 1, b = 2;`,
   `const x = 1, y = 2;`, each with its own initializer, evaluated
   left-to-right so a later initializer can see an earlier declared name,
-  e.g. `let a = 1, b = a + 1;` binds `b` to `2`), assignment, blocks with proper
+  e.g. `let a = 1, b = a + 1;` binds `b` to `2`), assignment, comma-separated
+  multiple statements in expression-statement position for already-declared
+  names or any other bare expression (`a = 1, b = 2;`, `f(), g();`, the
+  same left-to-right evaluation and shared `DeclSeq` execution the `let`/
+  `const` form already uses), blocks with proper
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, positional binding that may itself nest
   (`let [a, [b, c]] = [1, [2, 3]];`, to any depth, composing with rest/
@@ -441,36 +445,35 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_sad_number` — the
+Actively developed, nightly. Recently landed: comma-separated multiple
+statements in expression-statement position (`a = 1, b = 2;`) — the
+plain-statement counterpart to the comma-separated multiple declarations
+`let`/`const` already support, and before that `is_sad_number` — the
 direct complement of `is_happy_number` (every non-negative integer either
 reaches `1` under the digit-square-sum recurrence or cycles forever
 without doing so, never both), built by inverting `is_happy_number`'s
 own cycle-detection loop rather than negating a call to it, and before
 that missing string escape sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a
 fixed-width `\uXXXX` Unicode escape — closing the gap left by `_ESCAPES`
-recognizing only five escapes since strings were first implemented, and
-before that `is_circular_prime` — testing whether every rotation of an
-integer's decimal digits is also prime (e.g. `197`/`971`/`719`),
-combining `is_emirp`'s primality-plus-digit-transformation shape with
-`is_rotation`'s rotate-and-compare technique. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): comma-separated multiple statements in
-expression-statement position (`a = 1, b = 2;`) — the plain-statement
-counterpart to the comma-separated multiple declarations `let`/`const`
-already support, `additive_persistence` — the natural sibling of
-`multiplicative_persistence`, counting the number of repeated
-digit-summing steps needed to reduce an integer to a single digit, map
-concatenation via `+` (`{...} + {...}`) — the map-typed sibling of list
-concatenation, giving the existing `merge()` builtin an infix spelling,
-`is_pentagonal` — the closed-form figurate-number sibling of
-`is_triangular`, testing membership in the pentagonal numbers
-`1, 5, 12, 22, 35, ...` via the same `math.isqrt` perfect-square
-technique, nested map-in-map destructuring patterns
+recognizing only five escapes since strings were first implemented.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `additive_persistence`
+— the natural sibling of `multiplicative_persistence`, counting the
+number of repeated digit-summing steps needed to reduce an integer to a
+single digit, map concatenation via `+` (`{...} + {...}`) — the
+map-typed sibling of list concatenation, giving the existing `merge()`
+builtin an infix spelling, `is_pentagonal` — the closed-form
+figurate-number sibling of `is_triangular`, testing membership in the
+pentagonal numbers `1, 5, 12, 22, 35, ...` via the same `math.isqrt`
+perfect-square technique, nested map-in-map destructuring patterns
 (`let {a, b: {c, d}} = {...}`) — the deferred other half of the nested
 list-in-list destructuring task, giving map patterns the same nesting
-support list patterns already have, and `is_lucas_number` — the
+support list patterns already have, `is_lucas_number` — the
 Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded `2, 1`
 instead of `0, 1`), tested by generate-and-compare rather than a closed
 form since Lucas numbers lack `is_fibonacci`'s clean perfect-square
-identity. The backlog mixes language depth with stdlib breadth over
+identity, and multiple `for` clauses in list/map comprehensions
+(`[x + y for x in xs for y in ys]`) — cartesian-product iteration with a
+clause-chained `for`, matching Python's own multi-clause comprehension
+semantics. The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -347,11 +347,17 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
 
-    def _destructure_map_pattern_entry(self) -> "tuple[str, str, Expr | None]":
+    def _destructure_map_pattern_entry(self) -> "tuple[str, object, Expr | None]":
         key = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
         if self._check(TokenType.COLON):
             self._advance()
-            binding = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme
+            if self._check(TokenType.LBRACE):
+                nested_names, nested_rest = self._destructure_map_pattern()
+                binding = (nested_names, nested_rest)
+            else:
+                binding = self._consume(
+                    TokenType.IDENTIFIER, "identifier in destructuring pattern"
+                ).lexeme
         else:
             binding = key
         default = None

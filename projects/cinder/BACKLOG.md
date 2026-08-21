@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `additive_persistence` — steps of repeated digit-summing to reach one digit
+## 1. Standard library: `additive_persistence` — steps of repeated digit-summing to reach one digit [claimed 2026-08-21T14:28:36Z]
 
 Build: the breadth task after task 5's depth work (comma-separated
 expression statements) per `PROJECT.md`'s breadth-vs-depth policy,

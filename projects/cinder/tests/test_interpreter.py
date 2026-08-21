@@ -373,6 +373,64 @@ class TestListConcatenation(unittest.TestCase):
         self.assertEqual(env.get("xs"), [1, 2, 3])
 
 
+class TestMapConcatenation(unittest.TestCase):
+    def test_two_maps(self):
+        self.assertEqual(evaluate('{"a": 1} + {"b": 2}'), {"a": 1, "b": 2})
+
+    def test_right_wins_on_conflict(self):
+        self.assertEqual(evaluate('{"a": 1} + {"a": 2}'), {"a": 2})
+
+    def test_empty_left(self):
+        self.assertEqual(evaluate('{} + {"a": 1}'), {"a": 1})
+
+    def test_empty_right(self):
+        self.assertEqual(evaluate('{"a": 1} + {}'), {"a": 1})
+
+    def test_key_order_left_then_right_only_keys(self):
+        result = evaluate('{"a": 1, "b": 2} + {"b": 3, "c": 4}')
+        self.assertEqual(list(result.keys()), ["a", "b", "c"])
+
+    def test_does_not_mutate_inputs(self):
+        env = run('let a = {"a": 1}; let b = {"b": 2}; let c = a + b;')
+        self.assertEqual(env.get("a"), {"a": 1})
+        self.assertEqual(env.get("b"), {"b": 2})
+        self.assertEqual(env.get("c"), {"a": 1, "b": 2})
+
+    def test_compound_assignment_on_identifier(self):
+        env = run('let m = {"a": 1}; m += {"b": 2};')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_compound_assignment_on_index_target(self):
+        env = run('let xs = [{"a": 1}]; xs[0] += {"b": 2};')
+        self.assertEqual(env.get("xs"), [{"a": 1, "b": 2}])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"m": {"a": 1}}; obj.m += {"b": 2};')
+        self.assertEqual(env.get("obj"), {"m": {"a": 1, "b": 2}})
+
+    def test_left_associative(self):
+        env = run('let m = {"a": 1} + {"b": 2} + {"c": 3};')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2, "c": 3})
+
+    def test_map_plus_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '\\+': map and list"
+        ):
+            evaluate('{"a": 1} + [1, 2]')
+
+    def test_map_plus_string_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '\\+': map and string"
+        ):
+            evaluate('{"a": 1} + "x"')
+
+    def test_map_plus_number_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '\\+': map and int"
+        ):
+            evaluate('{"a": 1} + 1')
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

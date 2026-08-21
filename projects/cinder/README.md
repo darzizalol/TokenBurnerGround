@@ -341,6 +341,7 @@ while (i < 10) {
   `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `multiplicative_persistence` to count how many times an integer's digits must be repeatedly multiplied together before the result drops to a single digit,
+  `additive_persistence` as its digit-summing sibling, counting how many repeated digit-sum steps reduce an integer to a single digit,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_rotation` to test whether one string is a rotation of another via the doubled-string trick,
   `is_permutation` as its list-oriented sibling,
@@ -445,35 +446,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: comma-separated multiple
-statements in expression-statement position (`a = 1, b = 2;`) — the
-plain-statement counterpart to the comma-separated multiple declarations
-`let`/`const` already support, and before that `is_sad_number` — the
-direct complement of `is_happy_number` (every non-negative integer either
-reaches `1` under the digit-square-sum recurrence or cycles forever
-without doing so, never both), built by inverting `is_happy_number`'s
-own cycle-detection loop rather than negating a call to it, and before
-that missing string escape sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a
-fixed-width `\uXXXX` Unicode escape — closing the gap left by `_ESCAPES`
-recognizing only five escapes since strings were first implemented.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `additive_persistence`
-— the natural sibling of `multiplicative_persistence`, counting the
-number of repeated digit-summing steps needed to reduce an integer to a
-single digit, map concatenation via `+` (`{...} + {...}`) — the
-map-typed sibling of list concatenation, giving the existing `merge()`
-builtin an infix spelling, `is_pentagonal` — the closed-form
-figurate-number sibling of `is_triangular`, testing membership in the
-pentagonal numbers `1, 5, 12, 22, 35, ...` via the same `math.isqrt`
-perfect-square technique, nested map-in-map destructuring patterns
-(`let {a, b: {c, d}} = {...}`) — the deferred other half of the nested
-list-in-list destructuring task, giving map patterns the same nesting
-support list patterns already have, `is_lucas_number` — the
-Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded `2, 1`
-instead of `0, 1`), tested by generate-and-compare rather than a closed
-form since Lucas numbers lack `is_fibonacci`'s clean perfect-square
-identity, and multiple `for` clauses in list/map comprehensions
-(`[x + y for x in xs for y in ys]`) — cartesian-product iteration with a
-clause-chained `for`, matching Python's own multi-clause comprehension
-semantics. The backlog mixes language depth with stdlib breadth over
+Actively developed, nightly. Recently landed: `additive_persistence` —
+the natural sibling of `multiplicative_persistence`, counting the number
+of repeated digit-summing steps needed to reduce an integer to a single
+digit, and before that comma-separated multiple statements in
+expression-statement position (`a = 1, b = 2;`) — the plain-statement
+counterpart to the comma-separated multiple declarations `let`/`const`
+already support, and before that `is_sad_number` — the direct complement
+of `is_happy_number` (every non-negative integer either reaches `1`
+under the digit-square-sum recurrence or cycles forever without doing
+so, never both), built by inverting `is_happy_number`'s own
+cycle-detection loop rather than negating a call to it.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): map concatenation via
+`+` (`{...} + {...}`) — the map-typed sibling of list concatenation,
+giving the existing `merge()` builtin an infix spelling, `is_pentagonal`
+— the closed-form figurate-number sibling of `is_triangular`, testing
+membership in the pentagonal numbers `1, 5, 12, 22, 35, ...` via the
+same `math.isqrt` perfect-square technique, nested map-in-map
+destructuring patterns (`let {a, b: {c, d}} = {...}`) — the deferred
+other half of the nested list-in-list destructuring task, giving map
+patterns the same nesting support list patterns already have,
+`is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci` (same
+recurrence, seeded `2, 1` instead of `0, 1`), tested by generate-and-
+compare rather than a closed form since Lucas numbers lack
+`is_fibonacci`'s clean perfect-square identity, multiple `for` clauses in
+list/map comprehensions (`[x + y for x in xs for y in ys]`) —
+cartesian-product iteration with a clause-chained `for`, matching
+Python's own multi-clause comprehension semantics, and `is_subsequence`
+— testing whether one string's characters all appear in another in the
+same relative order without needing to be contiguous, the third member
+of the two-string predicate cluster alongside `is_rotation`/`is_anagram`.
+The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

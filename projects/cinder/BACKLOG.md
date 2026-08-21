@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Language: map concatenation via `+` (`{...} + {...}`)
+## 1. Language: map concatenation via `+` (`{...} + {...}`)
 
 Build: the depth task after task 5's breadth work (`additive_persistence`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to
@@ -141,7 +141,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_pentagonal` — the closed-form figurate-number sibling of `is_triangular`
+## 2. Standard library: `is_pentagonal` — the closed-form figurate-number sibling of `is_triangular`
 
 Build: the breadth task after task 5's depth work (map concatenation via
 `+`) per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog
@@ -227,7 +227,7 @@ task.
 
 ---
 
-## 4. Language: nested map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`)
+## 3. Language: nested map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`)
 
 Build: the depth task after task 5's breadth work (`is_pentagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -379,7 +379,7 @@ next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
+## 4. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
 
 Build: the breadth task after task 5's depth work (nested map-in-map
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -468,7 +468,7 @@ task.
 
 ---
 
-## 6. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
+## 5. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
 
 Build: the depth task after task 5's breadth work (`is_lucas_number`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -675,6 +675,103 @@ multi-clause mention added, its "Status & roadmap" section needs
 updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
 backlog to landed — leave all three to the Architect's next grooming
 pass, not this task.
+
+---
+
+## 6. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
+
+Build: the breadth task after task 5's depth work (multiple `for` clauses
+in list/map comprehensions) per `PROJECT.md`'s breadth-vs-depth policy,
+restocking the backlog back to 6 tasks now that `additive_persistence`
+has landed via PR #290, dropping the count to the 5-task floor.
+`is_rotation(a, b)` and `is_anagram(a, b)` (`cinder/builtins.py`) already
+cover two of the classic two-string relationship predicates — "same
+characters, cyclically shifted" and "same multiset of characters,
+any order" — but neither answers the third and most common one: does
+`a`'s characters all appear in `b`, in the same relative order, without
+requiring them to be contiguous (e.g. `"ace"` is a subsequence of
+`"abcde"`, `"aec"` is not — same three characters, wrong order).
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_subsequence("ace", "abcde"));'
+# -> CinderRuntimeError: undefined name 'is_subsequence'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_rotation`
+(search `def _is_rotation`, immediately before `_is_permutation`):
+```python
+def _is_subsequence(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_subsequence", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"is_subsequence() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"is_subsequence() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    remaining = iter(string2)
+    return all(character in remaining for character in string1)
+```
+This mirrors `_is_rotation`'s own two-string validation shape exactly
+(search `def _is_rotation`) — two positional string arguments, each
+checked and error-reported independently so a caller always learns
+which argument was wrong. The body itself is the standard Python
+two-pointer subsequence idiom expressed as a generator: `remaining` is
+a single shared iterator over `string2`, and `character in remaining`
+advances it past (and consumes) every character up to and including the
+first match, so each successive lookup for `string1`'s next character
+only ever searches the *unconsumed* tail of `string2` — a plain `in`
+check against a fresh `string2` for every character would ignore
+ordering entirely, matching `"ba"` against `"ab"` incorrectly. `all(...)`
+short-circuits on the first character of `string1` that can't be found
+in what's left, so no accumulator or index bookkeeping is needed; this
+is the same "concise stdlib idiom over hand-rolled bookkeeping" choice
+`_merge`'s two-line body already makes. The empty-string cases fall out
+of this shape for free with no special-casing: `all()` over an empty
+`string1` is vacuously `True` regardless of `string2` (the empty string
+is a subsequence of anything, including the empty string), and a
+non-empty `string1` against an empty `string2` is `False` at the first
+character since an iterator over `""` yields nothing for `in` to match.
+Also register the new dict entry (search `"is_rotation": _is_rotation,`,
+add `"is_subsequence": _is_subsequence,` directly after it).
+
+Acceptance criteria:
+- `is_subsequence("ace", "abcde");` is `true` — the canonical example.
+- `is_subsequence("aec", "abcde");` is `false` — same three characters as
+  above, wrong relative order.
+- `is_subsequence("", "abcde");` is `true` — the empty string is a
+  subsequence of anything.
+- `is_subsequence("abcde", "");` is `false` — nothing but the empty
+  string is a subsequence of the empty string.
+- `is_subsequence("", "");` is `true`.
+- `is_subsequence("abcde", "abcde");` is `true` — a string is always a
+  subsequence of itself.
+- `is_subsequence("aa", "a");` is `false` — needs two `"a"`s available,
+  only one exists.
+- `is_subsequence("aa", "aba");` is `true` — the two `"a"`s need not be
+  contiguous in `string2`.
+- `is_subsequence("ba", "ab");` is `false` — same multiset of characters
+  `is_anagram` would call equal, but wrong order for `is_subsequence`.
+- `is_subsequence(1, "abc");` raises `CinderRuntimeError` matching
+  `"is_subsequence() requires a string as its first argument, got int"`.
+- `is_subsequence("abc", 1);` raises `CinderRuntimeError` matching
+  `"is_subsequence() requires a string as its second argument, got int"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_rotation`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestIsRotation`, search that
+name). Once merged, `README.md`'s Builtins bullet needs `is_subsequence`
+added near `is_rotation`/`is_anagram`, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s roadmap paragraph needs this moved
+from backlog to landed — leave all three to the Architect's next
+grooming pass, not this task.
 
 ---
 

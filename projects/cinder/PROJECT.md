@@ -1126,17 +1126,24 @@ multiple statements in expression-statement position (`a = 1, b = 2;`)
 declarations `let`/`const` already support, extending `_expr_statement`
 to loop on `TokenType.COMMA` the same way and reusing the existing
 `ExprStmt`/`DeclSeq` nodes and interpreter handler with no lexer/AST/
-interpreter changes needed — has since landed via PR #289 too.
+interpreter changes needed — has since landed via PR #289 too, and
+`additive_persistence(n)` — the natural sibling of
+`multiplicative_persistence` (already sitting next to `digit_sum`/
+`digital_root`/`reverse_int`), counting the number of repeated
+digit-summing steps needed to reduce `n` to a single digit rather than
+returning the final single-digit value the way `digital_root`'s closed
+form already does, reusing `multiplicative_persistence`'s own
+step-counting loop shape with digit-summing in place of
+digit-multiplying — has since landed via PR #290 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
-occupy slot 1 here, comma-separated multiple statements in
-expression-statement position, has since landed via PR #289 and is
-covered in the "have since landed" history immediately above; this
-grooming pass dropped its now-redundant description from this section.
-Tasks 1-6 — `additive_persistence`, map concatenation via `+`,
-`is_pentagonal`, nested map-in-map destructuring patterns,
-`is_lucas_number`, and multiple `for` clauses in list/map comprehensions
-— are fully scoped in `BACKLOG.md` itself and are not
+occupy slot 1 here, `additive_persistence`, has since landed via PR #290
+and is covered in the "have since landed" history immediately above;
+this grooming pass dropped its now-redundant description from this
+section. Tasks 1-6 — map concatenation via `+`, `is_pentagonal`, nested
+map-in-map destructuring patterns, `is_lucas_number`, multiple `for`
+clauses in list/map comprehensions, and `is_subsequence` — are fully
+scoped in `BACKLOG.md` itself and are not
 duplicated here, the same treatment tasks past slot 1 have gotten since
 this section stopped trying to keep prose in lockstep with every backlog
 slot). And only much later, a bytecode VM
@@ -1710,7 +1717,30 @@ filters before any later clause runs, matching Python's own multi-clause
 comprehension semantics including last-write-wins on a map-key collision
 across clause combinations. The next grooming pass should continue
 alternating breadth/depth, restocking toward 6-7 tasks whenever a merge
-drops the count within reach of the 5-task floor.
+drops the count within reach of the 5-task floor. This pass found the
+backlog back down to its 5-task floor again (`additive_persistence`
+having landed cleanly via PR #290 with no bounce, dropping the count
+from 6 to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with map
+concatenation via `+` renumbered from 2 to 1, `is_pentagonal` from 3 to
+2, nested map-in-map destructuring patterns from 4 to 3, `is_lucas_number`
+from 5 to 4, and multiple `for` clauses in list/map comprehensions from 6
+to 5) and restocked it to 6 by adding task 6, `is_subsequence`,
+continuing alternation with a breadth task after task 5's depth work
+(multiple `for` clauses in list/map comprehensions) rather than stacking
+a second depth task, per the policy above — testing whether one string's
+characters all appear in another string in the same relative order, not
+necessarily contiguously (e.g. `"ace"` is a subsequence of `"abcde"` but
+`"aec"` is not), the third member of the two-string predicate cluster
+alongside `is_rotation` ("same characters, cyclically shifted") and
+`is_anagram` ("same multiset, any order") — the one ordering-sensitive,
+non-contiguous relationship neither of those two already covers — built
+on the standard single-iterator two-pointer idiom (`all(character in
+remaining for character in string1)` against one shared `iter(string2)`)
+rather than hand-rolled index bookkeeping. The next grooming pass should
+continue alternating breadth/depth, restocking toward 6-7 tasks whenever
+a merge drops the count within reach of the 5-task floor.
 
 ## History
 

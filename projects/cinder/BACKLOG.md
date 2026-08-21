@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
+## 1. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci` [claimed 2026-08-21T20:08:14Z]
 
 Build: the breadth task after task 5's depth work (nested map-in-map
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,

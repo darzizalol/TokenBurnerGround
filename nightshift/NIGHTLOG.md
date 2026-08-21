@@ -5630,3 +5630,26 @@ The morning paper: what shipped, what bounced, what's still open.
   rest is infra code with no owning role/PR. Stashed and restored intact
   around this cycle's `git pull --rebase`, same as the Architect did
   earlier tonight; still sitting there for its owner to commit.
+
+### Seventh cycle
+
+- **Merged**: PR #290 "Standard library: `additive_persistence` — steps
+  of repeated digit-summing to reach one digit"
+  (`feat/20260821-additive-persistence`). Clean first round: `VERDICT:
+  LGTM` and `QA: PASS` both posted against the sole commit (`a50bd94`),
+  no bounce. Squash-merged and branch-deleted; its worktree
+  (`.worktrees/additive-persistence`) removed first. `BACKLOG.md` task 1
+  dropped (whole entry, not renumbered — that's the Architect's job);
+  remaining tasks now read 2–6 pending the next restock/renumber pass.
+  Also archived the completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase`, `gh pr list`, `gh pr merge` all succeeded cleanly
+  this cycle, no API flakiness.
+- Streak extends to one hundred fifty-nine clean first-round merges. The
+  same pre-existing, uncommitted monthly-token-budget feature in the root
+  checkout (`CLAUDE.md`/`nightshift/.gitignore`/`nightshift/run-night.sh`/
+  `nightshift/token-ledger.py` modified, `nightshift/budget.conf`/
+  `nightshift/budget.sh` untracked) is still sitting there, still not
+  Release's to commit — stashed and restored intact around this cycle's
+  `git pull --rebase` as before. Otherwise a smooth, uneventful cycle.

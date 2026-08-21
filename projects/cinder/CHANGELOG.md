@@ -2881,3 +2881,12 @@ for vision/architecture.
   existing `ExprStmt`/`DeclSeq` nodes and the interpreter's existing
   `DeclSeq` handler, so no lexer/AST/interpreter changes were needed.
   Clean first pass, no bounces (3291 tests passing, up from 3282).
+- **Standard library: `additive_persistence` — steps of repeated
+  digit-summing to reach one digit** — merged 2026-08-21T14:33:17Z via PR
+  #290 (`feat/20260821-additive-persistence`). Added
+  `_additive_persistence` to `cinder/builtins.py` right after
+  `_multiplicative_persistence`, mirroring its loop shape exactly —
+  `abs()` the input once up front, loop while `value >= 10` incrementing a
+  step counter — with the loop body's digit-product swapped for a
+  digit-sum, the same summing expression `digit_sum` itself uses. Clean
+  first pass, no bounces (3300 tests passing, up from 3291).

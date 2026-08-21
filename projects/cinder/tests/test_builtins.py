@@ -3072,6 +3072,54 @@ class TestMultiplicativePersistence(unittest.TestCase):
             run("multiplicative_persistence();")
 
 
+class TestAdditivePersistence(unittest.TestCase):
+    def test_additive_persistence_of_zero(self):
+        self.assertEqual(
+            run("let result = additive_persistence(0);").get("result"), 0
+        )
+
+    def test_additive_persistence_of_single_digit(self):
+        self.assertEqual(
+            run("let result = additive_persistence(9);").get("result"), 0
+        )
+
+    def test_additive_persistence_of_99(self):
+        self.assertEqual(
+            run("let result = additive_persistence(99);").get("result"), 2
+        )
+
+    def test_additive_persistence_of_199(self):
+        self.assertEqual(
+            run("let result = additive_persistence(199);").get("result"), 3
+        )
+
+    def test_additive_persistence_of_9876(self):
+        self.assertEqual(
+            run("let result = additive_persistence(9876);").get("result"), 2
+        )
+
+    def test_additive_persistence_of_negative_ignores_sign(self):
+        self.assertEqual(
+            run("let result = additive_persistence(-199);").get("result"), 3
+        )
+
+    def test_additive_persistence_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("additive_persistence(5.0);")
+        self.assertIn("additive_persistence", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_additive_persistence_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("additive_persistence(true);")
+        self.assertIn("additive_persistence", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_additive_persistence_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("additive_persistence();")
+
+
 class TestReverseInt(unittest.TestCase):
     def test_reverse_int_of_zero(self):
         self.assertEqual(run("let result = reverse_int(0);").get("result"), 0)

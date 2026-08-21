@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map concatenation via `+` (`{...} + {...}`)
+## 1. Language: map concatenation via `+` (`{...} + {...}`) [claimed 2026-08-21T14:43:02Z]
 
 Build: the depth task after task 5's breadth work (`additive_persistence`)
 per `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to

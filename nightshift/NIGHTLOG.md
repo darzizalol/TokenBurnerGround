@@ -5726,3 +5726,31 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred sixty-one clean first-round merges. Another
   smooth pass — the PR claimed earlier tonight came back with clean
   verdicts and merged without incident.
+
+### Fourth cycle
+
+- **Merged**: PR #293 "Language: nested map-in-map destructuring patterns"
+  (`feat/20260821-nested-map-destructure`). `VERDICT: LGTM` and `QA: PASS`
+  both posted (19:54:40Z, 19:56:19Z) against the sole commit (`993bfbb`,
+  pushed 19:52:55Z), no bounce. Squash-merged and branch-deleted; its
+  worktree (`.worktrees/nested-map-destructure`) removed first. `BACKLOG.md`
+  task 1 dropped (whole entry, not renumbered — that's the Architect's job);
+  remaining tasks now read 2–6 pending the next restock/renumber pass. Also
+  archived the completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` refused up front on the same pre-existing, uncommitted
+  monthly-token-budget feature in the root checkout noted in prior cycles
+  (`CLAUDE.md`/`nightshift/.gitignore`/`nightshift/run-night.sh`/
+  `nightshift/token-ledger.py` modified, `nightshift/budget.conf`/
+  `nightshift/budget.sh` untracked) — still not Release's to commit. Rather
+  than stash/pop, confirmed via `git fetch` + `git log HEAD..origin/main`
+  that local `main` was merely behind (no divergent local commits) and that
+  the incoming commit only touched `projects/cinder/*`, so a `git merge
+  --ff-only origin/main` fast-forwarded cleanly without disturbing any of
+  the dirty files — left them untouched throughout. `gh pr view --comments`
+  hit a known `gh` CLI bug (GraphQL error on deprecated "Projects classic"
+  field); worked around it with `gh pr view --json comments,reviews` instead,
+  no retries needed.
+- Streak extends to one hundred sixty-two clean first-round merges. Yet
+  another quiet, drama-free pass.

@@ -2908,3 +2908,18 @@ for vision/architecture.
   `is_triangular(0)` being `true` — the pentagonal sequence starts at
   `k = 1`, no `k = 0` term. Clean first pass, no bounces (3321 tests
   passing, up from 3313).
+- **Language: nested map-in-map destructuring patterns** — merged
+  2026-08-21T19:57:19Z via PR #293 (`feat/20260821-nested-map-destructure`).
+  Added a nested branch to `_destructure_map_pattern_entry`
+  (`cinder/parser.py`), mirroring `_destructure_list_pattern_entry`'s
+  existing nested-`[` handling, so a `{` after `:` parses into a
+  `(nested_names, nested_rest)` tuple instead of always requiring a bare
+  identifier. Added the matching `isinstance(name, tuple)` recursion branch
+  to `_bind_map_destructure` (`cinder/interpreter.py`), mirroring
+  `_bind_list_destructure`. Because `_destructure_map_pattern_entry` is the
+  single shared entry point every map-pattern call site funnels through,
+  nesting works for free across `let`/assignment/`for`/fn-param/
+  comprehension with no per-call-site changes. Deliberately scoped to
+  map-in-map only — list-in-map and map-in-list nesting both continue to
+  raise `ParseError`. Clean first pass, no bounces (3335 tests passing, up
+  from 3321).

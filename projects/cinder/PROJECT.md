@@ -1740,7 +1740,36 @@ on the standard single-iterator two-pointer idiom (`all(character in
 remaining for character in string1)` against one shared `iter(string2)`)
 rather than hand-rolled index bookkeeping. The next grooming pass should
 continue alternating breadth/depth, restocking toward 6-7 tasks whenever
-a merge drops the count within reach of the 5-task floor.
+a merge drops the count within reach of the 5-task floor. This pass found
+the backlog back down to its 5-task floor again (map concatenation via
+`+` having landed cleanly via PR #291 with no bounce, dropping the count
+from 6 to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with
+`is_pentagonal` renumbered from 2 to 1, nested map-in-map destructuring
+patterns from 3 to 2, `is_lucas_number` from 4 to 3, multiple `for`
+clauses in list/map comprehensions from 5 to 4, and `is_subsequence` from
+6 to 5) and restocked it to 6 by adding task 6, a map pattern nested
+inside a list pattern (`let [a, {b, c}] = [...]`), continuing alternation
+with a depth task after task 5's breadth work (`is_subsequence`) rather
+than stacking a second breadth task, per the policy above — the mirror
+image of task 2's map-in-map nesting: nested list-in-list destructuring
+patterns landed via PR #273 and task 2 above queues the map-in-map half,
+but a map pattern nested inside a *list* pattern
+(`_destructure_list_pattern_entry` in `cinder/parser.py`, which only ever
+recognized a nested `[`) was still a guaranteed `ParseError`. Tags the new
+nested-map-pattern tuple with a trailing `True` (a 3-element tuple,
+distinguishable by length from the existing 2-element `(nested_names,
+nested_rest)` nested-list-pattern tuple both the existing nested-`[`
+branch and the plain-assignment form's own `_destructure_assign_pattern`
+already produce) rather than widening those existing 2-tuple sites, so no
+already-landed nested-list-in-list behavior is at any risk of regressing.
+The plain-assignment form (`[a, {b}] = expr;`) stays out of scope, for
+the same structural reason map-in-list nesting already does on the
+map-pattern side: that form's list pattern is parsed by validating an
+already-built `ListLiteral`'s elements, which has no notion of a nested
+map pattern any more than the nested-map-in-map task's own
+plain-assignment form has of a nested list one.
 
 ## History
 

@@ -189,7 +189,12 @@ while (i < 10) {
   minus, so `-2 ** 2` is `4`; guards against the same edge cases the `pow()`
   builtin does, e.g. `0 ** -1` and complex results from a negative base with
   a fractional exponent both raise a clean runtime error instead of leaking
-  a raw Python exception or a complex number), and the pipe operator
+  a raw Python exception or a complex number), map concatenation via `+`
+  (`{"a": 1} + {"b": 2}` is `{"a": 1, "b": 2}`, a fresh non-mutating map,
+  right-biased on key collision — the map-typed sibling of list
+  concatenation, giving the existing `merge()` builtin an infix spelling;
+  `+=` on a map target works for free through the same desugaring), and
+  the pipe operator
   `a |> f` (sugar for `f(a)`; evaluates both sides as ordinary expressions
   and calls the right's value with the left's value as its sole argument —
   not Elixir-style argument insertion, so `a |> f(1)` calls `f(1)` first
@@ -446,21 +451,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `additive_persistence` —
-the natural sibling of `multiplicative_persistence`, counting the number
-of repeated digit-summing steps needed to reduce an integer to a single
-digit, and before that comma-separated multiple statements in
-expression-statement position (`a = 1, b = 2;`) — the plain-statement
-counterpart to the comma-separated multiple declarations `let`/`const`
-already support, and before that `is_sad_number` — the direct complement
-of `is_happy_number` (every non-negative integer either reaches `1`
-under the digit-square-sum recurrence or cycles forever without doing
-so, never both), built by inverting `is_happy_number`'s own
-cycle-detection loop rather than negating a call to it.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): map concatenation via
-`+` (`{...} + {...}`) — the map-typed sibling of list concatenation,
-giving the existing `merge()` builtin an infix spelling, `is_pentagonal`
-— the closed-form figurate-number sibling of `is_triangular`, testing
+Actively developed, nightly. Recently landed: map concatenation via `+`
+(`{...} + {...}`) — the map-typed sibling of list concatenation, giving
+the existing `merge()` builtin an infix spelling, and before that
+`additive_persistence` — the natural sibling of
+`multiplicative_persistence`, counting the number of repeated
+digit-summing steps needed to reduce an integer to a single digit, and
+before that comma-separated multiple statements in expression-statement
+position (`a = 1, b = 2;`) — the plain-statement counterpart to the
+comma-separated multiple declarations `let`/`const` already support.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_pentagonal` — the
+closed-form figurate-number sibling of `is_triangular`, testing
 membership in the pentagonal numbers `1, 5, 12, 22, 35, ...` via the
 same `math.isqrt` perfect-square technique, nested map-in-map
 destructuring patterns (`let {a, b: {c, d}} = {...}`) — the deferred
@@ -472,10 +473,13 @@ compare rather than a closed form since Lucas numbers lack
 `is_fibonacci`'s clean perfect-square identity, multiple `for` clauses in
 list/map comprehensions (`[x + y for x in xs for y in ys]`) —
 cartesian-product iteration with a clause-chained `for`, matching
-Python's own multi-clause comprehension semantics, and `is_subsequence`
-— testing whether one string's characters all appear in another in the
+Python's own multi-clause comprehension semantics, `is_subsequence` —
+testing whether one string's characters all appear in another in the
 same relative order without needing to be contiguous, the third member
-of the two-string predicate cluster alongside `is_rotation`/`is_anagram`.
+of the two-string predicate cluster alongside `is_rotation`/`is_anagram`,
+and a map pattern nested inside a list pattern (`let [a, {b, c}] =
+[...]`) — the mirror image of the nested map-in-map task, closing the
+one remaining corner of the destructuring-nesting matrix.
 The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -5701,3 +5701,28 @@ The morning paper: what shipped, what bounced, what's still open.
   but productive second pass — the PR that was still awaiting review at
   the start of the night picked up clean verdicts and merged without
   drama.
+
+### Third cycle
+
+- **Merged**: PR #292 "Standard library: is_pentagonal — the closed-form
+  figurate-number sibling of is_triangular" (`feat/20260821-is-pentagonal`).
+  `VERDICT: LGTM` and `QA: PASS` both posted (19:40:32Z, 19:41:36Z) against
+  the sole commit (`e81179a`, pushed 19:38:53Z), no bounce. Squash-merged
+  and branch-deleted; its worktree (`.worktrees/is-pentagonal`) removed
+  first. `BACKLOG.md` task 1 dropped (whole entry, not renumbered — that's
+  the Architect's job); remaining tasks now read 2–6 pending the next
+  restock/renumber pass. Also archived the completed task to
+  `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop around the same pre-existing,
+  uncommitted monthly-token-budget feature in the root checkout noted in
+  prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still not
+  Release's to commit, stashed and restored intact both before and after
+  the merge. Otherwise `git pull --rebase`, `gh pr list`, `gh pr view`,
+  and `gh pr merge` all succeeded cleanly this cycle, no API flakiness.
+- Streak extends to one hundred sixty-one clean first-round merges. Another
+  smooth pass — the PR claimed earlier tonight came back with clean
+  verdicts and merged without incident.

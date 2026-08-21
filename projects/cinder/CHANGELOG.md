@@ -2899,3 +2899,12 @@ for vision/architecture.
   `_merge` directly would be circular. `+=` on identifier/index/dot
   targets falls out for free through existing desugaring. Clean first
   pass, no bounces (3313 tests passing, up from 3300).
+- **Standard library: `is_pentagonal`** — merged 2026-08-21T19:42:30Z via
+  PR #292 (`feat/20260821-is-pentagonal`). Added `_is_pentagonal` to
+  `cinder/builtins.py` right after `_is_triangular`, mirroring its
+  closed-form perfect-square shape but with an added mod-6 residue check
+  (`24n + 1` a perfect square whose root is `≡ 5 (mod 6)`) that the
+  pentagonal quadratic requires. `is_pentagonal(0)` is `false`, unlike
+  `is_triangular(0)` being `true` — the pentagonal sequence starts at
+  `k = 1`, no `k = 0` term. Clean first pass, no bounces (3321 tests
+  passing, up from 3313).

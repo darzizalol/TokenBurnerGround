@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: comma-separated multiple statements in expression-statement position (`a = 1, b = 2;`)
+## 1. Language: comma-separated multiple statements in expression-statement position (`a = 1, b = 2;`) [claimed 2026-08-21T14:07:19Z]
 
 Build: the depth task after task 5's breadth work (`is_sad_number`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

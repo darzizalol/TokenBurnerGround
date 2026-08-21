@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: nested map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`)
+## 1. Language: nested map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`) [claimed 2026-08-21T19:50:39Z]
 
 Build: the depth task after task 5's breadth work (`is_pentagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

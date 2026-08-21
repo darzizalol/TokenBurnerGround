@@ -303,6 +303,7 @@ while (i < 10) {
   through odd exponents),
   `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
+  `is_sad_number` to test the direct complement of `is_happy_number` (cycles forever instead of reaching `1`),
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
@@ -440,36 +441,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: missing string escape
-sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a fixed-width `\uXXXX` Unicode
-escape — closing the gap left by `_ESCAPES` recognizing only five escapes
-since strings were first implemented, and before that `is_circular_prime`
-— testing whether every rotation of an integer's decimal digits is also
-prime (e.g. `197`/`971`/`719`), combining `is_emirp`'s
-primality-plus-digit-transformation shape with `is_rotation`'s
-rotate-and-compare technique, and before that triple-quoted string
-literals `"""..."""`/`'''...'''` — ending only at three consecutive
-matching quote characters, so quote-heavy text (embedded dialogue, JSON
-snippets) needs no per-quote escaping. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `is_sad_number` — the direct complement
-of `is_happy_number` (every non-negative integer either reaches `1`
-under the digit-square-sum recurrence or cycles forever without doing
-so, never both), built by inverting `is_happy_number`'s own
-cycle-detection loop rather than negating a call to it, comma-separated
-multiple statements in expression-statement position (`a = 1, b = 2;`)
-— the plain-statement counterpart to the comma-separated multiple
-declarations `let`/`const` already support, `additive_persistence` —
-the natural sibling of `multiplicative_persistence`, counting the
-number of repeated digit-summing steps needed to reduce an integer to a
-single digit, map concatenation via `+` (`{...} + {...}`) — the
-map-typed sibling of list concatenation, giving the existing `merge()`
-builtin an infix spelling, `is_pentagonal` — the closed-form
-figurate-number sibling of `is_triangular`, testing membership in the
-pentagonal numbers `1, 5, 12, 22, 35, ...` via the same `math.isqrt`
-perfect-square technique, and nested map-in-map destructuring patterns
+Actively developed, nightly. Recently landed: `is_sad_number` — the
+direct complement of `is_happy_number` (every non-negative integer either
+reaches `1` under the digit-square-sum recurrence or cycles forever
+without doing so, never both), built by inverting `is_happy_number`'s
+own cycle-detection loop rather than negating a call to it, and before
+that missing string escape sequences `\r`/`\0`/`\b`/`\f`/`\v` plus a
+fixed-width `\uXXXX` Unicode escape — closing the gap left by `_ESCAPES`
+recognizing only five escapes since strings were first implemented, and
+before that `is_circular_prime` — testing whether every rotation of an
+integer's decimal digits is also prime (e.g. `197`/`971`/`719`),
+combining `is_emirp`'s primality-plus-digit-transformation shape with
+`is_rotation`'s rotate-and-compare technique. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): comma-separated multiple statements in
+expression-statement position (`a = 1, b = 2;`) — the plain-statement
+counterpart to the comma-separated multiple declarations `let`/`const`
+already support, `additive_persistence` — the natural sibling of
+`multiplicative_persistence`, counting the number of repeated
+digit-summing steps needed to reduce an integer to a single digit, map
+concatenation via `+` (`{...} + {...}`) — the map-typed sibling of list
+concatenation, giving the existing `merge()` builtin an infix spelling,
+`is_pentagonal` — the closed-form figurate-number sibling of
+`is_triangular`, testing membership in the pentagonal numbers
+`1, 5, 12, 22, 35, ...` via the same `math.isqrt` perfect-square
+technique, nested map-in-map destructuring patterns
 (`let {a, b: {c, d}} = {...}`) — the deferred other half of the nested
 list-in-list destructuring task, giving map patterns the same nesting
-support list patterns already have. The backlog mixes language depth
-with stdlib breadth over time rather than running either in one long
-block. The
+support list patterns already have, and `is_lucas_number` — the
+Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded `2, 1`
+instead of `0, 1`), tested by generate-and-compare rather than a closed
+form since Lucas numbers lack `is_fibonacci`'s clean perfect-square
+identity. The backlog mixes language depth with stdlib breadth over
+time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

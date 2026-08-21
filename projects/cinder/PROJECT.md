@@ -1114,19 +1114,25 @@ missing string escape sequences (`\r`, `\0`, `\b`, `\f`, `\v`, and a
 fixed-width `\uXXXX` Unicode escape) — extending `Lexer._ESCAPES` with
 the five missing one-character escapes and a `_unicode_escape` method
 reusing `_string`'s existing cursor primitives, raw strings unaffected by
-design — has since landed via PR #287 too.
+design — has since landed via PR #287 too, and `is_sad_number(n)` — the
+direct complement of `is_happy_number` (every non-negative integer either
+reaches `1` under the digit-square-sum recurrence or cycles forever
+without doing so, never both), built by inverting `is_happy_number`'s own
+cycle-detection loop (returning `true` on cycle detection instead of
+`false`, `false` on reaching `1` instead of `true`) rather than negating
+a call to it — has since landed via PR #288 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
-occupy slot 1 here, missing string escape sequences, has since landed via
-PR #287 and is covered in the "have since landed" history immediately
-above; this grooming pass dropped its now-redundant description from this
-section. Tasks 1-6 — `is_sad_number`, comma-separated multiple statements
-in expression-statement position, `additive_persistence`, map
-concatenation via `+`, `is_pentagonal`, and nested map-in-map
-destructuring patterns — are fully scoped in `BACKLOG.md` itself and are
-not duplicated here, the same treatment tasks past slot 1 have gotten
-since this section stopped trying to keep prose in lockstep with every
-backlog slot). And only much later, a bytecode VM
+occupy slot 1 here, `is_sad_number`, has since landed via PR #288 and is
+covered in the "have since landed" history immediately above; this
+grooming pass dropped its now-redundant description from this section.
+Tasks 1-6 — comma-separated multiple statements in expression-statement
+position, `additive_persistence`, map concatenation via `+`,
+`is_pentagonal`, nested map-in-map destructuring patterns, and
+`is_lucas_number` — are fully scoped in `BACKLOG.md` itself and are not
+duplicated here, the same treatment tasks past slot 1 have gotten since
+this section stopped trying to keep prose in lockstep with every backlog
+slot). And only much later, a bytecode VM
 if performance ever actually matters. The
 Architect should keep scoping these into `BACKLOG.md` incrementally —
 do not jump ahead of the current layer, and should keep watching the
@@ -1650,7 +1656,28 @@ exactly, with map-in-list and list-in-map nesting staying explicitly out
 of scope on both sides, matching the precedent the original task set. The
 next grooming pass should continue alternating breadth/depth, restocking
 toward 6-7 tasks whenever a merge drops the count within reach of the
-5-task floor.
+5-task floor. This pass found the backlog back down to its 5-task floor
+again (`is_sad_number` having landed cleanly via PR #288 with no bounce,
+dropping the count from 6 to 5, dropping its now-landed description from
+the "what remains plausible" section above into the "have since landed"
+history, and renumbering the remaining five tasks from 2-6 down to 1-5,
+with comma-separated multiple statements renumbered from 2 to 1,
+`additive_persistence` from 3 to 2, map concatenation via `+` from 4 to
+3, `is_pentagonal` from 5 to 4, and nested map-in-map destructuring
+patterns from 6 to 5) and restocked it to 6 by adding task 6,
+`is_lucas_number`, continuing alternation with a breadth task after task
+5's depth work (nested map-in-map destructuring patterns) rather than
+stacking a second depth task, per the policy above — the Lucas sequence
+is Fibonacci's standard companion sequence (same recurrence, seeded
+`2, 1` instead of `0, 1`), the natural sibling of the already-implemented
+`is_fibonacci`, but unlike Fibonacci it has no equally clean
+closed-form membership identity, so it generates and compares instead
+(with two explicit special cases for `1` and `2` since the sequence dips
+from `L(0) = 2` down to `L(1) = 1` before climbing monotonically from
+`L(2) = 3` onward, unlike Fibonacci's own non-decreasing-from-the-start
+shape). The next grooming pass should continue alternating breadth/depth,
+restocking toward 6-7 tasks whenever a merge drops the count within reach
+of the 5-task floor.
 
 ## History
 

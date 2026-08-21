@@ -81,7 +81,11 @@ while (i < 10) {
   function params, and comprehension loop variables — the plain-assignment
   form `[a, b] = expr;` does not support defaults) and
   map destructuring (`let {a, b} = expr;`, binds each identifier by
-  looking it up as a key, extra unnamed keys ignored, plus the same kind
+  looking it up as a key, extra unnamed keys ignored, that may itself
+  nest (`let {a, b: {c, d}} = {"a": 1, "b": {"c": 2, "d": 3}};`, to any
+  depth, composing with rest/rename/default at any nesting level;
+  list-in-map nesting either direction is not supported and remains a
+  `ParseError`), plus the same kind
   of optional trailing rest element `let {a, ...rest} = expr;` that
   collects every key not already named into a map, empty if none are
   left, an optional per-key rename `let {a: x, b} = expr;` binding
@@ -452,36 +456,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_pentagonal` — the
-closed-form figurate-number sibling of `is_triangular`, testing
-membership in the pentagonal numbers `1, 5, 12, 22, 35, ...` via the
-same `math.isqrt` perfect-square technique (plus a modular-residue
-check the simpler triangular test doesn't need), and before that map
-concatenation via `+` (`{...} + {...}`) — the map-typed sibling of list
-concatenation, giving the existing `merge()` builtin an infix spelling,
-and before that `additive_persistence` — the natural sibling of
-`multiplicative_persistence`, counting the number of repeated
-digit-summing steps needed to reduce an integer to a single digit.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): nested map-in-map
+Actively developed, nightly. Recently landed: nested map-in-map
 destructuring patterns (`let {a, b: {c, d}} = {...}`) — the deferred
 other half of the nested list-in-list destructuring task, giving map
-patterns the same nesting support list patterns already have,
-`is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci` (same
-recurrence, seeded `2, 1` instead of `0, 1`), tested by generate-and-
-compare rather than a closed form since Lucas numbers lack
-`is_fibonacci`'s clean perfect-square identity, multiple `for` clauses in
-list/map comprehensions (`[x + y for x in xs for y in ys]`) —
+patterns the same nesting support list patterns already have, and
+before that `is_pentagonal` — the closed-form figurate-number sibling of
+`is_triangular`, testing membership in the pentagonal numbers
+`1, 5, 12, 22, 35, ...` via the same `math.isqrt` perfect-square
+technique (plus a modular-residue check the simpler triangular test
+doesn't need), and before that map concatenation via `+` (`{...} +
+{...}`) — the map-typed sibling of list concatenation, giving the
+existing `merge()` builtin an infix spelling.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_lucas_number` —
+the Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded
+`2, 1` instead of `0, 1`), tested by generate-and-compare rather than a
+closed form since Lucas numbers lack `is_fibonacci`'s clean
+perfect-square identity, multiple `for` clauses in list/map
+comprehensions (`[x + y for x in xs for y in ys]`) —
 cartesian-product iteration with a clause-chained `for`, matching
 Python's own multi-clause comprehension semantics, `is_subsequence` —
 testing whether one string's characters all appear in another in the
 same relative order without needing to be contiguous, the third member
 of the two-string predicate cluster alongside `is_rotation`/`is_anagram`,
 a map pattern nested inside a list pattern (`let [a, {b, c}] =
-[...]`) — the mirror image of the nested map-in-map task, closing the
-one remaining corner of the destructuring-nesting matrix, and
+[...]`) — the mirror image of the nested map-in-map task,
 `is_hexagonal` — the third figurate-number membership predicate after
 `is_triangular`/`is_pentagonal`, testing membership in the hexagonal
-numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique.
+numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique, and
+a list pattern nested inside a map pattern (`let {a, b: [c, d]} =
+{...}`) — the mirror image of the map-in-list task, closing the last
+remaining corner of the destructuring-nesting matrix.
 The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

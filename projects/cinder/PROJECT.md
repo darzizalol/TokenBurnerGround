@@ -1134,16 +1134,25 @@ digit-summing steps needed to reduce `n` to a single digit rather than
 returning the final single-digit value the way `digital_root`'s closed
 form already does, reusing `multiplicative_persistence`'s own
 step-counting loop shape with digit-summing in place of
-digit-multiplying — has since landed via PR #290 too.
+digit-multiplying — has since landed via PR #290 too, and nested
+map-in-map destructuring patterns — the deferred other half of the
+nested list-in-list destructuring task (PR #273), teaching
+`_destructure_map_pattern_entry` (`cinder/parser.py`) the same
+nested-`{`-in-`binding`-position branch `_destructure_list_pattern_entry`
+already had for nested `[`, and `_bind_map_destructure`
+(`cinder/interpreter.py`) the matching `isinstance(binding, tuple)`
+recursive-bind branch `_bind_list_destructure` already had, with
+map-in-list and list-in-map nesting left explicitly out of scope on both
+sides — has since landed via PR #293 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
 occupy slot 1 here, `additive_persistence`, has since landed via PR #290
 and is covered in the "have since landed" history immediately above;
 this grooming pass dropped its now-redundant description from this
-section. Tasks 1-6 — map concatenation via `+`, `is_pentagonal`, nested
-map-in-map destructuring patterns, `is_lucas_number`, multiple `for`
-clauses in list/map comprehensions, and `is_subsequence` — are fully
-scoped in `BACKLOG.md` itself and are not
+section. Tasks 1-6 — `is_lucas_number`, multiple `for` clauses in
+list/map comprehensions, `is_subsequence`, a map pattern nested inside a
+list pattern, `is_hexagonal`, and a list pattern nested inside a map
+pattern — are fully scoped in `BACKLOG.md` itself and are not
 duplicated here, the same treatment tasks past slot 1 have gotten since
 this section stopped trying to keep prose in lockstep with every backlog
 slot). And only much later, a bytecode VM
@@ -1793,7 +1802,36 @@ own modular-residue check (`root % 4 == 3`) analogous to
 1) = n` for `k` leaves a divisibility-by-4 condition, just as solving
 the pentagonal formula leaves one by 6, while the simpler triangular
 formula needs no such check since its root is always odd by
-construction.
+construction. The next grooming pass should continue alternating
+breadth/depth, restocking toward 6-7 tasks whenever a merge drops the
+count within reach of the 5-task floor. This pass found the backlog back
+down to its 5-task floor again (nested map-in-map destructuring patterns
+having landed cleanly via PR #293 with no bounce, dropping the count from
+6 to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with
+`is_lucas_number` renumbered from 2 to 1, multiple `for` clauses in
+list/map comprehensions from 3 to 2, `is_subsequence` from 4 to 3, a map
+pattern nested inside a list pattern from 5 to 4, and `is_hexagonal` from
+6 to 5) and restocked it to 6 by adding task 6, a list pattern nested
+inside a map pattern (`let {a, b: [c, d]} = {...}`), continuing
+alternation with a depth task after task 5's breadth work
+(`is_hexagonal`) rather than stacking a second breadth task, per the
+policy above — the mirror image of task 4's map-in-list nesting, and the
+last unscoped corner of the destructuring-nesting matrix: nested
+list-in-list landed via PR #273, nested map-in-map via PR #293, task 4
+above still queues map-in-list, and this task closes list-in-map, the one
+direction `_destructure_map_pattern_entry` (`cinder/parser.py`) has never
+recognized (a `[` after a binding's `:` is a guaranteed `ParseError`
+today). Tags the new nested-list-pattern tuple with a trailing `True` (a
+3-element tuple, distinguishable by length from the existing 2-element
+`(nested_names, nested_rest)` nested-map-pattern tuple the existing
+nested-`{` branch already produces), the same length-based tagging
+technique task 4 uses in the opposite nesting direction, so no
+already-landed nested-map-in-map behavior is at any risk of regressing.
+The plain-assignment form stays out of scope for a different reason than
+task 4's does: map patterns have no plain-assignment destructuring form
+at all today, so there is no call site to extend either way.
 
 ## History
 

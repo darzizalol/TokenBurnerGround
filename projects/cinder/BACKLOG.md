@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
+## 1. Standard library: `is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci`
 
 Build: the breadth task after task 5's depth work (nested map-in-map
 destructuring patterns) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -100,7 +100,7 @@ task.
 
 ---
 
-## 3. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
+## 2. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
 
 Build: the depth task after task 5's breadth work (`is_lucas_number`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -310,7 +310,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
+## 3. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
 
 Build: the breadth task after task 5's depth work (multiple `for` clauses
 in list/map comprehensions) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -407,7 +407,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
+## 4. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
 
 Build: the depth task after task 5's breadth work (`is_subsequence`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -555,7 +555,7 @@ this task.
 
 ---
 
-## 6. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
+## 5. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
 
 Build: the breadth task after task 5's depth work (a map pattern nested
 inside a list pattern) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -638,6 +638,131 @@ added near `is_triangular`/`is_pentagonal`, its "Status & roadmap"
 section needs updating, and `PROJECT.md`'s roadmap paragraph needs this
 moved from backlog to landed — leave all three to the Architect's next
 grooming pass, not this task.
+
+---
+
+## 6. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
+
+Build: the depth task after task 5's breadth work (`is_hexagonal`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that nested map-in-map destructuring patterns has landed via PR
+#293, dropping the count to the 5-task floor. Nested list-in-list
+destructuring patterns landed via PR #273, nested map-in-map destructuring
+patterns landed via PR #293, and task 4 above queues the map-in-list half.
+The one remaining corner of the nesting matrix neither of those touches is
+a *list* pattern nested inside a *map* pattern — today
+`_destructure_map_pattern_entry` (`cinder/parser.py`) only recognizes a
+nested `{` after a binding's `:` (recursing into another map pattern); a
+`[` in that same position is a guaranteed `ParseError`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let {a, b: [c, d]} = {"a": 1, "b": [2, 3]}; print(a); print(c); print(d);'
+# -> <eval>:1:12: expected identifier in destructuring pattern, found '['
+```
+This is a guaranteed `ParseError` today (a `[` can never appear where
+`_destructure_map_pattern_entry` expects `{`/an identifier after `:`), so
+no currently-valid Cinder program's meaning changes. This is exactly the
+case `tests/test_interpreter.py`'s `TestDestructureNestedMapPattern.
+test_list_pattern_nested_in_map_still_rejected` currently pins as
+permanently rejected — that test's premise flips with this task and must
+be replaced (see Acceptance criteria).
+
+Add a nested-`[` branch to `_destructure_map_pattern_entry`, alongside its
+existing nested-`{` branch (search `def _destructure_map_pattern_entry`):
+```python
+            elif self._check(TokenType.LBRACKET):
+                nested_names, nested_rest = self._destructure_list_pattern()
+                binding = (nested_names, nested_rest, True)
+```
+This mirrors the existing nested-`{` branch's own shape exactly (recurse
+via the sibling pattern parser, store the result as `binding`), but tags
+its pattern tuple with a trailing `True` — deliberately a 3-element tuple,
+not the 2-element `(nested_names, nested_rest)` the nested-`{` branch
+already produces and will keep producing unchanged. This is the same
+length-based tagging technique task 5 (a map pattern nested inside a list
+pattern) uses in the opposite nesting direction, kept consistent so both
+halves of the "mixed nesting" gap resolve the same shape ambiguity the
+same way. Then teach `_bind_map_destructure` (`cinder/interpreter.py`) to
+recognize the tagged shape, at its existing `isinstance(binding, tuple):`
+check (search `isinstance(binding, tuple)`):
+```python
+            if isinstance(binding, tuple) and len(binding) == 3:
+                nested_names, nested_rest, _ = binding
+                self._bind_list_destructure(
+                    env, nested_names, nested_rest, item, line, column, use_assign
+                )
+            elif isinstance(binding, tuple):
+                nested_names, nested_rest = binding
+                self._bind_map_destructure(
+                    env, nested_names, nested_rest, item, line, column, use_assign
+                )
+            else:
+                self._bind_destructure_name(env, binding, item, line, column, use_assign)
+```
+Because the existing 2-tuple production site (the nested-`{` branch) is
+untouched, this task cannot regress any already-landed nested-map-in-map
+behavior — the `len(binding) == 3` check only ever matches the new
+branch's own output. The plain-assignment form (`{a, b: [c]} = expr;`)
+stays out of scope, for the same structural reason task 5's map-in-list
+plain-assignment form does: no plain-assignment destructuring exists for
+map patterns at all today (only list patterns get an assignment-target
+reading via `_destructure_assign_pattern`), so there is no call site to
+extend.
+
+Because `_destructure_map_pattern_entry` is the single shared entry point
+every map-pattern call site funnels through — `let`, `for`-loops, function
+params, and both comprehension forms — nesting a list pattern works for
+free across all of them, the same "pure plumbing" result task 5 and the
+original nested-map-in-map task both got from their own shared helpers.
+
+Acceptance criteria:
+- `let {a, b: [c, d]} = {"a": 1, "b": [2, 3]}; print(a); print(c); print(d);`
+  prints `1`, `2`, `3`.
+- `let {x: [y, z], a} = {"x": [1, 2], "a": 3}; print(y); print(z); print(a);`
+  prints `1`, `2`, `3` — nested pattern in the first position works too,
+  not just the last.
+- `let {a, b: {c: [d, e]}} = {"a": 1, "b": {"c": [2, 3]}}; print(a); print(d); print(e);`
+  prints `1`, `2`, `3` — a list pattern nested inside a nested *map*
+  pattern, confirming the two kinds of nesting compose.
+- `let {a, b: [c, ...drest]} = {"a": 1, "b": [2, 3, 4]}; print(drest);`
+  prints `[3, 4]` — a rest element inside the nested list pattern.
+- `let {a, b: [c] = [0]} = {"a": 1}; print(c);` prints `0` — a default
+  value on a missing key whose nested pattern is a list.
+- `let {a, b: [c]} = {"a": 1, "b": 2};` raises `CinderRuntimeError`
+  matching `"cannot destructure int as a list"` — a non-list value at a
+  nested position.
+- `let {a, b: [c]} = {"a": 1, "b": []};` raises `CinderRuntimeError`
+  matching `"destructuring pattern expects 1 elements, got 0"` — the
+  existing arity-mismatch error still fires correctly from inside a
+  nested pattern.
+- `for {a, b: [c]} in [{"a": 1, "b": [2]}, {"a": 3, "b": [4]}] { print(a); print(c); }`
+  prints `1`, `2`, `3`, `4` — the `for`-loop form.
+- `fn f({a, b: [c]}) { return a + c; } print(f({"a": 1, "b": [2]}));`
+  prints `3` — the function-parameter form.
+- `print([a + c for {a, b: [c]} in [{"a": 1, "b": [2]}, {"a": 3, "b": [4]}]]);`
+  prints `[3, 7]` — the comprehension loop-variable form.
+- `{a, b: [c]} = {"a": 1, "b": [2]};` still raises `ParseError` — map
+  patterns have no plain-assignment form at all today, out of scope for
+  this task.
+- `tests/test_interpreter.py`'s `TestDestructureNestedMapPattern.
+  test_list_pattern_nested_in_map_still_rejected` is removed (its premise
+  — that this syntax always raises — is exactly what this task makes
+  false) and replaced with a new test class covering the positive cases
+  above.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_destructure_map_pattern_entry`),
+`cinder/interpreter.py` (`_bind_map_destructure`), `tests/test_parser.py`
+(add a parser-shape test mirroring the existing nested-map-pattern-shape
+test, confirming a `let`-form nested list pattern parses into the
+`(nested_names, nested_rest, True)` shape), `tests/test_interpreter.py`
+(remove `test_list_pattern_nested_in_map_still_rejected` from
+`TestDestructureNestedMapPattern`, add a new `class
+TestDestructureListPatternNestedInMap` mirroring
+`TestDestructureMapPatternNestedInList`'s own style, placed near it). Once
+merged, `README.md`'s destructuring bullet, its "Status & roadmap"
+section, and `PROJECT.md`'s roadmap paragraph all need updating to note
+this landed — leave all three to the Architect's next grooming pass, not
+this task.
 
 ---
 

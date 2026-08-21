@@ -1536,6 +1536,17 @@ def _multiplicative_persistence(arguments: list, line: int, column: int) -> obje
     return steps
 
 
+def _additive_persistence(arguments: list, line: int, column: int) -> object:
+    _require_arity("additive_persistence", arguments, 1, line, column)
+    value = _require_int("additive_persistence", arguments[0], line, column)
+    value = abs(value)
+    steps = 0
+    while value >= 10:
+        value = sum(int(digit) for digit in str(value))
+        steps += 1
+    return steps
+
+
 def _reverse_int(arguments: list, line: int, column: int) -> object:
     _require_arity("reverse_int", arguments, 1, line, column)
     value = _require_int("reverse_int", arguments[0], line, column)
@@ -3785,6 +3796,7 @@ _BUILTINS = {
     "digit_sum": _digit_sum,
     "digit_product": _digit_product,
     "multiplicative_persistence": _multiplicative_persistence,
+    "additive_persistence": _additive_persistence,
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,

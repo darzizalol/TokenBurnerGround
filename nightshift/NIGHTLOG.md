@@ -5676,3 +5676,28 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak holds at one hundred fifty-nine clean first-round merges (no new
   merge this cycle, nothing bounced either — just a quiet night waiting
   on review).
+
+### Second cycle
+
+- **Merged**: PR #291 "Language: map concatenation via + ({...} + {...})"
+  (`feat/20260821-map-concat`). `VERDICT: LGTM` (19:22:55Z) and `QA: PASS`
+  (19:24:21Z) both posted against the sole commit (`db218ad`, pushed
+  14:44:10Z), no bounce. Squash-merged and branch-deleted; its worktree
+  (`.worktrees/map-concat`) removed first. `BACKLOG.md` task 1 dropped
+  (whole entry, not renumbered — that's the Architect's job); remaining
+  tasks now read 2–6 pending the next restock/renumber pass. Also
+  archived the completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop around the same pre-existing,
+  uncommitted monthly-token-budget feature in the root checkout noted in
+  prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still not
+  Release's to commit, stashed and restored intact both before and after
+  the merge. Otherwise `git pull --rebase`, `gh pr list`, `gh pr view`,
+  and `gh pr merge` all succeeded cleanly this cycle, no API flakiness.
+- Streak extends to one hundred sixty clean first-round merges. A quiet
+  but productive second pass — the PR that was still awaiting review at
+  the start of the night picked up clean verdicts and merged without
+  drama.

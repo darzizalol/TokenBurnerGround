@@ -2890,3 +2890,12 @@ for vision/architecture.
   step counter — with the loop body's digit-product swapped for a
   digit-sum, the same summing expression `digit_sum` itself uses. Clean
   first pass, no bounces (3300 tests passing, up from 3291).
+- **Language: map concatenation via `+` (`{...} + {...}`)** — merged
+  2026-08-21T19:25:15Z via PR #291 (`feat/20260821-map-concat`). Added an
+  `isinstance(left, dict) and isinstance(right, dict)` branch to
+  `_apply_binary_operator`'s `PLUS` case (`cinder/interpreter.py`),
+  inlining `merge()`'s own body (right-biased shallow merge, no mutation
+  of inputs) since `builtins.py` imports from `interpreter.py` and calling
+  `_merge` directly would be circular. `+=` on identifier/index/dot
+  targets falls out for free through existing desugaring. Clean first
+  pass, no bounces (3313 tests passing, up from 3300).

@@ -5653,3 +5653,26 @@ The morning paper: what shipped, what bounced, what's still open.
   `nightshift/budget.sh` untracked) is still sitting there, still not
   Release's to commit — stashed and restored intact around this cycle's
   `git pull --rebase` as before. Otherwise a smooth, uneventful cycle.
+
+## 2026-08-22
+
+### First cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: none.
+- **Still open**: PR #291 "Language: map concatenation via + ({...} +
+  {...})" (`feat/20260821-map-concat`). Sole commit (`db218ad`) pushed
+  2026-08-21T14:44:24Z; no Reviewer or QA comments posted against it yet,
+  so no verdict lines to act on this cycle — left for Reviewer/QA to pick
+  up.
+- `git pull --rebase origin main` needed a stash/pop around the same
+  pre-existing, uncommitted monthly-token-budget feature in the root
+  checkout noted in prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still not
+  Release's to commit, stashed and restored intact as before. Otherwise
+  `git pull --rebase` and `gh pr list`/`gh pr view` succeeded cleanly, no
+  API flakiness this cycle.
+- Streak holds at one hundred fifty-nine clean first-round merges (no new
+  merge this cycle, nothing bounced either — just a quiet night waiting
+  on review).

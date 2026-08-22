@@ -1143,16 +1143,24 @@ already had for nested `[`, and `_bind_map_destructure`
 (`cinder/interpreter.py`) the matching `isinstance(binding, tuple)`
 recursive-bind branch `_bind_list_destructure` already had, with
 map-in-list and list-in-map nesting left explicitly out of scope on both
-sides — has since landed via PR #293 too.
+sides — has since landed via PR #293 too, and `is_lucas_number` — the
+Lucas sequence is Fibonacci's standard companion sequence (same
+recurrence, seeded `2, 1` instead of `0, 1`), the natural sibling of the
+already-implemented `is_fibonacci`, but unlike Fibonacci it has no
+equally clean closed-form membership identity, so it generates and
+compares instead (with two explicit special cases for `1` and `2` since
+the sequence dips from `L(0) = 2` down to `L(1) = 1` before climbing
+monotonically from `L(2) = 3` onward, unlike Fibonacci's own
+non-decreasing-from-the-start shape) — has since landed via PR #294 too.
 What remains plausible, not yet scoped beyond current `BACKLOG.md`
 (numbering here matches `BACKLOG.md` tasks 1-6 — the task that used to
 occupy slot 1 here, `additive_persistence`, has since landed via PR #290
 and is covered in the "have since landed" history immediately above;
 this grooming pass dropped its now-redundant description from this
-section. Tasks 1-6 — `is_lucas_number`, multiple `for` clauses in
-list/map comprehensions, `is_subsequence`, a map pattern nested inside a
-list pattern, `is_hexagonal`, and a list pattern nested inside a map
-pattern — are fully scoped in `BACKLOG.md` itself and are not
+section. Tasks 1-6 — multiple `for` clauses in list/map comprehensions,
+`is_subsequence`, a map pattern nested inside a list pattern,
+`is_hexagonal`, a list pattern nested inside a map pattern, and
+`is_heptagonal` — are fully scoped in `BACKLOG.md` itself and are not
 duplicated here, the same treatment tasks past slot 1 have gotten since
 this section stopped trying to keep prose in lockstep with every backlog
 slot). And only much later, a bytecode VM
@@ -1831,7 +1839,31 @@ technique task 4 uses in the opposite nesting direction, so no
 already-landed nested-map-in-map behavior is at any risk of regressing.
 The plain-assignment form stays out of scope for a different reason than
 task 4's does: map patterns have no plain-assignment destructuring form
-at all today, so there is no call site to extend either way.
+at all today, so there is no call site to extend either way. The next
+grooming pass should continue alternating breadth/depth, restocking
+toward 6-7 tasks whenever a merge drops the count within reach of the
+5-task floor. This pass found the backlog back down to its 5-task floor
+again (`is_lucas_number` having landed cleanly via PR #294 with no
+bounce, dropping the count from 6 to 5, dropping its now-landed
+description from the "what remains plausible" section above into the
+"have since landed" history, and renumbering the remaining five tasks
+from 2-6 down to 1-5, with multiple `for` clauses in list/map
+comprehensions renumbered from 2 to 1, `is_subsequence` from 3 to 2, a
+map pattern nested inside a list pattern from 4 to 3, `is_hexagonal`
+from 5 to 4, and a list pattern nested inside a map pattern from 6 to 5)
+and restocked it to 6 by adding task 6, `is_heptagonal`, continuing
+alternation with a breadth task after task 5's depth work (a list
+pattern nested inside a map pattern) rather than stacking a second depth
+task, per the policy above — the fourth figurate-number membership
+predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing
+membership in the heptagonal numbers (`1, 7, 18, 34, 55, 81, ...`) via
+the same `math.isqrt`-based closed-form technique the rest of the
+cluster already uses, with its own modular-residue check (`root % 10 ==
+7`) analogous to `is_pentagonal`'s `root % 6 == 5` and `is_hexagonal`'s
+`root % 4 == 3` — the quadratic solving `H(k) = k(5k - 3) / 2 = n` for
+`k` leaves a divisibility-by-10 condition, the same kind of residue
+check each figurate number's own quadratic leaves behind, just with a
+different modulus.
 
 ## History
 

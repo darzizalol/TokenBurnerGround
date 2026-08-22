@@ -315,6 +315,8 @@ while (i < 10) {
   (the general closure of `is_perfect_square`/`is_perfect_cube`/`is_powerful_number`, negative input admitted only
   through odd exponents),
   `is_fibonacci` to test Fibonacci-sequence membership via a closed-form perfect-square check,
+  `is_lucas_number` to test membership in Fibonacci's companion Lucas sequence (same recurrence, seeded `2, 1`
+  instead of `0, 1`) via generate-and-compare rather than a closed form,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_sad_number` to test the direct complement of `is_happy_number` (cycles forever instead of reaching `1`),
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
@@ -456,23 +458,20 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: nested map-in-map
-destructuring patterns (`let {a, b: {c, d}} = {...}`) — the deferred
-other half of the nested list-in-list destructuring task, giving map
-patterns the same nesting support list patterns already have, and
-before that `is_pentagonal` — the closed-form figurate-number sibling of
-`is_triangular`, testing membership in the pentagonal numbers
-`1, 5, 12, 22, 35, ...` via the same `math.isqrt` perfect-square
-technique (plus a modular-residue check the simpler triangular test
-doesn't need), and before that map concatenation via `+` (`{...} +
-{...}`) — the map-typed sibling of list concatenation, giving the
-existing `merge()` builtin an infix spelling.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_lucas_number` —
-the Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded
-`2, 1` instead of `0, 1`), tested by generate-and-compare rather than a
-closed form since Lucas numbers lack `is_fibonacci`'s clean
-perfect-square identity, multiple `for` clauses in list/map
-comprehensions (`[x + y for x in xs for y in ys]`) —
+Actively developed, nightly. Recently landed: `is_lucas_number` — the
+Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded `2, 1`
+instead of `0, 1`), tested by generate-and-compare rather than a closed
+form since Lucas numbers lack `is_fibonacci`'s clean perfect-square
+identity, and before that nested map-in-map destructuring patterns
+(`let {a, b: {c, d}} = {...}`) — the deferred other half of the nested
+list-in-list destructuring task, giving map patterns the same nesting
+support list patterns already have, and before that `is_pentagonal` —
+the closed-form figurate-number sibling of `is_triangular`, testing
+membership in the pentagonal numbers `1, 5, 12, 22, 35, ...` via the
+same `math.isqrt` perfect-square technique (plus a modular-residue check
+the simpler triangular test doesn't need).
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): multiple `for` clauses
+in list/map comprehensions (`[x + y for x in xs for y in ys]`) —
 cartesian-product iteration with a clause-chained `for`, matching
 Python's own multi-clause comprehension semantics, `is_subsequence` —
 testing whether one string's characters all appear in another in the
@@ -482,10 +481,14 @@ a map pattern nested inside a list pattern (`let [a, {b, c}] =
 [...]`) — the mirror image of the nested map-in-map task,
 `is_hexagonal` — the third figurate-number membership predicate after
 `is_triangular`/`is_pentagonal`, testing membership in the hexagonal
-numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique, and
-a list pattern nested inside a map pattern (`let {a, b: [c, d]} =
+numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique, a
+list pattern nested inside a map pattern (`let {a, b: [c, d]} =
 {...}`) — the mirror image of the map-in-list task, closing the last
-remaining corner of the destructuring-nesting matrix.
+remaining corner of the destructuring-nesting matrix, and
+`is_heptagonal` — the fourth figurate-number membership predicate after
+`is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership in
+the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same closed-form
+technique.
 The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

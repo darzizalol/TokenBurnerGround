@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
+## 1. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
 
 Build: the depth task after task 5's breadth work (`is_lucas_number`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -221,7 +221,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
+## 2. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
 
 Build: the breadth task after task 5's depth work (multiple `for` clauses
 in list/map comprehensions) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -318,7 +318,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
+## 3. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
 
 Build: the depth task after task 5's breadth work (`is_subsequence`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -466,7 +466,7 @@ this task.
 
 ---
 
-## 5. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
+## 4. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
 
 Build: the breadth task after task 5's depth work (a map pattern nested
 inside a list pattern) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -552,7 +552,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
+## 5. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
 
 Build: the depth task after task 5's breadth work (`is_hexagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -674,6 +674,94 @@ merged, `README.md`'s destructuring bullet, its "Status & roadmap"
 section, and `PROJECT.md`'s roadmap paragraph all need updating to note
 this landed — leave all three to the Architect's next grooming pass, not
 this task.
+
+---
+
+## 6. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
+
+Build: the breadth task after task 5's depth work (a list pattern nested
+inside a map pattern) per `PROJECT.md`'s breadth-vs-depth policy,
+restocking the backlog back to 6 tasks now that `is_lucas_number` has
+landed via PR #294, dropping the count to the 5-task floor.
+`is_triangular`/`is_pentagonal`/`is_hexagonal` (`cinder/builtins.py`,
+`is_hexagonal` queued as task 4 above) test membership in three of the
+figurate-number sequences, each via a closed-form `math.isqrt`-based
+identity; the heptagonal numbers (`1, 7, 18, 34, 55, 81, 112, ...`,
+`H(k) = k(5k - 3) / 2`) are the natural fourth member of that cluster
+and nothing in Cinder tests membership in them today. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_heptagonal(18));'
+# -> CinderRuntimeError: undefined name 'is_heptagonal'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_hexagonal`
+(search `def _is_hexagonal`, immediately before `_is_prime` — task 4
+above lands `_is_hexagonal` in exactly that spot):
+```python
+def _is_heptagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_heptagonal", arguments, 1, line, column)
+    value = _require_int("is_heptagonal", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 40 * value + 9
+    root = math.isqrt(candidate)
+    return root * root == candidate and root % 10 == 7
+```
+This mirrors `_is_triangular`/`_is_pentagonal`/`_is_hexagonal`'s exact
+shape: solving `H(k) = k(5k - 3) / 2 = n` for `k` via the quadratic
+formula gives `k = (3 + sqrt(40n + 9)) / 10`, so `n` is heptagonal iff
+`40n + 9` is a perfect square whose exact integer root additionally
+satisfies `root % 10 == 7` (the condition that makes `(3 + root)`
+divisible by 10, so `k` comes out an integer) — the same "closed-form
+perfect-square identity plus one modular-residue check" technique
+`is_pentagonal`'s `root % 6 == 5` and `is_hexagonal`'s `root % 4 == 3`
+already use, each figurate number's own quadratic leaving a different
+modulus/residue pair. `math.isqrt` gives an exact integer root with no
+floating-point rounding risk, same as every sibling in the cluster. `0`
+and all negative inputs return `False` up front, matching
+`is_triangular`/`is_pentagonal`/`is_hexagonal`'s own "closed domain, no
+exception, just `false`" convention — `is_heptagonal`'s modular check
+already excludes `0` on its own (`40*0+9=9`, `root=3`, `3 % 10 == 3 !=
+7`), consistent with the standard heptagonal-number sequence starting at
+`k=1`. Also register the new dict entry (search `"is_hexagonal":
+_is_hexagonal,`, add `"is_heptagonal": _is_heptagonal,` directly after
+it).
+
+Acceptance criteria:
+- `is_heptagonal(0);` is `false` — `0` is not a heptagonal number under
+  the standard `k >= 1` convention.
+- `is_heptagonal(1);` is `true` (`H(1)`), `is_heptagonal(7);` is `true`
+  (`H(2)`), `is_heptagonal(18);` is `true` (`H(3)`), `is_heptagonal(34);`
+  is `true` (`H(4)`), `is_heptagonal(55);` is `true` (`H(5)`),
+  `is_heptagonal(81);` is `true` (`H(6)`), `is_heptagonal(112);` is
+  `true` (`H(7)`).
+- `is_heptagonal(2);` is `false`, `is_heptagonal(6);` is `false`,
+  `is_heptagonal(17);` is `false`, `is_heptagonal(100);` is `false` —
+  none of these are heptagonal numbers.
+- `is_heptagonal(235);` is `true` — a larger heptagonal number
+  (`H(10)`), confirming the check holds beyond small brute-forced cases.
+- `is_heptagonal(-18);` is `false` — negative input, matching
+  `is_triangular`/`is_pentagonal`/`is_hexagonal`'s own "not a valid
+  domain, answer false rather than raise" convention.
+- `is_heptagonal(18.0);` raises `CinderRuntimeError` matching
+  `"is_heptagonal() requires an int, got float"`.
+- `is_heptagonal(true);` raises `CinderRuntimeError` matching
+  `"is_heptagonal() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_hexagonal`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestIsHexagonal`, search that
+name — falls back to `class TestIsPentagonal` if task 4 above hasn't
+landed yet in whatever order tasks are claimed). Once merged,
+`README.md`'s Builtins bullet needs `is_heptagonal` added near
+`is_triangular`/`is_pentagonal`/`is_hexagonal`, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s roadmap paragraph needs this
+moved from backlog to landed — leave all three to the Architect's next
+grooming pass, not this task.
 
 ---
 

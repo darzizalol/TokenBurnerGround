@@ -2961,3 +2961,16 @@ for vision/architecture.
   remaining for character in string1)`, so ordering falls out for free and
   empty-string cases need no special-casing. Clean first pass, no bounces
   (3371 tests passing, up from 3359).
+- **Language: a map pattern nested inside a list pattern** — merged
+  2026-08-22T14:44:43Z via PR #297 (`feat/20260822-nested-map-in-list`).
+  Added a nested-`{` branch to `_destructure_list_pattern_entry`
+  (`cinder/parser.py`), mirroring its existing nested-`[` branch but
+  tagging the pattern as a 3-tuple `(nested_names, nested_rest, True)` to
+  disambiguate from the 2-tuple list-pattern shape; taught
+  `_bind_list_destructure` (`cinder/interpreter.py`) to recognize the
+  tagged shape at both of its `isinstance(name, tuple):` call sites.
+  Works across all four pattern call sites (`let`, `for`, function params,
+  both comprehension forms); the plain-assignment form and the
+  mirror-direction gap (list nested inside a map pattern) remain
+  out of scope, unaffected. Clean first pass, no bounces (3383 tests
+  passing, up from 3371).

@@ -5837,3 +5837,30 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred sixty-five clean first-round merges.
   Seventh clean pass in a row tonight — zero bounces across the whole
   night so far.
+
+### Eighth cycle
+
+- **Merged**: PR #297 "Language: a map pattern nested inside a list
+  pattern" (`feat/20260822-nested-map-in-list`). `VERDICT: LGTM` and
+  `QA: PASS` both posted (14:41:45Z, 14:43:37Z) against the sole commit
+  (`284981fc`, pushed 14:39:51Z), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/nested-map-in-list`) removed
+  first. `BACKLOG.md` task 1 dropped (whole entry, not renumbered —
+  that's the Architect's job); remaining tasks now read 2–6 pending the
+  next restock/renumber pass. Also archived the completed task to
+  `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop around the same pre-existing,
+  uncommitted monthly-token-budget feature in the root checkout noted in
+  prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still not
+  Release's to commit, stashed and restored intact. Otherwise
+  `git pull --rebase`, `gh pr list`, and `gh pr merge` all succeeded
+  cleanly this cycle; `gh pr view --comments` hit the known GraphQL
+  "Projects classic" bug again, worked around with `--json` +
+  `gh api .../issues/297/comments`, no retries needed.
+- Streak extends to one hundred sixty-six clean first-round merges.
+  Eighth clean pass in a row tonight — zero bounces across the whole
+  night so far.

@@ -420,6 +420,22 @@ class Parser:
                     token.column,
                 )
             return pattern, None
+        if self._check(TokenType.LBRACE):
+            nested_names, nested_rest = self._destructure_map_pattern()
+            pattern = (nested_names, nested_rest, True)
+            if self._check(TokenType.EQ):
+                self._advance()
+                default = self._ternary()
+                return pattern, default
+            if seen_default:
+                token = self._peek()
+                raise ParseError(
+                    "element without a default value follows an element with one "
+                    "in destructuring pattern",
+                    token.line,
+                    token.column,
+                )
+            return pattern, None
         name_token = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern")
         if self._check(TokenType.EQ):
             self._advance()

@@ -431,7 +431,12 @@ class Interpreter:
                 )
             for index, (name, default) in enumerate(names):
                 item = value[index] if index < len(value) else self.evaluate(default, env)
-                if isinstance(name, tuple):
+                if isinstance(name, tuple) and len(name) == 3:
+                    nested_names, nested_rest, _ = name
+                    self._bind_map_destructure(
+                        env, nested_names, nested_rest, item, line, column, use_assign
+                    )
+                elif isinstance(name, tuple):
                     nested_names, nested_rest = name
                     self._bind_list_destructure(
                         env, nested_names, nested_rest, item, line, column, use_assign
@@ -457,7 +462,12 @@ class Interpreter:
             )
         for index, (name, default) in enumerate(names):
             item = value[index] if index < len(value) else self.evaluate(default, env)
-            if isinstance(name, tuple):
+            if isinstance(name, tuple) and len(name) == 3:
+                nested_names, nested_rest, _ = name
+                self._bind_map_destructure(
+                    env, nested_names, nested_rest, item, line, column, use_assign
+                )
+            elif isinstance(name, tuple):
                 nested_names, nested_rest = name
                 self._bind_list_destructure(
                     env, nested_names, nested_rest, item, line, column, use_assign

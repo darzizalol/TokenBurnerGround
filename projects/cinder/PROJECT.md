@@ -149,13 +149,13 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): multiple `for`
-clauses in list/map comprehensions (#295), `is_subsequence` (#296), a
-map pattern nested inside a list pattern (#297), `is_hexagonal` (#298),
-and a list pattern nested inside a map pattern (#299). `BACKLOG.md`
-carries the active queue: `is_heptagonal`, a step component for range
+Recently landed (see `CHANGELOG.md` for the full list): a map pattern
+nested inside a list pattern (#297), `is_hexagonal` (#298), a list
+pattern nested inside a map pattern (#299), and `is_heptagonal` (#300).
+`BACKLOG.md` carries the active queue: a step component for range
 expressions, `collatz_max`, a `match` expression with literal patterns
-and a `_` wildcard, `nth_prime`, and `nth_fibonacci`.
+and a `_` wildcard, `nth_prime`, `nth_fibonacci`, and bare comma
+multi-target assignment (`a, b = 1, 2;`).
 
 With PR #299 landing, destructuring patterns now support arbitrary
 composition of list- and map-shaped nesting in any order — every corner
@@ -166,7 +166,12 @@ scoped small (literal patterns and a wildcard only, no bindings or
 guards yet); richer patterns (bound identifiers, nested/destructuring
 patterns, multi-value arms, guards) are natural follow-ups once it
 lands, for the Architect to sequence in future grooming passes rather
-than commit to now.
+than commit to now. The queued multi-target-assignment task is a second,
+independent depth thread — sugar over existing bracketed
+list-destructuring assignment, not part of the pattern-matching arc —
+picked because the gap it closes is a real correctness hole (today's
+parser silently misinterprets `a, b = 1, 2;` as unrelated statements
+rather than raising or working).
 
 ## History
 

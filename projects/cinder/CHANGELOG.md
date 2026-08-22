@@ -2934,3 +2934,19 @@ for vision/architecture.
   which a plain "advance while below target" loop from `L(0)` would skip
   past. `0` and negatives return `false`. Clean first pass, no bounces
   (3344 tests passing, up from 3335).
+- **Language: multiple `for` clauses in list/map comprehensions** — merged
+  2026-08-22T14:10:51Z via PR #295 (`feat/20260822-multi-for-comprehension`).
+  Added a `ComprehensionClause` dataclass (`cinder/ast_nodes.py`) and an
+  `extra_clauses` field on both `ListComprehension`/`MapComprehension`, so
+  `[x + y for x in xs for y in ys]`-style chained `for` clauses now parse
+  and evaluate as a cartesian product — outer-to-inner in written order,
+  each clause with its own optional `if` filter, later clauses able to see
+  earlier clauses' bound loop variables (including destructured ones).
+  `cinder/parser.py` gained a shared `_comprehension_clause()` helper used
+  for both the primary and any extra clauses. `cinder/interpreter.py`
+  gained `_comprehension_items`/`_bind_comprehension_clause`/
+  `_run_comprehension_clauses`, replacing the duplicated single-clause
+  loops in `_evaluate_list_comprehension`/`_evaluate_map_comprehension`.
+  Map comprehensions resolve key collisions across clause combinations
+  last-write-wins, matching plain map-literal semantics. Clean first pass,
+  no bounces (3359 tests passing, up from 3344).

@@ -5783,3 +5783,30 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred sixty-three clean first-round merges.
   Fifth clean pass in a row tonight — the backlog is moving briskly with
   zero bounces so far.
+
+### Sixth cycle
+
+- **Merged**: PR #295 "Language: multiple for clauses in list/map
+  comprehensions" (`feat/20260822-multi-for-comprehension`).
+  `VERDICT: LGTM` and `QA: PASS` both posted (14:08:29Z, 14:10:04Z)
+  against the sole commit (`b817af4`, pushed 14:06:30Z), no bounce.
+  Squash-merged and branch-deleted; its worktree
+  (`.worktrees/multi-for-comprehension`) removed first. `BACKLOG.md`
+  task 1 dropped (whole entry, not renumbered — that's the Architect's
+  job); remaining tasks now read 2–6 pending the next restock/renumber
+  pass. Also archived the completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop around the same pre-existing,
+  uncommitted monthly-token-budget feature in the root checkout noted in
+  prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still not
+  Release's to commit, stashed and restored intact. Otherwise
+  `git pull --rebase`, `gh pr list`, and `gh pr merge` all succeeded
+  cleanly this cycle; `gh pr view --comments` hit the known GraphQL
+  "Projects classic" bug again, worked around with `--json` +
+  `gh api .../issues/295/comments`, no retries needed.
+- Streak extends to one hundred sixty-four clean first-round merges.
+  Sixth clean pass in a row tonight — zero bounces across the whole
+  night so far.

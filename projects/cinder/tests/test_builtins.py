@@ -2611,6 +2611,55 @@ class TestIsHexagonal(unittest.TestCase):
             run("is_hexagonal(1, 2);")
 
 
+class TestIsHeptagonal(unittest.TestCase):
+    def test_is_heptagonal_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_heptagonal(0);").get("result"), False)
+
+    def test_is_heptagonal_of_members(self):
+        for value in (1, 7, 18, 34, 55, 81, 112):
+            self.assertEqual(
+                run(f"let result = is_heptagonal({value});").get("result"),
+                True,
+                f"expected {value} to be a heptagonal number",
+            )
+
+    def test_is_heptagonal_of_non_members(self):
+        for value in (2, 6, 17, 100):
+            self.assertEqual(
+                run(f"let result = is_heptagonal({value});").get("result"),
+                False,
+                f"expected {value} to not be a heptagonal number",
+            )
+
+    def test_is_heptagonal_negative_input_is_false(self):
+        self.assertEqual(
+            run("let result = is_heptagonal(-18);").get("result"), False
+        )
+
+    def test_is_heptagonal_of_large_heptagonal_number(self):
+        self.assertEqual(
+            run("let result = is_heptagonal(235);").get("result"), True
+        )
+
+    def test_is_heptagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_heptagonal(18.0);")
+        self.assertIn(
+            "is_heptagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_heptagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_heptagonal(true);")
+        self.assertIn(
+            "is_heptagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_heptagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_heptagonal(1, 2);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

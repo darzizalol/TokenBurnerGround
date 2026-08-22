@@ -2974,3 +2974,27 @@ for vision/architecture.
   mirror-direction gap (list nested inside a map pattern) remain
   out of scope, unaffected. Clean first pass, no bounces (3383 tests
   passing, up from 3371).
+- **Standard library: `is_hexagonal`** — merged 2026-08-22T15:02:22Z via
+  PR #298 (`feat/20260822-is-hexagonal`). Added the third figurate-number
+  membership predicate after `is_triangular`/`is_pentagonal`
+  (`cinder/builtins.py`), using the same closed-form `math.isqrt`
+  identity: `n` is hexagonal iff `8n + 1` is a perfect square whose root
+  satisfies `root % 4 == 3`. `0` and negative inputs return `false`
+  rather than raising, matching its siblings' convention. Clean first
+  pass, no bounces (3391 tests passing, up from 3383).
+- **Language: a list pattern nested inside a map pattern** — merged
+  2026-08-22T19:24:09Z via PR #299 (`feat/20260822-list-in-map`). Added
+  a nested-`[` branch to `_destructure_map_pattern_entry`
+  (`cinder/parser.py`), mirroring its existing nested-`{` branch but
+  tagging the pattern as a 3-tuple `(nested_names, nested_rest, True)`,
+  the same length-tagging convention PR #297 used for the opposite
+  nesting direction; taught `_bind_map_destructure`
+  (`cinder/interpreter.py`) to recognize the tagged shape and route to
+  `_bind_list_destructure`. Works across all four pattern call sites
+  (`let`, `for`, function params, both comprehension forms); also
+  guarded the plain-assignment map-destructure path so `{a, b: [c]} =
+  ...;` keeps raising rather than silently gaining a reading nothing
+  implements. With this landing, every corner of the list/map nesting
+  matrix (list-in-list, map-in-map, map-in-list, list-in-map) is
+  covered. Clean first pass, no bounces (3401 tests passing, up from
+  3391).

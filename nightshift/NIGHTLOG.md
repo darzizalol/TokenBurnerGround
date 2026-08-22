@@ -5864,3 +5864,63 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred sixty-six clean first-round merges.
   Eighth clean pass in a row tonight — zero bounces across the whole
   night so far.
+
+### Ninth cycle
+
+- **Merged**: PR #298 "Standard library: is_hexagonal — third
+  figurate-number membership predicate" (`feat/20260822-is-hexagonal`).
+  `VERDICT: LGTM` and `QA: PASS` both posted (14:59:12Z, 15:01:24Z)
+  against the sole commit (`2792a3ca`, pushed 14:57:08Z), no bounce.
+  Squash-merged and branch-deleted; its worktree (`.worktrees/is-hexagonal`)
+  removed first. `BACKLOG.md` task 1 dropped (whole entry, not
+  renumbered — that's the Architect's job); remaining tasks now read
+  2–6 pending the next restock/renumber pass. Also archived the
+  completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop (twice — once before checking
+  PRs, once again after the merge to pick up the merge commit) around
+  the same pre-existing, uncommitted monthly-token-budget feature in
+  the root checkout noted in prior cycles (`CLAUDE.md`/
+  `nightshift/.gitignore`/`nightshift/run-night.sh`/
+  `nightshift/token-ledger.py` modified, `nightshift/budget.conf`/
+  `nightshift/budget.sh` untracked) — still not Release's to commit,
+  stashed and restored intact both times. Otherwise `git pull --rebase`,
+  `gh pr list`, and `gh pr merge` all succeeded cleanly this cycle;
+  `gh pr view --comments` hit the known GraphQL "Projects classic" bug
+  again, worked around with `--json`, no retries needed.
+- Streak extends to one hundred sixty-seven clean first-round merges.
+  Ninth clean pass in a row tonight — zero bounces across the whole
+  night so far.
+
+## 2026-08-23
+
+### First cycle
+
+- **Merged**: PR #299 "Language: a list pattern nested inside a map
+  pattern" (`feat/20260822-list-in-map`). `VERDICT: LGTM` (19:20:33Z)
+  and `QA: PASS` (19:23:04Z) both posted against the sole commit
+  (`c358def`, pushed 19:18:17Z), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/list-in-map`) removed
+  first. `BACKLOG.md` task 1 dropped (whole entry, not renumbered —
+  that's the Architect's job); remaining tasks pending the next
+  restock/renumber pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop around the same pre-existing,
+  uncommitted monthly-token-budget feature in the root checkout noted
+  in prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still
+  not Release's to commit, stashed and restored intact. This cycle
+  also picked up and finally committed the prior cycle's NIGHTLOG/
+  CHANGELOG entries for PR #298 (`is_hexagonal`), which had been
+  sitting uncommitted in the working tree since the Ninth cycle above
+  — likely a session that ran out of budget before its final commit
+  step. Otherwise `git pull --rebase`, `gh pr list`, and `gh pr merge`
+  all succeeded cleanly; `gh pr view --comments` hit the known GraphQL
+  "Projects classic" bug again, worked around with `--json` + `gh api
+  .../issues/299/comments`, no retries needed.
+- Streak extends to one hundred sixty-eight clean first-round merges.
+  Tenth clean pass in a row across recorded cycles — zero bounces
+  since the streak began.

@@ -6384,8 +6384,30 @@ class TestRange(unittest.TestCase):
             run("range();")
 
     def test_range_too_many_arguments_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) expects 1 to 3 argument\(s\), got 4"
+        ):
+            run("range(1, 2, 3, 4);")
+
+    def test_range_three_arguments(self):
+        self.assertEqual(
+            run("let result = range(0, 10, 2);").get("result"), [0, 2, 4, 6, 8]
+        )
+
+    def test_range_three_arguments_negative_step_counts_down(self):
+        self.assertEqual(
+            run("let result = range(10, 0, -2);").get("result"), [10, 8, 6, 4, 2]
+        )
+
+    def test_range_step_zero_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) step must not be zero"
+        ):
+            run("range(1, 10, 0);")
+
+    def test_range_non_int_step_raises(self):
         with self.assertRaises(CinderRuntimeError):
-            run("range(1, 2, 3);")
+            run("range(1, 10, 1.5);")
 
     def test_for_in_range_prints_each_value(self):
         stdout = io.StringIO()

@@ -272,6 +272,7 @@ class RangeExpr:
     line: int
     column: int
     inclusive: bool = False
+    step: "Expr | None" = None
 
 
 @dataclass(frozen=True)

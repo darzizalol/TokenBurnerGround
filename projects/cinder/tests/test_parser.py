@@ -55,6 +55,20 @@ from cinder.parser import parse_expression, parse_program
 from cinder.tokens import TokenType
 
 
+def shape_extra_clauses(extra_clauses):
+    """Structural view of a comprehension's `extra_clauses`, ignoring line/column noise."""
+    if extra_clauses is None:
+        return None
+    return [
+        (
+            clause.var_name,
+            shape(clause.iterable),
+            shape(clause.condition) if clause.condition is not None else None,
+        )
+        for clause in extra_clauses
+    ]
+
+
 def shape(node):
     """Structural view of an AST node, ignoring line/column noise."""
     if isinstance(node, Literal):
@@ -92,6 +106,7 @@ def shape(node):
             node.var_name,
             shape(node.iterable),
             shape(node.condition) if node.condition is not None else None,
+            shape_extra_clauses(node.extra_clauses),
         )
     if isinstance(node, MapLiteral):
         return (
@@ -111,6 +126,7 @@ def shape(node):
             node.var_name,
             shape(node.iterable),
             shape(node.condition) if node.condition is not None else None,
+            shape_extra_clauses(node.extra_clauses),
         )
     if isinstance(node, Index):
         return ("Index", shape(node.obj), shape(node.index))
@@ -1074,6 +1090,7 @@ class TestListsAndMaps(unittest.TestCase):
                 "x",
                 ("Identifier", "xs"),
                 None,
+                None,
             ),
         )
 
@@ -1086,6 +1103,7 @@ class TestListsAndMaps(unittest.TestCase):
                 "x",
                 ("Identifier", "xs"),
                 ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+                None,
             ),
         )
 
@@ -1162,6 +1180,45 @@ class TestListsAndMaps(unittest.TestCase):
     def test_list_comprehension_list_destructure_is_map_false(self):
         node = parse("[k for [k, v] in items(m)]")
         self.assertFalse(node.is_map)
+
+    def test_list_comprehension_two_for_clauses(self):
+        self.assertEqual(
+            shape(parse("[x + y for x in xs for y in ys]")),
+            (
+                "ListComprehension",
+                ("Binary", ("Identifier", "x"), TokenType.PLUS, ("Identifier", "y")),
+                "x",
+                ("Identifier", "xs"),
+                None,
+                [("y", ("Identifier", "ys"), None)],
+            ),
+        )
+
+    def test_list_comprehension_two_for_clauses_with_filters(self):
+        node = parse("[x + y for x in xs if x > 0 for y in ys if y > 1]")
+        self.assertEqual(
+            shape(node.condition),
+            ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+        )
+        self.assertEqual(len(node.extra_clauses), 1)
+        extra = node.extra_clauses[0]
+        self.assertEqual(extra.var_name, "y")
+        self.assertEqual(
+            shape(extra.condition),
+            ("Binary", ("Identifier", "y"), TokenType.GT, ("Literal", 1)),
+        )
+
+    def test_list_comprehension_three_for_clauses(self):
+        node = parse("[x + y + z for x in xs for y in ys for z in zs]")
+        self.assertEqual(len(node.extra_clauses), 2)
+        self.assertEqual(node.extra_clauses[0].var_name, "y")
+        self.assertEqual(node.extra_clauses[1].var_name, "z")
+
+    def test_list_comprehension_extra_clause_destructure_pattern(self):
+        node = parse("[a + b for [a] in xs for b in ys]")
+        self.assertEqual(node.names, [("a", None)])
+        self.assertEqual(len(node.extra_clauses), 1)
+        self.assertEqual(node.extra_clauses[0].var_name, "b")
 
     def test_plain_list_literal_still_parses_after_comprehension_added(self):
         self.assertEqual(
@@ -1244,6 +1301,7 @@ class TestListsAndMaps(unittest.TestCase):
                 "x",
                 ("Identifier", "xs"),
                 None,
+                None,
             ),
         )
 
@@ -1257,6 +1315,7 @@ class TestListsAndMaps(unittest.TestCase):
                 "x",
                 ("Identifier", "xs"),
                 ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+                None,
             ),
         )
 
@@ -1318,6 +1377,34 @@ class TestListsAndMaps(unittest.TestCase):
     def test_map_comprehension_destructure_non_identifier_pattern_raises(self):
         with self.assertRaises(ParseError):
             parse("{x: x for [1, b] in xs}")
+
+    def test_map_comprehension_two_for_clauses(self):
+        self.assertEqual(
+            shape(parse("{x: y for x in xs for y in ys}")),
+            (
+                "MapComprehension",
+                ("Identifier", "x"),
+                ("Identifier", "y"),
+                "x",
+                ("Identifier", "xs"),
+                None,
+                [("y", ("Identifier", "ys"), None)],
+            ),
+        )
+
+    def test_map_comprehension_two_for_clauses_with_filters(self):
+        node = parse("{x: y for x in xs if x > 0 for y in ys if y > 1}")
+        self.assertEqual(
+            shape(node.condition),
+            ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+        )
+        self.assertEqual(len(node.extra_clauses), 1)
+        extra = node.extra_clauses[0]
+        self.assertEqual(extra.var_name, "y")
+        self.assertEqual(
+            shape(extra.condition),
+            ("Binary", ("Identifier", "y"), TokenType.GT, ("Literal", 1)),
+        )
 
     def test_plain_map_literal_still_parses_after_comprehension_added(self):
         self.assertEqual(

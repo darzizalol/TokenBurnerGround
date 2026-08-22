@@ -3817,6 +3817,42 @@ class TestListComprehension(unittest.TestCase):
             evaluate('[a for {a, b,} in [{"a": 1, "b": 2}]]'), [1]
         )
 
+    def test_two_for_clauses_cartesian_product(self):
+        self.assertEqual(
+            evaluate("[x + y for x in [1, 2] for y in [10, 20]]"),
+            [11, 21, 12, 22],
+        )
+
+    def test_second_clause_filter_uses_own_variable(self):
+        self.assertEqual(
+            evaluate("[[x, y] for x in [1, 2] for y in [1, 2] if x != y]"),
+            [[1, 2], [2, 1]],
+        )
+
+    def test_empty_inner_iterable_gives_empty_result(self):
+        self.assertEqual(evaluate("[x for x in [1, 2] for y in []]"), [])
+
+    def test_three_for_clauses(self):
+        self.assertEqual(
+            evaluate("[x + y + z for x in [1] for y in [10] for z in [100]]"),
+            [111],
+        )
+
+    def test_destructure_pattern_in_non_final_clause(self):
+        self.assertEqual(
+            evaluate("[a + b for [a] in [[1], [2]] for b in [10, 20]]"),
+            [11, 21, 12, 22],
+        )
+
+    def test_condition_on_non_final_clause_filters_before_later_clauses_run(self):
+        self.assertEqual(
+            evaluate("[[x, y] for x in [1, 2, 3] if x > 1 for y in [10, 20]]"),
+            [[2, 10], [2, 20], [3, 10], [3, 20]],
+        )
+
+    def test_single_clause_form_unchanged(self):
+        self.assertEqual(evaluate("[x for x in [1, 2, 3]]"), [1, 2, 3])
+
 
 class TestMapComprehension(unittest.TestCase):
     def test_basic_transform(self):
@@ -3926,6 +3962,17 @@ class TestMapComprehension(unittest.TestCase):
         self.assertEqual(
             evaluate('{x: x for {a: x} in [{"a": 1}, {"a": 2}]}'),
             {1: 1, 2: 2},
+        )
+
+    def test_two_for_clauses_later_combination_overwrites_earlier_on_collision(self):
+        self.assertEqual(
+            evaluate('{x: y for x in ["a", "b"] for y in [1, 2]}'),
+            {"a": 2, "b": 2},
+        )
+
+    def test_single_clause_form_unchanged(self):
+        self.assertEqual(
+            evaluate("{x: x * 2 for x in [1, 2]}"), {1: 2, 2: 4}
         )
 
 

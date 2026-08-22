@@ -114,6 +114,7 @@ from cinder.ast_nodes import (
     BreakStmt,
     Call,
     ChainedComparison,
+    ComprehensionClause,
     ConstStmt,
     ContinueStmt,
     DeclSeq,
@@ -1497,8 +1498,7 @@ class Parser:
         self._consume(TokenType.RBRACKET, "']' after list literal")
         return ListLiteral(elements, bracket.line, bracket.column)
 
-    def _list_comprehension(self, bracket: Token, element: Expr) -> Expr:
-        self._advance()  # consume 'for'
+    def _comprehension_clause(self) -> ComprehensionClause:
         var_name = None
         names = None
         rest = None
@@ -1516,17 +1516,30 @@ class Parser:
         if self._check(TokenType.IF):
             self._advance()
             condition = self._ternary()
+        return ComprehensionClause(
+            var_name, iterable, condition, self._previous().line, self._previous().column,
+            names=names, rest=rest, is_map=is_map,
+        )
+
+    def _list_comprehension(self, bracket: Token, element: Expr) -> Expr:
+        self._advance()  # consume 'for'
+        clause = self._comprehension_clause()
+        extra_clauses = []
+        while self._check(TokenType.FOR):
+            self._advance()  # consume 'for'
+            extra_clauses.append(self._comprehension_clause())
         self._consume(TokenType.RBRACKET, "']' after list comprehension")
         return ListComprehension(
             element,
-            var_name,
-            iterable,
-            condition,
+            clause.var_name,
+            clause.iterable,
+            clause.condition,
             bracket.line,
             bracket.column,
-            names=names,
-            rest=rest,
-            is_map=is_map,
+            names=clause.names,
+            rest=clause.rest,
+            is_map=clause.is_map,
+            extra_clauses=extra_clauses or None,
         )
 
     def _list_element(self) -> Expr:
@@ -1560,35 +1573,24 @@ class Parser:
     def _map_comprehension(self, brace: Token, entry: tuple) -> Expr:
         key, value = entry
         self._advance()  # consume 'for'
-        var_name = None
-        names = None
-        rest = None
-        is_map = False
-        if self._check(TokenType.LBRACKET):
-            names, rest = self._destructure_list_pattern()
-        elif self._check(TokenType.LBRACE):
-            names, rest = self._destructure_map_pattern()
-            is_map = True
-        else:
-            var_name = self._consume(TokenType.IDENTIFIER, "loop variable after 'for'").lexeme
-        self._consume(TokenType.IN, "'in' after loop variable")
-        iterable = self._ternary()
-        condition = None
-        if self._check(TokenType.IF):
-            self._advance()
-            condition = self._ternary()
+        clause = self._comprehension_clause()
+        extra_clauses = []
+        while self._check(TokenType.FOR):
+            self._advance()  # consume 'for'
+            extra_clauses.append(self._comprehension_clause())
         self._consume(TokenType.RBRACE, "'}' after map comprehension")
         return MapComprehension(
             key,
             value,
-            var_name,
-            iterable,
-            condition,
+            clause.var_name,
+            clause.iterable,
+            clause.condition,
             brace.line,
             brace.column,
-            names=names,
-            rest=rest,
-            is_map=is_map,
+            names=clause.names,
+            rest=clause.rest,
+            is_map=clause.is_map,
+            extra_clauses=extra_clauses or None,
         )
 
     def _map_entry(self):

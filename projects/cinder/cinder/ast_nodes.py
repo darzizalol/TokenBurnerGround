@@ -141,6 +141,18 @@ class ListLiteral:
 
 
 @dataclass(frozen=True)
+class ComprehensionClause:
+    var_name: "str | None"
+    iterable: "Expr"
+    condition: "Expr | None"
+    line: int
+    column: int
+    names: "list | None" = None
+    rest: "str | None" = None
+    is_map: bool = False
+
+
+@dataclass(frozen=True)
 class ListComprehension:
     element: "Expr"
     var_name: "str | None"
@@ -151,6 +163,7 @@ class ListComprehension:
     names: "list | None" = None
     rest: "str | None" = None
     is_map: bool = False
+    extra_clauses: "list[ComprehensionClause] | None" = None
 
 
 @dataclass(frozen=True)
@@ -172,6 +185,7 @@ class MapComprehension:
     names: "list | None" = None
     rest: "str | None" = None
     is_map: bool = False
+    extra_clauses: "list[ComprehensionClause] | None" = None
 
 
 @dataclass(frozen=True)

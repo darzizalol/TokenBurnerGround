@@ -51,6 +51,7 @@ from cinder.ast_nodes import (
     BreakStmt,
     Call,
     ChainedComparison,
+    ComprehensionClause,
     ConstStmt,
     ContinueStmt,
     DeclSeq,
@@ -663,34 +664,52 @@ class Interpreter:
                 result.append(self.evaluate(element, env))
         return result
 
+    def _comprehension_items(self, clause, env: Environment) -> list:
+        iterable = self.evaluate(clause.iterable, env)
+        if isinstance(iterable, dict):
+            return list(iterable.keys())
+        if isinstance(iterable, (list, str)):
+            return list(iterable)
+        raise CinderRuntimeError(
+            f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
+            clause.line,
+            clause.column,
+        )
+
+    def _bind_comprehension_clause(self, clause, item: object, env: Environment) -> None:
+        if clause.is_map:
+            self._bind_map_destructure(env, clause.names, clause.rest, item, clause.line, clause.column)
+        elif clause.names is not None:
+            self._bind_list_destructure(env, clause.names, clause.rest, item, clause.line, clause.column)
+        else:
+            env.define(clause.var_name, item)
+
+    def _run_comprehension_clauses(self, clauses: list, index: int, env: Environment, on_match) -> None:
+        clause = clauses[index]
+        for item in self._comprehension_items(clause, env):
+            iter_env = Environment(env)
+            self._bind_comprehension_clause(clause, item, iter_env)
+            if clause.condition is not None and not is_truthy(
+                self.evaluate(clause.condition, iter_env)
+            ):
+                continue
+            if index + 1 == len(clauses):
+                on_match(iter_env)
+            else:
+                self._run_comprehension_clauses(clauses, index + 1, iter_env, on_match)
+
     def _evaluate_list_comprehension(
         self, expr: ListComprehension, env: Environment
     ) -> list:
-        iterable = self.evaluate(expr.iterable, env)
-        if isinstance(iterable, dict):
-            items = list(iterable.keys())
-        elif isinstance(iterable, (list, str)):
-            items = list(iterable)
-        else:
-            raise CinderRuntimeError(
-                f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
-                expr.line,
-                expr.column,
-            )
+        primary = ComprehensionClause(
+            expr.var_name, expr.iterable, expr.condition, expr.line, expr.column,
+            names=expr.names, rest=expr.rest, is_map=expr.is_map,
+        )
+        clauses = [primary, *(expr.extra_clauses or [])]
         result: list = []
-        for item in items:
-            iter_env = Environment(env)
-            if expr.is_map:
-                self._bind_map_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
-            elif expr.names is not None:
-                self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
-            else:
-                iter_env.define(expr.var_name, item)
-            if expr.condition is not None and not is_truthy(
-                self.evaluate(expr.condition, iter_env)
-            ):
-                continue
-            result.append(self.evaluate(expr.element, iter_env))
+        self._run_comprehension_clauses(
+            clauses, 0, env, lambda iter_env: result.append(self.evaluate(expr.element, iter_env))
+        )
         return result
 
     def _evaluate_map_literal(self, expr: MapLiteral, env: Environment) -> object:
@@ -720,30 +739,14 @@ class Interpreter:
     def _evaluate_map_comprehension(
         self, expr: MapComprehension, env: Environment
     ) -> dict:
-        iterable = self.evaluate(expr.iterable, env)
-        if isinstance(iterable, dict):
-            items = list(iterable.keys())
-        elif isinstance(iterable, (list, str)):
-            items = list(iterable)
-        else:
-            raise CinderRuntimeError(
-                f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
-                expr.line,
-                expr.column,
-            )
+        primary = ComprehensionClause(
+            expr.var_name, expr.iterable, expr.condition, expr.line, expr.column,
+            names=expr.names, rest=expr.rest, is_map=expr.is_map,
+        )
+        clauses = [primary, *(expr.extra_clauses or [])]
         result: dict = {}
-        for item in items:
-            iter_env = Environment(env)
-            if expr.is_map:
-                self._bind_map_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
-            elif expr.names is not None:
-                self._bind_list_destructure(iter_env, expr.names, expr.rest, item, expr.line, expr.column)
-            else:
-                iter_env.define(expr.var_name, item)
-            if expr.condition is not None and not is_truthy(
-                self.evaluate(expr.condition, iter_env)
-            ):
-                continue
+
+        def on_match(iter_env: Environment) -> None:
             key = self.evaluate(expr.key, iter_env)
             if not _is_valid_key(key):
                 raise CinderRuntimeError(
@@ -752,6 +755,8 @@ class Interpreter:
                     expr.column,
                 )
             result[key] = self.evaluate(expr.value, iter_env)
+
+        self._run_comprehension_clauses(clauses, 0, env, on_match)
         return result
 
     def _evaluate_interp_string(self, expr: InterpString, env: Environment) -> object:

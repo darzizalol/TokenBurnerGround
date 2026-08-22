@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
+## 1. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`) [claimed 2026-08-22T14:37:40Z]
 
 Build: the depth task after task 5's breadth work (`is_subsequence`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

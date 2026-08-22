@@ -8106,6 +8106,71 @@ class TestIsRotation(unittest.TestCase):
             run('is_rotation("a", "b", "c");')
 
 
+class TestIsSubsequence(unittest.TestCase):
+    def test_is_subsequence_canonical_true(self):
+        self.assertIs(
+            run('let result = is_subsequence("ace", "abcde");').get("result"), True
+        )
+
+    def test_is_subsequence_wrong_order_false(self):
+        self.assertIs(
+            run('let result = is_subsequence("aec", "abcde");').get("result"), False
+        )
+
+    def test_is_subsequence_empty_first_argument_true(self):
+        self.assertIs(
+            run('let result = is_subsequence("", "abcde");').get("result"), True
+        )
+
+    def test_is_subsequence_empty_second_argument_false(self):
+        self.assertIs(
+            run('let result = is_subsequence("abcde", "");').get("result"), False
+        )
+
+    def test_is_subsequence_both_empty_true(self):
+        self.assertIs(run('let result = is_subsequence("", "");').get("result"), True)
+
+    def test_is_subsequence_identical_strings_true(self):
+        self.assertIs(
+            run('let result = is_subsequence("abcde", "abcde");').get("result"), True
+        )
+
+    def test_is_subsequence_not_enough_repeated_characters_false(self):
+        self.assertIs(
+            run('let result = is_subsequence("aa", "a");').get("result"), False
+        )
+
+    def test_is_subsequence_repeated_characters_non_contiguous_true(self):
+        self.assertIs(
+            run('let result = is_subsequence("aa", "aba");').get("result"), True
+        )
+
+    def test_is_subsequence_anagram_but_not_subsequence_false(self):
+        self.assertIs(
+            run('let result = is_subsequence("ba", "ab");').get("result"), False
+        )
+
+    def test_is_subsequence_of_non_string_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_subsequence(1, "abc");')
+        self.assertIn("is_subsequence", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_subsequence_of_non_string_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_subsequence("abc", 1);')
+        self.assertIn("is_subsequence", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_subsequence_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('is_subsequence("a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('is_subsequence("a", "b", "c");')
+
+
 class TestIsPermutation(unittest.TestCase):
     def test_is_permutation_reordered_true(self):
         self.assertIs(

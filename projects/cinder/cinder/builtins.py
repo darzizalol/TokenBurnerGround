@@ -663,6 +663,23 @@ def _is_rotation(arguments: list, line: int, column: int) -> object:
     return string2 in (string1 + string1)
 
 
+def _is_subsequence(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_subsequence", arguments, 2, line, column)
+    string1, string2 = arguments
+    if not isinstance(string1, str):
+        raise CinderRuntimeError(
+            f"is_subsequence() requires a string as its first argument, got {type_name(string1)}",
+            line, column,
+        )
+    if not isinstance(string2, str):
+        raise CinderRuntimeError(
+            f"is_subsequence() requires a string as its second argument, got {type_name(string2)}",
+            line, column,
+        )
+    remaining = iter(string2)
+    return all(character in remaining for character in string1)
+
+
 def _is_permutation(arguments: list, line: int, column: int) -> object:
     list1, list2 = _require_two_lists("is_permutation", arguments, line, column)
     if len(list1) != len(list2):
@@ -3958,6 +3975,7 @@ _BUILTINS = {
     "is_palindrome": _is_palindrome,
     "is_anagram": _is_anagram,
     "is_rotation": _is_rotation,
+    "is_subsequence": _is_subsequence,
     "is_permutation": _is_permutation,
     "levenshtein_distance": _levenshtein_distance,
     "hamming_distance": _hamming_distance,

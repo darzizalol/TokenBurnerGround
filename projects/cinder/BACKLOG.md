@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
+## 1. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`) [claimed 2026-08-22T19:13:49Z]
 
 Build: the depth task queued after `is_hexagonal` landed via PR #298
 (the prior top task) per `PROJECT.md`'s breadth-vs-depth policy. Nested

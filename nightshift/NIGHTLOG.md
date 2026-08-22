@@ -5810,3 +5810,30 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred sixty-four clean first-round merges.
   Sixth clean pass in a row tonight — zero bounces across the whole
   night so far.
+
+### Seventh cycle
+
+- **Merged**: PR #296 "Standard library: is_subsequence — ordered-but-
+  not-contiguous membership between two strings"
+  (`feat/20260822-is-subsequence`). `VERDICT: LGTM` and `QA: PASS` both
+  posted (14:25:22Z, 14:26:38Z) against the sole commit (`04faace6`,
+  pushed 14:23:39Z), no bounce. Squash-merged and branch-deleted; its
+  worktree (`.worktrees/is-subsequence`) removed first. `BACKLOG.md`
+  task 1 dropped (whole entry, not renumbered — that's the Architect's
+  job); remaining tasks now read 2–6 pending the next restock/renumber
+  pass. Also archived the completed task to `CHANGELOG.md`.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` needed a stash/pop around the same pre-existing,
+  uncommitted monthly-token-budget feature in the root checkout noted in
+  prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still not
+  Release's to commit, stashed and restored intact. Otherwise
+  `git pull --rebase`, `gh pr list`, and `gh pr merge` all succeeded
+  cleanly this cycle; `gh pr view --comments` hit the known GraphQL
+  "Projects classic" bug again, worked around with `--json` +
+  `gh api .../issues/296/comments`, no retries needed.
+- Streak extends to one hundred sixty-five clean first-round merges.
+  Seventh clean pass in a row tonight — zero bounces across the whole
+  night so far.

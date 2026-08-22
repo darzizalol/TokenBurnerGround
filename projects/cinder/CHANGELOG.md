@@ -2950,3 +2950,14 @@ for vision/architecture.
   Map comprehensions resolve key collisions across clause combinations
   last-write-wins, matching plain map-literal semantics. Clean first pass,
   no bounces (3359 tests passing, up from 3344).
+- **Standard library: `is_subsequence`** — merged 2026-08-22T14:27:32Z via
+  PR #296 (`feat/20260822-is-subsequence`). Added `_is_subsequence` to
+  `cinder/builtins.py`, registered right after `_is_rotation`. The third
+  classic two-string relationship predicate after `is_rotation` (cyclic
+  shift) and `is_anagram` (multiset equality): tests whether one string's
+  characters all appear in another, in the same relative order, without
+  requiring contiguity. Implemented as the standard two-pointer idiom via
+  a single shared `iter()` over the second string and `all(character in
+  remaining for character in string1)`, so ordering falls out for free and
+  empty-string cases need no special-casing. Clean first pass, no bounces
+  (3371 tests passing, up from 3359).

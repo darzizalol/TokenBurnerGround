@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: a step component for range expressions (`start..end..step`, `start..=end..step`)
+## 1. Language: a step component for range expressions (`start..end..step`, `start..=end..step`) [claimed 2026-08-22T19:51:11Z]
 
 Build: the depth task after `is_heptagonal` (PR #300) per `PROJECT.md`'s
 breadth-vs-depth policy. Multiple `for` clauses in

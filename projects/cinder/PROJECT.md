@@ -149,24 +149,24 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `is_lucas_number`
-(#294), multiple `for` clauses in list/map comprehensions (#295),
-`is_subsequence` (#296), a map pattern nested inside a list pattern
-(#297), and `is_hexagonal` (#298). `BACKLOG.md` carries the active
-queue: a list pattern nested inside a map pattern (the last remaining
-corner of the list/map pattern nesting matrix), `is_heptagonal`, a step
-component for range expressions, `collatz_max`, a `match` expression
-with literal patterns and a `_` wildcard, and `nth_prime`.
+Recently landed (see `CHANGELOG.md` for the full list): multiple `for`
+clauses in list/map comprehensions (#295), `is_subsequence` (#296), a
+map pattern nested inside a list pattern (#297), `is_hexagonal` (#298),
+and a list pattern nested inside a map pattern (#299). `BACKLOG.md`
+carries the active queue: `is_heptagonal`, a step component for range
+expressions, `collatz_max`, a `match` expression with literal patterns
+and a `_` wildcard, `nth_prime`, and `nth_fibonacci`.
 
-Once the list-pattern-nested-in-map task lands, destructuring patterns
-will support arbitrary composition of list- and map-shaped nesting in
-any order, closing that arc for good. The `match`-expression task
-already queued opens the next one — pattern matching beyond
-destructuring — deliberately scoped small (literal patterns and a
-wildcard only, no bindings or guards yet); richer patterns (bound
-identifiers, nested/destructuring patterns, multi-value arms, guards)
-are natural follow-ups once it lands, for the Architect to sequence in
-future grooming passes rather than commit to now.
+With PR #299 landing, destructuring patterns now support arbitrary
+composition of list- and map-shaped nesting in any order — every corner
+of that matrix (list-in-list, map-in-map, map-in-list, list-in-map) is
+closed for good. The `match`-expression task already queued opens the
+next depth arc — pattern matching beyond destructuring — deliberately
+scoped small (literal patterns and a wildcard only, no bindings or
+guards yet); richer patterns (bound identifiers, nested/destructuring
+patterns, multi-value arms, guards) are natural follow-ups once it
+lands, for the Architect to sequence in future grooming passes rather
+than commit to now.
 
 ## History
 

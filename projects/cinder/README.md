@@ -67,8 +67,10 @@ while (i < 10) {
   lexical scoping (inner `let` shadows, outer survives); list destructuring
   in `let` (`let [a, b] = expr;`, positional binding that may itself nest
   (`let [a, [b, c]] = [1, [2, 3]];`, to any depth, composing with rest/
-  default/hole elements at any nesting level; map-in-list nesting either
-  direction is not supported and remains a `ParseError`), plus
+  default/hole elements at any nesting level; a map pattern may also
+  nest inside a list pattern, `let [a, {b, c}] = [1, {"b": 2, "c": 3}];`,
+  and vice versa — every corner of the list/map nesting matrix, in any
+  combination, is supported), plus
   a hole element to skip an unwanted position (`let [a, , c] = expr;`,
   scoped to `let`, `for`, function params, and comprehension loop
   variables, not the plain-assignment form), an optional trailing rest
@@ -83,9 +85,9 @@ while (i < 10) {
   map destructuring (`let {a, b} = expr;`, binds each identifier by
   looking it up as a key, extra unnamed keys ignored, that may itself
   nest (`let {a, b: {c, d}} = {"a": 1, "b": {"c": 2, "d": 3}};`, to any
-  depth, composing with rest/rename/default at any nesting level;
-  list-in-map nesting either direction is not supported and remains a
-  `ParseError`), plus the same kind
+  depth, composing with rest/rename/default at any nesting level; a list
+  pattern may also nest inside a map pattern, `let {a, b: [c, d]} =
+  {"a": 1, "b": [2, 3]};`), plus the same kind
   of optional trailing rest element `let {a, ...rest} = expr;` that
   collects every key not already named into a map, empty if none are
   left, an optional per-key rename `let {a: x, b} = expr;` binding
@@ -465,22 +467,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_hexagonal` — the third
-figurate-number membership predicate after `is_triangular`/
-`is_pentagonal`, testing membership in the hexagonal numbers `1, 6, 15,
-28, 45, ...` via the same closed-form technique, and before that a map
-pattern nested inside a list pattern (`let [a, {b, c}] = [...]`) —
-closing one of the last two remaining corners of the
-destructuring-nesting matrix, and before that `is_subsequence` — the
-third member of the two-string predicate cluster alongside
-`is_rotation`/`is_anagram`, testing whether one string's characters all
-appear in another in the same relative order without needing to be
-contiguous. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
-history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a list pattern
-nested inside a map pattern (`let {a, b: [c, d]} = {...}`) — the mirror
-image of the map-in-list task that just landed, closing the last
-remaining corner of the destructuring-nesting matrix, `is_heptagonal` —
-the fourth figurate-number membership predicate after
+Actively developed, nightly. Recently landed: a list pattern nested
+inside a map pattern (`let {a, b: [c, d]} = {...}`) — the mirror image
+of the map-in-list task before it, closing the last remaining corner of
+the destructuring-nesting matrix (list-in-list, map-in-map, map-in-list,
+and now list-in-map are all supported, in any combination), and before
+that `is_hexagonal` — the third figurate-number membership predicate
+after `is_triangular`/`is_pentagonal`, testing membership in the
+hexagonal numbers `1, 6, 15, 28, 45, ...` via the same closed-form
+technique. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
+history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_heptagonal`
+— the fourth figurate-number membership predicate after
 `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership in
 the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same closed-form
 technique, a step component for range expressions (`start..end..step`,
@@ -493,9 +490,11 @@ sibling of `collatz_length`'s step count, a `match` expression with
 literal patterns and a `_` wildcard (`match (n) { 1 => "one", _ =>
 "other" }`) — the value-producing counterpart to `switch`, and the
 opening move in a new depth arc (pattern matching beyond destructuring)
-now that the destructuring-nesting matrix is nearly closed, and
-`nth_prime` — the complementary "which prime" question to
-`is_prime`/`prime_factors`, returning the prime found at a 1-indexed
-position (`nth_prime(1)` is `2`). The backlog mixes language depth with
-stdlib breadth over time rather than running either in one long block.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+now that the destructuring-nesting matrix is fully closed, `nth_prime` —
+the complementary "which prime" question to `is_prime`/`prime_factors`,
+returning the prime found at a 1-indexed position (`nth_prime(1)` is
+`2`), and `nth_fibonacci` — the same "which position" question for the
+Fibonacci sequence, the value-returning sibling of `is_fibonacci`'s
+membership test. The backlog mixes language depth with stdlib breadth
+over time rather than running either in one long block. The full vision
+and non-goals live in [`PROJECT.md`](PROJECT.md).

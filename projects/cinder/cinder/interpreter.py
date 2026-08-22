@@ -881,14 +881,19 @@ class Interpreter:
     def _evaluate_range(self, expr: RangeExpr, env: Environment) -> object:
         start = self.evaluate(expr.start, env)
         end = self.evaluate(expr.end, env)
+        step = self.evaluate(expr.step, env) if expr.step is not None else None
         if expr.inclusive and isinstance(end, int) and not isinstance(end, bool):
-            end = end + 1
+            descending = (
+                isinstance(step, int) and not isinstance(step, bool) and step < 0
+            )
+            end = end - 1 if descending else end + 1
         from cinder.builtins import _range  # local: builtins.py imports
         # from interpreter.py at module level already, so a top-level
         # import the other way round here would be circular; importing
         # inside the method instead defers it until both modules have
         # finished loading, which is safe.
-        return _range([start, end], expr.line, expr.column)
+        arguments = [start, end] if step is None else [start, end, step]
+        return _range(arguments, expr.line, expr.column)
 
     def _evaluate_slice_assign(self, expr: SliceAssign, env: Environment) -> object:
         obj = self.evaluate(expr.obj, env)

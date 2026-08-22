@@ -2750,19 +2750,24 @@ def _last(arguments: list, line: int, column: int) -> object:
 
 def _range(arguments: list, line: int, column: int) -> object:
     if len(arguments) == 1:
-        start, stop = 0, arguments[0]
+        start, stop, step = 0, arguments[0], 1
     elif len(arguments) == 2:
         start, stop = arguments
+        step = 1
+    elif len(arguments) == 3:
+        start, stop, step = arguments
     else:
         raise CinderRuntimeError(
-            f"range() expects 1 or 2 argument(s), got {len(arguments)}", line, column
+            f"range() expects 1 to 3 argument(s), got {len(arguments)}", line, column
         )
-    for value in (start, stop):
+    for value in (start, stop, step):
         if not isinstance(value, int) or isinstance(value, bool):
             raise CinderRuntimeError(
                 f"range() requires int arguments, got {type_name(value)}", line, column
             )
-    return list(range(start, stop))
+    if step == 0:
+        raise CinderRuntimeError("range() step must not be zero", line, column)
+    return list(range(start, stop, step))
 
 
 def _repeat(arguments: list, line: int, column: int) -> object:

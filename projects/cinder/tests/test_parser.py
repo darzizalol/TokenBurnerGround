@@ -141,7 +141,13 @@ def shape(node):
             shape(node.step) if node.step is not None else None,
         )
     if isinstance(node, RangeExpr):
-        return ("RangeExpr", shape(node.start), shape(node.end), node.inclusive)
+        return (
+            "RangeExpr",
+            shape(node.start),
+            shape(node.end),
+            node.inclusive,
+            shape(node.step) if node.step is not None else None,
+        )
     if isinstance(node, IndexAssign):
         return (
             "IndexAssign",
@@ -1918,7 +1924,7 @@ class TestListsAndMaps(unittest.TestCase):
     def test_range_literal(self):
         self.assertEqual(
             shape(parse("1..5")),
-            ("RangeExpr", ("Literal", 1), ("Literal", 5), False),
+            ("RangeExpr", ("Literal", 1), ("Literal", 5), False, None),
         )
 
     def test_range_binds_looser_than_arithmetic(self):
@@ -1929,6 +1935,7 @@ class TestListsAndMaps(unittest.TestCase):
                 ("Binary", ("Literal", 1), TokenType.PLUS, ("Literal", 1)),
                 ("Binary", ("Literal", 5), TokenType.STAR, ("Literal", 2)),
                 False,
+                None,
             ),
         )
 
@@ -1939,18 +1946,34 @@ class TestListsAndMaps(unittest.TestCase):
                 "Binary",
                 ("Identifier", "x"),
                 TokenType.IN,
-                ("RangeExpr", ("Literal", 1), ("Literal", 5), False),
+                ("RangeExpr", ("Literal", 1), ("Literal", 5), False, None),
             ),
         )
 
-    def test_range_does_not_chain(self):
+    def test_range_with_step(self):
+        self.assertEqual(
+            shape(parse("1..10..2")),
+            ("RangeExpr", ("Literal", 1), ("Literal", 10), False, ("Literal", 2)),
+        )
+
+    def test_inclusive_range_with_step(self):
+        self.assertEqual(
+            shape(parse("1..=10..2")),
+            ("RangeExpr", ("Literal", 1), ("Literal", 10), True, ("Literal", 2)),
+        )
+
+    def test_range_step_does_not_chain(self):
         with self.assertRaises(ParseError):
-            parse("1..5..10")
+            parse("1..5..10..15")
+
+    def test_range_with_inclusive_step_separator_is_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("1..10..=2")
 
     def test_inclusive_range_literal(self):
         self.assertEqual(
             shape(parse("1..=5")),
-            ("RangeExpr", ("Literal", 1), ("Literal", 5), True),
+            ("RangeExpr", ("Literal", 1), ("Literal", 5), True, None),
         )
 
     def test_inclusive_range_does_not_chain(self):

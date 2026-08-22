@@ -4306,9 +4306,57 @@ class TestRangeLiteral(unittest.TestCase):
         ):
             evaluate("1..2.5")
 
-    def test_range_does_not_chain(self):
+    def test_range_step_does_not_chain(self):
         with self.assertRaises(ParseError):
-            run("1..5..10;")
+            run("1..5..10..15;")
+
+    def test_range_with_step_skips_elements(self):
+        self.assertEqual(evaluate("1..10..2"), [1, 3, 5, 7, 9])
+
+    def test_range_with_negative_step_counts_down(self):
+        self.assertEqual(evaluate("10..0..-2"), [10, 8, 6, 4, 2])
+
+    def test_inclusive_range_with_step_reaches_upper_bound(self):
+        self.assertEqual(evaluate("0..=10..2"), [0, 2, 4, 6, 8, 10])
+
+    def test_inclusive_range_with_step_not_landing_on_bound(self):
+        self.assertEqual(evaluate("0..=9..2"), [0, 2, 4, 6, 8])
+
+    def test_inclusive_range_with_negative_step_counts_down(self):
+        self.assertEqual(evaluate("10..=0..-2"), [10, 8, 6, 4, 2, 0])
+
+    def test_inclusive_range_with_negative_step_landing_on_bound(self):
+        self.assertEqual(evaluate("10..=1..-3"), [10, 7, 4, 1])
+
+    def test_range_with_step_usable_in_for_loop(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            run("for x in 1..10..2 { print(x); }", create_global_environment())
+        self.assertEqual(stdout.getvalue(), "1\n3\n5\n7\n9\n")
+
+    def test_range_with_step_usable_as_comprehension_source(self):
+        self.assertEqual(evaluate("[x for x in 0..10..3]"), [0, 3, 6, 9])
+
+    def test_range_step_zero_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) step must not be zero"
+        ):
+            evaluate("1..10..0")
+
+    def test_range_non_int_step_raises_cinder_error(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"range\(\) requires int arguments, got float"
+        ):
+            evaluate("1..10..1.5")
+
+    def test_range_without_step_unaffected(self):
+        self.assertEqual(evaluate("1..10"), [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        self.assertEqual(evaluate("1..=10"), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
     def test_inclusive_range_includes_upper_bound(self):
         self.assertEqual(evaluate("1..=5"), [1, 2, 3, 4, 5])

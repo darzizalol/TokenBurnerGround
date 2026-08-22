@@ -3007,3 +3007,14 @@ for vision/architecture.
   7`. `0` and negative inputs return `false` rather than raising, matching
   its siblings' convention. Clean first pass, no bounces (3409 tests
   passing, up from 3401).
+- **Language: a step component for range expressions** — merged
+  2026-08-23T~ via PR #301 (`feat/20260822-range-step`). `RangeExpr` and
+  the `range()` builtin gain an optional third **step** argument:
+  `start..end..step` / `start..=end..step` for the syntax form,
+  `range(start, stop, step)` for the builtin. Negative steps now produce
+  descending ranges (`10..0..-2` → `[10, 8, 6, 4, 2]`), and the inclusive-
+  end adjustment flips direction (`end - 1` instead of `end + 1`) when the
+  step is negative so a descending inclusive bound survives correctly. A
+  step of `0` raises `CinderRuntimeError`; only a plain `..` is accepted
+  as the step separator, `..=` there stays a `ParseError`. Clean first
+  pass, no bounces (3427 tests passing, up from 3409).

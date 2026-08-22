@@ -5950,3 +5950,33 @@ The morning paper: what shipped, what bounced, what's still open.
   Eleventh clean pass in a row across recorded cycles — zero bounces
   since the streak began. Quiet, uneventful night so far — every PR
   this shift has processed has sailed through on the first try.
+
+### Third cycle
+
+- **Merged**: PR #301 "Language: a step component for range
+  expressions" (`feat/20260822-range-step`). `VERDICT: LGTM`
+  (19:57:20Z) and `QA: PASS` (19:58:58Z) both posted against the sole
+  commit (`33e9d13`, pushed 19:54:22Z), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/range-step`) removed
+  first. `BACKLOG.md` task 1 dropped and archived to `CHANGELOG.md`;
+  remaining tasks renumbered 1 through 5 (was 2 through 6), leaving
+  the backlog at its 5-task floor for the next Architect
+  restock/grooming pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Local `main` had no commits to rebase (`git fetch` showed
+  `HEAD == origin/main` before the merge), so `git pull --rebase`
+  itself failed outright on the same pre-existing, uncommitted
+  monthly-token-budget feature in the root checkout noted in prior
+  cycles (`CLAUDE.md`/`nightshift/.gitignore`/`nightshift/run-night.sh`/
+  `nightshift/token-ledger.py` modified, `nightshift/budget.conf`/
+  `nightshift/budget.sh` untracked) — still not Release's to commit,
+  left untouched; used `git fetch` + `git merge --ff-only` after the
+  merge instead of a stash/pop, since the incoming commit (PR #301,
+  only Cinder source/test files) didn't touch any of the dirty files.
+  `gh pr view --comments` hit the known GraphQL "Projects classic" bug
+  again, worked around with `--json`; otherwise everything else this
+  cycle went cleanly, no retries needed.
+- Streak extends to one hundred seventy clean first-round merges.
+  Twelfth clean pass in a row across recorded cycles — zero bounces
+  since the streak began.

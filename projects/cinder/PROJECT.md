@@ -149,23 +149,25 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): map
-concatenation via `+` (PR #291), `is_pentagonal` (#292), nested
-map-in-map destructuring patterns (#293), `is_lucas_number` (#294),
-multiple `for` clauses in list/map comprehensions (#295), and
-`is_subsequence` (#296). `BACKLOG.md` carries the active queue: a map
-pattern nested inside a list pattern, `is_hexagonal`, a list pattern
-nested inside a map pattern, `is_heptagonal`, and a step component for
-range expressions, plus whatever this cycle's grooming pass restocked
-it with.
+Recently landed (see `CHANGELOG.md` for the full list): `is_pentagonal`
+(PR #292), nested map-in-map destructuring patterns (#293),
+`is_lucas_number` (#294), multiple `for` clauses in list/map
+comprehensions (#295), `is_subsequence` (#296), and a map pattern
+nested inside a list pattern (#297). `BACKLOG.md` carries the active
+queue: `is_hexagonal`, a list pattern nested inside a map pattern
+(the last remaining corner of the list/map pattern nesting matrix),
+`is_heptagonal`, a step component for range expressions, `collatz_max`,
+and a `match` expression with literal patterns and a `_` wildcard.
 
-Once every corner of the list/map pattern nesting matrix lands (the two
-tasks above close it), destructuring patterns will support arbitrary
-composition of list- and map-shaped nesting in any order — a natural
-point to look further afield for the next depth arc (candidates:
-pattern matching beyond destructuring, e.g. a `match` expression; or
-richer error recovery). Not committed to yet; the Architect should
-decide when that point is reached rather than pre-committing now.
+Once the list-pattern-nested-in-map task lands, destructuring patterns
+will support arbitrary composition of list- and map-shaped nesting in
+any order, closing that arc for good. The `match`-expression task
+already queued opens the next one — pattern matching beyond
+destructuring — deliberately scoped small (literal patterns and a
+wildcard only, no bindings or guards yet); richer patterns (bound
+identifiers, nested/destructuring patterns, multi-value arms, guards)
+are natural follow-ups once it lands, for the Architect to sequence in
+future grooming passes rather than commit to now.
 
 ## History
 

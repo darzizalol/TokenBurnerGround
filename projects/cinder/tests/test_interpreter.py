@@ -1503,11 +1503,73 @@ class TestDestructureNestedListPattern(unittest.TestCase):
         env = run("let r = [b for [a, [b, c]] in [[1, [2, 3]]]];")
         self.assertEqual(env.get("r"), [2])
 
-    def test_map_pattern_nested_in_list_still_rejected(self):
+
+class TestDestructureMapPatternNestedInList(unittest.TestCase):
+    def test_nested_in_last_position(self):
+        env = run('let [a, {b, c}] = [1, {"b": 2, "c": 3}];')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_nested_in_first_position(self):
+        env = run('let [{x, y}, a] = [{"x": 1, "y": 2}, 3];')
+        self.assertEqual(env.get("x"), 1)
+        self.assertEqual(env.get("y"), 2)
+        self.assertEqual(env.get("a"), 3)
+
+    def test_composes_with_nested_list_pattern(self):
+        env = run('let [a, [b, {c}]] = [1, [2, {"c": 3}]];')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_rest_element_inside_nested_pattern(self):
+        env = run('let [a, {b, ...brest}] = [1, {"b": 2, "c": 3, "d": 4}];')
+        self.assertEqual(env.get("brest"), {"c": 3, "d": 4})
+
+    def test_default_value_on_nested_pattern_slot(self):
+        env = run('let [a, {b, c = 0}] = [1, {"b": 2}];')
+        self.assertEqual(env.get("c"), 0)
+
+    def test_non_map_at_nested_position_raises(self):
         with self.assertRaisesRegex(
-            ParseError, r"expected identifier in destructuring pattern, found '\{'"
+            CinderRuntimeError, r"cannot destructure int as a map"
         ):
-            run('let [a, {b, c}] = [1, {"b": 2}];')
+            run("let [a, {b}] = [1, 2];")
+
+    def test_missing_key_inside_nested_pattern_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"destructuring pattern expects key 'b', not found in map"
+        ):
+            run('let [a, {b}] = [1, {}];')
+
+    def test_for_loop_form(self):
+        env = run(
+            "let total_a = 0; let total_b = 0; "
+            'for [a, {b}] in [[1, {"b": 2}], [3, {"b": 4}]] { total_a = total_a + a; total_b = total_b + b; }'
+        )
+        self.assertEqual(env.get("total_a"), 4)
+        self.assertEqual(env.get("total_b"), 6)
+
+    def test_fn_param_form(self):
+        env = run('fn f([a, {b}]) { return a + b; } let r = f([1, {"b": 2}]);')
+        self.assertEqual(env.get("r"), 3)
+
+    def test_comprehension_form(self):
+        env = run(
+            'let r = [a + b for [a, {b}] in [[1, {"b": 2}], [3, {"b": 4}]]];'
+        )
+        self.assertEqual(env.get("r"), [3, 7])
+
+    def test_plain_assignment_form_still_rejected(self):
+        with self.assertRaisesRegex(ParseError, r"invalid assignment target"):
+            run('let a = 0; let b = 0; [a, {b}] = [1, {"b": 2}];')
+
+    def test_list_nested_in_map_pattern_still_rejected(self):
+        with self.assertRaisesRegex(
+            ParseError, r"expected identifier in destructuring pattern, found '\['"
+        ):
+            run('let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};')
 
 
 class TestDestructureNestedMapPattern(unittest.TestCase):

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
+## 1. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
 
 Build: the breadth task after task 5's depth work (multiple `for` clauses
 in list/map comprehensions) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -108,7 +108,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
+## 2. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
 
 Build: the depth task after task 5's breadth work (`is_subsequence`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -256,7 +256,7 @@ this task.
 
 ---
 
-## 4. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
+## 3. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
 
 Build: the breadth task after task 5's depth work (a map pattern nested
 inside a list pattern) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -342,7 +342,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
+## 4. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
 
 Build: the depth task after task 5's breadth work (`is_hexagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -467,7 +467,7 @@ this task.
 
 ---
 
-## 6. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
+## 5. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
 
 Build: the breadth task after task 5's depth work (a list pattern nested
 inside a map pattern) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -552,6 +552,167 @@ landed yet in whatever order tasks are claimed). Once merged,
 section needs updating, and `PROJECT.md`'s roadmap paragraph needs this
 moved from backlog to landed — leave all three to the Architect's next
 grooming pass, not this task.
+
+---
+
+## 6. Language: a step component for range expressions (`start..end..step`, `start..=end..step`)
+
+Build: the depth task after task 5's breadth work (`is_heptagonal`) per
+`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
+tasks now that multiple `for` clauses in list/map comprehensions has
+landed via PR #295, dropping the count to the 5-task floor. Range
+expressions (`cinder/ast_nodes.py`'s `RangeExpr`) always imply an
+implicit step of `1` today — there is no way to skip elements, and no
+way to count *down*, since `_range` (`cinder/builtins.py`) always calls
+Python's `range(start, stop)` with no third argument. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'for (x in 1..10..2) { print(x); }'
+# -> <eval>:1:16: expected ';' after for-loop init, found '..'
+python3 -m cinder.cli eval 'print(10..0);'
+# -> [] (silently empty — a descending bound with the implicit step of 1
+#    can never produce anything, and today there is no way to ask for a
+#    negative step to fix that)
+```
+
+Add an optional third `_bitor()` operand to `_range_expr` (search
+`def _range_expr`, `cinder/parser.py`):
+```python
+    def _range_expr(self) -> Expr:
+        expr = self._bitor()
+        if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
+            dots = self._advance()
+            end = self._bitor()
+            inclusive = dots.type is TokenType.DOT_DOT_EQ
+            step = None
+            if self._check(TokenType.DOT_DOT):
+                self._advance()
+                step = self._bitor()
+            return RangeExpr(expr, end, dots.line, dots.column, inclusive, step)
+        return expr
+```
+Only a plain `..` is accepted as the step separator (not `..=` — the
+inclusivity is already fixed by the first separator, so a second one
+carrying its own inclusivity would be meaningless); `1..=10..2` is valid
+(inclusive range, step `2`), `1..10..=2` is not and stays a `ParseError`
+the same way it is today, since nothing consumes a `..=` in that
+position.
+
+Add the field to `RangeExpr` (search `class RangeExpr`,
+`cinder/ast_nodes.py`), appended last so the existing single call site
+that constructs it with 5 positional arguments keeps working unchanged:
+```python
+class RangeExpr:
+    start: "Expr"
+    end: "Expr"
+    line: int
+    column: int
+    inclusive: bool = False
+    step: "Expr | None" = None
+```
+
+Thread it through `_evaluate_range` (search `def _evaluate_range`,
+`cinder/interpreter.py`):
+```python
+    def _evaluate_range(self, expr: RangeExpr, env: Environment) -> object:
+        start = self.evaluate(expr.start, env)
+        end = self.evaluate(expr.end, env)
+        step = self.evaluate(expr.step, env) if expr.step is not None else None
+        if expr.inclusive and isinstance(end, int) and not isinstance(end, bool):
+            descending = (
+                isinstance(step, int) and not isinstance(step, bool) and step < 0
+            )
+            end = end - 1 if descending else end + 1
+        from cinder.builtins import _range  # local: builtins.py imports
+        # from interpreter.py at module level already, so a top-level
+        # import the other way round here would be circular; importing
+        # inside the method instead defers it until both modules have
+        # finished loading, which is safe.
+        arguments = [start, end] if step is None else [start, end, step]
+        return _range(arguments, expr.line, expr.column)
+```
+The `descending` check flips the inclusive-end adjustment's direction:
+today `..=` always adds `1` so the upper bound survives Python's
+exclusive-`stop` semantics, but that only works for an ascending walk —
+`10..=0..-2` needs `end` pushed to `-1`, not `1`, so `0` (not `-2`)
+survives as the last element counted down to.
+
+Extend `_range` (search `def _range`, `cinder/builtins.py`) from its
+current 1-or-2-argument form to also accept a third:
+```python
+def _range(arguments: list, line: int, column: int) -> object:
+    if len(arguments) == 1:
+        start, stop, step = 0, arguments[0], 1
+    elif len(arguments) == 2:
+        start, stop = arguments
+        step = 1
+    elif len(arguments) == 3:
+        start, stop, step = arguments
+    else:
+        raise CinderRuntimeError(
+            f"range() expects 1 to 3 argument(s), got {len(arguments)}", line, column
+        )
+    for value in (start, stop, step):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise CinderRuntimeError(
+                f"range() requires int arguments, got {type_name(value)}", line, column
+            )
+    if step == 0:
+        raise CinderRuntimeError("range() step must not be zero", line, column)
+    return list(range(start, stop, step))
+```
+This matches Python's own `range(start, stop, step)` three-argument
+shape exactly, so the underlying `list(range(...))` call needs no other
+change — a negative step already produces a descending list on its own
+once `start > stop`, no separate direction-handling code needed.
+
+Acceptance criteria:
+- `print(1..10..2);` is `[1, 3, 5, 7, 9]`.
+- `print(1..=10..2);` is `[1, 3, 5, 7, 9]` — `10` isn't reached by the
+  step, so the inclusive marker changes nothing here.
+- `print(0..=10..2);` is `[0, 2, 4, 6, 8, 10]` — `10` is reached, so the
+  inclusive marker's `end - 1`-vs-`+ 1` split doesn't matter for a
+  positive step either way in this particular case; also confirm
+  `print(0..=9..2);` is `[0, 2, 4, 6, 8]` (`9` itself is never hit).
+- `print(10..0..-2);` is `[10, 8, 6, 4, 2]` — the first negative-step,
+  descending range Cinder has ever been able to produce.
+- `print(10..=0..-2);` is `[10, 8, 6, 4, 2, 0]` — inclusive descending,
+  confirming the `descending` branch's `end - 1` adjustment (`end`
+  becomes `-1`, not `1`) is what lets `0` survive.
+- `print(10..=1..-3);` is `[10, 7, 4, 1]` — a step that lands exactly on
+  the inclusive bound.
+- `for (x in 1..10..2) { print(x); }` prints `1`, `3`, `5`, `7`, `9` —
+  usable in a `for`-loop exactly like a step-less range already is.
+- `print([x for x in 0..10..3]);` is `[0, 3, 6, 9]` — usable as a
+  comprehension source.
+- `print(1..10..0);` raises `CinderRuntimeError` matching `"range()
+  step must not be zero"`.
+- `print(1..10..1.5);` raises `CinderRuntimeError` matching `"range()
+  requires int arguments, got float"`.
+- `print(range(0, 10, 2));` is `[0, 2, 4, 6, 8]` and
+  `print(range(10, 0, -2));` is `[10, 8, 6, 4, 2]` — the `range()`
+  builtin itself gains the same third argument directly, not just
+  through `..` syntax.
+- `print(range(1, 10, 0));` raises `CinderRuntimeError` matching
+  `"range() step must not be zero"`.
+- `print(range(1, 2, 3, 4));` raises `CinderRuntimeError` matching
+  `"range() expects 1 to 3 argument(s), got 4"`.
+- `print(1..10);` and `print(1..=10);` are unchanged (`[1..9]` and
+  `[1..10]` respectively) — no step given still means the existing
+  implicit-step-of-1 behavior, confirming this is purely additive.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_range_expr`), `cinder/ast_nodes.py`
+(`RangeExpr`), `cinder/interpreter.py` (`_evaluate_range`),
+`cinder/builtins.py` (`_range`), `tests/test_parser.py` (add tests
+alongside the existing range tests, search `test_range_literal` and its
+neighbors around `TestRange`-style range-parsing tests), `tests/test_interpreter.py`
+(extend `class TestRangeLiteral`, search that name), `tests/test_builtins.py`
+(extend `class TestRange`, search that name, for the `range()` builtin's
+new third argument). Once merged, `README.md`'s "Coming up next" bullet
+in "Status & roadmap" and its ranges mention in the Features list need
+updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
+backlog to landed — leave all three to the Architect's next grooming
+pass, not this task.
 
 ---
 

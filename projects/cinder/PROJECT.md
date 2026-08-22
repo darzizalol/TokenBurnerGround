@@ -1864,6 +1864,41 @@ cluster already uses, with its own modular-residue check (`root % 10 ==
 `k` leaves a divisibility-by-10 condition, the same kind of residue
 check each figurate number's own quadratic leaves behind, just with a
 different modulus.
+The next grooming pass should continue alternating breadth/depth,
+restocking toward 6-7 tasks whenever a merge drops the count within
+reach of the 5-task floor. This pass found the backlog back down to its
+5-task floor again (multiple `for` clauses in list/map comprehensions
+having landed cleanly via PR #295 with no bounce, dropping the count
+from 6 to 5, dropping its now-landed description from the "what remains
+plausible" section above into the "have since landed" history, and
+renumbering the remaining five tasks from 2-6 down to 1-5, with
+`is_subsequence` renumbered from 2 to 1, a map pattern nested inside a
+list pattern from 3 to 2, `is_hexagonal` from 4 to 3, a list pattern
+nested inside a map pattern from 5 to 4, and `is_heptagonal` from 6 to
+5) and restocked it to 6 by adding task 6, a step component for range
+expressions (`start..end..step`, plus its inclusive-end sibling
+`start..=end..step`), continuing alternation with a depth task after
+task 5's breadth work (`is_heptagonal`) rather than stacking a second
+breadth task, per the policy above — closing the one dimension range
+expressions have never had: today `RangeExpr` (`cinder/ast_nodes.py`)
+always implies an implicit step of `1`, so a descending range like
+`10..0` silently produces an empty list rather than counting down, and
+there is no way to skip elements either. Adds an optional third
+`_bitor()` operand to `_range_expr` (`cinder/parser.py`), parsed after a
+second plain `..`, threaded through as a new `step: Expr | None = None`
+field appended last on `RangeExpr` (so the one existing 5-argument
+construction site keeps working unchanged), evaluated by
+`_evaluate_range` (`cinder/interpreter.py`) and passed to `_range`
+(`cinder/builtins.py`), extended from its current 1-or-2-argument form
+to also accept a third — matching Python's own `range(start, stop,
+step)` three-argument shape exactly, so `list(range(...))` needs no
+other change; a negative step already produces a descending list on its
+own once `start > stop`. The one piece of real logic beyond plumbing:
+the existing inclusive-end `+ 1` adjustment `_evaluate_range` already
+makes for `..=` only works for an ascending walk, so it becomes a `- 1`
+adjustment instead whenever the step is negative, letting `10..=0..-2`
+correctly include `0` as its last element rather than stopping one
+short at `-2`.
 
 ## History
 

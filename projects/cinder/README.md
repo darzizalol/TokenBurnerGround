@@ -262,15 +262,19 @@ while (i < 10) {
   literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   list comprehensions `[expr for x in iterable]` and `[expr for x in
-  iterable if cond]` (a single loop variable, one optional filter clause,
-  no nesting; a fresh per-iteration scope so closures built inside the
-  comprehension capture their own iteration's binding), including a
+  iterable if cond]` (one optional filter clause; a fresh per-iteration
+  scope so closures built inside the comprehension capture their own
+  iteration's binding), including a
   list-destructuring loop variable (`[k + v for [k, v] in items(m)]`,
   same flat positional binding and optional trailing rest element as a
-  `for`-loop's own list-destructuring form) and a map-destructuring loop
+  `for`-loop's own list-destructuring form), a map-destructuring loop
   variable (`[a + b for {a, b} in list_of_maps]`, same key-lookup
   binding as a `for`-loop's own map-destructuring form, including the
-  same optional trailing rest element and per-key rename); map literals accept spread
+  same optional trailing rest element and per-key rename), and multiple
+  chained `for` clauses (`[x + y for x in xs for y in ys]`,
+  cartesian-product iteration matching Python's own multi-clause
+  comprehension semantics — each clause's own optional `if` filters
+  before any later clause runs); map literals accept spread
   elements too (`{...map1, "k": v}`), merging
   left to right with later keys/spreads winning on conflict; shorthand
   properties (`let a = 1, b = 2; print({a, b});` is `{"a": 1, "b": 2}`,
@@ -458,22 +462,19 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_lucas_number` — the
-Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded `2, 1`
-instead of `0, 1`), tested by generate-and-compare rather than a closed
-form since Lucas numbers lack `is_fibonacci`'s clean perfect-square
-identity, and before that nested map-in-map destructuring patterns
-(`let {a, b: {c, d}} = {...}`) — the deferred other half of the nested
-list-in-list destructuring task, giving map patterns the same nesting
-support list patterns already have, and before that `is_pentagonal` —
-the closed-form figurate-number sibling of `is_triangular`, testing
-membership in the pentagonal numbers `1, 5, 12, 22, 35, ...` via the
-same `math.isqrt` perfect-square technique (plus a modular-residue check
-the simpler triangular test doesn't need).
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): multiple `for` clauses
-in list/map comprehensions (`[x + y for x in xs for y in ys]`) —
+Actively developed, nightly. Recently landed: multiple `for` clauses in
+list/map comprehensions (`[x + y for x in xs for y in ys]`) —
 cartesian-product iteration with a clause-chained `for`, matching
-Python's own multi-clause comprehension semantics, `is_subsequence` —
+Python's own multi-clause comprehension semantics, and before that
+`is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci` (same
+recurrence, seeded `2, 1` instead of `0, 1`), tested by
+generate-and-compare rather than a closed form since Lucas numbers lack
+`is_fibonacci`'s clean perfect-square identity, and before that nested
+map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`) — the
+deferred other half of the nested list-in-list destructuring task,
+giving map patterns the same nesting support list patterns already
+have.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_subsequence` —
 testing whether one string's characters all appear in another in the
 same relative order without needing to be contiguous, the third member
 of the two-string predicate cluster alongside `is_rotation`/`is_anagram`,
@@ -484,11 +485,15 @@ a map pattern nested inside a list pattern (`let [a, {b, c}] =
 numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique, a
 list pattern nested inside a map pattern (`let {a, b: [c, d]} =
 {...}`) — the mirror image of the map-in-list task, closing the last
-remaining corner of the destructuring-nesting matrix, and
-`is_heptagonal` — the fourth figurate-number membership predicate after
+remaining corner of the destructuring-nesting matrix, `is_heptagonal` —
+the fourth figurate-number membership predicate after
 `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership in
 the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same closed-form
-technique.
+technique, and a step component for range expressions (`start..end..step`,
+`start..=end..step`) — closing the one dimension ranges have never had:
+today's implicit step of `1` means a descending bound like `10..0`
+silently produces an empty list, with no way to skip elements or count
+down either.
 The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

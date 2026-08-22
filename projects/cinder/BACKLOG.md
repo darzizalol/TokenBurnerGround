@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
+## 1. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal` [claimed 2026-08-22T14:56:07Z]
 
 Build: the breadth task queued after a map pattern nested inside a list
 pattern landed via PR #297 (the prior top task) per `PROJECT.md`'s

@@ -149,15 +149,14 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `is_pentagonal`
-(PR #292), nested map-in-map destructuring patterns (#293),
-`is_lucas_number` (#294), multiple `for` clauses in list/map
-comprehensions (#295), `is_subsequence` (#296), and a map pattern
-nested inside a list pattern (#297). `BACKLOG.md` carries the active
-queue: `is_hexagonal`, a list pattern nested inside a map pattern
-(the last remaining corner of the list/map pattern nesting matrix),
-`is_heptagonal`, a step component for range expressions, `collatz_max`,
-and a `match` expression with literal patterns and a `_` wildcard.
+Recently landed (see `CHANGELOG.md` for the full list): `is_lucas_number`
+(#294), multiple `for` clauses in list/map comprehensions (#295),
+`is_subsequence` (#296), a map pattern nested inside a list pattern
+(#297), and `is_hexagonal` (#298). `BACKLOG.md` carries the active
+queue: a list pattern nested inside a map pattern (the last remaining
+corner of the list/map pattern nesting matrix), `is_heptagonal`, a step
+component for range expressions, `collatz_max`, a `match` expression
+with literal patterns and a `_` wildcard, and `nth_prime`.
 
 Once the list-pattern-nested-in-map task lands, destructuring patterns
 will support arbitrary composition of list- and map-shaped nesting in

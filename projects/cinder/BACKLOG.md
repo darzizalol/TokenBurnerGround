@@ -11,102 +11,17 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal` [claimed 2026-08-22T14:56:07Z]
+## 1. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
 
-Build: the breadth task queued after a map pattern nested inside a list
-pattern landed via PR #297 (the prior top task) per `PROJECT.md`'s
-breadth-vs-depth policy. `is_pentagonal` landed via PR #292; PR #297
-dropped the backlog to its 5-task floor — this grooming pass renumbers
-the remaining tasks starting at 1 and restocks with a new task 6 (see
-bottom of file) to bring the count back to 6.
-`is_triangular`/`is_pentagonal` (`cinder/builtins.py`) already test
-membership in the triangular (`0, 1, 3, 6, 10, ...`) and pentagonal
-(`1, 5, 12, 22, 35, ...`) figurate-number sequences, each via a
-closed-form `math.isqrt`-based identity rather than an accumulating
-loop; the hexagonal numbers (`1, 6, 15, 28, 45, 66, ...`, `H(k) = k(2k
-- 1)`) are the natural third member of that cluster and nothing in
-Cinder tests membership in them today. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_hexagonal(15));'
-# -> CinderRuntimeError: undefined name 'is_hexagonal'
-```
-
-Add to `cinder/builtins.py`, registered right after `_is_pentagonal`
-(search `def _is_pentagonal`, immediately before `_is_prime`):
-```python
-def _is_hexagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_hexagonal", arguments, 1, line, column)
-    value = _require_int("is_hexagonal", arguments[0], line, column)
-    if value < 0:
-        return False
-
-    candidate = 8 * value + 1
-    root = math.isqrt(candidate)
-    return root * root == candidate and root % 4 == 3
-```
-This mirrors `_is_triangular`/`_is_pentagonal`'s exact shape: solving
-`H(k) = k(2k - 1) = n` for `k` via the quadratic formula gives `k = (1 +
-sqrt(8n + 1)) / 4`, so `n` is hexagonal iff `8n + 1` is a perfect square
-whose exact integer root additionally satisfies `root % 4 == 3` (the
-condition that makes `(1 + root)` divisible by 4, so `k` comes out an
-integer) — the same "closed-form perfect-square identity plus one
-modular-residue check" technique `is_pentagonal` already uses for its
-own `root % 6 == 5` condition (triangular numbers need no such extra
-check only because `8n + 1`'s root is always odd, which is already
-exactly what solving *that* sequence's quadratic requires). `math.isqrt`
-gives an exact integer root with no floating-point rounding risk, same
-as both existing siblings. `0` and all negative inputs return `False` up
-front, matching `is_triangular`/`is_pentagonal`'s own "closed domain, no
-exception, just `false`" convention — unlike `is_triangular` (whose
-`root % 4`-free check happens to accept `0` as `H(0)`'s degenerate
-case), `is_hexagonal`'s modular check already excludes `0` on its own
-(`8*0+1=1`, `root=1`, `1 % 4 == 1 != 3`), consistent with the standard
-hexagonal-number sequence starting at `k=1`. Also register the new dict
-entry (search `"is_pentagonal": _is_pentagonal,`, add `"is_hexagonal":
-_is_hexagonal,` directly after it).
-
-Acceptance criteria:
-- `is_hexagonal(0);` is `false` — `0` is not a hexagonal number under
-  the standard `k >= 1` convention.
-- `is_hexagonal(1);` is `true` (`H(1)`), `is_hexagonal(6);` is `true`
-  (`H(2)`), `is_hexagonal(15);` is `true` (`H(3)`), `is_hexagonal(28);`
-  is `true` (`H(4)`), `is_hexagonal(45);` is `true` (`H(5)`),
-  `is_hexagonal(66);` is `true` (`H(6)`).
-- `is_hexagonal(2);` is `false`, `is_hexagonal(5);` is `false`,
-  `is_hexagonal(10);` is `false`, `is_hexagonal(100);` is `false` — none
-  of these are hexagonal numbers.
-- `is_hexagonal(190);` is `true` — a larger hexagonal number (`H(10)`),
-  confirming the check holds beyond small brute-forced cases.
-- `is_hexagonal(-6);` is `false` — negative input, matching
-  `is_triangular`/`is_pentagonal`'s own "not a valid domain, answer
-  false rather than raise" convention.
-- `is_hexagonal(6.0);` raises `CinderRuntimeError` matching
-  `"is_hexagonal() requires an int, got float"`.
-- `is_hexagonal(true);` raises `CinderRuntimeError` matching
-  `"is_hexagonal() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_pentagonal`, see
-current line numbers — shift if earlier tasks this cycle land first),
-`tests/test_builtins.py` (model on `class TestIsPentagonal`, search that
-name). Once merged, `README.md`'s Builtins bullet needs `is_hexagonal`
-added near `is_triangular`/`is_pentagonal`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" bullet
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
-
-Build: the depth task after task 1's breadth work (`is_hexagonal`) per
-`PROJECT.md`'s breadth-vs-depth policy. Nested list-in-list
-destructuring patterns landed via PR #273, nested map-in-map
-destructuring patterns landed via PR #293, and a map pattern nested
-inside a list pattern landed via PR #297. The one remaining corner of
-the nesting matrix none of those touches is a *list* pattern nested
+Build: the depth task queued after `is_hexagonal` landed via PR #298
+(the prior top task) per `PROJECT.md`'s breadth-vs-depth policy. Nested
+list-in-list destructuring patterns landed via PR #273, nested
+map-in-map destructuring patterns landed via PR #293, and a map pattern
+nested inside a list pattern landed via PR #297. PR #298 dropped the
+backlog to its 5-task floor — this grooming pass renumbers the
+remaining tasks starting at 1 and restocks with a new task 6 (see
+bottom of file) to bring the count back to 6. The one remaining corner
+of the nesting matrix none of those touches is a *list* pattern nested
 inside a *map* pattern — today
 `_destructure_map_pattern_entry` (`cinder/parser.py`) only recognizes a
 nested `{` after a binding's `:` (recursing into another map pattern); a
@@ -223,13 +138,13 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
+## 2. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
 
-Build: the breadth task after task 2's depth work (a list pattern nested
+Build: the breadth task after task 1's depth work (a list pattern nested
 inside a map pattern) per `PROJECT.md`'s breadth-vs-depth policy.
 `is_lucas_number` landed via PR #294.
 `is_triangular`/`is_pentagonal`/`is_hexagonal` (`cinder/builtins.py`,
-`is_hexagonal` queued as task 1 above) test membership in three of the
+`is_hexagonal` landed via PR #298) test membership in three of the
 figurate-number sequences, each via a closed-form `math.isqrt`-based
 identity; the heptagonal numbers (`1, 7, 18, 34, 55, 81, 112, ...`,
 `H(k) = k(5k - 3) / 2`) are the natural fourth member of that cluster
@@ -240,8 +155,8 @@ python3 -m cinder.cli eval 'print(is_heptagonal(18));'
 ```
 
 Add to `cinder/builtins.py`, registered right after `_is_hexagonal`
-(search `def _is_hexagonal`, immediately before `_is_prime` — task 1
-above lands `_is_hexagonal` in exactly that spot):
+(search `def _is_hexagonal`, immediately before `_is_prime` —
+`is_hexagonal` already landed via PR #298 in exactly that spot):
 ```python
 def _is_heptagonal(arguments: list, line: int, column: int) -> object:
     _require_arity("is_heptagonal", arguments, 1, line, column)
@@ -300,8 +215,7 @@ Acceptance criteria:
 Likely files: `cinder/builtins.py` (register near `is_hexagonal`, see
 current line numbers — shift if earlier tasks this cycle land first),
 `tests/test_builtins.py` (model on `class TestIsHexagonal`, search that
-name — falls back to `class TestIsPentagonal` if task 1 above hasn't
-landed yet in whatever order tasks are claimed). Once merged,
+name). Once merged,
 `README.md`'s Builtins bullet needs `is_heptagonal` added near
 `is_triangular`/`is_pentagonal`/`is_hexagonal`, its "Status & roadmap"
 section needs updating, and `PROJECT.md`'s "Current frontier" bullet
@@ -310,9 +224,9 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: a step component for range expressions (`start..end..step`, `start..=end..step`)
+## 3. Language: a step component for range expressions (`start..end..step`, `start..=end..step`)
 
-Build: the depth task after task 3's breadth work (`is_heptagonal`) per
+Build: the depth task after task 2's breadth work (`is_heptagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy. Multiple `for` clauses in
 list/map comprehensions landed via PR #295. Range
 expressions (`cinder/ast_nodes.py`'s `RangeExpr`) always imply an
@@ -470,9 +384,9 @@ task.
 
 ---
 
-## 5. Standard library: `collatz_max` — the peak value reached by the Collatz (3n+1) recurrence
+## 4. Standard library: `collatz_max` — the peak value reached by the Collatz (3n+1) recurrence
 
-Build: the breadth task after task 4's depth work (a step component for
+Build: the breadth task after task 3's depth work (a step component for
 range expressions) per `PROJECT.md`'s breadth-vs-depth policy.
 `is_subsequence` landed via PR #296.
 `collatz_length` (`cinder/builtins.py`) already counts how many steps
@@ -548,13 +462,13 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: a `match` expression with literal patterns and a `_` wildcard
+## 5. Language: a `match` expression with literal patterns and a `_` wildcard
 
-Build: the depth task after task 5's breadth work (`collatz_max`) per
-`PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
-tasks. This is a new arc, not another destructuring-nesting corner: with
-task 2 above (a list pattern nested inside a map pattern) landing, every
-corner of the list/map pattern nesting matrix is closed, and
+Build: the depth task after task 4's breadth work (`collatz_max`) per
+`PROJECT.md`'s breadth-vs-depth policy. This is a new arc, not another
+destructuring-nesting corner: with task 1 above (a list pattern nested
+inside a map pattern) landing, every corner of the list/map pattern
+nesting matrix is closed, and
 `PROJECT.md`'s "Current frontier" section already names "pattern matching
 beyond destructuring, e.g. a `match` expression" as the natural next
 depth direction. This task is a deliberately small first step into that
@@ -763,6 +677,91 @@ updating to note a first, literal-only `match` expression landed, and
 `PROJECT.md`'s "Current frontier" bullet needs refreshing to note the
 pattern-matching-beyond-destructuring arc has begun — leave both to the
 Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `nth_prime` — the k-th prime number by position
+
+Build: the breadth task restocking the backlog back to 6 tasks now that
+`is_hexagonal` landed via PR #298, per `PROJECT.md`'s breadth-vs-depth
+policy (task 5 above is this pass's depth task; alternation resumes with
+breadth here). `is_prime`/`is_composite`/`is_semiprime`
+(`cinder/builtins.py`) all test membership in various prime-adjacent
+categories, and `prime_factors` lists an integer's own factors, but
+nothing in Cinder answers the complementary "which prime" question:
+given a 1-indexed position, what prime is found there. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_prime(1));'
+# -> CinderRuntimeError: undefined name 'nth_prime'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_prime` (search
+`def _is_prime`, immediately before `_is_composite`):
+```python
+def _nth_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_prime", arguments, 1, line, column)
+    value = _require_int("nth_prime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_prime() requires a positive integer, domain error", line, column
+        )
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        is_prime = True
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                is_prime = False
+                break
+        if is_prime:
+            count += 1
+    return candidate
+```
+This mirrors `_is_circular_prime`'s own locally-scoped trial-division
+style (search `def _is_circular_prime`) — a plain nested loop, not a
+call out to `_is_prime` itself — rather than reusing `_is_prime`
+directly, since `_is_prime` takes the CLI-facing `(arguments, line,
+column)` shape, not a plain `int -> bool` one; every other builtin that
+needs a bare primality check inline already makes this same choice.
+`1`-indexed like ordinal position is described everywhere else in the
+language, so `nth_prime(1) = 2` (no `0`th prime). A domain error (not a
+count of `false`) for `value < 1` matches `collatz_length`'s own
+convention for its own "not a valid input" case, since this is a
+value-returning function, not a predicate — there is no sensible prime
+to return for position `0` or a negative position, unlike the
+figurate-number predicates' "closed domain, just answer false"
+convention. Also register the new dict entry (search `"is_prime":
+_is_prime,`, add `"nth_prime": _nth_prime,` directly after it).
+
+Acceptance criteria:
+- `nth_prime(1);` is `2`, `nth_prime(2);` is `3`, `nth_prime(3);` is `5`,
+  `nth_prime(4);` is `7`, `nth_prime(5);` is `11` — the first five
+  primes by position.
+- `nth_prime(10);` is `29`.
+- `nth_prime(100);` is `541` — confirms the check holds well beyond
+  small brute-forced cases.
+- `nth_prime(0);` and `nth_prime(-3);` both raise `CinderRuntimeError`
+  matching `"nth_prime() requires a positive integer, domain error"`.
+- `nth_prime(2.0);` raises `CinderRuntimeError` matching `"nth_prime()
+  requires an int, got float"`.
+- `nth_prime(true);` raises `CinderRuntimeError` matching `"nth_prime()
+  requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_prime`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestIsPrime`, search that
+name, for the arity/type-error test shapes — the domain-error test
+shape instead mirrors `class TestCollatzLength`, search that name,
+since `nth_prime` raises rather than returning `false` for an invalid
+position). Once merged, `README.md`'s Builtins bullet needs `nth_prime`
+added near `is_prime`/`prime_factors`, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
 
 ---
 

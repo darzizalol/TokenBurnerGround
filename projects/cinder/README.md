@@ -325,6 +325,7 @@ while (i < 10) {
   `is_sad_number` to test the direct complement of `is_happy_number` (cycles forever instead of reaching `1`),
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_pentagonal` to test pentagonal-number membership via the same closed-form technique plus a modular-residue check,
+  `is_hexagonal` as the cluster's third member, testing hexagonal-number membership via the same closed-form technique,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -464,25 +465,22 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a map pattern nested
-inside a list pattern (`let [a, {b, c}] = [...]`) — closing one of the
-last two remaining corners of the destructuring-nesting matrix, and
-before that `is_subsequence` — the third member of the two-string
-predicate cluster alongside `is_rotation`/`is_anagram`, testing whether
-one string's characters all appear in another in the same relative
-order without needing to be contiguous, and before that multiple `for`
-clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
-— cartesian-product iteration with a clause-chained `for`, matching
-Python's own multi-clause comprehension semantics. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_hexagonal` — the
-third figurate-number membership predicate after
-`is_triangular`/`is_pentagonal`, testing membership in the hexagonal
-numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique, a
-list pattern nested inside a map pattern (`let {a, b: [c, d]} = {...}`)
-— the mirror image of the map-in-list task that just landed, closing
-the last remaining corner of the destructuring-nesting matrix,
-`is_heptagonal` — the fourth figurate-number membership predicate after
+Actively developed, nightly. Recently landed: `is_hexagonal` — the third
+figurate-number membership predicate after `is_triangular`/
+`is_pentagonal`, testing membership in the hexagonal numbers `1, 6, 15,
+28, 45, ...` via the same closed-form technique, and before that a map
+pattern nested inside a list pattern (`let [a, {b, c}] = [...]`) —
+closing one of the last two remaining corners of the
+destructuring-nesting matrix, and before that `is_subsequence` — the
+third member of the two-string predicate cluster alongside
+`is_rotation`/`is_anagram`, testing whether one string's characters all
+appear in another in the same relative order without needing to be
+contiguous. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
+history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a list pattern
+nested inside a map pattern (`let {a, b: [c, d]} = {...}`) — the mirror
+image of the map-in-list task that just landed, closing the last
+remaining corner of the destructuring-nesting matrix, `is_heptagonal` —
+the fourth figurate-number membership predicate after
 `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership in
 the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same closed-form
 technique, a step component for range expressions (`start..end..step`,
@@ -491,11 +489,13 @@ today's implicit step of `1` means a descending bound like `10..0`
 silently produces an empty list, with no way to skip elements or count
 down either, `collatz_max` — the peak value `collatz_length`'s Collatz
 (3n+1) recurrence reaches before collapsing to `1`, the value-returning
-sibling of `collatz_length`'s step count, and a `match` expression with
+sibling of `collatz_length`'s step count, a `match` expression with
 literal patterns and a `_` wildcard (`match (n) { 1 => "one", _ =>
 "other" }`) — the value-producing counterpart to `switch`, and the
 opening move in a new depth arc (pattern matching beyond destructuring)
-now that the destructuring-nesting matrix is nearly closed. The backlog
-mixes language depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+now that the destructuring-nesting matrix is nearly closed, and
+`nth_prime` — the complementary "which prime" question to
+`is_prime`/`prime_factors`, returning the prime found at a 1-indexed
+position (`nth_prime(1)` is `2`). The backlog mixes language depth with
+stdlib breadth over time rather than running either in one long block.
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

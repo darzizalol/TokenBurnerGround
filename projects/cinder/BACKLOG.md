@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
+## 1. Language: a map pattern nested inside a list pattern (`let [a, {b, c}] = [1, {"b": 2, "c": 3}];`)
 
 Build: the depth task after task 5's breadth work (`is_subsequence`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -152,14 +152,14 @@ nested_rest, True)` shape), `tests/test_interpreter.py` (remove
 `TestDestructureNestedListPattern`, add a new `class
 TestDestructureMapPatternNestedInList` mirroring
 `TestDestructureNestedListPattern`'s own style, placed near it). Once
-merged, `README.md`'s destructuring bullet, its "Status & roadmap"
-section, and `PROJECT.md`'s roadmap paragraph all need updating to note
-this landed — leave all three to the Architect's next grooming pass, not
-this task.
+merged, `README.md`'s destructuring bullet and its "Status & roadmap"
+section need updating to note this landed, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
+## 2. Standard library: `is_hexagonal` — the third figurate-number membership predicate after `is_triangular`/`is_pentagonal`
 
 Build: the breadth task after task 5's depth work (a map pattern nested
 inside a list pattern) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -239,13 +239,13 @@ current line numbers — shift if earlier tasks this cycle land first),
 `tests/test_builtins.py` (model on `class TestIsPentagonal`, search that
 name). Once merged, `README.md`'s Builtins bullet needs `is_hexagonal`
 added near `is_triangular`/`is_pentagonal`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s roadmap paragraph needs this
-moved from backlog to landed — leave all three to the Architect's next
-grooming pass, not this task.
+section needs updating, and `PROJECT.md`'s "Current frontier" bullet
+needs refreshing — leave both to the Architect's next grooming pass, not
+this task.
 
 ---
 
-## 4. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
+## 3. Language: a list pattern nested inside a map pattern (`let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};`)
 
 Build: the depth task after task 5's breadth work (`is_hexagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -363,14 +363,14 @@ test, confirming a `let`-form nested list pattern parses into the
 `TestDestructureNestedMapPattern`, add a new `class
 TestDestructureListPatternNestedInMap` mirroring
 `TestDestructureMapPatternNestedInList`'s own style, placed near it). Once
-merged, `README.md`'s destructuring bullet, its "Status & roadmap"
-section, and `PROJECT.md`'s roadmap paragraph all need updating to note
-this landed — leave all three to the Architect's next grooming pass, not
-this task.
+merged, `README.md`'s destructuring bullet and its "Status & roadmap"
+section need updating to note this landed, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
+## 4. Standard library: `is_heptagonal` — the fourth figurate-number membership predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`
 
 Build: the breadth task after task 5's depth work (a list pattern nested
 inside a map pattern) per `PROJECT.md`'s breadth-vs-depth policy,
@@ -448,17 +448,17 @@ Acceptance criteria:
 Likely files: `cinder/builtins.py` (register near `is_hexagonal`, see
 current line numbers — shift if earlier tasks this cycle land first),
 `tests/test_builtins.py` (model on `class TestIsHexagonal`, search that
-name — falls back to `class TestIsPentagonal` if task 4 above hasn't
+name — falls back to `class TestIsPentagonal` if task 2 above hasn't
 landed yet in whatever order tasks are claimed). Once merged,
 `README.md`'s Builtins bullet needs `is_heptagonal` added near
 `is_triangular`/`is_pentagonal`/`is_hexagonal`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s roadmap paragraph needs this
-moved from backlog to landed — leave all three to the Architect's next
+section needs updating, and `PROJECT.md`'s "Current frontier" bullet
+needs refreshing — leave both to the Architect's next
 grooming pass, not this task.
 
 ---
 
-## 6. Language: a step component for range expressions (`start..end..step`, `start..=end..step`)
+## 5. Language: a step component for range expressions (`start..end..step`, `start..=end..step`)
 
 Build: the depth task after task 5's breadth work (`is_heptagonal`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6
@@ -613,9 +613,88 @@ neighbors around `TestRange`-style range-parsing tests), `tests/test_interpreter
 (extend `class TestRange`, search that name, for the `range()` builtin's
 new third argument). Once merged, `README.md`'s "Coming up next" bullet
 in "Status & roadmap" and its ranges mention in the Features list need
-updating, and `PROJECT.md`'s roadmap paragraph needs this moved from
-backlog to landed — leave all three to the Architect's next grooming
-pass, not this task.
+updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
+## 6. Standard library: `collatz_max` — the peak value reached by the Collatz (3n+1) recurrence
+
+Build: the breadth task after task 5's depth work (a step component for
+range expressions) per `PROJECT.md`'s breadth-vs-depth policy,
+restocking the backlog back to 6 tasks now that `is_subsequence` has
+landed via PR #296, dropping the count to the 5-task floor.
+`collatz_length` (`cinder/builtins.py`) already counts how many steps
+the Collatz recurrence takes to reach `1` from a positive integer, but
+discards every intermediate value along the way; `collatz_max` is its
+natural value-returning sibling, reporting the highest value the
+sequence reaches before it collapses to `1` — the same
+"count-vs-collect/track" split `divisors`/`num_divisors` already have
+between them (`divisors` collects, `num_divisors` counts; here
+`collatz_length` counts steps, `collatz_max` tracks the peak). Verify
+the gap:
+```sh
+python3 -m cinder.cli eval 'print(collatz_max(6));'
+# -> CinderRuntimeError: undefined name 'collatz_max'
+```
+
+Add to `cinder/builtins.py`, registered right after `_collatz_length`
+(search `def _collatz_length`, immediately before `_is_triangular`):
+```python
+def _collatz_max(arguments: list, line: int, column: int) -> object:
+    _require_arity("collatz_max", arguments, 1, line, column)
+    value = _require_int("collatz_max", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "collatz_max() requires a positive integer, domain error", line, column
+        )
+    peak = value
+    n = value
+    while n != 1:
+        n = n // 2 if n % 2 == 0 else 3 * n + 1
+        if n > peak:
+            peak = n
+    return peak
+```
+This mirrors `_collatz_length`'s exact loop shape (same halve-if-even,
+`3n + 1`-if-odd step, same `n < 1` domain-error convention — Collatz is
+only defined for positive integers, so this raises rather than
+answering `false` the way the closed-form membership predicates do,
+matching `collatz_length`'s own choice) but tracks a running maximum
+instead of a step count. `peak` starts at `value` itself so an input
+already at its own maximum (including `n = 1`, whose sequence is just
+`[1]`) still returns correctly with no special-casing. Also register
+the new dict entry (search `"collatz_length": _collatz_length,`, add
+`"collatz_max": _collatz_max,` directly after it).
+
+Acceptance criteria:
+- `collatz_max(1);` is `1` — the sequence is just `[1]`, already at its
+  own peak.
+- `collatz_max(6);` is `16` (sequence `6, 3, 10, 5, 16, 8, 4, 2, 1`).
+- `collatz_max(7);` is `52` (sequence `7, 22, 11, 34, 17, 52, 26, 13,
+  40, 20, 10, 5, 16, 8, 4, 2, 1`).
+- `collatz_max(27);` is `9232` — the classic large-peak example,
+  confirming the check holds well beyond small brute-forced cases.
+- `collatz_max(0);` and `collatz_max(-5);` both raise
+  `CinderRuntimeError` matching `"collatz_max() requires a positive
+  integer, domain error"`.
+- `collatz_max(6.0);` raises `CinderRuntimeError` matching
+  `"collatz_max() requires an int, got float"`.
+- `collatz_max(true);` raises `CinderRuntimeError` matching
+  `"collatz_max() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `collatz_length`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestCollatzLength`, search
+that name). Once merged, `README.md`'s Builtins bullet needs
+`collatz_max` added right after its `collatz_length` mention, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
 
 ---
 

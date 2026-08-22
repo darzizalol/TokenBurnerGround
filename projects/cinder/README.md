@@ -360,6 +360,8 @@ while (i < 10) {
   `additive_persistence` as its digit-summing sibling, counting how many repeated digit-sum steps reduce an integer to a single digit,
   `is_anagram` to test whether two strings share the same character multiset,
   `is_rotation` to test whether one string is a rotation of another via the doubled-string trick,
+  `is_subsequence` to test whether one string's characters all appear in another in the same
+  relative order without needing to be contiguous,
   `is_permutation` as its list-oriented sibling,
   `is_palindrome_list` to test whether a list reads the same forwards and backwards,
   `is_pangram` to test whether a string contains every letter of the alphabet at least once,
@@ -462,38 +464,37 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: multiple `for` clauses in
-list/map comprehensions (`[x + y for x in xs for y in ys]`) —
-cartesian-product iteration with a clause-chained `for`, matching
-Python's own multi-clause comprehension semantics, and before that
-`is_lucas_number` — the Lucas-sequence sibling of `is_fibonacci` (same
-recurrence, seeded `2, 1` instead of `0, 1`), tested by
-generate-and-compare rather than a closed form since Lucas numbers lack
-`is_fibonacci`'s clean perfect-square identity, and before that nested
-map-in-map destructuring patterns (`let {a, b: {c, d}} = {...}`) — the
-deferred other half of the nested list-in-list destructuring task,
-giving map patterns the same nesting support list patterns already
-have.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_subsequence` —
-testing whether one string's characters all appear in another in the
-same relative order without needing to be contiguous, the third member
-of the two-string predicate cluster alongside `is_rotation`/`is_anagram`,
-a map pattern nested inside a list pattern (`let [a, {b, c}] =
-[...]`) — the mirror image of the nested map-in-map task,
-`is_hexagonal` — the third figurate-number membership predicate after
-`is_triangular`/`is_pentagonal`, testing membership in the hexagonal
-numbers `1, 6, 15, 28, 45, ...` via the same closed-form technique, a
-list pattern nested inside a map pattern (`let {a, b: [c, d]} =
-{...}`) — the mirror image of the map-in-list task, closing the last
-remaining corner of the destructuring-nesting matrix, `is_heptagonal` —
-the fourth figurate-number membership predicate after
-`is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership in
-the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same closed-form
-technique, and a step component for range expressions (`start..end..step`,
-`start..=end..step`) — closing the one dimension ranges have never had:
-today's implicit step of `1` means a descending bound like `10..0`
-silently produces an empty list, with no way to skip elements or count
-down either.
+Actively developed, nightly. Recently landed: `is_subsequence` — the
+third member of the two-string predicate cluster alongside
+`is_rotation`/`is_anagram`, testing whether one string's characters all
+appear in another in the same relative order without needing to be
+contiguous, and before that multiple `for` clauses in list/map
+comprehensions (`[x + y for x in xs for y in ys]`) — cartesian-product
+iteration with a clause-chained `for`, matching Python's own
+multi-clause comprehension semantics, and before that `is_lucas_number`
+— the Lucas-sequence sibling of `is_fibonacci` (same recurrence, seeded
+`2, 1` instead of `0, 1`), tested by generate-and-compare rather than a
+closed form since Lucas numbers lack `is_fibonacci`'s clean
+perfect-square identity. See [`CHANGELOG.md`](CHANGELOG.md) for the
+full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a map pattern nested
+inside a list pattern (`let [a, {b, c}] = [...]`) — the mirror image of
+the nested map-in-map task, `is_hexagonal` — the third figurate-number
+membership predicate after `is_triangular`/`is_pentagonal`, testing
+membership in the hexagonal numbers `1, 6, 15, 28, 45, ...` via the
+same closed-form technique, a list pattern nested inside a map pattern
+(`let {a, b: [c, d]} = {...}`) — the mirror image of the map-in-list
+task, closing the last remaining corner of the destructuring-nesting
+matrix, `is_heptagonal` — the fourth figurate-number membership
+predicate after `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing
+membership in the heptagonal numbers `1, 7, 18, 34, 55, ...` via the
+same closed-form technique, a step component for range expressions
+(`start..end..step`, `start..=end..step`) — closing the one dimension
+ranges have never had: today's implicit step of `1` means a descending
+bound like `10..0` silently produces an empty list, with no way to skip
+elements or count down either, and `collatz_max` — the peak value
+`collatz_length`'s Collatz (3n+1) recurrence reaches before collapsing
+to `1`, the value-returning sibling of `collatz_length`'s step count.
 The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The
 full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

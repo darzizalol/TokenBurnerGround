@@ -533,7 +533,12 @@ class Interpreter:
                     line,
                     column,
                 )
-            if isinstance(binding, tuple):
+            if isinstance(binding, tuple) and len(binding) == 3:
+                nested_names, nested_rest, _ = binding
+                self._bind_list_destructure(
+                    env, nested_names, nested_rest, item, line, column, use_assign
+                )
+            elif isinstance(binding, tuple):
                 nested_names, nested_rest = binding
                 self._bind_map_destructure(
                     env, nested_names, nested_rest, item, line, column, use_assign

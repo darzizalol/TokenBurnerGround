@@ -2615,6 +2615,17 @@ class TestStatements(unittest.TestCase):
         )
         self.assertIsNone(stmt.rest)
 
+    def test_destructure_let_map_nested_list_pattern_parses(self):
+        stmt = parse_stmts('let {a, b: [c, d]} = {"a": 1, "b": [2, 3]};')[0]
+        self.assertEqual(
+            stmt.names,
+            [
+                ("a", "a", None),
+                ("b", ([("c", None), ("d", None)], None, True), None),
+            ],
+        )
+        self.assertIsNone(stmt.rest)
+
     def test_destructure_let_missing_equals_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("let [a, b] [1, 2];")

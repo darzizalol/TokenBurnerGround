@@ -355,6 +355,9 @@ class Parser:
             if self._check(TokenType.LBRACE):
                 nested_names, nested_rest = self._destructure_map_pattern()
                 binding = (nested_names, nested_rest)
+            elif self._check(TokenType.LBRACKET):
+                nested_names, nested_rest = self._destructure_list_pattern()
+                binding = (nested_names, nested_rest, True)
             else:
                 binding = self._consume(
                     TokenType.IDENTIFIER, "identifier in destructuring pattern"
@@ -578,6 +581,15 @@ class Parser:
                     rest = self._destructure_rest_name()
                 else:
                     names.append(self._destructure_map_pattern_entry())
+            for _, binding, _ in names:
+                if isinstance(binding, tuple) and len(binding) == 3:
+                    # A list pattern nested inside a map pattern has no
+                    # plain-assignment reading (only `let`/`for`/fn params/
+                    # comprehensions support it) — fall through to `_block()`
+                    # exactly as before this shape existed.
+                    raise ParseError(
+                        "invalid assignment target", self._peek().line, self._peek().column
+                    )
             self._consume(TokenType.RBRACE, "'}' after destructuring pattern")
             eq_token = self._consume(TokenType.EQ, "'=' after destructuring pattern")
         except _RestNotLast as violation:

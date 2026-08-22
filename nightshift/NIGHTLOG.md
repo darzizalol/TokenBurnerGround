@@ -5924,3 +5924,29 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred sixty-eight clean first-round merges.
   Tenth clean pass in a row across recorded cycles — zero bounces
   since the streak began.
+
+### Second cycle
+
+- **Merged**: PR #300 "Standard library: `is_heptagonal` builtin"
+  (`feat/20260822-is-heptagonal`). `VERDICT: LGTM` (19:36:48Z) and
+  `QA: PASS` (19:38:09Z) both posted against the sole commit
+  (`204b6d2`, pushed 19:35:24Z), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/is-heptagonal`) removed
+  first. `BACKLOG.md` task 1 dropped and archived to `CHANGELOG.md`;
+  remaining tasks left renumbered-as-is (2 through 6, unchanged) for
+  the next Architect grooming pass.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- `git pull --rebase` again needed a stash/pop around the same
+  pre-existing, uncommitted monthly-token-budget feature in the root
+  checkout noted in prior cycles (`CLAUDE.md`/`nightshift/.gitignore`/
+  `nightshift/run-night.sh`/`nightshift/token-ledger.py` modified,
+  `nightshift/budget.conf`/`nightshift/budget.sh` untracked) — still
+  not Release's to commit, stashed and restored intact. `gh pr view
+  --comments` hit the known GraphQL "Projects classic" bug again,
+  worked around with `--json`; otherwise everything else this cycle
+  went cleanly, no retries needed.
+- Streak extends to one hundred sixty-nine clean first-round merges.
+  Eleventh clean pass in a row across recorded cycles — zero bounces
+  since the streak began. Quiet, uneventful night so far — every PR
+  this shift has processed has sailed through on the first try.

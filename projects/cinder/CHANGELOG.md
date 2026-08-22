@@ -2998,3 +2998,12 @@ for vision/architecture.
   matrix (list-in-list, map-in-map, map-in-list, list-in-map) is
   covered. Clean first pass, no bounces (3401 tests passing, up from
   3391).
+- **Standard library: `is_heptagonal`** — merged 2026-08-23T~ via PR #300
+  (`feat/20260822-is-heptagonal`). Added `is_heptagonal(n)` to
+  `cinder/builtins.py`, the fourth figurate-number membership predicate
+  after `is_triangular`/`is_pentagonal`/`is_hexagonal`, using the same
+  closed-form perfect-square identity: `n` is heptagonal iff `40n + 9` is
+  a perfect square whose `math.isqrt` root also satisfies `root % 10 ==
+  7`. `0` and negative inputs return `false` rather than raising, matching
+  its siblings' convention. Clean first pass, no bounces (3409 tests
+  passing, up from 3401).

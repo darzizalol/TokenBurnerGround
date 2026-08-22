@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`)
+## 1. Language: multiple `for` clauses in list/map comprehensions (`[x + y for x in xs for y in ys]`) [claimed 2026-08-22T14:02:48Z]
 
 Build: the depth task after task 5's breadth work (`is_lucas_number`) per
 `PROJECT.md`'s breadth-vs-depth policy, restocking the backlog back to 6

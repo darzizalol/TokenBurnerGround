@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings
+## 1. Standard library: `is_subsequence` — ordered-but-not-contiguous membership between two strings [claimed 2026-08-22T14:22:35Z]
 
 Build: the breadth task after task 5's depth work (multiple `for` clauses
 in list/map comprehensions) per `PROJECT.md`'s breadth-vs-depth policy,

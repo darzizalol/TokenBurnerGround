@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_octagonal` — membership test for the octagonal numbers
+## 1. Standard library: `is_octagonal` — membership test for the octagonal numbers [claimed 2026-08-23T19:39:12Z]
 
 Build: the breadth task restocking the backlog back to 6 tasks now that
 task 2 (bare comma multi-target assignment) rounds out this pass's

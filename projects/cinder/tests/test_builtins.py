@@ -2759,6 +2759,55 @@ class TestIsHeptagonal(unittest.TestCase):
             run("is_heptagonal(1, 2);")
 
 
+class TestIsOctagonal(unittest.TestCase):
+    def test_is_octagonal_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_octagonal(0);").get("result"), False)
+
+    def test_is_octagonal_of_members(self):
+        for value in (1, 8, 21, 40, 65, 96):
+            self.assertEqual(
+                run(f"let result = is_octagonal({value});").get("result"),
+                True,
+                f"expected {value} to be an octagonal number",
+            )
+
+    def test_is_octagonal_of_non_members(self):
+        for value in (2, 5, 9, 20, 50, 100):
+            self.assertEqual(
+                run(f"let result = is_octagonal({value});").get("result"),
+                False,
+                f"expected {value} to not be an octagonal number",
+            )
+
+    def test_is_octagonal_negative_input_is_false(self):
+        self.assertEqual(
+            run("let result = is_octagonal(-8);").get("result"), False
+        )
+
+    def test_is_octagonal_of_large_octagonal_number(self):
+        self.assertEqual(
+            run("let result = is_octagonal(29800);").get("result"), True
+        )
+
+    def test_is_octagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_octagonal(8.0);")
+        self.assertIn(
+            "is_octagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_octagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_octagonal(true);")
+        self.assertIn(
+            "is_octagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_octagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_octagonal(1, 2);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

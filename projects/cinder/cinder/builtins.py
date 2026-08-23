@@ -1433,6 +1433,17 @@ def _is_heptagonal(arguments: list, line: int, column: int) -> object:
     return root * root == candidate and root % 10 == 7
 
 
+def _is_octagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_octagonal", arguments, 1, line, column)
+    value = _require_int("is_octagonal", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 3 * value + 1
+    root = math.isqrt(candidate)
+    return root * root == candidate and (1 + root) % 3 == 0
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -3907,6 +3918,7 @@ _BUILTINS = {
     "is_pentagonal": _is_pentagonal,
     "is_hexagonal": _is_hexagonal,
     "is_heptagonal": _is_heptagonal,
+    "is_octagonal": _is_octagonal,
     "is_prime": _is_prime,
     "nth_prime": _nth_prime,
     "is_composite": _is_composite,

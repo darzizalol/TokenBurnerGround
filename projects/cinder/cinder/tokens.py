@@ -38,6 +38,7 @@ class TokenType(Enum):
     CATCH = auto()
     FINALLY = auto()
     SWITCH = auto()
+    MATCH = auto()
     CASE = auto()
     DEFAULT = auto()
     TRUE = auto()
@@ -125,6 +126,7 @@ KEYWORDS = {
     "catch": TokenType.CATCH,
     "finally": TokenType.FINALLY,
     "switch": TokenType.SWITCH,
+    "match": TokenType.MATCH,
     "case": TokenType.CASE,
     "default": TokenType.DEFAULT,
     "true": TokenType.TRUE,

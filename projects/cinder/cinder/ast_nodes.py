@@ -285,6 +285,33 @@ class Ternary:
 
 
 @dataclass(frozen=True)
+class MatchArm:
+    """`pattern` is `None` for the `_` wildcard (matches unconditionally,
+    evaluating no expression); otherwise a `Literal` node compared against
+    the match subject via `values_equal`, the same helper `SwitchStmt`
+    case-matching already uses."""
+
+    pattern: "Expr | None"
+    body: "Expr"
+
+
+@dataclass(frozen=True)
+class MatchExpr:
+    """`match (subject) { pattern => body, ..., _ => body }`. `subject` is
+    evaluated exactly once; `arms` are tried in source order via
+    `values_equal` and the first match's `body` is evaluated and returned
+    (no fallthrough, short-circuits on first match same as `SwitchStmt`).
+    If no arm matches (including no `_` wildcard arm present), raises
+    `CinderRuntimeError` — unlike `switch`'s `default`, there is no silent
+    no-op: `match` is an expression and must produce a value or fail."""
+
+    subject: "Expr"
+    arms: list
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class InterpString:
     """`"...${expr}..."` — `parts` interleaves literal `str` segments with
     parsed sub-expressions in source order (an all-`str` list never occurs;

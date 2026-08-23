@@ -143,6 +143,8 @@ from cinder.ast_nodes import (
     Logical,
     MapComprehension,
     MapLiteral,
+    MatchArm,
+    MatchExpr,
     OptionalCall,
     OptionalIndex,
     Param,
@@ -1053,6 +1055,50 @@ class Parser:
         self._consume(TokenType.RBRACE, "'}' after switch body")
         return SwitchStmt(scrutinee, cases, default, switch_token.line, switch_token.column)
 
+    def _match_expr(self) -> Expr:
+        match_token = self._advance()  # consume 'match'
+        self._consume(TokenType.LPAREN, "'(' after 'match'")
+        subject = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after match subject")
+        self._consume(TokenType.LBRACE, "'{' after match subject")
+        arms = [self._match_arm()]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            if self._check(TokenType.RBRACE):
+                break
+            arms.append(self._match_arm())
+        self._consume(TokenType.RBRACE, "'}' after match arms")
+        return MatchExpr(subject, arms, match_token.line, match_token.column)
+
+    def _match_arm(self) -> MatchArm:
+        pattern = self._match_pattern()
+        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+        body = self._ternary()
+        return MatchArm(pattern, body)
+
+    def _match_pattern(self) -> "Expr | None":
+        token = self._peek()
+        if token.type == TokenType.IDENTIFIER and token.lexeme == "_":
+            self._advance()
+            return None
+        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
+            self._advance()
+            return Literal(token.literal, token.line, token.column)
+        if token.type == TokenType.TRUE:
+            self._advance()
+            return Literal(True, token.line, token.column)
+        if token.type == TokenType.FALSE:
+            self._advance()
+            return Literal(False, token.line, token.column)
+        if token.type == TokenType.NIL:
+            self._advance()
+            return Literal(None, token.line, token.column)
+        raise ParseError(
+            f"expected a literal or '_' in match pattern, found {self._describe(token)}",
+            token.line,
+            token.column,
+        )
+
     def _expr_statement(self) -> Stmt:
         first = self._assignment()
         statements = [ExprStmt(first)]
@@ -1502,6 +1548,8 @@ class Parser:
             return self._map_literal()
         if token.type == TokenType.FN:
             return self._fn_expression()
+        if token.type == TokenType.MATCH:
+            return self._match_expr()
 
         raise ParseError(
             f"expected an expression, found {self._describe(token)}",

@@ -334,6 +334,8 @@ class TestKeywords(unittest.TestCase):
             "and": TokenType.AND,
             "or": TokenType.OR,
             "not": TokenType.NOT,
+            "switch": TokenType.SWITCH,
+            "match": TokenType.MATCH,
         }
         for word, expected_type in keywords.items():
             with self.subTest(word=word):

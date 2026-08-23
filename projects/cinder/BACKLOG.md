@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_lucas` — the k-th Lucas number by position
+## 1. Standard library: `nth_lucas` — the k-th Lucas number by position [claimed 2026-08-23T20:05:13Z]
 
 Build: restocking the backlog back to 6 tasks now that a `match`
 expression with literal patterns and a `_` wildcard landed via PR #304,

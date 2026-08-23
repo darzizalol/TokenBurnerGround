@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_prime` — the k-th prime number by position
+## 1. Standard library: `nth_prime` — the k-th prime number by position [claimed 2026-08-23T14:51:09Z]
 
 Build: the breadth task after a `match` expression with literal patterns
 and a `_` wildcard (PR #304) per `PROJECT.md`'s

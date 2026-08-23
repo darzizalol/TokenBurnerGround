@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: a `match` expression with literal patterns and a `_` wildcard
+## 1. Language: a `match` expression with literal patterns and a `_` wildcard [claimed 2026-08-23T14:34:44Z]
 
 Build: the depth task after `collatz_max` (PR #303) per
 `PROJECT.md`'s breadth-vs-depth policy. This is a new arc, not another

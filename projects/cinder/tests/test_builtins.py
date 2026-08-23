@@ -5203,6 +5203,63 @@ class TestFactorial(unittest.TestCase):
             run("factorial(5, 6);")
 
 
+class TestBinomial(unittest.TestCase):
+    def test_binomial_of_five_choose_two(self):
+        self.assertEqual(run("let result = binomial(5, 2);").get("result"), 10)
+
+    def test_binomial_choose_zero(self):
+        self.assertEqual(run("let result = binomial(5, 0);").get("result"), 1)
+
+    def test_binomial_choose_all(self):
+        self.assertEqual(run("let result = binomial(5, 5);").get("result"), 1)
+
+    def test_binomial_of_zero_choose_zero(self):
+        self.assertEqual(run("let result = binomial(0, 0);").get("result"), 1)
+
+    def test_binomial_of_ten_choose_three(self):
+        self.assertEqual(run("let result = binomial(10, 3);").get("result"), 120)
+
+    def test_binomial_of_thirty_choose_fifteen(self):
+        self.assertEqual(
+            run("let result = binomial(30, 15);").get("result"), 155117520
+        )
+
+    def test_binomial_choosing_more_than_available_is_zero(self):
+        self.assertEqual(run("let result = binomial(5, 8);").get("result"), 0)
+
+    def test_binomial_of_negative_first_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "binomial\\(\\) requires non-negative n and k, domain error",
+        ):
+            run("binomial(-1, 2);")
+
+    def test_binomial_of_negative_second_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "binomial\\(\\) requires non-negative n and k, domain error",
+        ):
+            run("binomial(5, -1);")
+
+    def test_binomial_of_float_first_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "binomial\\(\\) requires an int as its first argument, got float",
+        ):
+            run("binomial(5.0, 2);")
+
+    def test_binomial_of_bool_second_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "binomial\\(\\) requires an int as its second argument, got bool",
+        ):
+            run("binomial(5, true);")
+
+    def test_binomial_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("binomial(5);")
+
+
 class TestSum(unittest.TestCase):
     def test_sum_of_ints_is_int(self):
         result = run("let result = sum([1, 2, 3]);").get("result")

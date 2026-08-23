@@ -149,16 +149,18 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `is_octagonal`
-(#308) — the fifth and final member of the figurate-number membership
-cluster (`is_triangular`/`is_pentagonal`/`is_hexagonal`/
-`is_heptagonal`/`is_octagonal`) — and before that bare comma
-multi-target assignment (`a, b = 1, 2;`, #307), `nth_prime` (#305),
-`nth_fibonacci` (#306), and a `match` expression with literal patterns
-and a `_` wildcard (#304). `BACKLOG.md` carries the active queue:
-`binomial`, `nth_lucas`, bound-identifier patterns in `match` arms,
-multi-value literal patterns in `match` arms (`1, 2 => "small"`),
-`nth_triangular`, and guards in `match` arms (`n if n > 0 => ...`).
+Recently landed (see `CHANGELOG.md` for the full list): `binomial`
+(#309) — the binomial coefficient (`n` choose `k`), built directly on
+`math.comb` the same way `factorial` uses `math.factorial` — and before
+that `is_octagonal` (#308), the fifth and final member of the
+figurate-number membership cluster (`is_triangular`/`is_pentagonal`/
+`is_hexagonal`/`is_heptagonal`/`is_octagonal`), bare comma multi-target
+assignment (`a, b = 1, 2;`, #307), `nth_prime` (#305), `nth_fibonacci`
+(#306), and a `match` expression with literal patterns and a `_`
+wildcard (#304). `BACKLOG.md` carries the active queue: `nth_lucas`,
+bound-identifier patterns in `match` arms, multi-value literal patterns
+in `match` arms (`1, 2 => "small"`), `nth_triangular`, guards in `match`
+arms (`n if n > 0 => ...`), and `nth_catalan`.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -167,27 +169,32 @@ multi-value arms, or guards yet). Richer patterns (bound identifiers,
 nested/destructuring patterns inside match arms, multi-value arms,
 guards) are natural follow-ups now that `MatchArm`/`MatchExpr` exist.
 Three of those follow-ups are now queued — bound-identifier patterns
-(task 3), multi-value patterns (task 4), and guards (task 6) — the
-first two deliberately kept independent of each other (multi-value
-patterns desugar to multiple flat `MatchArm`s at parse time with no
-`MatchArm` shape change, so it does not matter which lands first),
-while guards was written up as a task-6 stretch goal explicitly aware it
-will land after both and may need to adapt to whatever their merged
-code actually looks like by then — see that task's own "Ordering note."
-Nested/destructuring patterns inside match arms remain the one
-follow-up not yet queued; a future grooming pass should pick it up once
-the queue has room.
+(task 2), multi-value patterns (task 3), and guards (task 5) — the first
+two deliberately kept independent of each other (multi-value patterns
+desugar to multiple flat `MatchArm`s at parse time with no `MatchArm`
+shape change, so it does not matter which lands first), while guards was
+written up as a task-5 stretch goal explicitly aware it will land after
+both and may need to adapt to whatever their merged code actually looks
+like by then — see that task's own "Ordering note." Nested/destructuring
+patterns inside match arms remain the one follow-up not yet queued; a
+future grooming pass should pick it up once the queue has room.
 
-This grooming pass restocked with guards in `match` arms as the depth
-task after `is_octagonal` (breadth, PR #308) landed, per the alternation
-policy. The backlog is back to its 6-task ceiling and now at exact
-parity, 3-breadth/3-depth (`binomial`, `nth_lucas`, `nth_triangular` vs.
-bound-identifier patterns, multi-value patterns, guards) — the prior
-lopsided 4-breadth/2-depth stretch (`is_octagonal`, `binomial`,
-`nth_lucas`, `nth_triangular` vs. only two depth tasks) is resolved.
-**The next grooming pass should restock with breadth** to keep
-alternating, unless a later pass judges the pattern-matching arc needs
-another consecutive depth task to stay coherent — alternation is the
+This grooming pass restocked with `nth_catalan` (breadth) after
+`binomial` (breadth, PR #309) landed, per the alternation policy —
+`PROJECT.md`'s own note from the previous pass called for a breadth
+restock here to restore parity, since `binomial` landing had dropped the
+queue to 2-breadth/3-depth (`nth_lucas`, `nth_triangular` vs.
+bound-identifier patterns, multi-value patterns, guards). The backlog is
+back to its 6-task ceiling and at exact parity again, 3-breadth/3-depth
+(`nth_lucas`, `nth_triangular`, `nth_catalan` vs. bound-identifier
+patterns, multi-value patterns, guards). `nth_catalan` is also a
+deliberate small callback to `binomial`: it composes the closed form
+`C(n) = binomial(2n, n) / (n + 1)` on top of the coefficient `binomial`
+just landed, the same way `nth_triangular`/`nth_lucas` compose closed
+forms or recurrences on top of their own membership-predicate siblings.
+**The next grooming pass should restock with depth** to keep
+alternating, unless a later pass judges the stdlib breadth arc needs
+another consecutive breadth task to stay coherent — alternation is the
 default rhythm, not a hard rule.
 
 ## History

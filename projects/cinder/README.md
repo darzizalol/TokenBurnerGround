@@ -111,7 +111,10 @@ while (i < 10) {
   accepts an optional trailing comma before its closing `]`/`}`
   (`let [a, b,] = expr;`, `let {a, b,} = expr;`), matching the trailing
   comma already accepted in list/map literals, call arguments, and
-  function parameter lists
+  function parameter lists; bare comma multi-target assignment
+  (`a, b = 1, 2;`, the unbracketed sibling of `[a, b] = expr;`, same flat
+  positional binding, no brackets required — including the swap idiom
+  `a, b = b, a;`)
 - **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   maps (over keys), and range literals (`a..b`, sugar over the existing
@@ -321,6 +324,8 @@ while (i < 10) {
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
   `nth_prime` to return the prime found at a 1-indexed position, the complementary "which prime" question to `is_prime`/`prime_factors`,
+  `nth_fibonacci` to return the Fibonacci number found at a 1-indexed position, the value-returning sibling of `is_fibonacci`'s membership test,
+  `binomial` to compute the binomial coefficient (`n` choose `k`), the combinatorics question built on top of `factorial`,
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
   `is_powerful_number` to test whether every prime factor of an integer appears with exponent `2` or more,
@@ -479,8 +484,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_octagonal` — the
-fifth and final figurate-number membership predicate, rounding out the
+Actively developed, nightly. Recently landed: `binomial` — the binomial
+coefficient (`n` choose `k`), the combinatorics question built on top of
+`factorial` — and before that `is_octagonal` — the fifth and final
+figurate-number membership predicate, rounding out the
 `is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster —
 and before that bare comma multi-target assignment (`a, b = 1, 2;`, the
 swap idiom `a, b = b, a;`) — the unbracketed sibling of the existing
@@ -497,21 +504,22 @@ counterpart to `switch`, and the opening move in a new depth arc
 (pattern matching beyond destructuring) now that the destructuring-nesting
 matrix is fully closed. See [`CHANGELOG.md`](CHANGELOG.md) for the full
 merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`binomial` — the binomial coefficient (`n` choose `k`), the
-combinatorics question built on top of `factorial`, `nth_lucas` — the
-same "which position" question as `nth_fibonacci`, but for the Lucas
-sequence, the value-returning sibling of `is_lucas_number`'s membership
-test, bound-identifier patterns in `match` arms (`match (5) { 0 =>
-"zero", n => n + 1 }`) — letting an unconditional arm also capture the
-subject's value under a name, multi-value literal patterns in `match`
-arms (`match (2) { 1, 2 => "small", _ => "large" }`) — letting one arm
-answer for several literal values without repeating the body,
-`nth_triangular` — the same "which position" question again, but for
-triangular numbers, answered by an exact closed form rather than an
-iterated recurrence, and guards in `match` arms (`match (n) { n if n > 0
-=> "positive", _ => "other" }`) — an extra condition on an arm, checked
-only once its pattern already matches. The bound-identifier and
-multi-value tasks are independent steps in the pattern-matching arc
+`nth_lucas` — the same "which position" question as `nth_fibonacci`, but
+for the Lucas sequence, the value-returning sibling of
+`is_lucas_number`'s membership test, bound-identifier patterns in
+`match` arms (`match (5) { 0 => "zero", n => n + 1 }`) — letting an
+unconditional arm also capture the subject's value under a name,
+multi-value literal patterns in `match` arms (`match (2) { 1, 2 =>
+"small", _ => "large" }`) — letting one arm answer for several literal
+values without repeating the body, `nth_triangular` — the same "which
+position" question again, but for triangular numbers, answered by an
+exact closed form rather than an iterated recurrence, guards in `match`
+arms (`match (n) { n if n > 0 => "positive", _ => "other" }`) — an extra
+condition on an arm, checked only once its pattern already matches, and
+`nth_catalan` — the k-th Catalan number by position, a thin composition
+of `binomial` (`C(n) = binomial(2n, n) / (n + 1)`) and the natural next
+combinatorics builtin now that `binomial` exists. The bound-identifier
+and multi-value tasks are independent steps in the pattern-matching arc
 opened by PR #304 and can land in either order; guards is a third,
 queued behind both. The backlog mixes language depth with stdlib
 breadth over time rather than running either in one long block. The

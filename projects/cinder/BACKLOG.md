@@ -27,10 +27,10 @@ python3 -m cinder.cli eval 'print(nth_lucas(5));'
 # -> <eval>:1:7: undefined name 'nth_lucas'
 ```
 
-Add to `cinder/builtins.py`, registered right after `_is_lucas_number`
-(search `def _is_lucas_number`, immediately before `_is_happy_number` —
-if task 1 has landed first, `_nth_fibonacci` will sit between them;
-register `_nth_lucas` after whichever of the two is currently last):
+Add to `cinder/builtins.py`, registered right after `_nth_fibonacci`
+(search `def _nth_fibonacci`, which itself sits directly after
+`_is_lucas_number` and immediately before `_is_happy_number` — register
+`_nth_lucas` between `_nth_fibonacci` and `_is_happy_number`):
 ```python
 def _nth_lucas(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_lucas", arguments, 1, line, column)
@@ -61,7 +61,7 @@ verified directly in the acceptance criteria below. A domain error (not
 a sentinel value) for `value < 1` matches `nth_prime`/`nth_fibonacci`'s
 own convention for their own "not a valid input" case, since this is a
 value-returning function, not a predicate. Also register the new dict
-entry (search `"is_lucas_number": _is_lucas_number,`, add `"nth_lucas":
+entry (search `"nth_fibonacci": _nth_fibonacci,`, add `"nth_lucas":
 _nth_lucas,` directly after it).
 
 Acceptance criteria:
@@ -274,7 +274,7 @@ keeps that ratio from drifting further). PR #304's `match` expression
 scoped its patterns down to a single literal (or `_`) per arm;
 `tests/test_parser.py`'s own `test_match_multi_value_arm_raises` (search
 that name) already documents today's behavior as a `ParseError`, sitting
-right next to `test_match_bound_identifier_pattern_raises` (task 5's own
+right next to `test_match_bound_identifier_pattern_raises` (task 2's own
 gap-marker) — these two tests were left side by side flagging sibling
 gaps, and this task closes the second one. Every pattern-matching
 language this feature is modeled on (Rust's `1 | 2 => ...`, Python's
@@ -409,11 +409,10 @@ python3 -m cinder.cli eval 'print(nth_triangular(5));'
 # -> <eval>:1:7: undefined name 'nth_triangular'
 ```
 
-Add to `cinder/builtins.py`, registered right after `_is_heptagonal`
-(search `def _is_heptagonal`, immediately before `_is_prime` — if task 1
-above (`is_octagonal`) has landed first, `_is_octagonal` will sit
-between them; register `_nth_triangular` after whichever of the two is
-currently last):
+Add to `cinder/builtins.py`, registered right after `_is_octagonal`
+(search `def _is_octagonal`, which itself sits directly after
+`_is_heptagonal` and immediately before `_is_prime` — register
+`_nth_triangular` between `_is_octagonal` and `_is_prime`):
 ```python
 def _nth_triangular(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_triangular", arguments, 1, line, column)
@@ -443,10 +442,9 @@ builtin's shared "position `1` is the first positive term" convention —
 verified directly in the acceptance criteria below. A domain error (not
 a sentinel value) for `value < 1` matches `nth_prime`/`nth_fibonacci`/
 `nth_lucas`'s own convention for their own "not a valid position" case.
-Also register the new dict entry (search `"is_heptagonal":
-_is_heptagonal,`, add `"nth_triangular": _nth_triangular,` directly
-after it — or after `"is_octagonal": _is_octagonal,` if task 1 has
-already landed).
+Also register the new dict entry (search `"is_octagonal":
+_is_octagonal,`, add `"nth_triangular": _nth_triangular,` directly
+after it).
 
 Acceptance criteria:
 - `nth_triangular(1);` is `1`, `nth_triangular(2);` is `3`,
@@ -490,11 +488,11 @@ to the Architect's next grooming pass, not this task.
 Build: restocking the backlog back to 6 tasks now that `is_octagonal`
 landed via PR #308, per `PROJECT.md`'s breadth-vs-depth policy
 (`is_octagonal` was breadth; alternation restocks with depth here — the
-queue was 3-breadth/2-depth after task 5 (`nth_triangular`) was added,
+queue was 3-breadth/2-depth after task 4 (`nth_triangular`) was added,
 so this depth restock brings it to 3-breadth/3-depth, exact parity).
 The pattern-matching arc opened by PR #304 already has two more depth
-tasks queued ahead of this one (task 3, bound-identifier patterns, and
-task 4, multi-value literal patterns) — guards are the third natural
+tasks queued ahead of this one (task 2, bound-identifier patterns, and
+task 3, multi-value literal patterns) — guards are the third natural
 follow-up `PROJECT.md`'s "Current frontier" note calls out
 (nested/destructuring patterns are the remaining one, left for a future
 pass). A guard is an extra boolean condition on an arm, evaluated only
@@ -508,23 +506,24 @@ python3 -m cinder.cli eval 'let x = 5; print(match (0) { 0 if x > 3 => "big-zero
 # -> <eval>:1:32: expected '=>' after match pattern, found 'if'
 ```
 
-**Ordering note:** this is task 6, behind tasks 1-5 above, so by the
-time it is claimed, tasks 3 (bound-identifier patterns) and 4
+**Ordering note:** this is task 5, behind tasks 1-4 above, so by the
+time it is claimed, tasks 2 (bound-identifier patterns) and 3
 (multi-value literal patterns) will most likely have already landed and
 changed the exact shape of `MatchArm`, `_match_pattern`, and
-`_match_arm` shown below — task 5 faced the same kind of uncertainty
-about task 1 landing first and resolved it by adapting to whatever the
-merged code actually looked like; do the same here. The code below is
-grounded in **today's** actual code (verified by reading
+`_match_arm` shown below — task 4 (`nth_triangular`) faced the same kind
+of ordering uncertainty about whether `is_octagonal` would land first
+and resolved it by adapting to whatever the merged code actually looked
+like; do the same here. The code below is grounded in **today's** actual
+code (verified by reading
 `cinder/ast_nodes.py`/`cinder/parser.py`/`cinder/interpreter.py`
 directly) so the *principle* is exact even if the exact diff has
 shifted: parse an optional `if <expr>` immediately after the pattern
-(and after any binding, if task 3 landed) and before the `=>`; store it
+(and after any binding, if task 2 landed) and before the `=>`; store it
 as one more field on `MatchArm`; at eval time, only treat the arm as
 matching if the pattern already matched (or is a wildcard) **and** the
 guard (if present) evaluates truthy — a false guard falls through to
 the next arm exactly as a non-matching pattern would, it does not raise
-or stop the search. If task 3 landed first and introduced a
+or stop the search. If task 2 landed first and introduced a
 per-arm child scope for the bound identifier, evaluate the guard in
 that same child scope (so the guard can see the binding), not the outer
 `env` — mirror whatever scope `arm.body` itself is evaluated in.
@@ -547,7 +546,7 @@ class MatchArm:
     body: "Expr"
     guard: "Expr | None" = None
 ```
-(If task 3 already added a `binding: "str | None" = None` field, add
+(If task 2 already added a `binding: "str | None" = None` field, add
 `guard` as a new trailing field after it instead, and fold the guard
 sentence above into that field's own docstring paragraph rather than
 replacing it.)
@@ -569,7 +568,7 @@ _match_arm`):
 condition parsed with `self._ternary()` — by `_comprehension_clause`
 (search `def _comprehension_clause`, the `if self._check(TokenType.IF)`
 block), so this mirrors an existing, working pattern in this same
-parser rather than inventing new lookahead machinery. If task 4 (which
+parser rather than inventing new lookahead machinery. If task 3 (which
 turns `_match_arm` into a comma-collecting, multi-pattern-returning
 method) landed first, parse the `if <expr>` once, after the whole
 comma-separated pattern list and before `=>`, and apply the same
@@ -619,7 +618,7 @@ Acceptance criteria:
   short-circuit order (pattern first, guard second) is load-bearing, not
   incidental.
 - `match (7) { n if n > 100 => "huge", n if n > 3 => "medium" };` raising
-  or matching correctly is **not** in scope unless task 3 has already
+  or matching correctly is **not** in scope unless task 2 has already
   landed (bound-identifier patterns) — if it has not, write this
   acceptance case instead against literal patterns only, e.g. `match (7)
   { 7 if false => "a", 7 if true => "b" };` is `"b"`, two guarded arms
@@ -631,7 +630,7 @@ Acceptance criteria:
   TestMatchExpression` (search that name, in both
   `tests/test_parser.py` and this file's own new tests) updated to match
   the new field count — including a `None` for every arm that has no
-  guard, exactly as task 3's own note about adding a trailing `None` for
+  guard, exactly as task 2's own note about adding a trailing `None` for
   `binding` describes for that field.
 - Full test suite passes.
 
@@ -645,6 +644,91 @@ that name, with the guard end-to-end cases above). Once merged,
 its "Status & roadmap" section needs updating, and `PROJECT.md`'s
 "Current frontier" bullet needs refreshing — leave both to the
 Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `nth_catalan` — the k-th Catalan number by position
+
+Build: restocking the backlog back to 6 tasks now that `binomial` landed
+via PR #309, per `PROJECT.md`'s breadth-vs-depth policy (`binomial` was
+breadth; alternation restocks with breadth again here — landing
+`binomial` dropped the queue to 2-breadth/3-depth (`nth_lucas`,
+`nth_triangular` vs. tasks 2, 3, 5 above), and `PROJECT.md`'s own
+"Current frontier" note from the previous grooming pass explicitly said
+the next pass should restock with breadth to restore parity). The
+Catalan numbers are the natural next combinatorics builtin now that
+`binomial` exists: `C(n) = binomial(2n, n) / (n + 1)`, and nothing in
+Cinder can compute them yet. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_catalan(5));'
+# -> <eval>:1:7: undefined name 'nth_catalan'
+```
+
+Add to `cinder/builtins.py`, registered right after `_binomial` (search
+`def _binomial`, immediately before `_sum`):
+```python
+def _nth_catalan(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_catalan", arguments, 1, line, column)
+    value = _require_int("nth_catalan", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_catalan() requires a positive integer, domain error", line, column
+        )
+    index = value - 1
+    return math.comb(2 * index, index) // (index + 1)
+```
+Mind the indexing subtlety this shares with `nth_triangular`/`nth_lucas`:
+the standard mathematical definition is 0-indexed (`C(0) = 1, C(1) = 1,
+C(2) = 2, ...`), but every `nth_*` builtin in this cluster
+(`nth_fibonacci`, `nth_prime`, `nth_lucas`, `nth_triangular`) treats
+position `1` as the first term of the sequence, not position `0` — so
+`nth_catalan(1)` must return `C(0) = 1` (the sequence's first term under
+this convention), `nth_catalan(2)` must return `C(1) = 1` (the second
+term, also `1` — Catalan numbers happen to repeat once at the start),
+and so on, with `index = value - 1` doing the conversion from Cinder's
+1-indexed position to the closed form's 0-indexed `n`. Getting this
+wrong (using `value` directly as `n` instead of `value - 1`) would
+silently shift every result by one position relative to the sequence's
+well-known values — verified directly in the acceptance criteria below.
+`math.comb`, not a hand-rolled loop, matches `_binomial`'s own
+implementation choice (search `def _binomial`) — this builtin is a thin
+composition of the same primitive, not a new algorithm. A domain error
+(not a sentinel value) for `value < 1` matches every other `nth_*`
+builtin's own convention for their own "not a valid position" case.
+Also register the new dict entry (search `"binomial": _binomial,`, add
+`"nth_catalan": _nth_catalan,` directly after it).
+
+Acceptance criteria:
+- `nth_catalan(1);` is `1`, `nth_catalan(2);` is `1`, `nth_catalan(3);`
+  is `2`, `nth_catalan(4);` is `5`, `nth_catalan(5);` is `14`,
+  `nth_catalan(6);` is `42` — the first six Catalan numbers by this
+  cluster's 1-indexed convention (note positions 1 and 2 are both `1`,
+  which is correct — the sequence itself repeats there, not an
+  off-by-one bug).
+- `nth_catalan(10);` is `4862`.
+- `nth_catalan(15);` is `2674440` — confirms the closed form holds well
+  beyond small brute-forced cases.
+- `nth_catalan(0);` and `nth_catalan(-3);` both raise
+  `CinderRuntimeError` matching `"nth_catalan() requires a positive
+  integer, domain error"`.
+- `nth_catalan(2.0);` raises `CinderRuntimeError` matching
+  `"nth_catalan() requires an int, got float"`.
+- `nth_catalan(true);` raises `CinderRuntimeError` matching
+  `"nth_catalan() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `binomial`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (model on `class TestBinomial` and `class
+TestNthFibonacci`, search those names, for both the sequence-value test
+shapes and the arity/type-error test shapes — the domain-error test
+shape mirrors `class TestNthFibonacci`'s own zero/negative cases). Once
+merged, `README.md`'s Builtins bullet needs `nth_catalan` added near
+`binomial`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
 
 ---
 

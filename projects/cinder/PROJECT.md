@@ -151,11 +151,11 @@ bring the count back to 6.
 
 Recently landed (see `CHANGELOG.md` for the full list): a map pattern
 nested inside a list pattern (#297), `is_hexagonal` (#298), a list
-pattern nested inside a map pattern (#299), and `is_heptagonal` (#300).
-`BACKLOG.md` carries the active queue: a step component for range
-expressions, `collatz_max`, a `match` expression with literal patterns
-and a `_` wildcard, `nth_prime`, `nth_fibonacci`, and bare comma
-multi-target assignment (`a, b = 1, 2;`).
+pattern nested inside a map pattern (#299), `is_heptagonal` (#300), and
+a step component for range expressions (#301). `BACKLOG.md` carries the
+active queue: `collatz_max`, a `match` expression with literal patterns
+and a `_` wildcard, `nth_prime`, `nth_fibonacci`, bare comma
+multi-target assignment (`a, b = 1, 2;`), and `is_octagonal`.
 
 With PR #299 landing, destructuring patterns now support arbitrary
 composition of list- and map-shaped nesting in any order — every corner

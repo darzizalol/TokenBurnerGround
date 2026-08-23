@@ -120,7 +120,10 @@ while (i < 10) {
   `b`, matching `range()`'s own two-argument semantics, plus an inclusive
   spelling `a..=b` for loops that must include their upper bound, e.g.
   `for i in 1..=5 { ... }` to cover `1` through `5` without the
-  easy-to-get-wrong `1..6`), plus
+  easy-to-get-wrong `1..6`), an optional step component on either
+  spelling (`a..b..step`, `a..=b..step`, mirroring `range()`'s own
+  three-argument form, e.g. `for i in 10..0..-2 { ... }` counts down by
+  `2`; a step of `0` raises `CinderRuntimeError`), plus
   list-destructuring loop variables
   (`for [k, v] in items(m) { ... }`, same flat positional binding and
   optional trailing rest element as `let` list destructuring) and
@@ -328,6 +331,7 @@ while (i < 10) {
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_pentagonal` to test pentagonal-number membership via the same closed-form technique plus a modular-residue check,
   `is_hexagonal` as the cluster's third member, testing hexagonal-number membership via the same closed-form technique,
+  `is_heptagonal` as the cluster's fourth member, testing heptagonal-number membership via the same closed-form technique,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -467,36 +471,34 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_heptagonal` — the
-fourth figurate-number membership predicate after
-`is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership in
-the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same closed-form
-technique, and before that a list pattern nested inside a map pattern
-(`let {a, b: [c, d]} = {...}`) — the mirror image of the map-in-list
-task before it, closing the last remaining corner of the
-destructuring-nesting matrix (list-in-list, map-in-map, map-in-list,
-and list-in-map are all supported, in any combination). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): a step component for range
-expressions (`start..end..step`, `start..=end..step`) — closing the one
-dimension ranges have never had: today's implicit step of `1` means a
-descending bound like `10..0` silently produces an empty list, with no
-way to skip elements or count down either, `collatz_max` — the peak
-value `collatz_length`'s Collatz (3n+1) recurrence reaches before
-collapsing to `1`, the value-returning sibling of `collatz_length`'s
-step count, a `match` expression with literal patterns and a `_`
-wildcard (`match (n) { 1 => "one", _ => "other" }`) — the
-value-producing counterpart to `switch`, and the opening move in a new
-depth arc (pattern matching beyond destructuring) now that the
-destructuring-nesting matrix is fully closed, `nth_prime` — the
-complementary "which prime" question to `is_prime`/`prime_factors`,
-returning the prime found at a 1-indexed position (`nth_prime(1)` is
-`2`), `nth_fibonacci` — the same "which position" question for the
-Fibonacci sequence, the value-returning sibling of `is_fibonacci`'s
-membership test, and bare comma multi-target assignment (`a, b = 1, 2;`,
-the swap idiom `a, b = b, a;`) — the unbracketed sibling of the existing
-`[a, b] = expr;` list-destructuring assignment, closing a real gap where
-the bare form today silently misparses as unrelated statements instead
-of raising or working. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: a step component for
+range expressions (`start..end..step`, `start..=end..step`) — closing
+the one dimension ranges never had: today's implicit step of `1` used
+to mean a descending bound like `10..0` silently produced an empty
+list, with no way to skip elements or count down either — and before
+that `is_heptagonal`, the fourth figurate-number membership predicate
+after `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership
+in the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same
+closed-form technique. See [`CHANGELOG.md`](CHANGELOG.md) for the full
+merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`collatz_max` — the peak value `collatz_length`'s Collatz (3n+1)
+recurrence reaches before collapsing to `1`, the value-returning
+sibling of `collatz_length`'s step count, a `match` expression with
+literal patterns and a `_` wildcard (`match (n) { 1 => "one", _ =>
+"other" }`) — the value-producing counterpart to `switch`, and the
+opening move in a new depth arc (pattern matching beyond destructuring)
+now that the destructuring-nesting matrix is fully closed, `nth_prime`
+— the complementary "which prime" question to `is_prime`/
+`prime_factors`, returning the prime found at a 1-indexed position
+(`nth_prime(1)` is `2`), `nth_fibonacci` — the same "which position"
+question for the Fibonacci sequence, the value-returning sibling of
+`is_fibonacci`'s membership test, bare comma multi-target assignment
+(`a, b = 1, 2;`, the swap idiom `a, b = b, a;`) — the unbracketed
+sibling of the existing `[a, b] = expr;` list-destructuring assignment,
+closing a real gap where the bare form today silently misparses as
+unrelated statements instead of raising or working, and `is_octagonal`
+— the fifth figurate-number membership predicate, rounding out the
+`is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster.
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

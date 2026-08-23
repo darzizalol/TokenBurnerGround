@@ -4730,5 +4730,55 @@ class TestSwitchStatement(unittest.TestCase):
         self.assertEqual(results, ["matched", "matched"])
 
 
+class TestMatchExpression(unittest.TestCase):
+    def test_first_matching_arm_wins(self):
+        env = run('let result = match (2) { 1 => "one", 2 => "two", _ => "other" };')
+        self.assertEqual(env.get("result"), "two")
+
+    def test_no_specific_match_runs_wildcard(self):
+        env = run('let result = match (5) { 1 => "one", 2 => "two", _ => "other" };')
+        self.assertEqual(env.get("result"), "other")
+
+    def test_usable_as_let_initializer(self):
+        env = run("let x = match (true) { false => 0, true => 1 };")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_string_patterns(self):
+        env = run('let result = match ("b") { "a" => 1, "b" => 2, "c" => 3 };')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_float_pattern_does_not_spuriously_match_int(self):
+        env = run(
+            'let result = match (1.5) { 1 => "int one", '
+            '1.5 => "float one-half", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "float one-half")
+
+    def test_nil_pattern(self):
+        env = run('let result = match (nil) { nil => "nothing", _ => "something" };')
+        self.assertEqual(env.get("result"), "nothing")
+
+    def test_no_arm_matched_and_no_wildcard_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('match (3) { 1 => "one", 2 => "two" };')
+
+    def test_arrow_functions_unaffected_by_wildcard_handling(self):
+        env = run("let double = x => x * 2; let result = double(5);")
+        self.assertEqual(env.get("result"), 10)
+
+    def test_bare_underscore_identifier_still_works(self):
+        env = run("let _ = 5;")
+        self.assertEqual(env.get("_"), 5)
+
+    def test_subject_evaluated_exactly_once(self):
+        env = run(
+            "let calls = 0; "
+            "fn subject() { calls = calls + 1; return 2; } "
+            'let result = match (subject()) { 1 => "one", 2 => "two", _ => "other" };'
+        )
+        self.assertEqual(env.get("calls"), 1)
+        self.assertEqual(env.get("result"), "two")
+
+
 if __name__ == "__main__":
     unittest.main()

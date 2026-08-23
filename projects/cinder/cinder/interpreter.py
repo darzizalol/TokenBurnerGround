@@ -80,6 +80,7 @@ from cinder.ast_nodes import (
     Logical,
     MapComprehension,
     MapLiteral,
+    MatchExpr,
     OptionalCall,
     OptionalIndex,
     RangeExpr,
@@ -238,6 +239,8 @@ class Interpreter:
             return self._evaluate_logical(expr, env)
         if isinstance(expr, Ternary):
             return self._evaluate_ternary(expr, env)
+        if isinstance(expr, MatchExpr):
+            return self._evaluate_match(expr, env)
         if isinstance(expr, Binary):
             return self._evaluate_binary(expr, env)
         if isinstance(expr, ChainedComparison):
@@ -1114,6 +1117,13 @@ class Interpreter:
         if is_truthy(condition):
             return self.evaluate(expr.then_expr, env)
         return self.evaluate(expr.else_expr, env)
+
+    def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
+        subject = self.evaluate(expr.subject, env)
+        for arm in expr.arms:
+            if arm.pattern is None or values_equal(subject, self.evaluate(arm.pattern, env)):
+                return self.evaluate(arm.body, env)
+        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
 
     def _evaluate_binary(self, expr: Binary, env: Environment) -> object:
         left = self.evaluate(expr.left, env)

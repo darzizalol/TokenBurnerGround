@@ -35,6 +35,7 @@ from cinder.ast_nodes import (
     Logical,
     MapComprehension,
     MapLiteral,
+    MatchExpr,
     OptionalCall,
     OptionalIndex,
     RangeExpr,
@@ -189,6 +190,15 @@ def shape(node):
             shape(node.condition),
             shape(node.then_expr),
             shape(node.else_expr),
+        )
+    if isinstance(node, MatchExpr):
+        return (
+            "MatchExpr",
+            shape(node.subject),
+            [
+                (shape(arm.pattern) if arm.pattern is not None else None, shape(arm.body))
+                for arm in node.arms
+            ],
         )
     if isinstance(node, FnExpr):
         return ("FnExpr", params_shape(node.params), node.rest_param, stmt_shape(node.body), node.name)
@@ -4377,6 +4387,76 @@ class TestSwitchStatement(unittest.TestCase):
     def test_break_inside_switch_inside_loop_is_valid(self):
         stmts = parse_stmts("while (true) { switch (1) { case 1: { break; } } }")
         self.assertEqual(len(stmts), 1)
+
+
+class TestMatchExpression(unittest.TestCase):
+    def test_match_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { 1 => "one", 2 => "two", _ => "other" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (("Literal", 1), ("Literal", "one")),
+                    (("Literal", 2), ("Literal", "two")),
+                    (None, ("Literal", "other")),
+                ],
+            ),
+        )
+
+    def test_match_literal_patterns(self):
+        self.assertEqual(
+            shape(parse("match (1) { true => 1, false => 2, nil => 3, 1.5 => 4 }")),
+            (
+                "MatchExpr",
+                ("Literal", 1),
+                [
+                    (("Literal", True), ("Literal", 1)),
+                    (("Literal", False), ("Literal", 2)),
+                    (("Literal", None), ("Literal", 3)),
+                    (("Literal", 1.5), ("Literal", 4)),
+                ],
+            ),
+        )
+
+    def test_match_usable_as_let_initializer(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("let x = match (true) { false => 0, true => 1 };")[0]),
+            (
+                "LetStmt",
+                "x",
+                (
+                    "MatchExpr",
+                    ("Literal", True),
+                    [
+                        (("Literal", False), ("Literal", 0)),
+                        (("Literal", True), ("Literal", 1)),
+                    ],
+                ),
+            ),
+        )
+
+    def test_match_without_paren_raises(self):
+        with self.assertRaises(ParseError):
+            parse('match x { 1 => "one" }')
+
+    def test_match_bound_identifier_pattern_raises(self):
+        with self.assertRaises(ParseError):
+            parse("match (1) { x => 1, _ => 2 }")
+
+    def test_match_multi_value_arm_raises(self):
+        with self.assertRaises(ParseError):
+            parse('match (1) { 1, 2 => "one or two", _ => "other" }')
+
+    def test_match_empty_body_raises(self):
+        with self.assertRaises(ParseError):
+            parse("match (1) { }")
+
+    def test_bare_underscore_identifier_still_works(self):
+        self.assertEqual(
+            stmt_shape(parse_stmts("let _ = 5;")[0]),
+            ("LetStmt", "_", ("Literal", 5)),
+        )
 
 
 if __name__ == "__main__":

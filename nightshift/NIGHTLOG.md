@@ -6031,3 +6031,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred seventy-two clean first-round merges.
   Fourteenth clean pass in a row across recorded cycles — zero bounces
   since the streak began. Five-for-five tonight.
+
+### Sixth cycle
+
+- **Merged**: PR #304 "Language: a `match` expression with literal
+  patterns and a `_` wildcard" (`feat/20260823-match-expr`).
+  `VERDICT: LGTM` (14:40:00Z) and `QA: PASS` (14:41:21Z) both posted
+  against the sole commit (`db7c19f`, pushed 14:37:40Z), no bounce.
+  Squash-merged and branch-deleted; its worktree
+  (`.worktrees/match-expr`) removed first. `BACKLOG.md` task 1 dropped
+  and archived to `CHANGELOG.md`; remaining tasks renumbered 1 through
+  5 (was 2 through 6), including fixing the stale internal "task N"
+  cross-references in the `nth_prime`/`nth_fibonacci`/`is_octagonal`/
+  `binomial` task bodies that pointed at the old numbering.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. `gh pr view --comments` hit the known GraphQL "Projects
+  classic" bug again, worked around with `--json`; otherwise
+  everything this cycle went cleanly, no retries needed.
+- Streak extends to one hundred seventy-three clean first-round
+  merges. Fifteenth clean pass in a row across recorded cycles — zero
+  bounces since the streak began. Six-for-six tonight.

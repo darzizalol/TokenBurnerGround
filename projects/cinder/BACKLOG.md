@@ -11,228 +11,10 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: a `match` expression with literal patterns and a `_` wildcard [claimed 2026-08-23T14:34:44Z]
+## 1. Standard library: `nth_prime` — the k-th prime number by position
 
-Build: the depth task after `collatz_max` (PR #303) per
-`PROJECT.md`'s breadth-vs-depth policy. This is a new arc, not another
-destructuring-nesting corner: with a list pattern nested inside a map
-pattern landing via PR #299, every corner of the list/map pattern
-nesting matrix is closed, and
-`PROJECT.md`'s "Current frontier" section already names "pattern matching
-beyond destructuring, e.g. a `match` expression" as the natural next
-depth direction. This task is a deliberately small first step into that
-arc: literal patterns only (`int`/`float`/`string`/`true`/`false`/`nil`)
-plus a `_` wildcard, one pattern per arm, no guards, no bindings, no
-nested/destructuring patterns — those are all natural follow-ups once
-this lands, not this task's job. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match (2) { 1 => "one", 2 => "two", _ => "other" });'
-# -> <eval>:1:7: expected an expression, found 'match'
-```
-
-`switch` (`cinder/parser.py`'s `_switch_statement`, `cinder/ast_nodes.py`'s
-`SwitchStmt`/`SwitchCase`, `cinder/interpreter.py`'s `_execute_switch`) is
-the closest existing feature — a value tried against `case` values via the
-`values_equal` helper (search `def values_equal`, `cinder/interpreter.py`)
-already used for exactly this — but it's a *statement* whose case bodies
-are blocks, so it cannot be used as a value (`let x = switch (n) { ... };`
-is a `ParseError` today, and stays one — out of scope to change). `match`
-is the value-producing counterpart: an *expression*, parsed in `_primary`
-alongside `_list_literal`/`_map_literal`, whose arm bodies are single
-expressions (reusing `values_equal` for the same match semantics `switch`
-already has, so `1 == 1.0`-style cross-type equality behaves identically
-in both).
-
-Add a `MATCH` token (search `SWITCH = auto()`, `cinder/tokens.py`, add
-`MATCH = auto()` right after it) and register the keyword (search
-`"switch": TokenType.SWITCH,`, add `"match": TokenType.MATCH,` right
-after it). Reuse the existing `FAT_ARROW` (`=>`) token for arm bodies —
-it already exists for arrow-function literals (search `FAT_ARROW`,
-`cinder/parser.py`) and needs no new lexer work.
-
-Add two AST nodes (search `class Ternary`, `cinder/ast_nodes.py`, add
-both right after it):
-```python
-@dataclass(frozen=True)
-class MatchArm:
-    """`pattern` is `None` for the `_` wildcard (matches unconditionally,
-    evaluating no expression); otherwise a `Literal` node compared against
-    the match subject via `values_equal`, the same helper `SwitchStmt`
-    case-matching already uses."""
-
-    pattern: "Expr | None"
-    body: "Expr"
-
-
-@dataclass(frozen=True)
-class MatchExpr:
-    """`match (subject) { pattern => body, ..., _ => body }`. `subject` is
-    evaluated exactly once; `arms` are tried in source order via
-    `values_equal` and the first match's `body` is evaluated and returned
-    (no fallthrough, short-circuits on first match same as `SwitchStmt`).
-    If no arm matches (including no `_` wildcard arm present), raises
-    `CinderRuntimeError` — unlike `switch`'s `default`, there is no silent
-    no-op: `match` is an expression and must produce a value or fail."""
-
-    subject: "Expr"
-    arms: list
-    line: int
-    column: int
-```
-
-Add parsing in `_primary` (search `def _primary`, `cinder/parser.py`,
-add right after the `TokenType.FN` branch):
-```python
-        if token.type == TokenType.MATCH:
-            return self._match_expr()
-```
-Then the three new parse methods (place near `_switch_statement`):
-```python
-    def _match_expr(self) -> Expr:
-        match_token = self._advance()  # consume 'match'
-        self._consume(TokenType.LPAREN, "'(' after 'match'")
-        subject = self._assignment()
-        self._consume(TokenType.RPAREN, "')' after match subject")
-        self._consume(TokenType.LBRACE, "'{' after match subject")
-        arms = [self._match_arm()]
-        while self._check(TokenType.COMMA):
-            self._advance()
-            if self._check(TokenType.RBRACE):
-                break
-            arms.append(self._match_arm())
-        self._consume(TokenType.RBRACE, "'}' after match arms")
-        return MatchExpr(subject, arms, match_token.line, match_token.column)
-
-    def _match_arm(self) -> MatchArm:
-        pattern = self._match_pattern()
-        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-        body = self._ternary()
-        return MatchArm(pattern, body)
-
-    def _match_pattern(self) -> "Expr | None":
-        token = self._peek()
-        if token.type == TokenType.IDENTIFIER and token.lexeme == "_":
-            self._advance()
-            return None
-        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
-            self._advance()
-            return Literal(token.literal, token.line, token.column)
-        if token.type == TokenType.TRUE:
-            self._advance()
-            return Literal(True, token.line, token.column)
-        if token.type == TokenType.FALSE:
-            self._advance()
-            return Literal(False, token.line, token.column)
-        if token.type == TokenType.NIL:
-            self._advance()
-            return Literal(None, token.line, token.column)
-        raise ParseError(
-            f"expected a literal or '_' in match pattern, found {self._describe(token)}",
-            token.line,
-            token.column,
-        )
-```
-The arm body is parsed at `_ternary()` precedence — the same tier
-`_map_pair`'s value and `_list_literal`'s elements already use — so a
-bare `,` at that precedence still ends the arm, keeping the comma-
-separated arm list unambiguous with no lookahead tricks needed. Each arm
-carries exactly one pattern (no `1, 2 => ...` multi-value arms, unlike
-`switch`'s `case v1, v2:`) — out of scope for this task, precisely
-because arms are themselves comma-separated here (`switch` avoids that
-ambiguity by having no arm separator at all, relying on the `case`/
-`default` keyword to end a block-bodied case); adding multi-pattern arms
-later needs a different separator (e.g. `|`) to stay unambiguous, a
-natural follow-up.
-
-`_match_pattern` special-cases a lone `_` identifier *before* falling
-through to any general expression parsing, and deliberately does not
-call `_primary`/`_ternary` at all for patterns (constructing `Literal`
-nodes directly instead) — this sidesteps a real collision: `_primary`'s
-existing single-identifier-arrow-function sugar (search `if self._peek_next().type == TokenType.FAT_ARROW`,
-right after the `TokenType.IDENTIFIER` branch) means any bare identifier
-immediately followed by `=>` parses as a `FnExpr`, so `_ => body` parsed
-through the general expression grammar would silently become an arrow
-function *value* used as a pattern (always failing to match, never
-raising) instead of the wildcard. Checking for `_` directly, before ever
-touching `_primary`, avoids this entirely; every other identifier in
-pattern position (not just `_`) correctly stays a `ParseError` from
-`_match_pattern`'s final `raise` branch, since only literals and `_` are
-valid patterns in this first version.
-
-Add evaluation in `evaluate` (search `if isinstance(expr, Ternary):`,
-`cinder/interpreter.py`, add right after its `return` line):
-```python
-        if isinstance(expr, MatchExpr):
-            return self._evaluate_match(expr, env)
-```
-Then the evaluator itself (place near `_evaluate_ternary`):
-```python
-    def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
-        subject = self.evaluate(expr.subject, env)
-        for arm in expr.arms:
-            if arm.pattern is None or values_equal(subject, self.evaluate(arm.pattern, env)):
-                return self.evaluate(arm.body, env)
-        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
-```
-
-Acceptance criteria:
-- `print(match (2) { 1 => "one", 2 => "two", _ => "other" });` prints
-  `"two"`.
-- `print(match (5) { 1 => "one", 2 => "two", _ => "other" });` prints
-  `"other"` — the wildcard arm.
-- `let x = match (true) { false => 0, true => 1 };` then `print(x);`
-  prints `1` — usable as a value in a `let` initializer, confirming this
-  is an expression, not a statement.
-- `print(match ("b") { "a" => 1, "b" => 2, "c" => 3 });` prints `2` —
-  string patterns.
-- `print(match (1.5) { 1 => "int one", 1.5 => "float one-half", _ => "other" });`
-  prints `"float one-half"` — float patterns, and confirms `1` (int) does
-  not spuriously match `1.5` (float).
-- `print(match (nil) { nil => "nothing", _ => "something" });` prints
-  `"nothing"` — `nil` as a pattern.
-- `print(match (3) { 1 => "one", 2 => "two" });` raises
-  `CinderRuntimeError` matching `"no match arm matched value"` — no `_`
-  wildcard present and no arm matched.
-- `let double = x => x * 2; print(double(5));` prints `10` — ordinary
-  arrow functions are unaffected by the new `_match_pattern` wildcard
-  handling, since it only ever runs inside a `match` arm's pattern
-  position.
-- `let _ = 5; print(_);` prints `5` — a bare `_` as an ordinary
-  identifier (outside match-pattern position) is still valid and
-  unaffected.
-- `print(match (1) { x => 1, _ => 2 });` raises `ParseError` matching
-  `"expected a literal or '_' in match pattern, found ..."` — a bound
-  identifier pattern (anything other than `_`) is out of scope for this
-  first version.
-- `print(match (1) { 1, 2 => "one or two", _ => "other" });` raises
-  `ParseError` — multi-value arms are out of scope for this task (see
-  above); confirm this fails cleanly (at the unexpected `,` after the
-  first pattern's arm) rather than silently misparsing.
-- `print(match (1) { });` raises `ParseError` — a match expression with
-  zero arms (nothing before the immediate `}`) is invalid, since
-  `_match_pattern` finds no valid pattern token there.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (`MATCH` token + keyword), `cinder/ast_nodes.py`
-(`MatchArm`, `MatchExpr`), `cinder/parser.py` (`_primary`, `_match_expr`,
-`_match_arm`, `_match_pattern`), `cinder/interpreter.py` (`evaluate`
-dispatch, `_evaluate_match`), `tests/test_lexer.py` (add `match` keyword
-lexing alongside the existing `switch` keyword test), `tests/test_parser.py`
-(add a `class TestMatchExpression` mirroring `TestSwitchStatement`'s own
-style, search that name), `tests/test_interpreter.py` (same, a `class
-TestMatchExpression` mirroring `TestSwitchStatement`). Once merged,
-`README.md`'s Features list and its "Status & roadmap" section need
-updating to note a first, literal-only `match` expression landed, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing to note the
-pattern-matching-beyond-destructuring arc has begun — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_prime` — the k-th prime number by position
-
-Build: the breadth task after task 1's depth work (a `match` expression
-with literal patterns and a `_` wildcard) per `PROJECT.md`'s
+Build: the breadth task after a `match` expression with literal patterns
+and a `_` wildcard (PR #304) per `PROJECT.md`'s
 breadth-vs-depth policy. `is_prime`/`is_composite`/`is_semiprime`
 (`cinder/builtins.py`) all test membership in various prime-adjacent
 categories, and `prime_factors` lists an integer's own factors, but
@@ -313,14 +95,14 @@ task.
 
 ---
 
-## 3. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position
+## 2. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position
 
 Build: the breadth task restocking the backlog after a list pattern
 nested inside a map pattern landed via PR #299, per `PROJECT.md`'s
-breadth-vs-depth policy (task 1 above is this pass's depth task;
-alternation resumes with breadth here). `is_fibonacci`/
-`is_lucas_number` (`cinder/builtins.py`) both test membership in their
-respective sequences, and `nth_prime` (task 2 above) already queues the
+breadth-vs-depth policy (the `match` expression task, merged as PR #304,
+was this pass's depth task; alternation resumes with breadth here).
+`is_fibonacci`/`is_lucas_number` (`cinder/builtins.py`) both test membership in their
+respective sequences, and `nth_prime` (task 1 above) already queues the
 same "which position" question for primes, but nothing in Cinder
 answers the complementary question for Fibonacci numbers: given a
 1-indexed position, what value is found there. Verify the gap:
@@ -394,11 +176,11 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
+## 3. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
 
 Build: the depth task restocking the backlog back to 6 tasks now that
 `is_heptagonal` landed via PR #300, per `PROJECT.md`'s breadth-vs-depth
-policy (tasks 3 and 4 above are both breadth; alternation resumes with
+policy (tasks 2 and 3 above are both breadth; alternation resumes with
 depth here). Cinder already has bracketed list-destructuring assignment
 (`[a, b] = expr;`, `cinder/parser.py`'s `_assignment`, the
 `isinstance(expr, ListLiteral)` branch) and, since PR #289, allows
@@ -552,10 +334,10 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_octagonal` — membership test for the octagonal numbers
+## 4. Standard library: `is_octagonal` — membership test for the octagonal numbers
 
 Build: the breadth task restocking the backlog back to 6 tasks now that
-task 4 (bare comma multi-target assignment) rounds out this pass's
+task 3 (bare comma multi-target assignment) rounds out this pass's
 depth work, per `PROJECT.md`'s breadth-vs-depth policy. `is_triangular`,
 `is_pentagonal`, `is_hexagonal`, and `is_heptagonal`
 (`cinder/builtins.py`) already form a cluster of figurate-number
@@ -632,10 +414,10 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+## 5. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
 
 Build: restocking the backlog back to 6 tasks now that `collatz_max`
-landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 5
+landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 4
 above is breadth; alternation would prefer depth here, but no
 well-scoped depth gap survived verification this pass — see the
 "Current frontier" note in `PROJECT.md` — so this restocks with a

@@ -3026,3 +3026,17 @@ for vision/architecture.
   Mirrors `collatz_length`'s exact loop shape and domain-error
   convention (`n < 1` raises). Clean first pass, no bounces (3436 tests
   passing, up from 3427).
+- **Language: a `match` expression with literal patterns and a `_`
+  wildcard** — merged 2026-08-23T14:42:04Z via PR #304
+  (`feat/20260823-match-expr`). Adds `match (subject) { pattern => body,
+  ..., _ => body }` as a value-producing expression, the counterpart to
+  the existing `switch` statement: literal patterns (`int`/`float`/
+  `string`/`true`/`false`/`nil`) or a `_` wildcard, one pattern per arm,
+  tried in source order via the existing `values_equal` helper (the same
+  cross-type equality `switch` already uses), raising
+  `CinderRuntimeError` if no arm matches. `_match_pattern` special-cases
+  a bare `_` before general expression parsing to avoid colliding with
+  the single-identifier arrow-function sugar (`_ => body`). Bindings,
+  guards, and nested/destructuring patterns are out of scope for this
+  first version. Clean first pass, no bounces (3454 tests passing, up
+  from 3436).

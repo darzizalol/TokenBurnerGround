@@ -370,3 +370,42 @@ them to unblock `git pull --rebase`, then popped the stash back
 immediately after so they're sitting in the working tree exactly as
 found — untouched, uncommitted, unpushed. Whoever owns that work
 should commit it directly.
+
+---
+
+## 2026-08-23T14:02:14Z — Architect
+
+What's wrong: not a new issue, but the token-budget-enforcement WIP
+flagged in the 2026-08-21 entry directly above is still sitting
+uncommitted in the root checkout today, two nights later — same files
+(`CLAUDE.md`, `nightshift/.gitignore`, `nightshift/run-night.sh`,
+`nightshift/token-ledger.py` modified; `nightshift/budget.conf`,
+`nightshift/budget.sh` untracked). This session's `git pull --rebase`
+failed on it exactly as described in the prior entry. This time the
+root checkout *also* had unrelated, finished Cinder grooming docs
+mixed into the same dirty working tree (`projects/cinder/BACKLOG.md`/
+`PROJECT.md`/`README.md` — restocking the backlog with `is_octagonal`
+and refreshing status after PR #301), which strongly suggests a
+previous Architect session did real work and got cut off before
+`git commit`/`git push`, rather than this being routine WIP.
+
+What I tried: `git stash push -u` (everything, both the infra WIP and
+the finished cinder docs) to unblock the pull, confirmed `git pull
+--rebase` was a no-op (already up to date), `git stash pop` to restore
+both, then split them — committed the cinder docs myself (commit
+`a32ca50`, that work matched this session's own grooming mandate and
+was complete/consistent with current history) and left the infra files
+exactly as found: untouched, uncommitted, unpushed.
+
+What I did instead: not paging via `notify.sh` — no credential or
+human action needed, this just needs an Engineer session to claim it
+properly (open `.worktrees/<slug>` on a `chore/` branch, commit, push,
+`gh pr create`, and route it through Review/QA/Release like anything
+else — `CLAUDE.md` itself says amendments to the constitution only land
+via PR, so it can't just be committed straight to `main` even though
+it's text). Flagging explicitly this time because it's now persisted
+across at least three sessions (2026-08-21 architect, this cycle's
+release/QA passes per NIGHTLOG's "still not Release's to commit" notes,
+and now this session) without anyone claiming it — if it sits
+uncommitted through another few nights it may be worth the human just
+saying whether to keep it, drop it, or who should pick it up.

@@ -1360,6 +1360,22 @@ def _collatz_length(arguments: list, line: int, column: int) -> object:
     return steps
 
 
+def _collatz_max(arguments: list, line: int, column: int) -> object:
+    _require_arity("collatz_max", arguments, 1, line, column)
+    value = _require_int("collatz_max", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "collatz_max() requires a positive integer, domain error", line, column
+        )
+    peak = value
+    n = value
+    while n != 1:
+        n = n // 2 if n % 2 == 0 else 3 * n + 1
+        if n > peak:
+            peak = n
+    return peak
+
+
 def _is_triangular(arguments: list, line: int, column: int) -> object:
     _require_arity("is_triangular", arguments, 1, line, column)
     value = _require_int("is_triangular", arguments[0], line, column)
@@ -3851,6 +3867,7 @@ _BUILTINS = {
     "is_happy_number": _is_happy_number,
     "is_sad_number": _is_sad_number,
     "collatz_length": _collatz_length,
+    "collatz_max": _collatz_max,
     "is_triangular": _is_triangular,
     "is_pentagonal": _is_pentagonal,
     "is_hexagonal": _is_hexagonal,

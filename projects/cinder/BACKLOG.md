@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position [claimed 2026-08-23T15:04:18Z]
+## 1. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position [claimed 2026-08-23T19:10:46Z]
 
 Build: the breadth task restocking the backlog after a list pattern
 nested inside a map pattern landed via PR #299, per `PROJECT.md`'s

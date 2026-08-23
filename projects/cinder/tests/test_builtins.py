@@ -2318,6 +2318,57 @@ class TestIsLucasNumber(unittest.TestCase):
             run("is_lucas_number(1, 2);")
 
 
+class TestNthFibonacci(unittest.TestCase):
+    def test_nth_fibonacci_of_first_five_positions(self):
+        expected = {1: 1, 2: 1, 3: 2, 4: 3, 5: 5}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_fibonacci({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_fibonacci_of_ten(self):
+        self.assertEqual(run("let result = nth_fibonacci(10);").get("result"), 55)
+
+    def test_nth_fibonacci_of_twenty(self):
+        self.assertEqual(run("let result = nth_fibonacci(20);").get("result"), 6765)
+
+    def test_nth_fibonacci_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_fibonacci(0);")
+        self.assertIn(
+            "nth_fibonacci() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_fibonacci_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_fibonacci(-3);")
+        self.assertIn(
+            "nth_fibonacci() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_fibonacci_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_fibonacci(2.0);")
+        self.assertIn(
+            "nth_fibonacci() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_fibonacci_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_fibonacci(true);")
+        self.assertIn(
+            "nth_fibonacci() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_fibonacci_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_fibonacci(1, 2);")
+
+
 class TestIsHappyNumber(unittest.TestCase):
     def test_is_happy_number_of_one(self):
         self.assertEqual(run("let result = is_happy_number(1);").get("result"), True)

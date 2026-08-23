@@ -1315,6 +1315,19 @@ def _is_lucas_number(arguments: list, line: int, column: int) -> object:
     return current == value
 
 
+def _nth_fibonacci(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_fibonacci", arguments, 1, line, column)
+    value = _require_int("nth_fibonacci", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_fibonacci() requires a positive integer, domain error", line, column
+        )
+    previous, current = 0, 1
+    for _ in range(value - 1):
+        previous, current = current, previous + current
+    return current
+
+
 def _is_happy_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_happy_number", arguments, 1, line, column)
     value = _require_int("is_happy_number", arguments[0], line, column)
@@ -3885,6 +3898,7 @@ _BUILTINS = {
     "is_coprime": _is_coprime,
     "is_fibonacci": _is_fibonacci,
     "is_lucas_number": _is_lucas_number,
+    "nth_fibonacci": _nth_fibonacci,
     "is_happy_number": _is_happy_number,
     "is_sad_number": _is_sad_number,
     "collatz_length": _collatz_length,

@@ -2752,6 +2752,55 @@ class TestIsPrime(unittest.TestCase):
             run("is_prime();")
 
 
+class TestNthPrime(unittest.TestCase):
+    def test_nth_prime_of_first_five(self):
+        self.assertEqual(run("let result = nth_prime(1);").get("result"), 2)
+        self.assertEqual(run("let result = nth_prime(2);").get("result"), 3)
+        self.assertEqual(run("let result = nth_prime(3);").get("result"), 5)
+        self.assertEqual(run("let result = nth_prime(4);").get("result"), 7)
+        self.assertEqual(run("let result = nth_prime(5);").get("result"), 11)
+
+    def test_nth_prime_of_ten(self):
+        self.assertEqual(run("let result = nth_prime(10);").get("result"), 29)
+
+    def test_nth_prime_of_one_hundred(self):
+        self.assertEqual(run("let result = nth_prime(100);").get("result"), 541)
+
+    def test_nth_prime_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_prime(0);")
+        self.assertIn(
+            "nth_prime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_prime_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_prime(-3);")
+        self.assertIn(
+            "nth_prime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_prime_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_prime(2.0);")
+        self.assertIn("nth_prime() requires an int, got float", ctx.exception.message)
+
+    def test_nth_prime_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_prime(true);")
+        self.assertIn("nth_prime() requires an int, got bool", ctx.exception.message)
+
+    def test_nth_prime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_prime();")
+
+    def test_nth_prime_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_prime(1, 2);")
+
+
 class TestIsComposite(unittest.TestCase):
     def test_is_composite_of_smallest_composite(self):
         self.assertEqual(run("let result = is_composite(4);").get("result"), True)

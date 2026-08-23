@@ -1431,6 +1431,27 @@ def _is_prime(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _nth_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_prime", arguments, 1, line, column)
+    value = _require_int("nth_prime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_prime() requires a positive integer, domain error", line, column
+        )
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        is_prime = True
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                is_prime = False
+                break
+        if is_prime:
+            count += 1
+    return candidate
+
+
 def _is_composite(arguments: list, line: int, column: int) -> object:
     _require_arity("is_composite", arguments, 1, line, column)
     value = _require_int("is_composite", arguments[0], line, column)
@@ -3873,6 +3894,7 @@ _BUILTINS = {
     "is_hexagonal": _is_hexagonal,
     "is_heptagonal": _is_heptagonal,
     "is_prime": _is_prime,
+    "nth_prime": _nth_prime,
     "is_composite": _is_composite,
     "is_semiprime": _is_semiprime,
     "is_sphenic": _is_sphenic,

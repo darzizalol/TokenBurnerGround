@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `collatz_max` — the peak value reached by the Collatz (3n+1) recurrence
+## 1. Standard library: `collatz_max` — the peak value reached by the Collatz (3n+1) recurrence [claimed 2026-08-23T14:18:18Z]
 
 Build: the breadth task after task 1's depth work (a step component for
 range expressions) per `PROJECT.md`'s breadth-vs-depth policy.

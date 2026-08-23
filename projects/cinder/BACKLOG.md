@@ -11,88 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position [claimed 2026-08-23T19:10:46Z]
-
-Build: the breadth task restocking the backlog after a list pattern
-nested inside a map pattern landed via PR #299, per `PROJECT.md`'s
-breadth-vs-depth policy (the `match` expression task, merged as PR #304,
-was this pass's depth task; alternation resumes with breadth here).
-`is_fibonacci`/`is_lucas_number` (`cinder/builtins.py`) both test membership in their
-respective sequences, and `nth_prime` (landed via PR #305) already
-answers the same "which position" question for primes, but nothing in Cinder
-answers the complementary question for Fibonacci numbers: given a
-1-indexed position, what value is found there. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_fibonacci(10));'
-# -> CinderRuntimeError: undefined name 'nth_fibonacci'
-```
-
-Add to `cinder/builtins.py`, registered right after `_is_lucas_number`
-(search `def _is_lucas_number`, immediately before `_is_happy_number`):
-```python
-def _nth_fibonacci(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_fibonacci", arguments, 1, line, column)
-    value = _require_int("nth_fibonacci", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_fibonacci() requires a positive integer, domain error", line, column
-        )
-    previous, current = 0, 1
-    for _ in range(value - 1):
-        previous, current = current, previous + current
-    return current
-```
-This mirrors `_is_lucas_number`'s own generate-and-track loop style — a
-plain iterative walk up the recurrence, not a closed form — deliberately
-avoiding Binet's formula (`(phi**k - psi**k) / sqrt(5)`), which relies
-on irrational `sqrt(5)` and loses exact-integer precision for large `k`
-under floating point; the iterative walk stays exact at any size, same
-tradeoff `is_fibonacci`'s own closed-form membership check avoids by
-using `math.isqrt` instead of a literal square root. `1`-indexed like
-`nth_prime`'s own convention, so `nth_fibonacci(1) = 1` and
-`nth_fibonacci(2) = 1` (the sequence's two seed values), not `nth_fibonacci(1) = 0`.
-A domain error (not a sentinel value) for `value < 1` matches
-`nth_prime`'s own convention for its own "not a valid input" case, since
-this is a value-returning function, not a predicate — there is no
-sensible Fibonacci number to return for position `0` or a negative
-position. Also register the new dict entry (search `"is_lucas_number":
-_is_lucas_number,`, add `"nth_fibonacci": _nth_fibonacci,` directly
-after it).
-
-Acceptance criteria:
-- `nth_fibonacci(1);` is `1`, `nth_fibonacci(2);` is `1`,
-  `nth_fibonacci(3);` is `2`, `nth_fibonacci(4);` is `3`,
-  `nth_fibonacci(5);` is `5` — the first five Fibonacci numbers by
-  position.
-- `nth_fibonacci(10);` is `55`.
-- `nth_fibonacci(20);` is `6765` — confirms the check holds well beyond
-  small brute-forced cases.
-- `nth_fibonacci(0);` and `nth_fibonacci(-3);` both raise
-  `CinderRuntimeError` matching `"nth_fibonacci() requires a positive
-  integer, domain error"`.
-- `nth_fibonacci(2.0);` raises `CinderRuntimeError` matching
-  `"nth_fibonacci() requires an int, got float"`.
-- `nth_fibonacci(true);` raises `CinderRuntimeError` matching
-  `"nth_fibonacci() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_lucas_number`, see
-current line numbers — shift if earlier tasks this cycle land first),
-`tests/test_builtins.py` (model on `class TestIsFibonacci`, search that
-name, for the arity/type-error test shapes — the domain-error test
-shape instead mirrors `class TestCollatzLength`, search that name,
-since `nth_fibonacci` raises rather than returning `false` for an
-invalid position). Once merged, `README.md`'s Builtins bullet needs
-`nth_fibonacci` added near `is_fibonacci`/`is_lucas_number`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
+## 1. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
 
 Build: the depth task restocking the backlog back to 6 tasks now that
 `is_heptagonal` landed via PR #300, per `PROJECT.md`'s breadth-vs-depth
@@ -250,7 +169,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_octagonal` — membership test for the octagonal numbers
+## 2. Standard library: `is_octagonal` — membership test for the octagonal numbers
 
 Build: the breadth task restocking the backlog back to 6 tasks now that
 task 2 (bare comma multi-target assignment) rounds out this pass's
@@ -330,7 +249,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+## 3. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
 
 Build: restocking the backlog back to 6 tasks now that `collatz_max`
 landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 3
@@ -411,15 +330,15 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_lucas` — the k-th Lucas number by position
+## 4. Standard library: `nth_lucas` — the k-th Lucas number by position
 
 Build: restocking the backlog back to 6 tasks now that a `match`
 expression with literal patterns and a `_` wildcard landed via PR #304,
 per `PROJECT.md`'s breadth-vs-depth policy (that task was depth;
 alternation restocks with breadth here). `is_lucas_number`
-(`cinder/builtins.py`) tests membership in the Lucas sequence, and task
-1 above (`nth_fibonacci`, not yet landed) already queues the same
-"which position" question for Fibonacci numbers, but nothing in Cinder
+(`cinder/builtins.py`) tests membership in the Lucas sequence, and
+`nth_fibonacci` (landed via PR #306) already answers the same "which
+position" question for Fibonacci numbers, but nothing in Cinder
 answers the complementary question for Lucas numbers: given a
 1-indexed position, what value is found there. Verify the gap:
 ```sh
@@ -498,7 +417,7 @@ task.
 
 ---
 
-## 6. Language: bound-identifier patterns in `match` arms
+## 5. Language: bound-identifier patterns in `match` arms
 
 Build: restocking the backlog back to 6 tasks now that `nth_prime` landed
 via PR #305, per `PROJECT.md`'s breadth-vs-depth policy (tasks 1, 3, 4,

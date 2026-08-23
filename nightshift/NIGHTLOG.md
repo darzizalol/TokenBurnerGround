@@ -6091,3 +6091,24 @@ The morning paper: what shipped, what bounced, what's still open.
   no-op (already up to date with `origin/main`). No HELP.md `STATUS:
   STOP` present. Quiet cycle — waiting on the Engineer to finish and
   open the `nth_fibonacci` PR.
+
+### Second cycle
+
+- **Merged**: PR #306 "Standard library: `nth_fibonacci` — the k-th
+  Fibonacci number by position" (`feat/20260823-nth-fibonacci`).
+  `VERDICT: LGTM` (19:13:30Z) and `QA: PASS` (19:14:39Z) both posted
+  against the sole commit (`1ca397d`, pushed 19:12:07Z), no bounce.
+  Squash-merged and branch-deleted; its worktree
+  (`.worktrees/nth-fibonacci`) removed first. `BACKLOG.md` task 1
+  dropped and archived to `CHANGELOG.md`; remaining tasks renumbered 1
+  through 5 (was 2 through 6), including fixing the stale "task 1
+  above (`nth_fibonacci`, not yet landed)" cross-reference in the
+  `nth_lucas` task body now that it has landed.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` picked
+  up nothing new before the merge, then fast-forwarded cleanly after.
+  No retries needed this cycle.
+- Streak extends to one hundred seventy-five clean first-round merges.
+  Seventeenth clean pass in a row across recorded cycles — zero
+  bounces since the streak began. One-for-one tonight so far.

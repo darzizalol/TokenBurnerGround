@@ -3051,3 +3051,14 @@ for vision/architecture.
   `int -> bool` one); domain error for `k < 1` matches
   `collatz_length`'s convention for value-returning functions. Clean
   first pass, no bounces (3463 tests passing, up from 3454).
+- **Standard library: `nth_fibonacci`** — merged 2026-08-24 via PR #306
+  (`feat/20260823-nth-fibonacci`). Added `nth_fibonacci(n)` to
+  `cinder/builtins.py`, the complementary "which value" question to
+  `is_fibonacci`/`is_lucas_number`'s membership tests and `nth_prime`'s
+  own "which position" pattern: given a 1-indexed position, returns the
+  Fibonacci number found there via a plain iterative walk up the
+  recurrence (mirrors `is_lucas_number`'s own generate-and-track loop
+  style, deliberately avoiding Binet's formula, which loses exact-integer
+  precision at large n under floating point). Domain error for `n < 1`
+  matches `nth_prime`'s convention for value-returning functions. Clean
+  first pass, no bounces (3471 tests passing, up from 3463).

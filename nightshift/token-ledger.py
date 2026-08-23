@@ -7,8 +7,14 @@ the API processed (input + output + cache write + cache read), writes
 nightshift/tokens.csv, and regenerates the burn chart between the
 TOKENBURN markers in the root README.md.
 
-Usage: python3 token-ledger.py update
-Run any time; it is a full idempotent rebuild from the transcripts.
+Usage: python3 token-ledger.py update            rebuild csv + svg + README
+       python3 token-ledger.py month-total [YYYY-MM]
+                                                 print one integer: the raw
+                                                 tokens burnt in that month
+Run any time; it is a full idempotent rebuild from the transcripts. Scanned
+sessions are memoised in .ledger-cache.json keyed by (mtime, size), so
+repeated runs — the budget guard calls this after every role session — only
+re-read transcripts that actually changed.
 Note: subagent (sidechain) transcripts can't be attributed to a parent
 session, so they are excluded — totals are a slight undercount.
 """
@@ -24,6 +30,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 README = REPO / "README.md"
 CSV_PATH = HERE / "tokens.csv"
+CACHE_PATH = HERE / ".ledger-cache.json"
 TRANSCRIPTS = Path.home() / ".claude" / "projects" / str(REPO).replace("/", "-").replace(" ", "-")
 
 ROLE_RE = re.compile(
@@ -94,28 +101,82 @@ def night_of(dt):
     return (dt - timedelta(days=1)).date() if dt.hour < 12 else dt.date()
 
 
-def rebuild():
-    rows = []
+def load_cache():
+    try:
+        cache = json.loads(CACHE_PATH.read_text())
+        return cache if isinstance(cache, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}   # a missing or corrupt cache costs a rescan, never a wrong number
+
+
+def save_cache(cache):
+    try:
+        tmp = CACHE_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cache))
+        tmp.replace(CACHE_PATH)
+    except OSError:
+        pass        # the cache is an optimisation; failing to persist it is harmless
+
+
+def scan_all():
+    """Every night-shift session as a ledger row, memoised by (mtime, size).
+
+    A transcript that is still being appended to changes size, so an
+    in-progress session is re-read on the next call and its running total
+    stays current — which is what the budget guard needs mid-shift.
+    """
+    cache = load_cache()
+    fresh, rows = {}, []
     for path in sorted(TRANSCRIPTS.glob("*.jsonl")):
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        key = path.name
+        stamp = [int(st.st_mtime_ns), st.st_size]
+        hit = cache.get(key)
+        if isinstance(hit, dict) and hit.get("stamp") == stamp:
+            fresh[key] = hit
+            if hit["row"]:
+                rows.append(hit["row"])
+            continue
         got = scan_session(path)
-        if not got:
-            continue
-        start, role, s = got
-        total = s["input"] + s["output"] + s["cache_write"] + s["cache_read"]
-        if total == 0:
-            continue
-        rows.append({
-            "timestamp": start.isoformat(timespec="seconds"),
-            "night": night_of(start).isoformat(),
-            "role": role,
-            "session": path.stem[:8],
-            "input": s["input"],
-            "output": s["output"],
-            "cache_write": s["cache_write"],
-            "cache_read": s["cache_read"],
-            "total": total,
-        })
+        row = None
+        if got:
+            start, role, s = got
+            total = s["input"] + s["output"] + s["cache_write"] + s["cache_read"]
+            if total:
+                row = {
+                    "timestamp": start.isoformat(timespec="seconds"),
+                    "night": night_of(start).isoformat(),
+                    "role": role,
+                    "session": path.stem[:8],
+                    "input": s["input"],
+                    "output": s["output"],
+                    "cache_write": s["cache_write"],
+                    "cache_read": s["cache_read"],
+                    "total": total,
+                }
+        fresh[key] = {"stamp": stamp, "row": row}
+        if row:
+            rows.append(row)
+    save_cache(fresh)
     rows.sort(key=lambda r: r["timestamp"])
+    return rows
+
+
+def month_total(month):
+    """Raw tokens burnt on every night belonging to `month` (YYYY-MM).
+
+    Attribution is by *night*, not wall clock: the 02:00 half of the night of
+    the 31st counts against the month that night started in, so a shift is
+    never split across two budgets mid-session.
+    """
+    return sum(r["total"] for r in scan_all() if r["night"].startswith(month))
+
+
+def rebuild():
+    rows = scan_all()
     with open(CSV_PATH, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()) if rows else
                            ["timestamp", "night", "role", "session",
@@ -246,12 +307,22 @@ def update_readme(block):
 
 
 def main():
-    if len(sys.argv) != 2 or sys.argv[1] != "update":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else ""
+    if cmd not in ("update", "month-total") or len(sys.argv) > 3:
         print(__doc__)
         return 1
     if not TRANSCRIPTS.is_dir():
         print(f"token-ledger: transcript dir not found: {TRANSCRIPTS}", file=sys.stderr)
         return 1
+
+    if cmd == "month-total":
+        month = sys.argv[2] if len(sys.argv) == 3 else night_of(datetime.now()).strftime("%Y-%m")
+        if not re.fullmatch(r"\d{4}-\d{2}", month):
+            print(f"token-ledger: bad month {month!r}, want YYYY-MM", file=sys.stderr)
+            return 1
+        print(month_total(month))
+        return 0
+
     rows = rebuild()
     update_readme(chart(rows))
     print(f"token-ledger: {len(rows)} night sessions, "

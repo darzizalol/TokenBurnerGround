@@ -2463,6 +2463,54 @@ class TestCollatzLength(unittest.TestCase):
             run("collatz_length(1, 2);")
 
 
+class TestCollatzMax(unittest.TestCase):
+    def test_collatz_max_of_one_is_one(self):
+        self.assertEqual(run("let result = collatz_max(1);").get("result"), 1)
+
+    def test_collatz_max_of_six(self):
+        self.assertEqual(run("let result = collatz_max(6);").get("result"), 16)
+
+    def test_collatz_max_of_seven(self):
+        self.assertEqual(run("let result = collatz_max(7);").get("result"), 52)
+
+    def test_collatz_max_of_twenty_seven(self):
+        self.assertEqual(run("let result = collatz_max(27);").get("result"), 9232)
+
+    def test_collatz_max_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_max(0);")
+        self.assertIn(
+            "collatz_max() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_collatz_max_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_max(-5);")
+        self.assertIn(
+            "collatz_max() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_collatz_max_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_max(6.0);")
+        self.assertIn(
+            "collatz_max() requires an int, got float", ctx.exception.message
+        )
+
+    def test_collatz_max_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("collatz_max(true);")
+        self.assertIn(
+            "collatz_max() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_collatz_max_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("collatz_max(1, 2);")
+
+
 class TestIsTriangular(unittest.TestCase):
     def test_is_triangular_degenerate_and_first_cases(self):
         self.assertEqual(run("let result = is_triangular(0);").get("result"), True)

@@ -2289,6 +2289,23 @@ def _factorial(arguments: list, line: int, column: int) -> object:
     return math.factorial(value)
 
 
+def _binomial(arguments: list, line: int, column: int) -> object:
+    _require_arity("binomial", arguments, 2, line, column)
+    n, k = arguments
+    for position, value in (("first", n), ("second", k)):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise CinderRuntimeError(
+                f"binomial() requires an int as its {position} argument, "
+                f"got {type_name(value)}",
+                line, column,
+            )
+    if n < 0 or k < 0:
+        raise CinderRuntimeError(
+            "binomial() requires non-negative n and k, domain error", line, column
+        )
+    return math.comb(n, k)
+
+
 def _sum(arguments: list, line: int, column: int) -> object:
     _require_arity("sum", arguments, 1, line, column)
     value = arguments[0]
@@ -3979,6 +3996,7 @@ _BUILTINS = {
     "gcd": _gcd,
     "lcm": _lcm,
     "factorial": _factorial,
+    "binomial": _binomial,
     "sum": _sum,
     "sum_by": _sum_by,
     "product": _product,

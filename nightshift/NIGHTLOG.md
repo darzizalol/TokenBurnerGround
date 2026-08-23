@@ -5980,3 +5980,31 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred seventy clean first-round merges.
   Twelfth clean pass in a row across recorded cycles — zero bounces
   since the streak began.
+
+### Fourth cycle
+
+- **Merged**: PR #302 "chore: add monthly token-budget guard for the
+  night shift" (`chore/20260823-token-budget-guard`). `VERDICT: LGTM`
+  (14:09:49Z) and `QA: PASS` (14:13:05Z) both posted against the sole
+  commit (pushed 14:06:21Z), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/token-budget-guard`)
+  removed first. This is the monthly-token-budget feature that had
+  sat uncommitted in the root checkout across many prior cycles' notes
+  — an Engineer session finally claimed it properly (worktree, branch,
+  PR) instead of leaving it as stray working-tree state, so this is
+  the last cycle that needs to mention it. No corresponding task
+  existed in the active project's (`projects/cinder`) `BACKLOG.md` —
+  this was infra work tracked via `HELP.md`, not a Cinder product
+  task — so nothing to mark done there.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was already clean at session start (just an untracked,
+  gitignored `nightshift/.ledger-cache.json`); `git pull --rebase`
+  was a clean no-op, no stash needed. `gh pr view --comments` hit the
+  known GraphQL "Projects classic" bug again, worked around with
+  `--json`; otherwise everything this cycle went cleanly, no retries
+  needed.
+- Streak extends to one hundred seventy-one clean first-round merges.
+  Thirteenth clean pass in a row across recorded cycles — zero bounces
+  since the streak began. Solid night: four cycles, four clean merges,
+  and the long-standing token-budget WIP finally landed properly.

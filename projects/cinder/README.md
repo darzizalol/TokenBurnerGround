@@ -382,6 +382,7 @@ while (i < 10) {
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
+  `collatz_max` to return the peak value that same recurrence reaches before collapsing to `1`,
   `is_kaprekar` to test whether a number's square splits into two parts that sum back to the number,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
@@ -471,19 +472,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a step component for
-range expressions (`start..end..step`, `start..=end..step`) — closing
-the one dimension ranges never had: today's implicit step of `1` used
-to mean a descending bound like `10..0` silently produced an empty
-list, with no way to skip elements or count down either — and before
-that `is_heptagonal`, the fourth figurate-number membership predicate
-after `is_triangular`/`is_pentagonal`/`is_hexagonal`, testing membership
-in the heptagonal numbers `1, 7, 18, 34, 55, ...` via the same
-closed-form technique. See [`CHANGELOG.md`](CHANGELOG.md) for the full
-merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`collatz_max` — the peak value `collatz_length`'s Collatz (3n+1)
-recurrence reaches before collapsing to `1`, the value-returning
-sibling of `collatz_length`'s step count, a `match` expression with
+Actively developed, nightly. Recently landed: `collatz_max` — the peak
+value the Collatz (3n+1) recurrence reaches before collapsing to `1`,
+the value-returning sibling of `collatz_length`'s step count — and
+before that a step component for range expressions
+(`start..end..step`, `start..=end..step`) — closing the one dimension
+ranges never had: today's implicit step of `1` used to mean a
+descending bound like `10..0` silently produced an empty list, with no
+way to skip elements or count down either. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): a `match` expression with
 literal patterns and a `_` wildcard (`match (n) { 1 => "one", _ =>
 "other" }`) — the value-producing counterpart to `switch`, and the
 opening move in a new depth arc (pattern matching beyond destructuring)
@@ -496,9 +494,11 @@ question for the Fibonacci sequence, the value-returning sibling of
 (`a, b = 1, 2;`, the swap idiom `a, b = b, a;`) — the unbracketed
 sibling of the existing `[a, b] = expr;` list-destructuring assignment,
 closing a real gap where the bare form today silently misparses as
-unrelated statements instead of raising or working, and `is_octagonal`
-— the fifth figurate-number membership predicate, rounding out the
-`is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster.
+unrelated statements instead of raising or working, `is_octagonal` —
+the fifth figurate-number membership predicate, rounding out the
+`is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster,
+and `binomial` — the binomial coefficient (`n` choose `k`), the
+combinatorics question built on top of `factorial`.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

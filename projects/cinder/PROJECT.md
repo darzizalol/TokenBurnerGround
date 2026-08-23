@@ -151,11 +151,12 @@ bring the count back to 6.
 
 Recently landed (see `CHANGELOG.md` for the full list): a map pattern
 nested inside a list pattern (#297), `is_hexagonal` (#298), a list
-pattern nested inside a map pattern (#299), `is_heptagonal` (#300), and
-a step component for range expressions (#301). `BACKLOG.md` carries the
-active queue: `collatz_max`, a `match` expression with literal patterns
-and a `_` wildcard, `nth_prime`, `nth_fibonacci`, bare comma
-multi-target assignment (`a, b = 1, 2;`), and `is_octagonal`.
+pattern nested inside a map pattern (#299), `is_heptagonal` (#300), a
+step component for range expressions (#301), and `collatz_max` (#303).
+`BACKLOG.md` carries the active queue: a `match` expression with
+literal patterns and a `_` wildcard, `nth_prime`, `nth_fibonacci`, bare
+comma multi-target assignment (`a, b = 1, 2;`), `is_octagonal`, and
+`binomial`.
 
 With PR #299 landing, destructuring patterns now support arbitrary
 composition of list- and map-shaped nesting in any order — every corner
@@ -166,12 +167,35 @@ scoped small (literal patterns and a wildcard only, no bindings or
 guards yet); richer patterns (bound identifiers, nested/destructuring
 patterns, multi-value arms, guards) are natural follow-ups once it
 lands, for the Architect to sequence in future grooming passes rather
-than commit to now. The queued multi-target-assignment task is a second,
-independent depth thread — sugar over existing bracketed
-list-destructuring assignment, not part of the pattern-matching arc —
-picked because the gap it closes is a real correctness hole (today's
-parser silently misinterprets `a, b = 1, 2;` as unrelated statements
-rather than raising or working).
+than commit to now — not before, since they'd extend `MatchArm`/
+`MatchExpr` nodes that don't exist yet. The queued multi-target-assignment
+task is a second, independent depth thread — sugar over existing
+bracketed list-destructuring assignment, not part of the
+pattern-matching arc — picked because the gap it closes is a real
+correctness hole (today's parser silently misinterprets `a, b = 1, 2;`
+as unrelated statements rather than raising or working).
+
+This grooming pass restocked with `binomial` as a second breadth task
+back-to-back with `is_octagonal` rather than alternating back to depth:
+several depth candidates were checked against the live interpreter and
+each either turned out to already exist (chained comparisons — `1 < 2 <
+3` already parses via `ChainedComparison` in `cinder/parser.py`'s
+`_comparison`, evaluating `and`-joined pairwise, not left-associative
+bool-as-int coercion; `to_fixed(value, digits)` for fixed-decimal
+number formatting already exists in `cinder/builtins.py`) or would open
+a genuinely ambiguous grammar question not safely scoped to one session
+(a format-spec suffix on string interpolation, `${value:.2f}`, collides
+with the ternary operator's own `:` at the same brace depth — resolving
+it needs either a parser-level disambiguation design or a character-offset
+scheme for slicing the raw spec text out of the interpolation's source,
+either of which is a task of its own, not a one-line addition). Rather
+than force a thin or risky depth task into the queue, this pass took the
+verified, unambiguous breadth gap instead — the backlog policy's
+"occasionally two of the same kind stack back-to-back" clause exists
+for exactly this case. The next grooming pass should return to depth;
+a format-spec suffix on string interpolation remains a plausible future
+depth task once someone designs the disambiguation properly, not
+attempted here.
 
 ## History
 

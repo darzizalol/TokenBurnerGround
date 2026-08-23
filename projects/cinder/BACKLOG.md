@@ -632,6 +632,87 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+
+Build: restocking the backlog back to 6 tasks now that `collatz_max`
+landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 5
+above is breadth; alternation would prefer depth here, but no
+well-scoped depth gap survived verification this pass — see the
+"Current frontier" note in `PROJECT.md` — so this restocks with a
+second breadth task, which the policy explicitly allows
+occasionally). `factorial` (`cinder/builtins.py`) computes `n!` but
+nothing in Cinder answers the combinatorics question built on top of
+it: how many ways to choose `k` items from `n`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(binomial(5, 2));'
+# -> <eval>:1:7: undefined name 'binomial'
+```
+
+Add to `cinder/builtins.py`, registered right after `_factorial`
+(search `def _factorial`, immediately before `_sum`):
+```python
+def _binomial(arguments: list, line: int, column: int) -> object:
+    _require_arity("binomial", arguments, 2, line, column)
+    n, k = arguments
+    for position, value in (("first", n), ("second", k)):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise CinderRuntimeError(
+                f"binomial() requires an int as its {position} argument, "
+                f"got {type_name(value)}",
+                line, column,
+            )
+    if n < 0 or k < 0:
+        raise CinderRuntimeError(
+            "binomial() requires non-negative n and k, domain error", line, column
+        )
+    return math.comb(n, k)
+```
+This mirrors `_gcd`/`_lcm`'s own two-int-argument style (search
+`def _gcd`, immediately above `_factorial`) — a `for position, value in
+(...)` loop checking both arguments share the same type-error shape —
+and `_factorial`'s own choice to delegate to a stdlib `math` function
+rather than a hand-rolled loop, since `math.comb` is exact-integer and
+already the standard library's own answer to this exact question. `k >
+n` is not a domain error: `math.comb(n, k)` correctly returns `0` for
+that case (zero ways to choose more items than exist), matching every
+combinatorics textbook's convention, so no extra check is needed beyond
+what `math.comb` already enforces. Also register the new dict entry
+(search `"factorial": _factorial,`, add `"binomial": _binomial,`
+directly after it).
+
+Acceptance criteria:
+- `binomial(5, 2);` is `10`, `binomial(5, 0);` is `1`, `binomial(5, 5);`
+  is `1` — the standard small cases.
+- `binomial(0, 0);` is `1` — the empty-choose-empty edge case.
+- `binomial(10, 3);` is `120`.
+- `binomial(30, 15);` is `155117520` — confirms the check holds well
+  beyond small brute-forced cases.
+- `binomial(5, 8);` is `0` — choosing more items than exist returns
+  `0`, not a domain error.
+- `binomial(-1, 2);` and `binomial(5, -1);` both raise
+  `CinderRuntimeError` matching `"binomial() requires non-negative n
+  and k, domain error"`.
+- `binomial(5.0, 2);` raises `CinderRuntimeError` matching `"binomial()
+  requires an int as its first argument, got float"`.
+- `binomial(5, true);` raises `CinderRuntimeError` matching
+  `"binomial() requires an int as its second argument, got bool"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `factorial`, see
+current line numbers — shift if earlier tasks this cycle land first),
+`tests/test_builtins.py` (add a `class TestBinomial` modeled on `class
+TestFactorial`, search that name, for both the combinatorics-value test
+shapes and the arity/type/domain-error test shapes, plus `class
+TestGcd`, search that name, for the two-argument type-error message
+shape). Once merged, `README.md`'s Builtins bullet needs `binomial`
+added near `factorial`, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

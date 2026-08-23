@@ -78,6 +78,8 @@ ${prs:-(none)}
 Latest nightlog:
 $(tail -n 30 "$DIR/NIGHTLOG.md" 2>/dev/null)
 
+$("$DIR/budget.sh" line 2>/dev/null)
+
 Raw session logs: nightshift/logs/ on $(hostname)."
   date +%s > "$STAMP"
 }
@@ -86,20 +88,82 @@ on_exit() { send_report; rm -f "$LOCK"; }
 trap on_exit EXIT
 trap 'exit 143' TERM INT   # ensure the EXIT trap (report + lock cleanup) runs on 07:00 kill
 
+# --- monthly token budget ----------------------------------------------------
+# The shift may spend at most MONTHLY_BUDGET_PCT of the account's monthly token
+# allowance (see nightshift/budget.conf); budget.sh compares the two. Checked at
+# clock-in and after every single role session, because one session can move the
+# month's number by tens of millions of tokens.
+#
+# Returns 0 to keep working, 1 when the month's budget is spent — the caller
+# clocks out. Standing down is a normal state, not a fault: the human is paged
+# once per month, and every stood-down night still sends a message so that
+# silence keeps meaning "something is broken".
+budget_gate() {
+  local phase="$1" once
+  BUDGET_STATE=unknown
+  BUDGET_MONTH="$(date +%Y-%m)"
+  BUDGET_USED_PCT=0
+  BUDGET_LINE="token budget: UNKNOWN — the guard itself failed to run."
+  eval "$("$DIR/budget.sh" status 2>> "$NIGHT_LOG")" 2>> "$NIGHT_LOG" || true
+  log "$BUDGET_LINE"
+
+  once="$DIR/.budget-warned-$BUDGET_MONTH"
+  if [ "$BUDGET_STATE" = warn ] && [ ! -e "$once" ]; then
+    : > "$once"
+    "$DIR/notify.sh" "Night shift at ${BUDGET_USED_PCT}% of its monthly token budget" \
+      "$BUDGET_LINE — it stands down for the rest of the month once the budget is spent."
+  fi
+
+  [ "$BUDGET_STATE" = over ] || return 0
+
+  log "MONTHLY TOKEN BUDGET SPENT ($phase) — standing down for the rest of $BUDGET_MONTH."
+  once="$DIR/.budget-halted-$BUDGET_MONTH"
+  if [ ! -e "$once" ]; then
+    : > "$once"
+    "$DIR/notify.sh" "Night shift stood down — monthly token budget spent" \
+      "$BUDGET_LINE No roles run until $BUDGET_MONTH is over. Raise the numbers in nightshift/budget.conf to buy more."
+    { echo
+      echo "## $(date '+%F %T') — orchestrator"
+      echo "Monthly token budget spent ($phase). $BUDGET_LINE"
+      echo "The shift clocks in and straight back out without running roles until the"
+      echo "calendar month rolls over. To buy more tokens for this month, raise"
+      echo "MONTHLY_TOKEN_LIMIT or MONTHLY_BUDGET_PCT in nightshift/budget.conf."
+      echo "Nothing is broken — no reply needed unless you want the shift back sooner."
+    } >> "$DIR/HELP.md"
+  fi
+
+  announce "🛑 Night shift stood down — token budget spent ($(date +%F))" \
+"$BUDGET_LINE
+
+No role sessions ran ($phase). The shift resumes by itself when $BUDGET_MONTH ends.
+To bring it back sooner, raise MONTHLY_TOKEN_LIMIT or MONTHLY_BUDGET_PCT in
+nightshift/budget.conf on $(hostname)."
+  REPORT_SENT=1        # this message replaces tonight's clock-out report
+  date +%s > "$STAMP"  # a budgeted stand-down must not trip the 07:05 watchdog
+  return 1
+}
+
 log "=== night shift clocking in (pid $$) ==="
+
+# Token-burn odometer: backup refresh at clock-in (primary is the 07:15 cron,
+# which counts the night that just finished). --force skips the lock check
+# since we own the lock. Shares one idempotent script with the cron. Run before
+# the budget gate so the gate and the odometer agree on the month's total.
+"$DIR/update-ledger.sh" --force >> "$NIGHT_LOG" 2>&1 || log "WARN: ledger update failed."
+
+# Nothing to announce as a clock-in if the month has no tokens left to spend.
+budget_gate "at clock-in" || exit 0
+
 announce "🌙 Night shift clocked in — $(date +%F)" \
 "The night shift started at $SHIFT_START on $(hostname).
 
 Backlog snapshot:
 $(head -n 15 "$REPO/$(grep -m1 '^ACTIVE:' "$REPO/PROJECTS.md" 2>/dev/null | awk '{print $2}')/BACKLOG.md" 2>/dev/null || echo '(no active project yet — the Architect will invent one)')
 
+$BUDGET_LINE
+
 A progress report follows when the shift ends (~07:00)."
 STARTED=1
-
-# Token-burn odometer: backup refresh at clock-in (primary is the 07:15 cron,
-# which counts the night that just finished). --force skips the lock check
-# since we own the lock. Shares one idempotent script with the cron.
-"$DIR/update-ledger.sh" --force >> "$NIGHT_LOG" 2>&1 || log "WARN: ledger update failed."
 
 ROLES=(architect engineer reviewer qa release)
 LIMIT_PATTERN='usage limit|session limit|hit your.*limit|limit reached|rate.?limit|out of (tokens|credits|usage)|exceeded.*(quota|limit)'
@@ -156,6 +220,10 @@ while in_window; do
         log "still limited — napping another 30 minutes."
       done
     fi
+
+    # The month's allowance is checked after every session, not once a cycle:
+    # a single Engineer run can spend tens of millions of tokens.
+    budget_gate "after the $role session" || exit 0
   done
 
   if [ "$ONCE" = 1 ]; then

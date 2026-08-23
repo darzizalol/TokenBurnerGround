@@ -111,7 +111,21 @@ in `PROJECTS.md` and the old project's `PROJECT.md` history.
 ## Token discipline
 
 The night shift runs on a subscription with usage windows (~5 h reset). Tokens
-are the fuel — burn them on building, not on flailing:
+are the fuel — burn them on building, not on flailing.
+
+**The monthly allowance is capped.** The shift may spend at most
+`MONTHLY_BUDGET_PCT` (35%) of the account's monthly token limit, both set in
+`nightshift/budget.conf`. The orchestrator checks the month's spend against
+that budget at clock-in and after every role session; when it is spent, the
+shift stands down for the rest of the calendar month and resumes on the 1st.
+Spending early in the month is spending the whole month's nights, so:
+
+- Prefer the cheapest session that finishes the task. A task you can close
+  tonight is worth more than one you explore expensively.
+- The budget is a hard ceiling enforced by the orchestrator, not a target.
+  Nobody edits `budget.conf` to buy more room — that is the human's call.
+
+Day to day:
 
 - Keep diffs small and sessions focused. Don't re-read large files you just
   wrote. Don't run the full test suite twice in a row without changes.
@@ -153,7 +167,9 @@ are the fuel — burn them on building, not on flailing:
 | `nightshift/email.sh` | Emails the human via Gmail SMTP. Credentials live in gitignored `nightshift/.env` — never commit them. |
 | `nightshift/telegram.sh` | Messages the human via Telegram bot; same `"Subject" "Body"` contract as `email.sh`, auto-splits past Telegram's 4096-char cap. Credentials live in gitignored `nightshift/.env` — never commit them. |
 | `nightshift/shift-watchdog.sh` | Cron at 07:05. Silent on a normal morning; alerts if no clock-out report was sent, i.e. the shift never ran. |
-| `nightshift/token-ledger.py` | Mines the local claude transcript store for night-shift sessions; writes `tokens.csv` and regenerates the animated burn odometer `burn.svg` embedded in the root README. |
+| `nightshift/token-ledger.py` | Mines the local claude transcript store for night-shift sessions; writes `tokens.csv` and regenerates the animated burn odometer `burn.svg` embedded in the root README. Also answers `month-total [YYYY-MM]` for the budget guard. |
+| `nightshift/budget.conf` | The monthly token allowance and the shift's share of it (35%). Human-owned — agents read it, never edit it. |
+| `nightshift/budget.sh` | Compares the month's burn against that budget. `status` / `check` / `line`. The orchestrator runs it at clock-in and after every role session and stands the shift down for the month when the budget is spent. |
 | `nightshift/update-ledger.sh` | Refreshes + commits the odometer. Runs via cron at 07:15 (after each shift) and again at clock-in; do not commit `burn.svg`/`tokens.csv` by hand. |
 | `nightshift/logs/` | Raw session logs (gitignored). |
 

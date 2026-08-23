@@ -149,49 +149,47 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): a list pattern
-nested inside a map pattern (#299), `is_heptagonal` (#300), a step
-component for range expressions (#301), `collatz_max` (#303), and a
-`match` expression with literal patterns and a `_` wildcard (#304).
-`BACKLOG.md` carries the active queue: `nth_prime`, `nth_fibonacci`,
-bare comma multi-target assignment (`a, b = 1, 2;`), `is_octagonal`,
-`binomial`, and `nth_lucas`.
+Recently landed (see `CHANGELOG.md` for the full list): a step component
+for range expressions (#301), `collatz_max` (#303), a `match` expression
+with literal patterns and a `_` wildcard (#304), and `nth_prime` (#305).
+`BACKLOG.md` carries the active queue: `nth_fibonacci`, bare comma
+multi-target assignment (`a, b = 1, 2;`), `is_octagonal`, `binomial`,
+`nth_lucas`, and bound-identifier patterns in `match` arms.
 
-With PR #299 landing, destructuring patterns now support arbitrary
-composition of list- and map-shaped nesting in any order — every corner
-of that matrix (list-in-list, map-in-map, map-in-list, list-in-map) is
-closed for good. With PR #304 landing, Cinder now has a `match`
-expression with literal patterns and a `_` wildcard — the opening move
-of a pattern-matching arc distinct from destructuring, deliberately
-scoped small (no bindings or guards yet). Richer patterns (bound
-identifiers, nested/destructuring patterns inside match arms,
-multi-value arms, guards) are natural follow-ups now that `MatchArm`/
-`MatchExpr` exist, but none is queued yet — the next depth grooming
-pass should pick one of these up explicitly rather than let the arc go
-cold. The still-queued multi-target-assignment task is a second,
-independent depth thread — sugar over existing bracketed
-list-destructuring assignment, not part of the pattern-matching arc —
-picked because the gap it closes is a real correctness hole (today's
-parser silently misinterprets `a, b = 1, 2;` as unrelated statements
-rather than raising or working).
+With PR #304 landing, Cinder has a `match` expression with literal
+patterns and a `_` wildcard — the opening move of a pattern-matching arc
+distinct from destructuring, deliberately scoped small (no bindings or
+guards yet). Richer patterns (bound identifiers, nested/destructuring
+patterns inside match arms, multi-value arms, guards) are natural
+follow-ups now that `MatchArm`/`MatchExpr` exist. The still-queued
+multi-target-assignment task is a second, independent depth thread —
+sugar over existing bracketed list-destructuring assignment, not part of
+the pattern-matching arc — picked because the gap it closes is a real
+correctness hole (today's parser silently misinterprets `a, b = 1, 2;`
+as unrelated statements rather than raising or working).
 
-This grooming pass restocked with `nth_lucas` as the breadth task after
-PR #304 (depth) landed, per the alternation policy. `is_lucas_number`
-already tests membership in the Lucas sequence with its own 1-indexed
-convention (`L(1) = 1, L(2) = 3`, deliberately omitting the textbook
-`L(0) = 2` seed); `nth_lucas` answers the complementary "which value at
-this position" question the same way `nth_prime`/`nth_fibonacci`
-already do for their own sequences, reusing `is_lucas_number`'s exact
-seed so the two stay position-for-position consistent — checked
-directly in the new task's acceptance criteria. The backlog is back to
-its 6-task ceiling: three breadth tasks (`nth_prime`, `nth_fibonacci`,
-`nth_lucas`) queued alongside `is_octagonal` and `binomial`, and one
-depth task (multi-target assignment) — lopsided toward breadth for now
-since the depth queue needs an explicit pattern-matching follow-up
-designed, not a placeholder. The next grooming pass should prioritize
-scoping that depth task (most likely bound-identifier patterns in
-`match` arms, the smallest of the follow-ups listed above) rather than
-adding a third breadth task back-to-back.
+This grooming pass restocked with bound-identifier patterns in `match`
+arms as the depth task after `nth_prime` (breadth, PR #305) landed, per
+the alternation policy — the queue had drifted to 4-breadth/1-depth
+(`nth_fibonacci`, `is_octagonal`, `binomial`, `nth_lucas` vs. just
+multi-target assignment), and the previous grooming pass had already
+flagged this exact follow-up as the next depth pick, the smallest item
+in the pattern-matching arc's backlog of natural next moves: extending
+`match`'s existing `_` wildcard so that a bare, non-`_` identifier in
+pattern position also matches unconditionally but additionally binds
+the subject's value under that name, scoped to the arm's body only
+(mirrors `TryStmt`'s own `catch_name` binding). This keeps the
+pattern-matching arc moving without yet touching the larger follow-ups
+(nested/destructuring patterns inside arms, multi-value arms, guards),
+which remain natural next moves once this one lands. The backlog is
+back to its 6-task ceiling: four breadth tasks (`nth_fibonacci`,
+`is_octagonal`, `binomial`, `nth_lucas`) and two depth tasks
+(multi-target assignment, bound-identifier match patterns). The next
+grooming pass should restock with breadth once either depth task lands,
+per the alternation policy, and should keep the pattern-matching arc
+alive by queuing one of its remaining follow-ups (nested patterns,
+multi-value arms, or guards) as a future depth task rather than letting
+it go cold again.
 
 ## History
 

@@ -3040,3 +3040,14 @@ for vision/architecture.
   guards, and nested/destructuring patterns are out of scope for this
   first version. Clean first pass, no bounces (3454 tests passing, up
   from 3436).
+- **Standard library: `nth_prime`** — merged 2026-08-23T14:55:44Z via
+  PR #305 (`feat/20260823-nth-prime`). Added `nth_prime(k)` to
+  `cinder/builtins.py`, the complementary "which prime" question to
+  `is_prime`/`is_composite`/`is_semiprime`/`prime_factors`: given a
+  1-indexed position, returns the prime found there via incremental
+  trial division. Mirrors `_is_circular_prime`'s locally-scoped
+  trial-division style rather than delegating to `_is_prime` (which
+  takes the CLI `(arguments, line, column)` shape, not a plain
+  `int -> bool` one); domain error for `k < 1` matches
+  `collatz_length`'s convention for value-returning functions. Clean
+  first pass, no bounces (3463 tests passing, up from 3454).

@@ -6053,3 +6053,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred seventy-three clean first-round
   merges. Fifteenth clean pass in a row across recorded cycles — zero
   bounces since the streak began. Six-for-six tonight.
+
+### Seventh cycle
+
+- **Merged**: PR #305 "Standard library: `nth_prime` — the k-th prime
+  number by position" (`feat/20260823-nth-prime`). `VERDICT: LGTM`
+  (14:53:50Z) and `QA: PASS` (14:55:03Z) both posted against the sole
+  commit (`a5ceca7`, pushed 14:52:09Z), no bounce. Squash-merged and
+  branch-deleted; its worktree (`.worktrees/nth-prime`) removed first.
+  `BACKLOG.md` task 1 dropped and archived to `CHANGELOG.md`; remaining
+  tasks renumbered 1 through 5 (was 2 through 6), including fixing the
+  stale internal "task N" cross-references in the `nth_fibonacci`/
+  `is_octagonal`/`binomial`/`nth_lucas` task bodies that pointed at the
+  old numbering.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. `gh pr view --comments` hit the known GraphQL "Projects
+  classic" bug again, worked around with `--json`; otherwise
+  everything this cycle went cleanly, no retries needed.
+- Streak extends to one hundred seventy-four clean first-round merges.
+  Sixteenth clean pass in a row across recorded cycles — zero bounces
+  since the streak began. Seven-for-seven tonight.

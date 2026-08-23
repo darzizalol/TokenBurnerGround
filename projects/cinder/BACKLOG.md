@@ -11,99 +11,15 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_prime` — the k-th prime number by position [claimed 2026-08-23T14:51:09Z]
-
-Build: the breadth task after a `match` expression with literal patterns
-and a `_` wildcard (PR #304) per `PROJECT.md`'s
-breadth-vs-depth policy. `is_prime`/`is_composite`/`is_semiprime`
-(`cinder/builtins.py`) all test membership in various prime-adjacent
-categories, and `prime_factors` lists an integer's own factors, but
-nothing in Cinder answers the complementary "which prime" question:
-given a 1-indexed position, what prime is found there. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_prime(1));'
-# -> CinderRuntimeError: undefined name 'nth_prime'
-```
-
-Add to `cinder/builtins.py`, registered right after `_is_prime` (search
-`def _is_prime`, immediately before `_is_composite`):
-```python
-def _nth_prime(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_prime", arguments, 1, line, column)
-    value = _require_int("nth_prime", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_prime() requires a positive integer, domain error", line, column
-        )
-    count = 0
-    candidate = 1
-    while count < value:
-        candidate += 1
-        is_prime = True
-        for divisor in range(2, int(candidate ** 0.5) + 1):
-            if candidate % divisor == 0:
-                is_prime = False
-                break
-        if is_prime:
-            count += 1
-    return candidate
-```
-This mirrors `_is_circular_prime`'s own locally-scoped trial-division
-style (search `def _is_circular_prime`) — a plain nested loop, not a
-call out to `_is_prime` itself — rather than reusing `_is_prime`
-directly, since `_is_prime` takes the CLI-facing `(arguments, line,
-column)` shape, not a plain `int -> bool` one; every other builtin that
-needs a bare primality check inline already makes this same choice.
-`1`-indexed like ordinal position is described everywhere else in the
-language, so `nth_prime(1) = 2` (no `0`th prime). A domain error (not a
-count of `false`) for `value < 1` matches `collatz_length`'s own
-convention for its own "not a valid input" case, since this is a
-value-returning function, not a predicate — there is no sensible prime
-to return for position `0` or a negative position, unlike the
-figurate-number predicates' "closed domain, just answer false"
-convention. Also register the new dict entry (search `"is_prime":
-_is_prime,`, add `"nth_prime": _nth_prime,` directly after it).
-
-Acceptance criteria:
-- `nth_prime(1);` is `2`, `nth_prime(2);` is `3`, `nth_prime(3);` is `5`,
-  `nth_prime(4);` is `7`, `nth_prime(5);` is `11` — the first five
-  primes by position.
-- `nth_prime(10);` is `29`.
-- `nth_prime(100);` is `541` — confirms the check holds well beyond
-  small brute-forced cases.
-- `nth_prime(0);` and `nth_prime(-3);` both raise `CinderRuntimeError`
-  matching `"nth_prime() requires a positive integer, domain error"`.
-- `nth_prime(2.0);` raises `CinderRuntimeError` matching `"nth_prime()
-  requires an int, got float"`.
-- `nth_prime(true);` raises `CinderRuntimeError` matching `"nth_prime()
-  requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_prime`, see
-current line numbers — shift if earlier tasks this cycle land first),
-`tests/test_builtins.py` (model on `class TestIsPrime`, search that
-name, for the arity/type-error test shapes — the domain-error test
-shape instead mirrors `class TestCollatzLength`, search that name,
-since `nth_prime` raises rather than returning `false` for an invalid
-position). Once merged, `README.md`'s Builtins bullet needs `nth_prime`
-added near `is_prime`/`prime_factors`, its "Status & roadmap" section
-needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position
+## 1. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position
 
 Build: the breadth task restocking the backlog after a list pattern
 nested inside a map pattern landed via PR #299, per `PROJECT.md`'s
 breadth-vs-depth policy (the `match` expression task, merged as PR #304,
 was this pass's depth task; alternation resumes with breadth here).
 `is_fibonacci`/`is_lucas_number` (`cinder/builtins.py`) both test membership in their
-respective sequences, and `nth_prime` (task 1 above) already queues the
-same "which position" question for primes, but nothing in Cinder
+respective sequences, and `nth_prime` (landed via PR #305) already
+answers the same "which position" question for primes, but nothing in Cinder
 answers the complementary question for Fibonacci numbers: given a
 1-indexed position, what value is found there. Verify the gap:
 ```sh
@@ -176,11 +92,11 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
+## 2. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
 
 Build: the depth task restocking the backlog back to 6 tasks now that
 `is_heptagonal` landed via PR #300, per `PROJECT.md`'s breadth-vs-depth
-policy (tasks 2 and 3 above are both breadth; alternation resumes with
+policy (tasks 1 and 2 above are both breadth; alternation resumes with
 depth here). Cinder already has bracketed list-destructuring assignment
 (`[a, b] = expr;`, `cinder/parser.py`'s `_assignment`, the
 `isinstance(expr, ListLiteral)` branch) and, since PR #289, allows
@@ -334,10 +250,10 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_octagonal` — membership test for the octagonal numbers
+## 3. Standard library: `is_octagonal` — membership test for the octagonal numbers
 
 Build: the breadth task restocking the backlog back to 6 tasks now that
-task 3 (bare comma multi-target assignment) rounds out this pass's
+task 2 (bare comma multi-target assignment) rounds out this pass's
 depth work, per `PROJECT.md`'s breadth-vs-depth policy. `is_triangular`,
 `is_pentagonal`, `is_hexagonal`, and `is_heptagonal`
 (`cinder/builtins.py`) already form a cluster of figurate-number
@@ -414,10 +330,10 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+## 4. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
 
 Build: restocking the backlog back to 6 tasks now that `collatz_max`
-landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 4
+landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 3
 above is breadth; alternation would prefer depth here, but no
 well-scoped depth gap survived verification this pass — see the
 "Current frontier" note in `PROJECT.md` — so this restocks with a
@@ -495,14 +411,14 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_lucas` — the k-th Lucas number by position
+## 5. Standard library: `nth_lucas` — the k-th Lucas number by position
 
 Build: restocking the backlog back to 6 tasks now that a `match`
 expression with literal patterns and a `_` wildcard landed via PR #304,
 per `PROJECT.md`'s breadth-vs-depth policy (that task was depth;
 alternation restocks with breadth here). `is_lucas_number`
 (`cinder/builtins.py`) tests membership in the Lucas sequence, and task
-2 above (`nth_fibonacci`, not yet landed) already queues the same
+1 above (`nth_fibonacci`, not yet landed) already queues the same
 "which position" question for Fibonacci numbers, but nothing in Cinder
 answers the complementary question for Lucas numbers: given a
 1-indexed position, what value is found there. Verify the gap:
@@ -513,7 +429,7 @@ python3 -m cinder.cli eval 'print(nth_lucas(5));'
 
 Add to `cinder/builtins.py`, registered right after `_is_lucas_number`
 (search `def _is_lucas_number`, immediately before `_is_happy_number` —
-if task 2 has landed first, `_nth_fibonacci` will sit between them;
+if task 1 has landed first, `_nth_fibonacci` will sit between them;
 register `_nth_lucas` after whichever of the two is currently last):
 ```python
 def _nth_lucas(arguments: list, line: int, column: int) -> object:

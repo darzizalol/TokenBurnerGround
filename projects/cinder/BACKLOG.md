@@ -553,6 +553,99 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_triangular` — the k-th triangular number by position
+
+Build: restocking the backlog back to 6 tasks now that bare comma
+multi-target assignment landed via PR #307, per `PROJECT.md`'s
+breadth-vs-depth policy (that task was depth; alternation restocks with
+breadth here, per the explicit instruction the previous grooming pass
+left in `PROJECT.md`'s "Current frontier" note). `is_triangular`
+(`cinder/builtins.py`) tests triangular-number membership, and
+`nth_prime`/`nth_fibonacci`/`nth_lucas` already answer the same "which
+position" question for their own sequences, but nothing in Cinder
+answers the complementary question for triangular numbers: given a
+1-indexed position, what value is found there. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_triangular(5));'
+# -> <eval>:1:7: undefined name 'nth_triangular'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_heptagonal`
+(search `def _is_heptagonal`, immediately before `_is_prime` — if task 1
+above (`is_octagonal`) has landed first, `_is_octagonal` will sit
+between them; register `_nth_triangular` after whichever of the two is
+currently last):
+```python
+def _nth_triangular(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_triangular", arguments, 1, line, column)
+    value = _require_int("nth_triangular", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_triangular() requires a positive integer, domain error", line, column
+        )
+    return value * (value + 1) // 2
+```
+Unlike `nth_fibonacci`/`nth_lucas`, which iterate a recurrence, or
+`nth_prime`, which counts up while sieving, triangular numbers have an
+exact closed form (`T(n) = n * (n + 1) / 2`), so `nth_triangular` needs
+no loop — mirroring `is_triangular`'s own closed-form check
+(`8 * value + 1` a perfect square) rather than the iterative pattern of
+its sequence-position siblings. Mind the indexing subtlety this shares
+with `nth_lucas`: `is_triangular(0)` is `true` (`T(0) = 0` is a
+degenerate member of the membership test — see
+`test_is_triangular_degenerate_and_first_cases` in
+`tests/test_builtins.py`), but `nth_triangular(1)` must still be `1`,
+not `0` — position `1` is the first *positive* triangular number, the
+same convention `nth_fibonacci(1)` already uses (`1`, not the `F(0) = 0`
+seed, even though `is_fibonacci(0)` is also `true`). Getting this wrong
+(returning `0` for position `1`, or starting the closed form at `n = 0`)
+would silently desynchronize `nth_triangular` from every other `nth_*`
+builtin's shared "position `1` is the first positive term" convention —
+verified directly in the acceptance criteria below. A domain error (not
+a sentinel value) for `value < 1` matches `nth_prime`/`nth_fibonacci`/
+`nth_lucas`'s own convention for their own "not a valid position" case.
+Also register the new dict entry (search `"is_heptagonal":
+_is_heptagonal,`, add `"nth_triangular": _nth_triangular,` directly
+after it — or after `"is_octagonal": _is_octagonal,` if task 1 has
+already landed).
+
+Acceptance criteria:
+- `nth_triangular(1);` is `1`, `nth_triangular(2);` is `3`,
+  `nth_triangular(3);` is `6`, `nth_triangular(4);` is `10`,
+  `nth_triangular(5);` is `15` — the first five (positive) triangular
+  numbers by this convention.
+- `nth_triangular(10);` is `55`.
+- `nth_triangular(100);` is `5050` — confirms the closed form holds well
+  beyond small brute-forced cases.
+- For each `n` in `1..100`, `is_triangular(nth_triangular(n));` is
+  `true` — `nth_triangular` and `is_triangular` agree on the same
+  sequence.
+- `nth_triangular(0);` and `nth_triangular(-3);` both raise
+  `CinderRuntimeError` matching `"nth_triangular() requires a positive
+  integer, domain error"` — position `0` is invalid input, it does not
+  return the degenerate `T(0) = 0` seed that `is_triangular(0)` accepts
+  as a member.
+- `nth_triangular(2.0);` raises `CinderRuntimeError` matching
+  `"nth_triangular() requires an int, got float"`.
+- `nth_triangular(true);` raises `CinderRuntimeError` matching
+  `"nth_triangular() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_heptagonal`/
+`is_octagonal`, see current line numbers — shift if earlier tasks this
+cycle land first), `tests/test_builtins.py` (model on `class
+TestNthFibonacci`, search that name, for both the sequence-value test
+shapes and the arity/type-error test shapes — the domain-error test
+shape also mirrors `class TestNthPrime`, search that name). Once
+merged, `README.md`'s Builtins bullet needs `nth_triangular` added near
+`is_triangular`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

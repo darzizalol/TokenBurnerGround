@@ -149,13 +149,14 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `nth_prime`
-(#305), `nth_fibonacci` (#306) — the "which position" question for
-Fibonacci numbers, the value-returning sibling of `is_fibonacci`'s
-membership test — and before those a `match` expression with literal
-patterns and a `_` wildcard (#304). `BACKLOG.md` carries the active
-queue: bare comma multi-target assignment (`a, b = 1, 2;`),
-`is_octagonal`, `binomial`, `nth_lucas`, bound-identifier patterns in
+Recently landed (see `CHANGELOG.md` for the full list): bare comma
+multi-target assignment (`a, b = 1, 2;`, #307) — the unbracketed sibling
+of the existing `[a, b] = expr;` list-destructuring assignment, closing
+a real gap where the bare form used to silently misparse as unrelated
+statements — and before that `nth_prime` (#305), `nth_fibonacci` (#306),
+and a `match` expression with literal patterns and a `_` wildcard
+(#304). `BACKLOG.md` carries the active queue: `is_octagonal`,
+`binomial`, `nth_lucas`, `nth_triangular`, bound-identifier patterns in
 `match` arms, and multi-value literal patterns in `match` arms (`1, 2 =>
 "small"`).
 
@@ -165,34 +166,29 @@ distinct from destructuring, deliberately scoped small (no bindings,
 multi-value arms, or guards yet). Richer patterns (bound identifiers,
 nested/destructuring patterns inside match arms, multi-value arms,
 guards) are natural follow-ups now that `MatchArm`/`MatchExpr` exist.
-Two of those follow-ups are now queued side by side — bound-identifier
-patterns (task 5) and multi-value patterns (task 6) — deliberately kept
+Two of those follow-ups are queued side by side — bound-identifier
+patterns (task 4) and multi-value patterns (task 5) — deliberately kept
 independent of each other: multi-value patterns desugar to multiple
 flat `MatchArm`s at parse time with no `MatchArm` shape change, so it
 does not matter which of the two lands first, neither will conflict with
-or block the other. The still-queued multi-target-assignment task is a
-third, wholly separate depth thread — sugar over existing bracketed
-list-destructuring assignment, not part of the pattern-matching arc — picked
-because the gap it closes is a real correctness hole (today's parser
-silently misinterprets `a, b = 1, 2;` as unrelated statements rather
-than raising or working).
+or block the other.
 
-This grooming pass restocked with multi-value literal match patterns as
-the depth task after `nth_fibonacci` (breadth, PR #306) landed, per the
-alternation policy — the queue had drifted to 3-breadth/2-depth
-(`is_octagonal`, `binomial`, `nth_lucas` vs. multi-target assignment and
-bound-identifier match patterns), and `tests/test_parser.py` already had
-a `test_match_multi_value_arm_raises` test sitting right next to the
-bound-identifier one from the previous pass, flagging this as the
-sibling gap to close next. The backlog is back to its 6-task ceiling:
-three breadth tasks (`is_octagonal`, `binomial`, `nth_lucas`) and three
-depth tasks (multi-target assignment, bound-identifier match patterns,
-multi-value match patterns). The next grooming pass should restock with
-breadth once a depth task lands, per the alternation policy, and should
-keep the pattern-matching arc alive by queuing one of its remaining
-follow-ups (nested/destructuring patterns inside arms, or guards) as a
-future depth task once both currently-queued match-pattern tasks have
-landed.
+This grooming pass restocked with `nth_triangular` as the breadth task
+after multi-target assignment (depth, PR #307) landed, per the
+alternation policy — this was the explicit instruction the previous
+grooming pass left here once one of the three then-queued depth tasks
+landed. The backlog is back to its 6-task ceiling, but now lopsided
+4-breadth/2-depth (`is_octagonal`, `binomial`, `nth_lucas`,
+`nth_triangular` vs. bound-identifier and multi-value match patterns) —
+the alternation rhythm's "occasionally two of the same kind stack"
+allowance stretched twice in a row (`nth_prime`→`nth_fibonacci` was
+already back-to-back breadth before #307's depth task broke the run).
+**The next grooming pass must restock with depth**, not breadth, to pull
+the ratio back toward parity — once either `match`-arm task lands, queue
+one of the pattern-matching arc's remaining follow-ups (nested/
+destructuring patterns inside arms, or guards) as that depth task, and
+do not add a fifth breadth task even if a breadth task happens to land
+first (rework/bounce delays are not "landing" for this purpose).
 
 ## History
 

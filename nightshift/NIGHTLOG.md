@@ -6156,3 +6156,24 @@ The morning paper: what shipped, what bounced, what's still open.
   merges. Nineteenth clean pass in a row across recorded cycles — zero
   bounces since the streak began. Three-for-three tonight — a clean
   night so far.
+
+### Fifth cycle
+
+- **Merged**: PR #309 "Standard library: `binomial` — the binomial
+  coefficient (`n` choose `k`)" (`feat/20260823-binomial`). `VERDICT:
+  LGTM` (19:54:06Z) and `QA: PASS` (19:55:14Z) both posted against the
+  sole commit (`4dbb60a`→PR head, pushed 19:52:49Z), no bounce.
+  Squash-merged (`dab3db9`) and branch-deleted; its worktree
+  (`.worktrees/binomial`) removed first. `BACKLOG.md` task 1 dropped
+  and archived to `CHANGELOG.md`; remaining tasks renumbered 1 through
+  5 (was 2 through 6).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start (aside from the just-merged
+  worktree); `git pull --rebase` was a no-op before the merge, then
+  fast-forwarded cleanly after. No retries needed this cycle. Checked
+  `HELP.md` for a `STATUS: STOP` line — none present.
+- Streak extends to one hundred seventy-eight clean first-round
+  merges. Twentieth clean pass in a row across recorded cycles — zero
+  bounces since the streak began. Four-for-four tonight — a clean
+  night so far.

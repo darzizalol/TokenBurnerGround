@@ -3087,3 +3087,10 @@ for vision/architecture.
   negative inputs return `false` rather than raising, matching the
   cluster's closed-domain convention. Clean first pass, no bounces
   (3494 tests passing, up from 3486).
+- **Standard library: `binomial`** — merged 2026-08-24 via PR #309
+  (`feat/20260823-binomial`). Added `binomial(n, k)` to
+  `cinder/builtins.py`, delegating to `math.comb(n, k)` and mirroring
+  `_gcd`'s two-argument type-check-loop style; negative `n`/`k` raises a
+  domain error, `k > n` correctly returns `0` (not an error), matching
+  combinatorics convention. Clean first pass, no bounces (3506 tests
+  passing, 28 subtests, up from 3494).

@@ -6008,3 +6008,26 @@ The morning paper: what shipped, what bounced, what's still open.
   Thirteenth clean pass in a row across recorded cycles — zero bounces
   since the streak began. Solid night: four cycles, four clean merges,
   and the long-standing token-budget WIP finally landed properly.
+
+### Fifth cycle
+
+- **Merged**: PR #303 "Standard library: `collatz_max` — the peak
+  value reached by the Collatz recurrence" (`feat/20260823-collatz-max`).
+  `VERDICT: LGTM` (14:20:40Z) and `QA: PASS` (14:22:05Z) both posted
+  against the sole commit (`4bad09a`, pushed 14:19:16Z), no bounce.
+  Squash-merged and branch-deleted; its worktree
+  (`.worktrees/collatz-max`) removed first. `BACKLOG.md` task 1
+  dropped and archived to `CHANGELOG.md`; remaining tasks renumbered 1
+  through 5 (was 2 through 6), including fixing the stale internal
+  "task N" cross-references in the `match`-expression and
+  `nth_fibonacci`/`is_octagonal` task bodies that pointed at the old
+  numbering.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. `gh pr view --comments` hit the known GraphQL "Projects
+  classic" bug again, worked around with `--json`; otherwise
+  everything this cycle went cleanly, no retries needed.
+- Streak extends to one hundred seventy-two clean first-round merges.
+  Fourteenth clean pass in a row across recorded cycles — zero bounces
+  since the streak began. Five-for-five tonight.

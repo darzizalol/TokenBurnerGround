@@ -3018,3 +3018,11 @@ for vision/architecture.
   step of `0` raises `CinderRuntimeError`; only a plain `..` is accepted
   as the step separator, `..=` there stays a `ParseError`. Clean first
   pass, no bounces (3427 tests passing, up from 3409).
+- **Standard library: `collatz_max`** — merged 2026-08-23T14:22:05Z via
+  PR #303 (`feat/20260823-collatz-max`). Added `collatz_max(n)` to
+  `cinder/builtins.py`, the value-returning sibling of `collatz_length`:
+  returns the highest value the Collatz (3n+1) sequence reaches before
+  collapsing to `1`, tracking a running peak instead of a step count.
+  Mirrors `collatz_length`'s exact loop shape and domain-error
+  convention (`n < 1` raises). Clean first pass, no bounces (3436 tests
+  passing, up from 3427).

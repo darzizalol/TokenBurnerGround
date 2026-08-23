@@ -11,87 +11,9 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `collatz_max` — the peak value reached by the Collatz (3n+1) recurrence [claimed 2026-08-23T14:18:18Z]
+## 1. Language: a `match` expression with literal patterns and a `_` wildcard
 
-Build: the breadth task after task 1's depth work (a step component for
-range expressions) per `PROJECT.md`'s breadth-vs-depth policy.
-`is_subsequence` landed via PR #296.
-`collatz_length` (`cinder/builtins.py`) already counts how many steps
-the Collatz recurrence takes to reach `1` from a positive integer, but
-discards every intermediate value along the way; `collatz_max` is its
-natural value-returning sibling, reporting the highest value the
-sequence reaches before it collapses to `1` — the same
-"count-vs-collect/track" split `divisors`/`num_divisors` already have
-between them (`divisors` collects, `num_divisors` counts; here
-`collatz_length` counts steps, `collatz_max` tracks the peak). Verify
-the gap:
-```sh
-python3 -m cinder.cli eval 'print(collatz_max(6));'
-# -> CinderRuntimeError: undefined name 'collatz_max'
-```
-
-Add to `cinder/builtins.py`, registered right after `_collatz_length`
-(search `def _collatz_length`, immediately before `_is_triangular`):
-```python
-def _collatz_max(arguments: list, line: int, column: int) -> object:
-    _require_arity("collatz_max", arguments, 1, line, column)
-    value = _require_int("collatz_max", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "collatz_max() requires a positive integer, domain error", line, column
-        )
-    peak = value
-    n = value
-    while n != 1:
-        n = n // 2 if n % 2 == 0 else 3 * n + 1
-        if n > peak:
-            peak = n
-    return peak
-```
-This mirrors `_collatz_length`'s exact loop shape (same halve-if-even,
-`3n + 1`-if-odd step, same `n < 1` domain-error convention — Collatz is
-only defined for positive integers, so this raises rather than
-answering `false` the way the closed-form membership predicates do,
-matching `collatz_length`'s own choice) but tracks a running maximum
-instead of a step count. `peak` starts at `value` itself so an input
-already at its own maximum (including `n = 1`, whose sequence is just
-`[1]`) still returns correctly with no special-casing. Also register
-the new dict entry (search `"collatz_length": _collatz_length,`, add
-`"collatz_max": _collatz_max,` directly after it).
-
-Acceptance criteria:
-- `collatz_max(1);` is `1` — the sequence is just `[1]`, already at its
-  own peak.
-- `collatz_max(6);` is `16` (sequence `6, 3, 10, 5, 16, 8, 4, 2, 1`).
-- `collatz_max(7);` is `52` (sequence `7, 22, 11, 34, 17, 52, 26, 13,
-  40, 20, 10, 5, 16, 8, 4, 2, 1`).
-- `collatz_max(27);` is `9232` — the classic large-peak example,
-  confirming the check holds well beyond small brute-forced cases.
-- `collatz_max(0);` and `collatz_max(-5);` both raise
-  `CinderRuntimeError` matching `"collatz_max() requires a positive
-  integer, domain error"`.
-- `collatz_max(6.0);` raises `CinderRuntimeError` matching
-  `"collatz_max() requires an int, got float"`.
-- `collatz_max(true);` raises `CinderRuntimeError` matching
-  `"collatz_max() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `collatz_length`, see
-current line numbers — shift if earlier tasks this cycle land first),
-`tests/test_builtins.py` (model on `class TestCollatzLength`, search
-that name). Once merged, `README.md`'s Builtins bullet needs
-`collatz_max` added right after its `collatz_length` mention, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: a `match` expression with literal patterns and a `_` wildcard
-
-Build: the depth task after task 1's breadth work (`collatz_max`) per
+Build: the depth task after `collatz_max` (PR #303) per
 `PROJECT.md`'s breadth-vs-depth policy. This is a new arc, not another
 destructuring-nesting corner: with a list pattern nested inside a map
 pattern landing via PR #299, every corner of the list/map pattern
@@ -307,9 +229,9 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_prime` — the k-th prime number by position
+## 2. Standard library: `nth_prime` — the k-th prime number by position
 
-Build: the breadth task after task 2's depth work (a `match` expression
+Build: the breadth task after task 1's depth work (a `match` expression
 with literal patterns and a `_` wildcard) per `PROJECT.md`'s
 breadth-vs-depth policy. `is_prime`/`is_composite`/`is_semiprime`
 (`cinder/builtins.py`) all test membership in various prime-adjacent
@@ -391,14 +313,14 @@ task.
 
 ---
 
-## 4. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position
+## 3. Standard library: `nth_fibonacci` — the k-th Fibonacci number by position
 
 Build: the breadth task restocking the backlog after a list pattern
 nested inside a map pattern landed via PR #299, per `PROJECT.md`'s
-breadth-vs-depth policy (task 2 above is this pass's depth task;
+breadth-vs-depth policy (task 1 above is this pass's depth task;
 alternation resumes with breadth here). `is_fibonacci`/
 `is_lucas_number` (`cinder/builtins.py`) both test membership in their
-respective sequences, and `nth_prime` (task 3 above) already queues the
+respective sequences, and `nth_prime` (task 2 above) already queues the
 same "which position" question for primes, but nothing in Cinder
 answers the complementary question for Fibonacci numbers: given a
 1-indexed position, what value is found there. Verify the gap:
@@ -472,7 +394,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
+## 4. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
 
 Build: the depth task restocking the backlog back to 6 tasks now that
 `is_heptagonal` landed via PR #300, per `PROJECT.md`'s breadth-vs-depth
@@ -630,10 +552,10 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_octagonal` — membership test for the octagonal numbers
+## 5. Standard library: `is_octagonal` — membership test for the octagonal numbers
 
 Build: the breadth task restocking the backlog back to 6 tasks now that
-task 5 (bare comma multi-target assignment) rounds out this pass's
+task 4 (bare comma multi-target assignment) rounds out this pass's
 depth work, per `PROJECT.md`'s breadth-vs-depth policy. `is_triangular`,
 `is_pentagonal`, `is_hexagonal`, and `is_heptagonal`
 (`cinder/builtins.py`) already form a cluster of figurate-number

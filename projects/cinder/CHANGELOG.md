@@ -3062,3 +3062,18 @@ for vision/architecture.
   precision at large n under floating point). Domain error for `n < 1`
   matches `nth_prime`'s convention for value-returning functions. Clean
   first pass, no bounces (3471 tests passing, up from 3463).
+- **Language: bare comma multi-target assignment** — merged 2026-08-24
+  via PR #307 (`feat/20260823-multi-target-assign`). Added
+  `_try_multi_assign_statement` to `cinder/parser.py`, a speculative
+  parse tried before `_expr_statement`'s existing single-target/comma-
+  separated-statements parse, so `a, b = 1, 2;` (and the swap idiom
+  `a, b = b, a;`) desugar to the same `DestructureAssign` node the
+  bracketed form `[a, b] = expr;` already produces — reusing its runtime
+  semantics (RHS evaluated once, length-checked, assigned left to right)
+  with no interpreter changes. A single RHS expression that evaluates to
+  a list (e.g. a function call) unpacks directly rather than being
+  wrapped; multiple comma-separated RHS values are wrapped in a
+  `ListLiteral`. Backs out cleanly to the prior parse on any non-
+  matching shape, leaving `a = 1, 2;` (PR #289's `DeclSeq` form) and
+  `a, b;` (independent statements) unchanged. Clean first pass, no
+  bounces (3486 tests passing, up from 3471).

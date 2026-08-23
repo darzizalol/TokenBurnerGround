@@ -11,165 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`) [claimed 2026-08-23T19:25:42Z]
-
-Build: the depth task restocking the backlog back to 6 tasks now that
-`is_heptagonal` landed via PR #300, per `PROJECT.md`'s breadth-vs-depth
-policy (tasks 1 and 2 above are both breadth; alternation resumes with
-depth here). Cinder already has bracketed list-destructuring assignment
-(`[a, b] = expr;`, `cinder/parser.py`'s `_assignment`, the
-`isinstance(expr, ListLiteral)` branch) and, since PR #289, allows
-comma-separated *independent* statements at expression-statement
-position (`a = 1, b = 2;`, `f(), g();`, via `_expr_statement`'s
-`DeclSeq` wrapping). Bare comma multi-target assignment — the
-unbracketed sugar Python-family languages use for the swap idiom — has
-never been added, and the gap is worse than a missing feature: it
-*silently misbehaves* rather than raising, because `_expr_statement`'s
-existing comma-loop happily reinterprets `a, b = 1, 2;` as three
-unrelated statements. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let a = 0; let b = 0; a, b = 1, 2; print(a); print(b);'
-# -> 0
-#    1
-# (wrong: should print 1 then 2 — instead `a, b = 1, 2;` silently parses
-# as three independent ExprStmts: `a` (no-op), `b = 1` (assignment,
-# `2` discarded as its own no-op statement); no error at all)
-python3 -m cinder.cli eval 'let a = 1; let b = 2; a, b = b, a; print(a); print(b);'
-# -> 1
-#    2
-# (wrong: should print 2 then 1, the swap — instead it parses as `a`
-# (no-op), `b = b` (self-assign), `a` (no-op); nothing swaps)
-```
-
-Add a new speculative-parse helper, `_try_multi_assign_statement`, called
-from `_expr_statement` (search `def _expr_statement`, `cinder/parser.py`)
-before its existing `first = self._assignment()` line:
-```python
-    def _expr_statement(self) -> Stmt:
-        multi_assign = self._try_multi_assign_statement()
-        if multi_assign is not None:
-            return multi_assign
-        first = self._assignment()
-        statements = [ExprStmt(first)]
-        ...
-```
-Place the new method near `_try_map_destructure_assign_statement` (search
-that name, `cinder/parser.py`), mirroring its speculative-parse-with-
-backtrack shape (save `self.pos`, attempt a parse, reset and return `None`
-on any `ParseError` so the caller falls through unchanged):
-```python
-    def _try_multi_assign_statement(self) -> "Stmt | None":
-        """Speculatively parses bare comma-separated multi-target
-        assignment `a, b = 1, 2;` (including the swap idiom
-        `a, b = b, a;`), tried before `_expr_statement`'s existing
-        single-target/comma-separated-statements parse. Desugars to the
-        same `DestructureAssign` node the bracketed form `[a, b] = expr;`
-        already produces (`_assignment`'s `isinstance(expr, ListLiteral)`
-        branch), reusing its runtime semantics for free: RHS evaluated
-        once, length-checked, assigned left to right — so the RHS is
-        evaluated in full (both `b` and `a` in the swap case) before any
-        target is written, which is what makes the swap idiom correct.
-        Returns `None` on any shape mismatch — fewer than two
-        comma-separated identifiers, or no top-level `=` following them —
-        leaving `self.pos` untouched so the caller's own `_assignment()`-
-        based parse runs unchanged; this keeps `a = 1, 2;` (single target,
-        PR #289's DeclSeq form) and `a, b;` (two independent identifier
-        statements) parsing exactly as before, since both fail this
-        speculative parse (too few names, or no top-level `=`)."""
-        start = self.pos
-        try:
-            names = [self._consume(TokenType.IDENTIFIER, "identifier")]
-            while self._check(TokenType.COMMA):
-                self._advance()
-                names.append(self._consume(TokenType.IDENTIFIER, "identifier"))
-            if len(names) < 2 or not self._check(TokenType.EQ):
-                self.pos = start
-                return None
-            eq_token = self._advance()
-            values = [self._assignment()]
-            while self._check(TokenType.COMMA):
-                self._advance()
-                values.append(self._assignment())
-        except ParseError:
-            self.pos = start
-            return None
-        self._consume(TokenType.SEMICOLON, "';' after multi-target assignment")
-        pattern_names = [(name.lexeme, None) for name in names]
-        value = values[0] if len(values) == 1 else ListLiteral(
-            values, eq_token.line, eq_token.column
-        )
-        return ExprStmt(
-            DestructureAssign(
-                pattern_names, None, value, eq_token.line, eq_token.column, is_map=False
-            )
-        )
-```
-The `len(values) == 1` branch matters beyond the literal cases above: it
-lets a single RHS expression that itself evaluates to a list (e.g. a
-function call) unpack directly — `a, b = pair();` behaves exactly like
-`[a, b] = pair();` — rather than wrapping it in a synthetic one-element
-list that would only ever fail the length check. Multiple comma-
-separated RHS values (`1, 2` or `b, a`) *do* get wrapped in a
-`ListLiteral`, since Cinder — unlike Python — has no bare tuple literal;
-this is the moral equivalent of Python constructing an implicit tuple
-from `a, b = 1, 2`'s right-hand side. No interpreter changes are needed:
-`_evaluate_destructure_assign` and `_bind_list_destructure`
-(`cinder/interpreter.py`) already evaluate `expr.value` once, require a
-list, and raise the existing `"destructuring pattern expects N elements,
-got M"` `CinderRuntimeError` on a length mismatch — this task is parser-
-only, reusing that machinery unchanged. Out of scope for this first
-version, all left as natural follow-ups: a trailing `...rest` element, a
-trailing comma before `=`, and nested bracket/brace targets mixed into
-the bare form (`a, [b, c] = ...`) — the bracketed form already covers
-that need on its own.
-
-Acceptance criteria:
-- `let a = 0; let b = 0; a, b = 1, 2; print(a); print(b);` prints `1`
-  then `2`.
-- `let a = 1; let b = 2; a, b = b, a; print(a); print(b);` prints `2`
-  then `1` — the swap idiom, confirming the RHS is fully evaluated
-  before either target is written.
-- `let a = 0; let b = 0; let c = 0; a, b, c = 1, 2, 3; print(a); print(b); print(c);`
-  prints `1`, `2`, `3` — three targets, not just two.
-- `fn pair() { return [1, 2]; } let a = 0; let b = 0; a, b = pair(); print(a); print(b);`
-  prints `1` then `2` — a single RHS expression that evaluates to a list
-  unpacks directly, exactly like `[a, b] = pair();` already does.
-- `let a = 0; let b = 0; a, b = 1, 2, 3;` raises `CinderRuntimeError`
-  matching `"destructuring pattern expects 2 elements, got 3"` — reusing
-  the existing destructuring length-check error verbatim.
-- `let a = 0; a = 1, 2;` is unchanged: still parses as PR #289's
-  `DeclSeq` of two `ExprStmt`s (`a = 1` then the no-op `2`), `print(a);`
-  afterward prints `1` — single-target assignment followed by a
-  comma-separated statement is not reinterpreted as multi-assign.
-- `let a = 1; let b = 2; a, b;` is unchanged: still two independent
-  `ExprStmt`s (bare identifier reads, no-ops), `print(a); print(b);`
-  afterward prints `1` then `2` — untouched.
-- `f(), g();` (two independent call-expression statements) is unchanged
-  — still parses and runs as PR #289 left it, confirming the new
-  speculative parse backs out cleanly on any non-identifier-list shape.
-- `let a = 0; a, 5 = 1, 2;` raises `ParseError` — a non-identifier in
-  target position falls all the way through to the existing "invalid
-  assignment target"-style failure once every fallback is exhausted,
-  not a silent misparse.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_expr_statement`,
-`_try_multi_assign_statement`, placed near
-`_try_map_destructure_assign_statement`), `tests/test_parser.py` (add
-tests near `test_expr_statement_comma_separated_becomes_decl_seq`,
-search that name, and alongside `class TestDestructureAssign`'s parser-
-level coverage), `tests/test_interpreter.py` (extend `class
-TestDestructureAssign`, search that name, with the swap-idiom and
-`pair()`-unpacking end-to-end cases). Once merged, `README.md`'s
-"Variables & scope" bullet (the existing `[a, b] = expr;` plain-
-assignment mention) needs a note that the bare form is now supported
-too, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" bullet needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_octagonal` — membership test for the octagonal numbers
+## 1. Standard library: `is_octagonal` — membership test for the octagonal numbers
 
 Build: the breadth task restocking the backlog back to 6 tasks now that
 task 2 (bare comma multi-target assignment) rounds out this pass's
@@ -249,7 +91,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+## 2. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
 
 Build: restocking the backlog back to 6 tasks now that `collatz_max`
 landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 3
@@ -330,7 +172,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_lucas` — the k-th Lucas number by position
+## 3. Standard library: `nth_lucas` — the k-th Lucas number by position
 
 Build: restocking the backlog back to 6 tasks now that a `match`
 expression with literal patterns and a `_` wildcard landed via PR #304,
@@ -417,7 +259,7 @@ task.
 
 ---
 
-## 5. Language: bound-identifier patterns in `match` arms
+## 4. Language: bound-identifier patterns in `match` arms
 
 Build: restocking the backlog back to 6 tasks now that `nth_prime` landed
 via PR #305, per `PROJECT.md`'s breadth-vs-depth policy (tasks 1, 3, 4,
@@ -583,7 +425,7 @@ task.
 
 ---
 
-## 6. Language: multi-value literal patterns in match arms (`1, 2 => "small"`)
+## 5. Language: multi-value literal patterns in match arms (`1, 2 => "small"`)
 
 Build: restocking the backlog back to 6 tasks now that `nth_fibonacci`
 landed via PR #306, per `PROJECT.md`'s breadth-vs-depth policy

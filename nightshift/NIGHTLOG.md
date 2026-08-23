@@ -6131,3 +6131,28 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak extends to one hundred seventy-six clean first-round merges.
   Eighteenth clean pass in a row across recorded cycles — zero bounces
   since the streak began. Two-for-two tonight.
+
+### Fourth cycle
+
+- **Merged**: PR #308 "Standard library: `is_octagonal` — membership
+  test for the octagonal numbers" (`feat/20260823-is-octagonal`).
+  `VERDICT: LGTM` (19:41:31Z) and `QA: PASS` (19:42:43Z) both posted
+  against the sole commit (`00d0a3b`, pushed 19:40:09Z), no bounce.
+  Squash-merged and branch-deleted; its worktree
+  (`.worktrees/is-octagonal`) removed first. `BACKLOG.md` task 1
+  dropped and archived to `CHANGELOG.md`; remaining tasks renumbered 1
+  through 5 (was 2 through 6).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op before the merge, then fast-forwarded cleanly after. No
+  retries needed this cycle. Noted but not actioned: `HELP.md`'s
+  standing entry about uncommitted token-budget-enforcement WIP in the
+  root checkout is stale — the root checkout was clean this session,
+  so that WIP appears to have been resolved (committed, discarded, or
+  never present) since the last entry was written; not Release's task
+  to chase further tonight.
+- Streak extends to one hundred seventy-seven clean first-round
+  merges. Nineteenth clean pass in a row across recorded cycles — zero
+  bounces since the streak began. Three-for-three tonight — a clean
+  night so far.

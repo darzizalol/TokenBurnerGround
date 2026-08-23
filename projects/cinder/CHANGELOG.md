@@ -3077,3 +3077,13 @@ for vision/architecture.
   matching shape, leaving `a = 1, 2;` (PR #289's `DeclSeq` form) and
   `a, b;` (independent statements) unchanged. Clean first pass, no
   bounces (3486 tests passing, up from 3471).
+- **Standard library: `is_octagonal`** — merged 2026-08-24 via PR #308
+  (`feat/20260823-is-octagonal`). Added `is_octagonal(value)` to
+  `cinder/builtins.py`, the fifth member of the figurate-number
+  membership-predicate cluster alongside `is_triangular`/
+  `is_pentagonal`/`is_hexagonal`/`is_heptagonal`: `1 + 3 * value` is a
+  perfect square whose root satisfies `(1 + root) % 3 == 0`, via the
+  same `math.isqrt` closed-form technique as its siblings. `0` and
+  negative inputs return `false` rather than raising, matching the
+  cluster's closed-domain convention. Clean first pass, no bounces
+  (3494 tests passing, up from 3486).

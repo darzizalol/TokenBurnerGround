@@ -11,87 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_octagonal` — membership test for the octagonal numbers [claimed 2026-08-23T19:39:12Z]
-
-Build: the breadth task restocking the backlog back to 6 tasks now that
-task 2 (bare comma multi-target assignment) rounds out this pass's
-depth work, per `PROJECT.md`'s breadth-vs-depth policy. `is_triangular`,
-`is_pentagonal`, `is_hexagonal`, and `is_heptagonal`
-(`cinder/builtins.py`) already form a cluster of figurate-number
-membership predicates, each using the same closed-form
-`math.isqrt`-based identity with a different modular-residue check;
-`is_octagonal` is the natural fifth member — octagonal numbers
-(`1, 8, 21, 40, 65, 96, ...`) are as standard a figurate family as the
-other four and nothing in Cinder tests membership in them yet. Verify
-the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_octagonal(8));'
-# -> <eval>:1:7: undefined name 'is_octagonal' (did you mean 'is_pentagonal'?)
-```
-
-Add to `cinder/builtins.py`, registered right after `_is_heptagonal`
-(search `def _is_heptagonal`, immediately before `_is_prime`):
-```python
-def _is_octagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_octagonal", arguments, 1, line, column)
-    value = _require_int("is_octagonal", arguments[0], line, column)
-    if value < 0:
-        return False
-
-    candidate = 3 * value + 1
-    root = math.isqrt(candidate)
-    return root * root == candidate and (1 + root) % 3 == 0
-```
-The `n`-th octagonal number is `P(n) = n * (3n - 2)`; solving
-`3n^2 - 2n - value = 0` for `n` gives
-`n = (1 + sqrt(1 + 3 * value)) / 3`, so `value` is octagonal iff
-`1 + 3 * value` is a perfect square (`candidate`/`root`, the same
-`math.isqrt` technique `is_triangular`/`is_pentagonal`/`is_hexagonal`/
-`is_heptagonal` all use) *and* `(1 + root)` is divisible by `3` — the
-modular-residue check that rules out roots which solve the algebraic
-identity but don't correspond to an integer `n` (the same role
-`is_pentagonal`'s `root % 6 == 5`, `is_hexagonal`'s `root % 4 == 3`,
-and `is_heptagonal`'s `root % 10 == 7` each play for their own family).
-`0` and negative inputs return `false` rather than raising, matching
-every sibling predicate's closed-domain convention — this is a
-membership test, not a value-returning function, so there is a
-sensible (negative) answer for any integer input, unlike `collatz_max`/
-`nth_prime`-style functions that raise on an invalid domain. Also
-register the new dict entry (search `"is_heptagonal": _is_heptagonal,`,
-add `"is_octagonal": _is_octagonal,` directly after it).
-
-Acceptance criteria:
-- `is_octagonal(1);` is `true` (`P(1) = 1`).
-- `is_octagonal(0);` is `false` — `0` is not in the sequence under this
-  cluster's 1-indexed convention (matches `is_heptagonal(0)`, `false`).
-- For each of `1, 8, 21, 40, 65, 96` (the first six octagonal numbers,
-  `P(1)` through `P(6)`), `is_octagonal(value);` is `true`.
-- For each of `2, 5, 9, 20, 50, 100` (non-members interleaved among the
-  above), `is_octagonal(value);` is `false`.
-- `is_octagonal(29800);` is `true` — `P(100) = 100 * 298 = 29800`,
-  confirming the check holds well beyond small brute-forced cases.
-- `is_octagonal(-8);` is `false` — negative input, no domain error.
-- `is_octagonal(8.0);` raises `CinderRuntimeError` matching
-  `"is_octagonal() requires an int, got float"`.
-- `is_octagonal(true);` raises `CinderRuntimeError` matching
-  `"is_octagonal() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_heptagonal`, see
-current line numbers — shift if earlier tasks this cycle land first),
-`tests/test_builtins.py` (model on `class TestIsHeptagonal`, search
-that name, for both the membership-cluster test shapes and the
-arity/type-error test shapes). Once merged, `README.md`'s Builtins
-bullet needs `is_octagonal` added right after its `is_heptagonal`
-mention, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+## 1. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
 
 Build: restocking the backlog back to 6 tasks now that `collatz_max`
 landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 3
@@ -172,7 +92,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_lucas` — the k-th Lucas number by position
+## 2. Standard library: `nth_lucas` — the k-th Lucas number by position
 
 Build: restocking the backlog back to 6 tasks now that a `match`
 expression with literal patterns and a `_` wildcard landed via PR #304,
@@ -259,7 +179,7 @@ task.
 
 ---
 
-## 4. Language: bound-identifier patterns in `match` arms
+## 3. Language: bound-identifier patterns in `match` arms
 
 Build: restocking the backlog back to 6 tasks now that `nth_prime` landed
 via PR #305, per `PROJECT.md`'s breadth-vs-depth policy (tasks 1, 3, 4,
@@ -425,7 +345,7 @@ task.
 
 ---
 
-## 5. Language: multi-value literal patterns in match arms (`1, 2 => "small"`)
+## 4. Language: multi-value literal patterns in match arms (`1, 2 => "small"`)
 
 Build: restocking the backlog back to 6 tasks now that `nth_fibonacci`
 landed via PR #306, per `PROJECT.md`'s breadth-vs-depth policy
@@ -553,7 +473,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_triangular` — the k-th triangular number by position
+## 5. Standard library: `nth_triangular` — the k-th triangular number by position
 
 Build: restocking the backlog back to 6 tasks now that bare comma
 multi-target assignment landed via PR #307, per `PROJECT.md`'s

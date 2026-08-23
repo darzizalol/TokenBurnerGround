@@ -1100,6 +1100,9 @@ class Parser:
         )
 
     def _expr_statement(self) -> Stmt:
+        multi_assign = self._try_multi_assign_statement()
+        if multi_assign is not None:
+            return multi_assign
         first = self._assignment()
         statements = [ExprStmt(first)]
         while self._check(TokenType.COMMA):
@@ -1109,6 +1112,52 @@ class Parser:
         if len(statements) == 1:
             return statements[0]
         return DeclSeq(statements, first.line, first.column)
+
+    def _try_multi_assign_statement(self) -> "Stmt | None":
+        """Speculatively parses bare comma-separated multi-target
+        assignment `a, b = 1, 2;` (including the swap idiom
+        `a, b = b, a;`), tried before `_expr_statement`'s existing
+        single-target/comma-separated-statements parse. Desugars to the
+        same `DestructureAssign` node the bracketed form `[a, b] = expr;`
+        already produces (`_assignment`'s `isinstance(expr, ListLiteral)`
+        branch), reusing its runtime semantics for free: RHS evaluated
+        once, length-checked, assigned left to right — so the RHS is
+        evaluated in full (both `b` and `a` in the swap case) before any
+        target is written, which is what makes the swap idiom correct.
+        Returns `None` on any shape mismatch — fewer than two
+        comma-separated identifiers, or no top-level `=` following them —
+        leaving `self.pos` untouched so the caller's own `_assignment()`-
+        based parse runs unchanged; this keeps `a = 1, 2;` (single target,
+        PR #289's DeclSeq form) and `a, b;` (two independent identifier
+        statements) parsing exactly as before, since both fail this
+        speculative parse (too few names, or no top-level `=`)."""
+        start = self.pos
+        try:
+            names = [self._consume(TokenType.IDENTIFIER, "identifier")]
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(self._consume(TokenType.IDENTIFIER, "identifier"))
+            if len(names) < 2 or not self._check(TokenType.EQ):
+                self.pos = start
+                return None
+            eq_token = self._advance()
+            values = [self._assignment()]
+            while self._check(TokenType.COMMA):
+                self._advance()
+                values.append(self._assignment())
+        except ParseError:
+            self.pos = start
+            return None
+        self._consume(TokenType.SEMICOLON, "';' after multi-target assignment")
+        pattern_names = [(name.lexeme, None) for name in names]
+        value = values[0] if len(values) == 1 else ListLiteral(
+            values, eq_token.line, eq_token.column
+        )
+        return ExprStmt(
+            DestructureAssign(
+                pattern_names, None, value, eq_token.line, eq_token.column, is_map=False
+            )
+        )
 
     def _assignment(self) -> Expr:
         expr = self._ternary()

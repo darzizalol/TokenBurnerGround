@@ -1822,6 +1822,47 @@ class TestDestructureAssign(unittest.TestCase):
         self.assertEqual(env.get("b"), 1)
 
 
+class TestBareMultiTargetAssign(unittest.TestCase):
+    def test_two_targets(self):
+        env = run("let a = 0; let b = 0; a, b = 1, 2;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_swap_idiom(self):
+        env = run("let a = 1; let b = 2; a, b = b, a;")
+        self.assertEqual(env.get("a"), 2)
+        self.assertEqual(env.get("b"), 1)
+
+    def test_three_targets(self):
+        env = run("let a = 0; let b = 0; let c = 0; a, b, c = 1, 2, 3;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_single_rhs_call_unpacks_like_bracketed_form(self):
+        env = run(
+            "fn pair() { return [1, 2]; } let a = 0; let b = 0; a, b = pair();"
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_too_many_values_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let a = 0; let b = 0; a, b = 1, 2, 3;")
+        self.assertEqual(
+            ctx.exception.message, "destructuring pattern expects 2 elements, got 3"
+        )
+
+    def test_single_target_followed_by_comma_statement_unchanged(self):
+        env = run("let a = 0; a = 1, 2;")
+        self.assertEqual(env.get("a"), 1)
+
+    def test_bare_comma_identifiers_without_equals_unchanged(self):
+        env = run("let a = 1; let b = 2; a, b;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+
 class TestDestructureAssignMap(unittest.TestCase):
     def test_binds_two_names(self):
         env = run('let a = 0; let b = 0; {a, b} = {"a": 1, "b": 2};')

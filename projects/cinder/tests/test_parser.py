@@ -2458,6 +2458,130 @@ class TestStatements(unittest.TestCase):
             ],
         )
 
+    def test_bare_multi_target_assignment_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a, b = 1, 2;")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [("a", None), ("b", None)],
+                        None,
+                        ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
+                        False,
+                    ),
+                )
+            ],
+        )
+
+    def test_bare_multi_target_assignment_swap_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a, b = b, a;")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [("a", None), ("b", None)],
+                        None,
+                        ("ListLiteral", [("Identifier", "b"), ("Identifier", "a")]),
+                        False,
+                    ),
+                )
+            ],
+        )
+
+    def test_bare_multi_target_assignment_three_targets_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a, b, c = 1, 2, 3;")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [("a", None), ("b", None), ("c", None)],
+                        None,
+                        (
+                            "ListLiteral",
+                            [("Literal", 1), ("Literal", 2), ("Literal", 3)],
+                        ),
+                        False,
+                    ),
+                )
+            ],
+        )
+
+    def test_bare_multi_target_assignment_single_rhs_not_wrapped_in_list(self):
+        # A single RHS expression (e.g. a call) is used directly, not
+        # wrapped in a synthetic one-element ListLiteral.
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a, b = pair();")],
+            [
+                (
+                    "ExprStmt",
+                    (
+                        "DestructureAssign",
+                        [("a", None), ("b", None)],
+                        None,
+                        ("Call", ("Identifier", "pair"), []),
+                        False,
+                    ),
+                )
+            ],
+        )
+
+    def test_single_target_assignment_followed_by_comma_stmt_unchanged(self):
+        # `a = 1, 2;` still parses as PR #289's DeclSeq of two ExprStmts,
+        # not reinterpreted as multi-target assignment.
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a = 1, 2;")],
+            [
+                (
+                    "DeclSeq",
+                    [
+                        ("ExprStmt", ("Assign", "a", ("Literal", 1))),
+                        ("ExprStmt", ("Literal", 2)),
+                    ],
+                )
+            ],
+        )
+
+    def test_bare_comma_identifiers_without_equals_unchanged(self):
+        # `a, b;` (no '=') stays two independent identifier ExprStmts.
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("a, b;")],
+            [
+                (
+                    "DeclSeq",
+                    [
+                        ("ExprStmt", ("Identifier", "a")),
+                        ("ExprStmt", ("Identifier", "b")),
+                    ],
+                )
+            ],
+        )
+
+    def test_comma_separated_calls_unchanged(self):
+        # `f(), g();` (two independent call-statements) is unaffected —
+        # confirms the speculative multi-assign parse backs out cleanly.
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("f(), g();")],
+            [
+                (
+                    "DeclSeq",
+                    [
+                        ("ExprStmt", ("Call", ("Identifier", "f"), [])),
+                        ("ExprStmt", ("Call", ("Identifier", "g"), [])),
+                    ],
+                )
+            ],
+        )
+
+    def test_bare_multi_target_assignment_non_identifier_target_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("a, 5 = 1, 2;")
+
     def test_multiple_statements(self):
         self.assertEqual(
             [stmt_shape(s) for s in parse_stmts("let x = 1; let y = 2;")],

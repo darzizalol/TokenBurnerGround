@@ -583,6 +583,134 @@ task.
 
 ---
 
+## 6. Language: multi-value literal patterns in match arms (`1, 2 => "small"`)
+
+Build: restocking the backlog back to 6 tasks now that `nth_fibonacci`
+landed via PR #306, per `PROJECT.md`'s breadth-vs-depth policy
+(`nth_fibonacci` was breadth; alternation restocks with depth here — the
+queue was 2-depth/3-breadth after the last pass, and a depth restock
+keeps that ratio from drifting further). PR #304's `match` expression
+scoped its patterns down to a single literal (or `_`) per arm;
+`tests/test_parser.py`'s own `test_match_multi_value_arm_raises` (search
+that name) already documents today's behavior as a `ParseError`, sitting
+right next to `test_match_bound_identifier_pattern_raises` (task 5's own
+gap-marker) — these two tests were left side by side flagging sibling
+gaps, and this task closes the second one. Every pattern-matching
+language this feature is modeled on (Rust's `1 | 2 => ...`, Python's
+`case 1 | 2:`) lets one arm answer for several literal values without
+repeating the body; Cinder cannot yet. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(match (2) { 1, 2 => "one-or-two", _ => "other" });'
+# -> <eval>:1:20: expected '=>' after match pattern, found ','
+```
+
+Change `_match_arm` (search `def _match_arm`, `cinder/parser.py`) to
+collect a comma-separated list of patterns before `=>`, then desugar
+into one flat `MatchArm` per pattern, all sharing the same `body` node —
+this needs no `ast_nodes.py` or `cinder/interpreter.py` changes at all,
+since `MatchArm` and `_evaluate_match` (search `def _evaluate_match`)
+already try arms one at a time in source order and stop at the first
+match; N arms with identical bodies behave exactly like one arm with N
+patterns would, for free:
+```python
+    def _match_arm(self) -> "list[MatchArm]":
+        first_token = self._peek()
+        patterns = [self._match_pattern()]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            patterns.append(self._match_pattern())
+        if len(patterns) > 1 and any(pattern is None for pattern in patterns):
+            raise ParseError(
+                "'_' cannot be combined with other patterns in a match arm",
+                first_token.line,
+                first_token.column,
+            )
+        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+        body = self._ternary()
+        return [MatchArm(pattern, body) for pattern in patterns]
+```
+And update `_match_expr` (search `def _match_expr`, immediately above) to
+flatten the list instead of appending a single arm:
+```python
+    def _match_expr(self) -> Expr:
+        match_token = self._advance()  # consume 'match'
+        self._consume(TokenType.LPAREN, "'(' after 'match'")
+        subject = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after match subject")
+        self._consume(TokenType.LBRACE, "'{' after match subject")
+        arms = list(self._match_arm())
+        while self._check(TokenType.COMMA):
+            self._advance()
+            if self._check(TokenType.RBRACE):
+                break
+            arms.extend(self._match_arm())
+        self._consume(TokenType.RBRACE, "'}' after match arms")
+        return MatchExpr(subject, arms, match_token.line, match_token.column)
+```
+The comma token is doing double duty here — separating patterns *within*
+one arm's pattern list, and separating *arms* from each other — but
+there is no ambiguity: `_match_arm`'s own comma-loop only runs while
+collecting patterns, strictly before `=>` is consumed, so it can never
+accidentally swallow the comma that starts the next arm (that comma is
+only ever reached, and consumed, by `_match_expr`'s own loop, after
+`_match_arm` has already returned). Trace `match (x) { 1, 2 => "a", 3 =>
+"b" }`: `_match_arm` collects `[1, 2]` (stopping because `=>` follows
+`2`, not a comma), consumes `=>`, parses body `"a"` (stops before the
+following comma — `_ternary()` never consumes a top-level comma);
+control returns to `_match_expr`, which sees that comma as its own arm
+separator and calls `_match_arm` again for `3 => "b"`. No backtracking
+or lookahead is needed anywhere in this change. Mixing `_` into a
+multi-value list (`1, _ => ...` or `_, 1 => ...`) is rejected at parse
+time rather than silently accepted — allowing it would make every
+pattern beside the wildcard dead code in an already-non-obvious way, and
+there is no such thing as "the wildcard, but only sometimes" for a
+construct that already has a bare `_` for "always."
+
+Acceptance criteria:
+- `match (2) { 1, 2 => "one-or-two", _ => "other" };` is `"one-or-two"`.
+- `match (5) { 1, 2 => "one-or-two", _ => "other" };` is `"other"` — a
+  non-matching subject still falls through to a later arm.
+- `match (3) { 1, 2, 3 => "small", _ => "large" };` is `"small"` — three
+  patterns sharing one arm, not just two.
+- `match (nil) { false, nil => "falsy-ish", true => "truthy" };` is
+  `"falsy-ish"`, and `match (true) { false, nil => "falsy-ish", true =>
+  "truthy" };` is `"truthy"` — mixed literal types (`bool`, `nil`)
+  combine in one multi-value arm.
+- `match (5) { 1, 2 => "a" };` raises `CinderRuntimeError` matching
+  `"no match arm matched value"` — no wildcard present and the subject
+  matches neither pattern.
+- `shape(parse('match (x) { 1, 2 => "ab", _ => "c" }'))` (see
+  `tests/test_parser.py`) desugars to three flat arms, the same `body`
+  shape repeated for the two literals that share it: `[(("Literal", 1),
+  ("Literal", "ab")), (("Literal", 2), ("Literal", "ab")), (None,
+  ("Literal", "c"))]` — confirms the desugaring, not just the
+  end-to-end value.
+- `match (1) { 1, _ => "x" };` and `match (1) { _, 1 => "x" };` both
+  raise `ParseError` matching `"'_' cannot be combined with other
+  patterns in a match arm"`.
+- `match (1) { 1, 2 => "ok", };` (trailing comma after the arm, before
+  `}`) is still `"ok"` — unaffected by this change, confirming the
+  pattern-list comma-loop and the arm-separator comma-loop don't
+  interfere with each other.
+- `tests/test_parser.py`'s existing `test_match_multi_value_arm_raises`
+  (search that name) must be replaced — multi-value arms no longer raise
+  `ParseError`; update or remove that test in favor of a shape assertion
+  for the new syntax.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_arm`, `_match_expr`),
+`tests/test_parser.py` (`class TestMatchExpression`, search that name —
+replace `test_match_multi_value_arm_raises`, add the multi-value shape
+assertion and the `_`-combination `ParseError` cases), `tests/test_interpreter.py`
+(extend `class TestMatchExpression`, search that name, with the
+multi-value end-to-end value cases above). Once merged, `README.md`'s
+`match` expression bullet needs a multi-value example added, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

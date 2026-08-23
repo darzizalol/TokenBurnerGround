@@ -478,33 +478,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_prime` — the
-complementary "which prime" question to `is_prime`/`prime_factors`,
+Actively developed, nightly. Recently landed: `nth_fibonacci` — the
+"which position" question for the Fibonacci sequence, the
+value-returning sibling of `is_fibonacci`'s membership test — `nth_prime`
+— the complementary "which prime" question to `is_prime`/`prime_factors`,
 returning the prime found at a 1-indexed position (`nth_prime(1)` is
-`2`) — and before that a `match` expression with literal patterns and a
+`2`) — and before those a `match` expression with literal patterns and a
 `_` wildcard (`match (n) { 1 => "one", _ => "other" }`) — the
 value-producing counterpart to `switch`, and the opening move in a new
 depth arc (pattern matching beyond destructuring) now that the
 destructuring-nesting matrix is fully closed. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_fibonacci` — the same
-"which position" question for the Fibonacci sequence, the
-value-returning sibling of `is_fibonacci`'s membership test, bare comma
-multi-target assignment
-(`a, b = 1, 2;`, the swap idiom `a, b = b, a;`) — the unbracketed
-sibling of the existing `[a, b] = expr;` list-destructuring assignment,
-closing a real gap where the bare form today silently misparses as
-unrelated statements instead of raising or working, `is_octagonal` —
-the fifth figurate-number membership predicate, rounding out the
-`is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster,
-`binomial` — the binomial coefficient (`n` choose `k`), the
-combinatorics question built on top of `factorial`, and `nth_lucas` —
-the same "which position" question as `nth_fibonacci`, but for the
-Lucas sequence, the value-returning sibling of `is_lucas_number`'s
-membership test, and bound-identifier patterns in `match` arms
-(`match (5) { 0 => "zero", n => n + 1 }`) — the next step in the
-pattern-matching arc opened by PR #304, letting an unconditional arm
-also capture the subject's value under a name.
+next (see [`BACKLOG.md`](BACKLOG.md)): bare comma multi-target
+assignment (`a, b = 1, 2;`, the swap idiom `a, b = b, a;`) — the
+unbracketed sibling of the existing `[a, b] = expr;` list-destructuring
+assignment, closing a real gap where the bare form today silently
+misparses as unrelated statements instead of raising or working,
+`is_octagonal` — the fifth figurate-number membership predicate,
+rounding out the `is_triangular`/`is_pentagonal`/`is_hexagonal`/
+`is_heptagonal` cluster, `binomial` — the binomial coefficient (`n`
+choose `k`), the combinatorics question built on top of `factorial`,
+`nth_lucas` — the same "which position" question as `nth_fibonacci`,
+but for the Lucas sequence, the value-returning sibling of
+`is_lucas_number`'s membership test, bound-identifier patterns in
+`match` arms (`match (5) { 0 => "zero", n => n + 1 }`) — letting an
+unconditional arm also capture the subject's value under a name, and
+multi-value literal patterns in `match` arms (`match (2) { 1, 2 =>
+"small", _ => "large" }`) — letting one arm answer for several literal
+values without repeating the body. The latter two are independent next
+steps in the pattern-matching arc opened by PR #304 and can land in
+either order.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

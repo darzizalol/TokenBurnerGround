@@ -338,6 +338,7 @@ while (i < 10) {
   `is_pentagonal` to test pentagonal-number membership via the same closed-form technique plus a modular-residue check,
   `is_hexagonal` as the cluster's third member, testing hexagonal-number membership via the same closed-form technique,
   `is_heptagonal` as the cluster's fourth member, testing heptagonal-number membership via the same closed-form technique,
+  `is_octagonal` as the cluster's fifth member, testing octagonal-number membership via the same closed-form technique,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -478,37 +479,40 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: bare comma multi-target
-assignment (`a, b = 1, 2;`, the swap idiom `a, b = b, a;`) — the
-unbracketed sibling of the existing `[a, b] = expr;` list-destructuring
-assignment, closing a real gap where the bare form used to silently
-misparse as unrelated statements instead of raising or working —
-`nth_fibonacci` — the "which position" question for the Fibonacci
-sequence, the value-returning sibling of `is_fibonacci`'s membership
-test — `nth_prime` — the complementary "which prime" question to
-`is_prime`/`prime_factors`, returning the prime found at a 1-indexed
-position (`nth_prime(1)` is `2`) — and before those a `match` expression
-with literal patterns and a `_` wildcard (`match (n) { 1 => "one", _ =>
-"other" }`) — the value-producing counterpart to `switch`, and the
-opening move in a new depth arc (pattern matching beyond destructuring)
-now that the destructuring-nesting matrix is fully closed. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `is_octagonal` — the fifth
-figurate-number membership predicate, rounding out the
-`is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster,
+Actively developed, nightly. Recently landed: `is_octagonal` — the
+fifth and final figurate-number membership predicate, rounding out the
+`is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster —
+and before that bare comma multi-target assignment (`a, b = 1, 2;`, the
+swap idiom `a, b = b, a;`) — the unbracketed sibling of the existing
+`[a, b] = expr;` list-destructuring assignment, closing a real gap where
+the bare form used to silently misparse as unrelated statements instead
+of raising or working — `nth_fibonacci` — the "which position" question
+for the Fibonacci sequence, the value-returning sibling of
+`is_fibonacci`'s membership test — `nth_prime` — the complementary
+"which prime" question to `is_prime`/`prime_factors`, returning the
+prime found at a 1-indexed position (`nth_prime(1)` is `2`) — and before
+those a `match` expression with literal patterns and a `_` wildcard
+(`match (n) { 1 => "one", _ => "other" }`) — the value-producing
+counterpart to `switch`, and the opening move in a new depth arc
+(pattern matching beyond destructuring) now that the destructuring-nesting
+matrix is fully closed. See [`CHANGELOG.md`](CHANGELOG.md) for the full
+merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
 `binomial` — the binomial coefficient (`n` choose `k`), the
 combinatorics question built on top of `factorial`, `nth_lucas` — the
 same "which position" question as `nth_fibonacci`, but for the Lucas
 sequence, the value-returning sibling of `is_lucas_number`'s membership
-test, `nth_triangular` — the same "which position" question again, but
-for triangular numbers, answered by an exact closed form rather than an
-iterated recurrence, bound-identifier patterns in `match` arms (`match
-(5) { 0 => "zero", n => n + 1 }`) — letting an unconditional arm also
-capture the subject's value under a name, and multi-value literal
-patterns in `match` arms (`match (2) { 1, 2 => "small", _ => "large" }`)
-— letting one arm answer for several literal values without repeating
-the body. The latter two are independent next steps in the
-pattern-matching arc opened by PR #304 and can land in either order.
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+test, bound-identifier patterns in `match` arms (`match (5) { 0 =>
+"zero", n => n + 1 }`) — letting an unconditional arm also capture the
+subject's value under a name, multi-value literal patterns in `match`
+arms (`match (2) { 1, 2 => "small", _ => "large" }`) — letting one arm
+answer for several literal values without repeating the body,
+`nth_triangular` — the same "which position" question again, but for
+triangular numbers, answered by an exact closed form rather than an
+iterated recurrence, and guards in `match` arms (`match (n) { n if n > 0
+=> "positive", _ => "other" }`) — an extra condition on an arm, checked
+only once its pattern already matches. The bound-identifier and
+multi-value tasks are independent steps in the pattern-matching arc
+opened by PR #304 and can land in either order; guards is a third,
+queued behind both. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

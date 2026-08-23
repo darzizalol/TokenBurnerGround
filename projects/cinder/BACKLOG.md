@@ -566,6 +566,169 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Language: guards in `match` arms (`n if n > 0 => "positive"`)
+
+Build: restocking the backlog back to 6 tasks now that `is_octagonal`
+landed via PR #308, per `PROJECT.md`'s breadth-vs-depth policy
+(`is_octagonal` was breadth; alternation restocks with depth here — the
+queue was 3-breadth/2-depth after task 5 (`nth_triangular`) was added,
+so this depth restock brings it to 3-breadth/3-depth, exact parity).
+The pattern-matching arc opened by PR #304 already has two more depth
+tasks queued ahead of this one (task 3, bound-identifier patterns, and
+task 4, multi-value literal patterns) — guards are the third natural
+follow-up `PROJECT.md`'s "Current frontier" note calls out
+(nested/destructuring patterns are the remaining one, left for a future
+pass). A guard is an extra boolean condition on an arm, evaluated only
+once the arm's pattern already matches, letting one pattern split into
+several arms by an arbitrary expression instead of only by literal
+equality — every pattern-matching language this feature is modeled on
+(Rust's `n if n > 0 => ...`, Python's `case n if n > 0:`) has this.
+Verify the gap against today's codebase:
+```sh
+python3 -m cinder.cli eval 'let x = 5; print(match (0) { 0 if x > 3 => "big-zero", _ => "other" });'
+# -> <eval>:1:32: expected '=>' after match pattern, found 'if'
+```
+
+**Ordering note:** this is task 6, behind tasks 1-5 above, so by the
+time it is claimed, tasks 3 (bound-identifier patterns) and 4
+(multi-value literal patterns) will most likely have already landed and
+changed the exact shape of `MatchArm`, `_match_pattern`, and
+`_match_arm` shown below — task 5 faced the same kind of uncertainty
+about task 1 landing first and resolved it by adapting to whatever the
+merged code actually looked like; do the same here. The code below is
+grounded in **today's** actual code (verified by reading
+`cinder/ast_nodes.py`/`cinder/parser.py`/`cinder/interpreter.py`
+directly) so the *principle* is exact even if the exact diff has
+shifted: parse an optional `if <expr>` immediately after the pattern
+(and after any binding, if task 3 landed) and before the `=>`; store it
+as one more field on `MatchArm`; at eval time, only treat the arm as
+matching if the pattern already matched (or is a wildcard) **and** the
+guard (if present) evaluates truthy — a false guard falls through to
+the next arm exactly as a non-matching pattern would, it does not raise
+or stop the search. If task 3 landed first and introduced a
+per-arm child scope for the bound identifier, evaluate the guard in
+that same child scope (so the guard can see the binding), not the outer
+`env` — mirror whatever scope `arm.body` itself is evaluated in.
+
+Today's starting point, `MatchArm` (`cinder/ast_nodes.py`, search
+`class MatchArm`):
+```python
+@dataclass(frozen=True)
+class MatchArm:
+    """`pattern` is `None` for the `_` wildcard (matches unconditionally,
+    evaluating no expression); otherwise a `Literal` node compared against
+    the match subject via `values_equal`, the same helper `SwitchStmt`
+    case-matching already uses. `guard`, when not `None`, is an extra
+    condition evaluated only after the pattern itself already matches (or
+    unconditionally for a wildcard arm) — if the guard evaluates falsy, the
+    arm is skipped and matching continues with the next arm, exactly as if
+    this arm's pattern had not matched at all."""
+
+    pattern: "Expr | None"
+    body: "Expr"
+    guard: "Expr | None" = None
+```
+(If task 3 already added a `binding: "str | None" = None` field, add
+`guard` as a new trailing field after it instead, and fold the guard
+sentence above into that field's own docstring paragraph rather than
+replacing it.)
+
+Today's `_match_arm`/`_match_pattern` (`cinder/parser.py`, search `def
+_match_arm`):
+```python
+    def _match_arm(self) -> MatchArm:
+        pattern = self._match_pattern()
+        guard = None
+        if self._check(TokenType.IF):
+            self._advance()
+            guard = self._ternary()
+        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+        body = self._ternary()
+        return MatchArm(pattern, body, guard)
+```
+`TokenType.IF` is already used the same way — an optional trailing
+condition parsed with `self._ternary()` — by `_comprehension_clause`
+(search `def _comprehension_clause`, the `if self._check(TokenType.IF)`
+block), so this mirrors an existing, working pattern in this same
+parser rather than inventing new lookahead machinery. If task 4 (which
+turns `_match_arm` into a comma-collecting, multi-pattern-returning
+method) landed first, parse the `if <expr>` once, after the whole
+comma-separated pattern list and before `=>`, and apply the same
+`guard` value to every desugared `MatchArm` produced from that arm
+(they share one guard, the same way they already share one `body`).
+
+Today's `_evaluate_match` (`cinder/interpreter.py`, search `def
+_evaluate_match`):
+```python
+    def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
+        subject = self.evaluate(expr.subject, env)
+        for arm in expr.arms:
+            if arm.pattern is None or values_equal(subject, self.evaluate(arm.pattern, env)):
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
+                    continue
+                return self.evaluate(arm.body, env)
+        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
+```
+`is_truthy` (module-level in `cinder/interpreter.py`, search `def
+is_truthy`) is the same helper `if`/`while`/`and`/`or` already use, so
+guard truthiness follows Cinder's one fixed truthiness rule (`false`
+and `nil` falsy, everything else — including `0` and `""` — truthy)
+with no special case. The guard is evaluated **after** confirming the
+pattern already matched, never before — this ordering is load-bearing,
+not incidental: it lets a guard reference values that would be
+meaningless or erroring to evaluate against a non-matching subject
+(see the short-circuit acceptance case below), and it means a guard
+never runs at all for an arm whose pattern was never going to match in
+the first place.
+
+Acceptance criteria:
+- `let x = 5; print(match (0) { 0 if x > 3 => "big-zero", 0 => "zero", _ => "other" });`
+  is `"big-zero"` — guard true, arm matches.
+- `let x = 1; print(match (0) { 0 if x > 3 => "big-zero", 0 => "zero", _ => "other" });`
+  is `"zero"` — guard false, falls through to a later arm with the same
+  literal pattern but no guard.
+- `match (5) { _ if false => "never", _ => "fallback" };` is
+  `"fallback"` — a wildcard arm with a false guard is skipped even
+  though a bare wildcard would otherwise always match; matching
+  continues to the next arm.
+- `match (5) { _ => "always" };` (no guard at all) is still `"always"`
+  — unguarded arms are unaffected by this change.
+- `match (1) { 0 if undefined_name => "x", _ => "y" };` is `"y"` and
+  does **not** raise a runtime error for the undefined name — confirms
+  the guard on the `0` arm is never evaluated at all, because the
+  pattern (`0`) never matched the subject (`1`) in the first place; the
+  short-circuit order (pattern first, guard second) is load-bearing, not
+  incidental.
+- `match (7) { n if n > 100 => "huge", n if n > 3 => "medium" };` raising
+  or matching correctly is **not** in scope unless task 3 has already
+  landed (bound-identifier patterns) — if it has not, write this
+  acceptance case instead against literal patterns only, e.g. `match (7)
+  { 7 if false => "a", 7 if true => "b" };` is `"b"`, two guarded arms
+  sharing one literal pattern, only the second's guard is true.
+- `tests/test_parser.py`'s `shape()` helper's `MatchExpr` branch (search
+  `isinstance(node, MatchExpr)`) needs its per-arm tuple extended to
+  include the guard shape (`shape(arm.guard) if arm.guard is not None
+  else None`), and every existing expected-shape tuple in `class
+  TestMatchExpression` (search that name, in both
+  `tests/test_parser.py` and this file's own new tests) updated to match
+  the new field count — including a `None` for every arm that has no
+  guard, exactly as task 3's own note about adding a trailing `None` for
+  `binding` describes for that field.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`MatchArm`, `MatchExpr`
+docstrings), `cinder/parser.py` (`_match_arm`), `cinder/interpreter.py`
+(`_evaluate_match`), `tests/test_parser.py` (`shape()` helper's
+`MatchExpr` branch and `class TestMatchExpression`, search that name),
+`tests/test_interpreter.py` (extend `class TestMatchExpression`, search
+that name, with the guard end-to-end cases above). Once merged,
+`README.md`'s `match` expression bullet needs a guard example added,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" bullet needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

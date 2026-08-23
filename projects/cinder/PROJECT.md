@@ -149,16 +149,16 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): bare comma
-multi-target assignment (`a, b = 1, 2;`, #307) — the unbracketed sibling
-of the existing `[a, b] = expr;` list-destructuring assignment, closing
-a real gap where the bare form used to silently misparse as unrelated
-statements — and before that `nth_prime` (#305), `nth_fibonacci` (#306),
-and a `match` expression with literal patterns and a `_` wildcard
-(#304). `BACKLOG.md` carries the active queue: `is_octagonal`,
-`binomial`, `nth_lucas`, `nth_triangular`, bound-identifier patterns in
-`match` arms, and multi-value literal patterns in `match` arms (`1, 2 =>
-"small"`).
+Recently landed (see `CHANGELOG.md` for the full list): `is_octagonal`
+(#308) — the fifth and final member of the figurate-number membership
+cluster (`is_triangular`/`is_pentagonal`/`is_hexagonal`/
+`is_heptagonal`/`is_octagonal`) — and before that bare comma
+multi-target assignment (`a, b = 1, 2;`, #307), `nth_prime` (#305),
+`nth_fibonacci` (#306), and a `match` expression with literal patterns
+and a `_` wildcard (#304). `BACKLOG.md` carries the active queue:
+`binomial`, `nth_lucas`, bound-identifier patterns in `match` arms,
+multi-value literal patterns in `match` arms (`1, 2 => "small"`),
+`nth_triangular`, and guards in `match` arms (`n if n > 0 => ...`).
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -166,29 +166,29 @@ distinct from destructuring, deliberately scoped small (no bindings,
 multi-value arms, or guards yet). Richer patterns (bound identifiers,
 nested/destructuring patterns inside match arms, multi-value arms,
 guards) are natural follow-ups now that `MatchArm`/`MatchExpr` exist.
-Two of those follow-ups are queued side by side — bound-identifier
-patterns (task 4) and multi-value patterns (task 5) — deliberately kept
-independent of each other: multi-value patterns desugar to multiple
-flat `MatchArm`s at parse time with no `MatchArm` shape change, so it
-does not matter which of the two lands first, neither will conflict with
-or block the other.
+Three of those follow-ups are now queued — bound-identifier patterns
+(task 3), multi-value patterns (task 4), and guards (task 6) — the
+first two deliberately kept independent of each other (multi-value
+patterns desugar to multiple flat `MatchArm`s at parse time with no
+`MatchArm` shape change, so it does not matter which lands first),
+while guards was written up as a task-6 stretch goal explicitly aware it
+will land after both and may need to adapt to whatever their merged
+code actually looks like by then — see that task's own "Ordering note."
+Nested/destructuring patterns inside match arms remain the one
+follow-up not yet queued; a future grooming pass should pick it up once
+the queue has room.
 
-This grooming pass restocked with `nth_triangular` as the breadth task
-after multi-target assignment (depth, PR #307) landed, per the
-alternation policy — this was the explicit instruction the previous
-grooming pass left here once one of the three then-queued depth tasks
-landed. The backlog is back to its 6-task ceiling, but now lopsided
-4-breadth/2-depth (`is_octagonal`, `binomial`, `nth_lucas`,
-`nth_triangular` vs. bound-identifier and multi-value match patterns) —
-the alternation rhythm's "occasionally two of the same kind stack"
-allowance stretched twice in a row (`nth_prime`→`nth_fibonacci` was
-already back-to-back breadth before #307's depth task broke the run).
-**The next grooming pass must restock with depth**, not breadth, to pull
-the ratio back toward parity — once either `match`-arm task lands, queue
-one of the pattern-matching arc's remaining follow-ups (nested/
-destructuring patterns inside arms, or guards) as that depth task, and
-do not add a fifth breadth task even if a breadth task happens to land
-first (rework/bounce delays are not "landing" for this purpose).
+This grooming pass restocked with guards in `match` arms as the depth
+task after `is_octagonal` (breadth, PR #308) landed, per the alternation
+policy. The backlog is back to its 6-task ceiling and now at exact
+parity, 3-breadth/3-depth (`binomial`, `nth_lucas`, `nth_triangular` vs.
+bound-identifier patterns, multi-value patterns, guards) — the prior
+lopsided 4-breadth/2-depth stretch (`is_octagonal`, `binomial`,
+`nth_lucas`, `nth_triangular` vs. only two depth tasks) is resolved.
+**The next grooming pass should restock with breadth** to keep
+alternating, unless a later pass judges the pattern-matching arc needs
+another consecutive depth task to stay coherent — alternation is the
+default rhythm, not a hard rule.
 
 ## History
 

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`)
+## 1. Language: bare comma multi-target assignment (`a, b = 1, 2;`, swap idiom `a, b = b, a;`) [claimed 2026-08-23T19:25:42Z]
 
 Build: the depth task restocking the backlog back to 6 tasks now that
 `is_heptagonal` landed via PR #300, per `PROJECT.md`'s breadth-vs-depth

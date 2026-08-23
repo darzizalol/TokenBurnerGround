@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `binomial` — the binomial coefficient (`n` choose `k`)
+## 1. Standard library: `binomial` — the binomial coefficient (`n` choose `k`) [claimed 2026-08-23T19:51:34Z]
 
 Build: restocking the backlog back to 6 tasks now that `collatz_max`
 landed via PR #303, per `PROJECT.md`'s breadth-vs-depth policy (task 3

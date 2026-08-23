@@ -149,53 +149,49 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): a map pattern
-nested inside a list pattern (#297), `is_hexagonal` (#298), a list
-pattern nested inside a map pattern (#299), `is_heptagonal` (#300), a
-step component for range expressions (#301), and `collatz_max` (#303).
-`BACKLOG.md` carries the active queue: a `match` expression with
-literal patterns and a `_` wildcard, `nth_prime`, `nth_fibonacci`, bare
-comma multi-target assignment (`a, b = 1, 2;`), `is_octagonal`, and
-`binomial`.
+Recently landed (see `CHANGELOG.md` for the full list): a list pattern
+nested inside a map pattern (#299), `is_heptagonal` (#300), a step
+component for range expressions (#301), `collatz_max` (#303), and a
+`match` expression with literal patterns and a `_` wildcard (#304).
+`BACKLOG.md` carries the active queue: `nth_prime`, `nth_fibonacci`,
+bare comma multi-target assignment (`a, b = 1, 2;`), `is_octagonal`,
+`binomial`, and `nth_lucas`.
 
 With PR #299 landing, destructuring patterns now support arbitrary
 composition of list- and map-shaped nesting in any order — every corner
 of that matrix (list-in-list, map-in-map, map-in-list, list-in-map) is
-closed for good. The `match`-expression task already queued opens the
-next depth arc — pattern matching beyond destructuring — deliberately
-scoped small (literal patterns and a wildcard only, no bindings or
-guards yet); richer patterns (bound identifiers, nested/destructuring
-patterns, multi-value arms, guards) are natural follow-ups once it
-lands, for the Architect to sequence in future grooming passes rather
-than commit to now — not before, since they'd extend `MatchArm`/
-`MatchExpr` nodes that don't exist yet. The queued multi-target-assignment
-task is a second, independent depth thread — sugar over existing
-bracketed list-destructuring assignment, not part of the
-pattern-matching arc — picked because the gap it closes is a real
-correctness hole (today's parser silently misinterprets `a, b = 1, 2;`
-as unrelated statements rather than raising or working).
+closed for good. With PR #304 landing, Cinder now has a `match`
+expression with literal patterns and a `_` wildcard — the opening move
+of a pattern-matching arc distinct from destructuring, deliberately
+scoped small (no bindings or guards yet). Richer patterns (bound
+identifiers, nested/destructuring patterns inside match arms,
+multi-value arms, guards) are natural follow-ups now that `MatchArm`/
+`MatchExpr` exist, but none is queued yet — the next depth grooming
+pass should pick one of these up explicitly rather than let the arc go
+cold. The still-queued multi-target-assignment task is a second,
+independent depth thread — sugar over existing bracketed
+list-destructuring assignment, not part of the pattern-matching arc —
+picked because the gap it closes is a real correctness hole (today's
+parser silently misinterprets `a, b = 1, 2;` as unrelated statements
+rather than raising or working).
 
-This grooming pass restocked with `binomial` as a second breadth task
-back-to-back with `is_octagonal` rather than alternating back to depth:
-several depth candidates were checked against the live interpreter and
-each either turned out to already exist (chained comparisons — `1 < 2 <
-3` already parses via `ChainedComparison` in `cinder/parser.py`'s
-`_comparison`, evaluating `and`-joined pairwise, not left-associative
-bool-as-int coercion; `to_fixed(value, digits)` for fixed-decimal
-number formatting already exists in `cinder/builtins.py`) or would open
-a genuinely ambiguous grammar question not safely scoped to one session
-(a format-spec suffix on string interpolation, `${value:.2f}`, collides
-with the ternary operator's own `:` at the same brace depth — resolving
-it needs either a parser-level disambiguation design or a character-offset
-scheme for slicing the raw spec text out of the interpolation's source,
-either of which is a task of its own, not a one-line addition). Rather
-than force a thin or risky depth task into the queue, this pass took the
-verified, unambiguous breadth gap instead — the backlog policy's
-"occasionally two of the same kind stack back-to-back" clause exists
-for exactly this case. The next grooming pass should return to depth;
-a format-spec suffix on string interpolation remains a plausible future
-depth task once someone designs the disambiguation properly, not
-attempted here.
+This grooming pass restocked with `nth_lucas` as the breadth task after
+PR #304 (depth) landed, per the alternation policy. `is_lucas_number`
+already tests membership in the Lucas sequence with its own 1-indexed
+convention (`L(1) = 1, L(2) = 3`, deliberately omitting the textbook
+`L(0) = 2` seed); `nth_lucas` answers the complementary "which value at
+this position" question the same way `nth_prime`/`nth_fibonacci`
+already do for their own sequences, reusing `is_lucas_number`'s exact
+seed so the two stay position-for-position consistent — checked
+directly in the new task's acceptance criteria. The backlog is back to
+its 6-task ceiling: three breadth tasks (`nth_prime`, `nth_fibonacci`,
+`nth_lucas`) queued alongside `is_octagonal` and `binomial`, and one
+depth task (multi-target assignment) — lopsided toward breadth for now
+since the depth queue needs an explicit pattern-matching follow-up
+designed, not a placeholder. The next grooming pass should prioritize
+scoping that depth task (most likely bound-identifier patterns in
+`match` arms, the smallest of the follow-ups listed above) rather than
+adding a third breadth task back-to-back.
 
 ## History
 

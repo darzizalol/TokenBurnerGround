@@ -495,6 +495,93 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_lucas` — the k-th Lucas number by position
+
+Build: restocking the backlog back to 6 tasks now that a `match`
+expression with literal patterns and a `_` wildcard landed via PR #304,
+per `PROJECT.md`'s breadth-vs-depth policy (that task was depth;
+alternation restocks with breadth here). `is_lucas_number`
+(`cinder/builtins.py`) tests membership in the Lucas sequence, and task
+2 above (`nth_fibonacci`, not yet landed) already queues the same
+"which position" question for Fibonacci numbers, but nothing in Cinder
+answers the complementary question for Lucas numbers: given a
+1-indexed position, what value is found there. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_lucas(5));'
+# -> <eval>:1:7: undefined name 'nth_lucas'
+```
+
+Add to `cinder/builtins.py`, registered right after `_is_lucas_number`
+(search `def _is_lucas_number`, immediately before `_is_happy_number` —
+if task 2 has landed first, `_nth_fibonacci` will sit between them;
+register `_nth_lucas` after whichever of the two is currently last):
+```python
+def _nth_lucas(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_lucas", arguments, 1, line, column)
+    value = _require_int("nth_lucas", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_lucas() requires a positive integer, domain error", line, column
+        )
+    previous, current = 1, 3  # L(1), L(2)
+    if value == 1:
+        return previous
+    for _ in range(value - 2):
+        previous, current = current, previous + current
+    return current
+```
+This mirrors `_is_lucas_number`'s own indexing convention exactly
+(search `def _is_lucas_number`): that predicate's internal loop seeds
+`previous, current = 1, 3` and comments them `L(1), L(2)`, i.e. this
+cluster's 1-indexed Lucas sequence starts at `L(1) = 1, L(2) = 3, L(3)
+= 4, ...` and deliberately omits the standard mathematical `L(0) = 2`
+seed — there is no `nth_lucas(0)` any more than there's an
+`is_lucas_number` match for the value `2` counted as position `0`.
+Getting this seed wrong (e.g. starting from `L(0) = 2, L(1) = 1` like
+the textbook definition) would silently desynchronize `nth_lucas` from
+`is_lucas_number`'s own notion of position, so `nth_lucas(n)` and
+`is_lucas_number`'s internal walk must agree position-for-position —
+verified directly in the acceptance criteria below. A domain error (not
+a sentinel value) for `value < 1` matches `nth_prime`/`nth_fibonacci`'s
+own convention for their own "not a valid input" case, since this is a
+value-returning function, not a predicate. Also register the new dict
+entry (search `"is_lucas_number": _is_lucas_number,`, add `"nth_lucas":
+_nth_lucas,` directly after it).
+
+Acceptance criteria:
+- `nth_lucas(1);` is `1`, `nth_lucas(2);` is `3`, `nth_lucas(3);` is
+  `4`, `nth_lucas(4);` is `7`, `nth_lucas(5);` is `11` — the first five
+  Lucas numbers by this cluster's 1-indexed convention.
+- `nth_lucas(10);` is `123`.
+- `nth_lucas(15);` is `1364` — confirms the check holds well beyond
+  small brute-forced cases.
+- For each `n` in `1..15`, `is_lucas_number(nth_lucas(n));` is `true` —
+  `nth_lucas` and `is_lucas_number` agree on the same sequence.
+- `nth_lucas(0);` and `nth_lucas(-3);` both raise `CinderRuntimeError`
+  matching `"nth_lucas() requires a positive integer, domain error"`.
+- `nth_lucas(2.0);` raises `CinderRuntimeError` matching `"nth_lucas()
+  requires an int, got float"`.
+- `nth_lucas(true);` raises `CinderRuntimeError` matching `"nth_lucas()
+  requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_lucas_number`,
+see current line numbers — shift if earlier tasks this cycle land
+first), `tests/test_builtins.py` (model on `class TestIsLucasNumber`,
+search that name, for both the sequence-value test shapes and the
+arity/type-error test shapes — the domain-error test shape instead
+mirrors `class TestCollatzLength`, search that name, since `nth_lucas`
+raises rather than returning `false` for an invalid position). Once
+merged, `README.md`'s Builtins bullet needs `nth_lucas` added near
+`is_lucas_number`/`nth_fibonacci`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

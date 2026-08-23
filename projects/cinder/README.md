@@ -148,7 +148,12 @@ while (i < 10) {
   `try`/`catch` exactly like a builtin runtime error), `switch`
   statements with `case`/`default` (no fallthrough, first match wins;
   a single `case` may list multiple values, e.g. `case 1, 2, 3: { ... }`,
-  matching if any of them equals the switch expression)
+  matching if any of them equals the switch expression), a `match`
+  expression (`match (n) { 1 => "one", 2 => "two", _ => "other" }`) for
+  literal-pattern dispatch that evaluates to a value rather than
+  running statements — literal patterns only and a required `_`
+  wildcard arm for now (no bound identifiers, nested patterns, or
+  guards yet)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -472,21 +477,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `collatz_max` — the peak
-value the Collatz (3n+1) recurrence reaches before collapsing to `1`,
-the value-returning sibling of `collatz_length`'s step count — and
-before that a step component for range expressions
-(`start..end..step`, `start..=end..step`) — closing the one dimension
-ranges never had: today's implicit step of `1` used to mean a
-descending bound like `10..0` silently produced an empty list, with no
-way to skip elements or count down either. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): a `match` expression with
+Actively developed, nightly. Recently landed: a `match` expression with
 literal patterns and a `_` wildcard (`match (n) { 1 => "one", _ =>
 "other" }`) — the value-producing counterpart to `switch`, and the
 opening move in a new depth arc (pattern matching beyond destructuring)
-now that the destructuring-nesting matrix is fully closed, `nth_prime`
-— the complementary "which prime" question to `is_prime`/
+now that the destructuring-nesting matrix is fully closed — and before
+that `collatz_max` — the peak value the Collatz (3n+1) recurrence
+reaches before collapsing to `1`, the value-returning sibling of
+`collatz_length`'s step count. See [`CHANGELOG.md`](CHANGELOG.md) for
+the full merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`nth_prime` — the complementary "which prime" question to `is_prime`/
 `prime_factors`, returning the prime found at a 1-indexed position
 (`nth_prime(1)` is `2`), `nth_fibonacci` — the same "which position"
 question for the Fibonacci sequence, the value-returning sibling of
@@ -497,8 +497,11 @@ closing a real gap where the bare form today silently misparses as
 unrelated statements instead of raising or working, `is_octagonal` —
 the fifth figurate-number membership predicate, rounding out the
 `is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal` cluster,
-and `binomial` — the binomial coefficient (`n` choose `k`), the
-combinatorics question built on top of `factorial`.
+`binomial` — the binomial coefficient (`n` choose `k`), the
+combinatorics question built on top of `factorial`, and `nth_lucas` —
+the same "which position" question as `nth_fibonacci`, but for the
+Lucas sequence, the value-returning sibling of `is_lucas_number`'s
+membership test.
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

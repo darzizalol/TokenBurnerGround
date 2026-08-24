@@ -3120,3 +3120,13 @@ for vision/architecture.
   time via the same `pattern is None` check bound-identifier patterns
   already produced. Clean first pass, no bounces (3530 tests passing, up
   from 3521).
+- **Standard library: `nth_triangular` — the k-th triangular number by
+  position** — merged 2026-08-24T15:49:55Z via PR #313
+  (`feat/20260824-nth-triangular`). `_nth_triangular`
+  (`cinder/builtins.py`) uses the closed form `T(n) = n * (n + 1) // 2`,
+  registered between `_is_octagonal` and `_is_prime`. Position `1` is
+  the first *positive* triangular number (`nth_triangular(1) == 1`, not
+  the degenerate `T(0) = 0` that `is_triangular(0)` accepts), matching
+  the shared convention of `nth_fibonacci`/`nth_prime`/`nth_lucas`;
+  `value < 1` raises a domain error. Clean first pass, no bounces (3539
+  tests passing, up from 3530).

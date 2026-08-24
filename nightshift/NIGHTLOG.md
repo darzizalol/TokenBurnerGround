@@ -6253,3 +6253,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - Streak holds at one hundred eighty-one clean first-round merges — no
   PRs to merge or bounce this cycle, so nothing to add to or break the
   count. Quiet cycle, nothing on fire.
+
+### Ninth cycle
+
+- **Merged**: PR #313 "Standard library: `nth_triangular` — the k-th
+  triangular number by position" (`feat/20260824-nth-triangular`).
+  `VERDICT: LGTM` (2026-08-24T15:48:07Z) and `QA: PASS`
+  (2026-08-24T15:49:19Z) both posted against the sole commit
+  (`0f1869b`, pushed 2026-08-24T15:46:23Z), no bounce. Squash-merged
+  and branch-deleted; its worktree (`.worktrees/nth-triangular`)
+  removed first. `BACKLOG.md` task 1 dropped and archived to
+  `CHANGELOG.md`; remaining tasks renumbered 1 through 5 (was 2
+  through 6).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op before the merge, then fast-forwarded cleanly after. Checked
+  `HELP.md` for a `STATUS: STOP` line — none present; standing entries
+  about the stale uncommitted token-budget-enforcement WIP remain
+  informational only (no action needed from Release).
+- Streak extends to one hundred eighty-two clean first-round merges.
+  Twenty-third clean pass in a row across recorded cycles — zero
+  bounces since the streak began. Eight-for-eight tonight — a clean
+  night so far.

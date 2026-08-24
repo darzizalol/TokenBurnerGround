@@ -1071,30 +1071,33 @@ class Parser:
         return MatchExpr(subject, arms, match_token.line, match_token.column)
 
     def _match_arm(self) -> MatchArm:
-        pattern = self._match_pattern()
+        pattern, binding = self._match_pattern()
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
-        return MatchArm(pattern, body)
+        return MatchArm(pattern, body, binding)
 
-    def _match_pattern(self) -> "Expr | None":
+    def _match_pattern(self) -> "tuple[Expr | None, str | None]":
         token = self._peek()
-        if token.type == TokenType.IDENTIFIER and token.lexeme == "_":
+        if token.type == TokenType.IDENTIFIER:
             self._advance()
-            return None
+            if token.lexeme == "_":
+                return None, None
+            return None, token.lexeme
         if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
             self._advance()
-            return Literal(token.literal, token.line, token.column)
+            return Literal(token.literal, token.line, token.column), None
         if token.type == TokenType.TRUE:
             self._advance()
-            return Literal(True, token.line, token.column)
+            return Literal(True, token.line, token.column), None
         if token.type == TokenType.FALSE:
             self._advance()
-            return Literal(False, token.line, token.column)
+            return Literal(False, token.line, token.column), None
         if token.type == TokenType.NIL:
             self._advance()
-            return Literal(None, token.line, token.column)
+            return Literal(None, token.line, token.column), None
         raise ParseError(
-            f"expected a literal or '_' in match pattern, found {self._describe(token)}",
+            f"expected a literal, identifier, or '_' in match pattern, "
+            f"found {self._describe(token)}",
             token.line,
             token.column,
         )

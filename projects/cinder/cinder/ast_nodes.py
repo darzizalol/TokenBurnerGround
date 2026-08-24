@@ -286,13 +286,20 @@ class Ternary:
 
 @dataclass(frozen=True)
 class MatchArm:
-    """`pattern` is `None` for the `_` wildcard (matches unconditionally,
-    evaluating no expression); otherwise a `Literal` node compared against
-    the match subject via `values_equal`, the same helper `SwitchStmt`
-    case-matching already uses."""
+    """`pattern` is `None` for an unconditional arm — either the `_`
+    wildcard (`binding` also `None`) or a bound-identifier pattern
+    (`binding` holds the name), both of which match unconditionally
+    and are otherwise compared via `values_equal`, the same helper
+    `SwitchStmt` case-matching already uses, when `pattern` is not
+    `None`. A bound-identifier arm's `binding` name is defined, holding
+    the match subject's value, in a fresh child scope that only
+    `body`'s evaluation sees — it does not leak into the enclosing
+    scope, mirroring `TryStmt`'s own `catch_name` binding
+    (`cinder/interpreter.py`'s `_execute_try`)."""
 
     pattern: "Expr | None"
     body: "Expr"
+    binding: "str | None" = None
 
 
 @dataclass(frozen=True)
@@ -301,9 +308,12 @@ class MatchExpr:
     evaluated exactly once; `arms` are tried in source order via
     `values_equal` and the first match's `body` is evaluated and returned
     (no fallthrough, short-circuits on first match same as `SwitchStmt`).
-    If no arm matches (including no `_` wildcard arm present), raises
-    `CinderRuntimeError` — unlike `switch`'s `default`, there is no silent
-    no-op: `match` is an expression and must produce a value or fail."""
+    An arm may also be unconditional: the `_` wildcard or a
+    bound-identifier pattern (any other identifier, which binds the
+    subject's value for the arm's body). If no arm matches (including no
+    unconditional arm present), raises `CinderRuntimeError` — unlike
+    `switch`'s `default`, there is no silent no-op: `match` is an
+    expression and must produce a value or fail."""
 
     subject: "Expr"
     arms: list

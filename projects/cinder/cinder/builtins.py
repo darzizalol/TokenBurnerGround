@@ -1459,6 +1459,16 @@ def _is_octagonal(arguments: list, line: int, column: int) -> object:
     return root * root == candidate and (1 + root) % 3 == 0
 
 
+def _nth_triangular(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_triangular", arguments, 1, line, column)
+    value = _require_int("nth_triangular", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_triangular() requires a positive integer, domain error", line, column
+        )
+    return value * (value + 1) // 2
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -3952,6 +3962,7 @@ _BUILTINS = {
     "is_hexagonal": _is_hexagonal,
     "is_heptagonal": _is_heptagonal,
     "is_octagonal": _is_octagonal,
+    "nth_triangular": _nth_triangular,
     "is_prime": _is_prime,
     "nth_prime": _nth_prime,
     "is_composite": _is_composite,

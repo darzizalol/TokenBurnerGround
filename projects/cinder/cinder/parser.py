@@ -1061,20 +1061,31 @@ class Parser:
         subject = self._assignment()
         self._consume(TokenType.RPAREN, "')' after match subject")
         self._consume(TokenType.LBRACE, "'{' after match subject")
-        arms = [self._match_arm()]
+        arms = list(self._match_arm())
         while self._check(TokenType.COMMA):
             self._advance()
             if self._check(TokenType.RBRACE):
                 break
-            arms.append(self._match_arm())
+            arms.extend(self._match_arm())
         self._consume(TokenType.RBRACE, "'}' after match arms")
         return MatchExpr(subject, arms, match_token.line, match_token.column)
 
-    def _match_arm(self) -> MatchArm:
-        pattern, binding = self._match_pattern()
+    def _match_arm(self) -> "list[MatchArm]":
+        first_token = self._peek()
+        entries = [self._match_pattern()]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            entries.append(self._match_pattern())
+        if len(entries) > 1 and any(pattern is None for pattern, _ in entries):
+            raise ParseError(
+                "'_' or a bound identifier cannot be combined with other "
+                "patterns in a match arm",
+                first_token.line,
+                first_token.column,
+            )
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
-        return MatchArm(pattern, body, binding)
+        return [MatchArm(pattern, body, binding) for pattern, binding in entries]
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None]":
         token = self._peek()

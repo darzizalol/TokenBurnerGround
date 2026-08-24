@@ -1121,7 +1121,13 @@ class Interpreter:
     def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
         subject = self.evaluate(expr.subject, env)
         for arm in expr.arms:
-            if arm.pattern is None or values_equal(subject, self.evaluate(arm.pattern, env)):
+            if arm.pattern is None:
+                if arm.binding is None:
+                    return self.evaluate(arm.body, env)
+                arm_env = Environment(env)
+                arm_env.define(arm.binding, subject)
+                return self.evaluate(arm.body, arm_env)
+            if values_equal(subject, self.evaluate(arm.pattern, env)):
                 return self.evaluate(arm.body, env)
         raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
 

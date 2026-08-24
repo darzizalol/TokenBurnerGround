@@ -4820,6 +4820,33 @@ class TestMatchExpression(unittest.TestCase):
         self.assertEqual(env.get("calls"), 1)
         self.assertEqual(env.get("result"), "two")
 
+    def test_bound_identifier_arm_matches_and_binds_value(self):
+        env = run('let result = match (5) { 0 => "zero", n => n + 1 };')
+        self.assertEqual(env.get("result"), 6)
+
+    def test_earlier_literal_arm_wins_over_later_bound_identifier(self):
+        env = run('let result = match (0) { 0 => "zero", n => n + 1 };')
+        self.assertEqual(env.get("result"), "zero")
+
+    def test_bound_identifier_does_not_leak_into_enclosing_scope(self):
+        env = run("let x = 99; match (5) { n => n }; ")
+        self.assertEqual(env.get("x"), 99)
+        with self.assertRaises(Exception):
+            env.get("n")
+
+    def test_bound_identifier_shadows_outer_variable_inside_arm_only(self):
+        env = run("let n = 1; let result = match (5) { n => n * 2 };")
+        self.assertEqual(env.get("n"), 1)
+        self.assertEqual(env.get("result"), 10)
+
+    def test_wildcard_still_binds_nothing(self):
+        env = run('let result = match (5) { _ => "wildcard" };')
+        self.assertEqual(env.get("result"), "wildcard")
+
+    def test_bound_identifier_works_for_non_numeric_subject(self):
+        env = run("let result = match (true) { flag => flag };")
+        self.assertEqual(env.get("result"), True)
+
 
 if __name__ == "__main__":
     unittest.main()

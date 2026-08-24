@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: guards in `match` arms (`n if n > 0 => "positive"`)
+## 1. Language: guards in `match` arms (`n if n > 0 => "positive"`) [claimed 2026-08-24T15:56:37Z]
 
 Build: restocking the backlog back to 6 tasks now that `is_octagonal`
 landed via PR #308, per `PROJECT.md`'s breadth-vs-depth policy. The

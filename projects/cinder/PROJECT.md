@@ -149,59 +149,56 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): bound-identifier
-patterns in `match` arms (#311) — any non-`_` identifier in a pattern
+Recently landed (see `CHANGELOG.md` for the full list): multi-value
+literal patterns in `match` arms (#312) — `1, 2 => "small"` lets one arm
+answer for several literal values without repeating the body — and
+bound-identifier patterns (#311) — any non-`_` identifier in a pattern
 position now matches unconditionally and binds the subject's value for
-the arm's body, in a fresh child scope — and `nth_lucas` (#310), the
-"which position" question for the Lucas sequence, the value-returning
-sibling of `is_lucas_number`'s membership test. Before those: `binomial`
-(#309), `is_octagonal` (#308), bare comma multi-target assignment
-(#307), `nth_prime` (#305), `nth_fibonacci` (#306), and the `match`
-expression itself with literal patterns and a `_` wildcard (#304).
-`BACKLOG.md` carries the active queue: multi-value literal patterns in
-`match` arms (`1, 2 => "small"`), `nth_triangular`, guards in `match`
-arms (`n if n > 0 => ...`), `nth_catalan`, flat list patterns in `match`
-arms (`[a, b] => a + b`), and `cartesian_product`.
+the arm's body, in a fresh child scope. Before those: `nth_lucas` (#310),
+the "which position" question for the Lucas sequence, the value-returning
+sibling of `is_lucas_number`'s membership test, `binomial` (#309),
+`is_octagonal` (#308), bare comma multi-target assignment (#307),
+`nth_prime` (#305), `nth_fibonacci` (#306), and the `match` expression
+itself with literal patterns and a `_` wildcard (#304). `BACKLOG.md`
+carries the active queue: `nth_triangular`, guards in `match` arms (`n
+if n > 0 => ...`), `nth_catalan`, flat list patterns in `match` arms
+(`[a, b] => a + b`), `cartesian_product`, and range patterns in `match`
+arms (`1..10 => "small"`).
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
 distinct from destructuring, deliberately scoped small (no bindings,
-multi-value arms, or guards yet). Bound-identifier patterns (#311) were
-the first of the natural follow-ups to land; multi-value patterns (task
-1), guards (task 3), and now flat list patterns (task 5) are queued
-behind it, each written to adapt to whatever the merged code actually
-looks like by the time it's claimed, since these tasks can land in
-different orders — see each task's own "Ordering note." Task 5 (flat
-list patterns) deliberately scopes down the open-ended "nested/
-destructuring patterns inside match arms" idea this section used to
-flag as unqueued: fixed-length `[a, b]` patterns only, no nesting, no
-literal elements, no rest capture. Nested list patterns, patterns with
-literal elements, and rest capture inside match arms remain real gaps
-for a future grooming pass once task 5 has landed and proven the flat
-form out.
+multi-value arms, or guards yet). Bound-identifier patterns (#311) and
+multi-value patterns (#312) were the first two natural follow-ups to
+land; guards (task 2), flat list patterns (task 4), and now range
+patterns (task 6) are queued behind them, each written to adapt to
+whatever the merged code actually looks like by the time it's claimed,
+since these tasks can land in different orders — see each task's own
+"Ordering note." Task 4 (flat list patterns) deliberately scopes down
+the open-ended "nested/destructuring patterns inside match arms" idea
+this section used to flag as unqueued: fixed-length `[a, b]` patterns
+only, no nesting, no literal elements, no rest capture. Task 6 (range
+patterns) is scoped to `INT`-only bounds, no step, and inherits (does not
+fix) the pre-existing gap that no match pattern of any kind accepts a
+negative literal yet. Nested list patterns, patterns with literal
+elements, rest capture, float/stepped range patterns, and negative
+literal patterns inside match arms all remain real gaps for future
+grooming passes, most of them blocked on their simpler sibling landing
+and proving the form out first (list patterns on task 4, in particular).
 
-This grooming pass restocked with two tasks at once — task 5 (flat list
-patterns, depth) and task 6 (`cartesian_product`, breadth) — because two
-tasks landed since the last pass (`nth_lucas`, breadth, #310, and
-bound-identifier patterns, depth, #311) without a grooming pass in
-between, dropping the queue from 6 to 4 (2-breadth/2-depth:
-`nth_triangular`, `nth_catalan` vs. multi-value patterns, guards).
-Restocking with one of each kind, continuing the alternation from task 4
-(breadth) → task 5 (depth) → task 6 (breadth), restores the queue to its
-6-task ceiling at exact 3-breadth/3-depth parity (`nth_triangular`,
-`nth_catalan`, `cartesian_product` vs. multi-value patterns, guards,
-list patterns). `cartesian_product` is also a deliberate callback to the
-collection-helper cluster (`zip`/`flatten`/`chunk`/...), which had gone
-unrestocked for several passes while the numeric `nth_*`/combinatorics
-cluster grew (`nth_prime`, `nth_fibonacci`, `nth_lucas`, `binomial`,
-soon `nth_triangular`/`nth_catalan`) — picking a different stdlib
-neighborhood each pass keeps the breadth side from narrowing into one
-cluster, per this policy's own "numeric-property predicates, string
-predicates, collection helpers, and similar" framing above.
-**The next grooming pass should restock with depth** to keep
-alternating, unless a later pass judges the stdlib breadth arc needs
-another consecutive breadth task to stay coherent — alternation is the
-default rhythm, not a hard rule.
+This grooming pass restocked with one task — task 6 (range patterns in
+`match` arms, depth) — because one task (multi-value patterns, depth,
+#312) landed since the last pass without a grooming pass in between,
+dropping the queue from 6 to 5 (3-breadth/2-depth: `nth_triangular`,
+`nth_catalan`, `cartesian_product` vs. guards, flat list patterns).
+Restocking with depth, per the explicit instruction the previous
+grooming pass left here, restores the queue to its 6-task ceiling at
+exact 3-breadth/3-depth parity (`nth_triangular`, `nth_catalan`,
+`cartesian_product` vs. guards, flat list patterns, range patterns).
+**The next grooming pass should restock with breadth** to keep
+alternating, unless a later pass judges the pattern-matching depth arc
+needs another consecutive depth task to stay coherent — alternation is
+the default rhythm, not a hard rule.
 
 ## History
 

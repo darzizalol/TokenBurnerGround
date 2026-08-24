@@ -350,6 +350,7 @@ while (i < 10) {
   `is_hexagonal` as the cluster's third member, testing hexagonal-number membership via the same closed-form technique,
   `is_heptagonal` as the cluster's fourth member, testing heptagonal-number membership via the same closed-form technique,
   `is_octagonal` as the cluster's fifth member, testing octagonal-number membership via the same closed-form technique,
+  `nth_triangular` to return the triangular number found at a 1-indexed position via the exact closed form `n(n+1)/2`, the value-returning sibling of `is_triangular`'s membership test,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -490,23 +491,25 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: multi-value literal
-patterns in `match` arms (`match (2) { 1, 2 => "small", _ => "large" }`)
-— letting one arm answer for several literal values without repeating
-the body — and before that bound-identifier patterns (`match (5) { 0 =>
-"zero", n => n + 1 }`) — any non-`_` identifier in a pattern position
-now matches unconditionally and binds the subject's value for the arm's
-body, in a scope that doesn't leak out — and before that `nth_lucas` —
-the same "which position" question as `nth_fibonacci`, but for the Lucas
-sequence, the value-returning sibling of `is_lucas_number`'s membership
-test — `binomial` — the binomial coefficient (`n` choose `k`), the
+Actively developed, nightly. Recently landed: `nth_triangular` — the
+"which position" question for triangular numbers, answered by an exact
+closed form (`n(n+1)/2`) rather than an iterated recurrence, the
+value-returning sibling of `is_triangular`'s membership test — and
+before that multi-value literal patterns in `match` arms (`match (2) {
+1, 2 => "small", _ => "large" }`) — letting one arm answer for several
+literal values without repeating the body — and before that
+bound-identifier patterns (`match (5) { 0 => "zero", n => n + 1 }`) —
+any non-`_` identifier in a pattern position now matches unconditionally
+and binds the subject's value for the arm's body, in a scope that
+doesn't leak out — and before that `nth_lucas` — the same "which
+position" question as `nth_fibonacci`, but for the Lucas sequence, the
+value-returning sibling of `is_lucas_number`'s membership test —
+`binomial` — the binomial coefficient (`n` choose `k`), the
 combinatorics question built on top of `factorial` — and `is_octagonal`
 — the fifth and final figurate-number membership predicate, rounding out
 the `is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal`
 cluster. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_triangular` — the
-"which position" question for triangular numbers, answered by an exact
-closed form rather than an iterated recurrence, guards in `match` arms
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): guards in `match` arms
 (`match (n) { n if n > 0 => "positive", _ => "other" }`) — an extra
 condition on an arm, checked only once its pattern already matches,
 `nth_catalan` — the k-th Catalan number by position, a thin composition
@@ -515,12 +518,15 @@ of `binomial` (`C(n) = binomial(2n, n) / (n + 1)`), flat list patterns in
 and destructuring a fixed-length list subject in one step,
 `cartesian_product` — every ordered combination of one element from each
 of N lists, the collection-side analogue to `binomial`/`nth_catalan`'s
-combinatorics-side counting, and range patterns in `match` arms (`match
-(5) { 1..10 => "small", _ => "large" }`) — testing whether the subject
-falls in a range instead of equaling one exact value. The guards, list
-patterns, and range patterns tasks are all steps in the pattern-matching
-arc opened by PR #304 and can land in any order relative to each other;
-each is written to adapt to whichever of the others has already landed
-by the time it's claimed. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The full
-vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+combinatorics-side counting, range patterns in `match` arms (`match (5)
+{ 1..10 => "small", _ => "large" }`) — testing whether the subject falls
+in a range instead of equaling one exact value, and `nth_pentagonal` —
+the k-th pentagonal number by position, the same closed-form pattern as
+`nth_triangular` applied to the next figurate-number cluster member. The
+guards, list patterns, and range patterns tasks are all steps in the
+pattern-matching arc opened by PR #304 and can land in any order
+relative to each other; each is written to adapt to whichever of the
+others has already landed by the time it's claimed. The backlog mixes
+language depth with stdlib breadth over time rather than running either
+in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

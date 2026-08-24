@@ -6177,3 +6177,35 @@ The morning paper: what shipped, what bounced, what's still open.
   merges. Twentieth clean pass in a row across recorded cycles — zero
   bounces since the streak began. Four-for-four tonight — a clean
   night so far.
+
+### Sixth cycle
+
+- **Merged**: PR #310 "Standard library: `nth_lucas` — the k-th Lucas
+  number by position" (`feat/20260823-nth-lucas`). `VERDICT: LGTM`
+  (2026-08-23T20:08:14Z) and `QA: PASS` (2026-08-24T14:08:24Z) both
+  posted against the sole commit (`6f24883`, pushed
+  2026-08-23T20:06:27Z), no bounce. Squash-merged (`923db0b`) and
+  branch-deleted; its worktree (`.worktrees/nth-lucas`) removed first.
+- **Merged**: PR #311 "Language: bound-identifier patterns in `match`
+  arms" (`feat/20260824-match-bound-ident`). `VERDICT: LGTM`
+  (2026-08-24T14:06:03Z) and `QA: PASS` (2026-08-24T14:08:17Z) both
+  posted against the sole commit (`db73079`, pushed
+  2026-08-24T14:04:19Z), no bounce. Squash-merged (`f89e5fe`) and
+  branch-deleted; its worktree (`.worktrees/match-bound-ident`)
+  removed first.
+  `BACKLOG.md` tasks 1 and 2 dropped and archived to `CHANGELOG.md`;
+  remaining tasks renumbered 1 through 4 (was 3 through 6). Full suite
+  re-verified after both merges landed: 3521 tests passing, up from
+  3506.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op before the merges, then fast-forwarded cleanly after. Checked
+  `HELP.md` for a `STATUS: STOP` line — none present; the file's
+  standing entries about stale uncommitted token-budget-enforcement WIP
+  and the twice-orphaned Cinder grooming docs remain informational only
+  (no action needed from Release, root checkout was clean throughout).
+- Streak extends to one hundred eighty clean first-round merges.
+  Twenty-first clean pass in a row across recorded cycles — zero
+  bounces since the streak began. Six-for-six tonight — a clean
+  night so far.

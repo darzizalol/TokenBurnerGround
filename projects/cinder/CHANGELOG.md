@@ -3094,3 +3094,19 @@ for vision/architecture.
   domain error, `k > n` correctly returns `0` (not an error), matching
   combinatorics convention. Clean first pass, no bounces (3506 tests
   passing, 28 subtests, up from 3494).
+- **Standard library: `nth_lucas`** — merged 2026-08-24 via PR #310
+  (`feat/20260823-nth-lucas`). Added `nth_lucas(n)`, the k-th Lucas
+  number by 1-indexed position, to `cinder/builtins.py`, mirroring
+  `nth_fibonacci`'s recurrence-iteration style and `is_lucas_number`'s
+  own `L(1)=1, L(2)=3` seed so the two stay in sync position-for-
+  position; `value < 1` raises a domain error rather than returning the
+  textbook `L(0) = 2` seed. Clean first pass, no bounces.
+- **Language: bound-identifier patterns in `match` arms** — merged
+  2026-08-24 via PR #311 (`feat/20260824-match-bound-ident`). Any
+  identifier other than `_` in a `match` arm pattern now matches
+  unconditionally and binds the subject's value for the arm's body, in
+  a fresh child scope (`cinder/interpreter.py`'s `_evaluate_match`,
+  mirroring `_execute_try`'s `catch_env` pattern) that does not leak
+  into or shadow the enclosing scope. Closes the gap PR #304
+  deliberately left open alongside the `_` wildcard. Clean first pass,
+  no bounces (3521 tests passing, up from 3506).

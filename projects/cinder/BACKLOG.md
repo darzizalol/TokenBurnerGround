@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 2. Standard library: `nth_triangular` — the k-th triangular number by position
+## 1. Standard library: `nth_triangular` — the k-th triangular number by position
 
 Build: restocking the backlog back to 6 tasks now that bare comma
 multi-target assignment landed via PR #307, per `PROJECT.md`'s
@@ -102,97 +102,89 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: guards in `match` arms (`n if n > 0 => "positive"`)
+## 2. Language: guards in `match` arms (`n if n > 0 => "positive"`)
 
 Build: restocking the backlog back to 6 tasks now that `is_octagonal`
-landed via PR #308, per `PROJECT.md`'s breadth-vs-depth policy
-(`is_octagonal` was breadth; alternation restocks with depth here — the
-queue was 3-breadth/2-depth after task 4 (`nth_triangular`) was added,
-so this depth restock brings it to 3-breadth/3-depth, exact parity).
-The pattern-matching arc opened by PR #304 already has two more depth
-tasks queued ahead of this one (task 2, bound-identifier patterns, and
-task 3, multi-value literal patterns) — guards are the third natural
-follow-up `PROJECT.md`'s "Current frontier" note calls out
-(nested/destructuring patterns are the remaining one, left for a future
-pass). A guard is an extra boolean condition on an arm, evaluated only
-once the arm's pattern already matches, letting one pattern split into
-several arms by an arbitrary expression instead of only by literal
-equality — every pattern-matching language this feature is modeled on
-(Rust's `n if n > 0 => ...`, Python's `case n if n > 0:`) has this.
-Verify the gap against today's codebase:
+landed via PR #308, per `PROJECT.md`'s breadth-vs-depth policy. The
+pattern-matching arc opened by PR #304 has since grown bound-identifier
+patterns (PR #311) and multi-value literal patterns (PR #312) — guards
+are the next natural follow-up `PROJECT.md`'s "Current frontier" note
+calls out (flat list patterns, queued as task 4 below, and
+nested/destructuring patterns beyond that are the remaining ones). A
+guard is an extra boolean condition on an arm, evaluated only once the
+arm's pattern already matches, letting one pattern split into several
+arms by an arbitrary expression instead of only by literal equality —
+every pattern-matching language this feature is modeled on (Rust's `n
+if n > 0 => ...`, Python's `case n if n > 0:`) has this. Verify the gap
+against today's codebase:
 ```sh
 python3 -m cinder.cli eval 'let x = 5; print(match (0) { 0 if x > 3 => "big-zero", _ => "other" });'
 # -> <eval>:1:32: expected '=>' after match pattern, found 'if'
 ```
 
-**Ordering note:** this is task 5, behind tasks 1-4 above, so by the
-time it is claimed, tasks 2 (bound-identifier patterns) and 3
-(multi-value literal patterns) will most likely have already landed and
-changed the exact shape of `MatchArm`, `_match_pattern`, and
-`_match_arm` shown below — task 4 (`nth_triangular`) faced the same kind
-of ordering uncertainty about whether `is_octagonal` would land first
-and resolved it by adapting to whatever the merged code actually looked
-like; do the same here. The code below is grounded in **today's** actual
-code (verified by reading
-`cinder/ast_nodes.py`/`cinder/parser.py`/`cinder/interpreter.py`
-directly) so the *principle* is exact even if the exact diff has
-shifted: parse an optional `if <expr>` immediately after the pattern
-(and after any binding, if task 2 landed) and before the `=>`; store it
-as one more field on `MatchArm`; at eval time, only treat the arm as
-matching if the pattern already matched (or is a wildcard) **and** the
-guard (if present) evaluates truthy — a false guard falls through to
-the next arm exactly as a non-matching pattern would, it does not raise
-or stop the search. If task 2 landed first and introduced a
-per-arm child scope for the bound identifier, evaluate the guard in
-that same child scope (so the guard can see the binding), not the outer
-`env` — mirror whatever scope `arm.body` itself is evaluated in.
+**Ordering note:** task 4 (flat list patterns) is also queued and may
+land first, adding a `list_pattern`-shaped branch to `MatchArm`/
+`_match_arm`/`_evaluate_match` alongside the ones shown below — adapt to
+whatever the merged code actually looks like, the same way `nth_triangular`
+adapted to `is_octagonal` landing first. The code below is grounded in
+**today's** actual code (verified by reading `cinder/ast_nodes.py`/
+`cinder/parser.py`/`cinder/interpreter.py` directly, post-#311/#312): parse
+an optional `if <expr>` after the whole comma-separated pattern list and
+before the `=>`; store it as one more field on `MatchArm`; at eval time,
+only treat the arm as matching if the pattern already matched (or is a
+wildcard/binding) **and** the guard (if present) evaluates truthy — a
+false guard falls through to the next arm exactly as a non-matching
+pattern would, it does not raise or stop the search. A guard on a
+bound-identifier arm must be evaluated in that arm's own child scope (so
+it can see the binding), not the outer `env`.
 
-Today's starting point, `MatchArm` (`cinder/ast_nodes.py`, search
-`class MatchArm`):
+Today's `MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) —
+add a fourth field:
 ```python
-@dataclass(frozen=True)
-class MatchArm:
-    """`pattern` is `None` for the `_` wildcard (matches unconditionally,
-    evaluating no expression); otherwise a `Literal` node compared against
-    the match subject via `values_equal`, the same helper `SwitchStmt`
-    case-matching already uses. `guard`, when not `None`, is an extra
-    condition evaluated only after the pattern itself already matches (or
-    unconditionally for a wildcard arm) — if the guard evaluates falsy, the
-    arm is skipped and matching continues with the next arm, exactly as if
-    this arm's pattern had not matched at all."""
-
     pattern: "Expr | None"
     body: "Expr"
+    binding: "str | None" = None
     guard: "Expr | None" = None
 ```
-(If task 2 already added a `binding: "str | None" = None` field, add
-`guard` as a new trailing field after it instead, and fold the guard
-sentence above into that field's own docstring paragraph rather than
-replacing it.)
 
 Today's `_match_arm`/`_match_pattern` (`cinder/parser.py`, search `def
 _match_arm`):
 ```python
-    def _match_arm(self) -> MatchArm:
-        pattern = self._match_pattern()
+    def _match_arm(self) -> "list[MatchArm]":
+        first_token = self._peek()
+        entries = [self._match_pattern()]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            entries.append(self._match_pattern())
+        if len(entries) > 1 and any(pattern is None for pattern, _ in entries):
+            raise ParseError(
+                "'_' or a bound identifier cannot be combined with other "
+                "patterns in a match arm",
+                first_token.line,
+                first_token.column,
+            )
+        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+        body = self._ternary()
+        return [MatchArm(pattern, body, binding) for pattern, binding in entries]
+```
+Add guard parsing between the comma-loop and the `FAT_ARROW` consume,
+and thread it through the list comprehension so every desugared arm
+from one multi-value pattern list shares the same guard (the same way
+they already share one `body`):
+```python
         guard = None
         if self._check(TokenType.IF):
             self._advance()
             guard = self._ternary()
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
-        return MatchArm(pattern, body, guard)
+        return [MatchArm(pattern, body, binding, guard) for pattern, binding in entries]
 ```
 `TokenType.IF` is already used the same way — an optional trailing
 condition parsed with `self._ternary()` — by `_comprehension_clause`
 (search `def _comprehension_clause`, the `if self._check(TokenType.IF)`
 block), so this mirrors an existing, working pattern in this same
-parser rather than inventing new lookahead machinery. If task 3 (which
-turns `_match_arm` into a comma-collecting, multi-pattern-returning
-method) landed first, parse the `if <expr>` once, after the whole
-comma-separated pattern list and before `=>`, and apply the same
-`guard` value to every desugared `MatchArm` produced from that arm
-(they share one guard, the same way they already share one `body`).
+parser rather than inventing new lookahead machinery.
 
 Today's `_evaluate_match` (`cinder/interpreter.py`, search `def
 _evaluate_match`):
@@ -200,11 +192,36 @@ _evaluate_match`):
     def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
         subject = self.evaluate(expr.subject, env)
         for arm in expr.arms:
-            if arm.pattern is None or values_equal(subject, self.evaluate(arm.pattern, env)):
+            if arm.pattern is None:
+                if arm.binding is None:
+                    return self.evaluate(arm.body, env)
+                arm_env = Environment(env)
+                arm_env.define(arm.binding, subject)
+                return self.evaluate(arm.body, arm_env)
+            if values_equal(subject, self.evaluate(arm.pattern, env)):
+                return self.evaluate(arm.body, env)
+        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
+```
+Add a guard check right before each of the three `return
+self.evaluate(arm.body, ...)` lines, using `continue` instead of
+returning when the guard is falsy — evaluate the guard in `arm_env` for
+the bound-identifier branch (so it can see the binding) and in `env` for
+the other two:
+```python
+            if arm.pattern is None:
+                if arm.binding is None:
+                    if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
+                        continue
+                    return self.evaluate(arm.body, env)
+                arm_env = Environment(env)
+                arm_env.define(arm.binding, subject)
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                    continue
+                return self.evaluate(arm.body, arm_env)
+            if values_equal(subject, self.evaluate(arm.pattern, env)):
                 if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
                     continue
                 return self.evaluate(arm.body, env)
-        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
 ```
 `is_truthy` (module-level in `cinder/interpreter.py`, search `def
 is_truthy`) is the same helper `if`/`while`/`and`/`or` already use, so
@@ -236,21 +253,21 @@ Acceptance criteria:
   pattern (`0`) never matched the subject (`1`) in the first place; the
   short-circuit order (pattern first, guard second) is load-bearing, not
   incidental.
-- `match (7) { n if n > 100 => "huge", n if n > 3 => "medium" };` raising
-  or matching correctly is **not** in scope unless task 2 has already
-  landed (bound-identifier patterns) — if it has not, write this
-  acceptance case instead against literal patterns only, e.g. `match (7)
-  { 7 if false => "a", 7 if true => "b" };` is `"b"`, two guarded arms
-  sharing one literal pattern, only the second's guard is true.
+- `match (7) { n if n > 100 => "huge", n if n > 3 => "medium" };` is
+  `"medium"` — a guard on a bound-identifier arm can see the binding
+  (`n`), and a false guard on the first bound-identifier arm falls
+  through to the second.
+- `let n = 100; match (7) { n if n > 3 => "shadowed", _ => "other" };
+  print(n);` prints `100` — the guard's `n` refers to the arm's own
+  binding, not the outer `n`, and evaluating the guard does not leak the
+  binding into the outer scope either.
 - `tests/test_parser.py`'s `shape()` helper's `MatchExpr` branch (search
   `isinstance(node, MatchExpr)`) needs its per-arm tuple extended to
   include the guard shape (`shape(arm.guard) if arm.guard is not None
   else None`), and every existing expected-shape tuple in `class
-  TestMatchExpression` (search that name, in both
-  `tests/test_parser.py` and this file's own new tests) updated to match
-  the new field count — including a `None` for every arm that has no
-  guard, exactly as task 2's own note about adding a trailing `None` for
-  `binding` describes for that field.
+  TestMatchExpression` (search that name, in both `tests/test_parser.py`
+  and this file's own new tests) updated to match the new field count —
+  including a `None` for every arm that has no guard.
 - Full test suite passes.
 
 Likely files: `cinder/ast_nodes.py` (`MatchArm`, `MatchExpr`
@@ -266,7 +283,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_catalan` — the k-th Catalan number by position
+## 3. Standard library: `nth_catalan` — the k-th Catalan number by position
 
 Build: restocking the backlog back to 6 tasks now that `binomial` landed
 via PR #309, per `PROJECT.md`'s breadth-vs-depth policy (`binomial` was
@@ -351,7 +368,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: flat list patterns in `match` arms (`[a, b] => a + b`)
+## 4. Language: flat list patterns in `match` arms (`[a, b] => a + b`)
 
 Build: restocking the backlog back to 6 tasks now that `nth_lucas`
 (breadth, PR #310) and bound-identifier patterns (depth, PR #311) both
@@ -529,7 +546,7 @@ this task.
 
 ---
 
-## 6. Standard library: `cartesian_product` — the Cartesian product of N lists
+## 5. Standard library: `cartesian_product` — the Cartesian product of N lists
 
 Build: restocking the backlog back to 6 tasks alongside task 5 above
 (breadth, following task 5's depth, continuing the alternation task 4

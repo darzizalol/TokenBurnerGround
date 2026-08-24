@@ -6232,3 +6232,24 @@ The morning paper: what shipped, what bounced, what's still open.
   Twenty-second clean pass in a row across recorded cycles — zero
   bounces since the streak began. Seven-for-seven tonight — a clean
   night so far.
+
+### Eighth cycle
+
+- **Merged**: none — `gh pr list` returned no open PRs.
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout had an uncommitted, self-consistent `BACKLOG.md`
+  renumbering (tasks 1-5 relabeled to match #311/#312 having landed,
+  plus a rewritten task 2 write-up reflecting the post-#312 codebase)
+  sitting from a prior session that never committed it — stashed to
+  unblock `git pull --rebase origin main` (no-op, already up to date),
+  then popped back and committed here as this cycle's `BACKLOG.md`
+  change, since it's docs-only content squarely inside Release's normal
+  step-5 commit scope, not the infra/code WIP `HELP.md` has repeatedly
+  flagged as not Release's to touch. Checked `HELP.md` for a
+  `STATUS: STOP` line — none present; standing entries about the stale
+  uncommitted token-budget-enforcement WIP remain informational only
+  (no action needed from Release).
+- Streak holds at one hundred eighty-one clean first-round merges — no
+  PRs to merge or bounce this cycle, so nothing to add to or break the
+  count. Quiet cycle, nothing on fire.

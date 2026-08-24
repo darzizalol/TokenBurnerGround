@@ -4581,9 +4581,42 @@ class TestMatchExpression(unittest.TestCase):
             ),
         )
 
-    def test_match_multi_value_arm_raises(self):
+    def test_match_multi_value_arm_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { 1, 2 => "ab", _ => "c" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (("Literal", 1), ("Literal", "ab"), None),
+                    (("Literal", 2), ("Literal", "ab"), None),
+                    (None, ("Literal", "c"), None),
+                ],
+            ),
+        )
+
+    def test_match_multi_value_arm_with_wildcard_raises(self):
         with self.assertRaises(ParseError):
-            parse('match (1) { 1, 2 => "one or two", _ => "other" }')
+            parse('match (1) { 1, _ => "x" }')
+        with self.assertRaises(ParseError):
+            parse('match (1) { _, 1 => "x" }')
+
+    def test_match_multi_value_arm_with_bound_identifier_raises(self):
+        with self.assertRaises(ParseError):
+            parse('match (1) { 1, n => "x" }')
+
+    def test_match_multi_value_arm_trailing_comma_after_arm(self):
+        self.assertEqual(
+            shape(parse('match (1) { 1, 2 => "ok", }')),
+            (
+                "MatchExpr",
+                ("Literal", 1),
+                [
+                    (("Literal", 1), ("Literal", "ok"), None),
+                    (("Literal", 2), ("Literal", "ok"), None),
+                ],
+            ),
+        )
 
     def test_match_empty_body_raises(self):
         with self.assertRaises(ParseError):

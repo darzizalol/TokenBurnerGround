@@ -4847,6 +4847,34 @@ class TestMatchExpression(unittest.TestCase):
         env = run("let result = match (true) { flag => flag };")
         self.assertEqual(env.get("result"), True)
 
+    def test_multi_value_arm_matches_either_value(self):
+        env = run('let result = match (2) { 1, 2 => "one-or-two", _ => "other" };')
+        self.assertEqual(env.get("result"), "one-or-two")
+
+    def test_multi_value_arm_falls_through_when_subject_matches_neither(self):
+        env = run('let result = match (5) { 1, 2 => "one-or-two", _ => "other" };')
+        self.assertEqual(env.get("result"), "other")
+
+    def test_multi_value_arm_with_three_patterns(self):
+        env = run('let result = match (3) { 1, 2, 3 => "small", _ => "large" };')
+        self.assertEqual(env.get("result"), "small")
+
+    def test_multi_value_arm_mixes_literal_types(self):
+        env = run(
+            'let a = match (nil) { false, nil => "falsy-ish", true => "truthy" };'
+            'let b = match (true) { false, nil => "falsy-ish", true => "truthy" };'
+        )
+        self.assertEqual(env.get("a"), "falsy-ish")
+        self.assertEqual(env.get("b"), "truthy")
+
+    def test_multi_value_arm_no_wildcard_raises_when_unmatched(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('match (5) { 1, 2 => "a" };')
+
+    def test_multi_value_arm_trailing_comma_after_arm(self):
+        env = run('let result = match (1) { 1, 2 => "ok", };')
+        self.assertEqual(env.get("result"), "ok")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6209,3 +6209,26 @@ The morning paper: what shipped, what bounced, what's still open.
   Twenty-first clean pass in a row across recorded cycles — zero
   bounces since the streak began. Six-for-six tonight — a clean
   night so far.
+
+### Seventh cycle
+
+- **Merged**: PR #312 "Language: multi-value literal patterns in match
+  arms (`1, 2 => \"small\"`)" (`feat/20260824-multi-value-match-patterns`).
+  `VERDICT: LGTM` (2026-08-24T14:23:58Z) and `QA: PASS`
+  (2026-08-24T14:25:37Z) both posted against the sole commit
+  (`fea453c`, pushed 2026-08-24T14:21:44Z), no bounce. Squash-merged
+  (`06eb543`) and branch-deleted; its worktree
+  (`.worktrees/multi-value-match-patterns`) removed first.
+  `BACKLOG.md` task 1 dropped and archived to `CHANGELOG.md`; remaining
+  tasks renumbered 1 through 5 (was 2 through 6).
+- **Bounced this cycle**: none.
+- **Still open**: none.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op before the merge, then fast-forwarded cleanly after. Checked
+  `HELP.md` for a `STATUS: STOP` line — none present; standing entries
+  about the stale uncommitted token-budget-enforcement WIP remain
+  informational only (no action needed from Release).
+- Streak extends to one hundred eighty-one clean first-round merges.
+  Twenty-second clean pass in a row across recorded cycles — zero
+  bounces since the streak began. Seven-for-seven tonight — a clean
+  night so far.

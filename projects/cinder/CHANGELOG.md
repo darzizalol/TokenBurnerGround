@@ -3110,3 +3110,13 @@ for vision/architecture.
   into or shadow the enclosing scope. Closes the gap PR #304
   deliberately left open alongside the `_` wildcard. Clean first pass,
   no bounces (3521 tests passing, up from 3506).
+- **Language: multi-value literal patterns in `match` arms** — merged
+  2026-08-24 via PR #312 (`feat/20260824-multi-value-match-patterns`).
+  `1, 2 => body` in a `match` arm now desugars in the parser
+  (`_match_arm`, `cinder/parser.py`) into N flat `MatchArm`s sharing one
+  `body`, since `_evaluate_match` already tries arms in source order and
+  stops at the first match — no `interpreter.py` changes needed. Mixing
+  `_` or a bound identifier into a multi-value list is rejected at parse
+  time via the same `pattern is None` check bound-identifier patterns
+  already produced. Clean first pass, no bounces (3530 tests passing, up
+  from 3521).

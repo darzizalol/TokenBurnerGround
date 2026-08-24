@@ -2369,6 +2369,67 @@ class TestNthFibonacci(unittest.TestCase):
             run("nth_fibonacci(1, 2);")
 
 
+class TestNthLucas(unittest.TestCase):
+    def test_nth_lucas_of_first_five_positions(self):
+        expected = {1: 1, 2: 3, 3: 4, 4: 7, 5: 11}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_lucas({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_lucas_of_ten(self):
+        self.assertEqual(run("let result = nth_lucas(10);").get("result"), 123)
+
+    def test_nth_lucas_of_fifteen(self):
+        self.assertEqual(run("let result = nth_lucas(15);").get("result"), 1364)
+
+    def test_nth_lucas_agrees_with_is_lucas_number(self):
+        for position in range(1, 16):
+            self.assertEqual(
+                run(
+                    f"let result = is_lucas_number(nth_lucas({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_lucas({position}) to be a Lucas number",
+            )
+
+    def test_nth_lucas_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_lucas(0);")
+        self.assertIn(
+            "nth_lucas() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_lucas_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_lucas(-3);")
+        self.assertIn(
+            "nth_lucas() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_lucas_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_lucas(2.0);")
+        self.assertIn(
+            "nth_lucas() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_lucas_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_lucas(true);")
+        self.assertIn(
+            "nth_lucas() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_lucas_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_lucas(1, 2);")
+
+
 class TestIsHappyNumber(unittest.TestCase):
     def test_is_happy_number_of_one(self):
         self.assertEqual(run("let result = is_happy_number(1);").get("result"), True)

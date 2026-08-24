@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: multi-value literal patterns in match arms (`1, 2 => "small"`)
+## 1. Language: multi-value literal patterns in match arms (`1, 2 => "small"`) [claimed 2026-08-24T14:20:27Z]
 
 Build: restocking the backlog back to 6 tasks now that `nth_fibonacci`
 landed via PR #306, per `PROJECT.md`'s breadth-vs-depth policy

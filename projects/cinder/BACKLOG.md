@@ -98,7 +98,7 @@ task.
 
 ---
 
-## 2. Language: bound-identifier patterns in `match` arms
+## 2. Language: bound-identifier patterns in `match` arms [claimed 2026-08-24T14:02:27Z]
 
 Build: restocking the backlog back to 6 tasks now that `nth_prime` landed
 via PR #305, per `PROJECT.md`'s breadth-vs-depth policy (tasks 1, 3, 4,

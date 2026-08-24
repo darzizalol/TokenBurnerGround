@@ -149,49 +149,55 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `binomial`
-(#309) — the binomial coefficient (`n` choose `k`), built directly on
-`math.comb` the same way `factorial` uses `math.factorial` — and before
-that `is_octagonal` (#308), the fifth and final member of the
-figurate-number membership cluster (`is_triangular`/`is_pentagonal`/
-`is_hexagonal`/`is_heptagonal`/`is_octagonal`), bare comma multi-target
-assignment (`a, b = 1, 2;`, #307), `nth_prime` (#305), `nth_fibonacci`
-(#306), and a `match` expression with literal patterns and a `_`
-wildcard (#304). `BACKLOG.md` carries the active queue: `nth_lucas`,
-bound-identifier patterns in `match` arms, multi-value literal patterns
-in `match` arms (`1, 2 => "small"`), `nth_triangular`, guards in `match`
-arms (`n if n > 0 => ...`), and `nth_catalan`.
+Recently landed (see `CHANGELOG.md` for the full list): bound-identifier
+patterns in `match` arms (#311) — any non-`_` identifier in a pattern
+position now matches unconditionally and binds the subject's value for
+the arm's body, in a fresh child scope — and `nth_lucas` (#310), the
+"which position" question for the Lucas sequence, the value-returning
+sibling of `is_lucas_number`'s membership test. Before those: `binomial`
+(#309), `is_octagonal` (#308), bare comma multi-target assignment
+(#307), `nth_prime` (#305), `nth_fibonacci` (#306), and the `match`
+expression itself with literal patterns and a `_` wildcard (#304).
+`BACKLOG.md` carries the active queue: multi-value literal patterns in
+`match` arms (`1, 2 => "small"`), `nth_triangular`, guards in `match`
+arms (`n if n > 0 => ...`), `nth_catalan`, flat list patterns in `match`
+arms (`[a, b] => a + b`), and `cartesian_product`.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
 distinct from destructuring, deliberately scoped small (no bindings,
-multi-value arms, or guards yet). Richer patterns (bound identifiers,
-nested/destructuring patterns inside match arms, multi-value arms,
-guards) are natural follow-ups now that `MatchArm`/`MatchExpr` exist.
-Three of those follow-ups are now queued — bound-identifier patterns
-(task 2), multi-value patterns (task 3), and guards (task 5) — the first
-two deliberately kept independent of each other (multi-value patterns
-desugar to multiple flat `MatchArm`s at parse time with no `MatchArm`
-shape change, so it does not matter which lands first), while guards was
-written up as a task-5 stretch goal explicitly aware it will land after
-both and may need to adapt to whatever their merged code actually looks
-like by then — see that task's own "Ordering note." Nested/destructuring
-patterns inside match arms remain the one follow-up not yet queued; a
-future grooming pass should pick it up once the queue has room.
+multi-value arms, or guards yet). Bound-identifier patterns (#311) were
+the first of the natural follow-ups to land; multi-value patterns (task
+1), guards (task 3), and now flat list patterns (task 5) are queued
+behind it, each written to adapt to whatever the merged code actually
+looks like by the time it's claimed, since these tasks can land in
+different orders — see each task's own "Ordering note." Task 5 (flat
+list patterns) deliberately scopes down the open-ended "nested/
+destructuring patterns inside match arms" idea this section used to
+flag as unqueued: fixed-length `[a, b]` patterns only, no nesting, no
+literal elements, no rest capture. Nested list patterns, patterns with
+literal elements, and rest capture inside match arms remain real gaps
+for a future grooming pass once task 5 has landed and proven the flat
+form out.
 
-This grooming pass restocked with `nth_catalan` (breadth) after
-`binomial` (breadth, PR #309) landed, per the alternation policy —
-`PROJECT.md`'s own note from the previous pass called for a breadth
-restock here to restore parity, since `binomial` landing had dropped the
-queue to 2-breadth/3-depth (`nth_lucas`, `nth_triangular` vs.
-bound-identifier patterns, multi-value patterns, guards). The backlog is
-back to its 6-task ceiling and at exact parity again, 3-breadth/3-depth
-(`nth_lucas`, `nth_triangular`, `nth_catalan` vs. bound-identifier
-patterns, multi-value patterns, guards). `nth_catalan` is also a
-deliberate small callback to `binomial`: it composes the closed form
-`C(n) = binomial(2n, n) / (n + 1)` on top of the coefficient `binomial`
-just landed, the same way `nth_triangular`/`nth_lucas` compose closed
-forms or recurrences on top of their own membership-predicate siblings.
+This grooming pass restocked with two tasks at once — task 5 (flat list
+patterns, depth) and task 6 (`cartesian_product`, breadth) — because two
+tasks landed since the last pass (`nth_lucas`, breadth, #310, and
+bound-identifier patterns, depth, #311) without a grooming pass in
+between, dropping the queue from 6 to 4 (2-breadth/2-depth:
+`nth_triangular`, `nth_catalan` vs. multi-value patterns, guards).
+Restocking with one of each kind, continuing the alternation from task 4
+(breadth) → task 5 (depth) → task 6 (breadth), restores the queue to its
+6-task ceiling at exact 3-breadth/3-depth parity (`nth_triangular`,
+`nth_catalan`, `cartesian_product` vs. multi-value patterns, guards,
+list patterns). `cartesian_product` is also a deliberate callback to the
+collection-helper cluster (`zip`/`flatten`/`chunk`/...), which had gone
+unrestocked for several passes while the numeric `nth_*`/combinatorics
+cluster grew (`nth_prime`, `nth_fibonacci`, `nth_lucas`, `binomial`,
+soon `nth_triangular`/`nth_catalan`) — picking a different stdlib
+neighborhood each pass keeps the breadth side from narrowing into one
+cluster, per this policy's own "numeric-property predicates, string
+predicates, collection helpers, and similar" framing above.
 **The next grooming pass should restock with depth** to keep
 alternating, unless a later pass judges the stdlib breadth arc needs
 another consecutive breadth task to stay coherent — alternation is the

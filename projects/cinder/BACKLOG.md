@@ -32,30 +32,39 @@ python3 -m cinder.cli eval 'print(match (2) { 1, 2 => "one-or-two", _ => "other"
 # -> <eval>:1:20: expected '=>' after match pattern, found ','
 ```
 
-Change `_match_arm` (search `def _match_arm`, `cinder/parser.py`) to
-collect a comma-separated list of patterns before `=>`, then desugar
-into one flat `MatchArm` per pattern, all sharing the same `body` node —
-this needs no `ast_nodes.py` or `cinder/interpreter.py` changes at all,
-since `MatchArm` and `_evaluate_match` (search `def _evaluate_match`)
-already try arms one at a time in source order and stop at the first
-match; N arms with identical bodies behave exactly like one arm with N
-patterns would, for free:
+**Ordering note (updated during grooming, 2026-08-24):** bound-identifier
+patterns (PR #311) landed since this task was first written, so
+`_match_pattern` today returns a `(pattern, binding)` tuple, not a bare
+pattern — the sketch below is grounded in the actual current code, not
+the pre-#311 version. Change `_match_arm` (search `def _match_arm`,
+`cinder/parser.py`) to collect a comma-separated list of `(pattern,
+binding)` entries before `=>`, then desugar into one flat `MatchArm` per
+entry, all sharing the same `body` node — this needs no `ast_nodes.py`
+or `cinder/interpreter.py` changes at all, since `MatchArm` and
+`_evaluate_match` (search `def _evaluate_match`) already try arms one at
+a time in source order and stop at the first match; N arms with
+identical bodies behave exactly like one arm with N patterns would, for
+free. A multi-value list mixing in the `_` wildcard *or* a
+bound-identifier pattern is rejected the same way — both surface as
+`pattern is None` from `_match_pattern`, so the existing wildcard check
+already covers bound identifiers too, for free:
 ```python
     def _match_arm(self) -> "list[MatchArm]":
         first_token = self._peek()
-        patterns = [self._match_pattern()]
+        entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
             self._advance()
-            patterns.append(self._match_pattern())
-        if len(patterns) > 1 and any(pattern is None for pattern in patterns):
+            entries.append(self._match_pattern())
+        if len(entries) > 1 and any(pattern is None for pattern, _ in entries):
             raise ParseError(
-                "'_' cannot be combined with other patterns in a match arm",
+                "'_' or a bound identifier cannot be combined with other "
+                "patterns in a match arm",
                 first_token.line,
                 first_token.column,
             )
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
-        return [MatchArm(pattern, body) for pattern in patterns]
+        return [MatchArm(pattern, body, binding) for pattern, binding in entries]
 ```
 And update `_match_expr` (search `def _match_expr`, immediately above) to
 flatten the list instead of appending a single arm:
@@ -108,14 +117,20 @@ Acceptance criteria:
   `"no match arm matched value"` — no wildcard present and the subject
   matches neither pattern.
 - `shape(parse('match (x) { 1, 2 => "ab", _ => "c" }'))` (see
-  `tests/test_parser.py`) desugars to three flat arms, the same `body`
+  `tests/test_parser.py`, whose `shape()` helper already renders each arm
+  as a 3-tuple `(pattern_shape_or_None, body_shape, binding)` per the
+  bound-identifier task) desugars to three flat arms, the same `body`
   shape repeated for the two literals that share it: `[(("Literal", 1),
-  ("Literal", "ab")), (("Literal", 2), ("Literal", "ab")), (None,
-  ("Literal", "c"))]` — confirms the desugaring, not just the
-  end-to-end value.
+  ("Literal", "ab"), None), (("Literal", 2), ("Literal", "ab"), None),
+  (None, ("Literal", "c"), None)]` — confirms the desugaring, not just
+  the end-to-end value.
 - `match (1) { 1, _ => "x" };` and `match (1) { _, 1 => "x" };` both
-  raise `ParseError` matching `"'_' cannot be combined with other
-  patterns in a match arm"`.
+  raise `ParseError` matching `"'_' or a bound identifier cannot be
+  combined with other patterns in a match arm"`.
+- `match (1) { 1, n => "x" };` also raises that same `ParseError` — a
+  bound-identifier pattern (any non-`_` identifier) is rejected from a
+  multi-value list exactly like `_` is, since both desugar to `pattern is
+  None` from `_match_pattern` and share one rejection check.
 - `match (1) { 1, 2 => "ok", };` (trailing comma after the arm, before
   `}`) is still `"ok"` — unaffected by this change, confirming the
   pattern-list comma-loop and the arm-separator comma-loop don't
@@ -474,6 +489,268 @@ shapes and the arity/type-error test shapes — the domain-error test
 shape mirrors `class TestNthFibonacci`'s own zero/negative cases). Once
 merged, `README.md`'s Builtins bullet needs `nth_catalan` added near
 `binomial`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Language: flat list patterns in `match` arms (`[a, b] => a + b`)
+
+Build: restocking the backlog back to 6 tasks now that `nth_lucas`
+(breadth, PR #310) and bound-identifier patterns (depth, PR #311) both
+landed since the last grooming pass, dropping the queue from 6 to 4
+(tasks 1-4 above). This restock adds one depth task and one breadth
+task (task 6, below) to bring it back to 6 at 3-breadth/3-depth parity,
+continuing the alternation this task 5 (depth) follows task 4
+(breadth). This closes the one follow-up `PROJECT.md`'s "Current
+frontier" note has flagged but never queued since the pattern-matching
+arc opened with PR #304: "Nested/destructuring patterns inside match
+arms remain the one follow-up not yet queued." Scoped down from that
+open-ended description to something one session can finish: **flat**
+list patterns only — `[a, b]` binds each element of a same-length list
+subject to a name (or discards it with `_`), no nesting, no literal
+sub-patterns, no rest/spread. Cinder's existing `let [a, b] = list;`
+destructuring (`cinder/parser.py`'s `_destructure_list_pattern`,
+`cinder/interpreter.py`'s `_bind_list_destructure`) already supports far
+more (nested patterns, rest capture, map patterns) — this task
+deliberately does not reuse that machinery or match its full power, since
+match arms need pattern *testing* (does this list have this shape at
+all, falling through to the next arm if not) rather than destructuring's
+unconditional *binding* (raise if the shape doesn't fit). Nested list
+patterns, literal elements inside a pattern (`[0, b] => ...`), and rest
+capture (`[a, ...rest] => ...`) are explicitly out of scope for this
+task — real gaps, left for a future grooming pass once this flat form is
+solid. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(match ([1, 2]) { [a, b] => a + b, _ => 0 });'
+# -> <eval>:1:20: expected a literal, identifier, or '_' in match pattern, found '['
+```
+
+**Ordering note:** tasks 1 (multi-value patterns) and 3 (guards) are
+still ahead of this in the queue and may land first, changing
+`MatchArm`'s exact field list and `_match_arm`'s exact shape — adapt to
+whatever the merged code actually looks like, the same way task 4
+(`nth_triangular`) adapted to `is_octagonal` landing first. The sketch
+below is grounded in **today's** actual code (verified by reading
+`cinder/ast_nodes.py`/`cinder/parser.py`/`cinder/interpreter.py`
+directly, post-#311, pre-#(task 1)/#(task 3)), so the *principle* is
+exact even if the exact diff has shifted: detect a leading `[` in
+`_match_arm` before falling into the existing literal/wildcard/
+bound-identifier path, parse a flat name list, and store it as one more
+field on `MatchArm` that the existing literal-pattern and
+bound-identifier fields stay `None` for (list patterns are a third,
+mutually-exclusive pattern kind, not a combination of the other two).
+
+Today's `MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) —
+add a fourth field:
+```python
+    pattern: "Expr | None"
+    body: "Expr"
+    binding: "str | None" = None
+    list_pattern: "list | None" = None  # list[str | None]; None = not a list pattern
+```
+
+Today's `_match_arm`/`_match_pattern` (`cinder/parser.py`, search `def
+_match_arm`):
+```python
+    def _match_arm(self) -> MatchArm:
+        if self._check(TokenType.LBRACKET):
+            list_pattern = self._match_list_pattern()
+            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+            body = self._ternary()
+            return MatchArm(None, body, None, list_pattern)
+        pattern, binding = self._match_pattern()
+        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+        body = self._ternary()
+        return MatchArm(pattern, body, binding)
+
+    def _match_list_pattern(self) -> "list[str | None]":
+        self._advance()  # consume '['
+        names: "list[str | None]" = []
+        if not self._check(TokenType.RBRACKET):
+            names.append(self._match_list_pattern_name())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(self._match_list_pattern_name())
+        self._consume(TokenType.RBRACKET, "']' after list pattern")
+        return names
+
+    def _match_list_pattern_name(self) -> "str | None":
+        token = self._peek()
+        if token.type != TokenType.IDENTIFIER:
+            raise ParseError(
+                f"expected an identifier or '_' inside list pattern, "
+                f"found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._advance()
+        return None if token.lexeme == "_" else token.lexeme
+```
+`[]` (empty brackets) is a valid pattern — `names` stays `[]`, matching
+only a same-length (zero-length) list subject; the `if not
+self._check(RBRACKET)` guard mirrors how argument lists and other
+comma-separated forms already handle the empty case elsewhere in this
+parser.
+
+Today's `_evaluate_match` (`cinder/interpreter.py`, search `def
+_evaluate_match`) needs a new branch checked first, since a list pattern
+is a shape test rather than a `values_equal` comparison:
+```python
+    def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
+        subject = self.evaluate(expr.subject, env)
+        for arm in expr.arms:
+            if arm.list_pattern is not None:
+                if not isinstance(subject, list) or len(subject) != len(arm.list_pattern):
+                    continue
+                arm_env = Environment(env)
+                for name, item in zip(arm.list_pattern, subject):
+                    if name is not None:
+                        arm_env.define(name, item)
+                return self.evaluate(arm.body, arm_env)
+            if arm.pattern is None:
+                if arm.binding is None:
+                    return self.evaluate(arm.body, env)
+                arm_env = Environment(env)
+                arm_env.define(arm.binding, subject)
+                return self.evaluate(arm.body, arm_env)
+            if values_equal(subject, self.evaluate(arm.pattern, env)):
+                return self.evaluate(arm.body, env)
+        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
+```
+A non-list subject, or a list of the wrong length, does not raise —
+it simply fails to match this arm and falls through to the next one,
+`continue`ing the loop exactly like a non-equal literal pattern already
+does; this keeps list patterns consistent with every other pattern
+kind's "no match here, try the next arm" behavior rather than
+introducing a new kind of failure mode. The child scope
+(`Environment(env)`) mirrors bound-identifier's own child-scope pattern
+directly above it (and `_execute_try`'s `catch_env`) — bindings live
+only for `arm.body`'s evaluation and do not leak into or shadow `env`.
+A repeated name in one pattern (`[a, a] => a`) is not rejected: `zip`
+binds left to right and `Environment.define` silently overwrites, so
+the later position wins — no special-case duplicate-name detection,
+matching this task's "flat and simple" scope.
+
+Acceptance criteria:
+- `match ([1, 2]) { [a, b] => a + b, _ => 0 };` is `3`.
+- `match ([1]) { [a, b] => a + b, [a] => a, _ => 0 };` is `1` — a
+  length-2 pattern that doesn't fit falls through to a length-1 pattern
+  that does, not an error.
+- `match ([1, 2, 3]) { [a, b] => a + b, _ => "no match" };` is
+  `"no match"` — a length-3 subject doesn't fit a length-2 pattern,
+  falls through to `_`.
+- `match (5) { [a, b] => a + b, _ => "not a list" };` is `"not a list"`
+  — a non-list subject fails the list pattern without raising, falls
+  through to `_`.
+- `match ([1, 2]) { [_, b] => b, _ => 0 };` is `2` — `_` inside a list
+  pattern discards that position without binding a name.
+- `match ([]) { [] => "empty", _ => "nonempty" };` is `"empty"` — `[]`
+  matches only a zero-length list.
+- `match ([1, 2]) { [a, a] => a, _ => "dup" };` is `2` — a repeated name
+  binds left to right, the later position wins, per the note above.
+- `let a = 100; match ([1, 2]) { [a, b] => a + b, _ => 0 }; print(a);`
+  prints `100` — the outer `a` is unchanged after the match, confirming
+  list-pattern bindings live in a child scope that does not leak,
+  mirroring bound-identifier's own scoping test.
+- `shape(parse('match (x) { [a, _] => a, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the list-pattern arm's shape including
+  `["a", None]` as the pattern names — confirms the parse, not just the
+  end-to-end value.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`MatchArm`), `cinder/parser.py`
+(`_match_arm`, new `_match_list_pattern`/`_match_list_pattern_name`),
+`cinder/interpreter.py` (`_evaluate_match`), `tests/test_parser.py`
+(`shape()` helper's `MatchExpr` branch, `class TestMatchExpression`),
+`tests/test_interpreter.py` (extend `class TestMatchExpression` with the
+end-to-end cases above). Once merged, `README.md`'s `match` expression
+bullet needs a list-pattern example added, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" bullet
+needs refreshing — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
+## 6. Standard library: `cartesian_product` — the Cartesian product of N lists
+
+Build: restocking the backlog back to 6 tasks alongside task 5 above
+(breadth, following task 5's depth, continuing the alternation task 4
+→ task 5 already restarted). Cinder's collection-helper cluster is deep
+(`zip`/`zip_longest`/`zip_with`/`unzip`, `flatten`/`flatten_deep`,
+`chunk`/`sliding_window`, `interleave`/`interpose`, and more) but has no
+way to combine several lists into every ordered tuple of one element
+from each — the Cartesian product, the collection-side analogue to
+`binomial`/`nth_catalan`'s combinatorics-side counting. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(cartesian_product([[1, 2], [3, 4]]));'
+# -> <eval>:1:7: undefined name 'cartesian_product'
+```
+
+Add to `cinder/builtins.py`, registered right after `_zip_with` (search
+`def _zip_with`, itself already imported alongside `itertools` at the
+top of this module — no new import needed):
+```python
+def _cartesian_product(arguments: list, line: int, column: int) -> object:
+    _require_arity("cartesian_product", arguments, 1, line, column)
+    lists = arguments[0]
+    if not isinstance(lists, list):
+        raise CinderRuntimeError(
+            f"cartesian_product() requires a list, got {type_name(lists)}", line, column
+        )
+    for index, item in enumerate(lists):
+        if not isinstance(item, list):
+            raise CinderRuntimeError(
+                f"cartesian_product() requires a list of lists, element {index} is "
+                f"{type_name(item)}",
+                line,
+                column,
+            )
+    return [list(combo) for combo in itertools.product(*lists)]
+```
+Mirrors `_zip`'s own per-argument list-type-check style (search `def
+_zip`), just looped over one outer list of lists instead of two fixed
+positional arguments. `itertools.product(*lists)` does the actual work —
+this builtin is a thin, validated wrapper, the same composition style
+`nth_catalan` used for `math.comb`. Two edge cases are load-bearing and
+covered explicitly below: `cartesian_product([])` (an empty outer list)
+returns `[[]]` — one empty combination, not zero combinations, matching
+the standard mathematical convention that the Cartesian product of zero
+sets is the singleton set containing the empty tuple, and exactly what
+`itertools.product()` called with no arguments already returns; while
+`cartesian_product([[1, 2], []])` (an empty *inner* list present among
+otherwise non-empty ones) returns `[]` — zero combinations, since no
+element can be drawn from the empty list, which `itertools.product`
+already handles correctly with no special-case code needed. Also
+register the new dict entry (search `"zip_with": _zip_with,`, add
+`"cartesian_product": _cartesian_product,` directly after it).
+
+Acceptance criteria:
+- `cartesian_product([[1, 2], [3, 4]]);` is `[[1, 3], [1, 4], [2, 3],
+  [2, 4]]`.
+- `cartesian_product([[1, 2], [3, 4], [5]]);` is `[[1, 3, 5], [1, 4, 5],
+  [2, 3, 5], [2, 4, 5]]` — three input lists, not just two.
+- `cartesian_product([[1, 2]]);` is `[[1], [2]]` — a single input list
+  still produces one-element combinations, not a flat list.
+- `cartesian_product([]);` is `[[]]` — the empty-outer-list convention
+  above, not `[]`.
+- `cartesian_product([[1, 2], []]);` is `[]` — the empty-inner-list case
+  above.
+- `cartesian_product("ab");` raises `CinderRuntimeError` matching
+  `"cartesian_product() requires a list, got string"`.
+- `cartesian_product([1, 2]);` raises `CinderRuntimeError` matching
+  `"cartesian_product() requires a list of lists, element 0 is int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `zip_with`/`unzip`,
+see current line numbers — shift if earlier tasks this cycle land
+first), `tests/test_builtins.py` (model on `class TestZip`/`class
+TestZipWith`, search those names, for the list-of-lists validation test
+shapes, and `class TestBinomial` for the arity-error test shape). Once
+merged, `README.md`'s Builtins bullet needs `cartesian_product` added
+near `zip`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
 to the Architect's next grooming pass, not this task.
 

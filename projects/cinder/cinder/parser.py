@@ -245,6 +245,8 @@ class Parser:
         self._fn_depth = 0
         self._loop_labels: list = []
         self._suppress_bare_arrow = False
+        self._suppress_bare_arrow_depth = 0
+        self._bracket_depth = 0
 
     def parse_expression(self) -> Expr:
         expr = self._assignment()
@@ -1092,13 +1094,22 @@ class Parser:
             # IDENTIFIER branch), stealing the arm's own '=>' and body —
             # e.g. `0 if undefined_name => "x"` misparsing `undefined_name
             # => "x"` as a lambda. Suppress that shorthand while parsing the
-            # guard so the fat arrow always belongs to the match arm.
+            # guard so the fat arrow always belongs to the match arm. Only
+            # the ambiguous position itself is suppressed — the identifier
+            # sitting directly in front of the guard's own terminating
+            # '=>' — tracked via `_bracket_depth` so a bare arrow nested
+            # inside call arguments, list/map literals, or a grouped
+            # expression within the guard (e.g. `[1,2].filter(x => x > n)`)
+            # still parses normally.
             previous_suppress = self._suppress_bare_arrow
+            previous_suppress_depth = self._suppress_bare_arrow_depth
             self._suppress_bare_arrow = True
+            self._suppress_bare_arrow_depth = self._bracket_depth
             try:
                 guard = self._ternary()
             finally:
                 self._suppress_bare_arrow = previous_suppress
+                self._suppress_bare_arrow_depth = previous_suppress_depth
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
         return [MatchArm(pattern, body, binding, guard) for pattern, binding in entries]
@@ -1488,26 +1499,30 @@ class Parser:
 
     def _finish_call(self, callee: Expr) -> Expr:
         paren = self._previous()
-        arguments = []
-        seen_keyword = False
-        if not self._check(TokenType.RPAREN):
-            arguments.append(self._call_argument())
-            seen_keyword = isinstance(arguments[-1], KeywordArg)
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if self._check(TokenType.RPAREN):
-                    break
-                argument = self._call_argument()
-                if seen_keyword and not isinstance(argument, KeywordArg):
-                    raise ParseError(
-                        "positional argument follows keyword argument",
-                        paren.line,
-                        paren.column,
-                    )
-                seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
-                arguments.append(argument)
-        self._consume(TokenType.RPAREN, "')' after arguments")
-        return Call(callee, arguments, paren.line, paren.column)
+        self._bracket_depth += 1
+        try:
+            arguments = []
+            seen_keyword = False
+            if not self._check(TokenType.RPAREN):
+                arguments.append(self._call_argument())
+                seen_keyword = isinstance(arguments[-1], KeywordArg)
+                while self._check(TokenType.COMMA):
+                    self._advance()
+                    if self._check(TokenType.RPAREN):
+                        break
+                    argument = self._call_argument()
+                    if seen_keyword and not isinstance(argument, KeywordArg):
+                        raise ParseError(
+                            "positional argument follows keyword argument",
+                            paren.line,
+                            paren.column,
+                        )
+                    seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
+                    arguments.append(argument)
+            self._consume(TokenType.RPAREN, "')' after arguments")
+            return Call(callee, arguments, paren.line, paren.column)
+        finally:
+            self._bracket_depth -= 1
 
     def _call_argument(self) -> Expr:
         if self._check(TokenType.DOT_DOT_DOT):
@@ -1526,23 +1541,27 @@ class Parser:
 
     def _finish_index(self, obj: Expr) -> Expr:
         bracket = self._advance()  # consume '['
-        start = None
-        if not self._check(TokenType.COLON):
-            start = self._ternary()
-        if self._check(TokenType.COLON):
-            self._advance()
-            end = None
-            if not self._check(TokenType.RBRACKET) and not self._check(TokenType.COLON):
-                end = self._ternary()
-            step = None
+        self._bracket_depth += 1
+        try:
+            start = None
+            if not self._check(TokenType.COLON):
+                start = self._ternary()
             if self._check(TokenType.COLON):
                 self._advance()
-                if not self._check(TokenType.RBRACKET):
-                    step = self._ternary()
-            self._consume(TokenType.RBRACKET, "']' after slice")
-            return SliceExpr(obj, start, end, step, bracket.line, bracket.column)
-        self._consume(TokenType.RBRACKET, "']' after index")
-        return Index(obj, start, bracket.line, bracket.column)
+                end = None
+                if not self._check(TokenType.RBRACKET) and not self._check(TokenType.COLON):
+                    end = self._ternary()
+                step = None
+                if self._check(TokenType.COLON):
+                    self._advance()
+                    if not self._check(TokenType.RBRACKET):
+                        step = self._ternary()
+                self._consume(TokenType.RBRACKET, "']' after slice")
+                return SliceExpr(obj, start, end, step, bracket.line, bracket.column)
+            self._consume(TokenType.RBRACKET, "']' after index")
+            return Index(obj, start, bracket.line, bracket.column)
+        finally:
+            self._bracket_depth -= 1
 
     def _finish_dot(self, obj: Expr) -> Expr:
         dot = self._advance()  # consume '.'
@@ -1556,9 +1575,13 @@ class Parser:
             return self._finish_optional_call(obj)
         if self._check(TokenType.LBRACKET):
             self._advance()  # consume '['
-            index = self._ternary()
-            self._consume(TokenType.RBRACKET, "']' after index")
-            return OptionalIndex(obj, index, dot.line, dot.column)
+            self._bracket_depth += 1
+            try:
+                index = self._ternary()
+                self._consume(TokenType.RBRACKET, "']' after index")
+                return OptionalIndex(obj, index, dot.line, dot.column)
+            finally:
+                self._bracket_depth -= 1
         name_token = self._consume(TokenType.IDENTIFIER, "a property name after '?.'")
         key = Literal(name_token.lexeme, name_token.line, name_token.column)
         return OptionalIndex(obj, key, dot.line, dot.column)
@@ -1566,24 +1589,28 @@ class Parser:
     def _finish_optional_call(self, callee: Expr) -> Expr:
         self._advance()  # consume '('
         paren = self._previous()
-        arguments = []
-        seen_keyword = False
-        if not self._check(TokenType.RPAREN):
-            arguments.append(self._call_argument())
-            seen_keyword = isinstance(arguments[-1], KeywordArg)
-            while self._check(TokenType.COMMA):
-                self._advance()
-                argument = self._call_argument()
-                if seen_keyword and not isinstance(argument, KeywordArg):
-                    raise ParseError(
-                        "positional argument follows keyword argument",
-                        paren.line,
-                        paren.column,
-                    )
-                seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
-                arguments.append(argument)
-        self._consume(TokenType.RPAREN, "')' after arguments")
-        return OptionalCall(callee, arguments, paren.line, paren.column)
+        self._bracket_depth += 1
+        try:
+            arguments = []
+            seen_keyword = False
+            if not self._check(TokenType.RPAREN):
+                arguments.append(self._call_argument())
+                seen_keyword = isinstance(arguments[-1], KeywordArg)
+                while self._check(TokenType.COMMA):
+                    self._advance()
+                    argument = self._call_argument()
+                    if seen_keyword and not isinstance(argument, KeywordArg):
+                        raise ParseError(
+                            "positional argument follows keyword argument",
+                            paren.line,
+                            paren.column,
+                        )
+                    seen_keyword = seen_keyword or isinstance(argument, KeywordArg)
+                    arguments.append(argument)
+            self._consume(TokenType.RPAREN, "')' after arguments")
+            return OptionalCall(callee, arguments, paren.line, paren.column)
+        finally:
+            self._bracket_depth -= 1
 
     def _primary(self) -> Expr:
         token = self._peek()
@@ -1605,7 +1632,10 @@ class Parser:
             return Literal(None, token.line, token.column)
         if token.type == TokenType.IDENTIFIER:
             if (
-                not self._suppress_bare_arrow
+                not (
+                    self._suppress_bare_arrow
+                    and self._bracket_depth == self._suppress_bare_arrow_depth
+                )
                 and self._peek_next().type == TokenType.FAT_ARROW
             ):
                 self._advance()  # consume the identifier
@@ -1617,13 +1647,17 @@ class Parser:
             self._advance()
             return Identifier(token.lexeme, token.line, token.column)
         if token.type == TokenType.LPAREN:
-            arrow = self._try_arrow_function()
-            if arrow is not None:
-                return arrow
-            self._advance()
-            expr = self._assignment()
-            self._consume(TokenType.RPAREN, "')' after expression")
-            return Grouping(expr)
+            self._bracket_depth += 1
+            try:
+                arrow = self._try_arrow_function()
+                if arrow is not None:
+                    return arrow
+                self._advance()
+                expr = self._assignment()
+                self._consume(TokenType.RPAREN, "')' after expression")
+                return Grouping(expr)
+            finally:
+                self._bracket_depth -= 1
         if token.type == TokenType.LBRACKET:
             return self._list_literal()
         if token.type == TokenType.LBRACE:
@@ -1641,24 +1675,28 @@ class Parser:
 
     def _list_literal(self) -> Expr:
         bracket = self._advance()  # consume '['
-        elements = []
-        if not self._check(TokenType.RBRACKET):
-            elements.append(self._list_element())
-            if self._check(TokenType.FOR):
-                if isinstance(elements[0], Spread):
-                    raise ParseError(
-                        "spread not allowed in list comprehension",
-                        bracket.line,
-                        bracket.column,
-                    )
-                return self._list_comprehension(bracket, elements[0])
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if self._check(TokenType.RBRACKET):
-                    break
+        self._bracket_depth += 1
+        try:
+            elements = []
+            if not self._check(TokenType.RBRACKET):
                 elements.append(self._list_element())
-        self._consume(TokenType.RBRACKET, "']' after list literal")
-        return ListLiteral(elements, bracket.line, bracket.column)
+                if self._check(TokenType.FOR):
+                    if isinstance(elements[0], Spread):
+                        raise ParseError(
+                            "spread not allowed in list comprehension",
+                            bracket.line,
+                            bracket.column,
+                        )
+                    return self._list_comprehension(bracket, elements[0])
+                while self._check(TokenType.COMMA):
+                    self._advance()
+                    if self._check(TokenType.RBRACKET):
+                        break
+                    elements.append(self._list_element())
+            self._consume(TokenType.RBRACKET, "']' after list literal")
+            return ListLiteral(elements, bracket.line, bracket.column)
+        finally:
+            self._bracket_depth -= 1
 
     def _comprehension_clause(self) -> ComprehensionClause:
         var_name = None
@@ -1712,25 +1750,29 @@ class Parser:
 
     def _map_literal(self) -> Expr:
         brace = self._advance()  # consume '{'
-        pairs = []
-        if not self._check(TokenType.RBRACE):
-            entry = self._map_entry()
-            if self._check(TokenType.FOR):
-                if isinstance(entry, Spread):
-                    raise ParseError(
-                        "spread not allowed in map comprehension",
-                        brace.line,
-                        brace.column,
-                    )
-                return self._map_comprehension(brace, entry)
-            pairs.append(entry)
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if self._check(TokenType.RBRACE):
-                    break
-                pairs.append(self._map_entry())
-        self._consume(TokenType.RBRACE, "'}' after map literal")
-        return MapLiteral(pairs, brace.line, brace.column)
+        self._bracket_depth += 1
+        try:
+            pairs = []
+            if not self._check(TokenType.RBRACE):
+                entry = self._map_entry()
+                if self._check(TokenType.FOR):
+                    if isinstance(entry, Spread):
+                        raise ParseError(
+                            "spread not allowed in map comprehension",
+                            brace.line,
+                            brace.column,
+                        )
+                    return self._map_comprehension(brace, entry)
+                pairs.append(entry)
+                while self._check(TokenType.COMMA):
+                    self._advance()
+                    if self._check(TokenType.RBRACE):
+                        break
+                    pairs.append(self._map_entry())
+            self._consume(TokenType.RBRACE, "'}' after map literal")
+            return MapLiteral(pairs, brace.line, brace.column)
+        finally:
+            self._bracket_depth -= 1
 
     def _map_comprehension(self, brace: Token, entry: tuple) -> Expr:
         key, value = entry

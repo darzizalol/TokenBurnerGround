@@ -4680,6 +4680,30 @@ class TestMatchExpression(unittest.TestCase):
             ),
         )
 
+    def test_match_arm_guard_allows_nested_bare_arrow_function(self):
+        # The bare-arrow suppression that disambiguates the guard's own
+        # terminating '=>' (see test_match_arm_guard_shared_across_multi_
+        # value_pattern above) must not also swallow bare arrows nested
+        # inside call arguments within the guard itself.
+        arm = shape(
+            parse(
+                'match (1) { n if [1,2].filter(x => x > n).length > 0 => "yes",'
+                ' _ => "no" }'
+            )
+        )[2][0]
+        pattern, body, binding, guard = arm
+        self.assertEqual(binding, "n")
+        self.assertEqual(body, ("Literal", "yes"))
+        self.assertEqual(guard[0], "Binary")
+        # ... > 0
+        self.assertEqual(guard[3], ("Literal", 0))
+        call_len = guard[1]
+        self.assertEqual(call_len[0], "Index")
+        filter_call = call_len[1]
+        self.assertEqual(filter_call[0], "Call")
+        arrow_arg = filter_call[2][0]
+        self.assertEqual(arrow_arg[0], "FnExpr")
+
 
 if __name__ == "__main__":
     unittest.main()

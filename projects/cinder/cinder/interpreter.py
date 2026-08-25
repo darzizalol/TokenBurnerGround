@@ -1129,6 +1129,13 @@ class Interpreter:
                     if name is not None:
                         arm_env.define(name, item)
                 return self.evaluate(arm.body, arm_env)
+            if arm.range_pattern is not None:
+                values = self._evaluate_range(arm.range_pattern, env)
+                if contains_value(
+                    values, subject, arm.range_pattern.line, arm.range_pattern.column
+                ):
+                    return self.evaluate(arm.body, env)
+                continue
             if arm.pattern is None:
                 if arm.binding is None:
                     return self.evaluate(arm.body, env)

@@ -299,12 +299,17 @@ class MatchArm:
     third, mutually exclusive pattern kind: a flat list of names (or
     `None` for `_`) tested against the subject's shape rather than
     compared with `values_equal`; `pattern` and `binding` stay `None`
-    for a list-pattern arm."""
+    for a list-pattern arm. `range_pattern` is a fourth pattern kind: a
+    membership test against an int range, combinable with literal
+    patterns (but not with the wildcard/bound-identifier kind) in a
+    multi-value arm; `pattern` and `binding` stay `None` for a
+    range-pattern entry."""
 
     pattern: "Expr | None"
     body: "Expr"
     binding: "str | None" = None
     list_pattern: "list | None" = None
+    range_pattern: "RangeExpr | None" = None
 
 
 @dataclass(frozen=True)

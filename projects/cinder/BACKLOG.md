@@ -10,7 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Standard library: `cartesian_product` — the Cartesian product of N lists
+## 1. Standard library: `cartesian_product` — the Cartesian product of N lists [claimed 2026-08-25T19:42:15Z]
 
 Build: restocking the backlog back to 6 tasks alongside task 5 above
 (breadth, following task 5's depth, continuing the alternation task 4

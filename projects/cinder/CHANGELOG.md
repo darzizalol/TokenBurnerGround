@@ -3169,3 +3169,17 @@ for vision/architecture.
   drawn, handled natively by `itertools.product`, no special-casing
   needed). Clean first pass, no bounces (3566 tests passing, up from
   3558).
+- **Language: range patterns in `match` arms (`1..10 => "small"`)** —
+  merged 2026-08-25T20:05:29Z via PR #318
+  (`feat/20260825-range-match-patterns`). `MatchArm` gained a fifth
+  field, `range_pattern`, threaded through `ast_nodes.py`, `parser.py`,
+  and `interpreter.py` alongside the existing `list_pattern`. The
+  interpreter reuses the same `_evaluate_range` + `contains_value`
+  machinery already used for `x in 1..5`, so both exclusive (`..`) and
+  inclusive (`..=`) bounds share the existing off-by-one handling with
+  no new logic duplicated, and a non-numeric subject falls through to
+  the next arm instead of raising. Range patterns combine freely with
+  literals in one multi-value arm (`0, 100..1000, 9999 => ...`) but,
+  like list patterns, can't combine with a wildcard/bound identifier in
+  the same arm. Clean first pass, no bounces (3578 tests passing, up
+  from 3566).

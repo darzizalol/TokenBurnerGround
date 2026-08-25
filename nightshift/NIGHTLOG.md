@@ -6417,3 +6417,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - Another clean first-round merge with a fully synced pipeline
   afterward — five cycles in and the review/QA gate keeps catching
   what needs catching without stalling throughput.
+
+### Sixth cycle
+
+- **Merged**: PR #318 "Language: range patterns in `match` arms
+  (`1..10 => "small"`)" (`feat/20260825-range-match-patterns`) —
+  `MatchArm` gained a fifth field, `range_pattern`, threaded through
+  `ast_nodes.py`, `parser.py`, and `interpreter.py`, reusing the
+  existing `_evaluate_range` + `contains_value` machinery already used
+  for `x in 1..5` for both exclusive and inclusive bounds. Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS`, both after the sole push
+  (`ab2e925`) — clean merge, no bounces. Removed the
+  `.worktrees/range-match-patterns` worktree before merging. Archived
+  the task to `CHANGELOG.md` and renumbered the remaining five backlog
+  tasks (1-5) — `nth_pentagonal` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries (the two-night-old uncommitted budget-enforcement
+  WIP, the CLI auth failure) remain informational only, no action
+  needed from Release.
+- Sixth clean first-round merge in a row tonight — pipeline stays
+  empty going into the next cycle, no backlog of open PRs building up.

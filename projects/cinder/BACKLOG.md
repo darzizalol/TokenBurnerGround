@@ -10,253 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Language: range patterns in `match` arms (`1..10 => "small"`) [claimed 2026-08-25T19:57:37Z]
-
-Build: restocking the backlog back to 6 tasks now that multi-value literal
-patterns landed via PR #312, per `PROJECT.md`'s breadth-vs-depth policy
-(landing #312 dropped the queue to 3-breadth/2-depth: `nth_triangular`,
-`nth_catalan`, `cartesian_product` vs. guards, flat list patterns — this
-task restocks with depth to restore 3-breadth/3-depth parity, per the
-explicit instruction the previous grooming pass left in `PROJECT.md`'s
-"Current frontier" note). Cinder already has range *literals* (`1..10`,
-`1..=10`, sugar over `range()`) and already uses them for membership tests
-(`5 in 1..10` is `true`), but a `match` arm cannot use one as a pattern yet
-— every arm today tests either exact equality (a literal pattern), matches
-unconditionally (`_`/a bound identifier), or destructures a fixed-length
-list (a list pattern, PR #316). Range patterns are the natural middle
-ground for the scalar case: "does the subject fall in this range" rather
-than "does it equal this one value" or "match anything at all" — the same
-generalization Rust's `n @ 1..=9 => ...` and Python's `case 1 | 2 | 3:`
-(via guards) address in their own pattern-matching syntax. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match (5) { 1..10 => "small", _ => "large" });'
-# -> <eval>:1:20: expected '=>' after match pattern, found '..'
-```
-
-**Ordering note (updated this grooming pass):** flat list patterns
-(formerly queued as "task 2") already landed on `main` via PR #316 —
-`MatchArm` already carries a **fourth** field, `list_pattern`
-(`"list | None"`), and `_match_arm`/`_evaluate_match` already branch on
-it, before reaching the literal/wildcard/bound-identifier path, via a
-leading `if self._check(TokenType.LBRACKET): ...` in `_match_arm` and a
-leading `if arm.list_pattern is not None: ...` in `_evaluate_match`. This
-task adds range patterns as a **fifth** field, `range_pattern`, alongside
-`list_pattern` — every snippet below is grounded in today's actual code
-(verified by reading `cinder/ast_nodes.py`/`cinder/parser.py`/
-`cinder/interpreter.py` directly, post-#316) and **keeps the existing
-`list_pattern` branches intact** in both functions — applying this task
-must not regress flat list patterns. (Guards in `match` arms, formerly
-queued ahead of this task too, was attempted and closed after three
-failed review rounds — see `## Graveyard` below — so it no longer factors
-into this task's field list either.) **Scope note:** only `INT` literal
-bounds are accepted (not `FLOAT`, not arbitrary expressions) — this
-matches the existing constraint that `range()`/range-literal bounds must
-already be ints elsewhere in Cinder (`cinder/builtins.py`'s `_range`
-raises `"range() requires int arguments"` for a float bound), so a
-float-bounded range pattern would either need new float-range semantics
-invented from scratch or would surface a confusing runtime error
-mid-match — both real gaps, left for a future grooming pass, not this
-task. A step component (`1..10..2`) is also out of scope for the same
-reason: real range literals support it, but it adds a second layer of
-parsing complexity range patterns don't need to be useful yet. Negative
-bounds (`-10..0`) are also out of scope, but not by choice — this task
-doesn't add them, it inherits an existing, pre-existing gap: **no** match
-pattern today, literal or otherwise, accepts a negative number (`match
-(-5) { -5 => "neg", _ => "pos" };` already fails to parse on current
-`main`, `<eval>:1:20: expected a literal, identifier, or '_' in match
-pattern, found '-'`, since `_match_pattern` only ever looks at a bare
-literal token, never a unary-minus expression). Fixing that is task 3
-below, not this one.
-
-Today's `MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) — add
-a fifth field, after the existing `list_pattern`:
-```python
-    pattern: "Expr | None"
-    body: "Expr"
-    binding: "str | None" = None
-    list_pattern: "list | None" = None
-    range_pattern: "RangeExpr | None" = None
-```
-
-Today's `_match_pattern` (`cinder/parser.py`, search `def _match_pattern`;
-this is the scalar-pattern path, unrelated to and untouched by the
-`list_pattern` branch in `_match_arm` below) currently returns a
-`tuple[Expr | None, str | None]`; extend it to a 3-tuple and detect `..`/
-`..=` right after an `INT` literal (string, float, bool, and nil literals
-are unaffected — only `INT` gets the range-lookahead branch):
-```python
-    def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
-        token = self._peek()
-        if token.type == TokenType.IDENTIFIER:
-            self._advance()
-            if token.lexeme == "_":
-                return None, None, None
-            return None, token.lexeme, None
-        if token.type == TokenType.INT:
-            self._advance()
-            start = Literal(token.literal, token.line, token.column)
-            if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
-                dots = self._advance()
-                inclusive = dots.type is TokenType.DOT_DOT_EQ
-                end_token = self._peek()
-                if end_token.type != TokenType.INT:
-                    raise ParseError(
-                        "expected an int after '..' in match range pattern, found "
-                        f"{self._describe(end_token)}",
-                        end_token.line,
-                        end_token.column,
-                    )
-                self._advance()
-                end = Literal(end_token.literal, end_token.line, end_token.column)
-                return None, None, RangeExpr(start, end, dots.line, dots.column, inclusive)
-            return start, None, None
-        if token.type in (TokenType.FLOAT, TokenType.STRING):
-            self._advance()
-            return Literal(token.literal, token.line, token.column), None, None
-        if token.type == TokenType.TRUE:
-            self._advance()
-            return Literal(True, token.line, token.column), None, None
-        if token.type == TokenType.FALSE:
-            self._advance()
-            return Literal(False, token.line, token.column), None, None
-        if token.type == TokenType.NIL:
-            self._advance()
-            return Literal(None, token.line, token.column), None, None
-        raise ParseError(
-            f"expected a literal, identifier, or '_' in match pattern, "
-            f"found {self._describe(token)}",
-            token.line,
-            token.column,
-        )
-```
-
-Today's `_match_arm` (`cinder/parser.py`, search `def _match_arm`) starts
-with a `LBRACKET` check for list patterns (**keep this branch exactly as
-it is on `main` today, just widen the `MatchArm(...)` call to pass
-`None` for the new `range_pattern` field**); below it, its
-tuple-unpacking needs widening to three elements, and its "cannot combine
-with other patterns" guard needs to check both `pattern is None` *and*
-`range_pattern is None` (a true wildcard/binding), since a range pattern
-combined with a literal in one multi-value arm (`1, 2..5 => ...`) is
-allowed — only the wildcard/bound-identifier kind is exclusive:
-```python
-    def _match_arm(self) -> "list[MatchArm]":
-        if self._check(TokenType.LBRACKET):
-            list_pattern = self._match_list_pattern()
-            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-            body = self._ternary()
-            return [MatchArm(None, body, None, list_pattern, None)]
-        first_token = self._peek()
-        entries = [self._match_pattern()]
-        while self._check(TokenType.COMMA):
-            self._advance()
-            entries.append(self._match_pattern())
-        if len(entries) > 1 and any(
-            pattern is None and range_pattern is None
-            for pattern, _, range_pattern in entries
-        ):
-            raise ParseError(
-                "'_' or a bound identifier cannot be combined with other "
-                "patterns in a match arm",
-                first_token.line,
-                first_token.column,
-            )
-        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-        body = self._ternary()
-        return [
-            MatchArm(pattern, body, binding, None, range_pattern)
-            for pattern, binding, range_pattern in entries
-        ]
-```
-
-Today's `_evaluate_match` (`cinder/interpreter.py`, search `def
-_evaluate_match`) starts with an `arm.list_pattern is not None` branch
-(**keep this exactly as it is on `main` today**); the new range-pattern
-branch goes directly after it, checked before the wildcard/binding/
-literal path, since a range pattern is a membership test rather than a
-`values_equal` comparison. Reuse `self._evaluate_range` (already used for
-`for`-loop ranges, search `def _evaluate_range`) to materialize the
-range's values, and the module-level `contains_value` helper (search `def
-contains_value`, already shared by the `in` operator and the `contains()`
-builtin) to test membership — both already exist, neither needs new
-logic:
-```python
-    def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
-        subject = self.evaluate(expr.subject, env)
-        for arm in expr.arms:
-            if arm.list_pattern is not None:
-                if not isinstance(subject, list) or len(subject) != len(arm.list_pattern):
-                    continue
-                arm_env = Environment(env)
-                for name, item in zip(arm.list_pattern, subject):
-                    if name is not None:
-                        arm_env.define(name, item)
-                return self.evaluate(arm.body, arm_env)
-            if arm.range_pattern is not None:
-                values = self._evaluate_range(arm.range_pattern, env)
-                if contains_value(
-                    values, subject, arm.range_pattern.line, arm.range_pattern.column
-                ):
-                    return self.evaluate(arm.body, env)
-                continue
-            if arm.pattern is None:
-                if arm.binding is None:
-                    return self.evaluate(arm.body, env)
-                arm_env = Environment(env)
-                arm_env.define(arm.binding, subject)
-                return self.evaluate(arm.body, arm_env)
-            if values_equal(subject, self.evaluate(arm.pattern, env)):
-                return self.evaluate(arm.body, env)
-        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
-```
-`contains_value` never raises for a list collection (only for a non-list/
-map/string one, per its own body) and `values` is always a list here (
-`_evaluate_range` delegates to `_range`, which always returns
-`list(range(...))`), so this branch cannot itself raise — a subject of any
-type simply fails to match and falls through to the next arm, exactly
-like a non-equal literal pattern already does.
-
-Acceptance criteria:
-- `match (5) { 1..10 => "small", _ => "large" };` is `"small"`.
-- `match (15) { 1..10 => "small", _ => "large" };` is `"large"` — `10` is
-  exclusive of the upper bound, matching every other range-literal use in
-  Cinder (`for i in 1..10`, `10 in 1..10` is `false`).
-- `match (10) { 1..=10 => "small", _ => "large" };` is `"small"` — `..=`
-  includes the upper bound.
-- `match (1) { 1..10 => "small", _ => "large" };` is `"small"` — the lower
-  bound is inclusive on both spellings.
-- `match (6) { 1, 5..10, 20 => "matched", _ => "no" };` is `"matched"` — a
-  range pattern combines with literal patterns in one multi-value arm
-  (`6` falls in `5..10`, the second entry).
-- `match ("x") { 1..10 => "n", _ => "s" };` is `"s"` — a non-numeric
-  subject fails a range pattern without raising, falls through to `_`.
-- `match ([1, 2]) { [a, b] => a + b, _ => 0 };` is still `3` — a
-  regression check that flat list patterns (`arm.list_pattern`) still
-  work unchanged after this task's `_match_arm`/`_evaluate_match` edits.
-- `shape(parse('match (x) { 1..10 => "a", _ => "b" }'))` (see
-  `tests/test_parser.py`) shows the first arm's 5-element tuple as
-  `(None, ("Literal", "a"), None, None, ("RangeExpr", ("Literal", 1),
-  ("Literal", 10), False, None))` — confirms the parse, not just the
-  end-to-end value, and that `list_pattern` stays `None` on a range-
-  pattern arm.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`MatchArm`), `cinder/parser.py`
-(`_match_pattern`, `_match_arm`), `cinder/interpreter.py`
-(`_evaluate_match`), `tests/test_parser.py` (the `shape()` helper's
-`MatchExpr` branch needs its per-arm tuple widened from 4 to 5 elements —
-search `arm.list_pattern,` inside `shape()` and add `shape(arm.range_pattern)
-if arm.range_pattern is not None else None,` right after it — plus `class
-TestMatchExpression`), `tests/test_interpreter.py` (extend `class
-TestMatchExpression`, search that name, with the end-to-end cases above).
-Once merged, `README.md`'s `match` expression bullet needs a range-pattern
-example added, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
+## 1. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
 
 Build: restocking the backlog back to 6 tasks now that `nth_triangular`
 landed via PR #313, per `PROJECT.md`'s breadth-vs-depth policy (landing
@@ -336,7 +90,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
+## 2. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
 
 Build: restocking the backlog back to 6 tasks now that guards in `match`
 arms was closed after three failed review rounds (see `## Graveyard`
@@ -457,7 +211,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `power_set` — every subset of a list
+## 3. Standard library: `power_set` — every subset of a list
 
 Build: restocking the backlog from 4 back to 6 tasks now that
 `nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)
@@ -545,7 +299,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: literal elements in list patterns (`[0, b] => ...`)
+## 4. Language: literal elements in list patterns (`[0, b] => ...`)
 
 Build: restocking the second of two slots this grooming pass added to
 restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4
@@ -701,7 +455,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+## 5. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `cartesian_product` (PR #317) landed, dropping the queue

@@ -5384,6 +5384,59 @@ class TestBinomial(unittest.TestCase):
             run("binomial(5);")
 
 
+class TestNthCatalan(unittest.TestCase):
+    def test_nth_catalan_of_first_six_positions(self):
+        expected = {1: 1, 2: 1, 3: 2, 4: 5, 5: 14, 6: 42}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_catalan({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_catalan_of_ten(self):
+        self.assertEqual(run("let result = nth_catalan(10);").get("result"), 4862)
+
+    def test_nth_catalan_of_fifteen(self):
+        self.assertEqual(
+            run("let result = nth_catalan(15);").get("result"), 2674440
+        )
+
+    def test_nth_catalan_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_catalan(0);")
+        self.assertIn(
+            "nth_catalan() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_catalan_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_catalan(-3);")
+        self.assertIn(
+            "nth_catalan() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_catalan_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_catalan(2.0);")
+        self.assertIn(
+            "nth_catalan() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_catalan_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_catalan(true);")
+        self.assertIn(
+            "nth_catalan() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_catalan_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_catalan(1, 2);")
+
+
 class TestSum(unittest.TestCase):
     def test_sum_of_ints_is_int(self):
         result = run("let result = sum([1, 2, 3]);").get("result")

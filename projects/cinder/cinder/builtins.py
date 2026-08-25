@@ -2331,6 +2331,17 @@ def _binomial(arguments: list, line: int, column: int) -> object:
     return math.comb(n, k)
 
 
+def _nth_catalan(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_catalan", arguments, 1, line, column)
+    value = _require_int("nth_catalan", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_catalan() requires a positive integer, domain error", line, column
+        )
+    index = value - 1
+    return math.comb(2 * index, index) // (index + 1)
+
+
 def _sum(arguments: list, line: int, column: int) -> object:
     _require_arity("sum", arguments, 1, line, column)
     value = arguments[0]
@@ -4024,6 +4035,7 @@ _BUILTINS = {
     "lcm": _lcm,
     "factorial": _factorial,
     "binomial": _binomial,
+    "nth_catalan": _nth_catalan,
     "sum": _sum,
     "sum_by": _sum_by,
     "product": _product,

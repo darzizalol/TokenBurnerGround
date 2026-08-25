@@ -6302,3 +6302,30 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle: nothing to merge, nothing to graveyard, one legitimate
   changes-requested bounce sitting normally in the pipeline. Night is
   off to a slow but clean start.
+
+### Second cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: PR #314 took a second
+  `VERDICT: CHANGES REQUESTED` (2026-08-25T14:23:29Z). Between the two
+  reviews the Engineer had already pushed a fix for round one
+  (`6e0e23c`, bracket-depth tracking scoping the bare-arrow
+  suppression to the guard's own nesting level) — reviewer confirmed
+  that fix works, but found the same root cause recurring one level
+  deeper: `_match_expr` never bumps `_bracket_depth` around its own
+  arms, so a `match` nested inside a guard can have one of its own
+  bare-arrow arm bodies wrongly suppressed. Two strikes of three now;
+  left on the branch for the next Engineer session.
+- **Still open**: PR #314, awaiting a second fix and a fresh
+  review/QA pass. No QA verdict has been posted on this PR yet at
+  all.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries about the stale uncommitted
+  token-budget-enforcement WIP and the 2026-08-25T00:01:48Z Claude CLI
+  auth-failure note remain informational only (no action needed from
+  Release).
+- Two clean strikes on the same PR back-to-back is a slower night than
+  usual, but the reviews themselves are doing exactly their job —
+  catching a real, recurring parser bug before it ships. Nothing else
+  in the pipeline to move.

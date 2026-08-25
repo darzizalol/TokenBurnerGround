@@ -4875,6 +4875,42 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match (1) { 1, 2 => "ok", };')
         self.assertEqual(env.get("result"), "ok")
 
+    def test_list_pattern_binds_each_element(self):
+        env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
+        self.assertEqual(env.get("result"), 3)
+
+    def test_list_pattern_falls_through_to_matching_length(self):
+        env = run('let result = match ([1]) { [a, b] => a + b, [a] => a, _ => 0 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_falls_through_on_longer_subject(self):
+        env = run(
+            'let result = match ([1, 2, 3]) { [a, b] => a + b, _ => "no match" };'
+        )
+        self.assertEqual(env.get("result"), "no match")
+
+    def test_list_pattern_falls_through_on_non_list_subject(self):
+        env = run('let result = match (5) { [a, b] => a + b, _ => "not a list" };')
+        self.assertEqual(env.get("result"), "not a list")
+
+    def test_list_pattern_underscore_discards_position(self):
+        env = run('let result = match ([1, 2]) { [_, b] => b, _ => 0 };')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_empty_list_pattern_matches_only_empty_list(self):
+        env = run('let result = match ([]) { [] => "empty", _ => "nonempty" };')
+        self.assertEqual(env.get("result"), "empty")
+
+    def test_list_pattern_repeated_name_later_position_wins(self):
+        env = run('let result = match ([1, 2]) { [a, a] => a, _ => "dup" };')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_list_pattern_bindings_do_not_leak_into_enclosing_scope(self):
+        env = run(
+            "let a = 100; match ([1, 2]) { [a, b] => a + b, _ => 0 }; "
+        )
+        self.assertEqual(env.get("a"), 100)
+
 
 if __name__ == "__main__":
     unittest.main()

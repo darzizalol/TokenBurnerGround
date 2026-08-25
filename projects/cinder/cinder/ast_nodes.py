@@ -295,11 +295,16 @@ class MatchArm:
     the match subject's value, in a fresh child scope that only
     `body`'s evaluation sees — it does not leak into the enclosing
     scope, mirroring `TryStmt`'s own `catch_name` binding
-    (`cinder/interpreter.py`'s `_execute_try`)."""
+    (`cinder/interpreter.py`'s `_execute_try`). `list_pattern` is a
+    third, mutually exclusive pattern kind: a flat list of names (or
+    `None` for `_`) tested against the subject's shape rather than
+    compared with `values_equal`; `pattern` and `binding` stay `None`
+    for a list-pattern arm."""
 
     pattern: "Expr | None"
     body: "Expr"
     binding: "str | None" = None
+    list_pattern: "list | None" = None
 
 
 @dataclass(frozen=True)

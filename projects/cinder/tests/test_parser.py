@@ -200,6 +200,7 @@ def shape(node):
                     shape(arm.pattern) if arm.pattern is not None else None,
                     shape(arm.body),
                     arm.binding,
+                    arm.list_pattern,
                 )
                 for arm in node.arms
             ],
@@ -4525,9 +4526,9 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "one"), None),
-                    (("Literal", 2), ("Literal", "two"), None),
-                    (None, ("Literal", "other"), None),
+                    (("Literal", 1), ("Literal", "one"), None, None),
+                    (("Literal", 2), ("Literal", "two"), None, None),
+                    (None, ("Literal", "other"), None, None),
                 ],
             ),
         )
@@ -4539,10 +4540,10 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (("Literal", True), ("Literal", 1), None),
-                    (("Literal", False), ("Literal", 2), None),
-                    (("Literal", None), ("Literal", 3), None),
-                    (("Literal", 1.5), ("Literal", 4), None),
+                    (("Literal", True), ("Literal", 1), None, None),
+                    (("Literal", False), ("Literal", 2), None, None),
+                    (("Literal", None), ("Literal", 3), None, None),
+                    (("Literal", 1.5), ("Literal", 4), None, None),
                 ],
             ),
         )
@@ -4557,8 +4558,8 @@ class TestMatchExpression(unittest.TestCase):
                     "MatchExpr",
                     ("Literal", True),
                     [
-                        (("Literal", False), ("Literal", 0), None),
-                        (("Literal", True), ("Literal", 1), None),
+                        (("Literal", False), ("Literal", 0), None, None),
+                        (("Literal", True), ("Literal", 1), None, None),
                     ],
                 ),
             ),
@@ -4575,8 +4576,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (None, ("Identifier", "x"), "x"),
-                    (None, ("Literal", 2), None),
+                    (None, ("Identifier", "x"), "x", None),
+                    (None, ("Literal", 2), None, None),
                 ],
             ),
         )
@@ -4588,9 +4589,9 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "ab"), None),
-                    (("Literal", 2), ("Literal", "ab"), None),
-                    (None, ("Literal", "c"), None),
+                    (("Literal", 1), ("Literal", "ab"), None, None),
+                    (("Literal", 2), ("Literal", "ab"), None, None),
+                    (None, ("Literal", "c"), None, None),
                 ],
             ),
         )
@@ -4612,8 +4613,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (("Literal", 1), ("Literal", "ok"), None),
-                    (("Literal", 2), ("Literal", "ok"), None),
+                    (("Literal", 1), ("Literal", "ok"), None, None),
+                    (("Literal", 2), ("Literal", "ok"), None, None),
                 ],
             ),
         )
@@ -4621,6 +4622,36 @@ class TestMatchExpression(unittest.TestCase):
     def test_match_empty_body_raises(self):
         with self.assertRaises(ParseError):
             parse("match (1) { }")
+
+    def test_match_list_pattern_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, _] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (None, ("Identifier", "a"), None, ["a", None]),
+                    (None, ("Literal", 0), None, None),
+                ],
+            ),
+        )
+
+    def test_match_empty_list_pattern_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [] => "empty", _ => "nonempty" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (None, ("Literal", "empty"), None, []),
+                    (None, ("Literal", "nonempty"), None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_requires_identifier_or_underscore(self):
+        with self.assertRaises(ParseError):
+            parse('match (x) { [1] => 1, _ => 0 }')
 
     def test_bare_underscore_identifier_still_works(self):
         self.assertEqual(

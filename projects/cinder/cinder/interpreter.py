@@ -1121,6 +1121,14 @@ class Interpreter:
     def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
         subject = self.evaluate(expr.subject, env)
         for arm in expr.arms:
+            if arm.list_pattern is not None:
+                if not isinstance(subject, list) or len(subject) != len(arm.list_pattern):
+                    continue
+                arm_env = Environment(env)
+                for name, item in zip(arm.list_pattern, subject):
+                    if name is not None:
+                        arm_env.define(name, item)
+                return self.evaluate(arm.body, arm_env)
             if arm.pattern is None:
                 if arm.binding is None:
                     return self.evaluate(arm.body, env)

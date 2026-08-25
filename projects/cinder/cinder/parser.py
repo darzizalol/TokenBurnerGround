@@ -1071,6 +1071,11 @@ class Parser:
         return MatchExpr(subject, arms, match_token.line, match_token.column)
 
     def _match_arm(self) -> "list[MatchArm]":
+        if self._check(TokenType.LBRACKET):
+            list_pattern = self._match_list_pattern()
+            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+            body = self._ternary()
+            return [MatchArm(None, body, None, list_pattern)]
         first_token = self._peek()
         entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
@@ -1086,6 +1091,29 @@ class Parser:
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
         return [MatchArm(pattern, body, binding) for pattern, binding in entries]
+
+    def _match_list_pattern(self) -> "list[str | None]":
+        self._advance()  # consume '['
+        names: "list[str | None]" = []
+        if not self._check(TokenType.RBRACKET):
+            names.append(self._match_list_pattern_name())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(self._match_list_pattern_name())
+        self._consume(TokenType.RBRACKET, "']' after list pattern")
+        return names
+
+    def _match_list_pattern_name(self) -> "str | None":
+        token = self._peek()
+        if token.type != TokenType.IDENTIFIER:
+            raise ParseError(
+                f"expected an identifier or '_' inside list pattern, "
+                f"found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._advance()
+        return None if token.lexeme == "_" else token.lexeme
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None]":
         token = self._peek()

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_catalan` — the k-th Catalan number by position
+## 1. Standard library: `nth_catalan` — the k-th Catalan number by position [claimed 2026-08-25T14:43:25Z]
 
 Build: restocking the backlog back to 6 tasks now that `binomial` landed
 via PR #309, per `PROJECT.md`'s breadth-vs-depth policy (`binomial` was

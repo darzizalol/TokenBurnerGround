@@ -3156,3 +3156,16 @@ for vision/architecture.
   no nesting, no literal sub-pattern elements, no rest/spread — those
   remain explicit future follow-ups. Clean first pass, no bounces (3558
   tests passing, up from 3547).
+- **Standard library: `cartesian_product` — the Cartesian product of N
+  lists** — merged 2026-08-25T19:46:47Z via PR #317
+  (`feat/20260825-cartesian-product`). `_cartesian_product`
+  (`cinder/builtins.py`) validates arity, outer-list type, and
+  per-element list type, then delegates to `itertools.product(*lists)`,
+  the same thin-wrapper composition style `nth_catalan` used for
+  `math.comb`. `cartesian_product([])` returns `[[]]` (Cartesian product
+  of zero sets is the singleton empty tuple, matching
+  `itertools.product()`'s own no-argument behavior); `cartesian_product([[1,
+  2], []])` returns `[]` (an empty inner list means no element can be
+  drawn, handled natively by `itertools.product`, no special-casing
+  needed). Clean first pass, no bounces (3566 tests passing, up from
+  3558).

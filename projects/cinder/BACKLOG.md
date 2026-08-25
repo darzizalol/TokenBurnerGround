@@ -10,91 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Standard library: `cartesian_product` — the Cartesian product of N lists [claimed 2026-08-25T19:42:15Z]
-
-Build: restocking the backlog back to 6 tasks alongside task 5 above
-(breadth, following task 5's depth, continuing the alternation task 4
-→ task 5 already restarted). Cinder's collection-helper cluster is deep
-(`zip`/`zip_longest`/`zip_with`/`unzip`, `flatten`/`flatten_deep`,
-`chunk`/`sliding_window`, `interleave`/`interpose`, and more) but has no
-way to combine several lists into every ordered tuple of one element
-from each — the Cartesian product, the collection-side analogue to
-`binomial`/`nth_catalan`'s combinatorics-side counting. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(cartesian_product([[1, 2], [3, 4]]));'
-# -> <eval>:1:7: undefined name 'cartesian_product'
-```
-
-Add to `cinder/builtins.py`, registered right after `_zip_with` (search
-`def _zip_with`, itself already imported alongside `itertools` at the
-top of this module — no new import needed):
-```python
-def _cartesian_product(arguments: list, line: int, column: int) -> object:
-    _require_arity("cartesian_product", arguments, 1, line, column)
-    lists = arguments[0]
-    if not isinstance(lists, list):
-        raise CinderRuntimeError(
-            f"cartesian_product() requires a list, got {type_name(lists)}", line, column
-        )
-    for index, item in enumerate(lists):
-        if not isinstance(item, list):
-            raise CinderRuntimeError(
-                f"cartesian_product() requires a list of lists, element {index} is "
-                f"{type_name(item)}",
-                line,
-                column,
-            )
-    return [list(combo) for combo in itertools.product(*lists)]
-```
-Mirrors `_zip`'s own per-argument list-type-check style (search `def
-_zip`), just looped over one outer list of lists instead of two fixed
-positional arguments. `itertools.product(*lists)` does the actual work —
-this builtin is a thin, validated wrapper, the same composition style
-`nth_catalan` used for `math.comb`. Two edge cases are load-bearing and
-covered explicitly below: `cartesian_product([])` (an empty outer list)
-returns `[[]]` — one empty combination, not zero combinations, matching
-the standard mathematical convention that the Cartesian product of zero
-sets is the singleton set containing the empty tuple, and exactly what
-`itertools.product()` called with no arguments already returns; while
-`cartesian_product([[1, 2], []])` (an empty *inner* list present among
-otherwise non-empty ones) returns `[]` — zero combinations, since no
-element can be drawn from the empty list, which `itertools.product`
-already handles correctly with no special-case code needed. Also
-register the new dict entry (search `"zip_with": _zip_with,`, add
-`"cartesian_product": _cartesian_product,` directly after it).
-
-Acceptance criteria:
-- `cartesian_product([[1, 2], [3, 4]]);` is `[[1, 3], [1, 4], [2, 3],
-  [2, 4]]`.
-- `cartesian_product([[1, 2], [3, 4], [5]]);` is `[[1, 3, 5], [1, 4, 5],
-  [2, 3, 5], [2, 4, 5]]` — three input lists, not just two.
-- `cartesian_product([[1, 2]]);` is `[[1], [2]]` — a single input list
-  still produces one-element combinations, not a flat list.
-- `cartesian_product([]);` is `[[]]` — the empty-outer-list convention
-  above, not `[]`.
-- `cartesian_product([[1, 2], []]);` is `[]` — the empty-inner-list case
-  above.
-- `cartesian_product("ab");` raises `CinderRuntimeError` matching
-  `"cartesian_product() requires a list, got string"`.
-- `cartesian_product([1, 2]);` raises `CinderRuntimeError` matching
-  `"cartesian_product() requires a list of lists, element 0 is int"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `zip_with`/`unzip`,
-see current line numbers — shift if earlier tasks this cycle land
-first), `tests/test_builtins.py` (model on `class TestZip`/`class
-TestZipWith`, search those names, for the list-of-lists validation test
-shapes, and `class TestBinomial` for the arity-error test shape). Once
-merged, `README.md`'s Builtins bullet needs `cartesian_product` added
-near `zip`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: range patterns in `match` arms (`1..10 => "small"`)
+## 1. Language: range patterns in `match` arms (`1..10 => "small"`)
 
 Build: restocking the backlog back to 6 tasks now that multi-value literal
 patterns landed via PR #312, per `PROJECT.md`'s breadth-vs-depth policy
@@ -340,7 +256,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
+## 2. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
 
 Build: restocking the backlog back to 6 tasks now that `nth_triangular`
 landed via PR #313, per `PROJECT.md`'s breadth-vs-depth policy (landing
@@ -420,7 +336,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
+## 3. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
 
 Build: restocking the backlog back to 6 tasks now that guards in `match`
 arms was closed after three failed review rounds (see `## Graveyard`
@@ -541,7 +457,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `power_set` — every subset of a list
+## 4. Standard library: `power_set` — every subset of a list
 
 Build: restocking the backlog from 4 back to 6 tasks now that
 `nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)
@@ -627,7 +543,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: literal elements in list patterns (`[0, b] => ...`)
+## 5. Language: literal elements in list patterns (`[0, b] => ...`)
 
 Build: restocking the second of two slots this grooming pass added to
 restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 5

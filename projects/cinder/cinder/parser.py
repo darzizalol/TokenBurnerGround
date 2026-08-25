@@ -1061,16 +1061,26 @@ class Parser:
     def _match_expr(self) -> Expr:
         match_token = self._advance()  # consume 'match'
         self._consume(TokenType.LPAREN, "'(' after 'match'")
-        subject = self._assignment()
-        self._consume(TokenType.RPAREN, "')' after match subject")
-        self._consume(TokenType.LBRACE, "'{' after match subject")
-        arms = list(self._match_arm())
-        while self._check(TokenType.COMMA):
-            self._advance()
-            if self._check(TokenType.RBRACE):
-                break
-            arms.extend(self._match_arm())
-        self._consume(TokenType.RBRACE, "'}' after match arms")
+        # A `match` nested inside a guard expression has its own
+        # '=>'-adjacent grammar (each arm's own bare-arrow body), so it
+        # must open a fresh bracket-depth level like every other
+        # parenthesized/braced construct — otherwise an inner arm sitting
+        # at the outer guard's suppression depth gets its bare arrow
+        # incorrectly swallowed (see `_match_arm`'s guard parsing).
+        self._bracket_depth += 1
+        try:
+            subject = self._assignment()
+            self._consume(TokenType.RPAREN, "')' after match subject")
+            self._consume(TokenType.LBRACE, "'{' after match subject")
+            arms = list(self._match_arm())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if self._check(TokenType.RBRACE):
+                    break
+                arms.extend(self._match_arm())
+            self._consume(TokenType.RBRACE, "'}' after match arms")
+        finally:
+            self._bracket_depth -= 1
         return MatchExpr(subject, arms, match_token.line, match_token.column)
 
     def _match_arm(self) -> "list[MatchArm]":

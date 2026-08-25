@@ -4704,6 +4704,29 @@ class TestMatchExpression(unittest.TestCase):
         arrow_arg = filter_call[2][0]
         self.assertEqual(arrow_arg[0], "FnExpr")
 
+    def test_match_arm_guard_allows_nested_match_with_bare_arrow_arm(self):
+        # A `match` nested inside a guard has its own '=>'-adjacent
+        # grammar (each arm's own bare-arrow body). It must open a fresh
+        # bracket-depth level like calls/lists/maps/groupings do, or an
+        # inner arm sitting at the outer guard's suppression depth gets
+        # its bare arrow incorrectly swallowed.
+        arm = shape(
+            parse(
+                'match (1) { n if match(n) { _ => x => x > 0 } => "yes",'
+                ' _ => "no" }'
+            )
+        )[2][0]
+        pattern, body, binding, guard = arm
+        self.assertEqual(binding, "n")
+        self.assertEqual(body, ("Literal", "yes"))
+        self.assertEqual(guard[0], "MatchExpr")
+        inner_arm = guard[2][0]
+        inner_pattern, inner_body, inner_binding, inner_guard = inner_arm
+        self.assertIsNone(inner_pattern)
+        self.assertIsNone(inner_binding)
+        self.assertIsNone(inner_guard)
+        self.assertEqual(inner_body[0], "FnExpr")
+
 
 if __name__ == "__main__":
     unittest.main()

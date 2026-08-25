@@ -200,6 +200,7 @@ def shape(node):
                     shape(arm.pattern) if arm.pattern is not None else None,
                     shape(arm.body),
                     arm.binding,
+                    shape(arm.guard) if arm.guard is not None else None,
                 )
                 for arm in node.arms
             ],
@@ -4525,9 +4526,9 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "one"), None),
-                    (("Literal", 2), ("Literal", "two"), None),
-                    (None, ("Literal", "other"), None),
+                    (("Literal", 1), ("Literal", "one"), None, None),
+                    (("Literal", 2), ("Literal", "two"), None, None),
+                    (None, ("Literal", "other"), None, None),
                 ],
             ),
         )
@@ -4539,10 +4540,10 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (("Literal", True), ("Literal", 1), None),
-                    (("Literal", False), ("Literal", 2), None),
-                    (("Literal", None), ("Literal", 3), None),
-                    (("Literal", 1.5), ("Literal", 4), None),
+                    (("Literal", True), ("Literal", 1), None, None),
+                    (("Literal", False), ("Literal", 2), None, None),
+                    (("Literal", None), ("Literal", 3), None, None),
+                    (("Literal", 1.5), ("Literal", 4), None, None),
                 ],
             ),
         )
@@ -4557,8 +4558,8 @@ class TestMatchExpression(unittest.TestCase):
                     "MatchExpr",
                     ("Literal", True),
                     [
-                        (("Literal", False), ("Literal", 0), None),
-                        (("Literal", True), ("Literal", 1), None),
+                        (("Literal", False), ("Literal", 0), None, None),
+                        (("Literal", True), ("Literal", 1), None, None),
                     ],
                 ),
             ),
@@ -4575,8 +4576,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (None, ("Identifier", "x"), "x"),
-                    (None, ("Literal", 2), None),
+                    (None, ("Identifier", "x"), "x", None),
+                    (None, ("Literal", 2), None, None),
                 ],
             ),
         )
@@ -4588,9 +4589,9 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "ab"), None),
-                    (("Literal", 2), ("Literal", "ab"), None),
-                    (None, ("Literal", "c"), None),
+                    (("Literal", 1), ("Literal", "ab"), None, None),
+                    (("Literal", 2), ("Literal", "ab"), None, None),
+                    (None, ("Literal", "c"), None, None),
                 ],
             ),
         )
@@ -4612,8 +4613,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (("Literal", 1), ("Literal", "ok"), None),
-                    (("Literal", 2), ("Literal", "ok"), None),
+                    (("Literal", 1), ("Literal", "ok"), None, None),
+                    (("Literal", 2), ("Literal", "ok"), None, None),
                 ],
             ),
         )
@@ -4626,6 +4627,57 @@ class TestMatchExpression(unittest.TestCase):
         self.assertEqual(
             stmt_shape(parse_stmts("let _ = 5;")[0]),
             ("LetStmt", "_", ("Literal", 5)),
+        )
+
+    def test_match_arm_guard_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { 0 if y > 3 => "big-zero", 0 => "zero", _ => "other" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        ("Literal", 0),
+                        ("Literal", "big-zero"),
+                        None,
+                        ("Binary", ("Identifier", "y"), TokenType.GT, ("Literal", 3)),
+                    ),
+                    (("Literal", 0), ("Literal", "zero"), None, None),
+                    (None, ("Literal", "other"), None, None),
+                ],
+            ),
+        )
+
+    def test_match_arm_guard_on_bound_identifier(self):
+        self.assertEqual(
+            shape(parse('match (1) { n if n > 3 => "big", _ => "other" }')),
+            (
+                "MatchExpr",
+                ("Literal", 1),
+                [
+                    (
+                        None,
+                        ("Literal", "big"),
+                        "n",
+                        ("Binary", ("Identifier", "n"), TokenType.GT, ("Literal", 3)),
+                    ),
+                    (None, ("Literal", "other"), None, None),
+                ],
+            ),
+        )
+
+    def test_match_arm_guard_shared_across_multi_value_pattern(self):
+        self.assertEqual(
+            shape(parse('match (x) { 1, 2 if y => "ab", _ => "c" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (("Literal", 1), ("Literal", "ab"), None, ("Identifier", "y")),
+                    (("Literal", 2), ("Literal", "ab"), None, ("Identifier", "y")),
+                    (None, ("Literal", "c"), None, None),
+                ],
+            ),
         )
 
 

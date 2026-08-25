@@ -1123,11 +1123,17 @@ class Interpreter:
         for arm in expr.arms:
             if arm.pattern is None:
                 if arm.binding is None:
+                    if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
+                        continue
                     return self.evaluate(arm.body, env)
                 arm_env = Environment(env)
                 arm_env.define(arm.binding, subject)
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                    continue
                 return self.evaluate(arm.body, arm_env)
             if values_equal(subject, self.evaluate(arm.pattern, env)):
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
+                    continue
                 return self.evaluate(arm.body, env)
         raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
 

@@ -4875,6 +4875,44 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match (1) { 1, 2 => "ok", };')
         self.assertEqual(env.get("result"), "ok")
 
+    def test_guard_true_matches_arm(self):
+        env = run(
+            'let x = 5; let result = match (0) '
+            '{ 0 if x > 3 => "big-zero", 0 => "zero", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "big-zero")
+
+    def test_guard_false_falls_through_to_later_arm(self):
+        env = run(
+            'let x = 1; let result = match (0) '
+            '{ 0 if x > 3 => "big-zero", 0 => "zero", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "zero")
+
+    def test_guard_false_on_wildcard_falls_through(self):
+        env = run('let result = match (5) { _ if false => "never", _ => "fallback" };')
+        self.assertEqual(env.get("result"), "fallback")
+
+    def test_unguarded_arms_unaffected(self):
+        env = run('let result = match (5) { _ => "always" };')
+        self.assertEqual(env.get("result"), "always")
+
+    def test_guard_short_circuits_on_non_matching_pattern(self):
+        env = run('let result = match (1) { 0 if undefined_name => "x", _ => "y" };')
+        self.assertEqual(env.get("result"), "y")
+
+    def test_guard_on_bound_identifier_arm_sees_binding(self):
+        env = run(
+            'let result = match (7) { n if n > 100 => "huge", n if n > 3 => "medium" };'
+        )
+        self.assertEqual(env.get("result"), "medium")
+
+    def test_guard_binding_shadows_and_does_not_leak(self):
+        env = run(
+            'let n = 100; match (7) { n if n > 3 => "shadowed", _ => "other" }; '
+        )
+        self.assertEqual(env.get("n"), 100)
+
 
 if __name__ == "__main__":
     unittest.main()

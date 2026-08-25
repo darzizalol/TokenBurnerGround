@@ -295,11 +295,15 @@ class MatchArm:
     the match subject's value, in a fresh child scope that only
     `body`'s evaluation sees — it does not leak into the enclosing
     scope, mirroring `TryStmt`'s own `catch_name` binding
-    (`cinder/interpreter.py`'s `_execute_try`)."""
+    (`cinder/interpreter.py`'s `_execute_try`). `guard`, if present, is an
+    extra boolean condition evaluated only after the pattern already
+    matched; a false guard falls through to the next arm exactly as a
+    non-matching pattern would."""
 
     pattern: "Expr | None"
     body: "Expr"
     binding: "str | None" = None
+    guard: "Expr | None" = None
 
 
 @dataclass(frozen=True)

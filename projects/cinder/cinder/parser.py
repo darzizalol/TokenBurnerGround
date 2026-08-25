@@ -244,6 +244,7 @@ class Parser:
         self.pos = 0
         self._fn_depth = 0
         self._loop_labels: list = []
+        self._suppress_bare_arrow = False
 
     def parse_expression(self) -> Expr:
         expr = self._assignment()
@@ -1083,9 +1084,24 @@ class Parser:
                 first_token.line,
                 first_token.column,
             )
+        guard = None
+        if self._check(TokenType.IF):
+            self._advance()
+            # A bare identifier immediately followed by '=>' would otherwise
+            # be swallowed as an arrow-function shorthand (see `_primary`'s
+            # IDENTIFIER branch), stealing the arm's own '=>' and body —
+            # e.g. `0 if undefined_name => "x"` misparsing `undefined_name
+            # => "x"` as a lambda. Suppress that shorthand while parsing the
+            # guard so the fat arrow always belongs to the match arm.
+            previous_suppress = self._suppress_bare_arrow
+            self._suppress_bare_arrow = True
+            try:
+                guard = self._ternary()
+            finally:
+                self._suppress_bare_arrow = previous_suppress
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
-        return [MatchArm(pattern, body, binding) for pattern, binding in entries]
+        return [MatchArm(pattern, body, binding, guard) for pattern, binding in entries]
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None]":
         token = self._peek()
@@ -1588,7 +1604,10 @@ class Parser:
             self._advance()
             return Literal(None, token.line, token.column)
         if token.type == TokenType.IDENTIFIER:
-            if self._peek_next().type == TokenType.FAT_ARROW:
+            if (
+                not self._suppress_bare_arrow
+                and self._peek_next().type == TokenType.FAT_ARROW
+            ):
                 self._advance()  # consume the identifier
                 self._consume(TokenType.FAT_ARROW, "'=>' after arrow function parameter")
                 body = self._arrow_body(token.line, token.column)

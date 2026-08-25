@@ -1075,13 +1075,16 @@ class Parser:
             list_pattern = self._match_list_pattern()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
-            return [MatchArm(None, body, None, list_pattern)]
+            return [MatchArm(None, body, None, list_pattern, None)]
         first_token = self._peek()
         entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
             self._advance()
             entries.append(self._match_pattern())
-        if len(entries) > 1 and any(pattern is None for pattern, _ in entries):
+        if len(entries) > 1 and any(
+            pattern is None and range_pattern is None
+            for pattern, _, range_pattern in entries
+        ):
             raise ParseError(
                 "'_' or a bound identifier cannot be combined with other "
                 "patterns in a match arm",
@@ -1090,7 +1093,10 @@ class Parser:
             )
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
-        return [MatchArm(pattern, body, binding) for pattern, binding in entries]
+        return [
+            MatchArm(pattern, body, binding, None, range_pattern)
+            for pattern, binding, range_pattern in entries
+        ]
 
     def _match_list_pattern(self) -> "list[str | None]":
         self._advance()  # consume '['
@@ -1115,25 +1121,43 @@ class Parser:
         self._advance()
         return None if token.lexeme == "_" else token.lexeme
 
-    def _match_pattern(self) -> "tuple[Expr | None, str | None]":
+    def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
         token = self._peek()
         if token.type == TokenType.IDENTIFIER:
             self._advance()
             if token.lexeme == "_":
-                return None, None
-            return None, token.lexeme
-        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
+                return None, None, None
+            return None, token.lexeme, None
+        if token.type == TokenType.INT:
             self._advance()
-            return Literal(token.literal, token.line, token.column), None
+            start = Literal(token.literal, token.line, token.column)
+            if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
+                dots = self._advance()
+                inclusive = dots.type is TokenType.DOT_DOT_EQ
+                end_token = self._peek()
+                if end_token.type != TokenType.INT:
+                    raise ParseError(
+                        "expected an int after '..' in match range pattern, found "
+                        f"{self._describe(end_token)}",
+                        end_token.line,
+                        end_token.column,
+                    )
+                self._advance()
+                end = Literal(end_token.literal, end_token.line, end_token.column)
+                return None, None, RangeExpr(start, end, dots.line, dots.column, inclusive)
+            return start, None, None
+        if token.type in (TokenType.FLOAT, TokenType.STRING):
+            self._advance()
+            return Literal(token.literal, token.line, token.column), None, None
         if token.type == TokenType.TRUE:
             self._advance()
-            return Literal(True, token.line, token.column), None
+            return Literal(True, token.line, token.column), None, None
         if token.type == TokenType.FALSE:
             self._advance()
-            return Literal(False, token.line, token.column), None
+            return Literal(False, token.line, token.column), None, None
         if token.type == TokenType.NIL:
             self._advance()
-            return Literal(None, token.line, token.column), None
+            return Literal(None, token.line, token.column), None, None
         raise ParseError(
             f"expected a literal, identifier, or '_' in match pattern, "
             f"found {self._describe(token)}",

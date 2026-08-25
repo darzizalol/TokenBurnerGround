@@ -4911,6 +4911,38 @@ class TestMatchExpression(unittest.TestCase):
         )
         self.assertEqual(env.get("a"), 100)
 
+    def test_range_pattern_matches_within_bounds(self):
+        env = run('let result = match (5) { 1..10 => "small", _ => "large" };')
+        self.assertEqual(env.get("result"), "small")
+
+    def test_range_pattern_upper_bound_exclusive(self):
+        env = run('let result = match (15) { 1..10 => "small", _ => "large" };')
+        self.assertEqual(env.get("result"), "large")
+
+    def test_range_pattern_inclusive_upper_bound(self):
+        env = run('let result = match (10) { 1..=10 => "small", _ => "large" };')
+        self.assertEqual(env.get("result"), "small")
+
+    def test_range_pattern_lower_bound_inclusive_both_spellings(self):
+        env = run('let a = match (1) { 1..10 => "small", _ => "large" };')
+        env2 = run('let a = match (1) { 1..=10 => "small", _ => "large" };')
+        self.assertEqual(env.get("a"), "small")
+        self.assertEqual(env2.get("a"), "small")
+
+    def test_range_pattern_combines_with_literal_patterns(self):
+        env = run(
+            'let result = match (6) { 1, 5..10, 20 => "matched", _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), "matched")
+
+    def test_range_pattern_falls_through_on_non_numeric_subject(self):
+        env = run('let result = match ("x") { 1..10 => "n", _ => "s" };')
+        self.assertEqual(env.get("result"), "s")
+
+    def test_list_pattern_still_works_alongside_range_patterns(self):
+        env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
+        self.assertEqual(env.get("result"), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

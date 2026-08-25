@@ -409,3 +409,7 @@ release/QA passes per NIGHTLOG's "still not Release's to commit" notes,
 and now this session) without anyone claiming it — if it sits
 uncommitted through another few nights it may be worth the human just
 saying whether to keep it, drop it, or who should pick it up.
+
+## 2026-08-25 00:01:48 — orchestrator
+Claude CLI authentication failed during the engineer session (see logs/20260824-235601-engineer.log).
+Human: run 'claude' in a terminal and re-login. No agent can fix this.

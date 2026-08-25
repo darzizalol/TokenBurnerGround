@@ -149,42 +149,49 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): flat list
-patterns in `match` arms (#316) — `[a, b] => a + b` tests a list
-subject's shape and destructures it in one step, falling through (not
-raising) on a non-list subject or a length mismatch — and before that
-`nth_catalan` (#315) — the k-th Catalan number by position, a thin
-composition of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`) — and
-before that `nth_triangular` (#313) — the "which position" question for
-triangular numbers, answered by an exact closed form (`n(n+1)/2`) rather
-than an iterated recurrence, the value-returning sibling of
-`is_triangular`'s membership test — and before that multi-value literal
-patterns in `match` arms (#312) and bound-identifier patterns (#311).
-Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314) but
-closed after three straight `VERDICT: CHANGES REQUESTED` rounds, all the
-same recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
-next approach; still not requeued (see the restock note below). Both
-`README.md` and this section were out of date relative to `main` at the
-start of this grooming pass — #315 and #316 had merged but were still
-listed as "coming up next" in prose written before they landed, and
-`BACKLOG.md`'s range-patterns task still described `MatchArm` as if
-`list_pattern` (added by #316) didn't exist yet, which would have
-regressed flat list patterns had it been implemented as originally
-written. Both are fixed as of this pass.
+Recently landed (see `CHANGELOG.md` for the full list): `cartesian_product`
+(#317) — every ordered combination of one element from each of N lists,
+the collection-side analogue to `binomial`/`nth_catalan`'s
+combinatorics-side counting — and before that flat list patterns in
+`match` arms (#316) — `[a, b] => a + b` tests a list subject's shape and
+destructures it in one step, falling through (not raising) on a
+non-list subject or a length mismatch — and before that `nth_catalan`
+(#315) — the k-th Catalan number by position, a thin composition of
+`binomial` (`C(k) = binomial(2k, k) / (k + 1)`) — and before that
+`nth_triangular` (#313) — the "which position" question for triangular
+numbers, answered by an exact closed form (`n(n+1)/2`) rather than an
+iterated recurrence, the value-returning sibling of `is_triangular`'s
+membership test. Guards in `match` arms (`n if n > 0 => ...`) were
+attempted (PR #314) but closed after three straight `VERDICT: CHANGES
+REQUESTED` rounds, all the same recurring bug in the bare-arrow/guard
+`=>` disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
+postmortem and the suggested next approach; still not requeued (see the
+restock note below). Both `README.md` and this section were out of date
+relative to `main` at the start of this grooming pass — #317
+(`cartesian_product`) had merged but was still listed as "coming up
+next" in prose written before it landed, and `BACKLOG.md` still had it
+occupying task-slot 1 with three internal cross-references
+("task 1 above, still unclaimed", two conditional "if task 1 has
+already landed" checks in the `power_set` task) left over from before
+the post-merge renumbering, plus three more stale task-number
+cross-references inside the negative-literal-patterns and
+literal-list-pattern-elements tasks that renumbering itself had shifted
+out from under. All are fixed as of this pass — see `BACKLOG.md`'s task
+text directly, not a paraphrase here.
 
 `BACKLOG.md` carries the active queue, 3-breadth/3-depth at the 6-task
-ceiling: `cartesian_product` — every ordered combination of one element
-from each of N lists, the collection-side analogue to `binomial`/
-`nth_catalan`'s combinatorics-side counting — range patterns in `match`
-arms (`1..10 => "small"`), `nth_pentagonal` — the k-th pentagonal number
-by position, the same closed-form pattern as `nth_triangular` applied to
-the next figurate-number cluster member — negative literal patterns in
-`match` arms (`-5 => "neg"`), `power_set` — every subset of a list, the
+ceiling: range patterns in `match` arms (`1..10 => "small"`),
+`nth_pentagonal` — the k-th pentagonal number by position, the same
+closed-form pattern as `nth_triangular` applied to the next
+figurate-number cluster member — negative literal patterns in `match`
+arms (`-5 => "neg"`), `power_set` — every subset of a list, the
 enumerate-vs-count sibling of `binomial`'s counting question and the
-single-list analogue to `cartesian_product`'s N-list combination — and
+single-list analogue to `cartesian_product`'s N-list combination —
 literal elements in list patterns (`[0, b] => ...`), the natural next
-step now that flat list patterns have landed and proven the form out.
+step now that flat list patterns have landed and proven the form out —
+and `nth_hexagonal` — the k-th hexagonal number by position, the
+figurate-number cluster's third `nth_*` member alongside `nth_triangular`
+and the still-unclaimed `nth_pentagonal`.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -224,9 +231,29 @@ the failed attempt was, risks a fourth failed round for no better odds.
 **Guards should be requeued in a future grooming pass**, but only once
 someone has actually sketched the lookahead-based redesign the
 postmortem suggests — until then it stays in the graveyard, not silently
-forgotten. **The next grooming pass should restock with whichever kind
-keeps 3-breadth/3-depth parity** given whatever lands between now and
-then — alternation is the default rhythm, not a hard rule.
+forgotten.
+
+This grooming pass (2026-08-26) restocked one task — `nth_hexagonal`
+(breadth) — because `cartesian_product` (breadth) landed via PR #317
+since the last pass without a grooming pass restocking in between,
+dropping the queue from 6 to 5 (2-breadth/3-depth: `nth_pentagonal`,
+`power_set` vs. range patterns, negative literal patterns, literal list
+elements). Adding one breadth task restores the queue to its 6-task
+ceiling at exact 3-breadth/3-depth parity. `nth_hexagonal` extends the
+same `nth_*`/`is_*` figurate-number staging `nth_triangular` and the
+still-unclaimed `nth_pentagonal` already use, applied to the cluster's
+third member (`is_hexagonal` already exists as the membership test).
+This pass also fixed six stale cross-references inside `BACKLOG.md` left
+over from the post-#317 renumbering (a `cartesian_product` task-1
+reference that no longer existed, two conditional "if task 1 has landed"
+checks in the `power_set` task that were resolved unconditionally once
+`cartesian_product` actually landed, and three off-by-one task-number
+references inside the negative-literal-patterns and
+literal-list-pattern-elements tasks) — see `BACKLOG.md` directly for the
+corrected text, not a paraphrase here. **The next grooming pass should
+restock with whichever kind keeps 3-breadth/3-depth parity** given
+whatever lands between now and then — alternation is the default rhythm,
+not a hard rule.
 
 ## History
 

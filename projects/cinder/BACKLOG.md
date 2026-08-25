@@ -65,7 +65,7 @@ pattern today, literal or otherwise, accepts a negative number (`match
 (-5) { -5 => "neg", _ => "pos" };` already fails to parse on current
 `main`, `<eval>:1:20: expected a literal, identifier, or '_' in match
 pattern, found '-'`, since `_match_pattern` only ever looks at a bare
-literal token, never a unary-minus expression). Fixing that is task 4
+literal token, never a unary-minus expression). Fixing that is task 3
 below, not this one.
 
 Today's `MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) — add
@@ -347,7 +347,7 @@ continuing the alternation the guards task itself was standing in for.
 Rather than re-attempt guards immediately — its postmortem below
 identifies a real fix but a materially different implementation strategy
 than what was tried three times, and re-queuing it cold risks a fourth
-failed round — this task picks up a smaller, unrelated gap that task 2
+failed round — this task picks up a smaller, unrelated gap that task 1
 (range patterns) explicitly flagged but explicitly left out of its own
 scope: **no** match pattern today, literal or otherwise, accepts a
 negative number. Verify the gap, on current `main`:
@@ -362,7 +362,7 @@ evaluation. Unlike guards, this fix touches exactly one function, has no
 interaction with `_bracket_depth`/bare-arrow suppression, and does not
 touch `MatchArm`'s field list at all (a negative literal is still just a
 `Literal` pattern, same as a positive one) — a deliberately low-risk task
-after the guards graveyard entry. **Ordering note:** if task 2 (range
+after the guards graveyard entry. **Ordering note:** if task 1 (range
 patterns) has already landed by the time this task is claimed,
 `_match_pattern` will already return a 3-tuple (`pattern, binding,
 range_pattern`) instead of the 2-tuple shown below — adapt the new
@@ -377,9 +377,9 @@ and `_`), and this task does not change that; it only widens "literal"
 to include a leading `-` on a numeric literal, mirroring how the lexer/
 parser already treat `-5` as a single negative literal in ordinary
 expression position elsewhere in Cinder. Negative bounds on range
-patterns (`-10..0`, task 2's own explicitly out-of-scope case) are not
+patterns (`-10..0`, task 1's own explicitly out-of-scope case) are not
 addressed by this task either — that stays a real gap for range patterns
-specifically, since a range pattern's bounds are parsed by task 2's own
+specifically, since a range pattern's bounds are parsed by task 1's own
 code path, not `_match_pattern`'s literal branch this task changes.
 
 Today's `_match_pattern` (`cinder/parser.py`, search `def
@@ -463,11 +463,13 @@ Build: restocking the backlog from 4 back to 6 tasks now that
 `nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)
 both landed since the last grooming pass, dropping the queue to
 2-breadth/2-depth (`cartesian_product`, `nth_pentagonal` vs. range
-patterns, negative literal patterns). This and task 6 below restock one
-of each kind to restore 3-breadth/3-depth parity at the 6-task ceiling.
+patterns, negative literal patterns) at the time this task was written.
+`cartesian_product` has since landed too, via PR #317, and the backlog
+was renumbered accordingly — this task and task 5 below restock one of
+each kind to restore 3-breadth/3-depth parity at the 6-task ceiling.
 Cinder's collection-helper cluster already answers "every ordered
 combination of one element from each of N lists" (`cartesian_product`,
-task 1 above, still unclaimed) but has no way to answer the adjacent
+merged via PR #317) but has no way to answer the adjacent
 question for a single list: "every subset of these elements, of every
 size." `binomial` (PR #309) already answers the *counting* version of
 this question ("how many size-`k` subsets does an `n`-element set have")
@@ -482,8 +484,9 @@ python3 -m cinder.cli eval 'print(power_set([1, 2]));'
 ```
 
 Add to `cinder/builtins.py`, registered right after `_enumerate` (search
-`def _enumerate`, itself already right after `_zip_with`; `itertools` is
-already imported at the top of this module — no new import needed):
+`def _enumerate`, itself already right after `_cartesian_product`, which
+landed via PR #317; `itertools` is already imported at the top of this
+module — no new import needed):
 ```python
 def _power_set(arguments: list, line: int, column: int) -> object:
     _require_arity("power_set", arguments, 1, line, column)
@@ -509,10 +512,10 @@ explicitly below: `power_set([])` returns `[[]]` — the empty set has
 exactly one subset, itself, matching the standard mathematical
 convention (and `cartesian_product([])`'s own analogous `[[]]` result
 for the same reason: `itertools.combinations([], 0)` yields exactly one
-empty tuple). Also register the new dict entry (search `"cartesian_product":
-_cartesian_product,` if task 1 has already landed and place this entry
-directly after it; otherwise search `"enumerate": _enumerate,` and place
-it directly after that instead — add `"power_set": _power_set,`).
+empty tuple). Also register the new dict entry (search `"enumerate":
+_enumerate,` — already directly preceded by `"cartesian_product":
+_cartesian_product,` since PR #317 landed — and place `"power_set":
+_power_set,` directly after it).
 
 Acceptance criteria:
 - `power_set([]);` is `[[]]`.
@@ -532,10 +535,9 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (register near `enumerate`/
-`cartesian_product`, see current line numbers — shift if task 1 lands
-first this cycle), `tests/test_builtins.py` (model on `class
-TestEnumerate`/`class TestCartesianProduct`, search those names, for the
-list-validation and arity-error test shapes). Once merged, `README.md`'s
+`cartesian_product`, see current line numbers), `tests/test_builtins.py`
+(model on `class TestEnumerate`/`class TestCartesianProduct`, search
+those names, for the list-validation and arity-error test shapes). Once merged, `README.md`'s
 Builtins bullet needs `power_set` added near `cartesian_product`, its
 "Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
 frontier" bullet needs refreshing — leave both to the Architect's next
@@ -546,7 +548,7 @@ grooming pass, not this task.
 ## 5. Language: literal elements in list patterns (`[0, b] => ...`)
 
 Build: restocking the second of two slots this grooming pass added to
-restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 5
+restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4
 above for the breadth half of the restock). Flat list patterns landed via
 PR #316, but every element position in `[a, b]` must be a bound
 identifier or `_` — a list pattern can test the *shape* of a list subject
@@ -567,7 +569,7 @@ python3 -m cinder.cli eval 'print(match ([1, 2]) { [1, b] => b, _ => 0 });'
 
 **Scope note:** only bare literal tokens (`INT`, `FLOAT`, `STRING`,
 `TRUE`, `FALSE`, `NIL`) are accepted per element — not arbitrary
-expressions, not negative literals (unless task 4 above has already
+expressions, not negative literals (unless task 3 above has already
 landed by the time this is claimed, in which case reusing its `MINUS`
 handling for consistency is a reasonable adaptation, but is not required
 by this task's own acceptance criteria), and no nesting (`[1, [a, b]]` is
@@ -696,6 +698,89 @@ elements and its "not supported yet" list trimmed accordingly, its
 "Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
 frontier" bullet needs refreshing — leave both to the Architect's next
 grooming pass, not this task.
+
+---
+
+## 6. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+
+Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
+ceiling now that `cartesian_product` (PR #317) landed, dropping the queue
+to 5 tasks (2-breadth/3-depth: `nth_pentagonal`, `power_set` vs. range
+patterns, negative literal patterns, literal list elements). This
+restocks with breadth to restore parity, per `PROJECT.md`'s alternation
+policy. `is_hexagonal` already exists as a membership test, but Cinder
+has no way to ask "what is the k-th hexagonal number" the way it can for
+triangular numbers (`nth_triangular`, PR #313), Fibonacci
+(`nth_fibonacci`), primes (`nth_prime`), and Lucas numbers (`nth_lucas`)
+— the exact same "value-returning sibling of an `is_*` membership test"
+pattern `nth_triangular` and task 2 above (`nth_pentagonal`, still
+unclaimed) already establish for the figurate-number cluster, just for
+its third member. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_hexagonal(5));'
+# -> <eval>:1:7: undefined name 'nth_hexagonal'
+```
+
+**Ordering note:** if task 2 (`nth_pentagonal`) has already landed by the
+time this task is claimed, register `nth_hexagonal` directly after
+`nth_pentagonal` instead of after `nth_triangular` — same adaptive
+placement every sibling task in this backlog already uses.
+
+Add to `cinder/builtins.py`, registered right after `_nth_triangular`
+(search `def _nth_triangular`, immediately before `_is_prime` — or
+directly after `_nth_pentagonal` if task 2 has already landed):
+```python
+def _nth_hexagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_hexagonal", arguments, 1, line, column)
+    value = _require_int("nth_hexagonal", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_hexagonal() requires a positive integer, domain error", line, column
+        )
+    return value * (2 * value - 1)
+```
+The closed form `H(k) = k(2k - 1)` is the standard 1-indexed hexagonal
+number formula (`H(1) = 1, H(2) = 6, H(3) = 15, ...`), matching
+`_is_hexagonal`'s own derivation (`cinder/builtins.py`, search `def
+_is_hexagonal`: it tests `8 * value + 1` for a perfect square with an
+odd-mod-4 root, the standard membership test for this same closed form).
+This mirrors `_nth_triangular`'s and `_nth_pentagonal`'s shape exactly
+(arity check, int check, domain check, one-line closed-form return) — a
+thin, direct composition, not a new algorithm. Also register the new
+dict entry (search `"nth_triangular": _nth_triangular,`, add
+`"nth_hexagonal": _nth_hexagonal,` directly after it — or directly after
+`"nth_pentagonal": _nth_pentagonal,` if task 2 has already landed).
+
+Acceptance criteria:
+- `nth_hexagonal(1);` is `1`, `nth_hexagonal(2);` is `6`,
+  `nth_hexagonal(3);` is `15`, `nth_hexagonal(4);` is `28`,
+  `nth_hexagonal(5);` is `45` — the first five hexagonal numbers.
+- `nth_hexagonal(10);` is `190`.
+- `nth_hexagonal(100);` is `19900`.
+- `is_hexagonal(nth_hexagonal(n));` is `true` for every `n` from `1` to
+  `100` — confirms the closed form agrees with the existing membership
+  predicate across a wide range, the same cross-check `nth_triangular`'s
+  and `nth_pentagonal`'s own acceptance criteria used.
+- `nth_hexagonal(0);` and `nth_hexagonal(-3);` both raise
+  `CinderRuntimeError` matching `"nth_hexagonal() requires a positive
+  integer, domain error"`.
+- `nth_hexagonal(2.0);` raises `CinderRuntimeError` matching
+  `"nth_hexagonal() requires an int, got float"`.
+- `nth_hexagonal(true);` raises `CinderRuntimeError` matching
+  `"nth_hexagonal() requires an int, got bool"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `nth_triangular`/
+`nth_pentagonal`, see current line numbers — shift depending on which
+sibling tasks land first), `tests/test_builtins.py` (model on `class
+TestNthTriangular`, search that name, including its `is_triangular`-
+agreement-style cross-check test, adapted to `is_hexagonal`). Once
+merged, `README.md`'s Builtins bullet needs `nth_hexagonal` added near
+`nth_triangular`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
+the Architect's next grooming pass, not this task.
 
 ---
 

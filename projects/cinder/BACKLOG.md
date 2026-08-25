@@ -11,188 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: guards in `match` arms (`n if n > 0 => "positive"`) [claimed 2026-08-24T15:56:37Z]
-
-Build: restocking the backlog back to 6 tasks now that `is_octagonal`
-landed via PR #308, per `PROJECT.md`'s breadth-vs-depth policy. The
-pattern-matching arc opened by PR #304 has since grown bound-identifier
-patterns (PR #311) and multi-value literal patterns (PR #312) — guards
-are the next natural follow-up `PROJECT.md`'s "Current frontier" note
-calls out (flat list patterns, queued as task 4 below, and
-nested/destructuring patterns beyond that are the remaining ones). A
-guard is an extra boolean condition on an arm, evaluated only once the
-arm's pattern already matches, letting one pattern split into several
-arms by an arbitrary expression instead of only by literal equality —
-every pattern-matching language this feature is modeled on (Rust's `n
-if n > 0 => ...`, Python's `case n if n > 0:`) has this. Verify the gap
-against today's codebase:
-```sh
-python3 -m cinder.cli eval 'let x = 5; print(match (0) { 0 if x > 3 => "big-zero", _ => "other" });'
-# -> <eval>:1:32: expected '=>' after match pattern, found 'if'
-```
-
-**Ordering note:** task 3 (flat list patterns) is also queued and may
-land first, adding a `list_pattern`-shaped branch to `MatchArm`/
-`_match_arm`/`_evaluate_match` alongside the ones shown below — adapt to
-whatever the merged code actually looks like, the same way `nth_triangular`
-adapted to `is_octagonal` landing first. The code below is grounded in
-**today's** actual code (verified by reading `cinder/ast_nodes.py`/
-`cinder/parser.py`/`cinder/interpreter.py` directly, post-#311/#312): parse
-an optional `if <expr>` after the whole comma-separated pattern list and
-before the `=>`; store it as one more field on `MatchArm`; at eval time,
-only treat the arm as matching if the pattern already matched (or is a
-wildcard/binding) **and** the guard (if present) evaluates truthy — a
-false guard falls through to the next arm exactly as a non-matching
-pattern would, it does not raise or stop the search. A guard on a
-bound-identifier arm must be evaluated in that arm's own child scope (so
-it can see the binding), not the outer `env`.
-
-Today's `MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) —
-add a fourth field:
-```python
-    pattern: "Expr | None"
-    body: "Expr"
-    binding: "str | None" = None
-    guard: "Expr | None" = None
-```
-
-Today's `_match_arm`/`_match_pattern` (`cinder/parser.py`, search `def
-_match_arm`):
-```python
-    def _match_arm(self) -> "list[MatchArm]":
-        first_token = self._peek()
-        entries = [self._match_pattern()]
-        while self._check(TokenType.COMMA):
-            self._advance()
-            entries.append(self._match_pattern())
-        if len(entries) > 1 and any(pattern is None for pattern, _ in entries):
-            raise ParseError(
-                "'_' or a bound identifier cannot be combined with other "
-                "patterns in a match arm",
-                first_token.line,
-                first_token.column,
-            )
-        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-        body = self._ternary()
-        return [MatchArm(pattern, body, binding) for pattern, binding in entries]
-```
-Add guard parsing between the comma-loop and the `FAT_ARROW` consume,
-and thread it through the list comprehension so every desugared arm
-from one multi-value pattern list shares the same guard (the same way
-they already share one `body`):
-```python
-        guard = None
-        if self._check(TokenType.IF):
-            self._advance()
-            guard = self._ternary()
-        self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-        body = self._ternary()
-        return [MatchArm(pattern, body, binding, guard) for pattern, binding in entries]
-```
-`TokenType.IF` is already used the same way — an optional trailing
-condition parsed with `self._ternary()` — by `_comprehension_clause`
-(search `def _comprehension_clause`, the `if self._check(TokenType.IF)`
-block), so this mirrors an existing, working pattern in this same
-parser rather than inventing new lookahead machinery.
-
-Today's `_evaluate_match` (`cinder/interpreter.py`, search `def
-_evaluate_match`):
-```python
-    def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
-        subject = self.evaluate(expr.subject, env)
-        for arm in expr.arms:
-            if arm.pattern is None:
-                if arm.binding is None:
-                    return self.evaluate(arm.body, env)
-                arm_env = Environment(env)
-                arm_env.define(arm.binding, subject)
-                return self.evaluate(arm.body, arm_env)
-            if values_equal(subject, self.evaluate(arm.pattern, env)):
-                return self.evaluate(arm.body, env)
-        raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
-```
-Add a guard check right before each of the three `return
-self.evaluate(arm.body, ...)` lines, using `continue` instead of
-returning when the guard is falsy — evaluate the guard in `arm_env` for
-the bound-identifier branch (so it can see the binding) and in `env` for
-the other two:
-```python
-            if arm.pattern is None:
-                if arm.binding is None:
-                    if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
-                        continue
-                    return self.evaluate(arm.body, env)
-                arm_env = Environment(env)
-                arm_env.define(arm.binding, subject)
-                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
-                    continue
-                return self.evaluate(arm.body, arm_env)
-            if values_equal(subject, self.evaluate(arm.pattern, env)):
-                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
-                    continue
-                return self.evaluate(arm.body, env)
-```
-`is_truthy` (module-level in `cinder/interpreter.py`, search `def
-is_truthy`) is the same helper `if`/`while`/`and`/`or` already use, so
-guard truthiness follows Cinder's one fixed truthiness rule (`false`
-and `nil` falsy, everything else — including `0` and `""` — truthy)
-with no special case. The guard is evaluated **after** confirming the
-pattern already matched, never before — this ordering is load-bearing,
-not incidental: it lets a guard reference values that would be
-meaningless or erroring to evaluate against a non-matching subject
-(see the short-circuit acceptance case below), and it means a guard
-never runs at all for an arm whose pattern was never going to match in
-the first place.
-
-Acceptance criteria:
-- `let x = 5; print(match (0) { 0 if x > 3 => "big-zero", 0 => "zero", _ => "other" });`
-  is `"big-zero"` — guard true, arm matches.
-- `let x = 1; print(match (0) { 0 if x > 3 => "big-zero", 0 => "zero", _ => "other" });`
-  is `"zero"` — guard false, falls through to a later arm with the same
-  literal pattern but no guard.
-- `match (5) { _ if false => "never", _ => "fallback" };` is
-  `"fallback"` — a wildcard arm with a false guard is skipped even
-  though a bare wildcard would otherwise always match; matching
-  continues to the next arm.
-- `match (5) { _ => "always" };` (no guard at all) is still `"always"`
-  — unguarded arms are unaffected by this change.
-- `match (1) { 0 if undefined_name => "x", _ => "y" };` is `"y"` and
-  does **not** raise a runtime error for the undefined name — confirms
-  the guard on the `0` arm is never evaluated at all, because the
-  pattern (`0`) never matched the subject (`1`) in the first place; the
-  short-circuit order (pattern first, guard second) is load-bearing, not
-  incidental.
-- `match (7) { n if n > 100 => "huge", n if n > 3 => "medium" };` is
-  `"medium"` — a guard on a bound-identifier arm can see the binding
-  (`n`), and a false guard on the first bound-identifier arm falls
-  through to the second.
-- `let n = 100; match (7) { n if n > 3 => "shadowed", _ => "other" };
-  print(n);` prints `100` — the guard's `n` refers to the arm's own
-  binding, not the outer `n`, and evaluating the guard does not leak the
-  binding into the outer scope either.
-- `tests/test_parser.py`'s `shape()` helper's `MatchExpr` branch (search
-  `isinstance(node, MatchExpr)`) needs its per-arm tuple extended to
-  include the guard shape (`shape(arm.guard) if arm.guard is not None
-  else None`), and every existing expected-shape tuple in `class
-  TestMatchExpression` (search that name, in both `tests/test_parser.py`
-  and this file's own new tests) updated to match the new field count —
-  including a `None` for every arm that has no guard.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`MatchArm`, `MatchExpr`
-docstrings), `cinder/parser.py` (`_match_arm`), `cinder/interpreter.py`
-(`_evaluate_match`), `tests/test_parser.py` (`shape()` helper's
-`MatchExpr` branch and `class TestMatchExpression`, search that name),
-`tests/test_interpreter.py` (extend `class TestMatchExpression`, search
-that name, with the guard end-to-end cases above). Once merged,
-`README.md`'s `match` expression bullet needs a guard example added,
-its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" bullet needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_catalan` — the k-th Catalan number by position
+## 1. Standard library: `nth_catalan` — the k-th Catalan number by position
 
 Build: restocking the backlog back to 6 tasks now that `binomial` landed
 via PR #309, per `PROJECT.md`'s breadth-vs-depth policy (`binomial` was
@@ -277,7 +96,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: flat list patterns in `match` arms (`[a, b] => a + b`)
+## 2. Language: flat list patterns in `match` arms (`[a, b] => a + b`)
 
 Build: restocking the backlog back to 6 tasks now that `nth_lucas`
 (breadth, PR #310) and bound-identifier patterns (depth, PR #311) both
@@ -455,7 +274,7 @@ this task.
 
 ---
 
-## 4. Standard library: `cartesian_product` — the Cartesian product of N lists
+## 3. Standard library: `cartesian_product` — the Cartesian product of N lists
 
 Build: restocking the backlog back to 6 tasks alongside task 5 above
 (breadth, following task 5's depth, continuing the alternation task 4
@@ -539,7 +358,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: range patterns in `match` arms (`1..10 => "small"`)
+## 4. Language: range patterns in `match` arms (`1..10 => "small"`)
 
 Build: restocking the backlog back to 6 tasks now that multi-value literal
 patterns landed via PR #312, per `PROJECT.md`'s breadth-vs-depth policy
@@ -751,7 +570,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
+## 5. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
 
 Build: restocking the backlog back to 6 tasks now that `nth_triangular`
 landed via PR #313, per `PROJECT.md`'s breadth-vs-depth policy (landing
@@ -840,4 +659,19 @@ kept here — keeps this file short for whoever's claiming the next task.
 
 ## Graveyard
 
-(none yet)
+### Language: guards in `match` arms (`n if n > 0 => "positive"`) — PR #314, closed 2026-08-25
+
+Bounced 3x with `VERDICT: CHANGES REQUESTED`, all the same recurring bug:
+each fix round patched `_bracket_depth` tracking (used to scope the
+bare-arrow/guard `=>` ambiguity fix) for one nested construct — call/list/map
+arguments (round 1), `match` expressions (round 2), `fn` expressions (round
+3) — while the reviewer kept finding another construct the fix hadn't
+threaded depth through, and round 3's review flagged a 4th possible gap
+(`_arrow_body`'s bare-expression branch, `_block()`) that was never
+confirmed either way. Next attempt should enumerate *every* production that
+opens a paren/bracket/brace scope up front (grep `_bracket_depth` usages in
+the closed PR's final diff for the list-so-far) rather than fixing gaps
+reactively one review round at a time — or consider a structurally
+different fix that doesn't need per-construct threading at all (e.g.
+resolving the bare-arrow/guard ambiguity by lookahead at the `=>` site
+instead of a suppression-depth counter).

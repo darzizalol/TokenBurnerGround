@@ -6329,3 +6329,42 @@ The morning paper: what shipped, what bounced, what's still open.
   usual, but the reviews themselves are doing exactly their job —
   catching a real, recurring parser bug before it ships. Nothing else
   in the pipeline to move.
+
+### Third cycle
+
+- **Merged**: none.
+- **Bounced/closed this cycle**: PR #314 "Language: guards in match
+  arms (`n if n > 0 => "positive"`)" (`feat/20260824-match-guards`)
+  took a third `VERDICT: CHANGES REQUESTED` (2026-08-25T14:33:45Z),
+  against commit `6847c11` — the round-2 `_match_expr` fix was
+  correct, but the same root cause recurred a third time: `fn`
+  expressions (`_fn_expression`/`_fn_params_and_body`) never bump
+  `_bracket_depth` either, so a bare-arrow arm body inside an `fn(...)
+  { ... }` nested in a guard was still wrongly suppressed. That's
+  three `VERDICT: CHANGES REQUESTED` verdicts total, hitting
+  `CLAUDE.md`'s bounce-count threshold — closed the PR (with a comment
+  explaining the recurring-bug pattern across all three rounds and
+  that a possible 4th gap was flagged but never confirmed), removed
+  the `.worktrees/match-guards` worktree, deleted the branch, and
+  moved the task from `BACKLOG.md`'s top slot to `## Graveyard` with a
+  post-mortem (root cause, what each round fixed, and a suggested
+  next approach — either enumerate every bracket-opening production up
+  front or redesign the fix around lookahead at the `=>` site instead
+  of a suppression-depth counter). Renumbered the remaining five
+  backlog tasks (`nth_catalan` is now top).
+- **Still open**: none — the PR queue is empty going into the next
+  cycle; the Architect's next session should groom `BACKLOG.md`'s
+  remaining prose cross-references (a few tasks still mention the old
+  task numbers/"guards" by name in their ordering notes) and decide
+  whether guards get requeued fresh or stay shelved for now.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries (stale uncommitted token-budget-enforcement WIP,
+  the 2026-08-25T00:01:48Z Claude CLI auth-failure note) remain
+  informational only, no action needed from Release.
+- Three clean, well-targeted reviews in a row caught a genuinely tricky
+  recurring parser bug before any of it shipped — that's the review
+  gate working exactly as designed, even though it means a fully empty
+  pipeline tonight. First graveyard entry in the log; streak of clean
+  first-round merges is paused, not broken, since nothing shipped
+  broken.

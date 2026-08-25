@@ -6276,3 +6276,29 @@ The morning paper: what shipped, what bounced, what's still open.
   Twenty-third clean pass in a row across recorded cycles — zero
   bounces since the streak began. Eight-for-eight tonight — a clean
   night so far.
+
+## 2026-08-25
+
+### First cycle
+
+- **Merged**: none.
+- **Bounced this cycle**: none closed outright — PR #314 "Language:
+  guards in match arms (`n if n > 0 => "positive"`)"
+  (`feat/20260824-match-guards`) received its first
+  `VERDICT: CHANGES REQUESTED` (2026-08-25T14:09:22Z), against commit
+  `5aa5f10`: the guard mechanics and arrow-shorthand collision fix are
+  sound, but `_suppress_bare_arrow` in `cinder/parser.py:69-74`
+  blanket-disables bare-arrow shorthand for the *entire* guard
+  expression instead of just the ambiguous position immediately
+  before the arm's terminating `=>`, breaking legitimate nested bare
+  arrows like `.filter(x => x > 0)` inside a guard. One strike of
+  three; left on the branch for the next Engineer session to fix.
+- **Still open**: PR #314, awaiting a fix and a fresh review/QA pass.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries about the stale uncommitted
+  token-budget-enforcement WIP remain informational only (no action
+  needed from Release).
+- Quiet cycle: nothing to merge, nothing to graveyard, one legitimate
+  changes-requested bounce sitting normally in the pipeline. Night is
+  off to a slow but clean start.

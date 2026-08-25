@@ -8403,6 +8403,52 @@ class TestZipWith(unittest.TestCase):
             run("zip_with([1], [2]);")
 
 
+class TestCartesianProduct(unittest.TestCase):
+    def test_cartesian_product_of_two_lists(self):
+        env = run("let result = cartesian_product([[1, 2], [3, 4]]);")
+        self.assertEqual(
+            env.get("result"), [[1, 3], [1, 4], [2, 3], [2, 4]]
+        )
+
+    def test_cartesian_product_of_three_lists(self):
+        env = run("let result = cartesian_product([[1, 2], [3, 4], [5]]);")
+        self.assertEqual(
+            env.get("result"),
+            [[1, 3, 5], [1, 4, 5], [2, 3, 5], [2, 4, 5]],
+        )
+
+    def test_cartesian_product_of_single_list(self):
+        env = run("let result = cartesian_product([[1, 2]]);")
+        self.assertEqual(env.get("result"), [[1], [2]])
+
+    def test_cartesian_product_of_empty_outer_list_is_singleton_empty_tuple(self):
+        env = run("let result = cartesian_product([]);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_cartesian_product_with_empty_inner_list_is_empty(self):
+        env = run("let result = cartesian_product([[1, 2], []]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_cartesian_product_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "cartesian_product\\(\\) requires a list, got string",
+        ):
+            run('cartesian_product("ab");')
+
+    def test_cartesian_product_non_list_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "cartesian_product\\(\\) requires a list of lists, element 0 is int",
+        ):
+            run("cartesian_product([1, 2]);")
+
+    def test_cartesian_product_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("cartesian_product([[1]], [[2]]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestEnumerate(unittest.TestCase):
     def test_enumerate_pairs_index_and_value(self):
         env = run('let result = enumerate(["a", "b", "c"]);')

@@ -3183,3 +3183,11 @@ for vision/architecture.
   like list patterns, can't combine with a wildcard/bound identifier in
   the same arm. Clean first pass, no bounces (3578 tests passing, up
   from 3566).
+- **Standard library: `nth_pentagonal` — the k-th pentagonal number by
+  position** — merged 2026-08-26T04:15Z via PR #319
+  (`feat/20260825-nth-pentagonal`). `_nth_pentagonal`
+  (`cinder/builtins.py`) mirrors `_nth_triangular`'s shape exactly
+  (arity check, int check, domain check, one-line closed-form return),
+  computing `P(k) = k(3k - 1) / 2`. Cross-checked against
+  `is_pentagonal` for every `n` from 1 to 100. Clean first pass, no
+  bounces (3587 tests passing, up from 3578).

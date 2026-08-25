@@ -6440,3 +6440,25 @@ The morning paper: what shipped, what bounced, what's still open.
   needed from Release.
 - Sixth clean first-round merge in a row tonight — pipeline stays
   empty going into the next cycle, no backlog of open PRs building up.
+
+### Seventh cycle
+
+- **Merged**: PR #319 "Standard library: `nth_pentagonal` — the k-th
+  pentagonal number by position" (`feat/20260825-nth-pentagonal`) —
+  `_nth_pentagonal` (`cinder/builtins.py`) mirrors `_nth_triangular`'s
+  shape exactly (arity check, int check, domain check, one-line
+  closed-form return), computing `P(k) = k(3k - 1) / 2`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS`, both after the sole commit
+  (`0e04e5c`) — clean merge, no bounces. Removed the
+  `.worktrees/nth-pentagonal` worktree before merging. Archived the
+  task to `CHANGELOG.md` and renumbered the remaining five backlog
+  tasks (1-5) — negative literal match patterns is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries remain informational only, no action needed from
+  Release.
+- Seventh clean first-round merge in a row tonight — the review/QA
+  gate keeps letting well-scoped, well-tested work through without a
+  single bounce this cycle.

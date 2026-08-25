@@ -10,87 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Standard library: `nth_pentagonal` — the k-th pentagonal number by position [claimed 2026-08-25T20:14:50Z]
-
-Build: restocking the backlog back to 6 tasks now that `nth_triangular`
-landed via PR #313, per `PROJECT.md`'s breadth-vs-depth policy (landing
-#313 dropped the queue to 2-breadth/3-depth: `nth_catalan`,
-`cartesian_product` vs. guards, flat list patterns, range patterns —
-this task restocks with breadth to restore 3-breadth/3-depth parity, per
-the explicit instruction the previous grooming pass left in
-`PROJECT.md`'s "Current frontier" note). `is_pentagonal` already exists
-as a membership test, but Cinder has no way to ask "what is the k-th
-pentagonal number" the way it can for triangular numbers
-(`nth_triangular`, PR #313), Fibonacci (`nth_fibonacci`), primes
-(`nth_prime`), and Lucas numbers (`nth_lucas`) — this is the exact same
-"value-returning sibling of an `is_*` membership test" pattern
-`nth_triangular` and `nth_lucas` already established, just for the next
-figurate-number cluster member. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_pentagonal(5));'
-# -> <eval>:1:7: undefined name 'nth_pentagonal'
-```
-
-Add to `cinder/builtins.py`, registered right after `_nth_triangular`
-(search `def _nth_triangular`, immediately before `_is_prime`):
-```python
-def _nth_pentagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_pentagonal", arguments, 1, line, column)
-    value = _require_int("nth_pentagonal", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_pentagonal() requires a positive integer, domain error", line, column
-        )
-    return value * (3 * value - 1) // 2
-```
-The closed form `P(k) = k(3k - 1) / 2` is the standard 1-indexed
-pentagonal number formula (`P(1) = 1, P(2) = 5, P(3) = 12, ...`) — no
-indexing subtlety here unlike `nth_catalan`'s 0-indexed closed form,
-since pentagonal numbers are already conventionally 1-indexed starting
-at `P(1) = 1`, matching every other builtin in this `nth_*` cluster
-directly. This mirrors `_nth_triangular`'s own shape exactly (arity
-check, int check, domain check, one-line closed-form return) — a thin,
-direct composition, not a new algorithm. A domain error (not a
-sentinel value) for `value < 1` matches every other `nth_*` builtin's
-own convention for their own "not a valid position" case. Also register
-the new dict entry (search `"nth_triangular": _nth_triangular,`, add
-`"nth_pentagonal": _nth_pentagonal,` directly after it).
-
-Acceptance criteria:
-- `nth_pentagonal(1);` is `1`, `nth_pentagonal(2);` is `5`,
-  `nth_pentagonal(3);` is `12`, `nth_pentagonal(4);` is `22`,
-  `nth_pentagonal(5);` is `35` — the first five pentagonal numbers.
-- `nth_pentagonal(10);` is `145`.
-- `nth_pentagonal(100);` is `14950`.
-- `is_pentagonal(nth_pentagonal(n));` is `true` for every `n` from `1`
-  to `100` — confirms the closed form agrees with the existing
-  membership predicate across a wide range, the same cross-check
-  `nth_triangular`'s own acceptance criteria used against
-  `is_triangular`.
-- `nth_pentagonal(0);` and `nth_pentagonal(-3);` both raise
-  `CinderRuntimeError` matching `"nth_pentagonal() requires a positive
-  integer, domain error"`.
-- `nth_pentagonal(2.0);` raises `CinderRuntimeError` matching
-  `"nth_pentagonal() requires an int, got float"`.
-- `nth_pentagonal(true);` raises `CinderRuntimeError` matching
-  `"nth_pentagonal() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `nth_triangular`, see
-current line numbers — shift if earlier tasks this cycle land first),
-`tests/test_builtins.py` (model on `class TestNthTriangular`, search
-that name, including its `is_triangular`-agreement-style cross-check
-test, adapted to `is_pentagonal`). Once merged, `README.md`'s Builtins
-bullet needs `nth_pentagonal` added near `nth_triangular`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-bullet needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
+## 1. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
 
 Build: restocking the backlog back to 6 tasks now that guards in `match`
 arms was closed after three failed review rounds (see `## Graveyard`
@@ -211,7 +131,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `power_set` — every subset of a list
+## 2. Standard library: `power_set` — every subset of a list
 
 Build: restocking the backlog from 4 back to 6 tasks now that
 `nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)
@@ -299,7 +219,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: literal elements in list patterns (`[0, b] => ...`)
+## 3. Language: literal elements in list patterns (`[0, b] => ...`)
 
 Build: restocking the second of two slots this grooming pass added to
 restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4
@@ -455,7 +375,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+## 4. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `cartesian_product` (PR #317) landed, dropping the queue
@@ -538,7 +458,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+## 5. Language: rest capture in list patterns (`[a, ...rest] => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling now that range patterns in `match` arms

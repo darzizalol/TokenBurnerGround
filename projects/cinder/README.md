@@ -159,8 +159,12 @@ while (i < 10) {
   identifier matches unconditionally and binds the subject's value for
   the arm's body, in a scope that doesn't leak out), and multi-value
   literal patterns (`match (2) { 1, 2 => "small", _ => "large" }`, one
-  arm answering for several literal values without repeating the body)
-  for now (no nested/list patterns, range patterns, negative literal
+  arm answering for several literal values without repeating the body),
+  and flat list patterns (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`,
+  a fixed-length list subject destructured element-by-element in a fresh
+  child scope, falling through — not raising — on a non-list subject or
+  a length mismatch) for now (no nested list patterns, patterns with
+  literal elements, rest capture, range patterns, negative literal
   patterns, or guards yet — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
@@ -332,6 +336,7 @@ while (i < 10) {
   `nth_fibonacci` to return the Fibonacci number found at a 1-indexed position, the value-returning sibling of `is_fibonacci`'s membership test,
   `nth_lucas` to return the Lucas number found at a 1-indexed position, the same question for the Lucas sequence, the value-returning sibling of `is_lucas_number`'s membership test,
   `binomial` to compute the binomial coefficient (`n` choose `k`), the combinatorics question built on top of `factorial`,
+  `nth_catalan` to return the Catalan number found at a 1-indexed position, a thin composition of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`, `k` the 0-indexed Catalan index),
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
   `is_powerful_number` to test whether every prime factor of an integer appears with exponent `2` or more,
@@ -491,44 +496,39 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_triangular` — the
-"which position" question for triangular numbers, answered by an exact
-closed form (`n(n+1)/2`) rather than an iterated recurrence, the
-value-returning sibling of `is_triangular`'s membership test — and
-before that multi-value literal patterns in `match` arms (`match (2) {
-1, 2 => "small", _ => "large" }`) — letting one arm answer for several
-literal values without repeating the body — and before that
-bound-identifier patterns (`match (5) { 0 => "zero", n => n + 1 }`) —
-any non-`_` identifier in a pattern position now matches unconditionally
-and binds the subject's value for the arm's body, in a scope that
-doesn't leak out — and before that `nth_lucas` — the same "which
-position" question as `nth_fibonacci`, but for the Lucas sequence, the
-value-returning sibling of `is_lucas_number`'s membership test —
-`binomial` — the binomial coefficient (`n` choose `k`), the
-combinatorics question built on top of `factorial` — and `is_octagonal`
-— the fifth and final figurate-number membership predicate, rounding out
-the `is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal`
-cluster. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_catalan` — the k-th
-Catalan number by position, a thin composition of `binomial` (`C(n) =
-binomial(2n, n) / (n + 1)`), flat list patterns in `match` arms (`match
-([1, 2]) { [a, b] => a + b, _ => 0 }`) — matching and destructuring a
-fixed-length list subject in one step, `cartesian_product` — every
-ordered combination of one element from each of N lists, the
-collection-side analogue to `binomial`/`nth_catalan`'s
+Actively developed, nightly. Recently landed: flat list patterns in
+`match` arms (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) — matching
+and destructuring a fixed-length list subject in one step, falling
+through (not raising) on a non-list subject or a length mismatch — and
+before that `nth_catalan` — the Catalan number found at a 1-indexed
+position, a thin composition of `binomial` (`C(k) = binomial(2k, k) /
+(k + 1)`) — and before that `nth_triangular` — the "which position"
+question for triangular numbers, answered by an exact closed form
+(`n(n+1)/2`) rather than an iterated recurrence, the value-returning
+sibling of `is_triangular`'s membership test — and before that
+multi-value literal patterns in `match` arms (`match (2) { 1, 2 =>
+"small", _ => "large" }`) and bound-identifier patterns (`match (5) { 0
+=> "zero", n => n + 1 }`). See [`CHANGELOG.md`](CHANGELOG.md) for the
+full merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`cartesian_product` — every ordered combination of one element from each
+of N lists, the collection-side analogue to `binomial`/`nth_catalan`'s
 combinatorics-side counting, range patterns in `match` arms (`match (5)
 { 1..10 => "small", _ => "large" }`) — testing whether the subject falls
 in a range instead of equaling one exact value, `nth_pentagonal` — the
 k-th pentagonal number by position, the same closed-form pattern as
-`nth_triangular` applied to the next figurate-number cluster member —
-and negative literal patterns in `match` arms (`match (-5) { -5 =>
-"neg", _ => "pos" }`). The list-pattern and range-pattern tasks are both
-steps in the pattern-matching arc opened by PR #304 and can land in
-either order relative to each other; each is written to adapt to
-whichever has already landed by the time it's claimed. (Guards in
-`match` arms, `n if n > 0 => "positive"`, were attempted but closed
-after three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but
-not back in the active queue yet.) The backlog mixes language depth with
-stdlib breadth over time rather than running either in one long block.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+`nth_triangular` applied to the next figurate-number cluster member,
+negative literal patterns in `match` arms (`match (-5) { -5 => "neg", _
+=> "pos" }`), `power_set` — every subset of a list, the
+enumerate-vs-count sibling of `binomial`'s counting question, and
+literal elements in list patterns (`match ([1, 2]) { [1, b] => b, _ =>
+0 }`) — a fixed literal alongside bound identifiers in the same list
+pattern. These pattern-matching tasks are all steps in the arc opened by
+PR #304 and can land in either order relative to their siblings; each is
+written to adapt to whichever has already landed by the time it's
+claimed. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a recurring
+parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
+they're a real gap but not back in the active queue yet.) The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

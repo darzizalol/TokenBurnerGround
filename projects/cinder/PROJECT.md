@@ -149,80 +149,84 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `nth_triangular`
-(#313) — the "which position" question for triangular numbers, answered
-by an exact closed form (`n(n+1)/2`) rather than an iterated recurrence,
-the value-returning sibling of `is_triangular`'s membership test — and
-before that multi-value literal patterns in `match` arms (#312) —
-`1, 2 => "small"` lets one arm answer for several literal values without
-repeating the body — and bound-identifier patterns (#311) — any non-`_`
-identifier in a pattern position now matches unconditionally and binds
-the subject's value for the arm's body, in a fresh child scope. Before
-those: `nth_lucas` (#310), `binomial` (#309), `is_octagonal` (#308),
-bare comma multi-target assignment (#307), `nth_prime` (#305),
-`nth_fibonacci` (#306), and the `match` expression itself with literal
-patterns and a `_` wildcard (#304). Guards in `match` arms (`n if n > 0
-=> ...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
-for the full postmortem and the suggested next approach. `BACKLOG.md`
-carries the active queue: `nth_catalan`, flat list patterns in `match`
-arms (`[a, b] => a + b`), `cartesian_product`, range patterns in `match`
+Recently landed (see `CHANGELOG.md` for the full list): flat list
+patterns in `match` arms (#316) — `[a, b] => a + b` tests a list
+subject's shape and destructures it in one step, falling through (not
+raising) on a non-list subject or a length mismatch — and before that
+`nth_catalan` (#315) — the k-th Catalan number by position, a thin
+composition of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`) — and
+before that `nth_triangular` (#313) — the "which position" question for
+triangular numbers, answered by an exact closed form (`n(n+1)/2`) rather
+than an iterated recurrence, the value-returning sibling of
+`is_triangular`'s membership test — and before that multi-value literal
+patterns in `match` arms (#312) and bound-identifier patterns (#311).
+Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314) but
+closed after three straight `VERDICT: CHANGES REQUESTED` rounds, all the
+same recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
+next approach; still not requeued (see the restock note below). Both
+`README.md` and this section were out of date relative to `main` at the
+start of this grooming pass — #315 and #316 had merged but were still
+listed as "coming up next" in prose written before they landed, and
+`BACKLOG.md`'s range-patterns task still described `MatchArm` as if
+`list_pattern` (added by #316) didn't exist yet, which would have
+regressed flat list patterns had it been implemented as originally
+written. Both are fixed as of this pass.
+
+`BACKLOG.md` carries the active queue, 3-breadth/3-depth at the 6-task
+ceiling: `cartesian_product` — every ordered combination of one element
+from each of N lists, the collection-side analogue to `binomial`/
+`nth_catalan`'s combinatorics-side counting — range patterns in `match`
 arms (`1..10 => "small"`), `nth_pentagonal` — the k-th pentagonal number
 by position, the same closed-form pattern as `nth_triangular` applied to
-the next figurate-number cluster member — and negative literal patterns
-in `match` arms (`-5 => "neg"`), the depth task that replaced guards in
-the queue.
+the next figurate-number cluster member — negative literal patterns in
+`match` arms (`-5 => "neg"`), `power_set` — every subset of a list, the
+enumerate-vs-count sibling of `binomial`'s counting question and the
+single-list analogue to `cartesian_product`'s N-list combination — and
+literal elements in list patterns (`[0, b] => ...`), the natural next
+step now that flat list patterns have landed and proven the form out.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
-distinct from destructuring, deliberately scoped small (no bindings,
-multi-value arms, or guards yet). Bound-identifier patterns (#311) and
-multi-value patterns (#312) were the first two natural follow-ups to
-land; flat list patterns (task 2) and range patterns (task 4) are queued
-behind them, each written to adapt to whatever the merged code actually
-looks like by the time it's claimed, since these tasks can land in
-either order — see each task's own "Ordering note." Task 2 (flat list
-patterns) deliberately scopes down the open-ended "nested/destructuring
-patterns inside match arms" idea this section used to flag as unqueued:
-fixed-length `[a, b]` patterns only, no nesting, no literal elements, no
-rest capture. Task 4 (range patterns) is scoped to `INT`-only bounds, no
-step, and inherits (does not fix) the pre-existing gap that no match
-pattern of any kind accepts a negative literal yet — task 6 (negative
-literal patterns) closes exactly that gap, but only for plain literal
-patterns, not range-pattern bounds (`-10..0` stays out of scope for
-range patterns specifically). Nested list patterns, patterns with
-literal elements, rest capture, and float/stepped range patterns all
-remain real gaps for future grooming passes, most of them blocked on
-their simpler sibling landing and proving the form out first (list
-patterns on task 2, in particular). Guards remain a real gap too, but
-are deliberately *not* requeued this pass — see the restock note below.
+distinct from destructuring. Bound-identifier patterns (#311),
+multi-value patterns (#312), and flat list patterns (#316) are the
+follow-ups that have landed so far; range patterns, negative literal
+patterns, and literal list-pattern elements are queued behind them, each
+written to adapt to whatever the merged code actually looks like by the
+time it's claimed, since these tasks can land in either order relative
+to their siblings — see each task's own "Ordering note." Range patterns
+are scoped to `INT`-only bounds, no step, and inherit (do not fix) the
+pre-existing gap that no match pattern of any kind accepts a negative
+literal yet — negative literal patterns close exactly that gap, but only
+for plain literal patterns, not range-pattern bounds (`-10..0` stays out
+of scope for range patterns specifically). Literal list-pattern elements
+are scoped to bare literals only, no nesting, no rest capture — nested
+list patterns and rest capture both remain real gaps for a future
+grooming pass, blocked on this task proving the literal-element form out
+first, the same staged approach the `nth_*`/`is_*` figurate-number
+cluster used. Guards remain a real gap too, but are deliberately *not*
+requeued this pass — see the restock note below.
 
-This grooming pass restocked with one task — task 6 (negative literal
-patterns in `match` arms, depth) — because guards, the depth task
-occupying that slot, was closed to the graveyard this cycle (see above),
-dropping the queue from 6 to 5 (3-breadth/2-depth: `nth_catalan`,
-`cartesian_product`, `nth_pentagonal` vs. flat list patterns, range
-patterns). Restocking with depth, per the explicit instruction the
-previous grooming pass left here, restores the queue to its 6-task
-ceiling at exact 3-breadth/3-depth parity. Deliberately **not**
-re-queuing guards itself this pass: its postmortem (`BACKLOG.md`'s
-`## Graveyard`) identifies a real fix but a structurally different one
-from what was tried three times (lookahead at the `=>` site instead of
-a suppression-depth counter threaded through every bracket-opening
-production) — re-queuing it cold, written the same way the failed
-attempt was, risks a fourth failed round for no better odds. Task 6
-picks up a smaller, unrelated, well-scoped gap instead (range patterns'
-own task explicitly flagged it but explicitly left it out of scope), so
-tonight's depth slot ships something real without gambling on a redesign
-that hasn't been thought through yet. **Guards should be requeued in a
-future grooming pass**, but only once someone has actually sketched the
-lookahead-based redesign the postmortem suggests — until then it stays
-in the graveyard, not silently forgotten. **The next grooming pass
-after this one should restock with breadth** to keep alternating, unless
-a later pass judges the pattern-matching depth arc needs another
-consecutive depth task (e.g. the guards redesign, once sketched) to stay
-coherent — alternation is the default rhythm, not a hard rule.
+This grooming pass restocked two tasks — `power_set` (breadth) and
+literal elements in list patterns (depth) — because two tasks landed
+since the last grooming pass (`nth_catalan`, breadth, and flat list
+patterns, depth) without a grooming pass restocking in between, dropping
+the queue from 6 to 4 (2-breadth/2-depth: `cartesian_product`,
+`nth_pentagonal` vs. range patterns, negative literal patterns). Adding
+one of each kind restores the queue to its 6-task ceiling at exact
+3-breadth/3-depth parity, continuing the established alternation.
+Deliberately **not** re-queuing guards itself this pass: its postmortem
+(`BACKLOG.md`'s `## Graveyard`) identifies a real fix but a structurally
+different one from what was tried three times (lookahead at the `=>`
+site instead of a suppression-depth counter threaded through every
+bracket-opening production) — re-queuing it cold, written the same way
+the failed attempt was, risks a fourth failed round for no better odds.
+**Guards should be requeued in a future grooming pass**, but only once
+someone has actually sketched the lookahead-based redesign the
+postmortem suggests — until then it stays in the graveyard, not silently
+forgotten. **The next grooming pass should restock with whichever kind
+keeps 3-breadth/3-depth parity** given whatever lands between now and
+then — alternation is the default rhythm, not a hard rule.
 
 ## History
 

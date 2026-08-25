@@ -10,7 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Standard library: `nth_pentagonal` — the k-th pentagonal number by position
+## 1. Standard library: `nth_pentagonal` — the k-th pentagonal number by position [claimed 2026-08-25T20:14:50Z]
 
 Build: restocking the backlog back to 6 tasks now that `nth_triangular`
 landed via PR #313, per `PROJECT.md`'s breadth-vs-depth policy (landing

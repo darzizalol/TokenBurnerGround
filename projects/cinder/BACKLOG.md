@@ -10,7 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Language: range patterns in `match` arms (`1..10 => "small"`)
+## 1. Language: range patterns in `match` arms (`1..10 => "small"`) [claimed 2026-08-25T19:57:37Z]
 
 Build: restocking the backlog back to 6 tasks now that multi-value literal
 patterns landed via PR #312, per `PROJECT.md`'s breadth-vs-depth policy

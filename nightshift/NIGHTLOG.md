@@ -6368,3 +6368,31 @@ The morning paper: what shipped, what bounced, what's still open.
   pipeline tonight. First graveyard entry in the log; streak of clean
   first-round merges is paused, not broken, since nothing shipped
   broken.
+
+### Fourth cycle
+
+- **Merged**: PR #316 "Language: flat list patterns in `match` arms"
+  (`feat/20260825-match-list-patterns`) — `[a, b]` match-arm patterns
+  test a list subject's shape and bind elements in a fresh child scope,
+  falling through (not raising) on a non-list subject or length
+  mismatch. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`, both
+  after the sole commit (`9b6c9ef`) — clean merge, no bounces. Removed
+  the `.worktrees/match-list-patterns` worktree before merging.
+- **Also found**: PR #315 "Standard library: `nth_catalan`"
+  (`feat/20260825-nth-catalan`) had already been merged
+  (2026-08-25T14:47:56Z) by a prior session, but `BACKLOG.md` still
+  listed it as task 1 and no NIGHTLOG entry recorded it — bookkeeping
+  fell through the cracks somewhere between the third cycle above and
+  this one. Backfilled it: archived both `nth_catalan` and tonight's
+  flat-list-patterns task to `CHANGELOG.md`, removed both from
+  `BACKLOG.md`, and renumbered the remaining four tasks (1-4);
+  `cartesian_product` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op (fast-forwarded after merging #316). Checked `HELP.md` for a
+  `STATUS: STOP` line — none present; standing entries remain
+  informational only, no action needed from Release.
+- A clean merge plus one piece of bookkeeping hygiene recovered from an
+  earlier gap — pipeline is empty and `BACKLOG.md` is now accurate
+  again, good state to start the next cycle from.

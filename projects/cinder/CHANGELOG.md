@@ -3130,3 +3130,29 @@ for vision/architecture.
   the shared convention of `nth_fibonacci`/`nth_prime`/`nth_lucas`;
   `value < 1` raises a domain error. Clean first pass, no bounces (3539
   tests passing, up from 3530).
+- **Standard library: `nth_catalan` — the k-th Catalan number by
+  position** — merged 2026-08-25T14:47:56Z via PR #315
+  (`feat/20260825-nth-catalan`). `_nth_catalan` (`cinder/builtins.py`)
+  is a thin composition of `_binomial`'s own `math.comb`, using
+  `C(n) = binomial(2n, n) / (n + 1)` with `index = value - 1` converting
+  Cinder's 1-indexed position convention to the closed form's 0-indexed
+  `n` (`nth_catalan(1) == 1`, `nth_catalan(2) == 1`, matching the
+  sequence's own early repeat, not an off-by-one bug). Domain error for
+  `value < 1`, matching every other `nth_*` builtin. Clean first pass,
+  no bounces (3547 tests passing, up from 3539).
+- **Language: flat list patterns in `match` arms (`[a, b] => a + b`)**
+  — merged 2026-08-25T19:28:39Z via PR #316
+  (`feat/20260825-match-list-patterns`). A leading `[` in `_match_arm`
+  (`cinder/parser.py`) now parses a flat name list into a new
+  `MatchArm.list_pattern` field (`cinder/ast_nodes.py`), mutually
+  exclusive with the existing literal-pattern and bound-identifier
+  fields; `_evaluate_match` (`cinder/interpreter.py`) tests the
+  subject's shape (`isinstance` list check + length match) before
+  binding each element in a fresh child `Environment` that does not
+  leak into the enclosing scope, falling through to the next arm on a
+  non-list subject or a length mismatch rather than raising. `_` inside
+  a pattern discards that position; a repeated name (`[a, a] => a`)
+  binds left to right, so the later position wins. Deliberately flat —
+  no nesting, no literal sub-pattern elements, no rest/spread — those
+  remain explicit future follow-ups. Clean first pass, no bounces (3558
+  tests passing, up from 3547).

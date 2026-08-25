@@ -160,8 +160,8 @@ while (i < 10) {
   the arm's body, in a scope that doesn't leak out), and multi-value
   literal patterns (`match (2) { 1, 2 => "small", _ => "large" }`, one
   arm answering for several literal values without repeating the body)
-  for now (no nested/list patterns, range patterns, or guards yet — see
-  `BACKLOG.md`)
+  for now (no nested/list patterns, range patterns, negative literal
+  patterns, or guards yet — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -509,24 +509,26 @@ combinatorics question built on top of `factorial` — and `is_octagonal`
 — the fifth and final figurate-number membership predicate, rounding out
 the `is_triangular`/`is_pentagonal`/`is_hexagonal`/`is_heptagonal`
 cluster. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): guards in `match` arms
-(`match (n) { n if n > 0 => "positive", _ => "other" }`) — an extra
-condition on an arm, checked only once its pattern already matches,
-`nth_catalan` — the k-th Catalan number by position, a thin composition
-of `binomial` (`C(n) = binomial(2n, n) / (n + 1)`), flat list patterns in
-`match` arms (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) — matching
-and destructuring a fixed-length list subject in one step,
-`cartesian_product` — every ordered combination of one element from each
-of N lists, the collection-side analogue to `binomial`/`nth_catalan`'s
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_catalan` — the k-th
+Catalan number by position, a thin composition of `binomial` (`C(n) =
+binomial(2n, n) / (n + 1)`), flat list patterns in `match` arms (`match
+([1, 2]) { [a, b] => a + b, _ => 0 }`) — matching and destructuring a
+fixed-length list subject in one step, `cartesian_product` — every
+ordered combination of one element from each of N lists, the
+collection-side analogue to `binomial`/`nth_catalan`'s
 combinatorics-side counting, range patterns in `match` arms (`match (5)
 { 1..10 => "small", _ => "large" }`) — testing whether the subject falls
-in a range instead of equaling one exact value, and `nth_pentagonal` —
-the k-th pentagonal number by position, the same closed-form pattern as
-`nth_triangular` applied to the next figurate-number cluster member. The
-guards, list patterns, and range patterns tasks are all steps in the
-pattern-matching arc opened by PR #304 and can land in any order
-relative to each other; each is written to adapt to whichever of the
-others has already landed by the time it's claimed. The backlog mixes
-language depth with stdlib breadth over time rather than running either
-in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+in a range instead of equaling one exact value, `nth_pentagonal` — the
+k-th pentagonal number by position, the same closed-form pattern as
+`nth_triangular` applied to the next figurate-number cluster member —
+and negative literal patterns in `match` arms (`match (-5) { -5 =>
+"neg", _ => "pos" }`). The list-pattern and range-pattern tasks are both
+steps in the pattern-matching arc opened by PR #304 and can land in
+either order relative to each other; each is written to adapt to
+whichever has already landed by the time it's claimed. (Guards in
+`match` arms, `n if n > 0 => "positive"`, were attempted but closed
+after three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but
+not back in the active queue yet.) The backlog mixes language depth with
+stdlib breadth over time rather than running either in one long block.
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

@@ -160,12 +160,14 @@ while (i < 10) {
   the arm's body, in a scope that doesn't leak out), and multi-value
   literal patterns (`match (2) { 1, 2 => "small", _ => "large" }`, one
   arm answering for several literal values without repeating the body),
-  and flat list patterns (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`,
+  flat list patterns (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`,
   a fixed-length list subject destructured element-by-element in a fresh
   child scope, falling through — not raising — on a non-list subject or
-  a length mismatch) for now (no nested list patterns, patterns with
-  literal elements, rest capture, range patterns, negative literal
-  patterns, or guards yet — see `BACKLOG.md`)
+  a length mismatch), and range patterns (`match (5) { 1..10 => "small",
+  _ => "large" }`, `INT`-only bounds, exclusive `..` or inclusive `..=`,
+  reusing the same range machinery as `x in 1..5`) for now (no nested
+  list patterns, patterns with literal elements, rest capture, negative
+  literal patterns, or guards yet — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -498,37 +500,39 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `cartesian_product` — every
-ordered combination of one element from each of N lists, the
-collection-side analogue to `binomial`/`nth_catalan`'s combinatorics-side
-counting — and before that flat list patterns in `match` arms (`match
-([1, 2]) { [a, b] => a + b, _ => 0 }`) — matching and destructuring a
-fixed-length list subject in one step, falling through (not raising) on
-a non-list subject or a length mismatch — and before that `nth_catalan`
-— the Catalan number found at a 1-indexed position, a thin composition
-of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`) — and before that
-`nth_triangular` — the "which position" question for triangular numbers,
-answered by an exact closed form (`n(n+1)/2`) rather than an iterated
-recurrence, the value-returning sibling of `is_triangular`'s membership
-test. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): range patterns in
-`match` arms (`match (5) { 1..10 => "small", _ => "large" }`) — testing
-whether the subject falls in a range instead of equaling one exact
-value, `nth_pentagonal` — the k-th pentagonal number by position, the
-same closed-form pattern as `nth_triangular` applied to the next
-figurate-number cluster member, negative literal patterns in `match`
-arms (`match (-5) { -5 => "neg", _ => "pos" }`), `power_set` — every
-subset of a list, the enumerate-vs-count sibling of `binomial`'s
-counting question, literal elements in list patterns (`match ([1, 2]) {
-[1, b] => b, _ => 0 }`) — a fixed literal alongside bound identifiers in
-the same list pattern, and `nth_hexagonal` — the k-th hexagonal number
-by position, the figurate-number cluster's third `nth_*` member. The
-pattern-matching tasks are all steps in the arc opened by PR #304 and
-can land in either order relative to their siblings; each is written to
-adapt to whichever has already landed by the time it's claimed. (Guards
-in `match` arms, `n if n > 0 => "positive"`, were attempted but closed
-after three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but
-not back in the active queue yet.) The backlog mixes language depth with
-stdlib breadth over time rather than running either in one long block.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: range patterns in `match`
+arms (`match (5) { 1..10 => "small", _ => "large" }`) — testing whether
+the subject falls in a range instead of equaling one exact value,
+reusing the same range machinery already backing `x in 1..5` — and
+before that `cartesian_product` — every ordered combination of one
+element from each of N lists, the collection-side analogue to
+`binomial`/`nth_catalan`'s combinatorics-side counting — and before that
+flat list patterns in `match` arms (`match ([1, 2]) { [a, b] => a + b,
+_ => 0 }`) — matching and destructuring a fixed-length list subject in
+one step, falling through (not raising) on a non-list subject or a
+length mismatch — and before that `nth_catalan` — the Catalan number
+found at a 1-indexed position, a thin composition of `binomial`
+(`C(k) = binomial(2k, k) / (k + 1)`). See [`CHANGELOG.md`](CHANGELOG.md)
+for the full merge history. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): `nth_pentagonal` — the k-th pentagonal
+number by position, the same closed-form pattern as `nth_triangular`
+applied to the next figurate-number cluster member, negative literal
+patterns in `match` arms (`match (-5) { -5 => "neg", _ => "pos" }`),
+`power_set` — every subset of a list, the enumerate-vs-count sibling of
+`binomial`'s counting question, literal elements in list patterns
+(`match ([1, 2]) { [1, b] => b, _ => 0 }`) — a fixed literal alongside
+bound identifiers in the same list pattern, `nth_hexagonal` — the k-th
+hexagonal number by position, the figurate-number cluster's third
+`nth_*` member, and rest capture in list patterns (`match ([1, 2, 3])
+{ [a, ...rest] => rest, _ => [] }`) — matching "at least N elements"
+instead of an exact length, mirroring the rest capture `let`
+destructuring already has. The pattern-matching tasks are all steps in
+the arc opened by PR #304 and can land in either order relative to their
+siblings; each is written to adapt to whichever has already landed by
+the time it's claimed. (Guards in `match` arms, `n if n > 0 =>
+"positive"`, were attempted but closed after three failed review rounds
+over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+postmortem; they're a real gap but not back in the active queue yet.)
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

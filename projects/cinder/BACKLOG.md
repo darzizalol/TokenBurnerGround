@@ -538,6 +538,179 @@ the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+
+Build: restocking the sixth and final slot to bring the backlog back to its
+6-task, 3-breadth/3-depth ceiling now that range patterns in `match` arms
+landed via PR #318 (dropping the queue from 6 to 5: `nth_pentagonal`,
+`power_set`, `nth_hexagonal` — breadth, 3 — vs. negative literal patterns,
+literal list elements — depth, 2). Restocking with a depth task restores
+parity. Flat list patterns (PR #316) can only test a list subject's *exact*
+length (`[a, b]` matches only a 2-element list) — Cinder's `let`/assignment
+destructuring already has a "rest capture" escape hatch for this same shape
+mismatch (`let [a, ...rest] = xs;`, `cinder/parser.py`'s
+`_destructure_list_pattern`/`_destructure_rest_name`), but match list
+patterns have no equivalent: there is no way to write a list-pattern arm that
+matches "at least N elements, bind the first N, capture everything else."
+Verify the gap, on current `main`:
+```sh
+python3 -m cinder.cli eval 'print(match ([1, 2, 3]) { [a, ...rest] => rest, _ => "no" });'
+# -> <eval>:1:31: expected an identifier or '_' inside list pattern, found '...'
+```
+
+**Scope note:** rest capture must be the last element in a list pattern
+(`[a, ...rest]` is valid, `[...rest, a]` is not — matching
+`_destructure_list_pattern`'s own "rest element must be last" restriction)
+and only one rest element is allowed per pattern. `...rest` binds the
+remaining elements as a new list (a copy via slicing, not a view). `..._`
+(discarding the captured tail while still requiring "at least N elements")
+is valid too, mirroring how a bare element can already be `_` to discard —
+unlike a discarded plain element (which parses to `None`), a discarded rest
+is kept as the literal name `"_"` so the interpreter can tell "no rest
+capture" (`None`) apart from "rest capture, discarded" (`"_"`); see below.
+This task does not touch literal list elements (task 4 above, still
+unclaimed as of this writing) — if that task has already landed by the time
+this one is claimed, follow the **Ordering note** below instead of the code
+shown.
+
+**Ordering note:** if literal elements in list patterns (task 4) has already
+landed by the time this task is claimed, `_match_list_pattern_entry` (not
+`_match_list_pattern_name`) will already exist and return `str | Expr | None`
+per element — add the `DOT_DOT_DOT` branch to `_match_list_pattern` (the
+caller) exactly as shown below, just calling `_match_list_pattern_entry` in
+place of `_match_list_pattern_name` for the non-rest branches; the
+interpreter-side length check (`>=` instead of `==` when a rest is present)
+and rest-slice binding are unaffected by which element parser is in place.
+
+Today's `_match_list_pattern`/`_match_list_pattern_name`
+(`cinder/parser.py`, search `def _match_list_pattern`) only ever parse a
+fixed-length list of identifier/`_` entries and never check for
+`TokenType.DOT_DOT_DOT`. Widen it to optionally end in a rest capture,
+mirroring `_destructure_list_pattern`'s own rest-checking loop shape:
+```python
+    def _match_list_pattern(self) -> "tuple[list[str | None], str | None]":
+        self._advance()  # consume '['
+        names: "list[str | None]" = []
+        rest: "str | None" = None
+        if not self._check(TokenType.RBRACKET):
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._match_list_pattern_rest_name()
+            else:
+                names.append(self._match_list_pattern_name())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if rest is not None:
+                    token = self._peek()
+                    raise ParseError(
+                        f"rest capture must be last in list pattern, found {self._describe(token)}",
+                        token.line,
+                        token.column,
+                    )
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest = self._match_list_pattern_rest_name()
+                else:
+                    names.append(self._match_list_pattern_name())
+        self._consume(TokenType.RBRACKET, "']' after list pattern")
+        return names, rest
+
+    def _match_list_pattern_rest_name(self) -> str:
+        self._advance()  # consume '...'
+        token = self._peek()
+        if token.type != TokenType.IDENTIFIER:
+            raise ParseError(
+                f"expected an identifier or '_' after '...' in list pattern, "
+                f"found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._advance()
+        return token.lexeme  # kept as "_" itself when discarded, see scope note
+```
+`_match_arm` (`cinder/parser.py`, search `def _match_arm`) currently does
+`list_pattern = self._match_list_pattern()` then constructs
+`MatchArm(None, body, None, list_pattern, None)` — update to unpack the new
+two-tuple and pass the rest name into `MatchArm`'s new field:
+```python
+        if self._check(TokenType.LBRACKET):
+            list_pattern, list_rest = self._match_list_pattern()
+            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+            body = self._ternary()
+            return [MatchArm(None, body, None, list_pattern, None, list_rest)]
+```
+`MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) needs a sixth
+field, appended after `range_pattern` (appending, not inserting, keeps every
+existing positional `MatchArm(...)` call site elsewhere in the parser valid
+without touching them):
+```python
+    list_rest: "str | None" = None
+```
+`_evaluate_match` (`cinder/interpreter.py`, search `def _evaluate_match`)'s
+`arm.list_pattern is not None` branch currently requires
+`len(subject) != len(arm.list_pattern)` to fail the arm; widen it to accept
+"at least" when a rest is present, and bind the tail:
+```python
+            if arm.list_pattern is not None:
+                min_len = len(arm.list_pattern)
+                length_ok = (
+                    len(subject) >= min_len if arm.list_rest is not None
+                    else len(subject) == min_len
+                )
+                if not isinstance(subject, list) or not length_ok:
+                    continue
+                arm_env = Environment(env)
+                for name, item in zip(arm.list_pattern, subject):
+                    if name is not None:
+                        arm_env.define(name, item)
+                if arm.list_rest is not None and arm.list_rest != "_":
+                    arm_env.define(arm.list_rest, subject[min_len:])
+                return self.evaluate(arm.body, arm_env)
+```
+
+Acceptance criteria:
+- `match ([1, 2, 3]) { [a, ...rest] => rest, _ => "no" };` is `[2, 3]`.
+- `match ([1]) { [a, ...rest] => rest, _ => "no" };` is `[]` — rest captures
+  an empty tail when the subject is exactly as long as the fixed prefix.
+- `match ([1, 2]) { [a, b, ...rest] => rest, _ => "no" };` is `[]`, and the
+  same arm against `[1, 2, 3]` gives `[3]`.
+- `match ([]) { [a, ...rest] => "yes", _ => "no" };` is `"no"` — a rest
+  pattern still requires at least as many elements as its fixed prefix; it
+  does not make the prefix optional.
+- `match ([1, 2, 3]) { [a, ..._] => a, _ => "no" };` is `1` — a discarded
+  rest (`..._`) still allows the "at least N" match without binding
+  anything.
+- `match ("ab") { [a, ...rest] => "yes", _ => "no" };` is `"no"` — a
+  non-list subject falls through without raising, same as today's
+  fixed-length list patterns.
+- `match ([1, 2]) { [a, b] => a + b, _ => 0 };` is still `3` — a list
+  pattern with no rest capture is unaffected (`arm.list_rest` is `None`, so
+  `length_ok` is the same exact-length check as before).
+- `match (x) { [a, ...rest, b] => 0, _ => 1 };` (rest not last) raises
+  `ParseError` matching `"rest capture must be last in list pattern, found
+  'b'"`.
+- `match (x) { [...5] => 0, _ => 1 };` (rest not followed by an identifier
+  or `_`) raises `ParseError` matching `"expected an identifier or '_'
+  after '...' in list pattern, found '5'"`.
+- `shape(parse('match (x) { [a, ...rest] => rest, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the first arm's 6-tuple ending in `"rest"` —
+  confirms `list_rest` threads through to the AST; a plain `[a, b]` pattern's
+  shape ends in `None`.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`MatchArm`), `cinder/parser.py`
+(`_match_list_pattern`, new `_match_list_pattern_rest_name`, `_match_arm`),
+`cinder/interpreter.py` (`_evaluate_match`), `tests/test_parser.py` (the
+`shape()` helper's `MatchExpr` branch — search `arm.list_pattern,` inside
+it — needs a 6th tuple element, `arm.list_rest`, appended; extend `class
+TestMatchExpression`), `tests/test_interpreter.py` (extend `class
+TestMatchExpression` with the end-to-end cases above). Once merged,
+`README.md`'s `match` expression bullet needs "rest capture" dropped from
+its "not supported yet" list and a short description added near the
+flat-list-pattern description, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

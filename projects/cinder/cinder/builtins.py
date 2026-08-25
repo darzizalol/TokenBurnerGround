@@ -3425,6 +3425,24 @@ def _zip_with(arguments: list, line: int, column: int) -> object:
     return [call_value(fn, [a, b], line, column) for a, b in zip(list1, list2)]
 
 
+def _cartesian_product(arguments: list, line: int, column: int) -> object:
+    _require_arity("cartesian_product", arguments, 1, line, column)
+    lists = arguments[0]
+    if not isinstance(lists, list):
+        raise CinderRuntimeError(
+            f"cartesian_product() requires a list, got {type_name(lists)}", line, column
+        )
+    for index, item in enumerate(lists):
+        if not isinstance(item, list):
+            raise CinderRuntimeError(
+                f"cartesian_product() requires a list of lists, element {index} is "
+                f"{type_name(item)}",
+                line,
+                column,
+            )
+    return [list(combo) for combo in itertools.product(*lists)]
+
+
 def _enumerate(arguments: list, line: int, column: int) -> object:
     _require_arity("enumerate", arguments, 1, line, column)
     target = arguments[0]
@@ -4117,6 +4135,7 @@ _BUILTINS = {
     "zip_longest": _zip_longest,
     "unzip": _unzip,
     "zip_with": _zip_with,
+    "cartesian_product": _cartesian_product,
     "enumerate": _enumerate,
     "assert": _assert,
     "format": _format,

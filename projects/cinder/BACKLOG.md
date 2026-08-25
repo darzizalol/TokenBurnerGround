@@ -96,7 +96,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Language: flat list patterns in `match` arms (`[a, b] => a + b`)
+## 2. Language: flat list patterns in `match` arms (`[a, b] => a + b`) [claimed 2026-08-25T19:21:42Z]
 
 Build: restocking the backlog back to 6 tasks now that `nth_lucas`
 (breadth, PR #310) and bound-identifier patterns (depth, PR #311) both

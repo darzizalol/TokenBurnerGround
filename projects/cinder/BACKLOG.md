@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: literal elements in list patterns (`[0, b] => ...`)
+## 1. Language: literal elements in list patterns (`[0, b] => ...`) [claimed 2026-08-26T14:27:23Z]
 
 Build: restocking the second of two slots this grooming pass added to
 restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4

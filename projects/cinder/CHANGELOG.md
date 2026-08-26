@@ -3256,3 +3256,16 @@ for vision/architecture.
   Duplicate elements are not de-duplicated, matching
   `itertools.permutations`'s position-based (not value-based) behavior.
   Clean first pass, no bounces (3638 tests passing).
+- **Language: flat map patterns in `match` arms (`{a, b} => ...`)** —
+  merged 2026-08-26T20:09:20Z via PR #326
+  (`feat/20260826-match-map-pattern`). Added a `map_pattern` field to
+  `MatchArm` (`cinder/ast_nodes.py`), a `{` branch in `_match_arm` plus
+  `_match_map_pattern`/`_match_map_pattern_name` (`cinder/parser.py`),
+  and a matching branch in `_evaluate_match` (`cinder/interpreter.py`).
+  Bare bound-identifier keys only — a map pattern matches if the subject
+  is a map containing every named key, extra keys are ignored, and a
+  missing key or non-map subject falls through without raising, mirroring
+  the same "falls through, doesn't raise" convention flat list patterns
+  and range patterns already use. Closes the same destructuring-vs-match
+  gap flat list patterns (PR #316) closed for lists. Clean first pass, no
+  bounces (3650 tests passing).

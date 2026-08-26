@@ -6630,3 +6630,30 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Thirteenth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Third cycle
+
+- **Merged**: PR #326 "Language: flat map patterns in `match` arms
+  (`{a, b} => ...`)" (`feat/20260826-match-map-pattern`). Added a
+  `map_pattern` field to `MatchArm` (`cinder/ast_nodes.py`), a `{` branch
+  in `_match_arm` plus `_match_map_pattern`/`_match_map_pattern_name`
+  (`cinder/parser.py`), and a matching branch in `_evaluate_match`
+  (`cinder/interpreter.py`). Bare bound-identifier keys only; falls
+  through without raising on a missing key or non-map subject, mirroring
+  list-pattern and range-pattern conventions. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS`, both after the sole commit
+  (`6b168fe`) — clean merge, no bounces (3650 tests passing, up from
+  3638). Removed the `.worktrees/match-map-pattern` worktree before
+  merging. Archived the task to `CHANGELOG.md` and renumbered the
+  remaining five backlog tasks (1-5) — `combinations` is now top. Fixed
+  the stale "task 1 above" cross-references in the nested-list-patterns
+  task (now stated as fact: flat map patterns landed via PR #326) and
+  the "task 3 above" cross-reference in the `nth_octagonal` task (now
+  "task 2 above", matching `nth_heptagonal`'s new number).
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Fourteenth clean first-round merge in a row — still no review/QA
+  bounces this shift.

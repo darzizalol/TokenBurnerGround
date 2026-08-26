@@ -11,177 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: rest capture in list patterns (`[a, ...rest] => ...`) [claimed 2026-08-26T19:33:37Z]
-
-Build: flat list patterns (PR #316), later widened to accept literal
-elements (PR #322), can only test a list subject's *exact* length
-(`[a, b]` matches only a 2-element list) — Cinder's `let`/assignment
-destructuring already has a "rest capture" escape hatch for this same shape
-mismatch (`let [a, ...rest] = xs;`, `cinder/parser.py`'s
-`_destructure_list_pattern`/`_destructure_rest_name`), but match list
-patterns have no equivalent: there is no way to write a list-pattern arm that
-matches "at least N elements, bind the first N, capture everything else."
-Verify the gap, on current `main`:
-```sh
-python3 -m cinder.cli eval 'print(match ([1, 2, 3]) { [a, ...rest] => rest, _ => "no" });'
-# -> <eval>:1:31: expected an identifier, '_', or a literal inside list pattern, found '...'
-```
-
-**Scope note:** rest capture must be the last element in a list pattern
-(`[a, ...rest]` is valid, `[...rest, a]` is not — matching
-`_destructure_list_pattern`'s own "rest element must be last" restriction)
-and only one rest element is allowed per pattern. `...rest` binds the
-remaining elements as a new list (a copy via slicing, not a view). `..._`
-(discarding the captured tail while still requiring "at least N elements")
-is valid too, mirroring how a bare element can already be `_` to discard —
-unlike a discarded plain element (which parses to `None`), a discarded rest
-is kept as the literal name `"_"` so the interpreter can tell "no rest
-capture" (`None`) apart from "rest capture, discarded" (`"_"`); see below.
-
-Today's `_match_list_pattern`/`_match_list_pattern_entry`
-(`cinder/parser.py`, search `def _match_list_pattern`) parse a fixed-length
-list of entries (identifier, `_`, or a literal) and never check for
-`TokenType.DOT_DOT_DOT`. Widen `_match_list_pattern` to optionally end in a
-rest capture, mirroring `_destructure_list_pattern`'s own rest-checking loop
-shape, and return a `(entries, rest)` two-tuple instead of just `entries`:
-```python
-    def _match_list_pattern(self) -> "tuple[list[str | Expr | None], str | None]":
-        self._advance()  # consume '['
-        entries: "list[str | Expr | None]" = []
-        rest: "str | None" = None
-        if not self._check(TokenType.RBRACKET):
-            if self._check(TokenType.DOT_DOT_DOT):
-                rest = self._match_list_pattern_rest_name()
-            else:
-                entries.append(self._match_list_pattern_entry())
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if rest is not None:
-                    token = self._peek()
-                    raise ParseError(
-                        f"rest capture must be last in list pattern, found {self._describe(token)}",
-                        token.line,
-                        token.column,
-                    )
-                if self._check(TokenType.DOT_DOT_DOT):
-                    rest = self._match_list_pattern_rest_name()
-                else:
-                    entries.append(self._match_list_pattern_entry())
-        self._consume(TokenType.RBRACKET, "']' after list pattern")
-        return entries, rest
-
-    def _match_list_pattern_rest_name(self) -> str:
-        self._advance()  # consume '...'
-        token = self._peek()
-        if token.type != TokenType.IDENTIFIER:
-            raise ParseError(
-                f"expected an identifier or '_' after '...' in list pattern, "
-                f"found {self._describe(token)}",
-                token.line,
-                token.column,
-            )
-        self._advance()
-        return token.lexeme  # kept as "_" itself when discarded, see scope note
-```
-`_match_arm` (`cinder/parser.py`, search `def _match_arm`) currently does
-`list_pattern = self._match_list_pattern()` then constructs
-`MatchArm(None, body, None, list_pattern, None)` — update to unpack the new
-two-tuple and pass the rest name into `MatchArm`'s new field:
-```python
-        if self._check(TokenType.LBRACKET):
-            list_pattern, list_rest = self._match_list_pattern()
-            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-            body = self._ternary()
-            return [MatchArm(None, body, None, list_pattern, None, list_rest)]
-```
-`MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) needs a fifth
-field, appended after `range_pattern` (appending, not inserting, keeps every
-existing positional `MatchArm(...)` call site elsewhere in the parser valid
-without touching them):
-```python
-    list_rest: "str | None" = None
-```
-`_evaluate_match` (`cinder/interpreter.py`, search `def _evaluate_match`)'s
-`arm.list_pattern is not None` branch currently requires
-`len(subject) != len(arm.list_pattern)` to fail the arm and then loops over
-`zip(arm.list_pattern, subject)` checking `Literal` entries by value and
-binding identifier entries; widen the length check to accept "at least" when
-a rest is present, and bind the tail after the existing per-entry loop:
-```python
-            if arm.list_pattern is not None:
-                min_len = len(arm.list_pattern)
-                length_ok = (
-                    len(subject) >= min_len if arm.list_rest is not None
-                    else len(subject) == min_len
-                )
-                if not isinstance(subject, list) or not length_ok:
-                    continue
-                arm_env = Environment(env)
-                matched = True
-                for entry, item in zip(arm.list_pattern, subject):
-                    if isinstance(entry, Literal):
-                        if not values_equal(item, self.evaluate(entry, arm_env)):
-                            matched = False
-                            break
-                        continue
-                    if entry is not None:
-                        arm_env.define(entry, item)
-                if not matched:
-                    continue
-                if arm.list_rest is not None and arm.list_rest != "_":
-                    arm_env.define(arm.list_rest, subject[min_len:])
-                return self.evaluate(arm.body, arm_env)
-```
-
-Acceptance criteria:
-- `match ([1, 2, 3]) { [a, ...rest] => rest, _ => "no" });` is `[2, 3]`.
-- `match ([1]) { [a, ...rest] => rest, _ => "no" });` is `[]` — rest captures
-  an empty tail when the subject is exactly as long as the fixed prefix.
-- `match ([1, 2]) { [a, b, ...rest] => rest, _ => "no" });` is `[]`, and the
-  same arm against `[1, 2, 3]` gives `[3]`.
-- `match ([]) { [a, ...rest] => "yes", _ => "no" });` is `"no"` — a rest
-  pattern still requires at least as many elements as its fixed prefix; it
-  does not make the prefix optional.
-- `match ([1, 2, 3]) { [a, ..._] => a, _ => "no" });` is `1` — a discarded
-  rest (`..._`) still allows the "at least N" match without binding
-  anything.
-- `match ([1, 2, 3]) { [0, b, ...rest] => rest, _ => "no" });` is `"no"` and
-  `match ([0, 2, 3]) { [0, b, ...rest] => rest, _ => "no" });` is `[3]` — a
-  literal entry combines with rest capture in the same pattern.
-- `match ("ab") { [a, ...rest] => "yes", _ => "no" });` is `"no"` — a
-  non-list subject falls through without raising, same as today's
-  fixed-length list patterns.
-- `match ([1, 2]) { [a, b] => a + b, _ => 0 });` is still `3` — a list
-  pattern with no rest capture is unaffected (`arm.list_rest` is `None`, so
-  `length_ok` is the same exact-length check as before).
-- `match (x) { [a, ...rest, b] => 0, _ => 1 });` (rest not last) raises
-  `ParseError` matching `"rest capture must be last in list pattern, found
-  'b'"`.
-- `match (x) { [...5] => 0, _ => 1 });` (rest not followed by an identifier
-  or `_`) raises `ParseError` matching `"expected an identifier or '_'
-  after '...' in list pattern, found '5'"`.
-- `shape(parse('match (x) { [a, ...rest] => rest, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's list-pattern tuple ending in
-  `"rest"` — confirms `list_rest` threads through to the AST; a plain
-  `[a, b]` pattern's shape ends in `None`.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`MatchArm`), `cinder/parser.py`
-(`_match_list_pattern`, new `_match_list_pattern_rest_name`, `_match_arm`),
-`cinder/interpreter.py` (`_evaluate_match`), `tests/test_parser.py` (the
-`shape()` helper's `MatchExpr` branch — search `arm.list_pattern` inside
-it — needs a `list_rest`/`arm.list_rest` element appended to the per-arm
-tuple; extend `class TestMatchExpression`), `tests/test_interpreter.py`
-(extend `class TestMatchExpression` with the end-to-end cases above). Once
-merged, `README.md`'s `match` expression bullet needs "rest capture" dropped
-from its "not supported yet" list and a short description added near the
-flat-list-pattern description, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `permutations` — every ordering of a list
+## 1. Standard library: `permutations` — every ordering of a list
 
 Build: Cinder's collection-helper cluster already answers "every ordered
 combination of one element from each of N lists" (`cartesian_product`,
@@ -261,7 +91,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+## 2. Language: flat map patterns in `match` arms (`{a, b} => ...`)
 
 Build: `match` currently has a flat *list* pattern (`[a, b] => ...`, PR
 #316) that destructures a list subject by shape, but no equivalent for a
@@ -287,7 +117,7 @@ list patterns → literal list elements both already used). No nested
 patterns (`{a: {b}}` or `{a: [b, c]}`), no rest capture (`{a, ...rest}`),
 and no default values (`{a, b = 5}`) — all real gaps, all left for future
 tasks once this one proves the form out, matching how rest capture in
-*list* patterns (task 1 above) is itself staged as a separate task from
+*list* patterns (PR #324) was itself staged as a separate task from
 flat list patterns. A map pattern matches if the subject is a map (dict)
 containing *every* named key — extra unnamed keys in the subject are
 ignored, and a missing key or non-map subject falls through to the next
@@ -295,13 +125,12 @@ arm (does not raise), the same "falls through, doesn't raise" philosophy
 flat list patterns (shape mismatch) and range patterns (non-numeric
 subject) already established for pattern-kind mismatches in `match`.
 
-**Ordering note:** if rest capture in list patterns (task 1 above) has
-already landed by the time this task is claimed, `MatchArm` will already
-have a `list_rest` field as its fifth positional slot — append the new
-`map_pattern` field as the *sixth* slot instead of the fifth shown below,
-and adjust the one `MatchArm(...)` call site this task touches accordingly
-(every other call site in the parser already uses the trailing-default
-form and needs no change either way).
+**Ordering note:** rest capture in list patterns (PR #324) has already
+landed — `MatchArm` already has a `list_rest` field as its fifth
+positional slot, so append the new `map_pattern` field as the *sixth*
+slot, not the fifth shown below, and adjust the one `MatchArm(...)` call
+site this task touches accordingly (every other call site in the parser
+already uses the trailing-default form and needs no change either way).
 
 Today's `_match_arm` (`cinder/parser.py`, search `def _match_arm`) checks
 `TokenType.LBRACKET` for a list pattern before falling through to
@@ -406,20 +235,20 @@ task.
 
 ---
 
-## 4. Standard library: `combinations` — every r-length combination of a list
+## 3. Standard library: `combinations` — every r-length combination of a list
 
 Build: `binomial(n, k)` already answers "how many r-length combinations
 exist" and `power_set` (PR #321) already enumerates combinations of *every*
 size at once — but there is no way to enumerate combinations of one
 specific size, the exact "enumerate-vs-count" gap `binomial` has to
-`power_set` itself, the same gap `permutations` (task 2 above) closes for
+`power_set` itself, the same gap `permutations` (task 1 above) closes for
 orderings against `is_permutation`. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(combinations([1, 2, 3], 2));'
 # -> <eval>:1:7: undefined name 'combinations'
 ```
 
-**Ordering note:** if `permutations` (task 2 above) has already landed by the
+**Ordering note:** if `permutations` (task 1 above) has already landed by the
 time this task is claimed, register `combinations` directly after
 `permutations` instead of after `power_set`, keeping the collection-helper
 cluster grouped together in the dict, same adaptive placement every sibling
@@ -448,12 +277,12 @@ def _combinations(arguments: list, line: int, column: int) -> object:
 ```
 `itertools.combinations(items, size)` does the actual enumeration — the same
 thin-wrapper composition style `power_set` uses for its own all-sizes loop and
-`permutations` (task 2) uses for `itertools.permutations`. Note
+`permutations` (task 1) uses for `itertools.permutations`. Note
 `itertools.combinations` already returns `[]` (not an error) when `size >
 len(items)`, matching Python's own convention — no extra domain check needed
 for that case. Also register the new dict entry (search `"power_set":
 _power_set,`, add `"combinations": _combinations,` directly after it — or
-directly after `"permutations": _permutations,` if task 2 has already landed).
+directly after `"permutations": _permutations,` if task 1 has already landed).
 
 Acceptance criteria:
 - `combinations([1, 2, 3], 2);` is `[[1, 2], [1, 3], [2, 3]]`.
@@ -490,7 +319,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
+## 4. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
 
 Build: `is_heptagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th heptagonal number" the way it can for
@@ -555,7 +384,7 @@ task.
 
 ---
 
-## 6. Language: negative bounds in range patterns (`-10..0 => "neg"`)
+## 5. Language: negative bounds in range patterns (`-10..0 => "neg"`)
 
 Build: negative literal patterns (PR #320) let a plain literal pattern be
 negated (`match (-5) { -5 => "neg", _ => "pos" }`), but range patterns

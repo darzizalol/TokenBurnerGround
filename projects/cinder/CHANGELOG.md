@@ -3235,3 +3235,15 @@ for vision/architecture.
   structure exactly. Registered in the builtins dispatch table alongside
   the other `nth_*` entries. Clean first pass, no bounces (3618 tests
   passing).
+- **Language: rest capture in list patterns (`[a, ...rest] => ...`)** —
+  merged 2026-08-27T03:41:38+08:00 via PR #324
+  (`feat/20260826-rest-capture-list-pattern`). Widened
+  `_match_list_pattern` (`cinder/parser.py`) to optionally parse a
+  trailing `...name` (or `..._` to discard) after the fixed-prefix
+  entries, returning an `(entries, rest)` tuple; `MatchArm` gained a
+  `list_rest` field (`cinder/ast_nodes.py`) as its fifth positional slot;
+  `_evaluate_match` (`cinder/interpreter.py`) now accepts subjects with
+  *at least* as many elements as the fixed prefix when a rest is present
+  and binds the tail as a sliced copy. Mirrors the "rest capture" escape
+  hatch `let`/assignment destructuring already had. Clean first pass, no
+  bounces (3630 tests passing).

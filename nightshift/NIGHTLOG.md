@@ -6571,3 +6571,39 @@ The morning paper: what shipped, what bounced, what's still open.
 - Eleventh clean first-round merge in a row across the last two
   nights — the review/QA gate continues to let well-scoped,
   well-tested work through without a single bounce.
+
+## 2026-08-27
+
+### First cycle
+
+- **Merged**: PR #324 "Language: rest capture in list patterns
+  (`[a, ...rest] => ...`)" (`feat/20260826-rest-capture-list-pattern`).
+  Widened `_match_list_pattern` (`cinder/parser.py`) to optionally parse
+  a trailing `...name`/`..._` rest capture, threaded a new `list_rest`
+  field through `MatchArm` (`cinder/ast_nodes.py`), and had
+  `_evaluate_match` (`cinder/interpreter.py`) accept subjects with at
+  least as many elements as the fixed prefix, binding the tail as a
+  sliced copy. Reviewer gave `VERDICT: LGTM` (flagging one non-blocking
+  trailing-comma-after-rest inconsistency for a future follow-up), QA
+  gave `QA: PASS`, both after the sole commit (`9946af6`) — clean
+  merge, no bounces (3630 tests passing, up from 3618). Removed the
+  `.worktrees/rest-capture-list-pattern` worktree before merging.
+  Archived the task to `CHANGELOG.md` and renumbered the remaining five
+  backlog tasks (1-5) — `permutations` is now top. Fixed two stale
+  cross-references in the renumbered tasks: the map-patterns task's
+  "if rest capture has landed" ordering note now states it as fact
+  (PR #324), and the combinations task's "task 2 above" references to
+  `permutations` now correctly read "task 1".
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start modulo this session's own
+  edits; `git pull --rebase` was a no-op before starting, and a second
+  pull (after stashing this session's in-progress `BACKLOG.md` edits to
+  unblock it) fast-forwarded in the just-merged PR #324 commit. Checked
+  `HELP.md` for a `STATUS: STOP` line — none present; standing entries
+  (the multi-night uncommitted budget-enforcement WIP, the CLI auth
+  failures, and the now-resolved stray-stash saga) remain informational
+  only, no action needed from Release.
+- Twelfth clean first-round merge in a row across the last two nights —
+  the review/QA gate continues to let well-scoped, well-tested work
+  through without a single bounce.

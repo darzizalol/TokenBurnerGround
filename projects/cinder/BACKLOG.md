@@ -10,95 +10,8 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Standard library: `power_set` — every subset of a list [claimed 2026-08-26T14:16:07Z]
 
-Build: restocking the backlog from 4 back to 6 tasks now that
-`nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)
-both landed since the last grooming pass, dropping the queue to
-2-breadth/2-depth (`cartesian_product`, `nth_pentagonal` vs. range
-patterns, negative literal patterns) at the time this task was written.
-`cartesian_product` has since landed too, via PR #317, and the backlog
-was renumbered accordingly — this task and task 5 below restock one of
-each kind to restore 3-breadth/3-depth parity at the 6-task ceiling.
-Cinder's collection-helper cluster already answers "every ordered
-combination of one element from each of N lists" (`cartesian_product`,
-merged via PR #317) but has no way to answer the adjacent
-question for a single list: "every subset of these elements, of every
-size." `binomial` (PR #309) already answers the *counting* version of
-this question ("how many size-`k` subsets does an `n`-element set have")
-the same way `nth_catalan` answers "which Catalan number" rather than
-"how many are there below N" — `power_set` is the *enumerating* sibling,
-returning the actual subsets rather than a count, the same
-enumerate-vs-count relationship `cartesian_product` has to `len(l1) *
-len(l2) * ...`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(power_set([1, 2]));'
-# -> <eval>:1:7: undefined name 'power_set' (did you mean 'is_superset'?)
-```
-
-Add to `cinder/builtins.py`, registered right after `_enumerate` (search
-`def _enumerate`, itself already right after `_cartesian_product`, which
-landed via PR #317; `itertools` is already imported at the top of this
-module — no new import needed):
-```python
-def _power_set(arguments: list, line: int, column: int) -> object:
-    _require_arity("power_set", arguments, 1, line, column)
-    items = arguments[0]
-    if not isinstance(items, list):
-        raise CinderRuntimeError(
-            f"power_set() requires a list, got {type_name(items)}", line, column
-        )
-    return [
-        list(combo)
-        for size in range(len(items) + 1)
-        for combo in itertools.combinations(items, size)
-    ]
-```
-`itertools.combinations(items, size)` over every size from `0` to
-`len(items)` does the actual enumeration — this builtin is a thin,
-validated wrapper, the same composition style `cartesian_product` uses
-for `itertools.product`. Subsets come out ordered by increasing size,
-and within a size in the same relative order as `items` itself (both
-properties of `itertools.combinations`, not extra code this builtin
-needs to add). The empty list is a load-bearing edge case, covered
-explicitly below: `power_set([])` returns `[[]]` — the empty set has
-exactly one subset, itself, matching the standard mathematical
-convention (and `cartesian_product([])`'s own analogous `[[]]` result
-for the same reason: `itertools.combinations([], 0)` yields exactly one
-empty tuple). Also register the new dict entry (search `"enumerate":
-_enumerate,` — already directly preceded by `"cartesian_product":
-_cartesian_product,` since PR #317 landed — and place `"power_set":
-_power_set,` directly after it).
-
-Acceptance criteria:
-- `power_set([]);` is `[[]]`.
-- `power_set([1]);` is `[[], [1]]`.
-- `power_set([1, 2]);` is `[[], [1], [2], [1, 2]]`.
-- `power_set([1, 2, 3]);` is `[[], [1], [2], [3], [1, 2], [1, 3], [2, 3],
-  [1, 2, 3]]` — ordered by increasing subset size, matching input order
-  within each size.
-- `len(power_set(l));` is `2 ** len(l)` for `l` equal to `[]`, `[1]`,
-  `[1, 2]`, `[1, 2, 3]`, and `[1, 2, 3, 4]` — the standard subset-count
-  identity, the same closed-form cross-check style `nth_pentagonal`'s
-  acceptance criteria uses against `is_pentagonal`.
-- `power_set("ab");` raises `CinderRuntimeError` matching `"power_set()
-  requires a list, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `enumerate`/
-`cartesian_product`, see current line numbers), `tests/test_builtins.py`
-(model on `class TestEnumerate`/`class TestCartesianProduct`, search
-those names, for the list-validation and arity-error test shapes). Once merged, `README.md`'s
-Builtins bullet needs `power_set` added near `cartesian_product`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: literal elements in list patterns (`[0, b] => ...`)
+## 1. Language: literal elements in list patterns (`[0, b] => ...`)
 
 Build: restocking the second of two slots this grooming pass added to
 restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4
@@ -254,7 +167,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+## 2. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `cartesian_product` (PR #317) landed, dropping the queue
@@ -337,7 +250,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+## 3. Language: rest capture in list patterns (`[a, ...rest] => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling now that range patterns in `match` arms
@@ -510,7 +423,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `permutations` — every ordering of a list
+## 4. Standard library: `permutations` — every ordering of a list
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `nth_pentagonal` (PR #319) landed, dropping the queue
@@ -597,7 +510,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+## 5. Language: flat map patterns in `match` arms (`{a, b} => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling. Negative literal patterns landed via PR

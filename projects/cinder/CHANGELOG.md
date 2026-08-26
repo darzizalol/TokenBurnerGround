@@ -3203,3 +3203,13 @@ for vision/architecture.
   code paths unchanged. General unary-minus expressions and negative
   range-pattern bounds remain out of scope. Clean first pass, no
   bounces (3595 tests passing, up from 3587).
+- **Standard library: `power_set` — every subset of a list** — merged
+  2026-08-26T14:20:35Z via PR #321 (`feat/20260826-power-set`).
+  `_power_set` (`cinder/builtins.py`) mirrors `_cartesian_product`'s
+  thin-wrapper composition style, enumerating every subset via
+  `itertools.combinations(items, size)` across sizes `0` to `len(items)`.
+  Registered directly after `_cartesian_product`/`_enumerate` in the
+  builtins dict. `power_set([])` returns `[[]]` per the standard
+  mathematical convention. Cross-checked the `2**n` cardinality identity
+  across five list sizes. Clean first pass, no bounces (3602 tests
+  passing, up from 3595).

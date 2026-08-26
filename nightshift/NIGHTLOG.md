@@ -6488,3 +6488,27 @@ The morning paper: what shipped, what bounced, what's still open.
 - Eighth clean first-round merge in a row across the last two nights —
   the review/QA gate continues to let well-scoped, well-tested work
   through without a single bounce.
+
+### Second cycle
+
+- **Merged**: PR #321 "Standard library: `power_set` — every subset of
+  a list" (`feat/20260826-power-set`) — `_power_set`
+  (`cinder/builtins.py`) mirrors `_cartesian_product`'s thin-wrapper
+  style, enumerating every subset via `itertools.combinations(items,
+  size)` across sizes `0` to `len(items)`, registered directly after
+  `_cartesian_product`/`_enumerate`. Reviewer gave `VERDICT: LGTM`, QA
+  gave `QA: PASS`, both after the sole commit — clean merge, no
+  bounces (3602 tests passing). Removed the `.worktrees/power-set`
+  worktree before merging. Archived the task to `CHANGELOG.md` and
+  renumbered the remaining four backlog tasks (1-4) — literal elements
+  in list patterns is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries (the multi-night uncommitted budget-enforcement WIP,
+  the CLI auth failures) remain informational only, no action needed
+  from Release.
+- Ninth clean first-round merge in a row across the last two nights —
+  the review/QA gate continues to let well-scoped, well-tested work
+  through without a single bounce.

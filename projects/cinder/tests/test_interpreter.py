@@ -4943,6 +4943,34 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
         self.assertEqual(env.get("result"), 3)
 
+    def test_negative_literal_pattern_matches_negative_subject(self):
+        env = run(
+            'let result = match (-5) { -5 => "neg", 5 => "pos", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "neg")
+
+    def test_negative_literal_pattern_does_not_match_positive_subject(self):
+        env = run(
+            'let result = match (5) { -5 => "neg", 5 => "pos", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "pos")
+
+    def test_negative_float_literal_pattern_matches(self):
+        env = run(
+            'let result = match (-2.5) { -2.5 => "neg-float", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "neg-float")
+
+    def test_negative_literal_pattern_falls_through_without_raising(self):
+        env = run('let result = match (0) { -5 => "neg", _ => "not"};')
+        self.assertEqual(env.get("result"), "not")
+
+    def test_negative_literal_pattern_combines_with_other_literals(self):
+        env = run(
+            'let result = match (-1) { -5, -1, 3 => "matched", _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), "matched")
+
 
 if __name__ == "__main__":
     unittest.main()

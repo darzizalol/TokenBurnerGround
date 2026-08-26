@@ -424,8 +424,10 @@ while (i < 10) {
   `is_circular_prime` to test whether every rotation of an integer's decimal digits is also prime
   (e.g. `197`/`971`/`719`),
   `cartesian_product` to return every ordered combination of one element from each of N lists
-  (an N-list generalization of `zip`, a thin wrapper over `itertools.product`), and type predicates
-  `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
+  (an N-list generalization of `zip`, a thin wrapper over `itertools.product`),
+  `power_set` to return every subset of a list across all sizes (a thin wrapper over
+  `itertools.combinations`, the enumerate-vs-count sibling of `binomial`'s counting question), and
+  type predicates `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
@@ -503,40 +505,42 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: negative literal patterns in
-`match` arms (`match (-5) { -5 => "neg", _ => "pos" }`) — a `MINUS` branch
-in the pattern parser that negates a following `INT`/`FLOAT` literal, not
-touching range-pattern bounds — and before that `nth_pentagonal` — the
-pentagonal number found at a 1-indexed position, the figurate-number
-cluster's second `nth_*` member alongside `nth_triangular` — and before
-that range patterns in `match` arms (`match (5) { 1..10 => "small", _ =>
-"large" }`) — testing whether the subject falls in a range instead of
-equaling one exact value, reusing the same range machinery already
-backing `x in 1..5` — and before that `cartesian_product` — every
-ordered combination of one element from each of N lists, the
-collection-side analogue to `binomial`/`nth_catalan`'s combinatorics-side
-counting. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `power_set` — every
-subset of a list, the enumerate-vs-count sibling of `binomial`'s counting
-question, literal elements in list patterns
-(`match ([1, 2]) { [1, b] => b, _ => 0 }`) — a fixed literal alongside
-bound identifiers in the same list pattern, `nth_hexagonal` — the k-th
-hexagonal number by position, the figurate-number cluster's third
-`nth_*` member, rest capture in list patterns (`match ([1, 2, 3])
+Actively developed, nightly. Recently landed: `power_set` — every subset
+of a list across all sizes, the enumerate-vs-count sibling of
+`binomial`'s counting question and the single-list analogue to
+`cartesian_product`'s N-list combination — and before that negative
+literal patterns in `match` arms (`match (-5) { -5 => "neg", _ => "pos" }`)
+— a `MINUS` branch in the pattern parser that negates a following
+`INT`/`FLOAT` literal, not touching range-pattern bounds — and before that
+`nth_pentagonal` — the pentagonal number found at a 1-indexed position,
+the figurate-number cluster's second `nth_*` member alongside
+`nth_triangular` — and before that range patterns in `match` arms
+(`match (5) { 1..10 => "small", _ => "large" }`) — testing whether the
+subject falls in a range instead of equaling one exact value, reusing the
+same range machinery already backing `x in 1..5`. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): literal elements in list
+patterns (`match ([1, 2]) { [1, b] => b, _ => 0 }`) — a fixed literal
+alongside bound identifiers in the same list pattern, `nth_hexagonal` —
+the k-th hexagonal number by position, the figurate-number cluster's
+third `nth_*` member, rest capture in list patterns (`match ([1, 2, 3])
 { [a, ...rest] => rest, _ => [] }`) — matching "at least N elements"
 instead of an exact length, mirroring the rest capture `let`
 destructuring already has, `permutations` — every ordering of a
 list, the collection-side sibling of `cartesian_product`/`power_set`
 rounding out the "enumerate the ways to arrange/pick/combine elements"
-cluster, and flat map patterns in `match` arms
+cluster, flat map patterns in `match` arms
 (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) — the map-subject
 counterpart to flat list patterns, testing key presence and binding each
-key's value in one step. The pattern-matching tasks are all steps in the
-arc opened by PR #304 and can land in either order relative to their
-siblings; each is written to adapt to whichever has already landed by the
-time it's claimed. (Guards in `match` arms, `n if n > 0 => "positive"`,
-were attempted but closed after three failed review rounds over a
-recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+key's value in one step, and `combinations` — every r-length combination
+of a list, the fixed-size sibling of `power_set` (all sizes at once) and
+the enumerate-vs-count sibling of `binomial` for one specific size. The
+pattern-matching tasks are all steps in the arc opened by PR #304 and can
+land in either order relative to their siblings; each is written to adapt
+to whichever has already landed by the time it's claimed. (Guards in
+`match` arms, `n if n > 0 => "positive"`, were attempted but closed after
+three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the
 postmortem; they're a real gap but not back in the active queue yet.) The
 backlog mixes language depth with stdlib breadth over time rather than
 running either in one long block. The full vision and non-goals live in

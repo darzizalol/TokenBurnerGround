@@ -661,6 +661,94 @@ task.
 
 ---
 
+## 6. Standard library: `combinations` — every r-length combination of a list
+
+Build: restocking the sixth slot to bring the backlog back to its 6-task,
+3-breadth/3-depth ceiling now that `power_set` landed via PR #321, dropping
+the queue to 5 tasks (2-breadth/3-depth: `nth_hexagonal`, `permutations` vs.
+literal list elements, rest capture, flat map patterns). Adding one breadth
+task restores parity. `binomial(n, k)` already answers "how many r-length
+combinations exist" and `power_set` (PR #321) already enumerates combinations
+of *every* size at once — but there is no way to enumerate combinations of one
+specific size, the exact "enumerate-vs-count" gap `binomial` has to
+`power_set` itself, the same gap task 4 (`permutations`) closes for orderings
+against `is_permutation`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(combinations([1, 2, 3], 2));'
+# -> <eval>:1:7: undefined name 'combinations'
+```
+
+**Ordering note:** if `permutations` (task 4 above) has already landed by the
+time this task is claimed, register `combinations` directly after
+`permutations` instead of after `power_set`, keeping the collection-helper
+cluster grouped together in the dict, same adaptive placement every sibling
+task in this backlog already uses.
+
+Add to `cinder/builtins.py`, registered right after `_power_set` (search `def
+_power_set`; `itertools` is already imported at the top of this module — no
+new import needed):
+```python
+def _combinations(arguments: list, line: int, column: int) -> object:
+    _require_arity("combinations", arguments, 2, line, column)
+    items, size = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"combinations() requires a list, got {type_name(items)}", line, column
+        )
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise CinderRuntimeError(
+            f"combinations() requires an int size, got {type_name(size)}", line, column
+        )
+    if size < 0:
+        raise CinderRuntimeError(
+            "combinations() requires a non-negative size, domain error", line, column
+        )
+    return [list(combo) for combo in itertools.combinations(items, size)]
+```
+`itertools.combinations(items, size)` does the actual enumeration — the same
+thin-wrapper composition style `power_set` uses for its own all-sizes loop and
+`permutations` (task 4) uses for `itertools.permutations`. Note
+`itertools.combinations` already returns `[]` (not an error) when `size >
+len(items)`, matching Python's own convention — no extra domain check needed
+for that case. Also register the new dict entry (search `"power_set":
+_power_set,`, add `"combinations": _combinations,` directly after it — or
+directly after `"permutations": _permutations,` if task 4 has already landed).
+
+Acceptance criteria:
+- `combinations([1, 2, 3], 2);` is `[[1, 2], [1, 3], [2, 3]]`.
+- `combinations([1, 2, 3], 0);` is `[[]]`.
+- `combinations([1, 2, 3], 3);` is `[[1, 2, 3]]`.
+- `combinations([1, 2, 3], 4);` is `[]` — size greater than the list's length
+  yields no combinations, not an error.
+- `combinations([], 0);` is `[[]]`.
+- `len(combinations(l, k));` is `binomial(len(l), k)` for `l` equal to
+  `[1, 2, 3, 4, 5]` and every `k` from `0` to `5` — the standard
+  combination-count identity, the same closed-form cross-check style
+  `power_set`'s and `nth_hexagonal`'s acceptance criteria use.
+- `combinations([1, 1], 1);` is `[[1], [1]]` — duplicate elements are not
+  de-duplicated, matching `itertools.combinations`'s own by-position
+  behavior (the same convention `permutations`' acceptance criteria uses).
+- `combinations("ab", 1);` raises `CinderRuntimeError` matching
+  `"combinations() requires a list, got string"`.
+- `combinations([1, 2], "1");` raises `CinderRuntimeError` matching
+  `"combinations() requires an int size, got string"`.
+- `combinations([1, 2], -1);` raises `CinderRuntimeError` matching
+  `"combinations() requires a non-negative size, domain error"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `power_set`/`permutations`,
+see current line numbers — shift depending on which sibling tasks land
+first), `tests/test_builtins.py` (model on `class TestPowerSet`, search that
+name, for the list-validation, arity-error, and closed-form cross-check test
+shapes). Once merged, `README.md`'s Builtins bullet needs `combinations`
+added near `power_set`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -3487,6 +3487,16 @@ def _power_set(arguments: list, line: int, column: int) -> object:
     ]
 
 
+def _permutations(arguments: list, line: int, column: int) -> object:
+    _require_arity("permutations", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"permutations() requires a list, got {type_name(items)}", line, column
+        )
+    return [list(p) for p in itertools.permutations(items)]
+
+
 def _assert(arguments: list, line: int, column: int) -> object:
     _require_arity("assert", arguments, 2, line, column)
     condition, message = arguments
@@ -4174,6 +4184,7 @@ _BUILTINS = {
     "cartesian_product": _cartesian_product,
     "enumerate": _enumerate,
     "power_set": _power_set,
+    "permutations": _permutations,
     "assert": _assert,
     "format": _format,
     "is_list": _is_list,

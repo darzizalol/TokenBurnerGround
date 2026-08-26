@@ -5040,6 +5040,48 @@ class TestMatchExpression(unittest.TestCase):
         )
         self.assertEqual(env.get("result"), "matched")
 
+    def test_map_pattern_binds_named_keys(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_falls_through_on_missing_key(self):
+        env = run(
+            'let result = match ({"a": 1}) { {a, b} => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 0)
+
+    def test_map_pattern_ignores_extra_keys(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2, "c": 3}) '
+            '{ {a, b} => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_falls_through_on_non_map_subject(self):
+        env = run('let result = match ([1, 2]) { {a} => a, _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_map_pattern_single_key(self):
+        env = run('let result = match ({"a": 1}) { {a} => a, _ => 0 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_empty_map_pattern_matches_any_map(self):
+        env = run('let result = match ({}) { {} => "empty", _ => "no" };')
+        self.assertEqual(env.get("result"), "empty")
+
+    def test_map_pattern_coexists_with_list_pattern_arms(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) '
+            '{ [a, b] => "list", {a, b} => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_non_identifier_key_raises(self):
+        with self.assertRaises(ParseError):
+            run('let result = match (x) { {1} => 0 };')
+
 
 if __name__ == "__main__":
     unittest.main()

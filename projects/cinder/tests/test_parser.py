@@ -211,6 +211,7 @@ def shape(node):
                     ),
                     shape(arm.range_pattern) if arm.range_pattern is not None else None,
                     arm.list_rest,
+                    arm.map_pattern,
                 )
                 for arm in node.arms
             ],
@@ -4536,9 +4537,9 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "one"), None, None, None, None),
-                    (("Literal", 2), ("Literal", "two"), None, None, None, None),
-                    (None, ("Literal", "other"), None, None, None, None),
+                    (("Literal", 1), ("Literal", "one"), None, None, None, None, None),
+                    (("Literal", 2), ("Literal", "two"), None, None, None, None, None),
+                    (None, ("Literal", "other"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4550,10 +4551,10 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (("Literal", True), ("Literal", 1), None, None, None, None),
-                    (("Literal", False), ("Literal", 2), None, None, None, None),
-                    (("Literal", None), ("Literal", 3), None, None, None, None),
-                    (("Literal", 1.5), ("Literal", 4), None, None, None, None),
+                    (("Literal", True), ("Literal", 1), None, None, None, None, None),
+                    (("Literal", False), ("Literal", 2), None, None, None, None, None),
+                    (("Literal", None), ("Literal", 3), None, None, None, None, None),
+                    (("Literal", 1.5), ("Literal", 4), None, None, None, None, None),
                 ],
             ),
         )
@@ -4568,8 +4569,8 @@ class TestMatchExpression(unittest.TestCase):
                     "MatchExpr",
                     ("Literal", True),
                     [
-                        (("Literal", False), ("Literal", 0), None, None, None, None),
-                        (("Literal", True), ("Literal", 1), None, None, None, None),
+                        (("Literal", False), ("Literal", 0), None, None, None, None, None),
+                        (("Literal", True), ("Literal", 1), None, None, None, None, None),
                     ],
                 ),
             ),
@@ -4586,8 +4587,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (None, ("Identifier", "x"), "x", None, None, None),
-                    (None, ("Literal", 2), None, None, None, None),
+                    (None, ("Identifier", "x"), "x", None, None, None, None),
+                    (None, ("Literal", 2), None, None, None, None, None),
                 ],
             ),
         )
@@ -4599,9 +4600,9 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "ab"), None, None, None, None),
-                    (("Literal", 2), ("Literal", "ab"), None, None, None, None),
-                    (None, ("Literal", "c"), None, None, None, None),
+                    (("Literal", 1), ("Literal", "ab"), None, None, None, None, None),
+                    (("Literal", 2), ("Literal", "ab"), None, None, None, None, None),
+                    (None, ("Literal", "c"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4623,8 +4624,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Literal", 1),
                 [
-                    (("Literal", 1), ("Literal", "ok"), None, None, None, None),
-                    (("Literal", 2), ("Literal", "ok"), None, None, None, None),
+                    (("Literal", 1), ("Literal", "ok"), None, None, None, None, None),
+                    (("Literal", 2), ("Literal", "ok"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4640,8 +4641,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "a"), None, ["a", None], None, None),
-                    (None, ("Literal", 0), None, None, None, None),
+                    (None, ("Identifier", "a"), None, ["a", None], None, None, None),
+                    (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),
         )
@@ -4653,8 +4654,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Literal", "empty"), None, [], None, None),
-                    (None, ("Literal", "nonempty"), None, None, None, None),
+                    (None, ("Literal", "empty"), None, [], None, None, None),
+                    (None, ("Literal", "nonempty"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4677,8 +4678,9 @@ class TestMatchExpression(unittest.TestCase):
                         [("Literal", 1), "b"],
                         None,
                         None,
+                        None,
                     ),
-                    (None, ("Literal", 0), None, None, None, None),
+                    (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),
         )
@@ -4690,8 +4692,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "rest"), None, ["a"], None, "rest"),
-                    (None, ("Literal", 0), None, None, None, None),
+                    (None, ("Identifier", "rest"), None, ["a"], None, "rest", None),
+                    (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),
         )
@@ -4703,8 +4705,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "a"), None, ["a", "b"], None, None),
-                    (None, ("Literal", 0), None, None, None, None),
+                    (None, ("Identifier", "a"), None, ["a", "b"], None, None, None),
+                    (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),
         )
@@ -4749,8 +4751,9 @@ class TestMatchExpression(unittest.TestCase):
                             None,
                         ),
                         None,
+                        None,
                     ),
-                    (None, ("Literal", "b"), None, None, None, None),
+                    (None, ("Literal", "b"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4775,8 +4778,9 @@ class TestMatchExpression(unittest.TestCase):
                             None,
                         ),
                         None,
+                        None,
                     ),
-                    (None, ("Literal", "b"), None, None, None, None),
+                    (None, ("Literal", "b"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4788,7 +4792,7 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", 1), ("Literal", "matched"), None, None, None, None),
+                    (("Literal", 1), ("Literal", "matched"), None, None, None, None, None),
                     (
                         None,
                         ("Literal", "matched"),
@@ -4802,9 +4806,10 @@ class TestMatchExpression(unittest.TestCase):
                             None,
                         ),
                         None,
+                        None,
                     ),
-                    (("Literal", 20), ("Literal", "matched"), None, None, None, None),
-                    (None, ("Literal", "no"), None, None, None, None),
+                    (("Literal", 20), ("Literal", "matched"), None, None, None, None, None),
+                    (None, ("Literal", "no"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4824,8 +4829,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", -5), ("Literal", "a"), None, None, None, None),
-                    (None, ("Literal", "b"), None, None, None, None),
+                    (("Literal", -5), ("Literal", "a"), None, None, None, None, None),
+                    (None, ("Literal", "b"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4837,8 +4842,8 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (("Literal", -2.5), ("Literal", "a"), None, None, None, None),
-                    (None, ("Literal", "b"), None, None, None, None),
+                    (("Literal", -2.5), ("Literal", "a"), None, None, None, None, None),
+                    (None, ("Literal", "b"), None, None, None, None, None),
                 ],
             ),
         )
@@ -4849,6 +4854,53 @@ class TestMatchExpression(unittest.TestCase):
             r"""expected an int or float after '-' in match pattern, found '"x"'""",
         ):
             parse('match (5) { -"x" => "a", _ => "b" }')
+
+    def test_match_map_pattern_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { {a, b} => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (None, ("Identifier", "a"), None, None, None, None, ["a", "b"]),
+                    (None, ("Literal", 0), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_empty_map_pattern_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { {} => "empty", _ => "nonempty" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (None, ("Literal", "empty"), None, None, None, None, []),
+                    (None, ("Literal", "nonempty"), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_map_pattern_requires_identifier(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"expected identifier inside map pattern, found '1'",
+        ):
+            parse('match (x) { {1} => 0, _ => 1 }')
+
+    def test_match_map_pattern_and_list_pattern_coexist(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, b] => "list", {a, b} => "map", _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (None, ("Literal", "list"), None, ["a", "b"], None, None, None),
+                    (None, ("Literal", "map"), None, None, None, None, ["a", "b"]),
+                    (None, ("Literal", 0), None, None, None, None, None),
+                ],
+            ),
+        )
 
 
 if __name__ == "__main__":

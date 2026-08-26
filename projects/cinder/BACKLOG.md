@@ -575,6 +575,80 @@ task.
 
 ---
 
+## 6. Standard library: `nth_octagonal` — the k-th octagonal number by position
+
+Build: `is_octagonal` already exists as a membership test, but Cinder has
+no way to ask "what is the k-th octagonal number" the way it can for
+triangular (`nth_triangular`, PR #313), pentagonal (`nth_pentagonal`, PR
+#319), and hexagonal numbers (`nth_hexagonal`, PR #323) — the same
+"value-returning sibling of an `is_*` membership test" pattern the
+figurate-number cluster's first three `nth_*` members already establish,
+just for its fifth (after `nth_heptagonal`, task 3 above, closes the
+fourth). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_octagonal(5));'
+# -> <eval>:1:7: undefined name 'nth_octagonal'
+```
+
+**Ordering note:** if `nth_heptagonal` (task 3 above) has already landed
+by the time this task is claimed, register `nth_octagonal` directly after
+`_nth_heptagonal` instead of `_nth_hexagonal` — same adaptive placement
+every sibling task in this backlog already uses.
+
+Add to `cinder/builtins.py`, registered right after `_nth_hexagonal` (search
+`def _nth_hexagonal`, immediately before `_is_prime` — or after
+`_nth_heptagonal` per the Ordering note above):
+```python
+def _nth_octagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_octagonal", arguments, 1, line, column)
+    value = _require_int("nth_octagonal", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_octagonal() requires a positive integer, domain error", line, column
+        )
+    return value * (3 * value - 2)
+```
+`O(k) = k(3k - 2)` is the standard closed form for the k-th octagonal
+number (cross-check: `_is_octagonal` tests `3 * value + 1` for a perfect
+square whose root satisfies `(1 + root) % 3 == 0`, the standard
+membership test derived from this same closed form). This mirrors
+`_nth_triangular`'s, `_nth_pentagonal`'s, `_nth_hexagonal`'s, and
+`_nth_heptagonal`'s shape exactly (arity check, int check, domain check,
+one-line closed-form return) — a thin, direct composition, not a new
+algorithm. Also register the new dict entry (search `"nth_hexagonal":
+_nth_hexagonal,`, add `"nth_octagonal": _nth_octagonal,` directly after
+it — or directly after `"nth_heptagonal": _nth_heptagonal,` per the
+Ordering note above).
+
+Acceptance criteria:
+- `nth_octagonal(1);` is `1`, `nth_octagonal(2);` is `8`,
+  `nth_octagonal(3);` is `21`, `nth_octagonal(4);` is `40` — the first
+  four octagonal numbers.
+- `is_octagonal(nth_octagonal(k));` is `true` for every `k` from `1` to
+  `100` — cross-checks the closed form against the existing membership
+  test, the same style `nth_pentagonal`'s, `nth_hexagonal`'s, and
+  `nth_heptagonal`'s acceptance criteria use.
+- `nth_octagonal(0);` and `nth_octagonal(-1);` both raise
+  `CinderRuntimeError` matching `"nth_octagonal() requires a positive
+  integer, domain error"`.
+- `nth_octagonal(1.5);` raises `CinderRuntimeError` matching
+  `"nth_octagonal() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `nth_hexagonal`/
+`nth_heptagonal`, search for the current line number), `tests/test_builtins.py`
+(model on `class TestNthHexagonal`, search that name, for the domain-error,
+type-error, and cross-check test shapes). Once merged, `README.md`'s
+Builtins bullet needs `nth_octagonal` added near `nth_heptagonal`, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -165,12 +165,15 @@ while (i < 10) {
   child scope, falling through — not raising — on a non-list subject or
   a length mismatch, and each element may itself be a bare literal
   (`match ([1, 2]) { [1, b] => b, _ => 0 }`) instead of only a bound
-  identifier or `_`), range patterns (`match (5) { 1..10 => "small",
-  _ => "large" }`, `INT`-only bounds, exclusive `..` or inclusive `..=`,
-  reusing the same range machinery as `x in 1..5`), and negative literal
-  patterns (`match (-5) { -5 => "neg", _ => "pos" }`, `INT`/`FLOAT` only,
-  not range-pattern bounds) for now (no nested list patterns, rest
-  capture, map patterns, negative range-pattern bounds, or guards yet —
+  identifier or `_`), an optional trailing rest capture in list patterns
+  (`match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] }`, matching "at
+  least N elements" instead of an exact length, mirroring `let`
+  destructuring's own rest capture), range patterns (`match (5) { 1..10
+  => "small", _ => "large" }`, `INT`-only bounds, exclusive `..` or
+  inclusive `..=`, reusing the same range machinery as `x in 1..5`), and
+  negative literal patterns (`match (-5) { -5 => "neg", _ => "pos" }`,
+  `INT`/`FLOAT` only, not range-pattern bounds) for now (no nested list
+  patterns, map patterns, negative range-pattern bounds, or guards yet —
   see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
@@ -508,24 +511,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_hexagonal` — the
-hexagonal number found at a 1-indexed position via the closed form
-`k(2k - 1)`, the figurate-number cluster's third `nth_*` member alongside
+Actively developed, nightly. Recently landed: rest capture in list
+patterns (`match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] }`) — an
+optional trailing `...name`/`..._` after a list pattern's fixed elements,
+matching "at least N elements" instead of an exact length and binding the
+tail as a sliced copy, mirroring the rest capture `let` destructuring
+already has — and before that `nth_hexagonal` — the hexagonal number
+found at a 1-indexed position via the closed form `k(2k - 1)`, the
+figurate-number cluster's third `nth_*` member alongside
 `nth_triangular`/`nth_pentagonal` — and before that literal elements in
 list patterns (`match ([1, 2]) { [1, b] => b, _ => 0 }`) — a bare literal
 now allowed alongside bound identifiers per element, falling through (not
 raising) on a mismatch — and before that `power_set` — every subset of a
 list across all sizes, the enumerate-vs-count sibling of `binomial`'s
 counting question and the single-list analogue to `cartesian_product`'s
-N-list combination — and before that negative literal patterns in `match`
-arms (`match (-5) { -5 => "neg", _ => "pos" }`) — a `MINUS` branch in the
-pattern parser that negates a following `INT`/`FLOAT` literal, not
-touching range-pattern bounds. See [`CHANGELOG.md`](CHANGELOG.md) for the
+N-list combination. See [`CHANGELOG.md`](CHANGELOG.md) for the
 full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): rest capture in list
-patterns (`match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] }`) —
-matching "at least N elements" instead of an exact length, mirroring the
-rest capture `let` destructuring already has, `permutations` — every
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `permutations` — every
 ordering of a list, the collection-side sibling of
 `cartesian_product`/`power_set` rounding out the "enumerate the ways to
 arrange/pick/combine elements" cluster, flat map patterns in `match` arms
@@ -535,16 +537,20 @@ key's value in one step, `combinations` — every r-length combination of a
 list, the fixed-size sibling of `power_set` (all sizes at once) and the
 enumerate-vs-count sibling of `binomial` for one specific size,
 `nth_heptagonal` — the k-th heptagonal number by position, the
-figurate-number cluster's fourth `nth_*` member, and negative bounds in
+figurate-number cluster's fourth `nth_*` member, negative bounds in
 range patterns (`match (-5) { -10..0 => "neg", _ => "other" }`) — the
 same negation `-5 => "neg"` already gets as a plain literal pattern,
-extended to range bounds. The pattern-matching tasks are all steps in the
-arc opened by PR #304 and can land in either order relative to their
-siblings; each is written to adapt to whichever has already landed by the
-time it's claimed. (Guards in `match` arms, `n if n > 0 => "positive"`,
-were attempted but closed after three failed review rounds over a
-recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
-postmortem; they're a real gap but not back in the active queue yet.) The
-backlog mixes language depth with stdlib breadth over time rather than
+extended to range bounds, and nested list patterns
+(`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`) — a
+list-pattern element that is itself a list pattern, to arbitrary depth,
+the last flat-vs-nested gap left in list patterns now that literal
+elements and rest capture have both landed. The pattern-matching tasks are
+all steps in the arc opened by PR #304 and can land in either order
+relative to their siblings; each is written to adapt to whichever has
+already landed by the time it's claimed. (Guards in `match` arms, `n if n
+> 0 => "positive"`, were attempted but closed after three failed review
+rounds over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for
+the postmortem; they're a real gap but not back in the active queue yet.)
+The backlog mixes language depth with stdlib breadth over time rather than
 running either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

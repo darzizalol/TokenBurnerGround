@@ -513,6 +513,149 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
+
+Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
+#322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a
+list-pattern element still can't itself be a list pattern — `let`
+destructuring already supports this (`let [a, [b, c]] = [1, [2, 3]];`,
+`_destructure_list_pattern_entry`/`cinder/parser.py`), the same
+destructuring-vs-match gap flat map patterns (task 2 above) closed for maps
+one level down. This is the last flat-vs-nested gap left in list patterns.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 });'
+# -> <eval>:1:33: expected an identifier, '_', or a literal inside list pattern, found '['
+```
+
+**Ordering note:** if flat map patterns (task 2 above) have already landed by
+the time this task is claimed, this task only touches list patterns — map
+patterns nesting inside list patterns or vice versa is a real but separate
+future gap, not in scope here either way.
+
+`_match_list_pattern_entry` (`cinder/parser.py`, search `def
+_match_list_pattern_entry`) currently only recognizes an identifier, `_`, or
+a literal at each position and raises `ParseError` on anything else,
+including `[`. Add one branch at the top, before the identifier check, that
+recurses into `_match_list_pattern` itself when the next token is `[`:
+```python
+    def _match_list_pattern_entry(self) -> "str | Expr | None | tuple[list, str | None]":
+        token = self._peek()
+        if token.type == TokenType.LBRACKET:
+            return self._match_list_pattern()
+        if token.type == TokenType.IDENTIFIER:
+            ...  # unchanged below
+```
+`_match_list_pattern()` already returns `tuple[list[str | Expr | None], str |
+None]` (entries, rest) and already consumes its own `[`...`]` — calling it
+recursively here means nesting to arbitrary depth, and rest capture at any
+nested level (`[a, [b, ...rest]] => ...`), work for free with no extra code:
+the recursive call *is* the same production, entries included. No change is
+needed to `_match_list_pattern` itself, `MatchArm`
+(`cinder/ast_nodes.py`), or the arity/rest-not-last/rest-needs-identifier
+error paths — they already apply correctly to the nested call by construction.
+
+`_evaluate_match`'s `list_pattern` branch (`cinder/interpreter.py`, search
+`def _evaluate_match`) currently inlines the length check, per-entry loop,
+and rest binding directly in the arm loop. Factor that inline logic into a
+new recursive helper so a nested tuple entry can call back into the same
+matching logic:
+```python
+    def _match_list_entries(
+        self, entries: list, rest: "str | None", subject: object, env: Environment
+    ) -> bool:
+        if not isinstance(subject, list):
+            return False
+        min_len = len(entries)
+        length_ok = (
+            len(subject) >= min_len if rest is not None else len(subject) == min_len
+        )
+        if not length_ok:
+            return False
+        for entry, item in zip(entries, subject):
+            if isinstance(entry, tuple):
+                nested_entries, nested_rest = entry
+                if not self._match_list_entries(nested_entries, nested_rest, item, env):
+                    return False
+                continue
+            if isinstance(entry, Literal):
+                if not values_equal(item, self.evaluate(entry, env)):
+                    return False
+                continue
+            if entry is not None:
+                env.define(entry, item)
+        if rest is not None and rest != "_":
+            env.define(rest, subject[min_len:])
+        return True
+```
+Then replace the `arm.list_pattern is not None` branch's body with:
+```python
+            if arm.list_pattern is not None:
+                arm_env = Environment(env)
+                if not self._match_list_entries(
+                    arm.list_pattern, arm.list_rest, subject, arm_env
+                ):
+                    continue
+                return self.evaluate(arm.body, arm_env)
+```
+This is a pure refactor of the existing top-level logic into a recursive
+helper — behavior for non-nested patterns is unchanged, verify the existing
+list-pattern tests still pass unmodified.
+
+Acceptance criteria:
+- `match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 };` is `6`.
+- `match ([1, [2, 3]]) { [a, [b, c, d]] => 0, _ => "no" };` is `"no"` —
+  nested length mismatch falls through, does not raise.
+- `match ([1, "x"]) { [a, [b, c]] => "yes", _ => "no" };` is `"no"` — a
+  non-list subject at a nested position falls through, does not raise.
+- `match ([[1, 2], [3, 4]]) { [[a, b], [c, d]] => a + b + c + d, _ => 0 };`
+  is `10` — nesting at every top-level position, not just one.
+- `match ([1, [2, [3, 4]]]) { [a, [b, [c, d]]] => a + b + c + d, _ => 0 };`
+  is `10` — two levels of nesting, confirming the recursion isn't
+  hardcoded to one level.
+- `match ([1, [2, 3]]) { [1, [b, c]] => b + c, _ => 0 };` is `5` — a literal
+  element and a nested pattern coexist in the same arm.
+- `match ([1, [2, 3]]) { [a, [_, c]] => a + c, _ => 0 };` is `4` — `_`
+  inside a nested pattern still discards.
+- `match ([1, [2, 3, 4]]) { [a, [b, ...rest]] => rest, _ => [] };` is
+  `[3, 4]` — rest capture works inside a nested pattern too (falls out of
+  the recursive reuse of `_match_list_pattern`, not extra code).
+- `match ([1, 2]) { [a, b] => a + b, _ => 0 };` is still `3` and
+  `match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] };` is still `[2, 3]`
+  — existing flat and rest-capture behavior is unaffected by the refactor.
+- `shape(parse('match (x) { [a, [b, c]] => a, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the first arm's `list_pattern` with a nested
+  tuple entry at index 1.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_list_pattern_entry`),
+`cinder/interpreter.py` (new `_match_list_entries` helper, `_evaluate_match`),
+`tests/test_parser.py` (extend the list-pattern shape tests around
+`test_match_list_pattern_literal_element_shape`/
+`test_match_list_pattern_rest_capture_shape`, search those names — note the
+`shape()` helper's list_pattern entry line, search `for entry in
+arm.list_pattern`, only shapes `Expr` instances today and needs a small
+recursive helper to also shape entries inside a nested tuple, e.g.:
+```python
+def _shape_list_pattern_entry(entry):
+    if isinstance(entry, Expr):
+        return shape(entry)
+    if isinstance(entry, tuple):
+        nested_entries, nested_rest = entry
+        return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest)
+    return entry
+```
+used in place of the current `shape(entry) if isinstance(entry, Expr) else
+entry` list comprehension), `tests/test_interpreter.py` (extend
+`class TestMatchExpression`, search that name, with the end-to-end cases
+above). Once merged, `README.md`'s `match` expression bullet needs its
+"no nested list patterns" caveat removed, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

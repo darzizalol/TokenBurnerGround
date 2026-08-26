@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+## 1. Language: rest capture in list patterns (`[a, ...rest] => ...`) [claimed 2026-08-26T19:33:37Z]
 
 Build: flat list patterns (PR #316), later widened to accept literal
 elements (PR #322), can only test a list subject's *exact* length

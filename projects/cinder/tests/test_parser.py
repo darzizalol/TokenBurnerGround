@@ -4745,6 +4745,39 @@ class TestMatchExpression(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse('match (1) { 1..10, _ => "x" }')
 
+    def test_match_negative_literal_pattern_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { -5 => "a", _ => "b" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (("Literal", -5), ("Literal", "a"), None, None, None),
+                    (None, ("Literal", "b"), None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_negative_float_literal_pattern_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { -2.5 => "a", _ => "b" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (("Literal", -2.5), ("Literal", "a"), None, None, None),
+                    (None, ("Literal", "b"), None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_negative_literal_pattern_requires_numeric_literal(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"""expected an int or float after '-' in match pattern, found '"x"'""",
+        ):
+            parse('match (5) { -"x" => "a", _ => "b" }')
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1128,6 +1128,22 @@ class Parser:
             if token.lexeme == "_":
                 return None, None, None
             return None, token.lexeme, None
+        if token.type == TokenType.MINUS:
+            minus = self._advance()
+            value_token = self._peek()
+            if value_token.type not in (TokenType.INT, TokenType.FLOAT):
+                raise ParseError(
+                    "expected an int or float after '-' in match pattern, "
+                    f"found {self._describe(value_token)}",
+                    value_token.line,
+                    value_token.column,
+                )
+            self._advance()
+            return (
+                Literal(-value_token.literal, minus.line, minus.column),
+                None,
+                None,
+            )
         if token.type == TokenType.INT:
             self._advance()
             start = Literal(token.literal, token.line, token.column)

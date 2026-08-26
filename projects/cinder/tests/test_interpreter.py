@@ -4911,6 +4911,33 @@ class TestMatchExpression(unittest.TestCase):
         )
         self.assertEqual(env.get("a"), 100)
 
+    def test_list_pattern_leading_literal_element_matches_and_binds_rest(self):
+        env = run('let result = match ([1, 2]) { [1, b] => b, _ => 0 };')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_list_pattern_leading_literal_element_falls_through_on_mismatch(self):
+        env = run('let result = match ([9, 2]) { [1, b] => b, _ => 0 };')
+        self.assertEqual(env.get("result"), 0)
+
+    def test_list_pattern_literal_element_in_non_leading_position(self):
+        env = run('let result = match ([1, 2]) { [a, 2] => a, _ => 0 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_string_literal_elements_compare_by_value(self):
+        env = run(
+            'let result = match (["x", 5]) '
+            '{ ["x", "y"] => "no", ["x", n] => n, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 5)
+
+    def test_list_pattern_bool_literal_element_matches(self):
+        env = run('let result = match ([true, 1]) { [true, n] => n, _ => 0 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_all_identifier_form_unaffected(self):
+        env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
+        self.assertEqual(env.get("result"), 3)
+
     def test_range_pattern_matches_within_bounds(self):
         env = run('let result = match (5) { 1..10 => "small", _ => "large" };')
         self.assertEqual(env.get("result"), "small")

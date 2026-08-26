@@ -1098,28 +1098,40 @@ class Parser:
             for pattern, binding, range_pattern in entries
         ]
 
-    def _match_list_pattern(self) -> "list[str | None]":
+    def _match_list_pattern(self) -> "list[str | Expr | None]":
         self._advance()  # consume '['
-        names: "list[str | None]" = []
+        entries: "list[str | Expr | None]" = []
         if not self._check(TokenType.RBRACKET):
-            names.append(self._match_list_pattern_name())
+            entries.append(self._match_list_pattern_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
-                names.append(self._match_list_pattern_name())
+                entries.append(self._match_list_pattern_entry())
         self._consume(TokenType.RBRACKET, "']' after list pattern")
-        return names
+        return entries
 
-    def _match_list_pattern_name(self) -> "str | None":
+    def _match_list_pattern_entry(self) -> "str | Expr | None":
         token = self._peek()
-        if token.type != TokenType.IDENTIFIER:
-            raise ParseError(
-                f"expected an identifier or '_' inside list pattern, "
-                f"found {self._describe(token)}",
-                token.line,
-                token.column,
-            )
-        self._advance()
-        return None if token.lexeme == "_" else token.lexeme
+        if token.type == TokenType.IDENTIFIER:
+            self._advance()
+            return None if token.lexeme == "_" else token.lexeme
+        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
+            self._advance()
+            return Literal(token.literal, token.line, token.column)
+        if token.type == TokenType.TRUE:
+            self._advance()
+            return Literal(True, token.line, token.column)
+        if token.type == TokenType.FALSE:
+            self._advance()
+            return Literal(False, token.line, token.column)
+        if token.type == TokenType.NIL:
+            self._advance()
+            return Literal(None, token.line, token.column)
+        raise ParseError(
+            f"expected an identifier, '_', or a literal inside list pattern, "
+            f"found {self._describe(token)}",
+            token.line,
+            token.column,
+        )
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
         token = self._peek()

@@ -15,6 +15,7 @@ from cinder.ast_nodes import (
     DestructureAssign,
     DestructureLetStmt,
     DoWhileStmt,
+    Expr,
     ExprStmt,
     FnDecl,
     FnExpr,
@@ -200,7 +201,14 @@ def shape(node):
                     shape(arm.pattern) if arm.pattern is not None else None,
                     shape(arm.body),
                     arm.binding,
-                    arm.list_pattern,
+                    (
+                        [
+                            shape(entry) if isinstance(entry, Expr) else entry
+                            for entry in arm.list_pattern
+                        ]
+                        if arm.list_pattern is not None
+                        else None
+                    ),
                     shape(arm.range_pattern) if arm.range_pattern is not None else None,
                 )
                 for arm in node.arms
@@ -4650,9 +4658,28 @@ class TestMatchExpression(unittest.TestCase):
             ),
         )
 
-    def test_match_list_pattern_requires_identifier_or_underscore(self):
+    def test_match_list_pattern_requires_identifier_underscore_or_literal(self):
         with self.assertRaises(ParseError):
-            parse('match (x) { [1] => 1, _ => 0 }')
+            parse('match (x) { [+] => 1, _ => 0 }')
+
+    def test_match_list_pattern_literal_element_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [1, b] => b, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "b"),
+                        None,
+                        [("Literal", 1), "b"],
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None),
+                ],
+            ),
+        )
 
     def test_bare_underscore_identifier_still_works(self):
         self.assertEqual(

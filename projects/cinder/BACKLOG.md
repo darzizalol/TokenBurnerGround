@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `permutations` — every ordering of a list
+## 1. Standard library: `permutations` — every ordering of a list [claimed 2026-08-26T19:50:55Z]
 
 Build: Cinder's collection-helper cluster already answers "every ordered
 combination of one element from each of N lists" (`cartesian_product`,

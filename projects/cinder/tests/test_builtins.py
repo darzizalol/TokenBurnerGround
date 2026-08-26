@@ -8657,6 +8657,64 @@ class TestPowerSet(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestPermutations(unittest.TestCase):
+    def test_permutations_of_empty_list_is_singleton_empty_list(self):
+        env = run("let result = permutations([]);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_permutations_of_single_element(self):
+        env = run("let result = permutations([1]);")
+        self.assertEqual(env.get("result"), [[1]])
+
+    def test_permutations_of_two_elements(self):
+        env = run("let result = permutations([1, 2]);")
+        self.assertEqual(env.get("result"), [[1, 2], [2, 1]])
+
+    def test_permutations_of_three_elements(self):
+        env = run("let result = permutations([1, 2, 3]);")
+        self.assertEqual(
+            env.get("result"),
+            [
+                [1, 2, 3],
+                [1, 3, 2],
+                [2, 1, 3],
+                [2, 3, 1],
+                [3, 1, 2],
+                [3, 2, 1],
+            ],
+        )
+
+    def test_permutations_size_matches_factorial(self):
+        env = run(
+            "let a = len(permutations([]));"
+            "let b = len(permutations([1]));"
+            "let c = len(permutations([1, 2]));"
+            "let d = len(permutations([1, 2, 3]));"
+            "let e = len(permutations([1, 2, 3, 4]));"
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 1)
+        self.assertEqual(env.get("c"), 2)
+        self.assertEqual(env.get("d"), 6)
+        self.assertEqual(env.get("e"), 24)
+
+    def test_permutations_does_not_deduplicate(self):
+        env = run("let result = permutations([1, 1]);")
+        self.assertEqual(env.get("result"), [[1, 1], [1, 1]])
+
+    def test_permutations_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "permutations\\(\\) requires a list, got string",
+        ):
+            run('permutations("ab");')
+
+    def test_permutations_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("permutations([1], [2]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestAssert(unittest.TestCase):
     def test_assert_true_does_not_raise_and_returns_nil(self):
         env = run('let result = assert(true, "should not fire");')

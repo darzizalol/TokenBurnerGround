@@ -10,7 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Language: negative literal patterns in `match` arms (`-5 => "neg"`)
+## 1. Language: negative literal patterns in `match` arms (`-5 => "neg"`) [claimed 2026-08-26T14:02:12Z]
 
 Build: restocking the backlog back to 6 tasks now that guards in `match`
 arms was closed after three failed review rounds (see `## Graveyard`

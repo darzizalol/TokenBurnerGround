@@ -6462,3 +6462,29 @@ The morning paper: what shipped, what bounced, what's still open.
 - Seventh clean first-round merge in a row tonight — the review/QA
   gate keeps letting well-scoped, well-tested work through without a
   single bounce this cycle.
+
+## 2026-08-26
+
+### First cycle
+
+- **Merged**: PR #320 "Language: negative literal patterns in `match`
+  arms (`-5 => "neg"`)" (`feat/20260826-neg-literal-match`) —
+  `_match_pattern` (`cinder/parser.py`) gained a `MINUS` branch that
+  consumes a leading `-` before an `INT`/`FLOAT` literal and returns a
+  negated `Literal`, raising `ParseError` for `-` before a non-numeric
+  literal. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`, both
+  after the sole commit (`36e7ab6`) — clean merge, no bounces. Removed
+  the `.worktrees/neg-literal-match` worktree before merging. Archived
+  the task to `CHANGELOG.md` and renumbered the remaining five backlog
+  tasks (1-5) — `power_set` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op (fast-forwarded to the Engineer's commit that had already
+  landed on `main` before this session started). Checked `HELP.md` for
+  a `STATUS: STOP` line — none present; standing entries (the
+  multi-night uncommitted budget-enforcement WIP, the CLI auth
+  failure) remain informational only, no action needed from Release.
+- Eighth clean first-round merge in a row across the last two nights —
+  the review/QA gate continues to let well-scoped, well-tested work
+  through without a single bounce.

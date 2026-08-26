@@ -3191,3 +3191,15 @@ for vision/architecture.
   computing `P(k) = k(3k - 1) / 2`. Cross-checked against
   `is_pentagonal` for every `n` from 1 to 100. Clean first pass, no
   bounces (3587 tests passing, up from 3578).
+- **Language: negative literal patterns in `match` arms (`-5 => "neg"`)**
+  — merged 2026-08-26T14:08:02Z via PR #320
+  (`feat/20260826-neg-literal-match`). `_match_pattern`
+  (`cinder/parser.py`) gained a `MINUS` branch that consumes a leading
+  `-` before an `INT`/`FLOAT` literal and returns a negated `Literal`
+  (line/column pointing at the `-`, not the digit); `-` before a
+  non-numeric literal raises `ParseError`. No changes needed to
+  `_match_arm` or `_evaluate_match` — a negative literal is still just a
+  `Literal` pattern, so multi-value arms and evaluation reuse existing
+  code paths unchanged. General unary-minus expressions and negative
+  range-pattern bounds remain out of scope. Clean first pass, no
+  bounces (3595 tests passing, up from 3587).

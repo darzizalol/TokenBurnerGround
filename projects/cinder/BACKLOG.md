@@ -10,128 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Language: negative literal patterns in `match` arms (`-5 => "neg"`) [claimed 2026-08-26T14:02:12Z]
-
-Build: restocking the backlog back to 6 tasks now that guards in `match`
-arms was closed after three failed review rounds (see `## Graveyard`
-below), dropping the queue from 6 to 5 (3-breadth/2-depth: `nth_catalan`,
-`cartesian_product`, `nth_pentagonal` vs. flat list patterns, range
-patterns). This restocks with depth to restore 3-breadth/3-depth parity,
-continuing the alternation the guards task itself was standing in for.
-Rather than re-attempt guards immediately — its postmortem below
-identifies a real fix but a materially different implementation strategy
-than what was tried three times, and re-queuing it cold risks a fourth
-failed round — this task picks up a smaller, unrelated gap that task 1
-(range patterns) explicitly flagged but explicitly left out of its own
-scope: **no** match pattern today, literal or otherwise, accepts a
-negative number. Verify the gap, on current `main`:
-```sh
-python3 -m cinder.cli eval 'print(match (-5) { -5 => "neg", 5 => "pos", _ => "other" });'
-# -> <eval>:1:20: expected a literal, identifier, or '_' in match pattern, found '-'
-```
-This is a parser-only gap: `_match_pattern` (`cinder/parser.py`) only
-ever looks at a bare literal token, never a unary-minus expression, so
-`-5` in pattern position fails to parse at all — it never reaches
-evaluation. Unlike guards, this fix touches exactly one function, has no
-interaction with `_bracket_depth`/bare-arrow suppression, and does not
-touch `MatchArm`'s field list at all (a negative literal is still just a
-`Literal` pattern, same as a positive one) — a deliberately low-risk task
-after the guards graveyard entry. **Ordering note:** if task 1 (range
-patterns) has already landed by the time this task is claimed,
-`_match_pattern` will already return a 3-tuple (`pattern, binding,
-range_pattern`) instead of the 2-tuple shown below — adapt the new
-`MINUS` branch to return a 3-tuple (`Literal(...), None, None`) in that
-case, the same way every other task in this backlog adapts to whichever
-sibling landed first.
-
-**Scope note:** only a literal `-<INT>` or `-<FLOAT>` is accepted — not
-a general unary-minus *expression* (`-x`, `-(1 + 1)`). Match patterns
-have never accepted arbitrary expressions (only literals, identifiers,
-and `_`), and this task does not change that; it only widens "literal"
-to include a leading `-` on a numeric literal, mirroring how the lexer/
-parser already treat `-5` as a single negative literal in ordinary
-expression position elsewhere in Cinder. Negative bounds on range
-patterns (`-10..0`, task 1's own explicitly out-of-scope case) are not
-addressed by this task either — that stays a real gap for range patterns
-specifically, since a range pattern's bounds are parsed by task 1's own
-code path, not `_match_pattern`'s literal branch this task changes.
-
-Today's `_match_pattern` (`cinder/parser.py`, search `def
-_match_pattern`) — add a new branch for a leading `MINUS` before the
-existing `INT`/`FLOAT`/`STRING` branch, so `-5` and `-2.5` parse as a
-single negated `Literal` rather than falling through to the "expected a
-literal..." error:
-```python
-    def _match_pattern(self) -> "tuple[Expr | None, str | None]":
-        token = self._peek()
-        if token.type == TokenType.IDENTIFIER:
-            self._advance()
-            if token.lexeme == "_":
-                return None, None
-            return None, token.lexeme
-        if token.type == TokenType.MINUS:
-            minus = self._advance()
-            value_token = self._peek()
-            if value_token.type not in (TokenType.INT, TokenType.FLOAT):
-                raise ParseError(
-                    "expected an int or float after '-' in match pattern, "
-                    f"found {self._describe(value_token)}",
-                    value_token.line,
-                    value_token.column,
-                )
-            self._advance()
-            return Literal(-value_token.literal, minus.line, minus.column), None
-        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
-            self._advance()
-            return Literal(token.literal, token.line, token.column), None
-        ...  # TRUE/FALSE/NIL branches and the final raise are unchanged
-```
-The new branch consumes the `MINUS` token itself, so the resulting
-`Literal`'s line/column point at the `-`, not the digit after it —
-matching how every other pattern's `Literal` points at its own leading
-token. No changes are needed to `_match_arm` (its multi-value
-comma-handling and its "`_`/bound-identifier cannot combine with other
-patterns" guard both already operate on `pattern is None`, and a negative
-literal produces a non-`None` `Literal` pattern exactly like a positive
-one) or to `_evaluate_match` (a negative-literal arm is compared with
-the existing `values_equal(subject, self.evaluate(arm.pattern, env))`
-branch, unchanged, since it's just another `Literal` expression to
-evaluate).
-
-Acceptance criteria:
-- `match (-5) { -5 => "neg", 5 => "pos", _ => "other" };` is `"neg"`.
-- `match (5) { -5 => "neg", 5 => "pos", _ => "other" };` is `"pos"`.
-- `match (-2.5) { -2.5 => "neg-float", _ => "other" };` is `"neg-float"`.
-- `match (0) { -5 => "neg", _ => "not"};` is `"not"` — a non-matching
-  negative-literal pattern falls through to `_` without raising, exactly
-  like a non-equal positive-literal pattern already does.
-- `match (-1) { -5, -1, 3 => "matched", _ => "no" };` is `"matched"` —
-  a negative literal combines with other literals in one multi-value arm
-  (PR #312's comma-separated form), landing in the second position.
-- `shape(parse('match (x) { -5 => "a", _ => "b" }'))` (see
-  `tests/test_parser.py`) shows the arm's pattern as `("Literal", -5)` —
-  confirms the parse produces a genuinely negated literal, not `5` with
-  a sign dropped.
-- `match (5) { -"x" => "a", _ => "b" };` raises `ParseError` matching
-  `"expected an int or float after '-' in match pattern, found string
-  'x'"` — `-` before a non-numeric literal is a parse error, not a
-  silent fallback.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_pattern`), `tests/test_parser.py`
-(`shape()` helper already renders `Literal` nodes; extend `class
-TestMatchExpression`, search that name, with the parse-shape case above
-and the new `ParseError` case), `tests/test_interpreter.py` (extend
-`class TestMatchExpression` with the end-to-end cases above). Once
-merged, `README.md`'s `match` expression bullet needs its "not supported
-yet" list trimmed (drop "negative literal patterns" from that list since
-this task lands them), its "Status & roadmap" section needs updating,
-and `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `power_set` — every subset of a list
+## 1. Standard library: `power_set` — every subset of a list
 
 Build: restocking the backlog from 4 back to 6 tasks now that
 `nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)
@@ -219,7 +98,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: literal elements in list patterns (`[0, b] => ...`)
+## 2. Language: literal elements in list patterns (`[0, b] => ...`)
 
 Build: restocking the second of two slots this grooming pass added to
 restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4
@@ -375,7 +254,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+## 3. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `cartesian_product` (PR #317) landed, dropping the queue
@@ -458,7 +337,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+## 4. Language: rest capture in list patterns (`[a, ...rest] => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling now that range patterns in `match` arms
@@ -631,7 +510,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `permutations` — every ordering of a list
+## 5. Standard library: `permutations` — every ordering of a list
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `nth_pentagonal` (PR #319) landed, dropping the queue

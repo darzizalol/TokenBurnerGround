@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+## 1. Language: flat map patterns in `match` arms (`{a, b} => ...`) [claimed 2026-08-26T20:01:36Z]
 
 Build: `match` currently has a flat *list* pattern (`[a, b] => ...`, PR
 #316) that destructures a list subject by shape, but no equivalent for a

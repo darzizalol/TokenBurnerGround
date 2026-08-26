@@ -631,6 +631,93 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `permutations` — every ordering of a list
+
+Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
+ceiling now that `nth_pentagonal` (PR #319) landed, dropping the queue
+to 5 tasks (2-breadth/3-depth: `power_set`, `nth_hexagonal` vs. negative
+literal patterns, literal list elements, rest capture). This restocks
+with breadth to restore parity, per `PROJECT.md`'s alternation policy.
+Cinder's collection-helper cluster already answers "every ordered
+combination of one element from each of N lists" (`cartesian_product`,
+PR #317) and, once task 2 above lands, will answer "every subset of one
+list, ignoring order" (`power_set`) — but has no way to answer the
+adjacent question "every ordering of one list's own elements", the
+question `is_permutation` (a predicate testing whether two lists are
+reorderings of each other) implies but never answers directly with the
+actual orderings, the same predicate-vs-enumerator gap `binomial` has to
+`power_set` and `len(cartesian_product(...))` has to `cartesian_product`
+itself. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(permutations([1, 2]));'
+# -> <eval>:1:7: undefined name 'permutations' (did you mean 'is_permutation'?)
+```
+
+Add to `cinder/builtins.py`, registered right after `_cartesian_product`
+(search `def _cartesian_product`; `itertools` is already imported at the
+top of this module — no new import needed):
+```python
+def _permutations(arguments: list, line: int, column: int) -> object:
+    _require_arity("permutations", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"permutations() requires a list, got {type_name(items)}", line, column
+        )
+    return [list(p) for p in itertools.permutations(items)]
+```
+`itertools.permutations(items)` (no second argument — full-length
+permutations only, see the scope note below) does the actual
+enumeration, the same thin-wrapper composition style `cartesian_product`
+uses for `itertools.product` and task 2 (`power_set`) uses for
+`itertools.combinations`. Also register the new dict entry (search
+`"cartesian_product": _cartesian_product,`, add `"permutations":
+_permutations,` directly after it — or directly after `"power_set":
+_power_set,` if task 2 has already landed, keeping the collection-helper
+cluster grouped together in the dict).
+
+**Scope note:** only full-length permutations (`itertools.permutations(items)`,
+no `r` argument) are in scope — a `permutations(items, k)` form for
+partial-length permutations is a real but separate gap, left for a
+future task if it proves needed. `permutations([])` returns `[[]]` (one
+empty permutation of the empty list, matching `itertools.permutations([])`'s
+own single-empty-tuple result and the same "one canonical empty-input
+answer" convention `power_set([])`/`cartesian_product([])` both already
+establish). Duplicate elements are not de-duplicated
+(`permutations([1, 1])` returns two `[1, 1]` entries, not one) —
+`itertools.permutations` treats elements by position, not by value,
+matching Python's own behavior and requiring no extra code to preserve.
+
+Acceptance criteria:
+- `permutations([]);` is `[[]]`.
+- `permutations([1]);` is `[[1]]`.
+- `permutations([1, 2]);` is `[[1, 2], [2, 1]]`.
+- `permutations([1, 2, 3]);` is `[[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3,
+  1], [3, 1, 2], [3, 2, 1]]` — matches `itertools.permutations`'s own
+  lexicographic-by-position order.
+- `len(permutations(l));` is `factorial(len(l))` for `l` equal to `[]`,
+  `[1]`, `[1, 2]`, `[1, 2, 3]`, and `[1, 2, 3, 4]` — the standard
+  permutation-count identity, the same closed-form cross-check style
+  `power_set`'s and `nth_hexagonal`'s acceptance criteria use.
+- `permutations([1, 1]);` is `[[1, 1], [1, 1]]` — duplicate elements are
+  not de-duplicated.
+- `permutations("ab");` raises `CinderRuntimeError` matching
+  `"permutations() requires a list, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `cartesian_product`/
+`power_set`, see current line numbers), `tests/test_builtins.py` (model
+on `class TestCartesianProduct`, search that name, for the
+list-validation and arity-error test shapes). Once merged, `README.md`'s
+Builtins bullet needs `permutations` added near `cartesian_product`, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

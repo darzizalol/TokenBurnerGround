@@ -358,6 +358,7 @@ while (i < 10) {
   `is_heptagonal` as the cluster's fourth member, testing heptagonal-number membership via the same closed-form technique,
   `is_octagonal` as the cluster's fifth member, testing octagonal-number membership via the same closed-form technique,
   `nth_triangular` to return the triangular number found at a 1-indexed position via the exact closed form `n(n+1)/2`, the value-returning sibling of `is_triangular`'s membership test,
+  `nth_pentagonal` to return the pentagonal number found at a 1-indexed position via the exact closed form `k(3k - 1)/2`, the figurate-number cluster's second `nth_*` member alongside `nth_triangular`,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -500,39 +501,40 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: range patterns in `match`
-arms (`match (5) { 1..10 => "small", _ => "large" }`) — testing whether
-the subject falls in a range instead of equaling one exact value,
-reusing the same range machinery already backing `x in 1..5` — and
-before that `cartesian_product` — every ordered combination of one
-element from each of N lists, the collection-side analogue to
-`binomial`/`nth_catalan`'s combinatorics-side counting — and before that
-flat list patterns in `match` arms (`match ([1, 2]) { [a, b] => a + b,
-_ => 0 }`) — matching and destructuring a fixed-length list subject in
-one step, falling through (not raising) on a non-list subject or a
-length mismatch — and before that `nth_catalan` — the Catalan number
-found at a 1-indexed position, a thin composition of `binomial`
-(`C(k) = binomial(2k, k) / (k + 1)`). See [`CHANGELOG.md`](CHANGELOG.md)
-for the full merge history. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): `nth_pentagonal` — the k-th pentagonal
-number by position, the same closed-form pattern as `nth_triangular`
-applied to the next figurate-number cluster member, negative literal
-patterns in `match` arms (`match (-5) { -5 => "neg", _ => "pos" }`),
-`power_set` — every subset of a list, the enumerate-vs-count sibling of
-`binomial`'s counting question, literal elements in list patterns
+Actively developed, nightly. Recently landed: `nth_pentagonal` — the
+pentagonal number found at a 1-indexed position, the figurate-number
+cluster's second `nth_*` member alongside `nth_triangular` — and before
+that range patterns in `match` arms (`match (5) { 1..10 => "small", _ =>
+"large" }`) — testing whether the subject falls in a range instead of
+equaling one exact value, reusing the same range machinery already
+backing `x in 1..5` — and before that `cartesian_product` — every
+ordered combination of one element from each of N lists, the
+collection-side analogue to `binomial`/`nth_catalan`'s combinatorics-side
+counting — and before that flat list patterns in `match` arms
+(`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) — matching and
+destructuring a fixed-length list subject in one step, falling through
+(not raising) on a non-list subject or a length mismatch. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): negative literal patterns in
+`match` arms (`match (-5) { -5 => "neg", _ => "pos" }`), `power_set` —
+every subset of a list, the enumerate-vs-count sibling of `binomial`'s
+counting question, literal elements in list patterns
 (`match ([1, 2]) { [1, b] => b, _ => 0 }`) — a fixed literal alongside
 bound identifiers in the same list pattern, `nth_hexagonal` — the k-th
 hexagonal number by position, the figurate-number cluster's third
-`nth_*` member, and rest capture in list patterns (`match ([1, 2, 3])
+`nth_*` member, rest capture in list patterns (`match ([1, 2, 3])
 { [a, ...rest] => rest, _ => [] }`) — matching "at least N elements"
 instead of an exact length, mirroring the rest capture `let`
-destructuring already has. The pattern-matching tasks are all steps in
-the arc opened by PR #304 and can land in either order relative to their
-siblings; each is written to adapt to whichever has already landed by
-the time it's claimed. (Guards in `match` arms, `n if n > 0 =>
-"positive"`, were attempted but closed after three failed review rounds
-over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
-postmortem; they're a real gap but not back in the active queue yet.)
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+destructuring already has, and `permutations` — every ordering of a
+list, the collection-side sibling of `cartesian_product`/`power_set`
+rounding out the "enumerate the ways to arrange/pick/combine elements"
+cluster. The pattern-matching tasks are all steps in the arc opened by
+PR #304 and can land in either order relative to their siblings; each is
+written to adapt to whichever has already landed by the time it's
+claimed. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a recurring
+parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
+they're a real gap but not back in the active queue yet.) The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

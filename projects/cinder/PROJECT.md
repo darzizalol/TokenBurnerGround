@@ -149,38 +149,41 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): range patterns in
-`match` arms (#318) — `1..10 => "small"` (exclusive) and `1..=10 => "small"`
-(inclusive) test whether the subject falls in an `INT`-only range, reusing
-the same range/`contains_value` machinery already backing `x in 1..5` — and
-before that `cartesian_product` (#317) — every ordered combination of one
-element from each of N lists, the collection-side analogue to
-`binomial`/`nth_catalan`'s combinatorics-side counting — and before that
-flat list patterns in `match` arms (#316) — `[a, b] => a + b` tests a list
-subject's shape and destructures it in one step, falling through (not
-raising) on a non-list subject or a length mismatch — and before that
-`nth_catalan` (#315) — the k-th Catalan number by position, a thin
-composition of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`). Guards in
-`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
-after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
-recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
-next approach; still not requeued (see the restock note below).
+Recently landed (see `CHANGELOG.md` for the full list): `nth_pentagonal`
+(#319) — the k-th pentagonal number by position, the figurate-number
+cluster's second `nth_*` member alongside `nth_triangular`, cross-checked
+against `is_pentagonal` for every `n` from 1 to 100 — and before that
+range patterns in `match` arms (#318) — `1..10 => "small"` (exclusive)
+and `1..=10 => "small"` (inclusive) test whether the subject falls in an
+`INT`-only range, reusing the same range/`contains_value` machinery
+already backing `x in 1..5` — and before that `cartesian_product` (#317)
+— every ordered combination of one element from each of N lists, the
+collection-side analogue to `binomial`/`nth_catalan`'s combinatorics-side
+counting — and before that flat list patterns in `match` arms (#316) —
+`[a, b] => a + b` tests a list subject's shape and destructures it in one
+step, falling through (not raising) on a non-list subject or a length
+mismatch. Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR
+#314) but closed after three straight `VERDICT: CHANGES REQUESTED`
+rounds, all the same recurring bug in the bare-arrow/guard `=>`
+disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
+postmortem and the suggested next approach; still not requeued (see the
+restock note below).
 
 `BACKLOG.md` carries the active queue, 3-breadth/3-depth at the 6-task
-ceiling: `nth_pentagonal` — the k-th pentagonal number by position, the
-same closed-form pattern as `nth_triangular` applied to the next
-figurate-number cluster member, negative literal patterns in `match` arms
-(`-5 => "neg"`), `power_set` — every subset of a list, the
-enumerate-vs-count sibling of `binomial`'s counting question and the
-single-list analogue to `cartesian_product`'s N-list combination — literal
-elements in list patterns (`[0, b] => ...`), the natural next step now
-that flat list patterns have landed and proven the form out — `nth_hexagonal`
-— the k-th hexagonal number by position, the figurate-number cluster's
-third `nth_*` member alongside `nth_triangular` and the still-unclaimed
-`nth_pentagonal` — and rest capture in list patterns (`[a, ...rest] => ...`),
-matching "at least N elements" instead of an exact length, mirroring the
-rest capture `let [a, ...rest] = xs;` destructuring already has.
+ceiling: negative literal patterns in `match` arms (`-5 => "neg"`),
+`power_set` — every subset of a list, the enumerate-vs-count sibling of
+`binomial`'s counting question and the single-list analogue to
+`cartesian_product`'s N-list combination — literal elements in list
+patterns (`[0, b] => ...`), the natural next step now that flat list
+patterns have landed and proven the form out — `nth_hexagonal` — the k-th
+hexagonal number by position, the figurate-number cluster's third `nth_*`
+member alongside `nth_triangular` and `nth_pentagonal` — rest capture in
+list patterns (`[a, ...rest] => ...`), matching "at least N elements"
+instead of an exact length, mirroring the rest capture
+`let [a, ...rest] = xs;` destructuring already has — and `permutations` —
+every ordering of a list, the collection-side sibling of
+`cartesian_product`/`power_set` rounding out the "enumerate the ways to
+arrange/pick/combine elements" cluster.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -205,13 +208,23 @@ list pattern's *shape* test rather than adding a new per-element kind, so
 it was queued now rather than waiting. Guards remain a real gap too, but
 are deliberately *not* requeued this pass — see the restock note below.
 
-This grooming pass (2026-08-26) restocked one task — rest capture in list
-patterns (depth) — because range patterns (depth) landed via PR #318
-since the last pass without a grooming pass restocking in between,
-dropping the queue from 6 to 5 (3-breadth/2-depth: `nth_pentagonal`,
-`power_set`, `nth_hexagonal` vs. negative literal patterns, literal list
-elements). Adding one depth task restores the queue to its 6-task
-ceiling at exact 3-breadth/3-depth parity. Rest capture extends the same
+This grooming pass (2026-08-26) restocked one task — `permutations`
+(breadth) — because `nth_pentagonal` (breadth) landed via PR #319 since
+the last pass without a grooming pass restocking in between, dropping
+the queue from 6 to 5 (2-breadth/3-depth: `power_set`, `nth_hexagonal`
+vs. negative literal patterns, literal list elements, rest capture).
+Adding one breadth task restores the queue to its 6-task ceiling at
+exact 3-breadth/3-depth parity. `permutations` rounds out the
+collection-enumeration trio started by `cartesian_product` and continued
+by the still-unclaimed `power_set`, the same "enumerate, don't just
+count" relationship `nth_catalan`/`nth_pentagonal` have to `binomial`.
+This pass also refreshed `README.md`'s Builtins bullet and "Status &
+roadmap" section to record `nth_pentagonal` as landed rather than
+upcoming — see `README.md` directly for the corrected text, not a
+paraphrase here. The previous pass's restock note (below) is retained
+for continuity but its "next grooming pass" instruction has now been
+carried out; the same alternation guidance still applies going forward.
+Rest capture extends the same
 "give list patterns a destructuring escape hatch" gap flat list patterns
 opened, mirroring the rest-capture syntax `let`/assignment destructuring
 already established, so it needed no new staging task ahead of it. This

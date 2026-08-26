@@ -1125,9 +1125,17 @@ class Interpreter:
                 if not isinstance(subject, list) or len(subject) != len(arm.list_pattern):
                     continue
                 arm_env = Environment(env)
-                for name, item in zip(arm.list_pattern, subject):
-                    if name is not None:
-                        arm_env.define(name, item)
+                matched = True
+                for entry, item in zip(arm.list_pattern, subject):
+                    if isinstance(entry, Literal):
+                        if not values_equal(item, self.evaluate(entry, arm_env)):
+                            matched = False
+                            break
+                        continue
+                    if entry is not None:
+                        arm_env.define(entry, item)
+                if not matched:
+                    continue
                 return self.evaluate(arm.body, arm_env)
             if arm.range_pattern is not None:
                 values = self._evaluate_range(arm.range_pattern, env)

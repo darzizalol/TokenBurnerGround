@@ -3247,3 +3247,12 @@ for vision/architecture.
   and binds the tail as a sliced copy. Mirrors the "rest capture" escape
   hatch `let`/assignment destructuring already had. Clean first pass, no
   bounces (3630 tests passing).
+- **Standard library: `permutations` — every ordering of a list** —
+  merged 2026-08-26T19:55:34Z via PR #325
+  (`feat/20260826-permutations`). Added `_permutations`
+  (`cinder/builtins.py`), a thin wrapper over
+  `itertools.permutations(items)` (full-length only, no `r` argument),
+  registered directly after `power_set` in the builtins dispatch table.
+  Duplicate elements are not de-duplicated, matching
+  `itertools.permutations`'s position-based (not value-based) behavior.
+  Clean first pass, no bounces (3638 tests passing).

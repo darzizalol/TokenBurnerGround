@@ -11,87 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `permutations` — every ordering of a list [claimed 2026-08-26T19:50:55Z]
-
-Build: Cinder's collection-helper cluster already answers "every ordered
-combination of one element from each of N lists" (`cartesian_product`,
-PR #317) and "every subset of one list, ignoring order" (`power_set`, PR
-#321) — but has no way to answer the adjacent question "every ordering of
-one list's own elements", the question `is_permutation` (a predicate
-testing whether two lists are reorderings of each other) implies but
-never answers directly with the actual orderings, the same
-predicate-vs-enumerator gap `binomial` has to `power_set` and
-`len(cartesian_product(...))` has to `cartesian_product` itself. Verify
-the gap:
-```sh
-python3 -m cinder.cli eval 'print(permutations([1, 2]));'
-# -> <eval>:1:7: undefined name 'permutations' (did you mean 'is_permutation'?)
-```
-
-Add to `cinder/builtins.py`, registered right after `_power_set` (search
-`def _power_set`; `itertools` is already imported at the top of this
-module — no new import needed):
-```python
-def _permutations(arguments: list, line: int, column: int) -> object:
-    _require_arity("permutations", arguments, 1, line, column)
-    items = arguments[0]
-    if not isinstance(items, list):
-        raise CinderRuntimeError(
-            f"permutations() requires a list, got {type_name(items)}", line, column
-        )
-    return [list(p) for p in itertools.permutations(items)]
-```
-`itertools.permutations(items)` (no second argument — full-length
-permutations only, see the scope note below) does the actual
-enumeration, the same thin-wrapper composition style `cartesian_product`
-uses for `itertools.product` and `power_set` uses for
-`itertools.combinations`. Also register the new dict entry (search
-`"power_set": _power_set,`, add `"permutations": _permutations,`
-directly after it, keeping the collection-helper cluster grouped
-together in the dict).
-
-**Scope note:** only full-length permutations (`itertools.permutations(items)`,
-no `r` argument) are in scope — a `permutations(items, k)` form for
-partial-length permutations is a real but separate gap, left for a
-future task if it proves needed. `permutations([])` returns `[[]]` (one
-empty permutation of the empty list, matching `itertools.permutations([])`'s
-own single-empty-tuple result and the same "one canonical empty-input
-answer" convention `power_set([])`/`cartesian_product([])` both already
-establish). Duplicate elements are not de-duplicated
-(`permutations([1, 1])` returns two `[1, 1]` entries, not one) —
-`itertools.permutations` treats elements by position, not by value,
-matching Python's own behavior and requiring no extra code to preserve.
-
-Acceptance criteria:
-- `permutations([]);` is `[[]]`.
-- `permutations([1]);` is `[[1]]`.
-- `permutations([1, 2]);` is `[[1, 2], [2, 1]]`.
-- `permutations([1, 2, 3]);` is `[[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3,
-  1], [3, 1, 2], [3, 2, 1]]` — matches `itertools.permutations`'s own
-  lexicographic-by-position order.
-- `len(permutations(l));` is `factorial(len(l))` for `l` equal to `[]`,
-  `[1]`, `[1, 2]`, `[1, 2, 3]`, and `[1, 2, 3, 4]` — the standard
-  permutation-count identity, the same closed-form cross-check style
-  `power_set`'s and `nth_hexagonal`'s acceptance criteria use.
-- `permutations([1, 1]);` is `[[1, 1], [1, 1]]` — duplicate elements are
-  not de-duplicated.
-- `permutations("ab");` raises `CinderRuntimeError` matching
-  `"permutations() requires a list, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `power_set`, search that
-name for current line numbers), `tests/test_builtins.py` (model on `class
-TestPowerSet`, search that name, for the list-validation and arity-error
-test shapes). Once merged, `README.md`'s Builtins bullet needs
-`permutations` added near `power_set`, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+## 1. Language: flat map patterns in `match` arms (`{a, b} => ...`)
 
 Build: `match` currently has a flat *list* pattern (`[a, b] => ...`, PR
 #316) that destructures a list subject by shape, but no equivalent for a
@@ -235,24 +155,23 @@ task.
 
 ---
 
-## 3. Standard library: `combinations` — every r-length combination of a list
+## 2. Standard library: `combinations` — every r-length combination of a list
 
 Build: `binomial(n, k)` already answers "how many r-length combinations
 exist" and `power_set` (PR #321) already enumerates combinations of *every*
 size at once — but there is no way to enumerate combinations of one
 specific size, the exact "enumerate-vs-count" gap `binomial` has to
-`power_set` itself, the same gap `permutations` (task 1 above) closes for
+`power_set` itself, the same gap `permutations` (PR #325) closes for
 orderings against `is_permutation`. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(combinations([1, 2, 3], 2));'
 # -> <eval>:1:7: undefined name 'combinations'
 ```
 
-**Ordering note:** if `permutations` (task 1 above) has already landed by the
-time this task is claimed, register `combinations` directly after
-`permutations` instead of after `power_set`, keeping the collection-helper
-cluster grouped together in the dict, same adaptive placement every sibling
-task in this backlog already uses.
+**Ordering note:** `permutations` (PR #325) has already landed — register
+`combinations` directly after `permutations` instead of after `power_set`,
+keeping the collection-helper cluster grouped together in the dict, same
+adaptive placement every sibling task in this backlog already uses.
 
 Add to `cinder/builtins.py`, registered right after `_power_set` (search `def
 _power_set`; `itertools` is already imported at the top of this module — no
@@ -277,12 +196,12 @@ def _combinations(arguments: list, line: int, column: int) -> object:
 ```
 `itertools.combinations(items, size)` does the actual enumeration — the same
 thin-wrapper composition style `power_set` uses for its own all-sizes loop and
-`permutations` (task 1) uses for `itertools.permutations`. Note
+`permutations` (PR #325) uses for `itertools.permutations`. Note
 `itertools.combinations` already returns `[]` (not an error) when `size >
 len(items)`, matching Python's own convention — no extra domain check needed
 for that case. Also register the new dict entry (search `"power_set":
 _power_set,`, add `"combinations": _combinations,` directly after it — or
-directly after `"permutations": _permutations,` if task 1 has already landed).
+directly after `"permutations": _permutations,`, which has already landed).
 
 Acceptance criteria:
 - `combinations([1, 2, 3], 2);` is `[[1, 2], [1, 3], [2, 3]]`.
@@ -319,7 +238,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
+## 3. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
 
 Build: `is_heptagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th heptagonal number" the way it can for
@@ -384,7 +303,7 @@ task.
 
 ---
 
-## 5. Language: negative bounds in range patterns (`-10..0 => "neg"`)
+## 4. Language: negative bounds in range patterns (`-10..0 => "neg"`)
 
 Build: negative literal patterns (PR #320) let a plain literal pattern be
 negated (`match (-5) { -5 => "neg", _ => "pos" }`), but range patterns
@@ -513,14 +432,14 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
+## 5. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
 
 Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
 #322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a
 list-pattern element still can't itself be a list pattern — `let`
 destructuring already supports this (`let [a, [b, c]] = [1, [2, 3]];`,
 `_destructure_list_pattern_entry`/`cinder/parser.py`), the same
-destructuring-vs-match gap flat map patterns (task 2 above) closed for maps
+destructuring-vs-match gap flat map patterns (task 1 above) closed for maps
 one level down. This is the last flat-vs-nested gap left in list patterns.
 Verify the gap:
 ```sh
@@ -528,7 +447,7 @@ python3 -m cinder.cli eval 'print(match ([1, [2, 3]]) { [a, [b, c]] => a + b + c
 # -> <eval>:1:33: expected an identifier, '_', or a literal inside list pattern, found '['
 ```
 
-**Ordering note:** if flat map patterns (task 2 above) have already landed by
+**Ordering note:** if flat map patterns (task 1 above) have already landed by
 the time this task is claimed, this task only touches list patterns — map
 patterns nesting inside list patterns or vice versa is a real but separate
 future gap, not in scope here either way.

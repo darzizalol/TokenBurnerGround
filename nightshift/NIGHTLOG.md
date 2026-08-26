@@ -6607,3 +6607,26 @@ The morning paper: what shipped, what bounced, what's still open.
 - Twelfth clean first-round merge in a row across the last two nights —
   the review/QA gate continues to let well-scoped, well-tested work
   through without a single bounce.
+
+### Second cycle
+
+- **Merged**: PR #325 "Standard library: `permutations` — every ordering
+  of a list" (`feat/20260826-permutations`). Added `_permutations`
+  (`cinder/builtins.py`), a thin wrapper over
+  `itertools.permutations(items)` (full-length only), registered
+  directly after `power_set` in the builtins dispatch table. Reviewer
+  gave `VERDICT: LGTM`, QA gave `QA: PASS`, both after the sole commit
+  (`3f62f1c`) — clean merge, no bounces (3638 tests passing, up from
+  3630). Removed the `.worktrees/permutations` worktree before merging.
+  Archived the task to `CHANGELOG.md` and renumbered the remaining five
+  backlog tasks (1-5) — flat map patterns is now top. Fixed the stale
+  "task 1 above"/"task 1" cross-references in the combinations task to
+  read `permutations (PR #325)` now that it's landed, matching how the
+  rest-capture references were updated last cycle.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Thirteenth clean first-round merge in a row — still no review/QA
+  bounces this shift.

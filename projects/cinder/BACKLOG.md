@@ -11,163 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: literal elements in list patterns (`[0, b] => ...`) [claimed 2026-08-26T14:27:23Z]
-
-Build: restocking the second of two slots this grooming pass added to
-restore the backlog to its 6-task, 3-breadth/3-depth ceiling (see task 4
-above for the breadth half of the restock). Flat list patterns landed via
-PR #316, but every element position in `[a, b]` must be a bound
-identifier or `_` — a list pattern can test the *shape* of a list subject
-(its length) but cannot test the *value* of any individual element, the
-way a scalar pattern can (`5 => ...`). This task closes exactly that gap
-for literal elements: `[0, b] => ...` matches a two-element list subject
-whose first element equals `0`, binding `b` to the second element,
-without requiring a nested `match`/`if` inside the arm body to check it.
-`PROJECT.md`'s "Current frontier" section already flags this as a real
-gap ("patterns with literal elements... remain real gaps for future
-grooming passes, most of them blocked on their simpler sibling landing
-and proving the form out first" — flat list patterns is that sibling, and
-it has now landed). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match ([1, 2]) { [1, b] => b, _ => 0 });'
-# -> <eval>:1:25: expected an identifier or '_' inside list pattern, found '1'
-```
-
-**Scope note:** only bare literal tokens (`INT`, `FLOAT`, `STRING`,
-`TRUE`, `FALSE`, `NIL`) are accepted per element — not arbitrary
-expressions, not negative literals (unless task 3 above has already
-landed by the time this is claimed, in which case reusing its `MINUS`
-handling for consistency is a reasonable adaptation, but is not required
-by this task's own acceptance criteria), and no nesting (`[1, [a, b]]` is
-still out of scope — a real gap, left for a future task once this one
-proves the "literal element" form out, the same staged approach
-`nth_triangular` → `nth_pentagonal` used for figurate numbers). Rest
-capture (`[a, ...rest]`) is also out of scope — a separate, unrelated
-gap.
-
-Today's `_match_list_pattern`/`_match_list_pattern_name`
-(`cinder/parser.py`, search `def _match_list_pattern`) only ever consume
-an `IDENTIFIER` token per element, returning `str | None`. Widen the
-per-element return type to also allow a `Literal` expression node,
-mirroring how `_match_pattern`'s own scalar branch already builds
-`Literal` nodes for `INT`/`FLOAT`/`STRING`/`TRUE`/`FALSE`/`NIL` tokens:
-```python
-    def _match_list_pattern(self) -> "list[str | Expr | None]":
-        self._advance()  # consume '['
-        entries: "list[str | Expr | None]" = []
-        if not self._check(TokenType.RBRACKET):
-            entries.append(self._match_list_pattern_entry())
-            while self._check(TokenType.COMMA):
-                self._advance()
-                entries.append(self._match_list_pattern_entry())
-        self._consume(TokenType.RBRACKET, "']' after list pattern")
-        return entries
-
-    def _match_list_pattern_entry(self) -> "str | Expr | None":
-        token = self._peek()
-        if token.type == TokenType.IDENTIFIER:
-            self._advance()
-            return None if token.lexeme == "_" else token.lexeme
-        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
-            self._advance()
-            return Literal(token.literal, token.line, token.column)
-        if token.type == TokenType.TRUE:
-            self._advance()
-            return Literal(True, token.line, token.column)
-        if token.type == TokenType.FALSE:
-            self._advance()
-            return Literal(False, token.line, token.column)
-        if token.type == TokenType.NIL:
-            self._advance()
-            return Literal(None, token.line, token.column)
-        raise ParseError(
-            f"expected an identifier, '_', or a literal inside list pattern, "
-            f"found {self._describe(token)}",
-            token.line,
-            token.column,
-        )
-```
-(Rename `_match_list_pattern_name` to `_match_list_pattern_entry` — every
-call site is the two loops inside `_match_list_pattern` itself, both
-shown above already updated.)
-
-Today's `_evaluate_match` (`cinder/interpreter.py`, search `def
-_evaluate_match`) needs its `arm.list_pattern is not None` branch (the
-first branch in the function) widened to check each entry's kind before
-binding: a `Literal` entry is a value test (`values_equal`, falling
-through — not raising — to the next arm on mismatch, exactly like a
-scalar literal pattern already does), while a `str | None` entry keeps
-its current bind-or-discard behavior unchanged:
-```python
-            if arm.list_pattern is not None:
-                if not isinstance(subject, list) or len(subject) != len(arm.list_pattern):
-                    continue
-                arm_env = Environment(env)
-                matched = True
-                for entry, item in zip(arm.list_pattern, subject):
-                    if isinstance(entry, Literal):
-                        if not values_equal(item, self.evaluate(entry, arm_env)):
-                            matched = False
-                            break
-                        continue
-                    if entry is not None:
-                        arm_env.define(entry, item)
-                if not matched:
-                    continue
-                return self.evaluate(arm.body, arm_env)
-```
-`Literal` is already imported in `cinder/interpreter.py` (search `from
-cinder.ast_nodes import (`, `Literal,` is already in that block) — no new
-import needed. No changes are needed to `MatchArm` itself (`list_pattern`
-stays typed loosely enough already) or to `_match_arm` (it just forwards
-whatever `_match_list_pattern` returns, unchanged).
-
-Acceptance criteria:
-- `match ([1, 2]) { [1, b] => b, _ => 0 };` is `2` — a leading literal
-  element matches and the trailing identifier binds.
-- `match ([9, 2]) { [1, b] => b, _ => 0 };` is `0` — a non-matching
-  literal element falls through to the next arm without raising.
-- `match ([1, 2]) { [a, 2] => a, _ => 0 };` is `1` — a literal element in
-  a non-leading position works the same way.
-- `match (["x", 5]) { ["x", "y"] => "no", ["x", n] => n, _ => 0 };` is
-  `5` — string literal elements compare by value, and the first arm's
-  literal-vs-literal mismatch on the second element falls through
-  correctly.
-- `match ([true, 1]) { [true, n] => n, _ => 0 };` is `1` — `TRUE`/`FALSE`/
-  `NIL` literal elements parse and match too, not just `INT`/`FLOAT`/
-  `STRING`.
-- `match ([1, 2]) { [a, b] => a + b, _ => 0 };` is still `3` — an
-  all-identifier list pattern (PR #316's original form) is unaffected.
-- `shape(parse('match (x) { [1, b] => b, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `list_pattern` as
-  `[("Literal", 1), "b"]` — confirms the literal element parses to an
-  actual `Literal` node, not a string, while the identifier element
-  stays a plain string.
-- `match (x) { [1, "y"] => 0 };` with `1` not followed by a valid literal
-  or identifier (e.g. `[1, +]`) raises `ParseError` matching `"expected
-  an identifier, '_', or a literal inside list pattern, found ..."`.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_list_pattern`,
-`_match_list_pattern_name` → `_match_list_pattern_entry`),
-`cinder/interpreter.py` (`_evaluate_match`), `tests/test_parser.py` (the
-`shape()` helper already renders `arm.list_pattern` as-is — since entries
-are now a mix of `str` and `Literal` nodes, the helper needs each
-`Literal` entry rendered via `shape()` too: search `arm.list_pattern,`
-inside `shape()`'s `MatchExpr` branch and change it to a list
-comprehension that calls `shape(entry) if isinstance(entry, Expr) else
-entry` per entry; also extend `class TestMatchExpression`),
-`tests/test_interpreter.py` (extend `class TestMatchExpression` with the
-end-to-end cases above). Once merged, `README.md`'s `match` expression
-bullet needs its flat-list-pattern description updated to mention literal
-elements and its "not supported yet" list trimmed accordingly, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+## 1. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `cartesian_product` (PR #317) landed, dropping the queue
@@ -250,7 +94,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+## 2. Language: rest capture in list patterns (`[a, ...rest] => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling now that range patterns in `match` arms
@@ -423,7 +267,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `permutations` — every ordering of a list
+## 3. Standard library: `permutations` — every ordering of a list
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `nth_pentagonal` (PR #319) landed, dropping the queue
@@ -510,7 +354,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+## 4. Language: flat map patterns in `match` arms (`{a, b} => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling. Negative literal patterns landed via PR
@@ -661,7 +505,7 @@ task.
 
 ---
 
-## 6. Standard library: `combinations` — every r-length combination of a list
+## 5. Standard library: `combinations` — every r-length combination of a list
 
 Build: restocking the sixth slot to bring the backlog back to its 6-task,
 3-breadth/3-depth ceiling now that `power_set` landed via PR #321, dropping

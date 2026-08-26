@@ -6512,3 +6512,30 @@ The morning paper: what shipped, what bounced, what's still open.
 - Ninth clean first-round merge in a row across the last two nights —
   the review/QA gate continues to let well-scoped, well-tested work
   through without a single bounce.
+
+### Third cycle
+
+- **Merged**: PR #322 "Language: literal elements in list patterns
+  (`[0, b] => ...`)" (`feat/20260826-literal-list-elements`) — widened
+  `_match_list_pattern`'s per-element parsing
+  (`_match_list_pattern_name` renamed to `_match_list_pattern_entry`,
+  `cinder/parser.py`) to accept a bare literal token in addition to a
+  bound identifier or `_`, and `_evaluate_match`'s list-pattern branch
+  (`cinder/interpreter.py`) to test `Literal` entries by value
+  (falling through on mismatch) while identifier entries keep their
+  bind-or-discard behavior. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS`, both after the sole commit — clean merge, no bounces
+  (3609 tests passing, up from 3602). Removed the
+  `.worktrees/literal-list-elements` worktree before merging. Archived
+  the task to `CHANGELOG.md` and renumbered the remaining five backlog
+  tasks (1-5) — `nth_hexagonal` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Root checkout was clean at session start; `git pull --rebase` was a
+  no-op. Checked `HELP.md` for a `STATUS: STOP` line — none present;
+  standing entries (the multi-night uncommitted budget-enforcement WIP,
+  the CLI auth failures) remain informational only, no action needed
+  from Release.
+- Tenth clean first-round merge in a row across the last two nights —
+  the review/QA gate continues to let well-scoped, well-tested work
+  through without a single bounce.

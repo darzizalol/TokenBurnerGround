@@ -3213,3 +3213,17 @@ for vision/architecture.
   mathematical convention. Cross-checked the `2**n` cardinality identity
   across five list sizes. Clean first pass, no bounces (3602 tests
   passing, up from 3595).
+- **Language: literal elements in list patterns (`[0, b] => ...`)** —
+  merged 2026-08-26T14:31:38Z via PR #322
+  (`feat/20260826-literal-list-elements`). Widened `_match_list_pattern`'s
+  per-element parsing (renamed `_match_list_pattern_name` to
+  `_match_list_pattern_entry`, `cinder/parser.py`) to accept a bare
+  literal token (`INT`/`FLOAT`/`STRING`/`TRUE`/`FALSE`/`NIL`) per element
+  in addition to a bound identifier or `_`, mirroring `_match_pattern`'s
+  own scalar-literal `Literal` construction; `_evaluate_match`'s
+  list-pattern branch (`cinder/interpreter.py`) now checks each entry's
+  kind, testing `Literal` entries with `values_equal` (falling through to
+  the next arm on mismatch) while identifier/`_` entries keep their
+  existing bind-or-discard behavior. Nested list patterns as elements
+  (`[1, [a, b]]`) and rest capture remain out of scope. Clean first pass,
+  no bounces (3609 tests passing, up from 3602).

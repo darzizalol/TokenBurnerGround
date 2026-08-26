@@ -504,6 +504,114 @@ grooming pass, not this task.
 
 ---
 
+## 6. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
+
+Build: flat map patterns (`{a, b} => ...`, PR #326) landed scoped to bare
+identifier keys only — each key binds a variable of the *same* name, with
+no way to rename. `let` map destructuring already supports per-key rename
+(`let {a: x, b} = expr;`, `_destructure_map_pattern_entry`,
+`cinder/parser.py`) — the same "prove the flat form out, then extend it"
+staging flat list patterns used for literal elements (PR #322) and rest
+capture (PR #324). This is the natural next extension now that the flat
+form has landed. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 });'
+# -> <eval>:1:24: expected '}' after map pattern, found ':'
+```
+
+**Scope note:** only bare per-key rename (`{a: x, b}`) is in scope — no
+nesting (`{a: {b}}`), no rest capture (`{a, ...rest}`), and no default
+values (`{a = 5}`); those stay real gaps for later, the same way flat map
+patterns themselves were staged.
+
+Today `_match_map_pattern` (`cinder/parser.py`, search `def
+_match_map_pattern`) returns a bare `list[str]` of key names, reused
+directly as both the map's lookup key and the bound variable's name; the
+interpreter's `map_pattern` branch (`cinder/interpreter.py`, search `if
+arm.map_pattern is not None`) does the same double duty. Widen both to
+carry `(key, binding)` pairs:
+```python
+    def _match_map_pattern(self) -> "list[tuple[str, str]]":
+        self._advance()  # consume '{'
+        entries: "list[tuple[str, str]]" = []
+        if not self._check(TokenType.RBRACE):
+            entries.append(self._match_map_pattern_entry())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                entries.append(self._match_map_pattern_entry())
+        self._consume(TokenType.RBRACE, "'}' after map pattern")
+        return entries
+
+    def _match_map_pattern_entry(self) -> "tuple[str, str]":
+        key = self._consume(
+            TokenType.IDENTIFIER, "identifier inside map pattern"
+        ).lexeme
+        if self._check(TokenType.COLON):
+            self._advance()
+            binding = self._consume(
+                TokenType.IDENTIFIER, "identifier after ':' in map pattern"
+            ).lexeme
+            return key, binding
+        return key, key
+```
+This mirrors `_destructure_map_pattern_entry`'s own `key`/`binding` split,
+just without its nested-pattern/default branches (out of scope here).
+Then in `cinder/interpreter.py`, replace the `map_pattern` branch's body:
+```python
+            if arm.map_pattern is not None:
+                if not isinstance(subject, dict) or not all(
+                    key in subject for key, _ in arm.map_pattern
+                ):
+                    continue
+                arm_env = Environment(env)
+                for key, binding in arm.map_pattern:
+                    arm_env.define(binding, subject[key])
+                return self.evaluate(arm.body, arm_env)
+```
+Update `MatchArm`'s `map_pattern` field docstring (`cinder/ast_nodes.py`,
+search `map_pattern` is a fifth`) from "a flat list of bound-identifier
+keys" to "a flat list of `(key, binding)` pairs, `binding` equal to `key`
+when unrenamed" — no field-type or dataclass-shape change beyond the
+element type, so nothing else in `ast_nodes.py` needs touching.
+
+Acceptance criteria:
+- `match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 };` is `3`.
+- `match ({"a": 1}) { {a: x} => x, _ => 0 };` is `1`.
+- `match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 };` is still `3` —
+  unrenamed keys are unaffected by the change.
+- `match ({"a": 1}) { {a: x, b: y} => x + y, _ => -1 };` is `-1` — a
+  missing key still falls through, not raises, rename or not.
+- `match ([1, 2]) { {a: x} => x, _ => "no" };` is `"no"` — a non-map
+  subject still falls through.
+- `match ({"a": 1, "b": 2}) { {a: x} => x, _ => 0 };` is `1` — extra
+  unmatched keys in the subject are still ignored.
+- A renamed binding is scoped to its arm's body only, same as unrenamed
+  bindings today (does not leak into the enclosing scope).
+- `match (x) { {a: 5} => a, _ => 0 };` (non-identifier after `:`) raises
+  `ParseError` matching `"identifier after ':' in map pattern"`.
+- `shape(parse('match (x) { {a: x, b} => a, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the first arm's `map_pattern` as
+  `[("a", "x"), ("b", "b")]` — update the existing
+  `test_match_map_pattern_shape`/`test_match_empty_map_pattern_shape`/
+  `test_match_map_pattern_and_list_pattern_coexist` assertions (search
+  those names), which currently expect a bare `["a", "b"]`, to the new
+  pair-list shape.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_map_pattern`, new
+`_match_map_pattern_entry`), `cinder/interpreter.py` (`_evaluate_match`'s
+`map_pattern` branch), `cinder/ast_nodes.py` (`MatchArm` docstring only),
+`tests/test_parser.py` (update the three shape tests named above, extend
+with a rename case), `tests/test_interpreter.py` (extend
+`class TestMatchExpression`, search `test_map_pattern_binds_named_keys`,
+with the rename cases above). Once merged, `README.md`'s `match`
+expression bullet needs the flat-map-patterns description widened to
+mention per-key rename, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

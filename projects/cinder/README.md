@@ -170,11 +170,15 @@ while (i < 10) {
   least N elements" instead of an exact length, mirroring `let`
   destructuring's own rest capture), range patterns (`match (5) { 1..10
   => "small", _ => "large" }`, `INT`-only bounds, exclusive `..` or
-  inclusive `..=`, reusing the same range machinery as `x in 1..5`), and
+  inclusive `..=`, reusing the same range machinery as `x in 1..5`),
   negative literal patterns (`match (-5) { -5 => "neg", _ => "pos" }`,
-  `INT`/`FLOAT` only, not range-pattern bounds) for now (no nested list
-  patterns, map patterns, negative range-pattern bounds, or guards yet —
-  see `BACKLOG.md`)
+  `INT`/`FLOAT` only, not range-pattern bounds), and flat map patterns
+  (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`, a map subject
+  tested for every named key's presence and each key's value bound in one
+  step, falling through — not raising — on a missing key or non-map
+  subject, bare identifier keys only, no rename yet) for now (no nested
+  list patterns, map-pattern rename, negative range-pattern bounds, or
+  guards yet — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -432,7 +436,9 @@ while (i < 10) {
   `cartesian_product` to return every ordered combination of one element from each of N lists
   (an N-list generalization of `zip`, a thin wrapper over `itertools.product`),
   `power_set` to return every subset of a list across all sizes (a thin wrapper over
-  `itertools.combinations`, the enumerate-vs-count sibling of `binomial`'s counting question), and
+  `itertools.combinations`, the enumerate-vs-count sibling of `binomial`'s counting question),
+  `permutations` to return every ordering of a list (a thin wrapper over `itertools.permutations`,
+  the arrangement-side sibling of `power_set`/`cartesian_product`), and
   type predicates `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -511,26 +517,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `permutations` — every
-ordering of a list via a thin wrapper over `itertools.permutations`, the
-collection-side sibling of `cartesian_product`/`power_set` rounding out
-the "enumerate the ways to arrange/pick/combine elements" cluster — and
-before that rest capture in list patterns (`match ([1, 2, 3]) { [a,
+Actively developed, nightly. Recently landed: flat map patterns in
+`match` arms (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) —
+the map-subject counterpart to flat list patterns, testing key presence
+and binding each key's value in one step, falling through (not raising)
+on a missing key or non-map subject — and before that `permutations` —
+every ordering of a list via a thin wrapper over `itertools.permutations`,
+the collection-side sibling of `cartesian_product`/`power_set` rounding
+out the "enumerate the ways to arrange/pick/combine elements" cluster —
+and before that rest capture in list patterns (`match ([1, 2, 3]) { [a,
 ...rest] => rest, _ => [] }`) — an optional trailing `...name`/`..._`
 after a list pattern's fixed elements, matching "at least N elements"
 instead of an exact length and binding the tail as a sliced copy,
 mirroring the rest capture `let` destructuring already has — and before
 that `nth_hexagonal` — the hexagonal number found at a 1-indexed position
 via the closed form `k(2k - 1)`, the figurate-number cluster's third
-`nth_*` member alongside `nth_triangular`/`nth_pentagonal` — and before
-that literal elements in list patterns (`match ([1, 2]) { [1, b] => b, _
-=> 0 }`) — a bare literal now allowed alongside bound identifiers per
-element, falling through (not raising) on a mismatch. See
+`nth_*` member alongside `nth_triangular`/`nth_pentagonal`. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): flat map patterns in
-`match` arms (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) —
-the map-subject counterpart to flat list patterns, testing key presence
-and binding each key's value in one step, `combinations` — every
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `combinations` — every
 r-length combination of a list, the fixed-size sibling of `power_set`
 (all sizes at once) and the enumerate-vs-count sibling of `binomial` for
 one specific size, `nth_heptagonal` — the k-th heptagonal number by
@@ -541,9 +545,13 @@ pattern, extended to range bounds, nested list patterns
 (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`) — a
 list-pattern element that is itself a list pattern, to arbitrary depth,
 the last flat-vs-nested gap left in list patterns now that literal
-elements and rest capture have both landed, and `nth_octagonal` — the
+elements and rest capture have both landed, `nth_octagonal` — the
 k-th octagonal number by position, the figurate-number cluster's fifth
-`nth_*` member. The pattern-matching tasks are all steps in the arc
+`nth_*` member, and per-key rename in match map patterns
+(`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`) — the same
+"prove the flat form out, then extend it" staging that already took flat
+list patterns to literal elements and rest capture, now applied to flat
+map patterns. The pattern-matching tasks are all steps in the arc
 opened by PR #304 and can land in either order relative to their
 siblings; each is written to adapt to whichever has already landed by
 the time it's claimed. (Guards in `match` arms, `n if n > 0 =>

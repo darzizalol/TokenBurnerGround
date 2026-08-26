@@ -149,9 +149,14 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `permutations`
-(#325) — every ordering of a list, a thin wrapper over
-`itertools.permutations`, the collection-side sibling of
+Recently landed (see `CHANGELOG.md` for the full list): flat map patterns
+in `match` arms (#326) — the map-subject counterpart to flat list
+patterns, `{a, b} => ...` tests that the subject is a map containing
+every named key and binds each key's value in one step, falling through
+(not raising) on a missing key or non-map subject, the same "shape test,
+no exception" philosophy flat list patterns established — and before
+that `permutations` (#325) — every ordering of a list, a thin wrapper
+over `itertools.permutations`, the collection-side sibling of
 `cartesian_product`/`power_set` rounding out the "enumerate the ways to
 arrange/pick/combine elements" cluster — and before that rest capture in
 list patterns (#324) — an optional trailing `...name`/`..._` after a list
@@ -160,23 +165,15 @@ length and binds the tail as a sliced copy, mirroring the rest capture
 `let [a, ...rest] = xs;` destructuring already has — and before that
 `nth_hexagonal` (#323) — the k-th hexagonal number by position, the
 figurate-number cluster's third `nth_*` member alongside
-`nth_triangular`/`nth_pentagonal` — and before that literal elements in
-list patterns (#322) — a bare literal (`INT`/`FLOAT`/`STRING`/`TRUE`/
-`FALSE`/`NIL`) is now allowed per list-pattern element alongside a bound
-identifier or `_`, tested with `values_equal`, falling through (not
-raising) on a mismatch. Guards in `match` arms (`n if n > 0 => ...`) were
-attempted (PR #314) but closed after three straight `VERDICT: CHANGES
-REQUESTED` rounds, all the same recurring bug in the bare-arrow/guard
-`=>` disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
-postmortem and the suggested next approach; still not requeued.
+`nth_triangular`/`nth_pentagonal`. Guards in `match` arms (`n if n > 0 =>
+...`) were attempted (PR #314) but closed after three straight `VERDICT:
+CHANGES REQUESTED` rounds, all the same recurring bug in the
+bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
+for the full postmortem and the suggested next approach; still not
+requeued.
 
-`BACKLOG.md` carries the active queue, 3-depth/3-breadth at the 6-task
-ceiling: flat map patterns in `match` arms (`{a, b} => a + b`), the
-map-subject counterpart to flat list patterns: tests that the subject is
-a map containing every named key and binds each key's value in one step,
-falling through (not raising) on a missing key or non-map subject, the
-same "shape test, no exception" philosophy flat list patterns
-established — `combinations` — every r-length combination of a list, the
+`BACKLOG.md` carries the active queue, 3-breadth/3-depth at the 6-task
+ceiling: `combinations` — every r-length combination of a list, the
 enumerate-vs-count sibling of `binomial` for a *specific* size, the
 natural companion to `power_set` (all sizes at once) — `nth_heptagonal` —
 the k-th heptagonal number by position, the figurate-number cluster's
@@ -185,51 +182,52 @@ fourth `nth_*` member — negative bounds in range patterns (`-10..0 =>
 plain literals to range bounds too — nested list patterns (`[a, [b, c]]
 => ...`), a list-pattern element that is itself a list pattern to
 arbitrary depth, the last flat-vs-nested gap left in list patterns now
-that literal elements and rest capture have both landed — and
-`nth_octagonal`, the figurate-number cluster's fifth `nth_*` member,
-following `nth_heptagonal` the same way each prior member followed its
-predecessor.
+that literal elements and rest capture have both landed — `nth_octagonal`,
+the figurate-number cluster's fifth `nth_*` member, following
+`nth_heptagonal` the same way each prior member followed its predecessor
+— and per-key rename in match map patterns (`{a: x, b} => ...`), the same
+"prove the flat form out, then extend it" staging flat list patterns used
+for literal elements/rest capture, now applied to flat map patterns.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
 distinct from destructuring. Bound-identifier patterns (#311), multi-value
 patterns (#312), flat list patterns (#316), range patterns (#318),
 negative literal patterns (#320), literal list-pattern elements (#322),
-and rest capture in list patterns (#324) are the follow-ups that have
-landed so far; flat map patterns and nested list patterns are queued
-behind them, each written to adapt to whatever the merged code actually
-looks like by the time it's claimed, since these tasks can land in either
-order relative to their siblings — see each task's own "Ordering note."
-Negative literal patterns landed scoped to plain literal patterns only —
-range-pattern bounds still don't accept a leading `-` (`-10..0` stays out
-of scope), queued as its own task since the gap was never separately
-closed. Literal list-pattern elements landed scoped to bare literals only,
-no nesting, no rest capture; rest capture then landed scoped to a single
-trailing capture, no nesting — nested list patterns are now queued as
-their own task, unblocked by both of those landing (the same staged
-approach the `nth_*`/`is_*` figurate-number cluster used: prove the flat
-form out, then extend it). Flat map patterns are scoped to bare identifier
-keys only, no rename, no nesting, no rest, no defaults — the same "prove
-the flat form out first" staging flat list patterns themselves used before
-literal elements/rest capture extended them; map-pattern rename/nesting/
-rest are real gaps left for later once this proves the form out. Guards
-remain a real gap too, but are deliberately not requeued yet.
+rest capture in list patterns (#324), and flat map patterns (#326) are
+the follow-ups that have landed so far; nested list patterns and map
+pattern rename are queued behind them, each written to adapt to whatever
+the merged code actually looks like by the time it's claimed, since these
+tasks can land in either order relative to their siblings — see each
+task's own "Ordering note." Negative literal patterns landed scoped to
+plain literal patterns only — range-pattern bounds still don't accept a
+leading `-` (`-10..0` stays out of scope), queued as its own task since
+the gap was never separately closed. Literal list-pattern elements landed
+scoped to bare literals only, no nesting, no rest capture; rest capture
+then landed scoped to a single trailing capture, no nesting — nested list
+patterns are now queued as their own task, unblocked by both of those
+landing (the same staged approach the `nth_*`/`is_*` figurate-number
+cluster used: prove the flat form out, then extend it). Flat map patterns
+landed scoped to bare identifier keys only, no rename, no nesting, no
+rest, no defaults — per-key rename is now queued as its own task, the
+same staging; map-pattern nesting/rest remain real gaps left for later
+once rename proves out. Guards remain a real gap too, but are
+deliberately not requeued yet.
 
-This grooming pass (2026-08-27, sixth pass) restocked one task —
-`nth_octagonal` (breadth) — because `permutations` (breadth) landed via
-PR #325 since the last pass without a grooming pass restocking behind it,
-dropping the queue from 6 to 5 (2-breadth/3-depth: `combinations`,
-`nth_heptagonal` vs. flat map patterns, negative range-pattern bounds,
-nested list patterns), at the 5-task floor. Adding one breadth task
-restores the queue to its 6-task ceiling at exact 3-breadth/3-depth
-parity. `nth_octagonal` is the natural next breadth task: `is_octagonal`
-already exists with no `nth_*` counterpart, the same gap `nth_heptagonal`
-(task 3, queued but not yet landed) closes for the cluster's fourth
-member — this task closes its fifth, mirroring the exact shape every
-prior `nth_*` task in the cluster used. **The next grooming pass should
-restock with whichever kind keeps 3-breadth/3-depth parity** given
-whatever lands between now and then — alternation is the default rhythm,
-not a hard rule.
+This grooming pass (2026-08-27, seventh pass) restocked one task — per-key
+rename in match map patterns (depth) — because flat map patterns (depth)
+landed via PR #326 since the last pass without a grooming pass restocking
+behind it, dropping the queue from 6 to 5 (3-breadth/2-depth:
+`combinations`, `nth_heptagonal`, `nth_octagonal` vs. negative
+range-pattern bounds, nested list patterns), at the 5-task floor. Adding
+one depth task restores the queue to its 6-task ceiling at exact
+3-breadth/3-depth parity. Map-pattern rename is the natural next depth
+task: it's the same "extend the flat form" staging literal
+list-pattern-elements and rest capture already used, applied to the
+pattern kind that just landed. **The next grooming pass should restock
+with whichever kind keeps 3-breadth/3-depth parity** given whatever lands
+between now and then — alternation is the default rhythm, not a hard
+rule.
 
 ## History
 

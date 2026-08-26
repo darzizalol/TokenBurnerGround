@@ -11,90 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_hexagonal` — the k-th hexagonal number by position [claimed 2026-08-26T19:16:50Z]
-
-Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
-ceiling now that `cartesian_product` (PR #317) landed, dropping the queue
-to 5 tasks (2-breadth/3-depth: `nth_pentagonal`, `power_set` vs. range
-patterns, negative literal patterns, literal list elements). This
-restocks with breadth to restore parity, per `PROJECT.md`'s alternation
-policy. `is_hexagonal` already exists as a membership test, but Cinder
-has no way to ask "what is the k-th hexagonal number" the way it can for
-triangular numbers (`nth_triangular`, PR #313), Fibonacci
-(`nth_fibonacci`), primes (`nth_prime`), and Lucas numbers (`nth_lucas`)
-— the exact same "value-returning sibling of an `is_*` membership test"
-pattern `nth_triangular` and task 2 above (`nth_pentagonal`, still
-unclaimed) already establish for the figurate-number cluster, just for
-its third member. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_hexagonal(5));'
-# -> <eval>:1:7: undefined name 'nth_hexagonal'
-```
-
-**Ordering note:** if task 2 (`nth_pentagonal`) has already landed by the
-time this task is claimed, register `nth_hexagonal` directly after
-`nth_pentagonal` instead of after `nth_triangular` — same adaptive
-placement every sibling task in this backlog already uses.
-
-Add to `cinder/builtins.py`, registered right after `_nth_triangular`
-(search `def _nth_triangular`, immediately before `_is_prime` — or
-directly after `_nth_pentagonal` if task 2 has already landed):
-```python
-def _nth_hexagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_hexagonal", arguments, 1, line, column)
-    value = _require_int("nth_hexagonal", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_hexagonal() requires a positive integer, domain error", line, column
-        )
-    return value * (2 * value - 1)
-```
-The closed form `H(k) = k(2k - 1)` is the standard 1-indexed hexagonal
-number formula (`H(1) = 1, H(2) = 6, H(3) = 15, ...`), matching
-`_is_hexagonal`'s own derivation (`cinder/builtins.py`, search `def
-_is_hexagonal`: it tests `8 * value + 1` for a perfect square with an
-odd-mod-4 root, the standard membership test for this same closed form).
-This mirrors `_nth_triangular`'s and `_nth_pentagonal`'s shape exactly
-(arity check, int check, domain check, one-line closed-form return) — a
-thin, direct composition, not a new algorithm. Also register the new
-dict entry (search `"nth_triangular": _nth_triangular,`, add
-`"nth_hexagonal": _nth_hexagonal,` directly after it — or directly after
-`"nth_pentagonal": _nth_pentagonal,` if task 2 has already landed).
-
-Acceptance criteria:
-- `nth_hexagonal(1);` is `1`, `nth_hexagonal(2);` is `6`,
-  `nth_hexagonal(3);` is `15`, `nth_hexagonal(4);` is `28`,
-  `nth_hexagonal(5);` is `45` — the first five hexagonal numbers.
-- `nth_hexagonal(10);` is `190`.
-- `nth_hexagonal(100);` is `19900`.
-- `is_hexagonal(nth_hexagonal(n));` is `true` for every `n` from `1` to
-  `100` — confirms the closed form agrees with the existing membership
-  predicate across a wide range, the same cross-check `nth_triangular`'s
-  and `nth_pentagonal`'s own acceptance criteria used.
-- `nth_hexagonal(0);` and `nth_hexagonal(-3);` both raise
-  `CinderRuntimeError` matching `"nth_hexagonal() requires a positive
-  integer, domain error"`.
-- `nth_hexagonal(2.0);` raises `CinderRuntimeError` matching
-  `"nth_hexagonal() requires an int, got float"`.
-- `nth_hexagonal(true);` raises `CinderRuntimeError` matching
-  `"nth_hexagonal() requires an int, got bool"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `nth_triangular`/
-`nth_pentagonal`, see current line numbers — shift depending on which
-sibling tasks land first), `tests/test_builtins.py` (model on `class
-TestNthTriangular`, search that name, including its `is_triangular`-
-agreement-style cross-check test, adapted to `is_hexagonal`). Once
-merged, `README.md`'s Builtins bullet needs `nth_hexagonal` added near
-`nth_triangular`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: rest capture in list patterns (`[a, ...rest] => ...`)
+## 1. Language: rest capture in list patterns (`[a, ...rest] => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling now that range patterns in `match` arms
@@ -267,7 +184,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `permutations` — every ordering of a list
+## 2. Standard library: `permutations` — every ordering of a list
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `nth_pentagonal` (PR #319) landed, dropping the queue
@@ -354,7 +271,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+## 3. Language: flat map patterns in `match` arms (`{a, b} => ...`)
 
 Build: restocking the sixth and final slot to bring the backlog back to its
 6-task, 3-breadth/3-depth ceiling. Negative literal patterns landed via PR
@@ -505,7 +422,7 @@ task.
 
 ---
 
-## 5. Standard library: `combinations` — every r-length combination of a list
+## 4. Standard library: `combinations` — every r-length combination of a list
 
 Build: restocking the sixth slot to bring the backlog back to its 6-task,
 3-breadth/3-depth ceiling now that `power_set` landed via PR #321, dropping

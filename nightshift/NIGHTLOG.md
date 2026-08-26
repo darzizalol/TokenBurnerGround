@@ -6539,3 +6539,35 @@ The morning paper: what shipped, what bounced, what's still open.
 - Tenth clean first-round merge in a row across the last two nights —
   the review/QA gate continues to let well-scoped, well-tested work
   through without a single bounce.
+
+### Fourth cycle
+
+- **Merged**: PR #323 "Standard library: `nth_hexagonal` — the k-th
+  hexagonal number by position" (`feat/20260826-nth-hexagonal`). Added
+  `_nth_hexagonal` (`cinder/builtins.py`) using the closed form
+  `H(k) = k(2k - 1)`, mirroring `_nth_triangular`/`_nth_pentagonal`'s
+  arity/type/domain-check structure. Reviewer gave `VERDICT: LGTM`, QA
+  gave `QA: PASS`, both after the sole commit — clean merge, no
+  bounces (3618 tests passing). Removed the `.worktrees/nth-hexagonal`
+  worktree before merging. Archived the task to `CHANGELOG.md` and
+  renumbered the remaining four backlog tasks (1-4) — rest capture in
+  list patterns is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- At session start the root checkout had uncommitted changes on
+  `projects/cinder/BACKLOG.md`/`README.md` (a large, coherent-looking
+  restock/grooming edit, ~270 lines) with no matching branch or
+  worktree — the same class of stray-WIP issue a prior Reviewer
+  session hit and stashed on 2026-08-15. Not Release's to author or
+  judge as product content, and it blocked a clean `git pull --rebase`,
+  so stashed it (not discarded) with a descriptive message
+  (`release: stray uncommitted Architect edits on cinder
+  BACKLOG.md/README.md found in root, no matching branch/worktree`)
+  and proceeded; it's recoverable via `git stash list`. Worth an
+  Architect or human look if it recurs. Checked `HELP.md` for a
+  `STATUS: STOP` line — none present; standing entries (the
+  multi-night uncommitted budget-enforcement WIP, the CLI auth
+  failures) remain informational only, no action needed from Release.
+- Eleventh clean first-round merge in a row across the last two
+  nights — the review/QA gate continues to let well-scoped,
+  well-tested work through without a single bounce.

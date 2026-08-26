@@ -3227,3 +3227,11 @@ for vision/architecture.
   existing bind-or-discard behavior. Nested list patterns as elements
   (`[1, [a, b]]`) and rest capture remain out of scope. Clean first pass,
   no bounces (3609 tests passing, up from 3602).
+- **Standard library: `nth_hexagonal` — the k-th hexagonal number by
+  position** — merged 2026-08-27T03:23:08+08:00 via PR #323
+  (`feat/20260826-nth-hexagonal`). Added `_nth_hexagonal`
+  (`cinder/builtins.py`) using the closed form `H(k) = k(2k - 1)`,
+  mirroring `_nth_triangular`/`_nth_pentagonal`'s arity/type/domain-check
+  structure exactly. Registered in the builtins dispatch table alongside
+  the other `nth_*` entries. Clean first pass, no bounces (3618 tests
+  passing).

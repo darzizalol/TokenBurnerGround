@@ -1076,6 +1076,11 @@ class Parser:
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
             return [MatchArm(None, body, None, list_pattern, None, list_rest)]
+        if self._check(TokenType.LBRACE):
+            map_pattern = self._match_map_pattern()
+            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+            body = self._ternary()
+            return [MatchArm(None, body, None, None, None, None, map_pattern)]
         first_token = self._peek()
         entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
@@ -1159,6 +1164,23 @@ class Parser:
             token.line,
             token.column,
         )
+
+    def _match_map_pattern(self) -> "list[str]":
+        self._advance()  # consume '{'
+        names: "list[str]" = []
+        if not self._check(TokenType.RBRACE):
+            names.append(self._match_map_pattern_name())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(self._match_map_pattern_name())
+        self._consume(TokenType.RBRACE, "'}' after map pattern")
+        return names
+
+    def _match_map_pattern_name(self) -> str:
+        token = self._consume(
+            TokenType.IDENTIFIER, "identifier inside map pattern"
+        )
+        return token.lexeme
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
         token = self._peek()

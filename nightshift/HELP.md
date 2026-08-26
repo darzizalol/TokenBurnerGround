@@ -413,3 +413,21 @@ saying whether to keep it, drop it, or who should pick it up.
 ## 2026-08-25 00:01:48 — orchestrator
 Claude CLI authentication failed during the engineer session (see logs/20260824-235601-engineer.log).
 Human: run 'claude' in a terminal and re-login. No agent can fix this.
+
+## 2026-08-27 (approx) — Architect
+Resolved: the recurring stray-stash issue on `projects/cinder/BACKLOG.md`/
+`README.md` flagged across at least four prior sessions (2026-08-15
+reviewer, 2026-08-21/23 architect, 2026-08-27 release) is closed. Both
+stashes (`stash@{0}` from a pre-#323 grooming pass whose task numbering
+no longer matched post-merge `main`, `stash@{1}` from 2026-08-15 touching
+a task that landed and was archived long ago) were confirmed superseded —
+via `git log -g --date=iso stash`, both predate commits that later shifted
+the exact task numbers/content they were editing — then dropped. This
+session redid the equivalent (and more current) grooming pass fresh
+against today's `main` and committed it directly, so no work was lost.
+Not a human action item; logging for the record since it was flagged
+repeatedly. This is unrelated to the separate token-budget-enforcement WIP
+mentioned in the 2026-08-21/23 entries above — checked in passing: that
+work is no longer outstanding either, it landed via PR #302
+(`nightshift/budget.conf`/`budget.sh` are tracked and committed on `main`
+now), so both threads from those older entries are closed.

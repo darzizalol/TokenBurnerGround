@@ -10,7 +10,7 @@ worktree on a `<type>/<YYYYMMDD>-<slug>` branch (`feat`/`fix`/`chore`/`docs`/
 a later task while an earlier one is unclaimed/open.
 
 ---
-## 1. Standard library: `power_set` — every subset of a list
+## 1. Standard library: `power_set` — every subset of a list [claimed 2026-08-26T14:16:07Z]
 
 Build: restocking the backlog from 4 back to 6 tasks now that
 `nth_catalan` (PR #315) and flat list patterns in `match` arms (PR #316)

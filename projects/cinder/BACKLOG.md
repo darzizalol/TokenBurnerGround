@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_hexagonal` — the k-th hexagonal number by position
+## 1. Standard library: `nth_hexagonal` — the k-th hexagonal number by position [claimed 2026-08-26T19:16:50Z]
 
 Build: restocking the backlog back to its 6-task, 3-breadth/3-depth
 ceiling now that `cartesian_product` (PR #317) landed, dropping the queue

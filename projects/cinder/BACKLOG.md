@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `combinations` — every r-length combination of a list
+## 1. Standard library: `combinations` — every r-length combination of a list [claimed 2026-08-26T20:18:27Z]
 
 Build: `binomial(n, k)` already answers "how many r-length combinations
 exist" and `power_set` (PR #321) already enumerates combinations of *every*

@@ -303,13 +303,18 @@ class MatchArm:
     membership test against an int range, combinable with literal
     patterns (but not with the wildcard/bound-identifier kind) in a
     multi-value arm; `pattern` and `binding` stay `None` for a
-    range-pattern entry."""
+    range-pattern entry. `list_rest` accompanies `list_pattern`: `None`
+    when the list pattern has no rest capture, the bound name when it
+    does (kept as the literal name `"_"` when the rest is discarded, so
+    the interpreter can tell "no rest capture" apart from "rest
+    capture, discarded")."""
 
     pattern: "Expr | None"
     body: "Expr"
     binding: "str | None" = None
     list_pattern: "list | None" = None
     range_pattern: "RangeExpr | None" = None
+    list_rest: "str | None" = None
 
 
 @dataclass(frozen=True)

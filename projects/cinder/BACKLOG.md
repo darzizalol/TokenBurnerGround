@@ -597,6 +597,157 @@ grooming pass, not this task.
 
 ---
 
+## 6. Language: flat map patterns in `match` arms (`{a, b} => ...`)
+
+Build: restocking the sixth and final slot to bring the backlog back to its
+6-task, 3-breadth/3-depth ceiling. Negative literal patterns landed via PR
+#320 and were archived to `CHANGELOG.md` without a grooming pass restocking
+behind them, dropping the queue to 5 tasks (3-breadth/2-depth: `power_set`,
+`nth_hexagonal`, `permutations` vs. literal list elements, rest capture).
+Adding one depth task restores 3/3 parity. `match` currently has a flat
+*list* pattern (`[a, b] => ...`, PR #316) that destructures a list subject
+by shape, but no equivalent for a *map* subject — `let`/assignment
+destructuring already has a rich map pattern (`let {a, b} = expr;`, with
+nesting, rename, rest, and defaults — `cinder/parser.py`'s
+`_destructure_map_pattern`), but `match` arms have no way to test "is this
+a map with these keys" and bind their values in one step, the same gap
+flat list patterns closed for lists in PR #316. This task closes the
+minimal slice of that gap — bare bound-identifier keys only, no nesting,
+no rename, no rest, no defaults — mirroring exactly how flat list patterns
+themselves started minimal before literal elements and rest capture (tasks
+2 and 4 above) extended them incrementally. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 });'
+# -> <eval>:1:32: expected a literal, identifier, or '_' in match pattern, found '{'
+```
+
+**Scope note:** only bare identifier keys are accepted per entry (`{a, b}`,
+where the key name and the bound name are always the same — no `{a: x}`
+rename, which is a real but separate follow-up gap, the same "prove the
+flat form out first" staging `nth_triangular` → `nth_pentagonal` and flat
+list patterns → literal list elements both already used). No nested
+patterns (`{a: {b}}` or `{a: [b, c]}`), no rest capture (`{a, ...rest}`),
+and no default values (`{a, b = 5}`) — all real gaps, all left for future
+tasks once this one proves the form out, matching how task 4 (rest capture
+in *list* patterns) is itself staged as a separate task from flat list
+patterns. A map pattern matches if the subject is a map (dict) containing
+*every* named key — extra unnamed keys in the subject are ignored, and a
+missing key or non-map subject falls through to the next arm (does not
+raise), the same "falls through, doesn't raise" philosophy flat list
+patterns (shape mismatch) and range patterns (non-numeric subject) already
+established for pattern-kind mismatches in `match`.
+
+**Ordering note:** if rest capture in list patterns (task 4 above) has
+already landed by the time this task is claimed, `MatchArm` will already
+have a `list_rest` field as its sixth positional slot — append the new
+`map_pattern` field as the *seventh* slot instead of the sixth shown below,
+and adjust the one `MatchArm(...)` call site this task touches accordingly
+(every other call site in the parser already uses the trailing-default
+form and needs no change either way).
+
+Today's `_match_arm` (`cinder/parser.py`, search `def _match_arm`) checks
+`TokenType.LBRACKET` for a list pattern before falling through to
+`_match_pattern`; widen it to also check `TokenType.LBRACE` for a map
+pattern, mirroring the list-pattern branch exactly:
+```python
+    def _match_arm(self) -> "list[MatchArm]":
+        if self._check(TokenType.LBRACKET):
+            list_pattern = self._match_list_pattern()
+            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+            body = self._ternary()
+            return [MatchArm(None, body, None, list_pattern, None)]
+        if self._check(TokenType.LBRACE):
+            map_pattern = self._match_map_pattern()
+            self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+            body = self._ternary()
+            return [MatchArm(None, body, None, None, None, map_pattern)]
+        ...  # unchanged below
+
+    def _match_map_pattern(self) -> "list[str]":
+        self._advance()  # consume '{'
+        names: "list[str]" = []
+        if not self._check(TokenType.RBRACE):
+            names.append(self._match_map_pattern_name())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                names.append(self._match_map_pattern_name())
+        self._consume(TokenType.RBRACE, "'}' after map pattern")
+        return names
+
+    def _match_map_pattern_name(self) -> str:
+        token = self._consume(
+            TokenType.IDENTIFIER, "identifier inside map pattern"
+        )
+        return token.lexeme
+```
+`{` is unambiguous at this position — no other `_match_arm` production
+starts with `{`, so no lookahead conflict with the enclosing `match { ...
+}` block itself (already consumed before `_match_arm` is ever called).
+
+`MatchArm` (`cinder/ast_nodes.py`, search `class MatchArm`) needs a new
+field appended after `range_pattern` (appending, not inserting, keeps
+every existing positional `MatchArm(...)` call site valid — see the
+Ordering note above for the one exception):
+```python
+    map_pattern: "list[str] | None" = None
+```
+
+`_evaluate_match` (`cinder/interpreter.py`, search `def _evaluate_match`)
+needs a new branch, modeled directly on the existing `list_pattern`
+branch but testing key presence instead of length:
+```python
+            if arm.map_pattern is not None:
+                if not isinstance(subject, dict) or not all(
+                    key in subject for key in arm.map_pattern
+                ):
+                    continue
+                arm_env = Environment(env)
+                for key in arm.map_pattern:
+                    arm_env.define(key, subject[key])
+                return self.evaluate(arm.body, arm_env)
+```
+Place it alongside the existing `list_pattern`/`range_pattern` branches,
+before the `arm.pattern is None` branch (order among the four branches
+doesn't matter — they're mutually exclusive per arm).
+
+Acceptance criteria:
+- `match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 };` is `3`.
+- `match ({"a": 1}) { {a, b} => a + b, _ => 0 };` is `0` — a missing key
+  falls through without raising.
+- `match ({"a": 1, "b": 2, "c": 3}) { {a, b} => a + b, _ => 0 };` is `3` —
+  extra unnamed keys in the subject are ignored.
+- `match ([1, 2]) { {a} => a, _ => "no" };` is `"no"` — a non-map subject
+  falls through without raising.
+- `match ({"a": 1}) { {a} => a, _ => 0 };` is `1` — a single-key pattern
+  works too.
+- `match ({}) { {} => "empty", _ => "no" };` is `"empty"` — an empty map
+  pattern matches any map subject (vacuously, every key of the empty set
+  is present).
+- `match ({"a": 1, "b": 2}) { [a, b] => "list", {a, b} => a + b, _ => 0 };`
+  is `3` — list and map patterns coexist as separate arms without
+  interfering.
+- `shape(parse('match (x) { {a, b} => a, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the first arm's `map_pattern` as
+  `["a", "b"]`.
+- `match (x) { {1} => 0 };` (non-identifier inside a map pattern) raises
+  `ParseError` matching `"expected identifier inside map pattern..."`
+  (exact message per whatever `_consume`'s own error formatting produces).
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`MatchArm`), `cinder/parser.py`
+(`_match_arm`, new `_match_map_pattern`/`_match_map_pattern_name`),
+`cinder/interpreter.py` (`_evaluate_match`), `tests/test_parser.py` (the
+`shape()` helper's `MatchExpr` branch needs `arm.map_pattern` added to its
+output tuple; extend `class TestMatchExpression`), `tests/test_interpreter.py`
+(extend `class TestMatchExpression` with the end-to-end cases above). Once
+merged, `README.md`'s `match` expression bullet needs a map-pattern
+description added near the flat-list-pattern one, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

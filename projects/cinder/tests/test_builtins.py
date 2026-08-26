@@ -8547,6 +8547,53 @@ class TestEnumerate(unittest.TestCase):
             run('enumerate(["a"], 2);')
 
 
+class TestPowerSet(unittest.TestCase):
+    def test_power_set_of_empty_list_is_singleton_empty_list(self):
+        env = run("let result = power_set([]);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_power_set_of_single_element(self):
+        env = run("let result = power_set([1]);")
+        self.assertEqual(env.get("result"), [[], [1]])
+
+    def test_power_set_of_two_elements(self):
+        env = run("let result = power_set([1, 2]);")
+        self.assertEqual(env.get("result"), [[], [1], [2], [1, 2]])
+
+    def test_power_set_of_three_elements(self):
+        env = run("let result = power_set([1, 2, 3]);")
+        self.assertEqual(
+            env.get("result"),
+            [[], [1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3]],
+        )
+
+    def test_power_set_size_matches_two_to_the_n(self):
+        env = run(
+            "let a = len(power_set([]));"
+            "let b = len(power_set([1]));"
+            "let c = len(power_set([1, 2]));"
+            "let d = len(power_set([1, 2, 3]));"
+            "let e = len(power_set([1, 2, 3, 4]));"
+        )
+        self.assertEqual(env.get("a"), 2 ** 0)
+        self.assertEqual(env.get("b"), 2 ** 1)
+        self.assertEqual(env.get("c"), 2 ** 2)
+        self.assertEqual(env.get("d"), 2 ** 3)
+        self.assertEqual(env.get("e"), 2 ** 4)
+
+    def test_power_set_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "power_set\\(\\) requires a list, got string",
+        ):
+            run('power_set("ab");')
+
+    def test_power_set_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("power_set([1], [2]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestAssert(unittest.TestCase):
     def test_assert_true_does_not_raise_and_returns_nil(self):
         env = run('let result = assert(true, "should not fire");')

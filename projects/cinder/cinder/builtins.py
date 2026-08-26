@@ -3463,6 +3463,20 @@ def _enumerate(arguments: list, line: int, column: int) -> object:
     return [[index, value] for index, value in enumerate(target)]
 
 
+def _power_set(arguments: list, line: int, column: int) -> object:
+    _require_arity("power_set", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"power_set() requires a list, got {type_name(items)}", line, column
+        )
+    return [
+        list(combo)
+        for size in range(len(items) + 1)
+        for combo in itertools.combinations(items, size)
+    ]
+
+
 def _assert(arguments: list, line: int, column: int) -> object:
     _require_arity("assert", arguments, 2, line, column)
     condition, message = arguments
@@ -4148,6 +4162,7 @@ _BUILTINS = {
     "zip_with": _zip_with,
     "cartesian_product": _cartesian_product,
     "enumerate": _enumerate,
+    "power_set": _power_set,
     "assert": _assert,
     "format": _format,
     "is_list": _is_list,

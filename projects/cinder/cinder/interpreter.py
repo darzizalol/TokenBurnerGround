@@ -1122,7 +1122,14 @@ class Interpreter:
         subject = self.evaluate(expr.subject, env)
         for arm in expr.arms:
             if arm.list_pattern is not None:
-                if not isinstance(subject, list) or len(subject) != len(arm.list_pattern):
+                if not isinstance(subject, list):
+                    continue
+                min_len = len(arm.list_pattern)
+                length_ok = (
+                    len(subject) >= min_len if arm.list_rest is not None
+                    else len(subject) == min_len
+                )
+                if not length_ok:
                     continue
                 arm_env = Environment(env)
                 matched = True
@@ -1136,6 +1143,8 @@ class Interpreter:
                         arm_env.define(entry, item)
                 if not matched:
                     continue
+                if arm.list_rest is not None and arm.list_rest != "_":
+                    arm_env.define(arm.list_rest, subject[min_len:])
                 return self.evaluate(arm.body, arm_env)
             if arm.range_pattern is not None:
                 values = self._evaluate_range(arm.range_pattern, env)

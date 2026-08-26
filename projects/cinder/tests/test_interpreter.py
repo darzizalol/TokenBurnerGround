@@ -4938,6 +4938,48 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
         self.assertEqual(env.get("result"), 3)
 
+    def test_list_pattern_rest_capture_binds_tail(self):
+        env = run(
+            'let result = match ([1, 2, 3]) { [a, ...rest] => rest, _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), [2, 3])
+
+    def test_list_pattern_rest_capture_empty_tail(self):
+        env = run('let result = match ([1]) { [a, ...rest] => rest, _ => "no" };')
+        self.assertEqual(env.get("result"), [])
+
+    def test_list_pattern_rest_capture_two_element_prefix(self):
+        env = run(
+            'let a = match ([1, 2]) { [a, b, ...rest] => rest, _ => "no" };'
+            'let b = match ([1, 2, 3]) { [a, b, ...rest] => rest, _ => "no" };'
+        )
+        self.assertEqual(env.get("a"), [])
+        self.assertEqual(env.get("b"), [3])
+
+    def test_list_pattern_rest_capture_requires_at_least_prefix_length(self):
+        env = run('let result = match ([]) { [a, ...rest] => "yes", _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_list_pattern_rest_capture_discarded_with_underscore(self):
+        env = run('let result = match ([1, 2, 3]) { [a, ..._] => a, _ => "no" };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_rest_capture_combines_with_literal_entry(self):
+        env = run(
+            'let a = match ([1, 2, 3]) { [0, b, ...rest] => rest, _ => "no" };'
+            'let b = match ([0, 2, 3]) { [0, b, ...rest] => rest, _ => "no" };'
+        )
+        self.assertEqual(env.get("a"), "no")
+        self.assertEqual(env.get("b"), [3])
+
+    def test_list_pattern_rest_capture_falls_through_on_non_list_subject(self):
+        env = run('let result = match ("ab") { [a, ...rest] => "yes", _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_list_pattern_without_rest_unaffected_by_rest_capture_feature(self):
+        env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
+        self.assertEqual(env.get("result"), 3)
+
     def test_range_pattern_matches_within_bounds(self):
         env = run('let result = match (5) { 1..10 => "small", _ => "large" };')
         self.assertEqual(env.get("result"), "small")

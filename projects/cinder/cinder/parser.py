@@ -1072,10 +1072,10 @@ class Parser:
 
     def _match_arm(self) -> "list[MatchArm]":
         if self._check(TokenType.LBRACKET):
-            list_pattern = self._match_list_pattern()
+            list_pattern, list_rest = self._match_list_pattern()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
-            return [MatchArm(None, body, None, list_pattern, None)]
+            return [MatchArm(None, body, None, list_pattern, None, list_rest)]
         first_token = self._peek()
         entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
@@ -1098,16 +1098,43 @@ class Parser:
             for pattern, binding, range_pattern in entries
         ]
 
-    def _match_list_pattern(self) -> "list[str | Expr | None]":
+    def _match_list_pattern(self) -> "tuple[list[str | Expr | None], str | None]":
         self._advance()  # consume '['
         entries: "list[str | Expr | None]" = []
+        rest: "str | None" = None
         if not self._check(TokenType.RBRACKET):
-            entries.append(self._match_list_pattern_entry())
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._match_list_pattern_rest_name()
+            else:
+                entries.append(self._match_list_pattern_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
-                entries.append(self._match_list_pattern_entry())
+                if rest is not None:
+                    token = self._peek()
+                    raise ParseError(
+                        f"rest capture must be last in list pattern, found {self._describe(token)}",
+                        token.line,
+                        token.column,
+                    )
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest = self._match_list_pattern_rest_name()
+                else:
+                    entries.append(self._match_list_pattern_entry())
         self._consume(TokenType.RBRACKET, "']' after list pattern")
-        return entries
+        return entries, rest
+
+    def _match_list_pattern_rest_name(self) -> str:
+        self._advance()  # consume '...'
+        token = self._peek()
+        if token.type != TokenType.IDENTIFIER:
+            raise ParseError(
+                f"expected an identifier or '_' after '...' in list pattern, "
+                f"found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._advance()
+        return token.lexeme
 
     def _match_list_pattern_entry(self) -> "str | Expr | None":
         token = self._peek()

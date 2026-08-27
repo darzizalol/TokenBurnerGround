@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
+## 1. Language: per-key rename in match map patterns (`{a: x, b} => ...`) [claimed 2026-08-27T19:32:32Z]
 
 Build: flat map patterns (`{a, b} => ...`, PR #326) landed scoped to bare
 identifier keys only — each key binds a variable of the *same* name, with

@@ -1200,27 +1200,22 @@ class Parser:
                     value_token.column,
                 )
             self._advance()
-            return (
-                Literal(-value_token.literal, minus.line, minus.column),
-                None,
-                None,
-            )
+            start = Literal(-value_token.literal, minus.line, minus.column)
+            if value_token.type == TokenType.INT and (
+                self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ)
+            ):
+                dots = self._advance()
+                inclusive = dots.type is TokenType.DOT_DOT_EQ
+                end = self._match_range_bound()
+                return None, None, RangeExpr(start, end, dots.line, dots.column, inclusive)
+            return start, None, None
         if token.type == TokenType.INT:
             self._advance()
             start = Literal(token.literal, token.line, token.column)
             if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
                 dots = self._advance()
                 inclusive = dots.type is TokenType.DOT_DOT_EQ
-                end_token = self._peek()
-                if end_token.type != TokenType.INT:
-                    raise ParseError(
-                        "expected an int after '..' in match range pattern, found "
-                        f"{self._describe(end_token)}",
-                        end_token.line,
-                        end_token.column,
-                    )
-                self._advance()
-                end = Literal(end_token.literal, end_token.line, end_token.column)
+                end = self._match_range_bound()
                 return None, None, RangeExpr(start, end, dots.line, dots.column, inclusive)
             return start, None, None
         if token.type in (TokenType.FLOAT, TokenType.STRING):
@@ -1238,6 +1233,30 @@ class Parser:
         raise ParseError(
             f"expected a literal, identifier, or '_' in match pattern, "
             f"found {self._describe(token)}",
+            token.line,
+            token.column,
+        )
+
+    def _match_range_bound(self) -> Expr:
+        token = self._peek()
+        if token.type == TokenType.MINUS:
+            minus = self._advance()
+            value_token = self._peek()
+            if value_token.type != TokenType.INT:
+                raise ParseError(
+                    "expected an int after '..' in match range pattern, found "
+                    f"{self._describe(value_token)}",
+                    value_token.line,
+                    value_token.column,
+                )
+            self._advance()
+            return Literal(-value_token.literal, minus.line, minus.column)
+        if token.type == TokenType.INT:
+            self._advance()
+            return Literal(token.literal, token.line, token.column)
+        raise ParseError(
+            "expected an int after '..' in match range pattern, found "
+            f"{self._describe(token)}",
             token.line,
             token.column,
         )

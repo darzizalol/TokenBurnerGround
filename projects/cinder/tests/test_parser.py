@@ -4855,6 +4855,91 @@ class TestMatchExpression(unittest.TestCase):
         ):
             parse('match (5) { -"x" => "a", _ => "b" }')
 
+    def test_match_range_pattern_negative_start_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { -10..0 => "a", _ => "b" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Literal", "a"),
+                        None,
+                        None,
+                        (
+                            "RangeExpr",
+                            ("Literal", -10),
+                            ("Literal", 0),
+                            False,
+                            None,
+                        ),
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", "b"), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_range_pattern_negative_end_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { 0..-1 => "a", _ => "b" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Literal", "a"),
+                        None,
+                        None,
+                        (
+                            "RangeExpr",
+                            ("Literal", 0),
+                            ("Literal", -1),
+                            False,
+                            None,
+                        ),
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", "b"), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_range_pattern_negative_bounds_inclusive_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { -10..=0 => "a", _ => "b" }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Literal", "a"),
+                        None,
+                        None,
+                        (
+                            "RangeExpr",
+                            ("Literal", -10),
+                            ("Literal", 0),
+                            True,
+                            None,
+                        ),
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", "b"), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_range_pattern_negative_start_requires_int_after_minus(self):
+        with self.assertRaises(ParseError):
+            parse('match (x) { -"a"..0 => 0, _ => 1 }')
+
     def test_match_map_pattern_shape(self):
         self.assertEqual(
             shape(parse('match (x) { {a, b} => a, _ => 0 }')),

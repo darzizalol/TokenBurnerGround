@@ -71,6 +71,15 @@ def shape_extra_clauses(extra_clauses):
     ]
 
 
+def _shape_list_pattern_entry(entry):
+    if isinstance(entry, Expr):
+        return shape(entry)
+    if isinstance(entry, tuple):
+        nested_entries, nested_rest = entry
+        return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest)
+    return entry
+
+
 def shape(node):
     """Structural view of an AST node, ignoring line/column noise."""
     if isinstance(node, Literal):
@@ -203,7 +212,7 @@ def shape(node):
                     arm.binding,
                     (
                         [
-                            shape(entry) if isinstance(entry, Expr) else entry
+                            _shape_list_pattern_entry(entry)
                             for entry in arm.list_pattern
                         ]
                         if arm.list_pattern is not None
@@ -4693,6 +4702,27 @@ class TestMatchExpression(unittest.TestCase):
                 ("Identifier", "x"),
                 [
                     (None, ("Identifier", "rest"), None, ["a"], None, "rest", None),
+                    (None, ("Literal", 0), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_nested_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, [b, c]] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        ["a", (["b", "c"], None)],
+                        None,
+                        None,
+                        None,
+                    ),
                     (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),

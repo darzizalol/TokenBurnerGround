@@ -3487,6 +3487,24 @@ def _power_set(arguments: list, line: int, column: int) -> object:
     ]
 
 
+def _combinations(arguments: list, line: int, column: int) -> object:
+    _require_arity("combinations", arguments, 2, line, column)
+    items, size = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"combinations() requires a list, got {type_name(items)}", line, column
+        )
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise CinderRuntimeError(
+            f"combinations() requires an int size, got {type_name(size)}", line, column
+        )
+    if size < 0:
+        raise CinderRuntimeError(
+            "combinations() requires a non-negative size, domain error", line, column
+        )
+    return [list(combo) for combo in itertools.combinations(items, size)]
+
+
 def _permutations(arguments: list, line: int, column: int) -> object:
     _require_arity("permutations", arguments, 1, line, column)
     items = arguments[0]
@@ -4185,6 +4203,7 @@ _BUILTINS = {
     "enumerate": _enumerate,
     "power_set": _power_set,
     "permutations": _permutations,
+    "combinations": _combinations,
     "assert": _assert,
     "format": _format,
     "is_list": _is_list,

@@ -8715,6 +8715,75 @@ class TestPermutations(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestCombinations(unittest.TestCase):
+    def test_combinations_of_three_elements_size_two(self):
+        env = run("let result = combinations([1, 2, 3], 2);")
+        self.assertEqual(env.get("result"), [[1, 2], [1, 3], [2, 3]])
+
+    def test_combinations_size_zero_is_singleton_empty_list(self):
+        env = run("let result = combinations([1, 2, 3], 0);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_combinations_size_equal_to_length(self):
+        env = run("let result = combinations([1, 2, 3], 3);")
+        self.assertEqual(env.get("result"), [[1, 2, 3]])
+
+    def test_combinations_size_greater_than_length_is_empty(self):
+        env = run("let result = combinations([1, 2, 3], 4);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_combinations_of_empty_list_size_zero_is_singleton_empty_list(self):
+        env = run("let result = combinations([], 0);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_combinations_count_matches_binomial(self):
+        env = run(
+            "let l = [1, 2, 3, 4, 5];"
+            "let a = len(combinations(l, 0)) == binomial(5, 0);"
+            "let b = len(combinations(l, 1)) == binomial(5, 1);"
+            "let c = len(combinations(l, 2)) == binomial(5, 2);"
+            "let d = len(combinations(l, 3)) == binomial(5, 3);"
+            "let e = len(combinations(l, 4)) == binomial(5, 4);"
+            "let f = len(combinations(l, 5)) == binomial(5, 5);"
+        )
+        self.assertTrue(env.get("a"))
+        self.assertTrue(env.get("b"))
+        self.assertTrue(env.get("c"))
+        self.assertTrue(env.get("d"))
+        self.assertTrue(env.get("e"))
+        self.assertTrue(env.get("f"))
+
+    def test_combinations_does_not_deduplicate(self):
+        env = run("let result = combinations([1, 1], 1);")
+        self.assertEqual(env.get("result"), [[1], [1]])
+
+    def test_combinations_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "combinations\\(\\) requires a list, got string",
+        ):
+            run('combinations("ab", 1);')
+
+    def test_combinations_non_int_size_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "combinations\\(\\) requires an int size, got string",
+        ):
+            run('combinations([1, 2], "1");')
+
+    def test_combinations_negative_size_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "combinations\\(\\) requires a non-negative size, domain error",
+        ):
+            run("combinations([1, 2], -1);")
+
+    def test_combinations_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("combinations([1, 2, 3]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestAssert(unittest.TestCase):
     def test_assert_true_does_not_raise_and_returns_nil(self):
         env = run('let result = assert(true, "should not fire");')

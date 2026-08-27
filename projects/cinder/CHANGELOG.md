@@ -3355,3 +3355,12 @@ for vision/architecture.
   the classic itertools "selections" trio (`permutations`, `combinations`,
   `combinations_with_replacement`). Clean first pass, no bounces (3720
   tests passing, up from 3710).
+- **Standard library: `is_nonagonal` — the sixth figurate-number membership
+  test** — merged 2026-08-28 via PR #334 (`feat/20260827-is-nonagonal`).
+  Added `_is_nonagonal` to `cinder/builtins.py`, registered directly after
+  `_is_octagonal`: arity check, int check, early-`False` on negative, then
+  the same perfect-square-plus-modular-residue shape as its five siblings
+  (`candidate = 56n + 25` must be a perfect square whose root satisfies
+  `(root + 5) % 14 == 0`). Completes the triangular..nonagonal membership
+  cluster. Clean first pass, no bounces (3727 tests passing, up from
+  3720).

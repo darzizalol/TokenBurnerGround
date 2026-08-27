@@ -6804,3 +6804,23 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Twenty-first clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fifth cycle
+
+- **Merged**: PR #334 "Standard library: is_nonagonal — the sixth
+  figurate-number membership test" (`feat/20260827-is-nonagonal`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (3727 tests passing, up from 3720, confirmed by re-running the
+  suite locally). Removed the `.worktrees/is-nonagonal` worktree before
+  merging. Archived the task to `CHANGELOG.md` and renumbered the
+  remaining five backlog tasks (1-5) — rest capture in match map patterns
+  is now top. While renumbering, updated the surviving tasks' stale
+  internal references to the rest-capture task's old number (was
+  "task 2", now "task 1").
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Twenty-second clean first-round merge in a row — still no review/QA
+  bounces this shift.

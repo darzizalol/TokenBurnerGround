@@ -11,77 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_nonagonal` — the sixth figurate-number membership test [claimed 2026-08-27T20:02:29Z]
-
-Build: the figurate-number membership cluster currently runs
-triangular/pentagonal/hexagonal/heptagonal/octagonal (`is_triangular`,
-`is_pentagonal`, `is_hexagonal`, `is_heptagonal`, `is_octagonal` — square
-numbers are skipped since `is_perfect_square` already covers them), each
-a closed-form perfect-square-plus-modular-residue check registered
-back-to-back in `cinder/builtins.py`. Nonagonal numbers are the next side
-of the polygon and nothing in Cinder can test membership in that sequence
-yet. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_nonagonal(9));'
-# -> <eval>:1:7: undefined name 'is_nonagonal'
-```
-
-The k-th nonagonal number is `N(k) = k(7k - 5) / 2`. Solving for `k` given
-a candidate `n` via the quadratic formula gives the same
-"perfect-square-plus-modular-residue" shape every sibling in the cluster
-already uses: `candidate = 56n + 25` must be a perfect square, and its
-integer root must satisfy `(root + 5) % 14 == 0`. Add to
-`cinder/builtins.py`, registered directly after `_is_octagonal` (search
-`def _is_octagonal`, immediately before `def _nth_triangular`):
-```python
-def _is_nonagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_nonagonal", arguments, 1, line, column)
-    value = _require_int("is_nonagonal", arguments[0], line, column)
-    if value < 0:
-        return False
-
-    candidate = 56 * value + 25
-    root = math.isqrt(candidate)
-    return root * root == candidate and (root + 5) % 14 == 0
-```
-This mirrors `_is_heptagonal`'s/`_is_octagonal`'s shape exactly (arity
-check, int check, early-`False` on negative, one perfect-square-plus-
-modular-residue check) — a derived formula, not a new algorithm shape.
-Also register the new dict entry (search `"is_octagonal": _is_octagonal,`,
-add `"is_nonagonal": _is_nonagonal,` directly after it).
-
-Acceptance criteria:
-- `is_nonagonal(1);`, `is_nonagonal(9);`, `is_nonagonal(24);`,
-  `is_nonagonal(46);`, `is_nonagonal(75);` are all `true` — the first five
-  nonagonal numbers (`N(k) = k(7k-5)/2` for `k` = 1..5).
-- `is_nonagonal(0);`, `is_nonagonal(2);`, `is_nonagonal(10);`,
-  `is_nonagonal(-1);` are all `false` — `0` is `false` here (matching
-  `is_heptagonal(0)`/`is_octagonal(0)`, not `is_triangular(0)`'s special
-  case), and `-1` returns `false` rather than raising, domain-open like
-  every other `is_*` membership predicate in the cluster.
-- `is_nonagonal(nth_triangular(k));` need not be `true` in general (cross-
-  cluster values don't coincide except at small `k`) — instead cross-check
-  via direct construction: `is_nonagonal(k * (7 * k - 5) / 2);` is `true`
-  for every `k` from `1` to `100`.
-- `is_nonagonal(1.5);` raises `CinderRuntimeError` matching
-  `"is_nonagonal() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_octagonal`, search
-for the current line number), `tests/test_builtins.py` (model on `class
-TestIsOctagonal`, search that name, for the domain, type-error, and
-cross-check test shapes). Once merged, `README.md`'s Builtins bullet
-needs `is_nonagonal` added near `is_octagonal`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" bullet
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Language: rest capture in match map patterns (`{a, ...rest} => ...`)
+## 1. Language: rest capture in match map patterns (`{a, ...rest} => ...`)
 
 Build: flat map patterns (PR #326) and per-key rename (PR #332) give match
 map patterns everything list patterns have except rest capture — list
@@ -101,7 +31,7 @@ that shape.
 
 **Scope note:** only a bare `...rest` (or `..._` to discard) is in scope,
 mirroring list pattern rest capture exactly — no combining rest with
-nested patterns beyond what task 2 already allows. This is the same
+nested patterns beyond what task 1 already allows. This is the same
 "flat form first" staging every other match-pattern extension in this
 backlog has used.
 
@@ -210,7 +140,7 @@ Likely files: `cinder/parser.py` (`_match_map_pattern`, new
 `_match_map_pattern_rest_name`, the `_match_pattern` call site),
 `cinder/ast_nodes.py` (new `MatchArm.map_rest` field), `cinder/interpreter.py`
 (`_evaluate_match`'s `map_pattern` branch), `tests/test_parser.py` (extend
-the map-pattern shape tests alongside task 2's, search
+the map-pattern shape tests alongside task 1's, search
 `test_match_map_pattern_shape`), `tests/test_interpreter.py` (extend `class
 TestMatchExpression`, search `test_map_pattern_binds_named_keys`, with the
 rest-capture cases above). Once merged, `README.md`'s `match` expression
@@ -221,7 +151,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_catalan` — membership test for `nth_catalan`'s existing sibling
+## 2. Standard library: `is_catalan` — membership test for `nth_catalan`'s existing sibling
 
 Build: `nth_catalan` (`cinder/builtins.py`) returns the k-th Catalan number
 by position, but every other `nth_*` builtin in Cinder has a matching
@@ -301,20 +231,20 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`)
+## 3. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`)
 
 Build: nested list patterns (PR #330) closed the flat-vs-nested gap for
 list-pattern elements — an element can now itself be a list pattern to
 arbitrary depth. Map patterns have no equivalent yet: a map pattern's
 value slot only ever binds a plain identifier (optionally renamed, PR
-#332) or captures rest (once task 2 above lands), never another list/map
+#332) or captures rest (once task 1 above lands), never another list/map
 pattern. `let` destructuring already supports this for maps
 (`let {a, b: [c, d]} = ...`, `let {a: {b}} = ...` —
 `_destructure_map_pattern_entry`, `cinder/parser.py`, recurses into
 `_destructure_list_pattern`/`_destructure_map_pattern` on a nested
 value), so this is the last flat-vs-nested gap between match map patterns
 and everything else in Cinder that already destructures maps. Verify the
-gap (assumes per-key rename (PR #332) and task 2's rest capture have
+gap (assumes per-key rename (PR #332) and task 1's rest capture have
 landed — see Ordering note):
 ```sh
 python3 -m cinder.cli eval 'print(match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 });'
@@ -323,10 +253,10 @@ python3 -m cinder.cli eval 'print(match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} 
 
 **Ordering note:** this task depends on per-key rename (PR #332, already
 landed — `_match_map_pattern_entry` returns `(key, binding)` pairs) and
-task 2 (rest capture, `_match_map_pattern` returning `(entries, rest)`)
+task 1 (rest capture, `_match_map_pattern` returning `(entries, rest)`)
 having landed — it widens the same `_match_map_pattern_entry` one more
 time, to let `binding` be a nested pattern instead of only a plain name.
-If task 2 hasn't landed yet when this is claimed, do that task's shape
+If task 1 hasn't landed yet when this is claimed, do that task's shape
 change first (this task is not a substitute for it).
 
 **Scope note:** only list-pattern and map-pattern nesting as a map
@@ -428,7 +358,7 @@ Acceptance criteria:
   in the same pattern.
 - `match ({"a": 1, "b": {"c": 2, "d": 3}}) { {a, b: {c, ...rest}} => rest,
   _ => 0 };` is `{"d": 3}` — nested map-pattern values compose with rest
-  capture (task 2) in the same pattern.
+  capture (task 1) in the same pattern.
 - `match ({"a": 1, "b": {"c": 2}}) { {a, b: {d}} => 0, _ => "no match" };`
   is `"no match"` — a nested pattern that doesn't match its nested
   subject falls through the whole arm, not just the nested part.
@@ -462,7 +392,7 @@ this task.
 
 ---
 
-## 5. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
+## 4. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
 
 Build: `let`/`for`/function-param/comprehension list destructuring has
 supported trailing default values for a long time (`let [a, b = 5] =
@@ -631,7 +561,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_twin_prime` — membership test for primes with a twin partner
+## 5. Standard library: `is_twin_prime` — membership test for primes with a twin partner
 
 Build: the prime-relationship cluster in `cinder/builtins.py` already
 covers several adjacency/structure predicates built on trial-division

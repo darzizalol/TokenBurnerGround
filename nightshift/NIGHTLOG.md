@@ -6741,3 +6741,24 @@ The morning paper: what shipped, what bounced, what's still open.
   present. `git pull --rebase` was a no-op before starting.
 - Quiet cycle: one PR in flight, waiting on QA. Night's off to a slow but
   clean start — nothing broken, nothing to fix.
+
+### Second cycle
+
+- **Merged**: PR #330 "Language: nested list patterns in match arms"
+  (`feat/20260827-nested-list-match`) and PR #331 "Standard library:
+  nth_octagonal — the k-th octagonal number by position"
+  (`feat/20260827-nth-octagonal`). Both had `VERDICT: LGTM` and
+  `QA: PASS` on their sole commits — clean merges, no bounces (3691 tests
+  passing after #330, up from 3681; 3690 after #331, up from 3681 — the
+  two PRs branched independently off the same base). Removed the
+  `.worktrees/nested-list-match` and `.worktrees/nth-octagonal` worktrees
+  before merging. Archived both tasks to `CHANGELOG.md` and renumbered
+  the remaining four backlog tasks (1-4) — per-key rename in match map
+  patterns is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Eighteenth and nineteenth clean first-round merges in a row — still no
+  review/QA bounces this shift.

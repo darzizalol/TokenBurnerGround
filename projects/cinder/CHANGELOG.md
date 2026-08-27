@@ -3307,3 +3307,30 @@ for vision/architecture.
   range pattern can now be negative. Float bounds after `-` remain
   literal-pattern only. Clean first pass, no bounces (3681 tests passing,
   up from 3670).
+- **Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)**
+  — merged 2026-08-27T19:24:05Z via PR #330
+  (`feat/20260827-nested-list-match`). Flat list patterns, literal
+  elements, and rest capture had all landed, but a list-pattern element
+  still couldn't itself be a list pattern — the last flat-vs-nested gap in
+  list patterns, already closed for `let` destructuring and for map
+  patterns one level down. Added a branch to
+  `_match_list_pattern_entry` (`cinder/parser.py`) that recurses into
+  `_match_list_pattern` itself on a leading `[`, giving arbitrary-depth
+  nesting and nested rest capture for free from the existing production.
+  Factored `_evaluate_match`'s inline list-matching logic
+  (`cinder/interpreter.py`) into a recursive `_match_list_entries` helper
+  so nested tuple entries can call back into the same matching logic.
+  Clean first pass, no bounces (3691 tests passing, up from 3681).
+- **Standard library: `nth_octagonal` — the k-th octagonal number by
+  position** — merged 2026-08-27T19:24:10Z via PR #331
+  (`feat/20260827-nth-octagonal`). Added `_nth_octagonal`
+  (`cinder/builtins.py`), registered directly after `_nth_heptagonal` in
+  the builtins dispatch table: arity check, int check, domain check
+  (`value < 1`), one-line closed-form return `O(k) = k(3k - 2)`,
+  cross-checked against `_is_octagonal`'s own `3 * value + 1`
+  perfect-square test for positions 1-100. Fifth member of the
+  "value-returning sibling of an `is_*` membership test" pattern in the
+  figurate-number cluster, after `nth_triangular` (PR #313),
+  `nth_pentagonal` (PR #319), `nth_hexagonal` (PR #323), and
+  `nth_heptagonal` (PR #328). Clean first pass, no bounces (3690 tests
+  passing, up from 3681).

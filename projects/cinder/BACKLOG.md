@@ -11,215 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`) [claimed 2026-08-27T14:36:47Z]
-
-Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
-#322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a
-list-pattern element still can't itself be a list pattern — `let`
-destructuring already supports this (`let [a, [b, c]] = [1, [2, 3]];`,
-`_destructure_list_pattern_entry`/`cinder/parser.py`), the same
-destructuring-vs-match gap flat map patterns (PR #326) closed for maps
-one level down. This is the last flat-vs-nested gap left in list patterns.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 });'
-# -> <eval>:1:33: expected an identifier, '_', or a literal inside list pattern, found '['
-```
-
-**Scope note:** flat map patterns (PR #326) already landed; this task only
-touches list patterns — map patterns nesting inside list patterns or vice
-versa is a real but separate future gap, not in scope here either way.
-
-`_match_list_pattern_entry` (`cinder/parser.py`, search `def
-_match_list_pattern_entry`) currently only recognizes an identifier, `_`, or
-a literal at each position and raises `ParseError` on anything else,
-including `[`. Add one branch at the top, before the identifier check, that
-recurses into `_match_list_pattern` itself when the next token is `[`:
-```python
-    def _match_list_pattern_entry(self) -> "str | Expr | None | tuple[list, str | None]":
-        token = self._peek()
-        if token.type == TokenType.LBRACKET:
-            return self._match_list_pattern()
-        if token.type == TokenType.IDENTIFIER:
-            ...  # unchanged below
-```
-`_match_list_pattern()` already returns `tuple[list[str | Expr | None], str |
-None]` (entries, rest) and already consumes its own `[`...`]` — calling it
-recursively here means nesting to arbitrary depth, and rest capture at any
-nested level (`[a, [b, ...rest]] => ...`), work for free with no extra code:
-the recursive call *is* the same production, entries included. No change is
-needed to `_match_list_pattern` itself, `MatchArm`
-(`cinder/ast_nodes.py`), or the arity/rest-not-last/rest-needs-identifier
-error paths — they already apply correctly to the nested call by construction.
-
-`_evaluate_match`'s `list_pattern` branch (`cinder/interpreter.py`, search
-`def _evaluate_match`) currently inlines the length check, per-entry loop,
-and rest binding directly in the arm loop. Factor that inline logic into a
-new recursive helper so a nested tuple entry can call back into the same
-matching logic:
-```python
-    def _match_list_entries(
-        self, entries: list, rest: "str | None", subject: object, env: Environment
-    ) -> bool:
-        if not isinstance(subject, list):
-            return False
-        min_len = len(entries)
-        length_ok = (
-            len(subject) >= min_len if rest is not None else len(subject) == min_len
-        )
-        if not length_ok:
-            return False
-        for entry, item in zip(entries, subject):
-            if isinstance(entry, tuple):
-                nested_entries, nested_rest = entry
-                if not self._match_list_entries(nested_entries, nested_rest, item, env):
-                    return False
-                continue
-            if isinstance(entry, Literal):
-                if not values_equal(item, self.evaluate(entry, env)):
-                    return False
-                continue
-            if entry is not None:
-                env.define(entry, item)
-        if rest is not None and rest != "_":
-            env.define(rest, subject[min_len:])
-        return True
-```
-Then replace the `arm.list_pattern is not None` branch's body with:
-```python
-            if arm.list_pattern is not None:
-                arm_env = Environment(env)
-                if not self._match_list_entries(
-                    arm.list_pattern, arm.list_rest, subject, arm_env
-                ):
-                    continue
-                return self.evaluate(arm.body, arm_env)
-```
-This is a pure refactor of the existing top-level logic into a recursive
-helper — behavior for non-nested patterns is unchanged, verify the existing
-list-pattern tests still pass unmodified.
-
-Acceptance criteria:
-- `match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 };` is `6`.
-- `match ([1, [2, 3]]) { [a, [b, c, d]] => 0, _ => "no" };` is `"no"` —
-  nested length mismatch falls through, does not raise.
-- `match ([1, "x"]) { [a, [b, c]] => "yes", _ => "no" };` is `"no"` — a
-  non-list subject at a nested position falls through, does not raise.
-- `match ([[1, 2], [3, 4]]) { [[a, b], [c, d]] => a + b + c + d, _ => 0 };`
-  is `10` — nesting at every top-level position, not just one.
-- `match ([1, [2, [3, 4]]]) { [a, [b, [c, d]]] => a + b + c + d, _ => 0 };`
-  is `10` — two levels of nesting, confirming the recursion isn't
-  hardcoded to one level.
-- `match ([1, [2, 3]]) { [1, [b, c]] => b + c, _ => 0 };` is `5` — a literal
-  element and a nested pattern coexist in the same arm.
-- `match ([1, [2, 3]]) { [a, [_, c]] => a + c, _ => 0 };` is `4` — `_`
-  inside a nested pattern still discards.
-- `match ([1, [2, 3, 4]]) { [a, [b, ...rest]] => rest, _ => [] };` is
-  `[3, 4]` — rest capture works inside a nested pattern too (falls out of
-  the recursive reuse of `_match_list_pattern`, not extra code).
-- `match ([1, 2]) { [a, b] => a + b, _ => 0 };` is still `3` and
-  `match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] };` is still `[2, 3]`
-  — existing flat and rest-capture behavior is unaffected by the refactor.
-- `shape(parse('match (x) { [a, [b, c]] => a, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `list_pattern` with a nested
-  tuple entry at index 1.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_list_pattern_entry`),
-`cinder/interpreter.py` (new `_match_list_entries` helper, `_evaluate_match`),
-`tests/test_parser.py` (extend the list-pattern shape tests around
-`test_match_list_pattern_literal_element_shape`/
-`test_match_list_pattern_rest_capture_shape`, search those names — note the
-`shape()` helper's list_pattern entry line, search `for entry in
-arm.list_pattern`, only shapes `Expr` instances today and needs a small
-recursive helper to also shape entries inside a nested tuple, e.g.:
-```python
-def _shape_list_pattern_entry(entry):
-    if isinstance(entry, Expr):
-        return shape(entry)
-    if isinstance(entry, tuple):
-        nested_entries, nested_rest = entry
-        return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest)
-    return entry
-```
-used in place of the current `shape(entry) if isinstance(entry, Expr) else
-entry` list comprehension), `tests/test_interpreter.py` (extend
-`class TestMatchExpression`, search that name, with the end-to-end cases
-above). Once merged, `README.md`'s `match` expression bullet needs its
-"no nested list patterns" caveat removed, its "Status & roadmap" section
-needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `nth_octagonal` — the k-th octagonal number by position [claimed 2026-08-27T19:18:26Z]
-
-Build: `is_octagonal` already exists as a membership test, but Cinder has
-no way to ask "what is the k-th octagonal number" the way it can for
-triangular (`nth_triangular`, PR #313), pentagonal (`nth_pentagonal`, PR
-#319), hexagonal (`nth_hexagonal`, PR #323), and heptagonal numbers
-(`nth_heptagonal`, PR #328) — the same "value-returning sibling of an
-`is_*` membership test" pattern the figurate-number cluster's first four
-`nth_*` members already establish, just for its fifth. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_octagonal(5));'
-# -> <eval>:1:7: undefined name 'nth_octagonal'
-```
-
-Add to `cinder/builtins.py`, registered right after `_nth_heptagonal`
-(search `def _nth_heptagonal`, immediately before `_is_prime`):
-```python
-def _nth_octagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_octagonal", arguments, 1, line, column)
-    value = _require_int("nth_octagonal", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_octagonal() requires a positive integer, domain error", line, column
-        )
-    return value * (3 * value - 2)
-```
-`O(k) = k(3k - 2)` is the standard closed form for the k-th octagonal
-number (cross-check: `_is_octagonal` tests `3 * value + 1` for a perfect
-square whose root satisfies `(1 + root) % 3 == 0`, the standard
-membership test derived from this same closed form). This mirrors
-`_nth_triangular`'s, `_nth_pentagonal`'s, `_nth_hexagonal`'s, and
-`_nth_heptagonal`'s shape exactly (arity check, int check, domain check,
-one-line closed-form return) — a thin, direct composition, not a new
-algorithm. Also register the new dict entry (search `"nth_heptagonal":
-_nth_heptagonal,`, add `"nth_octagonal": _nth_octagonal,` directly after
-it).
-
-Acceptance criteria:
-- `nth_octagonal(1);` is `1`, `nth_octagonal(2);` is `8`,
-  `nth_octagonal(3);` is `21`, `nth_octagonal(4);` is `40` — the first
-  four octagonal numbers.
-- `is_octagonal(nth_octagonal(k));` is `true` for every `k` from `1` to
-  `100` — cross-checks the closed form against the existing membership
-  test, the same style `nth_pentagonal`'s, `nth_hexagonal`'s, and
-  `nth_heptagonal`'s acceptance criteria use.
-- `nth_octagonal(0);` and `nth_octagonal(-1);` both raise
-  `CinderRuntimeError` matching `"nth_octagonal() requires a positive
-  integer, domain error"`.
-- `nth_octagonal(1.5);` raises `CinderRuntimeError` matching
-  `"nth_octagonal() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `nth_heptagonal`, search
-for the current line number), `tests/test_builtins.py`
-(model on `class TestNthHexagonal`, search that name, for the domain-error,
-type-error, and cross-check test shapes). Once merged, `README.md`'s
-Builtins bullet needs `nth_octagonal` added near `nth_heptagonal`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 3. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
+## 1. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
 
 Build: flat map patterns (`{a, b} => ...`, PR #326) landed scoped to bare
 identifier keys only — each key binds a variable of the *same* name, with
@@ -327,7 +119,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
+## 2. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
 
 Build: `combinations` (PR #327) returns every r-length combination without
 reusing an element more than once, but Cinder has no way to ask for
@@ -418,7 +210,7 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `is_nonagonal` — the sixth figurate-number membership test
+## 3. Standard library: `is_nonagonal` — the sixth figurate-number membership test
 
 Build: the figurate-number membership cluster currently runs
 triangular/pentagonal/hexagonal/heptagonal/octagonal (`is_triangular`,
@@ -488,7 +280,7 @@ this task.
 
 ---
 
-## 6. Language: rest capture in match map patterns (`{a, ...rest} => ...`)
+## 4. Language: rest capture in match map patterns (`{a, ...rest} => ...`)
 
 Build: flat map patterns (PR #326) and per-key rename (task 3 above, once
 merged) give match map patterns everything list patterns have except rest

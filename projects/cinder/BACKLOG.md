@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
+## 1. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`) [claimed 2026-08-27T14:36:47Z]
 
 Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
 #322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a

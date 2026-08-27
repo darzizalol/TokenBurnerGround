@@ -173,16 +173,18 @@ while (i < 10) {
   inclusive `..=`, either bound optionally negative (`match (-5) { -10..0
   => "neg", _ => "other" }`), reusing the same range machinery as
   `x in 1..5`), negative literal patterns (`match (-5) { -5 => "neg", _ =>
-  "pos" }`, `INT`/`FLOAT` only), and flat map patterns (`match ({"a": 1,
+  "pos" }`, `INT`/`FLOAT` only), flat map patterns (`match ({"a": 1,
   "b": 2}) { {a, b} => a + b, _ => 0 }`, a map subject tested for every
   named key's presence and each key's value bound in one step, falling
-  through — not raising — on a missing key or non-map subject, bare
-  identifier keys only, no rename yet), and nested list patterns
-  (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`, a
-  list-pattern element may itself be a list pattern to arbitrary depth,
-  including nested rest capture) for now (no map-pattern rename,
-  map-pattern rest capture, map-pattern value nesting, or guards yet —
-  see `BACKLOG.md`)
+  through — not raising — on a missing key or non-map subject), nested
+  list patterns (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0
+  }`, a list-pattern element may itself be a list pattern to arbitrary
+  depth, including nested rest capture), and per-key rename in match map
+  patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`,
+  the map-pattern counterpart to `let` map destructuring's own per-key
+  rename, composable with every other map-pattern capability) for now
+  (no map-pattern rest capture, map-pattern value nesting, or guards yet
+  — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -524,42 +526,47 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: nested list patterns in
-`match` arms (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`)
-— a list-pattern element may itself be a list pattern to arbitrary depth,
-the last flat-vs-nested gap list patterns had — and `nth_octagonal` — the
-k-th octagonal number by position via the exact closed form `k(3k - 2)`,
-the figurate-number cluster's fifth `nth_*` member — and before that
-negative bounds in range patterns (`match (-5) { -10..0 => "neg", _ =>
-"other" }`) — the same negation `-5 => "neg"` already gets as a plain
-literal pattern, extended to range bounds via a shared
-`_match_range_bound` helper. See [`CHANGELOG.md`](CHANGELOG.md) for the
-full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): per-key rename in match
-map patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`)
-— the same "prove the flat form out, then extend it" staging that
-already took flat list patterns to literal elements and rest capture,
-now applied to flat map patterns, `combinations_with_replacement` — the
-third and last member of itertools' "selections" trio (`permutations`,
-`combinations`, `combinations_with_replacement`), sitting directly next
-to `combinations` the same way `power_set` sits next to `binomial`,
-`is_nonagonal` — the sixth figurate-number membership test, the next
-side of the polygon after `is_octagonal`, rest capture in match map
-patterns (`match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ =>
-0 }`) — the same leftover-keys-into-a-dict capability list patterns
-already have via `[a, ...rest]`, closing the last flat-list-vs-flat-map
-gap, `is_catalan` — the one `nth_*` builtin (`nth_catalan`) still
-missing its `is_*` membership counterpart, via a bounded iterative
-search rather than a closed form since Catalan numbers have no simple
-algebraic membership test, and nested patterns as map pattern values
-(`match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 }`) —
-the map-pattern counterpart to nested list patterns, closing the last
-flat-vs-nested gap between match map patterns and `let` destructuring.
+Actively developed, nightly. Recently landed: per-key rename in match map
+patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`) — a
+map pattern's bound name may now differ from its key, the map-pattern
+counterpart to `let` map destructuring's own per-key rename — and before
+that nested list patterns in `match` arms (`match ([1, [2, 3]]) { [a,
+[b, c]] => a + b + c, _ => 0 }`) — a list-pattern element may itself be
+a list pattern to arbitrary depth, the last flat-vs-nested gap list
+patterns had — and `nth_octagonal` — the k-th octagonal number by
+position via the exact closed form `k(3k - 2)`, the figurate-number
+cluster's fifth `nth_*` member — and before that negative bounds in
+range patterns (`match (-5) { -10..0 => "neg", _ => "other" }`) — the
+same negation `-5 => "neg"` already gets as a plain literal pattern,
+extended to range bounds via a shared `_match_range_bound` helper. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `combinations_with_replacement`
+— the third and last member of itertools' "selections" trio
+(`permutations`, `combinations`, `combinations_with_replacement`),
+sitting directly next to `combinations` the same way `power_set` sits
+next to `binomial`, `is_nonagonal` — the sixth figurate-number
+membership test, the next side of the polygon after `is_octagonal`, rest
+capture in match map patterns (`match ({"a": 1, "b": 2, "c": 3}) { {a,
+...rest} => rest, _ => 0 }`) — the same leftover-keys-into-a-dict
+capability list patterns already have via `[a, ...rest]`, closing the
+last flat-list-vs-flat-map gap, `is_catalan` — the one `nth_*` builtin
+(`nth_catalan`) still missing its `is_*` membership counterpart, via a
+bounded iterative search rather than a closed form since Catalan numbers
+have no simple algebraic membership test, nested patterns as map pattern
+values (`match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0
+}`) — the map-pattern counterpart to nested list patterns, closing the
+last flat-vs-nested gap between match map patterns and `let`
+destructuring, and default values for trailing elements in match list
+patterns (`match ([1]) { [a, b = 0] => a + b, _ => -1 }`) — the
+match-pattern counterpart to `let` list destructuring's own trailing
+defaults, letting a shorter subject list still match instead of falling
+through the arm.
 The pattern-matching tasks are all steps in the arc opened by PR #304 and
 mostly can land in either order relative to their siblings (nested
-map-pattern values is the exception — it needs both rename and rest
-capture to land first); each is written to adapt to whichever has
-already landed by the time it's claimed. (Guards in `match` arms, `n if
+map-pattern values is the exception — it needs rest capture to land
+first, since rename (#332) has already landed); each is written to adapt
+to whichever has already landed by the time it's claimed. (Guards in
+`match` arms, `n if
 n > 0 => "positive"`, were attempted but closed after three failed
 review rounds over a recurring parser bug — see `BACKLOG.md`'s
 `## Graveyard` for the postmortem; they're a real gap but not back in

@@ -1118,33 +1118,42 @@ class Interpreter:
             return self.evaluate(expr.then_expr, env)
         return self.evaluate(expr.else_expr, env)
 
+    def _match_list_entries(
+        self, entries: list, rest: "str | None", subject: object, env: Environment
+    ) -> bool:
+        if not isinstance(subject, list):
+            return False
+        min_len = len(entries)
+        length_ok = (
+            len(subject) >= min_len if rest is not None else len(subject) == min_len
+        )
+        if not length_ok:
+            return False
+        for entry, item in zip(entries, subject):
+            if isinstance(entry, tuple):
+                nested_entries, nested_rest = entry
+                if not self._match_list_entries(nested_entries, nested_rest, item, env):
+                    return False
+                continue
+            if isinstance(entry, Literal):
+                if not values_equal(item, self.evaluate(entry, env)):
+                    return False
+                continue
+            if entry is not None:
+                env.define(entry, item)
+        if rest is not None and rest != "_":
+            env.define(rest, subject[min_len:])
+        return True
+
     def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
         subject = self.evaluate(expr.subject, env)
         for arm in expr.arms:
             if arm.list_pattern is not None:
-                if not isinstance(subject, list):
-                    continue
-                min_len = len(arm.list_pattern)
-                length_ok = (
-                    len(subject) >= min_len if arm.list_rest is not None
-                    else len(subject) == min_len
-                )
-                if not length_ok:
-                    continue
                 arm_env = Environment(env)
-                matched = True
-                for entry, item in zip(arm.list_pattern, subject):
-                    if isinstance(entry, Literal):
-                        if not values_equal(item, self.evaluate(entry, arm_env)):
-                            matched = False
-                            break
-                        continue
-                    if entry is not None:
-                        arm_env.define(entry, item)
-                if not matched:
+                if not self._match_list_entries(
+                    arm.list_pattern, arm.list_rest, subject, arm_env
+                ):
                     continue
-                if arm.list_rest is not None and arm.list_rest != "_":
-                    arm_env.define(arm.list_rest, subject[min_len:])
                 return self.evaluate(arm.body, arm_env)
             if arm.range_pattern is not None:
                 values = self._evaluate_range(arm.range_pattern, env)

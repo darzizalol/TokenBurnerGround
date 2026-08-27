@@ -1103,9 +1103,11 @@ class Parser:
             for pattern, binding, range_pattern in entries
         ]
 
-    def _match_list_pattern(self) -> "tuple[list[str | Expr | None], str | None]":
+    def _match_list_pattern(
+        self,
+    ) -> "tuple[list[str | Expr | None | tuple[list, str | None]], str | None]":
         self._advance()  # consume '['
-        entries: "list[str | Expr | None]" = []
+        entries: "list[str | Expr | None | tuple[list, str | None]]" = []
         rest: "str | None" = None
         if not self._check(TokenType.RBRACKET):
             if self._check(TokenType.DOT_DOT_DOT):
@@ -1141,8 +1143,10 @@ class Parser:
         self._advance()
         return token.lexeme
 
-    def _match_list_pattern_entry(self) -> "str | Expr | None":
+    def _match_list_pattern_entry(self) -> "str | Expr | None | tuple[list, str | None]":
         token = self._peek()
+        if token.type == TokenType.LBRACKET:
+            return self._match_list_pattern()
         if token.type == TokenType.IDENTIFIER:
             self._advance()
             return None if token.lexeme == "_" else token.lexeme

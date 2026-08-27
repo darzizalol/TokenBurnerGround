@@ -4980,6 +4980,64 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
         self.assertEqual(env.get("result"), 3)
 
+    def test_nested_list_pattern_binds_inner_elements(self):
+        env = run(
+            'let result = match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_nested_list_pattern_falls_through_on_length_mismatch(self):
+        env = run(
+            'let result = match ([1, [2, 3]]) '
+            '{ [a, [b, c, d]] => 0, _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), "no")
+
+    def test_nested_list_pattern_falls_through_on_non_list_subject(self):
+        env = run('let result = match ([1, "x"]) { [a, [b, c]] => "yes", _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_nested_list_pattern_at_every_top_level_position(self):
+        env = run(
+            'let result = match ([[1, 2], [3, 4]]) '
+            '{ [[a, b], [c, d]] => a + b + c + d, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 10)
+
+    def test_nested_list_pattern_two_levels_deep(self):
+        env = run(
+            'let result = match ([1, [2, [3, 4]]]) '
+            '{ [a, [b, [c, d]]] => a + b + c + d, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 10)
+
+    def test_nested_list_pattern_coexists_with_literal_element(self):
+        env = run(
+            'let result = match ([1, [2, 3]]) { [1, [b, c]] => b + c, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 5)
+
+    def test_nested_list_pattern_underscore_discards(self):
+        env = run(
+            'let result = match ([1, [2, 3]]) { [a, [_, c]] => a + c, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 4)
+
+    def test_nested_list_pattern_rest_capture(self):
+        env = run(
+            'let result = match ([1, [2, 3, 4]]) '
+            '{ [a, [b, ...rest]] => rest, _ => [] };'
+        )
+        self.assertEqual(env.get("result"), [3, 4])
+
+    def test_nested_list_pattern_flat_patterns_still_work(self):
+        env = run(
+            'let a = match ([1, 2]) { [a, b] => a + b, _ => 0 };'
+            'let b = match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] };'
+        )
+        self.assertEqual(env.get("a"), 3)
+        self.assertEqual(env.get("b"), [2, 3])
+
     def test_range_pattern_matches_within_bounds(self):
         env = run('let result = match (5) { 1..10 => "small", _ => "large" };')
         self.assertEqual(env.get("result"), "small")

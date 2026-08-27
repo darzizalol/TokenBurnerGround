@@ -547,6 +547,76 @@ pass, not this task.
 
 ---
 
+## 6. Standard library: `is_nonagonal` — the sixth figurate-number membership test
+
+Build: the figurate-number membership cluster currently runs
+triangular/pentagonal/hexagonal/heptagonal/octagonal (`is_triangular`,
+`is_pentagonal`, `is_hexagonal`, `is_heptagonal`, `is_octagonal` — square
+numbers are skipped since `is_perfect_square` already covers them), each
+a closed-form perfect-square-plus-modular-residue check registered
+back-to-back in `cinder/builtins.py`. Nonagonal numbers are the next side
+of the polygon and nothing in Cinder can test membership in that sequence
+yet. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_nonagonal(9));'
+# -> <eval>:1:7: undefined name 'is_nonagonal'
+```
+
+The k-th nonagonal number is `N(k) = k(7k - 5) / 2`. Solving for `k` given
+a candidate `n` via the quadratic formula gives the same
+"perfect-square-plus-modular-residue" shape every sibling in the cluster
+already uses: `candidate = 56n + 25` must be a perfect square, and its
+integer root must satisfy `(root + 5) % 14 == 0`. Add to
+`cinder/builtins.py`, registered directly after `_is_octagonal` (search
+`def _is_octagonal`, immediately before `def _nth_triangular`):
+```python
+def _is_nonagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_nonagonal", arguments, 1, line, column)
+    value = _require_int("is_nonagonal", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 56 * value + 25
+    root = math.isqrt(candidate)
+    return root * root == candidate and (root + 5) % 14 == 0
+```
+This mirrors `_is_heptagonal`'s/`_is_octagonal`'s shape exactly (arity
+check, int check, early-`False` on negative, one perfect-square-plus-
+modular-residue check) — a derived formula, not a new algorithm shape.
+Also register the new dict entry (search `"is_octagonal": _is_octagonal,`,
+add `"is_nonagonal": _is_nonagonal,` directly after it).
+
+Acceptance criteria:
+- `is_nonagonal(1);`, `is_nonagonal(9);`, `is_nonagonal(24);`,
+  `is_nonagonal(46);`, `is_nonagonal(75);` are all `true` — the first five
+  nonagonal numbers (`N(k) = k(7k-5)/2` for `k` = 1..5).
+- `is_nonagonal(0);`, `is_nonagonal(2);`, `is_nonagonal(10);`,
+  `is_nonagonal(-1);` are all `false` — `0` is `false` here (matching
+  `is_heptagonal(0)`/`is_octagonal(0)`, not `is_triangular(0)`'s special
+  case), and `-1` returns `false` rather than raising, domain-open like
+  every other `is_*` membership predicate in the cluster.
+- `is_nonagonal(nth_triangular(k));` need not be `true` in general (cross-
+  cluster values don't coincide except at small `k`) — instead cross-check
+  via direct construction: `is_nonagonal(k * (7 * k - 5) / 2);` is `true`
+  for every `k` from `1` to `100`.
+- `is_nonagonal(1.5);` raises `CinderRuntimeError` matching
+  `"is_nonagonal() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register near `is_octagonal`, search
+for the current line number), `tests/test_builtins.py` (model on `class
+TestIsOctagonal`, search that name, for the domain, type-error, and
+cross-check test shapes). Once merged, `README.md`'s Builtins bullet
+needs `is_nonagonal` added near `is_octagonal`, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" bullet
+needs refreshing — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

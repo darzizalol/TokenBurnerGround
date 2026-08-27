@@ -371,6 +371,7 @@ while (i < 10) {
   `nth_triangular` to return the triangular number found at a 1-indexed position via the exact closed form `n(n+1)/2`, the value-returning sibling of `is_triangular`'s membership test,
   `nth_pentagonal` to return the pentagonal number found at a 1-indexed position via the exact closed form `k(3k - 1)/2`, the figurate-number cluster's second `nth_*` member alongside `nth_triangular`,
   `nth_hexagonal` to return the hexagonal number found at a 1-indexed position via the exact closed form `k(2k - 1)`, the figurate-number cluster's third `nth_*` member,
+  `nth_heptagonal` to return the heptagonal number found at a 1-indexed position via the exact closed form `k(5k - 3)/2`, the figurate-number cluster's fourth `nth_*` member,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -519,45 +520,42 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `combinations` — every
-r-length combination of a list via a thin wrapper over
-`itertools.combinations`, the enumerate-vs-count sibling of `binomial`
-for a specific size and the fixed-size sibling of `power_set` (all sizes
-at once) — and before that flat map patterns in `match` arms
+Actively developed, nightly. Recently landed: `nth_heptagonal` — the k-th
+heptagonal number by position via the exact closed form `k(5k - 3)/2`,
+the figurate-number cluster's fourth `nth_*` member — and before that
+`combinations` — every r-length combination of a list via a thin wrapper
+over `itertools.combinations`, the enumerate-vs-count sibling of
+`binomial` for a specific size and the fixed-size sibling of `power_set`
+(all sizes at once) — and before that flat map patterns in `match` arms
 (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) — the map-subject
 counterpart to flat list patterns, testing key presence and binding each
 key's value in one step, falling through (not raising) on a missing key
 or non-map subject — and before that `permutations` — every ordering of
 a list via a thin wrapper over `itertools.permutations`, the
 collection-side sibling of `cartesian_product`/`power_set` rounding out
-the "enumerate the ways to arrange/pick/combine elements" cluster — and
-before that rest capture in list patterns (`match ([1, 2, 3]) { [a,
-...rest] => rest, _ => [] }`) — an optional trailing `...name`/`..._`
-after a list pattern's fixed elements, matching "at least N elements"
-instead of an exact length and binding the tail as a sliced copy,
-mirroring the rest capture `let` destructuring already has. See
+the "enumerate the ways to arrange/pick/combine elements" cluster. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_heptagonal` — the
-k-th heptagonal number by position, the figurate-number cluster's fourth
-`nth_*` member, negative bounds in range patterns (`match (-5) { -10..0
-=> "neg", _ => "other" }`) — the same negation `-5 => "neg"` already gets
-as a plain literal pattern, extended to range bounds, nested list
-patterns (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`) — a
-list-pattern element that is itself a list pattern, to arbitrary depth,
-the last flat-vs-nested gap left in list patterns now that literal
-elements and rest capture have both landed, `nth_octagonal` — the
-k-th octagonal number by position, the figurate-number cluster's fifth
-`nth_*` member, per-key rename in match map patterns
-(`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`) — the same
-"prove the flat form out, then extend it" staging that already took flat
-list patterns to literal elements and rest capture, now applied to flat
-map patterns, and `combinations_with_replacement` — the third and last
-member of itertools' "selections" trio (`permutations`, `combinations`,
-`combinations_with_replacement`), sitting directly next to `combinations`
-the same way `power_set` sits next to `binomial`. The pattern-matching
-tasks are all steps in the arc opened by PR #304 and can land in either
-order relative to their siblings; each is written to adapt to whichever
-has already landed by the time it's claimed. (Guards in `match` arms,
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): negative bounds in range
+patterns (`match (-5) { -10..0 => "neg", _ => "other" }`) — the same
+negation `-5 => "neg"` already gets as a plain literal pattern, extended
+to range bounds, nested list patterns (`match ([1, [2, 3]]) { [a, [b, c]]
+=> a + b + c, _ => 0 }`) — a list-pattern element that is itself a list
+pattern, to arbitrary depth, the last flat-vs-nested gap left in list
+patterns now that literal elements and rest capture have both landed,
+`nth_octagonal` — the k-th octagonal number by position, the
+figurate-number cluster's fifth `nth_*` member, per-key rename in match
+map patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`)
+— the same "prove the flat form out, then extend it" staging that
+already took flat list patterns to literal elements and rest capture,
+now applied to flat map patterns, `combinations_with_replacement` — the
+third and last member of itertools' "selections" trio (`permutations`,
+`combinations`, `combinations_with_replacement`), sitting directly next
+to `combinations` the same way `power_set` sits next to `binomial`, and
+`is_nonagonal` — the sixth figurate-number membership test, the next
+side of the polygon after `is_octagonal`. The pattern-matching tasks are
+all steps in the arc opened by PR #304 and can land in either order
+relative to their siblings; each is written to adapt to whichever has
+already landed by the time it's claimed. (Guards in `match` arms,
 `n if n > 0 => "positive"`, were attempted but closed after three failed
 review rounds over a recurring parser bug — see `BACKLOG.md`'s
 `## Graveyard` for the postmortem; they're a real gap but not back in the

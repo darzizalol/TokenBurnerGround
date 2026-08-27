@@ -4977,7 +4977,36 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "a"), None, None, None, None, ["a", "b"]),
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        [("a", "a"), ("b", "b")],
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_map_pattern_rename_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { {a: x, b} => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        [("a", "x"), ("b", "b")],
+                    ),
                     (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),
@@ -5003,6 +5032,13 @@ class TestMatchExpression(unittest.TestCase):
         ):
             parse('match (x) { {1} => 0, _ => 1 }')
 
+    def test_match_map_pattern_rename_requires_identifier(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"expected identifier after ':' in map pattern, found '5'",
+        ):
+            parse('match (x) { {a: 5} => a, _ => 0 }')
+
     def test_match_map_pattern_and_list_pattern_coexist(self):
         self.assertEqual(
             shape(parse('match (x) { [a, b] => "list", {a, b} => "map", _ => 0 }')),
@@ -5011,7 +5047,15 @@ class TestMatchExpression(unittest.TestCase):
                 ("Identifier", "x"),
                 [
                     (None, ("Literal", "list"), None, ["a", "b"], None, None, None),
-                    (None, ("Literal", "map"), None, None, None, None, ["a", "b"]),
+                    (
+                        None,
+                        ("Literal", "map"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        [("a", "a"), ("b", "b")],
+                    ),
                     (None, ("Literal", 0), None, None, None, None, None),
                 ],
             ),

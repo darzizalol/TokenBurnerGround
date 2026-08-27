@@ -5168,6 +5168,50 @@ class TestMatchExpression(unittest.TestCase):
         with self.assertRaises(ParseError):
             run('let result = match (x) { {1} => 0 };')
 
+    def test_map_pattern_renamed_keys(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) '
+            '{ {a: x, b} => x + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_single_renamed_key(self):
+        env = run('let result = match ({"a": 1}) { {a: x} => x, _ => 0 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_map_pattern_renamed_unaffects_unrenamed(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_renamed_falls_through_on_missing_key(self):
+        env = run(
+            'let result = match ({"a": 1}) { {a: x, b: y} => x + y, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), -1)
+
+    def test_map_pattern_renamed_falls_through_on_non_map_subject(self):
+        env = run('let result = match ([1, 2]) { {a: x} => x, _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_map_pattern_renamed_ignores_extra_keys(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) { {a: x} => x, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_map_pattern_renamed_binding_scoped_to_arm(self):
+        with self.assertRaises(CinderRuntimeError):
+            run(
+                'let result = match ({"a": 1}) { {a: x} => x, _ => 0 }; '
+                'print(x);'
+            )
+
+    def test_map_pattern_rename_requires_identifier(self):
+        with self.assertRaises(ParseError):
+            run('let result = match (x) { {a: 5} => a, _ => 0 };')
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6725,3 +6725,19 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Seventeenth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+## 2026-08-28
+
+### First cycle
+
+- **Merged**: none.
+- **Bounced**: none.
+- **Still open**: PR #330 "Language: nested list patterns in match arms"
+  (`feat/20260827-nested-list-match`). Reviewer already gave
+  `VERDICT: LGTM`; no QA comment has landed on the PR yet, so it's not
+  mergeable this cycle — left for QA to weigh in before the next Release
+  pass.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase` was a no-op before starting.
+- Quiet cycle: one PR in flight, waiting on QA. Night's off to a slow but
+  clean start — nothing broken, nothing to fix.

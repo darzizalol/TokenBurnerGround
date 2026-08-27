@@ -3295,3 +3295,15 @@ for vision/architecture.
   `nth_triangular` (PR #313), `nth_pentagonal` (PR #319), and
   `nth_hexagonal` (PR #323). Clean first pass, no bounces (3670 tests
   passing, up from 3661).
+- **Language: negative bounds in range patterns (`-10..0 => "neg"`)** —
+  merged 2026-08-27T14:28:49Z via PR #329
+  (`feat/20260827-neg-range-bounds`). Negative literal patterns (PR #320)
+  let a plain literal pattern be negated, but range patterns (PR #318)
+  could only parse an `INT` literal bound, so `-10..0 => "neg"` raised a
+  `ParseError` instead of parsing. Widened `_match_pattern`'s `MINUS`
+  branch (`cinder/parser.py`) to check for a trailing `..`/`..=` after a
+  negative int, and factored a shared `_match_range_bound` helper (used by
+  both the negative-start and positive-start paths) so either bound of a
+  range pattern can now be negative. Float bounds after `-` remain
+  literal-pattern only. Clean first pass, no bounces (3681 tests passing,
+  up from 3670).

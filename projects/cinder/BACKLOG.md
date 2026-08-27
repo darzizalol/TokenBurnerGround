@@ -11,136 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: negative bounds in range patterns (`-10..0 => "neg"`) [claimed 2026-08-27T14:23:22Z]
-
-Build: negative literal patterns (PR #320) let a plain literal pattern be
-negated (`match (-5) { -5 => "neg", _ => "pos" }`), but range patterns
-(`1..10 => "small"`, PR #318) still can't — a range pattern's bounds are
-parsed only from the `INT` branch of `_match_pattern`, which the `MINUS`
-branch (added for negative literals) never falls into, so a range with a
-negative start bound raises a `ParseError` at the following `..` instead of
-parsing the range. Verify the gap, on current `main`:
-```sh
-python3 -m cinder.cli eval 'print(match (-5) { -10..0 => "neg", _ => "other" });'
-# -> <eval>:1:23: expected '=>' after match pattern, found '..'
-```
-
-**Scope note:** only the numeric bounds themselves can be negative
-(`-10..0`, `-10..=0`, `-10..-1`, `0..-1`) — this does not touch general
-unary-minus *expressions* as bounds (only literal `INT`/`FLOAT` tokens
-after a `-`, matching negative literal patterns' own restriction) and does
-not touch multi-value combination with other pattern kinds, which is
-already handled generically by `_match_arm`'s entry list.
-
-Today's `_match_pattern` (`cinder/parser.py`, search `def _match_pattern`)
-has a `MINUS` branch that consumes `-` then an `INT`/`FLOAT` literal and
-returns immediately as a negated `Literal` pattern — it never checks for a
-following `..`/`..=`. The `INT` branch (further down) is the only one that
-checks for a range, and only ever builds an unnegated `Literal` start bound.
-Refactor both branches to share a single "parse an optionally-negated
-int-literal bound" helper, then have each check for a following range
-operator:
-```python
-    def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
-        token = self._peek()
-        if token.type == TokenType.IDENTIFIER:
-            self._advance()
-            if token.lexeme == "_":
-                return None, None, None
-            return None, token.lexeme, None
-        if token.type == TokenType.MINUS or token.type == TokenType.INT:
-            start = self._match_pattern_bound()
-            if self._check(TokenType.DOT_DOT) or self._check(TokenType.DOT_DOT_EQ):
-                dots = self._advance()
-                inclusive = dots.type is TokenType.DOT_DOT_EQ
-                end = self._match_pattern_bound()
-                return None, None, RangeExpr(start, end, dots.line, dots.column, inclusive)
-            return start, None, None
-        if token.type in (TokenType.FLOAT, TokenType.STRING):
-            self._advance()
-            return Literal(token.literal, token.line, token.column), None, None
-        ...  # TRUE/FALSE/NIL branches unchanged below
-
-    def _match_pattern_bound(self) -> Expr:
-        token = self._peek()
-        if token.type == TokenType.MINUS:
-            minus = self._advance()
-            value_token = self._peek()
-            if value_token.type != TokenType.INT:
-                raise ParseError(
-                    "expected an int after '-' in match range pattern, "
-                    f"found {self._describe(value_token)}",
-                    value_token.line,
-                    value_token.column,
-                )
-            self._advance()
-            return Literal(-value_token.literal, minus.line, minus.column)
-        if token.type == TokenType.INT:
-            self._advance()
-            return Literal(token.literal, token.line, token.column)
-        raise ParseError(
-            f"expected an int in match range pattern, found {self._describe(token)}",
-            token.line,
-            token.column,
-        )
-```
-Note the merged `MINUS`/`INT` branch drops float support for negative
-*literal* patterns' `-5.5 => ...` shape — preserve that by keeping
-`_match_pattern_bound`'s int-only restriction for range bounds (matching
-today's unnegated range bounds, which are already `INT`-only) while still
-letting a bare negative literal pattern (no following `..`) accept a float:
-adjust `_match_pattern_bound`'s `value_token.type != TokenType.INT` check
-to also accept `TokenType.FLOAT` when called from the non-range path, or
-(simpler) keep the original `MINUS` branch's float-accepting literal parse
-inline in `_match_pattern` and only extract a narrower int-only bound
-parser for use after `-` is confirmed to lead into a range — verify against
-the acceptance criteria below either way; the exact refactor shape is an
-implementation detail, not a fixed interface.
-
-No `RangeExpr` construction (`cinder/ast_nodes.py`), `_evaluate_range`
-(`cinder/interpreter.py`), or `contains_value` changes are needed — a
-negative-bound `RangeExpr` is structurally identical to a positive-bound
-one; only the *bound expressions themselves* need to support a leading
-`-`, and evaluation of `Literal(-10, ...)` already works today (that's how
-negative literal patterns evaluate).
-
-Acceptance criteria:
-- `match (-5) { -10..0 => "neg", _ => "other" };` is `"neg"`.
-- `match (5) { -10..0 => "neg", _ => "other" };` is `"other"` — `5` is
-  outside `-10..0`.
-- `match (0) { -10..0 => "neg", _ => "other" };` is `"other"` — exclusive
-  upper bound still excludes `0`.
-- `match (0) { -10..=0 => "neg", _ => "other" };` is `"neg"` — inclusive
-  upper bound now includes `0`.
-- `match (-1) { -10..-1 => "neg", _ => "other" };` is `"other"` — exclusive
-  upper bound with two negative bounds.
-- `match (5) { 0..-1 => "empty", _ => "other" };` is `"other"` — a
-  start-greater-than-end range with a negative end bound still matches
-  nothing, same as today's empty-range convention.
-- `match (-5) { -5 => "neg", _ => "pos" };` is still `"neg"` — a bare
-  negative literal pattern (no range) is unaffected.
-- `match (x) { -"a"..0 => 0, _ => 1 };` (non-numeric after `-` in a range
-  bound) raises `ParseError`.
-- `shape(parse('match (x) { -10..0 => 0, _ => 1 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `range_pattern` with a
-  negated start bound.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_pattern`, new
-`_match_pattern_bound` or equivalent), `tests/test_parser.py` (extend
-`class TestMatchExpression` or the range-pattern-specific test class —
-search `range_pattern` for existing shape assertions),
-`tests/test_interpreter.py` (extend the range-pattern match tests with the
-negative-bound cases above). Once merged, `README.md`'s `match` expression
-bullet needs its negative-literal-patterns description widened to mention
-range bounds, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing (it currently
-calls this out explicitly as "unaddressed, a real but separate gap") —
-leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
+## 1. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
 
 Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
 #322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a
@@ -282,7 +153,7 @@ task.
 
 ---
 
-## 3. Standard library: `nth_octagonal` — the k-th octagonal number by position
+## 2. Standard library: `nth_octagonal` — the k-th octagonal number by position
 
 Build: `is_octagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th octagonal number" the way it can for
@@ -348,7 +219,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
+## 3. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
 
 Build: flat map patterns (`{a, b} => ...`, PR #326) landed scoped to bare
 identifier keys only — each key binds a variable of the *same* name, with
@@ -456,7 +327,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
+## 4. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
 
 Build: `combinations` (PR #327) returns every r-length combination without
 reusing an element more than once, but Cinder has no way to ask for
@@ -547,7 +418,7 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `is_nonagonal` — the sixth figurate-number membership test
+## 5. Standard library: `is_nonagonal` — the sixth figurate-number membership test
 
 Build: the figurate-number membership cluster currently runs
 triangular/pentagonal/hexagonal/heptagonal/octagonal (`is_triangular`,

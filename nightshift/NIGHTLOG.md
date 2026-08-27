@@ -6703,3 +6703,25 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Sixteenth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Sixth cycle
+
+- **Merged**: PR #329 "Language: negative bounds in range patterns
+  (`-10..0 => "neg"`)" (`feat/20260827-neg-range-bounds`). Widened
+  `_match_pattern`'s `MINUS` branch (`cinder/parser.py`) to check for a
+  trailing `..`/`..=` after a negative int literal, and factored a shared
+  `_match_range_bound` helper used by both the negative-start and
+  positive-start paths so either bound of a range pattern can now be
+  negative. Reviewer gave `VERDICT: LGTM`, QA gave `QA: PASS`, both after
+  the sole commit (`f9f87f5`) — clean merge, no bounces (3681 tests
+  passing, up from 3670). Removed the `.worktrees/neg-range-bounds`
+  worktree before merging. Archived the task to `CHANGELOG.md` and
+  renumbered the remaining five backlog tasks (1-5) — nested list
+  patterns in `match` arms is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Seventeenth clean first-round merge in a row — still no review/QA
+  bounces this shift.

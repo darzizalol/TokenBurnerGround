@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: negative bounds in range patterns (`-10..0 => "neg"`)
+## 1. Language: negative bounds in range patterns (`-10..0 => "neg"`) [claimed 2026-08-27T14:23:22Z]
 
 Build: negative literal patterns (PR #320) let a plain literal pattern be
 negated (`match (-5) { -5 => "neg", _ => "pos" }`), but range patterns

@@ -488,6 +488,149 @@ this task.
 
 ---
 
+## 6. Language: rest capture in match map patterns (`{a, ...rest} => ...`)
+
+Build: flat map patterns (PR #326) and per-key rename (task 3 above, once
+merged) give match map patterns everything list patterns have except rest
+capture — list patterns already support `[a, ...rest] => ...` (PR #324),
+binding leftover elements into a list, and `let` map destructuring already
+supports the map-shaped equivalent (`let {a, ...rest} = expr;`, binding
+leftover *keys* into a dict, `_bind_map_destructure`/`cinder/interpreter.py`,
+search `remaining = {k: v for k, v in value.items()`). Match map patterns
+are the last place this specific capability is still missing. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ => 0 });'
+# -> <eval>:1:27: expected '}' after map pattern, found '...'
+```
+(Assumes task 3's per-key rename above has landed by the time this is
+claimed; if not, `_match_map_pattern` still returns a bare `list[str]`
+instead of `list[tuple[str, str]]` — adapt the parser sketch below to that
+shape, the rest-capture parsing/binding logic itself is unaffected either
+way.)
+
+**Scope note:** only a bare `...rest` (or `..._` to discard) is in scope,
+mirroring list pattern rest capture exactly — no combining rest with
+nested patterns beyond what task 3 already allows. This is the same
+"flat form first" staging every other match-pattern extension in this
+backlog has used.
+
+`_match_map_pattern` (`cinder/parser.py`, search `def _match_map_pattern`)
+currently loops entries with no `DOT_DOT_DOT` handling and no rest slot.
+Widen it to return `tuple[list[tuple[str, str]], str | None]`, mirroring
+`_match_list_pattern`'s own `(entries, rest)` shape and
+`_destructure_map_pattern`'s `DOT_DOT_DOT`/rest-must-be-last handling:
+```python
+    def _match_map_pattern(self) -> "tuple[list[tuple[str, str]], str | None]":
+        self._advance()  # consume '{'
+        entries: "list[tuple[str, str]]" = []
+        rest: "str | None" = None
+        if not self._check(TokenType.RBRACE):
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._match_map_pattern_rest_name()
+            else:
+                entries.append(self._match_map_pattern_entry())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if rest is not None:
+                    token = self._peek()
+                    raise ParseError(
+                        f"rest capture must be last in map pattern, found {self._describe(token)}",
+                        token.line,
+                        token.column,
+                    )
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest = self._match_map_pattern_rest_name()
+                else:
+                    entries.append(self._match_map_pattern_entry())
+        self._consume(TokenType.RBRACE, "'}' after map pattern")
+        return entries, rest
+
+    def _match_map_pattern_rest_name(self) -> str:
+        self._advance()  # consume '...'
+        token = self._peek()
+        if token.type != TokenType.IDENTIFIER:
+            raise ParseError(
+                f"expected an identifier or '_' after '...' in map pattern, "
+                f"found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._advance()
+        return token.lexeme
+```
+This mirrors `_match_list_pattern_rest_name` exactly. The call site
+(`_match_pattern`, search `map_pattern = self._match_map_pattern()`) now
+unpacks `map_pattern, map_rest = self._match_map_pattern()` and passes both
+into `MatchArm` — add a new `map_rest: "str | None" = None` field to
+`MatchArm` (`cinder/ast_nodes.py`, next to `map_pattern`), mirroring
+`list_rest` next to `list_pattern`.
+
+In `cinder/interpreter.py`, extend the `map_pattern` branch (search `if
+arm.map_pattern is not None`):
+```python
+            if arm.map_pattern is not None:
+                if not isinstance(subject, dict) or not all(
+                    key in subject for key, _ in arm.map_pattern
+                ):
+                    continue
+                arm_env = Environment(env)
+                seen_keys = set()
+                for key, binding in arm.map_pattern:
+                    arm_env.define(binding, subject[key])
+                    seen_keys.add(key)
+                if arm.map_rest is not None and arm.map_rest != "_":
+                    arm_env.define(
+                        arm.map_rest,
+                        {k: v for k, v in subject.items() if k not in seen_keys},
+                    )
+                return self.evaluate(arm.body, arm_env)
+```
+This mirrors `_bind_map_destructure`'s own leftover-keys dict construction
+and the list-pattern match branch's `rest != "_"` discard convention
+exactly.
+
+Acceptance criteria:
+- `match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ => 0 };` is
+  `{"b": 2, "c": 3}`.
+- `match ({"a": 1}) { {a, ...rest} => rest, _ => 0 };` is `{}` — rest
+  captures an empty dict when nothing is left over.
+- `match ({"a": 1, "b": 2}) { {a, ..._} => a, _ => 0 };` is `1` — `..._`
+  discards the rest binding without raising or leaking a variable.
+- `match ({"a": 1, "b": 2}) { {a} => a, _ => 0 };` is still `1` — patterns
+  with no rest are unaffected.
+- `match ({"a": 1, "b": 2, "c": 3}) { {a: x, ...rest} => [x, rest], _ => 0 };`
+  is `[1, {"b": 2, "c": 3}]` — rest capture composes with per-key rename
+  (task 3) in the same pattern.
+- `match ([1, 2]) { {a, ...rest} => rest, _ => "no" };` is `"no"` — a
+  non-map subject still falls through, rest capture included.
+- A rest capture is scoped to its arm's body only, same as every other
+  match-pattern binding.
+- `match (x) { {a, ...5} => a, _ => 0 };` (non-identifier after `...`)
+  raises `ParseError` matching `"expected an identifier or '_' after '...'
+  in map pattern"`.
+- `match (x) { {a, ...rest, b} => a, _ => 0 };` (rest not last) raises
+  `ParseError` matching `"rest capture must be last in map pattern"`.
+- `shape(parse('match (x) { {a, ...rest} => a, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the first arm's `map_pattern`/`map_rest`
+  fields with `map_rest` set to `"rest"`.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_map_pattern`, new
+`_match_map_pattern_rest_name`, the `_match_pattern` call site),
+`cinder/ast_nodes.py` (new `MatchArm.map_rest` field), `cinder/interpreter.py`
+(`_evaluate_match`'s `map_pattern` branch), `tests/test_parser.py` (extend
+the map-pattern shape tests alongside task 3's, search
+`test_match_map_pattern_shape`), `tests/test_interpreter.py` (extend `class
+TestMatchExpression`, search `test_map_pattern_binds_named_keys`, with the
+rest-capture cases above). Once merged, `README.md`'s `match` expression
+bullet needs its map-pattern description widened to mention rest capture,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

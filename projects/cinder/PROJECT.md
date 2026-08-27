@@ -149,35 +149,34 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `nth_heptagonal`
-(#328) — the k-th heptagonal number by position, the figurate-number
-cluster's fourth `nth_*` member, registered directly after
-`nth_hexagonal`, a one-line closed-form return (`H(k) = k(5k - 3)/2`)
-mirroring `nth_triangular`'s/`nth_pentagonal`'s/`nth_hexagonal`'s shape
-exactly — and before that `combinations` (#327) — every r-length
-combination of a list, a thin wrapper over `itertools.combinations(items,
-size)` registered directly after `permutations`, the enumerate-vs-count
-sibling of `binomial` for a *specific* size and the natural companion to
+Recently landed (see `CHANGELOG.md` for the full list): negative bounds
+in range patterns (#329) — either bound of a range pattern
+(`-10..0 => "neg"`) may now be negative, via a shared
+`_match_range_bound` helper factored out of the positive- and
+negative-start parsing paths, the same negation plain negative literal
+patterns already had — and before that `nth_heptagonal` (#328) — the
+k-th heptagonal number by position, the figurate-number cluster's fourth
+`nth_*` member, registered directly after `nth_hexagonal`, a one-line
+closed-form return (`H(k) = k(5k - 3)/2`) mirroring
+`nth_triangular`'s/`nth_pentagonal`'s/`nth_hexagonal`'s shape exactly —
+and before that `combinations` (#327) — every r-length combination of a
+list, a thin wrapper over `itertools.combinations(items, size)`
+registered directly after `permutations`, the enumerate-vs-count sibling
+of `binomial` for a *specific* size and the natural companion to
 `power_set` (all sizes at once) — and before that flat map patterns in
 `match` arms (#326) — the map-subject counterpart to flat list patterns,
 `{a, b} => ...` tests that the subject is a map containing every named
 key and binds each key's value in one step, falling through (not
 raising) on a missing key or non-map subject, the same "shape test, no
-exception" philosophy flat list patterns established — and before that
-`permutations` (#325) — every ordering of a list, a thin wrapper over
-`itertools.permutations`, the collection-side sibling of
-`cartesian_product`/`power_set` rounding out the "enumerate the ways to
-arrange/pick/combine elements" cluster. Guards in `match` arms
-(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
-straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug
-in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
-`## Graveyard` for the full postmortem and the suggested next approach;
-still not requeued.
+exception" philosophy flat list patterns established. Guards in `match`
+arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
+three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
+recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
+next approach; still not requeued.
 
-`BACKLOG.md` carries the active queue, 3-breadth/3-depth at the 6-task
-ceiling: negative bounds in range patterns (`-10..0 => "neg"`), extending
-the negation negative literal patterns already get for plain literals to
-range bounds too — nested list patterns (`[a, [b, c]] => ...`), a
+`BACKLOG.md` carries the active queue, back at its 6-task ceiling after
+this grooming pass: nested list patterns (`[a, [b, c]] => ...`), a
 list-pattern element that is itself a list pattern to arbitrary depth,
 the last flat-vs-nested gap left in list patterns now that literal
 elements and rest capture have both landed — `nth_octagonal`, the
@@ -189,10 +188,14 @@ for literal elements/rest capture, now applied to flat map patterns —
 `combinations_with_replacement`, the third and last member of itertools'
 "selections" trio (`permutations`, `combinations`,
 `combinations_with_replacement`), sitting directly next to `combinations`
-the same way `power_set` sits next to `binomial` — and `is_nonagonal`,
-the sixth figurate-number membership test, extending the
+the same way `power_set` sits next to `binomial` — `is_nonagonal`, the
+sixth figurate-number membership test, extending the
 perfect-square-plus-modular-residue check `is_heptagonal`/`is_octagonal`
-already use one side further around the polygon.
+already use one side further around the polygon — and, newly restocked
+this pass, rest capture in match map patterns (`{a, ...rest} => ...`),
+the same leftover-keys-into-a-dict capability list patterns already have
+via `[a, ...rest]`, closing the last flat-list-vs-flat-map gap once
+per-key rename lands.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

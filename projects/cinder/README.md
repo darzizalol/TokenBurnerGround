@@ -170,15 +170,16 @@ while (i < 10) {
   least N elements" instead of an exact length, mirroring `let`
   destructuring's own rest capture), range patterns (`match (5) { 1..10
   => "small", _ => "large" }`, `INT`-only bounds, exclusive `..` or
-  inclusive `..=`, reusing the same range machinery as `x in 1..5`),
-  negative literal patterns (`match (-5) { -5 => "neg", _ => "pos" }`,
-  `INT`/`FLOAT` only, not range-pattern bounds), and flat map patterns
-  (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`, a map subject
-  tested for every named key's presence and each key's value bound in one
-  step, falling through — not raising — on a missing key or non-map
-  subject, bare identifier keys only, no rename yet) for now (no nested
-  list patterns, map-pattern rename, negative range-pattern bounds, or
-  guards yet — see `BACKLOG.md`)
+  inclusive `..=`, either bound optionally negative (`match (-5) { -10..0
+  => "neg", _ => "other" }`), reusing the same range machinery as
+  `x in 1..5`), negative literal patterns (`match (-5) { -5 => "neg", _ =>
+  "pos" }`, `INT`/`FLOAT` only), and flat map patterns (`match ({"a": 1,
+  "b": 2}) { {a, b} => a + b, _ => 0 }`, a map subject tested for every
+  named key's presence and each key's value bound in one step, falling
+  through — not raising — on a missing key or non-map subject, bare
+  identifier keys only, no rename yet) for now (no nested list patterns,
+  map-pattern rename, map-pattern rest capture, or guards yet — see
+  `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -520,45 +521,46 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_heptagonal` — the k-th
-heptagonal number by position via the exact closed form `k(5k - 3)/2`,
-the figurate-number cluster's fourth `nth_*` member — and before that
-`combinations` — every r-length combination of a list via a thin wrapper
-over `itertools.combinations`, the enumerate-vs-count sibling of
-`binomial` for a specific size and the fixed-size sibling of `power_set`
-(all sizes at once) — and before that flat map patterns in `match` arms
-(`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) — the map-subject
-counterpart to flat list patterns, testing key presence and binding each
-key's value in one step, falling through (not raising) on a missing key
-or non-map subject — and before that `permutations` — every ordering of
-a list via a thin wrapper over `itertools.permutations`, the
-collection-side sibling of `cartesian_product`/`power_set` rounding out
-the "enumerate the ways to arrange/pick/combine elements" cluster. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): negative bounds in range
+Actively developed, nightly. Recently landed: negative bounds in range
 patterns (`match (-5) { -10..0 => "neg", _ => "other" }`) — the same
 negation `-5 => "neg"` already gets as a plain literal pattern, extended
-to range bounds, nested list patterns (`match ([1, [2, 3]]) { [a, [b, c]]
-=> a + b + c, _ => 0 }`) — a list-pattern element that is itself a list
-pattern, to arbitrary depth, the last flat-vs-nested gap left in list
-patterns now that literal elements and rest capture have both landed,
-`nth_octagonal` — the k-th octagonal number by position, the
-figurate-number cluster's fifth `nth_*` member, per-key rename in match
-map patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`)
-— the same "prove the flat form out, then extend it" staging that
-already took flat list patterns to literal elements and rest capture,
-now applied to flat map patterns, `combinations_with_replacement` — the
-third and last member of itertools' "selections" trio (`permutations`,
-`combinations`, `combinations_with_replacement`), sitting directly next
-to `combinations` the same way `power_set` sits next to `binomial`, and
-`is_nonagonal` — the sixth figurate-number membership test, the next
-side of the polygon after `is_octagonal`. The pattern-matching tasks are
-all steps in the arc opened by PR #304 and can land in either order
-relative to their siblings; each is written to adapt to whichever has
-already landed by the time it's claimed. (Guards in `match` arms,
-`n if n > 0 => "positive"`, were attempted but closed after three failed
-review rounds over a recurring parser bug — see `BACKLOG.md`'s
-`## Graveyard` for the postmortem; they're a real gap but not back in the
-active queue yet.) The backlog mixes language depth with stdlib breadth
-over time rather than running either in one long block. The full vision
-and non-goals live in [`PROJECT.md`](PROJECT.md).
+to range bounds via a shared `_match_range_bound` helper — and before that
+`nth_heptagonal` — the k-th heptagonal number by position via the exact
+closed form `k(5k - 3)/2`, the figurate-number cluster's fourth `nth_*`
+member — and before that `combinations` — every r-length combination of a
+list via a thin wrapper over `itertools.combinations`, the
+enumerate-vs-count sibling of `binomial` for a specific size and the
+fixed-size sibling of `power_set` (all sizes at once) — and before that
+flat map patterns in `match` arms (`match ({"a": 1, "b": 2}) { {a, b} =>
+a + b, _ => 0 }`) — the map-subject counterpart to flat list patterns,
+testing key presence and binding each key's value in one step, falling
+through (not raising) on a missing key or non-map subject. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): nested list patterns
+(`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`) — a
+list-pattern element that is itself a list pattern, to arbitrary depth,
+the last flat-vs-nested gap left in list patterns now that literal
+elements and rest capture have both landed, `nth_octagonal` — the k-th
+octagonal number by position, the figurate-number cluster's fifth
+`nth_*` member, per-key rename in match map patterns (`match ({"a": 1,
+"b": 2}) { {a: x, b} => x + b, _ => 0 }`) — the same "prove the flat
+form out, then extend it" staging that already took flat list patterns
+to literal elements and rest capture, now applied to flat map patterns,
+`combinations_with_replacement` — the third and last member of itertools'
+"selections" trio (`permutations`, `combinations`,
+`combinations_with_replacement`), sitting directly next to `combinations`
+the same way `power_set` sits next to `binomial`, `is_nonagonal` — the
+sixth figurate-number membership test, the next side of the polygon
+after `is_octagonal`, and rest capture in match map patterns (`match
+({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ => 0 }`) — the same
+leftover-keys-into-a-dict capability list patterns already have via
+`[a, ...rest]`, closing the last flat-list-vs-flat-map gap. The
+pattern-matching tasks are all steps in the arc opened by PR #304 and can
+land in either order relative to their siblings; each is written to adapt
+to whichever has already landed by the time it's claimed. (Guards in
+`match` arms, `n if n > 0 => "positive"`, were attempted but closed after
+three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but
+not back in the active queue yet.) The backlog mixes language depth with
+stdlib breadth over time rather than running either in one long block.
+The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

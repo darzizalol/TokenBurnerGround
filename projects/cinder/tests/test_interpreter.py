@@ -5008,6 +5008,34 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match ("x") { 1..10 => "n", _ => "s" };')
         self.assertEqual(env.get("result"), "s")
 
+    def test_range_pattern_negative_start_matches(self):
+        env = run('let result = match (-5) { -10..0 => "neg", _ => "other" };')
+        self.assertEqual(env.get("result"), "neg")
+
+    def test_range_pattern_negative_bounds_excludes_below_start(self):
+        env = run('let result = match (5) { -10..0 => "neg", _ => "other" };')
+        self.assertEqual(env.get("result"), "other")
+
+    def test_range_pattern_negative_bounds_upper_bound_exclusive(self):
+        env = run('let result = match (0) { -10..0 => "neg", _ => "other" };')
+        self.assertEqual(env.get("result"), "other")
+
+    def test_range_pattern_negative_bounds_inclusive_upper_bound(self):
+        env = run('let result = match (0) { -10..=0 => "neg", _ => "other" };')
+        self.assertEqual(env.get("result"), "neg")
+
+    def test_range_pattern_two_negative_bounds_upper_bound_exclusive(self):
+        env = run('let result = match (-1) { -10..-1 => "neg", _ => "other" };')
+        self.assertEqual(env.get("result"), "other")
+
+    def test_range_pattern_negative_end_bound_empty_range_matches_nothing(self):
+        env = run('let result = match (5) { 0..-1 => "empty", _ => "other" };')
+        self.assertEqual(env.get("result"), "other")
+
+    def test_negative_literal_pattern_unaffected_by_range_bound_support(self):
+        env = run('let result = match (-5) { -5 => "neg", _ => "pos" };')
+        self.assertEqual(env.get("result"), "neg")
+
     def test_list_pattern_still_works_alongside_range_patterns(self):
         env = run('let result = match ([1, 2]) { [a, b] => a + b, _ => 0 };')
         self.assertEqual(env.get("result"), 3)

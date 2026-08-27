@@ -11,72 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_heptagonal` — the k-th heptagonal number by position [claimed 2026-08-27T14:12:01Z]
-
-Build: `is_heptagonal` already exists as a membership test, but Cinder has
-no way to ask "what is the k-th heptagonal number" the way it can for
-triangular numbers (`nth_triangular`, PR #313), pentagonal numbers
-(`nth_pentagonal`, PR #319), and hexagonal numbers (`nth_hexagonal`, PR
-#323) — the exact same "value-returning sibling of an `is_*` membership
-test" pattern the figurate-number cluster's first three `nth_*` members
-already establish, just for its fourth. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_heptagonal(5));'
-# -> <eval>:1:7: undefined name 'nth_heptagonal'
-```
-
-Add to `cinder/builtins.py`, registered right after `_nth_hexagonal` (search
-`def _nth_hexagonal`, immediately before `_is_prime`):
-```python
-def _nth_heptagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_heptagonal", arguments, 1, line, column)
-    value = _require_int("nth_heptagonal", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_heptagonal() requires a positive integer, domain error", line, column
-        )
-    return value * (5 * value - 3) // 2
-```
-`H(k) = k(5k - 3) / 2` is the standard closed form for the k-th heptagonal
-number (cross-check: `_is_heptagonal` tests `40 * value + 9` for a perfect
-square whose root is `≡ 7 (mod 10)`, the standard membership test derived
-from this same closed form). This mirrors `_nth_triangular`'s,
-`_nth_pentagonal`'s, and `_nth_hexagonal`'s shape exactly (arity check, int
-check, domain check, one-line closed-form return) — a thin, direct
-composition, not a new algorithm. Also register the new dict entry (search
-`"nth_hexagonal": _nth_hexagonal,`, add `"nth_heptagonal":
-_nth_heptagonal,` directly after it).
-
-Acceptance criteria:
-- `nth_heptagonal(1);` is `1`, `nth_heptagonal(2);` is `7`,
-  `nth_heptagonal(3);` is `18`, `nth_heptagonal(4);` is `34` — the first
-  four heptagonal numbers.
-- `is_heptagonal(nth_heptagonal(k));` is `true` for every `k` from `1` to
-  `100` — cross-checks the closed form against the existing membership
-  test, the same style `nth_pentagonal`'s and `nth_hexagonal`'s acceptance
-  criteria use.
-- `nth_heptagonal(0);` and `nth_heptagonal(-1);` both raise
-  `CinderRuntimeError` matching `"nth_heptagonal() requires a positive
-  integer, domain error"`.
-- `nth_heptagonal(1.5);` raises `CinderRuntimeError` matching
-  `"nth_heptagonal() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `nth_hexagonal`, search
-that name for the current line number), `tests/test_builtins.py` (model on
-`class TestNthHexagonal`, search that name, for the domain-error, type-error,
-and cross-check test shapes). Once merged, `README.md`'s Builtins bullet
-needs `nth_heptagonal` added near `nth_hexagonal`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: negative bounds in range patterns (`-10..0 => "neg"`)
+## 1. Language: negative bounds in range patterns (`-10..0 => "neg"`)
 
 Build: negative literal patterns (PR #320) let a plain literal pattern be
 negated (`match (-5) { -5 => "neg", _ => "pos" }`), but range patterns
@@ -205,7 +140,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
+## 2. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
 
 Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
 #322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a
@@ -347,29 +282,22 @@ task.
 
 ---
 
-## 4. Standard library: `nth_octagonal` — the k-th octagonal number by position
+## 3. Standard library: `nth_octagonal` — the k-th octagonal number by position
 
 Build: `is_octagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th octagonal number" the way it can for
 triangular (`nth_triangular`, PR #313), pentagonal (`nth_pentagonal`, PR
-#319), and hexagonal numbers (`nth_hexagonal`, PR #323) — the same
-"value-returning sibling of an `is_*` membership test" pattern the
-figurate-number cluster's first three `nth_*` members already establish,
-just for its fifth (after `nth_heptagonal`, task 1 above, closes the
-fourth). Verify the gap:
+#319), hexagonal (`nth_hexagonal`, PR #323), and heptagonal numbers
+(`nth_heptagonal`, PR #328) — the same "value-returning sibling of an
+`is_*` membership test" pattern the figurate-number cluster's first four
+`nth_*` members already establish, just for its fifth. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_octagonal(5));'
 # -> <eval>:1:7: undefined name 'nth_octagonal'
 ```
 
-**Ordering note:** if `nth_heptagonal` (task 1 above) has already landed
-by the time this task is claimed, register `nth_octagonal` directly after
-`_nth_heptagonal` instead of `_nth_hexagonal` — same adaptive placement
-every sibling task in this backlog already uses.
-
-Add to `cinder/builtins.py`, registered right after `_nth_hexagonal` (search
-`def _nth_hexagonal`, immediately before `_is_prime` — or after
-`_nth_heptagonal` per the Ordering note above):
+Add to `cinder/builtins.py`, registered right after `_nth_heptagonal`
+(search `def _nth_heptagonal`, immediately before `_is_prime`):
 ```python
 def _nth_octagonal(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_octagonal", arguments, 1, line, column)
@@ -387,10 +315,9 @@ membership test derived from this same closed form). This mirrors
 `_nth_triangular`'s, `_nth_pentagonal`'s, `_nth_hexagonal`'s, and
 `_nth_heptagonal`'s shape exactly (arity check, int check, domain check,
 one-line closed-form return) — a thin, direct composition, not a new
-algorithm. Also register the new dict entry (search `"nth_hexagonal":
-_nth_hexagonal,`, add `"nth_octagonal": _nth_octagonal,` directly after
-it — or directly after `"nth_heptagonal": _nth_heptagonal,` per the
-Ordering note above).
+algorithm. Also register the new dict entry (search `"nth_heptagonal":
+_nth_heptagonal,`, add `"nth_octagonal": _nth_octagonal,` directly after
+it).
 
 Acceptance criteria:
 - `nth_octagonal(1);` is `1`, `nth_octagonal(2);` is `8`,
@@ -410,8 +337,8 @@ Acceptance criteria:
   line/column.
 - Full test suite passes.
 
-Likely files: `cinder/builtins.py` (register near `nth_hexagonal`/
-`nth_heptagonal`, search for the current line number), `tests/test_builtins.py`
+Likely files: `cinder/builtins.py` (register near `nth_heptagonal`, search
+for the current line number), `tests/test_builtins.py`
 (model on `class TestNthHexagonal`, search that name, for the domain-error,
 type-error, and cross-check test shapes). Once merged, `README.md`'s
 Builtins bullet needs `nth_octagonal` added near `nth_heptagonal`, its
@@ -421,7 +348,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
+## 4. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
 
 Build: flat map patterns (`{a, b} => ...`, PR #326) landed scoped to bare
 identifier keys only — each key binds a variable of the *same* name, with
@@ -529,7 +456,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
+## 5. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
 
 Build: `combinations` (PR #327) returns every r-length combination without
 reusing an element more than once, but Cinder has no way to ask for

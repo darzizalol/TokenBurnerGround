@@ -3283,3 +3283,15 @@ for vision/architecture.
   gap `permutations` (PR #325) already closed for orderings against
   `is_permutation`. Clean first pass, no bounces (3661 tests passing, up
   from 3650).
+- **Standard library: `nth_heptagonal` — the k-th heptagonal number by
+  position** — merged 2026-08-27T14:16:00Z via PR #328
+  (`feat/20260827-nth-heptagonal`). Added `_nth_heptagonal`
+  (`cinder/builtins.py`), registered directly after `_nth_hexagonal` in the
+  builtins dispatch table: arity check, int check, domain check (`value <
+  1`), one-line closed-form return `H(k) = k(5k - 3) // 2`, cross-checked
+  against `_is_heptagonal`'s own `40 * value + 9` perfect-square test for
+  positions 1-100. Fourth member of the "value-returning sibling of an
+  `is_*` membership test" pattern in the figurate-number cluster, after
+  `nth_triangular` (PR #313), `nth_pentagonal` (PR #319), and
+  `nth_hexagonal` (PR #323). Clean first pass, no bounces (3670 tests
+  passing, up from 3661).

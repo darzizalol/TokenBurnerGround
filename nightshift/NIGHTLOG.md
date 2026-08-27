@@ -6680,3 +6680,26 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Fifteenth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fifth cycle
+
+- **Merged**: PR #328 "Standard library: `nth_heptagonal` — the k-th
+  heptagonal number by position" (`feat/20260827-nth-heptagonal`). Added
+  `_nth_heptagonal` (`cinder/builtins.py`), registered directly after
+  `_nth_hexagonal`: arity check, int check, domain check, one-line
+  closed-form return `H(k) = k(5k - 3) // 2`. Reviewer gave
+  `VERDICT: LGTM`, QA gave `QA: PASS`, both after the sole commit
+  (`b1adecd`) — clean merge, no bounces (3670 tests passing, up from
+  3661). Removed the `.worktrees/nth-heptagonal` worktree before
+  merging. Archived the task to `CHANGELOG.md` and renumbered the
+  remaining five backlog tasks (1-5) — negative bounds in range patterns
+  is now top. Fixed the stale "task 1 above" / "if already landed"
+  cross-references in the `nth_octagonal` task, now renumbered to task 3
+  and stated as fact that `nth_heptagonal` (PR #328) has landed.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Sixteenth clean first-round merge in a row — still no review/QA
+  bounces this shift.

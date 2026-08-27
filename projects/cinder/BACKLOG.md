@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
+## 1. Standard library: `combinations_with_replacement` — r-length selections that allow repeats [claimed 2026-08-27T19:50:04Z]
 
 Build: `combinations` (PR #327) returns every r-length combination without
 reusing an element more than once, but Cinder has no way to ask for

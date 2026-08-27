@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
+## 1. Standard library: `nth_heptagonal` — the k-th heptagonal number by position [claimed 2026-08-27T14:12:01Z]
 
 Build: `is_heptagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th heptagonal number" the way it can for

@@ -529,6 +529,97 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `combinations_with_replacement` — r-length selections that allow repeats
+
+Build: `combinations` (PR #327) returns every r-length combination without
+reusing an element more than once, but Cinder has no way to ask for
+selections that *do* allow repeats (e.g. "every way to pick 2 dice values
+from `[1..6]`, repeats allowed") — the third and last member of the
+classic itertools "selections" trio (`permutations`, `combinations`,
+`combinations_with_replacement`), sitting directly next to `combinations`
+the same way `power_set` sits next to `binomial`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(combinations_with_replacement([1, 2], 2));'
+# -> <eval>:1:7: undefined name 'combinations_with_replacement'
+```
+
+Add to `cinder/builtins.py`, registered directly after `_combinations`
+(search `def _combinations`, immediately before `def _permutations`):
+```python
+def _combinations_with_replacement(arguments: list, line: int, column: int) -> object:
+    _require_arity("combinations_with_replacement", arguments, 2, line, column)
+    items, size = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"combinations_with_replacement() requires a list, got {type_name(items)}",
+            line,
+            column,
+        )
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise CinderRuntimeError(
+            f"combinations_with_replacement() requires an int size, got "
+            f"{type_name(size)}",
+            line,
+            column,
+        )
+    if size < 0:
+        raise CinderRuntimeError(
+            "combinations_with_replacement() requires a non-negative size, "
+            "domain error",
+            line,
+            column,
+        )
+    return [
+        list(combo)
+        for combo in itertools.combinations_with_replacement(items, size)
+    ]
+```
+This mirrors `_combinations`'s shape exactly (arity check, list check, int
+check, non-negative-size check, one-line `itertools` wrapper) — the only
+behavioral difference from `combinations` is which `itertools` function
+does the enumerating, so no new domain logic beyond what `_combinations`
+already validates. Unlike `combinations`, `size` may legitimately exceed
+`len(items)` here (repeats make that a valid non-empty request, e.g.
+`combinations_with_replacement([1], 3)` is `[[1, 1, 1]]`) — do not add a
+`size > len(items)` check. Also register the new dict entry (search
+`"combinations": _combinations,`, add `"combinations_with_replacement":
+_combinations_with_replacement,` directly after it).
+
+Acceptance criteria:
+- `combinations_with_replacement([1, 2], 2);` is
+  `[[1, 1], [1, 2], [2, 2]]` — order matches `itertools`'s own
+  lexicographic-by-input-position order.
+- `combinations_with_replacement([1], 3);` is `[[1, 1, 1]]` — `size`
+  exceeding `len(items)` is valid (repeats allow it), unlike `combinations`.
+- `combinations_with_replacement([1, 2], 0);` is `[[]]`.
+- `combinations_with_replacement([], 0);` is `[[]]` and
+  `combinations_with_replacement([], 1);` is `[]`.
+- `combinations_with_replacement([1, 2], -1);` raises `CinderRuntimeError`
+  matching `"combinations_with_replacement() requires a non-negative
+  size, domain error"`.
+- `combinations_with_replacement(5, 2);` raises `CinderRuntimeError`
+  matching `"combinations_with_replacement() requires a list, got int"`.
+- `combinations_with_replacement([1, 2], 1.5);` raises `CinderRuntimeError`
+  matching `"combinations_with_replacement() requires an int size, got
+  float"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
+  line/column.
+- Duplicate elements in the input are not de-duplicated, matching
+  `itertools.combinations_with_replacement`'s position-based (not
+  value-based) behavior.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after
+`combinations`), `tests/test_builtins.py` (model on `class
+TestCombinations`, search that name, for the domain-error, type-error,
+and shape test forms). Once merged, `README.md`'s Builtins bullet needs
+`combinations_with_replacement` added near `combinations`, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+bullet needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

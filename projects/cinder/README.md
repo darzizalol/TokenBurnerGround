@@ -438,7 +438,9 @@ while (i < 10) {
   `power_set` to return every subset of a list across all sizes (a thin wrapper over
   `itertools.combinations`, the enumerate-vs-count sibling of `binomial`'s counting question),
   `permutations` to return every ordering of a list (a thin wrapper over `itertools.permutations`,
-  the arrangement-side sibling of `power_set`/`cartesian_product`), and
+  the arrangement-side sibling of `power_set`/`cartesian_product`),
+  `combinations` to return every r-length combination of a list (a thin wrapper over
+  `itertools.combinations`, the enumerate-vs-count sibling of `binomial` for a specific size), and
   type predicates `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -517,47 +519,48 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: flat map patterns in
-`match` arms (`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) —
-the map-subject counterpart to flat list patterns, testing key presence
-and binding each key's value in one step, falling through (not raising)
-on a missing key or non-map subject — and before that `permutations` —
-every ordering of a list via a thin wrapper over `itertools.permutations`,
-the collection-side sibling of `cartesian_product`/`power_set` rounding
-out the "enumerate the ways to arrange/pick/combine elements" cluster —
-and before that rest capture in list patterns (`match ([1, 2, 3]) { [a,
+Actively developed, nightly. Recently landed: `combinations` — every
+r-length combination of a list via a thin wrapper over
+`itertools.combinations`, the enumerate-vs-count sibling of `binomial`
+for a specific size and the fixed-size sibling of `power_set` (all sizes
+at once) — and before that flat map patterns in `match` arms
+(`match ({"a": 1, "b": 2}) { {a, b} => a + b, _ => 0 }`) — the map-subject
+counterpart to flat list patterns, testing key presence and binding each
+key's value in one step, falling through (not raising) on a missing key
+or non-map subject — and before that `permutations` — every ordering of
+a list via a thin wrapper over `itertools.permutations`, the
+collection-side sibling of `cartesian_product`/`power_set` rounding out
+the "enumerate the ways to arrange/pick/combine elements" cluster — and
+before that rest capture in list patterns (`match ([1, 2, 3]) { [a,
 ...rest] => rest, _ => [] }`) — an optional trailing `...name`/`..._`
 after a list pattern's fixed elements, matching "at least N elements"
 instead of an exact length and binding the tail as a sliced copy,
-mirroring the rest capture `let` destructuring already has — and before
-that `nth_hexagonal` — the hexagonal number found at a 1-indexed position
-via the closed form `k(2k - 1)`, the figurate-number cluster's third
-`nth_*` member alongside `nth_triangular`/`nth_pentagonal`. See
+mirroring the rest capture `let` destructuring already has. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `combinations` — every
-r-length combination of a list, the fixed-size sibling of `power_set`
-(all sizes at once) and the enumerate-vs-count sibling of `binomial` for
-one specific size, `nth_heptagonal` — the k-th heptagonal number by
-position, the figurate-number cluster's fourth `nth_*` member, negative
-bounds in range patterns (`match (-5) { -10..0 => "neg", _ => "other"
-}`) — the same negation `-5 => "neg"` already gets as a plain literal
-pattern, extended to range bounds, nested list patterns
-(`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`) — a
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_heptagonal` — the
+k-th heptagonal number by position, the figurate-number cluster's fourth
+`nth_*` member, negative bounds in range patterns (`match (-5) { -10..0
+=> "neg", _ => "other" }`) — the same negation `-5 => "neg"` already gets
+as a plain literal pattern, extended to range bounds, nested list
+patterns (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }`) — a
 list-pattern element that is itself a list pattern, to arbitrary depth,
 the last flat-vs-nested gap left in list patterns now that literal
 elements and rest capture have both landed, `nth_octagonal` — the
 k-th octagonal number by position, the figurate-number cluster's fifth
-`nth_*` member, and per-key rename in match map patterns
+`nth_*` member, per-key rename in match map patterns
 (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`) — the same
 "prove the flat form out, then extend it" staging that already took flat
 list patterns to literal elements and rest capture, now applied to flat
-map patterns. The pattern-matching tasks are all steps in the arc
-opened by PR #304 and can land in either order relative to their
-siblings; each is written to adapt to whichever has already landed by
-the time it's claimed. (Guards in `match` arms, `n if n > 0 =>
-"positive"`, were attempted but closed after three failed review rounds
-over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
-postmortem; they're a real gap but not back in the active queue yet.)
-The backlog mixes language depth with stdlib breadth over time rather than
-running either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+map patterns, and `combinations_with_replacement` — the third and last
+member of itertools' "selections" trio (`permutations`, `combinations`,
+`combinations_with_replacement`), sitting directly next to `combinations`
+the same way `power_set` sits next to `binomial`. The pattern-matching
+tasks are all steps in the arc opened by PR #304 and can land in either
+order relative to their siblings; each is written to adapt to whichever
+has already landed by the time it's claimed. (Guards in `match` arms,
+`n if n > 0 => "positive"`, were attempted but closed after three failed
+review rounds over a recurring parser bug — see `BACKLOG.md`'s
+`## Graveyard` for the postmortem; they're a real gap but not back in the
+active queue yet.) The backlog mixes language depth with stdlib breadth
+over time rather than running either in one long block. The full vision
+and non-goals live in [`PROJECT.md`](PROJECT.md).

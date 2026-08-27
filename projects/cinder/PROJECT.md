@@ -149,45 +149,47 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): flat map patterns
-in `match` arms (#326) — the map-subject counterpart to flat list
-patterns, `{a, b} => ...` tests that the subject is a map containing
-every named key and binds each key's value in one step, falling through
-(not raising) on a missing key or non-map subject, the same "shape test,
-no exception" philosophy flat list patterns established — and before
-that `permutations` (#325) — every ordering of a list, a thin wrapper
-over `itertools.permutations`, the collection-side sibling of
-`cartesian_product`/`power_set` rounding out the "enumerate the ways to
-arrange/pick/combine elements" cluster — and before that rest capture in
-list patterns (#324) — an optional trailing `...name`/`..._` after a list
-pattern's fixed elements matches "at least N elements" instead of an exact
-length and binds the tail as a sliced copy, mirroring the rest capture
-`let [a, ...rest] = xs;` destructuring already has — and before that
-`nth_hexagonal` (#323) — the k-th hexagonal number by position, the
-figurate-number cluster's third `nth_*` member alongside
-`nth_triangular`/`nth_pentagonal`. Guards in `match` arms (`n if n > 0 =>
-...`) were attempted (PR #314) but closed after three straight `VERDICT:
-CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
-for the full postmortem and the suggested next approach; still not
-requeued.
+Recently landed (see `CHANGELOG.md` for the full list): `combinations`
+(#327) — every r-length combination of a list, a thin wrapper over
+`itertools.combinations(items, size)` registered directly after
+`permutations`, the enumerate-vs-count sibling of `binomial` for a
+*specific* size and the natural companion to `power_set` (all sizes at
+once) — and before that flat map patterns in `match` arms (#326) — the
+map-subject counterpart to flat list patterns, `{a, b} => ...` tests that
+the subject is a map containing every named key and binds each key's
+value in one step, falling through (not raising) on a missing key or
+non-map subject, the same "shape test, no exception" philosophy flat list
+patterns established — and before that `permutations` (#325) — every
+ordering of a list, a thin wrapper over `itertools.permutations`, the
+collection-side sibling of `cartesian_product`/`power_set` rounding out
+the "enumerate the ways to arrange/pick/combine elements" cluster — and
+before that rest capture in list patterns (#324) — an optional trailing
+`...name`/`..._` after a list pattern's fixed elements matches "at least
+N elements" instead of an exact length and binds the tail as a sliced
+copy, mirroring the rest capture `let [a, ...rest] = xs;` destructuring
+already has. Guards in `match` arms (`n if n > 0 => ...`) were attempted
+(PR #314) but closed after three straight `VERDICT: CHANGES REQUESTED`
+rounds, all the same recurring bug in the bare-arrow/guard `=>`
+disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
+postmortem and the suggested next approach; still not requeued.
 
 `BACKLOG.md` carries the active queue, 3-breadth/3-depth at the 6-task
-ceiling: `combinations` — every r-length combination of a list, the
-enumerate-vs-count sibling of `binomial` for a *specific* size, the
-natural companion to `power_set` (all sizes at once) — `nth_heptagonal` —
-the k-th heptagonal number by position, the figurate-number cluster's
-fourth `nth_*` member — negative bounds in range patterns (`-10..0 =>
-"neg"`), extending the negation negative literal patterns already get for
-plain literals to range bounds too — nested list patterns (`[a, [b, c]]
-=> ...`), a list-pattern element that is itself a list pattern to
-arbitrary depth, the last flat-vs-nested gap left in list patterns now
-that literal elements and rest capture have both landed — `nth_octagonal`,
-the figurate-number cluster's fifth `nth_*` member, following
-`nth_heptagonal` the same way each prior member followed its predecessor
-— and per-key rename in match map patterns (`{a: x, b} => ...`), the same
-"prove the flat form out, then extend it" staging flat list patterns used
-for literal elements/rest capture, now applied to flat map patterns.
+ceiling: `nth_heptagonal` — the k-th heptagonal number by position, the
+figurate-number cluster's fourth `nth_*` member — negative bounds in
+range patterns (`-10..0 => "neg"`), extending the negation negative
+literal patterns already get for plain literals to range bounds too —
+nested list patterns (`[a, [b, c]] => ...`), a list-pattern element that
+is itself a list pattern to arbitrary depth, the last flat-vs-nested gap
+left in list patterns now that literal elements and rest capture have
+both landed — `nth_octagonal`, the figurate-number cluster's fifth
+`nth_*` member, following `nth_heptagonal` the same way each prior member
+followed its predecessor — per-key rename in match map patterns (`{a: x,
+b} => ...`), the same "prove the flat form out, then extend it" staging
+flat list patterns used for literal elements/rest capture, now applied to
+flat map patterns — and `combinations_with_replacement`, the third and
+last member of itertools' "selections" trio (`permutations`,
+`combinations`, `combinations_with_replacement`), sitting directly next
+to `combinations` the same way `power_set` sits next to `binomial`.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -214,17 +216,18 @@ same staging; map-pattern nesting/rest remain real gaps left for later
 once rename proves out. Guards remain a real gap too, but are
 deliberately not requeued yet.
 
-This grooming pass (2026-08-27, seventh pass) restocked one task — per-key
-rename in match map patterns (depth) — because flat map patterns (depth)
-landed via PR #326 since the last pass without a grooming pass restocking
-behind it, dropping the queue from 6 to 5 (3-breadth/2-depth:
-`combinations`, `nth_heptagonal`, `nth_octagonal` vs. negative
-range-pattern bounds, nested list patterns), at the 5-task floor. Adding
-one depth task restores the queue to its 6-task ceiling at exact
-3-breadth/3-depth parity. Map-pattern rename is the natural next depth
-task: it's the same "extend the flat form" staging literal
-list-pattern-elements and rest capture already used, applied to the
-pattern kind that just landed. **The next grooming pass should restock
+This grooming pass (2026-08-27, eighth pass) restocked one task —
+`combinations_with_replacement` (breadth) — because `combinations`
+(breadth) landed via PR #327 since the last pass without a grooming pass
+restocking behind it, dropping the queue from 6 to 5 (2-breadth/3-depth:
+`nth_heptagonal`, `nth_octagonal` vs. negative range-pattern bounds,
+nested list patterns, map-pattern rename), at the 5-task floor. Adding
+one breadth task restores the queue to its 6-task ceiling at exact
+3-breadth/3-depth parity. `combinations_with_replacement` is the natural
+next breadth task: it's the third and last member of itertools'
+"selections" trio (`permutations`, `combinations`,
+`combinations_with_replacement`), the same thin-wrapper shape
+`combinations` itself just used. **The next grooming pass should restock
 with whichever kind keeps 3-breadth/3-depth parity** given whatever lands
 between now and then — alternation is the default rhythm, not a hard
 rule.

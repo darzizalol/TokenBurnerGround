@@ -3058,6 +3058,69 @@ class TestNthHexagonal(unittest.TestCase):
             run("nth_hexagonal(1, 2);")
 
 
+class TestNthHeptagonal(unittest.TestCase):
+    def test_nth_heptagonal_of_first_four_positions(self):
+        expected = {1: 1, 2: 7, 3: 18, 4: 34}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_heptagonal({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_heptagonal_of_ten(self):
+        self.assertEqual(run("let result = nth_heptagonal(10);").get("result"), 235)
+
+    def test_nth_heptagonal_of_one_hundred(self):
+        self.assertEqual(
+            run("let result = nth_heptagonal(100);").get("result"), 24850
+        )
+
+    def test_nth_heptagonal_agrees_with_is_heptagonal(self):
+        for position in range(1, 101):
+            self.assertEqual(
+                run(
+                    f"let result = is_heptagonal(nth_heptagonal({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_heptagonal({position}) to be a heptagonal number",
+            )
+
+    def test_nth_heptagonal_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_heptagonal(0);")
+        self.assertIn(
+            "nth_heptagonal() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_heptagonal_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_heptagonal(-3);")
+        self.assertIn(
+            "nth_heptagonal() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_heptagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_heptagonal(2.0);")
+        self.assertIn(
+            "nth_heptagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_heptagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_heptagonal(true);")
+        self.assertIn(
+            "nth_heptagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_heptagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_heptagonal(1, 2);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

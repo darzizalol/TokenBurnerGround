@@ -3345,3 +3345,13 @@ for vision/architecture.
   `key`. Scoped to bare rename only — no nesting, no rest capture, no
   defaults, staged the same way flat map patterns themselves were. Clean
   first pass, no bounces (3710 tests passing, up from 3690).
+- **Standard library: `combinations_with_replacement` — r-length selections
+  that allow repeats** — merged 2026-08-27T19:54:47Z via PR #333
+  (`feat/20260827-combinations-with-replacement`). Added
+  `_combinations_with_replacement` to `cinder/builtins.py`, mirroring
+  `_combinations`'s exact shape (arity check, list check, int check,
+  non-negative-size check, one-line `itertools` wrapper) but omitting the
+  `size > len(items)` check since replacement makes that valid. Completes
+  the classic itertools "selections" trio (`permutations`, `combinations`,
+  `combinations_with_replacement`). Clean first pass, no bounces (3720
+  tests passing, up from 3710).

@@ -6784,3 +6784,23 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Twentieth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fourth cycle
+
+- **Merged**: PR #333 "Standard library: combinations_with_replacement —
+  r-length selections that allow repeats"
+  (`feat/20260827-combinations-with-replacement`). Had `VERDICT: LGTM`
+  and `QA: PASS` on its sole commit — clean merge, no bounces (3720
+  tests passing, up from 3710). Removed the
+  `.worktrees/combinations-with-replacement` worktree before merging.
+  Archived the task to `CHANGELOG.md` and renumbered the remaining five
+  backlog tasks (1-5) — `is_nonagonal` is now top. While renumbering,
+  updated the surviving tasks' stale internal references to the
+  rest-capture task's old number (was "task 3", now "task 2").
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Twenty-first clean first-round merge in a row — still no review/QA
+  bounces this shift.

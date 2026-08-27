@@ -153,7 +153,7 @@ task.
 
 ---
 
-## 2. Standard library: `nth_octagonal` — the k-th octagonal number by position
+## 2. Standard library: `nth_octagonal` — the k-th octagonal number by position [claimed 2026-08-27T19:18:26Z]
 
 Build: `is_octagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th octagonal number" the way it can for

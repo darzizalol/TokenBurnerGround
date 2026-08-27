@@ -1164,12 +1164,12 @@ class Interpreter:
                 continue
             if arm.map_pattern is not None:
                 if not isinstance(subject, dict) or not all(
-                    key in subject for key in arm.map_pattern
+                    key in subject for key, _ in arm.map_pattern
                 ):
                     continue
                 arm_env = Environment(env)
-                for key in arm.map_pattern:
-                    arm_env.define(key, subject[key])
+                for key, binding in arm.map_pattern:
+                    arm_env.define(binding, subject[key])
                 return self.evaluate(arm.body, arm_env)
             if arm.pattern is None:
                 if arm.binding is None:

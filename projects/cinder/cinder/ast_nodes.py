@@ -308,11 +308,11 @@ class MatchArm:
     does (kept as the literal name `"_"` when the rest is discarded, so
     the interpreter can tell "no rest capture" apart from "rest
     capture, discarded"). `map_pattern` is a fifth, mutually exclusive
-    pattern kind: a flat list of bound-identifier keys tested for
-    presence against the subject's keys (a map/dict), binding each
-    key's value under its own name rather than comparing via
-    `values_equal`; `pattern` and `binding` stay `None` for a
-    map-pattern arm."""
+    pattern kind: a flat list of `(key, binding)` pairs, `binding` equal
+    to `key` when unrenamed, tested for presence against the subject's
+    keys (a map/dict), binding each key's value under `binding` rather
+    than comparing via `values_equal`; `pattern` and `binding` stay
+    `None` for a map-pattern arm."""
 
     pattern: "Expr | None"
     body: "Expr"
@@ -320,7 +320,7 @@ class MatchArm:
     list_pattern: "list | None" = None
     range_pattern: "RangeExpr | None" = None
     list_rest: "str | None" = None
-    map_pattern: "list[str] | None" = None
+    map_pattern: "list[tuple[str, str]] | None" = None
 
 
 @dataclass(frozen=True)

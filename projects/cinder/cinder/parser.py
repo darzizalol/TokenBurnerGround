@@ -1169,22 +1169,28 @@ class Parser:
             token.column,
         )
 
-    def _match_map_pattern(self) -> "list[str]":
+    def _match_map_pattern(self) -> "list[tuple[str, str]]":
         self._advance()  # consume '{'
-        names: "list[str]" = []
+        entries: "list[tuple[str, str]]" = []
         if not self._check(TokenType.RBRACE):
-            names.append(self._match_map_pattern_name())
+            entries.append(self._match_map_pattern_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
-                names.append(self._match_map_pattern_name())
+                entries.append(self._match_map_pattern_entry())
         self._consume(TokenType.RBRACE, "'}' after map pattern")
-        return names
+        return entries
 
-    def _match_map_pattern_name(self) -> str:
-        token = self._consume(
+    def _match_map_pattern_entry(self) -> "tuple[str, str]":
+        key = self._consume(
             TokenType.IDENTIFIER, "identifier inside map pattern"
-        )
-        return token.lexeme
+        ).lexeme
+        if self._check(TokenType.COLON):
+            self._advance()
+            binding = self._consume(
+                TokenType.IDENTIFIER, "identifier after ':' in map pattern"
+            ).lexeme
+            return key, binding
+        return key, key
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
         token = self._peek()

@@ -1459,6 +1459,17 @@ def _is_octagonal(arguments: list, line: int, column: int) -> object:
     return root * root == candidate and (1 + root) % 3 == 0
 
 
+def _is_nonagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_nonagonal", arguments, 1, line, column)
+    value = _require_int("is_nonagonal", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 56 * value + 25
+    root = math.isqrt(candidate)
+    return root * root == candidate and (root + 5) % 14 == 0
+
+
 def _nth_triangular(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_triangular", arguments, 1, line, column)
     value = _require_int("nth_triangular", arguments[0], line, column)
@@ -4102,6 +4113,7 @@ _BUILTINS = {
     "is_hexagonal": _is_hexagonal,
     "is_heptagonal": _is_heptagonal,
     "is_octagonal": _is_octagonal,
+    "is_nonagonal": _is_nonagonal,
     "nth_triangular": _nth_triangular,
     "nth_pentagonal": _nth_pentagonal,
     "nth_hexagonal": _nth_hexagonal,

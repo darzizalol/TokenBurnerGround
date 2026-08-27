@@ -2869,6 +2869,54 @@ class TestIsOctagonal(unittest.TestCase):
             run("is_octagonal(1, 2);")
 
 
+class TestIsNonagonal(unittest.TestCase):
+    def test_is_nonagonal_of_members(self):
+        for value in (1, 9, 24, 46, 75):
+            self.assertEqual(
+                run(f"let result = is_nonagonal({value});").get("result"),
+                True,
+                f"expected {value} to be a nonagonal number",
+            )
+
+    def test_is_nonagonal_of_non_members(self):
+        for value in (0, 2, 10):
+            self.assertEqual(
+                run(f"let result = is_nonagonal({value});").get("result"),
+                False,
+                f"expected {value} to not be a nonagonal number",
+            )
+
+    def test_is_nonagonal_negative_input_is_false(self):
+        self.assertEqual(run("let result = is_nonagonal(-1);").get("result"), False)
+
+    def test_is_nonagonal_matches_direct_construction(self):
+        for k in range(1, 101):
+            value = k * (7 * k - 5) // 2
+            self.assertEqual(
+                run(f"let result = is_nonagonal({value});").get("result"),
+                True,
+                f"expected N({k}) = {value} to be a nonagonal number",
+            )
+
+    def test_is_nonagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_nonagonal(1.5);")
+        self.assertIn(
+            "is_nonagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_nonagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_nonagonal(true);")
+        self.assertIn(
+            "is_nonagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_nonagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_nonagonal(1, 2);")
+
+
 class TestNthTriangular(unittest.TestCase):
     def test_nth_triangular_of_first_five_positions(self):
         expected = {1: 1, 2: 3, 3: 6, 4: 10, 5: 15}

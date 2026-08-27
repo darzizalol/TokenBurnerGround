@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: rest capture in match map patterns (`{a, ...rest} => ...`)
+## 1. Language: rest capture in match map patterns (`{a, ...rest} => ...`) [claimed 2026-08-27T20:15:59Z]
 
 Build: flat map patterns (PR #326) and per-key rename (PR #332) give match
 map patterns everything list patterns have except rest capture — list

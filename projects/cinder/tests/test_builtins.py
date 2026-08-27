@@ -8910,6 +8910,59 @@ class TestCombinations(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestCombinationsWithReplacement(unittest.TestCase):
+    def test_combinations_with_replacement_of_two_elements_size_two(self):
+        env = run("let result = combinations_with_replacement([1, 2], 2);")
+        self.assertEqual(env.get("result"), [[1, 1], [1, 2], [2, 2]])
+
+    def test_combinations_with_replacement_size_greater_than_length_is_valid(self):
+        env = run("let result = combinations_with_replacement([1], 3);")
+        self.assertEqual(env.get("result"), [[1, 1, 1]])
+
+    def test_combinations_with_replacement_size_zero_is_singleton_empty_list(self):
+        env = run("let result = combinations_with_replacement([1, 2], 0);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_combinations_with_replacement_of_empty_list_size_zero(self):
+        env = run("let result = combinations_with_replacement([], 0);")
+        self.assertEqual(env.get("result"), [[]])
+
+    def test_combinations_with_replacement_of_empty_list_size_one_is_empty(self):
+        env = run("let result = combinations_with_replacement([], 1);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_combinations_with_replacement_does_not_deduplicate(self):
+        env = run("let result = combinations_with_replacement([1, 1], 1);")
+        self.assertEqual(env.get("result"), [[1], [1]])
+
+    def test_combinations_with_replacement_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "combinations_with_replacement\\(\\) requires a list, got int",
+        ):
+            run("combinations_with_replacement(5, 2);")
+
+    def test_combinations_with_replacement_non_int_size_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "combinations_with_replacement\\(\\) requires an int size, got float",
+        ):
+            run("combinations_with_replacement([1, 2], 1.5);")
+
+    def test_combinations_with_replacement_negative_size_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            "combinations_with_replacement\\(\\) requires a non-negative size, "
+            "domain error",
+        ):
+            run("combinations_with_replacement([1, 2], -1);")
+
+    def test_combinations_with_replacement_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("combinations_with_replacement([1, 2, 3]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestAssert(unittest.TestCase):
     def test_assert_true_does_not_raise_and_returns_nil(self):
         env = run('let result = assert(true, "should not fire");')

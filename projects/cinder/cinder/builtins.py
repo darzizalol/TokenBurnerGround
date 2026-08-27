@@ -3525,6 +3525,35 @@ def _combinations(arguments: list, line: int, column: int) -> object:
     return [list(combo) for combo in itertools.combinations(items, size)]
 
 
+def _combinations_with_replacement(arguments: list, line: int, column: int) -> object:
+    _require_arity("combinations_with_replacement", arguments, 2, line, column)
+    items, size = arguments
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"combinations_with_replacement() requires a list, got {type_name(items)}",
+            line,
+            column,
+        )
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise CinderRuntimeError(
+            f"combinations_with_replacement() requires an int size, got "
+            f"{type_name(size)}",
+            line,
+            column,
+        )
+    if size < 0:
+        raise CinderRuntimeError(
+            "combinations_with_replacement() requires a non-negative size, "
+            "domain error",
+            line,
+            column,
+        )
+    return [
+        list(combo)
+        for combo in itertools.combinations_with_replacement(items, size)
+    ]
+
+
 def _permutations(arguments: list, line: int, column: int) -> object:
     _require_arity("permutations", arguments, 1, line, column)
     items = arguments[0]
@@ -4226,6 +4255,7 @@ _BUILTINS = {
     "power_set": _power_set,
     "permutations": _permutations,
     "combinations": _combinations,
+    "combinations_with_replacement": _combinations_with_replacement,
     "assert": _assert,
     "format": _format,
     "is_list": _is_list,

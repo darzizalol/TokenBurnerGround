@@ -149,94 +149,87 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): negative bounds
-in range patterns (#329) — either bound of a range pattern
+Recently landed (see `CHANGELOG.md` for the full list): nested list
+patterns in `match` arms (#330) — a list-pattern element may now itself
+be a list pattern to arbitrary depth, closed by a recursive branch in
+`_match_list_pattern_entry` and a matching `_match_list_entries` helper
+in the interpreter, the last flat-vs-nested gap list patterns had — and
+`nth_octagonal` (#331) — the k-th octagonal number by position, the
+figurate-number cluster's fifth `nth_*` member, registered directly
+after `nth_heptagonal`, a one-line closed-form return (`O(k) = k(3k -
+2)`) mirroring its siblings' shape exactly — and before that negative
+bounds in range patterns (#329) — either bound of a range pattern
 (`-10..0 => "neg"`) may now be negative, via a shared
 `_match_range_bound` helper factored out of the positive- and
 negative-start parsing paths, the same negation plain negative literal
-patterns already had — and before that `nth_heptagonal` (#328) — the
-k-th heptagonal number by position, the figurate-number cluster's fourth
-`nth_*` member, registered directly after `nth_hexagonal`, a one-line
-closed-form return (`H(k) = k(5k - 3)/2`) mirroring
-`nth_triangular`'s/`nth_pentagonal`'s/`nth_hexagonal`'s shape exactly —
-and before that `combinations` (#327) — every r-length combination of a
-list, a thin wrapper over `itertools.combinations(items, size)`
-registered directly after `permutations`, the enumerate-vs-count sibling
-of `binomial` for a *specific* size and the natural companion to
-`power_set` (all sizes at once) — and before that flat map patterns in
-`match` arms (#326) — the map-subject counterpart to flat list patterns,
-`{a, b} => ...` tests that the subject is a map containing every named
-key and binds each key's value in one step, falling through (not
-raising) on a missing key or non-map subject, the same "shape test, no
-exception" philosophy flat list patterns established. Guards in `match`
-arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
-three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
-recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
-next approach; still not requeued.
+patterns already had. Guards in `match` arms (`n if n > 0 => ...`) were
+attempted (PR #314) but closed after three straight
+`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
+bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
+for the full postmortem and the suggested next approach; still not
+requeued.
 
 `BACKLOG.md` carries the active queue, back at its 6-task ceiling after
-this grooming pass: nested list patterns (`[a, [b, c]] => ...`), a
-list-pattern element that is itself a list pattern to arbitrary depth,
-the last flat-vs-nested gap left in list patterns now that literal
-elements and rest capture have both landed — `nth_octagonal`, the
-figurate-number cluster's fifth `nth_*` member, following
-`nth_heptagonal` the same way each prior member followed its predecessor
-— per-key rename in match map patterns (`{a: x, b} => ...`), the same
-"prove the flat form out, then extend it" staging flat list patterns used
-for literal elements/rest capture, now applied to flat map patterns —
-`combinations_with_replacement`, the third and last member of itertools'
-"selections" trio (`permutations`, `combinations`,
-`combinations_with_replacement`), sitting directly next to `combinations`
-the same way `power_set` sits next to `binomial` — `is_nonagonal`, the
-sixth figurate-number membership test, extending the
+this grooming pass: per-key rename in match map patterns
+(`{a: x, b} => ...`), the same "prove the flat form out, then extend it"
+staging flat list patterns used for literal elements/rest capture, now
+applied to flat map patterns — `combinations_with_replacement`, the
+third and last member of itertools' "selections" trio (`permutations`,
+`combinations`, `combinations_with_replacement`), sitting directly next
+to `combinations` the same way `power_set` sits next to `binomial` —
+`is_nonagonal`, the sixth figurate-number membership test, extending the
 perfect-square-plus-modular-residue check `is_heptagonal`/`is_octagonal`
-already use one side further around the polygon — and, newly restocked
-this pass, rest capture in match map patterns (`{a, ...rest} => ...`),
-the same leftover-keys-into-a-dict capability list patterns already have
-via `[a, ...rest]`, closing the last flat-list-vs-flat-map gap once
-per-key rename lands.
+already use one side further around the polygon — rest capture in match
+map patterns (`{a, ...rest} => ...`), the same leftover-keys-into-a-dict
+capability list patterns already have via `[a, ...rest]`, closing the
+last flat-list-vs-flat-map gap once per-key rename lands — and, newly
+restocked this pass, `is_catalan`, filling the one `nth_*` builtin
+(`nth_catalan`) with no matching `is_*` membership predicate, via a
+bounded iterative search rather than the figurate cluster's closed-form
+check since Catalan numbers have no simple algebraic membership test —
+and nested patterns as map pattern values (`{a: {b, c}} => ...`), the
+map-pattern counterpart to nested list patterns (#330), closing the last
+flat-vs-nested gap between match map patterns and `let` destructuring
+(which already supports this), queued last since it depends on both
+per-key rename and rest capture landing first.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
 distinct from destructuring. Bound-identifier patterns (#311), multi-value
 patterns (#312), flat list patterns (#316), range patterns (#318),
 negative literal patterns (#320), literal list-pattern elements (#322),
-rest capture in list patterns (#324), and flat map patterns (#326) are
-the follow-ups that have landed so far; nested list patterns and map
-pattern rename are queued behind them, each written to adapt to whatever
-the merged code actually looks like by the time it's claimed, since these
-tasks can land in either order relative to their siblings — see each
-task's own "Ordering note." Negative literal patterns landed scoped to
-plain literal patterns only — range-pattern bounds still don't accept a
-leading `-` (`-10..0` stays out of scope), queued as its own task since
-the gap was never separately closed. Literal list-pattern elements landed
-scoped to bare literals only, no nesting, no rest capture; rest capture
-then landed scoped to a single trailing capture, no nesting — nested list
-patterns are now queued as their own task, unblocked by both of those
-landing (the same staged approach the `nth_*`/`is_*` figurate-number
-cluster used: prove the flat form out, then extend it). Flat map patterns
-landed scoped to bare identifier keys only, no rename, no nesting, no
-rest, no defaults — per-key rename is now queued as its own task, the
-same staging; map-pattern nesting/rest remain real gaps left for later
-once rename proves out. Guards remain a real gap too, but are
-deliberately not requeued yet.
+rest capture in list patterns (#324), flat map patterns (#326), and
+nested list patterns (#330) are the follow-ups that have landed so far;
+map-pattern rename, map-pattern rest capture, and map-pattern value
+nesting are queued behind them, each written to adapt to whatever the
+merged code actually looks like by the time it's claimed — see each
+task's own "Ordering note" (map-pattern value nesting explicitly depends
+on both rename and rest capture landing first; the other two can land in
+either order relative to each other). Flat map patterns landed scoped to
+bare identifier keys only, no rename, no nesting, no rest, no defaults —
+rename, rest capture, and value nesting are now each queued as their own
+task, the same staged approach nested list patterns proved out for list
+patterns. Guards remain a real gap too, but are deliberately not
+requeued yet.
 
-This grooming pass (2026-08-27, ninth pass) restocked one task —
-`is_nonagonal` (breadth) — because `nth_heptagonal` (breadth) landed via
-PR #328 since the last pass without a grooming pass restocking behind it,
-dropping the queue from 6 to 5 (2-breadth/3-depth: `nth_octagonal`,
-`combinations_with_replacement` vs. negative range-pattern bounds, nested
-list patterns, map-pattern rename), at the 5-task floor. Adding one
-breadth task restores the queue to its 6-task ceiling at exact
-3-breadth/3-depth parity. `is_nonagonal` is the natural next breadth
-task: it's the sixth member of the figurate-number membership cluster
-(`is_triangular` through `is_octagonal` already landed), the same
-closed-form-plus-modular-residue shape `is_heptagonal`/`is_octagonal`
-already use, one side further around the polygon. **The next grooming
-pass should restock with whichever kind keeps 3-breadth/3-depth parity**
-given whatever lands between now and then — alternation is the default
-rhythm, not a hard rule.
+This grooming pass (2026-08-28, tenth pass) restocked two tasks —
+`is_catalan` (breadth) and map-pattern value nesting (depth) — because
+both nested list patterns (depth, #330) and `nth_octagonal` (breadth,
+#331) landed since the last pass without a grooming pass restocking
+behind them, dropping the queue from 6 to 4 (2-breadth/2-depth:
+`combinations_with_replacement`, `is_nonagonal` vs. map-pattern rename,
+map-pattern rest capture), below the 5-task floor. Adding one task of
+each kind restores the queue to its 6-task ceiling at exact
+3-breadth/3-depth parity. `is_catalan` is the natural next breadth task:
+`nth_catalan` is the only `nth_*` builtin left without an `is_*`
+membership counterpart, a clearly identifiable gap rather than a chosen
+extension. Map-pattern value nesting is the natural next depth task: the
+same "flat first, then nested" staging every other pattern-matching
+extension in this backlog has used, applied to the one map-pattern
+capability list patterns already have (#330) that map patterns still
+lack. **The next grooming pass should restock with whichever kind keeps
+3-breadth/3-depth parity** given whatever lands between now and then —
+alternation is the default rhythm, not a hard rule.
 
 ## History
 

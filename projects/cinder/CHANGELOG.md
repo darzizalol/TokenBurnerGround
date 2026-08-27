@@ -3269,3 +3269,17 @@ for vision/architecture.
   and range patterns already use. Closes the same destructuring-vs-match
   gap flat list patterns (PR #316) closed for lists. Clean first pass, no
   bounces (3650 tests passing).
+- **Standard library: `combinations` — every r-length combination of a
+  list** — merged 2026-08-27T~ via PR #327
+  (`feat/20260826-combinations`). Added `_combinations`
+  (`cinder/builtins.py`), a thin wrapper over
+  `itertools.combinations(items, size)` registered directly after
+  `permutations` in the builtins dispatch table, guarding negative size
+  explicitly for a clean `CinderRuntimeError` (itertools would otherwise
+  raise a Python-level `ValueError`). `size == 0` returns `[[]]`, `size >
+  len(items)` returns `[]`, and duplicate elements are not de-duplicated,
+  matching `itertools`'s own semantics. Closes the same
+  enumerate-vs-count gap `binomial` has to `power_set` itself, the exact
+  gap `permutations` (PR #325) already closed for orderings against
+  `is_permutation`. Clean first pass, no bounces (3661 tests passing, up
+  from 3650).

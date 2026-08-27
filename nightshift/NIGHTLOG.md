@@ -6657,3 +6657,26 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Fourteenth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fourth cycle
+
+- **Merged**: PR #327 "Standard library: `combinations` — every r-length
+  combination of a list" (`feat/20260826-combinations`). Added
+  `_combinations` (`cinder/builtins.py`), a thin wrapper over
+  `itertools.combinations(items, size)` registered directly after
+  `permutations`, guarding negative size explicitly for a clean
+  `CinderRuntimeError`. Reviewer gave `VERDICT: LGTM`, QA gave
+  `QA: PASS`, both after the sole commit (`be842e3`) — clean merge, no
+  bounces (3661 tests passing, up from 3650). Removed the
+  `.worktrees/combinations` worktree before merging. Archived the task
+  to `CHANGELOG.md` and renumbered the remaining five backlog tasks
+  (1-5) — `nth_heptagonal` is now top. Fixed the stale "task 2 above"
+  cross-references in the `nth_octagonal` task to read "task 1 above",
+  matching `nth_heptagonal`'s new number.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Fifteenth clean first-round merge in a row — still no review/QA
+  bounces this shift.

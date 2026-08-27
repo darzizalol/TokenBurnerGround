@@ -11,90 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `combinations` — every r-length combination of a list [claimed 2026-08-26T20:18:27Z]
-
-Build: `binomial(n, k)` already answers "how many r-length combinations
-exist" and `power_set` (PR #321) already enumerates combinations of *every*
-size at once — but there is no way to enumerate combinations of one
-specific size, the exact "enumerate-vs-count" gap `binomial` has to
-`power_set` itself, the same gap `permutations` (PR #325) closes for
-orderings against `is_permutation`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(combinations([1, 2, 3], 2));'
-# -> <eval>:1:7: undefined name 'combinations'
-```
-
-**Ordering note:** `permutations` (PR #325) has already landed — register
-`combinations` directly after `permutations` instead of after `power_set`,
-keeping the collection-helper cluster grouped together in the dict, same
-adaptive placement every sibling task in this backlog already uses.
-
-Add to `cinder/builtins.py`, registered right after `_power_set` (search `def
-_power_set`; `itertools` is already imported at the top of this module — no
-new import needed):
-```python
-def _combinations(arguments: list, line: int, column: int) -> object:
-    _require_arity("combinations", arguments, 2, line, column)
-    items, size = arguments
-    if not isinstance(items, list):
-        raise CinderRuntimeError(
-            f"combinations() requires a list, got {type_name(items)}", line, column
-        )
-    if not isinstance(size, int) or isinstance(size, bool):
-        raise CinderRuntimeError(
-            f"combinations() requires an int size, got {type_name(size)}", line, column
-        )
-    if size < 0:
-        raise CinderRuntimeError(
-            "combinations() requires a non-negative size, domain error", line, column
-        )
-    return [list(combo) for combo in itertools.combinations(items, size)]
-```
-`itertools.combinations(items, size)` does the actual enumeration — the same
-thin-wrapper composition style `power_set` uses for its own all-sizes loop and
-`permutations` (PR #325) uses for `itertools.permutations`. Note
-`itertools.combinations` already returns `[]` (not an error) when `size >
-len(items)`, matching Python's own convention — no extra domain check needed
-for that case. Also register the new dict entry (search `"power_set":
-_power_set,`, add `"combinations": _combinations,` directly after it — or
-directly after `"permutations": _permutations,`, which has already landed).
-
-Acceptance criteria:
-- `combinations([1, 2, 3], 2);` is `[[1, 2], [1, 3], [2, 3]]`.
-- `combinations([1, 2, 3], 0);` is `[[]]`.
-- `combinations([1, 2, 3], 3);` is `[[1, 2, 3]]`.
-- `combinations([1, 2, 3], 4);` is `[]` — size greater than the list's length
-  yields no combinations, not an error.
-- `combinations([], 0);` is `[[]]`.
-- `len(combinations(l, k));` is `binomial(len(l), k)` for `l` equal to
-  `[1, 2, 3, 4, 5]` and every `k` from `0` to `5` — the standard
-  combination-count identity, the same closed-form cross-check style
-  `power_set`'s and `nth_hexagonal`'s acceptance criteria use.
-- `combinations([1, 1], 1);` is `[[1], [1]]` — duplicate elements are not
-  de-duplicated, matching `itertools.combinations`'s own by-position
-  behavior (the same convention `permutations`' acceptance criteria uses).
-- `combinations("ab", 1);` raises `CinderRuntimeError` matching
-  `"combinations() requires a list, got string"`.
-- `combinations([1, 2], "1");` raises `CinderRuntimeError` matching
-  `"combinations() requires an int size, got string"`.
-- `combinations([1, 2], -1);` raises `CinderRuntimeError` matching
-  `"combinations() requires a non-negative size, domain error"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `power_set`/`permutations`,
-see current line numbers — shift depending on which sibling tasks land
-first), `tests/test_builtins.py` (model on `class TestPowerSet`, search that
-name, for the list-validation, arity-error, and closed-form cross-check test
-shapes). Once merged, `README.md`'s Builtins bullet needs `combinations`
-added near `power_set`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
+## 1. Standard library: `nth_heptagonal` — the k-th heptagonal number by position
 
 Build: `is_heptagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th heptagonal number" the way it can for
@@ -159,7 +76,7 @@ task.
 
 ---
 
-## 3. Language: negative bounds in range patterns (`-10..0 => "neg"`)
+## 2. Language: negative bounds in range patterns (`-10..0 => "neg"`)
 
 Build: negative literal patterns (PR #320) let a plain literal pattern be
 negated (`match (-5) { -5 => "neg", _ => "pos" }`), but range patterns
@@ -288,7 +205,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
+## 3. Language: nested list patterns in `match` arms (`[a, [b, c]] => ...`)
 
 Build: flat list patterns (`[a, b] => ...`, PR #316), literal elements (PR
 #322), and rest capture (`[a, ...rest] => ...`, PR #324) all landed, but a
@@ -430,7 +347,7 @@ task.
 
 ---
 
-## 5. Standard library: `nth_octagonal` — the k-th octagonal number by position
+## 4. Standard library: `nth_octagonal` — the k-th octagonal number by position
 
 Build: `is_octagonal` already exists as a membership test, but Cinder has
 no way to ask "what is the k-th octagonal number" the way it can for
@@ -438,14 +355,14 @@ triangular (`nth_triangular`, PR #313), pentagonal (`nth_pentagonal`, PR
 #319), and hexagonal numbers (`nth_hexagonal`, PR #323) — the same
 "value-returning sibling of an `is_*` membership test" pattern the
 figurate-number cluster's first three `nth_*` members already establish,
-just for its fifth (after `nth_heptagonal`, task 2 above, closes the
+just for its fifth (after `nth_heptagonal`, task 1 above, closes the
 fourth). Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_octagonal(5));'
 # -> <eval>:1:7: undefined name 'nth_octagonal'
 ```
 
-**Ordering note:** if `nth_heptagonal` (task 2 above) has already landed
+**Ordering note:** if `nth_heptagonal` (task 1 above) has already landed
 by the time this task is claimed, register `nth_octagonal` directly after
 `_nth_heptagonal` instead of `_nth_hexagonal` — same adaptive placement
 every sibling task in this backlog already uses.
@@ -504,7 +421,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
+## 5. Language: per-key rename in match map patterns (`{a: x, b} => ...`)
 
 Build: flat map patterns (`{a, b} => ...`, PR #326) landed scoped to bare
 identifier keys only — each key binds a variable of the *same* name, with

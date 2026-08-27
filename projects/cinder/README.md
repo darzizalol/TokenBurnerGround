@@ -378,6 +378,7 @@ while (i < 10) {
   `nth_pentagonal` to return the pentagonal number found at a 1-indexed position via the exact closed form `k(3k - 1)/2`, the figurate-number cluster's second `nth_*` member alongside `nth_triangular`,
   `nth_hexagonal` to return the hexagonal number found at a 1-indexed position via the exact closed form `k(2k - 1)`, the figurate-number cluster's third `nth_*` member,
   `nth_heptagonal` to return the heptagonal number found at a 1-indexed position via the exact closed form `k(5k - 3)/2`, the figurate-number cluster's fourth `nth_*` member,
+  `nth_octagonal` to return the octagonal number found at a 1-indexed position via the exact closed form `k(3k - 2)`, the figurate-number cluster's fifth `nth_*` member,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -447,7 +448,10 @@ while (i < 10) {
   `permutations` to return every ordering of a list (a thin wrapper over `itertools.permutations`,
   the arrangement-side sibling of `power_set`/`cartesian_product`),
   `combinations` to return every r-length combination of a list (a thin wrapper over
-  `itertools.combinations`, the enumerate-vs-count sibling of `binomial` for a specific size), and
+  `itertools.combinations`, the enumerate-vs-count sibling of `binomial` for a specific size),
+  `combinations_with_replacement` to return every r-length selection of a list that allows repeats
+  (a thin wrapper over `itertools.combinations_with_replacement`, the third and last member of the
+  permutations/combinations family, sitting directly next to `combinations`), and
   type predicates `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
   `is_function`, `is_int`, `is_float`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
@@ -526,7 +530,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: per-key rename in match map
+Actively developed, nightly. Recently landed: `combinations_with_replacement`
+(#333) — the third and last member of itertools' "selections" trio
+(`permutations`, `combinations`, `combinations_with_replacement`),
+sitting directly next to `combinations` the same way `power_set` sits
+next to `binomial` — and before that per-key rename in match map
 patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`) — a
 map pattern's bound name may now differ from its key, the map-pattern
 counterpart to `let` map destructuring's own per-key rename — and before
@@ -535,32 +543,28 @@ that nested list patterns in `match` arms (`match ([1, [2, 3]]) { [a,
 a list pattern to arbitrary depth, the last flat-vs-nested gap list
 patterns had — and `nth_octagonal` — the k-th octagonal number by
 position via the exact closed form `k(3k - 2)`, the figurate-number
-cluster's fifth `nth_*` member — and before that negative bounds in
-range patterns (`match (-5) { -10..0 => "neg", _ => "other" }`) — the
-same negation `-5 => "neg"` already gets as a plain literal pattern,
-extended to range bounds via a shared `_match_range_bound` helper. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `combinations_with_replacement`
-— the third and last member of itertools' "selections" trio
-(`permutations`, `combinations`, `combinations_with_replacement`),
-sitting directly next to `combinations` the same way `power_set` sits
-next to `binomial`, `is_nonagonal` — the sixth figurate-number
-membership test, the next side of the polygon after `is_octagonal`, rest
-capture in match map patterns (`match ({"a": 1, "b": 2, "c": 3}) { {a,
-...rest} => rest, _ => 0 }`) — the same leftover-keys-into-a-dict
-capability list patterns already have via `[a, ...rest]`, closing the
-last flat-list-vs-flat-map gap, `is_catalan` — the one `nth_*` builtin
-(`nth_catalan`) still missing its `is_*` membership counterpart, via a
-bounded iterative search rather than a closed form since Catalan numbers
-have no simple algebraic membership test, nested patterns as map pattern
-values (`match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0
-}`) — the map-pattern counterpart to nested list patterns, closing the
-last flat-vs-nested gap between match map patterns and `let`
-destructuring, and default values for trailing elements in match list
-patterns (`match ([1]) { [a, b = 0] => a + b, _ => -1 }`) — the
-match-pattern counterpart to `let` list destructuring's own trailing
-defaults, letting a shorter subject list still match instead of falling
-through the arm.
+cluster's fifth `nth_*` member. See [`CHANGELOG.md`](CHANGELOG.md) for
+the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_nonagonal` — the
+sixth figurate-number membership test, the next side of the polygon
+after `is_octagonal`, rest capture in match map patterns (`match ({"a":
+1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ => 0 }`) — the same
+leftover-keys-into-a-dict capability list patterns already have via
+`[a, ...rest]`, closing the last flat-list-vs-flat-map gap, `is_catalan`
+— the one `nth_*` builtin (`nth_catalan`) still missing its `is_*`
+membership counterpart, via a bounded iterative search rather than a
+closed form since Catalan numbers have no simple algebraic membership
+test, nested patterns as map pattern values (`match ({"a": 1, "b": {"c":
+2}}) { {a, b: {c}} => a + c, _ => 0 }`) — the map-pattern counterpart to
+nested list patterns, closing the last flat-vs-nested gap between match
+map patterns and `let` destructuring, default values for trailing
+elements in match list patterns (`match ([1]) { [a, b = 0] => a + b, _
+=> -1 }`) — the match-pattern counterpart to `let` list destructuring's
+own trailing defaults, letting a shorter subject list still match
+instead of falling through the arm, and `is_twin_prime` — a gap in the
+prime-relationship cluster (`is_semiprime`/`is_sphenic`/`is_emirp`/
+`is_circular_prime` test other adjacency/structure relationships on
+primes, but none test the classic twin-prime pairing yet).
 The pattern-matching tasks are all steps in the arc opened by PR #304 and
 mostly can land in either order relative to their siblings (nested
 map-pattern values is the exception — it needs rest capture to land

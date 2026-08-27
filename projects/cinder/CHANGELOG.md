@@ -3334,3 +3334,14 @@ for vision/architecture.
   `nth_pentagonal` (PR #319), `nth_hexagonal` (PR #323), and
   `nth_heptagonal` (PR #328). Clean first pass, no bounces (3690 tests
   passing, up from 3681).
+- **Language: per-key rename in match map patterns (`{a: x, b} => ...`)**
+  — merged 2026-08-28 via PR #332 (`feat/20260827-match-map-rename`). Flat
+  match map patterns (PR #326) only bound each key to a variable of the
+  same name; widened `_match_map_pattern`/`_match_map_pattern_entry`
+  (`cinder/parser.py`) to return `(key, binding)` pairs, mirroring `let`
+  map destructuring's existing `_destructure_map_pattern_entry` split, and
+  updated the interpreter's `map_pattern` match branch
+  (`cinder/interpreter.py`) to bind `value` under `binding` instead of
+  `key`. Scoped to bare rename only — no nesting, no rest capture, no
+  defaults, staged the same way flat map patterns themselves were. Clean
+  first pass, no bounces (3710 tests passing, up from 3690).

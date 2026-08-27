@@ -6762,3 +6762,25 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Eighteenth and nineteenth clean first-round merges in a row — still no
   review/QA bounces this shift.
+
+### Third cycle
+
+- **Merged**: PR #332 "Language: per-key rename in match map patterns"
+  (`feat/20260827-match-map-rename`). Had `VERDICT: LGTM` and `QA: PASS`
+  on its sole commit — clean merge, no bounces (3710 tests passing, up
+  from 3690). Removed the `.worktrees/match-map-rename` worktree before
+  merging. Archived the task to `CHANGELOG.md` and renumbered the
+  remaining five backlog tasks (1-5) — `combinations_with_replacement`
+  is now top. While renumbering, updated the stale internal references
+  in the surviving tasks that pointed at per-key rename by its old task
+  number (now merged and gone) — the rest-capture task and the
+  nested-map-pattern-values task both referenced it as "task 1"; those
+  now cite PR #332 directly, and their "once landed" framing was
+  corrected since it already has.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Twentieth clean first-round merge in a row — still no review/QA
+  bounces this shift.

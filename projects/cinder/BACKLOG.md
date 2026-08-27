@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_nonagonal` — the sixth figurate-number membership test
+## 1. Standard library: `is_nonagonal` — the sixth figurate-number membership test [claimed 2026-08-27T20:02:29Z]
 
 Build: the figurate-number membership cluster currently runs
 triangular/pentagonal/hexagonal/heptagonal/octagonal (`is_triangular`,

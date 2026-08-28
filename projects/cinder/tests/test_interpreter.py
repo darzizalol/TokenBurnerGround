@@ -5212,6 +5212,60 @@ class TestMatchExpression(unittest.TestCase):
         with self.assertRaises(ParseError):
             run('let result = match (x) { {a: 5} => a, _ => 0 };')
 
+    def test_map_pattern_rest_capture_binds_leftover(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2, "c": 3}) '
+            '{ {a, ...rest} => rest, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), {"b": 2, "c": 3})
+
+    def test_map_pattern_rest_capture_empty_when_nothing_left_over(self):
+        env = run(
+            'let result = match ({"a": 1}) { {a, ...rest} => rest, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), {})
+
+    def test_map_pattern_rest_capture_discarded_with_underscore(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) { {a, ..._} => a, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_map_pattern_without_rest_unaffected_by_rest_capture_feature(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) { {a} => a, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_map_pattern_rest_capture_combines_with_rename(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2, "c": 3}) '
+            '{ {a: x, ...rest} => rest, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), {"b": 2, "c": 3})
+
+    def test_map_pattern_rest_capture_falls_through_on_missing_key(self):
+        env = run(
+            'let result = match ({"a": 1}) { {a, b, ...rest} => rest, _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), "no")
+
+    def test_map_pattern_rest_capture_binding_scoped_to_arm(self):
+        with self.assertRaises(CinderRuntimeError):
+            run(
+                'let result = match ({"a": 1, "b": 2}) '
+                '{ {a, ...rest} => a, _ => 0 }; '
+                'print(rest);'
+            )
+
+    def test_map_pattern_rest_not_last_raises(self):
+        with self.assertRaises(ParseError):
+            run('let result = match (x) { {a, ...rest, b} => a, _ => 0 };')
+
+    def test_map_pattern_rest_requires_identifier(self):
+        with self.assertRaises(ParseError):
+            run('let result = match (x) { {a, ...5} => a, _ => 0 };')
+
 
 if __name__ == "__main__":
     unittest.main()

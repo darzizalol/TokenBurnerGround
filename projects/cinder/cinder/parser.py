@@ -1077,10 +1077,10 @@ class Parser:
             body = self._ternary()
             return [MatchArm(None, body, None, list_pattern, None, list_rest)]
         if self._check(TokenType.LBRACE):
-            map_pattern = self._match_map_pattern()
+            map_pattern, map_rest = self._match_map_pattern()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
-            return [MatchArm(None, body, None, None, None, None, map_pattern)]
+            return [MatchArm(None, body, None, None, None, None, map_pattern, map_rest)]
         first_token = self._peek()
         entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
@@ -1169,16 +1169,43 @@ class Parser:
             token.column,
         )
 
-    def _match_map_pattern(self) -> "list[tuple[str, str]]":
+    def _match_map_pattern(self) -> "tuple[list[tuple[str, str]], str | None]":
         self._advance()  # consume '{'
         entries: "list[tuple[str, str]]" = []
+        rest: "str | None" = None
         if not self._check(TokenType.RBRACE):
-            entries.append(self._match_map_pattern_entry())
+            if self._check(TokenType.DOT_DOT_DOT):
+                rest = self._match_map_pattern_rest_name()
+            else:
+                entries.append(self._match_map_pattern_entry())
             while self._check(TokenType.COMMA):
                 self._advance()
-                entries.append(self._match_map_pattern_entry())
+                if rest is not None:
+                    token = self._peek()
+                    raise ParseError(
+                        f"rest capture must be last in map pattern, found {self._describe(token)}",
+                        token.line,
+                        token.column,
+                    )
+                if self._check(TokenType.DOT_DOT_DOT):
+                    rest = self._match_map_pattern_rest_name()
+                else:
+                    entries.append(self._match_map_pattern_entry())
         self._consume(TokenType.RBRACE, "'}' after map pattern")
-        return entries
+        return entries, rest
+
+    def _match_map_pattern_rest_name(self) -> str:
+        self._advance()  # consume '...'
+        token = self._peek()
+        if token.type != TokenType.IDENTIFIER:
+            raise ParseError(
+                f"expected an identifier or '_' after '...' in map pattern, "
+                f"found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        self._advance()
+        return token.lexeme
 
     def _match_map_pattern_entry(self) -> "tuple[str, str]":
         key = self._consume(

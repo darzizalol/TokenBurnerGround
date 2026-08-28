@@ -420,7 +420,7 @@ the parser should reject a `=` in those positions the same way it
 already rejects any other unexpected token there (no special-casing
 needed — the `_match_list_pattern`/`_consume(RBRACKET, ...)` machinery
 already errors cleanly on a stray `=`). Defaults on match *map*
-patterns are a separate, not-yet-queued task — out of scope here.
+patterns are a separate task (task 8 below) — out of scope here.
 
 `_match_list_pattern_entry` (`cinder/parser.py`, search `def
 _match_list_pattern_entry`) currently returns a single value per entry
@@ -705,6 +705,225 @@ positive/domain/type-error/cross-check test shapes). Once merged,
 `is_nonagonal`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
 the Architect's next grooming pass, not this task.
+
+---
+
+## 7. Standard library: `nth_happy_number` — the k-th happy number by position
+
+Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
+membership via the digit-square-sum cycle, but neither has a
+value-returning `nth_*` counterpart the way the figurate-number and prime
+clusters do (`nth_prime`/`is_prime`, `nth_triangular`/`is_triangular`,
+etc.) — happy numbers have no closed form, so this follows `nth_prime`'s
+own shape (search `def _nth_prime`): a sequential candidate scan with a
+`count`/`candidate` loop, not an inverse formula. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_happy_number(5));'
+# -> <eval>:1:7: undefined name 'nth_happy_number'
+```
+
+Add to `cinder/builtins.py`, registered directly after `_is_sad_number`
+(search `def _is_sad_number`, immediately before `def _collatz_length`)
+— keeps the happy/sad-number cluster together, mirroring how
+`is_catalan` sits directly after `nth_catalan`:
+```python
+def _nth_happy_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_happy_number", arguments, 1, line, column)
+    value = _require_int("nth_happy_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_happy_number() requires a positive integer, domain error", line, column
+        )
+
+    def _is_happy(candidate: int) -> bool:
+        seen = set()
+        while candidate != 1:
+            if candidate in seen:
+                return False
+            seen.add(candidate)
+            candidate = sum(int(digit) ** 2 for digit in str(candidate))
+        return True
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_happy(candidate):
+            count += 1
+    return candidate
+```
+This mirrors `_nth_prime`'s own `count`/`candidate` scanning loop exactly,
+just swapping the primality check for `_is_happy_number`'s cycle-detection
+logic (reimplemented locally as a nested helper, matching how
+`is_twin_prime`/`is_circular_prime` reimplement trial division locally
+rather than sharing a module-level helper — this file's existing
+convention for small local predicates). Also register the new dict entry
+(search `"is_sad_number": _is_sad_number,`, add `"nth_happy_number":
+_nth_happy_number,` directly after it, before `"collatz_length":
+_collatz_length,`).
+
+Acceptance criteria:
+- `nth_happy_number(1);`, `nth_happy_number(2);`, `nth_happy_number(3);`,
+  `nth_happy_number(4);`, `nth_happy_number(5);` are `1`, `7`, `10`, `13`,
+  `19` — the first five happy numbers by position.
+- `nth_happy_number(10);` is `44`.
+- `nth_happy_number(20);` is `100`.
+- `is_happy_number(nth_happy_number(k));` is `true` for every `k` from `1`
+  to `20` — cross-check against the existing `is_happy_number` builtin
+  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own
+  shape.
+- `nth_happy_number(0);` and `nth_happy_number(-1);` raise
+  `CinderRuntimeError` matching `"nth_happy_number() requires a positive
+  integer, domain error"`.
+- `nth_happy_number(1.5);` raises `CinderRuntimeError` matching
+  `"nth_happy_number() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after
+`is_sad_number`, search for the current line number), `tests/test_builtins.py`
+(model on `class TestNthPrime`, search that name, for the
+positive/domain/type-error/cross-check test shapes, and `class
+TestIsHappyNumber` for the happy-number cycle behavior). Once merged,
+`README.md`'s Builtins bullet needs `nth_happy_number` added near
+`is_happy_number`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
+the Architect's next grooming pass, not this task.
+
+---
+
+## 8. Language: default values in match map patterns (`{a, b = 0} => ...`)
+
+Build: match list patterns already support trailing defaults via `[a, b
+= 0] => ...` (see task 4 in this backlog, which explicitly flags map-
+pattern defaults as "a separate, not-yet-queued task"), and `let` map
+destructuring has supported per-key defaults for a long time (`let {a, b
+= 5} = expr;`, PR #244) — a map missing a key still binds successfully,
+falling back to the default. Match map patterns never got the
+equivalent: today a subject map missing a pattern's key just falls
+through the arm entirely, with no way to supply a fallback value.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(match ({"a": 1}) { {a, b = 0} => a + b, _ => -1 });'
+# -> <eval>:1:31: expected '}' after map pattern, found '='
+```
+
+**Ordering note:** this task depends on task 1 (rest capture) having
+landed — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
+production and the same interpreter `map_pattern` match branch task 1
+touches (`arm.map_rest` handling). If task 1 hasn't landed yet when this
+is claimed, do that task first (this task is not a substitute for it).
+Unlike task 4 (list defaults), this task does **not** need to check
+whether all pattern keys are present up front the way list patterns check
+length — map patterns already match on a key subset (extra keys in the
+subject beyond the pattern are always fine, no rest needed), so adding
+defaults only relaxes which keys are *required*.
+
+**Scope note:** only a bare identifier or renamed binding (`a` or `a: x`)
+may carry a default — mirroring task 4's "flat-capability-first" scope
+restriction exactly. If task 3 (nested map-pattern values) has also
+landed by the time this is claimed, a nested `{...}`/`[...]` binding
+carrying a default stays out of scope; only add the `= expr` check in
+the plain-identifier branch of `_match_map_pattern_entry`, not after a
+recursive nested-pattern call.
+
+Widen `_match_map_pattern_entry` (`cinder/parser.py`, search `def
+_match_map_pattern_entry`) to return a third element, mirroring
+`_destructure_map_pattern_entry`'s own trailing `default` return:
+```python
+    def _match_map_pattern_entry(self) -> "tuple[str, str, Expr | None]":
+        key = self._consume(
+            TokenType.IDENTIFIER, "identifier inside map pattern"
+        ).lexeme
+        if self._check(TokenType.COLON):
+            self._advance()
+            binding = self._consume(
+                TokenType.IDENTIFIER, "identifier after ':' in map pattern"
+            ).lexeme
+        else:
+            binding = key
+        default = None
+        if self._check(TokenType.EQ):
+            self._advance()
+            default = self._ternary()
+        return key, binding, default
+```
+`_match_map_pattern`'s entries list is now `list[tuple[str, str, Expr |
+None]]`; no other change needed there since map-pattern entries have no
+ordering constraint the way list-pattern defaults do (a required key can
+follow a defaulted one with no ambiguity — each entry is looked up by
+name, not position).
+
+In `cinder/interpreter.py`, widen the `map_pattern` branch (search `if
+arm.map_pattern is not None`) to unpack the 3-tuple and evaluate a
+default when a key is missing, mirroring `_bind_map_destructure`'s own
+`key in value` / `default is not None` check:
+```python
+            if arm.map_pattern is not None:
+                if not isinstance(subject, dict) or not all(
+                    key in subject or default is not None
+                    for key, _, default in arm.map_pattern
+                ):
+                    continue
+                arm_env = Environment(env)
+                seen_keys = set()
+                for key, binding, default in arm.map_pattern:
+                    item = subject[key] if key in subject else self.evaluate(default, arm_env)
+                    arm_env.define(binding, item)
+                    seen_keys.add(key)
+                if arm.map_rest is not None and arm.map_rest != "_":
+                    arm_env.define(
+                        arm.map_rest,
+                        {k: v for k, v in subject.items() if k not in seen_keys},
+                    )
+                return self.evaluate(arm.body, arm_env)
+```
+Default expressions are evaluated in `arm_env`, left-to-right in
+`arm.map_pattern` order, so an earlier binding in the same pattern is
+visible to a later default — mirroring `_bind_map_destructure`'s own
+progressive-`env` evaluation and task 4's identical left-to-right
+convention for list-pattern defaults.
+
+Acceptance criteria:
+- `match ({"a": 1}) { {a, b = 0} => a + b, _ => -1 };` is `1` — the
+  default fires when the subject is missing the key.
+- `match ({"a": 1, "b": 2}) { {a, b = 0} => a + b, _ => -1 };` is `3` —
+  the default is not used when the subject supplies the key.
+- `match ({}) { {a = 1, b = 2} => a + b, _ => -1 };` is `3` — multiple
+  defaults, subject missing every key.
+- `match ({"a": 1}) { {a, b = a + 1} => b, _ => -1 };` is `2` — a default
+  expression may reference an earlier binding in the same pattern.
+- `match ({"b": 2}) { {a: x = 0, b} => x + b, _ => -1 };` is `2` — a
+  default composes with per-key rename (PR #332) in the same pattern.
+- `match ({"a": 1, "c": 3}) { {a, b = 0, ...rest} => [a, b, rest], _ =>
+  "no" };` is `[1, 0, {"c": 3}]` — a default composes with rest capture
+  (task 1) in the same pattern; the missing, defaulted key `b` is not
+  spuriously included in `rest`.
+- `match ({}) { {a} => a, _ => "no" };` is `"no"` — a key without a
+  default is still required; missing it still falls through, unaffected
+  by this task.
+- `match ([1]) { {a = 1} => a, _ => "no" };` is `"no"` — a non-map
+  subject still falls through, defaults included.
+- `shape(parse('match (x) { {a, b = 0} => a, _ => 0 }'))` (see
+  `tests/test_parser.py`) shows the first arm's `map_pattern` with `b`'s
+  entry as a `(key, binding, default_expr)` triple rather than a
+  `(key, binding)` pair.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_map_pattern_entry`),
+`cinder/ast_nodes.py` (`MatchArm.map_pattern` docstring, widened for the
+new 3-tuple entry shape), `cinder/interpreter.py` (`_evaluate_match`'s
+`map_pattern` branch), `tests/test_parser.py` (extend the map-pattern
+shape tests, search `test_match_map_pattern_shape`),
+`tests/test_interpreter.py` (extend `class TestMatchExpression`, search
+`test_map_pattern_binds_named_keys`, with the default cases above). Once
+merged, `README.md`'s `match` expression bullet needs its map-pattern
+description widened to mention defaults, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
 
 ---
 

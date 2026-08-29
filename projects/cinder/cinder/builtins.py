@@ -2017,6 +2017,16 @@ def _is_pronic(arguments: list, line: int, column: int) -> object:
     return root * (root + 1) == value
 
 
+def _nth_pronic(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_pronic", arguments, 1, line, column)
+    value = _require_int("nth_pronic", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_pronic() requires a positive integer, domain error", line, column
+        )
+    return value * (value + 1)
+
+
 def _is_squarefree(arguments: list, line: int, column: int) -> object:
     _require_arity("is_squarefree", arguments, 1, line, column)
     value = _require_int("is_squarefree", arguments[0], line, column)
@@ -4258,6 +4268,7 @@ _BUILTINS = {
     "is_harshad": _is_harshad,
     "is_perfect_cube": _is_perfect_cube,
     "is_pronic": _is_pronic,
+    "nth_pronic": _nth_pronic,
     "is_squarefree": _is_squarefree,
     "is_powerful_number": _is_powerful_number,
     "is_achilles": _is_achilles,

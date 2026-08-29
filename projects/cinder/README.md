@@ -393,6 +393,7 @@ while (i < 10) {
   `nth_hexagonal` to return the hexagonal number found at a 1-indexed position via the exact closed form `k(2k - 1)`, the figurate-number cluster's third `nth_*` member,
   `nth_heptagonal` to return the heptagonal number found at a 1-indexed position via the exact closed form `k(5k - 3)/2`, the figurate-number cluster's fourth `nth_*` member,
   `nth_octagonal` to return the octagonal number found at a 1-indexed position via the exact closed form `k(3k - 2)`, the figurate-number cluster's fifth `nth_*` member,
+  `nth_nonagonal` to return the nonagonal number found at a 1-indexed position via the exact closed form `k(7k - 5)/2`, the figurate-number cluster's sixth and final `nth_*` member, completing the triangular..nonagonal `nth_*`/`is_*` pairing,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
@@ -546,37 +547,41 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_twin_prime` (PR #339)
-— a gap in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
-`is_emirp`/`is_circular_prime` test other adjacency/structure
-relationships on primes, but none tested the classic twin-prime pairing
-until now) — and before that default values for
-trailing elements in match list patterns (`match ([1]) { [a, b = 0] =>
-a + b, _ => -1 }`, PR #338) — the match-pattern counterpart to `let`
+Actively developed, nightly. Recently landed: `nth_nonagonal` (PR #340)
+— the one figurate `nth_*` closed form still missing now that
+`is_nonagonal` had completed the membership-test side of the cluster,
+closing out the triangular..nonagonal `nth_*`/`is_*` pairing — and
+before that `is_twin_prime` (PR #339) — a gap in the prime-relationship
+cluster (`is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime` test
+other adjacency/structure relationships on primes, but none tested the
+classic twin-prime pairing until now) — and before that default values
+for trailing elements in match list patterns (`match ([1]) { [a, b = 0]
+=> a + b, _ => -1 }`, PR #338) — the match-pattern counterpart to `let`
 list destructuring's own trailing defaults, letting a shorter subject
-list still match instead of falling through the arm — and before that
-nested patterns as map pattern values (`match ({"a": 1, "b": {"c": 2}})
-{ {a, b: {c}} => a + c, _ => 0 }`, PR #337) — the map-pattern
-counterpart to nested list patterns, closing the last flat-vs-nested gap
-between match map patterns and `let` destructuring. See
+list still match instead of falling through the arm. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_nonagonal` — the
-one figurate `nth_*` closed form still
-missing now that `is_nonagonal` completed the membership-test side of
-the cluster, `nth_happy_number` — the happy-number cluster's own missing
-`nth_*` counterpart, via a sequential candidate scan since happy numbers
-have no closed form, default values in match map patterns (`match
-({"a": 1}) { {a, b = 0} => a + b, _ => -1 }`) — the map-pattern
-counterpart to match list patterns' own trailing defaults (PR #338),
-`nth_semiprime` — the semiprime pair's own missing `nth_*` counterpart,
-via the same sequential-scan shape since semiprimes have no closed form,
-and `nth_pronic` — the one pronic-number closed form still missing now
-that `is_pronic` tests membership but has no value-returning sibling,
-via the same `k(k + 1)` shape `_is_pronic`'s own perfect-square-adjacent
-check already solves for.
-The pattern-matching tasks are all steps in the arc opened by PR #304 and
-mostly can land in either order relative to their siblings; each is
-written to adapt to whichever has already landed by the time it's
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_happy_number` —
+the happy-number cluster's own missing `nth_*` counterpart, via a
+sequential candidate scan since happy numbers have no closed form,
+default values in match map patterns (`match ({"a": 1}) { {a, b = 0} =>
+a + b, _ => -1 }`) — the map-pattern counterpart to match list patterns'
+own trailing defaults (PR #338), `nth_semiprime` — the semiprime pair's
+own missing `nth_*` counterpart, via the same sequential-scan shape
+since semiprimes have no closed form, `nth_pronic` — the one pronic-
+number closed form still missing now that `is_pronic` tests membership
+but has no value-returning sibling, via the same `k(k + 1)` shape
+`_is_pronic`'s own perfect-square-adjacent check already solves for,
+range case values in `switch` statements (`case 1..10: { ... }`) — fixing
+a real bug where a range case value silently never matches instead of
+raising, by giving `switch` the same containment check `match`'s range
+patterns already use, and `nth_abundant` — the divisor-sum cluster's own
+missing `nth_*` counterpart (`is_abundant` tests membership but has no
+value-returning sibling), via the same sequential-scan shape since
+abundant numbers have no closed form.
+The match-map-pattern-defaults task is a further step in the arc opened
+by PR #304 and can land in either order relative to its stdlib/switch
+siblings; it is written to adapt to whichever has already landed by the
+time it's
 claimed. (Guards in
 `match` arms, `n if
 n > 0 => "positive"`, were attempted but closed after three failed

@@ -388,6 +388,189 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: range case values in `switch` statements (`case 1..10: { ... }`)
+
+Build: `match` expressions support range patterns (`match (5) { 1..10 =>
+"small", _ => "large" }`, PR #318) via a dedicated containment check, but
+`switch` never got the equivalent — and worse, writing one today doesn't
+raise an error, it silently never matches. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'switch (5) { case 1..10: { print("small"); } default: { print("other"); } }'
+# -> other
+```
+`5` is inside `1..10`, so `"small"` should print, but `"other"` does
+instead. The root cause: `case` values already parse through the normal
+expression grammar (`_switch_statement`, `cinder/parser.py`, calls
+`self._ternary()` for each value, which descends through `_range_expr`,
+search `def _range_expr` — the same production `1..5` uses as an ordinary
+expression), so `1..10` parses fine as a `RangeExpr` AST node with no
+parser change needed. The bug is entirely in evaluation:
+`_execute_switch` (`cinder/interpreter.py`, search `def _execute_switch`)
+evaluates every case value with plain `self.evaluate(value_expr, env)`
+and compares via `values_equal(scrutinee, ...)` — a `RangeExpr` evaluates
+to a *materialized list* (via `_evaluate_range`, which calls the `_range`
+builtin), so `case 1..10:` today means "case equals the list
+`[1, 2, ..., 9]`", which can never equal a scalar scrutinee like `5`.
+
+Fix `_execute_switch` to special-case a `RangeExpr`-typed case value,
+mirroring how `_evaluate_match`'s own `range_pattern` branch already
+handles this (search `if arm.range_pattern is not None`, uses
+`_evaluate_range` + the shared `contains_value` helper rather than
+`values_equal`):
+```python
+    def _execute_switch(self, stmt: SwitchStmt, env: Environment) -> None:
+        scrutinee = self.evaluate(stmt.scrutinee, env)
+        for case in stmt.cases:
+            for value_expr in case.values:
+                if isinstance(value_expr, RangeExpr):
+                    values = self._evaluate_range(value_expr, env)
+                    if contains_value(
+                        values, scrutinee, value_expr.line, value_expr.column
+                    ):
+                        self.execute(case.body, env)
+                        return
+                elif values_equal(scrutinee, self.evaluate(value_expr, env)):
+                    self.execute(case.body, env)
+                    return
+        if stmt.default is not None:
+            self.execute(stmt.default, env)
+```
+`RangeExpr` and `contains_value` are both already imported/defined in
+`cinder/interpreter.py` (search each name to confirm) — no new imports
+needed. A range value composes for free with the existing multi-value
+`case 1, 2, 3:` syntax, since each entry in `case.values` is checked
+independently; a case can freely mix range and non-range values (e.g.
+`case 1..5, 100:`).
+
+Acceptance criteria:
+- `switch (5) { case 1..10: { print("small"); } default: { print("other"); } }`
+  prints `small` (currently prints `other`, per the gap above).
+- `switch (10) { case 1..10: { print("in"); } default: { print("out"); } }`
+  prints `out` — `..` is exclusive of the end by default, matching every
+  other range in the language (e.g. `for (i in 1..3)` visits `1, 2`).
+- `switch (10) { case 1..=10: { print("in"); } default: { print("out"); } }`
+  prints `in` — `..=` is inclusive, matching the match-pattern range
+  syntax exactly.
+- `switch (5) { case 100..200: { print("no"); } case 1..10: { print("yes"); } default: { print("neither"); } }`
+  prints `yes` — case order still short-circuits on first match, range
+  cases included.
+- `switch (5) { case 1..3, 5: { print("hit"); } default: { print("miss"); } }`
+  prints `hit` — a range value composes with plain values in the same
+  multi-value `case`.
+- `switch ("x") { case 1..10: { print("no"); } default: { print("ok"); } }`
+  prints `ok` — a non-numeric scrutinee against a range case falls
+  through to default rather than raising (mirrors `contains_value`'s
+  existing list-membership semantics: `"x" in [1, 2, ..., 9]` is simply
+  `false`, not an error).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_execute_switch`, search `def
+_execute_switch`), `tests/test_interpreter.py` (extend `class
+TestSwitchStatement`, search that name, with the range-case cases
+above). No parser or `cinder/ast_nodes.py` change needed — `SwitchCase.values`
+already holds arbitrary `Expr` nodes, `RangeExpr` included. Once merged,
+`README.md`'s `switch` statement bullet needs a mention of range case
+values, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" bullet needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `nth_abundant` — the k-th abundant number by position
+
+Build: `is_abundant` (`cinder/builtins.py`, search `def _is_abundant`)
+tests membership via a proper-divisor-sum comparison, but has no
+value-returning `nth_*` counterpart the way the prime and figurate-number
+clusters do (`nth_prime`/`is_prime`, `nth_pronic`/`is_pronic`, etc.) —
+abundant numbers have no closed form, so this follows `nth_prime`'s own
+shape (search `def _nth_prime`): a sequential candidate scan with a
+`count`/`candidate` loop, not an inverse formula. `is_abundant`'s two
+siblings in the divisor-sum cluster, `is_deficient` and
+`is_perfect_number`, are deliberately skipped for this same treatment:
+deficient numbers are the vast majority of integers (a `nth_deficient`
+scan would be a trivial "returns roughly k+3", not an interesting
+builtin), and perfect numbers are astronomically sparse (the 5th is
+33,550,336), which breaks the cross-check-up-to-k=50 acceptance-criteria
+convention every other `nth_*` builtin in this file uses. Abundant
+numbers are dense enough (12, 18, 20, 24, 30, ...) to scan quickly while
+still being a well-known classic (OEIS A005101). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_abundant(5));'
+# -> <eval>:1:7: undefined name 'nth_abundant'
+```
+
+Add to `cinder/builtins.py`, registered directly after `_is_abundant`
+(search `def _is_abundant`, immediately before `def _is_deficient`) —
+keeps the divisor-sum cluster together, mirroring how `is_catalan` sits
+directly after `nth_catalan`:
+```python
+def _nth_abundant(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_abundant", arguments, 1, line, column)
+    value = _require_int("nth_abundant", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_abundant() requires a positive integer, domain error", line, column
+        )
+
+    def _is_abundant_candidate(candidate: int) -> bool:
+        total = 1 if candidate > 1 else 0
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                total += divisor
+                complement = candidate // divisor
+                if complement != divisor:
+                    total += complement
+        return total > candidate
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_abundant_candidate(candidate):
+            count += 1
+    return candidate
+```
+This mirrors `_nth_prime`'s/`_nth_happy_number`'s own `count`/`candidate`
+scanning loop exactly, just swapping in `_is_abundant`'s own
+divisor-sum logic as a local nested helper (reimplemented locally,
+matching how `is_twin_prime`/`nth_happy_number` reimplement their
+predicate locally rather than sharing a module-level helper — this
+file's existing convention for small local predicates). Also register
+the new dict entry (search `"is_abundant": _is_abundant,`, add
+`"nth_abundant": _nth_abundant,` directly after it, before
+`"is_deficient": _is_deficient,`).
+
+Acceptance criteria:
+- `nth_abundant(1);` through `nth_abundant(10);` are `12`, `18`, `20`,
+  `24`, `30`, `36`, `40`, `42`, `48`, `54` — the first ten abundant
+  numbers by position.
+- `nth_abundant(20);` is `90`.
+- `nth_abundant(50);` is `216`.
+- `is_abundant(nth_abundant(k));` is `true` for every `k` from `1` to
+  `50` — cross-check against the existing `is_abundant` builtin
+  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own
+  shape.
+- `nth_abundant(0);` and `nth_abundant(-1);` raise `CinderRuntimeError`
+  matching `"nth_abundant() requires a positive integer, domain error"`.
+- `nth_abundant(1.5);` raises `CinderRuntimeError` matching
+  `"nth_abundant() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after
+`is_abundant`, search for the current line number), `tests/test_builtins.py`
+(model on `class TestNthPrime`, search that name, for the
+positive/domain/type-error/cross-check test shapes, and the existing
+`is_abundant` test class for the divisor-sum behavior). Once merged,
+`README.md`'s Builtins bullet needs `nth_abundant` added near
+`is_abundant`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
+the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

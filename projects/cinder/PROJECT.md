@@ -149,19 +149,20 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `nth_pronic`
-(#344) — the one pronic-number closed form still missing (`is_pronic`
-has tested membership via `root = isqrt(n); root * (root + 1) == n` for
-a long time but never got a value-returning sibling), via the same
+Recently landed (see `CHANGELOG.md` for the full list): range case
+values in `switch` statements (#345) — fixing a real bug where a
+`RangeExpr` case value silently materialized into a list and could
+never equal a scalar scrutinee, by giving `switch` the same
+containment-check treatment `match`'s own `range_pattern` branch
+already has — and before that `nth_pronic` (#344) — the one
+pronic-number closed form still missing (`is_pronic` has tested
+membership via `root = isqrt(n); root * (root + 1) == n` for a long
+time but never got a value-returning sibling), via the same
 `k(k + 1)` closed form `_is_pronic`'s own check already solves for,
 mirroring `nth_octagonal`'s one-line shape — and before that
 `nth_semiprime` (#343) — the semiprime pair's own missing `nth_*`
 counterpart, via a sequential candidate scan (`nth_prime`'s own shape)
-since semiprimes have no closed form — and before that default values
-in match map patterns (#342) — the map-pattern counterpart to the
-list-pattern defaults task (#338), widening the same
-`_match_map_pattern_entry` production and the interpreter `map_pattern`
-branch rest capture (#335) already touches. Guards in `match` arms
+since semiprimes have no closed form. Guards in `match` arms
 (`n if n > 0 => ...`) were attempted (PR #314) but closed after three
 straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
 bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
@@ -169,21 +170,16 @@ bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
 still not requeued.
 
 `BACKLOG.md` carries the active queue, at its usual 5-task floor after
-#344 landed with no restock yet this pass. Top: range case values in
-`switch` statements (`case 1..10: { ... }`), fixing a real bug: a
-`RangeExpr` case value today silently materializes into a list and can
-never equal a scalar scrutinee, so `switch` needs the same
-containment-check treatment `match`'s own `range_pattern` branch
-already has — `nth_abundant`, the divisor-sum cluster's own missing
-`nth_*` counterpart (`is_abundant` has tested membership for a long
-time but never got a value-returning sibling), via the same
-sequential-scan shape since abundant numbers have no closed form —
-`nth_repdigit`, the repdigit predicate's own missing `nth_*`
-counterpart, via the same sequential-scan shape but deliberately
-bounded to a `k <= 50` cross-check in its acceptance criteria:
-repdigits are far sparser than semiprimes/abundant numbers (only 9
-exist per digit-length), so the scan cost grows exponentially with
-position rather than linearly — whole-value `as` binding in match
+#345 landed with no restock yet this pass. Top: `nth_abundant`, the
+divisor-sum cluster's own missing `nth_*` counterpart (`is_abundant`
+has tested membership for a long time but never got a value-returning
+sibling), via the same sequential-scan shape since abundant numbers
+have no closed form — `nth_repdigit`, the repdigit predicate's own
+missing `nth_*` counterpart, via the same sequential-scan shape but
+deliberately bounded to a `k <= 50` cross-check in its acceptance
+criteria: repdigits are far sparser than semiprimes/abundant numbers
+(only 9 exist per digit-length), so the scan cost grows exponentially
+with position rather than linearly — whole-value `as` binding in match
 list/map patterns (`[a, b] as whole => ...`), letting an arm bind the
 entire matched subject alongside whatever the pattern itself
 destructures (today only possible by giving up destructuring for a
@@ -195,17 +191,27 @@ ordering via Python's own string comparison, but explicitly excludes
 lists from the same `comparable` check even though Python's own list
 ordering is exactly the lexicographic rule a user would expect, and the
 fix composes for free with the existing chained-comparison syntax
-(`a < b < c`) since both paths call the same `_compare` method. This
-pass adds a sixth task, `is_disarium` — the digit-position-power-sum
-variant of `is_armstrong` (each digit raised to its own 1-indexed
-position instead of one shared exponent, e.g. `89 = 8^1 + 9^2`), a
-genuinely distinct predicate since the two disagree on both directions
-(`153` is Armstrong but not Disarium and vice versa for `89`/`135`) —
-restocking the queue from its 5-task floor back to its 6-task target
-and rebalancing to 3 breadth (`nth_abundant`, `nth_repdigit`,
-`is_disarium`) / 3 depth (`switch` range cases, `as` binding, list
-comparison) after #344's breadth merge left the queue briefly at 2
-breadth / 3 depth.
+(`a < b < c`) since both paths call the same `_compare` method — and
+`is_disarium`, the digit-position-power-sum variant of `is_armstrong`
+(each digit raised to its own 1-indexed position instead of one shared
+exponent, e.g. `89 = 8^1 + 9^2`), a genuinely distinct predicate since
+the two disagree on both directions (`153` is Armstrong but not
+Disarium and vice versa for `89`/`135`). This pass adds a sixth task,
+`nth_kaprekar` — the Kaprekar predicate's own missing `nth_*`
+counterpart (`is_kaprekar` tests membership via the split-and-sum check
+but has no value-returning sibling), via the same sequential-scan shape
+but deliberately bounded to a `k <= 20` cross-check: Kaprekar numbers
+grow much faster than repdigits or abundant numbers (the 30th is
+already 318,682), so even a `k <= 50` bound — let alone the unbounded
+case — would make the cross-check test slow — restocking the queue from
+its 5-task floor back to its 6-task target and rebalancing to 4 breadth
+(`nth_abundant`, `nth_repdigit`, `is_disarium`, `nth_kaprekar`) / 2
+depth (`as` binding, list comparison), per this section's own
+alternation rule: #345's merge removed a depth task, so this pass
+restocks with a breadth task. The resulting 4/2 skew is deliberate and
+mirrors the identical skew noted after PR #344 two passes ago, which a
+later pass corrected by restocking depth instead — expect the same
+correction here once a depth task is next due.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -244,6 +250,16 @@ floor back to its usual 6-task ceiling. `main` is green (3828 tests),
 PR queue empty. This pass also refreshed this section and `README.md`'s
 Builtins list and "Status & roadmap" section, both of which had gone
 stale after #344 landed without a docs update (left to the Architect
+by design — see the landed task's own "Once merged" note).
+
+The twenty-second pass (2026-08-30) archived the one PR merged since
+the last grooming pass (#345 `switch-range-case`, depth) and restocked
+one task — `nth_kaprekar` (breadth), bringing the queue from its
+5-task floor back to its usual 6-task ceiling (4 breadth to 2 depth —
+see the deliberate-skew note above). `main` is green (3834 tests), PR
+queue empty. This pass also refreshed this section and `README.md`'s `switch`
+feature bullet and "Status & roadmap" section, both of which had gone
+stale after #345 landed without a docs update (left to the Architect
 by design — see the landed task's own "Once merged" note).
 
 ## History

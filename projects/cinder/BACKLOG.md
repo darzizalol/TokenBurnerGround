@@ -513,6 +513,108 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position
+
+Build: `is_kaprekar` (`cinder/builtins.py`, search `def _is_kaprekar`)
+tests membership by squaring the candidate and checking whether some
+split of the square's digits sums back to the candidate (`45^2 = 2025`,
+`20 + 25 = 45`), but has no value-returning `nth_*` counterpart the way
+the prime and figurate-number clusters do (`nth_prime`/`is_prime`,
+`nth_pronic`/`is_pronic`, etc.) — Kaprekar numbers have no closed form,
+so this follows `nth_prime`'s own shape (search `def _nth_prime`): a
+sequential candidate scan with a `count`/`candidate` loop. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_kaprekar(5));'
+# -> <eval>:1:7: undefined name 'nth_kaprekar'
+```
+
+**Performance note:** Kaprekar numbers grow much faster than the
+abundant/semiprime/pronic clusters' own `nth_*` builtins — the 30th is
+already `318682`, more than 1000x the 10th (`2728`) — and unlike those
+clusters, the usual `k <= 50` cross-check convention is too slow here:
+a fresh scan for every `k` from `1` to `50` takes several seconds
+because most of the cost concentrates in the last few, largest `k`
+values. Cap acceptance criteria and the cross-check test at `k = 20`
+instead (`nth_kaprekar(20)` is `38962`, still a fast scan) — this
+mirrors why the `nth_repdigit` task above stayed inside `k = 50` rather
+than extending further: stay inside the range where the cross-check is
+actually cheap to run, and here that range is narrower still.
+
+Add to `cinder/builtins.py`, registered directly after `_is_kaprekar`
+(search `def _is_kaprekar`, immediately before `def _is_harshad`) —
+keeps the Kaprekar pair together, mirroring how `is_catalan` sits
+directly after `nth_catalan`:
+```python
+def _nth_kaprekar(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_kaprekar", arguments, 1, line, column)
+    value = _require_int("nth_kaprekar", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_kaprekar() requires a positive integer, domain error", line, column
+        )
+
+    def _is_kaprekar_candidate(candidate: int) -> bool:
+        square = candidate * candidate
+        digits = str(square)
+        for split in range(1, len(digits) + 1):
+            right = square % (10 ** split)
+            left = square // (10 ** split)
+            if right != 0 and left + right == candidate:
+                return True
+        return False
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_kaprekar_candidate(candidate):
+            count += 1
+    return candidate
+```
+This mirrors `_nth_abundant`'s/`_nth_repdigit`'s own `count`/`candidate`
+scanning loop exactly, just swapping in `_is_kaprekar`'s own
+split-and-sum check as a local nested helper (reimplemented locally,
+matching how `is_twin_prime`/`nth_happy_number` reimplement their
+predicate locally rather than sharing a module-level helper — this
+file's existing convention for small local predicates). Also register
+the new dict entry (search `"is_kaprekar": _is_kaprekar,`, add
+`"nth_kaprekar": _nth_kaprekar,` directly after it, before
+`"is_harshad": _is_harshad,`).
+
+Acceptance criteria:
+- `nth_kaprekar(1);` through `nth_kaprekar(10);` are `1`, `9`, `45`,
+  `55`, `99`, `297`, `703`, `999`, `2223`, `2728` — the first ten
+  Kaprekar numbers by position.
+- `nth_kaprekar(15);` is `7272`.
+- `nth_kaprekar(17);` is `9999`.
+- `nth_kaprekar(20);` is `38962`.
+- `is_kaprekar(nth_kaprekar(k));` is `true` for every `k` from `1` to
+  `20` — cross-check against the existing `is_kaprekar` builtin
+  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s
+  own shape. Do not raise this bound past `20` (see the performance
+  note above).
+- `nth_kaprekar(0);` and `nth_kaprekar(-1);` raise `CinderRuntimeError`
+  matching `"nth_kaprekar() requires a positive integer, domain error"`.
+- `nth_kaprekar(1.5);` raises `CinderRuntimeError` matching
+  `"nth_kaprekar() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after
+`is_kaprekar`, search for the current line number), `tests/test_builtins.py`
+(model on `class TestNthOctagonal`, search that name, for the
+positive/domain/type-error/cross-check test shapes, and the existing
+`is_kaprekar` test class for the split-and-sum behavior). Once merged,
+`README.md`'s Builtins bullet needs `nth_kaprekar` added near
+`is_kaprekar`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -4770,6 +4770,55 @@ class TestSwitchStatement(unittest.TestCase):
             results.append(env.get("result"))
         self.assertEqual(results, ["matched", "matched"])
 
+    def test_range_case_matches_value_inside_range(self):
+        env = run(
+            'let result = "unset"; '
+            'switch (5) { case 1..10: { result = "small"; } '
+            'default: { result = "other"; } }'
+        )
+        self.assertEqual(env.get("result"), "small")
+
+    def test_range_case_end_is_exclusive_by_default(self):
+        env = run(
+            'let result = "unset"; '
+            'switch (10) { case 1..10: { result = "in"; } '
+            'default: { result = "out"; } }'
+        )
+        self.assertEqual(env.get("result"), "out")
+
+    def test_inclusive_range_case_includes_end(self):
+        env = run(
+            'let result = "unset"; '
+            'switch (10) { case 1..=10: { result = "in"; } '
+            'default: { result = "out"; } }'
+        )
+        self.assertEqual(env.get("result"), "in")
+
+    def test_range_case_order_still_short_circuits_on_first_match(self):
+        env = run(
+            'let result = "unset"; '
+            'switch (5) { case 100..200: { result = "no"; } '
+            'case 1..10: { result = "yes"; } '
+            'default: { result = "neither"; } }'
+        )
+        self.assertEqual(env.get("result"), "yes")
+
+    def test_range_case_composes_with_plain_values_in_same_case(self):
+        env = run(
+            'let result = "unset"; '
+            'switch (5) { case 1..3, 5: { result = "hit"; } '
+            'default: { result = "miss"; } }'
+        )
+        self.assertEqual(env.get("result"), "hit")
+
+    def test_range_case_falls_through_to_default_for_non_numeric_scrutinee(self):
+        env = run(
+            'let result = "unset"; '
+            'switch ("x") { case 1..10: { result = "no"; } '
+            'default: { result = "ok"; } }'
+        )
+        self.assertEqual(env.get("result"), "ok")
+
 
 class TestMatchExpression(unittest.TestCase):
     def test_first_matching_arm_wins(self):

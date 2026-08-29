@@ -4635,6 +4635,71 @@ class TestIsAbundant(unittest.TestCase):
             run("is_abundant();")
 
 
+class TestNthAbundant(unittest.TestCase):
+    def test_nth_abundant_of_first_ten_positions(self):
+        expected = {
+            1: 12,
+            2: 18,
+            3: 20,
+            4: 24,
+            5: 30,
+            6: 36,
+            7: 40,
+            8: 42,
+            9: 48,
+            10: 54,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_abundant({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_abundant_of_twenty(self):
+        self.assertEqual(run("let result = nth_abundant(20);").get("result"), 90)
+
+    def test_nth_abundant_of_fifty(self):
+        self.assertEqual(run("let result = nth_abundant(50);").get("result"), 216)
+
+    def test_nth_abundant_agrees_with_is_abundant(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_abundant(nth_abundant({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_abundant({position}) to be an abundant number",
+            )
+
+    def test_nth_abundant_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_abundant(0);")
+        self.assertIn(
+            "nth_abundant() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_abundant_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_abundant(-1);")
+        self.assertIn(
+            "nth_abundant() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_abundant_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_abundant(1.5);")
+        self.assertIn(
+            "nth_abundant() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_abundant_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_abundant(1, 2);")
+
+
 class TestIsDeficient(unittest.TestCase):
     def test_is_deficient_of_8(self):
         self.assertEqual(run("let result = is_deficient(8);").get("result"), True)

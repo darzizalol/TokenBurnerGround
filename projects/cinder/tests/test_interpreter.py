@@ -5038,6 +5038,49 @@ class TestMatchExpression(unittest.TestCase):
         self.assertEqual(env.get("a"), 3)
         self.assertEqual(env.get("b"), [2, 3])
 
+    def test_list_pattern_default_fires_when_subject_short(self):
+        env = run('let result = match ([1]) { [a, b = 0] => a + b, _ => -1 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_default_not_used_when_subject_supplies_value(self):
+        env = run('let result = match ([1, 2]) { [a, b = 0] => a + b, _ => -1 };')
+        self.assertEqual(env.get("result"), 3)
+
+    def test_list_pattern_multiple_defaults_all_missing(self):
+        env = run('let result = match ([]) { [a = 1, b = 2] => a + b, _ => -1 };')
+        self.assertEqual(env.get("result"), 3)
+
+    def test_list_pattern_default_falls_through_on_subject_longer_than_max(self):
+        env = run('let result = match ([1, 2, 3]) { [a, b = 0] => a + b, _ => -1 };')
+        self.assertEqual(env.get("result"), -1)
+
+    def test_list_pattern_default_expression_sees_earlier_binding(self):
+        env = run('let result = match ([1]) { [a, b = a + 1] => b, _ => -1 };')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_list_pattern_default_composes_with_rest_capture(self):
+        env = run(
+            'let result = match ([1]) '
+            '{ [a, b = 0, ...rest] => [a, b, rest], _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), [1, 0, []])
+
+    def test_list_pattern_default_composes_with_nested_list_pattern(self):
+        env = run('let result = match ([[1]]) { [[a, b = 0]] => a + b, _ => -1 };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_default_falls_through_on_non_list_subject(self):
+        env = run('let result = match ({"a": 1}) { [a, b = 0] => a + b, _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_list_pattern_element_without_default_after_defaulted_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in list pattern",
+        ):
+            run('match (x) { [a = 1, b] => a, _ => 0 };')
+
     def test_range_pattern_matches_within_bounds(self):
         env = run('let result = match (5) { 1..10 => "small", _ => "large" };')
         self.assertEqual(env.get("result"), "small")

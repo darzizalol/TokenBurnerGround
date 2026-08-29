@@ -1123,13 +1123,15 @@ class Interpreter:
     ) -> bool:
         if not isinstance(subject, list):
             return False
-        min_len = len(entries)
-        length_ok = (
-            len(subject) >= min_len if rest is not None else len(subject) == min_len
-        )
+        required = sum(1 for _, default in entries if default is None)
+        if rest is not None:
+            length_ok = len(subject) >= required
+        else:
+            length_ok = required <= len(subject) <= len(entries)
         if not length_ok:
             return False
-        for entry, item in zip(entries, subject):
+        for index, (entry, default) in enumerate(entries):
+            item = subject[index] if index < len(subject) else self.evaluate(default, env)
             if isinstance(entry, tuple):
                 nested_entries, nested_rest = entry
                 if not self._match_list_entries(nested_entries, nested_rest, item, env):
@@ -1142,7 +1144,7 @@ class Interpreter:
             if entry is not None:
                 env.define(entry, item)
         if rest is not None and rest != "_":
-            env.define(rest, subject[min_len:])
+            env.define(rest, subject[len(entries):])
         return True
 
     def _match_map_entries(

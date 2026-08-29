@@ -11,103 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_repdigit` — the k-th repdigit by position [claimed 2026-08-29T21:59:02Z]
-
-Build: `is_repdigit` (`cinder/builtins.py`, search `def _is_repdigit`)
-tests membership via `len(set(str(value))) == 1` (every decimal digit the
-same — this also makes every single-digit non-negative integer `0`-`9`
-trivially a repdigit), but has no value-returning `nth_*` counterpart.
-Repdigits have no useful closed form (a d-digit repdigit is `digit *
-(10**d - 1) // 9`, but neither `d` nor `digit` is a direct function of
-the 1-indexed position), so this follows `nth_prime`'s/`nth_semiprime`'s
-own shape (search `def _nth_prime`): a sequential candidate scan with a
-`count`/`candidate` loop. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_repdigit(5));'
-# -> <eval>:1:7: undefined name 'nth_repdigit'
-```
-
-**Performance note:** repdigits are far sparser than semiprimes/abundant
-numbers — only 9 exist at each digit-length (`1`-`9`, `11`-`99`,
-`111`-`999`, ...), so the candidate scan's cost grows exponentially with
-position, not linearly. `nth_repdigit(50)` lands at `555555` (well within
-a fast scan), but do not extend any acceptance criterion or test past
-`k = 50` — e.g. `nth_repdigit(100)` needs a 12-digit candidate and a scan
-past `10**11`, which does not finish in any reasonable test time. This
-mirrors why the `nth_abundant` task (above) deliberately excluded
-`nth_deficient`/`nth_perfect_number` from this same treatment — stay
-inside the range where the established up-to-`k=50` cross-check
-convention is actually cheap to run.
-
-Add to `cinder/builtins.py`, registered directly after `_is_repdigit`
-(search `def _is_repdigit`, immediately before `def _is_undulating`) —
-keeps the repdigit pair together, mirroring how `is_catalan` sits
-directly after `nth_catalan`:
-```python
-def _nth_repdigit(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_repdigit", arguments, 1, line, column)
-    value = _require_int("nth_repdigit", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_repdigit() requires a positive integer, domain error", line, column
-        )
-
-    def _is_repdigit_candidate(candidate: int) -> bool:
-        return len(set(str(candidate))) == 1
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_repdigit_candidate(candidate):
-            count += 1
-    return candidate
-```
-This mirrors `_nth_semiprime`'s/`_nth_abundant`'s own `count`/`candidate`
-scanning loop exactly, just swapping in `_is_repdigit`'s own
-single-distinct-digit check as a local nested helper (reimplemented
-locally, matching how `is_twin_prime`/`nth_happy_number` reimplement
-their predicate locally rather than sharing a module-level helper — this
-file's existing convention for small local predicates). Also register
-the new dict entry (search `"is_repdigit": _is_repdigit,`, add
-`"nth_repdigit": _nth_repdigit,` directly after it, before
-`"is_undulating": _is_undulating,`).
-
-Acceptance criteria:
-- `nth_repdigit(1);` through `nth_repdigit(10);` are `1`, `2`, `3`, `4`,
-  `5`, `6`, `7`, `8`, `9`, `11` — the nine single digits count as
-  one-digit repdigits before the two-digit repdigits begin.
-- `nth_repdigit(18);` is `99`, `nth_repdigit(19);` is `111`,
-  `nth_repdigit(20);` is `222` — the two-digit group (positions 10-18)
-  gives way to the three-digit group at position 19.
-- `nth_repdigit(30);` is `3333`, `nth_repdigit(40);` is `44444`.
-- `nth_repdigit(50);` is `555555`.
-- `is_repdigit(nth_repdigit(k));` is `true` for every `k` from `1` to
-  `50` — cross-check against the existing `is_repdigit` builtin directly,
-  mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own shape.
-  Do not raise this bound past `50` (see the performance note above).
-- `nth_repdigit(0);` and `nth_repdigit(-1);` raise `CinderRuntimeError`
-  matching `"nth_repdigit() requires a positive integer, domain error"`.
-- `nth_repdigit(1.5);` raises `CinderRuntimeError` matching
-  `"nth_repdigit() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`is_repdigit`, search for the current line number), `tests/test_builtins.py`
-(model on `class TestNthOctagonal`, search that name, for the
-positive/domain/type-error/cross-check test shapes, and `class
-TestIsRepdigit` for the single-distinct-digit behavior). Once merged,
-`README.md`'s Builtins bullet needs `nth_repdigit` added near
-`is_repdigit`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: whole-value `as` binding in match list/map patterns
+## 1. Language: whole-value `as` binding in match list/map patterns
 
 Build: a match list/map pattern destructures a subject into its parts
 (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) but there is no way to
@@ -237,7 +141,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`)
+## 2. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`)
 
 Build: `<`/`<=`/`>`/`>=` already work element-by-element for strings via
 Python's own string ordering (`_compare`, `cinder/interpreter.py`, search
@@ -345,7 +249,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_disarium` — digit-position-power sum test
+## 3. Standard library: `is_disarium` — digit-position-power sum test
 
 Build: `is_armstrong` (`cinder/builtins.py`, search `def _is_armstrong`)
 tests whether a number equals the sum of its own digits each raised to
@@ -418,7 +322,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position
+## 4. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position
 
 Build: `is_kaprekar` (`cinder/builtins.py`, search `def _is_kaprekar`)
 tests membership by squaring the candidate and checking whether some
@@ -520,7 +424,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: `else` clause on `while` loops (Python-style loop-`else`)
+## 5. Language: `else` clause on `while` loops (Python-style loop-`else`)
 
 Build: `while` loops have no way to distinguish "the loop ran to normal
 completion" from "the loop was cut short by `break`" without a manual

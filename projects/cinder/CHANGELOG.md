@@ -3490,3 +3490,11 @@ for vision/architecture.
   a sequential candidate scan mirroring `nth_prime`'s shape since
   abundant numbers have no closed form. Clean first pass, no bounces
   (3842 tests passing, up from 3834).
+- **Standard library: `nth_repdigit` — the k-th repdigit by position** —
+  merged 2026-08-29T22:03:38Z via PR #347 (`feat/20260829-nth-repdigit`).
+  Added `_nth_repdigit` (`cinder/builtins.py`), registered directly after
+  `_is_repdigit`, a sequential candidate scan mirroring `nth_abundant`'s/
+  `nth_semiprime`'s shape since repdigits have no closed form; tests
+  capped at `k = 50` per the task's performance note (candidate scan cost
+  grows exponentially with position). Clean first pass, no bounces (3852
+  tests passing, up from 3842).

@@ -3364,3 +3364,25 @@ for vision/architecture.
   `(root + 5) % 14 == 0`). Completes the triangular..nonagonal membership
   cluster. Clean first pass, no bounces (3727 tests passing, up from
   3720).
+- **Standard library: `is_catalan` — membership test for `nth_catalan`'s
+  existing sibling** — merged 2026-08-29T14:10:01Z via PR #336
+  (`feat/20260829-is-catalan`). Added `_is_catalan` to
+  `cinder/builtins.py`, registered directly after `nth_catalan`: since
+  Catalan numbers have no closed-form membership test, it follows
+  `_is_perfect_power`'s bounded iterative-search shape instead, growing
+  candidates via the same `math.comb(2*index, index) // (index+1)`
+  formula `_nth_catalan` uses and stopping as soon as a candidate meets or
+  exceeds the target. Completes the last `nth_*` builtin without a
+  matching `is_*` counterpart. Clean first pass, no bounces (3734 tests
+  passing, up from 3727).
+- **Language: rest capture in match map patterns
+  (`{a, ...rest} => ...`)** — merged 2026-08-29T14:10:04Z via PR #335
+  (`feat/20260827-rest-capture-map`). Ported the existing list-pattern
+  rest-capture machinery to map patterns: `_match_map_pattern_rest_name`
+  in `cinder/parser.py` mirrors `_match_list_pattern_rest_name` (same
+  "expected an identifier or '_'" error, same `_`-discards convention,
+  rest must be last), the interpreter folds leftover keys into
+  `arm.map_rest` unless it's `"_"`, and `ast_nodes.py` gained a `map_rest`
+  field alongside `list_rest`. Closes the last capability gap between
+  match map patterns and list patterns. Clean first pass, no bounces
+  (3741 tests passing, up from 3734).

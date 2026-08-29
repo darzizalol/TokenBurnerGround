@@ -11,253 +11,32 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: rest capture in match map patterns (`{a, ...rest} => ...`) [claimed 2026-08-27T20:15:59Z]
-
-Build: flat map patterns (PR #326) and per-key rename (PR #332) give match
-map patterns everything list patterns have except rest capture — list
-patterns already support `[a, ...rest] => ...` (PR #324), binding leftover
-elements into a list, and `let` map destructuring already supports the
-map-shaped equivalent (`let {a, ...rest} = expr;`, binding leftover *keys*
-into a dict, `_bind_map_destructure`/`cinder/interpreter.py`, search
-`remaining = {k: v for k, v in value.items()`). Match map patterns are the
-last place this specific capability is still missing. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ => 0 });'
-# -> <eval>:1:27: expected '}' after map pattern, found '...'
-```
-Per-key rename has already landed (PR #332), so `_match_map_pattern`
-already returns `list[tuple[str, str]]` — the parser sketch below assumes
-that shape.
-
-**Scope note:** only a bare `...rest` (or `..._` to discard) is in scope,
-mirroring list pattern rest capture exactly — no combining rest with
-nested patterns beyond what task 1 already allows. This is the same
-"flat form first" staging every other match-pattern extension in this
-backlog has used.
-
-`_match_map_pattern` (`cinder/parser.py`, search `def _match_map_pattern`)
-currently loops entries with no `DOT_DOT_DOT` handling and no rest slot.
-Widen it to return `tuple[list[tuple[str, str]], str | None]`, mirroring
-`_match_list_pattern`'s own `(entries, rest)` shape and
-`_destructure_map_pattern`'s `DOT_DOT_DOT`/rest-must-be-last handling:
-```python
-    def _match_map_pattern(self) -> "tuple[list[tuple[str, str]], str | None]":
-        self._advance()  # consume '{'
-        entries: "list[tuple[str, str]]" = []
-        rest: "str | None" = None
-        if not self._check(TokenType.RBRACE):
-            if self._check(TokenType.DOT_DOT_DOT):
-                rest = self._match_map_pattern_rest_name()
-            else:
-                entries.append(self._match_map_pattern_entry())
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if rest is not None:
-                    token = self._peek()
-                    raise ParseError(
-                        f"rest capture must be last in map pattern, found {self._describe(token)}",
-                        token.line,
-                        token.column,
-                    )
-                if self._check(TokenType.DOT_DOT_DOT):
-                    rest = self._match_map_pattern_rest_name()
-                else:
-                    entries.append(self._match_map_pattern_entry())
-        self._consume(TokenType.RBRACE, "'}' after map pattern")
-        return entries, rest
-
-    def _match_map_pattern_rest_name(self) -> str:
-        self._advance()  # consume '...'
-        token = self._peek()
-        if token.type != TokenType.IDENTIFIER:
-            raise ParseError(
-                f"expected an identifier or '_' after '...' in map pattern, "
-                f"found {self._describe(token)}",
-                token.line,
-                token.column,
-            )
-        self._advance()
-        return token.lexeme
-```
-This mirrors `_match_list_pattern_rest_name` exactly. The call site
-(`_match_pattern`, search `map_pattern = self._match_map_pattern()`) now
-unpacks `map_pattern, map_rest = self._match_map_pattern()` and passes both
-into `MatchArm` — add a new `map_rest: "str | None" = None` field to
-`MatchArm` (`cinder/ast_nodes.py`, next to `map_pattern`), mirroring
-`list_rest` next to `list_pattern`.
-
-In `cinder/interpreter.py`, extend the `map_pattern` branch (search `if
-arm.map_pattern is not None`):
-```python
-            if arm.map_pattern is not None:
-                if not isinstance(subject, dict) or not all(
-                    key in subject for key, _ in arm.map_pattern
-                ):
-                    continue
-                arm_env = Environment(env)
-                seen_keys = set()
-                for key, binding in arm.map_pattern:
-                    arm_env.define(binding, subject[key])
-                    seen_keys.add(key)
-                if arm.map_rest is not None and arm.map_rest != "_":
-                    arm_env.define(
-                        arm.map_rest,
-                        {k: v for k, v in subject.items() if k not in seen_keys},
-                    )
-                return self.evaluate(arm.body, arm_env)
-```
-This mirrors `_bind_map_destructure`'s own leftover-keys dict construction
-and the list-pattern match branch's `rest != "_"` discard convention
-exactly.
-
-Acceptance criteria:
-- `match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ => 0 };` is
-  `{"b": 2, "c": 3}`.
-- `match ({"a": 1}) { {a, ...rest} => rest, _ => 0 };` is `{}` — rest
-  captures an empty dict when nothing is left over.
-- `match ({"a": 1, "b": 2}) { {a, ..._} => a, _ => 0 };` is `1` — `..._`
-  discards the rest binding without raising or leaking a variable.
-- `match ({"a": 1, "b": 2}) { {a} => a, _ => 0 };` is still `1` — patterns
-  with no rest are unaffected.
-- `match ({"a": 1, "b": 2, "c": 3}) { {a: x, ...rest} => [x, rest], _ => 0 };`
-  is `[1, {"b": 2, "c": 3}]` — rest capture composes with per-key rename
-  (PR #332) in the same pattern.
-- `match ([1, 2]) { {a, ...rest} => rest, _ => "no" };` is `"no"` — a
-  non-map subject still falls through, rest capture included.
-- A rest capture is scoped to its arm's body only, same as every other
-  match-pattern binding.
-- `match (x) { {a, ...5} => a, _ => 0 };` (non-identifier after `...`)
-  raises `ParseError` matching `"expected an identifier or '_' after '...'
-  in map pattern"`.
-- `match (x) { {a, ...rest, b} => a, _ => 0 };` (rest not last) raises
-  `ParseError` matching `"rest capture must be last in map pattern"`.
-- `shape(parse('match (x) { {a, ...rest} => a, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `map_pattern`/`map_rest`
-  fields with `map_rest` set to `"rest"`.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_map_pattern`, new
-`_match_map_pattern_rest_name`, the `_match_pattern` call site),
-`cinder/ast_nodes.py` (new `MatchArm.map_rest` field), `cinder/interpreter.py`
-(`_evaluate_match`'s `map_pattern` branch), `tests/test_parser.py` (extend
-the map-pattern shape tests alongside task 1's, search
-`test_match_map_pattern_shape`), `tests/test_interpreter.py` (extend `class
-TestMatchExpression`, search `test_map_pattern_binds_named_keys`, with the
-rest-capture cases above). Once merged, `README.md`'s `match` expression
-bullet needs its map-pattern description widened to mention rest capture,
-its "Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_catalan` — membership test for `nth_catalan`'s existing sibling [claimed 2026-08-29T14:03:37Z]
-
-Build: `nth_catalan` (`cinder/builtins.py`) returns the k-th Catalan number
-by position, but every other `nth_*` builtin in Cinder has a matching
-`is_*` membership predicate (`is_fibonacci`/`nth_fibonacci`,
-`is_lucas_number`/`nth_lucas`, `is_triangular` through `is_octagonal`
-paired with their `nth_*` siblings) — `nth_catalan` is the one `nth_*`
-builtin with no `is_*` counterpart. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_catalan(14));'
-# -> <eval>:1:7: undefined name 'is_catalan'
-```
-
-Unlike the figurate-number cluster, Catalan numbers have no closed-form
-perfect-square-style membership test, so this follows a different
-existing shape instead: `is_perfect_power`'s bounded iterative search
-(search `def _is_perfect_power`, `cinder/builtins.py`) — grow candidates
-until they meet or exceed the target, an early terminating loop rather
-than an inverse formula. Catalan numbers grow fast (`C(15)` is already
-over 2.6 million, per `test_nth_catalan_of_fifteen`), so the loop
-terminates quickly for any realistic input. Add to `cinder/builtins.py`,
-registered directly after `_nth_catalan` (search `def _nth_catalan`,
-immediately before `def _sum`):
-```python
-def _is_catalan(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_catalan", arguments, 1, line, column)
-    value = _require_int("is_catalan", arguments[0], line, column)
-    if value < 1:
-        return False
-    index = 0
-    while True:
-        candidate = math.comb(2 * index, index) // (index + 1)
-        if candidate == value:
-            return True
-        if candidate > value:
-            return False
-        index += 1
-```
-This mirrors `_nth_catalan`'s own `math.comb(2 * index, index) // (index
-+ 1)` formula exactly, just iterated upward and compared instead of
-computed once at a fixed position — same arity/int-check shape every
-other predicate here uses, early `False` on `value < 1` since every
-Catalan number is positive (mirroring `_is_perfect_power`'s domain-open,
-non-raising convention for out-of-range input). Also register the new
-dict entry (search `"nth_catalan": _nth_catalan,`, add `"is_catalan":
-_is_catalan,` directly after it).
-
-Acceptance criteria:
-- `is_catalan(1);`, `is_catalan(2);`, `is_catalan(5);`, `is_catalan(14);`,
-  `is_catalan(42);`, `is_catalan(4862);` are all `true` — the first six
-  distinct Catalan numbers (`C(0)` through `C(9)`, using `nth_catalan`'s
-  own position-1-indexed values from `test_nth_catalan_of_first_six_positions`
-  and `test_nth_catalan_of_ten`).
-- `is_catalan(1);` is `true` via a single index-0 hit even though `C(0)
-  == C(1) == 1` — the loop returns on the first match, no duplicate-value
-  ambiguity to handle.
-- `is_catalan(0);`, `is_catalan(3);`, `is_catalan(4);`, `is_catalan(-1);`
-  are all `false` — `0` and negative values are domain-open (`false`, not
-  raised, matching every other `is_*` predicate here), `3`/`4` are
-  between consecutive Catalan numbers (`2` and `5`).
-- `is_catalan(nth_catalan(k));` is `true` for every `k` from `1` to `15`
-  — cross-check against the existing `nth_catalan` builtin directly.
-- `is_catalan(1.5);` raises `CinderRuntimeError` matching `"is_catalan()
-  requires an int, got float"` (via `_require_int`'s existing message
-  format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`nth_catalan`, search for the current line number), `tests/test_builtins.py`
-(model on `class TestNthCatalan`, search that name, for the
-positive/domain/type-error/cross-check test shapes). Once merged,
-`README.md`'s Builtins bullet needs `is_catalan` added near
-`nth_catalan`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 3. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`)
+## 1. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`)
 
 Build: nested list patterns (PR #330) closed the flat-vs-nested gap for
 list-pattern elements — an element can now itself be a list pattern to
 arbitrary depth. Map patterns have no equivalent yet: a map pattern's
 value slot only ever binds a plain identifier (optionally renamed, PR
-#332) or captures rest (once task 1 above lands), never another list/map
+#332) or captures rest (PR #335), never another list/map
 pattern. `let` destructuring already supports this for maps
 (`let {a, b: [c, d]} = ...`, `let {a: {b}} = ...` —
 `_destructure_map_pattern_entry`, `cinder/parser.py`, recurses into
 `_destructure_list_pattern`/`_destructure_map_pattern` on a nested
 value), so this is the last flat-vs-nested gap between match map patterns
 and everything else in Cinder that already destructures maps. Verify the
-gap (assumes per-key rename (PR #332) and task 1's rest capture have
-landed — see Ordering note):
+gap (both per-key rename, PR #332, and rest capture, PR #335, have
+landed):
 ```sh
 python3 -m cinder.cli eval 'print(match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 });'
 # -> <eval>:1:24: expected identifier after ':' in map pattern, found '{'
 ```
 
-**Ordering note:** this task depends on per-key rename (PR #332, already
-landed — `_match_map_pattern_entry` returns `(key, binding)` pairs) and
-task 1 (rest capture, `_match_map_pattern` returning `(entries, rest)`)
-having landed — it widens the same `_match_map_pattern_entry` one more
-time, to let `binding` be a nested pattern instead of only a plain name.
-If task 1 hasn't landed yet when this is claimed, do that task's shape
-change first (this task is not a substitute for it).
+**Ordering note:** this task builds on per-key rename (PR #332) and rest
+capture (PR #335), both already landed — it widens the same
+`_match_map_pattern_entry` one more time, to let `binding` be a nested
+pattern instead of only a plain name, and touches the same interpreter
+`map_pattern` match branch (`arm.map_rest` handling) that rest capture
+added.
 
 **Scope note:** only list-pattern and map-pattern nesting as a map
 pattern's *value* is in scope, mirroring what `let` destructuring
@@ -358,7 +137,7 @@ Acceptance criteria:
   in the same pattern.
 - `match ({"a": 1, "b": {"c": 2, "d": 3}}) { {a, b: {c, ...rest}} => rest,
   _ => 0 };` is `{"d": 3}` — nested map-pattern values compose with rest
-  capture (task 1) in the same pattern.
+  capture (PR #335) in the same pattern.
 - `match ({"a": 1, "b": {"c": 2}}) { {a, b: {d}} => 0, _ => "no match" };`
   is `"no match"` — a nested pattern that doesn't match its nested
   subject falls through the whole arm, not just the nested part.
@@ -392,7 +171,7 @@ this task.
 
 ---
 
-## 4. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
+## 2. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
 
 Build: `let`/`for`/function-param/comprehension list destructuring has
 supported trailing default values for a long time (`let [a, b = 5] =
@@ -561,7 +340,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_twin_prime` — membership test for primes with a twin partner
+## 3. Standard library: `is_twin_prime` — membership test for primes with a twin partner
 
 Build: the prime-relationship cluster in `cinder/builtins.py` already
 covers several adjacency/structure predicates built on trial-division
@@ -639,7 +418,7 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
+## 4. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
 
 Build: `is_nonagonal` (PR #334) just closed the triangular..nonagonal
 `is_*` cluster, but it left a new, smaller gap behind it —
@@ -708,7 +487,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 7. Standard library: `nth_happy_number` — the k-th happy number by position
+## 5. Standard library: `nth_happy_number` — the k-th happy number by position
 
 Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
 membership via the digit-square-sum cycle, but neither has a
@@ -794,7 +573,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 8. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 6. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
 = 0] => ...` (see task 4 in this backlog, which explicitly flags map-
@@ -810,11 +589,10 @@ python3 -m cinder.cli eval 'print(match ({"a": 1}) { {a, b = 0} => a + b, _ => -
 # -> <eval>:1:31: expected '}' after map pattern, found '='
 ```
 
-**Ordering note:** this task depends on task 1 (rest capture) having
-landed — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
-production and the same interpreter `map_pattern` match branch task 1
-touches (`arm.map_rest` handling). If task 1 hasn't landed yet when this
-is claimed, do that task first (this task is not a substitute for it).
+**Ordering note:** this task builds on rest capture (PR #335, already
+landed) — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
+production and the same interpreter `map_pattern` match branch rest
+capture touches (`arm.map_rest` handling).
 Unlike task 4 (list defaults), this task does **not** need to check
 whether all pattern keys are present up front the way list patterns check
 length — map patterns already match on a key subset (extra keys in the
@@ -899,7 +677,7 @@ Acceptance criteria:
   default composes with per-key rename (PR #332) in the same pattern.
 - `match ({"a": 1, "c": 3}) { {a, b = 0, ...rest} => [a, b, rest], _ =>
   "no" };` is `[1, 0, {"c": 3}]` — a default composes with rest capture
-  (task 1) in the same pattern; the missing, defaulted key `b` is not
+  (PR #335) in the same pattern; the missing, defaulted key `b` is not
   spuriously included in `rest`.
 - `match ({}) { {a} => a, _ => "no" };` is `"no"` — a key without a
   default is still required; missing it still falls through, unaffected

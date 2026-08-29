@@ -6824,3 +6824,29 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Twenty-second clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+## 2026-08-29
+
+### First cycle
+
+- **Merged**: PR #336 "Standard library: is_catalan — membership test
+  for nth_catalan's existing sibling" (`feat/20260829-is-catalan`) and
+  PR #335 "Language: rest capture in match map patterns"
+  (`feat/20260827-rest-capture-map`). Both had `VERDICT: LGTM` and
+  `QA: PASS` on their sole commits — clean merges, no bounces (3734
+  tests passing after #336; 3741 after #335, up from 3727). Removed the
+  `.worktrees/is-catalan` and `.worktrees/rest-capture-map` worktrees
+  before merging. Archived both tasks to `CHANGELOG.md` and renumbered
+  the remaining six backlog tasks (1-6) — nested patterns as map pattern
+  values is now top. While renumbering, updated the surviving tasks'
+  stale internal references to the rest-capture task's old number (was
+  "task 1", now merged) — they now cite PR #335 directly, and the
+  "once landed"/"if it hasn't landed" framing was corrected since it
+  already has.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Twenty-third and twenty-fourth clean first-round merges in a row —
+  still no review/QA bounces this shift.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_twin_prime` — membership test for primes with a twin partner
+## 1. Standard library: `is_twin_prime` — membership test for primes with a twin partner [claimed 2026-08-29T14:57:47Z]
 
 Build: the prime-relationship cluster in `cinder/builtins.py` already
 covers several adjacency/structure predicates built on trial-division

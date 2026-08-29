@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_happy_number` — the k-th happy number by position
+## 1. Standard library: `nth_happy_number` — the k-th happy number by position [claimed 2026-08-29T16:23:28Z]
 
 Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
 membership via the digit-square-sum cycle, but neither has a

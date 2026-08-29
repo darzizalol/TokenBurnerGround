@@ -528,6 +528,79 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_disarium` — digit-position-power sum test
+
+Build: `is_armstrong` (`cinder/builtins.py`, search `def _is_armstrong`)
+tests whether a number equals the sum of its own digits each raised to
+the *same* fixed exponent (the digit count) — `153 = 1^3 + 5^3 + 3^3`.
+A Disarium number is the closely related but distinct variant where
+each digit is raised to its own *positional* exponent (1-indexed from
+the left) instead of one shared exponent — `89 = 8^1 + 9^2` and
+`135 = 1^1 + 3^2 + 5^3` are both Disarium numbers, but neither is an
+Armstrong number (`1^3+3^3+5^3=153≠135`) and `153` is Armstrong but not
+Disarium (`1^1+5^2+3^3=1+25+27=53≠153`) — the two predicates disagree
+on both directions, so this is a genuinely separate check, not a
+rename. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_disarium(89));'
+# -> <eval>:1:11: undefined name 'is_disarium'
+```
+
+Add to `cinder/builtins.py`, registered directly after `_is_armstrong`
+(search `def _is_armstrong`, immediately before `def
+_is_strong_number`) — keeps the digit-power-sum predicates together:
+```python
+def _is_disarium(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_disarium", arguments, 1, line, column)
+    value = _require_int("is_disarium", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    return (
+        sum(int(digit) ** position for position, digit in enumerate(digits, start=1))
+        == value
+    )
+```
+This mirrors `_is_armstrong`'s own shape exactly (same negative-input
+`return False` convention — no domain error, matching how
+`is_armstrong`/`is_strong_number`/`is_harshad` all treat negative input
+as simply "not a match" rather than an error — same `str(value)` digit
+walk), just swapping the fixed `power = len(digits)` exponent for
+`enumerate(..., start=1)`'s per-digit positional exponent. Also
+register the new dict entry (search `"is_armstrong": _is_armstrong,`,
+add `"is_disarium": _is_disarium,` directly after it, before
+`"is_strong_number": _is_strong_number,`).
+
+Acceptance criteria:
+- `is_disarium(89);` and `is_disarium(135);` are `true` — the two
+  smallest multi-digit Disarium numbers.
+- `is_disarium(1);` through `is_disarium(9);` are all `true` — every
+  single digit trivially satisfies `d^1 == d`.
+- `is_disarium(153);` is `false` — the canonical Armstrong number is
+  not Disarium (`1^1 + 5^2 + 3^3 = 53`).
+- `is_disarium(175);` and `is_disarium(518);` are `true` — further
+  known Disarium numbers (`1^1+7^2+5^3=175`, `5^1+1^2+8^3=518`).
+- `is_disarium(10);` is `false` (`1^1 + 0^2 = 1 != 10`).
+- `is_disarium(-89);` is `false` — negative input is simply not a
+  match, no domain error (mirrors `is_armstrong`'s own convention).
+- `is_disarium(1.5);` raises `CinderRuntimeError` matching
+  `"is_disarium() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after
+`is_armstrong`, search for the current line number), `tests/test_builtins.py`
+(model on `class TestIsArmstrong`, search that name, for the
+true/false/negative/type-error test shapes). Once merged, `README.md`'s
+Builtins bullet needs `is_disarium` added near `is_armstrong`, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

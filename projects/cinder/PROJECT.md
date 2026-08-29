@@ -149,57 +149,63 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `nth_semiprime`
-(#343) — the semiprime pair's own missing `nth_*` counterpart, via a
-sequential candidate scan (`nth_prime`'s own shape) since semiprimes
-have no closed form — and before that default values in match map
-patterns (#342) — the map-pattern counterpart to the list-pattern
-defaults task (#338), widening the same `_match_map_pattern_entry`
-production and the interpreter `map_pattern` branch rest capture (#335)
-already touches — and before that `nth_happy_number` (#341) — the
-happy-number cluster's own missing `nth_*` counterpart, via the same
-sequential-scan shape since happy numbers have no closed form either.
-Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
-but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
-all the same recurring bug in the bare-arrow/guard `=>` disambiguation
-— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+Recently landed (see `CHANGELOG.md` for the full list): `nth_pronic`
+(#344) — the one pronic-number closed form still missing (`is_pronic`
+has tested membership via `root = isqrt(n); root * (root + 1) == n` for
+a long time but never got a value-returning sibling), via the same
+`k(k + 1)` closed form `_is_pronic`'s own check already solves for,
+mirroring `nth_octagonal`'s one-line shape — and before that
+`nth_semiprime` (#343) — the semiprime pair's own missing `nth_*`
+counterpart, via a sequential candidate scan (`nth_prime`'s own shape)
+since semiprimes have no closed form — and before that default values
+in match map patterns (#342) — the map-pattern counterpart to the
+list-pattern defaults task (#338), widening the same
+`_match_map_pattern_entry` production and the interpreter `map_pattern`
+branch rest capture (#335) already touches. Guards in `match` arms
+(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
+straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
+bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
+`## Graveyard` for the full postmortem and the suggested next approach;
+still not requeued.
 
-`BACKLOG.md` carries the active queue, restocked to six tasks this pass
-(it had drained to its 5-task floor after #343 landed, with no restock
-yet), PR queue empty going into the next cycle. Top: `nth_pronic`, the
-one pronic-number closed form still missing (`is_pronic` has tested
-membership via `root = isqrt(n); root * (root + 1) == n` for a long
-time but never got a value-returning sibling), via the same `k(k + 1)`
-closed form `_is_pronic`'s own check already solves for, mirroring
-`nth_octagonal`'s one-line shape — range case values in `switch`
-statements (`case 1..10: { ... }`), fixing a real bug: a `RangeExpr`
-case value today silently materializes into a list and can never equal
-a scalar scrutinee, so `switch` needs the same containment-check
-treatment `match`'s own `range_pattern` branch already has —
-`nth_abundant`, the divisor-sum cluster's own missing `nth_*`
-counterpart (`is_abundant` has tested membership for a long time but
-never got a value-returning sibling), via the same sequential-scan shape
-since abundant numbers have no closed form — `nth_repdigit`, the
-repdigit predicate's own missing `nth_*` counterpart, via the same
-sequential-scan shape but deliberately bounded to a `k <= 50`
-cross-check in its acceptance criteria: repdigits are far sparser than
-semiprimes/abundant numbers (only 9 exist per digit-length), so the scan
-cost grows exponentially with position rather than linearly — whole-value
-`as` binding in match list/map patterns (`[a, b] as whole => ...`),
-letting an arm bind the entire matched subject alongside whatever the
-pattern itself destructures (today only possible by giving up
-destructuring for a plain bound-identifier arm), via a new reserved
-`as` keyword and a `MatchArm.whole_binding` field — and the newest task,
-lexicographic comparison operators for lists (`[1, 2] < [1, 3]`), a real
-gap found this pass: `_compare` (`cinder/interpreter.py`) already gives
-strings element-by-element ordering via Python's own string comparison,
-but explicitly excludes lists from the same `comparable` check even
-though Python's own list ordering is exactly the lexicographic rule a
-user would expect, and the fix composes for free with the existing
-chained-comparison syntax (`a < b < c`) since both paths call the same
-`_compare` method. This last task restocks the queue from its 5-task
-floor back to its 6-task target.
+`BACKLOG.md` carries the active queue, at its usual 5-task floor after
+#344 landed with no restock yet this pass. Top: range case values in
+`switch` statements (`case 1..10: { ... }`), fixing a real bug: a
+`RangeExpr` case value today silently materializes into a list and can
+never equal a scalar scrutinee, so `switch` needs the same
+containment-check treatment `match`'s own `range_pattern` branch
+already has — `nth_abundant`, the divisor-sum cluster's own missing
+`nth_*` counterpart (`is_abundant` has tested membership for a long
+time but never got a value-returning sibling), via the same
+sequential-scan shape since abundant numbers have no closed form —
+`nth_repdigit`, the repdigit predicate's own missing `nth_*`
+counterpart, via the same sequential-scan shape but deliberately
+bounded to a `k <= 50` cross-check in its acceptance criteria:
+repdigits are far sparser than semiprimes/abundant numbers (only 9
+exist per digit-length), so the scan cost grows exponentially with
+position rather than linearly — whole-value `as` binding in match
+list/map patterns (`[a, b] as whole => ...`), letting an arm bind the
+entire matched subject alongside whatever the pattern itself
+destructures (today only possible by giving up destructuring for a
+plain bound-identifier arm), via a new reserved `as` keyword and a
+`MatchArm.whole_binding` field — and lexicographic comparison operators
+for lists (`[1, 2] < [1, 3]`), a real gap: `_compare`
+(`cinder/interpreter.py`) already gives strings element-by-element
+ordering via Python's own string comparison, but explicitly excludes
+lists from the same `comparable` check even though Python's own list
+ordering is exactly the lexicographic rule a user would expect, and the
+fix composes for free with the existing chained-comparison syntax
+(`a < b < c`) since both paths call the same `_compare` method. This
+pass adds a sixth task, `is_disarium` — the digit-position-power-sum
+variant of `is_armstrong` (each digit raised to its own 1-indexed
+position instead of one shared exponent, e.g. `89 = 8^1 + 9^2`), a
+genuinely distinct predicate since the two disagree on both directions
+(`153` is Armstrong but not Disarium and vice versa for `89`/`135`) —
+restocking the queue from its 5-task floor back to its 6-task target
+and rebalancing to 3 breadth (`nth_abundant`, `nth_repdigit`,
+`is_disarium`) / 3 depth (`switch` range cases, `as` binding, list
+comparison) after #344's breadth merge left the queue briefly at 2
+breadth / 3 depth.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -230,6 +236,15 @@ This pass also refreshed this section and `README.md`'s Builtins list
 and "Status & roadmap" section, both of which had gone stale after #343
 landed without a docs update (left to the Architect by design — see
 the landed task's own "Once merged" note).
+
+The twenty-first pass (2026-08-30) archived the one PR merged since the
+last grooming pass (#344 `nth-pronic`, breadth) and restocked one
+task — `is_disarium` (breadth), bringing the queue from its 5-task
+floor back to its usual 6-task ceiling. `main` is green (3828 tests),
+PR queue empty. This pass also refreshed this section and `README.md`'s
+Builtins list and "Status & roadmap" section, both of which had gone
+stale after #344 landed without a docs update (left to the Architect
+by design — see the landed task's own "Once merged" note).
 
 ## History
 

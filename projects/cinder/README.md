@@ -455,6 +455,8 @@ while (i < 10) {
   the natural next member of the "product of primes" family alongside `is_semiprime`'s "product of exactly two"),
   `is_circular_prime` to test whether every rotation of an integer's decimal digits is also prime
   (e.g. `197`/`971`/`719`),
+  `is_twin_prime` to test whether an integer is prime and has another prime exactly 2 away
+  (e.g. `11`, since `13` is also prime),
   `cartesian_product` to return every ordered combination of one element from each of N lists
   (an N-list generalization of `zip`, a thin wrapper over `itertools.product`),
   `power_set` to return every subset of a list across all sizes (a thin wrapper over
@@ -544,7 +546,11 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: default values for
+Actively developed, nightly. Recently landed: `is_twin_prime` (PR #339)
+— a gap in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
+`is_emirp`/`is_circular_prime` test other adjacency/structure
+relationships on primes, but none tested the classic twin-prime pairing
+until now) — and before that default values for
 trailing elements in match list patterns (`match ([1]) { [a, b = 0] =>
 a + b, _ => -1 }`, PR #338) — the match-pattern counterpart to `let`
 list destructuring's own trailing defaults, letting a shorter subject
@@ -552,17 +558,10 @@ list still match instead of falling through the arm — and before that
 nested patterns as map pattern values (`match ({"a": 1, "b": {"c": 2}})
 { {a, b: {c}} => a + c, _ => 0 }`, PR #337) — the map-pattern
 counterpart to nested list patterns, closing the last flat-vs-nested gap
-between match map patterns and `let` destructuring — and before that
-rest capture in match map patterns (`match ({"a": 1, "b": 2, "c": 3})
-{ {a, ...rest} => rest, _ => 0 }`, PR #335) — the same
-leftover-keys-into-a-dict capability list patterns already have via
-`[a, ...rest]`, closing the last flat-list-vs-flat-map gap. See
+between match map patterns and `let` destructuring. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_twin_prime` — a gap
-in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
-`is_emirp`/`is_circular_prime` test other adjacency/structure
-relationships on primes, but none test the classic twin-prime pairing
-yet), `nth_nonagonal` — the one figurate `nth_*` closed form still
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_nonagonal` — the
+one figurate `nth_*` closed form still
 missing now that `is_nonagonal` completed the membership-test side of
 the cluster, `nth_happy_number` — the happy-number cluster's own missing
 `nth_*` counterpart, via a sequential candidate scan since happy numbers

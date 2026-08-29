@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_semiprime` — the k-th semiprime by position
+## 1. Standard library: `nth_semiprime` — the k-th semiprime by position [claimed 2026-08-29T16:56:49Z]
 
 Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
 factor-count trial division, but has no value-returning `nth_*`

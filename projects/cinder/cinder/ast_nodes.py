@@ -314,8 +314,14 @@ class MatchArm:
     does (kept as the literal name `"_"` when the rest is discarded, so
     the interpreter can tell "no rest capture" apart from "rest
     capture, discarded"). `map_pattern` is a fifth, mutually exclusive
-    pattern kind: a flat list of `(key, binding)` pairs, tested for
-    presence against the subject's keys (a map/dict). `binding` is
+    pattern kind: a flat list of `(key, binding, default)` triples,
+    tested for presence against the subject's keys (a map/dict), unless
+    `default` is set, in which case a missing key falls back to
+    `default` (evaluated in the arm's own environment, left to right,
+    so an earlier binding is visible to a later default) rather than
+    failing the match — mirroring `list_pattern`'s own trailing-default
+    support, except a map pattern's defaults may appear in any position
+    since each entry is looked up by key, not position. `binding` is
     either a plain name (equal to `key` when unrenamed, binding the
     key's value directly), a nested list pattern as an `(entries, rest,
     True)` triple, or a nested map pattern as an `(entries, rest)` pair
@@ -324,12 +330,13 @@ class MatchArm:
     pattern, since both would otherwise reduce to the same 2-tuple
     shape. A nested pattern is matched recursively against the key's
     value rather than bound directly, mirroring `list_pattern`'s own
-    nested-element support; `pattern` and `binding` stay `None` for a
-    map-pattern arm. `map_rest` accompanies `map_pattern`, mirroring
-    `list_rest`: `None` when the map pattern has no rest capture, the
-    bound name when it does (kept as the literal name `"_"` when the
-    rest is discarded, so the interpreter can tell "no rest capture"
-    apart from "rest capture, discarded")."""
+    nested-element support, and its own `default` stays `None` — only a
+    plain-name binding may carry a default. `pattern` and `binding` stay
+    `None` for a map-pattern arm. `map_rest` accompanies `map_pattern`,
+    mirroring `list_rest`: `None` when the map pattern has no rest
+    capture, the bound name when it does (kept as the literal name
+    `"_"` when the rest is discarded, so the interpreter can tell "no
+    rest capture" apart from "rest capture, discarded")."""
 
     pattern: "Expr | None"
     body: "Expr"
@@ -337,7 +344,7 @@ class MatchArm:
     list_pattern: "list | None" = None
     range_pattern: "RangeExpr | None" = None
     list_rest: "str | None" = None
-    map_pattern: "list[tuple[str, object]] | None" = None
+    map_pattern: "list[tuple[str, object, Expr | None]] | None" = None
     map_rest: "str | None" = None
 
 

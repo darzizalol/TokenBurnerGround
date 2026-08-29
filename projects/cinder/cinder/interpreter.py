@@ -1151,13 +1151,13 @@ class Interpreter:
         self, entries: list, rest: "str | None", subject: object, env: Environment
     ) -> bool:
         if not isinstance(subject, dict) or not all(
-            key in subject for key, _ in entries
+            key in subject or default is not None for key, _, default in entries
         ):
             return False
         seen_keys = set()
-        for key, binding in entries:
+        for key, binding, default in entries:
             seen_keys.add(key)
-            item = subject[key]
+            item = subject[key] if key in subject else self.evaluate(default, env)
             if isinstance(binding, tuple) and len(binding) == 3:
                 nested_entries, nested_rest, _ = binding
                 if not self._match_list_entries(nested_entries, nested_rest, item, env):

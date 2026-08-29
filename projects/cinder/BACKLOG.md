@@ -11,140 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values in match map patterns (`{a, b = 0} => ...`) [claimed 2026-08-29T16:40:51Z]
-
-Build: match list patterns already support trailing defaults via `[a, b
-= 0] => ...` (PR #338, already merged — its task explicitly flagged map-
-pattern defaults as "a separate, not-yet-queued task"), and `let` map
-destructuring has supported per-key defaults for a long time (`let {a, b
-= 5} = expr;`, PR #244) — a map missing a key still binds successfully,
-falling back to the default. Match map patterns never got the
-equivalent: today a subject map missing a pattern's key just falls
-through the arm entirely, with no way to supply a fallback value.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match ({"a": 1}) { {a, b = 0} => a + b, _ => -1 });'
-# -> <eval>:1:31: expected '}' after map pattern, found '='
-```
-
-**Ordering note:** this task builds on rest capture (PR #335, already
-landed) — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
-production and the same interpreter `map_pattern` match branch rest
-capture touches (`arm.map_rest` handling).
-Unlike list-pattern defaults (PR #338), this task does **not** need to check
-whether all pattern keys are present up front the way list patterns check
-length — map patterns already match on a key subset (extra keys in the
-subject beyond the pattern are always fine, no rest needed), so adding
-defaults only relaxes which keys are *required*.
-
-**Scope note:** only a bare identifier or renamed binding (`a` or `a: x`)
-may carry a default — mirroring list-pattern defaults' (PR #338)
-"flat-capability-first" scope
-restriction exactly. Nested patterns as map-pattern values have already
-landed (PR #337) — a nested `{...}`/`[...]` binding carrying a default
-stays out of scope; only add the `= expr` check in the plain-identifier
-branch of `_match_map_pattern_entry`, not after a recursive
-nested-pattern call.
-
-Widen `_match_map_pattern_entry` (`cinder/parser.py`, search `def
-_match_map_pattern_entry`) to return a third element, mirroring
-`_destructure_map_pattern_entry`'s own trailing `default` return:
-```python
-    def _match_map_pattern_entry(self) -> "tuple[str, str, Expr | None]":
-        key = self._consume(
-            TokenType.IDENTIFIER, "identifier inside map pattern"
-        ).lexeme
-        if self._check(TokenType.COLON):
-            self._advance()
-            binding = self._consume(
-                TokenType.IDENTIFIER, "identifier after ':' in map pattern"
-            ).lexeme
-        else:
-            binding = key
-        default = None
-        if self._check(TokenType.EQ):
-            self._advance()
-            default = self._ternary()
-        return key, binding, default
-```
-`_match_map_pattern`'s entries list is now `list[tuple[str, str, Expr |
-None]]`; no other change needed there since map-pattern entries have no
-ordering constraint the way list-pattern defaults do (a required key can
-follow a defaulted one with no ambiguity — each entry is looked up by
-name, not position).
-
-In `cinder/interpreter.py`, widen the `map_pattern` branch (search `if
-arm.map_pattern is not None`) to unpack the 3-tuple and evaluate a
-default when a key is missing, mirroring `_bind_map_destructure`'s own
-`key in value` / `default is not None` check:
-```python
-            if arm.map_pattern is not None:
-                if not isinstance(subject, dict) or not all(
-                    key in subject or default is not None
-                    for key, _, default in arm.map_pattern
-                ):
-                    continue
-                arm_env = Environment(env)
-                seen_keys = set()
-                for key, binding, default in arm.map_pattern:
-                    item = subject[key] if key in subject else self.evaluate(default, arm_env)
-                    arm_env.define(binding, item)
-                    seen_keys.add(key)
-                if arm.map_rest is not None and arm.map_rest != "_":
-                    arm_env.define(
-                        arm.map_rest,
-                        {k: v for k, v in subject.items() if k not in seen_keys},
-                    )
-                return self.evaluate(arm.body, arm_env)
-```
-Default expressions are evaluated in `arm_env`, left-to-right in
-`arm.map_pattern` order, so an earlier binding in the same pattern is
-visible to a later default — mirroring `_bind_map_destructure`'s own
-progressive-`env` evaluation and list-pattern defaults' (PR #338)
-identical left-to-right convention.
-
-Acceptance criteria:
-- `match ({"a": 1}) { {a, b = 0} => a + b, _ => -1 };` is `1` — the
-  default fires when the subject is missing the key.
-- `match ({"a": 1, "b": 2}) { {a, b = 0} => a + b, _ => -1 };` is `3` —
-  the default is not used when the subject supplies the key.
-- `match ({}) { {a = 1, b = 2} => a + b, _ => -1 };` is `3` — multiple
-  defaults, subject missing every key.
-- `match ({"a": 1}) { {a, b = a + 1} => b, _ => -1 };` is `2` — a default
-  expression may reference an earlier binding in the same pattern.
-- `match ({"b": 2}) { {a: x = 0, b} => x + b, _ => -1 };` is `2` — a
-  default composes with per-key rename (PR #332) in the same pattern.
-- `match ({"a": 1, "c": 3}) { {a, b = 0, ...rest} => [a, b, rest], _ =>
-  "no" };` is `[1, 0, {"c": 3}]` — a default composes with rest capture
-  (PR #335) in the same pattern; the missing, defaulted key `b` is not
-  spuriously included in `rest`.
-- `match ({}) { {a} => a, _ => "no" };` is `"no"` — a key without a
-  default is still required; missing it still falls through, unaffected
-  by this task.
-- `match ([1]) { {a = 1} => a, _ => "no" };` is `"no"` — a non-map
-  subject still falls through, defaults included.
-- `shape(parse('match (x) { {a, b = 0} => a, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `map_pattern` with `b`'s
-  entry as a `(key, binding, default_expr)` triple rather than a
-  `(key, binding)` pair.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_map_pattern_entry`),
-`cinder/ast_nodes.py` (`MatchArm.map_pattern` docstring, widened for the
-new 3-tuple entry shape), `cinder/interpreter.py` (`_evaluate_match`'s
-`map_pattern` branch), `tests/test_parser.py` (extend the map-pattern
-shape tests, search `test_match_map_pattern_shape`),
-`tests/test_interpreter.py` (extend `class TestMatchExpression`, search
-`test_map_pattern_binds_named_keys`, with the default cases above). Once
-merged, `README.md`'s `match` expression bullet needs its map-pattern
-description widened to mention defaults, its "Status & roadmap" section
-needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `nth_semiprime` — the k-th semiprime by position
+## 1. Standard library: `nth_semiprime` — the k-th semiprime by position
 
 Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
 factor-count trial division, but has no value-returning `nth_*`
@@ -233,7 +100,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_pronic` — the k-th pronic number by position
+## 2. Standard library: `nth_pronic` — the k-th pronic number by position
 
 Build: `is_pronic` (`cinder/builtins.py`) tests membership via a
 perfect-square-adjacent check, but has no value-returning `nth_*`
@@ -302,7 +169,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: range case values in `switch` statements (`case 1..10: { ... }`)
+## 3. Language: range case values in `switch` statements (`case 1..10: { ... }`)
 
 Build: `match` expressions support range patterns (`match (5) { 1..10 =>
 "small", _ => "large" }`, PR #318) via a dedicated containment check, but
@@ -390,7 +257,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_abundant` — the k-th abundant number by position
+## 4. Standard library: `nth_abundant` — the k-th abundant number by position
 
 Build: `is_abundant` (`cinder/builtins.py`, search `def _is_abundant`)
 tests membership via a proper-divisor-sum comparison, but has no
@@ -485,7 +352,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_repdigit` — the k-th repdigit by position
+## 5. Standard library: `nth_repdigit` — the k-th repdigit by position
 
 Build: `is_repdigit` (`cinder/builtins.py`, search `def _is_repdigit`)
 tests membership via `len(set(str(value))) == 1` (every decimal digit the

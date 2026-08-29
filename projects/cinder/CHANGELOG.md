@@ -3447,3 +3447,15 @@ for vision/architecture.
   the happiness check. Gives the happy/sad-number cluster a value-returning
   counterpart the way the figurate-number and prime clusters already have.
   Clean first pass, no bounces (3799 tests passing, up from 3789).
+- **Language: default values in match map patterns (`{a, b = 0} => ...`)**
+  — merged 2026-08-29T16:46:35Z via PR #342
+  (`feat/20260829-match-map-defaults`). Widened
+  `_match_map_pattern_entry` (`cinder/parser.py`) to parse an optional
+  `= expr` on a plain-identifier or renamed binding, and the
+  interpreter's `map_pattern` match branch (`cinder/interpreter.py`) to
+  evaluate the default, in the arm's own environment left-to-right, when
+  a key is absent instead of failing the match. Composes with rename
+  (PR #332) and rest capture (PR #335) in the same pattern; nested
+  list/map sub-patterns stay out of scope, mirroring list-pattern
+  defaults' (PR #338) own restriction. Clean first pass, no bounces
+  (3809 tests passing, up from 3799).

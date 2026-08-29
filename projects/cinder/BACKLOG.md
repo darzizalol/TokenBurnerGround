@@ -11,95 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: range case values in `switch` statements (`case 1..10: { ... }`) [claimed 2026-08-29T21:29:11Z]
-
-Build: `match` expressions support range patterns (`match (5) { 1..10 =>
-"small", _ => "large" }`, PR #318) via a dedicated containment check, but
-`switch` never got the equivalent — and worse, writing one today doesn't
-raise an error, it silently never matches. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'switch (5) { case 1..10: { print("small"); } default: { print("other"); } }'
-# -> other
-```
-`5` is inside `1..10`, so `"small"` should print, but `"other"` does
-instead. The root cause: `case` values already parse through the normal
-expression grammar (`_switch_statement`, `cinder/parser.py`, calls
-`self._ternary()` for each value, which descends through `_range_expr`,
-search `def _range_expr` — the same production `1..5` uses as an ordinary
-expression), so `1..10` parses fine as a `RangeExpr` AST node with no
-parser change needed. The bug is entirely in evaluation:
-`_execute_switch` (`cinder/interpreter.py`, search `def _execute_switch`)
-evaluates every case value with plain `self.evaluate(value_expr, env)`
-and compares via `values_equal(scrutinee, ...)` — a `RangeExpr` evaluates
-to a *materialized list* (via `_evaluate_range`, which calls the `_range`
-builtin), so `case 1..10:` today means "case equals the list
-`[1, 2, ..., 9]`", which can never equal a scalar scrutinee like `5`.
-
-Fix `_execute_switch` to special-case a `RangeExpr`-typed case value,
-mirroring how `_evaluate_match`'s own `range_pattern` branch already
-handles this (search `if arm.range_pattern is not None`, uses
-`_evaluate_range` + the shared `contains_value` helper rather than
-`values_equal`):
-```python
-    def _execute_switch(self, stmt: SwitchStmt, env: Environment) -> None:
-        scrutinee = self.evaluate(stmt.scrutinee, env)
-        for case in stmt.cases:
-            for value_expr in case.values:
-                if isinstance(value_expr, RangeExpr):
-                    values = self._evaluate_range(value_expr, env)
-                    if contains_value(
-                        values, scrutinee, value_expr.line, value_expr.column
-                    ):
-                        self.execute(case.body, env)
-                        return
-                elif values_equal(scrutinee, self.evaluate(value_expr, env)):
-                    self.execute(case.body, env)
-                    return
-        if stmt.default is not None:
-            self.execute(stmt.default, env)
-```
-`RangeExpr` and `contains_value` are both already imported/defined in
-`cinder/interpreter.py` (search each name to confirm) — no new imports
-needed. A range value composes for free with the existing multi-value
-`case 1, 2, 3:` syntax, since each entry in `case.values` is checked
-independently; a case can freely mix range and non-range values (e.g.
-`case 1..5, 100:`).
-
-Acceptance criteria:
-- `switch (5) { case 1..10: { print("small"); } default: { print("other"); } }`
-  prints `small` (currently prints `other`, per the gap above).
-- `switch (10) { case 1..10: { print("in"); } default: { print("out"); } }`
-  prints `out` — `..` is exclusive of the end by default, matching every
-  other range in the language (e.g. `for (i in 1..3)` visits `1, 2`).
-- `switch (10) { case 1..=10: { print("in"); } default: { print("out"); } }`
-  prints `in` — `..=` is inclusive, matching the match-pattern range
-  syntax exactly.
-- `switch (5) { case 100..200: { print("no"); } case 1..10: { print("yes"); } default: { print("neither"); } }`
-  prints `yes` — case order still short-circuits on first match, range
-  cases included.
-- `switch (5) { case 1..3, 5: { print("hit"); } default: { print("miss"); } }`
-  prints `hit` — a range value composes with plain values in the same
-  multi-value `case`.
-- `switch ("x") { case 1..10: { print("no"); } default: { print("ok"); } }`
-  prints `ok` — a non-numeric scrutinee against a range case falls
-  through to default rather than raising (mirrors `contains_value`'s
-  existing list-membership semantics: `"x" in [1, 2, ..., 9]` is simply
-  `false`, not an error).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_execute_switch`, search `def
-_execute_switch`), `tests/test_interpreter.py` (extend `class
-TestSwitchStatement`, search that name, with the range-case cases
-above). No parser or `cinder/ast_nodes.py` change needed — `SwitchCase.values`
-already holds arbitrary `Expr` nodes, `RangeExpr` included. Once merged,
-`README.md`'s `switch` statement bullet needs a mention of range case
-values, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" bullet needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_abundant` — the k-th abundant number by position
+## 1. Standard library: `nth_abundant` — the k-th abundant number by position
 
 Build: `is_abundant` (`cinder/builtins.py`, search `def _is_abundant`)
 tests membership via a proper-divisor-sum comparison, but has no
@@ -194,7 +106,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_repdigit` — the k-th repdigit by position
+## 2. Standard library: `nth_repdigit` — the k-th repdigit by position
 
 Build: `is_repdigit` (`cinder/builtins.py`, search `def _is_repdigit`)
 tests membership via `len(set(str(value))) == 1` (every decimal digit the
@@ -290,7 +202,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: whole-value `as` binding in match list/map patterns
+## 3. Language: whole-value `as` binding in match list/map patterns
 
 Build: a match list/map pattern destructures a subject into its parts
 (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) but there is no way to
@@ -420,7 +332,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`)
+## 4. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`)
 
 Build: `<`/`<=`/`>`/`>=` already work element-by-element for strings via
 Python's own string ordering (`_compare`, `cinder/interpreter.py`, search
@@ -528,7 +440,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_disarium` — digit-position-power sum test
+## 5. Standard library: `is_disarium` — digit-position-power sum test
 
 Build: `is_armstrong` (`cinder/builtins.py`, search `def _is_armstrong`)
 tests whether a number equals the sum of its own digits each raised to

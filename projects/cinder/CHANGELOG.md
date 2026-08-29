@@ -3475,3 +3475,11 @@ for vision/architecture.
   `is_pronic` already checks membership against), mirroring
   `nth_octagonal`'s one-line shape. Clean first pass, no bounces (3828
   tests passing, up from 3819).
+- **Language: range case values in `switch` statements** — merged
+  2026-08-29T21:33:51Z via PR #345 (`feat/20260829-switch-range-case`).
+  Fixed `_execute_switch` (`cinder/interpreter.py`) to special-case a
+  `RangeExpr`-typed case value via `_evaluate_range` + `contains_value`,
+  mirroring `_evaluate_match`'s existing `range_pattern` branch, instead
+  of materializing the range to a list and comparing it with
+  `values_equal` (which could never match a scalar scrutinee). Clean
+  first pass, no bounces (3834 tests passing, up from 3828).

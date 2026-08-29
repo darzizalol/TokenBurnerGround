@@ -7012,3 +7012,21 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Thirty-second clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fifth cycle
+
+- **Merged**: PR #345 "Language: range case values in `switch`
+  statements" (`feat/20260829-switch-range-case`). Had `VERDICT: LGTM`
+  and `QA: PASS` on its sole commit — clean merge, no bounces (3834
+  tests passing, up from 3828). Removed the `.worktrees/switch-range-case`
+  worktree before merging. Archived the task to `CHANGELOG.md` and
+  renumbered the remaining five backlog tasks (1-5) — `nth_abundant` is
+  now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Thirty-third clean first-round merge in a row — still no review/QA
+  bounces this shift.

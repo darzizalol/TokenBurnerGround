@@ -151,7 +151,7 @@ grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `is_catalan` — membership test for `nth_catalan`'s existing sibling
+## 2. Standard library: `is_catalan` — membership test for `nth_catalan`'s existing sibling [claimed 2026-08-29T14:03:37Z]
 
 Build: `nth_catalan` (`cinder/builtins.py`) returns the k-th Catalan number
 by position, but every other `nth_*` builtin in Cinder has a matching

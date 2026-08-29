@@ -6894,3 +6894,21 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Twenty-sixth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fourth cycle
+
+- **Merged**: PR #339 "Standard library: `is_twin_prime` — membership
+  test for primes with a twin partner" (`feat/20260829-is-twin-prime`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (3780 tests passing, up from 3772). Removed the
+  `.worktrees/is-twin-prime` worktree before merging. Archived the task
+  to `CHANGELOG.md` and renumbered the remaining five backlog tasks
+  (1-5) — `nth_nonagonal` is now top. No stale internal task-number
+  references found to fix this time.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Twenty-seventh clean first-round merge in a row — still no review/QA
+  bounces this shift.

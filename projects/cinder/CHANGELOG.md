@@ -3417,3 +3417,15 @@ for vision/architecture.
   Closes the last capability gap between match list patterns and `let`
   list destructuring. Clean first pass, no bounces (3772 tests passing,
   up from 3761).
+- **Standard library: `is_twin_prime` — membership test for primes with
+  a twin partner** — merged 2026-08-29T15:03:36Z via PR #339
+  (`feat/20260829-is-twin-prime`). Added `_is_twin_prime`
+  (`cinder/builtins.py`), registered directly after `_is_circular_prime`,
+  following that predicate's own shape of a locally-scoped trial-division
+  helper rather than a shared module-level one, matching the file's
+  existing convention for the prime-relationship cluster. `n` is a twin
+  prime when it is itself prime and at least one of `n - 2`/`n + 2` is
+  also prime, covering both lower- and upper-twin cases. Closes the last
+  gap in the `is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime`
+  adjacency/structure cluster. Clean first pass, no bounces (3780 tests
+  passing, up from 3772).

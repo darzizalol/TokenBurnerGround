@@ -11,85 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_twin_prime` — membership test for primes with a twin partner [claimed 2026-08-29T14:57:47Z]
-
-Build: the prime-relationship cluster in `cinder/builtins.py` already
-covers several adjacency/structure predicates built on trial-division
-primality (`is_semiprime`, `is_sphenic`, `is_emirp`, `is_circular_prime`),
-but none test the classic "twin prime" relationship — whether a prime `p`
-has another prime exactly 2 away (`p - 2` or `p + 2`). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_twin_prime(5));'
-# -> <eval>:1:7: undefined name 'is_twin_prime'
-```
-
-`is_twin_prime(n)` is `true` when `n` itself is prime and at least one of
-`n - 2`/`n + 2` is also prime (covers both "lower twin", e.g. `3` paired
-with `5`, and "upper twin", e.g. `5` paired with `3` or `7` paired with
-`5`). Add to `cinder/builtins.py`, registered directly after
-`_is_circular_prime` (search `def _is_circular_prime`, immediately before
-`def _is_power_of_two`), following `_is_circular_prime`'s own shape of a
-local nested trial-division helper rather than a shared module-level one
-(matching this file's existing convention — each prime-relationship
-predicate reimplements trial division inline):
-```python
-def _is_twin_prime(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_twin_prime", arguments, 1, line, column)
-    value = _require_int("is_twin_prime", arguments[0], line, column)
-    if value < 2:
-        return False
-
-    def _trial_division_is_prime(candidate: int) -> bool:
-        if candidate < 2:
-            return False
-        for divisor in range(2, int(candidate ** 0.5) + 1):
-            if candidate % divisor == 0:
-                return False
-        return True
-
-    if not _trial_division_is_prime(value):
-        return False
-    return _trial_division_is_prime(value - 2) or _trial_division_is_prime(value + 2)
-```
-Also register the new dict entry (search `"is_circular_prime":
-_is_circular_prime,`, add `"is_twin_prime": _is_twin_prime,` directly
-after it).
-
-Acceptance criteria:
-- `is_twin_prime(3);`, `is_twin_prime(5);`, `is_twin_prime(7);`,
-  `is_twin_prime(11);`, `is_twin_prime(13);` are all `true` — each has a
-  prime partner exactly 2 away (`3`/`5`, `5`/`3` or `5`/`7`, `7`/`5`,
-  `11`/`13`, `13`/`11`).
-- `is_twin_prime(2);` is `false` — prime, but neither `0` nor `4` is
-  prime.
-- `is_twin_prime(23);` is `false` — prime, but neither `21` nor `25` is
-  prime.
-- `is_twin_prime(9);`, `is_twin_prime(0);`, `is_twin_prime(1);`,
-  `is_twin_prime(-5);` are all `false` — not prime to begin with (domain-
-  open, matching `is_semiprime`/`is_circular_prime`'s own `value < 2`
-  early-`False` convention, no raising on out-of-range input).
-- `is_twin_prime(k);` matches a direct trial-division cross-check
-  (`is_prime(k) and (is_prime(k - 2) or is_prime(k + 2))`) for every `k`
-  from `0` to `200`.
-- `is_twin_prime(5.0);` raises `CinderRuntimeError` matching
-  `"is_twin_prime() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register near `is_circular_prime`,
-search for the current line number), `tests/test_builtins.py` (model on
-`class TestIsCircularPrime`, search that name, for the domain, type-
-error, and cross-check test shapes). Once merged, `README.md`'s Builtins
-bullet needs `is_twin_prime` added near `is_circular_prime`, its "Status
-& roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-bullet needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
+## 1. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
 
 Build: `is_nonagonal` (PR #334) just closed the triangular..nonagonal
 `is_*` cluster, but it left a new, smaller gap behind it —
@@ -158,7 +80,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_happy_number` — the k-th happy number by position
+## 2. Standard library: `nth_happy_number` — the k-th happy number by position
 
 Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
 membership via the digit-square-sum cycle, but neither has a
@@ -244,7 +166,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 3. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
 = 0] => ...` (PR #338, already merged — its task explicitly flagged map-
@@ -377,7 +299,7 @@ task.
 
 ---
 
-## 5. Standard library: `nth_semiprime` — the k-th semiprime by position
+## 4. Standard library: `nth_semiprime` — the k-th semiprime by position
 
 Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
 factor-count trial division, but has no value-returning `nth_*`
@@ -466,7 +388,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_pronic` — the k-th pronic number by position
+## 5. Standard library: `nth_pronic` — the k-th pronic number by position
 
 Build: `is_pronic` (`cinder/builtins.py`) tests membership via a
 perfect-square-adjacent check, but has no value-returning `nth_*`

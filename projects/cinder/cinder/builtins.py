@@ -1373,6 +1373,32 @@ def _is_sad_number(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _nth_happy_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_happy_number", arguments, 1, line, column)
+    value = _require_int("nth_happy_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_happy_number() requires a positive integer, domain error", line, column
+        )
+
+    def _is_happy(candidate: int) -> bool:
+        seen = set()
+        while candidate != 1:
+            if candidate in seen:
+                return False
+            seen.add(candidate)
+            candidate = sum(int(digit) ** 2 for digit in str(candidate))
+        return True
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_happy(candidate):
+            count += 1
+    return candidate
+
+
 def _collatz_length(arguments: list, line: int, column: int) -> object:
     _require_arity("collatz_length", arguments, 1, line, column)
     value = _require_int("collatz_length", arguments[0], line, column)
@@ -4150,6 +4176,7 @@ _BUILTINS = {
     "nth_lucas": _nth_lucas,
     "is_happy_number": _is_happy_number,
     "is_sad_number": _is_sad_number,
+    "nth_happy_number": _nth_happy_number,
     "collatz_length": _collatz_length,
     "collatz_max": _collatz_max,
     "is_triangular": _is_triangular,

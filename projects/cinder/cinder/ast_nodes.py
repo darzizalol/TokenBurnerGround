@@ -312,7 +312,11 @@ class MatchArm:
     to `key` when unrenamed, tested for presence against the subject's
     keys (a map/dict), binding each key's value under `binding` rather
     than comparing via `values_equal`; `pattern` and `binding` stay
-    `None` for a map-pattern arm."""
+    `None` for a map-pattern arm. `map_rest` accompanies `map_pattern`,
+    mirroring `list_rest`: `None` when the map pattern has no rest
+    capture, the bound name when it does (kept as the literal name `"_"`
+    when the rest is discarded, so the interpreter can tell "no rest
+    capture" apart from "rest capture, discarded")."""
 
     pattern: "Expr | None"
     body: "Expr"
@@ -321,6 +325,7 @@ class MatchArm:
     range_pattern: "RangeExpr | None" = None
     list_rest: "str | None" = None
     map_pattern: "list[tuple[str, str]] | None" = None
+    map_rest: "str | None" = None
 
 
 @dataclass(frozen=True)

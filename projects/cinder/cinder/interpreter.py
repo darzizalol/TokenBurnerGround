@@ -1168,8 +1168,15 @@ class Interpreter:
                 ):
                     continue
                 arm_env = Environment(env)
+                seen_keys = set()
                 for key, binding in arm.map_pattern:
                     arm_env.define(binding, subject[key])
+                    seen_keys.add(key)
+                if arm.map_rest is not None and arm.map_rest != "_":
+                    arm_env.define(
+                        arm.map_rest,
+                        {k: v for k, v in subject.items() if k not in seen_keys},
+                    )
                 return self.evaluate(arm.body, arm_env)
             if arm.pattern is None:
                 if arm.binding is None:

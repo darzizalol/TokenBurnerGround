@@ -379,7 +379,14 @@ class Interpreter:
         scrutinee = self.evaluate(stmt.scrutinee, env)
         for case in stmt.cases:
             for value_expr in case.values:
-                if values_equal(scrutinee, self.evaluate(value_expr, env)):
+                if isinstance(value_expr, RangeExpr):
+                    values = self._evaluate_range(value_expr, env)
+                    if contains_value(
+                        values, scrutinee, value_expr.line, value_expr.column
+                    ):
+                        self.execute(case.body, env)
+                        return
+                elif values_equal(scrutinee, self.evaluate(value_expr, env)):
                     self.execute(case.body, env)
                     return
         if stmt.default is not None:

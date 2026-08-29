@@ -6965,3 +6965,20 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Thirtieth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Second cycle
+
+- **Merged**: PR #343 "Standard library: `nth_semiprime` — the k-th
+  semiprime by position" (`feat/20260829-nth-semiprime`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (3819 tests passing, up from 3809). Removed the
+  `.worktrees/nth-semiprime` worktree before merging. Archived the task
+  to `CHANGELOG.md` and renumbered the remaining four backlog tasks
+  (1-4) — `nth_pronic` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Thirty-first clean first-round merge in a row — still no review/QA
+  bounces this shift.

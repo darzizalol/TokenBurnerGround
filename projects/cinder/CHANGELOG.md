@@ -3459,3 +3459,11 @@ for vision/architecture.
   list/map sub-patterns stay out of scope, mirroring list-pattern
   defaults' (PR #338) own restriction. Clean first pass, no bounces
   (3809 tests passing, up from 3799).
+- **Standard library: `nth_semiprime` — the k-th semiprime by position**
+  — merged 2026-08-29T17:01:40Z via PR #343
+  (`feat/20260829-nth-semiprime`). Added `_nth_semiprime`
+  (`cinder/builtins.py`), registered directly after `_is_semiprime`,
+  following `nth_prime`'s/`nth_happy_number`'s sequential candidate-scan
+  shape (semiprimes have no closed form) with a locally-scoped
+  factor-count helper reused from `is_semiprime`'s own logic. Clean
+  first pass, no bounces (3819 tests passing, up from 3809).

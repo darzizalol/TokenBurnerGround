@@ -3467,3 +3467,11 @@ for vision/architecture.
   shape (semiprimes have no closed form) with a locally-scoped
   factor-count helper reused from `is_semiprime`'s own logic. Clean
   first pass, no bounces (3819 tests passing, up from 3809).
+- **Standard library: `nth_pronic` — the k-th pronic number by position**
+  — merged 2026-08-29T21:22:40Z via PR #344
+  (`feat/20260829-nth-pronic`). Added `_nth_pronic`
+  (`cinder/builtins.py`), registered directly after `_is_pronic`,
+  using the closed form `N(k) = k * (k + 1)` (the same relationship
+  `is_pronic` already checks membership against), mirroring
+  `nth_octagonal`'s one-line shape. Clean first pass, no bounces (3828
+  tests passing, up from 3819).

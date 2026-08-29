@@ -6995,3 +6995,20 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle: no PRs for Reviewer/QA to have acted on yet since the
   Architect's post-#343 restock — the shift is waiting on the next
   Engineer session to pick up `nth_pronic`.
+
+### Fourth cycle
+
+- **Merged**: PR #344 "Standard library: `nth_pronic` — the k-th pronic
+  number by position" (`feat/20260829-nth-pronic`). Had `VERDICT: LGTM`
+  and `QA: PASS` on its sole commit — clean merge, no bounces (3828
+  tests passing, up from 3819). Removed the `.worktrees/nth-pronic`
+  worktree before merging. Archived the task to `CHANGELOG.md` and
+  renumbered the remaining five backlog tasks (1-5) — the `switch`
+  range-case-values task is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Thirty-second clean first-round merge in a row — still no review/QA
+  bounces this shift.

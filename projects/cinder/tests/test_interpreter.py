@@ -5373,6 +5373,52 @@ class TestMatchExpression(unittest.TestCase):
                 'print(c);'
             )
 
+    def test_map_pattern_default_fires_on_missing_key(self):
+        env = run(
+            'let result = match ({"a": 1}) { {a, b = 0} => a + b, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_map_pattern_default_unused_when_key_present(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) '
+            '{ {a, b = 0} => a + b, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_multiple_defaults_all_missing(self):
+        env = run(
+            'let result = match ({}) { {a = 1, b = 2} => a + b, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_default_references_earlier_binding(self):
+        env = run(
+            'let result = match ({"a": 1}) { {a, b = a + 1} => b, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), 2)
+
+    def test_map_pattern_default_composes_with_rename(self):
+        env = run(
+            'let result = match ({"b": 2}) { {a: x = 0, b} => x + b, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), 2)
+
+    def test_map_pattern_default_composes_with_rest_capture(self):
+        env = run(
+            'let result = match ({"a": 1, "c": 3}) '
+            '{ {a, b = 0, ...rest} => [a, b, rest], _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), [1, 0, {"c": 3}])
+
+    def test_map_pattern_key_without_default_still_required(self):
+        env = run('let result = match ({}) { {a} => a, _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
+    def test_map_pattern_default_falls_through_on_non_map_subject(self):
+        env = run('let result = match ([1]) { {a = 1} => a, _ => "no" };')
+        self.assertEqual(env.get("result"), "no")
+
 
 if __name__ == "__main__":
     unittest.main()

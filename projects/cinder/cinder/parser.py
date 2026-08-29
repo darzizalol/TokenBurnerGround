@@ -1187,9 +1187,11 @@ class Parser:
             )
         return entry, None
 
-    def _match_map_pattern(self) -> "tuple[list[tuple[str, object]], str | None]":
+    def _match_map_pattern(
+        self,
+    ) -> "tuple[list[tuple[str, object, Expr | None]], str | None]":
         self._advance()  # consume '{'
-        entries: "list[tuple[str, str]]" = []
+        entries: "list[tuple[str, object, Expr | None]]" = []
         rest: "str | None" = None
         if not self._check(TokenType.RBRACE):
             if self._check(TokenType.DOT_DOT_DOT):
@@ -1225,7 +1227,7 @@ class Parser:
         self._advance()
         return token.lexeme
 
-    def _match_map_pattern_entry(self) -> "tuple[str, object]":
+    def _match_map_pattern_entry(self) -> "tuple[str, object, Expr | None]":
         key = self._consume(
             TokenType.IDENTIFIER, "identifier inside map pattern"
         ).lexeme
@@ -1233,15 +1235,23 @@ class Parser:
             self._advance()
             if self._check(TokenType.LBRACKET):
                 nested_entries, nested_rest = self._match_list_pattern()
-                return key, (nested_entries, nested_rest, True)
+                return key, (nested_entries, nested_rest, True), None
             if self._check(TokenType.LBRACE):
                 nested_entries, nested_rest = self._match_map_pattern()
-                return key, (nested_entries, nested_rest)
+                return key, (nested_entries, nested_rest), None
             binding = self._consume(
                 TokenType.IDENTIFIER, "identifier after ':' in map pattern"
             ).lexeme
-            return key, binding
-        return key, key
+            default = None
+            if self._check(TokenType.EQ):
+                self._advance()
+                default = self._ternary()
+            return key, binding, default
+        default = None
+        if self._check(TokenType.EQ):
+            self._advance()
+            default = self._ternary()
+        return key, key, default
 
     def _match_pattern(self) -> "tuple[Expr | None, str | None, RangeExpr | None]":
         token = self._peek()

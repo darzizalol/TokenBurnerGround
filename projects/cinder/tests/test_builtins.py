@@ -3563,6 +3563,52 @@ class TestIsCircularPrime(unittest.TestCase):
             run("is_circular_prime();")
 
 
+class TestIsTwinPrime(unittest.TestCase):
+    def test_is_twin_prime_of_lower_twin(self):
+        self.assertEqual(run("let result = is_twin_prime(3);").get("result"), True)
+        self.assertEqual(run("let result = is_twin_prime(5);").get("result"), True)
+
+    def test_is_twin_prime_of_upper_twin(self):
+        self.assertEqual(run("let result = is_twin_prime(7);").get("result"), True)
+        self.assertEqual(run("let result = is_twin_prime(11);").get("result"), True)
+        self.assertEqual(run("let result = is_twin_prime(13);").get("result"), True)
+
+    def test_is_twin_prime_of_prime_without_twin_is_false(self):
+        self.assertEqual(run("let result = is_twin_prime(2);").get("result"), False)
+        self.assertEqual(run("let result = is_twin_prime(23);").get("result"), False)
+
+    def test_is_twin_prime_of_non_prime_is_false(self):
+        self.assertEqual(run("let result = is_twin_prime(9);").get("result"), False)
+        self.assertEqual(run("let result = is_twin_prime(0);").get("result"), False)
+        self.assertEqual(run("let result = is_twin_prime(1);").get("result"), False)
+        self.assertEqual(run("let result = is_twin_prime(-5);").get("result"), False)
+
+    def test_is_twin_prime_agrees_with_direct_cross_check(self):
+        for candidate in range(0, 201):
+            expected = run(
+                f"let result = is_prime({candidate}) and "
+                f"(is_prime({candidate} - 2) or is_prime({candidate} + 2));"
+            ).get("result")
+            actual = run(f"let result = is_twin_prime({candidate});").get("result")
+            self.assertEqual(actual, expected, candidate)
+
+    def test_is_twin_prime_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_twin_prime(5.0);")
+        self.assertIn("is_twin_prime", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_twin_prime_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_twin_prime(true);")
+        self.assertIn("is_twin_prime", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_twin_prime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_twin_prime();")
+
+
 class TestIsPowerOfTwo(unittest.TestCase):
     def test_is_power_of_two_of_one(self):
         self.assertEqual(run("let result = is_power_of_two(1);").get("result"), True)

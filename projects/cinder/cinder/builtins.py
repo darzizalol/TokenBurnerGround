@@ -1619,6 +1619,38 @@ def _is_semiprime(arguments: list, line: int, column: int) -> object:
     return factor_count == 2
 
 
+def _nth_semiprime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_semiprime", arguments, 1, line, column)
+    value = _require_int("nth_semiprime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_semiprime() requires a positive integer, domain error", line, column
+        )
+
+    def _is_semiprime_candidate(candidate: int) -> bool:
+        remaining = candidate
+        factor_count = 0
+        divisor = 2
+        while divisor * divisor <= remaining:
+            while remaining % divisor == 0:
+                remaining //= divisor
+                factor_count += 1
+                if factor_count > 2:
+                    return False
+            divisor += 1
+        if remaining > 1:
+            factor_count += 1
+        return factor_count == 2
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_semiprime_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_sphenic(arguments: list, line: int, column: int) -> object:
     _require_arity("is_sphenic", arguments, 1, line, column)
     value = _require_int("is_sphenic", arguments[0], line, column)
@@ -4195,6 +4227,7 @@ _BUILTINS = {
     "nth_prime": _nth_prime,
     "is_composite": _is_composite,
     "is_semiprime": _is_semiprime,
+    "nth_semiprime": _nth_semiprime,
     "is_sphenic": _is_sphenic,
     "is_emirp": _is_emirp,
     "is_circular_prime": _is_circular_prime,

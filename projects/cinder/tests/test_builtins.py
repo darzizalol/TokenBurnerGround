@@ -3547,6 +3547,70 @@ class TestIsSemiprime(unittest.TestCase):
             run("is_semiprime();")
 
 
+class TestNthSemiprime(unittest.TestCase):
+    def test_nth_semiprime_of_first_six(self):
+        self.assertEqual(run("let result = nth_semiprime(1);").get("result"), 4)
+        self.assertEqual(run("let result = nth_semiprime(2);").get("result"), 6)
+        self.assertEqual(run("let result = nth_semiprime(3);").get("result"), 9)
+        self.assertEqual(run("let result = nth_semiprime(4);").get("result"), 10)
+        self.assertEqual(run("let result = nth_semiprime(5);").get("result"), 14)
+        self.assertEqual(run("let result = nth_semiprime(6);").get("result"), 15)
+
+    def test_nth_semiprime_of_twenty(self):
+        self.assertEqual(run("let result = nth_semiprime(20);").get("result"), 57)
+
+    def test_nth_semiprime_of_fifty(self):
+        self.assertEqual(run("let result = nth_semiprime(50);").get("result"), 146)
+
+    def test_nth_semiprime_agrees_with_is_semiprime(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_semiprime(nth_semiprime({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_semiprime({position}) to be a semiprime",
+            )
+
+    def test_nth_semiprime_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_semiprime(0);")
+        self.assertIn(
+            "nth_semiprime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_semiprime_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_semiprime(-1);")
+        self.assertIn(
+            "nth_semiprime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_semiprime_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_semiprime(1.5);")
+        self.assertIn(
+            "nth_semiprime() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_semiprime_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_semiprime(true);")
+        self.assertIn(
+            "nth_semiprime() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_semiprime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_semiprime();")
+
+    def test_nth_semiprime_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_semiprime(1, 2);")
+
+
 class TestIsSphenic(unittest.TestCase):
     def test_is_sphenic_of_smallest_sphenic_number(self):
         self.assertEqual(run("let result = is_sphenic(30);").get("result"), True)

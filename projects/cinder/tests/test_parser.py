@@ -71,13 +71,21 @@ def shape_extra_clauses(extra_clauses):
     ]
 
 
-def _shape_list_pattern_entry(entry):
+def _shape_list_pattern_raw_entry(entry):
     if isinstance(entry, Expr):
         return shape(entry)
     if isinstance(entry, tuple):
         nested_entries, nested_rest = entry
         return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest)
     return entry
+
+
+def _shape_list_pattern_entry(entry_and_default):
+    entry, default = entry_and_default
+    return (
+        _shape_list_pattern_raw_entry(entry),
+        shape(default) if default is not None else None,
+    )
 
 
 def shape(node):
@@ -4651,7 +4659,16 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "a"), None, ["a", None], None, None, None, None),
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [("a", None), (None, None)],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
                     (None, ("Literal", 0), None, None, None, None, None, None),
                 ],
             ),
@@ -4685,7 +4702,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         ("Identifier", "b"),
                         None,
-                        [("Literal", 1), "b"],
+                        [(("Literal", 1), None), ("b", None)],
                         None,
                         None,
                         None,
@@ -4703,7 +4720,16 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "rest"), None, ["a"], None, "rest", None, None),
+                    (
+                        None,
+                        ("Identifier", "rest"),
+                        None,
+                        [("a", None)],
+                        None,
+                        "rest",
+                        None,
+                        None,
+                    ),
                     (None, ("Literal", 0), None, None, None, None, None, None),
                 ],
             ),
@@ -4720,7 +4746,10 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         ("Identifier", "a"),
                         None,
-                        ["a", (["b", "c"], None)],
+                        [
+                            ("a", None),
+                            (([("b", None), ("c", None)], None), None),
+                        ],
                         None,
                         None,
                         None,
@@ -4738,11 +4767,50 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Identifier", "a"), None, ["a", "b"], None, None, None, None),
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [("a", None), ("b", None)],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
                     (None, ("Literal", 0), None, None, None, None, None, None),
                 ],
             ),
         )
+
+    def test_match_list_pattern_default_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, b = 0] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [("a", None), ("b", ("Literal", 0))],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_element_without_default_after_defaulted_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in list pattern",
+        ):
+            parse('match (x) { [a = 1, b] => a, _ => 0 }')
 
     def test_match_list_pattern_rest_not_last_raises(self):
         with self.assertRaisesRegex(
@@ -5057,7 +5125,16 @@ class TestMatchExpression(unittest.TestCase):
                 "MatchExpr",
                 ("Identifier", "x"),
                 [
-                    (None, ("Literal", "list"), None, ["a", "b"], None, None, None, None),
+                    (
+                        None,
+                        ("Literal", "list"),
+                        None,
+                        [("a", None), ("b", None)],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
                     (
                         None,
                         ("Literal", "map"),
@@ -5189,7 +5266,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         None,
                         None,
-                        [("a", "a"), ("b", (["x", "y"], None, True))],
+                        [("a", "a"), ("b", ([("x", None), ("y", None)], None, True))],
                         None,
                     ),
                     (None, ("Literal", 0), None, None, None, None, None, None),

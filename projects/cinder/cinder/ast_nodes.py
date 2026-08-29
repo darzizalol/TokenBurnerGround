@@ -296,9 +296,15 @@ class MatchArm:
     `body`'s evaluation sees — it does not leak into the enclosing
     scope, mirroring `TryStmt`'s own `catch_name` binding
     (`cinder/interpreter.py`'s `_execute_try`). `list_pattern` is a
-    third, mutually exclusive pattern kind: a flat list of names (or
-    `None` for `_`) tested against the subject's shape rather than
-    compared with `values_equal`; `pattern` and `binding` stay `None`
+    third, mutually exclusive pattern kind: a flat list of `(name,
+    default)` pairs (`name` is `None` for `_`, `default` is `None` when
+    the element has no default) tested against the subject's shape
+    rather than compared with `values_equal`; a trailing run of
+    defaulted elements lets a shorter-than-the-pattern subject still
+    match, falling back to each default (evaluated in the arm's own
+    environment, left to right, so an earlier element is visible to a
+    later default) — mirroring `let`/`for`/destructuring list patterns'
+    own trailing-default support. `pattern` and `binding` stay `None`
     for a list-pattern arm. `range_pattern` is a fourth pattern kind: a
     membership test against an int range, combinable with literal
     patterns (but not with the wildcard/bound-identifier kind) in a

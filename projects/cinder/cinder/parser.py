@@ -1105,15 +1105,17 @@ class Parser:
 
     def _match_list_pattern(
         self,
-    ) -> "tuple[list[str | Expr | None | tuple[list, str | None]], str | None]":
+    ) -> "tuple[list[tuple[str | Expr | None | tuple[list, str | None], Expr | None]], str | None]":
         self._advance()  # consume '['
-        entries: "list[str | Expr | None | tuple[list, str | None]]" = []
+        entries: "list[tuple[str | Expr | None | tuple[list, str | None], Expr | None]]" = []
         rest: "str | None" = None
+        seen_default = False
         if not self._check(TokenType.RBRACKET):
             if self._check(TokenType.DOT_DOT_DOT):
                 rest = self._match_list_pattern_rest_name()
             else:
-                entries.append(self._match_list_pattern_entry())
+                entries.append(self._match_list_pattern_entry(seen_default))
+                seen_default = entries[-1][1] is not None
             while self._check(TokenType.COMMA):
                 self._advance()
                 if rest is not None:
@@ -1126,7 +1128,8 @@ class Parser:
                 if self._check(TokenType.DOT_DOT_DOT):
                     rest = self._match_list_pattern_rest_name()
                 else:
-                    entries.append(self._match_list_pattern_entry())
+                    entries.append(self._match_list_pattern_entry(seen_default))
+                    seen_default = seen_default or entries[-1][1] is not None
         self._consume(TokenType.RBRACKET, "']' after list pattern")
         return entries, rest
 
@@ -1143,31 +1146,46 @@ class Parser:
         self._advance()
         return token.lexeme
 
-    def _match_list_pattern_entry(self) -> "str | Expr | None | tuple[list, str | None]":
+    def _match_list_pattern_entry(
+        self, seen_default: bool
+    ) -> "tuple[str | Expr | None | tuple[list, str | None], Expr | None]":
         token = self._peek()
         if token.type == TokenType.LBRACKET:
-            return self._match_list_pattern()
-        if token.type == TokenType.IDENTIFIER:
+            entry = self._match_list_pattern()
+        elif token.type == TokenType.IDENTIFIER:
             self._advance()
-            return None if token.lexeme == "_" else token.lexeme
-        if token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
+            entry = None if token.lexeme == "_" else token.lexeme
+            if entry is not None and self._check(TokenType.EQ):
+                self._advance()
+                default = self._ternary()
+                return entry, default
+        elif token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
             self._advance()
-            return Literal(token.literal, token.line, token.column)
-        if token.type == TokenType.TRUE:
+            entry = Literal(token.literal, token.line, token.column)
+        elif token.type == TokenType.TRUE:
             self._advance()
-            return Literal(True, token.line, token.column)
-        if token.type == TokenType.FALSE:
+            entry = Literal(True, token.line, token.column)
+        elif token.type == TokenType.FALSE:
             self._advance()
-            return Literal(False, token.line, token.column)
-        if token.type == TokenType.NIL:
+            entry = Literal(False, token.line, token.column)
+        elif token.type == TokenType.NIL:
             self._advance()
-            return Literal(None, token.line, token.column)
-        raise ParseError(
-            f"expected an identifier, '_', or a literal inside list pattern, "
-            f"found {self._describe(token)}",
-            token.line,
-            token.column,
-        )
+            entry = Literal(None, token.line, token.column)
+        else:
+            raise ParseError(
+                f"expected an identifier, '_', or a literal inside list "
+                f"pattern, found {self._describe(token)}",
+                token.line,
+                token.column,
+            )
+        if seen_default:
+            raise ParseError(
+                "element without a default value follows an element with "
+                "one in list pattern",
+                token.line,
+                token.column,
+            )
+        return entry, None
 
     def _match_map_pattern(self) -> "tuple[list[tuple[str, object]], str | None]":
         self._advance()  # consume '{'

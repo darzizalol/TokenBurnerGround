@@ -5373,6 +5373,32 @@ class TestMatchExpression(unittest.TestCase):
             ),
         )
 
+    def test_match_list_pattern_whole_binding(self):
+        arms = parse("match (x) { [a, b] as whole => a, _ => 0 }").arms
+        self.assertEqual(arms[0].whole_binding, "whole")
+        self.assertEqual(arms[0].list_pattern, [("a", None), ("b", None)])
+        self.assertIsNone(arms[1].whole_binding)
+
+    def test_match_map_pattern_whole_binding(self):
+        arms = parse("match (x) { {a} as whole => a, _ => 0 }").arms
+        self.assertEqual(arms[0].whole_binding, "whole")
+        self.assertEqual(arms[0].map_pattern, [("a", "a", None)])
+
+    def test_match_list_pattern_whole_binding_composes_with_rest(self):
+        arms = parse("match (x) { [a, ...rest] as whole => a, _ => 0 }").arms
+        self.assertEqual(arms[0].whole_binding, "whole")
+        self.assertEqual(arms[0].list_rest, "rest")
+
+    def test_match_list_pattern_without_as_has_no_whole_binding(self):
+        arms = parse("match (x) { [a, b] => a, _ => 0 }").arms
+        self.assertIsNone(arms[0].whole_binding)
+
+    def test_match_pattern_whole_binding_requires_identifier(self):
+        with self.assertRaisesRegex(
+            ParseError, "identifier after 'as' in match pattern"
+        ):
+            parse("match (x) { [a, b] as 5 => a, _ => 0 }")
+
 
 if __name__ == "__main__":
     unittest.main()

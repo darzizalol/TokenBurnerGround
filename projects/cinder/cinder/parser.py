@@ -1073,14 +1073,24 @@ class Parser:
     def _match_arm(self) -> "list[MatchArm]":
         if self._check(TokenType.LBRACKET):
             list_pattern, list_rest = self._match_list_pattern()
+            whole_binding = self._match_whole_binding()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
-            return [MatchArm(None, body, None, list_pattern, None, list_rest)]
+            return [
+                MatchArm(
+                    None, body, None, list_pattern, None, list_rest, None, None, whole_binding
+                )
+            ]
         if self._check(TokenType.LBRACE):
             map_pattern, map_rest = self._match_map_pattern()
+            whole_binding = self._match_whole_binding()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
-            return [MatchArm(None, body, None, None, None, None, map_pattern, map_rest)]
+            return [
+                MatchArm(
+                    None, body, None, None, None, None, map_pattern, map_rest, whole_binding
+                )
+            ]
         first_token = self._peek()
         entries = [self._match_pattern()]
         while self._check(TokenType.COMMA):
@@ -1102,6 +1112,13 @@ class Parser:
             MatchArm(pattern, body, binding, None, range_pattern)
             for pattern, binding, range_pattern in entries
         ]
+
+    def _match_whole_binding(self) -> "str | None":
+        if not self._check(TokenType.AS):
+            return None
+        self._advance()  # consume 'as'
+        token = self._consume(TokenType.IDENTIFIER, "identifier after 'as' in match pattern")
+        return token.lexeme
 
     def _match_list_pattern(
         self,

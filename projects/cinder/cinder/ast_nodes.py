@@ -336,7 +336,13 @@ class MatchArm:
     mirroring `list_rest`: `None` when the map pattern has no rest
     capture, the bound name when it does (kept as the literal name
     `"_"` when the rest is discarded, so the interpreter can tell "no
-    rest capture" apart from "rest capture, discarded")."""
+    rest capture" apart from "rest capture, discarded"). `whole_binding`
+    is `None` unless a list-pattern or map-pattern arm carries a
+    trailing `as NAME`, in which case it holds `NAME` — the subject's
+    whole value is bound to this name in the arm's own environment in
+    addition to whatever the pattern itself destructures. Not valid on
+    the wildcard/bound-identifier, literal, or range-pattern arm kinds
+    (only `list_pattern`/`map_pattern` arms may carry it)."""
 
     pattern: "Expr | None"
     body: "Expr"
@@ -346,6 +352,7 @@ class MatchArm:
     list_rest: "str | None" = None
     map_pattern: "list[tuple[str, object, Expr | None]] | None" = None
     map_rest: "str | None" = None
+    whole_binding: "str | None" = None
 
 
 @dataclass(frozen=True)

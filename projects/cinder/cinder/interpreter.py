@@ -1189,6 +1189,8 @@ class Interpreter:
                     arm.list_pattern, arm.list_rest, subject, arm_env
                 ):
                     continue
+                if arm.whole_binding is not None:
+                    arm_env.define(arm.whole_binding, subject)
                 return self.evaluate(arm.body, arm_env)
             if arm.range_pattern is not None:
                 values = self._evaluate_range(arm.range_pattern, env)
@@ -1203,6 +1205,8 @@ class Interpreter:
                     arm.map_pattern, arm.map_rest, subject, arm_env
                 ):
                     continue
+                if arm.whole_binding is not None:
+                    arm_env.define(arm.whole_binding, subject)
                 return self.evaluate(arm.body, arm_env)
             if arm.pattern is None:
                 if arm.binding is None:

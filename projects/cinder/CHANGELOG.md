@@ -3483,3 +3483,10 @@ for vision/architecture.
   of materializing the range to a list and comparing it with
   `values_equal` (which could never match a scalar scrutinee). Clean
   first pass, no bounces (3834 tests passing, up from 3828).
+- **Standard library: `nth_abundant` — the k-th abundant number by
+  position** — merged 2026-08-29T21:46:38Z via PR #346
+  (`feat/20260829-nth-abundant`). Added `_nth_abundant`
+  (`cinder/builtins.py`), registered directly after `_is_abundant`,
+  a sequential candidate scan mirroring `nth_prime`'s shape since
+  abundant numbers have no closed form. Clean first pass, no bounces
+  (3842 tests passing, up from 3834).

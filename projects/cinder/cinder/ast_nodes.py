@@ -308,15 +308,22 @@ class MatchArm:
     does (kept as the literal name `"_"` when the rest is discarded, so
     the interpreter can tell "no rest capture" apart from "rest
     capture, discarded"). `map_pattern` is a fifth, mutually exclusive
-    pattern kind: a flat list of `(key, binding)` pairs, `binding` equal
-    to `key` when unrenamed, tested for presence against the subject's
-    keys (a map/dict), binding each key's value under `binding` rather
-    than comparing via `values_equal`; `pattern` and `binding` stay
-    `None` for a map-pattern arm. `map_rest` accompanies `map_pattern`,
-    mirroring `list_rest`: `None` when the map pattern has no rest
-    capture, the bound name when it does (kept as the literal name `"_"`
-    when the rest is discarded, so the interpreter can tell "no rest
-    capture" apart from "rest capture, discarded")."""
+    pattern kind: a flat list of `(key, binding)` pairs, tested for
+    presence against the subject's keys (a map/dict). `binding` is
+    either a plain name (equal to `key` when unrenamed, binding the
+    key's value directly), a nested list pattern as an `(entries, rest,
+    True)` triple, or a nested map pattern as an `(entries, rest)` pair
+    — the trailing `True` tag on the triple is what lets the
+    interpreter tell a nested list pattern apart from a nested map
+    pattern, since both would otherwise reduce to the same 2-tuple
+    shape. A nested pattern is matched recursively against the key's
+    value rather than bound directly, mirroring `list_pattern`'s own
+    nested-element support; `pattern` and `binding` stay `None` for a
+    map-pattern arm. `map_rest` accompanies `map_pattern`, mirroring
+    `list_rest`: `None` when the map pattern has no rest capture, the
+    bound name when it does (kept as the literal name `"_"` when the
+    rest is discarded, so the interpreter can tell "no rest capture"
+    apart from "rest capture, discarded")."""
 
     pattern: "Expr | None"
     body: "Expr"
@@ -324,7 +331,7 @@ class MatchArm:
     list_pattern: "list | None" = None
     range_pattern: "RangeExpr | None" = None
     list_rest: "str | None" = None
-    map_pattern: "list[tuple[str, str]] | None" = None
+    map_pattern: "list[tuple[str, object]] | None" = None
     map_rest: "str | None" = None
 
 

@@ -1145,6 +1145,32 @@ class Interpreter:
             env.define(rest, subject[min_len:])
         return True
 
+    def _match_map_entries(
+        self, entries: list, rest: "str | None", subject: object, env: Environment
+    ) -> bool:
+        if not isinstance(subject, dict) or not all(
+            key in subject for key, _ in entries
+        ):
+            return False
+        seen_keys = set()
+        for key, binding in entries:
+            seen_keys.add(key)
+            item = subject[key]
+            if isinstance(binding, tuple) and len(binding) == 3:
+                nested_entries, nested_rest, _ = binding
+                if not self._match_list_entries(nested_entries, nested_rest, item, env):
+                    return False
+                continue
+            if isinstance(binding, tuple):
+                nested_entries, nested_rest = binding
+                if not self._match_map_entries(nested_entries, nested_rest, item, env):
+                    return False
+                continue
+            env.define(binding, item)
+        if rest is not None and rest != "_":
+            env.define(rest, {k: v for k, v in subject.items() if k not in seen_keys})
+        return True
+
     def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
         subject = self.evaluate(expr.subject, env)
         for arm in expr.arms:
@@ -1163,20 +1189,11 @@ class Interpreter:
                     return self.evaluate(arm.body, env)
                 continue
             if arm.map_pattern is not None:
-                if not isinstance(subject, dict) or not all(
-                    key in subject for key, _ in arm.map_pattern
+                arm_env = Environment(env)
+                if not self._match_map_entries(
+                    arm.map_pattern, arm.map_rest, subject, arm_env
                 ):
                     continue
-                arm_env = Environment(env)
-                seen_keys = set()
-                for key, binding in arm.map_pattern:
-                    arm_env.define(binding, subject[key])
-                    seen_keys.add(key)
-                if arm.map_rest is not None and arm.map_rest != "_":
-                    arm_env.define(
-                        arm.map_rest,
-                        {k: v for k, v in subject.items() if k not in seen_keys},
-                    )
                 return self.evaluate(arm.body, arm_env)
             if arm.pattern is None:
                 if arm.binding is None:

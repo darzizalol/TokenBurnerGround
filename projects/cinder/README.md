@@ -546,25 +546,32 @@ patterns in `match` arms (`match ([1, [2, 3]]) { [a, [b, c]] => a + b +
 c, _ => 0 }`) — a list-pattern element may itself be a list pattern to
 arbitrary depth, the last flat-vs-nested gap list patterns had. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): rest capture in match
-map patterns (`match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest,
-_ => 0 }`) — the same leftover-keys-into-a-dict capability list patterns
-already have via `[a, ...rest]`, closing the last flat-list-vs-flat-map
-gap, `is_catalan` — the one `nth_*` builtin (`nth_catalan`) still
-missing its `is_*` membership counterpart, via a bounded iterative
-search rather than a closed form since Catalan numbers have no simple
-algebraic membership test, nested patterns as map pattern values (`match
-({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 }`) — the
-map-pattern counterpart to nested list patterns, closing the last
-flat-vs-nested gap between match map patterns and `let` destructuring,
-default values for trailing elements in match list patterns (`match
-([1]) { [a, b = 0] => a + b, _ => -1 }`) — the match-pattern counterpart
-to `let` list destructuring's own trailing defaults, letting a shorter
-subject list still match instead of falling through the arm, and
-`is_twin_prime` — a gap in the prime-relationship cluster
-(`is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime` test other
-adjacency/structure relationships on primes, but none test the classic
-twin-prime pairing yet).
+In flight: rest capture in match map patterns (`match ({"a": 1, "b": 2,
+"c": 3}) { {a, ...rest} => rest, _ => 0 }`) — the same
+leftover-keys-into-a-dict capability list patterns already have via
+`[a, ...rest]`, closing the last flat-list-vs-flat-map gap — is out for
+review as PR #335. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+`is_catalan` — the one `nth_*` builtin (`nth_catalan`) still missing its
+`is_*` membership counterpart, via a bounded iterative search rather
+than a closed form since Catalan numbers have no simple algebraic
+membership test, nested patterns as map pattern values (`match ({"a": 1,
+"b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 }`) — the map-pattern
+counterpart to nested list patterns, closing the last flat-vs-nested gap
+between match map patterns and `let` destructuring, default values for
+trailing elements in match list patterns (`match ([1]) { [a, b = 0] =>
+a + b, _ => -1 }`) — the match-pattern counterpart to `let` list
+destructuring's own trailing defaults, letting a shorter subject list
+still match instead of falling through the arm, `is_twin_prime` — a gap
+in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
+`is_emirp`/`is_circular_prime` test other adjacency/structure
+relationships on primes, but none test the classic twin-prime pairing
+yet), `nth_nonagonal` — the one figurate `nth_*` closed form still
+missing now that `is_nonagonal` completed the membership-test side of
+the cluster, `nth_happy_number` — the happy-number cluster's own missing
+`nth_*` counterpart, via a sequential candidate scan since happy numbers
+have no closed form, and default values in match map patterns (`match
+({"a": 1}) { {a, b = 0} => a + b, _ => -1 }`) — the map-pattern
+counterpart to match list patterns' own trailing defaults.
 The pattern-matching tasks are all steps in the arc opened by PR #304 and
 mostly can land in either order relative to their siblings (nested
 map-pattern values is the exception — it needs rest capture to land

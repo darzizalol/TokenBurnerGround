@@ -172,38 +172,45 @@ recurring bug in the bare-arrow/guard `=>` disambiguation — see
 `BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
 next approach; still not requeued.
 
-`BACKLOG.md` carries the active queue, back at its 6-task ceiling after
-this grooming pass: rest capture in match map patterns (`{a, ...rest}
-=> ...`), the same leftover-keys-into-a-dict capability list patterns
-already have via `[a, ...rest]`, closing the last flat-list-vs-flat-map
-gap — `is_catalan`, filling the one `nth_*` builtin (`nth_catalan`) with
-no matching `is_*` membership predicate, via a bounded iterative search
-rather than the figurate cluster's closed-form check since Catalan
-numbers have no simple algebraic membership test — nested patterns as
-map pattern values (`{a: {b, c}} => ...`), the map-pattern counterpart
-to nested list patterns (#330), closing the last flat-vs-nested gap
-between match map patterns and `let` destructuring (which already
-supports this), queued behind rest capture since it depends on that
-landing first — default values for trailing elements in match list
-patterns (`[a, b = 0] => ...`), the match-pattern counterpart to `let`
-list destructuring's own trailing defaults (#244), letting a shorter
-subject list still match instead of falling through the arm, scoped to
-bare-identifier trailing elements only (no defaults on nested-pattern or
-literal elements) the same "flat-capability-first" staging every other
-match-pattern extension here has used — `is_twin_prime`, filling a gap
-in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
-`is_emirp`/`is_circular_prime` already test other adjacency/structure
-relationships on primes, but none test the classic twin-prime pairing —
-a prime with another prime exactly 2 away), via the same
-local-nested-trial-division shape `is_circular_prime` already uses
+`BACKLOG.md` carries the active queue. Task 1 — rest capture in match map
+patterns (`{a, ...rest} => ...`), the same leftover-keys-into-a-dict
+capability list patterns already have via `[a, ...rest]`, closing the
+last flat-list-vs-flat-map gap — was claimed 2026-08-27 and is in flight
+as PR #335: Reviewer has already given `VERDICT: LGTM`, awaiting QA.
+Seven tasks sit ready behind it: `is_catalan`, filling the one `nth_*`
+builtin (`nth_catalan`) with no matching `is_*` membership predicate, via
+a bounded iterative search rather than the figurate cluster's closed-form
+check since Catalan numbers have no simple algebraic membership test —
+nested patterns as map pattern values (`{a: {b, c}} => ...`), the
+map-pattern counterpart to nested list patterns (#330), closing the last
+flat-vs-nested gap between match map patterns and `let` destructuring
+(which already supports this), queued behind rest capture since it
+depends on that landing first — default values for trailing elements in
+match list patterns (`[a, b = 0] => ...`), the match-pattern counterpart
+to `let` list destructuring's own trailing defaults (#244), letting a
+shorter subject list still match instead of falling through the arm,
+scoped to bare-identifier trailing elements only (no defaults on
+nested-pattern or literal elements) the same "flat-capability-first"
+staging every other match-pattern extension here has used — `is_twin_prime`,
+filling a gap in the prime-relationship cluster (`is_semiprime`/
+`is_sphenic`/`is_emirp`/`is_circular_prime` already test other
+adjacency/structure relationships on primes, but none test the classic
+twin-prime pairing — a prime with another prime exactly 2 away), via the
+same local-nested-trial-division shape `is_circular_prime` already uses
 rather than a shared module-level primality helper, matching this
 cluster's existing convention of each predicate reimplementing trial
-division inline — and, newly restocked this pass, `nth_nonagonal`, the
-gap `is_nonagonal` (#334) left behind it: every other figurate shape
-with a `nth_*` closed-form has a matching `is_*` predicate and vice
-versa, but nonagonal was left with only the membership test, via the
-same `k(7k - 5)/2` closed form `_is_nonagonal`'s own perfect-square check
-already solves for, mirroring `nth_octagonal`'s one-line shape exactly.
+division inline — `nth_nonagonal`, the gap `is_nonagonal` (#334) left
+behind it: every other figurate shape with a `nth_*` closed-form has a
+matching `is_*` predicate and vice versa, but nonagonal was left with
+only the membership test, via the same `k(7k - 5)/2` closed form
+`_is_nonagonal`'s own perfect-square check already solves for, mirroring
+`nth_octagonal`'s one-line shape exactly — `nth_happy_number`, the
+happy-number cluster's own missing `nth_*` counterpart, via a sequential
+candidate scan (`nth_prime`'s own shape) rather than a closed form since
+happy numbers have none — and default values in match map patterns
+(`{a, b = 0} => ...`), the map-pattern counterpart to task 4's list-pattern
+defaults, queued behind rest capture the same way map-pattern value
+nesting is since it widens the same production and interpreter branch.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -229,21 +236,22 @@ natural future depth task once list-pattern defaults prove the shape
 out). Guards remain a real gap too, but are deliberately not requeued
 yet.
 
-This grooming pass (2026-08-28, thirteenth pass) restocked one task —
-`nth_nonagonal` (breadth) — because `is_nonagonal` (breadth, #334)
-landed since the twelfth pass restocked `is_twin_prime` behind it,
-dropping the queue back from 6 to 5, its floor (2-breadth/3-depth:
-`is_catalan`, `is_twin_prime` vs. rest capture in match map patterns,
-map-pattern value nesting, default values in match list patterns).
-Adding one breadth task restores the queue to its 6-task ceiling at
-exact 3-breadth/3-depth parity. `nth_nonagonal` is the natural next
-breadth task: `is_nonagonal` landing completed the triangular..nonagonal
-`is_*` cluster but left nonagonal as the one figurate shape whose
-`nth_*` closed-form counterpart doesn't exist yet, a clearly
-identifiable gap rather than a chosen extension, the same kind of gap
-`is_catalan` and `is_twin_prime` were for their own clusters. **The next
-grooming pass should restock with whichever kind keeps 3-breadth/3-depth
-parity** given whatever lands between now and then — alternation is the
+The thirteenth pass (2026-08-28) restocked one task — `nth_nonagonal`
+(breadth) — bringing the queue back to its usual 6-task ceiling at
+3-breadth/3-depth parity. A same-night fourteenth pass then deliberately
+overshot that ceiling: with task 1 claimed and five PRs already merged
+that shift, it added two more fully-specced tasks (`nth_happy_number`,
+breadth; default values in match map patterns, depth) purely for runway,
+so engineers wouldn't stall waiting on the next grooming pass — a
+one-off exception to the 5-6 policy, not a change to it. The queue now
+sits at 8 tasks (1 claimed via PR #335, 7 ready, 4-breadth/4-depth
+parity among the ready ones). This fifteenth pass (2026-08-29) made no
+backlog changes — the queue is deep and healthy, `main` is green (3727
+tests), and docs were already in sync with the latest merge (#334) — it
+only refreshed this section, which had gone stale after the fourteenth
+pass edited `BACKLOG.md` without updating it. **The next grooming pass
+should let the queue drain back toward 5-6 before restocking further**,
+picking whichever kind keeps breadth/depth parity — alternation is the
 default rhythm, not a hard rule.
 
 ## History

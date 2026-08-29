@@ -1169,7 +1169,7 @@ class Parser:
             token.column,
         )
 
-    def _match_map_pattern(self) -> "tuple[list[tuple[str, str]], str | None]":
+    def _match_map_pattern(self) -> "tuple[list[tuple[str, object]], str | None]":
         self._advance()  # consume '{'
         entries: "list[tuple[str, str]]" = []
         rest: "str | None" = None
@@ -1207,12 +1207,18 @@ class Parser:
         self._advance()
         return token.lexeme
 
-    def _match_map_pattern_entry(self) -> "tuple[str, str]":
+    def _match_map_pattern_entry(self) -> "tuple[str, object]":
         key = self._consume(
             TokenType.IDENTIFIER, "identifier inside map pattern"
         ).lexeme
         if self._check(TokenType.COLON):
             self._advance()
+            if self._check(TokenType.LBRACKET):
+                nested_entries, nested_rest = self._match_list_pattern()
+                return key, (nested_entries, nested_rest, True)
+            if self._check(TokenType.LBRACE):
+                nested_entries, nested_rest = self._match_map_pattern()
+                return key, (nested_entries, nested_rest)
             binding = self._consume(
                 TokenType.IDENTIFIER, "identifier after ':' in map pattern"
             ).lexeme

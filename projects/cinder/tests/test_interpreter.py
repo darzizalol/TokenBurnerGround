@@ -5266,6 +5266,70 @@ class TestMatchExpression(unittest.TestCase):
         with self.assertRaises(ParseError):
             run('let result = match (x) { {a, ...5} => a, _ => 0 };')
 
+    def test_map_pattern_nested_map_value(self):
+        env = run(
+            'let result = match ({"a": 1, "b": {"c": 2}}) '
+            '{ {a, b: {c}} => a + c, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_nested_list_value(self):
+        env = run(
+            'let result = match ({"a": 1, "b": [2, 3]}) '
+            '{ {a, b: [x, y]} => a + x + y, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_map_pattern_nested_map_value_arbitrary_depth(self):
+        env = run(
+            'let result = match ({"a": {"b": {"c": 1}}}) '
+            '{ {a: {b: {c}}} => c, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_map_pattern_nested_map_value_composes_with_rename(self):
+        env = run(
+            'let result = match ({"a": 1, "b": {"c": 2}}) '
+            '{ {a, b: {c: x}} => a + x, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_map_pattern_nested_map_value_composes_with_rest_capture(self):
+        env = run(
+            'let result = match ({"a": 1, "b": {"c": 2, "d": 3}}) '
+            '{ {a, b: {c, ...rest}} => rest, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), {"d": 3})
+
+    def test_map_pattern_nested_map_value_falls_through_whole_arm(self):
+        env = run(
+            'let result = match ({"a": 1, "b": {"c": 2}}) '
+            '{ {a, b: {d}} => 0, _ => "no match" };'
+        )
+        self.assertEqual(env.get("result"), "no match")
+
+    def test_map_pattern_nested_map_value_falls_through_on_non_map_subject(self):
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) '
+            '{ {a, b: {c}} => c, _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), "no")
+
+    def test_map_pattern_nested_map_value_falls_through_on_list_subject(self):
+        env = run(
+            'let result = match ({"a": 1, "b": [1, 2]}) '
+            '{ {a, b: {c}} => c, _ => "no" };'
+        )
+        self.assertEqual(env.get("result"), "no")
+
+    def test_map_pattern_nested_bindings_scoped_to_arm(self):
+        with self.assertRaises(CinderRuntimeError):
+            run(
+                'let result = match ({"a": 1, "b": {"c": 2}}) '
+                '{ {a, b: {c}} => a, _ => 0 }; '
+                'print(c);'
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

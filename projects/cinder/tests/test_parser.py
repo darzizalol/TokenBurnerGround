@@ -5153,6 +5153,79 @@ class TestMatchExpression(unittest.TestCase):
         ):
             parse('match (x) { {a, ...5} => a, _ => 0 }')
 
+    def test_match_map_pattern_nested_map_value_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { {a, b: {c}} => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        [("a", "a"), ("b", ([("c", "c")], None))],
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_map_pattern_nested_list_value_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { {a, b: [x, y]} => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        [("a", "a"), ("b", (["x", "y"], None, True))],
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_map_pattern_nested_map_value_arbitrary_depth_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { {a: {b: {c}}} => c, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "c"),
+                        None,
+                        None,
+                        None,
+                        None,
+                        [("a", ([("b", ([("c", "c")], None))], None))],
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_map_pattern_nested_map_value_requires_brace_close(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"expected '}' after map pattern, found",
+        ):
+            parse('match (x) { {a, b: {c} => a, _ => 0 }')
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -468,6 +468,9 @@ while (i < 10) {
   (semiprimes have no closed form), the value-returning sibling of `is_semiprime`'s membership test,
   `nth_pronic` to return the pronic number found at a 1-indexed position via the exact closed form
   `k(k + 1)`, the value-returning sibling of `is_pronic`'s membership test,
+  `nth_abundant` to return the abundant number found at a 1-indexed position via a sequential
+  candidate scan (abundant numbers have no closed form), the value-returning sibling of
+  `is_abundant`'s membership test,
   `cartesian_product` to return every ordered combination of one element from each of N lists
   (an N-list generalization of `zip`, a thin wrapper over `itertools.product`),
   `power_set` to return every subset of a list across all sizes (a thin wrapper over
@@ -557,27 +560,25 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: range case values in
-`switch` statements (PR #345) — fixing a real bug where a `RangeExpr`
-case value silently never matched instead of raising, by giving
-`switch` the same containment check `match`'s range patterns already
-use, instead of materializing the range to a list and comparing with
-`values_equal` — and before that `nth_pronic` (PR #344) — the one
-pronic-number closed form still missing now that `is_pronic`
-tests membership but has no value-returning sibling, via the same
-`k(k + 1)` shape `_is_pronic`'s own check already solves for, mirroring
-`nth_octagonal`'s one-line shape — and before that `nth_semiprime` (PR
-#343) — the semiprime pair's own missing `nth_*` counterpart, via a
-sequential candidate scan since semiprimes have no closed form. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_abundant` — the
-divisor-sum cluster's own missing `nth_*` counterpart (`is_abundant`
-tests membership but has no value-returning sibling), via the same
-sequential-scan shape since abundant numbers have no closed form,
-`nth_repdigit` — the repdigit predicate's own missing `nth_*`
-counterpart, via the same sequential-scan shape (bounded to a `k <= 50`
-cross-check since repdigits are far sparser than semiprimes/abundant
-numbers), whole-value `as` binding in match list/map patterns
+Actively developed, nightly. Recently landed: `nth_abundant` (PR #346)
+— the divisor-sum cluster's own missing `nth_*` counterpart
+(`is_abundant` tests membership but had no value-returning sibling),
+via a sequential candidate scan since abundant numbers have no closed
+form — and before that range case values in `switch` statements (PR
+#345) — fixing a real bug where a `RangeExpr` case value silently never
+matched instead of raising, by giving `switch` the same containment
+check `match`'s range patterns already use, instead of materializing
+the range to a list and comparing with `values_equal` — and before that
+`nth_pronic` (PR #344) — the one pronic-number closed form still
+missing now that `is_pronic` tests membership but has no
+value-returning sibling, via the same `k(k + 1)` shape `_is_pronic`'s
+own check already solves for, mirroring `nth_octagonal`'s one-line
+shape. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_repdigit` — the
+repdigit predicate's own missing `nth_*` counterpart, via the same
+sequential-scan shape (bounded to a `k <= 50` cross-check since
+repdigits are far sparser than semiprimes/abundant numbers),
+whole-value `as` binding in match list/map patterns
 (`match ([1, 2]) { [a, b] as whole => whole, _ => nil }`) — letting an
 arm bind the entire matched subject alongside whatever the pattern
 itself destructures, today possible only by giving up destructuring for
@@ -592,7 +593,10 @@ position instead of one shared exponent, e.g. `89 = 8^1 + 9^2`), and
 tests membership but has no value-returning sibling), via the same
 sequential-scan shape but deliberately bounded to a `k <= 20`
 cross-check since Kaprekar numbers grow too fast for a `k <= 50` scan to
-stay fast. (Guards in
+stay fast, and a Python-style `else` clause on `while` loops
+(`while (cond) { ... } else { ... }`, running exactly when the loop
+exits without an intervening `break`) — scoped to plain `while` only,
+not `do`-`while` or either `for` form. (Guards in
 `match` arms, `n if n > 0 => "positive"`, were attempted but closed
 after three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but

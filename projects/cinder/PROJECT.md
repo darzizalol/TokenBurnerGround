@@ -149,7 +149,11 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): range case
+Recently landed (see `CHANGELOG.md` for the full list): `nth_abundant`
+(#346) — the divisor-sum cluster's own missing `nth_*` counterpart
+(`is_abundant` has tested membership for a long time but never got a
+value-returning sibling), via a sequential candidate scan since
+abundant numbers have no closed form — and before that range case
 values in `switch` statements (#345) — fixing a real bug where a
 `RangeExpr` case value silently materialized into a list and could
 never equal a scalar scrutinee, by giving `switch` the same
@@ -159,59 +163,55 @@ pronic-number closed form still missing (`is_pronic` has tested
 membership via `root = isqrt(n); root * (root + 1) == n` for a long
 time but never got a value-returning sibling), via the same
 `k(k + 1)` closed form `_is_pronic`'s own check already solves for,
-mirroring `nth_octagonal`'s one-line shape — and before that
-`nth_semiprime` (#343) — the semiprime pair's own missing `nth_*`
-counterpart, via a sequential candidate scan (`nth_prime`'s own shape)
-since semiprimes have no closed form. Guards in `match` arms
+mirroring `nth_octagonal`'s one-line shape. Guards in `match` arms
 (`n if n > 0 => ...`) were attempted (PR #314) but closed after three
 straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
 bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
 `## Graveyard` for the full postmortem and the suggested next approach;
 still not requeued.
 
-`BACKLOG.md` carries the active queue, at its usual 5-task floor after
-#345 landed with no restock yet this pass. Top: `nth_abundant`, the
-divisor-sum cluster's own missing `nth_*` counterpart (`is_abundant`
-has tested membership for a long time but never got a value-returning
-sibling), via the same sequential-scan shape since abundant numbers
-have no closed form — `nth_repdigit`, the repdigit predicate's own
-missing `nth_*` counterpart, via the same sequential-scan shape but
-deliberately bounded to a `k <= 50` cross-check in its acceptance
-criteria: repdigits are far sparser than semiprimes/abundant numbers
-(only 9 exist per digit-length), so the scan cost grows exponentially
-with position rather than linearly — whole-value `as` binding in match
-list/map patterns (`[a, b] as whole => ...`), letting an arm bind the
-entire matched subject alongside whatever the pattern itself
-destructures (today only possible by giving up destructuring for a
-plain bound-identifier arm), via a new reserved `as` keyword and a
-`MatchArm.whole_binding` field — and lexicographic comparison operators
-for lists (`[1, 2] < [1, 3]`), a real gap: `_compare`
-(`cinder/interpreter.py`) already gives strings element-by-element
-ordering via Python's own string comparison, but explicitly excludes
-lists from the same `comparable` check even though Python's own list
-ordering is exactly the lexicographic rule a user would expect, and the
-fix composes for free with the existing chained-comparison syntax
-(`a < b < c`) since both paths call the same `_compare` method — and
-`is_disarium`, the digit-position-power-sum variant of `is_armstrong`
-(each digit raised to its own 1-indexed position instead of one shared
-exponent, e.g. `89 = 8^1 + 9^2`), a genuinely distinct predicate since
-the two disagree on both directions (`153` is Armstrong but not
-Disarium and vice versa for `89`/`135`). This pass adds a sixth task,
-`nth_kaprekar` — the Kaprekar predicate's own missing `nth_*`
+`BACKLOG.md` carries the active queue. Top: `nth_repdigit`, the
+repdigit predicate's own missing `nth_*` counterpart, via the same
+sequential-scan shape but deliberately bounded to a `k <= 50`
+cross-check in its acceptance criteria: repdigits are far sparser than
+semiprimes/abundant numbers (only 9 exist per digit-length), so the
+scan cost grows exponentially with position rather than linearly —
+whole-value `as` binding in match list/map patterns (`[a, b] as
+whole => ...`), letting an arm bind the entire matched subject
+alongside whatever the pattern itself destructures (today only
+possible by giving up destructuring for a plain bound-identifier arm),
+via a new reserved `as` keyword and a `MatchArm.whole_binding` field —
+lexicographic comparison operators for lists (`[1, 2] < [1, 3]`), a
+real gap: `_compare` (`cinder/interpreter.py`) already gives strings
+element-by-element ordering via Python's own string comparison, but
+explicitly excludes lists from the same `comparable` check even though
+Python's own list ordering is exactly the lexicographic rule a user
+would expect, and the fix composes for free with the existing
+chained-comparison syntax (`a < b < c`) since both paths call the same
+`_compare` method — `is_disarium`, the digit-position-power-sum variant
+of `is_armstrong` (each digit raised to its own 1-indexed position
+instead of one shared exponent, e.g. `89 = 8^1 + 9^2`), a genuinely
+distinct predicate since the two disagree on both directions (`153` is
+Armstrong but not Disarium and vice versa for `89`/`135`) — and
+`nth_kaprekar`, the Kaprekar predicate's own missing `nth_*`
 counterpart (`is_kaprekar` tests membership via the split-and-sum check
 but has no value-returning sibling), via the same sequential-scan shape
 but deliberately bounded to a `k <= 20` cross-check: Kaprekar numbers
 grow much faster than repdigits or abundant numbers (the 30th is
 already 318,682), so even a `k <= 50` bound — let alone the unbounded
-case — would make the cross-check test slow — restocking the queue from
-its 5-task floor back to its 6-task target and rebalancing to 4 breadth
-(`nth_abundant`, `nth_repdigit`, `is_disarium`, `nth_kaprekar`) / 2
-depth (`as` binding, list comparison), per this section's own
-alternation rule: #345's merge removed a depth task, so this pass
-restocks with a breadth task. The resulting 4/2 skew is deliberate and
-mirrors the identical skew noted after PR #344 two passes ago, which a
-later pass corrected by restocking depth instead — expect the same
-correction here once a depth task is next due.
+case — would make the cross-check test slow. This pass adds a sixth
+task, an `else` clause on `while` loops (Python-style loop-`else`,
+`while (cond) { ... } else { ... }` running exactly when the loop exits
+without an intervening `break`) — scoped to plain `while` only, not
+`do`-`while` or either `for` form, and flagging one subtle
+dangling-attachment interaction with `if`/`else` that the task's own
+acceptance criteria lock in with a regression test — restocking the
+queue from its 5-task floor back to its 6-task ceiling and rebalancing
+to 3 breadth (`nth_repdigit`, `is_disarium`, `nth_kaprekar`) / 3 depth
+(`as` binding, list comparison, `while`-`else`), per this section's own
+alternation rule: #346's merge removed a breadth task, so this pass
+restocks with a depth task, correcting the 4-breadth/2-depth skew noted
+after the twenty-second pass back to an even split.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -261,6 +261,18 @@ queue empty. This pass also refreshed this section and `README.md`'s `switch`
 feature bullet and "Status & roadmap" section, both of which had gone
 stale after #345 landed without a docs update (left to the Architect
 by design — see the landed task's own "Once merged" note).
+
+The twenty-third pass (2026-08-30) archived the one PR merged since
+the last grooming pass (#346 `nth-abundant`, breadth) and restocked
+one task — an `else` clause on `while` loops (depth), bringing the
+queue from its 5-task floor back to its usual 6-task ceiling and
+correcting the 4-breadth/2-depth skew noted after the twenty-second
+pass to an even 3/3 split (see the deliberate-skew note above). `main`
+is green (3842 tests), PR queue empty. This pass also refreshed this
+section and `README.md`'s Builtins list and "Status & roadmap" section,
+both of which had gone stale after #346 landed without a docs update
+(left to the Architect by design — see the landed task's own "Once
+merged" note).
 
 ## History
 

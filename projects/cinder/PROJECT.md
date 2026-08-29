@@ -149,59 +149,58 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): rest capture in
-match map patterns (#335) — the same leftover-keys-into-a-dict
-capability list patterns already have via `[a, ...rest]` (`{a, ...rest}
-=> ...`), closing the last flat-list-vs-flat-map gap — and `is_catalan`
-(#336) — the one `nth_*` builtin (`nth_catalan`) that had no matching
-`is_*` membership predicate, via a bounded iterative search rather than
-the figurate cluster's closed-form check since Catalan numbers have no
-simple algebraic membership test — and before that `is_nonagonal` (#334)
-— the sixth and final figurate-number membership test, completing the
-triangular..nonagonal `is_*` cluster via the same
-perfect-square-plus-modular-residue check its siblings use — and before
-that `combinations_with_replacement` (#333) — the third and last member
-of itertools' "selections" trio (`permutations`, `combinations`,
-`combinations_with_replacement`), sitting directly next to `combinations`
-the same way `power_set` sits next to `binomial`. Guards in `match` arms
-(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
-straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug
-in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
-`## Graveyard` for the full postmortem and the suggested next approach;
-still not requeued.
-
-`BACKLOG.md` carries the active queue, six tasks deep, PR queue empty
-going into the next cycle. Task 1 — nested patterns as map pattern
-values (`{a: {b, c}} => ...`), the map-pattern counterpart to nested
+Recently landed (see `CHANGELOG.md` for the full list): nested patterns
+as map pattern values (#337) — the map-pattern counterpart to nested
 list patterns (#330), closing the last flat-vs-nested gap between match
 map patterns and `let` destructuring (which already supports this) —
-is now unblocked and ready, since rest capture (#335) it depended on has
-landed. Behind it: default values for trailing elements in match list
-patterns (`[a, b = 0] => ...`), the match-pattern counterpart to `let`
-list destructuring's own trailing defaults (#244), letting a shorter
-subject list still match instead of falling through the arm, scoped to
-bare-identifier trailing elements only (no defaults on nested-pattern or
-literal elements) the same "flat-capability-first" staging every other
-match-pattern extension here has used — `is_twin_prime`, filling a gap
-in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
-`is_emirp`/`is_circular_prime` already test other adjacency/structure
-relationships on primes, but none test the classic twin-prime pairing —
-a prime with another prime exactly 2 away), via the same
-local-nested-trial-division shape `is_circular_prime` already uses
-rather than a shared module-level primality helper, matching this
-cluster's existing convention of each predicate reimplementing trial
-division inline — `nth_nonagonal`, the gap `is_nonagonal` (#334) left
-behind it: every other figurate shape with a `nth_*` closed-form has a
-matching `is_*` predicate and vice versa, but nonagonal was left with
-only the membership test, via the same `k(7k - 5)/2` closed form
-`_is_nonagonal`'s own perfect-square check already solves for, mirroring
-`nth_octagonal`'s one-line shape exactly — `nth_happy_number`, the
-happy-number cluster's own missing `nth_*` counterpart, via a sequential
-candidate scan (`nth_prime`'s own shape) rather than a closed form since
-happy numbers have none — and default values in match map patterns
-(`{a, b = 0} => ...`), the map-pattern counterpart to the list-pattern
-defaults task, queued last since it widens the same production and
-interpreter branch task 1 (map-pattern value nesting) also touches.
+and before that rest capture in match map patterns (#335) — the same
+leftover-keys-into-a-dict capability list patterns already have via
+`[a, ...rest]` (`{a, ...rest} => ...`), closing the last
+flat-list-vs-flat-map gap — and `is_catalan` (#336) — the one `nth_*`
+builtin (`nth_catalan`) that had no matching `is_*` membership
+predicate, via a bounded iterative search rather than the figurate
+cluster's closed-form check since Catalan numbers have no simple
+algebraic membership test — and before that `is_nonagonal` (#334) — the
+sixth and final figurate-number membership test, completing the
+triangular..nonagonal `is_*` cluster via the same
+perfect-square-plus-modular-residue check its siblings use. Guards in
+`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
+after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
+recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
+next approach; still not requeued.
+
+`BACKLOG.md` carries the active queue, six tasks deep, PR queue empty
+going into the next cycle. Top: default values for trailing elements in
+match list patterns (`[a, b = 0] => ...`), the match-pattern counterpart
+to `let` list destructuring's own trailing defaults (#244), letting a
+shorter subject list still match instead of falling through the arm,
+scoped to bare-identifier trailing elements only (no defaults on
+nested-pattern or literal elements) the same "flat-capability-first"
+staging every other match-pattern extension here has used. Behind it:
+`is_twin_prime`, filling a gap in the prime-relationship cluster
+(`is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime` already test
+other adjacency/structure relationships on primes, but none test the
+classic twin-prime pairing — a prime with another prime exactly 2 away),
+via the same local-nested-trial-division shape `is_circular_prime`
+already uses rather than a shared module-level primality helper,
+matching this cluster's existing convention of each predicate
+reimplementing trial division inline — `nth_nonagonal`, the gap
+`is_nonagonal` (#334) left behind it: every other figurate shape with a
+`nth_*` closed-form has a matching `is_*` predicate and vice versa, but
+nonagonal was left with only the membership test, via the same
+`k(7k - 5)/2` closed form `_is_nonagonal`'s own perfect-square check
+already solves for, mirroring `nth_octagonal`'s one-line shape exactly —
+`nth_happy_number`, the happy-number cluster's own missing `nth_*`
+counterpart, via a sequential candidate scan (`nth_prime`'s own shape)
+rather than a closed form since happy numbers have none — default
+values in match map patterns (`{a, b = 0} => ...`), the map-pattern
+counterpart to the list-pattern defaults task, queued behind it since it
+widens the same production and interpreter branch — and `nth_semiprime`,
+the newest task, the semiprime pair's own missing `nth_*` counterpart
+(`is_semiprime` has tested membership for a long time but never got a
+value-returning sibling), via the same sequential-scan shape as
+`nth_prime`/`nth_happy_number` since semiprimes have no closed form.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -209,39 +208,31 @@ distinct from destructuring. Bound-identifier patterns (#311), multi-value
 patterns (#312), flat list patterns (#316), range patterns (#318),
 negative literal patterns (#320), literal list-pattern elements (#322),
 rest capture in list patterns (#324), flat map patterns (#326), nested
-list patterns (#330), per-key rename in match map patterns (#332), and
-rest capture in match map patterns (#335) are the follow-ups that have
-landed so far; map-pattern value nesting and default values in match
-list/map patterns are queued behind them, each written to adapt to
-whatever the merged code actually looks like by the time it's claimed —
-see each task's own "Ordering note" where one exists. Flat map patterns
-landed scoped to bare identifier keys only, no rename, no nesting, no
-rest, no defaults; rename (#332) and rest capture (#335) have since
-landed — value nesting is still queued as its own task, the same staged
-approach nested list patterns proved out for list patterns. `let`
-list/map destructuring has long supported trailing defaults, but match
-list/map patterns never got the equivalent — both are now queued (list
-patterns' defaults first, proving the shape out before map patterns'
-own). Guards remain a real gap too, but are deliberately not requeued
-yet.
+list patterns (#330), per-key rename in match map patterns (#332), rest
+capture in match map patterns (#335), and nested patterns as map pattern
+values (#337) are the follow-ups that have landed so far; default values
+in match list/map patterns are queued behind them, each written to adapt
+to whatever the merged code actually looks like by the time it's claimed
+— see each task's own "Ordering note" where one exists. `let` list/map
+destructuring has long supported trailing defaults, but match list/map
+patterns never got the equivalent — both are now queued (list patterns'
+defaults first, proving the shape out before map patterns' own). Guards
+remain a real gap too, but are deliberately not requeued yet.
 
-The thirteenth pass (2026-08-28) restocked one task — `nth_nonagonal`
-(breadth) — bringing the queue back to its usual 6-task ceiling at
-3-breadth/3-depth parity. A same-night fourteenth pass then deliberately
-overshot that ceiling: with task 1 claimed and five PRs already merged
-that shift, it added two more fully-specced tasks (`nth_happy_number`,
-breadth; default values in match map patterns, depth) purely for runway,
-so engineers wouldn't stall waiting on the next grooming pass — a
-one-off exception to the 5-6 policy, not a change to it. The queue now
-sits at 8 tasks (1 claimed via PR #335, 7 ready, 4-breadth/4-depth
-parity among the ready ones). This fifteenth pass (2026-08-29) made no
-backlog changes — the queue is deep and healthy, `main` is green (3727
-tests), and docs were already in sync with the latest merge (#334) — it
-only refreshed this section, which had gone stale after the fourteenth
-pass edited `BACKLOG.md` without updating it. **The next grooming pass
-should let the queue drain back toward 5-6 before restocking further**,
-picking whichever kind keeps breadth/depth parity — alternation is the
-default rhythm, not a hard rule.
+The sixteenth pass (2026-08-29) archived the two PRs merged since the
+last grooming pass (#335 rest capture in match map patterns, #337 nested
+patterns as map pattern values — both from this same shift) and restocked
+one task — `nth_semiprime` (breadth) — bringing the queue back to its
+usual 6-task ceiling at 3-breadth/3-depth parity (`is_twin_prime`,
+`nth_nonagonal`, `nth_happy_number`, `nth_semiprime` are breadth;
+list-pattern defaults and map-pattern defaults are depth). `main` is
+green (3761 tests, 28 subtests), PR queue empty. This pass also refreshed
+this section and `README.md`'s "Status & roadmap", which had gone stale
+after #337 landed without a docs update (left to the Architect by design
+— see each landed task's own "Once merged" note). **The next grooming
+pass should let the queue drain before restocking further**, picking
+whichever kind keeps breadth/depth parity — alternation is the default
+rhythm, not a hard rule.
 
 ## History
 

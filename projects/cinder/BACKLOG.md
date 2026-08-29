@@ -545,6 +545,95 @@ task.
 
 ---
 
+## 6. Standard library: `nth_semiprime` — the k-th semiprime by position
+
+Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
+factor-count trial division, but has no value-returning `nth_*`
+counterpart the way `nth_catalan`/`is_catalan` and the figurate-number
+clusters do — semiprimes have no closed form, so this follows
+`nth_prime`'s/`nth_happy_number`'s own shape (search `def _nth_prime`): a
+sequential candidate scan with a `count`/`candidate` loop, not an inverse
+formula. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_semiprime(5));'
+# -> <eval>:1:7: undefined name 'nth_semiprime'
+```
+
+Add to `cinder/builtins.py`, registered directly after `_is_semiprime`
+(search `def _is_semiprime`, immediately before `def _is_sphenic`) —
+keeps the semiprime pair together, mirroring how `is_catalan` sits
+directly after `nth_catalan`:
+```python
+def _nth_semiprime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_semiprime", arguments, 1, line, column)
+    value = _require_int("nth_semiprime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_semiprime() requires a positive integer, domain error", line, column
+        )
+
+    def _is_semiprime_candidate(candidate: int) -> bool:
+        remaining = candidate
+        factor_count = 0
+        divisor = 2
+        while divisor * divisor <= remaining:
+            while remaining % divisor == 0:
+                remaining //= divisor
+                factor_count += 1
+                if factor_count > 2:
+                    return False
+            divisor += 1
+        if remaining > 1:
+            factor_count += 1
+        return factor_count == 2
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_semiprime_candidate(candidate):
+            count += 1
+    return candidate
+```
+This mirrors `_nth_prime`'s/`_nth_happy_number`'s own `count`/`candidate`
+scanning loop exactly, just swapping in `_is_semiprime`'s own factor-count
+logic as a local nested helper (reimplemented locally, matching how
+`is_twin_prime`/`nth_happy_number` reimplement their predicate locally
+rather than sharing a module-level helper — this file's existing
+convention for small local predicates). Also register the new dict entry
+(search `"is_semiprime": _is_semiprime,`, add `"nth_semiprime":
+_nth_semiprime,` directly after it, before `"is_sphenic": _is_sphenic,`).
+
+Acceptance criteria:
+- `nth_semiprime(1);` through `nth_semiprime(6);` are `4`, `6`, `9`, `10`,
+  `14`, `15` — the first six semiprimes by position.
+- `nth_semiprime(20);` is `57`.
+- `nth_semiprime(50);` is `146`.
+- `is_semiprime(nth_semiprime(k));` is `true` for every `k` from `1` to
+  `50` — cross-check against the existing `is_semiprime` builtin
+  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own
+  shape.
+- `nth_semiprime(0);` and `nth_semiprime(-1);` raise `CinderRuntimeError`
+  matching `"nth_semiprime() requires a positive integer, domain error"`.
+- `nth_semiprime(1.5);` raises `CinderRuntimeError` matching
+  `"nth_semiprime() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after
+`is_semiprime`, search for the current line number), `tests/test_builtins.py`
+(model on `class TestNthPrime`, search that name, for the
+positive/domain/type-error/cross-check test shapes, and `class
+TestIsSemiprime` for the semiprime factor-count behavior). Once merged,
+`README.md`'s Builtins bullet needs `nth_semiprime` added near
+`is_semiprime`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
+the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

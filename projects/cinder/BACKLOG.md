@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
+## 1. Standard library: `nth_nonagonal` — the k-th nonagonal number by position [claimed 2026-08-29T16:09:03Z]
 
 Build: `is_nonagonal` (PR #334) just closed the triangular..nonagonal
 `is_*` cluster, but it left a new, smaller gap behind it —

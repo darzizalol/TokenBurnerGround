@@ -4916,6 +4916,69 @@ class TestIsPronic(unittest.TestCase):
             run("is_pronic();")
 
 
+class TestNthPronic(unittest.TestCase):
+    def test_nth_pronic_of_first_four_positions(self):
+        expected = {1: 2, 2: 6, 3: 12, 4: 20}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_pronic({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_pronic_of_ten(self):
+        self.assertEqual(run("let result = nth_pronic(10);").get("result"), 110)
+
+    def test_nth_pronic_of_one_hundred(self):
+        self.assertEqual(
+            run("let result = nth_pronic(100);").get("result"), 10100
+        )
+
+    def test_nth_pronic_agrees_with_is_pronic(self):
+        for position in range(1, 101):
+            self.assertEqual(
+                run(f"let result = is_pronic(nth_pronic({position}));").get(
+                    "result"
+                ),
+                True,
+                f"expected nth_pronic({position}) to be a pronic number",
+            )
+
+    def test_nth_pronic_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pronic(0);")
+        self.assertIn(
+            "nth_pronic() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_pronic_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pronic(-1);")
+        self.assertIn(
+            "nth_pronic() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_pronic_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pronic(1.5);")
+        self.assertIn(
+            "nth_pronic() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_pronic_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pronic(true);")
+        self.assertIn(
+            "nth_pronic() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_pronic_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_pronic(1, 2);")
+
+
 class TestIsSquarefree(unittest.TestCase):
     def test_is_squarefree_of_1(self):
         self.assertEqual(run("let result = is_squarefree(1);").get("result"), True)

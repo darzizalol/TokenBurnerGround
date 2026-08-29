@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: whole-value `as` binding in match list/map patterns
+## 1. Language: whole-value `as` binding in match list/map patterns [claimed 2026-08-29T22:11:15Z]
 
 Build: a match list/map pattern destructures a subject into its parts
 (`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) but there is no way to

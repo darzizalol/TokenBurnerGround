@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
+## 1. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`) [claimed 2026-08-29T14:39:56Z]
 
 Build: `let`/`for`/function-param/comprehension list destructuring has
 supported trailing default values for a long time (`let [a, b = 5] =

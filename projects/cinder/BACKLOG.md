@@ -11,176 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`) [claimed 2026-08-29T14:39:56Z]
-
-Build: `let`/`for`/function-param/comprehension list destructuring has
-supported trailing default values for a long time (`let [a, b = 5] =
-expr;`, PR #244) — a shorter-than-the-pattern list still binds
-successfully, falling back to the default for missing trailing elements.
-Match list patterns never got the equivalent: today a subject list
-shorter than the pattern just falls through the arm entirely, with no
-way to supply a fallback value for a missing trailing element. This is
-the last capability `let` list destructuring has that match list
-patterns still lack — flat elements, literal elements (#322), rest
-capture (#324), and nesting (#330) have all already landed. Verify the
-gap:
-```sh
-python3 -m cinder.cli eval 'print(match ([1]) { [a, b = 0] => a + b, _ => -1 });'
-# -> <eval>:1:33: expected ']' after list pattern, found '='
-```
-
-**Scope note:** only a bare identifier element may carry a default —
-mirroring the "flat-capability-first" staging every other match-pattern
-extension in this backlog has used, and matching how rename/rest were
-each first proven out on the simple case before any further extension
-was considered. A literal element (`1 = 0`), a `_` wildcard, or a nested
-list-pattern element carrying a default is out of scope for this task;
-the parser should reject a `=` in those positions the same way it
-already rejects any other unexpected token there (no special-casing
-needed — the `_match_list_pattern`/`_consume(RBRACKET, ...)` machinery
-already errors cleanly on a stray `=`). Defaults on match *map*
-patterns are a separate task (task 5 below) — out of scope here.
-
-`_match_list_pattern_entry` (`cinder/parser.py`, search `def
-_match_list_pattern_entry`) currently returns a single value per entry
-(`str | Expr | None | tuple[list, str | None]`) with no default. Widen
-it to return `tuple[entry, Expr | None]` for every entry kind (mirroring
-`_destructure_list_pattern_entry`'s own `(pattern, default)` return
-shape, search `def _destructure_list_pattern_entry` for the ordering
-check to copy), take a `seen_default: bool` parameter, and only offer a
-trailing `= expr` after a plain (non-`_`) identifier:
-```python
-    def _match_list_pattern_entry(
-        self, seen_default: bool
-    ) -> "tuple[str | Expr | None | tuple[list, str | None], Expr | None]":
-        token = self._peek()
-        if token.type == TokenType.LBRACKET:
-            entry = self._match_list_pattern()
-        elif token.type == TokenType.IDENTIFIER:
-            self._advance()
-            entry = None if token.lexeme == "_" else token.lexeme
-            if entry is not None and self._check(TokenType.EQ):
-                self._advance()
-                default = self._ternary()
-                return entry, default
-        elif token.type in (TokenType.INT, TokenType.FLOAT, TokenType.STRING):
-            self._advance()
-            entry = Literal(token.literal, token.line, token.column)
-        elif token.type == TokenType.TRUE:
-            self._advance()
-            entry = Literal(True, token.line, token.column)
-        elif token.type == TokenType.FALSE:
-            self._advance()
-            entry = Literal(False, token.line, token.column)
-        elif token.type == TokenType.NIL:
-            self._advance()
-            entry = Literal(None, token.line, token.column)
-        else:
-            raise ParseError(
-                f"expected an identifier, '_', or a literal inside list "
-                f"pattern, found {self._describe(token)}",
-                token.line,
-                token.column,
-            )
-        if seen_default:
-            raise ParseError(
-                "element without a default value follows an element with "
-                "one in list pattern",
-                token.line,
-                token.column,
-            )
-        return entry, None
-```
-Update `_match_list_pattern` (search `def _match_list_pattern`) to
-thread `seen_default` through both call sites the same way
-`_destructure_list_pattern` already does, e.g. `entries.append(...);
-seen_default = seen_default or entries[-1][1] is not None`. Nested list
-patterns get default support for free — they parse via the same
-`_match_list_pattern` production recursively.
-
-In `cinder/interpreter.py`, widen `_match_list_entries` (search `def
-_match_list_entries`) to unpack `(entry, default)` pairs and evaluate a
-default when the subject runs out of elements, mirroring
-`_bind_list_destructure`'s own `required`/`has_defaults` length check
-(search `def _bind_list_destructure`):
-```python
-    def _match_list_entries(
-        self, entries: list, rest: "str | None", subject: object, env: Environment
-    ) -> bool:
-        if not isinstance(subject, list):
-            return False
-        required = sum(1 for _, default in entries if default is None)
-        if rest is not None:
-            length_ok = len(subject) >= required
-        else:
-            length_ok = required <= len(subject) <= len(entries)
-        if not length_ok:
-            return False
-        for index, (entry, default) in enumerate(entries):
-            item = subject[index] if index < len(subject) else self.evaluate(default, env)
-            if isinstance(entry, tuple):
-                nested_entries, nested_rest = entry
-                if not self._match_list_entries(nested_entries, nested_rest, item, env):
-                    return False
-                continue
-            if isinstance(entry, Literal):
-                if not values_equal(item, self.evaluate(entry, env)):
-                    return False
-                continue
-            if entry is not None:
-                env.define(entry, item)
-        if rest is not None and rest != "_":
-            env.define(rest, subject[len(entries):])
-        return True
-```
-Default expressions are evaluated in `env` (the arm's own child
-environment), left-to-right in `enumerate(entries)` order, so an earlier
-element bound in the same pattern is visible to a later default —
-mirroring `_bind_list_destructure`'s own left-to-right evaluation (e.g.
-`let [a, b = a + 1] = [5];`).
-
-Acceptance criteria:
-- `match ([1]) { [a, b = 0] => a + b, _ => -1 };` is `1` — the trailing
-  default fires when the subject is exactly one element short.
-- `match ([1, 2]) { [a, b = 0] => a + b, _ => -1 };` is `3` — the default
-  is not used when the subject supplies the value.
-- `match ([]) { [a = 1, b = 2] => a + b, _ => -1 };` is `3` — multiple
-  trailing defaults, subject with zero required elements.
-- `match ([1, 2, 3]) { [a, b = 0] => a + b, _ => -1 };` is `-1` — a
-  subject longer than the pattern's max length (2, with no rest) still
-  falls through; defaults widen the minimum matchable length, not the
-  maximum, same as `let` destructuring.
-- `match ([1]) { [a, b = a + 1] => b, _ => -1 };` is `2` — a default
-  expression may reference an earlier element bound in the same pattern.
-- `match ([1]) { [a, b = 0, ...rest] => [a, b, rest], _ => "no" };` is
-  `[1, 0, []]` — defaults compose with rest capture in the same pattern.
-- `match ([[1]]) { [[a, b = 0]] => a + b, _ => -1 };` is `1` — a nested
-  list-pattern element gets default support for free via the shared
-  recursive production.
-- `match ({"a": 1}) { [a, b = 0] => a + b, _ => "no" };` is `"no"` — a
-  non-list subject still falls through, defaults included.
-- `match (x) { [a = 1, b] => a, _ => 0 };` (an element without a default
-  follows one with a default) raises `ParseError` matching `"element
-  without a default value follows an element with one in list pattern"`.
-- `shape(parse('match (x) { [a, b = 0] => a, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `list_pattern` with `b`'s
-  entry as a `(name, default_expr)` pair rather than a bare string.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_list_pattern`,
-`_match_list_pattern_entry`), `cinder/interpreter.py`
-(`_match_list_entries`), `tests/test_parser.py` (extend the list-pattern
-shape tests, search `test_match_list_pattern_shape`),
-`tests/test_interpreter.py` (extend `class TestMatchExpression`, search
-`test_list_pattern_binds_elements`, with the default cases above). Once
-merged, `README.md`'s `match` expression bullet needs a mention of list-
-pattern defaults, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_twin_prime` — membership test for primes with a twin partner
+## 1. Standard library: `is_twin_prime` — membership test for primes with a twin partner
 
 Build: the prime-relationship cluster in `cinder/builtins.py` already
 covers several adjacency/structure predicates built on trial-division
@@ -258,7 +89,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
+## 2. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
 
 Build: `is_nonagonal` (PR #334) just closed the triangular..nonagonal
 `is_*` cluster, but it left a new, smaller gap behind it —
@@ -327,7 +158,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_happy_number` — the k-th happy number by position
+## 3. Standard library: `nth_happy_number` — the k-th happy number by position
 
 Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
 membership via the digit-square-sum cycle, but neither has a
@@ -413,10 +244,10 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 4. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
-= 0] => ...` (see task 1 in this backlog, which explicitly flags map-
+= 0] => ...` (PR #338, already merged — its task explicitly flagged map-
 pattern defaults as "a separate, not-yet-queued task"), and `let` map
 destructuring has supported per-key defaults for a long time (`let {a, b
 = 5} = expr;`, PR #244) — a map missing a key still binds successfully,
@@ -433,14 +264,15 @@ python3 -m cinder.cli eval 'print(match ({"a": 1}) { {a, b = 0} => a + b, _ => -
 landed) — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
 production and the same interpreter `map_pattern` match branch rest
 capture touches (`arm.map_rest` handling).
-Unlike task 1 (list defaults), this task does **not** need to check
+Unlike list-pattern defaults (PR #338), this task does **not** need to check
 whether all pattern keys are present up front the way list patterns check
 length — map patterns already match on a key subset (extra keys in the
 subject beyond the pattern are always fine, no rest needed), so adding
 defaults only relaxes which keys are *required*.
 
 **Scope note:** only a bare identifier or renamed binding (`a` or `a: x`)
-may carry a default — mirroring task 1's "flat-capability-first" scope
+may carry a default — mirroring list-pattern defaults' (PR #338)
+"flat-capability-first" scope
 restriction exactly. Nested patterns as map-pattern values have already
 landed (PR #337) — a nested `{...}`/`[...]` binding carrying a default
 stays out of scope; only add the `= expr` check in the plain-identifier
@@ -501,8 +333,8 @@ default when a key is missing, mirroring `_bind_map_destructure`'s own
 Default expressions are evaluated in `arm_env`, left-to-right in
 `arm.map_pattern` order, so an earlier binding in the same pattern is
 visible to a later default — mirroring `_bind_map_destructure`'s own
-progressive-`env` evaluation and task 1's identical left-to-right
-convention for list-pattern defaults.
+progressive-`env` evaluation and list-pattern defaults' (PR #338)
+identical left-to-right convention.
 
 Acceptance criteria:
 - `match ({"a": 1}) { {a, b = 0} => a + b, _ => -1 };` is `1` — the
@@ -545,7 +377,7 @@ task.
 
 ---
 
-## 6. Standard library: `nth_semiprime` — the k-th semiprime by position
+## 5. Standard library: `nth_semiprime` — the k-th semiprime by position
 
 Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
 factor-count trial division, but has no value-returning `nth_*`

@@ -6873,3 +6873,24 @@ The morning paper: what shipped, what bounced, what's still open.
   `git pull --rebase` was a no-op before starting.
 - Twenty-fifth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Third cycle
+
+- **Merged**: PR #338 "Language: default values for trailing elements in
+  match list patterns (`[a, b = 0] => ...`)"
+  (`feat/20260829-match-list-defaults`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit — clean merge, no bounces (3772 tests
+  passing, up from 3761). Removed the `.worktrees/match-list-defaults`
+  worktree before merging. Archived the task to `CHANGELOG.md` and
+  renumbered the remaining five backlog tasks (1-5) — `is_twin_prime` is
+  now top. While renumbering, updated the map-pattern-defaults task's
+  stale internal references (three mentions of "task 1", which no longer
+  exists now that list-pattern defaults merged) to cite PR #338 by
+  number instead.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase` was a no-op before starting.
+- Twenty-sixth clean first-round merge in a row — still no review/QA
+  bounces this shift.

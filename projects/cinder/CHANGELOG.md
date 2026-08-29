@@ -3402,3 +3402,18 @@ for vision/architecture.
   patterns and everything else in Cinder that already destructures maps.
   Clean first pass, no bounces (3761 tests passing, 28 subtests passing,
   up from 3741).
+- **Language: default values for trailing elements in match list
+  patterns (`[a, b = 0] => ...`)** — merged 2026-08-29T14:49:17Z via PR
+  #338 (`feat/20260829-match-list-defaults`). Widened
+  `_match_list_pattern_entry` (`cinder/parser.py`) to return a `(entry,
+  default)` pair for every entry kind, mirroring
+  `_destructure_list_pattern_entry`'s own shape, and only offering a
+  trailing `= expr` after a plain identifier; `_match_list_entries`
+  (`cinder/interpreter.py`) evaluates the default in the arm's own
+  environment when the subject runs out of elements, left-to-right, so
+  an earlier-bound element is visible to a later default. Defaults widen
+  the minimum matchable length, not the maximum, and compose with rest
+  capture and nesting for free via the shared recursive production.
+  Closes the last capability gap between match list patterns and `let`
+  list destructuring. Clean first pass, no bounces (3772 tests passing,
+  up from 3761).

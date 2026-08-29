@@ -5737,6 +5737,54 @@ class TestNthCatalan(unittest.TestCase):
             run("nth_catalan(1, 2);")
 
 
+class TestIsCatalan(unittest.TestCase):
+    def test_is_catalan_of_members(self):
+        for value in (1, 2, 5, 14, 42, 4862):
+            self.assertEqual(
+                run(f"let result = is_catalan({value});").get("result"),
+                True,
+                f"expected {value} to be a Catalan number",
+            )
+
+    def test_is_catalan_one_returns_true_on_first_hit(self):
+        self.assertEqual(run("let result = is_catalan(1);").get("result"), True)
+
+    def test_is_catalan_of_non_members(self):
+        for value in (0, 3, 4, -1):
+            self.assertEqual(
+                run(f"let result = is_catalan({value});").get("result"),
+                False,
+                f"expected {value} to not be a Catalan number",
+            )
+
+    def test_is_catalan_matches_nth_catalan(self):
+        for position in range(1, 16):
+            value = run(f"let result = nth_catalan({position});").get("result")
+            self.assertEqual(
+                run(f"let result = is_catalan({value});").get("result"),
+                True,
+                f"expected nth_catalan({position}) == {value} to be Catalan",
+            )
+
+    def test_is_catalan_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_catalan(1.5);")
+        self.assertIn(
+            "is_catalan() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_catalan_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_catalan(true);")
+        self.assertIn(
+            "is_catalan() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_catalan_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_catalan(1, 2);")
+
+
 class TestSum(unittest.TestCase):
     def test_sum_of_ints_is_int(self):
         result = run("let result = sum([1, 2, 3]);").get("result")

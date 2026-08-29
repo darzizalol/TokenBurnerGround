@@ -2393,6 +2393,21 @@ def _nth_catalan(arguments: list, line: int, column: int) -> object:
     return math.comb(2 * index, index) // (index + 1)
 
 
+def _is_catalan(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_catalan", arguments, 1, line, column)
+    value = _require_int("is_catalan", arguments[0], line, column)
+    if value < 1:
+        return False
+    index = 0
+    while True:
+        candidate = math.comb(2 * index, index) // (index + 1)
+        if candidate == value:
+            return True
+        if candidate > value:
+            return False
+        index += 1
+
+
 def _sum(arguments: list, line: int, column: int) -> object:
     _require_arity("sum", arguments, 1, line, column)
     value = arguments[0]
@@ -4181,6 +4196,7 @@ _BUILTINS = {
     "factorial": _factorial,
     "binomial": _binomial,
     "nth_catalan": _nth_catalan,
+    "is_catalan": _is_catalan,
     "sum": _sum,
     "sum_by": _sum_by,
     "product": _product,

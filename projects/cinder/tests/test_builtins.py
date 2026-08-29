@@ -4334,6 +4334,79 @@ class TestIsRepdigit(unittest.TestCase):
             run("is_repdigit();")
 
 
+class TestNthRepdigit(unittest.TestCase):
+    def test_nth_repdigit_of_first_ten_positions(self):
+        expected = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 11}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_repdigit({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_repdigit_at_group_boundary(self):
+        expected = {18: 99, 19: 111, 20: 222}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_repdigit({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_repdigit_of_thirty_and_forty(self):
+        self.assertEqual(run("let result = nth_repdigit(30);").get("result"), 3333)
+        self.assertEqual(run("let result = nth_repdigit(40);").get("result"), 44444)
+
+    def test_nth_repdigit_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_repdigit(50);").get("result"), 555555
+        )
+
+    def test_nth_repdigit_agrees_with_is_repdigit(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_repdigit(nth_repdigit({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_repdigit({position}) to be a repdigit",
+            )
+
+    def test_nth_repdigit_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_repdigit(0);")
+        self.assertIn(
+            "nth_repdigit() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_repdigit_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_repdigit(-1);")
+        self.assertIn(
+            "nth_repdigit() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_repdigit_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_repdigit(1.5);")
+        self.assertIn(
+            "nth_repdigit() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_repdigit_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_repdigit(true);")
+        self.assertIn(
+            "nth_repdigit() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_repdigit_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_repdigit(1, 2);")
+
+
 class TestIsUndulating(unittest.TestCase):
     def test_is_undulating_of_three_digits(self):
         self.assertEqual(run("let result = is_undulating(121);").get("result"), True)

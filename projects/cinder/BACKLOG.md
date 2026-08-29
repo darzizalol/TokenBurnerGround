@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: range case values in `switch` statements (`case 1..10: { ... }`)
+## 1. Language: range case values in `switch` statements (`case 1..10: { ... }`) [claimed 2026-08-29T21:29:11Z]
 
 Build: `match` expressions support range patterns (`match (5) { 1..10 =>
 "small", _ => "large" }`, PR #318) via a dedicated containment check, but

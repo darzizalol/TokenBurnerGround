@@ -455,6 +455,9 @@ while (i < 10) {
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
   `is_repdigit` to test whether every decimal digit of an integer is the same,
+  `nth_repdigit` to return the repdigit found at a 1-indexed position via a sequential
+  candidate scan (repdigits are far sparser than semiprimes/abundant numbers — only 9
+  exist per digit-length), the value-returning sibling of `is_repdigit`'s membership test,
   `is_undulating` to test whether an integer's decimal digits strictly alternate between exactly two distinct values,
   `is_pernicious` to test whether an integer's binary popcount is itself prime (sits next to `is_evil`/`is_odious`
   as the third popcount-based predicate, negative input raises the same domain error they do),
@@ -560,7 +563,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_abundant` (PR #346)
+Actively developed, nightly. Recently landed: `nth_repdigit` (PR #347)
+— the repdigit predicate's own missing `nth_*` counterpart
+(`is_repdigit` tests membership but had no value-returning sibling),
+via a sequential candidate scan bounded to a `k <= 50` cross-check
+since repdigits are far sparser than semiprimes/abundant numbers (only
+9 exist per digit-length) — and before that `nth_abundant` (PR #346)
 — the divisor-sum cluster's own missing `nth_*` counterpart
 (`is_abundant` tests membership but had no value-returning sibling),
 via a sequential candidate scan since abundant numbers have no closed
@@ -568,17 +576,10 @@ form — and before that range case values in `switch` statements (PR
 #345) — fixing a real bug where a `RangeExpr` case value silently never
 matched instead of raising, by giving `switch` the same containment
 check `match`'s range patterns already use, instead of materializing
-the range to a list and comparing with `values_equal` — and before that
-`nth_pronic` (PR #344) — the one pronic-number closed form still
-missing now that `is_pronic` tests membership but has no
-value-returning sibling, via the same `k(k + 1)` shape `_is_pronic`'s
-own check already solves for, mirroring `nth_octagonal`'s one-line
-shape. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_repdigit` — the
-repdigit predicate's own missing `nth_*` counterpart, via the same
-sequential-scan shape (bounded to a `k <= 50` cross-check since
-repdigits are far sparser than semiprimes/abundant numbers),
-whole-value `as` binding in match list/map patterns
+the range to a list and comparing with `values_equal`. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): whole-value `as`
+binding in match list/map patterns
 (`match ([1, 2]) { [a, b] as whole => whole, _ => nil }`) — letting an
 arm bind the entire matched subject alongside whatever the pattern
 itself destructures, today possible only by giving up destructuring for
@@ -588,19 +589,22 @@ ordering strings already have via `<`/`<=`/`>`/`>=` to lists, a real
 gap today (`[1, 2] < [1, 3]` currently raises `CinderRuntimeError`
 instead of comparing), `is_disarium` — the digit-position-power-sum
 variant of `is_armstrong` (each digit raised to its own 1-indexed
-position instead of one shared exponent, e.g. `89 = 8^1 + 9^2`), and
+position instead of one shared exponent, e.g. `89 = 8^1 + 9^2`),
 `nth_kaprekar` — the k-th Kaprekar number by position (`is_kaprekar`
 tests membership but has no value-returning sibling), via the same
 sequential-scan shape but deliberately bounded to a `k <= 20`
 cross-check since Kaprekar numbers grow too fast for a `k <= 50` scan to
-stay fast, and a Python-style `else` clause on `while` loops
+stay fast, a Python-style `else` clause on `while` loops
 (`while (cond) { ... } else { ... }`, running exactly when the loop
 exits without an intervening `break`) — scoped to plain `while` only,
-not `do`-`while` or either `for` form. (Guards in
-`match` arms, `n if n > 0 => "positive"`, were attempted but closed
-after three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but
-not back in the active queue yet.)
+not `do`-`while` or either `for` form, and `is_smith_number` — a
+composite integer whose own digit sum equals the combined digit sum of
+its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
+digit_sum(2) = 4`), the digit-sum question `prime_factors` never got
+asked of it. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a recurring
+parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
+they're a real gap but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

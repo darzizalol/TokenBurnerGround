@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_repdigit` — the k-th repdigit by position
+## 1. Standard library: `nth_repdigit` — the k-th repdigit by position [claimed 2026-08-29T21:59:02Z]
 
 Build: `is_repdigit` (`cinder/builtins.py`, search `def _is_repdigit`)
 tests membership via `len(set(str(value))) == 1` (every decimal digit the

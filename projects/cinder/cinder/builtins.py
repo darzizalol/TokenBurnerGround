@@ -1520,6 +1520,16 @@ def _nth_octagonal(arguments: list, line: int, column: int) -> object:
     return value * (3 * value - 2)
 
 
+def _nth_nonagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_nonagonal", arguments, 1, line, column)
+    value = _require_int("nth_nonagonal", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_nonagonal() requires a positive integer, domain error", line, column
+        )
+    return value * (7 * value - 5) // 2
+
+
 def _is_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_prime", arguments, 1, line, column)
     value = _require_int("is_prime", arguments[0], line, column)
@@ -4153,6 +4163,7 @@ _BUILTINS = {
     "nth_hexagonal": _nth_hexagonal,
     "nth_heptagonal": _nth_heptagonal,
     "nth_octagonal": _nth_octagonal,
+    "nth_nonagonal": _nth_nonagonal,
     "is_prime": _is_prime,
     "nth_prime": _nth_prime,
     "is_composite": _is_composite,

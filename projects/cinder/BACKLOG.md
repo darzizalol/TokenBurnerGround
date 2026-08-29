@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_abundant` — the k-th abundant number by position
+## 1. Standard library: `nth_abundant` — the k-th abundant number by position [claimed 2026-08-29T21:42:27Z]
 
 Build: `is_abundant` (`cinder/builtins.py`, search `def _is_abundant`)
 tests membership via a proper-divisor-sum comparison, but has no

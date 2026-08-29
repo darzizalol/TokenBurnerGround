@@ -2477,6 +2477,69 @@ class TestIsHappyNumber(unittest.TestCase):
             run("is_happy_number(1, 2);")
 
 
+class TestNthHappyNumber(unittest.TestCase):
+    def test_nth_happy_number_of_first_five(self):
+        self.assertEqual(run("let result = nth_happy_number(1);").get("result"), 1)
+        self.assertEqual(run("let result = nth_happy_number(2);").get("result"), 7)
+        self.assertEqual(run("let result = nth_happy_number(3);").get("result"), 10)
+        self.assertEqual(run("let result = nth_happy_number(4);").get("result"), 13)
+        self.assertEqual(run("let result = nth_happy_number(5);").get("result"), 19)
+
+    def test_nth_happy_number_of_ten(self):
+        self.assertEqual(run("let result = nth_happy_number(10);").get("result"), 44)
+
+    def test_nth_happy_number_of_twenty(self):
+        self.assertEqual(run("let result = nth_happy_number(20);").get("result"), 100)
+
+    def test_nth_happy_number_agrees_with_is_happy_number(self):
+        for position in range(1, 21):
+            self.assertEqual(
+                run(
+                    f"let result = is_happy_number(nth_happy_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_happy_number({position}) to be a happy number",
+            )
+
+    def test_nth_happy_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_happy_number(0);")
+        self.assertIn(
+            "nth_happy_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_happy_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_happy_number(-1);")
+        self.assertIn(
+            "nth_happy_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_happy_number_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_happy_number(1.5);")
+        self.assertIn(
+            "nth_happy_number() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_happy_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_happy_number(true);")
+        self.assertIn(
+            "nth_happy_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_happy_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_happy_number();")
+
+    def test_nth_happy_number_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_happy_number(1, 2);")
+
+
 class TestIsSadNumber(unittest.TestCase):
     def test_is_sad_number_of_cycle_members(self):
         for value in (2, 3, 4):

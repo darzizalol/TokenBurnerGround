@@ -382,6 +382,7 @@ while (i < 10) {
   instead of `0, 1`) via generate-and-compare rather than a closed form,
   `is_happy_number` to test the happy-number digit-square-sum recurrence via set-based cycle detection,
   `is_sad_number` to test the direct complement of `is_happy_number` (cycles forever instead of reaching `1`),
+  `nth_happy_number` to return the happy number found at a 1-indexed position via a sequential candidate scan (happy numbers have no closed form), the value-returning sibling of `is_happy_number`'s membership test,
   `is_triangular` to test triangular-number membership via the same closed-form perfect-square technique as `is_fibonacci`,
   `is_pentagonal` to test pentagonal-number membership via the same closed-form technique plus a modular-residue check,
   `is_hexagonal` as the cluster's third member, testing hexagonal-number membership via the same closed-form technique,
@@ -547,37 +548,37 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_nonagonal` (PR #340)
-— the one figurate `nth_*` closed form still missing now that
-`is_nonagonal` had completed the membership-test side of the cluster,
-closing out the triangular..nonagonal `nth_*`/`is_*` pairing — and
-before that `is_twin_prime` (PR #339) — a gap in the prime-relationship
-cluster (`is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime` test
-other adjacency/structure relationships on primes, but none tested the
-classic twin-prime pairing until now) — and before that default values
-for trailing elements in match list patterns (`match ([1]) { [a, b = 0]
-=> a + b, _ => -1 }`, PR #338) — the match-pattern counterpart to `let`
-list destructuring's own trailing defaults, letting a shorter subject
-list still match instead of falling through the arm. See
+Actively developed, nightly. Recently landed: `nth_happy_number` (PR
+#341) — the happy-number cluster's own missing `nth_*` counterpart, via
+a sequential candidate scan since happy numbers have no closed form —
+and before that `nth_nonagonal` (PR #340) — the one figurate `nth_*`
+closed form still missing now that `is_nonagonal` had completed the
+membership-test side of the cluster, closing out the
+triangular..nonagonal `nth_*`/`is_*` pairing — and before that
+`is_twin_prime` (PR #339) — a gap in the prime-relationship cluster
+(`is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime` test other
+adjacency/structure relationships on primes, but none tested the
+classic twin-prime pairing until now). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_happy_number` —
-the happy-number cluster's own missing `nth_*` counterpart, via a
-sequential candidate scan since happy numbers have no closed form,
-default values in match map patterns (`match ({"a": 1}) { {a, b = 0} =>
-a + b, _ => -1 }`) — the map-pattern counterpart to match list patterns'
-own trailing defaults (PR #338), `nth_semiprime` — the semiprime pair's
-own missing `nth_*` counterpart, via the same sequential-scan shape
-since semiprimes have no closed form, `nth_pronic` — the one pronic-
-number closed form still missing now that `is_pronic` tests membership
-but has no value-returning sibling, via the same `k(k + 1)` shape
-`_is_pronic`'s own perfect-square-adjacent check already solves for,
-range case values in `switch` statements (`case 1..10: { ... }`) — fixing
-a real bug where a range case value silently never matches instead of
-raising, by giving `switch` the same containment check `match`'s range
-patterns already use, and `nth_abundant` — the divisor-sum cluster's own
-missing `nth_*` counterpart (`is_abundant` tests membership but has no
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): default values in
+match map patterns (`match ({"a": 1}) { {a, b = 0} => a + b, _ => -1
+}`) — the map-pattern counterpart to match list patterns' own trailing
+defaults (PR #338), `nth_semiprime` — the semiprime pair's own missing
+`nth_*` counterpart, via the same sequential-scan shape since
+semiprimes have no closed form, `nth_pronic` — the one pronic-number
+closed form still missing now that `is_pronic` tests membership but has
+no value-returning sibling, via the same `k(k + 1)` shape `_is_pronic`'s
+own perfect-square-adjacent check already solves for, range case values
+in `switch` statements (`case 1..10: { ... }`) — fixing a real bug
+where a range case value silently never matches instead of raising, by
+giving `switch` the same containment check `match`'s range patterns
+already use, `nth_abundant` — the divisor-sum cluster's own missing
+`nth_*` counterpart (`is_abundant` tests membership but has no
 value-returning sibling), via the same sequential-scan shape since
-abundant numbers have no closed form.
+abundant numbers have no closed form, and `nth_repdigit` — the repdigit
+predicate's own missing `nth_*` counterpart, via the same
+sequential-scan shape (bounded to a `k <= 50` cross-check since
+repdigits are far sparser than semiprimes/abundant numbers).
 The match-map-pattern-defaults task is a further step in the arc opened
 by PR #304 and can land in either order relative to its stdlib/switch
 siblings; it is written to adapt to whichever has already landed by the

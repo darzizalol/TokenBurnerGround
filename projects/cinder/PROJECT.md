@@ -149,18 +149,17 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): `nth_nonagonal`
-(#340) — the one figurate `nth_*` closed form still missing now that
-`is_nonagonal` (#334) had completed the membership-test side of the
-cluster, closing out the triangular..nonagonal `nth_*`/`is_*` pairing —
-and before that `is_twin_prime` (#339) — filling a gap in the
+Recently landed (see `CHANGELOG.md` for the full list): `nth_happy_number`
+(#341) — the happy-number cluster's own missing `nth_*` counterpart, via
+a sequential candidate scan (`nth_prime`'s own shape) rather than a
+closed form since happy numbers have none — and before that
+`nth_nonagonal` (#340) — the one figurate `nth_*` closed form still
+missing now that `is_nonagonal` (#334) had completed the membership-test
+side of the cluster, closing out the triangular..nonagonal `nth_*`/`is_*`
+pairing — and before that `is_twin_prime` (#339) — filling a gap in the
 prime-relationship cluster (`is_semiprime`/`is_sphenic`/`is_emirp`/
 `is_circular_prime` already test other adjacency/structure relationships
-on primes, but none tested the classic twin-prime pairing before this)
-— and before that default values for trailing elements in match list
-patterns (#338) — the match-pattern counterpart to `let` list
-destructuring's own trailing defaults (#244), letting a shorter subject
-list still match instead of falling through the arm.
+on primes, but none tested the classic twin-prime pairing before this).
 Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
 but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
 all the same recurring bug in the bare-arrow/guard `=>` disambiguation
@@ -168,18 +167,15 @@ all the same recurring bug in the bare-arrow/guard `=>` disambiguation
 suggested next approach; still not requeued.
 
 `BACKLOG.md` carries the active queue, restocked to six tasks this pass
-(it had drained to four with no restock across tonight's fifth-cycle
-merges), PR queue empty going into the next cycle. Top: `nth_happy_number`,
-the happy-number cluster's own missing `nth_*` counterpart, via a
-sequential candidate scan (`nth_prime`'s own shape) rather than a closed
-form since happy numbers have none. Behind it: default values in match
-map patterns (`{a, b = 0} => ...`), the map-pattern counterpart to the
-now-landed list-pattern defaults task (#338), widening the same
-`_match_map_pattern_entry` production and the interpreter `map_pattern`
-branch rest capture (#335) already touches — `nth_semiprime`, the
-semiprime pair's own missing `nth_*` counterpart (`is_semiprime` has
-tested membership for a long time but never got a value-returning
-sibling), via the same sequential-scan shape as
+(it had drained to its 5-task floor after tonight's sixth-cycle merge,
+with no restock yet), PR queue empty going into the next cycle. Top:
+default values in match map patterns (`{a, b = 0} => ...`), the
+map-pattern counterpart to the now-landed list-pattern defaults task
+(#338), widening the same `_match_map_pattern_entry` production and the
+interpreter `map_pattern` branch rest capture (#335) already touches —
+`nth_semiprime`, the semiprime pair's own missing `nth_*` counterpart
+(`is_semiprime` has tested membership for a long time but never got a
+value-returning sibling), via the same sequential-scan shape as
 `nth_prime`/`nth_happy_number` since semiprimes have no closed form —
 `nth_pronic`, the one pronic-number closed form still missing
 (`is_pronic` has tested membership via
@@ -187,17 +183,20 @@ sibling), via the same sequential-scan shape as
 a value-returning sibling), via the same `k(k + 1)` closed form
 `_is_pronic`'s own check already solves for, mirroring `nth_octagonal`'s
 one-line shape — range case values in `switch` statements
-(`case 1..10: { ... }`), the newest depth task, fixing a real bug: a
-`RangeExpr` case value today silently materializes into a list and can
-never equal a scalar scrutinee, so `switch` needs the same
-containment-check treatment `match`'s own `range_pattern` branch already
-has — and `nth_abundant`, the newest breadth task, the divisor-sum
-cluster's own missing `nth_*` counterpart (`is_abundant` has tested
-membership for a long time but never got a value-returning sibling),
-via the same sequential-scan shape as `nth_prime`/`nth_happy_number`
-since abundant numbers have no closed form. These last two bring the
-queue back from four tasks (drained with no restock across tonight's
-merges) to its 6-task target.
+(`case 1..10: { ... }`), fixing a real bug: a `RangeExpr` case value
+today silently materializes into a list and can never equal a scalar
+scrutinee, so `switch` needs the same containment-check treatment
+`match`'s own `range_pattern` branch already has — `nth_abundant`, the
+divisor-sum cluster's own missing `nth_*` counterpart (`is_abundant` has
+tested membership for a long time but never got a value-returning
+sibling), via the same sequential-scan shape since abundant numbers have
+no closed form — and `nth_repdigit`, the newest breadth task, the
+repdigit predicate's own missing `nth_*` counterpart, via the same
+sequential-scan shape but deliberately bounded to a `k <= 50`
+cross-check in its acceptance criteria: repdigits are far sparser than
+semiprimes/abundant numbers (only 9 exist per digit-length), so the scan
+cost grows exponentially with position rather than linearly. This last
+task restocks the queue from its 5-task floor back to its 6-task target.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -209,29 +208,29 @@ list patterns (#330), per-key rename in match map patterns (#332), rest
 capture in match map patterns (#335), nested patterns as map pattern
 values (#337), and default values for trailing elements in match list
 patterns (#338) are the follow-ups that have landed so far; default
-values in match map patterns are queued behind `nth_happy_number`,
-written to adapt to whatever the merged code actually looks like by the
-time it's claimed — see the task's own "Ordering note". `let` list/map
+values in match map patterns are now the top of the backlog, written to
+adapt to whatever the merged code actually looks like by the time it's
+claimed — see the task's own "Ordering note". `let` list/map
 destructuring has long supported trailing defaults, and match list
 patterns now have the equivalent (#338); match map patterns' own
 defaults are queued next, proving out the same shape on the map side.
 Guards remain a real gap too, but are deliberately not requeued yet.
 
-The seventeenth pass (2026-08-29) archived the PR merged since the last
-grooming pass (#338 default values for trailing elements in match list
-patterns) and restocked one task — `nth_pronic` (breadth), following
-alternation since the task that just landed was depth — bringing the
-queue back to its usual 6-task ceiling (`is_twin_prime`, `nth_nonagonal`,
-`nth_happy_number`, `nth_semiprime`, `nth_pronic` are breadth;
-map-pattern defaults is depth). `main` is green (3772 tests, 28
-subtests), PR queue empty. This pass also refreshed this section,
-`README.md`'s "Features" bullet (which still said "no list/map-pattern
-defaults" after #338 landed) and its "Status & roadmap" section, both of
-which had gone stale after #338 landed without a docs update (left to
-the Architect by design — see each landed task's own "Once merged"
-note). **The next grooming pass should let the queue drain before
-restocking further**, picking whichever kind keeps breadth/depth
-parity — alternation is the default rhythm, not a hard rule.
+The eighteenth pass (2026-08-30) archived the three PRs merged since the
+last grooming pass (#339 `is_twin_prime`, #340 `nth_nonagonal`, #341
+`nth_happy_number` — all breadth) and restocked one task —
+`nth_repdigit` (breadth), bringing the queue from its 5-task floor back
+to its usual 6-task ceiling (`nth_semiprime`, `nth_pronic`,
+`nth_abundant`, `nth_repdigit` are breadth; map-pattern defaults and
+`switch` range cases are depth). `main` is green (3799 tests), PR queue
+empty. This pass also refreshed this section, `README.md`'s "Builtins"
+bullet (missing `nth_happy_number` after #341 landed) and its "Status &
+roadmap" section, both of which had gone stale after #339/#340/#341
+landed without a docs update (left to the Architect by design — see
+each landed task's own "Once merged" note). **The next grooming pass
+should let the queue drain before restocking further**, picking
+whichever kind keeps breadth/depth parity — alternation is the default
+rhythm, not a hard rule.
 
 ## History
 

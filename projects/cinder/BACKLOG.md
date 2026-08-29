@@ -466,6 +466,75 @@ the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_pronic` — the k-th pronic number by position
+
+Build: `is_pronic` (`cinder/builtins.py`) tests membership via a
+perfect-square-adjacent check, but has no value-returning `nth_*`
+counterpart the way `nth_octagonal`/`is_octagonal` and the other
+closed-form clusters do. Pronic numbers (also called oblong or
+heteromecic numbers) do have a simple closed form, so this follows
+`nth_octagonal`'s shape (search `def _nth_octagonal`) rather than a
+sequential scan. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_pronic(5));'
+# -> <eval>:1:7: undefined name 'nth_pronic'
+```
+
+Pronic numbers follow `N(k) = k * (k + 1)` — this is exactly the
+relationship `_is_pronic`'s own membership check already verifies
+against (search `def _is_pronic`, `cinder/builtins.py`:
+`root = math.isqrt(value)`, `root * (root + 1) == value`). Add to
+`cinder/builtins.py`, registered directly after `_is_pronic` (search
+`def _is_pronic`, immediately before `def _is_squarefree`), mirroring
+`_nth_octagonal`'s own one-line shape:
+```python
+def _nth_pronic(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_pronic", arguments, 1, line, column)
+    value = _require_int("nth_pronic", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_pronic() requires a positive integer, domain error", line, column
+        )
+    return value * (value + 1)
+```
+Also register the new dict entry (search `"is_pronic": _is_pronic,`, add
+`"nth_pronic": _nth_pronic,` directly after it, before `"is_squarefree":
+_is_squarefree,`).
+
+Note: this convention starts at `k = 1` giving `2` (skipping the trivial
+`k = 0` case, `0 * 1 = 0`), the same way `nth_triangular(1)` is `1` and
+skips `T(0) = 0` even though `is_triangular(0)` is also `true` — matching
+every other figurate `nth_*`/`is_*` pair in this file.
+
+Acceptance criteria:
+- `nth_pronic(1);`, `nth_pronic(2);`, `nth_pronic(3);`, `nth_pronic(4);`
+  are `2`, `6`, `12`, `20` — the first four positive pronic numbers.
+- `nth_pronic(10);` is `110` (`10 * 11`).
+- `nth_pronic(100);` is `10100` (`100 * 101`).
+- `is_pronic(nth_pronic(k));` is `true` for every `k` from `1` to `100`
+  — cross-check against the existing `is_pronic` builtin directly,
+  mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own shape.
+- `nth_pronic(0);` and `nth_pronic(-1);` raise `CinderRuntimeError`
+  matching `"nth_pronic() requires a positive integer, domain error"`.
+- `nth_pronic(1.5);` raises `CinderRuntimeError` matching
+  `"nth_pronic() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (register directly after `is_pronic`,
+search for the current line number), `tests/test_builtins.py` (model on
+`class TestNthOctagonal`, search that name, for the
+positive/domain/type-error/cross-check test shapes, and `class
+TestIsPronic` for the pronic-number membership behavior). Once merged,
+`README.md`'s Builtins bullet needs `nth_pronic` added near `is_pronic`,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" bullet needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

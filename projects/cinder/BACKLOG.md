@@ -11,93 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_happy_number` — the k-th happy number by position [claimed 2026-08-29T16:23:28Z]
-
-Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
-membership via the digit-square-sum cycle, but neither has a
-value-returning `nth_*` counterpart the way the figurate-number and prime
-clusters do (`nth_prime`/`is_prime`, `nth_triangular`/`is_triangular`,
-etc.) — happy numbers have no closed form, so this follows `nth_prime`'s
-own shape (search `def _nth_prime`): a sequential candidate scan with a
-`count`/`candidate` loop, not an inverse formula. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_happy_number(5));'
-# -> <eval>:1:7: undefined name 'nth_happy_number'
-```
-
-Add to `cinder/builtins.py`, registered directly after `_is_sad_number`
-(search `def _is_sad_number`, immediately before `def _collatz_length`)
-— keeps the happy/sad-number cluster together, mirroring how
-`is_catalan` sits directly after `nth_catalan`:
-```python
-def _nth_happy_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_happy_number", arguments, 1, line, column)
-    value = _require_int("nth_happy_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_happy_number() requires a positive integer, domain error", line, column
-        )
-
-    def _is_happy(candidate: int) -> bool:
-        seen = set()
-        while candidate != 1:
-            if candidate in seen:
-                return False
-            seen.add(candidate)
-            candidate = sum(int(digit) ** 2 for digit in str(candidate))
-        return True
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_happy(candidate):
-            count += 1
-    return candidate
-```
-This mirrors `_nth_prime`'s own `count`/`candidate` scanning loop exactly,
-just swapping the primality check for `_is_happy_number`'s cycle-detection
-logic (reimplemented locally as a nested helper, matching how
-`is_twin_prime`/`is_circular_prime` reimplement trial division locally
-rather than sharing a module-level helper — this file's existing
-convention for small local predicates). Also register the new dict entry
-(search `"is_sad_number": _is_sad_number,`, add `"nth_happy_number":
-_nth_happy_number,` directly after it, before `"collatz_length":
-_collatz_length,`).
-
-Acceptance criteria:
-- `nth_happy_number(1);`, `nth_happy_number(2);`, `nth_happy_number(3);`,
-  `nth_happy_number(4);`, `nth_happy_number(5);` are `1`, `7`, `10`, `13`,
-  `19` — the first five happy numbers by position.
-- `nth_happy_number(10);` is `44`.
-- `nth_happy_number(20);` is `100`.
-- `is_happy_number(nth_happy_number(k));` is `true` for every `k` from `1`
-  to `20` — cross-check against the existing `is_happy_number` builtin
-  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own
-  shape.
-- `nth_happy_number(0);` and `nth_happy_number(-1);` raise
-  `CinderRuntimeError` matching `"nth_happy_number() requires a positive
-  integer, domain error"`.
-- `nth_happy_number(1.5);` raises `CinderRuntimeError` matching
-  `"nth_happy_number() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`is_sad_number`, search for the current line number), `tests/test_builtins.py`
-(model on `class TestNthPrime`, search that name, for the
-positive/domain/type-error/cross-check test shapes, and `class
-TestIsHappyNumber` for the happy-number cycle behavior). Once merged,
-`README.md`'s Builtins bullet needs `nth_happy_number` added near
-`is_happy_number`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 1. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
 = 0] => ...` (PR #338, already merged — its task explicitly flagged map-
@@ -230,7 +144,7 @@ task.
 
 ---
 
-## 3. Standard library: `nth_semiprime` — the k-th semiprime by position
+## 2. Standard library: `nth_semiprime` — the k-th semiprime by position
 
 Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
 factor-count trial division, but has no value-returning `nth_*`
@@ -319,7 +233,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_pronic` — the k-th pronic number by position
+## 3. Standard library: `nth_pronic` — the k-th pronic number by position
 
 Build: `is_pronic` (`cinder/builtins.py`) tests membership via a
 perfect-square-adjacent check, but has no value-returning `nth_*`
@@ -388,7 +302,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: range case values in `switch` statements (`case 1..10: { ... }`)
+## 4. Language: range case values in `switch` statements (`case 1..10: { ... }`)
 
 Build: `match` expressions support range patterns (`match (5) { 1..10 =>
 "small", _ => "large" }`, PR #318) via a dedicated containment check, but
@@ -476,7 +390,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_abundant` — the k-th abundant number by position
+## 5. Standard library: `nth_abundant` — the k-th abundant number by position
 
 Build: `is_abundant` (`cinder/builtins.py`, search `def _is_abundant`)
 tests membership via a proper-divisor-sum comparison, but has no

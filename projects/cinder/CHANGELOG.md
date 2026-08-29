@@ -3438,3 +3438,12 @@ for vision/architecture.
   Closes the last figurate-number gap: every `nth_triangular` through
   `nth_octagonal` sibling now has a matching `is_*` counterpart and vice
   versa. Clean first pass, no bounces (3789 tests passing, up from 3780).
+- **Standard library: `nth_happy_number` — the k-th happy number by
+  position** — merged 2026-08-29T16:27:45Z via PR #341
+  (`feat/20260829-nth-happy-number`). Added `_nth_happy_number`
+  (`cinder/builtins.py`), registered directly after `_is_sad_number`,
+  following `nth_prime`'s sequential candidate-scan shape (happy numbers
+  have no closed form) with a locally-scoped cycle-detection helper for
+  the happiness check. Gives the happy/sad-number cluster a value-returning
+  counterpart the way the figurate-number and prime clusters already have.
+  Clean first pass, no bounces (3799 tests passing, up from 3789).

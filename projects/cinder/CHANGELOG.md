@@ -3429,3 +3429,12 @@ for vision/architecture.
   gap in the `is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime`
   adjacency/structure cluster. Clean first pass, no bounces (3780 tests
   passing, up from 3772).
+- **Standard library: `nth_nonagonal` — the k-th nonagonal number by
+  position** — merged 2026-08-29T16:11:34Z via PR #340
+  (`feat/20260829-nth-nonagonal`). Added `_nth_nonagonal`
+  (`cinder/builtins.py`), registered directly after `_nth_octagonal`,
+  implementing the closed form `N(k) = k(7k - 5)/2` — the same formula
+  `_is_nonagonal`'s own membership check already verifies against.
+  Closes the last figurate-number gap: every `nth_triangular` through
+  `nth_octagonal` sibling now has a matching `is_*` counterpart and vice
+  versa. Clean first pass, no bounces (3789 tests passing, up from 3780).

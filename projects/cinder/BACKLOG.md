@@ -11,76 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_nonagonal` — the k-th nonagonal number by position [claimed 2026-08-29T16:09:03Z]
-
-Build: `is_nonagonal` (PR #334) just closed the triangular..nonagonal
-`is_*` cluster, but it left a new, smaller gap behind it —
-`nth_triangular` through `nth_octagonal` all have a matching `nth_*`
-closed-form sibling (`nth_pentagonal`/`nth_hexagonal`/`nth_heptagonal`/
-`nth_octagonal`), and `nth_catalan`/`is_catalan` established the same
-`nth_*`-needs-`is_*`-and-vice-versa convention for a different cluster,
-but nonagonal is the one figurate shape with an `is_*` predicate and no
-`nth_*` value-returning counterpart. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_nonagonal(5));'
-# -> <eval>:1:7: undefined name 'nth_nonagonal'
-```
-
-Nonagonal numbers follow the same closed form as their pentagonal/
-hexagonal/heptagonal/octagonal siblings, `N(k) = k(7k - 5)/2` — this is
-exactly the formula `_is_nonagonal`'s own membership check already
-verifies against (search `def _is_nonagonal`, `cinder/builtins.py`:
-`candidate = 56 * value + 25`, `root = math.isqrt(candidate)`,
-`root * root == candidate and (root + 5) % 14 == 0`, which is the
-perfect-square/modular-residue test derived from solving `N(k) = n` for
-`k`). Add to `cinder/builtins.py`, registered directly after
-`_nth_octagonal` (search `def _nth_octagonal`, immediately before
-`def _is_prime`), mirroring `_nth_octagonal`'s own shape exactly:
-```python
-def _nth_nonagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_nonagonal", arguments, 1, line, column)
-    value = _require_int("nth_nonagonal", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_nonagonal() requires a positive integer, domain error", line, column
-        )
-    return value * (7 * value - 5) // 2
-```
-Also register the new dict entry (search `"nth_octagonal":
-_nth_octagonal,`, add `"nth_nonagonal": _nth_nonagonal,` directly after
-it, before `"is_prime": _is_prime,`).
-
-Acceptance criteria:
-- `nth_nonagonal(1);`, `nth_nonagonal(2);`, `nth_nonagonal(3);`,
-  `nth_nonagonal(4);` are `1`, `9`, `24`, `46` — the first four nonagonal
-  numbers.
-- `nth_nonagonal(10);` is `325`.
-- `nth_nonagonal(100);` is `34750` (`100 * (700 - 5) / 2`).
-- `is_nonagonal(nth_nonagonal(k));` is `true` for every `k` from `1` to
-  `100` — cross-check against the existing `is_nonagonal` builtin
-  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s own
-  shape.
-- `nth_nonagonal(0);` and `nth_nonagonal(-1);` raise `CinderRuntimeError`
-  matching `"nth_nonagonal() requires a positive integer, domain error"`.
-- `nth_nonagonal(1.5);` raises `CinderRuntimeError` matching
-  `"nth_nonagonal() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`nth_octagonal`, search for the current line number), `tests/test_builtins.py`
-(model on `class TestNthOctagonal`, search that name, for the
-positive/domain/type-error/cross-check test shapes). Once merged,
-`README.md`'s Builtins bullet needs `nth_nonagonal` added near
-`is_nonagonal`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both to
-the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_happy_number` — the k-th happy number by position
+## 1. Standard library: `nth_happy_number` — the k-th happy number by position
 
 Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
 membership via the digit-square-sum cycle, but neither has a
@@ -166,7 +97,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 2. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
 = 0] => ...` (PR #338, already merged — its task explicitly flagged map-
@@ -299,7 +230,7 @@ task.
 
 ---
 
-## 4. Standard library: `nth_semiprime` — the k-th semiprime by position
+## 3. Standard library: `nth_semiprime` — the k-th semiprime by position
 
 Build: `is_semiprime` (`cinder/builtins.py`) tests membership via a
 factor-count trial division, but has no value-returning `nth_*`
@@ -388,7 +319,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_pronic` — the k-th pronic number by position
+## 4. Standard library: `nth_pronic` — the k-th pronic number by position
 
 Build: `is_pronic` (`cinder/builtins.py`) tests membership via a
 perfect-square-adjacent check, but has no value-returning `nth_*`

@@ -199,7 +199,7 @@ the parser should reject a `=` in those positions the same way it
 already rejects any other unexpected token there (no special-casing
 needed — the `_match_list_pattern`/`_consume(RBRACKET, ...)` machinery
 already errors cleanly on a stray `=`). Defaults on match *map*
-patterns are a separate task (task 8 below) — out of scope here.
+patterns are a separate task (task 6 below) — out of scope here.
 
 `_match_list_pattern_entry` (`cinder/parser.py`, search `def
 _match_list_pattern_entry`) currently returns a single value per entry
@@ -576,7 +576,7 @@ the Architect's next grooming pass, not this task.
 ## 6. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
-= 0] => ...` (see task 4 in this backlog, which explicitly flags map-
+= 0] => ...` (see task 2 in this backlog, which explicitly flags map-
 pattern defaults as "a separate, not-yet-queued task"), and `let` map
 destructuring has supported per-key defaults for a long time (`let {a, b
 = 5} = expr;`, PR #244) — a map missing a key still binds successfully,
@@ -593,15 +593,15 @@ python3 -m cinder.cli eval 'print(match ({"a": 1}) { {a, b = 0} => a + b, _ => -
 landed) — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
 production and the same interpreter `map_pattern` match branch rest
 capture touches (`arm.map_rest` handling).
-Unlike task 4 (list defaults), this task does **not** need to check
+Unlike task 2 (list defaults), this task does **not** need to check
 whether all pattern keys are present up front the way list patterns check
 length — map patterns already match on a key subset (extra keys in the
 subject beyond the pattern are always fine, no rest needed), so adding
 defaults only relaxes which keys are *required*.
 
 **Scope note:** only a bare identifier or renamed binding (`a` or `a: x`)
-may carry a default — mirroring task 4's "flat-capability-first" scope
-restriction exactly. If task 3 (nested map-pattern values) has also
+may carry a default — mirroring task 2's "flat-capability-first" scope
+restriction exactly. If task 1 (nested map-pattern values) has also
 landed by the time this is claimed, a nested `{...}`/`[...]` binding
 carrying a default stays out of scope; only add the `= expr` check in
 the plain-identifier branch of `_match_map_pattern_entry`, not after a
@@ -661,7 +661,7 @@ default when a key is missing, mirroring `_bind_map_destructure`'s own
 Default expressions are evaluated in `arm_env`, left-to-right in
 `arm.map_pattern` order, so an earlier binding in the same pattern is
 visible to a later default — mirroring `_bind_map_destructure`'s own
-progressive-`env` evaluation and task 4's identical left-to-right
+progressive-`env` evaluation and task 2's identical left-to-right
 convention for list-pattern defaults.
 
 Acceptance criteria:

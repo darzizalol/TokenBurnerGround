@@ -179,11 +179,15 @@ while (i < 10) {
   through — not raising — on a missing key or non-map subject), nested
   list patterns (`match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0
   }`, a list-pattern element may itself be a list pattern to arbitrary
-  depth, including nested rest capture), and per-key rename in match map
+  depth, including nested rest capture), per-key rename in match map
   patterns (`match ({"a": 1, "b": 2}) { {a: x, b} => x + b, _ => 0 }`,
   the map-pattern counterpart to `let` map destructuring's own per-key
-  rename, composable with every other map-pattern capability) for now
-  (no map-pattern rest capture, map-pattern value nesting, or guards yet
+  rename, composable with every other map-pattern capability), and rest
+  capture in match map patterns (`match ({"a": 1, "b": 2, "c": 3}) { {a,
+  ...rest} => rest, _ => 0 }`, the same leftover-keys-into-a-dict
+  capability list patterns already have via `[a, ...rest]`, composable
+  with per-key rename in the same pattern) for now
+  (no map-pattern value nesting, list/map-pattern defaults, or guards yet
   — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
@@ -356,6 +360,7 @@ while (i < 10) {
   `nth_lucas` to return the Lucas number found at a 1-indexed position, the same question for the Lucas sequence, the value-returning sibling of `is_lucas_number`'s membership test,
   `binomial` to compute the binomial coefficient (`n` choose `k`), the combinatorics question built on top of `factorial`,
   `nth_catalan` to return the Catalan number found at a 1-indexed position, a thin composition of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`, `k` the 0-indexed Catalan index),
+  `is_catalan` to test Catalan-number membership via a bounded iterative search rather than a closed form, the membership-test sibling of `nth_catalan`,
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
   `is_powerful_number` to test whether every prime factor of an integer appears with exponent `2` or more,
@@ -531,52 +536,45 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_nonagonal` — the sixth
-and final figurate-number membership test, completing the
-triangular..nonagonal cluster — and before that
-`combinations_with_replacement` (#333) — the third and last member of
-itertools' "selections" trio (`permutations`, `combinations`,
+Actively developed, nightly. Recently landed: rest capture in match map
+patterns (`match ({"a": 1, "b": 2, "c": 3}) { {a, ...rest} => rest, _ =>
+0 }`, PR #335) — the same leftover-keys-into-a-dict capability list
+patterns already have via `[a, ...rest]`, closing the last
+flat-list-vs-flat-map gap — and `is_catalan` (PR #336) — the one `nth_*`
+builtin (`nth_catalan`) that was still missing its `is_*` membership
+counterpart, via a bounded iterative search rather than a closed form
+since Catalan numbers have no simple algebraic membership test — and
+before that `is_nonagonal` — the sixth and final figurate-number
+membership test, completing the triangular..nonagonal cluster — and
+before that `combinations_with_replacement` (#333) — the third and last
+member of itertools' "selections" trio (`permutations`, `combinations`,
 `combinations_with_replacement`), sitting directly next to
-`combinations` the same way `power_set` sits next to `binomial` — and
-before that per-key rename in match map patterns (`match ({"a": 1, "b":
-2}) { {a: x, b} => x + b, _ => 0 }`) — a map pattern's bound name may
-now differ from its key, the map-pattern counterpart to `let` map
-destructuring's own per-key rename — and before that nested list
-patterns in `match` arms (`match ([1, [2, 3]]) { [a, [b, c]] => a + b +
-c, _ => 0 }`) — a list-pattern element may itself be a list pattern to
-arbitrary depth, the last flat-vs-nested gap list patterns had. See
+`combinations` the same way `power_set` sits next to `binomial`. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-In flight: rest capture in match map patterns (`match ({"a": 1, "b": 2,
-"c": 3}) { {a, ...rest} => rest, _ => 0 }`) — the same
-leftover-keys-into-a-dict capability list patterns already have via
-`[a, ...rest]`, closing the last flat-list-vs-flat-map gap — is out for
-review as PR #335. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`is_catalan` — the one `nth_*` builtin (`nth_catalan`) still missing its
-`is_*` membership counterpart, via a bounded iterative search rather
-than a closed form since Catalan numbers have no simple algebraic
-membership test, nested patterns as map pattern values (`match ({"a": 1,
-"b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 }`) — the map-pattern
-counterpart to nested list patterns, closing the last flat-vs-nested gap
-between match map patterns and `let` destructuring, default values for
-trailing elements in match list patterns (`match ([1]) { [a, b = 0] =>
-a + b, _ => -1 }`) — the match-pattern counterpart to `let` list
-destructuring's own trailing defaults, letting a shorter subject list
-still match instead of falling through the arm, `is_twin_prime` — a gap
-in the prime-relationship cluster (`is_semiprime`/`is_sphenic`/
-`is_emirp`/`is_circular_prime` test other adjacency/structure
-relationships on primes, but none test the classic twin-prime pairing
-yet), `nth_nonagonal` — the one figurate `nth_*` closed form still
-missing now that `is_nonagonal` completed the membership-test side of
-the cluster, `nth_happy_number` — the happy-number cluster's own missing
-`nth_*` counterpart, via a sequential candidate scan since happy numbers
-have no closed form, and default values in match map patterns (`match
-({"a": 1}) { {a, b = 0} => a + b, _ => -1 }`) — the map-pattern
-counterpart to match list patterns' own trailing defaults.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): nested patterns as map
+pattern values (`match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c,
+_ => 0 }`) — the map-pattern counterpart to nested list patterns,
+closing the last flat-vs-nested gap between match map patterns and
+`let` destructuring, now that rest capture (#335) has landed to unblock
+it, default values for trailing elements in match list patterns (`match
+([1]) { [a, b = 0] => a + b, _ => -1 }`) — the match-pattern counterpart
+to `let` list destructuring's own trailing defaults, letting a shorter
+subject list still match instead of falling through the arm,
+`is_twin_prime` — a gap in the prime-relationship cluster
+(`is_semiprime`/`is_sphenic`/`is_emirp`/`is_circular_prime` test other
+adjacency/structure relationships on primes, but none test the classic
+twin-prime pairing yet), `nth_nonagonal` — the one figurate `nth_*`
+closed form still missing now that `is_nonagonal` completed the
+membership-test side of the cluster, `nth_happy_number` — the
+happy-number cluster's own missing `nth_*` counterpart, via a sequential
+candidate scan since happy numbers have no closed form, and default
+values in match map patterns (`match ({"a": 1}) { {a, b = 0} => a + b,
+_ => -1 }`) — the map-pattern counterpart to match list patterns' own
+trailing defaults.
 The pattern-matching tasks are all steps in the arc opened by PR #304 and
-mostly can land in either order relative to their siblings (nested
-map-pattern values is the exception — it needs rest capture to land
-first, since rename (#332) has already landed); each is written to adapt
-to whichever has already landed by the time it's claimed. (Guards in
+mostly can land in either order relative to their siblings; each is
+written to adapt to whichever has already landed by the time it's
+claimed. (Guards in
 `match` arms, `n if
 n > 0 => "positive"`, were attempted but closed after three failed
 review rounds over a recurring parser bug — see `BACKLOG.md`'s

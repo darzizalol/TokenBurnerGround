@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`)
+## 1. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`) [claimed 2026-08-29T14:20:31Z]
 
 Build: nested list patterns (PR #330) closed the flat-vs-nested gap for
 list-pattern elements — an element can now itself be a list pattern to

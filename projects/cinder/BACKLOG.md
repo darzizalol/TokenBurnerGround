@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_pronic` — the k-th pronic number by position
+## 1. Standard library: `nth_pronic` — the k-th pronic number by position [claimed 2026-08-29T21:17:57Z]
 
 Build: `is_pronic` (`cinder/builtins.py`) tests membership via a
 perfect-square-adjacent check, but has no value-returning `nth_*`

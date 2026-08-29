@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 1. Language: default values in match map patterns (`{a, b = 0} => ...`) [claimed 2026-08-29T16:40:51Z]
 
 Build: match list patterns already support trailing defaults via `[a, b
 = 0] => ...` (PR #338, already merged — its task explicitly flagged map-

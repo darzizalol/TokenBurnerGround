@@ -149,35 +149,29 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): default values
-in match map patterns (#342) — the map-pattern counterpart to the
-list-pattern defaults task (#338), widening the same
-`_match_map_pattern_entry` production and the interpreter `map_pattern`
-branch rest capture (#335) already touches — and before that
-`nth_happy_number` (#341) — the happy-number cluster's own missing
-`nth_*` counterpart, via a sequential candidate scan (`nth_prime`'s own
-shape) rather than a closed form since happy numbers have none — and
-before that `nth_nonagonal` (#340) — the one figurate `nth_*` closed
-form still missing now that `is_nonagonal` (#334) had completed the
-membership-test side of the cluster, closing out the
-triangular..nonagonal `nth_*`/`is_*` pairing. Guards in `match` arms
-(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
-straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug
-in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
-`## Graveyard` for the full postmortem and the suggested next approach;
-still not requeued.
+Recently landed (see `CHANGELOG.md` for the full list): `nth_semiprime`
+(#343) — the semiprime pair's own missing `nth_*` counterpart, via a
+sequential candidate scan (`nth_prime`'s own shape) since semiprimes
+have no closed form — and before that default values in match map
+patterns (#342) — the map-pattern counterpart to the list-pattern
+defaults task (#338), widening the same `_match_map_pattern_entry`
+production and the interpreter `map_pattern` branch rest capture (#335)
+already touches — and before that `nth_happy_number` (#341) — the
+happy-number cluster's own missing `nth_*` counterpart, via the same
+sequential-scan shape since happy numbers have no closed form either.
+Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
+but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
+all the same recurring bug in the bare-arrow/guard `=>` disambiguation
+— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
+suggested next approach; still not requeued.
 
 `BACKLOG.md` carries the active queue, restocked to six tasks this pass
-(it had drained to its 5-task floor after #342 landed, with no restock
-yet), PR queue empty going into the next cycle. Top: `nth_semiprime`,
-the semiprime pair's own missing `nth_*` counterpart (`is_semiprime` has
-tested membership for a long time but never got a value-returning
-sibling), via the same sequential-scan shape as `nth_prime`/
-`nth_happy_number` since semiprimes have no closed form — `nth_pronic`,
-the one pronic-number closed form still missing (`is_pronic` has tested
-membership via `root = isqrt(n); root * (root + 1) == n` for a long time
-but never got a value-returning sibling), via the same `k(k + 1)` closed
-form `_is_pronic`'s own check already solves for, mirroring
+(it had drained to its 5-task floor after #343 landed, with no restock
+yet), PR queue empty going into the next cycle. Top: `nth_pronic`, the
+one pronic-number closed form still missing (`is_pronic` has tested
+membership via `root = isqrt(n); root * (root + 1) == n` for a long
+time but never got a value-returning sibling), via the same `k(k + 1)`
+closed form `_is_pronic`'s own check already solves for, mirroring
 `nth_octagonal`'s one-line shape — range case values in `switch`
 statements (`case 1..10: { ... }`), fixing a real bug: a `RangeExpr`
 case value today silently materializes into a list and can never equal
@@ -191,14 +185,21 @@ repdigit predicate's own missing `nth_*` counterpart, via the same
 sequential-scan shape but deliberately bounded to a `k <= 50`
 cross-check in its acceptance criteria: repdigits are far sparser than
 semiprimes/abundant numbers (only 9 exist per digit-length), so the scan
-cost grows exponentially with position rather than linearly — and the
-newest task, whole-value `as` binding in match list/map patterns
-(`[a, b] as whole => ...`), letting an arm bind the entire matched
-subject alongside whatever the pattern itself destructures (today only
-possible by giving up destructuring for a plain bound-identifier arm),
-via a new reserved `as` keyword and a `MatchArm.whole_binding` field.
-This last task restocks the queue from its 5-task floor back to its
-6-task target.
+cost grows exponentially with position rather than linearly — whole-value
+`as` binding in match list/map patterns (`[a, b] as whole => ...`),
+letting an arm bind the entire matched subject alongside whatever the
+pattern itself destructures (today only possible by giving up
+destructuring for a plain bound-identifier arm), via a new reserved
+`as` keyword and a `MatchArm.whole_binding` field — and the newest task,
+lexicographic comparison operators for lists (`[1, 2] < [1, 3]`), a real
+gap found this pass: `_compare` (`cinder/interpreter.py`) already gives
+strings element-by-element ordering via Python's own string comparison,
+but explicitly excludes lists from the same `comparable` check even
+though Python's own list ordering is exactly the lexicographic rule a
+user would expect, and the fix composes for free with the existing
+chained-comparison syntax (`a < b < c`) since both paths call the same
+`_compare` method. This last task restocks the queue from its 5-task
+floor back to its 6-task target.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -217,20 +218,18 @@ per-key/per-element capability) rather than a continuation of the
 defaults arc. Guards remain a real gap too, but are deliberately not
 requeued yet.
 
-The nineteenth pass (2026-08-30) archived the one PR merged since the
-last grooming pass (#342 `match-map-defaults`, depth) and restocked one
-task — whole-value `as` binding in match list/map patterns (depth),
-bringing the queue from its 5-task floor back to its usual 6-task
-ceiling (`nth_semiprime`, `nth_pronic`, `nth_abundant`, `nth_repdigit`
-are breadth; `switch` range cases and `as` binding are depth — 2 depth
-to 4 breadth, deliberately favoring depth to correct the ratio per the
-prior pass's own note). `main` is green (3809 tests), PR queue empty.
-This pass also refreshed this section, `README.md`'s match list/map
-pattern bullets (still said "no map-pattern defaults... yet" after #342
-had already landed it) and its "Status & roadmap" section, both of
-which had gone stale after #342 landed without a docs update (left to
-the Architect by design — see the landed task's own "Once merged"
-note).
+The twentieth pass (2026-08-30) archived the one PR merged since the
+last grooming pass (#343 `nth-semiprime`, breadth) and restocked one
+task — lexicographic comparison operators for lists (depth), bringing
+the queue from its 5-task floor back to its usual 6-task ceiling
+(`nth_pronic`, `nth_abundant`, `nth_repdigit` are breadth; `switch`
+range cases, `as` binding, and list comparison are depth — 3 depth to 3
+breadth, restoring the even split after the prior pass's deliberate
+4-breadth/2-depth skew). `main` is green (3819 tests), PR queue empty.
+This pass also refreshed this section and `README.md`'s Builtins list
+and "Status & roadmap" section, both of which had gone stale after #343
+landed without a docs update (left to the Architect by design — see
+the landed task's own "Once merged" note).
 
 ## History
 

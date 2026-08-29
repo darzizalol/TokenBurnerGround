@@ -489,6 +489,114 @@ pass, not this task.
 
 ---
 
+## 6. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`)
+
+Build: `<`/`<=`/`>`/`>=` already work element-by-element for strings via
+Python's own string ordering (`_compare`, `cinder/interpreter.py`, search
+`def _compare`), but lists are explicitly excluded from the same
+`comparable` check — even though Python's own list ordering is exactly
+the lexicographic comparison a scripting-language user would expect.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print([1, 2] < [1, 3]);'
+# -> <eval>:1:15: unsupported operand types for comparison: list and list
+```
+This gap also affects the language's *chained* comparison syntax
+(`a < b < c`, `_evaluate_chained_comparison` in the same file, search
+`def _evaluate_chained_comparison`), since it calls the exact same
+`_compare` method per pair — fixing `_compare` fixes both `[1, 2] <
+[1, 3]` and `[1, 2] < [1, 3] < [2, 0]` in one change, no separate
+chained-comparison code path to touch.
+
+Extend `_compare`'s `comparable` check (search `def _compare`) to admit
+list/list, and wrap the actual comparison in a `try`/`except TypeError`
+so a per-element type mismatch inside two otherwise-comparable lists
+raises a clean `CinderRuntimeError` instead of leaking a raw Python
+`TypeError` — the one case Python's native list ordering doesn't handle
+for free, since Python's own `<` between two lists recurses
+element-by-element using each element's own `__lt__`, and that recursion
+can hit two elements of incompatible type (e.g. a `str` and an `int`)
+partway through, well past the point where the outer `comparable` check
+already gave the go-ahead on the two *lists* themselves:
+```python
+    def _compare(self, operator: Token, left, right, op: TokenType) -> bool:
+        comparable = (
+            (_is_number(left) and _is_number(right))
+            or (isinstance(left, str) and isinstance(right, str))
+            or (isinstance(left, list) and isinstance(right, list))
+        )
+        if not comparable:
+            raise CinderRuntimeError(
+                f"unsupported operand types for comparison: "
+                f"{type_name(left)} and {type_name(right)}",
+                operator.line,
+                operator.column,
+            )
+        try:
+            if op == TokenType.LT:
+                return left < right
+            if op == TokenType.LTEQ:
+                return left <= right
+            if op == TokenType.GT:
+                return left > right
+            return left >= right
+        except TypeError:
+            raise CinderRuntimeError(
+                "unsupported operand types for comparison: list elements are "
+                "not comparable",
+                operator.line,
+                operator.column,
+            ) from None
+```
+Comparison follows the exact same rule Python (and this file's own
+existing string comparison) already uses: element-by-element from the
+front, first differing pair decides the result, and a list that is a
+strict prefix of the other counts as the lesser one (`[1, 2] < [1, 2,
+3]` is `true`, mirroring `"ab" < "abc"`). No parser or AST change is
+needed — `<`/`<=`/`>`/`>=` already parse against any two operand
+expressions; only `_compare`'s runtime type-admission rule changes.
+
+Acceptance criteria:
+- `[1, 2] < [1, 3];` is `true`, `[1, 3] < [1, 2];` is `false` — first
+  differing element decides.
+- `[1, 2] < [1, 2, 3];` is `true`, `[1, 2, 3] < [1, 2];` is `false` — a
+  strict prefix is lesser, mirroring string-prefix ordering.
+- `[] < [1];` is `true`; `[] < [];` is `false` (equal, not strictly
+  less) — same edge case as `"" < "x"` and `"" < "";`.
+- `[1, 2] <= [1, 2];` is `true`, `[1, 2] >= [1, 2];` is `true` — the
+  equal-length equal-elements case for the inclusive operators.
+- `["a", "b"] < ["a", "c"];` is `true` — nested string elements compare
+  via their own existing string ordering, not just numbers.
+- `[[1, 2]] < [[1, 3]];` is `true` — a list-of-lists recurses through
+  the same rule at the nested level too (this falls out of Python's own
+  native list comparison for free, no extra recursion code needed).
+- `[1, "a"] < [1, 2];` raises `CinderRuntimeError` (mismatched element
+  types partway through the comparison — `1 == 1` at index 0, then
+  `"a"` vs `2` at index 1 can't be ordered) rather than a raw Python
+  `TypeError`.
+- `1 < [1, 2];` still raises `CinderRuntimeError` exactly as before
+  (mismatched *outer* types, unchanged existing behavior — a number is
+  still never comparable to a list).
+- Chained comparisons compose for free: `[1] < [2] < [3];` is `true`,
+  `[3] < [2] < [1];` is `false` (short-circuits on the first failing
+  pair, same as every other chained comparison) — via
+  `_evaluate_chained_comparison`, which calls the same `_compare` this
+  task changes.
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_compare`, search `def
+_compare`), `tests/test_interpreter.py` (extend `class TestComparisons`,
+search that name, with the list-ordering and mismatched-element cases
+above, and `class TestChainedComparisons`, search that name, with the
+list chained-comparison case). No `cinder/parser.py` or
+`cinder/ast_nodes.py` change needed. Once merged, `README.md`'s
+`Operators` bullet needs a mention that list ordering is now supported
+(currently silent on list comparison entirely), and `PROJECT.md`'s
+"Current frontier" bullet needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

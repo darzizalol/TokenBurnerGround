@@ -3386,3 +3386,19 @@ for vision/architecture.
   field alongside `list_rest`. Closes the last capability gap between
   match map patterns and list patterns. Clean first pass, no bounces
   (3741 tests passing, up from 3734).
+- **Language: nested patterns as map pattern values (`{a: {b, c}} => ...`,
+  `{a: [x, y]} => ...`)** — merged 2026-08-29T14:29:04Z via PR #337
+  (`feat/20260829-nested-map-pattern-values`). Widened
+  `_match_map_pattern_entry` (`cinder/parser.py`) to recurse into
+  `_match_list_pattern`/`_match_map_pattern` when a map pattern's value
+  slot is followed by `[`/`{`; a nested list pattern is tagged as a
+  3-tuple `(entries, rest, True)` while a nested map pattern stays a
+  2-tuple `(entries, rest)`, mirroring the disambiguation
+  `_destructure_map_pattern_entry` already uses, so the new
+  `_match_map_entries` interpreter helper (mirroring
+  `_match_list_entries`) can dispatch unambiguously. Nesting works to
+  arbitrary depth and composes with per-key rename (PR #332) and rest
+  capture (PR #335). Closes the last flat-vs-nested gap between match map
+  patterns and everything else in Cinder that already destructures maps.
+  Clean first pass, no bounces (3761 tests passing, 28 subtests passing,
+  up from 3741).

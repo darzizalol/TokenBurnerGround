@@ -11,167 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: nested patterns as map pattern values (`{a: {b, c}} => ...`, `{a: [x, y]} => ...`) [claimed 2026-08-29T14:20:31Z]
-
-Build: nested list patterns (PR #330) closed the flat-vs-nested gap for
-list-pattern elements — an element can now itself be a list pattern to
-arbitrary depth. Map patterns have no equivalent yet: a map pattern's
-value slot only ever binds a plain identifier (optionally renamed, PR
-#332) or captures rest (PR #335), never another list/map
-pattern. `let` destructuring already supports this for maps
-(`let {a, b: [c, d]} = ...`, `let {a: {b}} = ...` —
-`_destructure_map_pattern_entry`, `cinder/parser.py`, recurses into
-`_destructure_list_pattern`/`_destructure_map_pattern` on a nested
-value), so this is the last flat-vs-nested gap between match map patterns
-and everything else in Cinder that already destructures maps. Verify the
-gap (both per-key rename, PR #332, and rest capture, PR #335, have
-landed):
-```sh
-python3 -m cinder.cli eval 'print(match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 });'
-# -> <eval>:1:24: expected identifier after ':' in map pattern, found '{'
-```
-
-**Ordering note:** this task builds on per-key rename (PR #332) and rest
-capture (PR #335), both already landed — it widens the same
-`_match_map_pattern_entry` one more time, to let `binding` be a nested
-pattern instead of only a plain name, and touches the same interpreter
-`map_pattern` match branch (`arm.map_rest` handling) that rest capture
-added.
-
-**Scope note:** only list-pattern and map-pattern nesting as a map
-pattern's *value* is in scope, mirroring what `let` destructuring
-already allows in the same position — no defaults inside the nested
-pattern (that stays a `let`-only feature), no nesting on the *key* side
-(map keys are always plain strings, unaffected).
-
-Widen `_match_map_pattern_entry`'s `binding` slot
-(`cinder/parser.py`, search `def _match_map_pattern_entry`) to recurse
-into `_match_list_pattern`/`_match_map_pattern` on a nested `[`/`{`,
-mirroring `_destructure_map_pattern_entry`'s own nested-value branch:
-```python
-    def _match_map_pattern_entry(self) -> "tuple[str, object]":
-        key = self._consume(
-            TokenType.IDENTIFIER, "identifier inside map pattern"
-        ).lexeme
-        if self._check(TokenType.COLON):
-            self._advance()
-            if self._check(TokenType.LBRACKET):
-                return key, self._match_list_pattern()
-            if self._check(TokenType.LBRACE):
-                return key, self._match_map_pattern()
-            binding = self._consume(
-                TokenType.IDENTIFIER, "identifier after ':' in map pattern"
-            ).lexeme
-            return key, binding
-        return key, key
-```
-The `binding` slot in each `(key, binding)` pair returned by
-`_match_map_pattern` is now `str | tuple[list, str | None] | tuple[list,
-str | None]` (a plain name, a list-pattern `(entries, rest)` pair, or a
-map-pattern `(entries, rest)` pair) — same three-way shape
-`_match_list_pattern_entry` already returns for list-pattern elements.
-In `cinder/interpreter.py`, extend the `map_pattern` branch (search `if
-arm.map_pattern is not None`) to dispatch on `binding`'s shape the same
-way `_match_list_entries` already dispatches on list-pattern entries:
-```python
-            if arm.map_pattern is not None:
-                if not isinstance(subject, dict) or not all(
-                    key in subject for key, _ in arm.map_pattern
-                ):
-                    continue
-                arm_env = Environment(env)
-                seen_keys = set()
-                matched = True
-                for key, binding in arm.map_pattern:
-                    seen_keys.add(key)
-                    if isinstance(binding, tuple):
-                        nested_entries, nested_rest = binding
-                        if isinstance(nested_entries, list) and all(
-                            isinstance(e, tuple) and len(e) == 2 and isinstance(e[0], str)
-                            for e in nested_entries
-                        ) and _looks_like_map_entries(nested_entries):
-                            if not self._match_map_entries(
-                                nested_entries, nested_rest, subject[key], arm_env
-                            ):
-                                matched = False
-                                break
-                        elif not self._match_list_entries(
-                            nested_entries, nested_rest, subject[key], arm_env
-                        ):
-                            matched = False
-                            break
-                    else:
-                        arm_env.define(binding, subject[key])
-                if not matched:
-                    continue
-                if arm.map_rest is not None and arm.map_rest != "_":
-                    arm_env.define(
-                        arm.map_rest,
-                        {k: v for k, v in subject.items() if k not in seen_keys},
-                    )
-                return self.evaluate(arm.body, arm_env)
-```
-The list-vs-map ambiguity in the sketch above (`_looks_like_map_entries`)
-is a placeholder, not a real function to add as-is — both nested
-list-pattern and nested map-pattern entries end up as a `(entries, rest)`
-tuple from the parser, so the interpreter cannot tell them apart by shape
-alone once it reaches this branch. Resolve this cleanly instead by having
-the parser tag which kind it produced (e.g. wrap `_match_map_pattern`'s
-recursive-value result so the interpreter branch can dispatch on an
-unambiguous marker, such as a small tagged tuple/dataclass distinguishing
-"nested list" from "nested map", or by factoring a shared recursive
-`_match_map_entries` helper analogous to `_match_list_entries` and having
-the parser emit that instead of raw tuples) rather than the ad hoc shape
-sniffing above — this is a real design decision for whoever implements
-this task, not settled by this sketch.
-
-Acceptance criteria:
-- `match ({"a": 1, "b": {"c": 2}}) { {a, b: {c}} => a + c, _ => 0 };` is
-  `3`.
-- `match ({"a": 1, "b": [2, 3]}) { {a, b: [x, y]} => a + x + y, _ => 0 };`
-  is `6`.
-- `match ({"a": {"b": {"c": 1}}}) { {a: {b: {c}}} => c, _ => 0 };` is `1`
-  — nesting works to arbitrary depth, mirroring nested list patterns.
-- `match ({"a": 1, "b": {"c": 2}}) { {a, b: {c: x}} => a + x, _ => 0 };`
-  is `3` — nested map-pattern values compose with per-key rename (PR #332)
-  in the same pattern.
-- `match ({"a": 1, "b": {"c": 2, "d": 3}}) { {a, b: {c, ...rest}} => rest,
-  _ => 0 };` is `{"d": 3}` — nested map-pattern values compose with rest
-  capture (PR #335) in the same pattern.
-- `match ({"a": 1, "b": {"c": 2}}) { {a, b: {d}} => 0, _ => "no match" };`
-  is `"no match"` — a nested pattern that doesn't match its nested
-  subject falls through the whole arm, not just the nested part.
-- `match ({"a": 1, "b": 2}) { {a, b: {c}} => c, _ => "no" };` is `"no"` —
-  a nested map pattern whose nested subject is not itself a map falls
-  through (subject's `b` is an int, not a map).
-- `match ({"a": 1, "b": [1, 2]}) { {a, b: {c}} => c, _ => "no" };` is
-  `"no"` — a nested map pattern whose nested subject is a list, not a
-  map, falls through the same way.
-- Bindings from a nested pattern are scoped to the arm's body only, same
-  as every other match-pattern binding.
-- `shape(parse('match (x) { {a, b: {c}} => a, _ => 0 }'))` (see
-  `tests/test_parser.py`) shows the first arm's `map_pattern` with `b`'s
-  binding as a nested `(entries, rest)` pair rather than a plain string.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_map_pattern_entry`, and
-whatever tagging/helper the design decision above settles on),
-`cinder/ast_nodes.py` (`MatchArm.map_pattern` docstring, widened for the
-new value shape), `cinder/interpreter.py` (`_evaluate_match`'s
-`map_pattern` branch, likely a new `_match_map_entries` helper mirroring
-`_match_list_entries`), `tests/test_parser.py` (extend the map-pattern
-shape tests, search `test_match_map_pattern_shape`),
-`tests/test_interpreter.py` (extend `class TestMatchExpression`, search
-`test_map_pattern_binds_named_keys`, with the nesting cases above). Once
-merged, `README.md`'s `match` expression bullet needs its map-pattern
-description widened to mention value nesting, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" bullet
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
+## 1. Language: default values for trailing elements in match list patterns (`[a, b = 0] => ...`)
 
 Build: `let`/`for`/function-param/comprehension list destructuring has
 supported trailing default values for a long time (`let [a, b = 5] =
@@ -199,7 +39,7 @@ the parser should reject a `=` in those positions the same way it
 already rejects any other unexpected token there (no special-casing
 needed — the `_match_list_pattern`/`_consume(RBRACKET, ...)` machinery
 already errors cleanly on a stray `=`). Defaults on match *map*
-patterns are a separate task (task 6 below) — out of scope here.
+patterns are a separate task (task 5 below) — out of scope here.
 
 `_match_list_pattern_entry` (`cinder/parser.py`, search `def
 _match_list_pattern_entry`) currently returns a single value per entry
@@ -340,7 +180,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_twin_prime` — membership test for primes with a twin partner
+## 2. Standard library: `is_twin_prime` — membership test for primes with a twin partner
 
 Build: the prime-relationship cluster in `cinder/builtins.py` already
 covers several adjacency/structure predicates built on trial-division
@@ -418,7 +258,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
+## 3. Standard library: `nth_nonagonal` — the k-th nonagonal number by position
 
 Build: `is_nonagonal` (PR #334) just closed the triangular..nonagonal
 `is_*` cluster, but it left a new, smaller gap behind it —
@@ -487,7 +327,7 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_happy_number` — the k-th happy number by position
+## 4. Standard library: `nth_happy_number` — the k-th happy number by position
 
 Build: `is_happy_number`/`is_sad_number` (`cinder/builtins.py`) test
 membership via the digit-square-sum cycle, but neither has a
@@ -573,10 +413,10 @@ the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: default values in match map patterns (`{a, b = 0} => ...`)
+## 5. Language: default values in match map patterns (`{a, b = 0} => ...`)
 
 Build: match list patterns already support trailing defaults via `[a, b
-= 0] => ...` (see task 2 in this backlog, which explicitly flags map-
+= 0] => ...` (see task 1 in this backlog, which explicitly flags map-
 pattern defaults as "a separate, not-yet-queued task"), and `let` map
 destructuring has supported per-key defaults for a long time (`let {a, b
 = 5} = expr;`, PR #244) — a map missing a key still binds successfully,
@@ -593,19 +433,19 @@ python3 -m cinder.cli eval 'print(match ({"a": 1}) { {a, b = 0} => a + b, _ => -
 landed) — it widens the same `_match_map_pattern_entry`/`_match_map_pattern`
 production and the same interpreter `map_pattern` match branch rest
 capture touches (`arm.map_rest` handling).
-Unlike task 2 (list defaults), this task does **not** need to check
+Unlike task 1 (list defaults), this task does **not** need to check
 whether all pattern keys are present up front the way list patterns check
 length — map patterns already match on a key subset (extra keys in the
 subject beyond the pattern are always fine, no rest needed), so adding
 defaults only relaxes which keys are *required*.
 
 **Scope note:** only a bare identifier or renamed binding (`a` or `a: x`)
-may carry a default — mirroring task 2's "flat-capability-first" scope
-restriction exactly. If task 1 (nested map-pattern values) has also
-landed by the time this is claimed, a nested `{...}`/`[...]` binding
-carrying a default stays out of scope; only add the `= expr` check in
-the plain-identifier branch of `_match_map_pattern_entry`, not after a
-recursive nested-pattern call.
+may carry a default — mirroring task 1's "flat-capability-first" scope
+restriction exactly. Nested patterns as map-pattern values have already
+landed (PR #337) — a nested `{...}`/`[...]` binding carrying a default
+stays out of scope; only add the `= expr` check in the plain-identifier
+branch of `_match_map_pattern_entry`, not after a recursive
+nested-pattern call.
 
 Widen `_match_map_pattern_entry` (`cinder/parser.py`, search `def
 _match_map_pattern_entry`) to return a third element, mirroring
@@ -661,7 +501,7 @@ default when a key is missing, mirroring `_bind_map_destructure`'s own
 Default expressions are evaluated in `arm_env`, left-to-right in
 `arm.map_pattern` order, so an earlier binding in the same pattern is
 visible to a later default — mirroring `_bind_map_destructure`'s own
-progressive-`env` evaluation and task 2's identical left-to-right
+progressive-`env` evaluation and task 1's identical left-to-right
 convention for list-pattern defaults.
 
 Acceptance criteria:

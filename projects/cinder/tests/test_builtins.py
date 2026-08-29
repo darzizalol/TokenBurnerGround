@@ -3232,6 +3232,69 @@ class TestNthOctagonal(unittest.TestCase):
             run("nth_octagonal(1, 2);")
 
 
+class TestNthNonagonal(unittest.TestCase):
+    def test_nth_nonagonal_of_first_four_positions(self):
+        expected = {1: 1, 2: 9, 3: 24, 4: 46}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_nonagonal({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_nonagonal_of_ten(self):
+        self.assertEqual(run("let result = nth_nonagonal(10);").get("result"), 325)
+
+    def test_nth_nonagonal_of_one_hundred(self):
+        self.assertEqual(
+            run("let result = nth_nonagonal(100);").get("result"), 34750
+        )
+
+    def test_nth_nonagonal_agrees_with_is_nonagonal(self):
+        for position in range(1, 101):
+            self.assertEqual(
+                run(
+                    f"let result = is_nonagonal(nth_nonagonal({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_nonagonal({position}) to be a nonagonal number",
+            )
+
+    def test_nth_nonagonal_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_nonagonal(0);")
+        self.assertIn(
+            "nth_nonagonal() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_nonagonal_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_nonagonal(-3);")
+        self.assertIn(
+            "nth_nonagonal() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_nonagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_nonagonal(2.0);")
+        self.assertIn(
+            "nth_nonagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_nonagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_nonagonal(true);")
+        self.assertIn(
+            "nth_nonagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_nonagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_nonagonal(1, 2);")
+
+
 class TestIsPrime(unittest.TestCase):
     def test_is_prime_of_two(self):
         self.assertEqual(run("let result = is_prime(2);").get("result"), True)

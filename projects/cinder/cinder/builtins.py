@@ -1866,6 +1866,26 @@ def _is_repdigit(arguments: list, line: int, column: int) -> object:
     return len(set(str(value))) == 1
 
 
+def _nth_repdigit(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_repdigit", arguments, 1, line, column)
+    value = _require_int("nth_repdigit", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_repdigit() requires a positive integer, domain error", line, column
+        )
+
+    def _is_repdigit_candidate(candidate: int) -> bool:
+        return len(set(str(candidate))) == 1
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_repdigit_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_undulating(arguments: list, line: int, column: int) -> object:
     _require_arity("is_undulating", arguments, 1, line, column)
     value = _require_int("is_undulating", arguments[0], line, column)
@@ -4282,6 +4302,7 @@ _BUILTINS = {
     "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,
     "is_repdigit": _is_repdigit,
+    "nth_repdigit": _nth_repdigit,
     "is_undulating": _is_undulating,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,

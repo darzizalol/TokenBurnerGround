@@ -613,6 +613,116 @@ grooming pass, not this task.
 
 ---
 
+## 6. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
+
+Build: PR #356 gave `-` a map-map branch (key-based removal,
+`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) but explicitly scoped
+itself to `map`/`map` only, leaving list-list `-` to fall through to
+the numeric-only path and error out — the same gap the map branch
+itself closed for maps. Cinder's list builtins already answer this
+exact question as a function (`difference()`, `cinder/builtins.py`,
+search `def _difference`: dedupes the left list, keeps only elements
+not present in the right, both lists treated as unordered sets — the
+same convention `union`/`intersection`/`symmetric_difference` already
+share). This task gives that same set-style difference an infix `-`
+spelling for lists, exactly as `-` is already `difference()`'s
+map-shaped sibling operator for maps. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print([1, 2, 3] - [2]);'
+# -> <eval>:1:17: unsupported operand types for '-': list and list
+```
+
+Note `tests/test_interpreter.py`'s existing `TestMapDifference` class
+already has `test_list_minus_map_raises` (`[1, 2] - {"a": 1}` errors)
+and `test_map_minus_list_raises` (`{"a": 1} - [1, 2]` errors) — those
+stay exactly as they are, since this task only adds a list-**list**
+branch; mixed list/map operands remain a type error, unchanged.
+
+`cinder/interpreter.py` has no import of `cinder/builtins.py` (checked
+— builtins.py is the one that would need to import from interpreter.py
+for shared helpers like `values_equal`, not the reverse, to avoid a
+circular import), so don't import `_difference`/`_dedupe` from
+builtins.py; instead inline the same two-step "dedupe the left list,
+then drop anything found in the right" logic using `values_equal`
+(already imported and used elsewhere in `interpreter.py`, e.g. the
+`EQEQ` branch a few lines above) rather than Python's native `==`/`in`,
+matching `_dedupe`/`_contains_value`'s own reasoning (native `==`
+would wrongly conflate `1` and `true`, which `values_equal` keeps
+distinct).
+
+Edit `cinder/interpreter.py`'s `_apply_binary_operator`, the `MINUS`
+branch (search `if op == TokenType.MINUS:`): add a list-list case
+alongside the existing dict-dict one, before the branch falls through
+to `_numeric_op`:
+```python
+        if op == TokenType.MINUS:
+            if isinstance(left, dict) and isinstance(right, dict):
+                return {key: value for key, value in left.items() if key not in right}
+            if isinstance(left, list) and isinstance(right, list):
+                deduped: list = []
+                for element in left:
+                    if not any(values_equal(element, kept) for kept in deduped):
+                        deduped.append(element)
+                return [
+                    element
+                    for element in deduped
+                    if not any(values_equal(element, other) for other in right)
+                ]
+            return self._numeric_op(operator, left, right, lambda a, b: a - b)
+```
+(Only the new `isinstance(left, list) and isinstance(right, list)`
+block is added — the dict branch above it and the `_numeric_op`
+fallback below it are unchanged.)
+
+The compound-assignment desugaring (`-=`) already works for free once
+`-` itself handles lists, exactly as `TestMapDifference`'s own
+`test_compound_assignment_on_identifier`/`_index_target`/`_dot_target`
+tests document for maps — no separate wiring needed.
+
+Acceptance criteria (mirror `TestMapDifference` in
+`tests/test_interpreter.py`, search that class, one-for-one where a
+list equivalent makes sense):
+- `[1, 2, 3] - [2]` is `[1, 3]` — the basic case.
+- `[1, 2, 2, 3] - [2]` is `[1, 3]` — the left side is deduped, so a
+  repeated element that gets removed leaves only one gap, not one per
+  occurrence.
+- `[1, 2, 3] - []` is `[1, 2, 3]` — empty right is a no-op (aside from
+  deduping the left, matching `difference()`'s own behavior).
+- `[] - [1, 2]` is `[]` — empty left stays empty.
+- `[1, 2] - [1, 2]` is `[]` — removing every element empties the list.
+- `[1, 2] - [3, 4]` is `[1, 2]` — no overlap has no effect (beyond
+  dedup).
+- Does not mutate inputs: `let a = [1, 2]; let c = a - [1];` leaves `a`
+  as `[1, 2]` and `c` as `[2]`.
+- Left-associative: `[1, 2, 3] - [1] - [2]` is `[3]`.
+- Compound assignment works: `let xs = [1, 2]; xs -= [1];` leaves `xs`
+  as `[2]` (identifier target); also test an index target
+  (`let xs = [[1, 2]]; xs[0] -= [1];`) and a dot target
+  (`let obj = {"l": [1, 2]}; obj.l -= [1];`).
+- `[1, true, 2] - [true]` is `[1, 2]` — uses `values_equal`, not
+  Python's native `==`/`in`, so `1` and `true` are not conflated (a
+  `1` in the left list survives a `[true]` right side).
+- `[1, 2] - {"a": 1}` and `{"a": 1} - [1, 2]` still both raise
+  `CinderRuntimeError` matching `"unsupported operand types for '-':
+  ..."` — regression guards for the two existing
+  `test_list_minus_map_raises`/`test_map_minus_list_raises` tests,
+  confirming mixed list/map operands are still a type error.
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
+`MINUS` branch, search `if op == TokenType.MINUS:`), `tests/test_interpreter.py`
+(new `class TestListDifference`, modeled directly on
+`class TestMapDifference`, search that name, for the test shapes
+above — or add methods to `TestMapDifference` itself if renaming it to
+something like `TestDifferenceOperator` reads better; either is fine,
+Engineer's call). Once merged, `README.md`'s language-operators bullet
+needs a list-`-` mention next to the existing map-`-` one, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" section needs refreshing — leave both to the Architect's
+next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

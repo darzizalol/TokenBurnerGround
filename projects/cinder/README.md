@@ -386,7 +386,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -599,35 +599,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `-` (difference) for
-maps (PR #356, `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) —
-key-based removal by direct analogy to `+`'s existing dict-merge
-branch, the inverse of the `merge()` builtin the same way `+` is its
-infix form — and before that `is_pandigital` (PR #355) — testing
-whether an integer's decimal digits are exactly the ten digits `0`-`9`
-each appearing once (e.g. `1023456789`, the smallest such number), a
-digit-set question none of `is_repdigit`/`is_disarium`/`is_armstrong`
-answers — and before that ordering comparison operators
-(`<`/`<=`/`>`/`>=`) for maps (PR #354, `{"a": 1} < {"a": 2}`). See
+Actively developed, nightly. Recently landed: `transpose` (PR #357) —
+the arbitrary-column generalization of `unzip`'s fixed-two-column
+matrix transpose, validating every row is a list of equal length —
+and before that `-` (difference) for maps (PR #356,
+`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based removal by
+direct analogy to `+`'s existing dict-merge branch, the inverse of the
+`merge()` builtin the same way `+` is its infix form — and before that
+`is_pandigital` (PR #355) — testing whether an integer's decimal
+digits are exactly the ten digits `0`-`9` each appearing once (e.g.
+`1023456789`, the smallest such number), a digit-set question none of
+`is_repdigit`/`is_disarium`/`is_armstrong` answers. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `transpose` — the
-arbitrary-column generalization of `unzip`'s fixed-two-column matrix
-transpose, the same `else` clause PR #352 gave `while` extended to the
-foreach `for`-in form (`for x in xs { ... } else { ... }`), the one
-loop kind #352 itself left out of scope, `is_vampire_number` — a
-number whose decimal digits can be split into two equal-length
-"fangs" that multiply back to it (e.g. `1260 = 21 * 60`), a
-digit-permutation-meets-factorization predicate distinct from
-`is_smith_number`'s digit-sum-of-factors question, `is_trimorphic_number`
-— the cube-ending analog of `is_automorphic`'s own square-ending check
-(e.g. `24 ** 3 = 13824`, which ends in `24`), the same `else` clause
-extended once more, this time to `do`-`while` loops (`do { ... } while
-(cond) else { ... }`) — closing out the loop-`else` arc #352 started,
-since `while` and `for`-in (queued above) both get theirs first — and
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the same `else`
+clause PR #352 gave `while` extended to the foreach `for`-in form
+(`for x in xs { ... } else { ... }`), the one loop kind #352 itself
+left out of scope, `is_vampire_number` — a number whose decimal digits
+can be split into two equal-length "fangs" that multiply back to it
+(e.g. `1260 = 21 * 60`), a digit-permutation-meets-factorization
+predicate distinct from `is_smith_number`'s digit-sum-of-factors
+question, `is_trimorphic_number` — the cube-ending analog of
+`is_automorphic`'s own square-ending check (e.g. `24 ** 3 = 13824`,
+which ends in `24`), the same `else` clause extended once more, this
+time to `do`-`while` loops (`do { ... } while (cond) else { ... }`) —
+closing out the loop-`else` arc #352 started, since `while` and
+`for`-in (queued above) both get theirs first — and
 `is_munchausen_number` — a number equal to the sum of each digit
 raised to its own power (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the
 digit-to-its-own-power sibling of `is_strong_number`'s digit-factorial
-question. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+question, and a `-` (difference) operator for lists (`[1, 2, 3] - [2]`
+is `[1, 3]`), the set-style list-list sibling of the map-map `-`
+branch PR #356 added, mirroring the existing `difference()` builtin's
+set semantics. (Guards in `match` arms, `n if n > 0 => "positive"`, were
 attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
 postmortem; they're a real gap but not back in the active queue yet.)

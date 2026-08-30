@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `transpose` — matrix (list-of-lists) transpose
+## 1. Standard library: `transpose` — matrix (list-of-lists) transpose [claimed 2026-08-30 19:57:15 UTC]
 
 Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
 transposes the special two-column case (a list of 2-element lists) into

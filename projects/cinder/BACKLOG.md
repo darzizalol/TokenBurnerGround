@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
+## 1. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test [claimed 2026-08-30T15:39:32Z]
 
 Build: `prime_factors` (`cinder/builtins.py`, search `def _prime_factors`)
 already lists an integer's prime factors with multiplicity, and

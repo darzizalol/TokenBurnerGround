@@ -120,8 +120,10 @@ while (i < 10) {
   `while (cond) { ... } else { ... }`, running exactly once when the
   loop exits normally — including immediately, if the condition was
   already false — without an intervening `break`; `continue` does not
-  skip it, only `break` does; scoped to plain `while` only, not
-  `do`-`while` or either `for` form), `do { ... } while (cond);`,
+  skip it, only `break` does; the same clause is also available on the
+  foreach `for`-in form below (`for x in xs { ... } else { ... }`), with
+  `do`-`while` and the C-style `for` still to come), `do { ... } while
+  (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   maps (over keys), and range literals (`a..b`, sugar over the existing
   `range()` builtin usable directly as a loop source, e.g. `for i in
@@ -599,38 +601,34 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `transpose` (PR #357) —
-the arbitrary-column generalization of `unzip`'s fixed-two-column
+Actively developed, nightly. Recently landed: the `else` clause PR #352
+gave `while` loops, extended to the foreach `for`-in form (PR #358,
+`for x in xs { ... } else { ... }`) — and before that `transpose` (PR
+#357) — the arbitrary-column generalization of `unzip`'s fixed-two-column
 matrix transpose, validating every row is a list of equal length —
 and before that `-` (difference) for maps (PR #356,
 `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based removal by
 direct analogy to `+`'s existing dict-merge branch, the inverse of the
-`merge()` builtin the same way `+` is its infix form — and before that
-`is_pandigital` (PR #355) — testing whether an integer's decimal
-digits are exactly the ten digits `0`-`9` each appearing once (e.g.
-`1023456789`, the smallest such number), a digit-set question none of
-`is_repdigit`/`is_disarium`/`is_armstrong` answers. See
+`merge()` builtin the same way `+` is its infix form. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the same `else`
-clause PR #352 gave `while` extended to the foreach `for`-in form
-(`for x in xs { ... } else { ... }`), the one loop kind #352 itself
-left out of scope, `is_vampire_number` — a number whose decimal digits
-can be split into two equal-length "fangs" that multiply back to it
-(e.g. `1260 = 21 * 60`), a digit-permutation-meets-factorization
-predicate distinct from `is_smith_number`'s digit-sum-of-factors
-question, `is_trimorphic_number` — the cube-ending analog of
-`is_automorphic`'s own square-ending check (e.g. `24 ** 3 = 13824`,
-which ends in `24`), the same `else` clause extended once more, this
-time to `do`-`while` loops (`do { ... } while (cond) else { ... }`) —
-closing out the loop-`else` arc #352 started, since `while` and
-`for`-in (queued above) both get theirs first — and
-`is_munchausen_number` — a number equal to the sum of each digit
-raised to its own power (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the
-digit-to-its-own-power sibling of `is_strong_number`'s digit-factorial
-question, and a `-` (difference) operator for lists (`[1, 2, 3] - [2]`
-is `[1, 3]`), the set-style list-list sibling of the map-map `-`
-branch PR #356 added, mirroring the existing `difference()` builtin's
-set semantics. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_vampire_number` —
+a number whose decimal digits can be split into two equal-length
+"fangs" that multiply back to it (e.g. `1260 = 21 * 60`), a
+digit-permutation-meets-factorization predicate distinct from
+`is_smith_number`'s digit-sum-of-factors question, `is_trimorphic_number`
+— the cube-ending analog of `is_automorphic`'s own square-ending check
+(e.g. `24 ** 3 = 13824`, which ends in `24`), the same `else` clause
+extended once more, this time to `do`-`while` loops
+(`do { ... } while (cond) else { ... }`), `is_munchausen_number` — a
+number equal to the sum of each digit raised to its own power (e.g.
+`3435 = 3^3 + 4^4 + 3^3 + 5^5`), the digit-to-its-own-power sibling of
+`is_strong_number`'s digit-factorial question, a `-` (difference)
+operator for lists (`[1, 2, 3] - [2]` is `[1, 3]`), the set-style
+list-list sibling of the map-map `-` branch PR #356 added, mirroring
+the existing `difference()` builtin's set semantics, and the same
+`else` clause one last time on the C-style `for (init; cond; step)`
+loop — closing out the loop-`else` arc #352 started across all four
+loop kinds. (Guards in `match` arms, `n if n > 0 => "positive"`, were
 attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
 postmortem; they're a real gap but not back in the active queue yet.)

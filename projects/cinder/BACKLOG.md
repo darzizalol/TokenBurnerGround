@@ -554,6 +554,197 @@ next grooming pass, not this task.
 
 ---
 
+## 6. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
+
+Build: `while` (#352), the foreach `for`-in form (#358), and — once task 3
+in this file merges — `do`-`while` will all have a trailing Python-style
+`else { ... }` clause. The one loop kind left out every time is the
+classic three-clause `for (init; cond; step) { ... }` (`ForCStmt`,
+`cinder/ast_nodes.py`, search `class ForCStmt`). This task closes that
+last gap. Verify it:
+```sh
+python3 -m cinder.cli eval 'for (let i = 0; i < 3; i = i + 1) { print(i); } else { print("done"); }'
+# -> <eval>:1:46: expected ';' after for-loop init  (parses "else" as a
+#    fresh statement, i.e. the C-style for loop has no else support at all)
+```
+
+Semantics mirror `ForStmt.else_branch` (see its docstring, search `class
+ForStmt`) and the C-style loop's own body/exit shape: the `else` block
+runs exactly once when the condition clause evaluates false with no
+intervening `break` — including immediately, if the condition was
+already false before the first iteration (`for (; false;) { ... } else {
+ran = true; }` still runs the `else`), and including an omitted
+condition clause never being false on its own (`for (;;) { if (x) {
+break; } } else { ... }` can only skip the `else` via that `break`, never
+by falling out the condition, since an empty condition is always-true —
+see `ForCStmt`'s own docstring). `continue` does not skip it; an
+uncaught exception, `return`, or a propagating labeled `break`/`continue`
+does, since control never reaches the post-loop check in that case.
+
+Grammar wrinkle: exactly like `for`-in (`_for_statement`, search `def
+_for_statement`), the C-style form's body is always a brace-delimited
+`Block` (`self._block()`, never a bare single statement — see
+`_for_c_statement`'s existing `expected '{' before for-loop body` check),
+so there is no dangling-`else`/if-attachment ambiguity to resolve: an
+`else` immediately following the body's closing `}` unambiguously
+belongs to the `for`, the same reasoning `_for_statement` already
+documents for its own trailing `else` check.
+
+Edit three files:
+
+1. `cinder/ast_nodes.py` (search `class ForCStmt`), add one field at the
+   end, after `label: "str | None" = None`, and extend the docstring:
+```python
+@dataclass(frozen=True)
+class ForCStmt:
+    """Classic three-clause `for (init; cond; step) { ... }`, distinct from
+    the foreach `ForStmt` above. `init`/`step` are `None` when their clause
+    is empty (`for (;;) { ... }` is a valid infinite loop); `condition` is
+    `None` when omitted, treated as always-true at execution time.
+
+    `else_branch` is `None` unless the loop carries a trailing
+    `else { ... }` clause; when present, it runs exactly once, when the
+    condition becomes false *without* an intervening `break` — including
+    immediately, if the condition was already false (or omitted, which
+    never happens on its own since an omitted condition is always-true) —
+    mirroring `ForStmt`/`WhileStmt`'s own `else_branch`. `continue` does
+    not skip it (only `break` does); an uncaught exception, `return`, or
+    propagating labeled `break`/`continue` from the body also skips it.
+    """
+
+    init: "Stmt | None"
+    condition: "Expr | None"
+    step: "Stmt | None"
+    body: "Block"
+    line: int
+    column: int
+    label: "str | None" = None
+    else_branch: "Stmt | None" = None
+```
+
+2. `cinder/parser.py`'s `_for_c_statement` (search `def
+   _for_c_statement`): after the existing `body = self._block()` /
+   `self._loop_labels.pop()` lines and before the `return ForCStmt(...)`,
+   add the same else-check `_for_statement` already has, and thread it
+   into the constructor call:
+```python
+        self._loop_labels.append(label)
+        body = self._block()
+        self._loop_labels.pop()
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
+        return ForCStmt(
+            init,
+            condition,
+            step,
+            body,
+            for_token.line,
+            for_token.column,
+            label,
+            else_branch=else_branch,
+        )
+```
+(Only the `else_branch = None` block and the `else_branch=else_branch`
+constructor argument are new — everything above is unchanged, shown in
+full only so the exact insertion point is unambiguous.)
+
+3. `cinder/interpreter.py`'s `_execute_for_c` (search `def
+   _execute_for_c`): track a `broke` flag through the existing loop
+   exactly the way `_execute_for` already does, then check it after the
+   loop ends:
+```python
+    def _execute_for_c(self, stmt: ForCStmt, env: Environment) -> None:
+        loop_env = Environment(env)
+        if stmt.init is not None:
+            self.execute(stmt.init, loop_env)
+        broke = False
+        while True:
+            iter_env = Environment(env)
+            iter_env._values.update(loop_env._values)
+            iter_env._frozen.update(loop_env._frozen)
+            if stmt.condition is not None and not is_truthy(
+                self.evaluate(stmt.condition, iter_env)
+            ):
+                break
+            try:
+                self.execute(stmt.body, iter_env)
+            except _BreakSignal as signal:
+                if signal.label is not None and signal.label != stmt.label:
+                    raise
+                broke = True
+                break
+            except _ContinueSignal as signal:
+                if signal.label is not None and signal.label != stmt.label:
+                    raise
+            loop_env._values.update(iter_env._values)
+            loop_env._frozen.update(iter_env._frozen)
+            if stmt.step is not None:
+                self.execute(stmt.step, loop_env)
+        if not broke and stmt.else_branch is not None:
+            self.execute(stmt.else_branch, env)
+```
+(Only the `broke = False` init, the `broke = True` before the `break` in
+the `_BreakSignal` handler, and the final `if not broke and
+stmt.else_branch is not None:` block are new — everything else, including
+the existing docstring-documented per-iteration `Environment` copying, is
+unchanged.)
+
+Acceptance criteria (mirror `TestForElse` in `tests/test_interpreter.py`,
+search that class, one-for-one where a C-style equivalent makes sense):
+- `for (let i = 0; i < 3; i = i + 1) { x = i; } else { done = true; }`
+  runs the `else` — all three iterations complete, condition then false,
+  no `break`.
+- `for (; false;) { x = 1; } else { done = true; }` also runs the `else`
+  — the condition is false before the first iteration, body never runs,
+  mirrors `for`-in's own empty-iterable case.
+- `let i = 0; for (;; i = i + 1) { if (i == 2) { break; } } else { ran =
+  true; }` does **not** run the `else` — a `break` skips it even with an
+  always-true omitted condition.
+- `let i = 0; for (; i < 3; i = i + 1) { if (i == 1) { continue; } }
+  else { ran = true; }` still runs the `else` — `continue` does not skip
+  it, only `break` does.
+- `outer: for (let i = 0; i < 1; i = i + 1) { for (let j = 0; j < 1; j =
+  j + 1) { break outer; } } else { ran = true; }` does **not** run the
+  outer loop's `else` — a labeled `break` targeting the outer loop skips
+  its `else`, exactly like `while`/`for`-in's own labeled-break case.
+- `fn f() { for (let i = 0; i < 1; i = i + 1) { return 1; } else { return
+  2; } } f();` returns `1`, not `2` — `return` from the body skips the
+  `else`.
+- `for (let i = 0; i < 2; i = i + 1) { x = i; }` (no `else` at all) still
+  behaves exactly as before — a regression guard mirroring
+  `test_while_without_else_still_behaves_as_before`/the `for`-in
+  equivalent.
+- `for (let i = 0; i < 1; i = i + 1) { } else x = 1;` (an unbraced
+  single-statement `else`, not a block) parses and runs `x = 1` —
+  confirms the `else` branch is parsed via the generic `_statement()` the
+  same way `while`/`for`-in's own is, not hardcoded to require a block.
+- A closure captured inside the `else` branch still sees the loop's
+  final `init`-declared binding value (e.g. `let fns = []; for (let i =
+  0; i < 3; i = i + 1) { } else { fns = push(fns, fn() { return i; }); }
+  fns[0]();` returns `3`) — the `else` runs in the outer `env`, after
+  `loop_env`'s values have been copied back in on the last completed
+  iteration, not in a stale `iter_env`.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`ForCStmt`, search `class
+ForCStmt`), `cinder/parser.py` (`_for_c_statement`, search `def
+_for_c_statement`), `cinder/interpreter.py` (`_execute_for_c`, search
+`def _execute_for_c`), `tests/test_parser.py` (new `class
+TestForCElse`, modeled on `class TestForElse`, search that name, for the
+parse-shape assertions), `tests/test_interpreter.py` (new `class
+TestForCElse`, modeled on `class TestForElse`, search that name — it
+sits right after the existing `class TestForCStatement`, search that
+name, for context — for the runtime behavior above). Once merged,
+`README.md`'s Control flow bullet needs a C-style-for-else mention next
+to the existing `while`/`for`-in/`do`-`while` ones, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -3517,3 +3517,17 @@ for vision/architecture.
   comparisons (`a < b < c`) got the fix for free via the shared
   `_compare` method. Clean first pass, no bounces (3873 tests passing, up
   from 3864).
+- **Standard library: `is_disarium` — digit-position-power sum test** —
+  merged 2026-08-30T~15:15Z via PR #350 (`feat/20260830-is-disarium`).
+  Added `_is_disarium` (`cinder/builtins.py`), registered directly after
+  `_is_armstrong`, mirroring its shape but raising each digit to its own
+  1-indexed positional exponent instead of one shared exponent. Clean
+  first pass, no bounces (3883 tests passing, up from 3873).
+- **Standard library: `nth_kaprekar` — the k-th Kaprekar number by
+  position** — merged 2026-08-30T~15:15Z via PR #351
+  (`feat/20260830-nth-kaprekar`). Added `_nth_kaprekar`
+  (`cinder/builtins.py`), registered directly after `_is_kaprekar`, a
+  sequential candidate scan mirroring `nth_prime`'s shape since Kaprekar
+  numbers have no closed form; cross-check test capped at `k = 20` per
+  the task's performance note. Clean first pass, no bounces (3892 tests
+  passing, up from 3883).

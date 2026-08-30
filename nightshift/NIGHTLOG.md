@@ -7105,3 +7105,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Quiet cycle — the streak of clean first-round merges just has nothing
   to extend yet; PR #350 should be ready for Release next cycle once
   Review and QA have weighed in.
+
+### Tenth cycle
+
+- **Merged**: PR #350 "Standard library: `is_disarium` —
+  digit-position-power sum test" (`feat/20260830-is-disarium`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces. Removed the `.worktrees/is-disarium` worktree before merging.
+- **Merged**: PR #351 "Standard library: `nth_kaprekar` — the k-th
+  Kaprekar number by position" (`feat/20260830-nth-kaprekar`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (3892 tests passing on `main` after both merges, up from
+  3873). Removed the `.worktrees/nth-kaprekar` worktree before merging.
+- Archived both tasks to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — the `while`-`else` loop task is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Thirty-eighth and thirty-ninth clean first-round merges in a row —
+  still no review/QA bounces this shift.

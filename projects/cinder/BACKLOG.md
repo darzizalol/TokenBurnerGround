@@ -11,182 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_disarium` — digit-position-power sum test [claimed 2026-08-30T14:33:25Z]
-
-Build: `is_armstrong` (`cinder/builtins.py`, search `def _is_armstrong`)
-tests whether a number equals the sum of its own digits each raised to
-the *same* fixed exponent (the digit count) — `153 = 1^3 + 5^3 + 3^3`.
-A Disarium number is the closely related but distinct variant where
-each digit is raised to its own *positional* exponent (1-indexed from
-the left) instead of one shared exponent — `89 = 8^1 + 9^2` and
-`135 = 1^1 + 3^2 + 5^3` are both Disarium numbers, but neither is an
-Armstrong number (`1^3+3^3+5^3=153≠135`) and `153` is Armstrong but not
-Disarium (`1^1+5^2+3^3=1+25+27=53≠153`) — the two predicates disagree
-on both directions, so this is a genuinely separate check, not a
-rename. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_disarium(89));'
-# -> <eval>:1:11: undefined name 'is_disarium'
-```
-
-Add to `cinder/builtins.py`, registered directly after `_is_armstrong`
-(search `def _is_armstrong`, immediately before `def
-_is_strong_number`) — keeps the digit-power-sum predicates together:
-```python
-def _is_disarium(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_disarium", arguments, 1, line, column)
-    value = _require_int("is_disarium", arguments[0], line, column)
-    if value < 0:
-        return False
-    digits = str(value)
-    return (
-        sum(int(digit) ** position for position, digit in enumerate(digits, start=1))
-        == value
-    )
-```
-This mirrors `_is_armstrong`'s own shape exactly (same negative-input
-`return False` convention — no domain error, matching how
-`is_armstrong`/`is_strong_number`/`is_harshad` all treat negative input
-as simply "not a match" rather than an error — same `str(value)` digit
-walk), just swapping the fixed `power = len(digits)` exponent for
-`enumerate(..., start=1)`'s per-digit positional exponent. Also
-register the new dict entry (search `"is_armstrong": _is_armstrong,`,
-add `"is_disarium": _is_disarium,` directly after it, before
-`"is_strong_number": _is_strong_number,`).
-
-Acceptance criteria:
-- `is_disarium(89);` and `is_disarium(135);` are `true` — the two
-  smallest multi-digit Disarium numbers.
-- `is_disarium(1);` through `is_disarium(9);` are all `true` — every
-  single digit trivially satisfies `d^1 == d`.
-- `is_disarium(153);` is `false` — the canonical Armstrong number is
-  not Disarium (`1^1 + 5^2 + 3^3 = 53`).
-- `is_disarium(175);` and `is_disarium(518);` are `true` — further
-  known Disarium numbers (`1^1+7^2+5^3=175`, `5^1+1^2+8^3=518`).
-- `is_disarium(10);` is `false` (`1^1 + 0^2 = 1 != 10`).
-- `is_disarium(-89);` is `false` — negative input is simply not a
-  match, no domain error (mirrors `is_armstrong`'s own convention).
-- `is_disarium(1.5);` raises `CinderRuntimeError` matching
-  `"is_disarium() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`is_armstrong`, search for the current line number), `tests/test_builtins.py`
-(model on `class TestIsArmstrong`, search that name, for the
-true/false/negative/type-error test shapes). Once merged, `README.md`'s
-Builtins bullet needs `is_disarium` added near `is_armstrong`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position [claimed 2026-08-30T15:10:06Z]
-
-Build: `is_kaprekar` (`cinder/builtins.py`, search `def _is_kaprekar`)
-tests membership by squaring the candidate and checking whether some
-split of the square's digits sums back to the candidate (`45^2 = 2025`,
-`20 + 25 = 45`), but has no value-returning `nth_*` counterpart the way
-the prime and figurate-number clusters do (`nth_prime`/`is_prime`,
-`nth_pronic`/`is_pronic`, etc.) — Kaprekar numbers have no closed form,
-so this follows `nth_prime`'s own shape (search `def _nth_prime`): a
-sequential candidate scan with a `count`/`candidate` loop. Verify the
-gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_kaprekar(5));'
-# -> <eval>:1:7: undefined name 'nth_kaprekar'
-```
-
-**Performance note:** Kaprekar numbers grow much faster than the
-abundant/semiprime/pronic clusters' own `nth_*` builtins — the 30th is
-already `318682`, more than 1000x the 10th (`2728`) — and unlike those
-clusters, the usual `k <= 50` cross-check convention is too slow here:
-a fresh scan for every `k` from `1` to `50` takes several seconds
-because most of the cost concentrates in the last few, largest `k`
-values. Cap acceptance criteria and the cross-check test at `k = 20`
-instead (`nth_kaprekar(20)` is `38962`, still a fast scan) — this
-mirrors why the `nth_repdigit` task above stayed inside `k = 50` rather
-than extending further: stay inside the range where the cross-check is
-actually cheap to run, and here that range is narrower still.
-
-Add to `cinder/builtins.py`, registered directly after `_is_kaprekar`
-(search `def _is_kaprekar`, immediately before `def _is_harshad`) —
-keeps the Kaprekar pair together, mirroring how `is_catalan` sits
-directly after `nth_catalan`:
-```python
-def _nth_kaprekar(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_kaprekar", arguments, 1, line, column)
-    value = _require_int("nth_kaprekar", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_kaprekar() requires a positive integer, domain error", line, column
-        )
-
-    def _is_kaprekar_candidate(candidate: int) -> bool:
-        square = candidate * candidate
-        digits = str(square)
-        for split in range(1, len(digits) + 1):
-            right = square % (10 ** split)
-            left = square // (10 ** split)
-            if right != 0 and left + right == candidate:
-                return True
-        return False
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_kaprekar_candidate(candidate):
-            count += 1
-    return candidate
-```
-This mirrors `_nth_abundant`'s/`_nth_repdigit`'s own `count`/`candidate`
-scanning loop exactly, just swapping in `_is_kaprekar`'s own
-split-and-sum check as a local nested helper (reimplemented locally,
-matching how `is_twin_prime`/`nth_happy_number` reimplement their
-predicate locally rather than sharing a module-level helper — this
-file's existing convention for small local predicates). Also register
-the new dict entry (search `"is_kaprekar": _is_kaprekar,`, add
-`"nth_kaprekar": _nth_kaprekar,` directly after it, before
-`"is_harshad": _is_harshad,`).
-
-Acceptance criteria:
-- `nth_kaprekar(1);` through `nth_kaprekar(10);` are `1`, `9`, `45`,
-  `55`, `99`, `297`, `703`, `999`, `2223`, `2728` — the first ten
-  Kaprekar numbers by position.
-- `nth_kaprekar(15);` is `7272`.
-- `nth_kaprekar(17);` is `9999`.
-- `nth_kaprekar(20);` is `38962`.
-- `is_kaprekar(nth_kaprekar(k));` is `true` for every `k` from `1` to
-  `20` — cross-check against the existing `is_kaprekar` builtin
-  directly, mirroring `test_nth_octagonal_agrees_with_is_octagonal`'s
-  own shape. Do not raise this bound past `20` (see the performance
-  note above).
-- `nth_kaprekar(0);` and `nth_kaprekar(-1);` raise `CinderRuntimeError`
-  matching `"nth_kaprekar() requires a positive integer, domain error"`.
-- `nth_kaprekar(1.5);` raises `CinderRuntimeError` matching
-  `"nth_kaprekar() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`is_kaprekar`, search for the current line number), `tests/test_builtins.py`
-(model on `class TestNthOctagonal`, search that name, for the
-positive/domain/type-error/cross-check test shapes, and the existing
-`is_kaprekar` test class for the split-and-sum behavior). Once merged,
-`README.md`'s Builtins bullet needs `nth_kaprekar` added near
-`is_kaprekar`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 3. Language: `else` clause on `while` loops (Python-style loop-`else`)
+## 1. Language: `else` clause on `while` loops (Python-style loop-`else`)
 
 Build: `while` loops have no way to distinguish "the loop ran to normal
 completion" from "the loop was cut short by `break`" without a manual
@@ -351,7 +176,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
+## 2. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
 
 Build: `prime_factors` (`cinder/builtins.py`, search `def _prime_factors`)
 already lists an integer's prime factors with multiplicity, and
@@ -452,7 +277,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
+## 3. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
 
 Build: `_compare` (`cinder/interpreter.py`, search `def _compare`) already
 gives numbers, strings, and — as of PR #349, this project's most recently
@@ -571,7 +396,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: difference operator (`-`) for maps
+## 4. Language: difference operator (`-`) for maps
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as

@@ -11,96 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `transpose` — matrix (list-of-lists) transpose [claimed 2026-08-30 19:57:15 UTC]
-
-Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
-transposes the special two-column case (a list of 2-element lists) into
-a 2-element list of columns, and `zip`/`zip_longest` go the other
-direction for exactly two lists, but nothing generalizes either to an
-arbitrary number of columns — a list of same-length rows (a "matrix")
-has no way to swap rows and columns in one call. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(transpose([[1,2],[3,4]]));'
-# -> <eval>:1:7: undefined name 'transpose'
-```
-
-Add to `cinder/builtins.py`, directly after `_unzip` (search `def
-_unzip`, immediately before `def _zip_with`) — keeps it grouped with the
-other zip-family collection functions:
-```python
-def _transpose(arguments: list, line: int, column: int) -> object:
-    _require_arity("transpose", arguments, 1, line, column)
-    matrix = arguments[0]
-    if not isinstance(matrix, list):
-        raise CinderRuntimeError(
-            f"transpose() requires a list, got {type_name(matrix)}",
-            line, column,
-        )
-    if not matrix:
-        return []
-    width = None
-    for i, row in enumerate(matrix):
-        if not isinstance(row, list):
-            raise CinderRuntimeError(
-                f"transpose() requires a list of lists, got "
-                f"{type_name(row)} at index {i}",
-                line, column,
-            )
-        if width is None:
-            width = len(row)
-        elif len(row) != width:
-            raise CinderRuntimeError(
-                f"transpose() requires all rows to have the same length, "
-                f"got length {len(row)} at index {i}, expected {width}",
-                line, column,
-            )
-    return [[row[i] for row in matrix] for i in range(width)]
-```
-An empty outer list returns `[]` before the row-length check ever runs
-(there is no width to derive from zero rows). A non-empty list of empty
-rows (`width == 0`) falls through to `range(0)`, correctly returning `[]`
-too (a matrix with rows but no columns transposes to no rows). Also
-register the new dict entry (search `"unzip": _unzip,`, add
-`"transpose": _transpose,` directly after it, before `"zip_with":
-_zip_with,`).
-
-Acceptance criteria:
-- `transpose([[1, 2], [3, 4], [5, 6]]);` is `[[1, 3, 5], [2, 4, 6]]` —
-  3 rows of 2 columns becomes 2 rows of 3 columns.
-- `transpose([[1, 2, 3]]);` is `[[1], [2], [3]]` — a single row becomes
-  one column per element.
-- `transpose([]);` is `[]` — an empty matrix transposes to itself.
-- `transpose([[], [], []]);` is `[]` — rows with no columns transpose to
-  no rows.
-- `transpose(transpose([[1, 2], [3, 4], [5, 6]]));` is
-  `[[1, 2], [3, 4], [5, 6]]` — round-trips back to the original for any
-  rectangular matrix (mirrors `TestUnzip.test_unzip_round_trips_with_zip`).
-- Does not mutate the input: `let m = [[1, 2], [3, 4]]; transpose(m);
-  print(m);` still prints `[[1, 2], [3, 4]]`.
-- `transpose(5);` raises `CinderRuntimeError` matching `"transpose()
-  requires a list, got int"`.
-- `transpose([1, 2]);` raises `CinderRuntimeError` matching `"transpose()
-  requires a list of lists, got int at index 0"` — an element that isn't
-  itself a list.
-- `transpose([[1, 2], [3, 4, 5]]);` raises `CinderRuntimeError` matching
-  `"transpose() requires all rows to have the same length, got length 3
-  at index 1, expected 2"` — a ragged matrix.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_unzip`, search `def
-_unzip`), `tests/test_builtins.py` (new `class TestTranspose`, modeled
-directly on `class TestUnzip`, search that name, for the
-rectangular/single-row/empty/round-trip/mutation/ragged/type-error test
-shapes above). Once merged, `README.md`'s Builtins bullet needs
-`transpose` added near `unzip`, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing
-— leave both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
+## 1. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
 
 Build: PR #352 already added an `else { ... }` clause to plain `while`
 loops — it runs exactly once, when the loop exits normally (condition
@@ -269,7 +180,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_vampire_number` — digit-permutation factor pairs
+## 2. Standard library: `is_vampire_number` — digit-permutation factor pairs
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`) already asks a digit-vs-factors question (does the
@@ -374,7 +285,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
+## 3. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
 
 Build: `is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`) already tests whether a number's *square* ends in
@@ -460,7 +371,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
+## 4. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
 
 Build: PR #352 added a Python-style `else { ... }` clause to plain
 `while` loops, and task 2 in this file (once it merges) extends the
@@ -617,7 +528,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
+## 5. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
 
 Build: `is_strong_number` (`cinder/builtins.py`, search `def
 _is_strong_number`) already asks whether a number equals the sum of

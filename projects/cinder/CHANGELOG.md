@@ -3589,3 +3589,12 @@ for vision/architecture.
   giving `+`'s inverse an infix spelling. Scoped to `map`/`map` only;
   list difference left for a future task. Clean first pass, no bounces
   (3958 tests passing, up from 3944).
+- **Standard library: `transpose` — matrix (list-of-lists) transpose** —
+  merged 2026-08-30T20:01:12Z via PR #357 (`feat/20260830-transpose`).
+  Added `_transpose` (`cinder/builtins.py`), grouped with the other
+  zip-family collection functions directly after `_unzip`: generalizes
+  `unzip`'s special-case two-column transpose to an arbitrary-width
+  matrix (a list of same-length rows), validating the outer argument is
+  a list and every row is a list of equal length, with empty matrices
+  and all-empty-row matrices both returning `[]`. Clean first pass, no
+  bounces (3968 tests passing, up from 3958).

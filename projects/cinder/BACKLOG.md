@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: difference operator (`-`) for maps
+## 1. Language: difference operator (`-`) for maps [claimed 2026-08-30T19:42:31Z]
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as

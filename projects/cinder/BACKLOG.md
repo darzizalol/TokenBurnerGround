@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_disarium` — digit-position-power sum test
+## 1. Standard library: `is_disarium` — digit-position-power sum test [claimed 2026-08-30T14:33:25Z]
 
 Build: `is_armstrong` (`cinder/builtins.py`, search `def _is_armstrong`)
 tests whether a number equals the sum of its own digits each raised to

@@ -484,6 +484,60 @@ class TestComparisons(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate("1 < [1, 2]")
 
+    def test_map_ordering_same_key_lesser_value(self):
+        self.assertEqual(evaluate('{"a": 1} < {"a": 2}'), True)
+
+    def test_map_ordering_keys_differ_first(self):
+        self.assertEqual(evaluate('{"a": 1} < {"b": 0}'), True)
+
+    def test_map_ordering_first_differing_pair_before_length(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} < {"a": 2}'), True)
+
+    def test_map_ordering_empty_map_is_prefix(self):
+        self.assertEqual(evaluate('{} < {"a": 1}'), True)
+
+    def test_map_ordering_equal_maps_different_insertion_order(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} <= {"b": 2, "a": 1}'), True)
+        self.assertEqual(evaluate('{"a": 1, "b": 2} >= {"b": 2, "a": 1}'), True)
+        self.assertEqual(evaluate('{"a": 1, "b": 2} < {"b": 2, "a": 1}'), False)
+
+    def test_map_ordering_incomparable_values_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"unsupported operand types for comparison: map keys or values "
+            r"are not comparable",
+        ):
+            evaluate('{"a": 1} < {"a": "x"}')
+
+    def test_map_ordering_incomparable_keys_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"unsupported operand types for comparison: map keys or values "
+            r"are not comparable",
+        ):
+            evaluate('{1: "a"} < {"b": 2}')
+
+    def test_map_vs_list_still_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"unsupported operand types for comparison: map and list",
+        ):
+            evaluate('{"a": 1} < [1]')
+
+    def test_map_vs_number_still_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"unsupported operand types for comparison: map and int",
+        ):
+            evaluate('{"a": 1} < 1')
+
+    def test_list_of_maps_still_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('[{"a": 1}] < [{"a": 2}]')
+
+    def test_map_ordering_chained_comparison(self):
+        self.assertEqual(evaluate('{"a": 1} < {"a": 2} < {"a": 3}'), True)
+
 
 class TestChainedComparisons(unittest.TestCase):
     def test_two_operator_chain(self):

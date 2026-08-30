@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `else` clause on `while` loops (Python-style loop-`else`)
+## 1. Language: `else` clause on `while` loops (Python-style loop-`else`) [claimed 2026-08-30T15:24:34Z]
 
 Build: `while` loops have no way to distinguish "the loop ran to normal
 completion" from "the loop was cut short by `break`" without a manual

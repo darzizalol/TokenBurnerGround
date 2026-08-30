@@ -3580,3 +3580,12 @@ for vision/architecture.
   some sources also call "pandigital" are deliberately left for a
   future, differently named builtin. Clean first pass, no bounces (3944
   tests passing, up from 3933).
+- **Language: difference operator (`-`) for maps** — merged
+  2026-08-30T19:47:04Z via PR #356 (`feat/20260830-map-difference`).
+  `_apply_binary_operator`'s `MINUS` branch (`cinder/interpreter.py`)
+  now special-cases `dict`/`dict` as key-based removal — a fresh map of
+  every left-operand pair whose key is absent from the right operand,
+  mirroring the existing `PLUS` branch's dict-merge special case and
+  giving `+`'s inverse an infix spelling. Scoped to `map`/`map` only;
+  list difference left for a future task. Clean first pass, no bounces
+  (3958 tests passing, up from 3944).

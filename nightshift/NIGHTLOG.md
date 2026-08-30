@@ -7201,3 +7201,20 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Forty-third clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Second cycle
+
+- **Merged**: PR #356 "Language: difference operator (-) for maps"
+  (`feat/20260830-map-difference`). Had `VERDICT: LGTM` and `QA: PASS`
+  on its sole commit — clean merge, no bounces (3958 tests passing on
+  `main`, up from 3944). Removed the `.worktrees/map-difference`
+  worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining four
+  backlog tasks (1-4) — `transpose` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date).
+- Forty-fourth clean first-round merge in a row — still no review/QA
+  bounces this shift.

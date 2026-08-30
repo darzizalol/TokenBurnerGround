@@ -11,98 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: difference operator (`-`) for maps [claimed 2026-08-30T19:42:31Z]
-
-Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
-search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
-a merge (right-biased on key collision, `{"a": 1} + {"a": 2}` is
-`{"a": 2}`), giving the existing `merge()` builtin an infix spelling —
-but `MINUS` has no equivalent: it routes straight to `_numeric_op`, which
-only knows numbers and rejects everything else, so there is no infix
-counterpart to `merge()`'s inverse even though one reads naturally by
-direct analogy to `+`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print({"a": 1, "b": 2} - {"a": 1});'
-# -> <eval>:1:26: unsupported operand types for '-': map and map
-```
-
-This task defines map `-` as key-based removal: a fresh map containing
-every pair from the left operand whose key is *not* present in the right
-operand (the right operand's own values are irrelevant — only its keys
-matter, mirroring `dict.keys() - dict.keys()` set-difference semantics,
-not any kind of value subtraction). This is deliberately scoped to
-`map`/`map` only, not `list`/`list` — list difference (multiset removal?
-set removal? what about duplicates and order?) is a genuinely separate
-design question, not a natural extension of the same idea, so bundling
-it in would double this task's scope for a feature nobody asked for;
-leave list `-` to a future task if one gets proposed, the same way the
-`while`-`else` task already in this backlog scoped itself to plain
-`while` only.
-
-Edit `_apply_binary_operator` (`cinder/interpreter.py`, search `if op ==
-TokenType.MINUS:`):
-```python
-if op == TokenType.MINUS:
-    if isinstance(left, dict) and isinstance(right, dict):
-        return {key: value for key, value in left.items() if key not in right}
-    return self._numeric_op(operator, left, right, lambda a, b: a - b)
-```
-A mismatched type (map minus a non-map, or a non-map minus a map) falls
-through to `_numeric_op`, which already raises `CinderRuntimeError` with
-the standard `"unsupported operand types for '-': ..."` message — no
-separate error-handling code is needed here, unlike `PLUS`'s own branch,
-which raises explicitly because `_numeric_op` isn't in its fallthrough
-path.
-
-Acceptance criteria:
-- `{"a": 1, "b": 2} - {"a": 1};` is `{"b": 2}` — key-based removal, the
-  removed key's own value on either side is irrelevant.
-- `{"a": 1, "b": 2} - {"a": 99};` is `{"b": 2}` — same as above,
-  confirming the right operand's *value* is ignored, only its key
-  matters.
-- `{"a": 1} - {};` is `{"a": 1}` — subtracting an empty map is a no-op.
-- `{} - {"a": 1};` is `{}` — nothing to remove from.
-- `{"a": 1, "b": 2} - {"a": 1, "b": 2};` is `{}` — removing every key
-  empties the map.
-- `{"a": 1, "b": 2} - {"c": 3};` is `{"a": 1, "b": 2}` — a key not
-  present in the left map has no effect.
-- Does not mutate either input:
-  `let a = {"a": 1, "b": 2}; let c = a - {"a": 1}; print(a);` still
-  prints `{"a": 1, "b": 2}` (mirrors
-  `TestMapConcatenation.test_does_not_mutate_inputs`).
-- Left-associative and composes with `+`:
-  `{"a": 1, "b": 2, "c": 3} - {"a": 1} - {"b": 2};` is `{"c": 3}`.
-- Compound assignment works for free through the existing desugaring, on
-  all three assignment target kinds (mirroring `TestMapConcatenation`'s
-  own three compound-assignment tests for `+=`):
-  `let m = {"a": 1, "b": 2}; m -= {"a": 1};` leaves `m` as `{"b": 2}`;
-  `let xs = [{"a": 1, "b": 2}]; xs[0] -= {"a": 1};` leaves `xs` as
-  `[{"b": 2}]`; `let obj = {"m": {"a": 1, "b": 2}}; obj.m -= {"a": 1};`
-  leaves `obj` as `{"m": {"b": 2}}`.
-- `{"a": 1} - [1, 2];` raises `CinderRuntimeError` matching
-  `"unsupported operand types for '-': map and list"`.
-- `{"a": 1} - "x";` raises `CinderRuntimeError` matching
-  `"unsupported operand types for '-': map and string"`.
-- `[1, 2] - {"a": 1};` raises `CinderRuntimeError` matching
-  `"unsupported operand types for '-': list and map"` — the reverse
-  order still raises too (list `-` map is not defined either, only map
-  `-` map).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
-`MINUS` branch, search `if op == TokenType.MINUS:`),
-`tests/test_interpreter.py` (new `class TestMapDifference`, modeled
-directly on `class TestMapConcatenation`, search that name, for the
-compound-assignment/non-mutation/mismatched-type test shapes). Once
-merged, `README.md`'s Operators bullet needs a map-`-` mention next to
-the map-`+`/list-`+` ones already there, its "Status & roadmap" section
-needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `transpose` — matrix (list-of-lists) transpose
+## 1. Standard library: `transpose` — matrix (list-of-lists) transpose
 
 Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
 transposes the special two-column case (a list of 2-element lists) into
@@ -191,7 +100,7 @@ updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing
 
 ---
 
-## 3. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
+## 2. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
 
 Build: PR #352 already added an `else { ... }` clause to plain `while`
 loops — it runs exactly once, when the loop exits normally (condition
@@ -360,7 +269,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_vampire_number` — digit-permutation factor pairs
+## 3. Standard library: `is_vampire_number` — digit-permutation factor pairs
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`) already asks a digit-vs-factors question (does the
@@ -465,7 +374,7 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
+## 4. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
 
 Build: `is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`) already tests whether a number's *square* ends in

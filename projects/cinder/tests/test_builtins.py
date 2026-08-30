@@ -9360,6 +9360,62 @@ class TestUnzip(unittest.TestCase):
             run("unzip([[1, 2]], [[3, 4]]);")
 
 
+class TestTranspose(unittest.TestCase):
+    def test_transpose_rectangular_matrix(self):
+        env = run("let result = transpose([[1, 2], [3, 4], [5, 6]]);")
+        self.assertEqual(env.get("result"), [[1, 3, 5], [2, 4, 6]])
+
+    def test_transpose_single_row(self):
+        env = run("let result = transpose([[1, 2, 3]]);")
+        self.assertEqual(env.get("result"), [[1], [2], [3]])
+
+    def test_transpose_empty_matrix(self):
+        env = run("let result = transpose([]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_transpose_rows_with_no_columns(self):
+        env = run("let result = transpose([[], [], []]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_transpose_round_trips(self):
+        env = run(
+            "let result = transpose(transpose([[1, 2], [3, 4], [5, 6]]));"
+        )
+        self.assertEqual(env.get("result"), [[1, 2], [3, 4], [5, 6]])
+
+    def test_transpose_does_not_mutate_input(self):
+        env = run("let m = [[1, 2], [3, 4]]; transpose(m);")
+        self.assertEqual(env.get("m"), [[1, 2], [3, 4]])
+
+    def test_transpose_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("transpose(5);")
+        self.assertIn("transpose() requires a list, got int", str(ctx.exception))
+
+    def test_transpose_element_not_a_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("transpose([1, 2]);")
+        self.assertIn(
+            "transpose() requires a list of lists, got int at index 0",
+            str(ctx.exception),
+        )
+
+    def test_transpose_ragged_matrix_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("transpose([[1, 2], [3, 4, 5]]);")
+        self.assertIn(
+            "transpose() requires all rows to have the same length, "
+            "got length 3 at index 1, expected 2",
+            str(ctx.exception),
+        )
+
+    def test_transpose_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("transpose();")
+        with self.assertRaises(CinderRuntimeError):
+            run("transpose([[1, 2]], [[3, 4]]);")
+
+
 class TestZipWith(unittest.TestCase):
     def test_zip_with_combines_elementwise(self):
         env = run(

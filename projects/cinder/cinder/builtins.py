@@ -1916,6 +1916,18 @@ def _is_armstrong(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) ** power for digit in digits) == value
 
 
+def _is_disarium(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_disarium", arguments, 1, line, column)
+    value = _require_int("is_disarium", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    return (
+        sum(int(digit) ** position for position, digit in enumerate(digits, start=1))
+        == value
+    )
+
+
 def _is_strong_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_strong_number", arguments, 1, line, column)
     value = _require_int("is_strong_number", arguments[0], line, column)
@@ -4306,6 +4318,7 @@ _BUILTINS = {
     "is_undulating": _is_undulating,
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
+    "is_disarium": _is_disarium,
     "is_strong_number": _is_strong_number,
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,

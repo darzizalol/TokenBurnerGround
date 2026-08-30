@@ -4548,6 +4548,46 @@ class TestIsArmstrong(unittest.TestCase):
             run("is_armstrong();")
 
 
+class TestIsDisarium(unittest.TestCase):
+    def test_is_disarium_of_89(self):
+        self.assertEqual(run("let result = is_disarium(89);").get("result"), True)
+
+    def test_is_disarium_of_135(self):
+        self.assertEqual(run("let result = is_disarium(135);").get("result"), True)
+
+    def test_is_disarium_of_single_digits(self):
+        for digit in range(1, 10):
+            with self.subTest(digit=digit):
+                self.assertEqual(
+                    run(f"let result = is_disarium({digit});").get("result"), True
+                )
+
+    def test_is_disarium_of_153_is_false(self):
+        self.assertEqual(run("let result = is_disarium(153);").get("result"), False)
+
+    def test_is_disarium_of_175(self):
+        self.assertEqual(run("let result = is_disarium(175);").get("result"), True)
+
+    def test_is_disarium_of_518(self):
+        self.assertEqual(run("let result = is_disarium(518);").get("result"), True)
+
+    def test_is_disarium_of_ten_is_false(self):
+        self.assertEqual(run("let result = is_disarium(10);").get("result"), False)
+
+    def test_is_disarium_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_disarium(-89);").get("result"), False)
+
+    def test_is_disarium_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_disarium(1.5);")
+        self.assertIn("is_disarium", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_disarium_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_disarium();")
+
+
 class TestIsStrongNumber(unittest.TestCase):
     def test_is_strong_number_of_one(self):
         self.assertEqual(run("let result = is_strong_number(1);").get("result"), True)

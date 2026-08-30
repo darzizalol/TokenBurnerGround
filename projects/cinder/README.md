@@ -446,6 +446,8 @@ while (i < 10) {
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
   `is_amicable` to test whether two distinct integers' proper-divisor sums point at each other,
+  `is_smith_number` to test whether a composite integer's own decimal digit sum equals the
+  combined digit sum of its prime factors (with multiplicity),
   `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `multiplicative_persistence` to count how many times an integer's digits must be repeatedly multiplied together before the result drops to a single digit,
@@ -584,45 +586,45 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a Python-style `else`
-clause on `while` loops (PR #352, `while (cond) { ... } else { ... }`,
-running exactly when the loop exits without an intervening `break`) —
-scoped to plain `while` only, not `do`-`while` or either `for` form —
-and before that `nth_kaprekar` (PR #351) — the Kaprekar predicate's own
-missing `nth_*` counterpart (`is_kaprekar` tests membership via the
-split-and-sum check but had no value-returning sibling), via a
-sequential-scan shape bounded to a `k <= 20` cross-check since Kaprekar
-numbers grow far faster than repdigits or abundant numbers (the 30th is
-already 318,682) — and before that `is_disarium` (PR #350) — the
-digit-position-power-sum variant of `is_armstrong` (each digit raised
-to its own 1-indexed position instead of one shared exponent, e.g.
-`89 = 8^1 + 9^2`), a genuinely distinct predicate since the two
-disagree on both directions (`153` is Armstrong but not Disarium and
-vice versa for `89`/`135`). See [`CHANGELOG.md`](CHANGELOG.md) for the
-full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_smith_number` — a
-composite integer whose own digit sum equals the combined digit sum
-of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
-digit_sum(2) = 4`), the digit-sum question `prime_factors` never got
-asked of it, ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
-(`{"a": 1} < {"a": 2}`) — the same `_compare` gap PR #349 closed for
-lists but left open for maps, defined by comparing each map's items as
-a key-sorted list of pairs so the result stays consistent with the
-existing order-independent map `==`, `is_pandigital` — testing whether
-an integer's decimal digits are exactly the ten digits `0`-`9` each
-appearing once (e.g. `1023456789`, the smallest such number), a digit-set
-question none of `is_repdigit`/`is_disarium`/`is_armstrong` answers,
-`-` (difference) for maps (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`)
-— key-based removal by direct analogy to `+`'s existing dict-merge
-branch, the inverse of the `merge()` builtin the same way `+` is its
-infix form, `transpose` — the arbitrary-column generalization of
-`unzip`'s fixed-two-column matrix transpose, and the same `else` clause
-PR #352 gave `while` extended to the foreach `for`-in form (`for x in
-xs { ... } else { ... }`), the one loop kind #352 itself left out of
-scope. (Guards in `match` arms, `n if n > 0 => "positive"`, were
-attempted but closed after three failed review rounds over a recurring
-parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
-they're a real gap but not back in the active queue yet.)
+Actively developed, nightly. Recently landed: `is_smith_number` (PR
+#353) — a composite integer whose own digit sum equals the combined
+digit sum of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) =
+digit_sum(2) + digit_sum(2) = 4`), the digit-sum question
+`prime_factors` never got asked of it — and before that a Python-style
+`else` clause on `while` loops (PR #352, `while (cond) { ... } else {
+... }`, running exactly when the loop exits without an intervening
+`break`) — scoped to plain `while` only, not `do`-`while` or either
+`for` form — and before that `nth_kaprekar` (PR #351) — the Kaprekar
+predicate's own missing `nth_*` counterpart (`is_kaprekar` tests
+membership via the split-and-sum check but had no value-returning
+sibling), via a sequential-scan shape bounded to a `k <= 20`
+cross-check since Kaprekar numbers grow far faster than repdigits or
+abundant numbers (the 30th is already 318,682). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): ordering comparison
+operators (`<`/`<=`/`>`/`>=`) for maps (`{"a": 1} < {"a": 2}`) — the
+same `_compare` gap PR #349 closed for lists but left open for maps,
+defined by comparing each map's items as a key-sorted list of pairs so
+the result stays consistent with the existing order-independent map
+`==`, `is_pandigital` — testing whether an integer's decimal digits
+are exactly the ten digits `0`-`9` each appearing once (e.g.
+`1023456789`, the smallest such number), a digit-set question none of
+`is_repdigit`/`is_disarium`/`is_armstrong` answers, `-` (difference)
+for maps (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based
+removal by direct analogy to `+`'s existing dict-merge branch, the
+inverse of the `merge()` builtin the same way `+` is its infix form,
+`transpose` — the arbitrary-column generalization of `unzip`'s
+fixed-two-column matrix transpose, the same `else` clause PR #352 gave
+`while` extended to the foreach `for`-in form (`for x in xs { ... }
+else { ... }`), the one loop kind #352 itself left out of scope, and
+`is_vampire_number` — a number whose decimal digits can be split into
+two equal-length "fangs" that multiply back to it (e.g. `1260 = 21 *
+60`), a digit-permutation-meets-factorization predicate distinct from
+`is_smith_number`'s digit-sum-of-factors question. (Guards in `match`
+arms, `n if n > 0 => "positive"`, were attempted but closed after
+three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
+but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

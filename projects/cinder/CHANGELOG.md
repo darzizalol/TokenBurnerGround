@@ -3551,3 +3551,19 @@ for vision/architecture.
   `n`'s prime factors with multiplicity; primes and non-composites
   excluded by definition. Clean first pass, no bounces (3922 tests
   passing, up from 3906).
+- **Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for
+  maps** — merged 2026-08-30T~15:56Z via PR #354
+  (`feat/20260830-map-ordering`). Extended `_compare`
+  (`cinder/interpreter.py`) to accept `dict`/`dict` by comparing each
+  map's items as a list of `(key, value)` pairs sorted by key, then
+  lexicographically comparing those two sorted lists the same way list
+  comparison already does — consistent with `==`'s existing
+  order-independent map equality. Reuses the same `try`/`except
+  TypeError` pattern already used for incomparable list elements, with
+  `is_map_compare` captured before `left`/`right` are reassigned so the
+  except branch still picks the right message. Scoped to direct
+  map-vs-map comparison only — a map nested inside a list still raises,
+  since list comparison delegates to Python's native list `<` rather
+  than routing back through `_compare`; locked in with a regression
+  test. Clean first pass, no bounces (3933 tests passing, up from
+  3922).

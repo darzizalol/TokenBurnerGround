@@ -11,126 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps [claimed 2026-08-30T15:52:01Z]
-
-Build: `_compare` (`cinder/interpreter.py`, search `def _compare`) already
-gives numbers, strings, and — as of PR #349, this project's most recently
-merged depth task — lists element-by-element ordering, but maps are the
-one comparable-collection type still excluded from the `comparable` check,
-even though map *equality* (`==`) already treats two maps with the same
-key-value pairs in any order as equal, e.g. `{"a": 1, "b": 2} == {"b": 2,
-"a": 1}` is `true` — an ordering rule already has to be consistent with
-that existing equality, it just isn't wired up yet. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print({"a": 1} < {"a": 2});'
-# -> <eval>:1:15: unsupported operand types for comparison: map and map
-```
-
-Since Python dicts have no native ordering (unlike lists, which get `<`
-for free from Python's own list comparison), this task defines one
-explicitly: compare each map's items as a list of `(key, value)` pairs
-sorted by key, then compare those two sorted lists the same lexicographic
-way list comparison already does — first differing pair wins, and a
-shorter list that is a prefix of the other sorts less. This keeps two
-`==`-equal maps consistent under the new operators too (their sorted-item
-lists are identical, so `<`/`>` are both `false` and `<=`/`>=` are both
-`true`, exactly like two equal lists already behave), and it reuses the
-same `try`/`except TypeError` pattern `_compare` already has for lists so
-a key-type or value-type mismatch raises a clean `CinderRuntimeError`
-instead of a raw Python error.
-
-Edit `_compare` (`cinder/interpreter.py`, search `def _compare`):
-```python
-def _compare(self, operator: Token, left, right, op: TokenType) -> bool:
-    comparable = (
-        (_is_number(left) and _is_number(right))
-        or (isinstance(left, str) and isinstance(right, str))
-        or (isinstance(left, list) and isinstance(right, list))
-        or (isinstance(left, dict) and isinstance(right, dict))
-    )
-    if not comparable:
-        raise CinderRuntimeError(
-            f"unsupported operand types for comparison: "
-            f"{type_name(left)} and {type_name(right)}",
-            operator.line,
-            operator.column,
-        )
-    is_map_compare = isinstance(left, dict) and isinstance(right, dict)
-    try:
-        if is_map_compare:
-            left = sorted(left.items())
-            right = sorted(right.items())
-        if op == TokenType.LT:
-            return left < right
-        if op == TokenType.LTEQ:
-            return left <= right
-        if op == TokenType.GT:
-            return left > right
-        return left >= right
-    except TypeError:
-        message = (
-            "unsupported operand types for comparison: map keys or values "
-            "are not comparable"
-            if is_map_compare
-            else "unsupported operand types for comparison: list elements "
-            "are not comparable"
-        )
-        raise CinderRuntimeError(message, operator.line, operator.column) from None
-```
-`is_map_compare` is captured *before* `left`/`right` get reassigned to
-their sorted-items form, so the `except` branch can still tell which of
-the two pre-existing messages applies.
-
-**Scope note** (call this out in the PR body): this only makes *direct*
-map-vs-map comparison work — a map nested inside a list
-(`[{"a": 1}] < [{"a": 2}]`) still raises, because list comparison
-delegates to Python's own native list `<`, which tries `dict < dict`
-directly on the nested elements rather than routing back through this
-method. Making nested comparability recursive is a bigger, separate
-change and is out of scope here; lock in the current raise with a
-regression test instead of treating it as an accidental gap.
-
-Acceptance criteria:
-- `{"a": 1} < {"a": 2};` is `true` — same key, lesser value.
-- `{"a": 1} < {"b": 0};` is `true` — keys differ first (`"a" < "b"`), so
-  this holds regardless of values.
-- `{"a": 1, "b": 2} < {"a": 2};` is `true` — the first differing sorted
-  pair is `("a", 1)` vs `("a", 2)`, decided before list length matters.
-- `{} < {"a": 1};` is `true` — an empty map is a prefix of any
-  non-empty one, mirroring `[] < [1]`.
-- `{"a": 1, "b": 2} <= {"b": 2, "a": 1};` and
-  `{"a": 1, "b": 2} >= {"b": 2, "a": 1};` are both `true`, and
-  `{"a": 1, "b": 2} < {"b": 2, "a": 1};` is `false` — two maps that are
-  `==` (same pairs, different insertion order) are never strictly less
-  than or greater than each other.
-- `{"a": 1} < {"a": "x"};` raises `CinderRuntimeError` matching
-  `"unsupported operand types for comparison: map keys or values are not
-  comparable"` — same key, incomparable value types.
-- `{1: "a"} < {"b": 2};` raises `CinderRuntimeError` with the same
-  message — incomparable key types.
-- `{"a": 1} < [1];` and `{"a": 1} < 1;` still raise `CinderRuntimeError`
-  matching `"unsupported operand types for comparison: map and list"` /
-  `"... map and int"` — maps only compare against maps.
-- `[{"a": 1}] < [{"a": 2}];` still raises `CinderRuntimeError` (see the
-  scope note above — not fixed by this task).
-- Chained comparisons compose for free:
-  `{"a": 1} < {"a": 2} < {"a": 3};` is `true` (via
-  `_evaluate_chained_comparison`, which already calls `_compare` per
-  adjacent pair — no changes needed there).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_compare`, search `def
-_compare`), `tests/test_interpreter.py` (extend `class TestComparisons`,
-search that name, alongside the existing `test_list_ordering_*` cases,
-for the map equivalents above). Once merged, `README.md`'s Operators
-bullet needs a map-ordering mention next to the list-ordering one added
-for PR #349, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_pandigital` — 0-to-9 pandigital number test
+## 1. Standard library: `is_pandigital` — 0-to-9 pandigital number test
 
 Build: `is_disarium` and `is_armstrong` (`cinder/builtins.py`, search `def
 _is_disarium`) already test digit-position properties, and `is_undulating`/
@@ -201,7 +82,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: difference operator (`-`) for maps
+## 2. Language: difference operator (`-`) for maps
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
@@ -292,7 +173,7 @@ task.
 
 ---
 
-## 4. Standard library: `transpose` — matrix (list-of-lists) transpose
+## 3. Standard library: `transpose` — matrix (list-of-lists) transpose
 
 Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
 transposes the special two-column case (a list of 2-element lists) into
@@ -381,7 +262,7 @@ updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing
 
 ---
 
-## 5. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
+## 4. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
 
 Build: PR #352 already added an `else { ... }` clause to plain `while`
 loops — it runs exactly once, when the loop exits normally (condition
@@ -550,7 +431,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_vampire_number` — digit-permutation factor pairs
+## 5. Standard library: `is_vampire_number` — digit-permutation factor pairs
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`) already asks a digit-vs-factors question (does the

@@ -2025,6 +2025,33 @@ def _is_kaprekar(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _nth_kaprekar(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_kaprekar", arguments, 1, line, column)
+    value = _require_int("nth_kaprekar", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_kaprekar() requires a positive integer, domain error", line, column
+        )
+
+    def _is_kaprekar_candidate(candidate: int) -> bool:
+        square = candidate * candidate
+        digits = str(square)
+        for split in range(1, len(digits) + 1):
+            right = square % (10 ** split)
+            left = square // (10 ** split)
+            if right != 0 and left + right == candidate:
+                return True
+        return False
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_kaprekar_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_harshad(arguments: list, line: int, column: int) -> object:
     _require_arity("is_harshad", arguments, 1, line, column)
     value = _require_int("is_harshad", arguments[0], line, column)
@@ -4314,6 +4341,7 @@ _BUILTINS = {
     "is_deficient": _is_deficient,
     "is_automorphic": _is_automorphic,
     "is_kaprekar": _is_kaprekar,
+    "nth_kaprekar": _nth_kaprekar,
     "is_harshad": _is_harshad,
     "is_perfect_cube": _is_perfect_cube,
     "is_pronic": _is_pronic,

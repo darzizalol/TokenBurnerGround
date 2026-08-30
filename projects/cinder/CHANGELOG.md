@@ -3567,3 +3567,16 @@ for vision/architecture.
   than routing back through `_compare`; locked in with a regression
   test. Clean first pass, no bounces (3933 tests passing, up from
   3922).
+- **Standard library: `is_pandigital` — 0-to-9 pandigital number
+  test** — merged 2026-08-30T~16:08Z via PR #355
+  (`feat/20260830-is-pandigital`). Added `_is_pandigital`
+  (`cinder/builtins.py`), grouped with the other digit predicates
+  directly after `_is_disarium`: a number is pandigital iff its decimal
+  digits are exactly the multiset `{0,1,...,9}`, each appearing once,
+  i.e. `len(digits) == 10 and set(digits) == set("0123456789")`.
+  Negative numbers excluded, matching every other `is_*` digit
+  predicate's own convention. Scoped to the single unambiguous "0 to 9"
+  definition only — the "1 to 9" zeroless and "at least once" variants
+  some sources also call "pandigital" are deliberately left for a
+  future, differently named builtin. Clean first pass, no bounces (3944
+  tests passing, up from 3933).

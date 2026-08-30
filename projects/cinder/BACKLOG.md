@@ -11,78 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pandigital` — 0-to-9 pandigital number test [claimed 2026-08-30T16:04:06Z]
-
-Build: `is_disarium` and `is_armstrong` (`cinder/builtins.py`, search `def
-_is_disarium`) already test digit-position properties, and `is_undulating`/
-`is_repdigit` already test digit-*pattern* properties, but nothing checks
-whether a number's digits are a full house of exactly the ten decimal
-digits — a classic property (the "0 to 9 pandigital numbers", smallest
-`1023456789`, largest `9876543210`) that neither existing digit-set
-predicate (`is_repdigit`: all digits the same; `is_unique` operates on
-lists, not a number's own digits) answers. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_pandigital(1023456789));'
-# -> <eval>:1:7: undefined name 'is_pandigital' (did you mean 'is_digit'?)
-```
-
-This task scopes the predicate to the single unambiguous "0 to 9"
-definition — a number is pandigital iff its decimal digits are exactly
-the multiset `{0,1,2,...,9}`, each appearing once, which forces exactly
-10 digits. (The "1 to 9" zeroless variant, and "at least once" variants
-with more than 10 digits, are different, looser definitions some sources
-also call "pandigital" — deliberately not implemented here to avoid one
-name meaning three different things; a future task can add a differently
-named builtin for those if ever wanted.)
-
-Add to `cinder/builtins.py`, directly after `_is_disarium` (search `def
-_is_disarium`, immediately before `def _is_strong_number`) — keeps it
-grouped with the other single-argument digit predicates:
-```python
-def _is_pandigital(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_pandigital", arguments, 1, line, column)
-    value = _require_int("is_pandigital", arguments[0], line, column)
-    if value < 0:
-        return False
-    digits = str(value)
-    return len(digits) == 10 and set(digits) == set("0123456789")
-```
-Also register the new dict entry (search `"is_disarium": _is_disarium,`,
-add `"is_pandigital": _is_pandigital,` directly after it, before
-`"is_strong_number": _is_strong_number,`).
-
-Acceptance criteria:
-- `is_pandigital(1023456789);` and `is_pandigital(9876543210);` are both
-  `true` — the smallest and largest 0-to-9 pandigital numbers.
-- `is_pandigital(5670231849);` is `true` — an arbitrary permutation of
-  the ten digits, not just the sorted extremes.
-- `is_pandigital(123456789);` is `false` — only 9 digits, missing `0`.
-- `is_pandigital(1023456788);` is `false` — 10 digits, but `8` repeats
-  and `9` is missing (right length, wrong digit set).
-- `is_pandigital(10234567890);` is `false` — 11 digits, `0` repeats.
-- `is_pandigital(0);`, `is_pandigital(5);` are `false` — far too short.
-- `is_pandigital(-1023456789);` is `false` — negative numbers are
-  excluded (mirrors every other `is_*` digit predicate's own convention,
-  e.g. `is_disarium`/`is_armstrong`).
-- `is_pandigital(1.5);` raises `CinderRuntimeError` matching
-  `"is_pandigital() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_disarium`, search
-`def _is_disarium`), `tests/test_builtins.py` (new `class
-TestIsPandigital`, modeled directly on `class TestIsDisarium`, search
-that name, for the true/false/length/domain/type-error test shapes
-above). Once merged, `README.md`'s Builtins bullet needs `is_pandigital`
-added near `is_disarium`, its "Status & roadmap" section needs updating,
-and `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: difference operator (`-`) for maps
+## 1. Language: difference operator (`-`) for maps
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
@@ -173,7 +102,7 @@ task.
 
 ---
 
-## 3. Standard library: `transpose` — matrix (list-of-lists) transpose
+## 2. Standard library: `transpose` — matrix (list-of-lists) transpose
 
 Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
 transposes the special two-column case (a list of 2-element lists) into
@@ -262,7 +191,7 @@ updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing
 
 ---
 
-## 4. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
+## 3. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
 
 Build: PR #352 already added an `else { ... }` clause to plain `while`
 loops — it runs exactly once, when the loop exits normally (condition
@@ -431,7 +360,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_vampire_number` — digit-permutation factor pairs
+## 4. Standard library: `is_vampire_number` — digit-permutation factor pairs
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`) already asks a digit-vs-factors question (does the
@@ -536,7 +465,7 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
+## 5. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
 
 Build: `is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`) already tests whether a number's *square* ends in

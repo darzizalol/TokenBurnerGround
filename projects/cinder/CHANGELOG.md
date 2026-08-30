@@ -3541,3 +3541,13 @@ for vision/architecture.
   dangling-attachment behavior change for `if (cond) while (x) {} else
   {}` (the `else` now binds to the `while`), locked in with a regression
   test. Clean first pass, no bounces (3906 tests passing, up from 3892).
+- **Standard library: `is_smith_number`** — merged 2026-08-30T~15:43Z via
+  PR #353 (`feat/20260830-is-smith-number`). Added `_is_smith_number`
+  (`cinder/builtins.py`), registered directly after `prime_factors`,
+  reimplementing the `_is_prime`-shaped trial-division pre-check and the
+  `_prime_factors`-shaped factorization loop locally rather than calling
+  either directly, matching `_nth_semiprime`/`_is_sphenic`'s existing
+  convention. Compares `digit_sum(n)` against the combined digit sum of
+  `n`'s prime factors with multiplicity; primes and non-composites
+  excluded by definition. Clean first pass, no bounces (3922 tests
+  passing, up from 3906).

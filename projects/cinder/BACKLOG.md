@@ -11,108 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test [claimed 2026-08-30T15:39:32Z]
-
-Build: `prime_factors` (`cinder/builtins.py`, search `def _prime_factors`)
-already lists an integer's prime factors with multiplicity, and
-`is_harshad` already sums an integer's own digits for a divisibility
-check, but nothing compares an integer's digit sum against the combined
-digit sum of its prime factors — the defining property of a Smith
-number (named after Harold Smith, whose phone number `4937775` happens
-to have this property): a composite integer where `digit_sum(n) ==
-sum(digit_sum(f) for f in prime_factors(n))`, e.g. `4 = 2 * 2`,
-`digit_sum(4) = 4`, `digit_sum(2) + digit_sum(2) = 2 + 2 = 4`. Verify
-the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_smith_number(4));'
-# -> <eval>:1:11: undefined name 'is_smith_number'
-```
-
-Primes are excluded by definition (a prime's only prime factor is
-itself, so the digit sums trivially match every prime — the interesting
-case is composites where factoring actually changes the digit sum), and
-`1` and every non-positive integer are excluded too (neither prime nor
-composite). This mirrors `is_composite`'s own domain (`value < 4` is an
-automatic `False`, since `4` is the smallest composite), tightened
-further by the primality check.
-
-Add to `cinder/builtins.py`, registered directly after `_prime_factors`
-(search `def _prime_factors`, immediately before `def _num_divisors`) —
-keeps the two prime-factorization-based functions together:
-```python
-def _is_smith_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_smith_number", arguments, 1, line, column)
-    value = _require_int("is_smith_number", arguments[0], line, column)
-    if value < 2:
-        return False
-    for divisor in range(2, int(value ** 0.5) + 1):
-        if value % divisor == 0:
-            break
-    else:
-        return False  # prime, not composite
-    factors = []
-    remaining = value
-    divisor = 2
-    while divisor * divisor <= remaining:
-        while remaining % divisor == 0:
-            factors.append(divisor)
-            remaining //= divisor
-        divisor += 1
-    if remaining > 1:
-        factors.append(remaining)
-    digit_total = sum(int(digit) for digit in str(value))
-    factor_digit_total = sum(
-        sum(int(digit) for digit in str(factor)) for factor in factors
-    )
-    return digit_total == factor_digit_total
-```
-The primality pre-check is reimplemented locally (the same `for
-divisor in range(2, int(value ** 0.5) + 1)` / `else: return False`
-shape `_is_prime` already uses) rather than calling `_is_prime`
-directly, and the factorization loop is reimplemented locally too (the
-same trial-division shape `_prime_factors` already uses) rather than
-calling `_prime_factors` directly — matching how `_nth_semiprime`/
-`_is_sphenic` already reimplement `_is_prime`-shaped and
-factorization-shaped checks locally rather than sharing a module-level
-helper, this file's existing convention for small local predicates
-built from a bigger builtin's own logic. Also register the new dict
-entry (search `"prime_factors": _prime_factors,`, add
-`"is_smith_number": _is_smith_number,` directly after it, before
-`"num_divisors": _num_divisors,`).
-
-Acceptance criteria:
-- `is_smith_number(4);`, `is_smith_number(22);`, `is_smith_number(27);`,
-  `is_smith_number(58);`, `is_smith_number(85);`, `is_smith_number(94);`,
-  `is_smith_number(121);` are all `true` — the first seven known Smith
-  numbers.
-- `is_smith_number(9);` is `false` (`digit_sum(9) = 9`, but `9 = 3 * 3`
-  gives `digit_sum(3) + digit_sum(3) = 6`, and `9 != 6`) — a composite
-  whose digit sums simply don't match.
-- `is_smith_number(2);`, `is_smith_number(3);`, `is_smith_number(13);`
-  are all `false` — primes are excluded by definition, even though
-  their own digit sum trivially "matches" (a prime has exactly one
-  prime factor: itself).
-- `is_smith_number(1);`, `is_smith_number(0);`, `is_smith_number(-4);`
-  are all `false` — neither prime nor composite.
-- `is_smith_number(1.5);` raises `CinderRuntimeError` matching
-  `"is_smith_number() requires an int, got float"` (via `_require_int`'s
-  existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (register directly after
-`prime_factors`, search for the current line number), `tests/test_builtins.py`
-(extend near `class TestPrimeFactors`, search that name, for the
-true/false/prime-exclusion/domain/type-error test shapes above). Once
-merged, `README.md`'s Builtins bullet needs `is_smith_number` added near
-`prime_factors`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
+## 1. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
 
 Build: `_compare` (`cinder/interpreter.py`, search `def _compare`) already
 gives numbers, strings, and — as of PR #349, this project's most recently
@@ -231,7 +130,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_pandigital` — 0-to-9 pandigital number test
+## 2. Standard library: `is_pandigital` — 0-to-9 pandigital number test
 
 Build: `is_disarium` and `is_armstrong` (`cinder/builtins.py`, search `def
 _is_disarium`) already test digit-position properties, and `is_undulating`/
@@ -302,7 +201,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: difference operator (`-`) for maps
+## 3. Language: difference operator (`-`) for maps
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
@@ -393,7 +292,7 @@ task.
 
 ---
 
-## 5. Standard library: `transpose` — matrix (list-of-lists) transpose
+## 4. Standard library: `transpose` — matrix (list-of-lists) transpose
 
 Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
 transposes the special two-column case (a list of 2-element lists) into
@@ -482,7 +381,7 @@ updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing
 
 ---
 
-## 6. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
+## 5. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
 
 Build: PR #352 already added an `else { ... }` clause to plain `while`
 loops — it runs exactly once, when the loop exits normally (condition

@@ -4957,6 +4957,74 @@ class TestIsKaprekar(unittest.TestCase):
             run("is_kaprekar();")
 
 
+class TestNthKaprekar(unittest.TestCase):
+    def test_nth_kaprekar_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 9,
+            3: 45,
+            4: 55,
+            5: 99,
+            6: 297,
+            7: 703,
+            8: 999,
+            9: 2223,
+            10: 2728,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_kaprekar({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_kaprekar_of_15(self):
+        self.assertEqual(run("let result = nth_kaprekar(15);").get("result"), 7272)
+
+    def test_nth_kaprekar_of_17(self):
+        self.assertEqual(run("let result = nth_kaprekar(17);").get("result"), 9999)
+
+    def test_nth_kaprekar_of_20(self):
+        self.assertEqual(run("let result = nth_kaprekar(20);").get("result"), 38962)
+
+    def test_nth_kaprekar_agrees_with_is_kaprekar(self):
+        for position in range(1, 21):
+            self.assertEqual(
+                run(f"let result = is_kaprekar(nth_kaprekar({position}));").get(
+                    "result"
+                ),
+                True,
+                f"expected nth_kaprekar({position}) to be a Kaprekar number",
+            )
+
+    def test_nth_kaprekar_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_kaprekar(0);")
+        self.assertIn(
+            "nth_kaprekar() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_kaprekar_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_kaprekar(-1);")
+        self.assertIn(
+            "nth_kaprekar() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_kaprekar_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_kaprekar(1.5);")
+        self.assertIn(
+            "nth_kaprekar() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_kaprekar_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_kaprekar(1, 2);")
+
+
 class TestIsHarshad(unittest.TestCase):
     def test_is_harshad_of_18(self):
         self.assertEqual(run("let result = is_harshad(18);").get("result"), True)

@@ -1385,6 +1385,7 @@ class Interpreter:
             (_is_number(left) and _is_number(right))
             or (isinstance(left, str) and isinstance(right, str))
             or (isinstance(left, list) and isinstance(right, list))
+            or (isinstance(left, dict) and isinstance(right, dict))
         )
         if not comparable:
             raise CinderRuntimeError(
@@ -1393,7 +1394,11 @@ class Interpreter:
                 operator.line,
                 operator.column,
             )
+        is_map_compare = isinstance(left, dict) and isinstance(right, dict)
         try:
+            if is_map_compare:
+                left = sorted(left.items())
+                right = sorted(right.items())
             if op == TokenType.LT:
                 return left < right
             if op == TokenType.LTEQ:
@@ -1402,12 +1407,14 @@ class Interpreter:
                 return left > right
             return left >= right
         except TypeError:
-            raise CinderRuntimeError(
-                "unsupported operand types for comparison: list elements are "
-                "not comparable",
-                operator.line,
-                operator.column,
-            ) from None
+            message = (
+                "unsupported operand types for comparison: map keys or values "
+                "are not comparable"
+                if is_map_compare
+                else "unsupported operand types for comparison: list elements "
+                "are not comparable"
+            )
+            raise CinderRuntimeError(message, operator.line, operator.column) from None
 
 
 def call_value(

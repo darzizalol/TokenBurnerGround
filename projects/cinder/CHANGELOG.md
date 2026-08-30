@@ -3598,3 +3598,16 @@ for vision/architecture.
   a list and every row is a list of equal length, with empty matrices
   and all-empty-row matrices both returning `[]`. Clean first pass, no
   bounces (3968 tests passing, up from 3958).
+- **Language: `else` clause on `for`-in loops (Python-style loop-`else`)**
+  — merged 2026-08-31T~ via PR #358 (`feat/20260830-for-else`). Extends
+  the `else { ... }` clause PR #352 added for plain `while` loops to the
+  foreach `for NAME in EXPR { ... }` form: `ForStmt` gains an
+  `else_branch` field, the parser consumes a trailing `else` after the
+  for-body block (unambiguous here since a `for`'s body is always
+  brace-delimited, unlike `while`'s), and `_execute_for` tracks a
+  `broke` flag through iteration to run `else_branch` only when the
+  loop exits without an intervening `break` — `continue` doesn't skip
+  it, `return`/uncaught exception/propagating labeled `break` do.
+  Scoped to the foreach form only; `ForCStmt` and `DoWhileStmt` remain
+  future tasks. Clean first pass, no bounces (3981 tests passing, up
+  from 3968).

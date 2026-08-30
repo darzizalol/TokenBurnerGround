@@ -11,176 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `else` clause on `for`-in loops (Python-style loop-`else`) [claimed 2026-08-30T20:09:26Z]
-
-Build: PR #352 already added an `else { ... }` clause to plain `while`
-loops — it runs exactly once, when the loop exits normally (condition
-became false, or, for `for`, the iterable ran out) *without* an
-intervening `break`, mirroring Python's `while`/`for`-`else` — but that
-task explicitly scoped itself to `while` only, leaving the foreach
-`for NAME in EXPR { ... }` form (`cinder/ast_nodes.py`'s `ForStmt`) and
-the C-style `for (init; cond; step) { ... }` form (`ForCStmt`) both
-still without one. This task closes the gap for the foreach form only.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'for x in [1, 2, 3] { print(x); } else { print("done"); }'
-# -> <eval>:1:34: expected end of statement, found 'else'
-```
-
-Semantics mirror `WhileStmt.else_branch` exactly (see its docstring,
-`cinder/ast_nodes.py`, search `class WhileStmt`): the `else` block runs
-once control falls out of the loop with no intervening `break` —
-including immediately, for an empty or already-exhausted iterable, the
-`for`-loop equivalent of `while (false) { } else { ... }` running its
-else on zero iterations. `continue` does not skip it; an uncaught
-exception, `return`, or a propagating labeled `break`/`continue` from
-the body does, since control never reaches the check in that case. This
-task is scoped to the foreach `for`-in form only — not `ForCStmt` (the
-C-style three-clause form) and not `DoWhileStmt` — the same
-one-loop-kind-at-a-time scoping `while`-`else` itself used; either of
-those is a separate, future task if ever proposed.
-
-Unlike `while`-`else`, there is no dangling-`if`/`else`-attachment
-concern to handle here: `_while_statement` parses its body via the
-generic `_statement()` (so an unbraced single-statement body like
-`while (false) x = 1;` is legal, creating the ambiguity PR #352 had to
-resolve), but `_for_statement` already requires a brace-delimited
-`_block()` body unconditionally (see the `if not self._check(
-TokenType.LBRACE):` guard right before `body = self._block()`) — a
-trailing `else` after a `for`'s `{ ... }` body is unambiguous, since a
-`for` can never appear as an `if`'s unbraced then-branch and swallow
-the `if`'s own `else` the way an unbraced `while` could.
-
-Edit three files:
-
-1. `cinder/ast_nodes.py` (search `class ForStmt`), add one field at the
-   end, after `is_map: bool = False`:
-```python
-    else_branch: "Stmt | None" = None
-```
-
-2. `cinder/parser.py`'s `_for_statement` (search `def _for_statement`):
-   right after `body = self._block()` / `self._loop_labels.pop()` and
-   before the `return ForStmt(` — insert the same else-clause parse
-   `_while_statement` already has, then thread it into the constructor
-   call:
-```python
-        body = self._block()
-        self._loop_labels.pop()
-        else_branch = None
-        if self._check(TokenType.ELSE):
-            self._advance()
-            else_branch = self._statement()
-        return ForStmt(
-            var_name,
-            iterable,
-            body,
-            for_token.line,
-            for_token.column,
-            label,
-            names=names,
-            rest=rest,
-            is_map=is_map,
-            else_branch=else_branch,
-        )
-```
-
-3. `cinder/interpreter.py`'s `_execute_for` (search `def _execute_for`):
-   track a `broke` flag through the existing iteration loop exactly the
-   way `WhileStmt`'s handling already does, then check it after the
-   `for item in items:` loop ends:
-```python
-    def _execute_for(self, stmt: ForStmt, env: Environment) -> None:
-        iterable = self.evaluate(stmt.iterable, env)
-        if isinstance(iterable, dict):
-            items = list(iterable.keys())
-        elif isinstance(iterable, (list, str)):
-            items = list(iterable)
-        else:
-            raise CinderRuntimeError(
-                f"'for'-in loop requires a list, string, or map, got {type_name(iterable)}",
-                stmt.line,
-                stmt.column,
-            )
-        broke = False
-        for item in items:
-            iter_env = Environment(env)
-            if stmt.names is not None:
-                if stmt.is_map:
-                    self._bind_map_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
-                else:
-                    self._bind_list_destructure(iter_env, stmt.names, stmt.rest, item, stmt.line, stmt.column)
-            else:
-                iter_env.define(stmt.var_name, item)
-            try:
-                self.execute(stmt.body, iter_env)
-            except _BreakSignal as signal:
-                if signal.label is not None and signal.label != stmt.label:
-                    raise
-                broke = True
-                break
-            except _ContinueSignal as signal:
-                if signal.label is not None and signal.label != stmt.label:
-                    raise
-                continue
-        if not broke and stmt.else_branch is not None:
-            self.execute(stmt.else_branch, env)
-```
-(Only the `broke = False` init, the `broke = True` before the `break`
-in the `_BreakSignal` handler, and the final `if not broke and
-stmt.else_branch is not None:` block are new — everything else is
-unchanged, shown in full only so the exact insertion points are
-unambiguous.)
-
-Acceptance criteria (mirror `TestWhileElse` in `tests/test_interpreter.py`,
-search that name, one-for-one):
-- `for x in [1, 2, 3] { } else { done = true; }` runs the `else` — the
-  loop completes normally (iterable exhausted, no `break`).
-- `for x in [] { } else { done = true; }` also runs the `else` — zero
-  iterations still counts as "exited without a `break`", exactly like
-  `while (false) { } else { ... }`.
-- `for x in [1, 2, 3] { if (x == 2) { break; } } else { ran = true; }`
-  does **not** run the `else` — an intervening `break` skips it.
-- `for x in [1, 2, 3] { if (x == 1) { continue; } } else { ran = true; }`
-  still runs the `else` — `continue` does not skip it, only `break`
-  does.
-- `outer: for x in [1] { for y in [1] { break outer; } } else { ran =
-  true; }` does **not** run the outer `for`'s `else` — a labeled
-  `break` targeting the outer loop skips its `else` exactly like
-  `while`'s own labeled-break case.
-- `fn f() { for x in [1] { return 1; } else { return 2; } } f();`
-  returns `1`, not `2` — `return` from the body skips the `else`
-  (control never reaches the post-loop check).
-- The `else` clause also runs for a `for`-in loop over a string
-  (`for c in "" { } else { done = true; }`) and a map
-  (`for k in {} { } else { done = true; }`), and with a
-  list-destructuring (`for [a, b] in [] { } else { ... }`) or
-  map-destructuring (`for {a} in [] { } else { ... }`) loop variable —
-  all share the same `ForStmt`/`_execute_for` path, so one test per
-  shape is enough to confirm the `else` wiring doesn't only work for
-  the plain-identifier/list case.
-- `for x in [1, 2, 3] { }` (no `else` at all) still behaves exactly as
-  before — a regression guard mirroring
-  `test_while_without_else_still_behaves_as_before`.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`ForStmt`, search `class ForStmt`),
-`cinder/parser.py` (`_for_statement`, search `def _for_statement`),
-`cinder/interpreter.py` (`_execute_for`, search `def _execute_for`),
-`tests/test_parser.py` (new `class TestForElse`, modeled on
-`class TestWhileElse`, search that name, for the parse-shape
-assertions), `tests/test_interpreter.py` (new `class TestForElse`,
-modeled on the `test_while_else_*` methods inside `TestWhileStatement`,
-search `test_while_else_runs_on_normal_completion`, for the runtime
-behavior above). Once merged, `README.md`'s Control flow bullet needs a
-`for`-`else` mention next to the existing `while`-`else` one, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" section needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_vampire_number` — digit-permutation factor pairs
+## 1. Standard library: `is_vampire_number` — digit-permutation factor pairs
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`) already asks a digit-vs-factors question (does the
@@ -285,7 +116,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
+## 2. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
 
 Build: `is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`) already tests whether a number's *square* ends in
@@ -371,7 +202,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
+## 3. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
 
 Build: PR #352 added a Python-style `else { ... }` clause to plain
 `while` loops, and task 2 in this file (once it merges) extends the
@@ -528,7 +359,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
+## 4. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
 
 Build: `is_strong_number` (`cinder/builtins.py`, search `def
 _is_strong_number`) already asks whether a number equals the sum of
@@ -613,7 +444,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
+## 5. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
 
 Build: PR #356 gave `-` a map-map branch (key-based removal,
 `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) but explicitly scoped

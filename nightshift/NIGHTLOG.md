@@ -7236,3 +7236,21 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Forty-fifth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fourth cycle
+
+- **Merged**: PR #358 "Language: else clause on for-in loops
+  (Python-style loop-else)" (`feat/20260830-for-else`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (3981 tests passing on `main`, up from 3968). Removed the
+  `.worktrees/for-else` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining five
+  backlog tasks (1-5) — `is_vampire_number` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Forty-sixth clean first-round merge in a row — still no review/QA
+  bounces this shift.

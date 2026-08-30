@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_pandigital` — 0-to-9 pandigital number test
+## 1. Standard library: `is_pandigital` — 0-to-9 pandigital number test [claimed 2026-08-30T16:04:06Z]
 
 Build: `is_disarium` and `is_armstrong` (`cinder/builtins.py`, search `def
 _is_disarium`) already test digit-position properties, and `is_undulating`/

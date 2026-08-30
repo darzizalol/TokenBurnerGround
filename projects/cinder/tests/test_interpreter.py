@@ -454,6 +454,36 @@ class TestComparisons(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError):
             evaluate('1 < "x"')
 
+    def test_list_ordering_first_differing_element(self):
+        self.assertEqual(evaluate("[1, 2] < [1, 3]"), True)
+        self.assertEqual(evaluate("[1, 3] < [1, 2]"), False)
+
+    def test_list_ordering_prefix_is_lesser(self):
+        self.assertEqual(evaluate("[1, 2] < [1, 2, 3]"), True)
+        self.assertEqual(evaluate("[1, 2, 3] < [1, 2]"), False)
+
+    def test_list_ordering_empty_lists(self):
+        self.assertEqual(evaluate("[] < [1]"), True)
+        self.assertEqual(evaluate("[] < []"), False)
+
+    def test_list_ordering_inclusive_operators_on_equal_lists(self):
+        self.assertEqual(evaluate("[1, 2] <= [1, 2]"), True)
+        self.assertEqual(evaluate("[1, 2] >= [1, 2]"), True)
+
+    def test_list_ordering_nested_strings(self):
+        self.assertEqual(evaluate('["a", "b"] < ["a", "c"]'), True)
+
+    def test_list_ordering_nested_lists(self):
+        self.assertEqual(evaluate("[[1, 2]] < [[1, 3]]"), True)
+
+    def test_list_ordering_mismatched_element_types_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate('[1, "a"] < [1, 2]')
+
+    def test_list_vs_number_still_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            evaluate("1 < [1, 2]")
+
 
 class TestChainedComparisons(unittest.TestCase):
     def test_two_operator_chain(self):
@@ -492,6 +522,10 @@ class TestChainedComparisons(unittest.TestCase):
 
     def test_mixed_ordering_and_equality_unaffected(self):
         self.assertEqual(evaluate("1 < 2 == true"), True)
+
+    def test_list_chained_comparison(self):
+        self.assertEqual(evaluate("[1] < [2] < [3]"), True)
+        self.assertEqual(evaluate("[3] < [2] < [1]"), False)
 
 
 class TestLogical(unittest.TestCase):

@@ -1373,8 +1373,10 @@ class Interpreter:
         return fn(left, right)
 
     def _compare(self, operator: Token, left, right, op: TokenType) -> bool:
-        comparable = (_is_number(left) and _is_number(right)) or (
-            isinstance(left, str) and isinstance(right, str)
+        comparable = (
+            (_is_number(left) and _is_number(right))
+            or (isinstance(left, str) and isinstance(right, str))
+            or (isinstance(left, list) and isinstance(right, list))
         )
         if not comparable:
             raise CinderRuntimeError(
@@ -1383,13 +1385,21 @@ class Interpreter:
                 operator.line,
                 operator.column,
             )
-        if op == TokenType.LT:
-            return left < right
-        if op == TokenType.LTEQ:
-            return left <= right
-        if op == TokenType.GT:
-            return left > right
-        return left >= right
+        try:
+            if op == TokenType.LT:
+                return left < right
+            if op == TokenType.LTEQ:
+                return left <= right
+            if op == TokenType.GT:
+                return left > right
+            return left >= right
+        except TypeError:
+            raise CinderRuntimeError(
+                "unsupported operand types for comparison: list elements are "
+                "not comparable",
+                operator.line,
+                operator.column,
+            ) from None
 
 
 def call_value(

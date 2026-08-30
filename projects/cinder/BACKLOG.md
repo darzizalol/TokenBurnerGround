@@ -452,6 +452,216 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
+
+Build: `_compare` (`cinder/interpreter.py`, search `def _compare`) already
+gives numbers, strings, and — as of PR #349, this project's most recently
+merged depth task — lists element-by-element ordering, but maps are the
+one comparable-collection type still excluded from the `comparable` check,
+even though map *equality* (`==`) already treats two maps with the same
+key-value pairs in any order as equal, e.g. `{"a": 1, "b": 2} == {"b": 2,
+"a": 1}` is `true` — an ordering rule already has to be consistent with
+that existing equality, it just isn't wired up yet. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print({"a": 1} < {"a": 2});'
+# -> <eval>:1:15: unsupported operand types for comparison: map and map
+```
+
+Since Python dicts have no native ordering (unlike lists, which get `<`
+for free from Python's own list comparison), this task defines one
+explicitly: compare each map's items as a list of `(key, value)` pairs
+sorted by key, then compare those two sorted lists the same lexicographic
+way list comparison already does — first differing pair wins, and a
+shorter list that is a prefix of the other sorts less. This keeps two
+`==`-equal maps consistent under the new operators too (their sorted-item
+lists are identical, so `<`/`>` are both `false` and `<=`/`>=` are both
+`true`, exactly like two equal lists already behave), and it reuses the
+same `try`/`except TypeError` pattern `_compare` already has for lists so
+a key-type or value-type mismatch raises a clean `CinderRuntimeError`
+instead of a raw Python error.
+
+Edit `_compare` (`cinder/interpreter.py`, search `def _compare`):
+```python
+def _compare(self, operator: Token, left, right, op: TokenType) -> bool:
+    comparable = (
+        (_is_number(left) and _is_number(right))
+        or (isinstance(left, str) and isinstance(right, str))
+        or (isinstance(left, list) and isinstance(right, list))
+        or (isinstance(left, dict) and isinstance(right, dict))
+    )
+    if not comparable:
+        raise CinderRuntimeError(
+            f"unsupported operand types for comparison: "
+            f"{type_name(left)} and {type_name(right)}",
+            operator.line,
+            operator.column,
+        )
+    is_map_compare = isinstance(left, dict) and isinstance(right, dict)
+    try:
+        if is_map_compare:
+            left = sorted(left.items())
+            right = sorted(right.items())
+        if op == TokenType.LT:
+            return left < right
+        if op == TokenType.LTEQ:
+            return left <= right
+        if op == TokenType.GT:
+            return left > right
+        return left >= right
+    except TypeError:
+        message = (
+            "unsupported operand types for comparison: map keys or values "
+            "are not comparable"
+            if is_map_compare
+            else "unsupported operand types for comparison: list elements "
+            "are not comparable"
+        )
+        raise CinderRuntimeError(message, operator.line, operator.column) from None
+```
+`is_map_compare` is captured *before* `left`/`right` get reassigned to
+their sorted-items form, so the `except` branch can still tell which of
+the two pre-existing messages applies.
+
+**Scope note** (call this out in the PR body): this only makes *direct*
+map-vs-map comparison work — a map nested inside a list
+(`[{"a": 1}] < [{"a": 2}]`) still raises, because list comparison
+delegates to Python's own native list `<`, which tries `dict < dict`
+directly on the nested elements rather than routing back through this
+method. Making nested comparability recursive is a bigger, separate
+change and is out of scope here; lock in the current raise with a
+regression test instead of treating it as an accidental gap.
+
+Acceptance criteria:
+- `{"a": 1} < {"a": 2};` is `true` — same key, lesser value.
+- `{"a": 1} < {"b": 0};` is `true` — keys differ first (`"a" < "b"`), so
+  this holds regardless of values.
+- `{"a": 1, "b": 2} < {"a": 2};` is `true` — the first differing sorted
+  pair is `("a", 1)` vs `("a", 2)`, decided before list length matters.
+- `{} < {"a": 1};` is `true` — an empty map is a prefix of any
+  non-empty one, mirroring `[] < [1]`.
+- `{"a": 1, "b": 2} <= {"b": 2, "a": 1};` and
+  `{"a": 1, "b": 2} >= {"b": 2, "a": 1};` are both `true`, and
+  `{"a": 1, "b": 2} < {"b": 2, "a": 1};` is `false` — two maps that are
+  `==` (same pairs, different insertion order) are never strictly less
+  than or greater than each other.
+- `{"a": 1} < {"a": "x"};` raises `CinderRuntimeError` matching
+  `"unsupported operand types for comparison: map keys or values are not
+  comparable"` — same key, incomparable value types.
+- `{1: "a"} < {"b": 2};` raises `CinderRuntimeError` with the same
+  message — incomparable key types.
+- `{"a": 1} < [1];` and `{"a": 1} < 1;` still raise `CinderRuntimeError`
+  matching `"unsupported operand types for comparison: map and list"` /
+  `"... map and int"` — maps only compare against maps.
+- `[{"a": 1}] < [{"a": 2}];` still raises `CinderRuntimeError` (see the
+  scope note above — not fixed by this task).
+- Chained comparisons compose for free:
+  `{"a": 1} < {"a": 2} < {"a": 3};` is `true` (via
+  `_evaluate_chained_comparison`, which already calls `_compare` per
+  adjacent pair — no changes needed there).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_compare`, search `def
+_compare`), `tests/test_interpreter.py` (extend `class TestComparisons`,
+search that name, alongside the existing `test_list_ordering_*` cases,
+for the map equivalents above). Once merged, `README.md`'s Operators
+bullet needs a map-ordering mention next to the list-ordering one added
+for PR #349, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" bullet needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Language: difference operator (`-`) for maps
+
+Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
+search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
+a merge (right-biased on key collision, `{"a": 1} + {"a": 2}` is
+`{"a": 2}`), giving the existing `merge()` builtin an infix spelling —
+but `MINUS` has no equivalent: it routes straight to `_numeric_op`, which
+only knows numbers and rejects everything else, so there is no infix
+counterpart to `merge()`'s inverse even though one reads naturally by
+direct analogy to `+`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print({"a": 1, "b": 2} - {"a": 1});'
+# -> <eval>:1:26: unsupported operand types for '-': map and map
+```
+
+This task defines map `-` as key-based removal: a fresh map containing
+every pair from the left operand whose key is *not* present in the right
+operand (the right operand's own values are irrelevant — only its keys
+matter, mirroring `dict.keys() - dict.keys()` set-difference semantics,
+not any kind of value subtraction). This is deliberately scoped to
+`map`/`map` only, not `list`/`list` — list difference (multiset removal?
+set removal? what about duplicates and order?) is a genuinely separate
+design question, not a natural extension of the same idea, so bundling
+it in would double this task's scope for a feature nobody asked for;
+leave list `-` to a future task if one gets proposed, the same way the
+`while`-`else` task already in this backlog scoped itself to plain
+`while` only.
+
+Edit `_apply_binary_operator` (`cinder/interpreter.py`, search `if op ==
+TokenType.MINUS:`):
+```python
+if op == TokenType.MINUS:
+    if isinstance(left, dict) and isinstance(right, dict):
+        return {key: value for key, value in left.items() if key not in right}
+    return self._numeric_op(operator, left, right, lambda a, b: a - b)
+```
+A mismatched type (map minus a non-map, or a non-map minus a map) falls
+through to `_numeric_op`, which already raises `CinderRuntimeError` with
+the standard `"unsupported operand types for '-': ..."` message — no
+separate error-handling code is needed here, unlike `PLUS`'s own branch,
+which raises explicitly because `_numeric_op` isn't in its fallthrough
+path.
+
+Acceptance criteria:
+- `{"a": 1, "b": 2} - {"a": 1};` is `{"b": 2}` — key-based removal, the
+  removed key's own value on either side is irrelevant.
+- `{"a": 1, "b": 2} - {"a": 99};` is `{"b": 2}` — same as above,
+  confirming the right operand's *value* is ignored, only its key
+  matters.
+- `{"a": 1} - {};` is `{"a": 1}` — subtracting an empty map is a no-op.
+- `{} - {"a": 1};` is `{}` — nothing to remove from.
+- `{"a": 1, "b": 2} - {"a": 1, "b": 2};` is `{}` — removing every key
+  empties the map.
+- `{"a": 1, "b": 2} - {"c": 3};` is `{"a": 1, "b": 2}` — a key not
+  present in the left map has no effect.
+- Does not mutate either input:
+  `let a = {"a": 1, "b": 2}; let c = a - {"a": 1}; print(a);` still
+  prints `{"a": 1, "b": 2}` (mirrors
+  `TestMapConcatenation.test_does_not_mutate_inputs`).
+- Left-associative and composes with `+`:
+  `{"a": 1, "b": 2, "c": 3} - {"a": 1} - {"b": 2};` is `{"c": 3}`.
+- Compound assignment works for free through the existing desugaring, on
+  all three assignment target kinds (mirroring `TestMapConcatenation`'s
+  own three compound-assignment tests for `+=`):
+  `let m = {"a": 1, "b": 2}; m -= {"a": 1};` leaves `m` as `{"b": 2}`;
+  `let xs = [{"a": 1, "b": 2}]; xs[0] -= {"a": 1};` leaves `xs` as
+  `[{"b": 2}]`; `let obj = {"m": {"a": 1, "b": 2}}; obj.m -= {"a": 1};`
+  leaves `obj` as `{"m": {"b": 2}}`.
+- `{"a": 1} - [1, 2];` raises `CinderRuntimeError` matching
+  `"unsupported operand types for '-': map and list"`.
+- `{"a": 1} - "x";` raises `CinderRuntimeError` matching
+  `"unsupported operand types for '-': map and string"`.
+- `[1, 2] - {"a": 1};` raises `CinderRuntimeError` matching
+  `"unsupported operand types for '-': list and map"` — the reverse
+  order still raises too (list `-` map is not defined either, only map
+  `-` map).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
+`MINUS` branch, search `if op == TokenType.MINUS:`),
+`tests/test_interpreter.py` (new `class TestMapDifference`, modeled
+directly on `class TestMapConcatenation`, search that name, for the
+compound-assignment/non-mutation/mismatched-type test shapes). Once
+merged, `README.md`'s Operators bullet needs a map-`-` mention next to
+the map-`+`/list-`+` ones already there, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

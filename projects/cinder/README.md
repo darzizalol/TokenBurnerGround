@@ -201,7 +201,13 @@ while (i < 10) {
   the map-pattern counterpart to the above — a missing key falls back to
   its default, evaluated in the arm's own environment, rather than
   failing the match, composable with per-key rename, rest capture, and
-  nesting) for now (no guards yet — see `BACKLOG.md`)
+  nesting), and whole-value `as` binding on list/map patterns
+  (`match ([1, 2]) { [a, b] as whole => whole, _ => nil }`,
+  `match ({"a": 1}) { {a} as whole => whole, _ => nil }`, letting an arm
+  bind the entire matched subject alongside whatever the pattern itself
+  destructures — previously only possible by giving up destructuring for
+  a plain bound-identifier arm; composes with rest capture and defaults,
+  scoped per-arm) for now (no guards yet — see `BACKLOG.md`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -262,7 +268,11 @@ while (i < 10) {
   not Elixir-style argument insertion, so `a |> f(1)` calls `f(1)` first
   and calls *that result* with `a`, composing with `curry`, e.g.
   `3 |> curry(add, 2)(5)`; left-associative, looser than every
-  value-producing binary operator but tighter than `? :`/assignment)
+  value-producing binary operator but tighter than `? :`/assignment), and
+  lexicographic comparison for lists (`[1, 2] < [1, 3]`,
+  `<=`/`>`/`>=` too — element-by-element ordering the same way strings
+  already have it, composing for free with chained comparisons like
+  `a < b < c` since both share the same underlying comparison method)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -563,48 +573,47 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_repdigit` (PR #347)
-— the repdigit predicate's own missing `nth_*` counterpart
-(`is_repdigit` tests membership but had no value-returning sibling),
-via a sequential candidate scan bounded to a `k <= 50` cross-check
-since repdigits are far sparser than semiprimes/abundant numbers (only
-9 exist per digit-length) — and before that `nth_abundant` (PR #346)
-— the divisor-sum cluster's own missing `nth_*` counterpart
-(`is_abundant` tests membership but had no value-returning sibling),
-via a sequential candidate scan since abundant numbers have no closed
-form — and before that range case values in `switch` statements (PR
-#345) — fixing a real bug where a `RangeExpr` case value silently never
-matched instead of raising, by giving `switch` the same containment
-check `match`'s range patterns already use, instead of materializing
-the range to a list and comparing with `values_equal`. See
+Actively developed, nightly. Recently landed: lexicographic comparison
+operators for lists (PR #349, `[1, 2] < [1, 3]`) — admitting `list`/`list`
+into `_compare`'s `comparable` check the same way strings already have
+element-by-element ordering, composing for free with chained comparisons
+— and before that whole-value `as` binding in match list/map patterns
+(PR #348, `match ([1, 2]) { [a, b] as whole => whole, _ => nil }`) —
+letting an arm bind the entire matched subject alongside whatever the
+pattern itself destructures, previously only possible by giving up
+destructuring for a plain bound-identifier arm — and before that
+`nth_repdigit` (PR #347) — the repdigit predicate's own missing `nth_*`
+counterpart (`is_repdigit` tests membership but had no value-returning
+sibling), via a sequential candidate scan bounded to a `k <= 50`
+cross-check since repdigits are far sparser than semiprimes/abundant
+numbers (only 9 exist per digit-length). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): whole-value `as`
-binding in match list/map patterns
-(`match ([1, 2]) { [a, b] as whole => whole, _ => nil }`) — letting an
-arm bind the entire matched subject alongside whatever the pattern
-itself destructures, today possible only by giving up destructuring for
-a plain bound-identifier arm, lexicographic comparison operators for
-lists (`[1, 2] < [1, 3]`) — extending the same element-by-element
-ordering strings already have via `<`/`<=`/`>`/`>=` to lists, a real
-gap today (`[1, 2] < [1, 3]` currently raises `CinderRuntimeError`
-instead of comparing), `is_disarium` — the digit-position-power-sum
-variant of `is_armstrong` (each digit raised to its own 1-indexed
-position instead of one shared exponent, e.g. `89 = 8^1 + 9^2`),
-`nth_kaprekar` — the k-th Kaprekar number by position (`is_kaprekar`
-tests membership but has no value-returning sibling), via the same
-sequential-scan shape but deliberately bounded to a `k <= 20`
-cross-check since Kaprekar numbers grow too fast for a `k <= 50` scan to
-stay fast, a Python-style `else` clause on `while` loops
-(`while (cond) { ... } else { ... }`, running exactly when the loop
-exits without an intervening `break`) — scoped to plain `while` only,
-not `do`-`while` or either `for` form, and `is_smith_number` — a
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_disarium` — the
+digit-position-power-sum variant of `is_armstrong` (each digit raised
+to its own 1-indexed position instead of one shared exponent, e.g.
+`89 = 8^1 + 9^2`), `nth_kaprekar` — the k-th Kaprekar number by
+position (`is_kaprekar` tests membership but has no value-returning
+sibling), via a sequential-scan shape deliberately bounded to a
+`k <= 20` cross-check since Kaprekar numbers grow too fast for a
+`k <= 50` scan to stay fast, a Python-style `else` clause on `while`
+loops (`while (cond) { ... } else { ... }`, running exactly when the
+loop exits without an intervening `break`) — scoped to plain `while`
+only, not `do`-`while` or either `for` form, `is_smith_number` — a
 composite integer whose own digit sum equals the combined digit sum of
 its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
 digit_sum(2) = 4`), the digit-sum question `prime_factors` never got
-asked of it. (Guards in `match` arms, `n if n > 0 => "positive"`, were
-attempted but closed after three failed review rounds over a recurring
-parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
-they're a real gap but not back in the active queue yet.)
+asked of it, ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
+(`{"a": 1} < {"a": 2}`) — the same `_compare` gap PR #349 closed for
+lists but left open for maps, defined by comparing each map's items as
+a key-sorted list of pairs so the result stays consistent with the
+existing order-independent map `==`, and `-` (difference) for maps
+(`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based removal by
+direct analogy to `+`'s existing dict-merge branch, the inverse of the
+`merge()` builtin the same way `+` is its infix form. (Guards in
+`match` arms, `n if n > 0 => "positive"`, were attempted but closed
+after three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
+but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

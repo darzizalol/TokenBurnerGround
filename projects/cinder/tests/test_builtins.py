@@ -4588,6 +4588,59 @@ class TestIsDisarium(unittest.TestCase):
             run("is_disarium();")
 
 
+class TestIsPandigital(unittest.TestCase):
+    def test_is_pandigital_of_smallest(self):
+        self.assertEqual(
+            run("let result = is_pandigital(1023456789);").get("result"), True
+        )
+
+    def test_is_pandigital_of_largest(self):
+        self.assertEqual(
+            run("let result = is_pandigital(9876543210);").get("result"), True
+        )
+
+    def test_is_pandigital_of_arbitrary_permutation(self):
+        self.assertEqual(
+            run("let result = is_pandigital(5670231849);").get("result"), True
+        )
+
+    def test_is_pandigital_of_nine_digits_missing_zero_is_false(self):
+        self.assertEqual(
+            run("let result = is_pandigital(123456789);").get("result"), False
+        )
+
+    def test_is_pandigital_of_repeated_digit_is_false(self):
+        self.assertEqual(
+            run("let result = is_pandigital(1023456788);").get("result"), False
+        )
+
+    def test_is_pandigital_of_eleven_digits_is_false(self):
+        self.assertEqual(
+            run("let result = is_pandigital(10234567890);").get("result"), False
+        )
+
+    def test_is_pandigital_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_pandigital(0);").get("result"), False)
+
+    def test_is_pandigital_of_single_digit_is_false(self):
+        self.assertEqual(run("let result = is_pandigital(5);").get("result"), False)
+
+    def test_is_pandigital_of_negative_is_false(self):
+        self.assertEqual(
+            run("let result = is_pandigital(-1023456789);").get("result"), False
+        )
+
+    def test_is_pandigital_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_pandigital(1.5);")
+        self.assertIn("is_pandigital", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_pandigital_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_pandigital();")
+
+
 class TestIsStrongNumber(unittest.TestCase):
     def test_is_strong_number_of_one(self):
         self.assertEqual(run("let result = is_strong_number(1);").get("result"), True)

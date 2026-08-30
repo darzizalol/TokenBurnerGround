@@ -1928,6 +1928,15 @@ def _is_disarium(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _is_pandigital(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_pandigital", arguments, 1, line, column)
+    value = _require_int("is_pandigital", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    return len(digits) == 10 and set(digits) == set("0123456789")
+
+
 def _is_strong_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_strong_number", arguments, 1, line, column)
     value = _require_int("is_strong_number", arguments[0], line, column)
@@ -4373,6 +4382,7 @@ _BUILTINS = {
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_disarium": _is_disarium,
+    "is_pandigital": _is_pandigital,
     "is_strong_number": _is_strong_number,
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,

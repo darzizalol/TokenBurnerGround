@@ -4183,6 +4183,7 @@ class TestDoWhileStatement(unittest.TestCase):
             stmt_shape(stmts[0].body),
             ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Literal", 1)]))]),
         )
+        self.assertIsNone(stmts[0].else_branch)
 
     def test_missing_trailing_semicolon_raises(self):
         with self.assertRaises(ParseError):
@@ -4191,6 +4192,38 @@ class TestDoWhileStatement(unittest.TestCase):
     def test_missing_while_keyword_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("do { print(1); } (x < 3);")
+
+
+class TestWhileElse(unittest.TestCase):
+    def test_while_else_parses_else_branch(self):
+        stmts = parse_stmts("while (x < 3) { print(1); } else { print(2); }")
+        self.assertEqual(len(stmts), 1)
+        self.assertEqual(
+            stmt_shape(stmts[0].else_branch),
+            ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Literal", 2)]))]),
+        )
+
+    def test_while_else_binds_to_while_not_enclosing_if(self):
+        # An unbraced `while` as an `if`'s then-branch now consumes a
+        # trailing `else` itself, "stealing" it from the enclosing `if` —
+        # same nearest-open-construct precedent as ordinary dangling
+        # `if`/`else`.
+        stmt = parse_stmts("if (true) while (false) { } else { print(1); }")[0]
+        self.assertIsNone(stmt.else_branch)
+        self.assertIsInstance(stmt.then_branch, WhileStmt)
+        self.assertIsNotNone(stmt.then_branch.else_branch)
+
+    def test_do_while_else_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("do { } while (x < 3) else { };")
+
+    def test_for_in_else_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for x in xs { } else { }")
+
+    def test_for_c_else_raises(self):
+        with self.assertRaises(ParseError):
+            parse_stmts("for (;;) { } else { }")
 
 
 class TestBreakContinue(unittest.TestCase):
@@ -4266,6 +4299,12 @@ class TestLabeledLoops(unittest.TestCase):
         self.assertIsInstance(stmt, WhileStmt)
         self.assertEqual(stmt.label, "outer")
         self.assertEqual(stmt.body.statements[0].label, "outer")
+
+    def test_labeled_while_still_parses_else(self):
+        stmt = parse_stmts("outer: while (true) { break outer; } else { }")[0]
+        self.assertIsInstance(stmt, WhileStmt)
+        self.assertEqual(stmt.label, "outer")
+        self.assertIsNotNone(stmt.else_branch)
 
     def test_do_while_carries_its_label(self):
         stmt = parse_stmts("outer: do { break outer; } while (true);")[0]

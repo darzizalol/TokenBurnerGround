@@ -2566,6 +2566,56 @@ class TestWhileStatement(unittest.TestCase):
         env = run("let x = 0; while (false) { x = 1; }")
         self.assertEqual(env.get("x"), 0)
 
+    def test_while_else_runs_on_normal_completion(self):
+        env = run(
+            "let i = 0; let done = false; "
+            "while (i < 3) { i = i + 1; } else { done = true; }"
+        )
+        self.assertTrue(env.get("done"))
+
+    def test_while_else_skipped_by_break(self):
+        env = run("let ran = false; while (true) { break; } else { ran = true; }")
+        self.assertFalse(env.get("ran"))
+
+    def test_while_else_runs_on_zero_iterations(self):
+        env = run("let ran = false; while (false) { } else { ran = true; }")
+        self.assertTrue(env.get("ran"))
+
+    def test_while_else_not_skipped_by_continue(self):
+        env = run(
+            "let i = 0; let ran = false; "
+            "while (i < 3) { i = i + 1; if (i == 1) { continue; } } "
+            "else { ran = true; }"
+        )
+        self.assertTrue(env.get("ran"))
+
+    def test_while_else_skipped_by_labeled_break(self):
+        env = run(
+            "let ran = false; "
+            "outer: while (true) { break outer; } else { ran = true; }"
+        )
+        self.assertFalse(env.get("ran"))
+
+    def test_while_else_binds_to_while_not_enclosing_if(self):
+        # Dangling-attachment: an unbraced `while` as an `if`'s then-branch
+        # now claims a trailing `else` for itself, not the `if`.
+        env = run(
+            "let attached = false; "
+            "if (true) while (false) { } else { attached = true; }"
+        )
+        self.assertTrue(env.get("attached"))
+
+    def test_while_else_skipped_by_return(self):
+        env = run(
+            "fn f() { while (true) { return 1; } else { return 2; } } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_while_without_else_still_behaves_as_before(self):
+        env = run("let x = 0; while (x < 3) { x = x + 1; }")
+        self.assertEqual(env.get("x"), 3)
+
 
 class TestDoWhileStatement(unittest.TestCase):
     def _run(self, source: str) -> Environment:

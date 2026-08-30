@@ -647,7 +647,13 @@ class Parser:
         self._loop_labels.append(label)
         body = self._statement()
         self._loop_labels.pop()
-        return WhileStmt(condition, body, while_token.line, while_token.column, label)
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
+        return WhileStmt(
+            condition, body, while_token.line, while_token.column, label, else_branch
+        )
 
     def _do_while_statement(self, label: "str | None" = None) -> Stmt:
         do_token = self._advance()

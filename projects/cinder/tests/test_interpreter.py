@@ -431,6 +431,69 @@ class TestMapConcatenation(unittest.TestCase):
             evaluate('{"a": 1} + 1')
 
 
+class TestMapDifference(unittest.TestCase):
+    def test_removes_key_present_in_right(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} - {"a": 1}'), {"b": 2})
+
+    def test_right_value_is_ignored(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} - {"a": 99}'), {"b": 2})
+
+    def test_empty_right_is_noop(self):
+        self.assertEqual(evaluate('{"a": 1} - {}'), {"a": 1})
+
+    def test_empty_left(self):
+        self.assertEqual(evaluate('{} - {"a": 1}'), {})
+
+    def test_removing_every_key_empties_map(self):
+        self.assertEqual(
+            evaluate('{"a": 1, "b": 2} - {"a": 1, "b": 2}'), {}
+        )
+
+    def test_key_not_present_has_no_effect(self):
+        self.assertEqual(
+            evaluate('{"a": 1, "b": 2} - {"c": 3}'), {"a": 1, "b": 2}
+        )
+
+    def test_does_not_mutate_inputs(self):
+        env = run('let a = {"a": 1, "b": 2}; let c = a - {"a": 1};')
+        self.assertEqual(env.get("a"), {"a": 1, "b": 2})
+        self.assertEqual(env.get("c"), {"b": 2})
+
+    def test_left_associative(self):
+        env = run('let m = {"a": 1, "b": 2, "c": 3} - {"a": 1} - {"b": 2};')
+        self.assertEqual(env.get("m"), {"c": 3})
+
+    def test_compound_assignment_on_identifier(self):
+        env = run('let m = {"a": 1, "b": 2}; m -= {"a": 1};')
+        self.assertEqual(env.get("m"), {"b": 2})
+
+    def test_compound_assignment_on_index_target(self):
+        env = run('let xs = [{"a": 1, "b": 2}]; xs[0] -= {"a": 1};')
+        self.assertEqual(env.get("xs"), [{"b": 2}])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"m": {"a": 1, "b": 2}}; obj.m -= {"a": 1};')
+        self.assertEqual(env.get("obj"), {"m": {"b": 2}})
+
+    def test_map_minus_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '-': map and list"
+        ):
+            evaluate('{"a": 1} - [1, 2]')
+
+    def test_map_minus_string_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '-': map and string"
+        ):
+            evaluate('{"a": 1} - "x"')
+
+    def test_list_minus_map_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '-': list and map"
+        ):
+            evaluate('[1, 2] - {"a": 1}')
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

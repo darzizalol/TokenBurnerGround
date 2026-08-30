@@ -1258,6 +1258,8 @@ class Interpreter:
                 operator.column,
             )
         if op == TokenType.MINUS:
+            if isinstance(left, dict) and isinstance(right, dict):
+                return {key: value for key, value in left.items() if key not in right}
             return self._numeric_op(operator, left, right, lambda a, b: a - b)
         if op == TokenType.STAR:
             repeated = self._repeat_op(left, right)

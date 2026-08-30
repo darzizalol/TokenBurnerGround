@@ -694,6 +694,10 @@ class Parser:
         self._loop_labels.append(label)
         body = self._block()
         self._loop_labels.pop()
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
         return ForStmt(
             var_name,
             iterable,
@@ -704,6 +708,7 @@ class Parser:
             names=names,
             rest=rest,
             is_map=is_map,
+            else_branch=else_branch,
         )
 
     def _for_c_statement(self, for_token: Token, label: "str | None" = None) -> Stmt:

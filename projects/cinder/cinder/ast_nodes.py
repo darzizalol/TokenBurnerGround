@@ -531,6 +531,16 @@ class DoWhileStmt:
 
 @dataclass(frozen=True)
 class ForStmt:
+    """`else_branch` is `None` unless the loop carries a trailing
+    `else { ... }` clause; when present, it runs exactly once, when the
+    iterable is exhausted *without* an intervening `break` — including
+    immediately, for an empty iterable — mirroring Python's `while`/
+    `for`-`else`. `continue` does not skip it (only `break` does); an
+    uncaught exception, `return`, or propagating labeled `break`/`continue`
+    from the body also skips it, since control never reaches the check in
+    that case.
+    """
+
     var_name: "str | None"
     iterable: "Expr"
     body: "Block"
@@ -540,6 +550,7 @@ class ForStmt:
     names: "list | None" = None
     rest: "str | None" = None
     is_map: bool = False
+    else_branch: "Stmt | None" = None
 
 
 @dataclass(frozen=True)

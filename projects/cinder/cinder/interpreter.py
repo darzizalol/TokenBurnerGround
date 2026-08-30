@@ -587,6 +587,7 @@ class Interpreter:
                 stmt.line,
                 stmt.column,
             )
+        broke = False
         for item in items:
             iter_env = Environment(env)
             if stmt.names is not None:
@@ -601,11 +602,14 @@ class Interpreter:
             except _BreakSignal as signal:
                 if signal.label is not None and signal.label != stmt.label:
                     raise
+                broke = True
                 break
             except _ContinueSignal as signal:
                 if signal.label is not None and signal.label != stmt.label:
                     raise
                 continue
+        if not broke and stmt.else_branch is not None:
+            self.execute(stmt.else_branch, env)
 
     def _execute_for_c(self, stmt: ForCStmt, env: Environment) -> None:
         # Mirrors `_execute_for`: each iteration runs in its own fresh

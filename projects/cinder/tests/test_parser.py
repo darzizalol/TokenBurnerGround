@@ -4217,13 +4217,29 @@ class TestWhileElse(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts("do { } while (x < 3) else { };")
 
-    def test_for_in_else_raises(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("for x in xs { } else { }")
-
     def test_for_c_else_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("for (;;) { } else { }")
+
+
+class TestForElse(unittest.TestCase):
+    def test_for_else_parses_else_branch(self):
+        stmts = parse_stmts("for x in [1] { print(1); } else { print(2); }")
+        self.assertEqual(len(stmts), 1)
+        self.assertEqual(
+            stmt_shape(stmts[0].else_branch),
+            ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Literal", 2)]))]),
+        )
+
+    def test_for_without_else_has_none_else_branch(self):
+        stmts = parse_stmts("for x in [1] { }")
+        self.assertIsNone(stmts[0].else_branch)
+
+    def test_for_else_binds_to_for_not_enclosing_if(self):
+        stmt = parse_stmts("if (true) for x in [] { } else { print(1); }")[0]
+        self.assertIsNone(stmt.else_branch)
+        self.assertIsInstance(stmt.then_branch, ForStmt)
+        self.assertIsNotNone(stmt.then_branch.else_branch)
 
 
 class TestBreakContinue(unittest.TestCase):

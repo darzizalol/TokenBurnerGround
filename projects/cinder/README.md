@@ -425,6 +425,7 @@ while (i < 10) {
   `digit_product` to multiply an integer's decimal digits together (sign ignored, any `0` digit collapses the result to `0`),
   `is_perfect_square` to test whether an integer is a perfect square,
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
+  `is_disarium` as its digit-position sibling, each digit raised to its own 1-indexed position instead of one shared exponent (`89 = 8^1 + 9^2`),
   `is_strong_number` to test whether an integer equals the sum of its own digits' factorials,
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
@@ -462,6 +463,10 @@ while (i < 10) {
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
   `collatz_max` to return the peak value that same recurrence reaches before collapsing to `1`,
   `is_kaprekar` to test whether a number's square splits into two parts that sum back to the number,
+  `nth_kaprekar` to return the Kaprekar number found at a 1-indexed position via a sequential
+  candidate scan bounded to a `k <= 20` cross-check (Kaprekar numbers grow far faster than
+  repdigits or abundant numbers — the 30th is already 318,682), the value-returning sibling
+  of `is_kaprekar`'s membership test,
   `swap_case` to flip each character's case,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
   `is_repdigit` to test whether every decimal digit of an integer is the same,
@@ -573,47 +578,46 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: lexicographic comparison
-operators for lists (PR #349, `[1, 2] < [1, 3]`) — admitting `list`/`list`
-into `_compare`'s `comparable` check the same way strings already have
-element-by-element ordering, composing for free with chained comparisons
-— and before that whole-value `as` binding in match list/map patterns
-(PR #348, `match ([1, 2]) { [a, b] as whole => whole, _ => nil }`) —
-letting an arm bind the entire matched subject alongside whatever the
-pattern itself destructures, previously only possible by giving up
-destructuring for a plain bound-identifier arm — and before that
-`nth_repdigit` (PR #347) — the repdigit predicate's own missing `nth_*`
-counterpart (`is_repdigit` tests membership but had no value-returning
-sibling), via a sequential candidate scan bounded to a `k <= 50`
-cross-check since repdigits are far sparser than semiprimes/abundant
-numbers (only 9 exist per digit-length). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_disarium` — the
-digit-position-power-sum variant of `is_armstrong` (each digit raised
-to its own 1-indexed position instead of one shared exponent, e.g.
-`89 = 8^1 + 9^2`), `nth_kaprekar` — the k-th Kaprekar number by
-position (`is_kaprekar` tests membership but has no value-returning
-sibling), via a sequential-scan shape deliberately bounded to a
-`k <= 20` cross-check since Kaprekar numbers grow too fast for a
-`k <= 50` scan to stay fast, a Python-style `else` clause on `while`
-loops (`while (cond) { ... } else { ... }`, running exactly when the
-loop exits without an intervening `break`) — scoped to plain `while`
-only, not `do`-`while` or either `for` form, `is_smith_number` — a
-composite integer whose own digit sum equals the combined digit sum of
-its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
+Actively developed, nightly. Recently landed: `nth_kaprekar` (PR #351) —
+the Kaprekar predicate's own missing `nth_*` counterpart (`is_kaprekar`
+tests membership via the split-and-sum check but had no value-returning
+sibling), via a sequential-scan shape bounded to a `k <= 20` cross-check
+since Kaprekar numbers grow far faster than repdigits or abundant
+numbers (the 30th is already 318,682) — and before that `is_disarium`
+(PR #350) — the digit-position-power-sum variant of `is_armstrong` (each
+digit raised to its own 1-indexed position instead of one shared
+exponent, e.g. `89 = 8^1 + 9^2`), a genuinely distinct predicate since
+the two disagree on both directions (`153` is Armstrong but not
+Disarium and vice versa for `89`/`135`) — and before that lexicographic
+comparison operators for lists (PR #349, `[1, 2] < [1, 3]`) — admitting
+`list`/`list` into `_compare`'s `comparable` check the same way strings
+already have element-by-element ordering, composing for free with
+chained comparisons. See [`CHANGELOG.md`](CHANGELOG.md) for the full
+merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a Python-style `else`
+clause on `while` loops (`while (cond) { ... } else { ... }`, running
+exactly when the loop exits without an intervening `break`) — scoped to
+plain `while` only, not `do`-`while` or either `for` form, `is_smith_number`
+— a composite integer whose own digit sum equals the combined digit sum
+of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
 digit_sum(2) = 4`), the digit-sum question `prime_factors` never got
 asked of it, ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
 (`{"a": 1} < {"a": 2}`) — the same `_compare` gap PR #349 closed for
 lists but left open for maps, defined by comparing each map's items as
 a key-sorted list of pairs so the result stays consistent with the
-existing order-independent map `==`, and `-` (difference) for maps
-(`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based removal by
-direct analogy to `+`'s existing dict-merge branch, the inverse of the
-`merge()` builtin the same way `+` is its infix form. (Guards in
-`match` arms, `n if n > 0 => "positive"`, were attempted but closed
-after three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
-but not back in the active queue yet.)
+existing order-independent map `==`, `is_pandigital` — testing whether
+an integer's decimal digits are exactly the ten digits `0`-`9` each
+appearing once (e.g. `1023456789`, the smallest such number), a digit-set
+question none of `is_repdigit`/`is_disarium`/`is_armstrong` answers,
+`-` (difference) for maps (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`)
+— key-based removal by direct analogy to `+`'s existing dict-merge
+branch, the inverse of the `merge()` builtin the same way `+` is its
+infix form, and `transpose` — the arbitrary-column generalization of
+`unzip`'s fixed-two-column matrix transpose. (Guards in `match` arms,
+`n if n > 0 => "positive"`, were attempted but closed after three failed
+review rounds over a recurring parser bug — see `BACKLOG.md`'s
+`## Graveyard` for the postmortem; they're a real gap but not back in
+the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

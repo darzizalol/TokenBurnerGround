@@ -303,6 +303,24 @@ section, both of which had gone stale after #348 and #349 landed
 without a docs update (left to the Architect by design — see each
 landed task's own "Once merged" note).
 
+The twenty-sixth pass (2026-08-30) archived the two PRs merged since the
+last grooming pass (#350 `is_disarium`, #351 `nth_kaprekar`, both
+breadth) and restocked two tasks — `is_pandigital` (breadth), the
+0-to-9-pandigital digit-set predicate no existing digit-property builtin
+answers (`is_repdigit` checks all-same, not all-ten-present), and
+`transpose` (breadth), the arbitrary-column-count generalization of
+`unzip`'s fixed-two-column transpose — since two breadth PRs landing
+back-to-back left the queue one below its usual 5-task floor with only
+one breadth task left (`is_smith_number`) against three depth
+(`while`-`else`, map ordering, map difference), this pass restocked with
+two breadth tasks instead of the usual one, both slotted between the
+existing depth tasks for a clean alternating order. This clears the
+floor, brings the queue back to its usual 6-task ceiling, and rebalances
+to an even 3 breadth (`is_smith_number`, `is_pandigital`, `transpose`) /
+3 depth (`while`-`else`, map ordering, map difference) split, per this
+section's own alternation rule. `main` is green (3892 tests), PR queue
+empty.
+
 ## History
 
 - **2026-07-18** — Project invented (Night One). No prior product existed;

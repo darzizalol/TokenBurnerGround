@@ -396,7 +396,78 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: difference operator (`-`) for maps
+## 4. Standard library: `is_pandigital` — 0-to-9 pandigital number test
+
+Build: `is_disarium` and `is_armstrong` (`cinder/builtins.py`, search `def
+_is_disarium`) already test digit-position properties, and `is_undulating`/
+`is_repdigit` already test digit-*pattern* properties, but nothing checks
+whether a number's digits are a full house of exactly the ten decimal
+digits — a classic property (the "0 to 9 pandigital numbers", smallest
+`1023456789`, largest `9876543210`) that neither existing digit-set
+predicate (`is_repdigit`: all digits the same; `is_unique` operates on
+lists, not a number's own digits) answers. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_pandigital(1023456789));'
+# -> <eval>:1:7: undefined name 'is_pandigital' (did you mean 'is_digit'?)
+```
+
+This task scopes the predicate to the single unambiguous "0 to 9"
+definition — a number is pandigital iff its decimal digits are exactly
+the multiset `{0,1,2,...,9}`, each appearing once, which forces exactly
+10 digits. (The "1 to 9" zeroless variant, and "at least once" variants
+with more than 10 digits, are different, looser definitions some sources
+also call "pandigital" — deliberately not implemented here to avoid one
+name meaning three different things; a future task can add a differently
+named builtin for those if ever wanted.)
+
+Add to `cinder/builtins.py`, directly after `_is_disarium` (search `def
+_is_disarium`, immediately before `def _is_strong_number`) — keeps it
+grouped with the other single-argument digit predicates:
+```python
+def _is_pandigital(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_pandigital", arguments, 1, line, column)
+    value = _require_int("is_pandigital", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    return len(digits) == 10 and set(digits) == set("0123456789")
+```
+Also register the new dict entry (search `"is_disarium": _is_disarium,`,
+add `"is_pandigital": _is_pandigital,` directly after it, before
+`"is_strong_number": _is_strong_number,`).
+
+Acceptance criteria:
+- `is_pandigital(1023456789);` and `is_pandigital(9876543210);` are both
+  `true` — the smallest and largest 0-to-9 pandigital numbers.
+- `is_pandigital(5670231849);` is `true` — an arbitrary permutation of
+  the ten digits, not just the sorted extremes.
+- `is_pandigital(123456789);` is `false` — only 9 digits, missing `0`.
+- `is_pandigital(1023456788);` is `false` — 10 digits, but `8` repeats
+  and `9` is missing (right length, wrong digit set).
+- `is_pandigital(10234567890);` is `false` — 11 digits, `0` repeats.
+- `is_pandigital(0);`, `is_pandigital(5);` are `false` — far too short.
+- `is_pandigital(-1023456789);` is `false` — negative numbers are
+  excluded (mirrors every other `is_*` digit predicate's own convention,
+  e.g. `is_disarium`/`is_armstrong`).
+- `is_pandigital(1.5);` raises `CinderRuntimeError` matching
+  `"is_pandigital() requires an int, got float"` (via `_require_int`'s
+  existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_disarium`, search
+`def _is_disarium`), `tests/test_builtins.py` (new `class
+TestIsPandigital`, modeled directly on `class TestIsDisarium`, search
+that name, for the true/false/length/domain/type-error test shapes
+above). Once merged, `README.md`'s Builtins bullet needs `is_pandigital`
+added near `is_disarium`, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
+## 5. Language: difference operator (`-`) for maps
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
@@ -484,6 +555,95 @@ the map-`+`/list-`+` ones already there, its "Status & roadmap" section
 needs updating, and `PROJECT.md`'s "Current frontier" bullet needs
 refreshing — leave both to the Architect's next grooming pass, not this
 task.
+
+---
+
+## 6. Standard library: `transpose` — matrix (list-of-lists) transpose
+
+Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
+transposes the special two-column case (a list of 2-element lists) into
+a 2-element list of columns, and `zip`/`zip_longest` go the other
+direction for exactly two lists, but nothing generalizes either to an
+arbitrary number of columns — a list of same-length rows (a "matrix")
+has no way to swap rows and columns in one call. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(transpose([[1,2],[3,4]]));'
+# -> <eval>:1:7: undefined name 'transpose'
+```
+
+Add to `cinder/builtins.py`, directly after `_unzip` (search `def
+_unzip`, immediately before `def _zip_with`) — keeps it grouped with the
+other zip-family collection functions:
+```python
+def _transpose(arguments: list, line: int, column: int) -> object:
+    _require_arity("transpose", arguments, 1, line, column)
+    matrix = arguments[0]
+    if not isinstance(matrix, list):
+        raise CinderRuntimeError(
+            f"transpose() requires a list, got {type_name(matrix)}",
+            line, column,
+        )
+    if not matrix:
+        return []
+    width = None
+    for i, row in enumerate(matrix):
+        if not isinstance(row, list):
+            raise CinderRuntimeError(
+                f"transpose() requires a list of lists, got "
+                f"{type_name(row)} at index {i}",
+                line, column,
+            )
+        if width is None:
+            width = len(row)
+        elif len(row) != width:
+            raise CinderRuntimeError(
+                f"transpose() requires all rows to have the same length, "
+                f"got length {len(row)} at index {i}, expected {width}",
+                line, column,
+            )
+    return [[row[i] for row in matrix] for i in range(width)]
+```
+An empty outer list returns `[]` before the row-length check ever runs
+(there is no width to derive from zero rows). A non-empty list of empty
+rows (`width == 0`) falls through to `range(0)`, correctly returning `[]`
+too (a matrix with rows but no columns transposes to no rows). Also
+register the new dict entry (search `"unzip": _unzip,`, add
+`"transpose": _transpose,` directly after it, before `"zip_with":
+_zip_with,`).
+
+Acceptance criteria:
+- `transpose([[1, 2], [3, 4], [5, 6]]);` is `[[1, 3, 5], [2, 4, 6]]` —
+  3 rows of 2 columns becomes 2 rows of 3 columns.
+- `transpose([[1, 2, 3]]);` is `[[1], [2], [3]]` — a single row becomes
+  one column per element.
+- `transpose([]);` is `[]` — an empty matrix transposes to itself.
+- `transpose([[], [], []]);` is `[]` — rows with no columns transpose to
+  no rows.
+- `transpose(transpose([[1, 2], [3, 4], [5, 6]]));` is
+  `[[1, 2], [3, 4], [5, 6]]` — round-trips back to the original for any
+  rectangular matrix (mirrors `TestUnzip.test_unzip_round_trips_with_zip`).
+- Does not mutate the input: `let m = [[1, 2], [3, 4]]; transpose(m);
+  print(m);` still prints `[[1, 2], [3, 4]]`.
+- `transpose(5);` raises `CinderRuntimeError` matching `"transpose()
+  requires a list, got int"`.
+- `transpose([1, 2]);` raises `CinderRuntimeError` matching `"transpose()
+  requires a list of lists, got int at index 0"` — an element that isn't
+  itself a list.
+- `transpose([[1, 2], [3, 4, 5]]);` raises `CinderRuntimeError` matching
+  `"transpose() requires all rows to have the same length, got length 3
+  at index 1, expected 2"` — a ragged matrix.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_unzip`, search `def
+_unzip`), `tests/test_builtins.py` (new `class TestTranspose`, modeled
+directly on `class TestUnzip`, search that name, for the
+rectangular/single-row/empty/round-trip/mutation/ragged/type-error test
+shapes above). Once merged, `README.md`'s Builtins bullet needs
+`transpose` added near `unzip`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" bullet needs refreshing
+— leave both to the Architect's next grooming pass, not this task.
 
 ---
 

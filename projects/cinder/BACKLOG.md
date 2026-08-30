@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `else` clause on `for`-in loops (Python-style loop-`else`)
+## 1. Language: `else` clause on `for`-in loops (Python-style loop-`else`) [claimed 2026-08-30T20:09:26Z]
 
 Build: PR #352 already added an `else { ... }` clause to plain `while`
 loops — it runs exactly once, when the loop exits normally (condition

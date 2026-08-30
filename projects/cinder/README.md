@@ -115,7 +115,13 @@ while (i < 10) {
   (`a, b = 1, 2;`, the unbracketed sibling of `[a, b] = expr;`, same flat
   positional binding, no brackets required — including the swap idiom
   `a, b = b, a;`)
-- **Control flow**: `if`/`else`, `while`, `do { ... } while (cond);`,
+- **Control flow**: `if`/`else`, `while` with an optional trailing
+  `else { ... }` clause (Python-style loop-`else`,
+  `while (cond) { ... } else { ... }`, running exactly once when the
+  loop exits normally — including immediately, if the condition was
+  already false — without an intervening `break`; `continue` does not
+  skip it, only `break` does; scoped to plain `while` only, not
+  `do`-`while` or either `for` form), `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   maps (over keys), and range literals (`a..b`, sugar over the existing
   `range()` builtin usable directly as a loop source, e.g. `for i in
@@ -578,27 +584,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_kaprekar` (PR #351) —
-the Kaprekar predicate's own missing `nth_*` counterpart (`is_kaprekar`
-tests membership via the split-and-sum check but had no value-returning
-sibling), via a sequential-scan shape bounded to a `k <= 20` cross-check
-since Kaprekar numbers grow far faster than repdigits or abundant
-numbers (the 30th is already 318,682) — and before that `is_disarium`
-(PR #350) — the digit-position-power-sum variant of `is_armstrong` (each
-digit raised to its own 1-indexed position instead of one shared
-exponent, e.g. `89 = 8^1 + 9^2`), a genuinely distinct predicate since
-the two disagree on both directions (`153` is Armstrong but not
-Disarium and vice versa for `89`/`135`) — and before that lexicographic
-comparison operators for lists (PR #349, `[1, 2] < [1, 3]`) — admitting
-`list`/`list` into `_compare`'s `comparable` check the same way strings
-already have element-by-element ordering, composing for free with
-chained comparisons. See [`CHANGELOG.md`](CHANGELOG.md) for the full
-merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a Python-style `else`
-clause on `while` loops (`while (cond) { ... } else { ... }`, running
-exactly when the loop exits without an intervening `break`) — scoped to
-plain `while` only, not `do`-`while` or either `for` form, `is_smith_number`
-— a composite integer whose own digit sum equals the combined digit sum
+Actively developed, nightly. Recently landed: a Python-style `else`
+clause on `while` loops (PR #352, `while (cond) { ... } else { ... }`,
+running exactly when the loop exits without an intervening `break`) —
+scoped to plain `while` only, not `do`-`while` or either `for` form —
+and before that `nth_kaprekar` (PR #351) — the Kaprekar predicate's own
+missing `nth_*` counterpart (`is_kaprekar` tests membership via the
+split-and-sum check but had no value-returning sibling), via a
+sequential-scan shape bounded to a `k <= 20` cross-check since Kaprekar
+numbers grow far faster than repdigits or abundant numbers (the 30th is
+already 318,682) — and before that `is_disarium` (PR #350) — the
+digit-position-power-sum variant of `is_armstrong` (each digit raised
+to its own 1-indexed position instead of one shared exponent, e.g.
+`89 = 8^1 + 9^2`), a genuinely distinct predicate since the two
+disagree on both directions (`153` is Armstrong but not Disarium and
+vice versa for `89`/`135`). See [`CHANGELOG.md`](CHANGELOG.md) for the
+full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_smith_number` — a
+composite integer whose own digit sum equals the combined digit sum
 of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
 digit_sum(2) = 4`), the digit-sum question `prime_factors` never got
 asked of it, ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
@@ -612,12 +615,14 @@ question none of `is_repdigit`/`is_disarium`/`is_armstrong` answers,
 `-` (difference) for maps (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`)
 — key-based removal by direct analogy to `+`'s existing dict-merge
 branch, the inverse of the `merge()` builtin the same way `+` is its
-infix form, and `transpose` — the arbitrary-column generalization of
-`unzip`'s fixed-two-column matrix transpose. (Guards in `match` arms,
-`n if n > 0 => "positive"`, were attempted but closed after three failed
-review rounds over a recurring parser bug — see `BACKLOG.md`'s
-`## Graveyard` for the postmortem; they're a real gap but not back in
-the active queue yet.)
+infix form, `transpose` — the arbitrary-column generalization of
+`unzip`'s fixed-two-column matrix transpose, and the same `else` clause
+PR #352 gave `while` extended to the foreach `for`-in form (`for x in
+xs { ... } else { ... }`), the one loop kind #352 itself left out of
+scope. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a recurring
+parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
+they're a real gap but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -149,67 +149,35 @@ bring the count back to 6.
 
 ### Current frontier
 
-Recently landed (see `CHANGELOG.md` for the full list): lexicographic
-comparison operators for lists (#349, `[1, 2] < [1, 3]`) — admitting
-`list`/`list` into `_compare`'s `comparable` check the same way strings
-already had element-by-element ordering, composing for free with the
-existing chained-comparison syntax since both paths share the same
-`_compare` method — and before that whole-value `as` binding in match
-list/map patterns (#348, `[a, b] as whole => ...`) — letting an arm
-bind the entire matched subject alongside whatever the pattern itself
-destructures, via a new reserved `as` keyword and a
-`MatchArm.whole_binding` field — and before that `nth_repdigit` (#347)
-— the repdigit predicate's own missing `nth_*` counterpart
-(`is_repdigit` has tested membership for a long time but never got a
-value-returning sibling), via a sequential candidate scan bounded to a
-`k <= 50` cross-check since repdigits are far sparser than
-semiprimes/abundant numbers (only 9 exist per digit-length). Guards in
-`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
-after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
-recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
-next approach; still not requeued.
+This section stayed a rolling per-pass narration (twentieth through
+twenty-sixth passes) for long enough to repeat the exact growth pattern
+the old "Roadmap" section hit before its 2026-08-22 trim — see the
+History entry below for that precedent. Trimmed the same way here on
+2026-08-30 (twenty-seventh pass): the full pass-by-pass story is not
+lost, it is exactly what `CHANGELOG.md` (merge order) and this file's
+own git history already preserve; this section only needs to state
+where things stand right now.
 
-`BACKLOG.md` carries the active queue. Top: `is_disarium`, the
-digit-position-power-sum variant of `is_armstrong` (each digit raised
-to its own 1-indexed position instead of one shared exponent, e.g.
-`89 = 8^1 + 9^2`), a genuinely distinct predicate since the two
-disagree on both directions (`153` is Armstrong but not Disarium and
-vice versa for `89`/`135`) — `nth_kaprekar`, the Kaprekar predicate's
-own missing `nth_*` counterpart (`is_kaprekar` tests membership via the
-split-and-sum check but has no value-returning sibling), via the same
-sequential-scan shape but deliberately bounded to a `k <= 20`
-cross-check: Kaprekar numbers grow much faster than repdigits or
-abundant numbers (the 30th is already 318,682), so even a `k <= 50`
-bound — let alone the unbounded case — would make the cross-check test
-slow — an `else` clause on `while` loops (Python-style loop-`else`,
-`while (cond) { ... } else { ... }` running exactly when the loop exits
-without an intervening `break`) — scoped to plain `while` only, not
-`do`-`while` or either `for` form, and flagging one subtle
-dangling-attachment interaction with `if`/`else` that the task's own
-acceptance criteria lock in with a regression test — `is_smith_number`,
-a composite integer whose own digit sum equals the combined digit sum
-of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) = digit_sum(2) +
-digit_sum(2) = 4`), building on `prime_factors`' existing factorization
-logic and `is_harshad`'s existing digit-sum convention but asking a
-question neither answers — ordering comparison operators
-(`<`/`<=`/`>`/`>=`) for maps (`{"a": 1} < {"a": 2}`), the same
-`_compare` gap #349 closed for lists but left open for maps, defined as
-comparing each map's items as a key-sorted list of `(key, value)` pairs
-so the result stays consistent with existing order-independent map
-`==`; and `-` (difference) for maps (`{"a": 1, "b": 2} - {"a": 1}` is
-`{"b": 2}`), key-based removal by direct analogy to `+`'s existing
-dict-merge branch, the inverse of the `merge()` builtin the same way
-`+` is its infix form. The twenty-fifth pass (2026-08-30) added these
-last two: both PRs merged since the last grooming pass (#348 `as`
-binding, #349 list comparison) were depth, leaving the queue one below
-its usual 5-task floor with only one depth task left against three
-breadth, so this pass restocked with two depth tasks instead of the
-usual one — clearing the floor and rebalancing the queue back to an
-even 3 breadth (`is_disarium`, `nth_kaprekar`, `is_smith_number`) / 3
-depth (`while`-`else`, map ordering, map difference) split, per this
-section's own alternation rule — `main` is green (3873 tests), PR queue
-empty.
+Recently landed (see `CHANGELOG.md` for the full list, newest first):
+an `else` clause on `while` loops (#352, Python-style loop-`else`,
+scoped to plain `while` only); `nth_kaprekar` (#351) and `is_disarium`
+(#350), both digit/number-theory predicates' missing sequential-scan or
+digit-position siblings; lexicographic comparison operators for lists
+(#349) and whole-value `as` binding in match list/map patterns (#348).
+Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
+but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
+all the same recurring bug in the bare-arrow/guard `=>` disambiguation
+— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
+suggested next approach; still not requeued.
+
+`BACKLOG.md` carries the active queue (6 tasks after this pass, an even
+3 breadth / 3 depth split per the alternation policy above): breadth —
+`is_smith_number`, `is_pandigital`, `transpose`; depth — ordering
+comparison operators (`<`/`<=`/`>`/`>=`) for maps, `-` (difference) for
+maps, and (added this pass) an `else` clause on `for`-in loops — the
+same Python-style loop-`else` #352 added for `while`, extended to the
+foreach `for` form #352 itself explicitly left out of scope. `main` is
+green (3906 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -220,106 +188,10 @@ rest capture in list patterns (#324), flat map patterns (#326), nested
 list patterns (#330), per-key rename in match map patterns (#332), rest
 capture in match map patterns (#335), nested patterns as map pattern
 values (#337), default values for trailing elements in match list
-patterns (#338), and default values in match map patterns (#342) are the
-follow-ups that have landed so far — the list/map defaults pairing
-opened by #338 is now closed on both sides. Whole-value `as` binding is
-queued next, a fresh axis (composing with any pattern kind, not another
-per-key/per-element capability) rather than a continuation of the
-defaults arc. Guards remain a real gap too, but are deliberately not
-requeued yet.
-
-The twentieth pass (2026-08-30) archived the one PR merged since the
-last grooming pass (#343 `nth-semiprime`, breadth) and restocked one
-task — lexicographic comparison operators for lists (depth), bringing
-the queue from its 5-task floor back to its usual 6-task ceiling
-(`nth_pronic`, `nth_abundant`, `nth_repdigit` are breadth; `switch`
-range cases, `as` binding, and list comparison are depth — 3 depth to 3
-breadth, restoring the even split after the prior pass's deliberate
-4-breadth/2-depth skew). `main` is green (3819 tests), PR queue empty.
-This pass also refreshed this section and `README.md`'s Builtins list
-and "Status & roadmap" section, both of which had gone stale after #343
-landed without a docs update (left to the Architect by design — see
-the landed task's own "Once merged" note).
-
-The twenty-first pass (2026-08-30) archived the one PR merged since the
-last grooming pass (#344 `nth-pronic`, breadth) and restocked one
-task — `is_disarium` (breadth), bringing the queue from its 5-task
-floor back to its usual 6-task ceiling. `main` is green (3828 tests),
-PR queue empty. This pass also refreshed this section and `README.md`'s
-Builtins list and "Status & roadmap" section, both of which had gone
-stale after #344 landed without a docs update (left to the Architect
-by design — see the landed task's own "Once merged" note).
-
-The twenty-second pass (2026-08-30) archived the one PR merged since
-the last grooming pass (#345 `switch-range-case`, depth) and restocked
-one task — `nth_kaprekar` (breadth), bringing the queue from its
-5-task floor back to its usual 6-task ceiling (4 breadth to 2 depth —
-see the deliberate-skew note above). `main` is green (3834 tests), PR
-queue empty. This pass also refreshed this section and `README.md`'s `switch`
-feature bullet and "Status & roadmap" section, both of which had gone
-stale after #345 landed without a docs update (left to the Architect
-by design — see the landed task's own "Once merged" note).
-
-The twenty-third pass (2026-08-30) archived the one PR merged since
-the last grooming pass (#346 `nth-abundant`, breadth) and restocked
-one task — an `else` clause on `while` loops (depth), bringing the
-queue from its 5-task floor back to its usual 6-task ceiling and
-correcting the 4-breadth/2-depth skew noted after the twenty-second
-pass to an even 3/3 split (see the deliberate-skew note above). `main`
-is green (3842 tests), PR queue empty. This pass also refreshed this
-section and `README.md`'s Builtins list and "Status & roadmap" section,
-both of which had gone stale after #346 landed without a docs update
-(left to the Architect by design — see the landed task's own "Once
-merged" note).
-
-The twenty-fourth pass (2026-08-30) archived the one PR merged since
-the last grooming pass (#347 `nth-repdigit`, breadth) and restocked
-one task — `is_smith_number` (breadth), bringing the queue from its
-5-task floor back to its usual 6-task ceiling. `main` is green (3852
-tests), PR queue empty. This pass also refreshed this section and
-`README.md`'s Builtins list and "Status & roadmap" section, both of
-which had gone stale after #347 landed without a docs update (left to
-the Architect by design — see the landed task's own "Once merged"
-note).
-
-The twenty-fifth pass (2026-08-30) archived the two PRs merged since
-the last grooming pass (#348 `as-whole-binding`, #349
-`list-lexicographic-compare`, both depth) and restocked two tasks —
-ordering comparison operators for maps and `-` (difference) for maps
-(both depth) — since two depth PRs landing back-to-back left the queue
-one below its usual 5-task floor (4 tasks: `is_disarium`,
-`nth_kaprekar`, `while`-`else`, `is_smith_number`), the usual
-one-in-one-out restock wouldn't have cleared the floor, so this pass
-added two instead of one. Both new tasks close real gaps left open by
-#349 itself: `_compare` gained list ordering but not map ordering, and
-`+` has a dict-merge branch with no `-` counterpart. Restocking with
-two brings the queue
-back to its usual 6-task ceiling and rebalances to an even 3 breadth
-(`is_disarium`, `nth_kaprekar`, `is_smith_number`) / 3 depth
-(`while`-`else`, map ordering, map difference) split. `main` is green
-(3873 tests), PR queue empty. This pass also refreshed this section and
-`README.md`'s Features/Operators bullets and "Status & roadmap"
-section, both of which had gone stale after #348 and #349 landed
-without a docs update (left to the Architect by design — see each
-landed task's own "Once merged" note).
-
-The twenty-sixth pass (2026-08-30) archived the two PRs merged since the
-last grooming pass (#350 `is_disarium`, #351 `nth_kaprekar`, both
-breadth) and restocked two tasks — `is_pandigital` (breadth), the
-0-to-9-pandigital digit-set predicate no existing digit-property builtin
-answers (`is_repdigit` checks all-same, not all-ten-present), and
-`transpose` (breadth), the arbitrary-column-count generalization of
-`unzip`'s fixed-two-column transpose — since two breadth PRs landing
-back-to-back left the queue one below its usual 5-task floor with only
-one breadth task left (`is_smith_number`) against three depth
-(`while`-`else`, map ordering, map difference), this pass restocked with
-two breadth tasks instead of the usual one, both slotted between the
-existing depth tasks for a clean alternating order. This clears the
-floor, brings the queue back to its usual 6-task ceiling, and rebalances
-to an even 3 breadth (`is_smith_number`, `is_pandigital`, `transpose`) /
-3 depth (`while`-`else`, map ordering, map difference) split, per this
-section's own alternation rule. `main` is green (3892 tests), PR queue
-empty.
+patterns (#338), default values in match map patterns (#342), and
+whole-value `as` binding (#348) are the follow-ups that have landed so
+far. Guards remain a real gap too, but are deliberately not requeued
+yet — see the graveyard postmortem above.
 
 ## History
 
@@ -335,3 +207,10 @@ empty.
   `BACKLOG.md`/`CHANGELOG.md` split: nobody should have to read a
   wall of finished history to find current vision/scope, and this
   document's unbounded growth was costing every session that read it.
+- **2026-08-30** — Trimmed "Current frontier" the same way, for the same
+  reason: it had regrown seven pass-by-pass paragraphs (twentieth
+  through twenty-sixth) narrating each grooming pass's own restocking
+  math, exactly the pattern the 2026-08-22 trim above already fixed
+  once for "Roadmap". Replaced with a short current-status summary;
+  `CHANGELOG.md` and this file's own git history still have the
+  pass-by-pass detail for anyone who wants it.

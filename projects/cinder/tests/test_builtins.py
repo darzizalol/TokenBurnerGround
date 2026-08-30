@@ -5591,6 +5591,61 @@ class TestPrimeFactors(unittest.TestCase):
             run("prime_factors();")
 
 
+class TestIsSmithNumber(unittest.TestCase):
+    def test_is_smith_number_of_4(self):
+        self.assertTrue(run("let result = is_smith_number(4);").get("result"))
+
+    def test_is_smith_number_of_22(self):
+        self.assertTrue(run("let result = is_smith_number(22);").get("result"))
+
+    def test_is_smith_number_of_27(self):
+        self.assertTrue(run("let result = is_smith_number(27);").get("result"))
+
+    def test_is_smith_number_of_58(self):
+        self.assertTrue(run("let result = is_smith_number(58);").get("result"))
+
+    def test_is_smith_number_of_85(self):
+        self.assertTrue(run("let result = is_smith_number(85);").get("result"))
+
+    def test_is_smith_number_of_94(self):
+        self.assertTrue(run("let result = is_smith_number(94);").get("result"))
+
+    def test_is_smith_number_of_121(self):
+        self.assertTrue(run("let result = is_smith_number(121);").get("result"))
+
+    def test_is_smith_number_of_9_digit_sums_mismatch(self):
+        self.assertFalse(run("let result = is_smith_number(9);").get("result"))
+
+    def test_is_smith_number_of_2_is_prime(self):
+        self.assertFalse(run("let result = is_smith_number(2);").get("result"))
+
+    def test_is_smith_number_of_3_is_prime(self):
+        self.assertFalse(run("let result = is_smith_number(3);").get("result"))
+
+    def test_is_smith_number_of_13_is_prime(self):
+        self.assertFalse(run("let result = is_smith_number(13);").get("result"))
+
+    def test_is_smith_number_of_1(self):
+        self.assertFalse(run("let result = is_smith_number(1);").get("result"))
+
+    def test_is_smith_number_of_0(self):
+        self.assertFalse(run("let result = is_smith_number(0);").get("result"))
+
+    def test_is_smith_number_of_negative(self):
+        self.assertFalse(run("let result = is_smith_number(-4);").get("result"))
+
+    def test_is_smith_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_smith_number(1.5);")
+        self.assertIn(
+            "is_smith_number() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_smith_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_smith_number();")
+
+
 class TestNumDivisors(unittest.TestCase):
     def test_num_divisors_of_1(self):
         self.assertEqual(run("let result = num_divisors(1);").get("result"), 1)

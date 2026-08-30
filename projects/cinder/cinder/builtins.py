@@ -2253,6 +2253,33 @@ def _prime_factors(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _is_smith_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_smith_number", arguments, 1, line, column)
+    value = _require_int("is_smith_number", arguments[0], line, column)
+    if value < 2:
+        return False
+    for divisor in range(2, int(value ** 0.5) + 1):
+        if value % divisor == 0:
+            break
+    else:
+        return False  # prime, not composite
+    factors = []
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        while remaining % divisor == 0:
+            factors.append(divisor)
+            remaining //= divisor
+        divisor += 1
+    if remaining > 1:
+        factors.append(remaining)
+    digit_total = sum(int(digit) for digit in str(value))
+    factor_digit_total = sum(
+        sum(int(digit) for digit in str(factor)) for factor in factors
+    )
+    return digit_total == factor_digit_total
+
+
 def _num_divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("num_divisors", arguments, 1, line, column)
     value = _require_int("num_divisors", arguments[0], line, column)
@@ -4366,6 +4393,7 @@ _BUILTINS = {
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,
+    "is_smith_number": _is_smith_number,
     "num_divisors": _num_divisors,
     "is_amicable": _is_amicable,
     "min": _min,

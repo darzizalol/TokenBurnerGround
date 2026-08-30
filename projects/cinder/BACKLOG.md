@@ -11,172 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `else` clause on `while` loops (Python-style loop-`else`) [claimed 2026-08-30T15:24:34Z]
-
-Build: `while` loops have no way to distinguish "the loop ran to normal
-completion" from "the loop was cut short by `break`" without a manual
-sentinel flag (`let broke = false; while (...) { if (...) { broke = true;
-break; } } if (!broke) { ... }`). Python solves this with a loop-attached
-`else` clause that runs exactly when the loop's condition becomes false
-without an intervening `break` (including the zero-iteration case where
-the condition was already false). Cinder already reuses the `else` keyword
-for `if`/`else` (`TokenType.ELSE`, `cinder/tokens.py`) but a `while`
-statement's own parse never looks for a trailing `else`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let i = 0; while (i < 3) { i = i + 1; } else { print("done"); }'
-# -> <eval>:1:41: expected an expression, found 'else'
-```
-This task scopes the feature to plain `while` loops only — not `do`-`while`
-(no Python equivalent; the always-run-once semantics make "did it break"
-ambiguous with "ran zero times" in a different way), not the foreach
-`for`-in loop, and not the C-style `for (init; cond; step)` loop. Those are
-plausible natural follow-ups (mirroring how list patterns landed before map
-patterns) but each has its own `_execute_for`/`_execute_for_c` evaluator
-method and its own `ForStmt`/`ForCStmt` AST node, so bundling all four loop
-kinds into one PR would roughly quadruple this task's diff for no added
-insight — leave them to a future task if one gets proposed.
-
-No new token is needed — `TokenType.ELSE` already exists and is already
-looked up via `self._check(TokenType.ELSE)` in `_if_statement` (search
-`def _if_statement`, `cinder/parser.py`). Three changes:
-
-1. `cinder/ast_nodes.py`: add one new trailing field to `WhileStmt` (search
-   `class WhileStmt`), `else_branch: "Stmt | None" = None`, after the
-   existing `label` field. Being a defaulted trailing field, the one
-   existing `WhileStmt(...)` construction site (`cinder/parser.py`,
-   currently 5 positional arguments) keeps working once it's updated to
-   pass a 6th. Add a short docstring to the class (it currently has none):
-   `else_branch` is `None` unless the loop carries a trailing
-   `else { ... }` clause; when present, it runs exactly once, when the
-   loop's condition becomes false *without* an intervening `break` —
-   including immediately, if the condition was already false on the first
-   check — mirroring Python's `while`/`for`-`else`. `continue` does not
-   skip it (only `break` does); an uncaught exception, `return`, or
-   propagating labeled `break`/`continue` from the body also skips it,
-   since control never reaches the check in that case.
-
-2. `cinder/parser.py`, `_while_statement` (search `def _while_statement`):
-   after the existing `body = self._statement()` / `self._loop_labels.pop()`
-   pair, add the same `else`-lookahead `_if_statement` already does:
-   ```python
-   def _while_statement(self, label: "str | None" = None) -> Stmt:
-       while_token = self._advance()
-       self._consume(TokenType.LPAREN, "'(' after 'while'")
-       condition = self._assignment()
-       self._consume(TokenType.RPAREN, "')' after while condition")
-       self._loop_labels.append(label)
-       body = self._statement()
-       self._loop_labels.pop()
-       else_branch = None
-       if self._check(TokenType.ELSE):
-           self._advance()
-           else_branch = self._statement()
-       return WhileStmt(
-           condition, body, while_token.line, while_token.column, label, else_branch
-       )
-   ```
-   **Dangling-attachment note** (call this out in the PR body, it's the
-   one subtle part of this task): because `_while_statement` now consumes
-   a trailing `else` itself, a `while` loop that is itself the unbraced
-   `then_branch` of an `if` — `if (cond) while (x) { a; } else { b; }` —
-   changes which construct the `else` binds to. Today (before this
-   change) `_while_statement` never looks past its own body, so the
-   `else` token is left for `_if_statement`'s own lookahead to claim,
-   and `b` runs only when `cond` is falsy. After this change,
-   `_while_statement` claims the `else` first (it runs its own lookahead
-   before returning control to the caller), so `b` becomes the *while
-   loop's* else-clause instead, running whenever the `while` loop exits
-   without `break` — regardless of `cond`. This is the same
-   nearest-currently-open-construct precedent ordinary dangling
-   `if`/`else` already resolves by (an unbraced nested `if` without its
-   own `else` "steals" a following `else` from an outer construct); it's
-   a deliberate, if subtle, behavior change for that one specific
-   unbraced combination, and needs a regression test locking in the new
-   direction (acceptance criterion below) rather than being treated as
-   an accidental regression.
-
-3. `cinder/interpreter.py`, the `WhileStmt` branch inside `execute` (search
-   `if isinstance(stmt, WhileStmt):`): track whether the loop exited via
-   `break` and skip the run of `else_branch` when it did:
-   ```python
-   if isinstance(stmt, WhileStmt):
-       broke = False
-       while is_truthy(self.evaluate(stmt.condition, env)):
-           try:
-               self.execute(stmt.body, env)
-           except _BreakSignal as signal:
-               if signal.label is not None and signal.label != stmt.label:
-                   raise
-               broke = True
-               break
-           except _ContinueSignal as signal:
-               if signal.label is not None and signal.label != stmt.label:
-                   raise
-               continue
-       if not broke and stmt.else_branch is not None:
-           self.execute(stmt.else_branch, env)
-       return
-   ```
-   `self.execute(stmt.else_branch, env)` runs in the same `env` the loop
-   itself ran in (matching `IfStmt`'s own `self.execute(stmt.else_branch,
-   env)`, not a fresh child scope) — if `else_branch` is a `Block`, the
-   `Block` branch already creates its own child `Environment`, exactly
-   like an ordinary `if`'s `else { ... }`.
-
-Acceptance criteria:
-- `let i = 0; while (i < 3) { i = i + 1; } else { print("done"); }`
-  prints `done` — normal completion (condition goes false) runs the
-  `else` clause.
-- `let ran = false; while (true) { break; } else { ran = true; } print(ran);`
-  is `false` — `break` skips the `else` clause entirely.
-- `let ran = false; while (false) { } else { ran = true; } print(ran);`
-  is `true` — a loop whose condition is false from the start (zero
-  iterations) still counts as "completed without breaking".
-- `let i = 0; let ran = false; while (i < 3) { i = i + 1; if (i == 1) { continue; } } else { ran = true; } print(ran);`
-  is `true` — `continue` does not skip the `else` clause, only `break`
-  does.
-- `let ran = false; outer: while (true) { break outer; } else { ran = true; } print(ran);`
-  is `false` — a labeled `break` targeting this loop still counts as a
-  `break` for `else`-skipping purposes, same as an unlabeled one.
-- Dangling-attachment regression test (see the parser note above):
-  `if (true) while (false) { } else { print("attached-to-while"); }`
-  prints `attached-to-while` — the `else` binds to the `while`, not the
-  `if` (the `if`'s own condition is `true`, so if the `else` had instead
-  bound to the `if`, nothing would print).
-- Omitting `else` still parses and behaves exactly as before — no
-  regression to any existing `while`/labeled-`while` test;
-  `while (true) { break; }` with no trailing `else` still parses and
-  runs fine (`else_branch` defaults to `None`).
-- `do { ... } while (cond) else { ... };`, `for x in xs { ... } else { ... }`,
-  and `for (;;) { ... } else { ... }` all still raise `ParseError` matching
-  `"expected an expression, found 'else'"` — this task deliberately does
-  not extend `else` support to `do`-`while`, foreach `for`, or C-style
-  `for` (see the Build note above).
-- A `while`-`else` clause composes with an enclosing function's `return`:
-  a `return` inside the loop body still skips the `else` clause and
-  propagates immediately, same as it already does for the loop body
-  itself — `fn f() { while (true) { return 1; } else { return 2; } } print(f());`
-  is `1`.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`WhileStmt.else_branch` field +
-docstring, search `class WhileStmt`), `cinder/parser.py`
-(`_while_statement`, search `def _while_statement`), `cinder/interpreter.py`
-(the `WhileStmt` branch in `execute`, search `if isinstance(stmt,
-WhileStmt):`), `tests/test_parser.py` (extend `class TestDoWhileStatement`
-around `test_plain_while_still_parses_unaffected`, search that name, plus
-a new dangling-attachment parse test, and `class TestLabeledLoops`, search
-that name, if a labeled-loop-else parse shape test is wanted),
-`tests/test_interpreter.py` (extend `class TestWhileStatement`, search
-that name, with the completion/break/continue/label/dangling-attachment
-cases above). Once merged, `README.md`'s Control flow bullet needs a
-`while`-`else` mention, its "Status & roadmap" section needs updating,
-and `PROJECT.md`'s "Current frontier" bullet needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
+## 1. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
 
 Build: `prime_factors` (`cinder/builtins.py`, search `def _prime_factors`)
 already lists an integer's prime factors with multiplicity, and
@@ -277,7 +112,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
+## 2. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
 
 Build: `_compare` (`cinder/interpreter.py`, search `def _compare`) already
 gives numbers, strings, and — as of PR #349, this project's most recently
@@ -396,7 +231,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_pandigital` — 0-to-9 pandigital number test
+## 3. Standard library: `is_pandigital` — 0-to-9 pandigital number test
 
 Build: `is_disarium` and `is_armstrong` (`cinder/builtins.py`, search `def
 _is_disarium`) already test digit-position properties, and `is_undulating`/
@@ -467,7 +302,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: difference operator (`-`) for maps
+## 4. Language: difference operator (`-`) for maps
 
 Build: `_apply_binary_operator`'s `PLUS` branch (`cinder/interpreter.py`,
 search `if op == TokenType.PLUS:`) already special-cases `dict`/`dict` as
@@ -558,7 +393,7 @@ task.
 
 ---
 
-## 6. Standard library: `transpose` — matrix (list-of-lists) transpose
+## 5. Standard library: `transpose` — matrix (list-of-lists) transpose
 
 Build: `unzip` (`cinder/builtins.py`, search `def _unzip`) already
 transposes the special two-column case (a list of 2-element lists) into

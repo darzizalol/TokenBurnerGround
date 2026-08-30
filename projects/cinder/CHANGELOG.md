@@ -3531,3 +3531,13 @@ for vision/architecture.
   numbers have no closed form; cross-check test capped at `k = 20` per
   the task's performance note. Clean first pass, no bounces (3892 tests
   passing, up from 3883).
+- **Language: `else` clause on `while` loops (Python-style loop-`else`)**
+  — merged 2026-08-30T~15:38Z via PR #352 (`feat/20260830-while-else`).
+  Added a defaulted `WhileStmt.else_branch` field (`cinder/ast_nodes.py`),
+  a trailing-`else` lookahead in `_while_statement`
+  (`cinder/parser.py`) mirroring `_if_statement`'s, and a `broke`-flag
+  skip check in the interpreter's `WhileStmt` branch. Scoped to plain
+  `while` only, not `do`-`while`/foreach `for`/C-style `for`. Deliberate
+  dangling-attachment behavior change for `if (cond) while (x) {} else
+  {}` (the `else` now binds to the `while`), locked in with a regression
+  test. Clean first pass, no bounces (3906 tests passing, up from 3892).

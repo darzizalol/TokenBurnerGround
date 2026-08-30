@@ -3689,6 +3689,35 @@ def _unzip(arguments: list, line: int, column: int) -> object:
     return [firsts, seconds]
 
 
+def _transpose(arguments: list, line: int, column: int) -> object:
+    _require_arity("transpose", arguments, 1, line, column)
+    matrix = arguments[0]
+    if not isinstance(matrix, list):
+        raise CinderRuntimeError(
+            f"transpose() requires a list, got {type_name(matrix)}",
+            line, column,
+        )
+    if not matrix:
+        return []
+    width = None
+    for i, row in enumerate(matrix):
+        if not isinstance(row, list):
+            raise CinderRuntimeError(
+                f"transpose() requires a list of lists, got "
+                f"{type_name(row)} at index {i}",
+                line, column,
+            )
+        if width is None:
+            width = len(row)
+        elif len(row) != width:
+            raise CinderRuntimeError(
+                f"transpose() requires all rows to have the same length, "
+                f"got length {len(row)} at index {i}, expected {width}",
+                line, column,
+            )
+    return [[row[i] for row in matrix] for i in range(width)]
+
+
 def _zip_with(arguments: list, line: int, column: int) -> object:
     _require_arity("zip_with", arguments, 3, line, column)
     list1, list2, fn = arguments
@@ -4507,6 +4536,7 @@ _BUILTINS = {
     "zip": _zip,
     "zip_longest": _zip_longest,
     "unzip": _unzip,
+    "transpose": _transpose,
     "zip_with": _zip_with,
     "cartesian_product": _cartesian_product,
     "enumerate": _enumerate,

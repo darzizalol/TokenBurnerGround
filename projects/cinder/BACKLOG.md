@@ -460,6 +460,248 @@ pass, not this task.
 
 ---
 
+## 5. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
+
+Build: PR #352 added a Python-style `else { ... }` clause to plain
+`while` loops, and task 2 in this file (once it merges) extends the
+same clause to the foreach `for`-in form — both explicitly scoped
+themselves to leave `DoWhileStmt` (`cinder/ast_nodes.py`, search
+`class DoWhileStmt`) untouched. This task closes the last remaining
+gap: `do { ... } while (cond)`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'do { print(1); } while (false) else { print("done"); }'
+# -> <eval>:1:32: expected ';' after 'do ... while (...)', found 'else'
+```
+
+Semantics mirror `WhileStmt.else_branch` (see its docstring, search
+`class WhileStmt`): the `else` block runs exactly once when control
+falls out of the loop with no intervening `break` — `continue` does
+not skip it, an uncaught exception/`return`/propagating labeled
+`break`/`continue` does, since control never reaches the check in that
+case. The one semantic wrinkle specific to `do`-`while` is that its
+body always runs at least once (that is the entire point of the
+construct — there is no "zero iterations" case the way an empty
+`for`-in or an initially-false `while` condition has), so there is no
+"else runs with the body never having executed" test case here the way
+`while`/`for`-`else` both have; every `do`-`while`-`else` test
+necessarily has the body run at least once before the `else` fires or
+is skipped.
+
+Grammar wrinkle: `do { ... } while (cond);` currently always ends in a
+mandatory `;` (there is no body-shaped construct after the condition
+the way `while`'s own body terminates the statement, so the `;` is
+what closes it — see `_do_while_statement`, search `def
+_do_while_statement`). An `else` clause changes that: if `else`
+follows the condition's `)`, the else branch (parsed the same way
+`_while_statement` parses its own, via `self._statement()`) is itself
+what closes the statement — it already ends in a `}` (block) or a `;`
+(single statement), so no separate semicolon is needed or accepted
+there; the semicolon stays mandatory only when there is no `else`.
+Unlike `while`-`else`, there is no dangling-`else`/if-attachment
+concern to introduce: the trailing `else` sits after the `while (cond)`
+clause, textually separated from the body by the entire condition —
+any unbraced `if` inside the body already resolved its own `else`
+while `_do_while_statement` parsed `body = self._statement()`, well
+before the parser ever reaches the `while` keyword, let alone this new
+`else` check.
+
+Edit three files:
+
+1. `cinder/ast_nodes.py` (search `class DoWhileStmt`), add one field
+   at the end, after `label: "str | None" = None`:
+```python
+    else_branch: "Stmt | None" = None
+```
+
+2. `cinder/parser.py`'s `_do_while_statement` (search `def
+   _do_while_statement`): replace the unconditional trailing
+   `self._consume(TokenType.SEMICOLON, ...)` with an else-or-semicolon
+   branch, and thread the result into the constructor call:
+```python
+    def _do_while_statement(self, label: "str | None" = None) -> Stmt:
+        do_token = self._advance()
+        self._loop_labels.append(label)
+        body = self._statement()
+        self._loop_labels.pop()
+        self._consume(TokenType.WHILE, "'while' after 'do' body")
+        self._consume(TokenType.LPAREN, "'(' after 'while'")
+        condition = self._assignment()
+        self._consume(TokenType.RPAREN, "')' after while condition")
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
+        else:
+            self._consume(TokenType.SEMICOLON, "';' after 'do ... while (...)'")
+        return DoWhileStmt(
+            condition, body, do_token.line, do_token.column, label, else_branch
+        )
+```
+
+3. `cinder/interpreter.py`'s `DoWhileStmt` handling in `execute`
+   (search `if isinstance(stmt, DoWhileStmt):`): track a `broke` flag
+   through the existing loop exactly the way `WhileStmt`'s handling
+   already does, then check it after the loop ends:
+```python
+        if isinstance(stmt, DoWhileStmt):
+            broke = False
+            while True:
+                try:
+                    self.execute(stmt.body, env)
+                except _BreakSignal as signal:
+                    if signal.label is not None and signal.label != stmt.label:
+                        raise
+                    broke = True
+                    break
+                except _ContinueSignal as signal:
+                    if signal.label is not None and signal.label != stmt.label:
+                        raise
+                if not is_truthy(self.evaluate(stmt.condition, env)):
+                    break
+            if not broke and stmt.else_branch is not None:
+                self.execute(stmt.else_branch, env)
+            return
+```
+(Only the `broke = False` init, the `broke = True` before the `break`
+in the `_BreakSignal` handler, and the final `if not broke and
+stmt.else_branch is not None:` block are new — everything else is
+unchanged, shown in full only so the exact insertion points are
+unambiguous.)
+
+Acceptance criteria (mirror `TestWhileElse`/the `test_while_else_*`
+methods in `tests/test_interpreter.py`, search
+`test_while_else_runs_on_normal_completion`, one-for-one where a
+do-while equivalent makes sense):
+- `do { x = 1; } while (false) else { done = true; }` runs the `else`
+  — the loop completes its one iteration normally, condition then
+  false, no `break`.
+- `let i = 0; do { i = i + 1; } while (i < 3) else { done = true; }`
+  also runs the `else` after all three iterations — normal multi-
+  iteration completion.
+- `do { break; } while (true) else { ran = true; }` does **not** run
+  the `else` — a `break` on the very first iteration skips it.
+- `let i = 0; do { i = i + 1; if (i == 1) { continue; } } while (i < 2)
+  else { ran = true; }` still runs the `else` — `continue` does not
+  skip it, only `break` does.
+- `outer: do { do { break outer; } while (true); } while (true) else {
+  ran = true; }` does **not** run the outer loop's `else` — a labeled
+  `break` targeting the outer loop skips its `else`, exactly like
+  `while`'s own labeled-break case.
+- `fn f() { do { return 1; } while (false) else { return 2; } } f();`
+  returns `1`, not `2` — `return` from the body skips the `else`.
+- `do { x = 1; } while (false);` (no `else` at all) still behaves
+  exactly as before, including still requiring and accepting the
+  trailing `;` — a regression guard mirroring
+  `test_while_without_else_still_behaves_as_before`.
+- `do { } while (false) else x = 1;` (an unbraced single-statement
+  `else`, not a block) parses and runs `x = 1` — confirms the `else`
+  branch is parsed via the generic `_statement()` the same way
+  `while`-`else`'s is, not hardcoded to require a block.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (`DoWhileStmt`, search `class
+DoWhileStmt`), `cinder/parser.py` (`_do_while_statement`, search `def
+_do_while_statement`), `cinder/interpreter.py` (the `DoWhileStmt`
+branch of `execute`, search `if isinstance(stmt, DoWhileStmt):`),
+`tests/test_parser.py` (new `class TestDoWhileElse`, modeled on
+`class TestWhileElse`, search that name, for the parse-shape
+assertions, including the else-vs-semicolon grammar wrinkle above),
+`tests/test_interpreter.py` (new `class TestDoWhileElse`, modeled on
+the `test_while_else_*` methods inside `TestWhileStatement`, search
+`test_while_else_runs_on_normal_completion`, for the runtime behavior
+above). Once merged, `README.md`'s Control flow bullet needs a
+`do`-`while`-`else` mention next to the existing `while`/`for`-`else`
+ones, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
+
+Build: `is_strong_number` (`cinder/builtins.py`, search `def
+_is_strong_number`) already asks whether a number equals the sum of
+the *factorial* of each of its digits (e.g. `145 = 1! + 4! + 5!`), and
+`is_armstrong`/`is_disarium` already raise each digit to a *fixed*
+power (digit count, or digit position) and sum — but nothing raises
+each digit to *its own value* and sums, the classic "Munchausen
+number" property (named for Baron Munchausen's tall tales of lifting
+himself by his own hair — a number "lifting itself" out of its own
+digits). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_munchausen_number(3435));'
+# -> <eval>:1:7: undefined name 'is_munchausen_number' (did you mean 'is_lucas_number'?)
+```
+
+The one domain subtlety: by convention (the definition everyone
+publishing a list of Munchausen numbers uses), `0` raised to the power
+of itself contributes `0` to the sum, not `1` — even though Python's
+own `0 ** 0` evaluates to `1`. Without that override, `10` would
+wrongly evaluate its digit sum as `1**1 + 0**0 = 1 + 1 = 2 != 10`
+either way (still correctly `false` here), but the override matters
+for `0` itself: `0`'s own digit is `0`, and under the `0**0 := 0`
+convention its digit-power sum is `0`, which equals the number — so
+`0` is a (trivial) Munchausen number, matching every published
+reference list. Getting this wrong (using Python's raw `0 ** 0 == 1`)
+would make `0` evaluate to `false` instead, silently disagreeing with
+the standard definition.
+
+Add to `cinder/builtins.py`, directly after `_is_strong_number` (search
+`def _is_strong_number`, immediately before `def _is_leap_year`) —
+keeps it grouped with the other digit-power-sum predicates:
+```python
+def _is_munchausen_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_munchausen_number", arguments, 1, line, column)
+    value = _require_int("is_munchausen_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    total = 0
+    for digit in str(value):
+        d = int(digit)
+        total += d ** d if d != 0 else 0
+    return total == value
+```
+Also register the new dict entry (search `"is_strong_number":
+_is_strong_number,`, add `"is_munchausen_number":
+_is_munchausen_number,` directly after it, before `"is_leap_year":
+_is_leap_year,`).
+
+Acceptance criteria:
+- `is_munchausen_number(0);` is `true` — the trivial case under the
+  `0**0 := 0` convention (see the Build note above).
+- `is_munchausen_number(1);` is `true` — `1 ** 1 = 1`.
+- `is_munchausen_number(3435);` is `true` — the canonical example:
+  `3**3 + 4**4 + 3**3 + 5**5 = 27 + 256 + 27 + 3125 = 3435`.
+- `is_munchausen_number(438579088);` is `true` — the other known
+  base-10 Munchausen number, confirming the check isn't hardcoded to
+  4-digit inputs.
+- `is_munchausen_number(2);` is `false` — `2 ** 2 = 4 != 2`.
+- `is_munchausen_number(24);` is `false` — `2**2 + 4**4 = 4 + 256 =
+  260 != 24`.
+- `is_munchausen_number(100);` is `false` — exercises the `0**0 := 0`
+  override on a non-trivial multi-digit number: `1**1 + 0**0 + 0**0 =
+  1 + 0 + 0 = 1 != 100`.
+- `is_munchausen_number(-3435);` is `false` — negative numbers are
+  excluded (mirrors `is_strong_number`'s own convention).
+- `is_munchausen_number(1.5);` raises `CinderRuntimeError` matching
+  `"is_munchausen_number() requires an int, got float"` (via
+  `_require_int`'s existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_strong_number`,
+search `def _is_strong_number`), `tests/test_builtins.py` (new `class
+TestIsMunchausenNumber`, modeled directly on `class
+TestIsStrongNumber`, search that name, for the true/false/domain-edge/
+type-error test shapes above). Once merged, `README.md`'s Builtins
+bullet needs `is_munchausen_number` added near `is_strong_number`, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" bullet needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -284,7 +284,13 @@ while (i < 10) {
   as a key-sorted list of pairs, so the result stays consistent with the
   existing order-independent map `==`; nested map-in-list comparison
   like `[{"a": 1}] < [{"a": 2}]` is out of scope, since list comparison
-  delegates straight to Python's native list `<`)
+  delegates straight to Python's native list `<`), and map difference
+  via `-` (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`, a fresh
+  non-mutating map with every key from the right-hand map removed from
+  the left — key-based removal by direct analogy to `+`'s existing
+  dict-merge branch, the inverse of the `merge()` builtin the same way
+  `+` is its infix form; `-=` on a map target works for free through
+  the same desugaring)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -438,6 +444,7 @@ while (i < 10) {
   `is_perfect_square` to test whether an integer is a perfect square,
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
   `is_disarium` as its digit-position sibling, each digit raised to its own 1-indexed position instead of one shared exponent (`89 = 8^1 + 9^2`),
+  `is_pandigital` to test whether an integer's decimal digits are exactly the ten digits `0`-`9` each appearing once (e.g. `1023456789`),
   `is_strong_number` to test whether an integer equals the sum of its own digits' factorials,
   `is_leap_year` to test the Gregorian leap-year rule,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
@@ -592,41 +599,35 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: ordering comparison
-operators (`<`/`<=`/`>`/`>=`) for maps (PR #354, `{"a": 1} < {"a": 2}`)
-— the same `_compare` gap PR #349 closed for lists but left open for
-maps, defined by comparing each map's items as a key-sorted list of
-pairs so the result stays consistent with the existing
-order-independent map `==` — and before that `is_smith_number` (PR
-#353) — a composite integer whose own digit sum equals the combined
-digit sum of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) =
-digit_sum(2) + digit_sum(2) = 4`), the digit-sum question
-`prime_factors` never got asked of it — and before that a Python-style
-`else` clause on `while` loops (PR #352, `while (cond) { ... } else {
-... }`, running exactly when the loop exits without an intervening
-`break`) — scoped to plain `while` only, not `do`-`while` or either
-`for` form. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
-history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_pandigital` —
-testing whether an integer's decimal digits are exactly the ten digits
-`0`-`9` each appearing once (e.g. `1023456789`, the smallest such
-number), a digit-set question none of
-`is_repdigit`/`is_disarium`/`is_armstrong` answers, `-` (difference)
-for maps (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based
-removal by direct analogy to `+`'s existing dict-merge branch, the
-inverse of the `merge()` builtin the same way `+` is its infix form,
-`transpose` — the arbitrary-column generalization of `unzip`'s
-fixed-two-column matrix transpose, the same `else` clause PR #352 gave
-`while` extended to the foreach `for`-in form (`for x in xs { ... }
-else { ... }`), the one loop kind #352 itself left out of scope,
-`is_vampire_number` — a number whose decimal digits can be split into
-two equal-length "fangs" that multiply back to it (e.g. `1260 = 21 *
-60`), a digit-permutation-meets-factorization predicate distinct from
-`is_smith_number`'s digit-sum-of-factors question, and
-`is_trimorphic_number` — the cube-ending analog of `is_automorphic`'s
-own square-ending check (e.g. `24 ** 3 = 13824`, which ends in `24`),
-a direct extension of an existing digit-invariance predicate to one
-more power. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+Actively developed, nightly. Recently landed: `-` (difference) for
+maps (PR #356, `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) —
+key-based removal by direct analogy to `+`'s existing dict-merge
+branch, the inverse of the `merge()` builtin the same way `+` is its
+infix form — and before that `is_pandigital` (PR #355) — testing
+whether an integer's decimal digits are exactly the ten digits `0`-`9`
+each appearing once (e.g. `1023456789`, the smallest such number), a
+digit-set question none of `is_repdigit`/`is_disarium`/`is_armstrong`
+answers — and before that ordering comparison operators
+(`<`/`<=`/`>`/`>=`) for maps (PR #354, `{"a": 1} < {"a": 2}`). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `transpose` — the
+arbitrary-column generalization of `unzip`'s fixed-two-column matrix
+transpose, the same `else` clause PR #352 gave `while` extended to the
+foreach `for`-in form (`for x in xs { ... } else { ... }`), the one
+loop kind #352 itself left out of scope, `is_vampire_number` — a
+number whose decimal digits can be split into two equal-length
+"fangs" that multiply back to it (e.g. `1260 = 21 * 60`), a
+digit-permutation-meets-factorization predicate distinct from
+`is_smith_number`'s digit-sum-of-factors question, `is_trimorphic_number`
+— the cube-ending analog of `is_automorphic`'s own square-ending check
+(e.g. `24 ** 3 = 13824`, which ends in `24`), the same `else` clause
+extended once more, this time to `do`-`while` loops (`do { ... } while
+(cond) else { ... }`) — closing out the loop-`else` arc #352 started,
+since `while` and `for`-in (queued above) both get theirs first — and
+`is_munchausen_number` — a number equal to the sum of each digit
+raised to its own power (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the
+digit-to-its-own-power sibling of `is_strong_number`'s digit-factorial
+question. (Guards in `match` arms, `n if n > 0 => "positive"`, were
 attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
 postmortem; they're a real gap but not back in the active queue yet.)

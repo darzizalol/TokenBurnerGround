@@ -173,20 +173,25 @@ recurring bug in the bare-arrow/guard `=>` disambiguation — see
 `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
 suggested next approach; still not requeued.
 
-`BACKLOG.md` carries the active queue (6 tasks after this pass, back up
-from the 5-task floor with one new breadth task per the alternation
-policy above, since #354 was a depth task): breadth — `is_pandigital`,
-`transpose`, `is_vampire_number` — a number whose decimal digits split
-into two equal-length "fangs" that multiply back to it (e.g. `1260 =
-21 * 60`), a digit-permutation-meets-factorization predicate distinct
-from `is_smith_number`'s digit-sum-of-factors question — and (added
-this pass) `is_trimorphic_number` — the cube-ending analog of
+`BACKLOG.md` carries the active queue (back up to 6 tasks this pass,
+restocked from 4 after `-` (difference) for maps, #356, landed and
+dropped it below the 5-task floor): breadth — `transpose` — the
+arbitrary-column generalization of `unzip`'s fixed-two-column matrix
+transpose; depth — an `else` clause on `for`-in loops, the same
+Python-style loop-`else` #352 added for `while`, extended to the
+foreach form #352 itself left out of scope; breadth —
+`is_vampire_number` — a number whose decimal digits split into two
+equal-length "fangs" that multiply back to it (e.g. `1260 = 21 * 60`)
+— and `is_trimorphic_number` — the cube-ending analog of
 `is_automorphic`'s own square-ending check (e.g. `24 ** 3 = 13824`,
-which ends in `24`); depth — `-` (difference) for maps and an `else`
-clause on `for`-in loops — the same Python-style loop-`else` #352
-added for `while`, extended to the foreach `for` form #352 itself
-explicitly left out of scope. `main` is green (3933 tests), PR queue
-empty.
+which ends in `24`); depth (added this pass) — an `else` clause on
+`do`-`while` loops, closing out the loop-`else` arc #352 started —
+`while` (#352) and `for`-in (queued above) both have theirs, leaving
+only `do`-`while` unaddressed; breadth (added this pass) —
+`is_munchausen_number` — a number equal to the sum of each digit
+raised to its own power (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the
+digit-to-its-own-power sibling of `is_strong_number`'s digit-factorial
+question. `main` is green (3958 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

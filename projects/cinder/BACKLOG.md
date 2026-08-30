@@ -11,245 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: whole-value `as` binding in match list/map patterns [claimed 2026-08-29T22:11:15Z]
-
-Build: a match list/map pattern destructures a subject into its parts
-(`match ([1, 2]) { [a, b] => a + b, _ => 0 }`) but there is no way to
-also bind the *whole* matched value alongside the destructured pieces —
-today that forces either giving up destructuring (a bound-identifier
-arm, `match (v) { whole => ... }`, binds the whole value but can't
-destructure it) or re-indexing/re-slicing the subject inside the arm
-body by hand. Add an optional trailing `as NAME` after a list or map
-pattern (`match ([1, 2]) { [a, b] as whole => a + b + len(whole) }`,
-`match ({"a": 1}) { {a} as whole => a + len(keys(whole)) }`) that binds
-the entire subject to `NAME` in the arm's own scope, alongside whatever
-names the pattern itself destructures. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(match ([1, 2]) { [a, b] as whole => whole, _ => nil });'
-# -> <eval>:1:24: expected '=>' after match pattern, found identifier 'as'
-```
-
-This needs a new reserved keyword, `as` — confirmed unused as an
-identifier anywhere in `examples/*.cin` or `tests/*.py` today, so
-reserving it is safe. Add it in three places:
-1. `cinder/tokens.py`: a new `TokenType.AS = auto()` member (add next to
-   `TokenType.IN`, search `IN = auto()`), and a `"as": TokenType.AS,`
-   entry in the `KEYWORDS` dict (search `KEYWORDS = {`, add next to
-   `"in": TokenType.IN,`). No `cinder/lexer.py` change is needed — it
-   already looks up every identifier lexeme against `KEYWORDS` generically
-   (search `KEYWORDS.get(lexeme, TokenType.IDENTIFIER)`).
-2. `cinder/ast_nodes.py`: add one new trailing field to `MatchArm`
-   (search `class MatchArm`), `whole_binding: "str | None" = None`,
-   after the existing `map_rest` field. Being a defaulted trailing field,
-   every existing positional `MatchArm(...)` construction site keeps
-   working unchanged. Document it in the class docstring near the
-   `list_pattern`/`map_pattern` explanation: `whole_binding` is `None`
-   unless a list-pattern or map-pattern arm carries a trailing `as NAME`,
-   in which case it holds `NAME` — the subject's whole value is bound to
-   this name in the arm's own environment in addition to whatever the
-   pattern itself destructures. Not valid on the wildcard/bound-identifier,
-   literal, or range-pattern arm kinds (only `list_pattern`/`map_pattern`
-   arms may carry it).
-3. `cinder/parser.py`: add a small helper next to the other match-pattern
-   helpers (search `def _match_list_pattern_rest_name`):
-   ```python
-   def _match_whole_binding(self) -> "str | None":
-       if not self._check(TokenType.AS):
-           return None
-       self._advance()  # consume 'as'
-       token = self._consume(TokenType.IDENTIFIER, "identifier after 'as' in match pattern")
-       return token.lexeme
-   ```
-   Call it from `_match_arm` (search `def _match_arm`) right after each of
-   the two pattern-parsing calls, before the existing
-   `self._consume(TokenType.FAT_ARROW, ...)`:
-   ```python
-   if self._check(TokenType.LBRACKET):
-       list_pattern, list_rest = self._match_list_pattern()
-       whole_binding = self._match_whole_binding()
-       self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-       body = self._ternary()
-       return [MatchArm(None, body, None, list_pattern, None, list_rest, None, None, whole_binding)]
-   if self._check(TokenType.LBRACE):
-       map_pattern, map_rest = self._match_map_pattern()
-       whole_binding = self._match_whole_binding()
-       self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-       body = self._ternary()
-       return [MatchArm(None, body, None, None, None, None, map_pattern, map_rest, whole_binding)]
-   ```
-   The other `_match_arm` branch (literal/wildcard/bound-identifier/range
-   entries, search `entries = [self._match_pattern()]`) is untouched — `as`
-   binding is scoped to list/map patterns only for this task, mirroring how
-   rest capture and defaults were introduced list/map-first too.
-4. `cinder/interpreter.py`: in `_evaluate_match` (search
-   `def _evaluate_match`), after each pattern successfully matches and
-   before evaluating the body, define the whole binding in `arm_env` if
-   present:
-   ```python
-   if arm.list_pattern is not None:
-       arm_env = Environment(env)
-       if not self._match_list_entries(
-           arm.list_pattern, arm.list_rest, subject, arm_env
-       ):
-           continue
-       if arm.whole_binding is not None:
-           arm_env.define(arm.whole_binding, subject)
-       return self.evaluate(arm.body, arm_env)
-   ```
-   and the mirror-image insertion in the `arm.map_pattern is not None`
-   branch, right before its own `return self.evaluate(arm.body, arm_env)`.
-
-Acceptance criteria:
-- `match ([1, 2]) { [a, b] as whole => whole, _ => nil };` evaluates to
-  `[1, 2]` — the whole binding holds the original subject.
-- `match ([1, 2]) { [a, b] as whole => a + b + len(whole), _ => 0 };` is
-  `6` — destructured names (`a`, `b`) and the whole binding (`whole`) are
-  both usable in the same body.
-- `match ({"a": 1, "b": 2}) { {a, b} as whole => len(keys(whole)), _ => 0 };`
-  is `2`.
-- `as` composes with rest capture: `match ([1, 2, 3]) { [a, ...rest] as whole => len(whole) - len(rest), _ => 0 };`
-  is `1`.
-- `as` composes with defaults: `match ([1]) { [a, b = 0] as whole => len(whole), _ => -1 };`
-  is `1` (the pattern still matches a shorter subject; `whole` is the
-  actual — not the default-padded — subject).
-- A non-matching subject still falls through without binding anything:
-  `match (5) { [a, b] as whole => whole, _ => "no match" };` is
-  `"no match"` (`5` is not a list, so the arm never runs and `whole`
-  is never defined).
-- `whole` does not leak outside the arm: `let whole = 1; match ([1, 2]) { [a, b] as whole => whole, _ => nil }; print(whole);`
-  prints `1` — the arm's `as` binding lives only in the arm's own child
-  scope, mirroring every other match-pattern binding's scoping.
-- Omitting `as` still parses and behaves exactly as before (no
-  regression to any existing list/map pattern test).
-- A malformed binding raises a parse error with line/column, e.g.
-  `match ([1, 2]) { [a, b] as 5 => a, _ => 0 };` raises `ParseError`
-  matching `"identifier after 'as' in match pattern"`.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (new `TokenType.AS`, `KEYWORDS` entry),
-`cinder/ast_nodes.py` (`MatchArm.whole_binding` field + docstring),
-`cinder/parser.py` (`_match_whole_binding` helper, two call sites in
-`_match_arm`), `cinder/interpreter.py` (`_evaluate_match`'s
-`list_pattern`/`map_pattern` branches), `tests/test_parser.py` (extend
-`class TestMatchExpression`, search that name), `tests/test_interpreter.py`
-(extend `class TestMatchExpression`, search that name, for the
-evaluation/scoping behavior above). Once merged, `README.md`'s match
-list/map pattern bullets need an `as`-binding mention, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-bullet needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`) [claimed 2026-08-30T14:07:01Z]
-
-Build: `<`/`<=`/`>`/`>=` already work element-by-element for strings via
-Python's own string ordering (`_compare`, `cinder/interpreter.py`, search
-`def _compare`), but lists are explicitly excluded from the same
-`comparable` check — even though Python's own list ordering is exactly
-the lexicographic comparison a scripting-language user would expect.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print([1, 2] < [1, 3]);'
-# -> <eval>:1:15: unsupported operand types for comparison: list and list
-```
-This gap also affects the language's *chained* comparison syntax
-(`a < b < c`, `_evaluate_chained_comparison` in the same file, search
-`def _evaluate_chained_comparison`), since it calls the exact same
-`_compare` method per pair — fixing `_compare` fixes both `[1, 2] <
-[1, 3]` and `[1, 2] < [1, 3] < [2, 0]` in one change, no separate
-chained-comparison code path to touch.
-
-Extend `_compare`'s `comparable` check (search `def _compare`) to admit
-list/list, and wrap the actual comparison in a `try`/`except TypeError`
-so a per-element type mismatch inside two otherwise-comparable lists
-raises a clean `CinderRuntimeError` instead of leaking a raw Python
-`TypeError` — the one case Python's native list ordering doesn't handle
-for free, since Python's own `<` between two lists recurses
-element-by-element using each element's own `__lt__`, and that recursion
-can hit two elements of incompatible type (e.g. a `str` and an `int`)
-partway through, well past the point where the outer `comparable` check
-already gave the go-ahead on the two *lists* themselves:
-```python
-    def _compare(self, operator: Token, left, right, op: TokenType) -> bool:
-        comparable = (
-            (_is_number(left) and _is_number(right))
-            or (isinstance(left, str) and isinstance(right, str))
-            or (isinstance(left, list) and isinstance(right, list))
-        )
-        if not comparable:
-            raise CinderRuntimeError(
-                f"unsupported operand types for comparison: "
-                f"{type_name(left)} and {type_name(right)}",
-                operator.line,
-                operator.column,
-            )
-        try:
-            if op == TokenType.LT:
-                return left < right
-            if op == TokenType.LTEQ:
-                return left <= right
-            if op == TokenType.GT:
-                return left > right
-            return left >= right
-        except TypeError:
-            raise CinderRuntimeError(
-                "unsupported operand types for comparison: list elements are "
-                "not comparable",
-                operator.line,
-                operator.column,
-            ) from None
-```
-Comparison follows the exact same rule Python (and this file's own
-existing string comparison) already uses: element-by-element from the
-front, first differing pair decides the result, and a list that is a
-strict prefix of the other counts as the lesser one (`[1, 2] < [1, 2,
-3]` is `true`, mirroring `"ab" < "abc"`). No parser or AST change is
-needed — `<`/`<=`/`>`/`>=` already parse against any two operand
-expressions; only `_compare`'s runtime type-admission rule changes.
-
-Acceptance criteria:
-- `[1, 2] < [1, 3];` is `true`, `[1, 3] < [1, 2];` is `false` — first
-  differing element decides.
-- `[1, 2] < [1, 2, 3];` is `true`, `[1, 2, 3] < [1, 2];` is `false` — a
-  strict prefix is lesser, mirroring string-prefix ordering.
-- `[] < [1];` is `true`; `[] < [];` is `false` (equal, not strictly
-  less) — same edge case as `"" < "x"` and `"" < "";`.
-- `[1, 2] <= [1, 2];` is `true`, `[1, 2] >= [1, 2];` is `true` — the
-  equal-length equal-elements case for the inclusive operators.
-- `["a", "b"] < ["a", "c"];` is `true` — nested string elements compare
-  via their own existing string ordering, not just numbers.
-- `[[1, 2]] < [[1, 3]];` is `true` — a list-of-lists recurses through
-  the same rule at the nested level too (this falls out of Python's own
-  native list comparison for free, no extra recursion code needed).
-- `[1, "a"] < [1, 2];` raises `CinderRuntimeError` (mismatched element
-  types partway through the comparison — `1 == 1` at index 0, then
-  `"a"` vs `2` at index 1 can't be ordered) rather than a raw Python
-  `TypeError`.
-- `1 < [1, 2];` still raises `CinderRuntimeError` exactly as before
-  (mismatched *outer* types, unchanged existing behavior — a number is
-  still never comparable to a list).
-- Chained comparisons compose for free: `[1] < [2] < [3];` is `true`,
-  `[3] < [2] < [1];` is `false` (short-circuits on the first failing
-  pair, same as every other chained comparison) — via
-  `_evaluate_chained_comparison`, which calls the same `_compare` this
-  task changes.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_compare`, search `def
-_compare`), `tests/test_interpreter.py` (extend `class TestComparisons`,
-search that name, with the list-ordering and mismatched-element cases
-above, and `class TestChainedComparisons`, search that name, with the
-list chained-comparison case). No `cinder/parser.py` or
-`cinder/ast_nodes.py` change needed. Once merged, `README.md`'s
-`Operators` bullet needs a mention that list ordering is now supported
-(currently silent on list comparison entirely), and `PROJECT.md`'s
-"Current frontier" bullet needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 3. Standard library: `is_disarium` — digit-position-power sum test
+## 1. Standard library: `is_disarium` — digit-position-power sum test
 
 Build: `is_armstrong` (`cinder/builtins.py`, search `def _is_armstrong`)
 tests whether a number equals the sum of its own digits each raised to
@@ -322,7 +84,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position
+## 2. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position
 
 Build: `is_kaprekar` (`cinder/builtins.py`, search `def _is_kaprekar`)
 tests membership by squaring the candidate and checking whether some
@@ -424,7 +186,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: `else` clause on `while` loops (Python-style loop-`else`)
+## 3. Language: `else` clause on `while` loops (Python-style loop-`else`)
 
 Build: `while` loops have no way to distinguish "the loop ran to normal
 completion" from "the loop was cut short by `break`" without a manual
@@ -589,7 +351,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
+## 4. Standard library: `is_smith_number` — digit-sum-of-n vs digit-sum-of-its-prime-factors test
 
 Build: `prime_factors` (`cinder/builtins.py`, search `def _prime_factors`)
 already lists an integer's prime factors with multiplicity, and

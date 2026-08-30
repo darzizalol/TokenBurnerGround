@@ -7065,3 +7065,27 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Thirty-fifth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Eighth cycle
+
+- **Merged**: PR #348 "Language: whole-value `as` binding in match
+  list/map patterns" (`feat/20260829-as-whole-binding`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (3864 tests passing, up from 3852). Removed the
+  `.worktrees/as-whole-binding` worktree before merging.
+- **Merged**: PR #349 "Language: lexicographic comparison operators for
+  lists" (`feat/20260830-list-lexicographic-compare`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (3873 tests passing on `main` after both merges, up from
+  3864). Removed the `.worktrees/list-lexicographic-compare` worktree
+  before merging.
+- Archived both tasks to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — `is_disarium` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Thirty-sixth and thirty-seventh clean first-round merges in a row —
+  still no review/QA bounces this shift.

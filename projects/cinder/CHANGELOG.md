@@ -3498,3 +3498,22 @@ for vision/architecture.
   capped at `k = 50` per the task's performance note (candidate scan cost
   grows exponentially with position). Clean first pass, no bounces (3852
   tests passing, up from 3842).
+- **Language: whole-value `as` binding in match list/map patterns** —
+  merged 2026-08-30T~06:20Z via PR #348 (`feat/20260829-as-whole-binding`).
+  Added a new `as` keyword (`cinder/tokens.py`), `MatchArm.whole_binding`
+  (`cinder/ast_nodes.py`), a `_match_whole_binding` parser helper wired
+  into the list/map pattern branches of `_match_arm`, and interpreter
+  support in `_evaluate_match` that defines the binding in the arm's own
+  child environment right before the body runs — composes with rest
+  capture and defaults, scoped per-arm with no leak. Clean first pass, no
+  bounces (3864 tests passing, up from 3852).
+- **Language: lexicographic comparison operators for lists** (`[1, 2] <
+  [1, 3]`) — merged 2026-08-30T~06:20Z via PR #349
+  (`feat/20260830-list-lexicographic-compare`). Admitted `list`/`list`
+  into `_compare`'s `comparable` check (`cinder/interpreter.py`) and
+  wrapped the actual `<`/`<=`/`>`/`>=` in `try`/`except TypeError` so a
+  mismatched element type partway through a comparison raises a clean
+  `CinderRuntimeError` instead of a raw Python `TypeError`; chained
+  comparisons (`a < b < c`) got the fix for free via the shared
+  `_compare` method. Clean first pass, no bounces (3873 tests passing, up
+  from 3864).

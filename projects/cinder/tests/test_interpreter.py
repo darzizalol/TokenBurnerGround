@@ -5468,6 +5468,64 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match ([1]) { {a = 1} => a, _ => "no" };')
         self.assertEqual(env.get("result"), "no")
 
+    def test_list_pattern_whole_binding_holds_original_subject(self):
+        env = run(
+            'let result = match ([1, 2]) { [a, b] as whole => whole, _ => nil };'
+        )
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_list_pattern_whole_binding_composes_with_destructured_names(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let result = match ([1, 2]) '
+            '{ [a, b] as whole => a + b + len(whole), _ => 0 };',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), 5)
+
+    def test_map_pattern_whole_binding(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let result = match ({"a": 1, "b": 2}) '
+            '{ {a, b} as whole => len(keys(whole)), _ => 0 };',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), 2)
+
+    def test_list_pattern_whole_binding_composes_with_rest_capture(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let result = match ([1, 2, 3]) '
+            '{ [a, ...rest] as whole => len(whole) - len(rest), _ => 0 };',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_whole_binding_composes_with_defaults(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            'let result = match ([1]) { [a, b = 0] as whole => len(whole), _ => -1 };',
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_list_pattern_whole_binding_not_defined_on_non_match(self):
+        env = run(
+            'let result = match (5) { [a, b] as whole => whole, _ => "no match" };'
+        )
+        self.assertEqual(env.get("result"), "no match")
+
+    def test_list_pattern_whole_binding_does_not_leak_into_enclosing_scope(self):
+        env = run(
+            'let whole = 1; '
+            'match ([1, 2]) { [a, b] as whole => whole, _ => nil }; '
+        )
+        self.assertEqual(env.get("whole"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

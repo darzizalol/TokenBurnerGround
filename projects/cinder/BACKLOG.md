@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps
+## 1. Language: ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps [claimed 2026-08-30T15:52:01Z]
 
 Build: `_compare` (`cinder/interpreter.py`, search `def _compare`) already
 gives numbers, strings, and — as of PR #349, this project's most recently

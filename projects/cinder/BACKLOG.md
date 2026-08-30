@@ -141,7 +141,7 @@ pass, not this task.
 
 ---
 
-## 2. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`)
+## 2. Language: lexicographic comparison operators for lists (`[1, 2] < [1, 3]`) [claimed 2026-08-30T14:07:01Z]
 
 Build: `<`/`<=`/`>`/`>=` already work element-by-element for strings via
 Python's own string ordering (`_compare`, `cinder/interpreter.py`, search

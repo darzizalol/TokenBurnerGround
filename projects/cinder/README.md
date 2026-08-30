@@ -278,7 +278,13 @@ while (i < 10) {
   lexicographic comparison for lists (`[1, 2] < [1, 3]`,
   `<=`/`>`/`>=` too — element-by-element ordering the same way strings
   already have it, composing for free with chained comparisons like
-  `a < b < c` since both share the same underlying comparison method)
+  `a < b < c` since both share the same underlying comparison method),
+  and the same ordering comparison operators for maps
+  (`{"a": 1} < {"a": 2}`, `<=`/`>`/`>=` too — each map's items compared
+  as a key-sorted list of pairs, so the result stays consistent with the
+  existing order-independent map `==`; nested map-in-list comparison
+  like `[{"a": 1}] < [{"a": 2}]` is out of scope, since list comparison
+  delegates straight to Python's native list `<`)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -586,7 +592,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_smith_number` (PR
+Actively developed, nightly. Recently landed: ordering comparison
+operators (`<`/`<=`/`>`/`>=`) for maps (PR #354, `{"a": 1} < {"a": 2}`)
+— the same `_compare` gap PR #349 closed for lists but left open for
+maps, defined by comparing each map's items as a key-sorted list of
+pairs so the result stays consistent with the existing
+order-independent map `==` — and before that `is_smith_number` (PR
 #353) — a composite integer whose own digit sum equals the combined
 digit sum of its prime factors (e.g. `4 = 2 * 2`, `digit_sum(4) =
 digit_sum(2) + digit_sum(2) = 4`), the digit-sum question
@@ -594,21 +605,12 @@ digit_sum(2) + digit_sum(2) = 4`), the digit-sum question
 `else` clause on `while` loops (PR #352, `while (cond) { ... } else {
 ... }`, running exactly when the loop exits without an intervening
 `break`) — scoped to plain `while` only, not `do`-`while` or either
-`for` form — and before that `nth_kaprekar` (PR #351) — the Kaprekar
-predicate's own missing `nth_*` counterpart (`is_kaprekar` tests
-membership via the split-and-sum check but had no value-returning
-sibling), via a sequential-scan shape bounded to a `k <= 20`
-cross-check since Kaprekar numbers grow far faster than repdigits or
-abundant numbers (the 30th is already 318,682). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): ordering comparison
-operators (`<`/`<=`/`>`/`>=`) for maps (`{"a": 1} < {"a": 2}`) — the
-same `_compare` gap PR #349 closed for lists but left open for maps,
-defined by comparing each map's items as a key-sorted list of pairs so
-the result stays consistent with the existing order-independent map
-`==`, `is_pandigital` — testing whether an integer's decimal digits
-are exactly the ten digits `0`-`9` each appearing once (e.g.
-`1023456789`, the smallest such number), a digit-set question none of
+`for` form. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
+history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_pandigital` —
+testing whether an integer's decimal digits are exactly the ten digits
+`0`-`9` each appearing once (e.g. `1023456789`, the smallest such
+number), a digit-set question none of
 `is_repdigit`/`is_disarium`/`is_armstrong` answers, `-` (difference)
 for maps (`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) — key-based
 removal by direct analogy to `+`'s existing dict-merge branch, the
@@ -616,15 +618,18 @@ inverse of the `merge()` builtin the same way `+` is its infix form,
 `transpose` — the arbitrary-column generalization of `unzip`'s
 fixed-two-column matrix transpose, the same `else` clause PR #352 gave
 `while` extended to the foreach `for`-in form (`for x in xs { ... }
-else { ... }`), the one loop kind #352 itself left out of scope, and
+else { ... }`), the one loop kind #352 itself left out of scope,
 `is_vampire_number` — a number whose decimal digits can be split into
 two equal-length "fangs" that multiply back to it (e.g. `1260 = 21 *
 60`), a digit-permutation-meets-factorization predicate distinct from
-`is_smith_number`'s digit-sum-of-factors question. (Guards in `match`
-arms, `n if n > 0 => "positive"`, were attempted but closed after
-three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
-but not back in the active queue yet.)
+`is_smith_number`'s digit-sum-of-factors question, and
+`is_trimorphic_number` — the cube-ending analog of `is_automorphic`'s
+own square-ending check (e.g. `24 ** 3 = 13824`, which ends in `24`),
+a direct extension of an existing digit-invariance predicate to one
+more power. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a
+recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+postmortem; they're a real gap but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

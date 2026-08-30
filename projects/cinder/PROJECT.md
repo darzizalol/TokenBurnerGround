@@ -159,30 +159,34 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`is_smith_number` (#353, a composite integer whose own digit sum
-equals the combined digit sum of its prime factors); an `else` clause
-on `while` loops (#352, Python-style loop-`else`, scoped to plain
-`while` only); `nth_kaprekar` (#351) and `is_disarium` (#350), both
-digit/number-theory predicates' missing sequential-scan or
-digit-position siblings; lexicographic comparison operators for lists
-(#349). Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR
-#314) but closed after three straight `VERDICT: CHANGES REQUESTED`
-rounds, all the same recurring bug in the bare-arrow/guard `=>`
-disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
-postmortem and the suggested next approach; still not requeued.
+ordering comparison operators (`<`/`<=`/`>`/`>=`) for maps (#354, each
+map's items compared as a key-sorted list of pairs, consistent with
+the existing order-independent map `==`); `is_smith_number` (#353, a
+composite integer whose own digit sum equals the combined digit sum of
+its prime factors); an `else` clause on `while` loops (#352,
+Python-style loop-`else`, scoped to plain `while` only); `nth_kaprekar`
+(#351) and `is_disarium` (#350), both digit/number-theory predicates'
+missing sequential-scan or digit-position siblings. Guards in `match`
+arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
+three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
+recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the
+suggested next approach; still not requeued.
 
-`BACKLOG.md` carries the active queue (6 tasks after this pass, an even
-3 breadth / 3 depth split per the alternation policy above): breadth —
-`is_pandigital`, `transpose`, and (added this pass) `is_vampire_number`
-— a number whose decimal digits split into two equal-length "fangs"
-that multiply back to it (e.g. `1260 = 21 * 60`), a
-digit-permutation-meets-factorization predicate distinct from
-`is_smith_number`'s digit-sum-of-factors question; depth — ordering
-comparison operators (`<`/`<=`/`>`/`>=`) for maps, `-` (difference) for
-maps, and an `else` clause on `for`-in loops — the same Python-style
-loop-`else` #352 added for `while`, extended to the foreach `for` form
-#352 itself explicitly left out of scope. `main` is green (3922
-tests), PR queue empty.
+`BACKLOG.md` carries the active queue (6 tasks after this pass, back up
+from the 5-task floor with one new breadth task per the alternation
+policy above, since #354 was a depth task): breadth — `is_pandigital`,
+`transpose`, `is_vampire_number` — a number whose decimal digits split
+into two equal-length "fangs" that multiply back to it (e.g. `1260 =
+21 * 60`), a digit-permutation-meets-factorization predicate distinct
+from `is_smith_number`'s digit-sum-of-factors question — and (added
+this pass) `is_trimorphic_number` — the cube-ending analog of
+`is_automorphic`'s own square-ending check (e.g. `24 ** 3 = 13824`,
+which ends in `24`); depth — `-` (difference) for maps and an `else`
+clause on `for`-in loops — the same Python-style loop-`else` #352
+added for `while`, extended to the foreach `for` form #352 itself
+explicitly left out of scope. `main` is green (3933 tests), PR queue
+empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

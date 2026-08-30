@@ -2839,6 +2839,67 @@ class TestForStatement(unittest.TestCase):
         self.assertEqual(env.get("x"), 0)
 
 
+class TestForElse(unittest.TestCase):
+    def test_for_else_runs_on_normal_completion(self):
+        env = run(
+            "let done = false; "
+            "for x in [1, 2, 3] { } else { done = true; }"
+        )
+        self.assertTrue(env.get("done"))
+
+    def test_for_else_runs_on_zero_iterations(self):
+        env = run("let done = false; for x in [] { } else { done = true; }")
+        self.assertTrue(env.get("done"))
+
+    def test_for_else_skipped_by_break(self):
+        env = run(
+            "let ran = false; "
+            "for x in [1, 2, 3] { if (x == 2) { break; } } else { ran = true; }"
+        )
+        self.assertFalse(env.get("ran"))
+
+    def test_for_else_not_skipped_by_continue(self):
+        env = run(
+            "let ran = false; "
+            "for x in [1, 2, 3] { if (x == 1) { continue; } } else { ran = true; }"
+        )
+        self.assertTrue(env.get("ran"))
+
+    def test_for_else_skipped_by_labeled_break(self):
+        env = run(
+            "let ran = false; "
+            "outer: for x in [1] { for y in [1] { break outer; } } else { ran = true; }"
+        )
+        self.assertFalse(env.get("ran"))
+
+    def test_for_else_skipped_by_return(self):
+        env = run(
+            "fn f() { for x in [1] { return 1; } else { return 2; } } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_for_else_runs_over_string(self):
+        env = run('let done = false; for c in "" { } else { done = true; }')
+        self.assertTrue(env.get("done"))
+
+    def test_for_else_runs_over_map(self):
+        env = run("let done = false; for k in {} { } else { done = true; }")
+        self.assertTrue(env.get("done"))
+
+    def test_for_else_runs_with_list_destructuring(self):
+        env = run("let done = false; for [a, b] in [] { } else { done = true; }")
+        self.assertTrue(env.get("done"))
+
+    def test_for_else_runs_with_map_destructuring(self):
+        env = run("let done = false; for {a} in [] { } else { done = true; }")
+        self.assertTrue(env.get("done"))
+
+    def test_for_without_else_still_behaves_as_before(self):
+        env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")
+        self.assertEqual(env.get("total"), 6)
+
+
 class TestForDestructuring(unittest.TestCase):
     def _run(self, source: str) -> Environment:
         from cinder.builtins import create_global_environment

@@ -84,7 +84,7 @@ grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position
+## 2. Standard library: `nth_kaprekar` — the k-th Kaprekar number by position [claimed 2026-08-30T15:10:06Z]
 
 Build: `is_kaprekar` (`cinder/builtins.py`, search `def _is_kaprekar`)
 tests membership by squaring the candidate and checking whether some

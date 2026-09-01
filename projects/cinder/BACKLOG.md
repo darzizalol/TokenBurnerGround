@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_vampire_number` — digit-permutation factor pairs
+## 1. Standard library: `is_vampire_number` — digit-permutation factor pairs [claimed 2026-09-01T14:02:08Z]
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`) already asks a digit-vs-factors question (does the

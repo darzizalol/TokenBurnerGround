@@ -550,6 +550,71 @@ class TestListDifference(unittest.TestCase):
             evaluate('{"a": 1} - [1, 2]')
 
 
+class TestListIntersection(unittest.TestCase):
+    def test_basic_case(self):
+        self.assertEqual(evaluate("[1, 2, 3] & [2, 3, 4]"), [2, 3])
+
+    def test_left_side_is_deduped(self):
+        self.assertEqual(evaluate("[1, 2, 2, 3] & [2]"), [2])
+
+    def test_empty_right_empties_result(self):
+        self.assertEqual(evaluate("[1, 2, 3] & []"), [])
+
+    def test_empty_left_empties_result(self):
+        self.assertEqual(evaluate("[] & [1, 2]"), [])
+
+    def test_full_overlap_keeps_everything_deduped(self):
+        self.assertEqual(evaluate("[1, 2] & [1, 2]"), [1, 2])
+
+    def test_no_overlap(self):
+        self.assertEqual(evaluate("[1, 2] & [3, 4]"), [])
+
+    def test_does_not_mutate_inputs(self):
+        env = run("let a = [1, 2, 3]; let c = a & [2];")
+        self.assertEqual(env.get("a"), [1, 2, 3])
+        self.assertEqual(env.get("c"), [2])
+
+    def test_left_associative(self):
+        env = run("let xs = [1, 2, 3] & [1, 2] & [2];")
+        self.assertEqual(env.get("xs"), [2])
+
+    def test_compound_assignment_on_identifier(self):
+        env = run("let xs = [1, 2, 3]; xs &= [2, 3];")
+        self.assertEqual(env.get("xs"), [2, 3])
+
+    def test_compound_assignment_on_index_target(self):
+        env = run("let xs = [[1, 2, 3]]; xs[0] &= [2, 3];")
+        self.assertEqual(env.get("xs"), [[2, 3]])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"l": [1, 2, 3]}; obj.l &= [2, 3];')
+        self.assertEqual(env.get("obj"), {"l": [2, 3]})
+
+    def test_uses_values_equal_not_native_equality(self):
+        self.assertEqual(evaluate("[1, true, 2] & [true]"), [True])
+
+    def test_int_and_int_still_bitwise_and(self):
+        self.assertEqual(evaluate("2 & 3"), 2)
+
+    def test_list_and_int_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '&': list and int"
+        ):
+            evaluate("[1, 2] & 3")
+
+    def test_int_and_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '&': int and list"
+        ):
+            evaluate("2 & [1, 2]")
+
+    def test_list_and_map_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '&': list and map"
+        ):
+            evaluate('[1, 2] & {"a": 1}')
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

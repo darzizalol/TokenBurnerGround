@@ -3690,3 +3690,14 @@ for vision/architecture.
   call sites are unaffected since none pass `value=`. Clean first pass,
   no bounces (4065 tests passing, up from 4058). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `is_keith_number` — digit-recurrence self-generating
+  number** — merged 2026-09-02 via PR #366
+  (`feat/20260901-is-keith-number`). Added `_is_keith_number` to
+  `cinder/builtins.py`, directly after `_is_trimorphic_number`: seeds an
+  n-digit number's own digits as a sequence, extends it with a
+  digit-count-wide Fibonacci-style recurrence, and checks whether the
+  original value reappears as a later term. Single-digit and negative
+  inputs are excluded per the standard convention (OEIS A007629 starts
+  at `14`). Clean first pass, no bounces (4076 tests passing, up from
+  4065). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

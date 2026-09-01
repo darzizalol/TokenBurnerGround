@@ -11,112 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_vampire_number` — digit-permutation factor pairs [claimed 2026-09-01T14:02:08Z]
-
-Build: `is_smith_number` (`cinder/builtins.py`, search `def
-_is_smith_number`) already asks a digit-vs-factors question (does the
-number's own digit sum match its prime factors' combined digit sum),
-and `is_kaprekar`/`nth_kaprekar` already split a number's *square* and
-recombine the halves by addition — but nothing checks the classic
-"vampire number" property: a number whose decimal digits can be
-rearranged into two equal-length factors ("fangs") that multiply back
-to it. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_vampire_number(1260));'
-# -> <eval>:1:7: undefined name 'is_vampire_number'
-```
-
-This task scopes the predicate to the standard definition (the one
-used by every reference list of vampire numbers, e.g. OEIS A014575):
-a number `n` with an even number `2k` of decimal digits (`k >= 2`, so
-the smallest possible case is 4 digits — no known 2-digit case exists
-under this definition, so it is out of scope rather than special-cased)
-qualifies if there exist two factors `a * b == n`, each with exactly
-`k` digits (no leading zero, so each fang is at least `10^(k-1)`), such
-that the combined multiset of `a`'s and `b`'s digits equals `n`'s own
-digit multiset, **and** `a` and `b` are not *both* multiples of 10 (the
-standard exclusion that rules out "trivial" fangs like `10 * 10 = 100`
-padding zeros onto an otherwise-ordinary factorization — one fang
-ending in `0` is fine, e.g. `1260 = 21 * 60`, only *both* ending in `0`
-is excluded). Odd digit counts and numbers under 4 digits are `false`
-outright — there is no way to split them into two equal-length fangs.
-
-Add to `cinder/builtins.py`, directly after `_is_smith_number` (search
-`def _is_smith_number`, immediately before `def _num_divisors`) —
-keeps it grouped with the other digit-vs-factorization predicates:
-```python
-def _is_vampire_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_vampire_number", arguments, 1, line, column)
-    value = _require_int("is_vampire_number", arguments[0], line, column)
-    if value < 0:
-        return False
-    digits = str(value)
-    digit_count = len(digits)
-    if digit_count % 2 != 0 or digit_count < 4:
-        return False
-    half = digit_count // 2
-    lower = 10 ** (half - 1)
-    upper = 10 ** half
-    target = sorted(digits)
-    for fang_a in range(lower, upper):
-        if value % fang_a != 0:
-            continue
-        fang_b = value // fang_a
-        if fang_b < lower or fang_b >= upper:
-            continue
-        if fang_a % 10 == 0 and fang_b % 10 == 0:
-            continue
-        if sorted(str(fang_a) + str(fang_b)) == target:
-            return True
-    return False
-```
-Also register the new dict entry (search `"is_smith_number":
-_is_smith_number,`, add `"is_vampire_number": _is_vampire_number,`
-directly after it, before `"num_divisors": _num_divisors,`).
-
-Acceptance criteria:
-- `is_vampire_number(1260);` is `true` — `1260 = 21 * 60`, digits
-  `{1,2,6,0}` match `{2,1}` + `{6,0}`.
-- `is_vampire_number(1395);` is `true` — `1395 = 15 * 93`.
-- `is_vampire_number(1530);` is `true` — `1530 = 30 * 51`, one fang
-  (`30`) ends in `0` but not both, so it still counts.
-- `is_vampire_number(6880);` is `true` — `6880 = 80 * 86`, a 4-digit
-  case with a different digit multiset than the examples above.
-- `is_vampire_number(125460);` is `true` — a 6-digit case,
-  `125460 = 204 * 615`, confirming the check isn't hardcoded to 4
-  digits.
-- `is_vampire_number(1234);` is `false` — a 4-digit number with no
-  valid fang pair.
-- `is_vampire_number(100);` is `false` — `100 = 10 * 10`, the classic
-  *excluded* trivial case: both fangs end in `0`.
-- `is_vampire_number(123);` and `is_vampire_number(12345);` are both
-  `false` — odd digit counts can never split into two equal-length
-  fangs.
-- `is_vampire_number(21);`, `is_vampire_number(0);` are `false` — fewer
-  than 4 digits, too short to have two 2-digit-or-larger fangs.
-- `is_vampire_number(-1260);` is `false` — negative numbers are
-  excluded (mirrors every other `is_*` digit predicate's own
-  convention, e.g. `is_smith_number`/`is_disarium`).
-- `is_vampire_number(1.5);` raises `CinderRuntimeError` matching
-  `"is_vampire_number() requires an int, got float"` (via
-  `_require_int`'s existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_smith_number`,
-search `def _is_smith_number`), `tests/test_builtins.py` (new `class
-TestIsVampireNumber`, modeled directly on `class TestIsSmithNumber`,
-search that name, for the true/false/length/domain/type-error test
-shapes above). Once merged, `README.md`'s Builtins bullet needs
-`is_vampire_number` added near `is_smith_number`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-bullet needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
+## 1. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
 
 Build: `is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`) already tests whether a number's *square* ends in
@@ -202,7 +97,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
+## 2. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
 
 Build: PR #352 added a Python-style `else { ... }` clause to plain
 `while` loops, and task 2 in this file (once it merges) extends the
@@ -359,7 +254,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
+## 3. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
 
 Build: `is_strong_number` (`cinder/builtins.py`, search `def
 _is_strong_number`) already asks whether a number equals the sum of
@@ -444,7 +339,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
+## 4. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
 
 Build: PR #356 gave `-` a map-map branch (key-based removal,
 `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) but explicitly scoped
@@ -554,9 +449,9 @@ next grooming pass, not this task.
 
 ---
 
-## 6. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
+## 5. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
 
-Build: `while` (#352), the foreach `for`-in form (#358), and — once task 3
+Build: `while` (#352), the foreach `for`-in form (#358), and — once task 2
 in this file merges — `do`-`while` will all have a trailing Python-style
 `else { ... }` clause. The one loop kind left out every time is the
 classic three-clause `for (init; cond; step) { ... }` (`ForCStmt`,

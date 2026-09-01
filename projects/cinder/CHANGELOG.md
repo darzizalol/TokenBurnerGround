@@ -3611,3 +3611,13 @@ for vision/architecture.
   Scoped to the foreach form only; `ForCStmt` and `DoWhileStmt` remain
   future tasks. Clean first pass, no bounces (3981 tests passing, up
   from 3968).
+- **Standard library: `is_vampire_number` — digit-permutation factor
+  pairs** — merged 2026-09-01 via PR #359
+  (`feat/20260901-is-vampire-number`). Added `_is_vampire_number`
+  (`cinder/builtins.py`), grouped directly after `_is_smith_number`:
+  tests whether an even-digit-count number's decimal digits can be
+  rearranged into two equal-length "fangs" that multiply back to it
+  (OEIS A014575), excluding the trivial case where both fangs are
+  multiples of 10. Clean first pass, no bounces (3995 tests passing, up
+  from 3981). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

@@ -7254,3 +7254,23 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Forty-sixth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+## 2026-09-01
+
+### First cycle
+
+- **Merged**: PR #359 "Standard library: is_vampire_number —
+  digit-permutation factor pairs" (`feat/20260901-is-vampire-number`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (3995 tests passing on `main`, up from 3981). Removed the
+  `.worktrees/is-vampire-number` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining five
+  backlog tasks (1-5) — `is_trimorphic_number` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Forty-seventh clean first-round merge in a row — still no review/QA
+  bounces this shift.

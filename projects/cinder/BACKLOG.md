@@ -690,6 +690,109 @@ task.
 
 ---
 
+## 6. Standard library: `is_keith_number` — digit-recurrence self-generating number
+
+Build: Cinder already has several "does a number reproduce itself under
+some digit-driven process" predicates — `is_automorphic`/
+`is_trimorphic_number` (`cinder/builtins.py`, search `def
+_is_automorphic`, immediately followed by `def
+_is_trimorphic_number`) check whether a power of the number *ends in*
+the number's own digits, and `is_kaprekar`/`nth_kaprekar` (search `def
+_is_kaprekar`) split the number's square and check the halves sum back
+to it. Missing is the Keith number test: take an n-digit number's own
+digits as the first n terms of a sequence, then generate each further
+term as the sum of the previous n terms (a digit-count-wide
+Fibonacci-style recurrence) — if the original number itself eventually
+appears as a later term, it is a Keith number. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_keith_number(197));'
+# -> <eval>:1:7: undefined name 'is_keith_number' (did you mean 'is_kaprekar'?)
+```
+
+Worked example, `197` (3 digits, so each new term sums the previous
+three): seed `[1, 9, 7]`, then `1+9+7=17`, `9+7+17=33`, `7+17+33=57`,
+`17+33+57=107`, `33+57+107=197` — the sequence hits `197` exactly, so
+it's a Keith number. Contrast `20` (2 digits): seed `[2, 0]`, then
+`2`, `2`, `4`, `6`, `10`, `16`, `26` — the sequence overshoots `20`
+(jumping from `16` to `26`) without ever landing on it exactly, so
+`20` is not a Keith number; once a term meets or exceeds the original
+value the search is over; there's no valid domain where more terms
+could still hit it exactly, since the sequence is non-decreasing once
+all digits are non-negative (which they always are).
+
+The one domain wrinkle every published definition agrees on: Keith
+numbers require **at least two digits** — a single digit's "sequence"
+would just be that digit repeating itself starting from the seed, a
+trivial case that ordinarily isn't counted as a Keith number in any of
+the reference lists (OEIS A007629 starts at `14`, the smallest
+2-digit example, not at any single digit). Exclude single-digit inputs
+explicitly rather than letting the general recurrence accidentally
+"pass" them.
+
+Add to `cinder/builtins.py`, directly after `_is_trimorphic_number`
+(search `def _is_trimorphic_number`, immediately before `def
+_is_kaprekar`) — keeps it grouped with the other digit-recurrence/
+digit-driven number predicates:
+```python
+def _is_keith_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_keith_number", arguments, 1, line, column)
+    value = _require_int("is_keith_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = [int(digit) for digit in str(value)]
+    digit_count = len(digits)
+    if digit_count < 2:
+        return False
+    sequence = digits[:]
+    while sequence[-1] < value:
+        sequence.append(sum(sequence[-digit_count:]))
+    return sequence[-1] == value
+```
+Also register the new dict entry (search `"is_trimorphic_number":
+_is_trimorphic_number,`, add `"is_keith_number": _is_keith_number,`
+directly after it, before `"is_kaprekar": _is_kaprekar,`).
+
+Acceptance criteria:
+- `is_keith_number(14);` is `true` — the smallest Keith number
+  (OEIS A007629's first term): seed `[1, 4]`, `4+1=5`, `1+5=6`, ...,
+  eventually `14` (`5, 9, 14`).
+- `is_keith_number(19);` is `true` — seed `[1, 9]`, `1+9=10`,
+  `9+10=19`, hits on the very next term.
+- `is_keith_number(197);` is `true` — the worked 3-digit example above.
+- `is_keith_number(742);` is `true` — another known multi-digit Keith
+  number, confirming the check isn't hardcoded to 2/3-digit inputs.
+- `is_keith_number(20);` is `false` — the worked overshoot example
+  above.
+- `is_keith_number(100);` is `false` — seed `[1, 0, 0]` stays at `0`/`1`
+  forever without reaching `100` (`0, 0, 1, 1, 2, ...` all strictly
+  less until it eventually overshoots), confirming a non-Keith case
+  with interior zero digits.
+- `is_keith_number(9);` is `false` — single-digit input, excluded by
+  the "at least two digits" convention even though it trivially
+  "contains itself".
+- `is_keith_number(0);` is `false` — same single-digit exclusion.
+- `is_keith_number(-14);` is `false` — negative numbers excluded
+  (mirrors `is_trimorphic_number`'s own convention), despite `14`
+  itself being Keith.
+- `is_keith_number(1.5);` raises `CinderRuntimeError` matching
+  `"is_keith_number() requires an int, got float"` (via
+  `_require_int`'s existing message format).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after
+`_is_trimorphic_number`, search `def _is_trimorphic_number`),
+`tests/test_builtins.py` (new `class TestIsKeithNumber`, modeled
+directly on `class TestIsTrimorphicNumber`, search that name, for the
+true/false/domain-edge/type-error test shapes above). Once merged,
+`README.md`'s Builtins bullet needs `is_keith_number` added near
+`is_trimorphic_number`, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s "Current frontier" section needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

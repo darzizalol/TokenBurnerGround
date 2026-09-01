@@ -482,6 +482,7 @@ while (i < 10) {
   `levenshtein_distance` to compute the classic string edit distance (minimum single-character
   insertions/deletions/substitutions to turn one string into another),
   `is_automorphic` to test whether an integer's square ends with the integer itself in decimal,
+  `is_trimorphic_number` as its cube-ending sibling (e.g. `24 ** 3 = 13824`, which ends in `24`),
   `hamming_distance` to count differing positions between two equal-length strings,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
@@ -604,20 +605,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_vampire_number` (PR
-#359) — a number whose decimal digits can be split into two
-equal-length "fangs" that multiply back to it (e.g. `1260 = 21 * 60`),
-a digit-permutation-meets-factorization predicate distinct from
-`is_smith_number`'s digit-sum-of-factors question — and before that the
-`else` clause PR #352 gave `while` loops, extended to the foreach
-`for`-in form (PR #358, `for x in xs { ... } else { ... }`) — and
-before that `transpose` (PR #357) — the arbitrary-column generalization
-of `unzip`'s fixed-two-column matrix transpose, validating every row is
-a list of equal length. See [`CHANGELOG.md`](CHANGELOG.md) for the full
-merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_trimorphic_number`
-— the cube-ending analog of `is_automorphic`'s own square-ending check
-(e.g. `24 ** 3 = 13824`, which ends in `24`), the same loop-`else`
+Actively developed, nightly. Recently landed: `is_trimorphic_number`
+(PR #360) — the cube-ending analog of `is_automorphic`'s own
+square-ending check (e.g. `24 ** 3 = 13824`, which ends in `24`) — and
+before that `is_vampire_number` (PR #359) — a number whose decimal
+digits can be split into two equal-length "fangs" that multiply back
+to it (e.g. `1260 = 21 * 60`), a digit-permutation-meets-factorization
+predicate distinct from `is_smith_number`'s digit-sum-of-factors
+question — and before that the `else` clause PR #352 gave `while`
+loops, extended to the foreach `for`-in form (PR #358,
+`for x in xs { ... } else { ... }`). See [`CHANGELOG.md`](CHANGELOG.md)
+for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the same loop-`else`
 clause extended once more, this time to `do`-`while` loops
 (`do { ... } while (cond) else { ... }`), `is_munchausen_number` — a
 number equal to the sum of each digit raised to its own power (e.g.
@@ -628,14 +627,18 @@ list-list sibling of the map-map `-` branch PR #356 added, mirroring
 the existing `difference()` builtin's set semantics, the same `else`
 clause one last time on the C-style `for (init; cond; step)` loop —
 closing out the loop-`else` arc #352 started across all four loop
-kinds — and letting `throw`/`catch` carry any Cinder value instead of
+kinds — letting `throw`/`catch` carry any Cinder value instead of
 strings only (today `throw {"a": 1};` doesn't just get rejected, the
 rejection's own error message gets caught and misbound to `e`, so
-accessing a field on it blows up with an unrelated error). (Guards in
-`match` arms, `n if n > 0 => "positive"`, were attempted but closed
-after three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
-but not back in the active queue yet.)
+accessing a field on it blows up with an unrelated error) — and
+`is_keith_number` — a number that reappears in the digit-count-wide
+Fibonacci-style recurrence seeded by its own decimal digits (e.g.
+`197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`), the digit-recurrence
+sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending
+questions. (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a recurring
+parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
+they're a real gap but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

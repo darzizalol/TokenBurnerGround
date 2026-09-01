@@ -5699,6 +5699,55 @@ class TestIsSmithNumber(unittest.TestCase):
             run("is_smith_number();")
 
 
+class TestIsVampireNumber(unittest.TestCase):
+    def test_is_vampire_number_of_1260(self):
+        self.assertTrue(run("let result = is_vampire_number(1260);").get("result"))
+
+    def test_is_vampire_number_of_1395(self):
+        self.assertTrue(run("let result = is_vampire_number(1395);").get("result"))
+
+    def test_is_vampire_number_of_1530_one_fang_trailing_zero(self):
+        self.assertTrue(run("let result = is_vampire_number(1530);").get("result"))
+
+    def test_is_vampire_number_of_6880(self):
+        self.assertTrue(run("let result = is_vampire_number(6880);").get("result"))
+
+    def test_is_vampire_number_of_125460_six_digits(self):
+        self.assertTrue(run("let result = is_vampire_number(125460);").get("result"))
+
+    def test_is_vampire_number_of_1234_no_valid_fangs(self):
+        self.assertFalse(run("let result = is_vampire_number(1234);").get("result"))
+
+    def test_is_vampire_number_of_100_both_fangs_trailing_zero(self):
+        self.assertFalse(run("let result = is_vampire_number(100);").get("result"))
+
+    def test_is_vampire_number_of_123_odd_digit_count(self):
+        self.assertFalse(run("let result = is_vampire_number(123);").get("result"))
+
+    def test_is_vampire_number_of_12345_odd_digit_count(self):
+        self.assertFalse(run("let result = is_vampire_number(12345);").get("result"))
+
+    def test_is_vampire_number_of_21_too_short(self):
+        self.assertFalse(run("let result = is_vampire_number(21);").get("result"))
+
+    def test_is_vampire_number_of_0_too_short(self):
+        self.assertFalse(run("let result = is_vampire_number(0);").get("result"))
+
+    def test_is_vampire_number_of_negative(self):
+        self.assertFalse(run("let result = is_vampire_number(-1260);").get("result"))
+
+    def test_is_vampire_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_vampire_number(1.5);")
+        self.assertIn(
+            "is_vampire_number() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_vampire_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_vampire_number();")
+
+
 class TestNumDivisors(unittest.TestCase):
     def test_num_divisors_of_1(self):
         self.assertEqual(run("let result = num_divisors(1);").get("result"), 1)

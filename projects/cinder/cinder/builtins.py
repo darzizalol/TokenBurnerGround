@@ -2289,6 +2289,32 @@ def _is_smith_number(arguments: list, line: int, column: int) -> object:
     return digit_total == factor_digit_total
 
 
+def _is_vampire_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_vampire_number", arguments, 1, line, column)
+    value = _require_int("is_vampire_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    digit_count = len(digits)
+    if digit_count % 2 != 0 or digit_count < 4:
+        return False
+    half = digit_count // 2
+    lower = 10 ** (half - 1)
+    upper = 10 ** half
+    target = sorted(digits)
+    for fang_a in range(lower, upper):
+        if value % fang_a != 0:
+            continue
+        fang_b = value // fang_a
+        if fang_b < lower or fang_b >= upper:
+            continue
+        if fang_a % 10 == 0 and fang_b % 10 == 0:
+            continue
+        if sorted(str(fang_a) + str(fang_b)) == target:
+            return True
+    return False
+
+
 def _num_divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("num_divisors", arguments, 1, line, column)
     value = _require_int("num_divisors", arguments[0], line, column)
@@ -4433,6 +4459,7 @@ _BUILTINS = {
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,
     "is_smith_number": _is_smith_number,
+    "is_vampire_number": _is_vampire_number,
     "num_divisors": _num_divisors,
     "is_amicable": _is_amicable,
     "min": _min,

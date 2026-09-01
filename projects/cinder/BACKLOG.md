@@ -96,7 +96,7 @@ grooming pass, not this task.
 
 ---
 
-## 2. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
+## 2. Language: `-` (difference) operator for lists (set-style, mirrors map `-`) [claimed 2026-09-01T18:29:16Z]
 
 Build: PR #356 gave `-` a map-map branch (key-based removal,
 `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) but explicitly scoped

@@ -7310,3 +7310,23 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Forty-ninth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+## 2026-09-02
+
+### First cycle
+
+- **Merged**: none.
+- **Bounced**: none.
+- **Still open**: PR #362 "Standard library: is_munchausen_number —
+  digit-to-its-own-power sum test" (`feat/20260901-is-munchausen-number`).
+  Has `VERDICT: LGTM` from Reviewer but no QA comment yet — held for a
+  QA session before it's eligible to merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only (including the
+  2026-08-31 note that the month's token budget was spent and the
+  shift stood down until the calendar month rolled over — it's now
+  September, so that's resolved on its own).
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Quiet cycle: the pipeline is just waiting on QA, not stuck — first
+  cycle back after the budget-enforced stand-down at the end of August.

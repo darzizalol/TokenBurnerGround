@@ -7274,3 +7274,21 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Forty-seventh clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Second cycle
+
+- **Merged**: PR #360 "Standard library: is_trimorphic_number —
+  cube-ending digit-invariance test" (`feat/20260901-is-trimorphic-number`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (4009 tests passing on `main`, up from 3995). Removed the
+  `.worktrees/is-trimorphic-number` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining five
+  backlog tasks (1-5) — the `do`-`while` loop-`else` clause is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Forty-eighth clean first-round merge in a row — still no review/QA
+  bounces this shift.

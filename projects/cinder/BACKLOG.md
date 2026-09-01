@@ -11,93 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test [claimed 2026-09-01T14:16:22Z]
-
-Build: `is_automorphic` (`cinder/builtins.py`, search `def
-_is_automorphic`) already tests whether a number's *square* ends in
-the number itself (`str(value * value).endswith(str(value))`), but
-nothing asks the same question one power up — whether a number's
-*cube* ends in the number itself, the classic "trimorphic number"
-property (OEIS A033819). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_trimorphic_number(24));'
-# -> <eval>:1:7: undefined name 'is_trimorphic_number'
-```
-
-This is a direct one-power extension of `is_automorphic`'s own check —
-same digit-string-suffix approach, same domain (non-negative integers),
-just `value ** 3` instead of `value * value`. Every automorphic number
-is automatically trimorphic too (if `n * n` ends in `n` modulo
-`10 ** k`, then `n ** 3 = n * n * n` ends in `n * n`'s own ending,
-which already ends in `n`, by the same modular idempotence — e.g. `76`
-is automorphic, `76 * 76 = 5776` ends in `76`, and indeed `76 ** 3 =
-438976` also ends in `76`), but the reverse does not hold: `24` is
-trimorphic (`24 ** 3 = 13824` ends in `24`) while *not* automorphic
-(`24 * 24 = 576` does not end in `24`), so this is a genuinely broader
-predicate, not a trivial alias.
-
-Add to `cinder/builtins.py`, directly after `_is_automorphic` (search
-`def _is_automorphic`, immediately before `def _is_kaprekar`) — keeps
-it grouped with the other digit-invariance predicates:
-```python
-def _is_trimorphic_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_trimorphic_number", arguments, 1, line, column)
-    value = _require_int("is_trimorphic_number", arguments[0], line, column)
-    if value < 0:
-        return False
-    return str(value ** 3).endswith(str(value))
-```
-Also register the new dict entry (search `"is_automorphic":
-_is_automorphic,`, add `"is_trimorphic_number": _is_trimorphic_number,`
-directly after it, before `"is_kaprekar": _is_kaprekar,`).
-
-Acceptance criteria:
-- `is_trimorphic_number(0);`, `is_trimorphic_number(1);`,
-  `is_trimorphic_number(4);`, `is_trimorphic_number(5);`,
-  `is_trimorphic_number(6);`, `is_trimorphic_number(9);` are all
-  `true` — the single-digit trimorphic numbers (`4 ** 3 = 64` ends in
-  `4`, `5 ** 3 = 125` ends in `5`, `6 ** 3 = 216` ends in `6`, `9 ** 3
-  = 729` ends in `9`).
-- `is_trimorphic_number(24);` is `true` — `24 ** 3 = 13824`, ends in
-  `24`.
-- `is_trimorphic_number(125);` is `true` — `125 ** 3 = 1953125`, ends
-  in `125`.
-- `is_trimorphic_number(2);` is `false` — `2 ** 3 = 8`, does not end
-  in `2`.
-- `is_trimorphic_number(100);` is `false` — `100 ** 3 = 1000000`, does
-  not end in `100`.
-- `is_trimorphic_number(76);` is `true` — `76` is automorphic too
-  (`76 * 76 = 5776` ends in `76`) and every automorphic number is
-  automatically trimorphic (see the Build note above), so this
-  regression-guards that overlap rather than treating it as a
-  contradiction.
-- `is_trimorphic_number(24);` (already asserted `true` above) is the
-  predicate's actual non-alias evidence: confirms `is_trimorphic_number`
-  is genuinely broader than `is_automorphic`, not just another name for
-  it, since `24` is trimorphic but *not* automorphic
-  (`24 * 24 = 576` does not end in `24`).
-- `is_trimorphic_number(-24);` is `false` — negative numbers are
-  excluded (mirrors `is_automorphic`'s own convention).
-- `is_trimorphic_number(1.5);` raises `CinderRuntimeError` matching
-  `"is_trimorphic_number() requires an int, got float"` (via
-  `_require_int`'s existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_automorphic`,
-search `def _is_automorphic`), `tests/test_builtins.py` (new `class
-TestIsTrimorphicNumber`, modeled directly on `class TestIsAutomorphic`,
-search that name, for the true/false/non-alias/negative/type-error test
-shapes above). Once merged, `README.md`'s Builtins bullet needs
-`is_trimorphic_number` added near `is_automorphic`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-bullet needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
+## 1. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
 
 Build: PR #352 added a Python-style `else { ... }` clause to plain
 `while` loops, and task 2 in this file (once it merges) extends the
@@ -254,7 +168,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
+## 2. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
 
 Build: `is_strong_number` (`cinder/builtins.py`, search `def
 _is_strong_number`) already asks whether a number equals the sum of
@@ -339,7 +253,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
+## 3. Language: `-` (difference) operator for lists (set-style, mirrors map `-`)
 
 Build: PR #356 gave `-` a map-map branch (key-based removal,
 `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) but explicitly scoped
@@ -449,7 +363,7 @@ next grooming pass, not this task.
 
 ---
 
-## 5. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
+## 4. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
 
 Build: `while` (#352), the foreach `for`-in form (#358), and — once task 2
 in this file merges — `do`-`while` will all have a trailing Python-style
@@ -640,7 +554,7 @@ pass, not this task.
 
 ---
 
-## 6. Language: `throw`/`catch` carry any value, not just strings
+## 5. Language: `throw`/`catch` carry any value, not just strings
 
 Build: `throw` (`cinder/interpreter.py`, search `if isinstance(stmt,
 ThrowStmt):`) currently rejects any thrown value that isn't a `str`, and

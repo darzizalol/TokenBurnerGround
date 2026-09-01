@@ -3621,3 +3621,14 @@ for vision/architecture.
   multiples of 10. Clean first pass, no bounces (3995 tests passing, up
   from 3981). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `is_trimorphic_number` — cube-ending
+  digit-invariance test** — merged 2026-09-01 via PR #360
+  (`feat/20260901-is-trimorphic-number`). Added `_is_trimorphic_number`
+  (`cinder/builtins.py`), grouped directly after `_is_automorphic`: the
+  one-power extension testing whether a number's cube ends in the
+  number itself (OEIS A033819); every automorphic number is
+  automatically trimorphic, but the reverse doesn't hold (`24` is
+  trimorphic but not automorphic), and a dedicated regression test
+  pins that non-alias distinction. Clean first pass, no bounces (4009
+  tests passing, up from 3995). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

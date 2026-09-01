@@ -613,39 +613,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `throw`/`catch` carrying
-any Cinder value instead of strings only (PR #365 — previously
-`throw {"a": 1};` didn't just get rejected, the rejection's own error
-message got caught and misbound to `e`, so accessing a field on it blew
-up with an unrelated error) — and before that an `else` clause on
-C-style `for (init; cond; step)` loops (PR #364,
-`for (init; cond; step) { ... } else { ... }`), closing out the
-loop-`else` arc across all four loop kinds (`while` #352, `for`-in
-#358, `do`-`while` #361, C-style `for` #364) — and before that a `-`
-(difference) operator for lists (PR #363, `[1, 2, 3] - [2]` is
-`[1, 3]`), the set-style list-list sibling of the map-map `-` branch
-PR #356 added, mirroring the existing `difference()` builtin's set
-semantics. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
-history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_keith_number` — a
-number that reappears in the digit-count-wide Fibonacci-style
+Actively developed, nightly. Recently landed: `is_keith_number` (PR
+#366), a number that reappears in the digit-count-wide Fibonacci-style
 recurrence seeded by its own decimal digits (e.g. `197`: seed `1, 9,
 7`, then `17, 33, 57, 107, 197`), the digit-recurrence sibling of
-`is_automorphic`/`is_trimorphic_number`'s digit-ending questions —
-a `&` (intersection) operator for lists (`[1, 2, 3] & [2, 3, 4]` is
-`[2, 3]`), the set-style counterpart to the list `-` operator above,
-mirroring the existing `intersection()` builtin's set semantics —
-`run_length_encode`/`run_length_decode`, the classic consecutive-run
-compression pair (`run_length_encode([1, 1, 2, 2, 2, 3])` is
-`[[1, 2], [2, 3], [3, 1]]`), expressed as the `(value, count)`-pair
-cousin of the existing `group_consecutive` builtin — a `&`
-(intersection) operator for maps (`{"a": 1, "b": 2} & {"a": 1, "c": 3}`
-is `{"a": 1}`), the key-based counterpart to map `-` above, mirroring
-map `-`'s own "keys decide, left's values win" convention — and
-`is_luhn_valid`, a Luhn mod-10 checksum validator for digit strings
-(`is_luhn_valid("79927398713")` is `true`), the identifier-checksum
-sibling of the digit-recurrence predicates above, operating on a string
-of digits rather than a numeric value.
+`is_automorphic`/`is_trimorphic_number`'s digit-ending questions — and
+before that `throw`/`catch` carrying any Cinder value instead of
+strings only (PR #365 — previously `throw {"a": 1};` didn't just get
+rejected, the rejection's own error message got caught and misbound to
+`e`, so accessing a field on it blew up with an unrelated error) — and
+before that an `else` clause on C-style `for (init; cond; step)` loops
+(PR #364, `for (init; cond; step) { ... } else { ... }`), closing out
+the loop-`else` arc across all four loop kinds (`while` #352, `for`-in
+#358, `do`-`while` #361, C-style `for` #364). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a `&` (intersection)
+operator for lists (`[1, 2, 3] & [2, 3, 4]` is `[2, 3]`), the set-style
+counterpart to the existing list `-` operator, mirroring the existing
+`intersection()` builtin's set semantics — `run_length_encode`/
+`run_length_decode`, the classic consecutive-run compression pair
+(`run_length_encode([1, 1, 2, 2, 2, 3])` is `[[1, 2], [2, 3], [3, 1]]`),
+expressed as the `(value, count)`-pair cousin of the existing
+`group_consecutive` builtin — a `&` (intersection) operator for maps
+(`{"a": 1, "b": 2} & {"a": 1, "c": 3}` is `{"a": 1}`), the key-based
+counterpart to map `-` above, mirroring map `-`'s own "keys decide,
+left's values win" convention — `is_luhn_valid`, a Luhn mod-10 checksum
+validator for digit strings (`is_luhn_valid("79927398713")` is `true`),
+the identifier-checksum sibling of the digit-recurrence predicates
+above, operating on a string of digits rather than a numeric value —
+and a `|` (union) operator for lists (`[1, 2, 3] | [2, 3, 4]` is
+`[1, 2, 3, 4]`), the set-style counterpart to list `&`/`-` above,
+mirroring the existing `union()` builtin's dedupe-and-concatenate
+semantics.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
+## 1. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds) [claimed 2026-09-01T18:42:14Z]
 
 Build: `while` (#352), the foreach `for`-in form (#358), and `do`-`while`
 (#361) all now have a trailing Python-style `else { ... }` clause. The

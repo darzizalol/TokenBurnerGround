@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test
+## 1. Standard library: `is_trimorphic_number` — cube-ending digit-invariance test [claimed 2026-09-01T14:16:22Z]
 
 Build: `is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`) already tests whether a number's *square* ends in

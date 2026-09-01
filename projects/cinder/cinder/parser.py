@@ -664,8 +664,15 @@ class Parser:
         self._consume(TokenType.LPAREN, "'(' after 'while'")
         condition = self._assignment()
         self._consume(TokenType.RPAREN, "')' after while condition")
-        self._consume(TokenType.SEMICOLON, "';' after 'do ... while (...)'")
-        return DoWhileStmt(condition, body, do_token.line, do_token.column, label)
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
+        else:
+            self._consume(TokenType.SEMICOLON, "';' after 'do ... while (...)'")
+        return DoWhileStmt(
+            condition, body, do_token.line, do_token.column, label, else_branch
+        )
 
     def _for_statement(self, label: "str | None" = None) -> Stmt:
         for_token = self._advance()

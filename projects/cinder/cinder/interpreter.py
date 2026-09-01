@@ -333,18 +333,22 @@ class Interpreter:
                 self.execute(stmt.else_branch, env)
             return
         if isinstance(stmt, DoWhileStmt):
+            broke = False
             while True:
                 try:
                     self.execute(stmt.body, env)
                 except _BreakSignal as signal:
                     if signal.label is not None and signal.label != stmt.label:
                         raise
+                    broke = True
                     break
                 except _ContinueSignal as signal:
                     if signal.label is not None and signal.label != stmt.label:
                         raise
                 if not is_truthy(self.evaluate(stmt.condition, env)):
                     break
+            if not broke and stmt.else_branch is not None:
+                self.execute(stmt.else_branch, env)
             return
         if isinstance(stmt, ForStmt):
             self._execute_for(stmt, env)

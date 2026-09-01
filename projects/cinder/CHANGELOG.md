@@ -3665,3 +3665,14 @@ for vision/architecture.
   right). Clean first pass, no bounces (4036 tests passing, up from
   4032). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Language: `else` clause on C-style `for` loops** — merged
+  2026-09-01T18:49:41Z via PR #364 (`feat/20260901-for-c-else`). Added
+  `else_branch` to `ForCStmt` in `cinder/ast_nodes.py`, an else-check in
+  `_for_c_statement` mirroring `_for_statement`'s, and a `broke`-flag
+  post-loop check in `_execute_for_c` mirroring `_execute_for`'s —
+  running the else in `loop_env` (not `env`) so closures see the final
+  `init`-declared binding. Closes the loop-`else` arc for all four loop
+  kinds (`while` #352, `for`-in #358, `do`-`while` #361, `for`-C-style
+  #364). Clean first pass, no bounces (4058 tests passing, up from
+  4036). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

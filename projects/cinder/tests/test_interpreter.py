@@ -494,6 +494,62 @@ class TestMapDifference(unittest.TestCase):
             evaluate('[1, 2] - {"a": 1}')
 
 
+class TestListDifference(unittest.TestCase):
+    def test_basic_case(self):
+        self.assertEqual(evaluate("[1, 2, 3] - [2]"), [1, 3])
+
+    def test_left_side_is_deduped(self):
+        self.assertEqual(evaluate("[1, 2, 2, 3] - [2]"), [1, 3])
+
+    def test_empty_right_is_noop(self):
+        self.assertEqual(evaluate("[1, 2, 3] - []"), [1, 2, 3])
+
+    def test_empty_left(self):
+        self.assertEqual(evaluate("[] - [1, 2]"), [])
+
+    def test_removing_every_element_empties_list(self):
+        self.assertEqual(evaluate("[1, 2] - [1, 2]"), [])
+
+    def test_no_overlap_has_no_effect(self):
+        self.assertEqual(evaluate("[1, 2] - [3, 4]"), [1, 2])
+
+    def test_does_not_mutate_inputs(self):
+        env = run("let a = [1, 2]; let c = a - [1];")
+        self.assertEqual(env.get("a"), [1, 2])
+        self.assertEqual(env.get("c"), [2])
+
+    def test_left_associative(self):
+        env = run("let xs = [1, 2, 3] - [1] - [2];")
+        self.assertEqual(env.get("xs"), [3])
+
+    def test_compound_assignment_on_identifier(self):
+        env = run("let xs = [1, 2]; xs -= [1];")
+        self.assertEqual(env.get("xs"), [2])
+
+    def test_compound_assignment_on_index_target(self):
+        env = run("let xs = [[1, 2]]; xs[0] -= [1];")
+        self.assertEqual(env.get("xs"), [[2]])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"l": [1, 2]}; obj.l -= [1];')
+        self.assertEqual(env.get("obj"), {"l": [2]})
+
+    def test_uses_values_equal_not_native_equality(self):
+        self.assertEqual(evaluate("[1, true, 2] - [true]"), [1, 2])
+
+    def test_list_minus_map_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '-': list and map"
+        ):
+            evaluate('[1, 2] - {"a": 1}')
+
+    def test_map_minus_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '-': map and list"
+        ):
+            evaluate('{"a": 1} - [1, 2]')
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

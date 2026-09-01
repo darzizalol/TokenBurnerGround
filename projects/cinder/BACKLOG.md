@@ -11,202 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test [claimed 2026-09-01T14:52:01Z]
-
-Build: `is_strong_number` (`cinder/builtins.py`, search `def
-_is_strong_number`) already asks whether a number equals the sum of
-the *factorial* of each of its digits (e.g. `145 = 1! + 4! + 5!`), and
-`is_armstrong`/`is_disarium` already raise each digit to a *fixed*
-power (digit count, or digit position) and sum — but nothing raises
-each digit to *its own value* and sums, the classic "Munchausen
-number" property (named for Baron Munchausen's tall tales of lifting
-himself by his own hair — a number "lifting itself" out of its own
-digits). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_munchausen_number(3435));'
-# -> <eval>:1:7: undefined name 'is_munchausen_number' (did you mean 'is_lucas_number'?)
-```
-
-The one domain subtlety: by convention (the definition everyone
-publishing a list of Munchausen numbers uses), `0` raised to the power
-of itself contributes `0` to the sum, not `1` — even though Python's
-own `0 ** 0` evaluates to `1`. Without that override, `10` would
-wrongly evaluate its digit sum as `1**1 + 0**0 = 1 + 1 = 2 != 10`
-either way (still correctly `false` here), but the override matters
-for `0` itself: `0`'s own digit is `0`, and under the `0**0 := 0`
-convention its digit-power sum is `0`, which equals the number — so
-`0` is a (trivial) Munchausen number, matching every published
-reference list. Getting this wrong (using Python's raw `0 ** 0 == 1`)
-would make `0` evaluate to `false` instead, silently disagreeing with
-the standard definition.
-
-Add to `cinder/builtins.py`, directly after `_is_strong_number` (search
-`def _is_strong_number`, immediately before `def _is_leap_year`) —
-keeps it grouped with the other digit-power-sum predicates:
-```python
-def _is_munchausen_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_munchausen_number", arguments, 1, line, column)
-    value = _require_int("is_munchausen_number", arguments[0], line, column)
-    if value < 0:
-        return False
-    total = 0
-    for digit in str(value):
-        d = int(digit)
-        total += d ** d if d != 0 else 0
-    return total == value
-```
-Also register the new dict entry (search `"is_strong_number":
-_is_strong_number,`, add `"is_munchausen_number":
-_is_munchausen_number,` directly after it, before `"is_leap_year":
-_is_leap_year,`).
-
-Acceptance criteria:
-- `is_munchausen_number(0);` is `true` — the trivial case under the
-  `0**0 := 0` convention (see the Build note above).
-- `is_munchausen_number(1);` is `true` — `1 ** 1 = 1`.
-- `is_munchausen_number(3435);` is `true` — the canonical example:
-  `3**3 + 4**4 + 3**3 + 5**5 = 27 + 256 + 27 + 3125 = 3435`.
-- `is_munchausen_number(438579088);` is `true` — the other known
-  base-10 Munchausen number, confirming the check isn't hardcoded to
-  4-digit inputs.
-- `is_munchausen_number(2);` is `false` — `2 ** 2 = 4 != 2`.
-- `is_munchausen_number(24);` is `false` — `2**2 + 4**4 = 4 + 256 =
-  260 != 24`.
-- `is_munchausen_number(100);` is `false` — exercises the `0**0 := 0`
-  override on a non-trivial multi-digit number: `1**1 + 0**0 + 0**0 =
-  1 + 0 + 0 = 1 != 100`.
-- `is_munchausen_number(-3435);` is `false` — negative numbers are
-  excluded (mirrors `is_strong_number`'s own convention).
-- `is_munchausen_number(1.5);` raises `CinderRuntimeError` matching
-  `"is_munchausen_number() requires an int, got float"` (via
-  `_require_int`'s existing message format).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_strong_number`,
-search `def _is_strong_number`), `tests/test_builtins.py` (new `class
-TestIsMunchausenNumber`, modeled directly on `class
-TestIsStrongNumber`, search that name, for the true/false/domain-edge/
-type-error test shapes above). Once merged, `README.md`'s Builtins
-bullet needs `is_munchausen_number` added near `is_strong_number`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" bullet needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Language: `-` (difference) operator for lists (set-style, mirrors map `-`) [claimed 2026-09-01T18:29:16Z]
-
-Build: PR #356 gave `-` a map-map branch (key-based removal,
-`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}`) but explicitly scoped
-itself to `map`/`map` only, leaving list-list `-` to fall through to
-the numeric-only path and error out — the same gap the map branch
-itself closed for maps. Cinder's list builtins already answer this
-exact question as a function (`difference()`, `cinder/builtins.py`,
-search `def _difference`: dedupes the left list, keeps only elements
-not present in the right, both lists treated as unordered sets — the
-same convention `union`/`intersection`/`symmetric_difference` already
-share). This task gives that same set-style difference an infix `-`
-spelling for lists, exactly as `-` is already `difference()`'s
-map-shaped sibling operator for maps. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print([1, 2, 3] - [2]);'
-# -> <eval>:1:17: unsupported operand types for '-': list and list
-```
-
-Note `tests/test_interpreter.py`'s existing `TestMapDifference` class
-already has `test_list_minus_map_raises` (`[1, 2] - {"a": 1}` errors)
-and `test_map_minus_list_raises` (`{"a": 1} - [1, 2]` errors) — those
-stay exactly as they are, since this task only adds a list-**list**
-branch; mixed list/map operands remain a type error, unchanged.
-
-`cinder/interpreter.py` has no import of `cinder/builtins.py` (checked
-— builtins.py is the one that would need to import from interpreter.py
-for shared helpers like `values_equal`, not the reverse, to avoid a
-circular import), so don't import `_difference`/`_dedupe` from
-builtins.py; instead inline the same two-step "dedupe the left list,
-then drop anything found in the right" logic using `values_equal`
-(already imported and used elsewhere in `interpreter.py`, e.g. the
-`EQEQ` branch a few lines above) rather than Python's native `==`/`in`,
-matching `_dedupe`/`_contains_value`'s own reasoning (native `==`
-would wrongly conflate `1` and `true`, which `values_equal` keeps
-distinct).
-
-Edit `cinder/interpreter.py`'s `_apply_binary_operator`, the `MINUS`
-branch (search `if op == TokenType.MINUS:`): add a list-list case
-alongside the existing dict-dict one, before the branch falls through
-to `_numeric_op`:
-```python
-        if op == TokenType.MINUS:
-            if isinstance(left, dict) and isinstance(right, dict):
-                return {key: value for key, value in left.items() if key not in right}
-            if isinstance(left, list) and isinstance(right, list):
-                deduped: list = []
-                for element in left:
-                    if not any(values_equal(element, kept) for kept in deduped):
-                        deduped.append(element)
-                return [
-                    element
-                    for element in deduped
-                    if not any(values_equal(element, other) for other in right)
-                ]
-            return self._numeric_op(operator, left, right, lambda a, b: a - b)
-```
-(Only the new `isinstance(left, list) and isinstance(right, list)`
-block is added — the dict branch above it and the `_numeric_op`
-fallback below it are unchanged.)
-
-The compound-assignment desugaring (`-=`) already works for free once
-`-` itself handles lists, exactly as `TestMapDifference`'s own
-`test_compound_assignment_on_identifier`/`_index_target`/`_dot_target`
-tests document for maps — no separate wiring needed.
-
-Acceptance criteria (mirror `TestMapDifference` in
-`tests/test_interpreter.py`, search that class, one-for-one where a
-list equivalent makes sense):
-- `[1, 2, 3] - [2]` is `[1, 3]` — the basic case.
-- `[1, 2, 2, 3] - [2]` is `[1, 3]` — the left side is deduped, so a
-  repeated element that gets removed leaves only one gap, not one per
-  occurrence.
-- `[1, 2, 3] - []` is `[1, 2, 3]` — empty right is a no-op (aside from
-  deduping the left, matching `difference()`'s own behavior).
-- `[] - [1, 2]` is `[]` — empty left stays empty.
-- `[1, 2] - [1, 2]` is `[]` — removing every element empties the list.
-- `[1, 2] - [3, 4]` is `[1, 2]` — no overlap has no effect (beyond
-  dedup).
-- Does not mutate inputs: `let a = [1, 2]; let c = a - [1];` leaves `a`
-  as `[1, 2]` and `c` as `[2]`.
-- Left-associative: `[1, 2, 3] - [1] - [2]` is `[3]`.
-- Compound assignment works: `let xs = [1, 2]; xs -= [1];` leaves `xs`
-  as `[2]` (identifier target); also test an index target
-  (`let xs = [[1, 2]]; xs[0] -= [1];`) and a dot target
-  (`let obj = {"l": [1, 2]}; obj.l -= [1];`).
-- `[1, true, 2] - [true]` is `[1, 2]` — uses `values_equal`, not
-  Python's native `==`/`in`, so `1` and `true` are not conflated (a
-  `1` in the left list survives a `[true]` right side).
-- `[1, 2] - {"a": 1}` and `{"a": 1} - [1, 2]` still both raise
-  `CinderRuntimeError` matching `"unsupported operand types for '-':
-  ..."` — regression guards for the two existing
-  `test_list_minus_map_raises`/`test_map_minus_list_raises` tests,
-  confirming mixed list/map operands are still a type error.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
-`MINUS` branch, search `if op == TokenType.MINUS:`), `tests/test_interpreter.py`
-(new `class TestListDifference`, modeled directly on
-`class TestMapDifference`, search that name, for the test shapes
-above — or add methods to `TestMapDifference` itself if renaming it to
-something like `TestDifferenceOperator` reads better; either is fine,
-Engineer's call). Once merged, `README.md`'s language-operators bullet
-needs a list-`-` mention next to the existing map-`-` one, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" section needs refreshing — leave both to the Architect's
-next grooming pass, not this task.
-
----
-
-## 3. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
+## 1. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
 
 Build: `while` (#352), the foreach `for`-in form (#358), and `do`-`while`
 (#361) all now have a trailing Python-style `else { ... }` clause. The
@@ -397,7 +202,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: `throw`/`catch` carry any value, not just strings
+## 2. Language: `throw`/`catch` carry any value, not just strings
 
 Build: `throw` (`cinder/interpreter.py`, search `if isinstance(stmt,
 ThrowStmt):`) currently rejects any thrown value that isn't a `str`, and
@@ -533,7 +338,7 @@ task.
 
 ---
 
-## 5. Standard library: `is_keith_number` — digit-recurrence self-generating number
+## 3. Standard library: `is_keith_number` — digit-recurrence self-generating number
 
 Build: Cinder already has several "does a number reproduce itself under
 some digit-driven process" predicates — `is_automorphic`/
@@ -636,7 +441,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: `&` (intersection) operator for lists (set-style, mirrors list `-`)
+## 4. Language: `&` (intersection) operator for lists (set-style, mirrors list `-`)
 
 Build: PR #356 gave `-` a map-map branch (key-based removal), and task 2
 in this file gives it a list-list branch too (set-style difference,

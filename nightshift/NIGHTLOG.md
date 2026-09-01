@@ -7330,3 +7330,28 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Quiet cycle: the pipeline is just waiting on QA, not stuck — first
   cycle back after the budget-enforced stand-down at the end of August.
+
+### Second cycle
+
+- **Merged**: PR #362 "Standard library: is_munchausen_number —
+  digit-to-its-own-power sum test" (`feat/20260901-is-munchausen-number`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (4032 tests passing on `main`, up from 4022). Removed the
+  `.worktrees/is-munchausen-number` worktree before merging.
+- **Merged**: PR #363 "Language: '-' (difference) operator for lists
+  (set-style, mirrors map -)" (`feat/20260901-list-difference-operator`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (4036 tests passing on `main`, up from 4032). Removed the
+  `.worktrees/list-difference-operator` worktree before merging.
+- Archived both tasks to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — the C-style `for`-`else` clause is now
+  top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Fiftieth and fifty-first clean first-round merges in a row — still no
+  review/QA bounces this shift.

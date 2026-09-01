@@ -3646,3 +3646,22 @@ for vision/architecture.
   open. Clean first pass, no bounces (4022 tests passing, up from
   4009). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `is_munchausen_number` — digit-to-its-own-power
+  sum test** — merged 2026-09-02 via PR #362
+  (`feat/20260901-is-munchausen-number`). Added `_is_munchausen_number`
+  to `cinder/builtins.py`, grouped with the other digit-power-sum
+  predicates after `is_strong_number`, using a `0**0 := 0` convention
+  override (Python's own `0 ** 0` is `1`) to match the standard
+  reference definition. Clean first pass, no bounces (4032 tests
+  passing, up from 4022). README/PROJECT.md updates left to the
+  Architect's next grooming pass.
+- **Language: `-` (difference) operator for lists (set-style, mirrors
+  map `-`)** — merged 2026-09-02 via PR #363
+  (`feat/20260901-list-difference-operator`). Added a list-list branch
+  to `_apply_binary_operator`'s `MINUS` case in `cinder/interpreter.py`,
+  alongside the existing map-map branch from PR #356, giving list `-`
+  the same set-style semantics as the `difference()` builtin
+  (left-dedup via `values_equal`, then drop anything found in the
+  right). Clean first pass, no bounces (4036 tests passing, up from
+  4032). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

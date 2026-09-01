@@ -1945,6 +1945,18 @@ def _is_strong_number(arguments: list, line: int, column: int) -> object:
     return sum(math.factorial(int(digit)) for digit in str(value)) == value
 
 
+def _is_munchausen_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_munchausen_number", arguments, 1, line, column)
+    value = _require_int("is_munchausen_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    total = 0
+    for digit in str(value):
+        d = int(digit)
+        total += d ** d if d != 0 else 0
+    return total == value
+
+
 def _is_leap_year(arguments: list, line: int, column: int) -> object:
     _require_arity("is_leap_year", arguments, 1, line, column)
     value = _require_int("is_leap_year", arguments[0], line, column)
@@ -4447,6 +4459,7 @@ _BUILTINS = {
     "is_disarium": _is_disarium,
     "is_pandigital": _is_pandigital,
     "is_strong_number": _is_strong_number,
+    "is_munchausen_number": _is_munchausen_number,
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,
     "is_abundant": _is_abundant,

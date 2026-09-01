@@ -4683,6 +4683,58 @@ class TestIsStrongNumber(unittest.TestCase):
             run("is_strong_number();")
 
 
+class TestIsMunchausenNumber(unittest.TestCase):
+    def test_is_munchausen_number_of_zero(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(0);").get("result"), True
+        )
+
+    def test_is_munchausen_number_of_one(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(1);").get("result"), True
+        )
+
+    def test_is_munchausen_number_of_3435(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(3435);").get("result"), True
+        )
+
+    def test_is_munchausen_number_of_438579088(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(438579088);").get("result"), True
+        )
+
+    def test_is_munchausen_number_of_two_is_false(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(2);").get("result"), False
+        )
+
+    def test_is_munchausen_number_of_24_is_false(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(24);").get("result"), False
+        )
+
+    def test_is_munchausen_number_of_100_is_false(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(100);").get("result"), False
+        )
+
+    def test_is_munchausen_number_of_negative_is_false(self):
+        self.assertEqual(
+            run("let result = is_munchausen_number(-3435);").get("result"), False
+        )
+
+    def test_is_munchausen_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_munchausen_number(1.5);")
+        self.assertIn("is_munchausen_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_munchausen_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_munchausen_number();")
+
+
 class TestIsLeapYear(unittest.TestCase):
     def test_is_leap_year_of_2000(self):
         self.assertEqual(run("let result = is_leap_year(2000);").get("result"), True)

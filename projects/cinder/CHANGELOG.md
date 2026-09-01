@@ -3676,3 +3676,17 @@ for vision/architecture.
   #364). Clean first pass, no bounces (4058 tests passing, up from
   4036). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Language: `throw`/`catch` carry any value, not just strings** —
+  merged 2026-09-02 via PR #365 (`feat/20260902-throw-catch-value`).
+  Added an optional `value` field (defaulting to `message`) to
+  `CinderRuntimeError` in `cinder/errors.py`, guarded by a module-level
+  `_UNSET` sentinel so a genuinely thrown `nil`/`false` isn't mistaken
+  for "no value supplied"; `ThrowStmt` now evaluates and passes the raw
+  value through (using `stringify` only for the display `.message`),
+  and `_execute_try` binds `catch (e)` to `error.value` instead of
+  `error.message`. Fixes the double-failure bug where throwing a
+  non-string value got caught with the type-check's own error text
+  instead of the thrown value. All ~430 internal `CinderRuntimeError`
+  call sites are unaffected since none pass `value=`. Clean first pass,
+  no bounces (4065 tests passing, up from 4058). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

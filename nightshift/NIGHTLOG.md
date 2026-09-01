@@ -7375,3 +7375,24 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Fifty-second clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Fourth cycle
+
+- **Merged**: PR #365 "Language: throw/catch carry any value, not just
+  strings" (`feat/20260902-throw-catch-value`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit — clean merge, no bounces (4065 tests
+  passing on `main`, up from 4058). Removed the
+  `.worktrees/throw-catch-value` worktree before merging. Fixes the
+  double-failure bug where throwing a non-string value got caught with
+  the type-check's own error text instead of the thrown value.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining four
+  backlog tasks (1-4) — `is_keith_number` is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Fifty-third clean first-round merge in a row — still no review/QA
+  bounces this shift.

@@ -34,14 +34,26 @@ class ParseError(CinderError):
     """Raised by the parser on malformed token sequences."""
 
 
+_UNSET = object()
+
+
 class CinderRuntimeError(CinderError):
     """Raised by the interpreter for errors detected during evaluation.
 
     `frames` records the call chain the error passed through on its way out,
     one `(function_name, call_line, call_column)` tuple per call-site,
     innermost call first. Empty for an error raised directly at top level.
+
+    `value` is the original Cinder value a `catch (e)` clause binds `e`
+    to. It defaults to `message` itself (every internal engine error is,
+    in effect, a string-valued exception) unless explicitly overridden —
+    `ThrowStmt` handling is the only caller that does, passing the
+    literal value the user threw.
     """
 
-    def __init__(self, message: str, line: int, column: int):
+    def __init__(
+        self, message: str, line: int, column: int, value: object = _UNSET
+    ):
         super().__init__(message, line, column)
         self.frames: list[tuple[str, int, int]] = []
+        self.value = message if value is _UNSET else value

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind)
+## 1. Language: `else` clause on `do`-`while` loops (Python-style loop-`else`, the last loop kind) [claimed 2026-09-01T14:27:08Z]
 
 Build: PR #352 added a Python-style `else { ... }` clause to plain
 `while` loops, and task 2 in this file (once it merges) extends the

@@ -527,6 +527,7 @@ class DoWhileStmt:
     line: int
     column: int
     label: "str | None" = None
+    else_branch: "Stmt | None" = None
 
 
 @dataclass(frozen=True)

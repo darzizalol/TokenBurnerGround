@@ -2769,6 +2769,54 @@ class TestDoWhileStatement(unittest.TestCase):
         self.assertEqual(env.get("i"), 3)
 
 
+class TestDoWhileElse(unittest.TestCase):
+    def test_do_while_else_runs_on_normal_completion(self):
+        env = run("let x = 0; let done = false; do { x = 1; } while (false) else { done = true; }")
+        self.assertTrue(env.get("done"))
+
+    def test_do_while_else_runs_after_multiple_iterations(self):
+        env = run(
+            "let i = 0; let done = false; "
+            "do { i = i + 1; } while (i < 3) else { done = true; }"
+        )
+        self.assertTrue(env.get("done"))
+
+    def test_do_while_else_skipped_by_break(self):
+        env = run("let ran = false; do { break; } while (true) else { ran = true; }")
+        self.assertFalse(env.get("ran"))
+
+    def test_do_while_else_not_skipped_by_continue(self):
+        env = run(
+            "let i = 0; let ran = false; "
+            "do { i = i + 1; if (i == 1) { continue; } } while (i < 2) "
+            "else { ran = true; }"
+        )
+        self.assertTrue(env.get("ran"))
+
+    def test_do_while_else_skipped_by_labeled_break(self):
+        env = run(
+            "let ran = false; "
+            "outer: do { do { break outer; } while (true); } while (true) "
+            "else { ran = true; }"
+        )
+        self.assertFalse(env.get("ran"))
+
+    def test_do_while_else_skipped_by_return(self):
+        env = run(
+            "fn f() { do { return 1; } while (false) else { return 2; } } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_do_while_without_else_still_behaves_as_before(self):
+        env = run("let x = 0; do { x = 1; } while (false);")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_do_while_else_unbraced_single_statement(self):
+        env = run("let x = 0; do { } while (false) else x = 1;")
+        self.assertEqual(env.get("x"), 1)
+
+
 class TestForStatement(unittest.TestCase):
     def test_for_in_sums_list(self):
         env = run("let total = 0; for x in [1, 2, 3] { total = total + x; }")

@@ -3632,3 +3632,17 @@ for vision/architecture.
   pins that non-alias distinction. Clean first pass, no bounces (4009
   tests passing, up from 3995). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Language: `else` clause on `do`-`while` loops (Python-style
+  loop-`else`, the last loop kind)** — merged 2026-09-01 via PR #361
+  (`feat/20260901-do-while-else`). Threaded a `broke` flag through
+  `DoWhileStmt`'s existing loop (`cinder/interpreter.py`) and an
+  else-or-semicolon branch through `_do_while_statement`
+  (`cinder/parser.py`), mirroring `WhileStmt.else_branch`'s established
+  pattern: the `else` block runs once on normal completion, skipped by
+  `break` (including labeled) or a propagating `return`/exception,
+  unaffected by `continue`. No dangling-`else` ambiguity since the
+  trailing `else` sits after the `while (cond)` clause. Closes the gap
+  PR #352 and the foreach `for`-in `else` task both explicitly left
+  open. Clean first pass, no bounces (4022 tests passing, up from
+  4009). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

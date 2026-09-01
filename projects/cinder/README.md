@@ -121,9 +121,9 @@ while (i < 10) {
   loop exits normally — including immediately, if the condition was
   already false — without an intervening `break`; `continue` does not
   skip it, only `break` does; the same clause is also available on the
-  foreach `for`-in form below (`for x in xs { ... } else { ... }`), with
-  `do`-`while` and the C-style `for` still to come), `do { ... } while
-  (cond);`,
+  foreach `for`-in form (`for x in xs { ... } else { ... }`) and on
+  `do`-`while` (`do { ... } while (cond) else { ... }`), with the
+  C-style `for` still to come), `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   maps (over keys), and range literals (`a..b`, sugar over the existing
   `range()` builtin usable directly as a loop source, e.g. `for i in
@@ -605,40 +605,41 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_trimorphic_number`
-(PR #360) — the cube-ending analog of `is_automorphic`'s own
-square-ending check (e.g. `24 ** 3 = 13824`, which ends in `24`) — and
-before that `is_vampire_number` (PR #359) — a number whose decimal
-digits can be split into two equal-length "fangs" that multiply back
-to it (e.g. `1260 = 21 * 60`), a digit-permutation-meets-factorization
-predicate distinct from `is_smith_number`'s digit-sum-of-factors
-question — and before that the `else` clause PR #352 gave `while`
-loops, extended to the foreach `for`-in form (PR #358,
-`for x in xs { ... } else { ... }`). See [`CHANGELOG.md`](CHANGELOG.md)
-for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the same loop-`else`
-clause extended once more, this time to `do`-`while` loops
-(`do { ... } while (cond) else { ... }`), `is_munchausen_number` — a
-number equal to the sum of each digit raised to its own power (e.g.
-`3435 = 3^3 + 4^4 + 3^3 + 5^5`), the digit-to-its-own-power sibling of
-`is_strong_number`'s digit-factorial question, a `-` (difference)
-operator for lists (`[1, 2, 3] - [2]` is `[1, 3]`), the set-style
-list-list sibling of the map-map `-` branch PR #356 added, mirroring
-the existing `difference()` builtin's set semantics, the same `else`
-clause one last time on the C-style `for (init; cond; step)` loop —
-closing out the loop-`else` arc #352 started across all four loop
-kinds — letting `throw`/`catch` carry any Cinder value instead of
-strings only (today `throw {"a": 1};` doesn't just get rejected, the
-rejection's own error message gets caught and misbound to `e`, so
-accessing a field on it blows up with an unrelated error) — and
-`is_keith_number` — a number that reappears in the digit-count-wide
+Actively developed, nightly. Recently landed: the `else` clause on
+`do`-`while` loops (PR #361, `do { ... } while (cond) else { ... }`),
+closing out the loop-`else` arc #352 started for every loop kind except
+the C-style `for` — and before that `is_trimorphic_number` (PR #360) —
+the cube-ending analog of `is_automorphic`'s own square-ending check
+(e.g. `24 ** 3 = 13824`, which ends in `24`) — and before that
+`is_vampire_number` (PR #359) — a number whose decimal digits can be
+split into two equal-length "fangs" that multiply back to it (e.g.
+`1260 = 21 * 60`), a digit-permutation-meets-factorization predicate
+distinct from `is_smith_number`'s digit-sum-of-factors question. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_munchausen_number`
+— a number equal to the sum of each digit raised to its own power
+(e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the digit-to-its-own-power
+sibling of `is_strong_number`'s digit-factorial question — a `-`
+(difference) operator for lists (`[1, 2, 3] - [2]` is `[1, 3]`), the
+set-style list-list sibling of the map-map `-` branch PR #356 added,
+mirroring the existing `difference()` builtin's set semantics — the
+same `else` clause one last time on the C-style
+`for (init; cond; step)` loop, closing out the loop-`else` arc across
+all four loop kinds — letting `throw`/`catch` carry any Cinder value
+instead of strings only (today `throw {"a": 1};` doesn't just get
+rejected, the rejection's own error message gets caught and misbound
+to `e`, so accessing a field on it blows up with an unrelated error)
+— `is_keith_number` — a number that reappears in the digit-count-wide
 Fibonacci-style recurrence seeded by its own decimal digits (e.g.
 `197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`), the digit-recurrence
 sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending
-questions. (Guards in `match` arms, `n if n > 0 => "positive"`, were
-attempted but closed after three failed review rounds over a recurring
-parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
-they're a real gap but not back in the active queue yet.)
+questions — and a `&` (intersection) operator for lists
+(`[1, 2, 3] & [2, 3, 4]` is `[2, 3]`), the set-style counterpart to the
+list `-` task above, mirroring the existing `intersection()` builtin's
+set semantics. (Guards in `match` arms, `n if n > 0 => "positive"`,
+were attempted but closed after three failed review rounds over a
+recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+postmortem; they're a real gap but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

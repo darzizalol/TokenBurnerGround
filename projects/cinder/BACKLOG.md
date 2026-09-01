@@ -208,10 +208,10 @@ next grooming pass, not this task.
 
 ## 3. Language: `else` clause on C-style `for` loops (closes the loop-`else` arc for all four loop kinds)
 
-Build: `while` (#352), the foreach `for`-in form (#358), and — once task 2
-in this file merges — `do`-`while` will all have a trailing Python-style
-`else { ... }` clause. The one loop kind left out every time is the
-classic three-clause `for (init; cond; step) { ... }` (`ForCStmt`,
+Build: `while` (#352), the foreach `for`-in form (#358), and `do`-`while`
+(#361) all now have a trailing Python-style `else { ... }` clause. The
+one loop kind left out every time is the classic three-clause
+`for (init; cond; step) { ... }` (`ForCStmt`,
 `cinder/ast_nodes.py`, search `class ForCStmt`). This task closes that
 last gap. Verify it:
 ```sh
@@ -633,6 +633,109 @@ true/false/domain-edge/type-error test shapes above). Once merged,
 `is_trimorphic_number`, its "Status & roadmap" section needs updating,
 and `PROJECT.md`'s "Current frontier" section needs refreshing — leave
 both to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Language: `&` (intersection) operator for lists (set-style, mirrors list `-`)
+
+Build: PR #356 gave `-` a map-map branch (key-based removal), and task 2
+in this file gives it a list-list branch too (set-style difference,
+`[1, 2, 3] - [2]` is `[1, 3]`) — mirroring the existing `difference()`
+builtin's set semantics. Cinder's list builtins also already answer the
+intersection question as a function (`intersection()`,
+`cinder/builtins.py`, search `def _intersection`: dedupes the left
+list, keeps only elements also present in the right, both lists
+treated as unordered sets — the same convention `union`/`difference`/
+`symmetric_difference` share), but `&` has no list meaning at all today
+— it is bitwise-int-only (`_bitwise_op`, `cinder/interpreter.py`,
+search `def _bitwise_op`, unconditionally requires both operands to be
+`int`). This task gives `intersection()` the same infix spelling task 2
+gives `difference()`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print([1, 2, 3] & [2, 3, 4]);'
+# -> <eval>:1:17: unsupported operand types for '&': list and list
+```
+
+Scope: list-list only, matching how `-` got its dict branch (#356) and
+list branch (task 2) as two separate, smaller tasks rather than one —
+map-map `&` intersection is a plausible future task, not this one. This
+task does not depend on task 2 landing first; either order is fine.
+
+Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
+above the existing dispatch to `_bitwise_op` (search `TokenType.AMP,`
+inside the `if op in (` tuple that also lists `PIPE`/`CARET`/
+`LSHIFT`/`RSHIFT`): add a list-list special case for `AMP` specifically,
+reusing `contains_value` (search `def contains_value`, already used a
+few lines above for the `IN`/`NOT_IN` branches) for `values_equal`-based
+membership rather than Python's native `in`:
+```python
+        if op == TokenType.AMP and isinstance(left, list) and isinstance(right, list):
+            deduped: list = []
+            for element in left:
+                if not any(values_equal(element, kept) for kept in deduped):
+                    deduped.append(element)
+            return [
+                element
+                for element in deduped
+                if contains_value(right, element, operator.line, operator.column)
+            ]
+        if op in (
+            TokenType.AMP,
+            TokenType.PIPE,
+            TokenType.CARET,
+            TokenType.LSHIFT,
+            TokenType.RSHIFT,
+        ):
+            return self._bitwise_op(operator, left, right, op)
+```
+(Only the new `if op == TokenType.AMP and isinstance(left, list)...`
+block is added, directly above the existing bitwise dispatch — `PIPE`/
+`CARET`/`LSHIFT`/`RSHIFT` and int-int `AMP` all still fall through
+unchanged to `_bitwise_op`, which still rejects every other
+non-int/non-list-list combination exactly as it does today.)
+
+The compound-assignment desugaring (`&=`) already works for free once
+`&` itself handles lists, exactly as `-=`'s existing coverage for maps
+documents — no separate wiring needed.
+
+Acceptance criteria (mirror `TestMapDifference`/task 2's
+`TestListDifference` shape in `tests/test_interpreter.py`):
+- `[1, 2, 3] & [2, 3, 4]` is `[2, 3]` — the basic case, left-to-right
+  order.
+- `[1, 2, 2, 3] & [2]` is `[2]` — the left side is deduped first.
+- `[1, 2, 3] & []` is `[]` and `[] & [1, 2]` is `[]` — either empty
+  side empties the result.
+- `[1, 2] & [1, 2]` is `[1, 2]` — full overlap keeps everything
+  (deduped).
+- `[1, 2] & [3, 4]` is `[]` — no overlap.
+- Does not mutate inputs: `let a = [1, 2, 3]; let c = a & [2];` leaves
+  `a` as `[1, 2, 3]` and `c` as `[2]`.
+- Left-associative: `[1, 2, 3] & [1, 2] & [2]` is `[2]`.
+- Compound assignment works: `let xs = [1, 2, 3]; xs &= [2, 3];` leaves
+  `xs` as `[2, 3]` (identifier target); also test an index target and a
+  dot target, mirroring task 2's own compound-assignment cases.
+- `[1, true, 2] & [true]` is `[true]` — uses `values_equal`, not
+  Python's native `==`/`in`, so `1` is not conflated with `true`.
+- `2 & 3` (both ints) is still `2` — existing bitwise-AND behavior is
+  unchanged, a regression guard.
+- `[1, 2] & 3` and `2 & [1, 2]` still raise `CinderRuntimeError`
+  matching `"unsupported operand types for '&': ..."` — mixed
+  list/non-list operands remain a type error, same message shape
+  `_bitwise_op` already produces.
+- `[1, 2] & {"a": 1}` also raises the same type error — map operands
+  are unsupported (deferred per the Scope note above).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
+`AMP`/`PIPE`/`CARET`/`LSHIFT`/`RSHIFT` dispatch, search
+`TokenType.AMP,`), `tests/test_interpreter.py` (new `class
+TestListIntersection`, modeled on `class TestMapDifference` or task 2's
+`TestListDifference`, search either name, for the test shapes above).
+Once merged, `README.md`'s language-operators bullet needs a list-`&`
+mention next to the existing map/list `-` ones, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass,
+not this task.
 
 ---
 

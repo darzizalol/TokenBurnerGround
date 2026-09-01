@@ -364,13 +364,9 @@ class Interpreter:
             raise _ReturnSignal(value)
         if isinstance(stmt, ThrowStmt):
             value = self.evaluate(stmt.expression, env)
-            if not isinstance(value, str):
-                raise CinderRuntimeError(
-                    f"throw requires a string message, got {type_name(value)}",
-                    stmt.line,
-                    stmt.column,
-                )
-            raise CinderRuntimeError(value, stmt.line, stmt.column)
+            raise CinderRuntimeError(
+                stringify(value), stmt.line, stmt.column, value=value
+            )
         if isinstance(stmt, BreakStmt):
             raise _BreakSignal(stmt.label)
         if isinstance(stmt, ContinueStmt):
@@ -409,7 +405,7 @@ class Interpreter:
                     raise
                 catch_env = Environment(env)
                 if stmt.catch_name is not None:
-                    catch_env.define(stmt.catch_name, error.message)
+                    catch_env.define(stmt.catch_name, error.value)
                 self.execute(stmt.catch_block, catch_env)
         finally:
             if stmt.finally_block is not None:

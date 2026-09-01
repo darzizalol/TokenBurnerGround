@@ -5026,14 +5026,104 @@ class TestThrowStatement(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
         self.assertEqual(ctx.exception.column, 1)
 
-    def test_throw_non_string_raises_type_error(self):
+    def test_throw_map_is_caught_with_original_value(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                'try { throw {"kind": "MyError", "msg": "oops"}; } '
+                "catch (e) { print(e.msg); }",
+                create_global_environment(),
+            )
+        self.assertEqual(out.getvalue(), "oops\n")
+
+    def test_throw_int_keeps_real_type(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                "try { throw 42; } catch (e) { print(e + 1); }",
+                create_global_environment(),
+            )
+        self.assertEqual(out.getvalue(), "43\n")
+
+    def test_throw_list_keeps_real_type(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                "try { throw [1, 2, 3]; } catch (e) { print(e[1]); }",
+                create_global_environment(),
+            )
+        self.assertEqual(out.getvalue(), "2\n")
+
+    def test_throw_nil_is_distinguished_from_unset(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                "try { throw nil; } catch (e) { print(e == nil); }",
+                create_global_environment(),
+            )
+        self.assertEqual(out.getvalue(), "true\n")
+
+    def test_throw_false_is_not_confused_with_unset(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                "try { throw false; } catch (e) { print(e); }",
+                create_global_environment(),
+            )
+        self.assertEqual(out.getvalue(), "false\n")
+
+    def test_uncaught_throw_int_has_message_and_value(self):
         with self.assertRaises(CinderRuntimeError) as ctx:
             run("throw 42;")
+        self.assertEqual(ctx.exception.message, "42")
+        self.assertEqual(ctx.exception.value, 42)
+
+    def test_uncaught_throw_map_message_matches_print_format(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('throw {"a": 1};')
+        self.assertEqual(ctx.exception.message, '{"a": 1}')
+
+    def test_internal_error_value_still_equals_message(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from cinder.builtins import create_global_environment
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            run(
+                'try { 1 + "a"; } catch (e) { print(e); }',
+                create_global_environment(),
+            )
         self.assertEqual(
-            ctx.exception.message, "throw requires a string message, got int"
+            out.getvalue(),
+            "unsupported operand types for '+': int and string\n",
         )
-        self.assertEqual(ctx.exception.line, 1)
-        self.assertEqual(ctx.exception.column, 1)
 
     def test_throw_inside_nested_call_reports_call_stack(self):
         with self.assertRaises(CinderRuntimeError) as ctx:

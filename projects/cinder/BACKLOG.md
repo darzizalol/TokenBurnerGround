@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `&` (intersection) operator for lists (set-style, mirrors list `-`)
+## 1. Language: `&` (intersection) operator for lists (set-style, mirrors list `-`) [claimed 2026-09-01T19:22:11Z]
 
 Build: PR #356 gave `-` a map-map branch (key-based removal), and PR #363
 gave it a list-list branch too (set-style difference, `[1, 2, 3] - [2]`

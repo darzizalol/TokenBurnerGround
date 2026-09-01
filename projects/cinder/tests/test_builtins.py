@@ -4950,6 +4950,79 @@ class TestIsAutomorphic(unittest.TestCase):
             run("is_automorphic();")
 
 
+class TestIsTrimorphicNumber(unittest.TestCase):
+    def test_is_trimorphic_number_of_0(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(0);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_1(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(1);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_4(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(4);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_5(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(5);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_6(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(6);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_9(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(9);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_24(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(24);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_125(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(125);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_2_is_false(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(2);").get("result"), False
+        )
+
+    def test_is_trimorphic_number_of_100_is_false(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(100);").get("result"), False
+        )
+
+    def test_is_trimorphic_number_of_76_is_true(self):
+        # 76 is automorphic too; every automorphic number is also trimorphic.
+        self.assertEqual(
+            run("let result = is_trimorphic_number(76);").get("result"), True
+        )
+
+    def test_is_trimorphic_number_of_negative_is_false(self):
+        self.assertEqual(
+            run("let result = is_trimorphic_number(-24);").get("result"), False
+        )
+
+    def test_is_trimorphic_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_trimorphic_number(1.5);")
+        self.assertIn("is_trimorphic_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_trimorphic_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_trimorphic_number();")
+
+
 class TestIsKaprekar(unittest.TestCase):
     def test_is_kaprekar_of_1(self):
         self.assertEqual(run("let result = is_kaprekar(1);").get("result"), True)

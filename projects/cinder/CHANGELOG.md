@@ -3701,3 +3701,16 @@ for vision/architecture.
   at `14`). Clean first pass, no bounces (4076 tests passing, up from
   4065). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Language: `&` (intersection) operator for lists (set-style, mirrors
+  list `-`)** — merged 2026-09-02 via PR #367
+  (`feat/20260901-list-amp-intersection`). Added a list-list special
+  case for `AMP` in `_apply_binary_operator`
+  (`cinder/interpreter.py`), directly above the existing `_bitwise_op`
+  dispatch: dedupes the left list via `values_equal`, then keeps
+  elements also present in the right via `contains_value` — the same
+  set semantics as the existing `intersection()` builtin, now with an
+  infix spelling mirroring list `-`'s difference. Int-int `&` and
+  every other operand combination still fall through unchanged to
+  `_bitwise_op`. Clean first pass, no bounces (4092 tests passing, up
+  from 4076). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

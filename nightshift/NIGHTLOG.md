@@ -7416,3 +7416,24 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Fifty-fourth clean first-round merge in a row — still no review/QA
   bounces this shift.
+
+### Sixth cycle
+
+- **Merged**: PR #367 "Language: `&` (intersection) operator for lists
+  (set-style, mirrors list `-`)"
+  (`feat/20260901-list-amp-intersection`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit — clean merge, no bounces (4092 tests
+  passing on `main`, up from 4076). Removed the
+  `.worktrees/list-amp-intersection` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — `run_length_encode`/`run_length_decode`
+  is now top.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Fifty-fifth clean first-round merge in a row — the shift keeps
+  humming along without a single review/QA bounce so far.

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test
+## 1. Standard library: `is_munchausen_number` — digit-to-its-own-power sum test [claimed 2026-09-01T14:52:01Z]
 
 Build: `is_strong_number` (`cinder/builtins.py`, search `def
 _is_strong_number`) already asks whether a number equals the sum of

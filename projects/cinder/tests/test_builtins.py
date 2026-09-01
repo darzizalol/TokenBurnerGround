@@ -5075,6 +5075,55 @@ class TestIsTrimorphicNumber(unittest.TestCase):
             run("is_trimorphic_number();")
 
 
+class TestIsKeithNumber(unittest.TestCase):
+    def test_is_keith_number_of_14(self):
+        self.assertEqual(run("let result = is_keith_number(14);").get("result"), True)
+
+    def test_is_keith_number_of_19(self):
+        self.assertEqual(run("let result = is_keith_number(19);").get("result"), True)
+
+    def test_is_keith_number_of_197(self):
+        self.assertEqual(
+            run("let result = is_keith_number(197);").get("result"), True
+        )
+
+    def test_is_keith_number_of_742(self):
+        self.assertEqual(
+            run("let result = is_keith_number(742);").get("result"), True
+        )
+
+    def test_is_keith_number_of_20_is_false(self):
+        self.assertEqual(
+            run("let result = is_keith_number(20);").get("result"), False
+        )
+
+    def test_is_keith_number_of_100_is_false(self):
+        self.assertEqual(
+            run("let result = is_keith_number(100);").get("result"), False
+        )
+
+    def test_is_keith_number_of_9_is_false(self):
+        self.assertEqual(run("let result = is_keith_number(9);").get("result"), False)
+
+    def test_is_keith_number_of_0_is_false(self):
+        self.assertEqual(run("let result = is_keith_number(0);").get("result"), False)
+
+    def test_is_keith_number_of_negative_is_false(self):
+        self.assertEqual(
+            run("let result = is_keith_number(-14);").get("result"), False
+        )
+
+    def test_is_keith_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_keith_number(1.5);")
+        self.assertIn("is_keith_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_is_keith_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_keith_number();")
+
+
 class TestIsKaprekar(unittest.TestCase):
     def test_is_kaprekar_of_1(self):
         self.assertEqual(run("let result = is_kaprekar(1);").get("result"), True)

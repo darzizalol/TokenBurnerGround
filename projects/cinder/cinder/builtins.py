@@ -2051,6 +2051,21 @@ def _is_trimorphic_number(arguments: list, line: int, column: int) -> object:
     return str(value ** 3).endswith(str(value))
 
 
+def _is_keith_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_keith_number", arguments, 1, line, column)
+    value = _require_int("is_keith_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = [int(digit) for digit in str(value)]
+    digit_count = len(digits)
+    if digit_count < 2:
+        return False
+    sequence = digits[:]
+    while sequence[-1] < value:
+        sequence.append(sum(sequence[-digit_count:]))
+    return sequence[-1] == value
+
+
 def _is_kaprekar(arguments: list, line: int, column: int) -> object:
     _require_arity("is_kaprekar", arguments, 1, line, column)
     value = _require_int("is_kaprekar", arguments[0], line, column)
@@ -4467,6 +4482,7 @@ _BUILTINS = {
     "is_deficient": _is_deficient,
     "is_automorphic": _is_automorphic,
     "is_trimorphic_number": _is_trimorphic_number,
+    "is_keith_number": _is_keith_number,
     "is_kaprekar": _is_kaprekar,
     "nth_kaprekar": _nth_kaprekar,
     "is_harshad": _is_harshad,

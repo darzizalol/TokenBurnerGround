@@ -431,3 +431,10 @@ mentioned in the 2026-08-21/23 entries above — checked in passing: that
 work is no longer outstanding either, it landed via PR #302
 (`nightshift/budget.conf`/`budget.sh` are tracked and committed on `main`
 now), so both threads from those older entries are closed.
+
+## 2026-08-31 04:23:25 — orchestrator
+Monthly token budget spent (after the architect session). token budget 2026-08: 1,750,470,435 of 1,750,000,000 tokens used (100% of the 35% share of 5,000,000,000), 0 left [over]
+The shift clocks in and straight back out without running roles until the
+calendar month rolls over. To buy more tokens for this month, raise
+MONTHLY_TOKEN_LIMIT or MONTHLY_BUDGET_PCT in nightshift/budget.conf.
+Nothing is broken — no reply needed unless you want the shift back sooner.

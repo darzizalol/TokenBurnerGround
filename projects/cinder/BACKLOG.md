@@ -640,6 +640,142 @@ pass, not this task.
 
 ---
 
+## 6. Language: `throw`/`catch` carry any value, not just strings
+
+Build: `throw` (`cinder/interpreter.py`, search `if isinstance(stmt,
+ThrowStmt):`) currently rejects any thrown value that isn't a `str`, and
+`catch (e)` (`_execute_try`, search `def _execute_try`) always binds `e`
+to `error.message` — the *string* every `CinderRuntimeError` carries,
+whether it came from a user `throw` or an internal type/arity error. This
+is more than just a limitation: because the "must be a string" check
+itself raises a `CinderRuntimeError`, throwing a non-string value gets
+*caught by the surrounding `catch`* with `e` bound to the check's own
+error text, not the value the user actually threw — a confusing double
+failure, not a clean rejection. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'try { throw {"kind": "MyError", "msg": "oops"}; } catch (e) { print(e.msg); }'
+# -> <eval>:1:70: string index must be an int, got string
+#    (e is bound to "throw requires a string message, got map" — the
+#    type-check's own message, not the thrown map — so `.msg` tries to
+#    index that string and blows up on an unrelated error)
+```
+
+This task lets `throw` accept any Cinder value and makes `catch` bind
+the original value, not a stringified message — while leaving every
+*internal* error (type errors, arity errors, etc., the ~430 other
+`CinderRuntimeError(...)` call sites across `cinder/interpreter.py` and
+`cinder/builtins.py`) behaving exactly as before, since none of those
+call sites pass the new field described below.
+
+Edit two files:
+
+1. `cinder/errors.py`'s `CinderRuntimeError` (search `class
+   CinderRuntimeError`): add an optional `value` field, defaulting to
+   the error's own `message` when not given. Use a module-level sentinel
+   (not `None`) so a genuinely thrown `nil` — which is Python `None` at
+   runtime, see `PROJECT.md`'s truthiness note — isn't mistaken for "no
+   value supplied":
+```python
+_UNSET = object()
+
+
+class CinderRuntimeError(CinderError):
+    """Raised by the interpreter for errors detected during evaluation.
+
+    `frames` records the call chain the error passed through on its way out,
+    one `(function_name, call_line, call_column)` tuple per call-site,
+    innermost call first. Empty for an error raised directly at top level.
+
+    `value` is the original Cinder value a `catch (e)` clause binds `e`
+    to. It defaults to `message` itself (every internal engine error is,
+    in effect, a string-valued exception) unless explicitly overridden —
+    `ThrowStmt` handling is the only caller that does, passing the
+    literal value the user threw.
+    """
+
+    def __init__(
+        self, message: str, line: int, column: int, value: object = _UNSET
+    ):
+        super().__init__(message, line, column)
+        self.frames: list[tuple[str, int, int]] = []
+        self.value = message if value is _UNSET else value
+```
+(Every other one of the ~430 existing `CinderRuntimeError(...)` call
+sites is unchanged — none of them pass `value=`, so `error.value ==
+error.message` for all of them, exactly matching today's behavior.)
+
+2. `cinder/interpreter.py`, two spots:
+   - The `ThrowStmt` branch of `execute` (search `if isinstance(stmt,
+     ThrowStmt):`): drop the string-only type check entirely and pass
+     the evaluated value straight through, using the module's existing
+     `stringify` (search `def stringify`, already used elsewhere in this
+     file — no new import needed) to build the display message:
+```python
+        if isinstance(stmt, ThrowStmt):
+            value = self.evaluate(stmt.expression, env)
+            raise CinderRuntimeError(
+                stringify(value), stmt.line, stmt.column, value=value
+            )
+```
+   - `_execute_try` (search `def _execute_try`): bind the catch name to
+     `error.value` instead of `error.message`:
+```python
+                catch_env = Environment(env)
+                if stmt.catch_name is not None:
+                    catch_env.define(stmt.catch_name, error.value)
+```
+(Only the `error.message` → `error.value` change; everything else in
+`_execute_try`, including the `finally` handling, is untouched.)
+
+Acceptance criteria:
+- `try { throw "boom"; } catch (e) { print(e); }` still prints `boom` —
+  regression guard, matches the existing
+  `test_thrown_string_is_caught_and_bound`.
+- `throw "boom";` uncaught still has `.message == "boom"` at line 1,
+  column 1 — regression guard, matches the existing
+  `test_uncaught_throw_raises_with_own_line_and_column`.
+- `try { throw {"kind": "MyError", "msg": "oops"}; } catch (e) { print(e.msg); }`
+  prints `oops` — the exact gap demonstrated above, now fixed cleanly.
+- `try { throw 42; } catch (e) { print(e + 1); }` prints `43` — the
+  caught value keeps its real type (`int`), not a stringified form.
+- `try { throw [1, 2, 3]; } catch (e) { print(e[1]); }` prints `2`.
+- `try { throw nil; } catch (e) { print(e == nil); }` prints `true` —
+  confirms the sentinel correctly distinguishes "no value" from a
+  genuinely thrown `nil` (`None` at the Python level).
+- `try { throw false; } catch (e) { print(e); }` prints `false` — a
+  second falsy-value regression guard alongside `nil`, since `false`
+  must not be confused with "value not supplied" either.
+- `throw 42;` uncaught now succeeds (no longer a type error): `.message
+  == "42"` and `.value == 42`. Replaces `test_throw_non_string_raises_type_error`
+  (delete it — it asserted exactly the restriction this task removes).
+- `throw {"a": 1};` uncaught has `.message == '{"a": 1}'` — reuses
+  `stringify`'s existing map-rendering format for the display message
+  (matches what `print({"a": 1});` already outputs).
+- Internal errors are unaffected: `try { 1 + "a"; } catch (e) { print(e); }`
+  still prints the exact same type-error string it always has, since
+  `_apply_binary_operator`'s `CinderRuntimeError(...)` call (like the
+  ~430 others) never passes `value=`, so `error.value` still equals
+  `error.message` there.
+- `test_throw_inside_nested_call_reports_call_stack` and
+  `test_finally_runs_before_throw_propagates_uncaught` still pass
+  unmodified — call-stack frames and `finally` ordering are untouched.
+- Full test suite passes.
+
+Likely files: `cinder/errors.py` (`CinderRuntimeError`, search `class
+CinderRuntimeError`), `cinder/interpreter.py` (`ThrowStmt` branch of
+`execute`, search `if isinstance(stmt, ThrowStmt):`; `_execute_try`,
+search `def _execute_try`), `tests/test_interpreter.py` (`class
+TestThrowStatement`, search that name — delete
+`test_throw_non_string_raises_type_error`, add new tests for the
+non-string throw/catch cases above). Once merged, `README.md`'s
+error-handling bullet needs a mention that `throw`/`catch` carry any
+value now (not just strings), its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -159,39 +159,42 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
+`is_vampire_number` (#359, a number whose decimal digits split into two
+equal-length "fangs" that multiply back to it, e.g. `1260 = 21 * 60`);
 an `else` clause on `for`-in loops (#358, the same Python-style
 loop-`else` #352 added for `while`, extended to the foreach form);
 `transpose` (#357, the arbitrary-column generalization of `unzip`'s
 fixed-two-column matrix transpose); `-` (difference) for maps (#356,
 key-based removal by direct analogy to `+`'s existing dict-merge
-branch); `is_pandigital` (#355, an integer whose decimal digits are
-exactly the ten digits `0`-`9` each appearing once). Guards in `match`
-arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
-three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
-recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+branch). Guards in `match` arms (`n if n > 0 => ...`) were attempted
+(PR #314) but closed after three straight `VERDICT: CHANGES REQUESTED`
+rounds, all the same recurring bug in the bare-arrow/guard `=>`
+disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
+postmortem and the suggested next approach; still not requeued.
 
 `BACKLOG.md` carries the active queue (restocked to 6 tasks this pass
-after `for`-in `else`, #358, landed and dropped it to 5, the floor):
-breadth — `is_vampire_number` — a number whose decimal digits split
-into two equal-length "fangs" that multiply back to it (e.g.
-`1260 = 21 * 60`) — and `is_trimorphic_number` — the cube-ending
-analog of `is_automorphic`'s own square-ending check (e.g.
-`24 ** 3 = 13824`, which ends in `24`); depth — an `else` clause on
-`do`-`while` loops, continuing the loop-`else` arc #352 started —
-`while` (#352) and `for`-in (#358) both have theirs, leaving
-`do`-`while` and the C-style `for` unaddressed; breadth —
-`is_munchausen_number` — a number equal to the sum of each digit
-raised to its own power (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the
-digit-to-its-own-power sibling of `is_strong_number`'s digit-factorial
-question; depth — a `-` (difference) operator for lists, the
-set-style list-list sibling of the map-map `-` branch #356 added,
-mirroring the existing `difference()` builtin's set semantics; depth
-(added this pass) — an `else` clause on the C-style
-`for (init; cond; step)` loop, closing out the loop-`else` arc across
-all four loop kinds once it and the `do`-`while` task above both land.
-`main` is green (3981 tests), PR queue empty.
+after `is_vampire_number`, #359, landed and dropped it to 5, the
+floor): breadth — `is_trimorphic_number` — the cube-ending analog of
+`is_automorphic`'s own square-ending check (e.g. `24 ** 3 = 13824`,
+which ends in `24`); depth — an `else` clause on `do`-`while` loops,
+continuing the loop-`else` arc #352 started — `while` (#352) and
+`for`-in (#358) both have theirs, leaving `do`-`while` and the C-style
+`for` unaddressed; breadth — `is_munchausen_number` — a number equal
+to the sum of each digit raised to its own power (e.g.
+`3435 = 3^3 + 4^4 + 3^3 + 5^5`), the digit-to-its-own-power sibling of
+`is_strong_number`'s digit-factorial question; depth — a `-`
+(difference) operator for lists, the set-style list-list sibling of
+the map-map `-` branch #356 added, mirroring the existing
+`difference()` builtin's set semantics; depth — an `else` clause on
+the C-style `for (init; cond; step)` loop, closing out the loop-`else`
+arc across all four loop kinds once it and the `do`-`while` task above
+both land; depth (added this pass) — `throw`/`catch` carry any Cinder
+value, not just strings — discovered while grooming this pass: today
+`throw {"a": 1};` doesn't just get rejected, the rejection's own error
+message gets caught and misbound to `e`, so `e`'s field access blows
+up on an unrelated string-indexing error instead of a clean type
+error. See task 6 in `BACKLOG.md` for the exact repro and fix.
+`main` is green (3995 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

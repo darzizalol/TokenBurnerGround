@@ -559,7 +559,17 @@ class ForCStmt:
     """Classic three-clause `for (init; cond; step) { ... }`, distinct from
     the foreach `ForStmt` above. `init`/`step` are `None` when their clause
     is empty (`for (;;) { ... }` is a valid infinite loop); `condition` is
-    `None` when omitted, treated as always-true at execution time."""
+    `None` when omitted, treated as always-true at execution time.
+
+    `else_branch` is `None` unless the loop carries a trailing
+    `else { ... }` clause; when present, it runs exactly once, when the
+    condition becomes false *without* an intervening `break` — including
+    immediately, if the condition was already false (or omitted, which
+    never happens on its own since an omitted condition is always-true) —
+    mirroring `ForStmt`/`WhileStmt`'s own `else_branch`. `continue` does
+    not skip it (only `break` does); an uncaught exception, `return`, or
+    propagating labeled `break`/`continue` from the body also skips it.
+    """
 
     init: "Stmt | None"
     condition: "Expr | None"
@@ -568,6 +578,7 @@ class ForCStmt:
     line: int
     column: int
     label: "str | None" = None
+    else_branch: "Stmt | None" = None
 
 
 @dataclass(frozen=True)

@@ -158,43 +158,46 @@ lost, it is exactly what `CHANGELOG.md` (merge order) and this file's
 own git history already preserve; this section only needs to state
 where things stand right now.
 
-Recently landed (see `CHANGELOG.md` for the full list, newest first): a
-`-` (difference) operator for lists (#363, the set-style list-list
-sibling of the map-map `-` branch #356 added); `is_munchausen_number`
-(#362, a number equal to the sum of each digit raised to its own power,
-e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`, the digit-to-its-own-power sibling
-of `is_strong_number`'s digit-factorial question); an `else` clause on
-`do`-`while` loops (#361, the same Python-style loop-`else` #352 started
-for `while`, now on every loop kind but the C-style `for`). Guards in
-`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
-after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
-recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
-next approach; still not requeued.
+Recently landed (see `CHANGELOG.md` for the full list, newest first): an
+`else` clause on C-style `for (init; cond; step)` loops (#364, closing
+out the loop-`else` arc across all four loop kinds — `while` #352,
+`for`-in #358, `do`-`while` #361, C-style `for` #364); a `-`
+(difference) operator for lists (#363, the set-style list-list sibling
+of the map-map `-` branch #356 added); `is_munchausen_number` (#362, a
+number equal to the sum of each digit raised to its own power, e.g.
+`3435 = 3^3 + 4^4 + 3^3 + 5^5`, the digit-to-its-own-power sibling of
+`is_strong_number`'s digit-factorial question). Guards in `match` arms
+(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
+straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug
+in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
+`## Graveyard` for the full postmortem and the suggested next approach;
+still not requeued.
 
 `BACKLOG.md` carries the active queue (restocked to 5 tasks this pass
-after `is_munchausen_number` #362 and list-`-` #363 both landed and
-dropped it to 3, below the floor): depth — an `else` clause on the
-C-style `for (init; cond; step)` loop, the last loop kind in the
-loop-`else` arc now that list-`-` has landed; depth — `throw`/`catch`
-carry any Cinder value, not just strings — today `throw {"a": 1};`
-doesn't just get rejected, the rejection's own error message gets caught
-and misbound to `e`, so `e`'s field access blows up on an unrelated
-string-indexing error instead of a clean type error; breadth —
-`is_keith_number` — a number that reappears in the digit-count-wide
-Fibonacci-style recurrence seeded by its own decimal digits (e.g. `197`:
-seed `1, 9, 7`, then `17, 33, 57, 107, 197`), the digit-recurrence
-sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending
-questions; depth — a `&` (intersection) operator for lists, the
-set-style counterpart to list `-`, mirroring the existing
-`intersection()` builtin's set semantics; breadth (added this pass) —
-`run_length_encode`/`run_length_decode`, the classic consecutive-run
-compression pair, expressed as the `(value, count)`-pair cousin of the
-existing `group_consecutive` builtin — restocking the backlog back to 5,
-alternating to breadth after the depth-heavy tail (C-style `for`-`else`
-... list `&`) that built up over the last two passes. See task 5 in
-`BACKLOG.md` for the exact repro and fix.
-`main` is green (4036 tests), PR queue empty.
+after C-style `for`-`else` #364 landed and dropped it to 4, below the
+floor): depth — `throw`/`catch` carry any Cinder value, not just
+strings — today `throw {"a": 1};` doesn't just get rejected, the
+rejection's own error message gets caught and misbound to `e`, so `e`'s
+field access blows up on an unrelated string-indexing error instead of
+a clean type error; breadth — `is_keith_number` — a number that
+reappears in the digit-count-wide Fibonacci-style recurrence seeded by
+its own decimal digits (e.g. `197`: seed `1, 9, 7`, then
+`17, 33, 57, 107, 197`), the digit-recurrence sibling of
+`is_automorphic`/`is_trimorphic_number`'s digit-ending questions; depth
+— a `&` (intersection) operator for lists, the set-style counterpart to
+list `-`, mirroring the existing `intersection()` builtin's set
+semantics; breadth — `run_length_encode`/`run_length_decode`, the
+classic consecutive-run compression pair, expressed as the
+`(value, count)`-pair cousin of the existing `group_consecutive`
+builtin; depth (added this pass) — a `&` (intersection) operator for
+maps, the key-based counterpart to map `-`, mirroring map `-`'s own
+"keys decide, left's values win" convention (list `&`'s own Scope note
+called this out explicitly as a deferred future task, not something it
+covers) — restocking the backlog back to 5, keeping the established
+depth/breadth alternation now that the loop-`else` arc's depth-heavy
+tail is closed out. See task 5 in `BACKLOG.md` for the exact repro and
+fix.
+`main` is green (4058 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

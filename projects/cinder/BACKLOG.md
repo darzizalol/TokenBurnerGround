@@ -252,10 +252,10 @@ both to the Architect's next grooming pass, not this task.
 
 ## 3. Language: `&` (intersection) operator for lists (set-style, mirrors list `-`)
 
-Build: PR #356 gave `-` a map-map branch (key-based removal), and task 2
-in this file gives it a list-list branch too (set-style difference,
-`[1, 2, 3] - [2]` is `[1, 3]`) — mirroring the existing `difference()`
-builtin's set semantics. Cinder's list builtins also already answer the
+Build: PR #356 gave `-` a map-map branch (key-based removal), and PR #363
+gave it a list-list branch too (set-style difference, `[1, 2, 3] - [2]`
+is `[1, 3]`) — mirroring the existing `difference()` builtin's set
+semantics. Cinder's list builtins also already answer the
 intersection question as a function (`intersection()`,
 `cinder/builtins.py`, search `def _intersection`: dedupes the left
 list, keeps only elements also present in the right, both lists
@@ -343,13 +343,12 @@ Acceptance criteria (mirror `TestMapDifference`/task 2's
 Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
 `AMP`/`PIPE`/`CARET`/`LSHIFT`/`RSHIFT` dispatch, search
 `TokenType.AMP,`), `tests/test_interpreter.py` (new `class
-TestListIntersection`, modeled on `class TestMapDifference` or task 2's
-`TestListDifference`, search either name, for the test shapes above).
-Once merged, `README.md`'s language-operators bullet needs a list-`&`
-mention next to the existing map/list `-` ones, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass,
-not this task.
+TestListIntersection`, modeled on `class TestMapDifference`, search that
+name, for the test shapes above). Once merged, `README.md`'s
+language-operators bullet needs a list-`&` mention next to the existing
+map/list `-` ones, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
 
 ---
 
@@ -479,6 +478,102 @@ merged, `README.md`'s Builtins bullet needs `run_length_encode`/
 roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
 section needs refreshing — leave both to the Architect's next grooming
 pass, not this task.
+
+---
+
+## 5. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`)
+
+Build: task 3 above gives `&` a list-list branch, and the map side of
+`-` (PR #356) already established what a key-based map operator looks
+like: `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}` — keys present in the
+right map are dropped from the left, *values on the right are ignored
+entirely* (`{"a": 1} - {"a": 99}` still removes `"a"` even though the
+values don't match). `&` has no map meaning at all today — like list
+`&` before task 3, it falls straight through to `_bitwise_op`, which
+rejects any non-int operand. Task 3's own Scope note calls this out
+explicitly as deferred, not in-scope there: "map-map `&` intersection
+is a plausible future task, not this one." This task is that task, once
+task 3 has landed (both edit the same dispatch block in
+`_apply_binary_operator`, so task 3's list-list branch must be merged
+first — this task's diff assumes it's already there). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print({"a": 1, "b": 2} & {"a": 1, "c": 3});'
+# -> <eval>:1:24: unsupported operand types for '&': map and map
+```
+
+Semantics: key-based intersection, keeping the *left* map's value for
+every key present in both — the same "keys decide, left's values win"
+convention map `-` already set, not a value-equality check. So
+`{"a": 1, "b": 2} & {"a": 99, "c": 3}` is `{"a": 1}`: key `"a"` is kept
+(present on both sides) with its value taken from the left, `"b"` is
+dropped (left-only, not present on the right), `"c"` is dropped
+(right-only, not present on the left), and the right map's `"a": 99`
+never surfaces.
+
+Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
+above the list-list `AMP` branch task 3 adds (search `if op ==
+TokenType.AMP and isinstance(left, list)`) — add a dict-dict special
+case first, mirroring `MINUS`'s existing dict-dict branch just above in
+the same method (search `if isinstance(left, dict) and isinstance(right,
+dict):` under the `MINUS` case):
+```python
+        if op == TokenType.AMP and isinstance(left, dict) and isinstance(right, dict):
+            return {key: value for key, value in left.items() if key in right}
+        if op == TokenType.AMP and isinstance(left, list) and isinstance(right, list):
+```
+(Only the new dict-dict `if` line is added, directly above task 3's
+list-list `if`; that line's own `and isinstance(left, list)` check
+already means it never fires for dicts, so the two branches can't
+collide — order between them doesn't actually matter, but placing the
+dict check first keeps `AMP`'s branches in the same left-to-right
+type order `MINUS`'s dict-then-list branches already use, two lines
+above.)
+
+The compound-assignment desugaring (`&=`) already works for free on a
+map target once `&` itself handles maps, exactly as `-=` does for maps
+today — no separate wiring needed.
+
+Acceptance criteria (mirror `TestMapDifference`'s shape in
+`tests/test_interpreter.py`, search that name):
+- `{"a": 1, "b": 2} & {"a": 1, "c": 3}` is `{"a": 1}` — the basic case.
+- `{"a": 1, "b": 2} & {"a": 99}` is `{"a": 1}` — right-side value is
+  ignored, left's value wins (mirrors `test_right_value_is_ignored` for
+  `-`).
+- `{"a": 1} & {}` is `{}` and `{} & {"a": 1}` is `{}` — either side
+  empty empties the result.
+- `{"a": 1, "b": 2} & {"a": 1, "b": 2}` is `{"a": 1, "b": 2}` — full
+  overlap keeps everything.
+- `{"a": 1, "b": 2} & {"c": 3}` is `{}` — no shared keys.
+- Does not mutate inputs: `let m = {"a": 1, "b": 2}; let c = m & {"a": 1};`
+  leaves `m` as `{"a": 1, "b": 2}` and `c` as `{"a": 1}`.
+- Left-associative: `{"a": 1, "b": 2, "c": 3} & {"a": 1, "b": 2} & {"b": 2}`
+  is `{"b": 2}`.
+- Compound assignment works: `let m = {"a": 1, "b": 2}; m &= {"a": 1};`
+  leaves `m` as `{"a": 1}` (identifier target); also test an index
+  target and a dot target, mirroring `TestMapDifference`'s own
+  `test_compound_assignment_on_index_target`/`_on_dot_target`.
+- `2 & 3` (both ints) is still `2` — existing bitwise-AND behavior is
+  unchanged, a regression guard.
+- `[1, 2] & [1]` (both lists, from task 3) is still `[1]` — confirms
+  the new dict-dict branch doesn't shadow or reorder ahead of the
+  list-list branch it sits next to.
+- `{"a": 1} & 3` and `3 & {"a": 1}` still raise `CinderRuntimeError`
+  matching `"unsupported operand types for '&': ..."` — mixed
+  map/non-map operands remain a type error.
+- `{"a": 1} & [1, 2]` also raises the same type error — map/list
+  operands are unsupported (neither branch's `isinstance` pair
+  matches).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s `AMP`
+dispatch, search `if op == TokenType.AMP and isinstance(left, list)`,
+added by task 3), `tests/test_interpreter.py` (new `class
+TestMapIntersection`, modeled on `class TestMapDifference`, search that
+name, for the test shapes above). Once merged, `README.md`'s
+language-operators bullet needs a map-`&` mention next to the list-`&`
+one task 3 adds, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
 
 ---
 

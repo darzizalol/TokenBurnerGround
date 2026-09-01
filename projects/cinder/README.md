@@ -121,9 +121,11 @@ while (i < 10) {
   loop exits normally — including immediately, if the condition was
   already false — without an intervening `break`; `continue` does not
   skip it, only `break` does; the same clause is also available on the
-  foreach `for`-in form (`for x in xs { ... } else { ... }`) and on
-  `do`-`while` (`do { ... } while (cond) else { ... }`), with the
-  C-style `for` still to come), `do { ... } while (cond);`,
+  foreach `for`-in form (`for x in xs { ... } else { ... }`), on
+  `do`-`while` (`do { ... } while (cond) else { ... }`), and on the
+  C-style `for` (`for (init; cond; step) { ... } else { ... }`, running
+  in the loop's own scope so closures see the final `init`-declared
+  binding) — every loop kind now has it), `do { ... } while (cond);`,
   `for NAME in EXPR { ... }` over lists, strings (character-by-character),
   maps (over keys), and range literals (`a..b`, sugar over the existing
   `range()` builtin usable directly as a loop source, e.g. `for i in
@@ -611,21 +613,20 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a `-` (difference)
-operator for lists (PR #363, `[1, 2, 3] - [2]` is `[1, 3]`), the
-set-style list-list sibling of the map-map `-` branch PR #356 added,
-mirroring the existing `difference()` builtin's set semantics — and
-before that `is_munchausen_number` (PR #362) — a number equal to the
-sum of each digit raised to its own power (e.g.
+Actively developed, nightly. Recently landed: an `else` clause on
+C-style `for (init; cond; step)` loops (PR #364,
+`for (init; cond; step) { ... } else { ... }`), closing out the
+loop-`else` arc across all four loop kinds (`while` #352, `for`-in
+#358, `do`-`while` #361, C-style `for` #364) — and before that a `-`
+(difference) operator for lists (PR #363, `[1, 2, 3] - [2]` is
+`[1, 3]`), the set-style list-list sibling of the map-map `-` branch
+PR #356 added, mirroring the existing `difference()` builtin's set
+semantics — and before that `is_munchausen_number` (PR #362) — a
+number equal to the sum of each digit raised to its own power (e.g.
 `3435 = 3^3 + 4^4 + 3^3 + 5^5`), the digit-to-its-own-power sibling of
-`is_strong_number`'s digit-factorial question — and before that the
-`else` clause on `do`-`while` loops (PR #361,
-`do { ... } while (cond) else { ... }`), closing out the loop-`else`
-arc #352 started for every loop kind except the C-style `for`. See
+`is_strong_number`'s digit-factorial question. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): the same `else` clause
-one last time on the C-style `for (init; cond; step)` loop, closing out
-the loop-`else` arc across all four loop kinds — letting `throw`/`catch`
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): letting `throw`/`catch`
 carry any Cinder value instead of strings only (today
 `throw {"a": 1};` doesn't just get rejected, the rejection's own error
 message gets caught and misbound to `e`, so accessing a field on it
@@ -633,10 +634,17 @@ blows up with an unrelated error) — `is_keith_number` — a number that
 reappears in the digit-count-wide Fibonacci-style recurrence seeded by
 its own decimal digits (e.g. `197`: seed `1, 9, 7`, then
 `17, 33, 57, 107, 197`), the digit-recurrence sibling of
-`is_automorphic`/`is_trimorphic_number`'s digit-ending questions — and
+`is_automorphic`/`is_trimorphic_number`'s digit-ending questions —
 a `&` (intersection) operator for lists (`[1, 2, 3] & [2, 3, 4]` is
 `[2, 3]`), the set-style counterpart to the list `-` operator above,
-mirroring the existing `intersection()` builtin's set semantics.
+mirroring the existing `intersection()` builtin's set semantics —
+`run_length_encode`/`run_length_decode`, the classic consecutive-run
+compression pair (`run_length_encode([1, 1, 2, 2, 2, 3])` is
+`[[1, 2], [2, 3], [3, 1]]`), expressed as the `(value, count)`-pair
+cousin of the existing `group_consecutive` builtin — and a `&`
+(intersection) operator for maps (`{"a": 1, "b": 2} & {"a": 1, "c": 3}`
+is `{"a": 1}`), the key-based counterpart to map `-` above, mirroring
+map `-`'s own "keys decide, left's values win" convention.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

@@ -3195,6 +3195,70 @@ class TestForCStatement(unittest.TestCase):
         self.assertEqual(env.get("c"), 2)
 
 
+class TestForCElse(unittest.TestCase):
+    def test_for_c_else_runs_on_normal_completion(self):
+        env = run(
+            "let x; let done = false; "
+            "for (let i = 0; i < 3; i = i + 1) { x = i; } else { done = true; }"
+        )
+        self.assertTrue(env.get("done"))
+
+    def test_for_c_else_runs_when_condition_false_before_first_iteration(self):
+        env = run("let done = false; for (; false;) { } else { done = true; }")
+        self.assertTrue(env.get("done"))
+
+    def test_for_c_else_skipped_by_break(self):
+        env = run(
+            "let i = 0; let ran = false; "
+            "for (;; i = i + 1) { if (i == 2) { break; } } else { ran = true; }"
+        )
+        self.assertFalse(env.get("ran"))
+
+    def test_for_c_else_not_skipped_by_continue(self):
+        env = run(
+            "let ran = false; "
+            "for (let i = 0; i < 3; i = i + 1) { if (i == 1) { continue; } } "
+            "else { ran = true; }"
+        )
+        self.assertTrue(env.get("ran"))
+
+    def test_for_c_else_skipped_by_labeled_break(self):
+        env = run(
+            "let ran = false; "
+            "outer: for (let i = 0; i < 1; i = i + 1) { "
+            "  for (let j = 0; j < 1; j = j + 1) { break outer; } "
+            "} else { ran = true; }"
+        )
+        self.assertFalse(env.get("ran"))
+
+    def test_for_c_else_skipped_by_return(self):
+        env = run(
+            "fn f() { for (let i = 0; i < 1; i = i + 1) { return 1; } else { return 2; } } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), 1)
+
+    def test_for_c_without_else_still_behaves_as_before(self):
+        env = run("let x; for (let i = 0; i < 2; i = i + 1) { x = i; }")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_for_c_else_unbraced_statement_runs(self):
+        env = run("let x = 0; for (let i = 0; i < 1; i = i + 1) { } else x = 1;")
+        self.assertEqual(env.get("x"), 1)
+
+    def test_for_c_else_sees_final_init_declared_binding(self):
+        from cinder.builtins import create_global_environment
+
+        env = run(
+            "let fns = []; "
+            "for (let i = 0; i < 3; i = i + 1) { } "
+            "else { fns = push(fns, fn() { return i; }); } "
+            "let result = fns[0]();",
+            create_global_environment(),
+        )
+        self.assertEqual(env.get("result"), 3)
+
+
 class TestBreakContinue(unittest.TestCase):
     def test_break_exits_while_loop_immediately(self):
         env = run(

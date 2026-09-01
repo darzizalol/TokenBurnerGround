@@ -4213,10 +4213,6 @@ class TestWhileElse(unittest.TestCase):
         self.assertIsInstance(stmt.then_branch, WhileStmt)
         self.assertIsNotNone(stmt.then_branch.else_branch)
 
-    def test_for_c_else_raises(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("for (;;) { } else { }")
-
 
 class TestDoWhileElse(unittest.TestCase):
     def test_do_while_else_parses_else_branch(self):
@@ -4273,6 +4269,31 @@ class TestForElse(unittest.TestCase):
         self.assertIsNone(stmt.else_branch)
         self.assertIsInstance(stmt.then_branch, ForStmt)
         self.assertIsNotNone(stmt.then_branch.else_branch)
+
+
+class TestForCElse(unittest.TestCase):
+    def test_for_c_else_parses_else_branch(self):
+        stmts = parse_stmts("for (;;) { print(1); break; } else { print(2); }")
+        self.assertEqual(len(stmts), 1)
+        self.assertEqual(
+            stmt_shape(stmts[0].else_branch),
+            ("Block", [("ExprStmt", ("Call", ("Identifier", "print"), [("Literal", 2)]))]),
+        )
+
+    def test_for_c_without_else_has_none_else_branch(self):
+        stmts = parse_stmts("for (;;) { break; }")
+        self.assertIsNone(stmts[0].else_branch)
+
+    def test_for_c_else_binds_to_for_c_not_enclosing_if(self):
+        stmt = parse_stmts("if (true) for (;;) { break; } else { print(1); }")[0]
+        self.assertIsNone(stmt.else_branch)
+        self.assertIsInstance(stmt.then_branch, ForCStmt)
+        self.assertIsNotNone(stmt.then_branch.else_branch)
+
+    def test_for_c_else_unbraced_statement_parses(self):
+        stmts = parse_stmts("for (;;) { break; } else x = 1;")
+        self.assertEqual(len(stmts), 1)
+        self.assertIsNotNone(stmts[0].else_branch)
 
 
 class TestBreakContinue(unittest.TestCase):

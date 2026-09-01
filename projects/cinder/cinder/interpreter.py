@@ -626,6 +626,7 @@ class Interpreter:
         loop_env = Environment(env)
         if stmt.init is not None:
             self.execute(stmt.init, loop_env)
+        broke = False
         while True:
             iter_env = Environment(env)
             iter_env._values.update(loop_env._values)
@@ -639,6 +640,7 @@ class Interpreter:
             except _BreakSignal as signal:
                 if signal.label is not None and signal.label != stmt.label:
                     raise
+                broke = True
                 break
             except _ContinueSignal as signal:
                 if signal.label is not None and signal.label != stmt.label:
@@ -647,6 +649,8 @@ class Interpreter:
             loop_env._frozen.update(iter_env._frozen)
             if stmt.step is not None:
                 self.execute(stmt.step, loop_env)
+        if not broke and stmt.else_branch is not None:
+            self.execute(stmt.else_branch, loop_env)
 
     def _evaluate_call(self, expr: Call, env: Environment) -> object:
         callee = self.evaluate(expr.callee, env)

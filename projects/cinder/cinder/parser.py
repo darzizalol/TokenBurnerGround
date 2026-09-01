@@ -748,8 +748,19 @@ class Parser:
         self._loop_labels.append(label)
         body = self._block()
         self._loop_labels.pop()
+        else_branch = None
+        if self._check(TokenType.ELSE):
+            self._advance()
+            else_branch = self._statement()
         return ForCStmt(
-            init, condition, step, body, for_token.line, for_token.column, label
+            init,
+            condition,
+            step,
+            body,
+            for_token.line,
+            for_token.column,
+            label,
+            else_branch=else_branch,
         )
 
     def _fn_declaration(self) -> Stmt:

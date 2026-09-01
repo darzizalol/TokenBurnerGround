@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `throw`/`catch` carry any value, not just strings
+## 1. Language: `throw`/`catch` carry any value, not just strings [claimed 2026-09-01T18:57:32Z]
 
 Build: `throw` (`cinder/interpreter.py`, search `if isinstance(stmt,
 ThrowStmt):`) currently rejects any thrown value that isn't a `str`, and

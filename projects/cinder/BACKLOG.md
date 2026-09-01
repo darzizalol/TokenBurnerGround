@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_keith_number` — digit-recurrence self-generating number
+## 1. Standard library: `is_keith_number` — digit-recurrence self-generating number [claimed 2026-09-01T19:11:19Z]
 
 Build: Cinder already has several "does a number reproduce itself under
 some digit-driven process" predicates — `is_automorphic`/

@@ -1268,6 +1268,16 @@ class Interpreter:
         if op == TokenType.MINUS:
             if isinstance(left, dict) and isinstance(right, dict):
                 return {key: value for key, value in left.items() if key not in right}
+            if isinstance(left, list) and isinstance(right, list):
+                deduped: list = []
+                for element in left:
+                    if not any(values_equal(element, kept) for kept in deduped):
+                        deduped.append(element)
+                return [
+                    element
+                    for element in deduped
+                    if not any(values_equal(element, other) for other in right)
+                ]
             return self._numeric_op(operator, left, right, lambda a, b: a - b)
         if op == TokenType.STAR:
             repeated = self._repeat_op(left, right)

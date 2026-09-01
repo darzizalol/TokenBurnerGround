@@ -2031,6 +2031,14 @@ def _is_automorphic(arguments: list, line: int, column: int) -> object:
     return str(value * value).endswith(str(value))
 
 
+def _is_trimorphic_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_trimorphic_number", arguments, 1, line, column)
+    value = _require_int("is_trimorphic_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    return str(value ** 3).endswith(str(value))
+
+
 def _is_kaprekar(arguments: list, line: int, column: int) -> object:
     _require_arity("is_kaprekar", arguments, 1, line, column)
     value = _require_int("is_kaprekar", arguments[0], line, column)
@@ -4445,6 +4453,7 @@ _BUILTINS = {
     "nth_abundant": _nth_abundant,
     "is_deficient": _is_deficient,
     "is_automorphic": _is_automorphic,
+    "is_trimorphic_number": _is_trimorphic_number,
     "is_kaprekar": _is_kaprekar,
     "nth_kaprekar": _nth_kaprekar,
     "is_harshad": _is_harshad,

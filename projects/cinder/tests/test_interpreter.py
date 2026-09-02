@@ -615,6 +615,77 @@ class TestListIntersection(unittest.TestCase):
             evaluate('[1, 2] & {"a": 1}')
 
 
+class TestMapIntersection(unittest.TestCase):
+    def test_basic_case(self):
+        self.assertEqual(
+            evaluate('{"a": 1, "b": 2} & {"a": 1, "c": 3}'), {"a": 1}
+        )
+
+    def test_right_value_is_ignored(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} & {"a": 99}'), {"a": 1})
+
+    def test_empty_right_empties_result(self):
+        self.assertEqual(evaluate('{"a": 1} & {}'), {})
+
+    def test_empty_left_empties_result(self):
+        self.assertEqual(evaluate('{} & {"a": 1}'), {})
+
+    def test_full_overlap_keeps_everything(self):
+        self.assertEqual(
+            evaluate('{"a": 1, "b": 2} & {"a": 1, "b": 2}'), {"a": 1, "b": 2}
+        )
+
+    def test_no_shared_keys(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} & {"c": 3}'), {})
+
+    def test_does_not_mutate_inputs(self):
+        env = run('let m = {"a": 1, "b": 2}; let c = m & {"a": 1};')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+        self.assertEqual(env.get("c"), {"a": 1})
+
+    def test_left_associative(self):
+        env = run(
+            'let m = {"a": 1, "b": 2, "c": 3} & {"a": 1, "b": 2} & {"b": 2};'
+        )
+        self.assertEqual(env.get("m"), {"b": 2})
+
+    def test_compound_assignment_on_identifier(self):
+        env = run('let m = {"a": 1, "b": 2}; m &= {"a": 1};')
+        self.assertEqual(env.get("m"), {"a": 1})
+
+    def test_compound_assignment_on_index_target(self):
+        env = run('let xs = [{"a": 1, "b": 2}]; xs[0] &= {"a": 1};')
+        self.assertEqual(env.get("xs"), [{"a": 1}])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"m": {"a": 1, "b": 2}}; obj.m &= {"a": 1};')
+        self.assertEqual(env.get("obj"), {"m": {"a": 1}})
+
+    def test_int_and_int_still_bitwise_and(self):
+        self.assertEqual(evaluate("2 & 3"), 2)
+
+    def test_list_and_list_still_works(self):
+        self.assertEqual(evaluate("[1, 2] & [1]"), [1])
+
+    def test_map_and_int_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '&': map and int"
+        ):
+            evaluate('{"a": 1} & 3')
+
+    def test_int_and_map_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '&': int and map"
+        ):
+            evaluate('3 & {"a": 1}')
+
+    def test_map_and_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '&': map and list"
+        ):
+            evaluate('{"a": 1} & [1, 2]')
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

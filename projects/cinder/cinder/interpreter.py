@@ -1305,6 +1305,8 @@ class Interpreter:
             return not contains_value(right, left, operator.line, operator.column)
         if op == TokenType.PIPE_ARROW:
             return call_value(right, [left], operator.line, operator.column)
+        if op == TokenType.AMP and isinstance(left, dict) and isinstance(right, dict):
+            return {key: value for key, value in left.items() if key in right}
         if op == TokenType.AMP and isinstance(left, list) and isinstance(right, list):
             deduped: list = []
             for element in left:

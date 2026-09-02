@@ -615,6 +615,71 @@ class TestListIntersection(unittest.TestCase):
             evaluate('[1, 2] & {"a": 1}')
 
 
+class TestListUnion(unittest.TestCase):
+    def test_basic_case(self):
+        self.assertEqual(evaluate("[1, 2, 3] | [2, 3, 4]"), [1, 2, 3, 4])
+
+    def test_duplicates_on_either_side_deduped(self):
+        self.assertEqual(evaluate("[1, 2, 2, 3] | [2]"), [1, 2, 3])
+
+    def test_empty_right_leaves_left_deduped(self):
+        self.assertEqual(evaluate("[1, 2, 3] | []"), [1, 2, 3])
+
+    def test_empty_left_leaves_right_deduped(self):
+        self.assertEqual(evaluate("[] | [1, 2]"), [1, 2])
+
+    def test_full_overlap_keeps_everything_deduped(self):
+        self.assertEqual(evaluate("[1, 2] | [1, 2]"), [1, 2])
+
+    def test_no_overlap_is_concatenation(self):
+        self.assertEqual(evaluate("[1, 2] | [3, 4]"), [1, 2, 3, 4])
+
+    def test_does_not_mutate_inputs(self):
+        env = run("let a = [1, 2, 3]; let c = a | [4];")
+        self.assertEqual(env.get("a"), [1, 2, 3])
+        self.assertEqual(env.get("c"), [1, 2, 3, 4])
+
+    def test_left_associative(self):
+        env = run("let xs = [1] | [2] | [1, 3];")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_compound_assignment_on_identifier(self):
+        env = run("let xs = [1, 2]; xs |= [2, 3];")
+        self.assertEqual(env.get("xs"), [1, 2, 3])
+
+    def test_compound_assignment_on_index_target(self):
+        env = run("let xs = [[1, 2]]; xs[0] |= [2, 3];")
+        self.assertEqual(env.get("xs"), [[1, 2, 3]])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"l": [1, 2]}; obj.l |= [2, 3];')
+        self.assertEqual(env.get("obj"), {"l": [1, 2, 3]})
+
+    def test_uses_values_equal_not_native_equality(self):
+        self.assertEqual(evaluate("[1, true, 2] | [true, 3]"), [1, True, 2, 3])
+
+    def test_int_or_int_still_bitwise_or(self):
+        self.assertEqual(evaluate("2 | 3"), 3)
+
+    def test_list_or_int_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '|': list and int"
+        ):
+            evaluate("[1, 2] | 3")
+
+    def test_int_or_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '|': int and list"
+        ):
+            evaluate("2 | [1, 2]")
+
+    def test_list_or_map_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '|': list and map"
+        ):
+            evaluate('[1, 2] | {"a": 1}')
+
+
 class TestMapIntersection(unittest.TestCase):
     def test_basic_case(self):
         self.assertEqual(

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
+## 1. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`) [claimed 2026-09-02T19:46:05Z]
 
 Build: tasks 1/3 above give list-list `&`/`|` infix spellings of the
 existing `intersection()`/`union()` builtins, and list-list `-` (an

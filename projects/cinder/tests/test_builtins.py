@@ -9363,6 +9363,99 @@ class TestGroupConsecutive(unittest.TestCase):
             run("group_consecutive([1, 2], 3);")
 
 
+class TestRunLengthEncode(unittest.TestCase):
+    def test_run_length_encode_basic_runs(self):
+        env = run("let result = run_length_encode([1, 1, 2, 2, 2, 3]);")
+        self.assertEqual(env.get("result"), [[1, 2], [2, 3], [3, 1]])
+
+    def test_run_length_encode_empty_list(self):
+        env = run("let result = run_length_encode([]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_run_length_encode_single_element(self):
+        env = run("let result = run_length_encode([5]);")
+        self.assertEqual(env.get("result"), [[5, 1]])
+
+    def test_run_length_encode_no_runs_longer_than_one(self):
+        env = run("let result = run_length_encode([1, 2, 3]);")
+        self.assertEqual(env.get("result"), [[1, 1], [2, 1], [3, 1]])
+
+    def test_run_length_encode_uses_values_equal_not_native_eq(self):
+        env = run("let result = run_length_encode([1, true, true]);")
+        self.assertEqual(env.get("result"), [[1, 1], [True, 2]])
+
+    def test_run_length_encode_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("run_length_encode(5);")
+
+    def test_run_length_encode_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("run_length_encode();")
+        with self.assertRaises(CinderRuntimeError):
+            run("run_length_encode([1, 2], 3);")
+
+
+class TestRunLengthDecode(unittest.TestCase):
+    def test_run_length_decode_basic_pairs(self):
+        env = run("let result = run_length_decode([[1, 2], [2, 3], [3, 1]]);")
+        self.assertEqual(env.get("result"), [1, 1, 2, 2, 2, 3])
+
+    def test_run_length_decode_empty_list(self):
+        env = run("let result = run_length_decode([]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_run_length_decode_zero_count_contributes_nothing(self):
+        env = run("let result = run_length_decode([[5, 0]]);")
+        self.assertEqual(env.get("result"), [])
+
+    def test_run_length_decode_round_trips_with_encode(self):
+        for xs in ("[]", "[1]", "[1, 1, 2, 2, 2, 3]", '["a", "a", "b"]'):
+            env = run(f"let xs = {xs}; let result = run_length_decode(run_length_encode(xs));")
+            self.assertEqual(env.get("result"), env.get("xs"))
+
+    def test_run_length_decode_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("run_length_decode(5);")
+
+    def test_run_length_decode_non_pair_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"run_length_decode\(\) requires a list of \[value, count\] "
+            r"pairs, got int at index 1",
+        ):
+            run("run_length_decode([[1, 2], 5]);")
+
+    def test_run_length_decode_wrong_pair_length_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"run_length_decode\(\) requires a list of \[value, count\] "
+            r"pairs, got list at index 0",
+        ):
+            run("run_length_decode([[1, 2, 3]]);")
+
+    def test_run_length_decode_non_int_count_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"run_length_decode\(\) requires an int count, got string at "
+            r"index 0",
+        ):
+            run('run_length_decode([[1, "a"]]);')
+
+    def test_run_length_decode_negative_count_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"run_length_decode\(\) requires a non-negative count, got -1 "
+            r"at index 0",
+        ):
+            run("run_length_decode([[1, -1]]);")
+
+    def test_run_length_decode_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("run_length_decode();")
+        with self.assertRaises(CinderRuntimeError):
+            run("run_length_decode([[1, 2]], 3);")
+
+
 class TestFlatten(unittest.TestCase):
     def test_flatten_one_level_of_nesting(self):
         env = run("let result = flatten([[1, 2], [3, 4]]);")

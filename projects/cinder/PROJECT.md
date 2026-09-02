@@ -159,26 +159,23 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`run_length_encode`/`run_length_decode` (#368, the classic
-consecutive-run compression pair, the `(value, count)`-pair cousin of
-the existing `group_consecutive` builtin); a `&` (intersection)
-operator for lists (#367, the set-style counterpart to list `-`,
-mirroring the existing `intersection()` builtin's set semantics);
-`is_keith_number` (#366, the digit-recurrence sibling of
-`is_automorphic`/`is_trimorphic_number`'s digit-ending questions).
-Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
-but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
-all the same recurring bug in the bare-arrow/guard `=>` disambiguation
-— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+a `&` (intersection) operator for maps (#369, the key-based
+counterpart to map `-`, mirroring map `-`'s own "keys decide, left's
+values win" convention); `run_length_encode`/`run_length_decode`
+(#368, the classic consecutive-run compression pair, the
+`(value, count)`-pair cousin of the existing `group_consecutive`
+builtin); a `&` (intersection) operator for lists (#367, the
+set-style counterpart to list `-`, mirroring the existing
+`intersection()` builtin's set semantics). Guards in `match` arms
+(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
+straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
+bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
+`## Graveyard` for the full postmortem and the suggested next
+approach; still not requeued.
 
 `BACKLOG.md` carries the active queue (restocked to 5 tasks this pass
-after `run_length_encode`/`run_length_decode` #368 landed and dropped
-it to 4, below the floor): depth — a `&` (intersection) operator for
-maps, the key-based counterpart to map `-`, mirroring map `-`'s own
-"keys decide, left's values win" convention (list `&`'s own Scope note
-called this out explicitly as a deferred future task, not something it
-covers); breadth — `is_luhn_valid`, a Luhn mod-10 checksum validator
+after map `&` intersection #369 landed and dropped it to 4, below the
+floor): breadth — `is_luhn_valid`, a Luhn mod-10 checksum validator
 for identifier-shaped digit strings (credit card numbers, IMEI
 numbers, ...), the checksum-algorithm sibling of the digit-recurrence
 predicates above, operating on a string rather than a numeric value;
@@ -188,14 +185,18 @@ dedupe-and-concatenate semantics; breadth — `is_polydivisible`, a
 digit-position predicate checking that every decimal prefix of a
 number is divisible by its own length (e.g. `381654729`, the classic
 pandigital example), the prefix-checksum sibling of `is_disarium`'s own
-digit-position math; depth (added this pass) — a `^` (symmetric
-difference) operator for lists, completing the set-operator family
-alongside `&`/`|`/`-` by mirroring the existing `symmetric_difference()`
-builtin's dedupe-both-sides semantics — restocking the backlog back to
-5, keeping the established depth/breadth alternation (the queue now
-runs depth, breadth, depth, breadth, depth). See task 5 in
-`BACKLOG.md` for the exact repro and fix.
-`main` is green (4109 tests), PR queue empty.
+digit-position math; depth — a `^` (symmetric difference) operator for
+lists, completing the set-operator family alongside `&`/`|`/`-` by
+mirroring the existing `symmetric_difference()` builtin's
+dedupe-both-sides semantics; breadth (added this pass) —
+`is_self_number`, the Colombian/self-number predicate (no smaller `m`
+generates `n` via `m + digit_sum(m) = n`), the plain-digit-sum,
+bounded-generator-search sibling that sits next to `is_happy_number`/
+`is_sad_number`'s sum-of-squares cycle detection — restocking the
+backlog back to 5, keeping the established depth/breadth alternation
+(the queue now runs breadth, depth, breadth, depth, breadth). See
+task 5 in `BACKLOG.md` for the exact repro and fix.
+`main` is green (4125 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

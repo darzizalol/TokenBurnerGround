@@ -4588,6 +4588,68 @@ class TestIsDisarium(unittest.TestCase):
             run("is_disarium();")
 
 
+class TestIsPolydivisible(unittest.TestCase):
+    def test_is_polydivisible_of_largest_pandigital_example(self):
+        self.assertEqual(
+            run("let result = is_polydivisible(381654729);").get("result"), True
+        )
+
+    def test_is_polydivisible_of_106_is_false(self):
+        self.assertEqual(
+            run("let result = is_polydivisible(106);").get("result"), False
+        )
+
+    def test_is_polydivisible_of_zero(self):
+        self.assertEqual(run("let result = is_polydivisible(0);").get("result"), True)
+
+    def test_is_polydivisible_of_nine(self):
+        self.assertEqual(run("let result = is_polydivisible(9);").get("result"), True)
+
+    def test_is_polydivisible_of_12(self):
+        self.assertEqual(run("let result = is_polydivisible(12);").get("result"), True)
+
+    def test_is_polydivisible_of_11_is_false(self):
+        self.assertEqual(
+            run("let result = is_polydivisible(11);").get("result"), False
+        )
+
+    def test_is_polydivisible_of_105(self):
+        self.assertEqual(
+            run("let result = is_polydivisible(105);").get("result"), True
+        )
+
+    def test_is_polydivisible_of_1230_is_false(self):
+        self.assertEqual(
+            run("let result = is_polydivisible(1230);").get("result"), False
+        )
+
+    def test_is_polydivisible_of_negative_is_false(self):
+        self.assertEqual(
+            run("let result = is_polydivisible(-381654729);").get("result"), False
+        )
+
+    def test_is_polydivisible_of_plain_int(self):
+        self.assertEqual(run("let result = is_polydivisible(5);").get("result"), True)
+
+    def test_is_polydivisible_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_polydivisible(true);")
+        self.assertIn(
+            "is_polydivisible() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_polydivisible_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_polydivisible("106");')
+        self.assertIn(
+            "is_polydivisible() requires an int, got string", ctx.exception.message
+        )
+
+    def test_is_polydivisible_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_polydivisible();")
+
+
 class TestIsPandigital(unittest.TestCase):
     def test_is_pandigital_of_smallest(self):
         self.assertEqual(

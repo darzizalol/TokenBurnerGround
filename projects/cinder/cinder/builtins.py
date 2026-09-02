@@ -1952,6 +1952,15 @@ def _is_disarium(arguments: list, line: int, column: int) -> object:
     )
 
 
+def _is_polydivisible(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_polydivisible", arguments, 1, line, column)
+    value = _require_int("is_polydivisible", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    return all(int(digits[:i]) % i == 0 for i in range(1, len(digits) + 1))
+
+
 def _is_pandigital(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pandigital", arguments, 1, line, column)
     value = _require_int("is_pandigital", arguments[0], line, column)
@@ -4546,6 +4555,7 @@ _BUILTINS = {
     "is_perfect_square": _is_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_disarium": _is_disarium,
+    "is_polydivisible": _is_polydivisible,
     "is_pandigital": _is_pandigital,
     "is_strong_number": _is_strong_number,
     "is_munchausen_number": _is_munchausen_number,

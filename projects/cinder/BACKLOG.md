@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_polydivisible` — polydivisible number predicate
+## 1. Standard library: `is_polydivisible` — polydivisible number predicate [claimed 2026-09-02T19:34:35Z]
 
 Build: Cinder has plenty of digit-position-based number predicates
 (`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each

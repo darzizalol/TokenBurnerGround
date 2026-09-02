@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention)
+## 1. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention) [claimed 2026-09-02T20:16:43Z]
 
 Build: map `&` (intersection, PR #369) and map `-` (difference, an earlier
 pass) both follow the same "keys decide, left's values win" convention

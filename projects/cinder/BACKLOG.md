@@ -131,14 +131,12 @@ python3 -m cinder.cli eval 'print({"a": 1} | {"b": 2});'
 # -> <eval>:1:15: unsupported operand types for '|': map and map
 ```
 
-Scope: map-map only. This is the map-side counterpart deferred by
-`BACKLOG.md` task 1's own Scope note ("map-map `|` union is a plausible
-future task, not this one"). This task does not depend on task 1 (list
-`|`) landing first, in either order: each touches its own `isinstance`
-branch under the `PIPE` dispatch and neither reads the other's code. If
-task 1 has already landed, its `if op == TokenType.PIPE and
-isinstance(left, list)...` block will sit nearby — leave it untouched;
-this task only adds a dict-dict block.
+Scope: map-map only. This is the map-side counterpart deferred by list
+`|` union's own Scope note when it landed ("map-map `|` union is a
+plausible future task, not this one") — list `|` union merged 2026-09-02
+via PR #371, and its `if op == TokenType.PIPE and isinstance(left,
+list)...` block already sits in `_apply_binary_operator`; leave it
+untouched, this task only adds a new dict-dict block alongside it.
 
 Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
 above the existing dispatch to `_bitwise_op` (search `TokenType.PIPE,`
@@ -308,17 +306,18 @@ Architect's next grooming pass, not this task.
 
 ## 4. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
 
-Build: tasks 2 and 4 above give maps `^`'s list-side counterpart and give
-maps `|`, which together with the already-landed map `&`/`-`
+Build: task 2 above gives maps `|`, and list `^` (symmetric difference,
+already landed 2026-09-03 via PR #373) gives `^`'s list-side
+counterpart, which together with the already-landed map `&`/`-`
 (`cinder/interpreter.py`, search `TokenType.AMP and isinstance(left,
 dict)` and `if op == TokenType.MINUS:`, its `isinstance(left, dict)`
 branch) leaves exactly one gap in the map operator family: `^` is still
 bitwise-int-only for maps (`_bitwise_op`, search `def _bitwise_op`, the
 `TokenType.CARET` branch does `left ^ right` and unconditionally
 requires both operands to be `int`). This task completes the map side
-of the set-operator family the same way task 2 completes it for lists —
-after this lands, both lists and maps have `&`/`|`/`-`/`^` with
-consistent set-style meanings. Verify the gap:
+of the set-operator family the same way list `^` (PR #373) completed it
+for lists — after this lands, both lists and maps have `&`/`|`/`-`/`^`
+with consistent set-style meanings. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print({"a": 1} ^ {"b": 2});'
 # -> <eval>:1:15: unsupported operand types for '^': map and map
@@ -329,10 +328,10 @@ there is no map-flavored builtin to mirror here — `cinder/builtins.py`'s
 `_symmetric_difference` is list-only — so this task defines the
 convention directly, following the same "keys decide" shape map `&`/`-`
 already established rather than inventing a values-aware one). This task
-does not depend on tasks 2/4 landing first; whichever order they land
-in, this task's own diff only touches a new `isinstance(left, dict)`
-branch under the `CARET` dispatch, never the list-`CARET` branch task 2
-adds or the dict-`PIPE` branch task 4 adds.
+does not depend on task 2 (map `|`) landing first, in either order: this
+task's own diff only touches a new `isinstance(left, dict)` branch under
+the `CARET` dispatch, and never reads the dict-`PIPE` branch task 2
+adds.
 
 Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
 above the existing dispatch to `_bitwise_op` (search `TokenType.PIPE,`
@@ -348,10 +347,10 @@ inside the `if op in (` tuple that also lists `AMP`/`CARET`/`LSHIFT`/
 (Keys present in both maps are excluded entirely — there is no value
 conflict to resolve, unlike `|`, since a shared key never appears in the
 result. Left-only entries come first in left's own order, then
-right-only entries in right's own order, mirroring task 2's list `^`
+right-only entries in right's own order, mirroring list `^`'s (PR #373)
 convention. Only this new block is added; the `AMP`/`MINUS` dict
-branches and any list `CARET` block from task 2 or dict `PIPE` block
-from task 4 are untouched.)
+branches, list `^`'s already-landed `CARET` block, and the dict `PIPE`
+block task 2 adds are all untouched.)
 
 The compound-assignment desugaring (`^=`) already works for free once
 `^` itself handles maps, exactly as `&=`/`|=`/`-='s existing coverage
@@ -509,6 +508,134 @@ Builtins bullet needs `is_carmichael_number` added near
 `is_smith_number`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" section needs refreshing — leave
 both to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Language: `<=>` (spaceship / three-way comparison) operator
+
+Build: Cinder already has `<`/`<=`/`>`/`>=` working consistently across
+numbers, strings, lists (lexicographic), and maps (key-sorted item
+comparison) via a single shared helper (`cinder/interpreter.py`, search
+`def _compare`), plus order-independent equality via `values_equal`
+(used by `==`/`!=`). There is no three-way comparison operator that
+combines both into a single `-1`/`0`/`1` result the way Ruby/Perl/PHP's
+`<=>` does — useful as a comparator building block once user-defined
+sort comparators exist, and a natural small addition given the
+comparison machinery it needs already exists end-to-end. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(1 <=> 2);'
+# -> <eval>:1:11: expected an expression, found '>'
+```
+(The lexer currently emits `<=` then leaves a bare `>` for the parser,
+which cannot start an expression with it.)
+
+Three-layer change, all straightforward extensions of existing code:
+
+1. **Token** (`cinder/tokens.py`): add `SPACESHIP = auto()` directly
+   after `GTEQ = auto()`.
+
+2. **Lexer** (`cinder/lexer.py`, search `def _lt`): currently
+   `_lt` matches `=` and immediately emits `LTEQ`. Change it to look
+   one character further for `<=>`:
+   ```python
+   def _lt(self, start_line: int, start_col: int):
+       if self._match("="):
+           if self._match(">"):
+               self.tokens.append(
+                   Token(TokenType.SPACESHIP, "<=>", None, start_line, start_col)
+               )
+           else:
+               self.tokens.append(Token(TokenType.LTEQ, "<=", None, start_line, start_col))
+       elif self._match("<"):
+           ...  # LSHIFT/LSHIFTEQ handling unchanged
+       else:
+           self.tokens.append(Token(TokenType.LT, "<", None, start_line, start_col))
+   ```
+   Only the `if self._match("=")` branch changes; the `<<`/`<<=`/`<`
+   branches are untouched.
+
+3. **Parser** (`cinder/parser.py`, search `_COMPARISON = {`): add
+   `TokenType.SPACESHIP` to the `_COMPARISON` set but **not** to
+   `_ORDERING` — this puts `<=>` at the same precedence tier as
+   `==`/`!=`/`<`/`<=`/`>`/`>=` (so `1 <=> 2 == -1` parses as
+   `(1 <=> 2) == -1`) without making it chainable the way `a < b < c`
+   is: `_comparison()`'s chaining check (`all(op.type in _ORDERING for
+   op in operators)`) only fires when every operator in a run is a pure
+   ordering operator, so a `<=>` in the mix falls through to sequential
+   left-to-right `Binary` application — exactly how `==`/`!=` already
+   behave when mixed with `<`, no new logic needed.
+
+4. **Interpreter** (`cinder/interpreter.py`, search `if op in
+   (TokenType.LT, TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):`):
+   add a branch immediately after it, reusing `_compare` and
+   `values_equal` rather than duplicating their type/error handling:
+   ```python
+   if op == TokenType.SPACESHIP:
+       if self._compare(operator, left, right, TokenType.LT):
+           return -1
+       if values_equal(left, right):
+           return 0
+       return 1
+   ```
+   `_compare(operator, left, right, TokenType.LT)` already raises
+   `CinderRuntimeError` for uncomparable types (e.g. int vs string, int
+   vs bool) before this branch would ever reach `values_equal`, so
+   `<=>` inherits `<`'s exact comparability rules and error messages
+   for free.
+
+Scope: comparison only, no compound-assignment form (`<`/`>`/`==` have
+none either — a "spaceship-assign" has no sensible meaning). Every
+comparable pair `<`/`==` already handle (numbers including cross
+int/float, strings, lists, maps) is automatically comparable via `<=>`
+too, since it is built entirely from those two existing operations.
+
+Acceptance criteria:
+- `1 <=> 2;` is `-1`, `2 <=> 2;` is `0`, `3 <=> 2;` is `1`.
+- `"a" <=> "b";` is `-1`, `"b" <=> "a";` is `1`, `"a" <=> "a";` is `0`.
+- `[1, 2] <=> [1, 3];` is `-1` — lexicographic, matching list `<`.
+- `[1, 2] <=> [1, 2];` is `0`.
+- `{"a": 1} <=> {"a": 2};` is `-1` — key-sorted item comparison,
+  matching map `<`.
+- `{"a": 1, "b": 2} <=> {"b": 2, "a": 1};` is `0` — map equality is
+  order-independent via `values_equal`, consistent with `==`, even
+  though the two maps' key-sorted item lists happen to already agree
+  here too.
+- `1 <=> 1.0;` is `0` — cross int/float equality already holds for
+  `==`, inherited here via `values_equal`.
+- `1.5 <=> 1;` is `1` — cross int/float ordering already holds for
+  `<`, inherited here via `_compare`.
+- `1 <=> "a";` raises `CinderRuntimeError` matching `"unsupported
+  operand types for comparison: int and string"` — the exact message
+  `_compare` already raises for `1 < "a"`.
+- `1 <=> true;` raises `CinderRuntimeError` matching `"unsupported
+  operand types for comparison: int and bool"` — `_compare` already
+  rejects `int`/`bool` pairs the same way for `<`, since Cinder's
+  `bool` is excluded from `_is_number`'s numeric-comparability check.
+- `(1 <=> 1) == 0;` is `true` and `(2 <=> 1) == 1;` is `true` —
+  confirms `<=>`'s result composes as an ordinary int with `==` at the
+  same precedence tier, non-chained (mirrors how `1 == 2 == 3` already
+  evaluates sequentially rather than chaining, since `_ORDERING`
+  excludes `EQEQ`/`BANGEQ` today).
+- Lexer regression: `1 << 2;` (`LSHIFT`) and `1 <= 2;` (`LTEQ`) are
+  both unaffected — only a literal `<=>` sequence produces the new
+  token.
+- Full test suite passes.
+
+Likely files: `cinder/tokens.py` (new `SPACESHIP` token, next to
+`GTEQ`), `cinder/lexer.py` (`_lt`, search `def _lt`), `cinder/parser.py`
+(`_COMPARISON`, search `_COMPARISON = {`), `cinder/interpreter.py`
+(`_apply_binary_operator`, search `if op in (TokenType.LT,
+TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):`), `tests/test_lexer.py`
+(new token-emission cases near the existing `<<`/`<=` tests),
+`tests/test_parser.py` (a case confirming `<=>` doesn't trigger
+`ChainedComparison`), `tests/test_interpreter.py` (new `class
+TestSpaceshipOperator`, modeled on `class TestComparisons`, search that
+name, for the test shapes above). Once merged, `README.md`'s
+language-operators bullet needs a `<=>` mention, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass,
+not this task.
 
 ---
 

@@ -873,6 +873,30 @@ def _is_numeric_string(arguments: list, line: int, column: int) -> object:
     return value.isnumeric()
 
 
+def _is_luhn_valid(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_luhn_valid", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_luhn_valid() requires a string, got {type_name(value)}",
+            line, column,
+        )
+    if not value or any(ch not in "0123456789" for ch in value):
+        raise CinderRuntimeError(
+            "is_luhn_valid() requires a non-empty string of ASCII digits",
+            line, column,
+        )
+    total = 0
+    for index, ch in enumerate(reversed(value)):
+        digit = int(ch)
+        if index % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        total += digit
+    return total % 10 == 0
+
+
 def _is_sorted(arguments: list, line: int, column: int) -> object:
     _require_arity("is_sorted", arguments, 1, line, column)
     value = arguments[0]
@@ -4685,6 +4709,7 @@ _BUILTINS = {
     "is_isogram": _is_isogram,
     "is_ascii": _is_ascii,
     "is_numeric": _is_numeric_string,
+    "is_luhn_valid": _is_luhn_valid,
     "is_sorted": _is_sorted,
     "is_unique": _is_unique,
     "is_number": _is_number,

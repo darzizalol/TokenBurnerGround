@@ -10958,6 +10958,83 @@ class TestIsNumeric(unittest.TestCase):
             run('is_numeric("1", "2");')
 
 
+class TestIsLuhnValid(unittest.TestCase):
+    def test_is_luhn_valid_known_valid_visa_true(self):
+        self.assertIs(
+            run('let result = is_luhn_valid("4539148803436467");').get("result"),
+            True,
+        )
+
+    def test_is_luhn_valid_off_by_one_last_digit_false(self):
+        self.assertIs(
+            run('let result = is_luhn_valid("4539148803436468");').get("result"),
+            False,
+        )
+
+    def test_is_luhn_valid_wikipedia_example_true(self):
+        self.assertIs(
+            run('let result = is_luhn_valid("79927398713");').get("result"), True
+        )
+
+    def test_is_luhn_valid_wikipedia_example_last_digit_zeroed_false(self):
+        self.assertIs(
+            run('let result = is_luhn_valid("79927398710");').get("result"), False
+        )
+
+    def test_is_luhn_valid_another_valid_length_true(self):
+        self.assertIs(
+            run('let result = is_luhn_valid("4111111111111111");').get("result"),
+            True,
+        )
+
+    def test_is_luhn_valid_single_digit_zero_true(self):
+        self.assertIs(run('let result = is_luhn_valid("0");').get("result"), True)
+
+    def test_is_luhn_valid_single_digit_nine_false(self):
+        self.assertIs(run('let result = is_luhn_valid("9");').get("result"), False)
+
+    def test_is_luhn_valid_all_zeros_true(self):
+        self.assertIs(
+            run('let result = is_luhn_valid("0000000000");').get("result"), True
+        )
+
+    def test_is_luhn_valid_empty_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_luhn_valid("");')
+        self.assertIn(
+            "is_luhn_valid() requires a non-empty string of ASCII digits",
+            ctx.exception.message,
+        )
+
+    def test_is_luhn_valid_non_digit_char_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_luhn_valid("123a");')
+        self.assertIn(
+            "is_luhn_valid() requires a non-empty string of ASCII digits",
+            ctx.exception.message,
+        )
+
+    def test_is_luhn_valid_internal_whitespace_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_luhn_valid("12 34");')
+        self.assertIn(
+            "is_luhn_valid() requires a non-empty string of ASCII digits",
+            ctx.exception.message,
+        )
+
+    def test_is_luhn_valid_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_luhn_valid(4539148803436467);")
+        self.assertIn("is_luhn_valid", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_luhn_valid_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_luhn_valid();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_luhn_valid("1", "2");')
+
+
 class TestIsSorted(unittest.TestCase):
     def test_is_sorted_ascending_numbers_true(self):
         self.assertIs(run("let result = is_sorted([1, 2, 3]);").get("result"), True)

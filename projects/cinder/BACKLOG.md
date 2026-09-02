@@ -418,6 +418,124 @@ pass, not this task.
 
 ---
 
+## 5. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
+
+Build: tasks 1/3 above give list-list `&`/`|` infix spellings of the
+existing `intersection()`/`union()` builtins, and list-list `-` (an
+earlier pass) already gave `difference()` the same treatment. Cinder's
+list builtins already answer the symmetric-difference question as a
+function (`symmetric_difference()`, `cinder/builtins.py`, search `def
+_symmetric_difference`: dedupes each side independently, then returns
+left-only elements followed by right-only elements — the same
+"dedupe-per-side, this-side-first" convention `intersection()`/
+`union()`/`difference()` already share), but `^` has no list meaning
+today — it is bitwise-int-only (`_bitwise_op`, `cinder/interpreter.py`,
+search `def _bitwise_op`, the `TokenType.CARET` branch does `left ^
+right` and unconditionally requires both operands to be `int`). This
+task completes the set-operator family that tasks 1/3 and the earlier
+`-` task started — after this lands, `&`/`|`/`-`/`^` all have list
+meanings mirroring their same-named builtins. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print([1, 2, 3] ^ [2, 3, 4]);'
+# -> <eval>:1:17: unsupported operand types for '^': list and list
+```
+
+Scope: list-list only, matching how `&`/`|`/`-` each got their list
+branch as a task separate from any map branch — map-map `^` symmetric
+difference is a plausible future task, not this one. This task does
+not depend on tasks 1-4 landing first; whichever order they land in,
+this task's own diff only touches the `CARET` branch, never the
+`AMP`/`PIPE`/`MINUS` branches those tasks add or already have.
+
+Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
+above the existing dispatch to `_bitwise_op` (search `TokenType.PIPE,`
+inside the `if op in (` tuple that also lists `AMP`/`CARET`/`LSHIFT`/
+`RSHIFT`): add a list-list special case for `CARET` specifically,
+reusing `values_equal`-based membership (the same pattern the `MINUS`/
+`AMP` list branches already use) rather than Python's native
+`==`/`in`:
+```python
+        if op == TokenType.CARET and isinstance(left, list) and isinstance(right, list):
+            left_deduped: list = []
+            for element in left:
+                if not any(values_equal(element, kept) for kept in left_deduped):
+                    left_deduped.append(element)
+            right_deduped: list = []
+            for element in right:
+                if not any(values_equal(element, kept) for kept in right_deduped):
+                    right_deduped.append(element)
+            return [
+                element for element in left_deduped
+                if not contains_value(right, element, operator.line, operator.column)
+            ] + [
+                element for element in right_deduped
+                if not contains_value(left, element, operator.line, operator.column)
+            ]
+        if op in (
+            TokenType.AMP,
+            TokenType.PIPE,
+            TokenType.CARET,
+            TokenType.LSHIFT,
+            TokenType.RSHIFT,
+        ):
+            return self._bitwise_op(operator, left, right, op)
+```
+(Only the new `if op == TokenType.CARET and isinstance(left, list)...`
+block is added, directly above the existing bitwise dispatch —
+`AMP`/`PIPE`/`LSHIFT`/`RSHIFT` and int-int `CARET` all still fall
+through unchanged to `_bitwise_op`. If task 3's own `PIPE` list branch
+has already landed by the time this task is implemented, it will sit
+as a separate `if op == TokenType.PIPE and ...` block nearby — leave it
+untouched; this task only adds the `CARET` block.)
+
+The compound-assignment desugaring (`^=`) already works for free once
+`^` itself handles lists, exactly as `&=`/`|=`/`-='s existing coverage
+documents — no separate wiring needed.
+
+Acceptance criteria (mirror `TestListIntersection`/`TestListDifference`'s
+shape in `tests/test_interpreter.py`):
+- `[1, 2, 3] ^ [2, 3, 4]` is `[1, 4]` — the basic case, left-only
+  elements first (in original order), then right-only elements.
+- `[1, 1, 2] ^ [2, 2, 3]` is `[1, 3]` — duplicates on either side are
+  deduped before the comparison, first occurrence kept.
+- `[1, 2, 3] ^ []` is `[1, 2, 3]` (deduped) and `[] ^ [1, 2]` is
+  `[1, 2]` — either empty side leaves the other's deduped elements.
+- `[1, 2] ^ [1, 2]` is `[]` — full overlap, nothing left on either
+  side.
+- `[1, 2] ^ [3, 4]` is `[1, 2, 3, 4]` — no overlap, simple
+  concatenation of the deduped sides.
+- Does not mutate inputs: `let a = [1, 2, 3]; let c = a ^ [2, 4];`
+  leaves `a` as `[1, 2, 3]` and `c` as `[1, 3, 4]`.
+- Left-associative: `[1, 2] ^ [2, 3] ^ [3, 4]` is `[1, 4]` (first pass
+  `[1, 2] ^ [2, 3]` is `[1, 3]`, then `[1, 3] ^ [3, 4]` is `[1, 4]`).
+- Compound assignment works: `let xs = [1, 2]; xs ^= [2, 3];` leaves
+  `xs` as `[1, 3]` (identifier target); also test an index target and
+  a dot target, mirroring task 1's own compound-assignment cases.
+- `[1, true, 2] ^ [true, 3]` is `[1, 2, 3]` — uses `values_equal`, not
+  Python's native `==`/`in`, so `1` is not conflated with `true` when
+  deduping/comparing.
+- `2 ^ 3` (both ints) is still `1` — existing bitwise-XOR behavior is
+  unchanged, a regression guard.
+- `[1, 2] ^ 3` and `2 ^ [1, 2]` still raise `CinderRuntimeError`
+  matching `"unsupported operand types for '^': ..."` — mixed
+  list/non-list operands remain a type error, same message shape
+  `_bitwise_op` already produces.
+- `[1, 2] ^ {"a": 1}` also raises the same type error — map operands
+  are unsupported (deferred per the Scope note above).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
+`AMP`/`PIPE`/`CARET`/`LSHIFT`/`RSHIFT` dispatch, search
+`TokenType.PIPE,`), `tests/test_interpreter.py` (new `class
+TestListSymmetricDifference`, modeled on `class TestListDifference`,
+search that name, for the test shapes above). Once merged, `README.md`'s
+language-operators bullet needs a list-`^` mention next to the existing
+list `&`/`|`/`-` ones, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s "Current frontier" section needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

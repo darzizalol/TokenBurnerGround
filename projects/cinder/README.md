@@ -403,7 +403,7 @@ while (i < 10) {
   `copy`, `deep_copy`, `deep_equal`, `contains`, `index_of`, `last_index_of`, `find_index`, `find_last_index`, `count`, `unique`, `distinct_by`, `flatten`, `flatten_deep`, `get_in`,
   `union`, `intersection`, `difference`, `symmetric_difference`, `is_subset`, `is_superset`, `is_disjoint` (lists treated as unordered sets), `interleave`, `interpose`, `zip_object`,
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
-  `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
+  `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
   `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
@@ -626,35 +626,37 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a `&` (intersection)
-operator for lists (PR #367, `[1, 2, 3] & [2, 3, 4]` is `[2, 3]`), the
-set-style counterpart to the existing list `-` operator, mirroring the
-existing `intersection()` builtin's set semantics — and before that
-`is_keith_number` (PR #366), a number that reappears in the
+Actively developed, nightly. Recently landed: `run_length_encode`/
+`run_length_decode` (PR #368), the classic consecutive-run compression
+pair (`run_length_encode([1, 1, 2, 2, 2, 3])` is `[[1, 2], [2, 3],
+[3, 1]]`), expressed as the `(value, count)`-pair cousin of the
+existing `group_consecutive` builtin — and before that a `&`
+(intersection) operator for lists (PR #367, `[1, 2, 3] & [2, 3, 4]` is
+`[2, 3]`), the set-style counterpart to the existing list `-` operator,
+mirroring the existing `intersection()` builtin's set semantics — and
+before that `is_keith_number` (PR #366), a number that reappears in the
 digit-count-wide Fibonacci-style recurrence seeded by its own decimal
 digits (e.g. `197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`), the
 digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s
-digit-ending questions — and before that `throw`/`catch` carrying any
-Cinder value instead of strings only (PR #365 — previously
-`throw {"a": 1};` didn't just get rejected, the rejection's own error
-message got caught and misbound to `e`, so accessing a field on it
-blew up with an unrelated error). See [`CHANGELOG.md`](CHANGELOG.md)
-for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `run_length_encode`/
-`run_length_decode`, the classic consecutive-run compression pair
-(`run_length_encode([1, 1, 2, 2, 2, 3])` is `[[1, 2], [2, 3], [3, 1]]`),
-expressed as the `(value, count)`-pair cousin of the existing
-`group_consecutive` builtin — a `&` (intersection) operator for maps
-(`{"a": 1, "b": 2} & {"a": 1, "c": 3}` is `{"a": 1}`), the key-based
-counterpart to map `-` above, mirroring map `-`'s own "keys decide,
-left's values win" convention — `is_luhn_valid`, a Luhn mod-10 checksum
-validator for digit strings (`is_luhn_valid("79927398713")` is `true`),
-the identifier-checksum sibling of the digit-recurrence predicates
-above, operating on a string of digits rather than a numeric value —
-and a `|` (union) operator for lists (`[1, 2, 3] | [2, 3, 4]` is
-`[1, 2, 3, 4]`), the set-style counterpart to list `&`/`-` above,
-mirroring the existing `union()` builtin's dedupe-and-concatenate
-semantics.
+digit-ending questions. See [`CHANGELOG.md`](CHANGELOG.md) for the
+full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a `&` (intersection)
+operator for maps (`{"a": 1, "b": 2} & {"a": 1, "c": 3}` is `{"a":
+1}`), the key-based counterpart to map `-` above, mirroring map `-`'s
+own "keys decide, left's values win" convention — `is_luhn_valid`, a
+Luhn mod-10 checksum validator for digit strings
+(`is_luhn_valid("79927398713")` is `true`), the identifier-checksum
+sibling of the digit-recurrence predicates above, operating on a
+string of digits rather than a numeric value — a `|` (union) operator
+for lists (`[1, 2, 3] | [2, 3, 4]` is `[1, 2, 3, 4]`), the set-style
+counterpart to list `&`/`-` above, mirroring the existing `union()`
+builtin's dedupe-and-concatenate semantics — `is_polydivisible`, a
+digit-position predicate checking that every decimal prefix of a
+number is divisible by its own length (e.g. `381654729`, the classic
+pandigital example) — and a `^` (symmetric difference) operator for
+lists (`[1, 2, 3] ^ [2, 3, 4]` is `[1, 4]`), completing the set-style
+operator family alongside `&`/`|`/`-` above by mirroring the existing
+`symmetric_difference()` builtin's dedupe-both-sides semantics.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

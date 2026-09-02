@@ -1397,6 +1397,19 @@ def _is_sad_number(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _is_self_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_self_number", arguments, 1, line, column)
+    value = _require_int("is_self_number", arguments[0], line, column)
+    if value < 0:
+        return False
+    digit_count = len(str(value))
+    lower_bound = max(0, value - 9 * digit_count)
+    for candidate in range(lower_bound, value):
+        if candidate + sum(int(digit) for digit in str(candidate)) == value:
+            return False
+    return True
+
+
 def _nth_happy_number(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_happy_number", arguments, 1, line, column)
     value = _require_int("nth_happy_number", arguments[0], line, column)
@@ -4513,6 +4526,7 @@ _BUILTINS = {
     "nth_lucas": _nth_lucas,
     "is_happy_number": _is_happy_number,
     "is_sad_number": _is_sad_number,
+    "is_self_number": _is_self_number,
     "nth_happy_number": _nth_happy_number,
     "collatz_length": _collatz_length,
     "collatz_max": _collatz_max,

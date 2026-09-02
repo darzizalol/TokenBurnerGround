@@ -2587,6 +2587,72 @@ class TestIsSadNumber(unittest.TestCase):
             run("is_sad_number(1, 2);")
 
 
+class TestIsSelfNumber(unittest.TestCase):
+    def test_is_self_number_smallest_two_digit(self):
+        self.assertEqual(run("let result = is_self_number(20);").get("result"), True)
+
+    def test_is_self_number_generated_value_is_false(self):
+        self.assertEqual(run("let result = is_self_number(21);").get("result"), False)
+
+    def test_is_self_number_single_digit_odd_numbers_are_true(self):
+        for value in (1, 3, 9):
+            self.assertEqual(
+                run(f"let result = is_self_number({value});").get("result"),
+                True,
+                f"expected {value} to be a self number",
+            )
+
+    def test_is_self_number_single_digit_even_numbers_are_false(self):
+        for value in (2, 4, 8):
+            self.assertEqual(
+                run(f"let result = is_self_number({value});").get("result"),
+                False,
+                f"expected {value} to not be a self number",
+            )
+
+    def test_is_self_number_further_oeis_terms_are_true(self):
+        for value in (31, 42, 97, 121):
+            self.assertEqual(
+                run(f"let result = is_self_number({value});").get("result"),
+                True,
+                f"expected {value} to be a self number",
+            )
+
+    def test_is_self_number_three_digit_generated_values_are_false(self):
+        for value in (100, 101):
+            self.assertEqual(
+                run(f"let result = is_self_number({value});").get("result"),
+                False,
+                f"expected {value} to not be a self number",
+            )
+
+    def test_is_self_number_of_zero_is_true(self):
+        self.assertEqual(run("let result = is_self_number(0);").get("result"), True)
+
+    def test_is_self_number_negative_input_is_false(self):
+        self.assertEqual(
+            run("let result = is_self_number(-5);").get("result"), False
+        )
+
+    def test_is_self_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_self_number(true);")
+        self.assertIn(
+            "is_self_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_self_number_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_self_number("20");')
+        self.assertIn(
+            "is_self_number() requires an int, got string", ctx.exception.message
+        )
+
+    def test_is_self_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_self_number(1, 2);")
+
+
 class TestCollatzLength(unittest.TestCase):
     def test_collatz_length_of_one_is_zero(self):
         self.assertEqual(run("let result = collatz_length(1);").get("result"), 0)

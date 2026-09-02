@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
+## 1. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`) [claimed 2026-09-02T14:49:05Z]
 
 Build: tasks 1 and 3 above give `&` list-list and map-map branches, and
 `-` already has both (PR #356 map, task from an earlier pass for list).

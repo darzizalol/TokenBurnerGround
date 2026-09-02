@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`)
+## 1. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`) [claimed 2026-09-02T14:19:33Z]
 
 Build: list-list `&` already landed (PR #367,
 `cinder/interpreter.py:1308`), and the map side of `-` (PR #356)

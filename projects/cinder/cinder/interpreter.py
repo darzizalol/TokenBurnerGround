@@ -1317,6 +1317,12 @@ class Interpreter:
                 for element in deduped
                 if contains_value(right, element, operator.line, operator.column)
             ]
+        if op == TokenType.PIPE and isinstance(left, list) and isinstance(right, list):
+            combined: list = []
+            for element in left + right:
+                if not any(values_equal(element, kept) for kept in combined):
+                    combined.append(element)
+            return combined
         if op in (
             TokenType.AMP,
             TokenType.PIPE,

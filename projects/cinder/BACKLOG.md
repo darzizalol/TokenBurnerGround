@@ -142,19 +142,20 @@ pass, not this task.
 
 ## 2. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`)
 
-Build: task 3 above gives `&` a list-list branch, and the map side of
-`-` (PR #356) already established what a key-based map operator looks
-like: `{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}` — keys present in the
-right map are dropped from the left, *values on the right are ignored
+Build: list-list `&` already landed (PR #367,
+`cinder/interpreter.py:1308`), and the map side of `-` (PR #356)
+already established what a key-based map operator looks like:
+`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}` — keys present in the right
+map are dropped from the left, *values on the right are ignored
 entirely* (`{"a": 1} - {"a": 99}` still removes `"a"` even though the
-values don't match). `&` has no map meaning at all today — like list
-`&` before task 3, it falls straight through to `_bitwise_op`, which
-rejects any non-int operand. Task 3's own Scope note calls this out
-explicitly as deferred, not in-scope there: "map-map `&` intersection
-is a plausible future task, not this one." This task is that task, once
-task 3 has landed (both edit the same dispatch block in
-`_apply_binary_operator`, so task 3's list-list branch must be merged
-first — this task's diff assumes it's already there). Verify the gap:
+values don't match). `&` still has no map meaning today — dict-dict
+operands fall straight through the list-list `AMP` check (which only
+matches when both sides are lists) into `_bitwise_op`, which rejects
+any non-int operand. PR #367's own Scope note called this out
+explicitly as deferred, not in scope there: "map-map `&` intersection
+is a plausible future task, not this one." This task is that task — no
+further dependency, the list-list branch it sits next to is already on
+`main`. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print({"a": 1, "b": 2} & {"a": 1, "c": 3});'
 # -> <eval>:1:24: unsupported operand types for '&': map and map
@@ -170,23 +171,23 @@ dropped (left-only, not present on the right), `"c"` is dropped
 never surfaces.
 
 Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
-above the list-list `AMP` branch task 3 adds (search `if op ==
-TokenType.AMP and isinstance(left, list)`) — add a dict-dict special
-case first, mirroring `MINUS`'s existing dict-dict branch just above in
-the same method (search `if isinstance(left, dict) and isinstance(right,
-dict):` under the `MINUS` case):
+above the existing list-list `AMP` branch (`cinder/interpreter.py:1308`,
+search `if op == TokenType.AMP and isinstance(left, list)`) — add a
+dict-dict special case first, mirroring `MINUS`'s existing dict-dict
+branch just above in the same method (search `if isinstance(left,
+dict) and isinstance(right, dict):` under the `MINUS` case):
 ```python
         if op == TokenType.AMP and isinstance(left, dict) and isinstance(right, dict):
             return {key: value for key, value in left.items() if key in right}
         if op == TokenType.AMP and isinstance(left, list) and isinstance(right, list):
 ```
-(Only the new dict-dict `if` line is added, directly above task 3's
-list-list `if`; that line's own `and isinstance(left, list)` check
-already means it never fires for dicts, so the two branches can't
-collide — order between them doesn't actually matter, but placing the
-dict check first keeps `AMP`'s branches in the same left-to-right
-type order `MINUS`'s dict-then-list branches already use, two lines
-above.)
+(Only the new dict-dict `if` line is added, directly above the
+existing list-list `if`; that line's own `and isinstance(left, list)`
+check already means it never fires for dicts, so the two branches
+can't collide — order between them doesn't actually matter, but
+placing the dict check first keeps `AMP`'s branches in the same
+left-to-right type order `MINUS`'s dict-then-list branches already
+use, two lines above.)
 
 The compound-assignment desugaring (`&=`) already works for free on a
 map target once `&` itself handles maps, exactly as `-=` does for maps
@@ -213,9 +214,9 @@ Acceptance criteria (mirror `TestMapDifference`'s shape in
   `test_compound_assignment_on_index_target`/`_on_dot_target`.
 - `2 & 3` (both ints) is still `2` — existing bitwise-AND behavior is
   unchanged, a regression guard.
-- `[1, 2] & [1]` (both lists, from task 3) is still `[1]` — confirms
-  the new dict-dict branch doesn't shadow or reorder ahead of the
-  list-list branch it sits next to.
+- `[1, 2] & [1]` (both lists, PR #367's existing branch) is still
+  `[1]` — confirms the new dict-dict branch doesn't shadow or reorder
+  ahead of the list-list branch it sits next to.
 - `{"a": 1} & 3` and `3 & {"a": 1}` still raise `CinderRuntimeError`
   matching `"unsupported operand types for '&': ..."` — mixed
   map/non-map operands remain a type error.
@@ -225,14 +226,14 @@ Acceptance criteria (mirror `TestMapDifference`'s shape in
 - Full test suite passes.
 
 Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s `AMP`
-dispatch, search `if op == TokenType.AMP and isinstance(left, list)`,
-added by task 3), `tests/test_interpreter.py` (new `class
-TestMapIntersection`, modeled on `class TestMapDifference`, search that
-name, for the test shapes above). Once merged, `README.md`'s
-language-operators bullet needs a map-`&` mention next to the list-`&`
-one task 3 adds, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
+dispatch, search `if op == TokenType.AMP and isinstance(left, list)`),
+`tests/test_interpreter.py` (new `class TestMapIntersection`, modeled
+on `class TestMapDifference`, search that name, for the test shapes
+above). Once merged, `README.md`'s language-operators bullet needs a
+map-`&` mention next to the existing list-`&` one, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
 
 ---
 
@@ -456,6 +457,93 @@ existing list `&`/`-` ones, its "Status & roadmap" section needs
 updating, and `PROJECT.md`'s "Current frontier" section needs
 refreshing — leave both to the Architect's next grooming pass, not
 this task.
+
+---
+
+## 5. Standard library: `is_polydivisible` — polydivisible number predicate
+
+Build: Cinder has plenty of digit-position-based number predicates
+(`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each
+digit raised to its 1-based position, summed, must equal the number
+itself) but nothing that checks the classic *polydivisible* property —
+a number is polydivisible when, reading its decimal digits left to
+right, every prefix of length `i` is itself divisible by `i`: the
+1-digit prefix by 1 (always true), the 2-digit prefix by 2, the 3-digit
+prefix by 3, and so on up through the full number divided by its own
+digit count. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_polydivisible(381654729));'
+# -> <eval>:1:7: undefined name 'is_polydivisible'
+```
+
+Worked example, `381654729` (the largest polydivisible number that uses
+each of the digits 1-9 exactly once, a well-known instance of this
+property): prefix `3` div by 1 ✓, `38` div by 2 (`19`) ✓, `381` div by 3
+(digit sum `12`) ✓, `3816` div by 4 (last two digits `16`) ✓, `38165`
+div by 5 (ends in `5`) ✓, `381654` div by 6 (even and digit-sum-`27`
+divisible by 3) ✓, `3816547` div by 7 (`545221 * 7`) ✓, `38165472` div
+by 8 (last three digits `472 / 8 = 59`) ✓, `381654729` div by 9 (digit
+sum `45`) ✓ — every prefix checks out, so it's polydivisible. Contrast
+`106`: `1` div by 1 ✓, `10` div by 2 ✓, but `106` is not divisible by 3
+(digit sum `7`), so it fails at the last prefix and the whole number is
+not polydivisible.
+
+Add to `cinder/builtins.py`, directly after `_is_disarium` (search `def
+_is_disarium`, immediately before `def _is_pandigital`) — keeps it
+grouped with the other digit-position predicates:
+```python
+def _is_polydivisible(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_polydivisible", arguments, 1, line, column)
+    value = _require_int("is_polydivisible", arguments[0], line, column)
+    if value < 0:
+        return False
+    digits = str(value)
+    return all(int(digits[:i]) % i == 0 for i in range(1, len(digits) + 1))
+```
+Also register the new dict entry (search `"is_disarium":
+_is_disarium,`, add `"is_polydivisible": _is_polydivisible,` directly
+after it, before `"is_pandigital": _is_pandigital,`).
+
+Acceptance criteria:
+- `is_polydivisible(381654729);` is `true` — the classic pandigital
+  worked example above.
+- `is_polydivisible(106);` is `false` — fails at the 3-digit prefix
+  (`106 % 3 != 0`), the contrasting worked example above.
+- `is_polydivisible(0);` is `true` — a single digit's 1-digit prefix is
+  always divisible by 1, trivially valid (matches `is_disarium(0)`'s
+  own trivially-true single-digit convention, same file).
+- `is_polydivisible(9);` is `true` — same trivial single-digit case,
+  non-zero.
+- `is_polydivisible(12);` is `true` — `1 % 1 == 0` and `12 % 2 == 0`.
+- `is_polydivisible(11);` is `false` — `1 % 1 == 0` but `11 % 2 != 0`.
+- `is_polydivisible(105);` is `true` — `1 % 1 == 0`, `10 % 2 == 0`,
+  `105 % 3 == 0`.
+- `is_polydivisible(1230);` is `false` — fails at the 4-digit prefix
+  (`1230 % 4 != 0`), confirming the check runs all the way to the full
+  number, not just a leading few digits.
+- `is_polydivisible(-381654729);` is `false` — negative numbers return
+  `false` outright, matching `is_disarium`/`is_armstrong`'s own
+  negative-number convention in this file, not a domain error.
+- `is_polydivisible(5);` (a bool-free plain int) and
+  `is_polydivisible(true);` — the latter raises `CinderRuntimeError`
+  matching `"is_polydivisible() requires an int, got bool"`, since
+  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
+  `int` subclass (same guard every other int-only predicate in this
+  file already relies on).
+- `is_polydivisible("106");` raises `CinderRuntimeError` matching
+  `"is_polydivisible() requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_disarium`,
+search `def _is_disarium`), `tests/test_builtins.py` (new `class
+TestIsPolydivisible`, modeled on `class TestIsDisarium`, search that
+name, for the test shapes above). Once merged, `README.md`'s Builtins
+bullet needs `is_polydivisible` added near `is_disarium`, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
 
 ---
 

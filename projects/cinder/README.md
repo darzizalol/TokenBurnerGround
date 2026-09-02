@@ -150,15 +150,18 @@ while (i < 10) {
   `break`/`continue` (`outer: while (...) { for x in y { break outer; } }`)
   to target an enclosing loop from a nested one,
   `try { ... } catch (name) { ... }` for recovering from runtime errors
-  (the caught message binds to `name`; `break`/`continue`/`return` still
+  (the caught value binds to `name`; `break`/`continue`/`return` still
   propagate through uncaught), an optional catch binding
   (`try { ... } catch { ... }`, no `(name)` required, for handlers that
-  don't need to inspect the caught message), an optional `finally { ... }` block (at
+  don't need to inspect the caught value), an optional `finally { ... }` block (at
   least one of `catch`/`finally` is required) that always runs on the way
   out of the `try`, whether it succeeded, was caught, or is propagating
   uncaught, a `throw expr;` statement for raising user-defined errors
-  (the expression must be a string; catchable by an enclosing
-  `try`/`catch` exactly like a builtin runtime error), `switch`
+  (the expression may be any Cinder value, not just a string —
+  `throw {"code": 404};` catches with `e` bound to the map itself, not
+  its stringified form; catchable by an enclosing `try`/`catch` exactly
+  like a builtin runtime error, which still carries a string message),
+  `switch`
   statements with `case`/`default` (no fallthrough, first match wins;
   a single `case` may list multiple values, e.g. `case 1, 2, 3: { ... }`,
   matching if any of them equals the switch expression; a `case` value
@@ -299,7 +302,14 @@ while (i < 10) {
   element also present in the right-hand list removed and the left
   deduped first — set-style semantics mirroring the existing
   `difference()` builtin, the list-typed sibling of map `-` above;
-  `-=` on a list target works for free through the same desugaring)
+  `-=` on a list target works for free through the same desugaring),
+  and list intersection via `&`
+  (`[1, 2, 3] & [2, 3, 4]` is `[2, 3]`, a fresh non-mutating list with
+  every left-hand element also present in the right-hand list, deduped
+  first and order preserved from the left — set-style semantics
+  mirroring the existing `intersection()` builtin; `&=` on a list
+  target works for free through the same desugaring; `&` remains
+  int-only bitwise-AND when neither operand is a list)
 - **Functions**: `fn name(a, b) { ... }` — first-class, arity-checked, with
   recursion, `return`, and real closures (functions capture their defining
   environment); also anonymous function *expressions* `fn(a, b) { ... }` usable
@@ -491,6 +501,9 @@ while (i < 10) {
   insertions/deletions/substitutions to turn one string into another),
   `is_automorphic` to test whether an integer's square ends with the integer itself in decimal,
   `is_trimorphic_number` as its cube-ending sibling (e.g. `24 ** 3 = 13824`, which ends in `24`),
+  `is_keith_number` to test whether an integer reappears in the digit-count-wide Fibonacci-style
+  recurrence seeded by its own decimal digits (e.g. `197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`),
+  the digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending questions,
   `hamming_distance` to count differing positions between two equal-length strings,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
@@ -613,24 +626,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_keith_number` (PR
-#366), a number that reappears in the digit-count-wide Fibonacci-style
-recurrence seeded by its own decimal digits (e.g. `197`: seed `1, 9,
-7`, then `17, 33, 57, 107, 197`), the digit-recurrence sibling of
-`is_automorphic`/`is_trimorphic_number`'s digit-ending questions — and
-before that `throw`/`catch` carrying any Cinder value instead of
-strings only (PR #365 — previously `throw {"a": 1};` didn't just get
-rejected, the rejection's own error message got caught and misbound to
-`e`, so accessing a field on it blew up with an unrelated error) — and
-before that an `else` clause on C-style `for (init; cond; step)` loops
-(PR #364, `for (init; cond; step) { ... } else { ... }`), closing out
-the loop-`else` arc across all four loop kinds (`while` #352, `for`-in
-#358, `do`-`while` #361, C-style `for` #364). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a `&` (intersection)
-operator for lists (`[1, 2, 3] & [2, 3, 4]` is `[2, 3]`), the set-style
-counterpart to the existing list `-` operator, mirroring the existing
-`intersection()` builtin's set semantics — `run_length_encode`/
+Actively developed, nightly. Recently landed: a `&` (intersection)
+operator for lists (PR #367, `[1, 2, 3] & [2, 3, 4]` is `[2, 3]`), the
+set-style counterpart to the existing list `-` operator, mirroring the
+existing `intersection()` builtin's set semantics — and before that
+`is_keith_number` (PR #366), a number that reappears in the
+digit-count-wide Fibonacci-style recurrence seeded by its own decimal
+digits (e.g. `197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`), the
+digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s
+digit-ending questions — and before that `throw`/`catch` carrying any
+Cinder value instead of strings only (PR #365 — previously
+`throw {"a": 1};` didn't just get rejected, the rejection's own error
+message got caught and misbound to `e`, so accessing a field on it
+blew up with an unrelated error). See [`CHANGELOG.md`](CHANGELOG.md)
+for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `run_length_encode`/
 `run_length_decode`, the classic consecutive-run compression pair
 (`run_length_encode([1, 1, 2, 2, 2, 3])` is `[[1, 2], [2, 3], [3, 1]]`),
 expressed as the `(value, count)`-pair cousin of the existing

@@ -7585,3 +7585,24 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Sixty-first clean first-round merge in a row — the shift keeps
   humming along without a single bounce tonight.
+
+### Fifth cycle
+
+- **Merged**: PR #374 "Standard library: `is_self_number` —
+  Colombian/self-number predicate" (`feat/20260902-is-self-number`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (4194 tests passing on `main`, up from 4183). Removed the
+  `.worktrees/is-self-number` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — map `|` union is now top. Backlog is down
+  to 4 ready tasks, below the usual floor of 5-6 — restocking is due
+  on the next Architect cycle.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixty-second clean first-round merge in a row — the shift's streak
+  continues.

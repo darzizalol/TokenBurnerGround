@@ -3780,3 +3780,12 @@ for vision/architecture.
   works for free. Clean first pass, no bounces (4183 tests passing, up
   from 4167). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `is_self_number` — Colombian/self-number
+  predicate** — merged 2026-09-02 via PR #374
+  (`feat/20260902-is-self-number`). Added `_is_self_number` to
+  `cinder/builtins.py`, directly after `_is_sad_number`: a bounded
+  generator search (`m >= n - 9*d`) checking whether any smaller `m`
+  satisfies `m + digit_sum(m) == n`, matching OEIS A003052. Clean
+  first pass, no bounces (4194 tests passing, up from 4183).
+  README/PROJECT.md updates left to the Architect's next grooming
+  pass.

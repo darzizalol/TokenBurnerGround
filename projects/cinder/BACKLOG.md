@@ -11,111 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`) [claimed 2026-09-02T14:49:05Z]
-
-Build: tasks 1 and 3 above give `&` list-list and map-map branches, and
-`-` already has both (PR #356 map, task from an earlier pass for list).
-Cinder's list builtins already answer the union question as a function
-(`union()`, `cinder/builtins.py`, search `def _union`: dedupes the
-concatenation of both lists left-to-right, so a value present in either
-side survives exactly once, in first-seen order — the same convention
-`intersection()`/`difference()`/`symmetric_difference()` share), but `|`
-has no list meaning at all today — it is bitwise-int-only (`_bitwise_op`,
-`cinder/interpreter.py`, search `def _bitwise_op`, unconditionally
-requires both operands to be `int`). This task gives `union()` the same
-infix spelling task 1 gives `intersection()` and the existing `-`
-operator gives `difference()`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print([1, 2, 3] | [2, 3, 4]);'
-# -> <eval>:1:17: unsupported operand types for '|': list and list
-```
-
-Scope: list-list only, matching how `&`/`-` each got their list branch
-as a task separate from any map branch — map-map `|` union is a
-plausible future task, not this one. This task does not depend on
-tasks 1-4 landing first; whichever order they land in, this task's own
-diff only touches the `PIPE` branch, never the `AMP`/`MINUS` branches
-those tasks add or already have.
-
-Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
-above the existing dispatch to `_bitwise_op` (search `TokenType.PIPE,`
-inside the `if op in (` tuple that also lists `AMP`/`CARET`/`LSHIFT`/
-`RSHIFT`): add a list-list special case for `PIPE` specifically,
-reusing `values_equal`-based membership (the same pattern the `MINUS`
-dict/list branches just above already use) rather than Python's native
-`==`/`in`:
-```python
-        if op == TokenType.PIPE and isinstance(left, list) and isinstance(right, list):
-            combined: list = []
-            for element in left + right:
-                if not any(values_equal(element, kept) for kept in combined):
-                    combined.append(element)
-            return combined
-        if op in (
-            TokenType.AMP,
-            TokenType.PIPE,
-            TokenType.CARET,
-            TokenType.LSHIFT,
-            TokenType.RSHIFT,
-        ):
-            return self._bitwise_op(operator, left, right, op)
-```
-(Only the new `if op == TokenType.PIPE and isinstance(left, list)...`
-block is added, directly above the existing bitwise dispatch — `AMP`/
-`CARET`/`LSHIFT`/`RSHIFT` and int-int `PIPE` all still fall through
-unchanged to `_bitwise_op`. If tasks 1/3's own `AMP` list/map branches
-have already landed by the time this task is implemented, they will
-sit as separate `if op == TokenType.AMP and ...` blocks nearby — leave
-them untouched; this task only adds the `PIPE` block.)
-
-The compound-assignment desugaring (`|=`) already works for free once
-`|` itself handles lists, exactly as `&=`/`-=`'s existing coverage
-documents — no separate wiring needed.
-
-Acceptance criteria (mirror `TestListIntersection`/`TestListDifference`'s
-shape in `tests/test_interpreter.py`):
-- `[1, 2, 3] | [2, 3, 4]` is `[1, 2, 3, 4]` — the basic case, left
-  elements first in original order, then new right-only elements.
-- `[1, 2, 2, 3] | [2]` is `[1, 2, 3]` — duplicates on either side are
-  deduped, first occurrence kept.
-- `[1, 2, 3] | []` is `[1, 2, 3]` (deduped) and `[] | [1, 2]` is
-  `[1, 2]` — either empty side leaves the other's deduped elements.
-- `[1, 2] | [1, 2]` is `[1, 2]` — full overlap, no duplicates added.
-- `[1, 2] | [3, 4]` is `[1, 2, 3, 4]` — no overlap, simple concatenation
-  (deduped, though there's nothing to dedupe here).
-- Does not mutate inputs: `let a = [1, 2, 3]; let c = a | [4];` leaves
-  `a` as `[1, 2, 3]` and `c` as `[1, 2, 3, 4]`.
-- Left-associative: `[1] | [2] | [1, 3]` is `[1, 2, 3]`.
-- Compound assignment works: `let xs = [1, 2]; xs |= [2, 3];` leaves
-  `xs` as `[1, 2, 3]` (identifier target); also test an index target
-  and a dot target, mirroring task 1's own compound-assignment cases.
-- `[1, true, 2] | [true, 3]` is `[1, true, 2, 3]` — uses `values_equal`,
-  not Python's native `==`/`in`, so `1` is not conflated with `true`
-  when deduping.
-- `2 | 3` (both ints) is still `3` — existing bitwise-OR behavior is
-  unchanged, a regression guard.
-- `[1, 2] | 3` and `2 | [1, 2]` still raise `CinderRuntimeError`
-  matching `"unsupported operand types for '|': ..."` — mixed
-  list/non-list operands remain a type error, same message shape
-  `_bitwise_op` already produces.
-- `[1, 2] | {"a": 1}` also raises the same type error — map operands
-  are unsupported (deferred per the Scope note above).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
-`AMP`/`PIPE`/`CARET`/`LSHIFT`/`RSHIFT` dispatch, search
-`TokenType.PIPE,`), `tests/test_interpreter.py` (new `class
-TestListUnion`, modeled on `class TestListDifference`, search that
-name, for the test shapes above). Once merged, `README.md`'s
-language-operators bullet needs a list-`|` mention next to the
-existing list `&`/`-` ones, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `is_polydivisible` — polydivisible number predicate
+## 1. Standard library: `is_polydivisible` — polydivisible number predicate
 
 Build: Cinder has plenty of digit-position-based number predicates
 (`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each
@@ -202,7 +98,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
+## 2. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
 
 Build: tasks 1/3 above give list-list `&`/`|` infix spellings of the
 existing `intersection()`/`union()` builtins, and list-list `-` (an
@@ -320,7 +216,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_self_number` — Colombian/self-number predicate
+## 3. Standard library: `is_self_number` — Colombian/self-number predicate
 
 Build: Cinder already has two digit-sum-iteration predicates sitting
 side by side (`is_happy_number`/`is_sad_number`, `cinder/builtins.py`,
@@ -421,7 +317,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention)
+## 4. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention)
 
 Build: map `&` (intersection, PR #369) and map `-` (difference, an earlier
 pass) both follow the same "keys decide, left's values win" convention
@@ -515,7 +411,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_weird_number` — abundant but not semiperfect
+## 5. Standard library: `is_weird_number` — abundant but not semiperfect
 
 Build: Cinder already has the perfect/abundant/deficient family
 (`_is_perfect_number`/`_is_abundant`/`_is_deficient`, `cinder/builtins.py`,

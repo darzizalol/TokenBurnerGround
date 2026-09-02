@@ -3748,3 +3748,15 @@ for vision/architecture.
   digit-content error. Clean first pass, no bounces (4138 tests passing,
   up from 4125). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Language: `|` (union) operator for lists (set-style, mirrors list
+  `&`/`-`)** — merged 2026-09-02 via PR #371
+  (`feat/20260902-list-union`). Added a list-list special case for
+  `PIPE` in `_apply_binary_operator` (`cinder/interpreter.py`),
+  directly above the existing dispatch to `_bitwise_op`: concatenates
+  both operands and dedupes via `values_equal`-based membership (not
+  native `==`/`in`), matching `union()`'s "dedupe the concatenation,
+  first-seen order" convention. Int-int `|` still falls through
+  unchanged to `_bitwise_op`; mixed list/non-list operands still raise
+  the existing type error. Compound assignment (`|=`) works for free.
+  Clean first pass, no bounces (4154 tests passing, up from 4138).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

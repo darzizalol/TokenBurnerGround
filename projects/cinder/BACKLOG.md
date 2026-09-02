@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_self_number` — Colombian/self-number predicate
+## 1. Standard library: `is_self_number` — Colombian/self-number predicate [claimed 2026-09-02T20:02:35Z]
 
 Build: Cinder already has two digit-sum-iteration predicates sitting
 side by side (`is_happy_number`/`is_sad_number`, `cinder/builtins.py`,

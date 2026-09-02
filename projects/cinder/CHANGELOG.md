@@ -3725,3 +3725,14 @@ for vision/architecture.
   `run_length_decode(pairs)` is the exact inverse. Clean first pass,
   no bounces (4109 tests passing, up from 4092). README/CHANGELOG/
   PROJECT.md updates left to the Architect's next grooming pass.
+- **Language: `&` (intersection) operator for maps (key-based, mirrors
+  map `-`)** — merged 2026-09-02 via PR #369
+  (`feat/20260902-map-and-intersection`). Added a dict-dict special
+  case for `AMP` in `_apply_binary_operator` (`cinder/interpreter.py`),
+  directly above the existing list-list `AMP` branch, mirroring `MINUS`'s
+  dict-dict branch: key-based intersection keeping the *left* map's
+  value for every key present in both sides, right-side values ignored
+  entirely — the same "keys decide, left's values win" convention map
+  `-` already set. Compound assignment (`&=`) on a map target works for
+  free. Clean first pass, no bounces (4125 tests passing, up from 4109).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

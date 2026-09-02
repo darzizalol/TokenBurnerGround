@@ -11,104 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`) [claimed 2026-09-02T14:19:33Z]
-
-Build: list-list `&` already landed (PR #367,
-`cinder/interpreter.py:1308`), and the map side of `-` (PR #356)
-already established what a key-based map operator looks like:
-`{"a": 1, "b": 2} - {"a": 1}` is `{"b": 2}` — keys present in the right
-map are dropped from the left, *values on the right are ignored
-entirely* (`{"a": 1} - {"a": 99}` still removes `"a"` even though the
-values don't match). `&` still has no map meaning today — dict-dict
-operands fall straight through the list-list `AMP` check (which only
-matches when both sides are lists) into `_bitwise_op`, which rejects
-any non-int operand. PR #367's own Scope note called this out
-explicitly as deferred, not in scope there: "map-map `&` intersection
-is a plausible future task, not this one." This task is that task — no
-further dependency, the list-list branch it sits next to is already on
-`main`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print({"a": 1, "b": 2} & {"a": 1, "c": 3});'
-# -> <eval>:1:24: unsupported operand types for '&': map and map
-```
-
-Semantics: key-based intersection, keeping the *left* map's value for
-every key present in both — the same "keys decide, left's values win"
-convention map `-` already set, not a value-equality check. So
-`{"a": 1, "b": 2} & {"a": 99, "c": 3}` is `{"a": 1}`: key `"a"` is kept
-(present on both sides) with its value taken from the left, `"b"` is
-dropped (left-only, not present on the right), `"c"` is dropped
-(right-only, not present on the left), and the right map's `"a": 99`
-never surfaces.
-
-Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
-above the existing list-list `AMP` branch (`cinder/interpreter.py:1308`,
-search `if op == TokenType.AMP and isinstance(left, list)`) — add a
-dict-dict special case first, mirroring `MINUS`'s existing dict-dict
-branch just above in the same method (search `if isinstance(left,
-dict) and isinstance(right, dict):` under the `MINUS` case):
-```python
-        if op == TokenType.AMP and isinstance(left, dict) and isinstance(right, dict):
-            return {key: value for key, value in left.items() if key in right}
-        if op == TokenType.AMP and isinstance(left, list) and isinstance(right, list):
-```
-(Only the new dict-dict `if` line is added, directly above the
-existing list-list `if`; that line's own `and isinstance(left, list)`
-check already means it never fires for dicts, so the two branches
-can't collide — order between them doesn't actually matter, but
-placing the dict check first keeps `AMP`'s branches in the same
-left-to-right type order `MINUS`'s dict-then-list branches already
-use, two lines above.)
-
-The compound-assignment desugaring (`&=`) already works for free on a
-map target once `&` itself handles maps, exactly as `-=` does for maps
-today — no separate wiring needed.
-
-Acceptance criteria (mirror `TestMapDifference`'s shape in
-`tests/test_interpreter.py`, search that name):
-- `{"a": 1, "b": 2} & {"a": 1, "c": 3}` is `{"a": 1}` — the basic case.
-- `{"a": 1, "b": 2} & {"a": 99}` is `{"a": 1}` — right-side value is
-  ignored, left's value wins (mirrors `test_right_value_is_ignored` for
-  `-`).
-- `{"a": 1} & {}` is `{}` and `{} & {"a": 1}` is `{}` — either side
-  empty empties the result.
-- `{"a": 1, "b": 2} & {"a": 1, "b": 2}` is `{"a": 1, "b": 2}` — full
-  overlap keeps everything.
-- `{"a": 1, "b": 2} & {"c": 3}` is `{}` — no shared keys.
-- Does not mutate inputs: `let m = {"a": 1, "b": 2}; let c = m & {"a": 1};`
-  leaves `m` as `{"a": 1, "b": 2}` and `c` as `{"a": 1}`.
-- Left-associative: `{"a": 1, "b": 2, "c": 3} & {"a": 1, "b": 2} & {"b": 2}`
-  is `{"b": 2}`.
-- Compound assignment works: `let m = {"a": 1, "b": 2}; m &= {"a": 1};`
-  leaves `m` as `{"a": 1}` (identifier target); also test an index
-  target and a dot target, mirroring `TestMapDifference`'s own
-  `test_compound_assignment_on_index_target`/`_on_dot_target`.
-- `2 & 3` (both ints) is still `2` — existing bitwise-AND behavior is
-  unchanged, a regression guard.
-- `[1, 2] & [1]` (both lists, PR #367's existing branch) is still
-  `[1]` — confirms the new dict-dict branch doesn't shadow or reorder
-  ahead of the list-list branch it sits next to.
-- `{"a": 1} & 3` and `3 & {"a": 1}` still raise `CinderRuntimeError`
-  matching `"unsupported operand types for '&': ..."` — mixed
-  map/non-map operands remain a type error.
-- `{"a": 1} & [1, 2]` also raises the same type error — map/list
-  operands are unsupported (neither branch's `isinstance` pair
-  matches).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s `AMP`
-dispatch, search `if op == TokenType.AMP and isinstance(left, list)`),
-`tests/test_interpreter.py` (new `class TestMapIntersection`, modeled
-on `class TestMapDifference`, search that name, for the test shapes
-above). Once merged, `README.md`'s language-operators bullet needs a
-map-`&` mention next to the existing list-`&` one, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings
+## 1. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings
 
 Build: Cinder has plenty of digit-driven number predicates
 (`is_keith_number` above, `is_kaprekar`, `is_armstrong`, ...) but nothing
@@ -227,7 +130,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
+## 2. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
 
 Build: tasks 1 and 3 above give `&` list-list and map-map branches, and
 `-` already has both (PR #356 map, task from an earlier pass for list).
@@ -331,7 +234,7 @@ this task.
 
 ---
 
-## 4. Standard library: `is_polydivisible` — polydivisible number predicate
+## 3. Standard library: `is_polydivisible` — polydivisible number predicate
 
 Build: Cinder has plenty of digit-position-based number predicates
 (`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each
@@ -418,7 +321,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
+## 4. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
 
 Build: tasks 1/3 above give list-list `&`/`|` infix spellings of the
 existing `intersection()`/`union()` builtins, and list-list `-` (an

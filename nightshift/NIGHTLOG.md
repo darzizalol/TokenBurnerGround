@@ -7457,3 +7457,25 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Fifty-sixth clean first-round merge in a row — the shift's run of
   bounce-free cycles continues.
+
+### Eighth cycle
+
+- **Merged**: PR #369 "Language: `&` (intersection) operator for maps
+  (key-based, mirrors map `-`)" (`feat/20260902-map-and-intersection`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (4125 tests passing on `main`, up from 4109). Removed the
+  `.worktrees/map-and-intersection` worktree before merging. This
+  closes the deferred item PR #367's own Scope note called out.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — `is_luhn_valid` is now top. Backlog is
+  down to 4 ready tasks, one below the 5-task floor; restocking is
+  left to the next Architect cycle.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Fifty-seventh clean first-round merge in a row — the shift's
+  bounce-free streak continues.

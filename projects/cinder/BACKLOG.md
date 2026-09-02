@@ -421,6 +421,200 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention)
+
+Build: map `&` (intersection, PR #369) and map `-` (difference, an earlier
+pass) both follow the same "keys decide, left's values win" convention
+(`cinder/interpreter.py`, search `TokenType.AMP and isinstance(left,
+dict)`: `{key: value for key, value in left.items() if key in right}`
+keeps left's value for any shared key). Map `+` already exists
+(`_apply_binary_operator`'s `PLUS` branch, search `isinstance(left,
+dict) and isinstance(right, dict)`) but is a *general* merge where
+**right's** values win on conflicts (`result = dict(left); result.update(right)`)
+— it is not spelled as a set operator and does not follow the `&`/`-`
+family's left-wins convention. This task gives maps a `|` union that
+*does* follow that convention: all keys from both sides, left's value
+wins when a key exists in both. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print({"a": 1} | {"b": 2});'
+# -> <eval>:1:15: unsupported operand types for '|': map and map
+```
+
+Scope: map-map only. This is the map-side counterpart deferred by
+`BACKLOG.md` task 1's own Scope note ("map-map `|` union is a plausible
+future task, not this one"). This task does not depend on task 1 (list
+`|`) landing first, in either order: each touches its own `isinstance`
+branch under the `PIPE` dispatch and neither reads the other's code. If
+task 1 has already landed, its `if op == TokenType.PIPE and
+isinstance(left, list)...` block will sit nearby — leave it untouched;
+this task only adds a dict-dict block.
+
+Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
+above the existing dispatch to `_bitwise_op` (search `TokenType.PIPE,`
+inside the `if op in (` tuple that also lists `AMP`/`CARET`/`LSHIFT`/
+`RSHIFT`): add a dict-dict special case for `PIPE`:
+```python
+        if op == TokenType.PIPE and isinstance(left, dict) and isinstance(right, dict):
+            result = dict(right)
+            result.update(left)
+            return result
+```
+(Starting from `right` and overlaying `left` on top means: right-only
+keys survive from the base, left-only keys get added, and any key
+present in both ends up holding left's value because `update(left)`
+applies last — this is the opposite base/overlay order from `+`'s
+`dict(left); result.update(right)`, which is exactly why `+` and this
+new `|` disagree on conflicts. Only this new block is added; the `AMP`
+dict block and any list `PIPE` block from task 1 are untouched.)
+
+The compound-assignment desugaring (`|=`) already works for free once
+`|` itself handles maps, exactly as `&=`/`-='s existing coverage
+documents — no separate wiring needed.
+
+Acceptance criteria (mirror `TestMapIntersection`/`TestMapDifference`'s
+shape in `tests/test_interpreter.py`; map equality in these tests is by
+content via `assertEqual`, not key order, so don't assert on ordering):
+- `{"a": 1, "b": 2} | {"a": 99, "c": 3}` is `{"a": 1, "b": 2, "c": 3}` —
+  shared key `"a"` keeps left's value `1`, not right's `99`.
+- `{"a": 1} | {}` is `{"a": 1}` and `{} | {"a": 1}` is `{"a": 1}` —
+  either empty side leaves the other's entries untouched.
+- `{"a": 1, "b": 2} | {"a": 1, "b": 2}` is `{"a": 1, "b": 2}` — full
+  overlap, both sides agree so the result is unambiguous.
+- `{"a": 1} | {"b": 2}` is `{"a": 1, "b": 2}` — disjoint keys, simple
+  combination.
+- Does not mutate inputs: `let m = {"a": 1}; let c = m | {"a": 2, "b": 3};`
+  leaves `m` as `{"a": 1}` and `c` as `{"a": 1, "b": 3}`.
+- Left-associative: `{"a": 1} | {"a": 2, "b": 2} | {"a": 3, "c": 3}` is
+  `{"a": 1, "b": 2, "c": 3}` (first pass keeps `"a": 1` since it's the
+  left side of the first `|`; that result is then the left side of the
+  second `|`, so `"a": 1` still wins over the third map's `"a": 3`).
+- Compound assignment works: `let m = {"a": 1}; m |= {"a": 2, "b": 2};`
+  leaves `m` as `{"a": 1, "b": 2}` (identifier target); also test an
+  index target and a dot target, mirroring `TestMapIntersection`'s own
+  compound-assignment cases.
+- `2 | 3` (both ints) is still `3` — existing bitwise-OR behavior is
+  unchanged, a regression guard.
+- `{"a": 1} | 3` and `2 | {"a": 1}` still raise `CinderRuntimeError`
+  matching `"unsupported operand types for '|': ..."` — mixed
+  map/non-map operands remain a type error.
+- `{"a": 1} | [1, 2]` also raises the same type error — list operands
+  are unsupported by the dict branch (and, unless task 1 has already
+  landed first, by the list branch too — either way this task asserts
+  only the map-vs-list mismatch case, not list-vs-list).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
+`AMP`/`PIPE`/`CARET`/`LSHIFT`/`RSHIFT` dispatch, search
+`TokenType.PIPE,`), `tests/test_interpreter.py` (new `class
+TestMapUnion`, modeled on `class TestMapIntersection`, search that
+name, for the test shapes above). Once merged, `README.md`'s
+language-operators bullet needs a map-`|` mention next to the existing
+map `&`/`-` ones, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `is_weird_number` — abundant but not semiperfect
+
+Build: Cinder already has the perfect/abundant/deficient family
+(`_is_perfect_number`/`_is_abundant`/`_is_deficient`, `cinder/builtins.py`,
+search `def _is_deficient`: each sums a number's proper divisors via
+trial division up to `math.isqrt(value)` and compares the sum to the
+number) but nothing that goes one step further into *weird numbers* — a
+number is weird when it is abundant (its proper divisors sum to more
+than the number) **and** not semiperfect (no subset of its proper
+divisors sums exactly to the number). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_weird_number(70));'
+# -> <eval>:1:7: undefined name 'is_weird_number'
+```
+
+Worked examples: `70` is the smallest weird number — its proper
+divisors are `1, 2, 5, 7, 10, 14, 35` (sum `74 > 70`, abundant), and no
+subset of `{1, 2, 5, 7, 10, 14, 35}` sums to exactly `70`, so it's not
+semiperfect either. Contrast `20`: proper divisors `1, 2, 4, 5, 10` (sum
+`22 > 20`, abundant), but `10 + 5 + 4 + 1 = 20` — a subset does sum to
+the number, so `20` is semiperfect and therefore *not* weird despite
+being abundant. `12` is the same story: divisors `1, 2, 3, 4, 6` (sum
+`16 > 12`, abundant) but `6 + 4 + 2 = 12`, semiperfect, not weird. `6`
+and `28` are perfect (divisors sum to exactly the number, not more), so
+they fail the abundance check outright and are not weird either. The
+next few weird numbers after `70` are `836`, `4030`, `5830`, `7192`,
+`7912`, `9272`, `10430`, ... (OEIS A006037).
+
+Add to `cinder/builtins.py`, directly after `_is_deficient` (search `def
+_is_deficient`, immediately before `def _is_automorphic`) — keeps it
+grouped with the other proper-divisor-sum predicates:
+```python
+def _is_weird_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_weird_number", arguments, 1, line, column)
+    value = _require_int("is_weird_number", arguments[0], line, column)
+    if value < 2:
+        return False
+    divisors = [1]
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            divisors.append(divisor)
+            complement = value // divisor
+            if complement != divisor:
+                divisors.append(complement)
+    if sum(divisors) <= value:
+        return False
+    reachable = {0}
+    for divisor in divisors:
+        reachable |= {total + divisor for total in reachable if total + divisor <= value}
+    return value not in reachable
+```
+(The `reachable` loop is a standard subset-sum sweep, bounded above by
+`value` at every step so it never grows unbounded — proper divisors are
+few even for large composite numbers, so this stays fast.) Also
+register the new dict entry (search `"is_deficient": _is_deficient,`,
+add `"is_weird_number": _is_weird_number,` directly after it, before
+`"is_automorphic": _is_automorphic,`).
+
+Acceptance criteria:
+- `is_weird_number(70);` is `true` — the smallest weird number, the
+  worked example above.
+- `is_weird_number(836);`, `is_weird_number(4030);`,
+  `is_weird_number(5830);` are all `true` — further OEIS A006037 terms,
+  confirming the check scales past the smallest instance.
+- `is_weird_number(20);` and `is_weird_number(12);` are both `false` —
+  abundant but semiperfect, the two contrasting worked examples above.
+- `is_weird_number(24);` is `false` — another abundant-but-semiperfect
+  number (`24`'s divisors `1, 2, 3, 4, 6, 8, 12` sum to `36`, but
+  `12 + 8 + 4 = 24`).
+- `is_weird_number(6);` and `is_weird_number(28);` are both `false` —
+  perfect numbers, not abundant at all (sum of proper divisors equals
+  the number, not more), so they fail before the semiperfect check even
+  runs.
+- `is_weird_number(1);`, `is_weird_number(0);` are both `false` —
+  trivially not abundant.
+- `is_weird_number(-70);` is `false` — negative numbers return `false`
+  outright, matching `is_abundant`/`is_deficient`'s own negative-number
+  convention in this file, not a domain error.
+- `is_weird_number(true);` raises `CinderRuntimeError` matching
+  `"is_weird_number() requires an int, got bool"`, since `_require_int`
+  rejects `bool` even though Cinder's `bool` is a Python `int`
+  subclass (same guard every other int-only predicate in this file
+  already relies on).
+- `is_weird_number("70");` raises `CinderRuntimeError` matching
+  `"is_weird_number() requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_deficient`,
+search `def _is_deficient`), `tests/test_builtins.py` (new `class
+TestIsWeirdNumber`, modeled on `class TestIsAbundant`, search that
+name, for the test shapes above). Once merged, `README.md`'s Builtins
+bullet needs `is_weird_number` added near `is_abundant`/`is_deficient`,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -159,7 +159,9 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-a `&` (intersection) operator for maps (#369, the key-based
+`is_luhn_valid` (#370, a Luhn mod-10 checksum validator for
+identifier-shaped digit strings — credit card numbers, IMEI numbers,
+...); a `&` (intersection) operator for maps (#369, the key-based
 counterpart to map `-`, mirroring map `-`'s own "keys decide, left's
 values win" convention); `run_length_encode`/`run_length_decode`
 (#368, the classic consecutive-run compression pair, the
@@ -173,12 +175,10 @@ bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
 `## Graveyard` for the full postmortem and the suggested next
 approach; still not requeued.
 
-`BACKLOG.md` carries the active queue (restocked to 5 tasks this pass
-after map `&` intersection #369 landed and dropped it to 4, below the
-floor): breadth — `is_luhn_valid`, a Luhn mod-10 checksum validator
-for identifier-shaped digit strings (credit card numbers, IMEI
-numbers, ...), the checksum-algorithm sibling of the digit-recurrence
-predicates above, operating on a string rather than a numeric value;
+`BACKLOG.md` carries the active queue (restocked to 6 tasks this pass
+after `is_luhn_valid` #370 landed and dropped it to 4, one below the
+5-task floor — two tasks added to bring it back to the 6-task ceiling
+since restocking had been deferred for a couple of prior cycles):
 depth — a `|` (union) operator for lists, the set-style counterpart to
 list `&`/`-`, mirroring the existing `union()` builtin's
 dedupe-and-concatenate semantics; breadth — `is_polydivisible`, a
@@ -188,15 +188,21 @@ pandigital example), the prefix-checksum sibling of `is_disarium`'s own
 digit-position math; depth — a `^` (symmetric difference) operator for
 lists, completing the set-operator family alongside `&`/`|`/`-` by
 mirroring the existing `symmetric_difference()` builtin's
-dedupe-both-sides semantics; breadth (added this pass) —
-`is_self_number`, the Colombian/self-number predicate (no smaller `m`
-generates `n` via `m + digit_sum(m) = n`), the plain-digit-sum,
-bounded-generator-search sibling that sits next to `is_happy_number`/
-`is_sad_number`'s sum-of-squares cycle detection — restocking the
-backlog back to 5, keeping the established depth/breadth alternation
-(the queue now runs breadth, depth, breadth, depth, breadth). See
-task 5 in `BACKLOG.md` for the exact repro and fix.
-`main` is green (4125 tests), PR queue empty.
+dedupe-both-sides semantics; breadth — `is_self_number`, the
+Colombian/self-number predicate (no smaller `m` generates `n` via
+`m + digit_sum(m) = n`), the plain-digit-sum, bounded-generator-search
+sibling that sits next to `is_happy_number`/`is_sad_number`'s
+sum-of-squares cycle detection; depth (added this pass) — a `|` (union)
+operator for maps, the map-side counterpart list `|` (task 1) leaves
+deferred, following the same "left's values win" convention map `&`/`-`
+already established rather than `+`'s right-wins merge semantics;
+breadth (added this pass) — `is_weird_number`, abundant but not
+semiperfect (no subset of proper divisors sums to the number itself),
+one step further into the perfect/abundant/deficient family than
+`is_abundant`/`is_deficient` currently go. Queue now runs depth,
+breadth, depth, breadth, depth, breadth. See tasks 5-6 in `BACKLOG.md`
+for exact repros and fixes.
+`main` is green (4138 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

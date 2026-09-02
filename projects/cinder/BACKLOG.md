@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings
+## 1. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings [claimed 2026-09-02T14:31:46Z]
 
 Build: Cinder has plenty of digit-driven number predicates
 (`is_keith_number` above, `is_kaprekar`, `is_armstrong`, ...) but nothing

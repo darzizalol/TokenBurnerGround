@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `run_length_encode` / `run_length_decode` — consecutive-run compression
+## 1. Standard library: `run_length_encode` / `run_length_decode` — consecutive-run compression [claimed 2026-09-02T14:07:06Z]
 
 Build: Cinder already has `group_consecutive` (`cinder/builtins.py`, search
 `def _group_consecutive`) which splits a list into sublists of consecutive

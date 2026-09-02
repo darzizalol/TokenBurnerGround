@@ -1323,6 +1323,10 @@ class Interpreter:
                 if not any(values_equal(element, kept) for kept in combined):
                     combined.append(element)
             return combined
+        if op == TokenType.PIPE and isinstance(left, dict) and isinstance(right, dict):
+            result = dict(right)
+            result.update(left)
+            return result
         if op == TokenType.CARET and isinstance(left, list) and isinstance(right, list):
             left_deduped: list = []
             for element in left:

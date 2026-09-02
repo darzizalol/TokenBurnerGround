@@ -53,7 +53,8 @@ present in both ends up holding left's value because `update(left)`
 applies last — this is the opposite base/overlay order from `+`'s
 `dict(left); result.update(right)`, which is exactly why `+` and this
 new `|` disagree on conflicts. Only this new block is added; the `AMP`
-dict block and any list `PIPE` block from task 1 are untouched.)
+dict block and the already-landed list `PIPE` block (PR #371) are
+untouched.)
 
 The compound-assignment desugaring (`|=`) already works for free once
 `|` itself handles maps, exactly as `&=`/`-='s existing coverage
@@ -86,9 +87,9 @@ content via `assertEqual`, not key order, so don't assert on ordering):
   matching `"unsupported operand types for '|': ..."` — mixed
   map/non-map operands remain a type error.
 - `{"a": 1} | [1, 2]` also raises the same type error — list operands
-  are unsupported by the dict branch (and, unless task 1 has already
-  landed first, by the list branch too — either way this task asserts
-  only the map-vs-list mismatch case, not list-vs-list).
+  are unsupported by the dict branch (list `|` already handles
+  list-vs-list via PR #371, so this task only needs to assert the
+  map-vs-list mismatch case).
 - Full test suite passes.
 
 Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
@@ -205,7 +206,7 @@ Architect's next grooming pass, not this task.
 
 ## 3. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
 
-Build: task 2 above gives maps `|`, and list `^` (symmetric difference,
+Build: task 1 above gives maps `|`, and list `^` (symmetric difference,
 already landed 2026-09-03 via PR #373) gives `^`'s list-side
 counterpart, which together with the already-landed map `&`/`-`
 (`cinder/interpreter.py`, search `TokenType.AMP and isinstance(left,
@@ -227,9 +228,9 @@ there is no map-flavored builtin to mirror here — `cinder/builtins.py`'s
 `_symmetric_difference` is list-only — so this task defines the
 convention directly, following the same "keys decide" shape map `&`/`-`
 already established rather than inventing a values-aware one). This task
-does not depend on task 2 (map `|`) landing first, in either order: this
+does not depend on task 1 (map `|`) landing first, in either order: this
 task's own diff only touches a new `isinstance(left, dict)` branch under
-the `CARET` dispatch, and never reads the dict-`PIPE` branch task 2
+the `CARET` dispatch, and never reads the dict-`PIPE` branch task 1
 adds.
 
 Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
@@ -249,7 +250,7 @@ result. Left-only entries come first in left's own order, then
 right-only entries in right's own order, mirroring list `^`'s (PR #373)
 convention. Only this new block is added; the `AMP`/`MINUS` dict
 branches, list `^`'s already-landed `CARET` block, and the dict `PIPE`
-block task 2 adds are all untouched.)
+block task 1 adds are all untouched.)
 
 The compound-assignment desugaring (`^=`) already works for free once
 `^` itself handles maps, exactly as `&=`/`|=`/`-='s existing coverage
@@ -278,7 +279,7 @@ content via `assertEqual`, not key order, so don't assert on ordering):
   in the test rather than re-deriving it by eye).
 - Compound assignment works: `let m = {"a": 1}; m ^= {"a": 2, "b": 2};`
   leaves `m` as `{"b": 2}` (identifier target); also test an index
-  target and a dot target, mirroring task 4's own compound-assignment
+  target and a dot target, mirroring task 1's own compound-assignment
   cases.
 - `2 ^ 3` (both ints) is still `1` — existing bitwise-XOR behavior is
   unchanged, a regression guard.
@@ -286,9 +287,9 @@ content via `assertEqual`, not key order, so don't assert on ordering):
   matching `"unsupported operand types for '^': ..."` — mixed
   map/non-map operands remain a type error.
 - `{"a": 1} ^ [1, 2]` also raises the same type error — list operands
-  are unsupported by the dict branch (and, unless task 2 has already
-  landed first, by the list branch too — either way this task asserts
-  only the map-vs-list mismatch case, not list-vs-list).
+  are unsupported by the dict branch (list `^` already handles
+  list-vs-list via PR #373, so this task only needs to assert the
+  map-vs-list mismatch case).
 - Full test suite passes.
 
 Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
@@ -535,6 +536,98 @@ language-operators bullet needs a `<=>` mention, its "Status & roadmap"
 section needs updating, and `PROJECT.md`'s "Current frontier" section
 needs refreshing — leave both to the Architect's next grooming pass,
 not this task.
+
+---
+
+## 6. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
+
+Build: Cinder already has `is_anagram` (`cinder/builtins.py`, search `def
+_is_anagram`: two strings share the same character multiset, via
+`Counter(string1) == Counter(string2)`) and `is_palindrome` (search `def
+_is_palindrome`: a single string already reads the same forwards and
+backwards), but nothing that answers the question in between — whether a
+*single* string's characters could be *rearranged* into some palindrome,
+without actually needing to be one already. A string can be permuted into
+a palindrome iff at most one distinct character has an odd count in its
+multiset (that one odd-count character, if any, sits in the middle; every
+other character must pair up on both sides). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_palindrome_permutation("carrace"));'
+# -> <eval>:1:7: undefined name 'is_palindrome_permutation' (did you mean 'is_permutation'?)
+```
+
+Worked examples: `"carrace"` has counts `c:2, a:2, r:2, e:1` — exactly one
+odd count (`e`), so it permutes to a palindrome (e.g. `"racecar"`).
+`"aabbcc"` has all-even counts (`a:2, b:2, c:2`) — zero odd counts, still
+permutable (e.g. `"abccba"`). `"aabbc"` has counts `a:2, b:2, c:1` — one
+odd count, permutable (`"abcba"`). `"abc"` has counts `a:1, b:1, c:1` —
+three odd counts, not permutable. Exact-character convention throughout
+(case-sensitive, no whitespace/punctuation stripping), matching
+`is_anagram`'s own exact-`Counter`-equality convention rather than
+`is_isogram`'s case-folded/letters-only one — so `"Aa"` (counts `A:1, a:1`,
+two distinct odd-count characters since `A` and `a` are different
+characters here) is not permutable, and a space counts like any other
+character (`"ab a"` has counts `a:2, b:1, " ":1` — two odd counts, not
+permutable).
+
+Add to `cinder/builtins.py`, directly after `_is_anagram` (search `def
+_is_anagram`, immediately before `def _is_rotation`) — keeps it grouped
+with the other character-multiset string predicates:
+```python
+def _is_palindrome_permutation(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_palindrome_permutation", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"is_palindrome_permutation() requires a string, got {type_name(value)}",
+            line, column,
+        )
+    odd_counts = sum(1 for count in Counter(value).values() if count % 2 == 1)
+    return odd_counts <= 1
+```
+(`Counter` is already imported at module level for `_is_anagram`'s own
+use — no new import needed.) Also register the new dict entry (search
+`"is_anagram": _is_anagram,`, add `"is_palindrome_permutation":
+_is_palindrome_permutation,` directly after it, before `"is_rotation":
+_is_rotation,`).
+
+Acceptance criteria:
+- `is_palindrome_permutation("carrace");` is `true` — one odd count
+  (`e`), the worked example above.
+- `is_palindrome_permutation("aabbcc");` is `true` — zero odd counts.
+- `is_palindrome_permutation("aabbc");` is `true` — one odd count (`c`).
+- `is_palindrome_permutation("abc");` is `false` — three odd counts, the
+  contrasting worked example above.
+- `is_palindrome_permutation("");` is `true` — the empty string vacuously
+  permutes into itself, a palindrome.
+- `is_palindrome_permutation("a");` is `true` — a single character is
+  always already a palindrome.
+- `is_palindrome_permutation("Aa");` is `false` — case-sensitive, `A` and
+  `a` are distinct characters each with an odd count of 1.
+- `is_palindrome_permutation("ab a");` is `false` — a space counts like
+  any other character, giving two odd counts (`a:2` even, `b:1` and
+  `" ":1` both odd).
+- `is_palindrome_permutation("racecar");` is `true` — already a
+  palindrome, which is always trivially permutable into one (zero odd
+  counts here since every character but the middle `e` pairs up, and `e`
+  itself is the one allowed odd count).
+- `is_palindrome_permutation(5);` raises `CinderRuntimeError` matching
+  `"is_palindrome_permutation() requires a string, got int"`, matching
+  `is_anagram`/`is_palindrome`'s own non-string-argument convention in
+  this file.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_anagram`, search
+`def _is_anagram`), `tests/test_builtins.py` (new `class
+TestIsPalindromePermutation`, modeled on `class TestIsAnagram`, search
+that name, for the test shapes above). Once merged, `README.md`'s
+Builtins bullet needs `is_palindrome_permutation` added near
+`is_anagram`/`is_palindrome`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
 
 ---
 

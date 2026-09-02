@@ -1323,6 +1323,22 @@ class Interpreter:
                 if not any(values_equal(element, kept) for kept in combined):
                     combined.append(element)
             return combined
+        if op == TokenType.CARET and isinstance(left, list) and isinstance(right, list):
+            left_deduped: list = []
+            for element in left:
+                if not any(values_equal(element, kept) for kept in left_deduped):
+                    left_deduped.append(element)
+            right_deduped: list = []
+            for element in right:
+                if not any(values_equal(element, kept) for kept in right_deduped):
+                    right_deduped.append(element)
+            return [
+                element for element in left_deduped
+                if not contains_value(right, element, operator.line, operator.column)
+            ] + [
+                element for element in right_deduped
+                if not contains_value(left, element, operator.line, operator.column)
+            ]
         if op in (
             TokenType.AMP,
             TokenType.PIPE,

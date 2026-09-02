@@ -159,35 +159,31 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-a `|` (union) operator for lists (#371, the set-style counterpart to
+`is_polydivisible` (#372, a digit-position predicate checking that
+every decimal prefix of a number is divisible by its own length, the
+prefix-checksum sibling of `is_disarium`'s own digit-position math); a
+`|` (union) operator for lists (#371, the set-style counterpart to
 list `&`/`-`, mirroring the existing `union()` builtin's
 dedupe-and-concatenate semantics); `is_luhn_valid` (#370, a Luhn mod-10
 checksum validator for identifier-shaped digit strings — credit card
 numbers, IMEI numbers, ...); a `&` (intersection) operator for maps
 (#369, the key-based counterpart to map `-`, mirroring map `-`'s own
-"keys decide, left's values win" convention); `run_length_encode`/
-`run_length_decode` (#368, the classic consecutive-run compression
-pair, the `(value, count)`-pair cousin of the existing
-`group_consecutive` builtin). Guards in `match` arms (`n if n > 0 =>
-...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
-for the full postmortem and the suggested next approach; still not
-requeued.
+"keys decide, left's values win" convention). Guards in `match` arms
+(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
+straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
+bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
+`## Graveyard` for the full postmortem and the suggested next
+approach; still not requeued.
 
 `BACKLOG.md` carries the active queue (restocked to 6 tasks this pass
-after list `|` #371 landed and dropped it to 5, right at the floor —
-one task added to bring it back to the 6-task ceiling): breadth —
-`is_polydivisible`, a digit-position predicate checking that every
-decimal prefix of a number is divisible by its own length (e.g.
-`381654729`, the classic pandigital example), the prefix-checksum
-sibling of `is_disarium`'s own digit-position math; depth — a `^`
-(symmetric difference) operator for lists, completing the list side of
-the set-operator family alongside `&`/`|`/`-` by mirroring the existing
-`symmetric_difference()` builtin's dedupe-both-sides semantics; breadth
-— `is_self_number`, the Colombian/self-number predicate (no smaller `m`
-generates `n` via `m + digit_sum(m) = n`), the plain-digit-sum,
-bounded-generator-search sibling that sits next to
+after `is_polydivisible` #372 landed and dropped it to 5, right at the
+floor — one task added to bring it back to the 6-task ceiling): depth —
+a `^` (symmetric difference) operator for lists, completing the list
+side of the set-operator family alongside `&`/`|`/`-` by mirroring the
+existing `symmetric_difference()` builtin's dedupe-both-sides
+semantics; breadth — `is_self_number`, the Colombian/self-number
+predicate (no smaller `m` generates `n` via `m + digit_sum(m) = n`),
+the plain-digit-sum, bounded-generator-search sibling that sits next to
 `is_happy_number`/`is_sad_number`'s sum-of-squares cycle detection;
 depth — a `|` (union) operator for maps, the map-side counterpart list
 `|` leaves deferred, following the same "left's values win" convention
@@ -195,13 +191,17 @@ map `&`/`-` already established rather than `+`'s right-wins merge
 semantics; breadth — `is_weird_number`, abundant but not semiperfect
 (no subset of proper divisors sums to the number itself), one step
 further into the perfect/abundant/deficient family than
-`is_abundant`/`is_deficient` currently go; depth (added this pass) — a
-`^` (symmetric difference) operator for maps, completing the map side
-of the same set-operator family once list `^` and map `|` land,
-key-based since there is no map-flavored `symmetric_difference()`
-builtin to mirror. Queue now runs breadth, depth, breadth, depth,
-breadth, depth. See task 6 in `BACKLOG.md` for the exact repro and fix.
-`main` is green (4154 tests), PR queue empty.
+`is_abundant`/`is_deficient` currently go; depth — a `^` (symmetric
+difference) operator for maps, completing the map side of the same
+set-operator family once list `^` and map `|` land, key-based since
+there is no map-flavored `symmetric_difference()` builtin to mirror;
+breadth (added this pass) — `is_carmichael_number`, a
+Korselt's-criterion Fermat-pseudoprime predicate (composite, squarefree,
+and `(p-1) | (n-1)` for every prime factor `p`), built on the same
+trial-division factoring `prime_factors`/`is_smith_number` already use.
+Queue now runs depth, breadth, depth, breadth, depth, breadth. See task
+6 in `BACKLOG.md` for the exact repro and fix. `main` is green (4167
+tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

@@ -3767,3 +3767,16 @@ for vision/architecture.
   by `i`. Clean first pass, no bounces (4167 tests passing, up from
   4154). README/PROJECT.md updates left to the Architect's next grooming
   pass.
+- **Language: `^` (symmetric difference) operator for lists (set-style,
+  mirrors list `&`/`|`/`-`)** — merged 2026-09-03 via PR #373
+  (`feat/20260902-list-caret-symdiff`). Added a list-list special case
+  for `CARET` in `_apply_binary_operator` (`cinder/interpreter.py`),
+  directly above the existing dispatch to `_bitwise_op`: dedupes each
+  side independently via `values_equal`-based membership, then returns
+  left-only elements followed by right-only elements, matching
+  `symmetric_difference()`'s convention. Int-int `^` still falls
+  through unchanged to `_bitwise_op`; mixed list/non-list operands
+  still raise the existing type error. Compound assignment (`^=`)
+  works for free. Clean first pass, no bounces (4183 tests passing, up
+  from 4167). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

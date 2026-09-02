@@ -816,6 +816,75 @@ class TestMapIntersection(unittest.TestCase):
             evaluate('{"a": 1} & [1, 2]')
 
 
+class TestMapUnion(unittest.TestCase):
+    def test_basic_case(self):
+        self.assertEqual(
+            evaluate('{"a": 1, "b": 2} | {"a": 99, "c": 3}'),
+            {"a": 1, "b": 2, "c": 3},
+        )
+
+    def test_empty_right_leaves_left_untouched(self):
+        self.assertEqual(evaluate('{"a": 1} | {}'), {"a": 1})
+
+    def test_empty_left_leaves_right_untouched(self):
+        self.assertEqual(evaluate('{} | {"a": 1}'), {"a": 1})
+
+    def test_full_overlap_keeps_everything(self):
+        self.assertEqual(
+            evaluate('{"a": 1, "b": 2} | {"a": 1, "b": 2}'), {"a": 1, "b": 2}
+        )
+
+    def test_disjoint_keys_combine(self):
+        self.assertEqual(evaluate('{"a": 1} | {"b": 2}'), {"a": 1, "b": 2})
+
+    def test_does_not_mutate_inputs(self):
+        env = run('let m = {"a": 1}; let c = m | {"a": 2, "b": 3};')
+        self.assertEqual(env.get("m"), {"a": 1})
+        self.assertEqual(env.get("c"), {"a": 1, "b": 3})
+
+    def test_left_associative(self):
+        env = run(
+            'let m = {"a": 1} | {"a": 2, "b": 2} | {"a": 3, "c": 3};'
+        )
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2, "c": 3})
+
+    def test_compound_assignment_on_identifier(self):
+        env = run('let m = {"a": 1}; m |= {"a": 2, "b": 2};')
+        self.assertEqual(env.get("m"), {"a": 1, "b": 2})
+
+    def test_compound_assignment_on_index_target(self):
+        env = run('let xs = [{"a": 1}]; xs[0] |= {"a": 2, "b": 2};')
+        self.assertEqual(env.get("xs"), [{"a": 1, "b": 2}])
+
+    def test_compound_assignment_on_dot_target(self):
+        env = run('let obj = {"m": {"a": 1}}; obj.m |= {"a": 2, "b": 2};')
+        self.assertEqual(env.get("obj"), {"m": {"a": 1, "b": 2}})
+
+    def test_int_or_int_still_bitwise_or(self):
+        self.assertEqual(evaluate("2 | 3"), 3)
+
+    def test_list_or_list_still_works(self):
+        self.assertEqual(evaluate("[1, 2] | [2, 3]"), [1, 2, 3])
+
+    def test_map_or_int_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '\\|': map and int"
+        ):
+            evaluate('{"a": 1} | 3')
+
+    def test_int_or_map_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '\\|': int and map"
+        ):
+            evaluate('2 | {"a": 1}')
+
+    def test_map_or_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, "unsupported operand types for '\\|': map and list"
+        ):
+            evaluate('{"a": 1} | [1, 2]')
+
+
 class TestComparisons(unittest.TestCase):
     def test_less_than(self):
         self.assertEqual(evaluate("1 < 2"), True)

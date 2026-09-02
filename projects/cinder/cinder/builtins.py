@@ -3691,6 +3691,56 @@ def _group_consecutive(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _run_length_encode(arguments: list, line: int, column: int) -> object:
+    _require_arity("run_length_encode", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"run_length_encode() requires a list, got {type_name(value)}",
+            line, column,
+        )
+    result: list = []
+    for element in value:
+        if result and values_equal(result[-1][0], element):
+            result[-1][1] += 1
+        else:
+            result.append([element, 1])
+    return result
+
+
+def _run_length_decode(arguments: list, line: int, column: int) -> object:
+    _require_arity("run_length_decode", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"run_length_decode() requires a list, got {type_name(value)}",
+            line, column,
+        )
+    result: list = []
+    for i, pair in enumerate(value):
+        if not isinstance(pair, list) or len(pair) != 2:
+            raise CinderRuntimeError(
+                f"run_length_decode() requires a list of [value, count] "
+                f"pairs, got {type_name(pair)} at index {i}",
+                line, column,
+            )
+        element, count = pair
+        if not isinstance(count, int) or isinstance(count, bool):
+            raise CinderRuntimeError(
+                f"run_length_decode() requires an int count, got "
+                f"{type_name(count)} at index {i}",
+                line, column,
+            )
+        if count < 0:
+            raise CinderRuntimeError(
+                f"run_length_decode() requires a non-negative count, got "
+                f"{count} at index {i}",
+                line, column,
+            )
+        result.extend([element] * count)
+    return result
+
+
 def _zip(arguments: list, line: int, column: int) -> object:
     _require_arity("zip", arguments, 2, line, column)
     list1, list2 = arguments
@@ -4598,6 +4648,8 @@ _BUILTINS = {
     "chunk": _chunk,
     "sliding_window": _sliding_window,
     "group_consecutive": _group_consecutive,
+    "run_length_encode": _run_length_encode,
+    "run_length_decode": _run_length_decode,
     "zip": _zip,
     "zip_longest": _zip_longest,
     "unzip": _unzip,

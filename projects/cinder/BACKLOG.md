@@ -11,94 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_polydivisible` — polydivisible number predicate [claimed 2026-09-02T19:34:35Z]
-
-Build: Cinder has plenty of digit-position-based number predicates
-(`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each
-digit raised to its 1-based position, summed, must equal the number
-itself) but nothing that checks the classic *polydivisible* property —
-a number is polydivisible when, reading its decimal digits left to
-right, every prefix of length `i` is itself divisible by `i`: the
-1-digit prefix by 1 (always true), the 2-digit prefix by 2, the 3-digit
-prefix by 3, and so on up through the full number divided by its own
-digit count. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_polydivisible(381654729));'
-# -> <eval>:1:7: undefined name 'is_polydivisible'
-```
-
-Worked example, `381654729` (the largest polydivisible number that uses
-each of the digits 1-9 exactly once, a well-known instance of this
-property): prefix `3` div by 1 ✓, `38` div by 2 (`19`) ✓, `381` div by 3
-(digit sum `12`) ✓, `3816` div by 4 (last two digits `16`) ✓, `38165`
-div by 5 (ends in `5`) ✓, `381654` div by 6 (even and digit-sum-`27`
-divisible by 3) ✓, `3816547` div by 7 (`545221 * 7`) ✓, `38165472` div
-by 8 (last three digits `472 / 8 = 59`) ✓, `381654729` div by 9 (digit
-sum `45`) ✓ — every prefix checks out, so it's polydivisible. Contrast
-`106`: `1` div by 1 ✓, `10` div by 2 ✓, but `106` is not divisible by 3
-(digit sum `7`), so it fails at the last prefix and the whole number is
-not polydivisible.
-
-Add to `cinder/builtins.py`, directly after `_is_disarium` (search `def
-_is_disarium`, immediately before `def _is_pandigital`) — keeps it
-grouped with the other digit-position predicates:
-```python
-def _is_polydivisible(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_polydivisible", arguments, 1, line, column)
-    value = _require_int("is_polydivisible", arguments[0], line, column)
-    if value < 0:
-        return False
-    digits = str(value)
-    return all(int(digits[:i]) % i == 0 for i in range(1, len(digits) + 1))
-```
-Also register the new dict entry (search `"is_disarium":
-_is_disarium,`, add `"is_polydivisible": _is_polydivisible,` directly
-after it, before `"is_pandigital": _is_pandigital,`).
-
-Acceptance criteria:
-- `is_polydivisible(381654729);` is `true` — the classic pandigital
-  worked example above.
-- `is_polydivisible(106);` is `false` — fails at the 3-digit prefix
-  (`106 % 3 != 0`), the contrasting worked example above.
-- `is_polydivisible(0);` is `true` — a single digit's 1-digit prefix is
-  always divisible by 1, trivially valid (matches `is_disarium(0)`'s
-  own trivially-true single-digit convention, same file).
-- `is_polydivisible(9);` is `true` — same trivial single-digit case,
-  non-zero.
-- `is_polydivisible(12);` is `true` — `1 % 1 == 0` and `12 % 2 == 0`.
-- `is_polydivisible(11);` is `false` — `1 % 1 == 0` but `11 % 2 != 0`.
-- `is_polydivisible(105);` is `true` — `1 % 1 == 0`, `10 % 2 == 0`,
-  `105 % 3 == 0`.
-- `is_polydivisible(1230);` is `false` — fails at the 4-digit prefix
-  (`1230 % 4 != 0`), confirming the check runs all the way to the full
-  number, not just a leading few digits.
-- `is_polydivisible(-381654729);` is `false` — negative numbers return
-  `false` outright, matching `is_disarium`/`is_armstrong`'s own
-  negative-number convention in this file, not a domain error.
-- `is_polydivisible(5);` (a bool-free plain int) and
-  `is_polydivisible(true);` — the latter raises `CinderRuntimeError`
-  matching `"is_polydivisible() requires an int, got bool"`, since
-  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
-  `int` subclass (same guard every other int-only predicate in this
-  file already relies on).
-- `is_polydivisible("106");` raises `CinderRuntimeError` matching
-  `"is_polydivisible() requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_disarium`,
-search `def _is_disarium`), `tests/test_builtins.py` (new `class
-TestIsPolydivisible`, modeled on `class TestIsDisarium`, search that
-name, for the test shapes above). Once merged, `README.md`'s Builtins
-bullet needs `is_polydivisible` added near `is_disarium`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
+## 1. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
 
 Build: tasks 1/3 above give list-list `&`/`|` infix spellings of the
 existing `intersection()`/`union()` builtins, and list-list `-` (an
@@ -216,7 +129,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_self_number` — Colombian/self-number predicate
+## 2. Standard library: `is_self_number` — Colombian/self-number predicate
 
 Build: Cinder already has two digit-sum-iteration predicates sitting
 side by side (`is_happy_number`/`is_sad_number`, `cinder/builtins.py`,
@@ -317,7 +230,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention)
+## 3. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention)
 
 Build: map `&` (intersection, PR #369) and map `-` (difference, an earlier
 pass) both follow the same "keys decide, left's values win" convention
@@ -411,7 +324,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_weird_number` — abundant but not semiperfect
+## 4. Standard library: `is_weird_number` — abundant but not semiperfect
 
 Build: Cinder already has the perfect/abundant/deficient family
 (`_is_perfect_number`/`_is_abundant`/`_is_deficient`, `cinder/builtins.py`,
@@ -511,7 +424,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
+## 5. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
 
 Build: tasks 2 and 4 above give maps `^`'s list-side counterpart and give
 maps `|`, which together with the already-landed map `&`/`-`

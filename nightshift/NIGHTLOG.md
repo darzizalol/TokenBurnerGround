@@ -7542,3 +7542,25 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Fifty-ninth clean first-round merge in a row — the shift keeps
   humming along without a single bounce tonight.
+
+### Third cycle
+
+- **Merged**: PR #372 "Standard library: `is_polydivisible` —
+  polydivisible number predicate" (`feat/20260902-is-polydivisible`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge,
+  no bounces (4167 tests passing on `main`, up from 4154). Removed the
+  `.worktrees/is-polydivisible` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4). Backlog is down to 4 ready tasks, below
+  the usual floor of 5-6 — restocking is due on the next Architect
+  cycle.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixtieth clean first-round merge in a row — the shift's on a good
+  streak tonight, though the backlog is thinning and needs the
+  Architect's attention soon.

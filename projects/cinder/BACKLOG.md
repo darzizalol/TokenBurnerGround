@@ -11,126 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings [claimed 2026-09-02T14:31:46Z]
-
-Build: Cinder has plenty of digit-driven number predicates
-(`is_keith_number` above, `is_kaprekar`, `is_armstrong`, ...) but nothing
-that validates the classic Luhn checksum — the mod-10 algorithm used to
-catch single-digit errors and transpositions in credit card numbers, IMEI
-numbers, and similar identifiers (ISO/IEC 7812). It's a different shape of
-task from the number predicates above: it operates on a **string** of
-digit characters (an identifier like a card number, not a numeric value —
-leading zeros matter and the input can be longer than fits comfortably as
-an `int` for some real-world identifiers), and it's a checksum algorithm
-rather than a digit-recurrence/digit-ending question. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_luhn_valid("4539148803436467"));'
-# -> <eval>:1:7: undefined name 'is_luhn_valid'
-```
-
-Algorithm: starting from the rightmost digit and moving left, double
-every second digit (i.e. the 2nd, 4th, 6th, ... digits counting from the
-right); if a doubled digit exceeds 9, subtract 9 from it (equivalent to
-summing its own two digits, e.g. `doubled 16` becomes `7`, the same as
-`1 + 6`); sum every digit (doubled ones after the >9 correction,
-untouched ones as-is); the string is Luhn-valid if that sum is a
-multiple of 10.
-
-Worked example, `"79927398713"` (the classic Wikipedia example, reading
-right to left: `3,1,7,8,9,3,7,2,9,9,7`): digits at odd positions from
-the right (2nd, 4th, ...: `1, 8, 3, 2, 9`) get doubled and corrected
-(`2, 16->7, 6, 4, 18->9`), everything else stays put; the full sum is
-`3+2+7+7+9+6+7+4+9+9+7 = 70`, a multiple of 10, so it's valid — flip
-the last digit to `"79927398710"` and the same process sums to `67`, not
-a multiple of 10, so it's invalid.
-
-**Digit-character landmine**: do not use Python's `str.isdigit()`/`int()`
-to validate/parse each character — `str.isdigit()` returns `True` for
-non-ASCII Unicode digit characters like `"²"` (superscript two) that
-`int()` cannot parse the way this checksum needs (it would either raise
-or silently misinterpret the character's value). Check membership in the
-literal ASCII set `"0123456789"` instead, e.g. `all(ch in "0123456789"
-for ch in value)` — the same reason `is_ascii`'s own check (search `def
-_is_ascii`) uses `.isascii()` rather than a looser Unicode-permissive
-test where a narrower one is actually meant.
-
-Add to `cinder/builtins.py`, directly after `_is_numeric_string` (search
-`def _is_numeric_string`, immediately before `def _is_sorted`) — keeps
-it grouped with the other string-shaped validators:
-```python
-def _is_luhn_valid(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_luhn_valid", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, str):
-        raise CinderRuntimeError(
-            f"is_luhn_valid() requires a string, got {type_name(value)}",
-            line, column,
-        )
-    if not value or any(ch not in "0123456789" for ch in value):
-        raise CinderRuntimeError(
-            "is_luhn_valid() requires a non-empty string of ASCII digits",
-            line, column,
-        )
-    total = 0
-    for index, ch in enumerate(reversed(value)):
-        digit = int(ch)
-        if index % 2 == 1:
-            digit *= 2
-            if digit > 9:
-                digit -= 9
-        total += digit
-    return total % 10 == 0
-```
-Also register the new dict entry (search `"is_numeric":
-_is_numeric_string,`, add `"is_luhn_valid": _is_luhn_valid,` directly
-after it, before `"is_sorted": _is_sorted,`).
-
-Acceptance criteria:
-- `is_luhn_valid("4539148803436467");` is `true` — a known-valid test
-  Visa-format number.
-- `is_luhn_valid("4539148803436468");` is `false` — same number with the
-  last digit off by one, breaks the checksum.
-- `is_luhn_valid("79927398713");` is `true` — the classic Wikipedia
-  worked example above.
-- `is_luhn_valid("79927398710");` is `false` — the same digits with the
-  last one zeroed, from the same worked example.
-- `is_luhn_valid("4111111111111111");` is `true` — another commonly used
-  Luhn-valid test number, confirming the check isn't hardcoded to one
-  length.
-- `is_luhn_valid("0");` is `true` — single digit, sum is `0`, trivially
-  a multiple of 10.
-- `is_luhn_valid("9");` is `false` — single digit, sum is `9`, not a
-  multiple of 10.
-- `is_luhn_valid("0000000000");` is `true` — an all-zero identifier is a
-  degenerate but valid case (sum `0`), not a domain error.
-- `is_luhn_valid("");` raises `CinderRuntimeError` matching
-  `"is_luhn_valid() requires a non-empty string of ASCII digits"` — the
-  empty string is rejected outright rather than trivially "passing" with
-  a vacuous sum of `0`.
-- `is_luhn_valid("123a");` raises `CinderRuntimeError` matching the same
-  message — any non-digit character anywhere in the string is a domain
-  error, not just at the start/end.
-- `is_luhn_valid("12 34");` raises the same error — whitespace inside the
-  string is not silently stripped/ignored.
-- `is_luhn_valid(4539148803436467);` (an int, not a string) raises
-  `CinderRuntimeError` matching `"is_luhn_valid() requires a string, got
-  int"` — the type check, not the digit-content check, fires first.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_numeric_string`,
-search `def _is_numeric_string`), `tests/test_builtins.py` (new `class
-TestIsLuhnValid`, modeled on `class TestIsNumeric`, search that name, for
-the true/false/domain-edge/type-error test shapes above). Once merged,
-`README.md`'s Builtins bullet needs `is_luhn_valid` added near
-`is_numeric`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
+## 1. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
 
 Build: tasks 1 and 3 above give `&` list-list and map-map branches, and
 `-` already has both (PR #356 map, task from an earlier pass for list).
@@ -234,7 +115,7 @@ this task.
 
 ---
 
-## 3. Standard library: `is_polydivisible` — polydivisible number predicate
+## 2. Standard library: `is_polydivisible` — polydivisible number predicate
 
 Build: Cinder has plenty of digit-position-based number predicates
 (`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each
@@ -321,7 +202,7 @@ pass, not this task.
 
 ---
 
-## 4. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
+## 3. Language: `^` (symmetric difference) operator for lists (set-style, mirrors list `&`/`|`/`-`)
 
 Build: tasks 1/3 above give list-list `&`/`|` infix spellings of the
 existing `intersection()`/`union()` builtins, and list-list `-` (an
@@ -439,7 +320,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `is_self_number` — Colombian/self-number predicate
+## 4. Standard library: `is_self_number` — Colombian/self-number predicate
 
 Build: Cinder already has two digit-sum-iteration predicates sitting
 side by side (`is_happy_number`/`is_sad_number`, `cinder/builtins.py`,

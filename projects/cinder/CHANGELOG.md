@@ -3736,3 +3736,15 @@ for vision/architecture.
   `-` already set. Compound assignment (`&=`) on a map target works for
   free. Clean first pass, no bounces (4125 tests passing, up from 4109).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `is_luhn_valid` — Luhn checksum validator for
+  digit strings** — merged 2026-09-02 via PR #370
+  (`feat/20260902-is-luhn-valid`). Added `_is_luhn_valid` to
+  `cinder/builtins.py` directly after `_is_numeric_string`: type-checks
+  the argument is a string, checks it's non-empty and every character
+  is an ASCII digit (`"0123456789"` membership, not `str.isdigit()`,
+  to avoid non-ASCII Unicode digit characters), then doubles every
+  second digit from the right with the classic >9 correction and
+  checks the total sum is a multiple of 10. Type error fires before the
+  digit-content error. Clean first pass, no bounces (4138 tests passing,
+  up from 4125). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

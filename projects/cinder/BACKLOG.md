@@ -11,100 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `|` (union) operator for maps (key-based, mirrors map `&`/`-`'s "left's values win" convention) [claimed 2026-09-02T20:16:43Z]
-
-Build: map `&` (intersection, PR #369) and map `-` (difference, an earlier
-pass) both follow the same "keys decide, left's values win" convention
-(`cinder/interpreter.py`, search `TokenType.AMP and isinstance(left,
-dict)`: `{key: value for key, value in left.items() if key in right}`
-keeps left's value for any shared key). Map `+` already exists
-(`_apply_binary_operator`'s `PLUS` branch, search `isinstance(left,
-dict) and isinstance(right, dict)`) but is a *general* merge where
-**right's** values win on conflicts (`result = dict(left); result.update(right)`)
-— it is not spelled as a set operator and does not follow the `&`/`-`
-family's left-wins convention. This task gives maps a `|` union that
-*does* follow that convention: all keys from both sides, left's value
-wins when a key exists in both. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print({"a": 1} | {"b": 2});'
-# -> <eval>:1:15: unsupported operand types for '|': map and map
-```
-
-Scope: map-map only. This is the map-side counterpart deferred by list
-`|` union's own Scope note when it landed ("map-map `|` union is a
-plausible future task, not this one") — list `|` union merged 2026-09-02
-via PR #371, and its `if op == TokenType.PIPE and isinstance(left,
-list)...` block already sits in `_apply_binary_operator`; leave it
-untouched, this task only adds a new dict-dict block alongside it.
-
-Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
-above the existing dispatch to `_bitwise_op` (search `TokenType.PIPE,`
-inside the `if op in (` tuple that also lists `AMP`/`CARET`/`LSHIFT`/
-`RSHIFT`): add a dict-dict special case for `PIPE`:
-```python
-        if op == TokenType.PIPE and isinstance(left, dict) and isinstance(right, dict):
-            result = dict(right)
-            result.update(left)
-            return result
-```
-(Starting from `right` and overlaying `left` on top means: right-only
-keys survive from the base, left-only keys get added, and any key
-present in both ends up holding left's value because `update(left)`
-applies last — this is the opposite base/overlay order from `+`'s
-`dict(left); result.update(right)`, which is exactly why `+` and this
-new `|` disagree on conflicts. Only this new block is added; the `AMP`
-dict block and the already-landed list `PIPE` block (PR #371) are
-untouched.)
-
-The compound-assignment desugaring (`|=`) already works for free once
-`|` itself handles maps, exactly as `&=`/`-='s existing coverage
-documents — no separate wiring needed.
-
-Acceptance criteria (mirror `TestMapIntersection`/`TestMapDifference`'s
-shape in `tests/test_interpreter.py`; map equality in these tests is by
-content via `assertEqual`, not key order, so don't assert on ordering):
-- `{"a": 1, "b": 2} | {"a": 99, "c": 3}` is `{"a": 1, "b": 2, "c": 3}` —
-  shared key `"a"` keeps left's value `1`, not right's `99`.
-- `{"a": 1} | {}` is `{"a": 1}` and `{} | {"a": 1}` is `{"a": 1}` —
-  either empty side leaves the other's entries untouched.
-- `{"a": 1, "b": 2} | {"a": 1, "b": 2}` is `{"a": 1, "b": 2}` — full
-  overlap, both sides agree so the result is unambiguous.
-- `{"a": 1} | {"b": 2}` is `{"a": 1, "b": 2}` — disjoint keys, simple
-  combination.
-- Does not mutate inputs: `let m = {"a": 1}; let c = m | {"a": 2, "b": 3};`
-  leaves `m` as `{"a": 1}` and `c` as `{"a": 1, "b": 3}`.
-- Left-associative: `{"a": 1} | {"a": 2, "b": 2} | {"a": 3, "c": 3}` is
-  `{"a": 1, "b": 2, "c": 3}` (first pass keeps `"a": 1` since it's the
-  left side of the first `|`; that result is then the left side of the
-  second `|`, so `"a": 1` still wins over the third map's `"a": 3`).
-- Compound assignment works: `let m = {"a": 1}; m |= {"a": 2, "b": 2};`
-  leaves `m` as `{"a": 1, "b": 2}` (identifier target); also test an
-  index target and a dot target, mirroring `TestMapIntersection`'s own
-  compound-assignment cases.
-- `2 | 3` (both ints) is still `3` — existing bitwise-OR behavior is
-  unchanged, a regression guard.
-- `{"a": 1} | 3` and `2 | {"a": 1}` still raise `CinderRuntimeError`
-  matching `"unsupported operand types for '|': ..."` — mixed
-  map/non-map operands remain a type error.
-- `{"a": 1} | [1, 2]` also raises the same type error — list operands
-  are unsupported by the dict branch (list `|` already handles
-  list-vs-list via PR #371, so this task only needs to assert the
-  map-vs-list mismatch case).
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (`_apply_binary_operator`'s
-`AMP`/`PIPE`/`CARET`/`LSHIFT`/`RSHIFT` dispatch, search
-`TokenType.PIPE,`), `tests/test_interpreter.py` (new `class
-TestMapUnion`, modeled on `class TestMapIntersection`, search that
-name, for the test shapes above). Once merged, `README.md`'s
-language-operators bullet needs a map-`|` mention next to the existing
-map `&`/`-` ones, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_weird_number` — abundant but not semiperfect
+## 1. Standard library: `is_weird_number` — abundant but not semiperfect
 
 Build: Cinder already has the perfect/abundant/deficient family
 (`_is_perfect_number`/`_is_abundant`/`_is_deficient`, `cinder/builtins.py`,
@@ -204,10 +111,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
+## 2. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
 
-Build: task 1 above gives maps `|`, and list `^` (symmetric difference,
-already landed 2026-09-03 via PR #373) gives `^`'s list-side
+Build: map `|` (union, already landed 2026-09-02 via PR #375) gives
+maps `|`, and list `^` (symmetric difference, already landed
+2026-09-03 via PR #373) gives `^`'s list-side
 counterpart, which together with the already-landed map `&`/`-`
 (`cinder/interpreter.py`, search `TokenType.AMP and isinstance(left,
 dict)` and `if op == TokenType.MINUS:`, its `isinstance(left, dict)`
@@ -228,9 +136,9 @@ there is no map-flavored builtin to mirror here — `cinder/builtins.py`'s
 `_symmetric_difference` is list-only — so this task defines the
 convention directly, following the same "keys decide" shape map `&`/`-`
 already established rather than inventing a values-aware one). This task
-does not depend on task 1 (map `|`) landing first, in either order: this
+did not depend on map `|` (PR #375) landing first, in either order: this
 task's own diff only touches a new `isinstance(left, dict)` branch under
-the `CARET` dispatch, and never reads the dict-`PIPE` branch task 1
+the `CARET` dispatch, and never reads the dict-`PIPE` branch that PR
 adds.
 
 Edit `cinder/interpreter.py`'s `_apply_binary_operator`, immediately
@@ -250,7 +158,7 @@ result. Left-only entries come first in left's own order, then
 right-only entries in right's own order, mirroring list `^`'s (PR #373)
 convention. Only this new block is added; the `AMP`/`MINUS` dict
 branches, list `^`'s already-landed `CARET` block, and the dict `PIPE`
-block task 1 adds are all untouched.)
+block (PR #375) are all untouched.)
 
 The compound-assignment desugaring (`^=`) already works for free once
 `^` itself handles maps, exactly as `&=`/`|=`/`-='s existing coverage
@@ -279,8 +187,8 @@ content via `assertEqual`, not key order, so don't assert on ordering):
   in the test rather than re-deriving it by eye).
 - Compound assignment works: `let m = {"a": 1}; m ^= {"a": 2, "b": 2};`
   leaves `m` as `{"b": 2}` (identifier target); also test an index
-  target and a dot target, mirroring task 1's own compound-assignment
-  cases.
+  target and a dot target, mirroring `TestMapUnion`'s own
+  compound-assignment cases.
 - `2 ^ 3` (both ints) is still `1` — existing bitwise-XOR behavior is
   unchanged, a regression guard.
 - `{"a": 1} ^ 3` and `2 ^ {"a": 1}` still raise `CinderRuntimeError`
@@ -304,7 +212,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate
+## 3. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate
 
 Build: Cinder already has `is_prime`/`prime_factors`/`is_squarefree`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-divides up to
@@ -411,7 +319,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: `<=>` (spaceship / three-way comparison) operator
+## 4. Language: `<=>` (spaceship / three-way comparison) operator
 
 Build: Cinder already has `<`/`<=`/`>`/`>=` working consistently across
 numbers, strings, lists (lexicographic), and maps (key-sorted item
@@ -539,7 +447,7 @@ not this task.
 
 ---
 
-## 6. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
+## 5. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
 
 Build: Cinder already has `is_anagram` (`cinder/builtins.py`, search `def
 _is_anagram`: two strings share the same character multiset, via

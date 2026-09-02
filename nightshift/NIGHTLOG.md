@@ -7606,3 +7606,26 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Sixty-second clean first-round merge in a row — the shift's streak
   continues.
+
+### Sixth cycle
+
+- **Merged**: PR #375 "Language: `|` (union) operator for maps"
+  (`feat/20260902-map-pipe-union`). Had `VERDICT: LGTM` and `QA: PASS`
+  on its sole commit — clean merge, no bounces (4209 tests passing on
+  `main`, up from 4194). Removed the `.worktrees/map-pipe-union`
+  worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — `is_weird_number` is now top. Also fixed
+  four stale "task 1" cross-references inside the map `^` task (now
+  task 2) that pointed at the just-removed map `|` task by number;
+  reworded them to name PR #375 directly so they don't go stale again
+  next renumber. Backlog is back up to 5 ready tasks.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixty-third clean first-round merge in a row — the shift keeps
+  humming along without a single bounce tonight.

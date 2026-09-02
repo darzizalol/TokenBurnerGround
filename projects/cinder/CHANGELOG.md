@@ -3789,3 +3789,15 @@ for vision/architecture.
   first pass, no bounces (4194 tests passing, up from 4183).
   README/PROJECT.md updates left to the Architect's next grooming
   pass.
+- **Language: `|` (union) operator for maps** — merged 2026-09-02 via
+  PR #375 (`feat/20260902-map-pipe-union`). Added a dict-dict special
+  case for `PIPE` in `_apply_binary_operator` (`cinder/interpreter.py`),
+  directly above the dispatch to `_bitwise_op`: `result = dict(right);
+  result.update(left)` gives left's value priority on conflicts,
+  mirroring map `&`/`-`'s "left's values win" convention (map `+`
+  remains the separate, right-wins general merge). Int-int and
+  list-list `|` still fall through unchanged; mixed map/non-map
+  operands still raise the existing type error. Compound assignment
+  (`|=`) works for free. Clean first pass, no bounces (4209 tests
+  passing, up from 4194). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

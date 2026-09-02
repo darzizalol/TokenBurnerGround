@@ -3714,3 +3714,14 @@ for vision/architecture.
   `_bitwise_op`. Clean first pass, no bounces (4092 tests passing, up
   from 4076). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `run_length_encode` / `run_length_decode` —
+  consecutive-run compression** — merged 2026-09-02 via PR #368
+  (`feat/20260902-run-length-encode`). Added the pair to
+  `cinder/builtins.py` directly after `group_consecutive`, mirroring
+  `zip`/`unzip` and `flatten`/`chunk` as inverse siblings:
+  `run_length_encode(xs)` collapses each maximal run of consecutive
+  equal elements (via `values_equal`, not native `==`, so `1` and
+  `true` never merge) into a `[value, count]` pair, and
+  `run_length_decode(pairs)` is the exact inverse. Clean first pass,
+  no bounces (4109 tests passing, up from 4092). README/CHANGELOG/
+  PROJECT.md updates left to the Architect's next grooming pass.

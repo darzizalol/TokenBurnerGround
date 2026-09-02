@@ -11,136 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `run_length_encode` / `run_length_decode` — consecutive-run compression [claimed 2026-09-02T14:07:06Z]
-
-Build: Cinder already has `group_consecutive` (`cinder/builtins.py`, search
-`def _group_consecutive`) which splits a list into sublists of consecutive
-equal elements (e.g. `[1, 1, 2, 2, 2, 3]` becomes `[[1, 1], [2, 2, 2],
-[3]]`), but there is no way to get the classic compressed `(value, count)`
-form of that same grouping, or to expand it back out. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(run_length_encode([1, 1, 2, 2, 2, 3]));'
-# -> <eval>:1:7: undefined name 'run_length_encode' (did you mean
-#    'group_consecutive'?)
-```
-
-This task adds both directions as a pair, mirroring how `zip`/`unzip` or
-`flatten`/`chunk` already live as inverse siblings in this file.
-`run_length_encode(xs)` returns a list of `[value, count]` pairs, one per
-maximal run of consecutive equal elements (equality via `values_equal`,
-not Python's native `==` — see the existing `_dedupe` comment, search
-`native hash/eq treat`, for why: Cinder's `==` does not conflate `1` and
-`true` the way Python's does, so runs must not merge across that boundary
-either). `run_length_decode(pairs)` is the exact inverse: expand each
-`[value, count]` pair back into `count` repetitions of `value`,
-concatenated in order.
-
-Add to `cinder/builtins.py`, directly after `_group_consecutive` (search
-`def _group_consecutive`, immediately before `def _zip`) — keeps the pair
-grouped with the other consecutive-run/list-transform builtins:
-```python
-def _run_length_encode(arguments: list, line: int, column: int) -> object:
-    _require_arity("run_length_encode", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"run_length_encode() requires a list, got {type_name(value)}",
-            line, column,
-        )
-    result: list = []
-    for element in value:
-        if result and values_equal(result[-1][0], element):
-            result[-1][1] += 1
-        else:
-            result.append([element, 1])
-    return result
-
-
-def _run_length_decode(arguments: list, line: int, column: int) -> object:
-    _require_arity("run_length_decode", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"run_length_decode() requires a list, got {type_name(value)}",
-            line, column,
-        )
-    result: list = []
-    for i, pair in enumerate(value):
-        if not isinstance(pair, list) or len(pair) != 2:
-            raise CinderRuntimeError(
-                f"run_length_decode() requires a list of [value, count] "
-                f"pairs, got {type_name(pair)} at index {i}",
-                line, column,
-            )
-        element, count = pair
-        if not isinstance(count, int) or isinstance(count, bool):
-            raise CinderRuntimeError(
-                f"run_length_decode() requires an int count, got "
-                f"{type_name(count)} at index {i}",
-                line, column,
-            )
-        if count < 0:
-            raise CinderRuntimeError(
-                f"run_length_decode() requires a non-negative count, got "
-                f"{count} at index {i}",
-                line, column,
-            )
-        result.extend([element] * count)
-    return result
-```
-Also register both dict entries (search `"group_consecutive":
-_group_consecutive,`, add directly after it, before `"zip": _zip,`):
-```python
-    "run_length_encode": _run_length_encode,
-    "run_length_decode": _run_length_decode,
-```
-
-Acceptance criteria:
-- `run_length_encode([1, 1, 2, 2, 2, 3]);` is `[[1, 2], [2, 3], [3, 1]]`.
-- `run_length_encode([]);` is `[]`.
-- `run_length_encode([5]);` is `[[5, 1]]` — single element, count 1.
-- `run_length_encode([1, 2, 3]);` is `[[1, 1], [2, 1], [3, 1]]` — no runs
-  longer than 1, still one pair per element.
-- `run_length_encode([1, true, true]);` is `[[1, 1], [true, 2]]` — uses
-  `values_equal`, not native `==`, so `1` never merges into the `true`
-  run even though Python's own `==`/hashing would conflate them.
-- `run_length_decode([[1, 2], [2, 3], [3, 1]]);` is
-  `[1, 1, 2, 2, 2, 3]` — the exact inverse of the first case.
-- `run_length_decode([]);` is `[]`.
-- `run_length_decode([[5, 0]]);` is `[]` — a zero count contributes
-  nothing.
-- Round-trips: `run_length_decode(run_length_encode(xs))` equals `xs` for
-  `xs` in `[]`, `[1]`, `[1, 1, 2, 2, 2, 3]`, and `["a", "a", "b"]`.
-- `run_length_encode(5);` and `run_length_decode(5);` both raise
-  `CinderRuntimeError` matching `"...() requires a list, got int"`.
-- `run_length_decode([[1, 2], 5]);` raises `CinderRuntimeError` matching
-  `"run_length_decode() requires a list of [value, count] pairs, got int
-  at index 1"`.
-- `run_length_decode([[1, 2, 3]]);` (a 3-element pair) raises the same
-  `"requires a list of [value, count] pairs"` error, index 0.
-- `run_length_decode([[1, "a"]]);` raises `CinderRuntimeError` matching
-  `"run_length_decode() requires an int count, got string at index 0"`.
-- `run_length_decode([[1, -1]]);` raises `CinderRuntimeError` matching
-  `"run_length_decode() requires a non-negative count, got -1 at index
-  0"`.
-- Wrong arity (not exactly 1 argument) on either builtin raises
-  `CinderRuntimeError` with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_group_consecutive`,
-search `def _group_consecutive`), `tests/test_builtins.py` (new `class
-TestRunLengthEncode` and `class TestRunLengthDecode`, modeled on `class
-TestGroupConsecutive`, search that name, for the test shapes above; it
-sits right after `class TestChunk`, search that name, for context). Once
-merged, `README.md`'s Builtins bullet needs `run_length_encode`/
-`run_length_decode` added near `group_consecutive`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`)
+## 1. Language: `&` (intersection) operator for maps (key-based, mirrors map `-`)
 
 Build: list-list `&` already landed (PR #367,
 `cinder/interpreter.py:1308`), and the map side of `-` (PR #356)
@@ -237,7 +108,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings
+## 2. Standard library: `is_luhn_valid` — Luhn checksum validator for digit strings
 
 Build: Cinder has plenty of digit-driven number predicates
 (`is_keith_number` above, `is_kaprekar`, `is_armstrong`, ...) but nothing
@@ -356,7 +227,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
+## 3. Language: `|` (union) operator for lists (set-style, mirrors list `&`/`-`)
 
 Build: tasks 1 and 3 above give `&` list-list and map-map branches, and
 `-` already has both (PR #356 map, task from an earlier pass for list).
@@ -460,7 +331,7 @@ this task.
 
 ---
 
-## 5. Standard library: `is_polydivisible` — polydivisible number predicate
+## 4. Standard library: `is_polydivisible` — polydivisible number predicate
 
 Build: Cinder has plenty of digit-position-based number predicates
 (`is_disarium`, `cinder/builtins.py`, search `def _is_disarium`: each

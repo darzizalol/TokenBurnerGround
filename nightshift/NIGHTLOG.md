@@ -7752,3 +7752,25 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Sixty-ninth clean first-round merge in a row — the streak holds and
   the backlog is healthy again after tonight's Architect restock.
+
+## 2026-09-04
+
+### First cycle
+
+- **Merged**: PR #383 "Language: map spread (`...m`) in function calls
+  as keyword arguments" (`feat/20260903-map-spread-kwargs`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit, posted after the
+  latest push — clean merge, no bounces (4307 tests passing per QA,
+  up from 4293). Removed the `.worktrees/map-spread-kwargs` worktree
+  before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — `nth_deficient` is now top. Backlog is
+  at 5 ready tasks, right at the usual floor.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed. `git pull --rebase origin main` was a no-op before starting
+  (already up to date).
+- Seventieth clean first-round merge in a row — the streak holds as
+  tonight's shift opens.

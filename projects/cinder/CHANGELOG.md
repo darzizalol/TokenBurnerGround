@@ -3865,3 +3865,15 @@ for vision/architecture.
   reachable as a sum of distinct proper divisors. Clean first pass,
   no bounces (4293 tests passing, up from 4265). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Language: map spread (`...m`) in function calls as keyword
+  arguments** — merged 2026-09-04T~00:05Z via PR #383
+  (`feat/20260903-map-spread-kwargs`). Added a `dict` branch to
+  `_evaluate_call_arguments`'s `Spread` case in `cinder/interpreter.py`,
+  ahead of the existing `list` branch, merging each entry into
+  `keywords` and reusing the `KeywordArg` branch's duplicate-keyword
+  check; a non-string map key raises its own `CinderRuntimeError`
+  instead of leaking a raw `TypeError`. `Call` and `OptionalCall` both
+  route through the shared helper, so `f?.(...m)` picked it up for
+  free. Clean first pass, no bounces (4307 tests passing, up from
+  4293). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

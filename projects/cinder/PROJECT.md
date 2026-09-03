@@ -158,35 +158,31 @@ lost, it is exactly what `CHANGELOG.md` (merge order) and this file's
 own git history already preserve; this section only needs to state
 where things stand right now.
 
-Recently landed (see `CHANGELOG.md` for the full list, newest first): a
-`|` (union) operator for maps (#375, `{"a": 1} | {"a": 99, "b": 2}` is
-`{"a": 1, "b": 2}`, left's values win on overlapping keys, following
-the same "keys decide" convention map `&`/`-` already established
-rather than `+`'s right-wins merge — completed the map side of the
-`&`/`|`/`-` trio, `^` still the one gap, queued below); `is_self_number`
-(#374, the Colombian/self-number predicate — no smaller `m` generates
-`n` via `m + digit_sum(m) = n` — the plain-digit-sum,
-bounded-generator-search sibling of `is_happy_number`/`is_sad_number`'s
-sum-of-squares cycle detection); a `^` (symmetric difference) operator
-for lists (#373, the set-style counterpart to list `&`/`|`/`-`,
-completing the list side of the set-operator family by mirroring the
-existing `symmetric_difference()` builtin's dedupe-both-sides
-semantics).
+Recently landed (see `CHANGELOG.md` for the full list, newest first):
+`is_weird_number` (#377, abundant but not semiperfect — no subset of
+its own proper divisors sums to it, e.g. `70` — a bounded 0/1
+subset-sum sweep over the divisor list, one step further into the
+perfect/abundant/deficient family than `is_abundant`/`is_deficient`
+alone go); a `|` (union) operator for maps (#375, `{"a": 1} | {"a": 99,
+"b": 2}` is `{"a": 1, "b": 2}`, left's values win on overlapping keys,
+following the same "keys decide" convention map `&`/`-` already
+established rather than `+`'s right-wins merge — completed the map
+side of the `&`/`|`/`-` trio, `^` still the one gap, queued below);
+`is_self_number` (#374, the Colombian/self-number predicate — no
+smaller `m` generates `n` via `m + digit_sum(m) = n` — the
+plain-digit-sum, bounded-generator-search sibling of
+`is_happy_number`/`is_sad_number`'s sum-of-squares cycle detection).
 Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
 but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
 all the same recurring bug in the bare-arrow/guard `=>` disambiguation
 — see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
 suggested next approach; still not requeued.
 
-`BACKLOG.md` carries the active queue (restocked to 6 tasks this pass
-after #375 landed and dropped it to 4, below the usual floor — two
-tasks added to bring it back to the 6-task ceiling): breadth —
-`is_weird_number`, abundant but not semiperfect (no subset of proper
-divisors sums to the number itself), one step further into the
-perfect/abundant/deficient family than `is_abundant`/`is_deficient`
-currently go; depth — a `^` (symmetric difference) operator for maps,
-completing the map side of the same set-operator family now that list
-`^` has landed, key-based since there is no map-flavored
+`BACKLOG.md` carries the active queue, holding steady at the usual
+5-task floor now that `is_weird_number` (#377) landed and was archived:
+depth — a `^` (symmetric difference) operator for maps (task 1, queued
+first), completing the map side of the same set-operator family now
+that list `^` has landed, key-based since there is no map-flavored
 `symmetric_difference()` builtin to mirror; breadth —
 `is_carmichael_number`, a Korselt's-criterion Fermat-pseudoprime
 predicate (composite, squarefree, and `(p-1) | (n-1)` for every prime
@@ -199,14 +195,13 @@ free; breadth — `is_palindrome_permutation`, testing whether a
 string's characters could be rearranged into some palindrome (at most
 one distinct character with an odd count), the multiset question
 sitting between `is_anagram`'s two-string comparison and
-`is_palindrome`'s single-string check; breadth (added this pass) —
+`is_palindrome`'s single-string check; breadth —
 `is_practical_number`, whether every integer from `1` to `n - 1` is a
 sum of distinct proper divisors of `n`, a stronger per-value
 reachability question than `is_abundant`/`is_deficient`'s simple sum
-comparison and a stepping stone toward `is_weird_number`'s own
-subset-sum reachability sweep (task 1, queued first). Queue now runs
-breadth, depth, breadth, depth, breadth, breadth. `main` is green
-(4209 tests), PR queue empty.
+comparison and the same subset-sum reachability sweep `is_weird_number`
+itself used, now queued last. Queue now runs depth, breadth, depth,
+breadth, breadth. `main` is green (4224 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

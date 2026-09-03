@@ -7654,3 +7654,26 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Sixty-fourth clean first-round merge in a row — the shift's streak
   continues without a single bounce.
+
+### Eighth cycle
+
+- **Merged**: PR #378 "Language: `^` (symmetric difference) operator
+  for maps" (`feat/20260903-map-symmetric-difference`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit — clean merge, no
+  bounces (4238 tests passing on `main`, up from 4224). Removed the
+  `.worktrees/map-symmetric-difference` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — `is_carmichael_number` is now top. No
+  stale cross-references found this time. Backlog is down to 4 ready
+  tasks.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixty-fifth clean first-round merge in a row — the shift keeps
+  humming along without a single bounce tonight, though the backlog
+  is getting thin at 4 tasks and could use the Architect's attention
+  soon.

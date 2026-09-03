@@ -3810,3 +3810,16 @@ for vision/architecture.
   first pass, no bounces (4224 tests passing, up from 4209).
   README/PROJECT.md updates left to the Architect's next grooming
   pass.
+- **Language: `^` (symmetric difference) operator for maps** — merged
+  2026-09-03 via PR #378 (`feat/20260903-map-symmetric-difference`).
+  Added a dict-dict `CARET` special case to `_apply_binary_operator`
+  in `cinder/interpreter.py`, directly above the dispatch to
+  `_bitwise_op`: shared keys are excluded entirely, left-only and
+  right-only entries keep their own values, following the "keys
+  decide" convention already established by map `&`/`-`/`|` and
+  mirroring list `^`'s (PR #373) semantics. Compound assignment
+  (`^=`) works for free via the existing desugaring. Completes the
+  map side of the `&`/`|`/`-`/`^` set-operator family. Clean first
+  pass, no bounces (4238 tests passing, up from 4224).
+  README/PROJECT.md updates left to the Architect's next grooming
+  pass.

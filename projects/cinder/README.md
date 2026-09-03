@@ -674,41 +674,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_carmichael_number`
-(PR #379, `is_carmichael_number(561)` is `true`, the smallest
-Carmichael number, `3 * 11 * 17` with `(p-1) | 560` for every prime
-factor `p`), the composite-but-squarefree Fermat-pseudoprime cousin of
-`is_prime` built on the same trial-division factoring
-`prime_factors`/`is_smith_number` already use — and before that a `^`
-(symmetric difference) operator for maps (PR #378, `{"a": 1, "b": 2} ^
-{"b": 3, "c": 4}` is `{"a": 1, "c": 4}`), completing the map side of
-the `&`/`|`/`-`/`^` set-operator family alongside list `^` — and
-before that `is_weird_number` (PR #377, `is_weird_number(70)` is
-`true` — abundant but not semiperfect, no subset of its own proper
-divisors sums back to it), one step further into the
-perfect/abundant/deficient family than `is_abundant`/`is_deficient`'s
-simple sum comparison, via a bounded 0/1 subset-sum sweep. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a `<=>` (spaceship /
-three-way comparison) operator (`1 <=> 2` is `-1`, `2 <=> 2` is `0`,
-`3 <=> 2` is `1`), built entirely from the existing `<`/`==` comparison
-machinery so every type that's already comparable (numbers, strings,
-lists, maps) gets it for free — `is_palindrome_permutation`, testing
-whether a string's characters could be rearranged into some palindrome
-rather than already being one (`is_palindrome_permutation("carrace")`
-is `true`, via `"racecar"`; at most one distinct character may have an
-odd count), the multiset question sitting between `is_anagram`'s
-two-string comparison and `is_palindrome`'s single-string check —
-`is_practical_number`, whether every integer from `1` to `n - 1` is a
-sum of distinct proper divisors of `n` (`is_practical_number(6)` is
-`true`; `10` is not, since no subset of `{1, 2, 5}` sums to `4`), the
-same subset-sum reachability sweep `is_weird_number` itself uses —
-map spread (`...m`) as keyword arguments in function calls
-(`greet(...{"name": "Ada", "greeting": "yo"})`), the map-flavored
-sibling of list spread's existing positional-argument spreading — and
-`nth_deficient`, the value-returning sibling `is_deficient` itself was
-missing, mirroring `nth_abundant`'s own bounded sequential-scan shape
-with the comparison flipped.
+Actively developed, nightly. Recently landed: a `<=>` (spaceship /
+three-way comparison) operator (PR #380, `1 <=> 2` is `-1`, `2 <=> 2`
+is `0`, `3 <=> 2` is `1`), built entirely from the existing `<`/`==`
+comparison machinery so every type that's already comparable (numbers,
+strings, lists, maps) gets it for free — and `is_palindrome_permutation`
+(PR #381, `is_palindrome_permutation("carrace")` is `true`, via
+`"racecar"`; at most one distinct character may have an odd count),
+the multiset question sitting between `is_anagram`'s two-string
+comparison and `is_palindrome`'s single-string check — and before that
+`is_carmichael_number` (PR #379, `is_carmichael_number(561)` is `true`,
+the smallest Carmichael number, `3 * 11 * 17` with `(p-1) | 560` for
+every prime factor `p`), the composite-but-squarefree Fermat-pseudoprime
+cousin of `is_prime`. See [`CHANGELOG.md`](CHANGELOG.md) for the full
+merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_practical_number`,
+whether every integer from `1` to `n - 1` is a sum of distinct proper
+divisors of `n` (`is_practical_number(6)` is `true`; `10` is not, since
+no subset of `{1, 2, 5}` sums to `4`), the same subset-sum reachability
+sweep `is_weird_number` itself uses — map spread (`...m`) as keyword
+arguments in function calls (`greet(...{"name": "Ada", "greeting":
+"yo"})`), the map-flavored sibling of list spread's existing
+positional-argument spreading — `nth_deficient`, the value-returning
+sibling `is_deficient` itself was missing, mirroring `nth_abundant`'s
+own bounded sequential-scan shape with the comparison flipped —
+`is_semiperfect`, extracting the standalone pseudoperfect question
+`is_weird_number` already computes internally but never exposed on its
+own — a `*` marker for keyword-only function parameters (`fn
+greet(name, *, loud) { ... }` forces `loud` to be passed as
+`greet("Ada", loud: true)`, never positionally) — and `euler_totient`,
+the aggregate counterpart to `is_coprime` (count of integers up to `n`
+coprime with `n`), via the same trial-division factoring
+`prime_factors` already uses.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

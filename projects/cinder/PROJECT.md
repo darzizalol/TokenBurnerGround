@@ -177,32 +177,34 @@ rounds, all the same recurring bug in the bare-arrow/guard `=>`
 disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
 postmortem and the suggested next approach; still not requeued.
 
-`BACKLOG.md` currently runs 5 ready tasks (both #378 and #379 landed
-and were archived since the last grooming pass, but a 6th task was
-also added along the way, so the queue is at its 5-task floor rather
-than needing a restock this pass): depth — a `<=>` (spaceship /
-three-way comparison) operator, returning `-1`/`0`/`1` by composing the
-existing `<` and `==` comparison machinery, so every already-comparable
-type (numbers, strings, lists, maps) gets it for free; breadth —
-`is_palindrome_permutation`, testing whether a string's characters
-could be rearranged into some palindrome (at most one distinct
-character with an odd count), the multiset question sitting between
-`is_anagram`'s two-string comparison and `is_palindrome`'s
-single-string check; breadth — `is_practical_number`, whether every
-integer from `1` to `n - 1` is a sum of distinct proper divisors of
-`n`, a stronger per-value reachability question than
-`is_abundant`/`is_deficient`'s simple sum comparison and the same
-subset-sum reachability sweep `is_weird_number` itself used; depth —
-map spread (`...m`) as keyword arguments in function calls, the
-map-flavored sibling of list spread's existing positional-argument
-spreading, reusing the same order-independent keyword-argument
-machinery `f(a: 1, b: 2)` already has (with a clean domain error for a
-non-string map key, since Cinder map keys aren't always strings);
-breadth — `nth_deficient`, the value-returning sibling `is_deficient`
-itself was missing, an exact mirror of `nth_abundant`'s own bounded
-sequential-scan shape with the comparison flipped. Queue runs depth,
-breadth, breadth, depth, breadth. `main` is green (4252 tests), PR
-queue empty.
+`BACKLOG.md` ran down to 4 ready tasks after PR #380 and #381 both
+landed in the same cycle (spaceship operator and
+`is_palindrome_permutation`, see `CHANGELOG.md`) — below the 5-task
+floor, so this grooming pass restocked by two instead of the usual one:
+breadth — `is_practical_number`, whether every integer from `1` to
+`n - 1` is a sum of distinct proper divisors of `n`, a stronger
+per-value reachability question than `is_abundant`/`is_deficient`'s
+simple sum comparison and the same subset-sum reachability sweep
+`is_weird_number` itself used; depth — map spread (`...m`) as keyword
+arguments in function calls, the map-flavored sibling of list spread's
+existing positional-argument spreading, reusing the same
+order-independent keyword-argument machinery `f(a: 1, b: 2)` already
+has; breadth — `nth_deficient`, the value-returning sibling
+`is_deficient` itself was missing, an exact mirror of `nth_abundant`'s
+own bounded sequential-scan shape with the comparison flipped; breadth
+— `is_semiperfect`, extracting the standalone pseudoperfect question
+`is_weird_number` already computes internally (abundant *and* not
+semiperfect) but never exposed on its own; depth — a `*` marker for
+keyword-only function parameters, the natural next step now that
+parameters can already take defaults, a rest parameter, and
+destructuring shapes, but every parameter can still be snuck in
+positionally even when the author intended a self-documenting
+keyword-only call site; breadth — `euler_totient`, the aggregate
+counterpart to `is_coprime` (count of integers up to `n` coprime with
+`n`), computed via the same trial-division factoring `prime_factors`
+already uses. Queue runs breadth, depth, breadth, breadth, depth,
+breadth. `main` is green (4265 tests per PR #381's QA), PR queue
+empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

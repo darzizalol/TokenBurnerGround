@@ -10480,6 +10480,70 @@ class TestIsAnagram(unittest.TestCase):
             run('is_anagram("a", "b", "c");')
 
 
+class TestIsPalindromePermutation(unittest.TestCase):
+    def test_is_palindrome_permutation_one_odd_count_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("carrace");').get("result"),
+            True,
+        )
+
+    def test_is_palindrome_permutation_all_even_counts_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("aabbcc");').get("result"),
+            True,
+        )
+
+    def test_is_palindrome_permutation_one_odd_count_with_evens_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("aabbc");').get("result"),
+            True,
+        )
+
+    def test_is_palindrome_permutation_three_odd_counts_false(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("abc");').get("result"), False
+        )
+
+    def test_is_palindrome_permutation_empty_string_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("");').get("result"), True
+        )
+
+    def test_is_palindrome_permutation_single_character_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("a");').get("result"), True
+        )
+
+    def test_is_palindrome_permutation_case_sensitive_false(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("Aa");').get("result"), False
+        )
+
+    def test_is_palindrome_permutation_no_whitespace_stripping_false(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("ab a");').get("result"),
+            False,
+        )
+
+    def test_is_palindrome_permutation_already_a_palindrome_true(self):
+        self.assertIs(
+            run('let result = is_palindrome_permutation("racecar");').get("result"),
+            True,
+        )
+
+    def test_is_palindrome_permutation_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_palindrome_permutation(5);")
+        self.assertIn("is_palindrome_permutation", ctx.exception.message)
+        self.assertIn("int", ctx.exception.message)
+
+    def test_is_palindrome_permutation_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_palindrome_permutation();")
+        with self.assertRaises(CinderRuntimeError):
+            run('is_palindrome_permutation("a", "b");')
+
+
 class TestIsRotation(unittest.TestCase):
     def test_is_rotation_true(self):
         self.assertIs(

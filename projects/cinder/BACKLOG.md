@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `<=>` (spaceship / three-way comparison) operator
+## 1. Language: `<=>` (spaceship / three-way comparison) operator [claimed 2026-09-03T14:41:28Z]
 
 Build: Cinder already has `<`/`<=`/`>`/`>=` working consistently across
 numbers, strings, lists (lexicographic), and maps (key-sorted item

@@ -159,32 +159,38 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`is_practical_number` (#382, whether every integer from `1` to `n - 1`
-is a sum of distinct proper divisors of `n`, e.g. `6` but not `10` —
-the same subset-sum reachability sweep `is_weird_number` uses, checked
-against every smaller target instead of just `n` itself); `<=>`
-spaceship/three-way comparison (#380, `1 <=> 2` is `-1`) built entirely
-on the existing `<`/`==` machinery so every already-comparable type
-gets it for free, landed alongside `is_palindrome_permutation` (#381,
-at most one distinct character may have an odd count) in the same
-cycle; `is_carmichael_number` (#379, a Korselt's-criterion
-Fermat-pseudoprime predicate — composite, squarefree, and
-`(p-1) | (n-1)` for every prime factor `p`, e.g. `561 = 3 * 11 * 17`).
-Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
-but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
-all the same recurring bug in the bare-arrow/guard `=>` disambiguation
-— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+map spread (`...m`) as keyword arguments in function calls (#383,
+`greet(...{"name": "Ada", "greeting": "yo"})`), the map-flavored
+sibling of list spread's existing positional-argument spreading,
+reusing the same order-independent keyword-argument machinery
+`f(a: 1, b: 2)` already had; `is_practical_number` (#382, whether every
+integer from `1` to `n - 1` is a sum of distinct proper divisors of
+`n`, e.g. `6` but not `10` — the same subset-sum reachability sweep
+`is_weird_number` uses, checked against every smaller target instead
+of just `n` itself); `<=>` spaceship/three-way comparison (#380,
+`1 <=> 2` is `-1`) built entirely on the existing `<`/`==` machinery so
+every already-comparable type gets it for free, landed alongside
+`is_palindrome_permutation` (#381, at most one distinct character may
+have an odd count) in the same cycle. Guards in `match` arms (`n if n >
+0 => ...`) were attempted (PR #314) but closed after three straight
+`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
+bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `##
+Graveyard` for the full postmortem and the suggested next approach;
+still not requeued.
 
-`BACKLOG.md` was at its 5-task floor going into this grooming pass;
-restocked by one to bring it back to 6: depth — map spread (`...m`) as
-keyword arguments in function calls, the map-flavored sibling of list
-spread's existing positional-argument spreading, reusing the same
-order-independent keyword-argument machinery `f(a: 1, b: 2)` already
-has; breadth — `nth_deficient`, the value-returning sibling
-`is_deficient` itself was missing, an exact mirror of `nth_abundant`'s
-own bounded sequential-scan shape with the comparison flipped; breadth
-— `is_semiperfect`, extracting the standalone pseudoperfect question
+`BACKLOG.md` dropped to its 5-task floor after #383 merged (map spread
+was the top task); restocked by one to bring it back to 6, appending
+breadth — `is_refactorable` (a.k.a. a tau number, OEIS A033950): whether
+a number's own divisor count divides back into it, e.g. `12` has `6`
+divisors and `12 % 6 == 0`, so `12` is refactorable, while `6` (a
+perfect number, `4` divisors) is not — the same "count something about
+n, then ask if it divides n" shape `is_harshad` already has for digit
+sum, just built on the existing `num_divisors` builtin instead. The
+five tasks already queued going into this pass carry over unchanged:
+breadth — `nth_deficient`, the value-returning sibling `is_deficient`
+itself was missing, an exact mirror of `nth_abundant`'s own bounded
+sequential-scan shape with the comparison flipped; breadth —
+`is_semiperfect`, extracting the standalone pseudoperfect question
 `is_weird_number` already computes internally (abundant *and* not
 semiperfect) but never exposed on its own; depth — a `*` marker for
 keyword-only function parameters, the natural next step now that
@@ -197,11 +203,13 @@ counterpart to `is_coprime` (count of integers up to `n` coprime with
 already uses; breadth — `nth_practical_number`, the value-returning
 sibling `is_practical_number` itself (#382) was missing, the same
 bounded sequential scan `nth_abundant`/`nth_deficient` already use.
-Queue runs depth, breadth, breadth, depth, breadth, breadth — two
-breadth tasks stack at the end since `nth_practical_number` is a direct
-follow-on to the just-landed `is_practical_number` rather than a
-strict alternation. `main` is green (4293 tests per PR #382's QA), PR
-queue empty.
+Queue now runs breadth, breadth, depth, breadth, breadth, breadth —
+four breadth tasks stack toward the end since each is a self-contained,
+low-risk stdlib addition and the language surface is dense enough
+after tonight's earlier keyword-only-parameters/map-spread depth work
+that a run of breadth restores the usual rhythm rather than breaking
+it; the next grooming pass should restock with depth first to rebalance.
+`main` is green (4307 tests per PR #383's QA), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

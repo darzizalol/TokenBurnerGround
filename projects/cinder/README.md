@@ -692,24 +692,26 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_practical_number`
-(PR #382, `is_practical_number(6)` is `true`; `10` is not, since no
-subset of `{1, 2, 5}` sums to `4`), the same subset-sum reachability
-sweep `is_weird_number` uses, checked against every smaller target
-instead of just `n` itself — a `<=>` (spaceship / three-way comparison)
-operator (PR #380, `1 <=> 2` is `-1`, `2 <=> 2` is `0`, `3 <=> 2` is
-`1`), built entirely from the existing `<`/`==` comparison machinery so
-every type that's already comparable (numbers, strings, lists, maps)
-gets it for free — and `is_palindrome_permutation` (PR #381,
-`is_palindrome_permutation("carrace")` is `true`, via `"racecar"`; at
-most one distinct character may have an odd count), the multiset
-question sitting between `is_anagram`'s two-string comparison and
-`is_palindrome`'s single-string check. See [`CHANGELOG.md`](CHANGELOG.md)
-for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): map spread (`...m`) as
-keyword arguments in function calls (`greet(...{"name": "Ada",
+Actively developed, nightly. Recently landed: map spread (`...m`) as
+keyword arguments in function calls (PR #383, `greet(...{"name": "Ada",
 "greeting": "yo"})`), the map-flavored sibling of list spread's
-existing positional-argument spreading — `nth_deficient`, the
+existing positional-argument spreading, reusing the same
+order-independent keyword-argument machinery `f(a: 1, b: 2)` already
+had — `is_practical_number` (PR #382, `is_practical_number(6)` is
+`true`; `10` is not, since no subset of `{1, 2, 5}` sums to `4`), the
+same subset-sum reachability sweep `is_weird_number` uses, checked
+against every smaller target instead of just `n` itself — a `<=>`
+(spaceship / three-way comparison) operator (PR #380, `1 <=> 2` is
+`-1`, `2 <=> 2` is `0`, `3 <=> 2` is `1`), built entirely from the
+existing `<`/`==` comparison machinery so every type that's already
+comparable (numbers, strings, lists, maps) gets it for free — and
+`is_palindrome_permutation` (PR #381, `is_palindrome_permutation
+("carrace")` is `true`, via `"racecar"`; at most one distinct
+character may have an odd count), the multiset question sitting
+between `is_anagram`'s two-string comparison and `is_palindrome`'s
+single-string check. See [`CHANGELOG.md`](CHANGELOG.md) for the full
+merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_deficient`, the
 value-returning sibling `is_deficient` itself was missing, mirroring
 `nth_abundant`'s own bounded sequential-scan shape with the comparison
 flipped — `is_semiperfect`, extracting the standalone pseudoperfect
@@ -719,10 +721,13 @@ exposed on its own — a `*` marker for keyword-only function parameters
 `greet("Ada", loud: true)`, never positionally) — `euler_totient`, the
 aggregate counterpart to `is_coprime` (count of integers up to `n`
 coprime with `n`), via the same trial-division factoring
-`prime_factors` already uses — and `nth_practical_number`, the
+`prime_factors` already uses — `nth_practical_number`, the
 value-returning sibling `is_practical_number` itself was missing, the
 same bounded sequential scan `nth_abundant`/`nth_deficient` already
-use.
+use — and `is_refactorable`, whether a number's own divisor count
+divides back into it (a.k.a. a tau number), the same "count something
+about n, then ask if it divides n" shape `is_harshad` already has for
+digit sum.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

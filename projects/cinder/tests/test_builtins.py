@@ -1920,6 +1920,11 @@ class TestAbs(unittest.TestCase):
             run("abs(x: -5);")
         self.assertIn("abs() does not accept keyword arguments", str(ctx.exception))
 
+    def test_abs_rejects_map_spread_as_keyword_arguments(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('abs(...{"x": 5});')
+        self.assertIn("abs() does not accept keyword arguments", str(ctx.exception))
+
 
 class TestSign(unittest.TestCase):
     def test_sign_of_positive_int(self):

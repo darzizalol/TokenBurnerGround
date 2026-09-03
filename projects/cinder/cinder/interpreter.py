@@ -667,13 +667,29 @@ class Interpreter:
                 keywords[arg.name] = self.evaluate(arg.value, env)
             elif isinstance(arg, Spread):
                 value = self.evaluate(arg.expression, env)
-                if not isinstance(value, list):
+                if isinstance(value, dict):
+                    for key, entry_value in value.items():
+                        if not isinstance(key, str):
+                            raise CinderRuntimeError(
+                                f"cannot spread map with non-string key {key!r} as keyword arguments",
+                                arg.line,
+                                arg.column,
+                            )
+                        if key in keywords:
+                            raise CinderRuntimeError(
+                                f"duplicate keyword argument {key!r} in call",
+                                arg.line,
+                                arg.column,
+                            )
+                        keywords[key] = entry_value
+                elif isinstance(value, list):
+                    positional.extend(value)
+                else:
                     raise CinderRuntimeError(
                         f"cannot spread {type_name(value)} in a function call",
                         arg.line,
                         arg.column,
                     )
-                positional.extend(value)
             else:
                 positional.append(self.evaluate(arg, env))
         return positional, keywords

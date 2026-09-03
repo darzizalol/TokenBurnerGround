@@ -630,6 +630,110 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
+
+Build: Cinder's `is_practical_number` (`cinder/builtins.py`, search `def
+_is_practical_number`: proper-divisor list, then a bounded 0/1 subset-sum
+sweep checking every integer `1..n-1` is reachable) landed as PR #382 —
+but, like `is_abundant`/`nth_abundant` and `is_deficient`/`nth_deficient`
+(already queued as task 2 above) before it, it has no value-returning
+`nth_*` sibling yet. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_practical_number(5));'
+# -> <eval>:1:7: undefined name 'nth_practical_number' (did you mean
+#    'is_practical_number'?)
+```
+
+Worked examples: the first ten practical numbers (OEIS A005153) are `1,
+2, 4, 6, 8, 12, 16, 18, 20, 24` — note the gaps at `3`, `5`, `7`, etc.
+(every odd number other than `1` is non-practical, since an odd
+number's divisors are all odd and so can never sum to the even targets
+among `1..n-1`); the 20th is `60`.
+
+Add directly after `_is_practical_number` (search `def
+_is_practical_number`, immediately before `def _is_abundant`) — keeps
+the value-returning helper next to the predicate it mirrors, matching
+where `nth_abundant` itself sits right after `is_abundant`:
+```python
+def _nth_practical_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_practical_number", arguments, 1, line, column)
+    value = _require_int("nth_practical_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_practical_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_practical_candidate(candidate: int) -> bool:
+        if candidate == 1:
+            return True
+        divisors = [1]
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                divisors.append(divisor)
+                complement = candidate // divisor
+                if complement != divisor:
+                    divisors.append(complement)
+        reachable = {0}
+        for divisor in divisors:
+            reachable |= {
+                total + divisor for total in reachable if total + divisor <= candidate
+            }
+        return all(target in reachable for target in range(1, candidate))
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_practical_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_abundant`, with the inner candidate check
+copied from `_is_practical_number`'s own body instead of
+`_is_abundant`'s single sum comparison — practical numbers have no
+closed form either, so the same bounded sequential scan applies.) Also
+register the new dict entry (search `"is_practical_number":
+_is_practical_number,`, add `"nth_practical_number":
+_nth_practical_number,` directly after it, before `"is_abundant":
+_is_abundant,`).
+
+Acceptance criteria:
+- `nth_practical_number(1);` through `nth_practical_number(10);` are
+  `1, 2, 4, 6, 8, 12, 16, 18, 20, 24` in order — the worked example
+  above.
+- `nth_practical_number(20);` is `60` — a further worked example
+  confirming the scan scales past the first ten.
+- For every `position` in `1..50`,
+  `is_practical_number(nth_practical_number(position))` is `true` —
+  the same self-consistency check `nth_abundant`'s own test suite
+  already runs against `is_abundant`.
+- `nth_practical_number(0);`, `nth_practical_number(-3);` both raise
+  `CinderRuntimeError` matching `"nth_practical_number\(\) requires a
+  positive integer, domain error"`, matching `nth_abundant`'s own
+  non-positive-input convention.
+- `nth_practical_number(true);` raises `CinderRuntimeError` matching
+  `"nth_practical_number\(\) requires an int, got bool"`, since
+  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
+  `int` subclass (same guard every other int-only predicate in this
+  file already relies on).
+- `nth_practical_number("5");` raises `CinderRuntimeError` matching
+  `"nth_practical_number\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_practical_number`,
+search `def _is_practical_number`), `tests/test_builtins.py` (new `class
+TestNthPracticalNumber`, modeled on `class TestNthAbundant`, search that
+name, for the test shapes above). Once merged, `README.md`'s Builtins
+bullet needs `nth_practical_number` added near `is_practical_number`,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

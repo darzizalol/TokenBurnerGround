@@ -159,35 +159,27 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`is_carmichael_number` (#379, a Korselt's-criterion Fermat-pseudoprime
-predicate — composite, squarefree, and `(p-1) | (n-1)` for every prime
-factor `p`, e.g. `561 = 3 * 11 * 17` — built on the same trial-division
-factoring `prime_factors`/`is_smith_number` already use); a `^`
-(symmetric difference) operator for maps (#378, `{"a": 1, "b": 2} ^
-{"b": 3, "c": 4}` is `{"a": 1, "c": 4}`, key-based since there is no
-map-flavored `symmetric_difference()` builtin to mirror — completed
-the map side of the `&`/`|`/`-`/`^` operator family alongside list
-`^`); `is_weird_number` (#377, abundant but not semiperfect — no
-subset of its own proper divisors sums to it, e.g. `70` — a bounded
-0/1 subset-sum sweep over the divisor list, one step further into the
-perfect/abundant/deficient family than `is_abundant`/`is_deficient`
-alone go). Guards in `match` arms (`n if n > 0 => ...`) were attempted
-(PR #314) but closed after three straight `VERDICT: CHANGES REQUESTED`
-rounds, all the same recurring bug in the bare-arrow/guard `=>`
-disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
-postmortem and the suggested next approach; still not requeued.
+`is_practical_number` (#382, whether every integer from `1` to `n - 1`
+is a sum of distinct proper divisors of `n`, e.g. `6` but not `10` —
+the same subset-sum reachability sweep `is_weird_number` uses, checked
+against every smaller target instead of just `n` itself); `<=>`
+spaceship/three-way comparison (#380, `1 <=> 2` is `-1`) built entirely
+on the existing `<`/`==` machinery so every already-comparable type
+gets it for free, landed alongside `is_palindrome_permutation` (#381,
+at most one distinct character may have an odd count) in the same
+cycle; `is_carmichael_number` (#379, a Korselt's-criterion
+Fermat-pseudoprime predicate — composite, squarefree, and
+`(p-1) | (n-1)` for every prime factor `p`, e.g. `561 = 3 * 11 * 17`).
+Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
+but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
+all the same recurring bug in the bare-arrow/guard `=>` disambiguation
+— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
+suggested next approach; still not requeued.
 
-`BACKLOG.md` ran down to 4 ready tasks after PR #380 and #381 both
-landed in the same cycle (spaceship operator and
-`is_palindrome_permutation`, see `CHANGELOG.md`) — below the 5-task
-floor, so this grooming pass restocked by two instead of the usual one:
-breadth — `is_practical_number`, whether every integer from `1` to
-`n - 1` is a sum of distinct proper divisors of `n`, a stronger
-per-value reachability question than `is_abundant`/`is_deficient`'s
-simple sum comparison and the same subset-sum reachability sweep
-`is_weird_number` itself used; depth — map spread (`...m`) as keyword
-arguments in function calls, the map-flavored sibling of list spread's
-existing positional-argument spreading, reusing the same
+`BACKLOG.md` was at its 5-task floor going into this grooming pass;
+restocked by one to bring it back to 6: depth — map spread (`...m`) as
+keyword arguments in function calls, the map-flavored sibling of list
+spread's existing positional-argument spreading, reusing the same
 order-independent keyword-argument machinery `f(a: 1, b: 2)` already
 has; breadth — `nth_deficient`, the value-returning sibling
 `is_deficient` itself was missing, an exact mirror of `nth_abundant`'s
@@ -202,9 +194,14 @@ positionally even when the author intended a self-documenting
 keyword-only call site; breadth — `euler_totient`, the aggregate
 counterpart to `is_coprime` (count of integers up to `n` coprime with
 `n`), computed via the same trial-division factoring `prime_factors`
-already uses. Queue runs breadth, depth, breadth, breadth, depth,
-breadth. `main` is green (4265 tests per PR #381's QA), PR queue
-empty.
+already uses; breadth — `nth_practical_number`, the value-returning
+sibling `is_practical_number` itself (#382) was missing, the same
+bounded sequential scan `nth_abundant`/`nth_deficient` already use.
+Queue runs depth, breadth, breadth, depth, breadth, breadth — two
+breadth tasks stack at the end since `nth_practical_number` is a direct
+follow-on to the just-landed `is_practical_number` rather than a
+strict alternation. `main` is green (4293 tests per PR #382's QA), PR
+queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

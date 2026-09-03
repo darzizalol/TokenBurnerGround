@@ -442,6 +442,220 @@ this task.
 
 ---
 
+## 5. Language: map spread (`...m`) in function calls as keyword arguments
+
+Build: Cinder already spreads a *list* into positional call arguments
+(`cinder/interpreter.py`, search `_evaluate_call_arguments`: a `Spread`
+argument whose value is a `list` gets extended onto `positional`, anything
+else raises `"cannot spread {type} in a function call"`) and already has
+order-independent keyword arguments matched by name (`f(a: 1, b: 2)`, a
+`KeywordArg` argument populates the `keywords` dict, with a `"duplicate
+keyword argument"` check when the same name appears twice). There is no
+way to spread a *map*'s entries as keyword arguments — the natural
+map-flavored sibling of list-spread-as-positional, letting a caller hold
+its arguments in a map (e.g. built up conditionally, or received from
+elsewhere) and forward them by name without listing every key by hand.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'fn greet(name, greeting) { return greeting + ", " + name; } print(greet(...{"name": "Ada", "greeting": "yo"}));'
+# -> <eval>:1:76: cannot spread map in a function call
+```
+
+Change (`cinder/interpreter.py`, search `def _evaluate_call_arguments`):
+the `Spread` branch currently only handles `list`; add a `dict` branch
+ahead of it that merges each entry into `keywords`, reusing the exact
+duplicate-keyword-argument check the `KeywordArg` branch above it already
+has (so `f(...{"a": 1}, a: 2)` and `f(...{"a": 1}, ...{"a": 2})` both raise
+the same `"duplicate keyword argument 'a' in call"` error a hand-written
+double `a:` would). Cinder map keys are not always strings (`{1: "a"}` is
+legal — plain values, not just strings, are valid map keys), but a
+keyword-argument name must be a string, so a non-string key needs its own
+clean error rather than silently coercing or leaking a raw Python
+`TypeError` when it's later used as a parameter-name lookup:
+```python
+elif isinstance(arg, Spread):
+    value = self.evaluate(arg.expression, env)
+    if isinstance(value, dict):
+        for key, entry_value in value.items():
+            if not isinstance(key, str):
+                raise CinderRuntimeError(
+                    f"cannot spread map with non-string key {key!r} as keyword arguments",
+                    arg.line, arg.column,
+                )
+            if key in keywords:
+                raise CinderRuntimeError(
+                    f"duplicate keyword argument {key!r} in call",
+                    arg.line, arg.column,
+                )
+            keywords[key] = entry_value
+    elif isinstance(value, list):
+        positional.extend(value)
+    else:
+        raise CinderRuntimeError(
+            f"cannot spread {type_name(value)} in a function call",
+            arg.line, arg.column,
+        )
+```
+This is the one function both `Call` and `OptionalCall` evaluation already
+route through (`_evaluate_call`/`_evaluate_optional_call`, both call
+`_evaluate_call_arguments`), so both call forms and `f?.(...m)` all pick
+this up for free — no separate change needed for optional calls.
+Builtins already reject *any* non-empty `keywords` dict outright
+(`call_value`, search `does not accept keyword arguments`) regardless of
+where its entries came from, so a map-spread onto a builtin call falls
+into that existing check automatically too.
+
+Acceptance criteria:
+- `fn greet(name, greeting) { return greeting + ", " + name; }
+  greet(...{"name": "Ada", "greeting": "yo"});` is `"yo, Ada"` — the
+  worked example above.
+- `fn greet(name, greeting) { return greeting + ", " + name; }
+  greet(...{"greeting": "yo", "name": "Ada"});` is also `"yo, Ada"` — key
+  order in the spread map doesn't matter, matching keyword arguments'
+  existing order-independence.
+- `fn f(a, b) { return a - b; } f(5, ...{"b": 1});` is `4` — a map spread
+  combines with a leading positional argument, same as an explicit
+  trailing keyword argument already does.
+- `fn f(a, b = 10) { return a + b; } f(...{"a": 3});` is `13` — an
+  omitted trailing parameter still falls back to its default when the
+  map spread doesn't supply it.
+- `fn f(a, b) { return a; } f(1, ...{"a": 2});` raises `CinderRuntimeError`
+  matching `"f() got multiple values for parameter 'a'"` — the existing
+  positional/keyword collision check, reached via a map-spread keyword
+  this time instead of an explicit one.
+- `fn f(a) { return a; } f(...{"a": 1, "z": 2});` raises
+  `CinderRuntimeError` matching `"f() got an unexpected keyword argument
+  'z'"`.
+- `fn f(a, b) { return a; } f(...{"a": 1});` raises `CinderRuntimeError`
+  matching `"f() missing required argument\(s\): 'b'"`.
+- `fn f(a) { return a; } f(...{"a": 1}, a: 2);` raises `CinderRuntimeError`
+  matching `"duplicate keyword argument 'a' in call"`.
+- `fn f(a) { return a; } f(...{"a": 1}, ...{"a": 2});` raises the same
+  `"duplicate keyword argument 'a' in call"` — two map spreads colliding,
+  not just a map spread colliding with an explicit keyword argument.
+- `fn f(a) { return a; } f(...{1: "x"});` raises `CinderRuntimeError`
+  matching `"cannot spread map with non-string key 1 as keyword
+  arguments"` — a non-string map key can never be a valid keyword-argument
+  name.
+- `abs(...{"x": 5});` raises `CinderRuntimeError` matching `"abs\(\) does
+  not accept keyword arguments"` — builtins reject any keywords regardless
+  of source, map-spread included.
+- Regression: `fn f(a, b, c) { return a + b + c; } f(...[1, 2, 3]);` is
+  `6` and `fn f(a) { return a; } f(...5);` still raises `"cannot spread
+  int in a function call"` — list spread and the non-list/non-map error
+  path are both unaffected by the new `dict` branch.
+- `fn f() { return 1; } f?.(...{"a": 1});` — optional-call spread still
+  works the same way (trivial regression check that `_evaluate_call_arguments`
+  is shared).
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (`_evaluate_call_arguments`, search
+`def _evaluate_call_arguments`), `tests/test_interpreter.py` (new `class
+TestMapSpreadCallArguments`, modeled on the existing `class
+TestSpreadCallArguments`/`class TestKeywordCallArguments`, search either
+name, placed directly after them, for the test shapes above). Once
+merged, `README.md`'s call-arguments bullet needs a mention of map spread
+alongside the existing list-spread/keyword-argument text, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
+## 6. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
+
+Build: Cinder already has `is_deficient` (`cinder/builtins.py`, search `def
+_is_deficient`: proper-divisor sum less than the number itself) and its
+abundant-number sibling already has a value-returning counterpart,
+`nth_abundant` (search `def _nth_abundant`: a sequential candidate scan
+using a private nested `_is_abundant_candidate` helper, since abundant
+numbers have no closed form) — but there is no equivalent for the
+deficient side, the value-returning sibling `is_deficient` itself is
+missing. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_deficient(3));'
+# -> <eval>:1:7: undefined name 'nth_deficient' (did you mean 'is_deficient'?)
+```
+
+Worked examples: the first ten deficient numbers (proper-divisor sum less
+than the number, OEIS A005100) are `1, 2, 3, 4, 5, 7, 8, 9, 10, 11` — note
+`6` is skipped (a perfect number, proper divisors `1+2+3=6`) and so is any
+multiple of 6 that happens to be perfect/abundant; the 20th is `25`. Every
+prime is deficient (proper-divisor sum is always `1 < p`), so deficient
+numbers are far denser than abundant numbers — `nth_deficient` needs no
+special-casing for that, the same bounded sequential scan `nth_abundant`
+already uses just finds matches sooner.
+
+Add directly after `_nth_abundant` (search `def _nth_abundant`, immediately
+before `def _is_deficient`) — keeps the value-returning helper next to the
+`is_abundant`/`nth_abundant` pair it mirrors:
+```python
+def _nth_deficient(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_deficient", arguments, 1, line, column)
+    value = _require_int("nth_deficient", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_deficient() requires a positive integer, domain error", line, column
+        )
+
+    def _is_deficient_candidate(candidate: int) -> bool:
+        total = 1 if candidate > 1 else 0
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                total += divisor
+                complement = candidate // divisor
+                if complement != divisor:
+                    total += complement
+        return total < candidate
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_deficient_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_abundant`, only the comparison flips from `>` to
+`<`, matching `_is_abundant`/`_is_deficient`'s own relationship.) Also
+register the new dict entry (search `"is_deficient": _is_deficient,`, add
+`"nth_deficient": _nth_deficient,` directly before it, next to
+`"nth_abundant": _nth_abundant,` which already sits right above
+`"is_deficient"` in the dict).
+
+Acceptance criteria:
+- `nth_deficient(1);` through `nth_deficient(10);` are `1, 2, 3, 4, 5, 7,
+  8, 9, 10, 11` in order — the worked example above (note the gap at `6`).
+- `nth_deficient(20);` is `25` — a further worked example confirming the
+  scan scales past the first ten.
+- For every `position` in `1..50`, `is_deficient(nth_deficient(position))`
+  is `true` — the same self-consistency check `nth_abundant`'s own test
+  suite already runs against `is_abundant`.
+- `nth_deficient(0);`, `nth_deficient(-3);` both raise `CinderRuntimeError`
+  matching `"nth_deficient\(\) requires a positive integer, domain
+  error"`, matching `nth_abundant`'s own non-positive-input convention.
+- `nth_deficient(true);` raises `CinderRuntimeError` matching
+  `"nth_deficient\(\) requires an int, got bool"`, since `_require_int`
+  rejects `bool` even though Cinder's `bool` is a Python `int` subclass
+  (same guard every other int-only predicate in this file already relies
+  on).
+- `nth_deficient("3");` raises `CinderRuntimeError` matching
+  `"nth_deficient\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_nth_abundant`, search
+`def _nth_abundant`), `tests/test_builtins.py` (new `class
+TestNthDeficient`, modeled on `class TestNthAbundant`, search that name,
+for the test shapes above). Once merged, `README.md`'s Builtins bullet
+needs `nth_deficient` added near `is_deficient`/`nth_abundant`, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" section needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -178,18 +178,15 @@ all the same recurring bug in the bare-arrow/guard `=>` disambiguation
 — see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
 suggested next approach; still not requeued.
 
-`BACKLOG.md` carries the active queue, holding steady at the usual
-5-task floor now that `is_weird_number` (#377) landed and was archived:
-depth — a `^` (symmetric difference) operator for maps (task 1, queued
-first), completing the map side of the same set-operator family now
-that list `^` has landed, key-based since there is no map-flavored
-`symmetric_difference()` builtin to mirror; breadth —
-`is_carmichael_number`, a Korselt's-criterion Fermat-pseudoprime
-predicate (composite, squarefree, and `(p-1) | (n-1)` for every prime
-factor `p`), built on the same trial-division factoring
-`prime_factors`/`is_smith_number` already use; depth — a `<=>`
-(spaceship / three-way comparison) operator, returning `-1`/`0`/`1` by
-composing the existing `<` and `==` comparison machinery, so every
+`BACKLOG.md` was restocked this pass from 4 tasks back up to the usual
+6-task ceiling (map `^` landed as #378 and was archived, dropping the
+queue to 4 — below the 5-task floor — before this grooming pass added
+two more): breadth — `is_carmichael_number`, a Korselt's-criterion
+Fermat-pseudoprime predicate (composite, squarefree, and `(p-1) |
+(n-1)` for every prime factor `p`), built on the same trial-division
+factoring `prime_factors`/`is_smith_number` already use; depth — a
+`<=>` (spaceship / three-way comparison) operator, returning `-1`/`0`/`1`
+by composing the existing `<` and `==` comparison machinery, so every
 already-comparable type (numbers, strings, lists, maps) gets it for
 free; breadth — `is_palindrome_permutation`, testing whether a
 string's characters could be rearranged into some palindrome (at most
@@ -200,8 +197,16 @@ sitting between `is_anagram`'s two-string comparison and
 sum of distinct proper divisors of `n`, a stronger per-value
 reachability question than `is_abundant`/`is_deficient`'s simple sum
 comparison and the same subset-sum reachability sweep `is_weird_number`
-itself used, now queued last. Queue now runs depth, breadth, depth,
-breadth, breadth. `main` is green (4224 tests), PR queue empty.
+itself used; depth — map spread (`...m`) as keyword arguments in
+function calls, the map-flavored sibling of list spread's existing
+positional-argument spreading, reusing the same order-independent
+keyword-argument machinery `f(a: 1, b: 2)` already has (with a clean
+domain error for a non-string map key, since Cinder map keys aren't
+always strings); breadth — `nth_deficient`, the value-returning sibling
+`is_deficient` itself was missing, an exact mirror of `nth_abundant`'s
+own bounded sequential-scan shape with the comparison flipped. Queue
+now runs breadth, depth, breadth, breadth, depth, breadth. `main` is
+green (4238 tests), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

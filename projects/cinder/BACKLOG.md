@@ -139,7 +139,7 @@ not this task.
 
 ---
 
-## 2. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
+## 2. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome? [claimed 2026-09-03T19:22:10Z]
 
 Build: Cinder already has `is_anagram` (`cinder/builtins.py`, search `def
 _is_anagram`: two strings share the same character multiset, via

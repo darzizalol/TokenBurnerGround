@@ -499,6 +499,27 @@ class TestPrecedence(unittest.TestCase):
             ),
         )
 
+    def test_spaceship_stays_a_binary_node(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 <=> 2")),
+            ("Binary", ("Literal", 1), TokenType.SPACESHIP, ("Literal", 2)),
+        )
+
+    def test_spaceship_mixed_with_equality_stays_left_folded_binary_not_chained(self):
+        from cinder.tokens import TokenType
+
+        self.assertEqual(
+            shape(parse("1 <=> 2 == -1")),
+            (
+                "Binary",
+                ("Binary", ("Literal", 1), TokenType.SPACESHIP, ("Literal", 2)),
+                TokenType.EQEQ,
+                ("Unary", TokenType.MINUS, ("Literal", 1)),
+            ),
+        )
+
     def test_and_binds_tighter_than_or(self):
         from cinder.tokens import TokenType
 

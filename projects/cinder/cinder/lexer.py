@@ -434,7 +434,12 @@ class Lexer:
 
     def _lt(self, start_line: int, start_col: int):
         if self._match("="):
-            self.tokens.append(Token(TokenType.LTEQ, "<=", None, start_line, start_col))
+            if self._match(">"):
+                self.tokens.append(
+                    Token(TokenType.SPACESHIP, "<=>", None, start_line, start_col)
+                )
+            else:
+                self.tokens.append(Token(TokenType.LTEQ, "<=", None, start_line, start_col))
         elif self._match("<"):
             if self._match("="):
                 self.tokens.append(

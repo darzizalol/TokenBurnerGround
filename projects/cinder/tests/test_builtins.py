@@ -5085,6 +5085,60 @@ class TestIsDeficient(unittest.TestCase):
             run("is_deficient();")
 
 
+class TestIsWeirdNumber(unittest.TestCase):
+    def test_is_weird_number_of_70(self):
+        self.assertEqual(run("let result = is_weird_number(70);").get("result"), True)
+
+    def test_is_weird_number_of_836(self):
+        self.assertEqual(run("let result = is_weird_number(836);").get("result"), True)
+
+    def test_is_weird_number_of_4030(self):
+        self.assertEqual(run("let result = is_weird_number(4030);").get("result"), True)
+
+    def test_is_weird_number_of_5830(self):
+        self.assertEqual(run("let result = is_weird_number(5830);").get("result"), True)
+
+    def test_is_weird_number_of_20_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(20);").get("result"), False)
+
+    def test_is_weird_number_of_12_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(12);").get("result"), False)
+
+    def test_is_weird_number_of_24_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(24);").get("result"), False)
+
+    def test_is_weird_number_of_6_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(6);").get("result"), False)
+
+    def test_is_weird_number_of_28_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(28);").get("result"), False)
+
+    def test_is_weird_number_of_1_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(1);").get("result"), False)
+
+    def test_is_weird_number_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(0);").get("result"), False)
+
+    def test_is_weird_number_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_weird_number(-70);").get("result"), False)
+
+    def test_is_weird_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_weird_number(true);")
+        self.assertIn("is_weird_number", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_weird_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_weird_number("70");')
+        self.assertIn("is_weird_number", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_weird_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_weird_number();")
+
+
 class TestIsAutomorphic(unittest.TestCase):
     def test_is_automorphic_of_5(self):
         self.assertEqual(run("let result = is_automorphic(5);").get("result"), True)

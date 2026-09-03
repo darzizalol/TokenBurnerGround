@@ -549,6 +549,108 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
+
+Build: Cinder's `is_weird_number` (`cinder/builtins.py`, search `def
+_is_weird_number`) is defined as "abundant but not semiperfect" and
+already computes both halves internally — a proper-divisor list, then a
+bounded 0/1 subset-sum sweep (`reachable`) checking whether `value`
+itself turns up as some subset's sum — but only the *negation* of that
+second half is exposed, folded into `is_weird_number`'s combined abundant
+check. There is no standalone way to ask the semiperfect (a.k.a.
+pseudoperfect) question on its own, independent of abundance. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(is_semiperfect(12));'
+# -> <eval>:1:7: undefined name 'is_semiperfect' (did you mean 'is_semiprime'?)
+```
+
+Worked examples: `6`'s proper divisors are `1, 2, 3` — the full set sums
+to exactly `6`, so `6` is semiperfect (it is also perfect: every perfect
+number is trivially semiperfect via its complete divisor set). `12`'s
+proper divisors are `1, 2, 3, 4, 6` — the subset `{2, 4, 6}` sums to
+`12` (so does `{1, 2, 3, 6}`), so `12` is semiperfect despite not being
+perfect. `18`'s proper divisors are `1, 2, 3, 6, 9` — `{3, 6, 9}` sums to
+`18`. Contrast `16`: proper divisors `1, 2, 4, 8` sum to only `15 < 16`
+(deficient), so no subset can possibly reach `16` — not semiperfect.
+Contrast `70`, Cinder's own `is_weird_number` worked example: proper
+divisors `1, 2, 5, 7, 10, 14, 35` sum to `74 > 70` (abundant) yet no
+subset of them sums to exactly `70` — abundant but not semiperfect is
+precisely *why* `70` is weird, so `is_semiperfect(70)` must be `false`
+even though the number is abundant. This gives a direct cross-check:
+for every `n`, `is_weird_number(n)` must equal `is_abundant(n) and not
+is_semiperfect(n)`.
+
+Add to `cinder/builtins.py`, directly after `_is_weird_number` (search
+`def _is_weird_number`, immediately before `def _is_automorphic`) — keeps
+it grouped with the divisor-sum family it factors apart:
+```python
+def _is_semiperfect(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_semiperfect", arguments, 1, line, column)
+    value = _require_int("is_semiperfect", arguments[0], line, column)
+    if value < 2:
+        return False
+    divisors = [1]
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            divisors.append(divisor)
+            complement = value // divisor
+            if complement != divisor:
+                divisors.append(complement)
+    reachable = {0}
+    for divisor in divisors:
+        reachable |= {total + divisor for total in reachable if total + divisor <= value}
+    return value in reachable
+```
+(Identical subset-sum shape to `_is_weird_number`'s own `reachable`
+sweep, just asking directly whether `value` itself is reachable instead
+of checking abundance first and negating reachability second — the two
+functions will necessarily duplicate this block, which is fine: factoring
+it into a shared helper is out of scope for this task and not requested.)
+Also register the new dict entry (search `"is_weird_number":
+_is_weird_number,`, add `"is_semiperfect": _is_semiperfect,` directly
+after it, before `"is_automorphic": _is_automorphic,`).
+
+Acceptance criteria:
+- `is_semiperfect(6);`, `is_semiperfect(12);`, `is_semiperfect(18);`,
+  `is_semiperfect(20);`, `is_semiperfect(28);` are all `true` — the
+  worked examples above plus further OEIS A005835 terms (`28` is
+  perfect, trivially semiperfect via its full divisor set).
+- `is_semiperfect(1);`, `is_semiperfect(2);`, `is_semiperfect(4);`,
+  `is_semiperfect(16);` are all `false` — too few/small proper divisors
+  to reach the target, the `16` contrast above.
+- `is_semiperfect(70);` is `false` — the `is_weird_number` worked
+  example: abundant but not semiperfect.
+- For every `n` in `2..200`, `is_weird_number(n)` equals
+  `(is_abundant(n) and not is_semiperfect(n))` — the direct cross-check
+  derived above, confirming this task's extraction matches
+  `is_weird_number`'s existing internal logic exactly rather than
+  drifting from it.
+- `is_semiperfect(0);`, `is_semiperfect(-6);` are both `false` —
+  non-positive numbers return `false` outright, matching
+  `is_weird_number`'s own `value < 2` guard.
+- `is_semiperfect(true);` raises `CinderRuntimeError` matching
+  `"is_semiperfect() requires an int, got bool"`, since `_require_int`
+  rejects `bool` even though Cinder's `bool` is a Python `int` subclass
+  (same guard every other int-only predicate in this file already relies
+  on).
+- `is_semiperfect("6");` raises `CinderRuntimeError` matching
+  `"is_semiperfect() requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_weird_number`,
+search `def _is_weird_number`), `tests/test_builtins.py` (new `class
+TestIsSemiperfect`, modeled on `class TestIsWeirdNumber`, search that
+name, for the test shapes above). Once merged, `README.md`'s Builtins
+bullet needs `is_semiperfect` added near `is_weird_number`, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

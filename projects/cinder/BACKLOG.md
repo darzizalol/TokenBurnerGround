@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map spread (`...m`) in function calls as keyword arguments
+## 1. Language: map spread (`...m`) in function calls as keyword arguments [claimed 2026-09-03T19:55:39Z]
 
 Build: Cinder already spreads a *list* into positional call arguments
 (`cinder/interpreter.py`, search `_evaluate_call_arguments`: a `Spread`

@@ -4497,6 +4497,79 @@ class TestKeywordCallArguments(unittest.TestCase):
         self.assertEqual(env.get("result"), 3)
 
 
+class TestMapSpreadCallArguments(unittest.TestCase):
+    def test_map_spread_as_keyword_arguments(self):
+        env = run(
+            'fn greet(name, greeting) { return greeting + ", " + name; } '
+            'let result = greet(...{"name": "Ada", "greeting": "yo"});'
+        )
+        self.assertEqual(env.get("result"), "yo, Ada")
+
+    def test_map_spread_key_order_independent(self):
+        env = run(
+            'fn greet(name, greeting) { return greeting + ", " + name; } '
+            'let result = greet(...{"greeting": "yo", "name": "Ada"});'
+        )
+        self.assertEqual(env.get("result"), "yo, Ada")
+
+    def test_map_spread_combines_with_leading_positional(self):
+        env = run('fn f(a, b) { return a - b; } let result = f(5, ...{"b": 1});')
+        self.assertEqual(env.get("result"), 4)
+
+    def test_map_spread_omitted_trailing_parameter_uses_default(self):
+        env = run('fn f(a, b = 10) { return a + b; } let result = f(...{"a": 3});')
+        self.assertEqual(env.get("result"), 13)
+
+    def test_map_spread_duplicate_with_positional_raises_multiple_values(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a, b) { return a; } f(1, ...{"a": 2});')
+        self.assertIn("f() got multiple values for parameter 'a'", str(ctx.exception))
+
+    def test_map_spread_unexpected_keyword_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a) { return a; } f(...{"a": 1, "z": 2});')
+        self.assertIn("f() got an unexpected keyword argument 'z'", str(ctx.exception))
+
+    def test_map_spread_missing_required_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a, b) { return a; } f(...{"a": 1});')
+        self.assertIn("f() missing required argument(s): 'b'", str(ctx.exception))
+
+    def test_map_spread_duplicate_with_explicit_keyword_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a) { return a; } f(...{"a": 1}, a: 2);')
+        self.assertIn("duplicate keyword argument 'a' in call", str(ctx.exception))
+
+    def test_two_map_spreads_colliding_raises_duplicate(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a) { return a; } f(...{"a": 1}, ...{"a": 2});')
+        self.assertIn("duplicate keyword argument 'a' in call", str(ctx.exception))
+
+    def test_map_spread_with_non_string_key_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f(a) { return a; } f(...{1: "x"});')
+        self.assertIn(
+            "cannot spread map with non-string key 1 as keyword arguments",
+            str(ctx.exception),
+        )
+
+    def test_list_spread_regression_unaffected(self):
+        env = run(
+            "fn f(a, b, c) { return a + b + c; } let result = f(...[1, 2, 3]);"
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_non_list_non_map_spread_regression_unaffected(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a) { return a; } f(...5);")
+        self.assertIn("cannot spread int in a function call", str(ctx.exception))
+
+    def test_optional_call_map_spread_shares_call_argument_evaluation(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('fn f() { return 1; } f?.(...{"a": 1});')
+        self.assertIn("f() got an unexpected keyword argument 'a'", str(ctx.exception))
+
+
 class TestListsAndMaps(unittest.TestCase):
     def test_list_literal(self):
         self.assertEqual(evaluate("[1, 2, 3]"), [1, 2, 3])

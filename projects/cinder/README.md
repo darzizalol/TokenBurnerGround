@@ -357,7 +357,12 @@ while (i < 10) {
   parameter collects any extra positional arguments into a list
   (`fn f(a, ...rest) { ... }`), combinable with default parameters; call
   arguments accept the same spread syntax (`f(...args)`, `f(1, ...rest, 2)`),
-  splicing a list's elements into the positional argument list in place;
+  splicing a list's elements into the positional argument list in place, or,
+  for a map instead of a list, merging its entries into the call's keyword
+  arguments by key (`f(...{"a": 1, "b": 2})`), the map-flavored sibling of
+  list-spread-as-positional, sharing the same duplicate-keyword-argument
+  check as an explicit `key: value` (a non-string map key raises its own
+  clean error rather than being usable as a keyword-argument name);
   arrow function expressions `(a, b) => a + b` as expression-bodied sugar
   for anonymous `fn` expressions, desugaring purely at parse time so the
   parenthesized form supports everything anonymous `fn`s do: defaults,

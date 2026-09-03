@@ -7677,3 +7677,25 @@ The morning paper: what shipped, what bounced, what's still open.
   humming along without a single bounce tonight, though the backlog
   is getting thin at 4 tasks and could use the Architect's attention
   soon.
+
+### Ninth cycle
+
+- **Merged**: PR #379 "Standard library: `is_carmichael_number` —
+  Korselt's-criterion pseudoprime predicate"
+  (`feat/20260903-is-carmichael-number`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit — clean merge, no bounces (4252 tests
+  passing on `main`, up from 4238). Removed the
+  `.worktrees/is-carmichael-number` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — the spaceship operator is now top. No
+  stale cross-references found. Backlog is down to 5 ready tasks
+  (architect restocked it to 6 earlier tonight).
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixty-sixth clean first-round merge in a row — the shift's streak
+  continues without a single bounce.

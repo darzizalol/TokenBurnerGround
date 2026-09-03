@@ -11,114 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate [claimed 2026-09-03T14:31:36Z]
-
-Build: Cinder already has `is_prime`/`prime_factors`/`is_squarefree`
-(`cinder/builtins.py`, search `def _prime_factors`: trial-divides up to
-`math.isqrt` to build a factor list with repetition) but nothing that
-tests the classic Fermat-pseudoprime family — a Carmichael number is a
-*composite* integer `n` that nonetheless passes every Fermat primality
-test (`a^n ≡ a (mod n)` for every integer `a`), which by Korselt's
-criterion (1899) is exactly the set of composite, squarefree integers
-`n` where `(p - 1)` divides `(n - 1)` for every prime factor `p` of
-`n` — no modular exponentiation loop over `a` needed, just the
-factorization. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_carmichael_number(561));'
-# -> <eval>:1:7: undefined name 'is_carmichael_number'
-```
-
-Worked examples: `561 = 3 * 11 * 17` is the smallest Carmichael number
-— squarefree, composite, and `(3-1)=2 | 560`, `(11-1)=10 | 560`,
-`(17-1)=16 | 560` all hold (`560 = 561 - 1`). Contrast `562 = 2 * 281`:
-squarefree and composite, but `(2-1)=1 | 561` holds while
-`(281-1)=280 | 561` does not (`561 / 280` is not an integer), so `562`
-is not Carmichael. `9 = 3^2` is composite but not squarefree (the
-prime `3` repeats), so it fails before the divisibility check even
-runs. Primes themselves are excluded outright (Korselt's criterion
-only applies to composites). The next few Carmichael numbers after
-`561` are `1105`, `1729`, `2465`, `2821`, `6601`, `8911` (OEIS A002997)
-— `1729` is also the Hardy-Ramanujan taxicab number, a fun aside worth
-no more than a passing comment if any.
-
-Algorithm — factor via the same trial-division shape `_prime_factors`
-already uses (build a list with repetition, not a set, so squarefree-ness
-falls out of a length check against the deduped set), then apply
-Korselt's criterion:
-```python
-def _is_carmichael_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_carmichael_number", arguments, 1, line, column)
-    value = _require_int("is_carmichael_number", arguments[0], line, column)
-    if value < 2:
-        return False
-    factors = []
-    remaining = value
-    divisor = 2
-    while divisor * divisor <= remaining:
-        while remaining % divisor == 0:
-            factors.append(divisor)
-            remaining //= divisor
-        divisor += 1
-    if remaining > 1:
-        factors.append(remaining)
-    if len(factors) < 2:
-        return False  # prime, not composite
-    if len(factors) != len(set(factors)):
-        return False  # not squarefree
-    return all((prime - 1) != 0 and (value - 1) % (prime - 1) == 0 for prime in factors)
-```
-Add this directly after `_is_smith_number` (search `def
-_is_smith_number`, insert right after its closing `return` statement,
-ahead of whatever function happens to follow it — this task's own diff
-only adds the new function and its dict entry, nothing else moves) —
-keeps it grouped with the file's other prime-factorization predicates.
-Also register the new dict entry (search `"is_smith_number":
-_is_smith_number,`, add `"is_carmichael_number":
-_is_carmichael_number,` directly after it).
-
-Acceptance criteria:
-- `is_carmichael_number(561);` is `true` — the smallest Carmichael
-  number, the worked example above.
-- `is_carmichael_number(1105);`, `is_carmichael_number(1729);`,
-  `is_carmichael_number(2465);`, `is_carmichael_number(2821);` are all
-  `true` — further OEIS A002997 terms, confirming the check scales
-  past the smallest instance.
-- `is_carmichael_number(562);` is `false` — squarefree and composite
-  but fails Korselt's divisibility check, the contrasting worked
-  example above.
-- `is_carmichael_number(9);` is `false` — composite but not squarefree
-  (`3^2`), fails before the divisibility check runs.
-- `is_carmichael_number(17);` is `false` — prime, not composite,
-  `len(factors) < 2` short-circuits before either the squarefree or
-  divisibility check.
-- `is_carmichael_number(1);`, `is_carmichael_number(0);` are both
-  `false` — trivially not composite.
-- `is_carmichael_number(-561);` is `false` — negative numbers return
-  `false` outright, matching `is_smith_number`/`is_weird_number`'s own
-  negative-number convention in this file, not a domain error.
-- `is_carmichael_number(true);` raises `CinderRuntimeError` matching
-  `"is_carmichael_number() requires an int, got bool"`, since
-  `_require_int` rejects `bool` even though Cinder's `bool` is a
-  Python `int` subclass (same guard every other int-only predicate in
-  this file already relies on).
-- `is_carmichael_number("561");` raises `CinderRuntimeError` matching
-  `"is_carmichael_number() requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (near `_is_smith_number`, search
-`def _is_smith_number`), `tests/test_builtins.py` (new `class
-TestIsCarmichaelNumber`, modeled on `class TestIsSmithNumber`, search
-that name, for the test shapes above). Once merged, `README.md`'s
-Builtins bullet needs `is_carmichael_number` added near
-`is_smith_number`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: `<=>` (spaceship / three-way comparison) operator
+## 1. Language: `<=>` (spaceship / three-way comparison) operator
 
 Build: Cinder already has `<`/`<=`/`>`/`>=` working consistently across
 numbers, strings, lists (lexicographic), and maps (key-sorted item
@@ -246,7 +139,7 @@ not this task.
 
 ---
 
-## 3. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
+## 2. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
 
 Build: Cinder already has `is_anagram` (`cinder/builtins.py`, search `def
 _is_anagram`: two strings share the same character multiset, via
@@ -338,7 +231,7 @@ task.
 
 ---
 
-## 4. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
+## 3. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
 
 Build: Cinder already has the perfect/abundant/deficient divisor-sum family
 (`cinder/builtins.py`, search `def _is_perfect_number`: sums a number's
@@ -442,7 +335,7 @@ this task.
 
 ---
 
-## 5. Language: map spread (`...m`) in function calls as keyword arguments
+## 4. Language: map spread (`...m`) in function calls as keyword arguments
 
 Build: Cinder already spreads a *list* into positional call arguments
 (`cinder/interpreter.py`, search `_evaluate_call_arguments`: a `Spread`
@@ -562,7 +455,7 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
+## 5. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
 
 Build: Cinder already has `is_deficient` (`cinder/builtins.py`, search `def
 _is_deficient`: proper-divisor sum less than the number itself) and its

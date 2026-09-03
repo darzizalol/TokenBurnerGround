@@ -3823,3 +3823,13 @@ for vision/architecture.
   pass, no bounces (4238 tests passing, up from 4224).
   README/PROJECT.md updates left to the Architect's next grooming
   pass.
+- **Standard library: `is_carmichael_number`** — merged 2026-09-03 via
+  PR #379 (`feat/20260903-is-carmichael-number`). Added
+  `_is_carmichael_number` to `cinder/builtins.py`, directly after
+  `_is_smith_number`: trial-divides to build a factor list with
+  repetition, then applies Korselt's 1899 criterion (composite,
+  squarefree, and `(p-1) | (n-1)` for every prime factor `p`) to
+  identify Fermat pseudoprimes without any modular exponentiation
+  loop. Clean first pass, no bounces (4252 tests passing, up from
+  4238). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

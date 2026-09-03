@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
+## 1. Standard library: `nth_deficient` — deficient number found at a 1-indexed position [claimed 2026-09-03T20:09:49Z]
 
 Build: Cinder already has `is_deficient` (`cinder/builtins.py`, search `def
 _is_deficient`: proper-divisor sum less than the number itself) and its

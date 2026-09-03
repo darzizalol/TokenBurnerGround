@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
+## 1. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors [claimed 2026-09-03T20:23:20Z]
 
 Build: Cinder's `is_weird_number` (`cinder/builtins.py`, search `def
 _is_weird_number`) is defined as "abundant but not semiperfect" and

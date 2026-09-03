@@ -3801,3 +3801,12 @@ for vision/architecture.
   (`|=`) works for free. Clean first pass, no bounces (4209 tests
   passing, up from 4194). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `is_weird_number` — abundant but not semiperfect**
+  — merged 2026-09-03 via PR #377 (`feat/20260903-is-weird-number`).
+  Added `_is_weird_number` to `cinder/builtins.py`, directly after
+  `_is_deficient`: checks abundance (proper divisors sum to more than
+  the number) then rules out semiperfect numbers via a bounded 0/1
+  subset-sum sweep over those divisors, matching OEIS A006037. Clean
+  first pass, no bounces (4224 tests passing, up from 4209).
+  README/PROJECT.md updates left to the Architect's next grooming
+  pass.

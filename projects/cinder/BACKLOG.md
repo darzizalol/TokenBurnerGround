@@ -11,107 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_weird_number` — abundant but not semiperfect [claimed 2026-09-03T14:06:02Z]
-
-Build: Cinder already has the perfect/abundant/deficient family
-(`_is_perfect_number`/`_is_abundant`/`_is_deficient`, `cinder/builtins.py`,
-search `def _is_deficient`: each sums a number's proper divisors via
-trial division up to `math.isqrt(value)` and compares the sum to the
-number) but nothing that goes one step further into *weird numbers* — a
-number is weird when it is abundant (its proper divisors sum to more
-than the number) **and** not semiperfect (no subset of its proper
-divisors sums exactly to the number). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_weird_number(70));'
-# -> <eval>:1:7: undefined name 'is_weird_number'
-```
-
-Worked examples: `70` is the smallest weird number — its proper
-divisors are `1, 2, 5, 7, 10, 14, 35` (sum `74 > 70`, abundant), and no
-subset of `{1, 2, 5, 7, 10, 14, 35}` sums to exactly `70`, so it's not
-semiperfect either. Contrast `20`: proper divisors `1, 2, 4, 5, 10` (sum
-`22 > 20`, abundant), but `10 + 5 + 4 + 1 = 20` — a subset does sum to
-the number, so `20` is semiperfect and therefore *not* weird despite
-being abundant. `12` is the same story: divisors `1, 2, 3, 4, 6` (sum
-`16 > 12`, abundant) but `6 + 4 + 2 = 12`, semiperfect, not weird. `6`
-and `28` are perfect (divisors sum to exactly the number, not more), so
-they fail the abundance check outright and are not weird either. The
-next few weird numbers after `70` are `836`, `4030`, `5830`, `7192`,
-`7912`, `9272`, `10430`, ... (OEIS A006037).
-
-Add to `cinder/builtins.py`, directly after `_is_deficient` (search `def
-_is_deficient`, immediately before `def _is_automorphic`) — keeps it
-grouped with the other proper-divisor-sum predicates:
-```python
-def _is_weird_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_weird_number", arguments, 1, line, column)
-    value = _require_int("is_weird_number", arguments[0], line, column)
-    if value < 2:
-        return False
-    divisors = [1]
-    for divisor in range(2, math.isqrt(value) + 1):
-        if value % divisor == 0:
-            divisors.append(divisor)
-            complement = value // divisor
-            if complement != divisor:
-                divisors.append(complement)
-    if sum(divisors) <= value:
-        return False
-    reachable = {0}
-    for divisor in divisors:
-        reachable |= {total + divisor for total in reachable if total + divisor <= value}
-    return value not in reachable
-```
-(The `reachable` loop is a standard subset-sum sweep, bounded above by
-`value` at every step so it never grows unbounded — proper divisors are
-few even for large composite numbers, so this stays fast.) Also
-register the new dict entry (search `"is_deficient": _is_deficient,`,
-add `"is_weird_number": _is_weird_number,` directly after it, before
-`"is_automorphic": _is_automorphic,`).
-
-Acceptance criteria:
-- `is_weird_number(70);` is `true` — the smallest weird number, the
-  worked example above.
-- `is_weird_number(836);`, `is_weird_number(4030);`,
-  `is_weird_number(5830);` are all `true` — further OEIS A006037 terms,
-  confirming the check scales past the smallest instance.
-- `is_weird_number(20);` and `is_weird_number(12);` are both `false` —
-  abundant but semiperfect, the two contrasting worked examples above.
-- `is_weird_number(24);` is `false` — another abundant-but-semiperfect
-  number (`24`'s divisors `1, 2, 3, 4, 6, 8, 12` sum to `36`, but
-  `12 + 8 + 4 = 24`).
-- `is_weird_number(6);` and `is_weird_number(28);` are both `false` —
-  perfect numbers, not abundant at all (sum of proper divisors equals
-  the number, not more), so they fail before the semiperfect check even
-  runs.
-- `is_weird_number(1);`, `is_weird_number(0);` are both `false` —
-  trivially not abundant.
-- `is_weird_number(-70);` is `false` — negative numbers return `false`
-  outright, matching `is_abundant`/`is_deficient`'s own negative-number
-  convention in this file, not a domain error.
-- `is_weird_number(true);` raises `CinderRuntimeError` matching
-  `"is_weird_number() requires an int, got bool"`, since `_require_int`
-  rejects `bool` even though Cinder's `bool` is a Python `int`
-  subclass (same guard every other int-only predicate in this file
-  already relies on).
-- `is_weird_number("70");` raises `CinderRuntimeError` matching
-  `"is_weird_number() requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_deficient`,
-search `def _is_deficient`), `tests/test_builtins.py` (new `class
-TestIsWeirdNumber`, modeled on `class TestIsAbundant`, search that
-name, for the test shapes above). Once merged, `README.md`'s Builtins
-bullet needs `is_weird_number` added near `is_abundant`/`is_deficient`,
-its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" section needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
+## 1. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
 
 Build: map `|` (union, already landed 2026-09-02 via PR #375) gives
 maps `|`, and list `^` (symmetric difference, already landed
@@ -212,7 +112,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate
+## 2. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate
 
 Build: Cinder already has `is_prime`/`prime_factors`/`is_squarefree`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-divides up to
@@ -319,7 +219,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: `<=>` (spaceship / three-way comparison) operator
+## 3. Language: `<=>` (spaceship / three-way comparison) operator
 
 Build: Cinder already has `<`/`<=`/`>`/`>=` working consistently across
 numbers, strings, lists (lexicographic), and maps (key-sorted item
@@ -447,7 +347,7 @@ not this task.
 
 ---
 
-## 5. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
+## 4. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome?
 
 Build: Cinder already has `is_anagram` (`cinder/builtins.py`, search `def
 _is_anagram`: two strings share the same character multiset, via
@@ -539,7 +439,7 @@ task.
 
 ---
 
-## 6. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
+## 5. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
 
 Build: Cinder already has the perfect/abundant/deficient divisor-sum family
 (`cinder/builtins.py`, search `def _is_perfect_number`: sums a number's
@@ -597,7 +497,7 @@ def _is_practical_number(arguments: list, line: int, column: int) -> object:
 `divisor = 2`, so every entry added to `divisors` is a genuine proper
 divisor — no `complement != value` guard needed, unlike `_is_perfect_number`'s
 own loop just above it. The `reachable` sweep is the same bounded
-subset-sum shape `is_weird_number` — task 1 above, once it lands — uses,
+subset-sum shape `is_weird_number` (PR #377) uses,
 capped at `value` at every step so it stays fast even for numbers with
 many divisors.) Also register the new dict entry (search
 `"is_perfect_number": _is_perfect_number,`, add `"is_practical_number":

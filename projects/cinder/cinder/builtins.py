@@ -2098,6 +2098,33 @@ def _nth_abundant(arguments: list, line: int, column: int) -> object:
     return candidate
 
 
+def _nth_deficient(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_deficient", arguments, 1, line, column)
+    value = _require_int("nth_deficient", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_deficient() requires a positive integer, domain error", line, column
+        )
+
+    def _is_deficient_candidate(candidate: int) -> bool:
+        total = 1 if candidate > 1 else 0
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                total += divisor
+                complement = candidate // divisor
+                if complement != divisor:
+                    total += complement
+        return total < candidate
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_deficient_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_deficient(arguments: list, line: int, column: int) -> object:
     _require_arity("is_deficient", arguments, 1, line, column)
     value = _require_int("is_deficient", arguments[0], line, column)
@@ -4652,6 +4679,7 @@ _BUILTINS = {
     "is_practical_number": _is_practical_number,
     "is_abundant": _is_abundant,
     "nth_abundant": _nth_abundant,
+    "nth_deficient": _nth_deficient,
     "is_deficient": _is_deficient,
     "is_weird_number": _is_weird_number,
     "is_automorphic": _is_automorphic,

@@ -5111,6 +5111,75 @@ class TestNthAbundant(unittest.TestCase):
             run("nth_abundant(1, 2);")
 
 
+class TestNthDeficient(unittest.TestCase):
+    def test_nth_deficient_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 7,
+            7: 8,
+            8: 9,
+            9: 10,
+            10: 11,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_deficient({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_deficient_of_twenty(self):
+        self.assertEqual(run("let result = nth_deficient(20);").get("result"), 25)
+
+    def test_nth_deficient_agrees_with_is_deficient(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_deficient(nth_deficient({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_deficient({position}) to be a deficient number",
+            )
+
+    def test_nth_deficient_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_deficient(0);")
+        self.assertIn(
+            "nth_deficient() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_deficient_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_deficient(-3);")
+        self.assertIn(
+            "nth_deficient() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_deficient_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_deficient(true);")
+        self.assertIn(
+            "nth_deficient() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_deficient_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_deficient("3");')
+        self.assertIn(
+            "nth_deficient() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_deficient_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_deficient(1, 2);")
+
+
 class TestIsDeficient(unittest.TestCase):
     def test_is_deficient_of_8(self):
         self.assertEqual(run("let result = is_deficient(8);").get("result"), True)

@@ -173,6 +173,7 @@ _COMPARISON = {
     TokenType.LTEQ,
     TokenType.GT,
     TokenType.GTEQ,
+    TokenType.SPACESHIP,
 }
 _ORDERING = {
     TokenType.LT,

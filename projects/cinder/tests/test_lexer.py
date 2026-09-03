@@ -649,6 +649,24 @@ class TestOperators(unittest.TestCase):
         # A lone "<" still lexes as LT.
         self.assertEqual(types(tokenize("1 < 2")), [TokenType.INT, TokenType.LT, TokenType.INT, TokenType.EOF])
 
+    def test_spaceship_does_not_collide_with_lteq_lshift_or_lt(self):
+        # "<=>" must lex as one SPACESHIP token, not LTEQ then GT.
+        tokens = tokenize("1 <=> 2")
+        self.assertEqual(
+            types(tokens),
+            [TokenType.INT, TokenType.SPACESHIP, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(tokens[1].lexeme, "<=>")
+        # "<<" (LSHIFT) and "<=" (LTEQ) are both unaffected by the new token.
+        self.assertEqual(
+            types(tokenize("1 << 2")),
+            [TokenType.INT, TokenType.LSHIFT, TokenType.INT, TokenType.EOF],
+        )
+        self.assertEqual(
+            types(tokenize("1 <= 2")),
+            [TokenType.INT, TokenType.LTEQ, TokenType.INT, TokenType.EOF],
+        )
+
     def test_rshift_does_not_collide_with_gteq_or_gt(self):
         tokens = tokenize("1 >> 2")
         self.assertEqual(

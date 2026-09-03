@@ -68,6 +68,7 @@ class TokenType(Enum):
     LTEQ = auto()
     GT = auto()
     GTEQ = auto()
+    SPACESHIP = auto()
     PLUSEQ = auto()
     MINUSEQ = auto()
     STAREQ = auto()

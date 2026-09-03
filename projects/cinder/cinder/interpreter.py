@@ -1299,6 +1299,12 @@ class Interpreter:
             return not values_equal(left, right)
         if op in (TokenType.LT, TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):
             return self._compare(operator, left, right, op)
+        if op == TokenType.SPACESHIP:
+            if self._compare(operator, left, right, TokenType.LT):
+                return -1
+            if values_equal(left, right):
+                return 0
+            return 1
         if op == TokenType.IN:
             return contains_value(right, left, operator.line, operator.column)
         if op == TokenType.NOT_IN:

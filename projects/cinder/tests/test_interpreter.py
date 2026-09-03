@@ -1057,6 +1057,52 @@ class TestComparisons(unittest.TestCase):
         self.assertEqual(evaluate('{"a": 1} < {"a": 2} < {"a": 3}'), True)
 
 
+class TestSpaceshipOperator(unittest.TestCase):
+    def test_numbers(self):
+        self.assertEqual(evaluate("1 <=> 2"), -1)
+        self.assertEqual(evaluate("2 <=> 2"), 0)
+        self.assertEqual(evaluate("3 <=> 2"), 1)
+
+    def test_strings(self):
+        self.assertEqual(evaluate('"a" <=> "b"'), -1)
+        self.assertEqual(evaluate('"b" <=> "a"'), 1)
+        self.assertEqual(evaluate('"a" <=> "a"'), 0)
+
+    def test_list_lexicographic(self):
+        self.assertEqual(evaluate("[1, 2] <=> [1, 3]"), -1)
+        self.assertEqual(evaluate("[1, 2] <=> [1, 2]"), 0)
+
+    def test_map_key_sorted_comparison(self):
+        self.assertEqual(evaluate('{"a": 1} <=> {"a": 2}'), -1)
+
+    def test_map_equality_is_order_independent(self):
+        self.assertEqual(evaluate('{"a": 1, "b": 2} <=> {"b": 2, "a": 1}'), 0)
+
+    def test_cross_int_float_equality(self):
+        self.assertEqual(evaluate("1 <=> 1.0"), 0)
+
+    def test_cross_int_float_ordering(self):
+        self.assertEqual(evaluate("1.5 <=> 1"), 1)
+
+    def test_incomparable_types_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"unsupported operand types for comparison: int and string",
+        ):
+            evaluate('1 <=> "a"')
+
+    def test_int_vs_bool_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"unsupported operand types for comparison: int and bool",
+        ):
+            evaluate("1 <=> true")
+
+    def test_result_composes_with_equality_non_chained(self):
+        self.assertEqual(evaluate("(1 <=> 1) == 0"), True)
+        self.assertEqual(evaluate("(2 <=> 1) == 1"), True)
+
+
 class TestChainedComparisons(unittest.TestCase):
     def test_two_operator_chain(self):
         self.assertEqual(evaluate("1 < 2 < 3"), True)

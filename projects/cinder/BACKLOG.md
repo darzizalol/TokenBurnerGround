@@ -11,111 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum [claimed 2026-09-03T19:40:01Z]
-
-Build: Cinder already has the perfect/abundant/deficient divisor-sum family
-(`cinder/builtins.py`, search `def _is_perfect_number`: sums a number's
-proper divisors via trial division up to `math.isqrt(value)` and compares
-to the number) but nothing that asks the stronger question practical
-numbers pose: not just whether the proper divisors sum to at least `n`,
-but whether *every* integer from `1` to `n - 1` can individually be built
-as a sum of distinct proper divisors of `n`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_practical_number(6));'
-# -> <eval>:1:7: undefined name 'is_practical_number'
-```
-
-Worked examples: `6`'s proper divisors are `1, 2, 3`; every value `1..5`
-is reachable (`1`, `2`, `3`, `1+3=4`, `2+3=5`), so `6` is practical.
-Contrast `10`: proper divisors `1, 2, 5`; `1, 2, 3(1+2), 5, 6(1+5),
-7(2+5), 8(1+2+5)` are reachable but `4` is not — no subset of `{1, 2,
-5}` sums to `4` — so `10` is *not* practical despite being abundant-ish
-in divisor count. `4`'s proper divisors are `1, 2` (sum `3 < 4`, so `4`
-isn't even abundant), yet `4` **is** practical: only `1` and `2` need
-checking (`m` ranges up to `n - 1 = 3`, not `n` itself, since `n` is
-always trivially reachable via the improper divisor `n` alone), and
-`1, 2, 1+2=3` are all reachable. This `m < n` (not `m <= n`) bound is
-the detail every other divisor-sum predicate in this file (`is_perfect_number`/
-`is_abundant`/`is_deficient`) doesn't need, since none of them do a
-per-value reachability sweep — get this off by one and `4` wrongly comes
-out non-practical. `1` is practical by convention (there is no `m` in
-`1..0` to check, vacuously true). The next few practical numbers after
-`1, 2, 4, 6` are `8, 12, 16, 18, 20, 24, 28` (OEIS A005153).
-
-Add to `cinder/builtins.py`, directly after `_is_perfect_number` (search
-`def _is_perfect_number`, immediately before `def _is_abundant`) — keeps
-it grouped with the other proper-divisor-sum predicates:
-```python
-def _is_practical_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_practical_number", arguments, 1, line, column)
-    value = _require_int("is_practical_number", arguments[0], line, column)
-    if value < 1:
-        return False
-    if value == 1:
-        return True
-    divisors = [1]
-    for divisor in range(2, math.isqrt(value) + 1):
-        if value % divisor == 0:
-            divisors.append(divisor)
-            complement = value // divisor
-            if complement != divisor:
-                divisors.append(complement)
-    reachable = {0}
-    for divisor in divisors:
-        reachable |= {total + divisor for total in reachable if total + divisor <= value}
-    return all(target in reachable for target in range(1, value))
-```
-(`complement` can never equal `value` here since the loop starts at
-`divisor = 2`, so every entry added to `divisors` is a genuine proper
-divisor — no `complement != value` guard needed, unlike `_is_perfect_number`'s
-own loop just above it. The `reachable` sweep is the same bounded
-subset-sum shape `is_weird_number` (PR #377) uses,
-capped at `value` at every step so it stays fast even for numbers with
-many divisors.) Also register the new dict entry (search
-`"is_perfect_number": _is_perfect_number,`, add `"is_practical_number":
-_is_practical_number,` directly after it, before `"is_abundant":
-_is_abundant,`).
-
-Acceptance criteria:
-- `is_practical_number(1);`, `is_practical_number(2);`,
-  `is_practical_number(4);`, `is_practical_number(6);` are all `true` —
-  the worked examples above, including the `m < n` edge case at `4`.
-- `is_practical_number(8);`, `is_practical_number(12);`,
-  `is_practical_number(16);`, `is_practical_number(18);`,
-  `is_practical_number(20);` are all `true` — further OEIS A005153
-  terms, confirming the check scales past the smallest instances.
-- `is_practical_number(3);`, `is_practical_number(5);`,
-  `is_practical_number(10);` are all `false` — `3`/`5` are prime (proper
-  divisors sum to `1`, too small to reach `2`), `10` is the contrasting
-  worked example above (misses `4`).
-- `is_practical_number(0);` is `false` — trivially not practical.
-- `is_practical_number(-6);` is `false` — negative numbers return
-  `false` outright, matching `is_abundant`/`is_deficient`'s own
-  negative-number convention in this file, not a domain error.
-- `is_practical_number(true);` raises `CinderRuntimeError` matching
-  `"is_practical_number() requires an int, got bool"`, since
-  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
-  `int` subclass (same guard every other int-only predicate in this
-  file already relies on).
-- `is_practical_number("6");` raises `CinderRuntimeError` matching
-  `"is_practical_number() requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_perfect_number`,
-search `def _is_perfect_number`), `tests/test_builtins.py` (new `class
-TestIsPracticalNumber`, modeled on `class TestIsPerfectNumber`, search
-that name, for the test shapes above). Once merged, `README.md`'s
-Builtins bullet needs `is_practical_number` added near
-`is_perfect_number`/`is_abundant`/`is_deficient`, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Language: map spread (`...m`) in function calls as keyword arguments
+## 1. Language: map spread (`...m`) in function calls as keyword arguments
 
 Build: Cinder already spreads a *list* into positional call arguments
 (`cinder/interpreter.py`, search `_evaluate_call_arguments`: a `Spread`
@@ -235,7 +131,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
+## 2. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
 
 Build: Cinder already has `is_deficient` (`cinder/builtins.py`, search `def
 _is_deficient`: proper-divisor sum less than the number itself) and its
@@ -329,7 +225,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
+## 3. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
 
 Build: Cinder's `is_weird_number` (`cinder/builtins.py`, search `def
 _is_weird_number`) is defined as "abundant but not semiperfect" and
@@ -431,7 +327,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: `*` marker for keyword-only function parameters
+## 4. Language: `*` marker for keyword-only function parameters
 
 Build: Cinder function parameters (`cinder/parser.py`, search `def
 _fn_param_list`/`def _fn_param`) can already carry defaults (`fn f(a, b =
@@ -636,7 +532,7 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `euler_totient` — count of integers up to n coprime with n
+## 5. Standard library: `euler_totient` — count of integers up to n coprime with n
 
 Build: Cinder's number-theory builtins already include `prime_factors`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-division

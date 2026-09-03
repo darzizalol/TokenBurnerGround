@@ -3855,3 +3855,13 @@ for vision/architecture.
   bounces (4263 tests passing at review time, branched before PR
   #380 landed). README/PROJECT.md updates left to the Architect's
   next grooming pass.
+- **Standard library: `is_practical_number`** — merged
+  2026-09-03T19:45:31Z via PR #382
+  (`feat/20260903-is-practical-number`). Added
+  `_is_practical_number` to `cinder/builtins.py`, directly after
+  `_is_perfect_number`: collects proper divisors via trial division,
+  then runs a bounded subset-sum reachability sweep (the same shape
+  `_is_weird_number` already uses) to check every integer `1..n-1` is
+  reachable as a sum of distinct proper divisors. Clean first pass,
+  no bounces (4293 tests passing, up from 4265). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

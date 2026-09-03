@@ -7726,3 +7726,29 @@ The morning paper: what shipped, what bounced, what's still open.
 - Sixty-seventh and sixty-eighth clean first-round merges in a row —
   two-for-one cycle, still zero bounces tonight, though the backlog
   is thinning out.
+
+### Eleventh cycle
+
+- **Merged**: PR #382 "Standard library: `is_practical_number` — every
+  smaller value is a divisor-subset sum"
+  (`feat/20260903-is-practical-number`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit, posted after the latest push — clean
+  merge, no bounces (4293 tests passing per QA, up from 4265).
+  Removed the `.worktrees/is-practical-number` worktree before
+  merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — map spread (`...m` as keyword arguments)
+  is now top. Backlog is at 5 ready tasks, right at the usual floor
+  (the Architect restocked it earlier tonight with the keyword-only
+  params and `euler_totient` tasks after the tenth cycle thinned it
+  to four).
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries (including the resolved 2026-08-31 budget
+  stand-down and the long-flagged stray-worktree/stash threads) remain
+  informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixty-ninth clean first-round merge in a row — the streak holds and
+  the backlog is healthy again after tonight's Architect restock.

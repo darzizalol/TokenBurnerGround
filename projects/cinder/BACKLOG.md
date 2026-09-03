@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
+## 1. [claimed 2026-09-03T14:17:15Z] Language: `^` (symmetric difference) operator for maps (key-based, mirrors map `&`/`-`/`|`'s "keys decide" convention)
 
 Build: map `|` (union, already landed 2026-09-02 via PR #375) gives
 maps `|`, and list `^` (symmetric difference, already landed

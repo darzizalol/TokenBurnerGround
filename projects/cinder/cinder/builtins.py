@@ -2390,6 +2390,28 @@ def _is_smith_number(arguments: list, line: int, column: int) -> object:
     return digit_total == factor_digit_total
 
 
+def _is_carmichael_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_carmichael_number", arguments, 1, line, column)
+    value = _require_int("is_carmichael_number", arguments[0], line, column)
+    if value < 2:
+        return False
+    factors = []
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        while remaining % divisor == 0:
+            factors.append(divisor)
+            remaining //= divisor
+        divisor += 1
+    if remaining > 1:
+        factors.append(remaining)
+    if len(factors) < 2:
+        return False  # prime, not composite
+    if len(factors) != len(set(factors)):
+        return False  # not squarefree
+    return all((prime - 1) != 0 and (value - 1) % (prime - 1) == 0 for prime in factors)
+
+
 def _is_vampire_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_vampire_number", arguments, 1, line, column)
     value = _require_int("is_vampire_number", arguments[0], line, column)
@@ -4616,6 +4638,7 @@ _BUILTINS = {
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,
     "is_smith_number": _is_smith_number,
+    "is_carmichael_number": _is_carmichael_number,
     "is_vampire_number": _is_vampire_number,
     "num_divisors": _num_divisors,
     "is_amicable": _is_amicable,

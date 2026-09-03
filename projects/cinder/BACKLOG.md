@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate
+## 1. Standard library: `is_carmichael_number` — Korselt's-criterion pseudoprime predicate [claimed 2026-09-03T14:31:36Z]
 
 Build: Cinder already has `is_prime`/`prime_factors`/`is_squarefree`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-divides up to

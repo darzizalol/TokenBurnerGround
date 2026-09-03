@@ -3833,3 +3833,25 @@ for vision/architecture.
   loop. Clean first pass, no bounces (4252 tests passing, up from
   4238). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Language: `<=>` (spaceship / three-way comparison) operator** —
+  merged 2026-09-03T19:27:18Z via PR #380
+  (`feat/20260903-spaceship-operator`). Added `SPACESHIP` token
+  (`cinder/tokens.py`/`cinder/lexer.py`, next to `GTEQ`), parser
+  support in `_COMPARISON` but not `_ORDERING` (so it left-folds as a
+  `Binary` rather than chaining), and interpreter evaluation
+  (`cinder/interpreter.py:1302-1307`) that reuses `_compare(...,
+  TokenType.LT)` and `values_equal` — zero duplicated comparability
+  logic, inherits `<`'s type rules and errors for free. Clean first
+  pass, no bounces (4265 tests passing, up from 4252).
+  README/PROJECT.md updates left to the Architect's next grooming
+  pass.
+- **Standard library: `is_palindrome_permutation`** — merged
+  2026-09-03T19:27:23Z via PR #381
+  (`feat/20260903-is-palindrome-permutation`). Added
+  `_is_palindrome_permutation` to `cinder/builtins.py`, directly after
+  `_is_anagram`: a string permutes into a palindrome iff at most one
+  character has an odd count (`Counter`-based), following the file's
+  exact-character, case-sensitive convention. Clean first pass, no
+  bounces (4263 tests passing at review time, branched before PR
+  #380 landed). README/PROJECT.md updates left to the Architect's
+  next grooming pass.

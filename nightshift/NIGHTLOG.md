@@ -7699,3 +7699,30 @@ The morning paper: what shipped, what bounced, what's still open.
   up to date).
 - Sixty-sixth clean first-round merge in a row — the shift's streak
   continues without a single bounce.
+
+### Tenth cycle
+
+- **Merged**: PR #380 "Language: `<=>` (spaceship / three-way
+  comparison) operator" (`feat/20260903-spaceship-operator`) and PR
+  #381 "Standard library: `is_palindrome_permutation`"
+  (`feat/20260903-is-palindrome-permutation`). Both had `VERDICT:
+  LGTM` and `QA: PASS` on their sole commits, posted after the latest
+  push — clean merges, no bounces (4265 tests passing per #380's QA,
+  4263 per #381's, which was branched before #380 landed). Removed
+  the `.worktrees/spaceship-operator`, `.worktrees/qa-pr380`, and
+  `.worktrees/is-palindrome-permutation` worktrees before merging.
+- Archived both tasks to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — `is_practical_number` is now top.
+  Backlog is down to 4 ready tasks, below the usual floor; could use
+  the Architect's attention soon.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries (including the resolved 2026-08-31 budget
+  stand-down and the long-flagged stray-worktree/stash threads) remain
+  informational only, no action needed.
+  `git pull --rebase origin main` was a no-op before starting (already
+  up to date).
+- Sixty-seventh and sixty-eighth clean first-round merges in a row —
+  two-for-one cycle, still zero bounces tonight, though the backlog
+  is thinning out.

@@ -11,227 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `<=>` (spaceship / three-way comparison) operator [claimed 2026-09-03T14:41:28Z]
-
-Build: Cinder already has `<`/`<=`/`>`/`>=` working consistently across
-numbers, strings, lists (lexicographic), and maps (key-sorted item
-comparison) via a single shared helper (`cinder/interpreter.py`, search
-`def _compare`), plus order-independent equality via `values_equal`
-(used by `==`/`!=`). There is no three-way comparison operator that
-combines both into a single `-1`/`0`/`1` result the way Ruby/Perl/PHP's
-`<=>` does — useful as a comparator building block once user-defined
-sort comparators exist, and a natural small addition given the
-comparison machinery it needs already exists end-to-end. Verify the
-gap:
-```sh
-python3 -m cinder.cli eval 'print(1 <=> 2);'
-# -> <eval>:1:11: expected an expression, found '>'
-```
-(The lexer currently emits `<=` then leaves a bare `>` for the parser,
-which cannot start an expression with it.)
-
-Three-layer change, all straightforward extensions of existing code:
-
-1. **Token** (`cinder/tokens.py`): add `SPACESHIP = auto()` directly
-   after `GTEQ = auto()`.
-
-2. **Lexer** (`cinder/lexer.py`, search `def _lt`): currently
-   `_lt` matches `=` and immediately emits `LTEQ`. Change it to look
-   one character further for `<=>`:
-   ```python
-   def _lt(self, start_line: int, start_col: int):
-       if self._match("="):
-           if self._match(">"):
-               self.tokens.append(
-                   Token(TokenType.SPACESHIP, "<=>", None, start_line, start_col)
-               )
-           else:
-               self.tokens.append(Token(TokenType.LTEQ, "<=", None, start_line, start_col))
-       elif self._match("<"):
-           ...  # LSHIFT/LSHIFTEQ handling unchanged
-       else:
-           self.tokens.append(Token(TokenType.LT, "<", None, start_line, start_col))
-   ```
-   Only the `if self._match("=")` branch changes; the `<<`/`<<=`/`<`
-   branches are untouched.
-
-3. **Parser** (`cinder/parser.py`, search `_COMPARISON = {`): add
-   `TokenType.SPACESHIP` to the `_COMPARISON` set but **not** to
-   `_ORDERING` — this puts `<=>` at the same precedence tier as
-   `==`/`!=`/`<`/`<=`/`>`/`>=` (so `1 <=> 2 == -1` parses as
-   `(1 <=> 2) == -1`) without making it chainable the way `a < b < c`
-   is: `_comparison()`'s chaining check (`all(op.type in _ORDERING for
-   op in operators)`) only fires when every operator in a run is a pure
-   ordering operator, so a `<=>` in the mix falls through to sequential
-   left-to-right `Binary` application — exactly how `==`/`!=` already
-   behave when mixed with `<`, no new logic needed.
-
-4. **Interpreter** (`cinder/interpreter.py`, search `if op in
-   (TokenType.LT, TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):`):
-   add a branch immediately after it, reusing `_compare` and
-   `values_equal` rather than duplicating their type/error handling:
-   ```python
-   if op == TokenType.SPACESHIP:
-       if self._compare(operator, left, right, TokenType.LT):
-           return -1
-       if values_equal(left, right):
-           return 0
-       return 1
-   ```
-   `_compare(operator, left, right, TokenType.LT)` already raises
-   `CinderRuntimeError` for uncomparable types (e.g. int vs string, int
-   vs bool) before this branch would ever reach `values_equal`, so
-   `<=>` inherits `<`'s exact comparability rules and error messages
-   for free.
-
-Scope: comparison only, no compound-assignment form (`<`/`>`/`==` have
-none either — a "spaceship-assign" has no sensible meaning). Every
-comparable pair `<`/`==` already handle (numbers including cross
-int/float, strings, lists, maps) is automatically comparable via `<=>`
-too, since it is built entirely from those two existing operations.
-
-Acceptance criteria:
-- `1 <=> 2;` is `-1`, `2 <=> 2;` is `0`, `3 <=> 2;` is `1`.
-- `"a" <=> "b";` is `-1`, `"b" <=> "a";` is `1`, `"a" <=> "a";` is `0`.
-- `[1, 2] <=> [1, 3];` is `-1` — lexicographic, matching list `<`.
-- `[1, 2] <=> [1, 2];` is `0`.
-- `{"a": 1} <=> {"a": 2};` is `-1` — key-sorted item comparison,
-  matching map `<`.
-- `{"a": 1, "b": 2} <=> {"b": 2, "a": 1};` is `0` — map equality is
-  order-independent via `values_equal`, consistent with `==`, even
-  though the two maps' key-sorted item lists happen to already agree
-  here too.
-- `1 <=> 1.0;` is `0` — cross int/float equality already holds for
-  `==`, inherited here via `values_equal`.
-- `1.5 <=> 1;` is `1` — cross int/float ordering already holds for
-  `<`, inherited here via `_compare`.
-- `1 <=> "a";` raises `CinderRuntimeError` matching `"unsupported
-  operand types for comparison: int and string"` — the exact message
-  `_compare` already raises for `1 < "a"`.
-- `1 <=> true;` raises `CinderRuntimeError` matching `"unsupported
-  operand types for comparison: int and bool"` — `_compare` already
-  rejects `int`/`bool` pairs the same way for `<`, since Cinder's
-  `bool` is excluded from `_is_number`'s numeric-comparability check.
-- `(1 <=> 1) == 0;` is `true` and `(2 <=> 1) == 1;` is `true` —
-  confirms `<=>`'s result composes as an ordinary int with `==` at the
-  same precedence tier, non-chained (mirrors how `1 == 2 == 3` already
-  evaluates sequentially rather than chaining, since `_ORDERING`
-  excludes `EQEQ`/`BANGEQ` today).
-- Lexer regression: `1 << 2;` (`LSHIFT`) and `1 <= 2;` (`LTEQ`) are
-  both unaffected — only a literal `<=>` sequence produces the new
-  token.
-- Full test suite passes.
-
-Likely files: `cinder/tokens.py` (new `SPACESHIP` token, next to
-`GTEQ`), `cinder/lexer.py` (`_lt`, search `def _lt`), `cinder/parser.py`
-(`_COMPARISON`, search `_COMPARISON = {`), `cinder/interpreter.py`
-(`_apply_binary_operator`, search `if op in (TokenType.LT,
-TokenType.LTEQ, TokenType.GT, TokenType.GTEQ):`), `tests/test_lexer.py`
-(new token-emission cases near the existing `<<`/`<=` tests),
-`tests/test_parser.py` (a case confirming `<=>` doesn't trigger
-`ChainedComparison`), `tests/test_interpreter.py` (new `class
-TestSpaceshipOperator`, modeled on `class TestComparisons`, search that
-name, for the test shapes above). Once merged, `README.md`'s
-language-operators bullet needs a `<=>` mention, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Standard library: `is_palindrome_permutation` — can a string's characters be rearranged into a palindrome? [claimed 2026-09-03T19:22:10Z]
-
-Build: Cinder already has `is_anagram` (`cinder/builtins.py`, search `def
-_is_anagram`: two strings share the same character multiset, via
-`Counter(string1) == Counter(string2)`) and `is_palindrome` (search `def
-_is_palindrome`: a single string already reads the same forwards and
-backwards), but nothing that answers the question in between — whether a
-*single* string's characters could be *rearranged* into some palindrome,
-without actually needing to be one already. A string can be permuted into
-a palindrome iff at most one distinct character has an odd count in its
-multiset (that one odd-count character, if any, sits in the middle; every
-other character must pair up on both sides). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_palindrome_permutation("carrace"));'
-# -> <eval>:1:7: undefined name 'is_palindrome_permutation' (did you mean 'is_permutation'?)
-```
-
-Worked examples: `"carrace"` has counts `c:2, a:2, r:2, e:1` — exactly one
-odd count (`e`), so it permutes to a palindrome (e.g. `"racecar"`).
-`"aabbcc"` has all-even counts (`a:2, b:2, c:2`) — zero odd counts, still
-permutable (e.g. `"abccba"`). `"aabbc"` has counts `a:2, b:2, c:1` — one
-odd count, permutable (`"abcba"`). `"abc"` has counts `a:1, b:1, c:1` —
-three odd counts, not permutable. Exact-character convention throughout
-(case-sensitive, no whitespace/punctuation stripping), matching
-`is_anagram`'s own exact-`Counter`-equality convention rather than
-`is_isogram`'s case-folded/letters-only one — so `"Aa"` (counts `A:1, a:1`,
-two distinct odd-count characters since `A` and `a` are different
-characters here) is not permutable, and a space counts like any other
-character (`"ab a"` has counts `a:2, b:1, " ":1` — two odd counts, not
-permutable).
-
-Add to `cinder/builtins.py`, directly after `_is_anagram` (search `def
-_is_anagram`, immediately before `def _is_rotation`) — keeps it grouped
-with the other character-multiset string predicates:
-```python
-def _is_palindrome_permutation(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_palindrome_permutation", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, str):
-        raise CinderRuntimeError(
-            f"is_palindrome_permutation() requires a string, got {type_name(value)}",
-            line, column,
-        )
-    odd_counts = sum(1 for count in Counter(value).values() if count % 2 == 1)
-    return odd_counts <= 1
-```
-(`Counter` is already imported at module level for `_is_anagram`'s own
-use — no new import needed.) Also register the new dict entry (search
-`"is_anagram": _is_anagram,`, add `"is_palindrome_permutation":
-_is_palindrome_permutation,` directly after it, before `"is_rotation":
-_is_rotation,`).
-
-Acceptance criteria:
-- `is_palindrome_permutation("carrace");` is `true` — one odd count
-  (`e`), the worked example above.
-- `is_palindrome_permutation("aabbcc");` is `true` — zero odd counts.
-- `is_palindrome_permutation("aabbc");` is `true` — one odd count (`c`).
-- `is_palindrome_permutation("abc");` is `false` — three odd counts, the
-  contrasting worked example above.
-- `is_palindrome_permutation("");` is `true` — the empty string vacuously
-  permutes into itself, a palindrome.
-- `is_palindrome_permutation("a");` is `true` — a single character is
-  always already a palindrome.
-- `is_palindrome_permutation("Aa");` is `false` — case-sensitive, `A` and
-  `a` are distinct characters each with an odd count of 1.
-- `is_palindrome_permutation("ab a");` is `false` — a space counts like
-  any other character, giving two odd counts (`a:2` even, `b:1` and
-  `" ":1` both odd).
-- `is_palindrome_permutation("racecar");` is `true` — already a
-  palindrome, which is always trivially permutable into one (zero odd
-  counts here since every character but the middle `e` pairs up, and `e`
-  itself is the one allowed odd count).
-- `is_palindrome_permutation(5);` raises `CinderRuntimeError` matching
-  `"is_palindrome_permutation() requires a string, got int"`, matching
-  `is_anagram`/`is_palindrome`'s own non-string-argument convention in
-  this file.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_anagram`, search
-`def _is_anagram`), `tests/test_builtins.py` (new `class
-TestIsPalindromePermutation`, modeled on `class TestIsAnagram`, search
-that name, for the test shapes above). Once merged, `README.md`'s
-Builtins bullet needs `is_palindrome_permutation` added near
-`is_anagram`/`is_palindrome`, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 3. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
+## 1. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
 
 Build: Cinder already has the perfect/abundant/deficient divisor-sum family
 (`cinder/builtins.py`, search `def _is_perfect_number`: sums a number's
@@ -335,7 +115,7 @@ this task.
 
 ---
 
-## 4. Language: map spread (`...m`) in function calls as keyword arguments
+## 2. Language: map spread (`...m`) in function calls as keyword arguments
 
 Build: Cinder already spreads a *list* into positional call arguments
 (`cinder/interpreter.py`, search `_evaluate_call_arguments`: a `Spread`
@@ -455,7 +235,7 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
+## 3. Standard library: `nth_deficient` — deficient number found at a 1-indexed position
 
 Build: Cinder already has `is_deficient` (`cinder/builtins.py`, search `def
 _is_deficient`: proper-divisor sum less than the number itself) and its
@@ -549,7 +329,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
+## 4. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
 
 Build: Cinder's `is_weird_number` (`cinder/builtins.py`, search `def
 _is_weird_number`) is defined as "abundant but not semiperfect" and

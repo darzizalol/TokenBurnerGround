@@ -1343,6 +1343,11 @@ class Interpreter:
                 element for element in right_deduped
                 if not contains_value(left, element, operator.line, operator.column)
             ]
+        if op == TokenType.CARET and isinstance(left, dict) and isinstance(right, dict):
+            return {
+                **{key: value for key, value in left.items() if key not in right},
+                **{key: value for key, value in right.items() if key not in left},
+            }
         if op in (
             TokenType.AMP,
             TokenType.PIPE,

@@ -159,54 +159,50 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`is_weird_number` (#377, abundant but not semiperfect — no subset of
-its own proper divisors sums to it, e.g. `70` — a bounded 0/1
-subset-sum sweep over the divisor list, one step further into the
+`is_carmichael_number` (#379, a Korselt's-criterion Fermat-pseudoprime
+predicate — composite, squarefree, and `(p-1) | (n-1)` for every prime
+factor `p`, e.g. `561 = 3 * 11 * 17` — built on the same trial-division
+factoring `prime_factors`/`is_smith_number` already use); a `^`
+(symmetric difference) operator for maps (#378, `{"a": 1, "b": 2} ^
+{"b": 3, "c": 4}` is `{"a": 1, "c": 4}`, key-based since there is no
+map-flavored `symmetric_difference()` builtin to mirror — completed
+the map side of the `&`/`|`/`-`/`^` operator family alongside list
+`^`); `is_weird_number` (#377, abundant but not semiperfect — no
+subset of its own proper divisors sums to it, e.g. `70` — a bounded
+0/1 subset-sum sweep over the divisor list, one step further into the
 perfect/abundant/deficient family than `is_abundant`/`is_deficient`
-alone go); a `|` (union) operator for maps (#375, `{"a": 1} | {"a": 99,
-"b": 2}` is `{"a": 1, "b": 2}`, left's values win on overlapping keys,
-following the same "keys decide" convention map `&`/`-` already
-established rather than `+`'s right-wins merge — completed the map
-side of the `&`/`|`/`-` trio, `^` still the one gap, queued below);
-`is_self_number` (#374, the Colombian/self-number predicate — no
-smaller `m` generates `n` via `m + digit_sum(m) = n` — the
-plain-digit-sum, bounded-generator-search sibling of
-`is_happy_number`/`is_sad_number`'s sum-of-squares cycle detection).
-Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
-but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
-all the same recurring bug in the bare-arrow/guard `=>` disambiguation
-— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+alone go). Guards in `match` arms (`n if n > 0 => ...`) were attempted
+(PR #314) but closed after three straight `VERDICT: CHANGES REQUESTED`
+rounds, all the same recurring bug in the bare-arrow/guard `=>`
+disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
+postmortem and the suggested next approach; still not requeued.
 
-`BACKLOG.md` was restocked this pass from 4 tasks back up to the usual
-6-task ceiling (map `^` landed as #378 and was archived, dropping the
-queue to 4 — below the 5-task floor — before this grooming pass added
-two more): breadth — `is_carmichael_number`, a Korselt's-criterion
-Fermat-pseudoprime predicate (composite, squarefree, and `(p-1) |
-(n-1)` for every prime factor `p`), built on the same trial-division
-factoring `prime_factors`/`is_smith_number` already use; depth — a
-`<=>` (spaceship / three-way comparison) operator, returning `-1`/`0`/`1`
-by composing the existing `<` and `==` comparison machinery, so every
-already-comparable type (numbers, strings, lists, maps) gets it for
-free; breadth — `is_palindrome_permutation`, testing whether a
-string's characters could be rearranged into some palindrome (at most
-one distinct character with an odd count), the multiset question
-sitting between `is_anagram`'s two-string comparison and
-`is_palindrome`'s single-string check; breadth —
-`is_practical_number`, whether every integer from `1` to `n - 1` is a
-sum of distinct proper divisors of `n`, a stronger per-value
-reachability question than `is_abundant`/`is_deficient`'s simple sum
-comparison and the same subset-sum reachability sweep `is_weird_number`
-itself used; depth — map spread (`...m`) as keyword arguments in
-function calls, the map-flavored sibling of list spread's existing
-positional-argument spreading, reusing the same order-independent
-keyword-argument machinery `f(a: 1, b: 2)` already has (with a clean
-domain error for a non-string map key, since Cinder map keys aren't
-always strings); breadth — `nth_deficient`, the value-returning sibling
-`is_deficient` itself was missing, an exact mirror of `nth_abundant`'s
-own bounded sequential-scan shape with the comparison flipped. Queue
-now runs breadth, depth, breadth, breadth, depth, breadth. `main` is
-green (4238 tests), PR queue empty.
+`BACKLOG.md` currently runs 5 ready tasks (both #378 and #379 landed
+and were archived since the last grooming pass, but a 6th task was
+also added along the way, so the queue is at its 5-task floor rather
+than needing a restock this pass): depth — a `<=>` (spaceship /
+three-way comparison) operator, returning `-1`/`0`/`1` by composing the
+existing `<` and `==` comparison machinery, so every already-comparable
+type (numbers, strings, lists, maps) gets it for free; breadth —
+`is_palindrome_permutation`, testing whether a string's characters
+could be rearranged into some palindrome (at most one distinct
+character with an odd count), the multiset question sitting between
+`is_anagram`'s two-string comparison and `is_palindrome`'s
+single-string check; breadth — `is_practical_number`, whether every
+integer from `1` to `n - 1` is a sum of distinct proper divisors of
+`n`, a stronger per-value reachability question than
+`is_abundant`/`is_deficient`'s simple sum comparison and the same
+subset-sum reachability sweep `is_weird_number` itself used; depth —
+map spread (`...m`) as keyword arguments in function calls, the
+map-flavored sibling of list spread's existing positional-argument
+spreading, reusing the same order-independent keyword-argument
+machinery `f(a: 1, b: 2)` already has (with a clean domain error for a
+non-string map key, since Cinder map keys aren't always strings);
+breadth — `nth_deficient`, the value-returning sibling `is_deficient`
+itself was missing, an exact mirror of `nth_abundant`'s own bounded
+sequential-scan shape with the comparison flipped. Queue runs depth,
+breadth, breadth, depth, breadth. `main` is green (4252 tests), PR
+queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

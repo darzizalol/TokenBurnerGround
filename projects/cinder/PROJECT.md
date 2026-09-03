@@ -178,38 +178,39 @@ bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `##
 Graveyard` for the full postmortem and the suggested next approach;
 still not requeued.
 
-`BACKLOG.md` dropped to its 5-task floor after #383 merged (map spread
-was the top task); restocked by one to bring it back to 6, appending
-breadth — `is_refactorable` (a.k.a. a tau number, OEIS A033950): whether
-a number's own divisor count divides back into it, e.g. `12` has `6`
-divisors and `12 % 6 == 0`, so `12` is refactorable, while `6` (a
-perfect number, `4` divisors) is not — the same "count something about
-n, then ask if it divides n" shape `is_harshad` already has for digit
-sum, just built on the existing `num_divisors` builtin instead. The
-five tasks already queued going into this pass carry over unchanged:
-breadth — `nth_deficient`, the value-returning sibling `is_deficient`
-itself was missing, an exact mirror of `nth_abundant`'s own bounded
-sequential-scan shape with the comparison flipped; breadth —
-`is_semiperfect`, extracting the standalone pseudoperfect question
-`is_weird_number` already computes internally (abundant *and* not
-semiperfect) but never exposed on its own; depth — a `*` marker for
-keyword-only function parameters, the natural next step now that
-parameters can already take defaults, a rest parameter, and
-destructuring shapes, but every parameter can still be snuck in
-positionally even when the author intended a self-documenting
-keyword-only call site; breadth — `euler_totient`, the aggregate
-counterpart to `is_coprime` (count of integers up to `n` coprime with
-`n`), computed via the same trial-division factoring `prime_factors`
-already uses; breadth — `nth_practical_number`, the value-returning
-sibling `is_practical_number` itself (#382) was missing, the same
-bounded sequential scan `nth_abundant`/`nth_deficient` already use.
-Queue now runs breadth, breadth, depth, breadth, breadth, breadth —
-four breadth tasks stack toward the end since each is a self-contained,
-low-risk stdlib addition and the language surface is dense enough
-after tonight's earlier keyword-only-parameters/map-spread depth work
-that a run of breadth restores the usual rhythm rather than breaking
-it; the next grooming pass should restock with depth first to rebalance.
-`main` is green (4307 tests per PR #383's QA), PR queue empty.
+Two merges landed this cycle (map spread #383, then `nth_deficient`
+#384), dropping `BACKLOG.md` to its 5-task floor twice over; restocked
+once by one task to bring it back to 6, this time leading with depth as
+flagged by the prior pass — default values for whole-pattern
+destructuring function parameters (`fn f([a, b] = [1, 2]) { ... }`,
+today rejected outright by the parser even though per-entry defaults
+inside a pattern already work and `cinder/interpreter.py`'s `call_value`
+already handles a defaulted destructuring parameter with no changes
+needed there at all; the fix is narrowly scoped to `_fn_param` in
+`cinder/parser.py`). The five tasks already queued going into this pass
+carry over unchanged, now numbered 1-5: breadth — `is_semiperfect`,
+extracting the standalone pseudoperfect question `is_weird_number`
+already computes internally (abundant *and* not semiperfect) but never
+exposed on its own; depth — a `*` marker for keyword-only function
+parameters, the natural next step now that parameters can already take
+defaults, a rest parameter, and destructuring shapes, but every
+parameter can still be snuck in positionally even when the author
+intended a self-documenting keyword-only call site; breadth —
+`euler_totient`, the aggregate counterpart to `is_coprime` (count of
+integers up to `n` coprime with `n`), computed via the same
+trial-division factoring `prime_factors` already uses; breadth —
+`nth_practical_number`, the value-returning sibling `is_practical_number`
+itself (#382) was missing, the same bounded sequential scan
+`nth_abundant`/`nth_deficient` already use; breadth — `is_refactorable`
+(a.k.a. a tau number, OEIS A033950): whether a number's own divisor
+count divides back into it, built on the existing `num_divisors`
+builtin. Queue now runs breadth, depth, breadth, breadth, breadth,
+depth — the new task 6 explicitly notes it touches the same
+`_fn_param`/`_fn_param_list` functions task 2 (keyword-only parameters)
+rewrites, and should adapt to whichever shape task 2 leaves behind if
+it lands first, since tasks are claimed in order and task 2 sits ahead
+of it in the queue. `main` is green (4315 tests per PR #384's QA), PR
+queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

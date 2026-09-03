@@ -596,6 +596,9 @@ while (i < 10) {
   `nth_abundant` to return the abundant number found at a 1-indexed position via a sequential
   candidate scan (abundant numbers have no closed form), the value-returning sibling of
   `is_abundant`'s membership test,
+  `nth_deficient` to return the deficient number found at a 1-indexed position via the same
+  sequential candidate scan with the comparison flipped, the value-returning sibling of
+  `is_deficient`'s membership test,
   `is_luhn_valid` to test whether a digit string passes the Luhn mod-10 checksum (double every
   second digit from the right, subtract 9 from any result over 9, sum everything, valid iff the
   total is a multiple of 10) used by credit card numbers and IMEI numbers,
@@ -692,9 +695,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map spread (`...m`) as
-keyword arguments in function calls (PR #383, `greet(...{"name": "Ada",
-"greeting": "yo"})`), the map-flavored sibling of list spread's
+Actively developed, nightly. Recently landed: `nth_deficient` (PR #384,
+`nth_deficient(1)` is `1`, `nth_deficient(20)` is `27`), the
+value-returning sibling `is_deficient`'s own bounded sequential-scan
+shape with the comparison flipped, mirroring `nth_abundant` — map spread
+(`...m`) as keyword arguments in function calls (PR #383, `greet(...{"name":
+"Ada", "greeting": "yo"})`), the map-flavored sibling of list spread's
 existing positional-argument spreading, reusing the same
 order-independent keyword-argument machinery `f(a: 1, b: 2)` already
 had — `is_practical_number` (PR #382, `is_practical_number(6)` is
@@ -711,23 +717,24 @@ character may have an odd count), the multiset question sitting
 between `is_anagram`'s two-string comparison and `is_palindrome`'s
 single-string check. See [`CHANGELOG.md`](CHANGELOG.md) for the full
 merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_deficient`, the
-value-returning sibling `is_deficient` itself was missing, mirroring
-`nth_abundant`'s own bounded sequential-scan shape with the comparison
-flipped — `is_semiperfect`, extracting the standalone pseudoperfect
-question `is_weird_number` already computes internally but never
-exposed on its own — a `*` marker for keyword-only function parameters
-(`fn greet(name, *, loud) { ... }` forces `loud` to be passed as
-`greet("Ada", loud: true)`, never positionally) — `euler_totient`, the
-aggregate counterpart to `is_coprime` (count of integers up to `n`
-coprime with `n`), via the same trial-division factoring
-`prime_factors` already uses — `nth_practical_number`, the
-value-returning sibling `is_practical_number` itself was missing, the
-same bounded sequential scan `nth_abundant`/`nth_deficient` already
-use — and `is_refactorable`, whether a number's own divisor count
-divides back into it (a.k.a. a tau number), the same "count something
-about n, then ask if it divides n" shape `is_harshad` already has for
-digit sum.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_semiperfect`,
+extracting the standalone pseudoperfect question `is_weird_number`
+already computes internally but never exposed on its own — a `*` marker
+for keyword-only function parameters (`fn greet(name, *, loud) { ... }`
+forces `loud` to be passed as `greet("Ada", loud: true)`, never
+positionally) — `euler_totient`, the aggregate counterpart to
+`is_coprime` (count of integers up to `n` coprime with `n`), via the
+same trial-division factoring `prime_factors` already uses —
+`nth_practical_number`, the value-returning sibling `is_practical_number`
+itself was missing, the same bounded sequential scan
+`nth_abundant`/`nth_deficient` already use — `is_refactorable`, whether
+a number's own divisor count divides back into it (a.k.a. a tau
+number), the same "count something about n, then ask if it divides n"
+shape `is_harshad` already has for digit sum — and default values for
+whole-pattern destructuring function parameters (`fn f([a, b] = [1, 2])
+{ ... }`, falling back to the whole default list/map when the argument
+is omitted entirely, not just per-entry inside the pattern the way
+`fn f([a, b = 10])` already can).
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

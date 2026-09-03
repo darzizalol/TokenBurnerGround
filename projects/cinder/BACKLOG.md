@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_weird_number` — abundant but not semiperfect
+## 1. Standard library: `is_weird_number` — abundant but not semiperfect [claimed 2026-09-03T14:06:02Z]
 
 Build: Cinder already has the perfect/abundant/deficient family
 (`_is_perfect_number`/`_is_abundant`/`_is_deficient`, `cinder/builtins.py`,

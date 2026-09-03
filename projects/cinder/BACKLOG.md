@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum
+## 1. Standard library: `is_practical_number` — every smaller value is a divisor-subset sum [claimed 2026-09-03T19:40:01Z]
 
 Build: Cinder already has the perfect/abundant/deficient divisor-sum family
 (`cinder/builtins.py`, search `def _is_perfect_number`: sums a number's

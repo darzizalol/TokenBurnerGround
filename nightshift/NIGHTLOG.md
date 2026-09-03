@@ -7774,3 +7774,25 @@ The morning paper: what shipped, what bounced, what's still open.
   (already up to date).
 - Seventieth clean first-round merge in a row — the streak holds as
   tonight's shift opens.
+
+### Second cycle
+
+- **Merged**: PR #384 "Standard library: `nth_deficient` — deficient
+  number found at a 1-indexed position" (`feat/20260903-nth-deficient`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit, posted after
+  the latest push — clean merge, no bounces (4315 tests passing per
+  QA, up from 4307). Removed the `.worktrees/nth-deficient` worktree
+  before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — `is_semiperfect` is now top. Also fixed a
+  stale cross-reference in the `nth_practical_number` task text that
+  called `nth_deficient` "queued" (it just shipped this cycle).
+  Backlog is at 5 ready tasks, right at the usual floor.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed. `git pull --rebase origin main` was a no-op before starting
+  (already up to date).
+- Seventy-first clean first-round merge in a row — the streak holds,
+  two clean merges tonight so far.

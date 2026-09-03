@@ -3877,3 +3877,11 @@ for vision/architecture.
   free. Clean first pass, no bounces (4307 tests passing, up from
   4293). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `nth_deficient`** — merged 2026-09-03T20:14:02Z
+  via PR #384 (`feat/20260903-nth-deficient`). Added `_nth_deficient`
+  to `cinder/builtins.py`, directly after `_nth_abundant`: an exact
+  structural mirror with the comparison flipped from `>` to `<` in the
+  nested candidate helper, matching the existing `_is_abundant`/
+  `_is_deficient` relationship. Clean first pass, no bounces (4315
+  tests passing, up from 4307). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

@@ -11,101 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_deficient` — deficient number found at a 1-indexed position [claimed 2026-09-03T20:09:49Z]
-
-Build: Cinder already has `is_deficient` (`cinder/builtins.py`, search `def
-_is_deficient`: proper-divisor sum less than the number itself) and its
-abundant-number sibling already has a value-returning counterpart,
-`nth_abundant` (search `def _nth_abundant`: a sequential candidate scan
-using a private nested `_is_abundant_candidate` helper, since abundant
-numbers have no closed form) — but there is no equivalent for the
-deficient side, the value-returning sibling `is_deficient` itself is
-missing. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_deficient(3));'
-# -> <eval>:1:7: undefined name 'nth_deficient' (did you mean 'is_deficient'?)
-```
-
-Worked examples: the first ten deficient numbers (proper-divisor sum less
-than the number, OEIS A005100) are `1, 2, 3, 4, 5, 7, 8, 9, 10, 11` — note
-`6` is skipped (a perfect number, proper divisors `1+2+3=6`) and so is any
-multiple of 6 that happens to be perfect/abundant; the 20th is `25`. Every
-prime is deficient (proper-divisor sum is always `1 < p`), so deficient
-numbers are far denser than abundant numbers — `nth_deficient` needs no
-special-casing for that, the same bounded sequential scan `nth_abundant`
-already uses just finds matches sooner.
-
-Add directly after `_nth_abundant` (search `def _nth_abundant`, immediately
-before `def _is_deficient`) — keeps the value-returning helper next to the
-`is_abundant`/`nth_abundant` pair it mirrors:
-```python
-def _nth_deficient(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_deficient", arguments, 1, line, column)
-    value = _require_int("nth_deficient", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_deficient() requires a positive integer, domain error", line, column
-        )
-
-    def _is_deficient_candidate(candidate: int) -> bool:
-        total = 1 if candidate > 1 else 0
-        for divisor in range(2, math.isqrt(candidate) + 1):
-            if candidate % divisor == 0:
-                total += divisor
-                complement = candidate // divisor
-                if complement != divisor:
-                    total += complement
-        return total < candidate
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_deficient_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_abundant`, only the comparison flips from `>` to
-`<`, matching `_is_abundant`/`_is_deficient`'s own relationship.) Also
-register the new dict entry (search `"is_deficient": _is_deficient,`, add
-`"nth_deficient": _nth_deficient,` directly before it, next to
-`"nth_abundant": _nth_abundant,` which already sits right above
-`"is_deficient"` in the dict).
-
-Acceptance criteria:
-- `nth_deficient(1);` through `nth_deficient(10);` are `1, 2, 3, 4, 5, 7,
-  8, 9, 10, 11` in order — the worked example above (note the gap at `6`).
-- `nth_deficient(20);` is `25` — a further worked example confirming the
-  scan scales past the first ten.
-- For every `position` in `1..50`, `is_deficient(nth_deficient(position))`
-  is `true` — the same self-consistency check `nth_abundant`'s own test
-  suite already runs against `is_abundant`.
-- `nth_deficient(0);`, `nth_deficient(-3);` both raise `CinderRuntimeError`
-  matching `"nth_deficient\(\) requires a positive integer, domain
-  error"`, matching `nth_abundant`'s own non-positive-input convention.
-- `nth_deficient(true);` raises `CinderRuntimeError` matching
-  `"nth_deficient\(\) requires an int, got bool"`, since `_require_int`
-  rejects `bool` even though Cinder's `bool` is a Python `int` subclass
-  (same guard every other int-only predicate in this file already relies
-  on).
-- `nth_deficient("3");` raises `CinderRuntimeError` matching
-  `"nth_deficient\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_nth_abundant`, search
-`def _nth_abundant`), `tests/test_builtins.py` (new `class
-TestNthDeficient`, modeled on `class TestNthAbundant`, search that name,
-for the test shapes above). Once merged, `README.md`'s Builtins bullet
-needs `nth_deficient` added near `is_deficient`/`nth_abundant`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" section needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
+## 1. Standard library: `is_semiperfect` — n equals a sum of some subset of its own proper divisors
 
 Build: Cinder's `is_weird_number` (`cinder/builtins.py`, search `def
 _is_weird_number`) is defined as "abundant but not semiperfect" and
@@ -207,7 +113,7 @@ pass, not this task.
 
 ---
 
-## 3. Language: `*` marker for keyword-only function parameters
+## 2. Language: `*` marker for keyword-only function parameters
 
 Build: Cinder function parameters (`cinder/parser.py`, search `def
 _fn_param_list`/`def _fn_param`) can already carry defaults (`fn f(a, b =
@@ -412,7 +318,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `euler_totient` — count of integers up to n coprime with n
+## 3. Standard library: `euler_totient` — count of integers up to n coprime with n
 
 Build: Cinder's number-theory builtins already include `prime_factors`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-division
@@ -510,14 +416,13 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
+## 4. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
 
 Build: Cinder's `is_practical_number` (`cinder/builtins.py`, search `def
 _is_practical_number`: proper-divisor list, then a bounded 0/1 subset-sum
 sweep checking every integer `1..n-1` is reachable) landed as PR #382 —
 but, like `is_abundant`/`nth_abundant` and `is_deficient`/`nth_deficient`
-(already queued as task 2 above) before it, it has no value-returning
-`nth_*` sibling yet. Verify the gap:
+before it, it has no value-returning `nth_*` sibling yet. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_practical_number(5));'
 # -> <eval>:1:7: undefined name 'nth_practical_number' (did you mean
@@ -614,7 +519,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `is_refactorable` — divisor count divides the number itself
+## 5. Standard library: `is_refactorable` — divisor count divides the number itself
 
 Build: Cinder's `num_divisors` (`cinder/builtins.py`, search `def
 _num_divisors`: counts divisors via a bounded `math.isqrt` sweep,

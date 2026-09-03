@@ -6055,6 +6055,59 @@ class TestIsSmithNumber(unittest.TestCase):
             run("is_smith_number();")
 
 
+class TestIsCarmichaelNumber(unittest.TestCase):
+    def test_is_carmichael_number_of_561(self):
+        self.assertTrue(run("let result = is_carmichael_number(561);").get("result"))
+
+    def test_is_carmichael_number_of_1105(self):
+        self.assertTrue(run("let result = is_carmichael_number(1105);").get("result"))
+
+    def test_is_carmichael_number_of_1729(self):
+        self.assertTrue(run("let result = is_carmichael_number(1729);").get("result"))
+
+    def test_is_carmichael_number_of_2465(self):
+        self.assertTrue(run("let result = is_carmichael_number(2465);").get("result"))
+
+    def test_is_carmichael_number_of_2821(self):
+        self.assertTrue(run("let result = is_carmichael_number(2821);").get("result"))
+
+    def test_is_carmichael_number_of_562_fails_divisibility(self):
+        self.assertFalse(run("let result = is_carmichael_number(562);").get("result"))
+
+    def test_is_carmichael_number_of_9_not_squarefree(self):
+        self.assertFalse(run("let result = is_carmichael_number(9);").get("result"))
+
+    def test_is_carmichael_number_of_17_is_prime(self):
+        self.assertFalse(run("let result = is_carmichael_number(17);").get("result"))
+
+    def test_is_carmichael_number_of_1(self):
+        self.assertFalse(run("let result = is_carmichael_number(1);").get("result"))
+
+    def test_is_carmichael_number_of_0(self):
+        self.assertFalse(run("let result = is_carmichael_number(0);").get("result"))
+
+    def test_is_carmichael_number_of_negative(self):
+        self.assertFalse(run("let result = is_carmichael_number(-561);").get("result"))
+
+    def test_is_carmichael_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_carmichael_number(true);")
+        self.assertIn(
+            "is_carmichael_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_carmichael_number_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_carmichael_number("561");')
+        self.assertIn(
+            "is_carmichael_number() requires an int, got string", ctx.exception.message
+        )
+
+    def test_is_carmichael_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_carmichael_number();")
+
+
 class TestIsVampireNumber(unittest.TestCase):
     def test_is_vampire_number_of_1260(self):
         self.assertTrue(run("let result = is_vampire_number(1260);").get("result"))

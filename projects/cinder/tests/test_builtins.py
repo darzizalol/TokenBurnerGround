@@ -4939,6 +4939,66 @@ class TestIsPerfectNumber(unittest.TestCase):
             run("is_perfect_number();")
 
 
+class TestIsPracticalNumber(unittest.TestCase):
+    def test_is_practical_number_of_1(self):
+        self.assertEqual(run("let result = is_practical_number(1);").get("result"), True)
+
+    def test_is_practical_number_of_2(self):
+        self.assertEqual(run("let result = is_practical_number(2);").get("result"), True)
+
+    def test_is_practical_number_of_4(self):
+        self.assertEqual(run("let result = is_practical_number(4);").get("result"), True)
+
+    def test_is_practical_number_of_6(self):
+        self.assertEqual(run("let result = is_practical_number(6);").get("result"), True)
+
+    def test_is_practical_number_of_8(self):
+        self.assertEqual(run("let result = is_practical_number(8);").get("result"), True)
+
+    def test_is_practical_number_of_12(self):
+        self.assertEqual(run("let result = is_practical_number(12);").get("result"), True)
+
+    def test_is_practical_number_of_16(self):
+        self.assertEqual(run("let result = is_practical_number(16);").get("result"), True)
+
+    def test_is_practical_number_of_18(self):
+        self.assertEqual(run("let result = is_practical_number(18);").get("result"), True)
+
+    def test_is_practical_number_of_20(self):
+        self.assertEqual(run("let result = is_practical_number(20);").get("result"), True)
+
+    def test_is_practical_number_of_3_is_false(self):
+        self.assertEqual(run("let result = is_practical_number(3);").get("result"), False)
+
+    def test_is_practical_number_of_5_is_false(self):
+        self.assertEqual(run("let result = is_practical_number(5);").get("result"), False)
+
+    def test_is_practical_number_of_10_is_false(self):
+        self.assertEqual(run("let result = is_practical_number(10);").get("result"), False)
+
+    def test_is_practical_number_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_practical_number(0);").get("result"), False)
+
+    def test_is_practical_number_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_practical_number(-6);").get("result"), False)
+
+    def test_is_practical_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_practical_number(true);")
+        self.assertIn("is_practical_number", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_practical_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_practical_number("6");')
+        self.assertIn("is_practical_number", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_practical_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_practical_number();")
+
+
 class TestIsAbundant(unittest.TestCase):
     def test_is_abundant_of_12(self):
         self.assertEqual(run("let result = is_abundant(12);").get("result"), True)

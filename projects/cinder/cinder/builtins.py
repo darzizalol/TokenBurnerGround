@@ -2036,6 +2036,26 @@ def _is_perfect_number(arguments: list, line: int, column: int) -> object:
     return total == value
 
 
+def _is_practical_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_practical_number", arguments, 1, line, column)
+    value = _require_int("is_practical_number", arguments[0], line, column)
+    if value < 1:
+        return False
+    if value == 1:
+        return True
+    divisors = [1]
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            divisors.append(divisor)
+            complement = value // divisor
+            if complement != divisor:
+                divisors.append(complement)
+    reachable = {0}
+    for divisor in divisors:
+        reachable |= {total + divisor for total in reachable if total + divisor <= value}
+    return all(target in reachable for target in range(1, value))
+
+
 def _is_abundant(arguments: list, line: int, column: int) -> object:
     _require_arity("is_abundant", arguments, 1, line, column)
     value = _require_int("is_abundant", arguments[0], line, column)
@@ -4629,6 +4649,7 @@ _BUILTINS = {
     "is_munchausen_number": _is_munchausen_number,
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,
+    "is_practical_number": _is_practical_number,
     "is_abundant": _is_abundant,
     "nth_abundant": _nth_abundant,
     "is_deficient": _is_deficient,

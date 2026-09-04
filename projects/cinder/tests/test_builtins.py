@@ -6542,6 +6542,69 @@ class TestNumDivisors(unittest.TestCase):
             run("num_divisors();")
 
 
+class TestIsRefactorable(unittest.TestCase):
+    def test_is_refactorable_of_1(self):
+        self.assertEqual(run("let result = is_refactorable(1);").get("result"), True)
+
+    def test_is_refactorable_of_8(self):
+        self.assertEqual(run("let result = is_refactorable(8);").get("result"), True)
+
+    def test_is_refactorable_of_9(self):
+        self.assertEqual(run("let result = is_refactorable(9);").get("result"), True)
+
+    def test_is_refactorable_of_12(self):
+        self.assertEqual(run("let result = is_refactorable(12);").get("result"), True)
+
+    def test_is_refactorable_of_18(self):
+        self.assertEqual(run("let result = is_refactorable(18);").get("result"), True)
+
+    def test_is_refactorable_of_24(self):
+        self.assertEqual(run("let result = is_refactorable(24);").get("result"), True)
+
+    def test_is_refactorable_of_6_is_false(self):
+        self.assertEqual(run("let result = is_refactorable(6);").get("result"), False)
+
+    def test_is_refactorable_of_3_is_false(self):
+        self.assertEqual(run("let result = is_refactorable(3);").get("result"), False)
+
+    def test_is_refactorable_of_5_is_false(self):
+        self.assertEqual(run("let result = is_refactorable(5);").get("result"), False)
+
+    def test_is_refactorable_of_7_is_false(self):
+        self.assertEqual(run("let result = is_refactorable(7);").get("result"), False)
+
+    def test_is_refactorable_agrees_with_num_divisors_definition(self):
+        for n in range(1, 101):
+            actual = run(f"let result = is_refactorable({n});").get("result")
+            divisor_count = run(f"let result = num_divisors({n});").get("result")
+            expected = n % divisor_count == 0
+            self.assertEqual(actual, expected, f"mismatch for n={n}")
+
+    def test_is_refactorable_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_refactorable(0);").get("result"), False)
+
+    def test_is_refactorable_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_refactorable(-8);").get("result"), False)
+
+    def test_is_refactorable_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_refactorable(true);")
+        self.assertIn(
+            "is_refactorable() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_refactorable_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_refactorable("8");')
+        self.assertIn(
+            "is_refactorable() requires an int, got string", ctx.exception.message
+        )
+
+    def test_is_refactorable_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_refactorable();")
+
+
 class TestIsAmicable(unittest.TestCase):
     def test_is_amicable_smallest_pair(self):
         self.assertEqual(run("let result = is_amicable(220, 284);").get("result"), True)

@@ -2590,6 +2590,23 @@ def _num_divisors(arguments: list, line: int, column: int) -> object:
     return count
 
 
+def _is_refactorable(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_refactorable", arguments, 1, line, column)
+    value = _require_int("is_refactorable", arguments[0], line, column)
+    if value < 1:
+        return False
+    if value == 1:
+        return True
+    count = 2  # 1 and value itself
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            count += 1
+            complement = value // divisor
+            if complement != divisor:
+                count += 1
+    return value % count == 0
+
+
 def _is_amicable(arguments: list, line: int, column: int) -> object:
     _require_arity("is_amicable", arguments, 2, line, column)
     a = _require_int("is_amicable", arguments[0], line, column)
@@ -4779,6 +4796,7 @@ _BUILTINS = {
     "is_carmichael_number": _is_carmichael_number,
     "is_vampire_number": _is_vampire_number,
     "num_divisors": _num_divisors,
+    "is_refactorable": _is_refactorable,
     "is_amicable": _is_amicable,
     "min": _min,
     "max": _max,

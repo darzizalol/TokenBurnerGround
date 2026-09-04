@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values for whole-pattern destructuring function parameters
+## 1. Language: default values for whole-pattern destructuring function parameters [claimed 2026-09-04T15:44:15Z]
 
 Build: Cinder function parameters can already be a list-destructuring
 pattern (`fn f([a, b])`) or a map-destructuring pattern (`fn f({a, b})`),

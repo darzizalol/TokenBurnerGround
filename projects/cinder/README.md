@@ -464,6 +464,7 @@ while (i < 10) {
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
+  `euler_totient` to count the integers up to `n` coprime with `n` (Euler's totient function), the aggregate counterpart to `is_coprime`, via the same trial-division factoring `prime_factors` already uses,
   `nth_prime` to return the prime found at a 1-indexed position, the complementary "which prime" question to `is_prime`/`prime_factors`,
   `nth_fibonacci` to return the Fibonacci number found at a 1-indexed position, the value-returning sibling of `is_fibonacci`'s membership test,
   `nth_lucas` to return the Lucas number found at a 1-indexed position, the same question for the Lucas sequence, the value-returning sibling of `is_lucas_number`'s membership test,
@@ -539,6 +540,9 @@ while (i < 10) {
   of distinct proper divisors of `n` (e.g. `6` is practical, `10` is not since no subset of
   `{1, 2, 5}` sums to `4`), the same subset-sum reachability sweep `is_weird_number` uses but
   checked against every smaller target instead of just `n` itself,
+  `nth_practical_number` to return the practical number found at a 1-indexed position, the
+  value-returning sibling `is_practical_number` itself was missing, the same bounded sequential
+  scan `nth_abundant`/`nth_deficient` already use,
   `is_amicable` to test whether two distinct integers' proper-divisor sums point at each other,
   `is_smith_number` to test whether a composite integer's own decimal digit sum equals the
   combined digit sum of its prime factors (with multiplicity),
@@ -705,44 +709,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a `*` marker for
-keyword-only function parameters (PR #386, `fn greet(name, *, loud) {
-... }` forces `loud` to be passed as `greet("Ada", loud: true)`, never
-positionally) — `is_semiperfect` (PR #385, `is_semiperfect(12)` is
-`true`, via `{2, 4, 6}`), extracting the standalone pseudoperfect
-question `is_weird_number` already computed internally but never
-exposed on its own — `nth_deficient` (PR #384, `nth_deficient(1)` is
-`1`, `nth_deficient(20)` is `27`), the value-returning sibling
-`is_deficient`'s own bounded sequential-scan shape with the comparison
-flipped, mirroring `nth_abundant` — and map spread (`...m`) as keyword
-arguments in function calls (PR #383, `greet(...{"name": "Ada",
-"greeting": "yo"})`), the map-flavored sibling of list spread's
-existing positional-argument spreading, reusing the same
-order-independent keyword-argument machinery `f(a: 1, b: 2)` already
-had. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `euler_totient`, the
-aggregate counterpart to `is_coprime` (count of integers up to `n`
-coprime with `n`), via the same trial-division factoring
-`prime_factors` already uses — `nth_practical_number`, the
-value-returning sibling `is_practical_number` itself was missing, the
-same bounded sequential scan `nth_abundant`/`nth_deficient` already use
-— `is_refactorable`, whether a number's own divisor count divides back
-into it (a.k.a. a tau number), the same "count something about n, then
-ask if it divides n" shape `is_harshad` already has for digit sum —
-default values for whole-pattern destructuring function parameters
-(`fn f([a, b] = [1, 2]) { ... }`, falling back to the whole default
-list/map when the argument is omitted entirely, not just per-entry
-inside the pattern the way `fn f([a, b = 10])` already can) —
-`nth_semiperfect`, the value-returning sibling `is_semiperfect` itself
-was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_deficient` already use — and
-`is_decagonal`/`nth_decagonal`, the next member of the existing
+Actively developed, nightly. Recently landed: `nth_practical_number`
+(PR #388, `nth_practical_number(1)` is `1`), the value-returning
+sibling `is_practical_number` itself was missing, the same bounded
+sequential scan `nth_abundant`/`nth_deficient` already use — and
+`euler_totient` (PR #387, `euler_totient(9)` is `6`), the aggregate
+counterpart to `is_coprime` (count of integers up to `n` coprime with
+`n`), via the same trial-division factoring `prime_factors` already
+uses. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_refactorable`,
+whether a number's own divisor count divides back into it (a.k.a. a
+tau number), the same "count something about n, then ask if it divides
+n" shape `is_harshad` already has for digit sum — default values for
+whole-pattern destructuring function parameters (`fn f([a, b] = [1,
+2]) { ... }`, falling back to the whole default list/map when the
+argument is omitted entirely, not just per-entry inside the pattern
+the way `fn f([a, b = 10])` already can) — `nth_semiperfect`, the
+value-returning sibling `is_semiperfect` itself was missing, the same
+bounded sequential scan `nth_practical_number`/`nth_deficient` already
+use — `is_decagonal`/`nth_decagonal`, the next member of the existing
 triangular-through-nonagonal polygonal-number family (10-gonal
-numbers), both closed-form like every other sibling in that family.
-(Guards in `match` arms, `n if n > 0 => "positive"`,
-were attempted but closed after three failed review rounds over a
-recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
-postmortem; they're a real gap but not back in the active queue yet.)
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+numbers), both closed-form like every other sibling in that family —
+hole elements and per-element defaults in plain-assignment list
+destructuring (`[a, , c] = expr;` skipping a position, `[a, b = 5] =
+expr;` falling back to a default when the source value is too short),
+closing the gap between that form and `let`-style list destructuring,
+which already supports both — and `nth_harshad`, the value-returning
+sibling `is_harshad` itself was missing, the same bounded sequential
+scan `nth_abundant`/`nth_deficient` already use. (Guards in `match`
+arms, `n if n > 0 => "positive"`, were attempted but closed after
+three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
+but not back in the active queue yet.) The backlog mixes language
+depth with stdlib breadth over time rather than running either in one
+long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

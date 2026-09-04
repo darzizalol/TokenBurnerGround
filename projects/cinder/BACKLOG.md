@@ -508,6 +508,270 @@ task.
 
 ---
 
+## 5. Language: hole elements and per-element default values in plain-assignment list destructuring
+
+Build: `let [a, , c] = expr;` (a hole element, skipping a position) and
+`let [a, b = 5] = expr;` (a per-element default) both already work for
+`let`-style list destructuring (`_destructure_list_pattern`,
+`cinder/parser.py`, search `def _destructure_list_pattern`), but neither
+works for the plain-assignment form `[a, b] = expr;` for
+already-declared names — it only supports plain identifiers, a trailing
+`...rest`, and (already, today) arbitrary nesting of further list
+patterns. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let a; let c; [a, , c] = [1, 2, 3]; print(a); print(c);'
+# -> <eval>:1:19: expected an expression, found ','
+python3 -m cinder.cli eval 'let a; let b; [a, b = 5] = [1]; print(a); print(b);'
+# -> <eval>:1:21: expected ']' after list literal, found '='
+```
+A third, related gap in the same code path: a nested **map** pattern as
+a list-destructuring element (`[a, {b, c}] = [1, {"b": 2, "c": 3}];`,
+the list-typed mirror of nesting a list pattern inside a list pattern,
+which already works) also fails today:
+```sh
+python3 -m cinder.cli eval 'let a; let b; let c; [a, {b, c}] = [1, {"b": 2, "c": 3}]; print(a); print(b); print(c);'
+# -> <eval>:1:34: invalid assignment target
+```
+
+Root cause: `_assignment()` (search `def _assignment`) parses the LHS as
+an ordinary expression first (`expr = self._ternary()`), and only
+*afterwards*, once it turns out to be a `ListLiteral` followed by `=`,
+reinterprets it as a pattern via `_destructure_assign_pattern` (search
+`def _destructure_assign_pattern`) — which walks the already-parsed
+`ListLiteral.elements` and only recognizes `Identifier`, a trailing
+`Spread` (rest), and nested `ListLiteral` shapes, because those are the
+only element shapes ordinary list-literal expression grammar can
+produce. A hole (`, ,`) and a bare `= expr` are not valid list-literal
+*expression* syntax at all — the parse fails before `_assignment` ever
+regains control to attempt the pattern reinterpretation — and a
+`MapLiteral` element, while valid list-literal syntax, is never
+translated into a nested map pattern by `_destructure_assign_pattern`
+(it only recurses on `ListLiteral`).
+
+The fix is architectural, not a patch to `_destructure_assign_pattern`:
+parse the pattern *speculatively* with the same dedicated grammar `let`
+already uses (`_destructure_list_pattern`, which fully supports holes,
+defaults, and both nested-list and nested-map elements), *before*
+falling back to ordinary expression parsing — exactly the same
+speculative-dual-parse technique this codebase already uses for the
+map-assignment form (`_try_map_destructure_assign_statement`, search
+that name, tried from `_brace_statement`) and for disambiguating a
+leading `{` between a map literal and a block (see `PROJECT.md`'s
+Design principles: "A leading `{` at statement position is
+disambiguated by speculative parse"). Once the speculative parse wins,
+build the `DestructureAssign` directly from its output — no
+reinterpretation step needed, since `_destructure_list_pattern`'s
+`(names, rest)` output shape is already exactly what `DestructureAssign`
+stores (a superset of what `_destructure_assign_pattern` could ever
+produce). This also means **the interpreter needs no changes at all**:
+`_bind_list_destructure` (`cinder/interpreter.py`, search `def
+_bind_list_destructure`) already handles a `None` name (hole, `elif
+name is not None:` skips it), a per-element `default` (`item =
+value[index] if index < len(value) else self.evaluate(default, env)`),
+and a 3-tuple nested map pattern (`isinstance(name, tuple) and
+len(name) == 3`) generically for both `let`-style `env.define` and
+assignment-style `env.assign` (the `use_assign` flag) — it was already
+written to support all of this the day map/list nesting first landed,
+just never reachable from the plain-assignment parse path.
+
+Replace `_assignment` (search `def _assignment`) — only the opening of
+the method changes, everything from `expr = self._ternary()` onward is
+unchanged:
+```python
+def _assignment(self) -> Expr:
+    if self._check(TokenType.LBRACKET):
+        start = self.pos
+        try:
+            names, rest = self._destructure_list_pattern()
+            if self._check(TokenType.EQ):
+                eq_token = self._advance()
+                value = self._assignment()
+                return DestructureAssign(
+                    names, rest, value, eq_token.line, eq_token.column
+                )
+        except ParseError:
+            pass
+        self.pos = start
+    expr = self._ternary()
+    if self._check(TokenType.EQ):
+        eq_token = self._advance()
+        value = self._assignment()
+        if isinstance(expr, Identifier):
+            return Assign(expr.name, value, eq_token.line, eq_token.column)
+        if isinstance(expr, Index):
+            return IndexAssign(
+                expr.obj, expr.index, value, eq_token.line, eq_token.column
+            )
+        if isinstance(expr, SliceExpr):
+            return SliceAssign(
+                expr.obj, expr.start, expr.end, expr.step, value,
+                eq_token.line, eq_token.column,
+            )
+        raise ParseError(
+            "invalid assignment target", eq_token.line, eq_token.column
+        )
+    # ...rest of the method (QQEQ, compound-assign, increment/decrement
+    # branches) is unchanged — leave it exactly as it is today.
+```
+(Note the `isinstance(expr, ListLiteral)` branch that used to call
+`_destructure_assign_pattern` is gone — every `[...] = ...` case that
+used to reach it now returns earlier, from the speculative branch, so
+this branch was dead code once the speculative parse is in place. Any
+`[...] = ...` shape that still shouldn't parse — e.g. `[1, 2] = [3,
+4];`, a literal element the pattern grammar rejects — now falls through
+to the same `raise ParseError("invalid assignment target", ...)` at
+the bottom, just via the ordinary-expression path instead of a
+dedicated check, so the end-user error is identical.) Also delete
+`_destructure_assign_pattern` itself (search `def
+_destructure_assign_pattern`) — after this change it has no callers.
+
+Acceptance criteria:
+- `let a; let c; [a, , c] = [1, 2, 3]; print(a); print(c);` prints `1`
+  then `3` — the hole worked example above, `b`'s value discarded.
+- `let a; let b; [a, b = 5] = [1]; print(a); print(b);` prints `1` then
+  `5` — the default worked example above.
+- `let a; let b; let c; [a, {b, c}] = [1, {"b": 2, "c": 3}]; print(a);
+  print(b); print(c);` prints `1`, `2`, `3` — the nested-map-element
+  worked example above.
+- `let a; let b; [a, b] = [b, a];` (swap idiom), `let a; let b; let
+  rest; [a, b, ...rest] = [1, 2, 3, 4];`, and `let a; let b; let c;
+  [[a, b], c] = [[1, 2], 3];` (nested list, already working) all still
+  behave exactly as before — regression coverage for
+  `TestDestructureAssign.test_swap_idiom`/`test_rest_binds_remaining_elements_as_list`
+  and `test_list_destructure_assignment_nested_pattern_parses`.
+- `[1, 2] = [3, 4];` and `[] = [1];` still raise `ParseError` — regression
+  coverage for `test_list_destructure_assignment_literal_element_raises_parse_error`
+  and `test_list_destructure_assignment_empty_pattern_raises_parse_error`
+  (search either name in `tests/test_parser.py`), confirming the
+  fallback path still rejects genuinely invalid targets.
+- `[a, ...rest, b] = [1, 2, 3];` (rest not last) still raises
+  `ParseError` — regression coverage for
+  `test_list_destructure_assignment_rest_not_last_raises_parse_error`.
+- `[a, b] += [1, 2];` and `[a, b] ??= [1, 2];` still raise `ParseError`
+  — regression coverage for `test_list_destructure_compound_assign_raises_parse_error`
+  and `test_list_destructure_qq_assign_raises_parse_error` (a
+  destructuring target is never valid for a compound-assignment
+  operator, only plain `=`).
+- Update `tests/test_parser.py`'s `test_list_destructure_assignment_default_raises_parse_error`
+  (search that name): this is the one existing test whose asserted
+  behavior this task deliberately changes (`[a, b = 5] = [1];` used to
+  raise `ParseError`, and now must parse) — verified by actually
+  applying this task's patch against current `main` and running the
+  full suite, which fails exactly this one test, no others. Rewrite it
+  into a positive test asserting the parsed shape, modeled on
+  `test_map_destructure_assignment_entry_default` (search that name)
+  for the map-pattern equivalent's own shape-assertion style.
+- Add new tests: `tests/test_parser.py`, parse-shape tests for the hole
+  and default and nested-map-element cases above (modeled on
+  `test_list_destructure_assignment`/`test_list_destructure_assignment_nested_pattern_parses`);
+  `tests/test_interpreter.py`'s `TestDestructureAssign` class (search
+  that name), runtime tests for the three worked examples above,
+  modeled on that class's existing `test_swap_idiom`/`test_rest_binds_remaining_elements_as_list`.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_assignment`, search `def
+_assignment`; delete `_destructure_assign_pattern`, search `def
+_destructure_assign_pattern`) — no changes needed to
+`cinder/interpreter.py` or `cinder/ast_nodes.py` (though
+`ast_nodes.py`'s `DestructureAssign` docstring, search `class
+DestructureAssign`, is worth a one-line fix while you're there: it
+currently claims "flat patterns only... mirroring `DestructureLetStmt`'s
+own 'no nesting' rule", which was already stale before this task since
+nested list-in-list plain-assignment destructuring works today — feel
+free to correct it in passing, but it's not this task's acceptance
+bar). `tests/test_parser.py` and `tests/test_interpreter.py` per the
+acceptance criteria above. Once merged, `README.md`'s Variables & scope
+bullet needs its "the plain-assignment form `[a, b] = expr;` does not
+support defaults" caveat removed/updated, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
+## 6. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
+
+Build: `is_harshad` (`cinder/builtins.py`, search `def _is_harshad`:
+whether `n` is divisible by its own digit sum, e.g. `18`'s digits sum
+to `9` and `18 % 9 == 0`) has no value-returning sibling that finds the
+Harshad number at a given 1-indexed position — the same gap
+`nth_abundant`/`nth_deficient` (search either name) already closed for
+`is_abundant`/`is_deficient`, and `nth_semiperfect` (task 3 above) is
+about to close for `is_semiperfect`. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_harshad(1));'
+# -> <eval>:1:7: undefined name 'nth_harshad'
+```
+
+Worked examples: the first ten Harshad numbers are `1, 2, 3, 4, 5, 6,
+7, 8, 9, 10` (every one-digit number is trivially divisible by its own
+digit sum), so `nth_harshad(1)` is `1` and `nth_harshad(10)` is `10`.
+The next ones are `12, 18, 20, 21, 24, 27, 30, 36, 40, 42` — `11` is
+skipped (`11 % (1+1) == 11 % 2 == 1`, not divisible), so `nth_harshad(20)`
+is `42`.
+
+Add to `cinder/builtins.py`, directly after `_is_harshad` (search `def
+_is_harshad`):
+```python
+def _nth_harshad(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_harshad", arguments, 1, line, column)
+    value = _require_int("nth_harshad", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_harshad() requires a positive integer, domain error", line, column
+        )
+
+    def _is_harshad_candidate(candidate: int) -> bool:
+        digit_total = sum(int(digit) for digit in str(candidate))
+        return candidate % digit_total == 0
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_harshad_candidate(candidate):
+            count += 1
+    return candidate
+```
+(The bounded sequential-scan shape mirrors `_nth_abundant`/`_nth_deficient`
+exactly — search either name for the precedent — just with `_is_harshad`'s
+own digit-sum divisibility check inlined instead of calling `_is_harshad`
+directly, the same "duplicate the tiny predicate body instead of a
+redundant `_require_arity`/`_require_int` round-trip per candidate"
+choice those two already made.) Register it in the builtins dict
+(search `"is_harshad": _is_harshad,`) right next to the existing entry:
+`"nth_harshad": _nth_harshad,`.
+
+Acceptance criteria:
+- `nth_harshad(1)` through `nth_harshad(10)` are `1` through `10` — the
+  first worked example above.
+- `nth_harshad(20)` is `42` — the second worked example above.
+- `is_harshad(nth_harshad(n))` is `true` for every `n` from `1` to `50`
+  — the value returned is always actually a Harshad number, mirroring
+  `test_nth_deficient_agrees_with_is_deficient`'s (search that name)
+  cross-check style.
+- `nth_harshad(0)` and `nth_harshad(-3)` raise `CinderRuntimeError`
+  matching `"nth_harshad() requires a positive integer, domain error"`.
+- `nth_harshad(true)` and `nth_harshad("3")` raise `CinderRuntimeError`
+  with the standard `_require_int` type-mismatch message, and
+  `nth_harshad(1, 2)` raises the standard arity error — regression
+  coverage matching `nth_deficient`'s own bool/string/arity tests
+  (search `test_nth_deficient_of_bool_raises`/
+  `test_nth_deficient_of_string_raises`/`test_nth_deficient_wrong_arity_raises`).
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_harshad`,
+search `def _is_harshad`), `tests/test_builtins.py` (new `class
+TestNthHarshad`, modeled on `class TestNthDeficient`, search that name,
+for the test shapes above — place it near the existing `class
+TestIsHarshad`, search that name). Once merged, `README.md`'s Builtins
+bullet needs `nth_harshad` added near `is_harshad`, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

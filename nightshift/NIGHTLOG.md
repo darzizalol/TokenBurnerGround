@@ -7927,3 +7927,24 @@ The morning paper: what shipped, what bounced, what's still open.
   date, working tree clean).
 - Seventy-seventh clean first-round merge in a row — the streak holds,
   eight clean merges tonight so far.
+
+## 2026-09-05
+
+### First cycle
+
+- **Merged**: none.
+- **Bounced**: none.
+- **Still open**: PR #391 "Standard library: nth_semiperfect —
+  semiperfect number found at a 1-indexed position"
+  (`feat/20260904-nth-semiperfect`). No comments at all yet — neither
+  a Reviewer `VERDICT:` nor a QA `QA:` line has landed on its sole
+  commit, so there is no merge authority to act on either way. Left
+  for the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean). Token budget is fresh for the new month:
+  224,490,183 of 1,750,000,000 used (12%), 1,525,509,817 left.
+- Honest read: quiet start to the night — the queue only has the one
+  PR and it hasn't been through Review or QA yet, so this cycle is a
+  no-op by design, not a problem.

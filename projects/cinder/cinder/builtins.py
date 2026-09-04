@@ -2213,6 +2213,41 @@ def _is_semiperfect(arguments: list, line: int, column: int) -> object:
     return value in reachable
 
 
+def _nth_semiperfect(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_semiperfect", arguments, 1, line, column)
+    value = _require_int("nth_semiperfect", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_semiperfect() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_semiperfect_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        divisors = [1]
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                divisors.append(divisor)
+                complement = candidate // divisor
+                if complement != divisor:
+                    divisors.append(complement)
+        reachable = {0}
+        for divisor in divisors:
+            reachable |= {
+                total + divisor for total in reachable if total + divisor <= candidate
+            }
+        return candidate in reachable
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_semiperfect_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_automorphic(arguments: list, line: int, column: int) -> object:
     _require_arity("is_automorphic", arguments, 1, line, column)
     value = _require_int("is_automorphic", arguments[0], line, column)
@@ -4775,6 +4810,7 @@ _BUILTINS = {
     "is_deficient": _is_deficient,
     "is_weird_number": _is_weird_number,
     "is_semiperfect": _is_semiperfect,
+    "nth_semiperfect": _nth_semiperfect,
     "is_automorphic": _is_automorphic,
     "is_trimorphic_number": _is_trimorphic_number,
     "is_keith_number": _is_keith_number,

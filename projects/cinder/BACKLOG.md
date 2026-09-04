@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_refactorable` — divisor count divides the number itself
+## 1. Standard library: `is_refactorable` — divisor count divides the number itself [claimed 2026-09-04T15:29:25Z]
 
 Build: Cinder's `num_divisors` (`cinder/builtins.py`, search `def
 _num_divisors`: counts divisors via a bounded `math.isqrt` sweep,

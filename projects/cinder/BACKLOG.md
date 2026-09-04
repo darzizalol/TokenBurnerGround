@@ -11,105 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `euler_totient` — count of integers up to n coprime with n [claimed 2026-09-04T14:28:26Z]
-
-Build: Cinder's number-theory builtins already include `prime_factors`
-(`cinder/builtins.py`, search `def _prime_factors`: trial-division
-factoring returning every prime factor with multiplicity, e.g.
-`prime_factors(12)` is `[2, 2, 3]`) and `gcd`/`is_coprime`, but nothing
-computes Euler's totient function — the count of integers in `1..n` that
-share no common factor with `n`, the building block `is_coprime` checks
-pairwise but has no aggregate counterpart. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(euler_totient(9));'
-# -> <eval>:1:7: undefined name 'euler_totient'
-```
-
-Worked examples: `euler_totient(9)` is `6` — of `1..9`, everything except
-the multiples of `3` (`3, 6, 9`) is coprime with `9`, leaving `1, 2, 4, 5,
-7, 8`. `euler_totient(1)` is `1` by convention (the empty product / only
-`1` itself, coprime with everything trivially). For any prime `p`,
-`euler_totient(p)` is `p - 1` (every smaller positive integer is
-coprime with a prime) — `euler_totient(13)` is `12`. `euler_totient(36)`
-is `12` (`36 = 2^2 * 3^2`, formula below gives `36 * (1/2) * (2/3) =
-12`). The standard closed form is `n * product over each distinct prime
-factor p of n of (1 - 1/p)`, computed here with pure integer arithmetic
-(no floats) by repeatedly dividing out one factor of exact multiplicity
-`result // p` at a time — the same "well-known, exact" shape as the
-textbook `phi(n)` sieve-free algorithm, not a novel derivation.
-
-Add to `cinder/builtins.py`, directly after `_prime_factors` (search `def
-_prime_factors`, immediately before `def _is_smith_number`) — keeps it
-grouped with the other prime-factorization-based builtins:
-```python
-def _euler_totient(arguments: list, line: int, column: int) -> object:
-    _require_arity("euler_totient", arguments, 1, line, column)
-    value = _require_int("euler_totient", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "euler_totient() requires a positive integer, domain error", line, column
-        )
-    result = value
-    remaining = value
-    divisor = 2
-    while divisor * divisor <= remaining:
-        if remaining % divisor == 0:
-            while remaining % divisor == 0:
-                remaining //= divisor
-            result -= result // divisor
-        divisor += 1
-    if remaining > 1:
-        result -= result // remaining
-    return result
-```
-(Each `result -= result // p` step is exact integer division precisely
-because `p` still divides `result` at that point — `result` starts as
-`n`, a multiple of every one of its own prime factors, and each step
-only removes factors for primes already confirmed to divide the
-original `n`.) Also register the new dict entry (search `"prime_factors":
-_prime_factors,`, add `"euler_totient": _euler_totient,` directly after
-it, before `"is_smith_number": _is_smith_number,`).
-
-Acceptance criteria:
-- `euler_totient(1);` is `1`, `euler_totient(9);` is `6` — the worked
-  examples above.
-- `euler_totient(2);`, `euler_totient(3);`, `euler_totient(13);` are `1,
-  2, 12` — every prime `p` gives `p - 1`.
-- `euler_totient(36);` is `12`, `euler_totient(100);` is `40` — further
-  worked examples confirming the multi-prime-factor case.
-- For every `n` in `1..100`, `euler_totient(n)` equals
-  `len([m for m in 1..n where is_coprime(m, n)])` computed independently
-  via a brute-force loop in the test itself (not calling
-  `euler_totient` to check itself) — a direct cross-check against the
-  function's own definition, the same shape `nth_abundant`'s test suite
-  uses to cross-check against `is_abundant`.
-- `euler_totient(0);`, `euler_totient(-9);` both raise
-  `CinderRuntimeError` matching `"euler_totient\(\) requires a positive
-  integer, domain error"`, matching `prime_factors`' own non-positive-
-  input convention.
-- `euler_totient(true);` raises `CinderRuntimeError` matching
-  `"euler_totient\(\) requires an int, got bool"`, since `_require_int`
-  rejects `bool` even though Cinder's `bool` is a Python `int` subclass
-  (same guard every other int-only predicate in this file already relies
-  on).
-- `euler_totient("9");` raises `CinderRuntimeError` matching
-  `"euler_totient\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_prime_factors`,
-search `def _prime_factors`), `tests/test_builtins.py` (new `class
-TestEulerTotient`, modeled on `class TestPrimeFactors`, search that
-name, for the test shapes above). Once merged, `README.md`'s Builtins
-bullet needs `euler_totient` added near `prime_factors`/`is_coprime`, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" section needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
+## 1. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
 
 Build: Cinder's `is_practical_number` (`cinder/builtins.py`, search `def
 _is_practical_number`: proper-divisor list, then a bounded 0/1 subset-sum
@@ -212,7 +114,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `is_refactorable` — divisor count divides the number itself
+## 2. Standard library: `is_refactorable` — divisor count divides the number itself
 
 Build: Cinder's `num_divisors` (`cinder/builtins.py`, search `def
 _num_divisors`: counts divisors via a bounded `math.isqrt` sweep,
@@ -312,7 +214,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: default values for whole-pattern destructuring function parameters
+## 3. Language: default values for whole-pattern destructuring function parameters
 
 Build: Cinder function parameters can already be a list-destructuring
 pattern (`fn f([a, b])`) or a map-destructuring pattern (`fn f({a, b})`),
@@ -496,7 +398,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
+## 4. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
 
 Build: `is_semiperfect` (`cinder/builtins.py`, search `def
 _is_semiperfect`: proper-divisor list, then a bounded 0/1 subset-sum
@@ -597,7 +499,7 @@ task.
 
 ---
 
-## 6. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
+## 5. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
 
 Build: Cinder's polygonal-number family already covers triangular
 (`is_triangular`/`nth_triangular`), pentagonal, hexagonal, heptagonal,

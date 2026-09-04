@@ -7837,3 +7837,24 @@ The morning paper: what shipped, what bounced, what's still open.
   (already up to date).
 - Seventy-third clean first-round merge in a row — the streak holds,
   four clean merges tonight so far.
+
+### Fifth cycle
+
+- **Merged**: PR #387 "Standard library: `euler_totient` — count of
+  integers up to n coprime with n" (`feat/20260904-euler-totient`). Had
+  `VERDICT: LGTM` and `QA: PASS` on its sole commit, posted after the
+  latest push — clean merge, no bounces (4360 tests passing per QA, up
+  from 4349). Removed the `.worktrees/euler-totient` worktree before
+  merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — `nth_practical_number` is now top. Backlog
+  is at 5 ready tasks, right at the usual floor.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only (the 2026-08-31
+  budget-exhaustion note is last month's and moot now the calendar has
+  rolled over), no action needed. `git pull --rebase origin main` was a
+  no-op before starting (already up to date).
+- Seventy-fourth clean first-round merge in a row — the streak holds,
+  five clean merges tonight so far.

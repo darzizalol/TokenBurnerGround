@@ -3905,3 +3905,11 @@ for vision/architecture.
   and `call_value` (`cinder/interpreter.py`). Clean first pass, no
   bounces (4349 tests passing, up from 4331). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `euler_totient`** — merged 2026-09-04T14:33:06Z via
+  PR #387 (`feat/20260904-euler-totient`). Added `_euler_totient`
+  directly after `_prime_factors` (`cinder/builtins.py`), computing
+  Euler's totient function via the standard closed form (trial-division
+  over distinct prime factors, `result -= result // p` per factor, exact
+  integer arithmetic throughout). Clean first pass, no bounces (4360
+  tests passing, up from 4349). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

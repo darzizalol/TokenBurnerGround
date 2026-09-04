@@ -2351,6 +2351,27 @@ def _is_harshad(arguments: list, line: int, column: int) -> object:
     return value % digit_total == 0
 
 
+def _nth_harshad(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_harshad", arguments, 1, line, column)
+    value = _require_int("nth_harshad", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_harshad() requires a positive integer, domain error", line, column
+        )
+
+    def _is_harshad_candidate(candidate: int) -> bool:
+        digit_total = sum(int(digit) for digit in str(candidate))
+        return candidate % digit_total == 0
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_harshad_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _integer_cube_root(magnitude: int) -> int:
     if magnitude == 0:
         return 0
@@ -4840,6 +4861,7 @@ _BUILTINS = {
     "is_kaprekar": _is_kaprekar,
     "nth_kaprekar": _nth_kaprekar,
     "is_harshad": _is_harshad,
+    "nth_harshad": _nth_harshad,
     "is_perfect_cube": _is_perfect_cube,
     "is_pronic": _is_pronic,
     "nth_pronic": _nth_pronic,

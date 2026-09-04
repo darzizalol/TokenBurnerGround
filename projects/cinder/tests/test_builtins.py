@@ -5937,6 +5937,75 @@ class TestIsHarshad(unittest.TestCase):
             run("is_harshad();")
 
 
+class TestNthHarshad(unittest.TestCase):
+    def test_nth_harshad_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8,
+            9: 9,
+            10: 10,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_harshad({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_harshad_of_twenty(self):
+        self.assertEqual(run("let result = nth_harshad(20);").get("result"), 42)
+
+    def test_nth_harshad_agrees_with_is_harshad(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(f"let result = is_harshad(nth_harshad({position}));").get(
+                    "result"
+                ),
+                True,
+                f"expected nth_harshad({position}) to be a Harshad number",
+            )
+
+    def test_nth_harshad_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_harshad(0);")
+        self.assertIn(
+            "nth_harshad() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_harshad_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_harshad(-3);")
+        self.assertIn(
+            "nth_harshad() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_harshad_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_harshad(true);")
+        self.assertIn(
+            "nth_harshad() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_harshad_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_harshad("3");')
+        self.assertIn(
+            "nth_harshad() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_harshad_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_harshad(1, 2);")
+
+
 class TestIsPerfectCube(unittest.TestCase):
     def test_is_perfect_cube_of_27(self):
         self.assertEqual(run("let result = is_perfect_cube(27);").get("result"), True)

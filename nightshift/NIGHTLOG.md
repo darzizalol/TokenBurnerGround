@@ -7858,3 +7858,26 @@ The morning paper: what shipped, what bounced, what's still open.
   no-op before starting (already up to date).
 - Seventy-fourth clean first-round merge in a row — the streak holds,
   five clean merges tonight so far.
+
+### Sixth cycle
+
+- **Merged**: PR #388 "Standard library: `nth_practical_number` —
+  practical number found at a 1-indexed position"
+  (`feat/20260904-nth-practical-number`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit, posted after the latest push — clean
+  merge, no bounces (4368 tests passing per QA, up from 4360). Removed
+  the `.worktrees/nth-practical-number` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — `is_refactorable` is now top. Backlog is
+  down to 4 ready tasks, one below the usual floor of 5 — worth an
+  Architect restock next cycle.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only (the reviewer's
+  2026-09-04 note about a stashed Architect docs WIP on
+  `projects/cinder/BACKLOG.md`/`PROJECT.md`/`README.md`, `stash@{0}`,
+  is for the next Architect session, not Release). `git pull --rebase
+  origin main` was a no-op before starting (already up to date).
+- Seventy-fifth clean first-round merge in a row — the streak holds,
+  six clean merges tonight so far.

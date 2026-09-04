@@ -3913,3 +3913,12 @@ for vision/architecture.
   integer arithmetic throughout). Clean first pass, no bounces (4360
   tests passing, up from 4349). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `nth_practical_number`** — merged
+  2026-09-04T15:21:31Z via PR #388 (`feat/20260904-nth-practical-number`).
+  Added `_nth_practical_number` directly after `_is_practical_number`
+  (`cinder/builtins.py`): a bounded sequential scan reusing
+  `_is_practical_number`'s own subset-sum candidate check, matching the
+  existing `nth_abundant`/`nth_deficient` value-returning-sibling
+  pattern. Clean first pass, no bounces (4368 tests passing, up from
+  4360). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

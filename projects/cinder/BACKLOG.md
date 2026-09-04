@@ -597,6 +597,118 @@ task.
 
 ---
 
+## 6. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
+
+Build: Cinder's polygonal-number family already covers triangular
+(`is_triangular`/`nth_triangular`), pentagonal, hexagonal, heptagonal,
+octagonal, and nonagonal (3- through 9-gonal, `cinder/builtins.py`,
+search `def _is_nonagonal`/`def _nth_nonagonal`, the last pair in the
+family) but stops one short of decagonal (10-gonal). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(is_decagonal(10));'
+# -> <eval>:1:7: undefined name 'is_decagonal' (did you mean 'is_octagonal'?)
+python3 -m cinder.cli eval 'print(nth_decagonal(5));'
+# -> <eval>:1:7: undefined name 'nth_decagonal' (did you mean 'nth_octagonal'?)
+```
+
+Worked examples: the first ten decagonal numbers (OEIS A001107) are `1,
+10, 27, 52, 85, 126, 175, 232, 297, 370` — the generalized polygonal
+formula for `s` sides is `P(s, n) = ((s - 2) * n^2 - (s - 4) * n) / 2`,
+which for `s = 10` simplifies to `P(10, n) = 4n^2 - 3n` (e.g. `n = 4`:
+`4 * 16 - 12 = 52`, matching the fourth term above). Every other family
+member already uses this same closed form (see `_nth_octagonal`'s
+`value * (3 * value - 2)`, `_nth_nonagonal`'s
+`value * (7 * value - 5) // 2`, both directly `P(s, n)` for their own
+`s`), and every `is_*gonal` predicate already inverts it via the
+quadratic formula, testing whether `8 * (s - 2) * x + (s - 4)^2` is a
+perfect square whose root satisfies a fixed modular condition — for
+`s = 10` that is `candidate = 16 * x + 9`, root must satisfy
+`(3 + root) % 8 == 0` (worked by hand from the same derivation
+`_is_octagonal`'s `3 * value + 1`/`(1 + root) % 3 == 0` and
+`_is_nonagonal`'s `56 * value + 25`/`(root + 5) % 14 == 0` already use
+for their own `s`).
+
+Add both directly after `_is_nonagonal`/`_nth_nonagonal` respectively
+(search `def _is_nonagonal`, immediately before `def _nth_triangular`;
+and search `def _nth_nonagonal`, immediately before `def _is_prime`) —
+keeps the new pair as the next member of the existing family, in the
+same triangular-through-nonagonal order:
+```python
+def _is_decagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_decagonal", arguments, 1, line, column)
+    value = _require_int("is_decagonal", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 16 * value + 9
+    root = math.isqrt(candidate)
+    return root * root == candidate and (root + 3) % 8 == 0
+```
+```python
+def _nth_decagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_decagonal", arguments, 1, line, column)
+    value = _require_int("nth_decagonal", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_decagonal() requires a positive integer, domain error", line, column
+        )
+    return value * (4 * value - 3)
+```
+Also register both new dict entries (search `"is_nonagonal":
+_is_nonagonal,`, add `"is_decagonal": _is_decagonal,` directly after
+it, before `"nth_triangular": _nth_triangular,`; search `"nth_nonagonal":
+_nth_nonagonal,`, add `"nth_decagonal": _nth_decagonal,` directly after
+it, before `"is_prime": _is_prime,`).
+
+Acceptance criteria:
+- `is_decagonal(1);`, `is_decagonal(10);`, `is_decagonal(27);`,
+  `is_decagonal(52);`, `is_decagonal(85);` are all `true` — the worked
+  examples above.
+- `is_decagonal(0);`, `is_decagonal(2);`, `is_decagonal(11);` are all
+  `false` — non-members between/around the worked examples.
+- `is_decagonal(-1);` is `false` — negative input is false outright, no
+  domain error, matching `is_nonagonal`'s own negative-input convention
+  (this is a total predicate, not a `nth_*` scan).
+- For every `k` in `1..100`, `is_decagonal(4 * k * k - 3 * k)` is `true`
+  — the same direct-construction cross-check `is_nonagonal`'s own test
+  suite runs (`k * (7 * k - 5) // 2` there), confirming the predicate
+  accepts every value the formula actually produces.
+- `nth_decagonal(1);` through `nth_decagonal(10);` are `1, 10, 27, 52,
+  85, 126, 175, 232, 297, 370` in order — the worked example above.
+- For every `position` in `1..50`, `is_decagonal(nth_decagonal(position))`
+  is `true` — the same self-consistency check `nth_practical_number`'s
+  test suite runs against `is_practical_number`.
+- `nth_decagonal(0);`, `nth_decagonal(-3);` both raise
+  `CinderRuntimeError` matching `"nth_decagonal\(\) requires a positive
+  integer, domain error"`, matching `nth_triangular`'s own
+  non-positive-input convention (every other `nth_*gonal` sibling raises
+  rather than returning a sentinel).
+- `is_decagonal(true);` / `nth_decagonal(true);` raise
+  `CinderRuntimeError` matching `"is_decagonal\(\) requires an int, got
+  bool"` / `"nth_decagonal\(\) requires an int, got bool"`, since
+  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
+  `int` subclass (same guard every other int-only predicate in this file
+  already relies on).
+- `is_decagonal(1.5);` / `nth_decagonal("5");` raise `CinderRuntimeError`
+  matching `"is_decagonal\(\) requires an int, got float"` /
+  `"nth_decagonal\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column, for both functions.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_nonagonal` and
+`_nth_nonagonal`, search either name), `tests/test_builtins.py` (new
+`class TestIsDecagonal` and `class TestNthDecagonal`, modeled on
+`class TestIsNonagonal`/`class TestNthNonagonal`, search either name,
+for the test shapes above). Once merged, `README.md`'s Builtins bullet
+needs `is_decagonal`/`nth_decagonal` added near
+`is_nonagonal`/`nth_nonagonal`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -392,7 +392,13 @@ while (i < 10) {
   name for recursion without depending on whatever outer binding it
   happens to be assigned to — the name is bound fresh into each call's own
   environment, not the enclosing scope, so it never leaks outside calls to
-  that specific function value
+  that specific function value; a bare `*` marker in a parameter list
+  forces every parameter after it to be keyword-only
+  (`fn greet(name, *, loud) { ... }` — `greet("Ada", loud: true)` works,
+  `greet("Ada", true)` raises an arity error since `loud` no longer
+  counts toward positional arity at all), combinable with a default
+  (`fn f(a, *, b = 1) { ... }`) but not with a following rest parameter
+  or another `*`, and only one `*` per parameter list
 - **Data structures**: lists `[1, 2, 3]` and maps `{"a": 1}`, `expr[expr]`
   indexing for get/set (negative indices supported for list/string reads
   and list writes), plus read-only string indexing, and slicing
@@ -699,38 +705,40 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_semiperfect` (PR #385,
-`is_semiperfect(12)` is `true`, via `{2, 4, 6}`), extracting the
-standalone pseudoperfect question `is_weird_number` already computed
-internally but never exposed on its own — `nth_deficient` (PR #384,
-`nth_deficient(1)` is `1`, `nth_deficient(20)` is `27`), the
-value-returning sibling `is_deficient`'s own bounded sequential-scan
-shape with the comparison flipped, mirroring `nth_abundant` — and map
-spread (`...m`) as keyword arguments in function calls (PR #383,
-`greet(...{"name": "Ada", "greeting": "yo"})`), the map-flavored
-sibling of list spread's existing positional-argument spreading,
-reusing the same order-independent keyword-argument machinery `f(a: 1,
-b: 2)` already had. See [`CHANGELOG.md`](CHANGELOG.md) for the full
-merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a `*` marker
-for keyword-only function parameters (`fn greet(name, *, loud) { ... }`
-forces `loud` to be passed as `greet("Ada", loud: true)`, never
-positionally) — `euler_totient`, the aggregate counterpart to
-`is_coprime` (count of integers up to `n` coprime with `n`), via the
-same trial-division factoring `prime_factors` already uses —
-`nth_practical_number`, the value-returning sibling `is_practical_number`
-itself was missing, the same bounded sequential scan
-`nth_abundant`/`nth_deficient` already use — `is_refactorable`, whether
-a number's own divisor count divides back into it (a.k.a. a tau
-number), the same "count something about n, then ask if it divides n"
-shape `is_harshad` already has for digit sum — default values for
-whole-pattern destructuring function parameters (`fn f([a, b] = [1, 2])
-{ ... }`, falling back to the whole default list/map when the argument
-is omitted entirely, not just per-entry inside the pattern the way
-`fn f([a, b = 10])` already can) — and `nth_semiperfect`, the
-value-returning sibling `is_semiperfect` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_deficient` already
-use.
+Actively developed, nightly. Recently landed: a `*` marker for
+keyword-only function parameters (PR #386, `fn greet(name, *, loud) {
+... }` forces `loud` to be passed as `greet("Ada", loud: true)`, never
+positionally) — `is_semiperfect` (PR #385, `is_semiperfect(12)` is
+`true`, via `{2, 4, 6}`), extracting the standalone pseudoperfect
+question `is_weird_number` already computed internally but never
+exposed on its own — `nth_deficient` (PR #384, `nth_deficient(1)` is
+`1`, `nth_deficient(20)` is `27`), the value-returning sibling
+`is_deficient`'s own bounded sequential-scan shape with the comparison
+flipped, mirroring `nth_abundant` — and map spread (`...m`) as keyword
+arguments in function calls (PR #383, `greet(...{"name": "Ada",
+"greeting": "yo"})`), the map-flavored sibling of list spread's
+existing positional-argument spreading, reusing the same
+order-independent keyword-argument machinery `f(a: 1, b: 2)` already
+had. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `euler_totient`, the
+aggregate counterpart to `is_coprime` (count of integers up to `n`
+coprime with `n`), via the same trial-division factoring
+`prime_factors` already uses — `nth_practical_number`, the
+value-returning sibling `is_practical_number` itself was missing, the
+same bounded sequential scan `nth_abundant`/`nth_deficient` already use
+— `is_refactorable`, whether a number's own divisor count divides back
+into it (a.k.a. a tau number), the same "count something about n, then
+ask if it divides n" shape `is_harshad` already has for digit sum —
+default values for whole-pattern destructuring function parameters
+(`fn f([a, b] = [1, 2]) { ... }`, falling back to the whole default
+list/map when the argument is omitted entirely, not just per-entry
+inside the pattern the way `fn f([a, b = 10])` already can) —
+`nth_semiperfect`, the value-returning sibling `is_semiperfect` itself
+was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_deficient` already use — and
+`is_decagonal`/`nth_decagonal`, the next member of the existing
+triangular-through-nonagonal polygonal-number family (10-gonal
+numbers), both closed-form like every other sibling in that family.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

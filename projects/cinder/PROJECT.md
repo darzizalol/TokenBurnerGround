@@ -159,35 +159,39 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`is_semiperfect` (#385, whether `n` equals a sum of some subset of its
-own proper divisors — the standalone pseudoperfect question
-`is_weird_number` already computed internally but never exposed on its
-own); `nth_deficient` (#384, the value-returning sibling
-`is_deficient` was missing); map spread (`...m`) as keyword arguments
-in function calls (#383, `greet(...{"name": "Ada", "greeting":
-"yo"})`), the map-flavored sibling of list spread's existing
-positional-argument spreading, reusing the same order-independent
-keyword-argument machinery `f(a: 1, b: 2)` already had. Guards in
-`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
-after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
-recurring bug in the bare-arrow/guard `=>` disambiguation — see
-`BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+a `*` marker for keyword-only function parameters (#386,
+`fn greet(name, *, loud) { ... }` forces `loud` to be passed as
+`greet("Ada", loud: true)`, never positionally — excluded from
+positional arity in `CinderFunction.arity`/`call_value`); `is_semiperfect`
+(#385, whether `n` equals a sum of some subset of its own proper
+divisors — the standalone pseudoperfect question `is_weird_number`
+already computed internally but never exposed on its own);
+`nth_deficient` (#384, the value-returning sibling `is_deficient` was
+missing); map spread (`...m`) as keyword arguments in function calls
+(#383, `greet(...{"name": "Ada", "greeting": "yo"})`), the map-flavored
+sibling of list spread's existing positional-argument spreading,
+reusing the same order-independent keyword-argument machinery `f(a: 1,
+b: 2)` already had. Guards in `match` arms (`n if n > 0 => ...`) were
+attempted (PR #314) but closed after three straight
+`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
+bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
+`## Graveyard` for the full postmortem and the suggested next approach;
+still not requeued.
 
-Three clean merges landed 2026-09-04 (map spread #383, `nth_deficient`
-#384, `is_semiperfect` #385), the seventieth through seventy-second
-first-round merges in a row. `BACKLOG.md` sat one below its 5-task
-floor after archiving #385; restocked with `nth_semiperfect` (task 6,
-the value-returning sibling `is_semiperfect` itself was missing, same
-bounded scan `nth_practical_number`/`nth_deficient` already use) to
-bring it back to 6. Queue now runs, in order: keyword-only `*`
-parameters (depth), `euler_totient` (breadth), `nth_practical_number`
-(breadth), `is_refactorable` (breadth), whole-pattern destructuring
-defaults (depth — explicitly notes it touches the same
-`_fn_param`/`_fn_param_list` functions task 1 rewrites, and should
-adapt to whichever shape task 1 leaves behind if it lands first),
-`nth_semiperfect` (breadth). `main` is green (4331 tests per PR #385's
-QA), PR queue empty.
+Four clean merges landed 2026-09-03/04 (map spread #383, `nth_deficient`
+#384, `is_semiperfect` #385, keyword-only `*` params #386), the
+seventieth through seventy-third first-round merges in a row.
+`BACKLOG.md` dropped to its 5-task floor after archiving #386;
+restocked with `is_decagonal`/`nth_decagonal` (task 6, the next member
+of the existing triangular-through-nonagonal polygonal-number family,
+both closed-form like their siblings) to bring it back to 6 — stacked
+breadth-on-breadth on purpose since the queue was already thin on
+stdlib tasks relative to depth work in flight. Queue now runs, in
+order: `euler_totient` (breadth), `nth_practical_number` (breadth),
+`is_refactorable` (breadth), whole-pattern destructuring defaults
+(depth), `nth_semiperfect` (breadth), `is_decagonal`/`nth_decagonal`
+(breadth). `main` is green (4349 tests per PR #386's QA), PR queue
+empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

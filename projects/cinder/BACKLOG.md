@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: hole elements and per-element default values in plain-assignment list destructuring
+## 1. Language: hole elements and per-element default values in plain-assignment list destructuring [claimed 2026-09-04T20:54:02Z]
 
 Build: `let [a, , c] = expr;` (a hole element, skipping a position) and
 `let [a, b = 5] = expr;` (a per-element default) both already work for

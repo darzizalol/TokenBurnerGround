@@ -643,6 +643,112 @@ task.
 
 ---
 
+## 6. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
+
+Build: `let`/`for`/function-param/comprehension list-destructuring patterns
+all accept a bare comma-comma hole to skip an unwanted position
+(`let [a, , c] = expr;` — see the README's "Variables & scope" bullet), but
+`match`'s own list patterns only offer the equivalent via an explicit `_`
+placeholder (`match ([1, 2, 3]) { [a, _, c] => a + c, _ => 0 }`, which
+already works today) — the bare comma spelling raises a `ParseError`
+instead of being treated the same way. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let r = match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }; print(r);'
+# -> <eval>:1:31: expected an identifier, '_', or a literal inside list pattern, found ','
+python3 -m cinder.cli eval 'let r = match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 }; print(r);'
+# -> <eval>:1:28: expected an identifier, '_', or a literal inside list pattern, found ','
+```
+
+Worked examples: `match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }` should
+evaluate to `4`, exactly like the already-working `[a, _, c]` spelling
+(confirmed: `match ([1, 2, 3]) { [a, _, c] => a + c, _ => 0 }` is already
+`4` today). `match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 }` (leading
+hole) should be `5`, exactly like `[_, b, c]` (confirmed already `5`
+today).
+
+Root cause and fix shape: `_match_list_pattern_entry` (search `def
+_match_list_pattern_entry`, `cinder/parser.py`) has no branch for a
+`COMMA` token — it falls straight to the final `else: raise ParseError`
+for anything that isn't an identifier/`_`/literal/nested pattern. The
+`let`-destructuring equivalent, `_destructure_list_pattern_entry` (search
+that name), already solves exactly this: its very first check is
+```python
+if self._check(TokenType.COMMA):
+    if seen_default:
+        raise _DestructurePatternCommittedError(...)
+    return None, None
+```
+— a comma at entry-parsing position, *without consuming it*, means "this
+slot is empty," and the caller's own comma-handling loop advances past it
+on the next iteration. Add the equivalent branch as the first check in
+`_match_list_pattern_entry`, right after its existing `token = self._peek()`
+line:
+```python
+if token.type == TokenType.COMMA:
+    if seen_default:
+        raise ParseError(
+            "element without a default value follows an element with "
+            "one in list pattern",
+            token.line,
+            token.column,
+        )
+    return None, None
+```
+Use plain `ParseError` here, not `_DestructurePatternCommittedError` —
+that marker class exists solely to survive `_assignment`'s speculative
+list-literal-vs-destructure-assign fallback (see PR #393's postmortem in
+`CHANGELOG.md`), and `_match_arm` (search `def _match_arm`) calls
+`_match_list_pattern` directly with no surrounding `try`/`except
+ParseError` to swallow it, so a plain `ParseError` already propagates
+uncaught — confirmed by every other error path already in this function
+(e.g. its own existing "element without a default value follows..." raise
+a few lines down) using plain `ParseError` too.
+
+No interpreter changes are needed at all: `_match_list_pattern_entry`'s
+`_` handling already produces the exact same `entry = None` value
+(search `entry = None if token.lexeme == "_" else token.lexeme`) that
+this task's hole branch also returns, so every consumer downstream
+(list-pattern binding, rest capture, nesting) already treats `None`
+generically as "match this position but bind nothing" — confirmed
+working today via `_` for wildcard-plus-rest (`match ([1,2,3,4]) { [a,
+_, ...rest] => rest, _ => 0 }` is already `[3, 4]`) and leading-wildcard
+(`match ([1,2,3]) { [_, b, c] => b + c, _ => 0 }` is already `5`).
+
+Acceptance criteria:
+- `match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }` is `4` — the first
+  worked example above.
+- `match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 }` is `5` — the leading
+  bare-hole worked example above.
+- `match ([1, 2, 3, 4]) { [a, , ...rest] => rest, _ => 0 }` is `[3, 4]`
+  — a bare hole composes with rest capture, mirroring the already-working
+  `_`-plus-rest case above.
+- `match ([1, [2, 3]]) { [a, [, c]] => a + c, _ => 0 }` is `4` — a bare
+  hole works inside a nested list pattern too.
+- `match ([1]) { [a = 1, ] => 0, _ => -1 }`-style ordering check:
+  `match ([1]) { [a = 1, , c] => 0, _ => -1 }` raises `ParseError`
+  matching `"element without a default value follows an element with one
+  in list pattern"` — a bare hole is "no default," so it still triggers
+  the existing ordering rule, exactly like a bare identifier would
+  (confirmed today: `[a = 1, _]` already raises the same message).
+- Regression: every existing `_`-wildcard test in
+  `tests/test_interpreter.py`/`tests/test_parser.py` (search `TestMatch`)
+  still passes unmodified — this task only adds a new accepted spelling,
+  it does not change `_`'s own behavior.
+- New tests in `tests/test_parser.py` and `tests/test_interpreter.py`
+  (search `class TestMatch` in each) covering every acceptance case
+  above, modeled on the existing `_`-wildcard match-pattern tests.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_list_pattern_entry`, search
+that name), `tests/test_parser.py`, `tests/test_interpreter.py` per the
+acceptance criteria above. Once merged, `README.md`'s `match` bullet
+needs a one-clause mention that list patterns also accept the bare hole
+spelling alongside `_`, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

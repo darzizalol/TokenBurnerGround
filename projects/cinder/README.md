@@ -73,15 +73,16 @@ while (i < 10) {
   combination, is supported), plus
   a hole element to skip an unwanted position (`let [a, , c] = expr;`,
   scoped to `let`, `for`, function params, and comprehension loop
-  variables, not the plain-assignment form), an optional trailing rest
+  variables, and also the plain-assignment form,
+  `[a, , c] = expr;`), an optional trailing rest
   element `let [a, b, ...rest] = expr;` that
   collects any remaining elements into a list, empty if none are left,
   and an optional default value per element `let [a, b = 5] = expr;`,
   used when the source list doesn't reach that position, evaluated
   left-to-right so a later default can see an earlier bound name, e.g.
   `let [a, b = a + 1] = [5];` binds `b` to `6`; scoped to `let`, `for`,
-  function params, and comprehension loop variables — the plain-assignment
-  form `[a, b] = expr;` does not support defaults) and
+  function params, comprehension loop variables, and the
+  plain-assignment form, e.g. `[a, b = 5] = [1];` binds `b` to `5`) and
   map destructuring (`let {a, b} = expr;`, binds each identifier by
   looking it up as a key, extra unnamed keys ignored, that may itself
   nest (`let {a, b: {c, d}} = {"a": 1, "b": {"c": 2, "d": 3}};`, to any
@@ -98,12 +99,14 @@ while (i < 10) {
   source map (a present-but-falsy value does not trigger it), evaluated
   in pattern order so a later default can see an earlier bound name,
   e.g. `let {a, b = a + 1} = {"a": 5};` binds `b` to `6`; combinable
-  with rename (`let {a: x = 5} = expr;`) and, unlike the list-pattern
-  version, supported on every map-pattern form including plain
-  assignment, since all five share one parser entry point), plus plain
+  with rename (`let {a: x = 5} = expr;`), supported on every map-pattern
+  form including plain assignment, since all five share one parser entry
+  point), plus plain
   assignment forms of both for already-declared bindings — list
-  (`[a, b] = expr;`, same flat positional binding and optional trailing
-  rest element as the `let` form, e.g. the swap idiom `[a, b] = [b, a];`)
+  (`[a, b] = expr;`, same flat positional binding, hole elements,
+  optional trailing rest element, and per-element defaults as the `let`
+  form, e.g. the swap idiom `[a, b] = [b, a];`, `[a, , c] = expr;`,
+  `[a, b = 5] = [1];`)
   and map (`{a, b} = expr;`, same key-lookup binding, rest element,
   per-key rename, and per-key default as the `let` form); every
   destructuring pattern form (`let`, `for`, function params, both
@@ -727,36 +730,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_decagonal`/`nth_decagonal`
-(PR #392, `is_decagonal(10)` is `true`), extending the
-triangular-through-nonagonal figurate-number family to its next member,
-10-gonal numbers, both closed-form like every other sibling in that
-family — and `nth_semiperfect` (PR #391, `nth_semiperfect(1)` is `6`),
-the value-returning sibling `is_semiperfect` itself was missing, the
-same bounded sequential scan `nth_practical_number`/`nth_deficient`
-already use. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
-history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): hole elements
-and per-element defaults in plain-assignment list destructuring (`[a, ,
-c] = expr;` skipping a position, `[a, b = 5] = expr;` falling back to a
-default when the source value is too short), closing the gap between
-that form and `let`-style list destructuring, which already supports
-both — `nth_harshad`, the value-returning sibling `is_harshad` itself
-was missing, the same bounded sequential scan `nth_abundant`/
-`nth_deficient` already use — destructuring patterns for `const`
-declarations (`const [a, b] = expr;`, `const {a, b} = expr;`, every
-bound name frozen), closing the gap between `let`, which already
-supports both destructuring forms, and `const`, which today accepts
-only a bare identifier — `nth_squarefree`, the value-returning sibling
-`is_squarefree` itself was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_harshad` already use — destructuring
-patterns for `try`/`catch` clauses (`catch ([a, b]) { ... }`, `catch
-({a, b}) { ... }`, pulling fields straight out of a thrown list/map the
-same way `let` already can, since `throw` accepts any Cinder value, not
-just a string), closing the gap between `catch`'s single-identifier-only
-binding and every other binding site in the language — and
-`nth_refactorable`, the value-returning sibling `is_refactorable` itself
+Actively developed, nightly. Recently landed: hole elements and
+per-element default values in plain-assignment list destructuring
+(PR #393, `[a, , c] = expr;` skipping a position, `[a, b = 5] = [1];`
+falling back to a default when the source value is too short), closing
+the gap between that form and `let`-style list destructuring, which
+already supported both — and `is_decagonal`/`nth_decagonal` (PR #392,
+`is_decagonal(10)` is `true`), extending the triangular-through-nonagonal
+figurate-number family to its next member, 10-gonal numbers, both
+closed-form like every other sibling in that family. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `nth_harshad`, the
+value-returning sibling `is_harshad` itself was missing, the same
+bounded sequential scan `nth_abundant`/`nth_deficient` already use —
+destructuring patterns for `const` declarations (`const [a, b] =
+expr;`, `const {a, b} = expr;`, every bound name frozen), closing the
+gap between `let`, which already supports both destructuring forms,
+and `const`, which today accepts only a bare identifier —
+`nth_squarefree`, the value-returning sibling `is_squarefree` itself
 was missing, the same bounded sequential scan `nth_practical_number`/
-`nth_semiperfect` already use. (Guards in `match`
+`nth_harshad` already use — destructuring patterns for `try`/`catch`
+clauses (`catch ([a, b]) { ... }`, `catch ({a, b}) { ... }`, pulling
+fields straight out of a thrown list/map the same way `let` already
+can, since `throw` accepts any Cinder value, not just a string),
+closing the gap between `catch`'s single-identifier-only binding and
+every other binding site in the language — `nth_refactorable`, the
+value-returning sibling `is_refactorable` itself was missing, the same
+bounded sequential scan `nth_practical_number`/`nth_semiperfect`
+already use — and a bare hole-element spelling (`[a, , c]`) in `match`
+list patterns, matching the already-working `_` placeholder spelling
+(`[a, _, c]`) with the same effect, closing the gap between `match`'s
+list patterns and every other destructuring site in the language, which
+already accept the bare comma-comma spelling. (Guards in `match`
 arms, `n if n > 0 => "positive"`, were attempted but closed after
 three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

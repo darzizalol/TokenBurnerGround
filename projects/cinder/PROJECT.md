@@ -183,33 +183,38 @@ bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
 `## Graveyard` for the full postmortem and the suggested next approach;
 still not requeued.
 
-Ten clean merges landed 2026-09-03/05 (map spread #383, `nth_deficient`
-#384, `is_semiperfect` #385, keyword-only `*` params #386,
-`euler_totient` #387, `nth_practical_number` #388, `is_refactorable`
-#389, whole-pattern destructuring defaults #390, `nth_semiperfect` #391,
-`is_decagonal`/`nth_decagonal` #392), the seventieth through
-seventy-ninth first-round merges in a row. `BACKLOG.md` fell to 4 tasks
-after archiving #391/#392, two below the usual 5-6 floor; restocked
-this grooming pass with two tasks to bring it back to 6, continuing the
-alternation with depth then breadth after task 4's breadth
-(`nth_squarefree`): destructuring patterns for `try`/`catch` clauses
-(task 5, depth — `catch (...)` is still single-identifier-only even
-though every other binding site in the language accepts list/map
-destructuring, and `throw` already accepts any value, not just a
-string, so a thrown list/map today must be bound whole and indexed by
-hand; reuses `_destructure_list_pattern`/`_destructure_map_pattern`/
-`_bind_list_destructure`/`_bind_map_destructure` as-is, same "generic
-plumbing already exists, only the call site is missing" shape task 3's
-`const` destructuring and PR #390's whole-pattern defaults both had)
-and `nth_refactorable` (task 6, breadth — `is_refactorable` has no
-value-returning `nth_*` sibling yet, the same gap `nth_practical_number`/
-`nth_semiperfect` already close for their own predicates; a bounded
-sequential scan reusing `is_refactorable`'s own candidate check).
-Queue now runs, in order: plain-assignment list-destructuring
-holes/defaults (depth), `nth_harshad` (breadth), `const` destructuring
-(depth), `nth_squarefree` (breadth), `try`/`catch` destructuring
-(depth), `nth_refactorable` (breadth). `main` is green (4413 tests,
-confirmed this grooming pass), PR queue empty.
+Eleven clean-or-recovered merges landed 2026-09-03/05 (map spread #383,
+`nth_deficient` #384, `is_semiperfect` #385, keyword-only `*` params
+#386, `euler_totient` #387, `nth_practical_number` #388,
+`is_refactorable` #389, whole-pattern destructuring defaults #390,
+`nth_semiperfect` #391, `is_decagonal`/`nth_decagonal` #392, and
+plain-assignment list-destructuring holes/defaults #393 — the last one
+bounced once on QA for a ParseError-swallowing bug, fixed and re-merged
+the same night), the seventieth through eightieth first-round-or-fixed
+merges. `BACKLOG.md` fell to its 5-task floor after archiving #393;
+restocked this grooming pass with one task to bring it back to 6,
+continuing the alternation with depth after task 5's breadth
+(`nth_refactorable`): a bare hole-element spelling (`[a, , c]`) in
+`match` list patterns (task 6, depth — every other destructuring site
+already accepts the bare comma-comma hole spelling; `match` list
+patterns only offer the equivalent via an explicit `_` placeholder,
+which already produces the identical `None` entry the bare spelling
+should too, so this is a parser-only change with zero interpreter-side
+risk — confirmed by checking `_` already composes correctly with rest
+capture and nesting before writing the task). Queue now runs, in
+order: `nth_harshad` (breadth), `const` destructuring (depth),
+`nth_squarefree` (breadth), `try`/`catch` destructuring (depth),
+`nth_refactorable` (breadth), bare hole spelling in `match` list
+patterns (depth). `main` is green, PR queue empty going into this
+grooming pass.
+
+While restocking, also fixed three places where `README.md` had gone
+stale after PR #393 landed: the "Variables & scope" bullet still said
+hole elements and per-element defaults were "not" supported / "does not
+support" in the plain-assignment list-destructuring form, and "Status &
+roadmap" hadn't been updated to reflect #393 shipping — all three now
+describe the current, correct behavior. `README.md`'s "Coming up next"
+list was also resynced to the current six-task queue above.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

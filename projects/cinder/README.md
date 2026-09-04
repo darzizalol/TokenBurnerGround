@@ -590,6 +590,13 @@ while (i < 10) {
   a tau number, e.g. `8` has 4 divisors and `8 % 4 == 0`), the same "count something about `n`,
   then ask if it divides `n`" shape `is_harshad` already has for digit sum, applied to divisor
   count instead,
+  `nth_semiperfect` to return the semiperfect number found at a 1-indexed position via a bounded
+  sequential scan reusing `is_semiperfect`'s own subset-sum reachability check, the value-returning
+  sibling `is_semiperfect` itself was missing,
+  `is_decagonal` to test 10-gonal-number membership via the same closed-form quadratic-formula
+  reachability check every other `is_*gonal` predicate uses, and `nth_decagonal` to return the
+  10-gonal number found at a 1-indexed position via the closed form `P(10, n) = 4n^2 - 3n`, together
+  extending the triangular-through-nonagonal figurate-number cluster to its next member,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
@@ -720,39 +727,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: default values for
-whole-pattern destructuring function parameters (PR #390,
-`fn f([a, b] = [1, 2]) { ... }` falls back to the whole default
-list/map when the argument is omitted entirely, not just per-entry
-inside the pattern the way `fn f([a, b = 10])` already could) —
-`is_refactorable` (PR #389, `is_refactorable(8)` is `true`), whether a
-number's own divisor count divides back into it (a.k.a. a tau number),
-the same "count something about n, then ask if it divides n" shape
-`is_harshad` already has for digit sum — and `nth_practical_number`
-(PR #388, `nth_practical_number(1)` is `1`), the value-returning
-sibling `is_practical_number` itself was missing, the same bounded
-sequential scan `nth_abundant`/`nth_deficient` already use. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_semiperfect`, the
-value-returning sibling `is_semiperfect` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_deficient` already
-use — `is_decagonal`/`nth_decagonal`, the next member of the existing
-triangular-through-nonagonal polygonal-number family (10-gonal
-numbers), both closed-form like every other sibling in that family —
-hole elements and per-element defaults in plain-assignment list
-destructuring (`[a, , c] = expr;` skipping a position, `[a, b = 5] =
-expr;` falling back to a default when the source value is too short),
-closing the gap between that form and `let`-style list destructuring,
-which already supports both — `nth_harshad`, the value-returning
-sibling `is_harshad` itself was missing, the same bounded sequential
-scan `nth_abundant`/`nth_deficient` already use — destructuring
-patterns for `const` declarations (`const [a, b] = expr;`, `const {a,
-b} = expr;`, every bound name frozen), closing the gap between `let`,
-which already supports both destructuring forms, and `const`, which
-today accepts only a bare identifier — and `nth_squarefree`, the
-value-returning sibling `is_squarefree` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_harshad` already
-use. (Guards in `match`
+Actively developed, nightly. Recently landed: `is_decagonal`/`nth_decagonal`
+(PR #392, `is_decagonal(10)` is `true`), extending the
+triangular-through-nonagonal figurate-number family to its next member,
+10-gonal numbers, both closed-form like every other sibling in that
+family — and `nth_semiperfect` (PR #391, `nth_semiperfect(1)` is `6`),
+the value-returning sibling `is_semiperfect` itself was missing, the
+same bounded sequential scan `nth_practical_number`/`nth_deficient`
+already use. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
+history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): hole elements
+and per-element defaults in plain-assignment list destructuring (`[a, ,
+c] = expr;` skipping a position, `[a, b = 5] = expr;` falling back to a
+default when the source value is too short), closing the gap between
+that form and `let`-style list destructuring, which already supports
+both — `nth_harshad`, the value-returning sibling `is_harshad` itself
+was missing, the same bounded sequential scan `nth_abundant`/
+`nth_deficient` already use — destructuring patterns for `const`
+declarations (`const [a, b] = expr;`, `const {a, b} = expr;`, every
+bound name frozen), closing the gap between `let`, which already
+supports both destructuring forms, and `const`, which today accepts
+only a bare identifier — `nth_squarefree`, the value-returning sibling
+`is_squarefree` itself was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_harshad` already use — destructuring
+patterns for `try`/`catch` clauses (`catch ([a, b]) { ... }`, `catch
+({a, b}) { ... }`, pulling fields straight out of a thrown list/map the
+same way `let` already can, since `throw` accepts any Cinder value, not
+just a string), closing the gap between `catch`'s single-identifier-only
+binding and every other binding site in the language — and
+`nth_refactorable`, the value-returning sibling `is_refactorable` itself
+was missing, the same bounded sequential scan `nth_practical_number`/
+`nth_semiperfect` already use. (Guards in `match`
 arms, `n if n > 0 => "positive"`, were attempted but closed after
 three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

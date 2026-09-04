@@ -577,6 +577,253 @@ grooming pass, not this task.
 
 ---
 
+## 5. Language: destructuring patterns for `try`/`catch` clauses
+
+Build: `let`/`for`/function params/comprehension loop variables all accept
+list- and map-destructuring patterns (with rest, per-key rename, defaults,
+holes, and nesting — see the README's "Variables & scope" bullet), but
+`catch (...)` only ever accepts a single plain identifier or nothing at
+all. Since `throw` can raise any Cinder value, not just a string (`throw
+{"code": 404};`, `throw [1, 2];` — see the README's Control flow bullet),
+catch handlers that want to pull fields out of a thrown list/map today
+must bind the whole value under one name and manually index into it.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'try { throw [1, 2]; } catch ([a, b]) { print(a); print(b); }'
+# -> <eval>:1:29: expected identifier after 'catch (', found '['
+python3 -m cinder.cli eval 'try { throw {"a": 1, "b": 2}; } catch ({a, b}) { print(a); print(b); }'
+# -> <eval>:1:40: expected identifier after 'catch (', found '{'
+```
+
+Root cause: `_try_statement` (search `def _try_statement`,
+`cinder/parser.py`) only ever calls `self._consume(TokenType.IDENTIFIER,
+"identifier after 'catch ('")` inside the `catch (...)` branch — it never
+checks for a leading `[`/`{` the way `_let_statement`/`_for_statement`
+already do. The pattern-parsing machinery itself needs no changes:
+`_destructure_list_pattern`/`_destructure_map_pattern` (search either
+name) already produce the `(names, rest)` shape every other destructuring
+site consumes, and `_bind_list_destructure`/`_bind_map_destructure`
+(`cinder/interpreter.py`, search either name) already bind that shape
+into an `Environment` generically — they don't know or care that the
+value being destructured came from a caught error rather than a `let`
+initializer or a `for`-loop iterable.
+
+`TryStmt` (search `class TryStmt` in `cinder/ast_nodes.py`) needs three
+new fields, each defaulted so every existing plain-identifier/nameless
+`TryStmt` is unaffected:
+```python
+catch_names: "list | None" = None
+catch_rest: "str | None" = None
+catch_is_map: bool = False
+```
+Change the `catch (...)` branch of `_try_statement` (search `def
+_try_statement`) to try a pattern first:
+```python
+if self._check(TokenType.LPAREN):
+    self._advance()
+    if self._check(TokenType.LBRACKET):
+        catch_names, catch_rest = self._destructure_list_pattern()
+    elif self._check(TokenType.LBRACE):
+        catch_names, catch_rest = self._destructure_map_pattern()
+        catch_is_map = True
+    else:
+        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
+        catch_name = name_token.lexeme
+    self._consume(TokenType.RPAREN, "')' after catch name")
+```
+(`catch_names = None`, `catch_rest = None`, `catch_is_map = False`,
+`catch_name = None` need declaring above this block, same as the
+existing `catch_name = None` initialization already does today — only
+the body of the `if self._check(TokenType.LPAREN):` branch changes.)
+Thread the three new fields into the `TryStmt(...)` construction at the
+bottom of the method alongside the existing `catch_name`.
+
+In `cinder/interpreter.py`, `_execute_try`'s catch branch (search `def
+_execute_try`) currently does:
+```python
+catch_env = Environment(env)
+if stmt.catch_name is not None:
+    catch_env.define(stmt.catch_name, error.value)
+```
+Extend it to check the pattern fields first:
+```python
+catch_env = Environment(env)
+if stmt.catch_names is not None:
+    if stmt.catch_is_map:
+        self._bind_map_destructure(
+            catch_env, stmt.catch_names, stmt.catch_rest, error.value,
+            stmt.line, stmt.column,
+        )
+    else:
+        self._bind_list_destructure(
+            catch_env, stmt.catch_names, stmt.catch_rest, error.value,
+            stmt.line, stmt.column,
+        )
+elif stmt.catch_name is not None:
+    catch_env.define(stmt.catch_name, error.value)
+```
+No change needed to `_bind_list_destructure`/`_bind_map_destructure`
+themselves — a non-list/non-map `error.value` against a destructuring
+catch pattern (e.g. `catch ([a]) { }` when the thrown value was an int)
+should raise `CinderRuntimeError` exactly the way it already does for a
+`let`/`for` mismatch (`"cannot destructure int as a list"`), and since
+that raise happens inside the same `except CinderRuntimeError as error:`
+block rather than a nested `try`, it propagates uncaught — consistent
+with the existing `test_error_raised_inside_catch_block_is_not_re_caught`
+precedent (an error while entering/running the catch handler is never
+silently re-caught by its own `try`).
+
+Acceptance criteria:
+- `try { throw [1, 2]; } catch ([a, b]) { print(a); print(b); }` prints
+  `1` then `2` — the list worked example above.
+- `try { throw {"a": 1, "b": 2}; } catch ({a, b}) { print(a); print(b); }`
+  prints `1` then `2` — the map worked example above.
+- `try { throw [1, 2, 3]; } catch ([a, ...rest]) { print(rest); }` prints
+  `[2, 3]` — rest capture works in a catch pattern.
+- `try { throw {"a": 1}; } catch ({a, b = 5}) { print(b); }` prints `5`
+  — per-key default works in a catch pattern.
+- `try { throw {"a": 1}; } catch ({a: x}) { print(x); }` prints `1` —
+  per-key rename works in a catch pattern.
+- `try { throw 5; } catch ([a]) { }` raises `CinderRuntimeError` matching
+  `"cannot destructure int as a list"`, uncaught by its own `try` —
+  regression coverage matching `test_error_raised_inside_catch_block_is_not_re_caught`'s
+  style, confirming a pattern/value mismatch during binding propagates
+  rather than being silently swallowed.
+- Regression: `try { let x = 1 / 0; } catch (e) { ... }` (plain
+  identifier) and `try { let x = 1 / 0; } catch { ... }` (nameless) both
+  still behave exactly as before — every existing test in
+  `TestTryCatch`/`TestTryFinally` (`tests/test_interpreter.py`) and
+  `TestTryCatch` (`tests/test_parser.py`) still passes unmodified.
+- Catch pattern bindings are scoped to the catch block only, same as a
+  plain catch name — `try { throw [1]; } catch ([a]) {} a;` raises
+  `CinderRuntimeError` (undefined name), matching
+  `test_catch_name_not_visible_after_try_catch`'s style.
+- New tests in `tests/test_interpreter.py`: add to `class TestTryCatch`
+  (search that name), covering every acceptance case above.
+- New tests in `tests/test_parser.py`: parse-shape tests for
+  `try {} catch ([a, b]) {}` and `try {} catch ({a, b}) {}` asserting
+  `catch_names`/`catch_rest`/`catch_is_map` directly on the parsed
+  `TryStmt` node, the same "assert the new field directly rather than
+  extending the fixed-shape tuple" choice task 3's `const`-destructure
+  work already made for `DestructureLetStmt`'s `is_const` field — `shape()`'s
+  existing `TryStmt` tuple (search `"TryStmt"`) is a fixed 5-element shape
+  asserted by roughly six existing tests and only reads `catch_name`
+  (which stays `None` for a destructuring catch), so extending it is
+  unnecessary churn for fields this task can verify more narrowly.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_try_statement`, search `def
+_try_statement` — while there, the method's grammar-summary docstring
+comment near the top of the file, search `catch (IDENTIFIER)`, is worth
+a one-line fix too: it currently claims "the parenthesized catch name is
+required", which was already stale before this task since nameless
+`catch { ... }` has worked for a while — feel free to correct it in
+passing, but it's not this task's acceptance bar), `cinder/ast_nodes.py`
+(`class TryStmt`), `cinder/interpreter.py` (`_execute_try`, search that
+name — no changes needed to `_bind_list_destructure`/
+`_bind_map_destructure` themselves), `tests/test_parser.py`,
+`tests/test_interpreter.py` per the acceptance criteria above. Once
+merged, `README.md`'s Control flow bullet needs a mention that `catch`
+now accepts the same destructuring patterns as `let`, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
+## 6. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
+
+Build: `is_refactorable` (`cinder/builtins.py`, search `def
+_is_refactorable`: whether `n`'s own divisor count divides back into
+`n`, e.g. `8` has 4 divisors and `8 % 4 == 0`) has no value-returning
+`nth_*` sibling, the same gap `nth_practical_number`/`nth_semiperfect`
+already closed for their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_refactorable(1));'
+# -> <eval>:1:7: undefined name 'nth_refactorable' (did you mean
+#    'is_refactorable'?)
+```
+
+Worked examples: the first ten refactorable numbers are `1, 2, 8, 9, 12,
+18, 24, 36, 40, 56` (`1` is trivially refactorable — `_is_refactorable`
+special-cases it to `True` — and `2` has 2 divisors, `2 % 2 == 0`), so
+`nth_refactorable(1)` is `1` and `nth_refactorable(10)` is `56`. The 20th
+is `132`.
+
+Add directly after `_is_refactorable` (search `def _is_refactorable`,
+immediately before `def _is_amicable`):
+```python
+def _nth_refactorable(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_refactorable", arguments, 1, line, column)
+    value = _require_int("nth_refactorable", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_refactorable() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_refactorable_candidate(candidate: int) -> bool:
+        if candidate == 1:
+            return True
+        count = 2
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                count += 1
+                complement = candidate // divisor
+                if complement != divisor:
+                    count += 1
+        return candidate % count == 0
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_refactorable_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_practical_number`/`_nth_semiperfect`, with the
+inner candidate check copied from `_is_refactorable`'s own body instead
+of calling `_is_refactorable` directly — the same "duplicate the tiny
+predicate body instead of a redundant `_require_arity`/`_require_int`
+round-trip per candidate" choice `_nth_harshad`/`_nth_squarefree` (tasks
+2 and 4 above) already make.) Register the new dict entry (search
+`"is_refactorable": _is_refactorable,`, add `"nth_refactorable":
+_nth_refactorable,` directly after it).
+
+Acceptance criteria:
+- `nth_refactorable(1);` through `nth_refactorable(10);` are `1, 2, 8, 9,
+  12, 18, 24, 36, 40, 56` in order — the worked example above.
+- `nth_refactorable(20);` is `132` — a further worked example confirming
+  the scan scales past the first ten.
+- For every `position` in `1..50`, `is_refactorable(nth_refactorable(position))`
+  is `true` — the same self-consistency check `nth_practical_number`/
+  `nth_semiperfect`'s own test suites already run against their
+  predicates.
+- `nth_refactorable(0);`, `nth_refactorable(-3);` both raise
+  `CinderRuntimeError` matching `"nth_refactorable\(\) requires a
+  positive integer, domain error"`.
+- `nth_refactorable(true);` raises `CinderRuntimeError` matching
+  `"nth_refactorable\(\) requires an int, got bool"`.
+- `nth_refactorable("5");` raises `CinderRuntimeError` matching
+  `"nth_refactorable\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_refactorable`,
+search `def _is_refactorable`), `tests/test_builtins.py` (new `class
+TestNthRefactorable`, modeled on `class TestNthPracticalNumber`/`class
+TestNthSemiperfect`, search either name, for the test shapes above —
+place it near the existing `class TestIsRefactorable`, search that
+name). Once merged, `README.md`'s Builtins bullet needs `nth_refactorable`
+added near `is_refactorable`, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

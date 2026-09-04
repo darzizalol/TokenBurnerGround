@@ -159,6 +159,14 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
+`is_decagonal`/`nth_decagonal` (#392, extending the
+triangular-through-nonagonal figurate-number family to 10-gonal numbers,
+both closed-form like every other sibling — `_nth_decagonal` via
+`P(10, n) = 4n^2 - 3n`, `_is_decagonal` via the same quadratic-formula
+reachability check every other `is_*gonal` predicate uses);
+`nth_semiperfect` (#391, the value-returning sibling `is_semiperfect`
+was missing — a bounded sequential scan reusing `is_semiperfect`'s own
+subset-sum candidate check, identical shape to `nth_practical_number`);
 default values for whole-pattern destructuring function parameters
 (#390, `fn f([a, b] = [1, 2]) { ... }` falls back to the whole default
 list/map when the argument is omitted entirely — reused
@@ -168,37 +176,40 @@ handled a defaulted destructuring `Param` correctly and only the
 parser rejected the syntax); `is_refactorable` (#389, whether an
 integer's own divisor count divides back into it, a.k.a. a tau number
 — the same "count something about `n`, then ask if it divides `n`"
-shape `is_harshad` already has for digit sum); `nth_practical_number`
-(#388, the value-returning sibling `is_practical_number` was missing —
-the same "find the n-th number satisfying a bounded numeric predicate"
-shape `nth_abundant`/`nth_deficient` already established); `euler_totient`
-(#387, count of integers up to `n` coprime with `n`, the aggregate
-counterpart to `is_coprime` via the same trial-division factoring
-`prime_factors` already uses). Guards in `match` arms (`n if n > 0 =>
-...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
-for the full postmortem and the suggested next approach; still not
-requeued.
+shape `is_harshad` already has for digit sum). Guards in `match` arms
+(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
+straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
+bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
+`## Graveyard` for the full postmortem and the suggested next approach;
+still not requeued.
 
-Eight clean merges landed 2026-09-03/04 (map spread #383,
-`nth_deficient` #384, `is_semiperfect` #385, keyword-only `*` params
-#386, `euler_totient` #387, `nth_practical_number` #388,
-`is_refactorable` #389, whole-pattern destructuring defaults #390),
-the seventieth through seventy-seventh first-round merges in a row.
-`BACKLOG.md` fell to 5 tasks after archiving #390, right at the floor;
-restocked this grooming pass with one task to bring it back to 6:
-`nth_squarefree` (task 6, breadth — `is_squarefree` has no
+Ten clean merges landed 2026-09-03/05 (map spread #383, `nth_deficient`
+#384, `is_semiperfect` #385, keyword-only `*` params #386,
+`euler_totient` #387, `nth_practical_number` #388, `is_refactorable`
+#389, whole-pattern destructuring defaults #390, `nth_semiperfect` #391,
+`is_decagonal`/`nth_decagonal` #392), the seventieth through
+seventy-ninth first-round merges in a row. `BACKLOG.md` fell to 4 tasks
+after archiving #391/#392, two below the usual 5-6 floor; restocked
+this grooming pass with two tasks to bring it back to 6, continuing the
+alternation with depth then breadth after task 4's breadth
+(`nth_squarefree`): destructuring patterns for `try`/`catch` clauses
+(task 5, depth — `catch (...)` is still single-identifier-only even
+though every other binding site in the language accepts list/map
+destructuring, and `throw` already accepts any value, not just a
+string, so a thrown list/map today must be bound whole and indexed by
+hand; reuses `_destructure_list_pattern`/`_destructure_map_pattern`/
+`_bind_list_destructure`/`_bind_map_destructure` as-is, same "generic
+plumbing already exists, only the call site is missing" shape task 3's
+`const` destructuring and PR #390's whole-pattern defaults both had)
+and `nth_refactorable` (task 6, breadth — `is_refactorable` has no
 value-returning `nth_*` sibling yet, the same gap `nth_practical_number`/
-`nth_harshad` already close or are about to close for their own
-predicates; a bounded sequential scan reusing `is_squarefree`'s own
-candidate check, identical shape to `nth_practical_number`/`nth_harshad`),
-continuing the alternation with a breadth task after task 5's depth
-(`const` destructuring). Queue now runs, in order: `nth_semiperfect`
-(breadth), `is_decagonal`/`nth_decagonal` (breadth), plain-assignment
-list-destructuring holes/defaults (depth), `nth_harshad` (breadth),
-`const` destructuring (depth), `nth_squarefree` (breadth). `main` is
-green (4389 tests, confirmed this grooming pass), PR queue empty.
+`nth_semiperfect` already close for their own predicates; a bounded
+sequential scan reusing `is_refactorable`'s own candidate check).
+Queue now runs, in order: plain-assignment list-destructuring
+holes/defaults (depth), `nth_harshad` (breadth), `const` destructuring
+(depth), `nth_squarefree` (breadth), `try`/`catch` destructuring
+(depth), `nth_refactorable` (breadth). `main` is green (4413 tests,
+confirmed this grooming pass), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

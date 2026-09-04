@@ -3922,3 +3922,14 @@ for vision/architecture.
   pattern. Clean first pass, no bounces (4368 tests passing, up from
   4360). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `is_refactorable`** — merged 2026-09-04T15:34:42Z
+  via PR #389 (`feat/20260904-is-refactorable`). Added
+  `_is_refactorable` directly after `_num_divisors` (`cinder/builtins.py`):
+  duplicates `_num_divisors`'s own bounded `math.isqrt` counting loop
+  (same "duplicate the small counting block" tradeoff `_is_semiperfect`/
+  `_is_weird_number` already made) and checks whether that divisor count
+  divides back into the original number, mirroring `is_harshad`'s
+  "count something about n, then ask if it divides n" shape for divisor
+  count instead of digit sum. Clean first pass, no bounces (4384 tests
+  passing, up from 4368). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

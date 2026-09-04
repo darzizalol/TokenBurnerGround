@@ -11,107 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `is_refactorable` — divisor count divides the number itself [claimed 2026-09-04T15:29:25Z]
-
-Build: Cinder's `num_divisors` (`cinder/builtins.py`, search `def
-_num_divisors`: counts divisors via a bounded `math.isqrt` sweep,
-pairing each divisor found up to the square root with its complement)
-has no predicate built on top of it that asks whether that count itself
-divides back into the original number — the same "count something about
-n, then ask if it divides n" shape `is_harshad` already has for digit
-sum, just for divisor count instead. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_refactorable(12));'
-# -> <eval>:1:7: undefined name 'is_refactorable'
-```
-
-Worked examples (refactorable numbers, a.k.a. tau numbers, OEIS
-A033950): `1` is refactorable by convention (`num_divisors(1)` is `1`,
-and `1 % 1` is `0`). `8`'s divisors are `1, 2, 4, 8` — `num_divisors(8)`
-is `4`, and `8 % 4` is `0`, so `8` is refactorable. `9`'s divisors are
-`1, 3, 9` — `num_divisors(9)` is `3`, and `9 % 3` is `0`, refactorable.
-`12`'s divisors are `1, 2, 3, 4, 6, 12` — `num_divisors(12)` is `6`,
-and `12 % 6` is `0`, refactorable. Contrast `6`: divisors `1, 2, 3, 6`,
-`num_divisors(6)` is `4`, and `6 % 4` is `2 != 0` — not refactorable,
-even though `6` is a perfect number, showing refactorable-ness is
-unrelated to perfection/abundance. The first ten refactorable numbers
-are `1, 2, 8, 9, 12, 18, 24, 36, 40, 56`.
-
-Add to `cinder/builtins.py`, directly after `_num_divisors` (search `def
-_num_divisors`, immediately before `def _is_amicable`) — keeps it next
-to the divisor-count builtin it mirrors the shape of:
-```python
-def _is_refactorable(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_refactorable", arguments, 1, line, column)
-    value = _require_int("is_refactorable", arguments[0], line, column)
-    if value < 1:
-        return False
-    if value == 1:
-        return True
-    count = 2  # 1 and value itself
-    for divisor in range(2, math.isqrt(value) + 1):
-        if value % divisor == 0:
-            count += 1
-            complement = value // divisor
-            if complement != divisor:
-                count += 1
-    return value % count == 0
-```
-(Duplicates `_num_divisors`'s own counting loop rather than calling it —
-`_num_divisors` takes the interpreter-facing `arguments`/`line`/`column`
-signature and returns a validated result, not a plain int helper other
-builtins can call directly; the same "duplicate the small counting
-block" tradeoff `_is_semiperfect`/`_is_weird_number` already made, and
-is fine for the same reason: factoring a shared helper is out of scope
-for this task and not requested.) Also register the new dict entry
-(search `"num_divisors": _num_divisors,`, add `"is_refactorable":
-_is_refactorable,` directly after it, before `"is_amicable":
-_is_amicable,`).
-
-Acceptance criteria:
-- `is_refactorable(1);`, `is_refactorable(8);`, `is_refactorable(9);`,
-  `is_refactorable(12);`, `is_refactorable(18);`, `is_refactorable(24);`
-  are all `true` — the worked examples above plus further OEIS A033950
-  terms.
-- `is_refactorable(6);`, `is_refactorable(3);`, `is_refactorable(5);`,
-  `is_refactorable(7);` are all `false` — `6`'s contrast above (a
-  perfect number that is still not refactorable) plus primes, whose
-  divisor count is always `2` and so only divide back in when the
-  prime itself is `2`.
-- For every `n` in `1..100`, `is_refactorable(n)` equals `n %
-  num_divisors(n) == 0` computed independently in the test itself
-  (calling both builtins, not reimplementing either) — a direct
-  cross-check against the definition, the same shape `nth_abundant`'s
-  test suite uses to cross-check against `is_abundant`.
-- `is_refactorable(0);`, `is_refactorable(-8);` are both `false` —
-  non-positive numbers return `false` outright, matching
-  `is_weird_number`'s own non-positive guard convention (no domain
-  error, since refactorable-ness is a total predicate over all integers
-  under this convention, not restricted to positive ones the way
-  `nth_*` scans are).
-- `is_refactorable(true);` raises `CinderRuntimeError` matching
-  `"is_refactorable\(\) requires an int, got bool"`, since
-  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
-  `int` subclass (same guard every other int-only predicate in this
-  file already relies on).
-- `is_refactorable("8");` raises `CinderRuntimeError` matching
-  `"is_refactorable\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_num_divisors`,
-search `def _num_divisors`), `tests/test_builtins.py` (new `class
-TestIsRefactorable`, modeled on `class TestIsHarshad`, search that
-name, for the test shapes above). Once merged, `README.md`'s Builtins
-bullet needs `is_refactorable` added near `num_divisors`/`is_harshad`,
-its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" section needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: default values for whole-pattern destructuring function parameters
+## 1. Language: default values for whole-pattern destructuring function parameters
 
 Build: Cinder function parameters can already be a list-destructuring
 pattern (`fn f([a, b])`) or a map-destructuring pattern (`fn f({a, b})`),
@@ -295,7 +195,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
+## 2. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
 
 Build: `is_semiperfect` (`cinder/builtins.py`, search `def
 _is_semiperfect`: proper-divisor list, then a bounded 0/1 subset-sum
@@ -396,7 +296,7 @@ task.
 
 ---
 
-## 4. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
+## 3. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
 
 Build: Cinder's polygonal-number family already covers triangular
 (`is_triangular`/`nth_triangular`), pentagonal, hexagonal, heptagonal,
@@ -508,7 +408,7 @@ task.
 
 ---
 
-## 5. Language: hole elements and per-element default values in plain-assignment list destructuring
+## 4. Language: hole elements and per-element default values in plain-assignment list destructuring
 
 Build: `let [a, , c] = expr;` (a hole element, skipping a position) and
 `let [a, b = 5] = expr;` (a per-element default) both already work for
@@ -689,14 +589,14 @@ not this task.
 
 ---
 
-## 6. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
+## 5. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
 
 Build: `is_harshad` (`cinder/builtins.py`, search `def _is_harshad`:
 whether `n` is divisible by its own digit sum, e.g. `18`'s digits sum
 to `9` and `18 % 9 == 0`) has no value-returning sibling that finds the
 Harshad number at a given 1-indexed position — the same gap
 `nth_abundant`/`nth_deficient` (search either name) already closed for
-`is_abundant`/`is_deficient`, and `nth_semiperfect` (task 3 above) is
+`is_abundant`/`is_deficient`, and `nth_semiperfect` (task 2 above) is
 about to close for `is_semiperfect`. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_harshad(1));'

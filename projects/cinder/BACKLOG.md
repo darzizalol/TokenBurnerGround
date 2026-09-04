@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `*` marker for keyword-only function parameters
+## 1. Language: `*` marker for keyword-only function parameters [claimed 2026-09-04T14:12:36Z]
 
 Build: Cinder function parameters (`cinder/parser.py`, search `def
 _fn_param_list`/`def _fn_param`) can already carry defaults (`fn f(a, b =

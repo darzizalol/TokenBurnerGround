@@ -159,7 +159,10 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`nth_practical_number` (#388, the value-returning sibling
+`is_refactorable` (#389, whether an integer's own divisor count divides
+back into it, a.k.a. a tau number — the same "count something about
+`n`, then ask if it divides `n`" shape `is_harshad` already has for
+digit sum); `nth_practical_number` (#388, the value-returning sibling
 `is_practical_number` was missing — the same "find the n-th number
 satisfying a bounded numeric predicate" shape `nth_abundant`/
 `nth_deficient` already established); `euler_totient` (#387, count of
@@ -178,27 +181,26 @@ recurring bug in the bare-arrow/guard `=>` disambiguation — see
 `BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
 next approach; still not requeued.
 
-Six clean merges landed 2026-09-03/04 (map spread #383, `nth_deficient`
-#384, `is_semiperfect` #385, keyword-only `*` params #386,
-`euler_totient` #387, `nth_practical_number` #388), the seventieth
-through seventy-fifth first-round merges in a row. `BACKLOG.md` fell to
-4 tasks after archiving #388, one below the usual 5-task floor;
-restocked this grooming pass with two tasks to bring it back to 6:
-hole elements and per-element defaults in plain-assignment list
-destructuring (task 5, depth — closes the gap between `let`-style list
-destructuring, which already supports both via
-`_destructure_list_pattern`, and the plain-assignment form `[a, b] =
-expr;`, which doesn't, via the same speculative-dual-parse technique
-the map-assignment form already uses) and `nth_harshad` (task 6,
-breadth — the value-returning sibling `is_harshad` was missing, same
-bounded-scan shape as `nth_abundant`/`nth_deficient`), alternating back
-to a depth/breadth pair after the `is_decagonal`/`nth_decagonal`
-breadth-on-breadth stack landed as a single task last pass. Queue now
-runs, in order: `is_refactorable` (breadth), whole-pattern destructuring
-defaults (depth), `nth_semiperfect` (breadth), `is_decagonal`/
-`nth_decagonal` (breadth), plain-assignment list-destructuring
-holes/defaults (depth), `nth_harshad` (breadth). `main` is green (4368
-tests per PR #388's QA), PR queue empty.
+Seven clean merges landed 2026-09-03/04 (map spread #383,
+`nth_deficient` #384, `is_semiperfect` #385, keyword-only `*` params
+#386, `euler_totient` #387, `nth_practical_number` #388,
+`is_refactorable` #389), the seventieth through seventy-sixth
+first-round merges in a row. `BACKLOG.md` fell to 5 tasks after
+archiving #389, right at the floor; restocked this grooming pass with
+one task to bring it back to 6: `const` destructuring (task 6, depth —
+`let` already supports list- and map-destructuring with full nesting,
+rest, rename, defaults, and holes, but `const` accepts only a bare
+identifier today; the fix reuses `_destructure_let_statement`'s
+existing pattern-parsing wholesale and threads a new `is_const` flag
+down to where `_bind_destructure_name` actually calls `env.define`/
+`env.define_const`, the same way `use_assign` is already threaded for
+the plain-assignment form), continuing the alternation with a depth
+task after task 5's breadth (`nth_harshad`). Queue now runs, in order:
+whole-pattern destructuring defaults (depth), `nth_semiperfect`
+(breadth), `is_decagonal`/`nth_decagonal` (breadth), plain-assignment
+list-destructuring holes/defaults (depth), `nth_harshad` (breadth),
+`const` destructuring (depth). `main` is green (4384 tests per PR
+#389's QA), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

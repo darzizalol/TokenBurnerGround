@@ -709,18 +709,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_practical_number`
-(PR #388, `nth_practical_number(1)` is `1`), the value-returning
-sibling `is_practical_number` itself was missing, the same bounded
-sequential scan `nth_abundant`/`nth_deficient` already use — and
-`euler_totient` (PR #387, `euler_totient(9)` is `6`), the aggregate
-counterpart to `is_coprime` (count of integers up to `n` coprime with
-`n`), via the same trial-division factoring `prime_factors` already
-uses. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_refactorable`,
-whether a number's own divisor count divides back into it (a.k.a. a
-tau number), the same "count something about n, then ask if it divides
-n" shape `is_harshad` already has for digit sum — default values for
+Actively developed, nightly. Recently landed: `is_refactorable`
+(PR #389, `is_refactorable(8)` is `true`), whether a number's own
+divisor count divides back into it (a.k.a. a tau number), the same
+"count something about n, then ask if it divides n" shape `is_harshad`
+already has for digit sum — and `nth_practical_number` (PR #388,
+`nth_practical_number(1)` is `1`), the value-returning sibling
+`is_practical_number` itself was missing, the same bounded sequential
+scan `nth_abundant`/`nth_deficient` already use. See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): default values for
 whole-pattern destructuring function parameters (`fn f([a, b] = [1,
 2]) { ... }`, falling back to the whole default list/map when the
 argument is omitted entirely, not just per-entry inside the pattern
@@ -734,9 +732,13 @@ hole elements and per-element defaults in plain-assignment list
 destructuring (`[a, , c] = expr;` skipping a position, `[a, b = 5] =
 expr;` falling back to a default when the source value is too short),
 closing the gap between that form and `let`-style list destructuring,
-which already supports both — and `nth_harshad`, the value-returning
+which already supports both — `nth_harshad`, the value-returning
 sibling `is_harshad` itself was missing, the same bounded sequential
-scan `nth_abundant`/`nth_deficient` already use. (Guards in `match`
+scan `nth_abundant`/`nth_deficient` already use — and destructuring
+patterns for `const` declarations (`const [a, b] = expr;`, `const {a,
+b} = expr;`, every bound name frozen), closing the gap between `let`,
+which already supports both destructuring forms, and `const`, which
+today accepts only a bare identifier. (Guards in `match`
 arms, `n if n > 0 => "positive"`, were attempted but closed after
 three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

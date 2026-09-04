@@ -3051,6 +3051,54 @@ class TestIsNonagonal(unittest.TestCase):
             run("is_nonagonal(1, 2);")
 
 
+class TestIsDecagonal(unittest.TestCase):
+    def test_is_decagonal_of_members(self):
+        for value in (1, 10, 27, 52, 85):
+            self.assertEqual(
+                run(f"let result = is_decagonal({value});").get("result"),
+                True,
+                f"expected {value} to be a decagonal number",
+            )
+
+    def test_is_decagonal_of_non_members(self):
+        for value in (0, 2, 11):
+            self.assertEqual(
+                run(f"let result = is_decagonal({value});").get("result"),
+                False,
+                f"expected {value} to not be a decagonal number",
+            )
+
+    def test_is_decagonal_negative_input_is_false(self):
+        self.assertEqual(run("let result = is_decagonal(-1);").get("result"), False)
+
+    def test_is_decagonal_matches_direct_construction(self):
+        for k in range(1, 101):
+            value = 4 * k * k - 3 * k
+            self.assertEqual(
+                run(f"let result = is_decagonal({value});").get("result"),
+                True,
+                f"expected P(10, {k}) = {value} to be a decagonal number",
+            )
+
+    def test_is_decagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_decagonal(1.5);")
+        self.assertIn(
+            "is_decagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_is_decagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_decagonal(true);")
+        self.assertIn(
+            "is_decagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_is_decagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_decagonal(1, 2);")
+
+
 class TestNthTriangular(unittest.TestCase):
     def test_nth_triangular_of_first_five_positions(self):
         expected = {1: 1, 2: 3, 3: 6, 4: 10, 5: 15}
@@ -3427,6 +3475,76 @@ class TestNthNonagonal(unittest.TestCase):
     def test_nth_nonagonal_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("nth_nonagonal(1, 2);")
+
+
+class TestNthDecagonal(unittest.TestCase):
+    def test_nth_decagonal_of_first_ten_positions(self):
+        expected = {
+            1: 1, 2: 10, 3: 27, 4: 52, 5: 85,
+            6: 126, 7: 175, 8: 232, 9: 297, 10: 370,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_decagonal({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_decagonal_of_one_hundred(self):
+        self.assertEqual(
+            run("let result = nth_decagonal(100);").get("result"), 39700
+        )
+
+    def test_nth_decagonal_agrees_with_is_decagonal(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_decagonal(nth_decagonal({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_decagonal({position}) to be a decagonal number",
+            )
+
+    def test_nth_decagonal_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_decagonal(0);")
+        self.assertIn(
+            "nth_decagonal() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_decagonal_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_decagonal(-3);")
+        self.assertIn(
+            "nth_decagonal() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_decagonal_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_decagonal(2.0);")
+        self.assertIn(
+            "nth_decagonal() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_decagonal_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_decagonal(true);")
+        self.assertIn(
+            "nth_decagonal() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_decagonal_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_decagonal("5");')
+        self.assertIn(
+            "nth_decagonal() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_decagonal_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_decagonal(1, 2);")
 
 
 class TestIsPrime(unittest.TestCase):

@@ -159,58 +159,35 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-map spread (`...m`) as keyword arguments in function calls (#383,
-`greet(...{"name": "Ada", "greeting": "yo"})`), the map-flavored
-sibling of list spread's existing positional-argument spreading,
-reusing the same order-independent keyword-argument machinery
-`f(a: 1, b: 2)` already had; `is_practical_number` (#382, whether every
-integer from `1` to `n - 1` is a sum of distinct proper divisors of
-`n`, e.g. `6` but not `10` — the same subset-sum reachability sweep
-`is_weird_number` uses, checked against every smaller target instead
-of just `n` itself); `<=>` spaceship/three-way comparison (#380,
-`1 <=> 2` is `-1`) built entirely on the existing `<`/`==` machinery so
-every already-comparable type gets it for free, landed alongside
-`is_palindrome_permutation` (#381, at most one distinct character may
-have an odd count) in the same cycle. Guards in `match` arms (`n if n >
-0 => ...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `##
-Graveyard` for the full postmortem and the suggested next approach;
-still not requeued.
+`is_semiperfect` (#385, whether `n` equals a sum of some subset of its
+own proper divisors — the standalone pseudoperfect question
+`is_weird_number` already computed internally but never exposed on its
+own); `nth_deficient` (#384, the value-returning sibling
+`is_deficient` was missing); map spread (`...m`) as keyword arguments
+in function calls (#383, `greet(...{"name": "Ada", "greeting":
+"yo"})`), the map-flavored sibling of list spread's existing
+positional-argument spreading, reusing the same order-independent
+keyword-argument machinery `f(a: 1, b: 2)` already had. Guards in
+`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
+after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
+recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the
+suggested next approach; still not requeued.
 
-Two merges landed this cycle (map spread #383, then `nth_deficient`
-#384), dropping `BACKLOG.md` to its 5-task floor twice over; restocked
-once by one task to bring it back to 6, this time leading with depth as
-flagged by the prior pass — default values for whole-pattern
-destructuring function parameters (`fn f([a, b] = [1, 2]) { ... }`,
-today rejected outright by the parser even though per-entry defaults
-inside a pattern already work and `cinder/interpreter.py`'s `call_value`
-already handles a defaulted destructuring parameter with no changes
-needed there at all; the fix is narrowly scoped to `_fn_param` in
-`cinder/parser.py`). The five tasks already queued going into this pass
-carry over unchanged, now numbered 1-5: breadth — `is_semiperfect`,
-extracting the standalone pseudoperfect question `is_weird_number`
-already computes internally (abundant *and* not semiperfect) but never
-exposed on its own; depth — a `*` marker for keyword-only function
-parameters, the natural next step now that parameters can already take
-defaults, a rest parameter, and destructuring shapes, but every
-parameter can still be snuck in positionally even when the author
-intended a self-documenting keyword-only call site; breadth —
-`euler_totient`, the aggregate counterpart to `is_coprime` (count of
-integers up to `n` coprime with `n`), computed via the same
-trial-division factoring `prime_factors` already uses; breadth —
-`nth_practical_number`, the value-returning sibling `is_practical_number`
-itself (#382) was missing, the same bounded sequential scan
-`nth_abundant`/`nth_deficient` already use; breadth — `is_refactorable`
-(a.k.a. a tau number, OEIS A033950): whether a number's own divisor
-count divides back into it, built on the existing `num_divisors`
-builtin. Queue now runs breadth, depth, breadth, breadth, breadth,
-depth — the new task 6 explicitly notes it touches the same
-`_fn_param`/`_fn_param_list` functions task 2 (keyword-only parameters)
-rewrites, and should adapt to whichever shape task 2 leaves behind if
-it lands first, since tasks are claimed in order and task 2 sits ahead
-of it in the queue. `main` is green (4315 tests per PR #384's QA), PR
-queue empty.
+Three clean merges landed 2026-09-04 (map spread #383, `nth_deficient`
+#384, `is_semiperfect` #385), the seventieth through seventy-second
+first-round merges in a row. `BACKLOG.md` sat one below its 5-task
+floor after archiving #385; restocked with `nth_semiperfect` (task 6,
+the value-returning sibling `is_semiperfect` itself was missing, same
+bounded scan `nth_practical_number`/`nth_deficient` already use) to
+bring it back to 6. Queue now runs, in order: keyword-only `*`
+parameters (depth), `euler_totient` (breadth), `nth_practical_number`
+(breadth), `is_refactorable` (breadth), whole-pattern destructuring
+defaults (depth — explicitly notes it touches the same
+`_fn_param`/`_fn_param_list` functions task 1 rewrites, and should
+adapt to whichever shape task 1 leaves behind if it lands first),
+`nth_semiperfect` (breadth). `main` is green (4331 tests per PR #385's
+QA), PR queue empty.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

@@ -701,6 +701,107 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
+
+Build: `is_semiperfect` (`cinder/builtins.py`, search `def
+_is_semiperfect`: proper-divisor list, then a bounded 0/1 subset-sum
+sweep checking whether `value` itself is reachable) landed as PR #385 —
+but, like `is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
+and `is_practical_number`/`nth_practical_number` before it, it has no
+value-returning `nth_*` sibling yet. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_semiperfect(5));'
+# -> <eval>:1:7: undefined name 'nth_semiperfect' (did you mean
+#    'is_semiperfect'?)
+```
+
+Worked examples: the first ten semiperfect numbers (OEIS A005835) are `6,
+12, 18, 20, 24, 28, 30, 36, 40, 42` — note `28` is perfect and so
+trivially semiperfect via its own full divisor set, same as `6`; the
+20th is `88`.
+
+Add directly after `_is_semiperfect` (search `def _is_semiperfect`,
+immediately before `def _is_automorphic`) — keeps the value-returning
+helper next to the predicate it mirrors, matching where `nth_deficient`
+itself sits right after `is_deficient`:
+```python
+def _nth_semiperfect(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_semiperfect", arguments, 1, line, column)
+    value = _require_int("nth_semiperfect", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_semiperfect() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_semiperfect_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        divisors = [1]
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                divisors.append(divisor)
+                complement = candidate // divisor
+                if complement != divisor:
+                    divisors.append(complement)
+        reachable = {0}
+        for divisor in divisors:
+            reachable |= {
+                total + divisor for total in reachable if total + divisor <= candidate
+            }
+        return candidate in reachable
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_semiperfect_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_practical_number`, with the inner candidate
+check copied from `_is_semiperfect`'s own body instead of
+`_is_practical_number`'s — semiperfect numbers have no closed form
+either, so the same bounded sequential scan applies.) Also register the
+new dict entry (search `"is_semiperfect": _is_semiperfect,`, add
+`"nth_semiperfect": _nth_semiperfect,` directly after it, before
+`"is_automorphic": _is_automorphic,`).
+
+Acceptance criteria:
+- `nth_semiperfect(1);` through `nth_semiperfect(10);` are `6, 12, 18,
+  20, 24, 28, 30, 36, 40, 42` in order — the worked example above.
+- `nth_semiperfect(20);` is `88` — a further worked example confirming
+  the scan scales past the first ten.
+- For every `position` in `1..50`, `is_semiperfect(nth_semiperfect(position))`
+  is `true` — the same self-consistency check `nth_practical_number`'s
+  own test suite already runs against `is_practical_number`.
+- `nth_semiperfect(0);`, `nth_semiperfect(-3);` both raise
+  `CinderRuntimeError` matching `"nth_semiperfect\(\) requires a
+  positive integer, domain error"`, matching `nth_practical_number`'s
+  own non-positive-input convention.
+- `nth_semiperfect(true);` raises `CinderRuntimeError` matching
+  `"nth_semiperfect\(\) requires an int, got bool"`, since
+  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
+  `int` subclass (same guard every other int-only predicate in this
+  file already relies on).
+- `nth_semiperfect("5");` raises `CinderRuntimeError` matching
+  `"nth_semiperfect\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_semiperfect`,
+search `def _is_semiperfect`), `tests/test_builtins.py` (new `class
+TestNthSemiperfect`, modeled on `class TestNthPracticalNumber`, search
+that name, for the test shapes above). Once merged, `README.md`'s
+Builtins bullet needs `nth_semiperfect` added near
+`is_semiperfect`/`nth_practical_number`, its "Status & roadmap" section
+needs updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

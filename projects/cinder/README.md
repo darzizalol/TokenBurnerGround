@@ -525,6 +525,10 @@ while (i < 10) {
   `is_weird_number` to test whether an integer is abundant but not semiperfect (no subset of its
   own proper divisors sums to it, e.g. `70`), one step further into the family than
   `is_abundant`/`is_deficient`'s simple sum comparison via a bounded 0/1 subset-sum sweep,
+  `is_semiperfect` to test whether an integer equals a sum of some subset of its own proper
+  divisors (e.g. `12`, via `{2, 4, 6}`), the standalone pseudoperfect question `is_weird_number`
+  already computed internally but never exposed on its own — every perfect number is trivially
+  semiperfect via its complete divisor set,
   `is_practical_number` to test whether every integer from `1` to `n - 1` is expressible as a sum
   of distinct proper divisors of `n` (e.g. `6` is practical, `10` is not since no subset of
   `{1, 2, 5}` sums to `4`), the same subset-sum reachability sweep `is_weird_number` uses but
@@ -695,31 +699,20 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_deficient` (PR #384,
+Actively developed, nightly. Recently landed: `is_semiperfect` (PR #385,
+`is_semiperfect(12)` is `true`, via `{2, 4, 6}`), extracting the
+standalone pseudoperfect question `is_weird_number` already computed
+internally but never exposed on its own — `nth_deficient` (PR #384,
 `nth_deficient(1)` is `1`, `nth_deficient(20)` is `27`), the
 value-returning sibling `is_deficient`'s own bounded sequential-scan
-shape with the comparison flipped, mirroring `nth_abundant` — map spread
-(`...m`) as keyword arguments in function calls (PR #383, `greet(...{"name":
-"Ada", "greeting": "yo"})`), the map-flavored sibling of list spread's
-existing positional-argument spreading, reusing the same
-order-independent keyword-argument machinery `f(a: 1, b: 2)` already
-had — `is_practical_number` (PR #382, `is_practical_number(6)` is
-`true`; `10` is not, since no subset of `{1, 2, 5}` sums to `4`), the
-same subset-sum reachability sweep `is_weird_number` uses, checked
-against every smaller target instead of just `n` itself — a `<=>`
-(spaceship / three-way comparison) operator (PR #380, `1 <=> 2` is
-`-1`, `2 <=> 2` is `0`, `3 <=> 2` is `1`), built entirely from the
-existing `<`/`==` comparison machinery so every type that's already
-comparable (numbers, strings, lists, maps) gets it for free — and
-`is_palindrome_permutation` (PR #381, `is_palindrome_permutation
-("carrace")` is `true`, via `"racecar"`; at most one distinct
-character may have an odd count), the multiset question sitting
-between `is_anagram`'s two-string comparison and `is_palindrome`'s
-single-string check. See [`CHANGELOG.md`](CHANGELOG.md) for the full
+shape with the comparison flipped, mirroring `nth_abundant` — and map
+spread (`...m`) as keyword arguments in function calls (PR #383,
+`greet(...{"name": "Ada", "greeting": "yo"})`), the map-flavored
+sibling of list spread's existing positional-argument spreading,
+reusing the same order-independent keyword-argument machinery `f(a: 1,
+b: 2)` already had. See [`CHANGELOG.md`](CHANGELOG.md) for the full
 merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `is_semiperfect`,
-extracting the standalone pseudoperfect question `is_weird_number`
-already computes internally but never exposed on its own — a `*` marker
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): a `*` marker
 for keyword-only function parameters (`fn greet(name, *, loud) { ... }`
 forces `loud` to be passed as `greet("Ada", loud: true)`, never
 positionally) — `euler_totient`, the aggregate counterpart to
@@ -730,11 +723,14 @@ itself was missing, the same bounded sequential scan
 `nth_abundant`/`nth_deficient` already use — `is_refactorable`, whether
 a number's own divisor count divides back into it (a.k.a. a tau
 number), the same "count something about n, then ask if it divides n"
-shape `is_harshad` already has for digit sum — and default values for
+shape `is_harshad` already has for digit sum — default values for
 whole-pattern destructuring function parameters (`fn f([a, b] = [1, 2])
 { ... }`, falling back to the whole default list/map when the argument
 is omitted entirely, not just per-entry inside the pattern the way
-`fn f([a, b = 10])` already can).
+`fn f([a, b = 10])` already can) — and `nth_semiperfect`, the
+value-returning sibling `is_semiperfect` itself was missing, the same
+bounded sequential scan `nth_practical_number`/`nth_deficient` already
+use.
 (Guards in `match` arms, `n if n > 0 => "positive"`,
 were attempted but closed after three failed review rounds over a
 recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the

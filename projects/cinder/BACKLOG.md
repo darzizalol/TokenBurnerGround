@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
+## 1. Standard library: `nth_practical_number` — practical number found at a 1-indexed position [claimed 2026-09-04T15:15:47Z]
 
 Build: Cinder's `is_practical_number` (`cinder/builtins.py`, search `def
 _is_practical_number`: proper-divisor list, then a bounded 0/1 subset-sum

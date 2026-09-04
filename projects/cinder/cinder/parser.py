@@ -841,36 +841,83 @@ class Parser:
         return params, rest_param, body
 
     def _fn_param_list(self) -> tuple:
-        """Parses a comma-separated parameter list — default values and a
-        single trailing rest parameter, via `_fn_param`/`_fn_rest_param` —
-        assuming the caller has already consumed the opening `(` and will
-        consume the closing `)` itself. Shared by `fn` expressions/
-        declarations and arrow-function parameter lists."""
+        """Parses a comma-separated parameter list — default values, an
+        optional `*` keyword-only marker, and a single trailing rest
+        parameter, via `_fn_param`/`_fn_rest_param` — assuming the caller
+        has already consumed the opening `(` and will consume the closing
+        `)` itself. Shared by `fn` expressions/declarations and
+        arrow-function parameter lists. Everything after a bare `*` marker
+        must be passed by name; `seen_default`'s no-default-after-default
+        ordering rule only applies within each side of the marker, since
+        keyword-only parameters can never be filled positionally."""
         params = []
         rest_param = None
         seen_default = False
+        seen_star = False
+        star_token = None
         if not self._check(TokenType.RPAREN):
-            if self._check(TokenType.DOT_DOT_DOT):
-                rest_param = self._fn_rest_param()
-            else:
-                params.append(self._fn_param(seen_default))
-                seen_default = seen_default or params[-1].default is not None
-            while self._check(TokenType.COMMA):
-                self._advance()
-                if self._check(TokenType.RPAREN):
-                    break
-                if rest_param is not None:
+            while True:
+                if self._check(TokenType.STAR):
                     token = self._peek()
-                    raise ParseError(
-                        "rest parameter must be the last parameter",
-                        token.line,
-                        token.column,
-                    )
-                if self._check(TokenType.DOT_DOT_DOT):
+                    if seen_star:
+                        raise ParseError(
+                            "duplicate '*' in parameter list", token.line, token.column
+                        )
+                    if rest_param is not None:
+                        raise ParseError(
+                            "cannot combine keyword-only parameters with a rest parameter",
+                            token.line,
+                            token.column,
+                        )
+                    star_token = self._advance()
+                    seen_star = True
+                    seen_default = False
+                elif self._check(TokenType.DOT_DOT_DOT):
+                    token = self._peek()
+                    if rest_param is not None:
+                        raise ParseError(
+                            "rest parameter must be the last parameter",
+                            token.line,
+                            token.column,
+                        )
+                    if seen_star:
+                        raise ParseError(
+                            "cannot combine keyword-only parameters with a rest parameter",
+                            token.line,
+                            token.column,
+                        )
                     rest_param = self._fn_rest_param()
                 else:
-                    params.append(self._fn_param(seen_default))
-                    seen_default = seen_default or params[-1].default is not None
+                    if rest_param is not None:
+                        token = self._peek()
+                        raise ParseError(
+                            "rest parameter must be the last parameter",
+                            token.line,
+                            token.column,
+                        )
+                    if seen_star and (
+                        self._check(TokenType.LBRACKET) or self._check(TokenType.LBRACE)
+                    ):
+                        token = self._peek()
+                        raise ParseError(
+                            "keyword-only parameter cannot use destructuring",
+                            token.line,
+                            token.column,
+                        )
+                    param = self._fn_param(seen_default, keyword_only=seen_star)
+                    params.append(param)
+                    if not seen_star:
+                        seen_default = seen_default or param.default is not None
+                if self._check(TokenType.COMMA):
+                    self._advance()
+                    if self._check(TokenType.RPAREN):
+                        break
+                    continue
+                break
+        if seen_star and not any(param.keyword_only for param in params):
+            raise ParseError(
+                "named parameter required after '*'", star_token.line, star_token.column
+            )
         return params, rest_param
 
     def _fn_rest_param(self) -> str:
@@ -878,7 +925,7 @@ class Parser:
         name_token = self._consume(TokenType.IDENTIFIER, "parameter name after '...'")
         return name_token.lexeme
 
-    def _fn_param(self, seen_default: bool) -> Param:
+    def _fn_param(self, seen_default: bool, keyword_only: bool = False) -> Param:
         if self._check(TokenType.LBRACKET):
             bracket_token = self._peek()
             if seen_default:
@@ -926,7 +973,7 @@ class Parser:
             )
         else:
             default = None
-        return Param(name=name_token.lexeme, default=default)
+        return Param(name=name_token.lexeme, default=default, keyword_only=keyword_only)
 
     def _return_statement(self) -> Stmt:
         return_token = self._advance()

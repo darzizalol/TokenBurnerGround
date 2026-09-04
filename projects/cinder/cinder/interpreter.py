@@ -156,8 +156,11 @@ class CinderFunction:
 
     @property
     def arity(self) -> int:
-        """Minimum arity: the count of parameters with no default value."""
-        return sum(1 for param in self.decl.params if param.default is None)
+        """Minimum arity: the count of required positional parameters
+        (no default, not keyword-only)."""
+        return sum(
+            1 for param in self.decl.params if not param.keyword_only and param.default is None
+        )
 
 
 class Builtin:
@@ -1520,7 +1523,11 @@ def call_value(
         raise CinderRuntimeError(f"{type_name(callee)} is not callable", line, column)
     keywords = keywords or {}
     min_arity = callee.arity
-    max_arity = None if callee.decl.rest_param else len(callee.decl.params)
+    max_arity = (
+        None
+        if callee.decl.rest_param
+        else sum(1 for p in callee.decl.params if not p.keyword_only)
+    )
     if not keywords:
         if len(arguments) < min_arity or (max_arity is not None and len(arguments) > max_arity):
             if max_arity is None:
@@ -1535,6 +1542,14 @@ def call_value(
                 f"{callee.name}() expects {expected} argument(s), got {len(arguments)}",
                 line,
                 column,
+            )
+        missing_keyword_only = [
+            p.name for p in callee.decl.params if p.keyword_only and p.default is None
+        ]
+        if missing_keyword_only:
+            names = ", ".join(repr(name) for name in missing_keyword_only)
+            raise CinderRuntimeError(
+                f"{callee.name}() missing required argument(s): {names}", line, column
             )
     else:
         if max_arity is not None and len(arguments) > max_arity:

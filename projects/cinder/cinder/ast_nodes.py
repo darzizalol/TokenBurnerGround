@@ -398,6 +398,7 @@ class Param:
     names: "list | None" = None
     rest: "str | None" = None
     is_map: bool = False
+    keyword_only: bool = False
 
 
 @dataclass(frozen=True)

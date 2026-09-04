@@ -3523,11 +3523,14 @@ class TestFunctions(unittest.TestCase):
         self.assertIsNone(param.rest)
         self.assertTrue(param.is_map)
 
-    def test_fn_declaration_with_map_destructuring_param_whole_pattern_default_still_raises(self):
-        with self.assertRaisesRegex(
-            ParseError, "destructuring parameter cannot have a default value"
-        ):
-            parse_stmts('fn f({a, b} = {"a": 1, "b": 2}) { }')
+    def test_fn_declaration_with_map_destructuring_param_whole_pattern_default(self):
+        stmt = parse_stmts('fn f({a, b} = {"a": 1, "b": 2}) { }')[0]
+        param = stmt.params[0]
+        self.assertTrue(param.is_map)
+        self.assertEqual(
+            shape(param.default),
+            ("MapLiteral", [(("Literal", "a"), ("Literal", 1)), (("Literal", "b"), ("Literal", 2))]),
+        )
 
     def test_fn_declaration_with_destructuring_param_and_trailing_rest_param(self):
         self.assertEqual(
@@ -3583,13 +3586,20 @@ class TestFunctions(unittest.TestCase):
         self.assertIsNone(param.rest)
         self.assertFalse(param.is_map)
 
-    def test_list_destructuring_param_with_default_raises(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("fn f([a, b] = [1, 2]) { return a; }")
+    def test_list_destructuring_param_with_default(self):
+        stmt = parse_stmts("fn f([a, b] = [1, 2]) { return a; }")[0]
+        param = stmt.params[0]
+        self.assertFalse(param.is_map)
+        self.assertEqual(shape(param.default), ("ListLiteral", [("Literal", 1), ("Literal", 2)]))
 
-    def test_map_destructuring_param_with_default_raises(self):
-        with self.assertRaises(ParseError):
-            parse_stmts('fn f({a, b} = {"a": 1, "b": 2}) { return a; }')
+    def test_map_destructuring_param_with_default(self):
+        stmt = parse_stmts('fn f({a, b} = {"a": 1, "b": 2}) { return a; }')[0]
+        param = stmt.params[0]
+        self.assertTrue(param.is_map)
+        self.assertEqual(
+            shape(param.default),
+            ("MapLiteral", [(("Literal", "a"), ("Literal", 1)), (("Literal", "b"), ("Literal", 2))]),
+        )
 
     def test_list_destructuring_param_after_defaulted_param_raises(self):
         with self.assertRaises(ParseError):

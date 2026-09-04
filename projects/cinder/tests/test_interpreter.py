@@ -2412,11 +2412,18 @@ class TestDestructureMapDefaults(unittest.TestCase):
         ):
             run('let {a, b = 1} = {};')
 
-    def test_whole_pattern_default_still_rejected(self):
-        with self.assertRaisesRegex(
-            ParseError, "destructuring parameter cannot have a default value"
-        ):
-            run('fn f({a, b} = {"a": 1, "b": 2}) { }')
+    def test_whole_pattern_default_used_when_argument_omitted(self):
+        env = run(
+            'fn f({a, b} = {"a": 1, "b": 2}) { return a + b; } let r = f();'
+        )
+        self.assertEqual(env.get("r"), 3)
+
+    def test_whole_pattern_default_unused_when_argument_supplied(self):
+        env = run(
+            'fn f({a, b} = {"a": 1, "b": 2}) { return a + b; } '
+            'let r = f({"a": 9, "b": 1});'
+        )
+        self.assertEqual(env.get("r"), 10)
 
 
 class TestDestructureAssign(unittest.TestCase):
@@ -4119,6 +4126,33 @@ class TestDestructuringParams(unittest.TestCase):
             "let result = f(9);"
         )
         self.assertEqual(env.get("result"), [9, 1, []])
+
+    def test_list_destructuring_param_whole_pattern_default_used_when_omitted(self):
+        env = run(
+            "fn f([a, b] = [1, 2]) { return a + b; } let result = f();"
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_list_destructuring_param_whole_pattern_default_unused_when_supplied(self):
+        env = run(
+            "fn f([a, b] = [1, 2]) { return a + b; } let result = f([5, 6]);"
+        )
+        self.assertEqual(env.get("result"), 11)
+
+    def test_list_destructuring_param_whole_pattern_default_combines_with_preceding_plain_param(self):
+        env = run(
+            "fn f(a, [b, c] = [1, 2]) { return [a, b, c]; } "
+            "let omitted = f(9); let supplied = f(9, [5, 6]);"
+        )
+        self.assertEqual(env.get("omitted"), [9, 1, 2])
+        self.assertEqual(env.get("supplied"), [9, 5, 6])
+
+    def test_list_destructuring_param_whole_pattern_default_followed_by_defaulted_param(self):
+        env = run(
+            "fn f([a, b] = [1, 2], c = 3) { return [a, b, c]; } "
+            "let result = f();"
+        )
+        self.assertEqual(env.get("result"), [1, 2, 3])
 
     def test_list_destructuring_param_trailing_comma(self):
         env = run("fn f([a, b,]) { return a + b; } let result = f([1, 2]);")

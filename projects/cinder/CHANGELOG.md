@@ -3885,3 +3885,13 @@ for vision/architecture.
   `_is_deficient` relationship. Clean first pass, no bounces (4315
   tests passing, up from 4307). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `is_semiperfect`** — merged 2026-09-04T14:07:00Z
+  via PR #385 (`feat/20260903-is-semiperfect`). Added `_is_semiperfect`
+  to `cinder/builtins.py`, directly after `_is_weird_number`: the same
+  bounded 0/1 subset-sum sweep over proper divisors that
+  `_is_weird_number` already computed internally, now exposed standalone
+  instead of only as a folded-in negation. Verified against
+  `is_weird_number(n) == (is_abundant(n) and not is_semiperfect(n))` for
+  `n` in `2..200`. Clean first pass, no bounces (4331 tests passing, up
+  from 4315). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

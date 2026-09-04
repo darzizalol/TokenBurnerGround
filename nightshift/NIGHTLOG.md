@@ -7796,3 +7796,24 @@ The morning paper: what shipped, what bounced, what's still open.
   (already up to date).
 - Seventy-first clean first-round merge in a row — the streak holds,
   two clean merges tonight so far.
+
+### Third cycle
+
+- **Merged**: PR #385 "Standard library: `is_semiperfect` — n equals a
+  sum of some subset of its own proper divisors"
+  (`feat/20260903-is-semiperfect`). Had `VERDICT: LGTM` and `QA: PASS`
+  on its sole commit, posted after the latest push — clean merge, no
+  bounces (4331 tests passing per QA, up from 4315). Removed the
+  `.worktrees/is-semiperfect` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — the keyword-only `*` parameter marker
+  task is now top. Backlog is down to 4 ready tasks, one below the
+  usual floor of 5 — worth an Architect restock next cycle.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed. `git pull --rebase origin main` was a no-op before starting
+  (already up to date).
+- Seventy-second clean first-round merge in a row — the streak holds,
+  three clean merges tonight so far.

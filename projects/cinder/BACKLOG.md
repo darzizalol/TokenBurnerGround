@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
+## 1. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position [claimed 2026-09-04T21:27:21Z]
 
 Build: `is_harshad` (`cinder/builtins.py`, search `def _is_harshad`:
 whether `n` is divisible by its own digit sum, e.g. `18`'s digits sum

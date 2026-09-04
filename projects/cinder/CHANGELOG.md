@@ -3933,3 +3933,17 @@ for vision/architecture.
   count instead of digit sum. Clean first pass, no bounces (4384 tests
   passing, up from 4368). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Language: default values for whole-pattern destructuring function
+  parameters** — merged 2026-09-04T15:51:26Z via PR #390
+  (`feat/20260904-destructure-param-defaults`). Rewrote `_fn_param`'s
+  list/map branches (`cinder/parser.py`) to parse the destructuring
+  pattern first and only then optionally consume a trailing `= expr`,
+  the same shape the plain-identifier branch already used — fixing the
+  parser's outright rejection of `fn f([a, b] = [1, 2])` /
+  `fn f({a, b} = {...})` even though `interpreter.py`'s `call_value`/
+  `CinderFunction.arity` already handled a defaulted destructuring
+  `Param` correctly. Rewrote the four existing tests that asserted this
+  was rejected into positive tests, and added coverage for combining
+  with a preceding plain param and another defaulted param. Clean first
+  pass, no bounces (4389 tests passing, up from 4384). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

@@ -11,191 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: default values for whole-pattern destructuring function parameters [claimed 2026-09-04T15:44:15Z]
-
-Build: Cinder function parameters can already be a list-destructuring
-pattern (`fn f([a, b])`) or a map-destructuring pattern (`fn f({a, b})`),
-and both pattern kinds already support **per-entry** defaults inside the
-pattern itself (`fn f([a, b = 10])`, `fn f({a, b = 10})` — see
-`TestDestructureListDefaults`/`TestDestructureMapDefaults` in
-`tests/test_interpreter.py`). What is still missing is a default for the
-**whole parameter** — falling back to an entire default list/map when the
-caller omits the argument entirely, the same way a plain identifier
-parameter already can (`fn f(a = 1)`). The parser rejects it outright
-today, even though the interpreter already has full support wired up for
-it (see below). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'fn f([a, b] = [1, 2]) { return a + b; } print(f());'
-# -> <eval>:1:6: destructuring parameter cannot have a default value
-python3 -m cinder.cli eval 'fn f({a, b} = {"a": 1, "b": 2}) { return a + b; } print(f());'
-# -> <eval>:1:6: destructuring parameter cannot have a default value
-```
-
-Worked examples: `fn f([a, b] = [1, 2]) { return a + b; }` called as
-`f()` should return `3` (the whole `[1, 2]` default list is destructured
-since no argument was supplied at all), while `f([5, 6])` should return
-`11` (the supplied list is destructured instead, default unused) — the
-same "used only when the argument is entirely omitted" semantics a plain
-parameter's default already has. Same shape for map patterns:
-`fn f({a, b} = {"a": 1, "b": 2}) { return a + b; }` called as `f()` is
-`3`, `f({"a": 9, "b": 1})` is `10`.
-
-This is a narrower gap than it first looks: `cinder/interpreter.py`'s
-`call_value` (search `def call_value`) already handles this generically
-and needs **no change at all** — its per-parameter loop already does
-`value = arguments[index] if index < len(arguments) else ...
-Interpreter().evaluate(param.default, call_env)` followed by `if
-param.names is not None: <bind value via destructure>`, which already
-works correctly for a destructuring `Param` with a non-`None` `default`
-(there is nothing in that code path that assumes `param.names is None`
-whenever `param.default is not None`). Likewise `CinderFunction.arity`
-(search `def arity`, `"""Minimum arity...`) already computes `sum(1 for
-param in self.decl.params if param.default is None)`, which already
-excludes a defaulted destructuring param correctly. The *only* place
-that actively forbids this is `cinder/parser.py`'s `_fn_param` (search
-`def _fn_param`), which raises `"destructuring parameter cannot have a
-default value"` immediately upon seeing `=` after a list or map pattern.
-That rejection also runs *before* checking whether this parameter itself
-will turn out to have a default, which is why today's `seen_default`
-check for a destructuring parameter fires immediately on the `[`/`{`
-token rather than after attempting to parse a trailing `= expr` — both
-bugs share the same fix. Replace `_fn_param` (search `def _fn_param`)
-with:
-```python
-def _fn_param(self, seen_default: bool) -> Param:
-    if self._check(TokenType.LBRACKET):
-        bracket_token = self._peek()
-        names, rest = self._destructure_list_pattern()
-        default = None
-        if self._check(TokenType.EQ):
-            self._advance()
-            default = self._ternary()
-        elif seen_default:
-            raise ParseError(
-                "destructuring parameter without a default value "
-                "follows a parameter with one",
-                bracket_token.line,
-                bracket_token.column,
-            )
-        return Param(name=None, names=names, rest=rest, default=default)
-    if self._check(TokenType.LBRACE):
-        brace_token = self._peek()
-        names, rest = self._destructure_map_pattern()
-        default = None
-        if self._check(TokenType.EQ):
-            self._advance()
-            default = self._ternary()
-        elif seen_default:
-            raise ParseError(
-                "destructuring parameter without a default value "
-                "follows a parameter with one",
-                brace_token.line,
-                brace_token.column,
-            )
-        return Param(name=None, names=names, rest=rest, is_map=True, default=default)
-    name_token = self._consume(TokenType.IDENTIFIER, "parameter name")
-    if self._check(TokenType.EQ):
-        self._advance()
-        default = self._ternary()
-    elif seen_default:
-        raise ParseError(
-            f"parameter '{name_token.lexeme}' without a default value "
-            "follows a parameter with one",
-            name_token.line,
-            name_token.column,
-        )
-    else:
-        default = None
-    return Param(name=name_token.lexeme, default=default)
-```
-(The plain-identifier branch at the bottom is unchanged, included only so
-the replacement is a drop-in for the whole function. `Param` already has
-a `default` field usable by any of the three branches — see `class
-Param` in `cinder/ast_nodes.py` — so no AST change is needed.) The
-`_fn_param_list` caller (search `def _fn_param_list`, the two
-`seen_default = seen_default or params[-1].default is not None` lines)
-needs no change: it already recomputes `seen_default` generically from
-whatever `Param` came back.
-
-**Dependency note**: `BACKLOG.md` task 2 (keyword-only parameters, `*`
-marker) also rewrites `_fn_param`/`_fn_param_list` and may land first. If
-it has, `_fn_param` will already take a `keyword_only` flag and
-`_fn_param_list` will already be restructured into one loop — apply the
-same "parse the pattern, then optionally consume `= expr`, then check
-`seen_default` only if no `=` was found" shape shown above on top of
-whatever that task leaves behind, rather than reverting its changes.
-
-Acceptance criteria:
-- `fn f([a, b] = [1, 2]) { return a + b; } f();` is `3` and `f([5, 6]);`
-  is `11` — the worked example above.
-- `fn f({a, b} = {"a": 1, "b": 2}) { return a + b; } f();` is `3` and
-  `f({"a": 9, "b": 1});` is `10` — the map worked example above.
-- `fn f(a, [b, c] = [1, 2]) { return [a, b, c]; } f(9);` is `[9, 1, 2]`
-  and `f(9, [5, 6]);` is `[9, 5, 6]` — a defaulted destructuring
-  parameter combines with a preceding required plain parameter.
-- `fn f([a, b] = [1, 2], c = 3) { return [a, b, c]; } f();` is
-  `[1, 2, 3]` — a defaulted destructuring parameter followed by another
-  defaulted parameter is legal (both have defaults, ordering satisfied).
-- `fn f([a, b] = [1, 2], c) { return [a, b, c]; }` raises `ParseError`
-  matching `"parameter 'c' without a default value follows a parameter
-  with one"` — the existing ordering rule still applies when a
-  destructuring parameter is the one carrying the earlier default.
-- `fn f(a = 1, [b, c]) { return [a, b, c]; }` raises `ParseError`
-  matching `"destructuring parameter without a default value follows a
-  parameter with one"` — the same ordering rule in the other direction,
-  now reachable only *after* confirming `[b, c]` has no `=` of its own
-  (regression check that the fix didn't just delete the ordering check
-  along with the outright rejection).
-- `fn f([a, b] = [1, 2], [c, d]) { return [a, b, c, d]; }` raises
-  `ParseError` with the same `"destructuring parameter without a default
-  value follows a parameter with one"` message — ordering rule between
-  two destructuring parameters.
-- Regression: `fn f([a, b]) { return a + b; } f([1, 2]);` is `3` (no
-  default, still works), `fn f({a, b = 10}) { return a + b; } f({"a":
-  1});` is `11` (existing per-entry default inside a map pattern, not
-  the whole-pattern default this task adds, still works unchanged), and
-  `fn f(a, b = 1, ...rest) { return [a, b, rest]; } f(9);` is
-  `[9, 1, []]` (plain defaults/rest alongside destructuring, existing
-  `test_plain_params_defaults_and_rest_still_work_alongside_destructuring`
-  case, still works).
-- Update the four existing tests that currently assert this was
-  rejected, since the behavior they test is intentionally changing —
-  verified by actually applying this task's patch against current `main`
-  and running the full suite, which fails exactly these four, no others:
-  `tests/test_interpreter.py`'s `TestDestructureMapDefaults
-  .test_whole_pattern_default_still_rejected` (search that name);
-  `tests/test_parser.py`'s `TestFnDeclarations
-  .test_fn_declaration_with_map_destructuring_param_whole_pattern_default_still_raises`
-  (search that name); and `tests/test_parser.py`'s `TestFunctions
-  .test_list_destructuring_param_with_default_raises` and
-  `.test_map_destructuring_param_with_default_raises` (search either
-  name — both currently just `assertRaises(ParseError)` around `fn f([a,
-  b] = [1, 2]) { return a; }` / the map equivalent, with no message
-  check). Rewrite all four into positive tests asserting the
-  whole-pattern default now works (e.g. call `run('fn f({a, b} = {"a":
-  1, "b": 2}) { return a + b; } let r = f();')` and assert `r == 3`; for
-  the parser-level tests, assert the parsed `Param.default` shape
-  instead of expecting a `ParseError`), rather than leaving them
-  asserting behavior this task deliberately removes.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_fn_param`, search `def _fn_param`),
-`tests/test_parser.py` (`TestFnDeclarations` and `TestFunctions`, update
-the four rejection tests above and add parse-shape tests for the new
-default, modeled on
-`test_fn_declaration_with_map_destructuring_param_entry_default`),
-`tests/test_interpreter.py` (`TestDestructuringParams` and
-`TestDestructureMapDefaults`, search those names, update the whole-
-pattern rejection test and add the runtime cases above). Once merged,
-`README.md`'s function-parameters bullet needs a mention of whole-
-pattern destructuring defaults alongside the existing per-entry-default
-text, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" section needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
+## 1. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
 
 Build: `is_semiperfect` (`cinder/builtins.py`, search `def
 _is_semiperfect`: proper-divisor list, then a bounded 0/1 subset-sum
@@ -296,7 +112,7 @@ task.
 
 ---
 
-## 3. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
+## 2. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
 
 Build: Cinder's polygonal-number family already covers triangular
 (`is_triangular`/`nth_triangular`), pentagonal, hexagonal, heptagonal,
@@ -408,7 +224,7 @@ task.
 
 ---
 
-## 4. Language: hole elements and per-element default values in plain-assignment list destructuring
+## 3. Language: hole elements and per-element default values in plain-assignment list destructuring
 
 Build: `let [a, , c] = expr;` (a hole element, skipping a position) and
 `let [a, b = 5] = expr;` (a per-element default) both already work for
@@ -589,14 +405,14 @@ not this task.
 
 ---
 
-## 5. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
+## 4. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
 
 Build: `is_harshad` (`cinder/builtins.py`, search `def _is_harshad`:
 whether `n` is divisible by its own digit sum, e.g. `18`'s digits sum
 to `9` and `18 % 9 == 0`) has no value-returning sibling that finds the
 Harshad number at a given 1-indexed position — the same gap
 `nth_abundant`/`nth_deficient` (search either name) already closed for
-`is_abundant`/`is_deficient`, and `nth_semiperfect` (task 2 above) is
+`is_abundant`/`is_deficient`, and `nth_semiperfect` (task 1 above) is
 about to close for `is_semiperfect`. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_harshad(1));'
@@ -672,7 +488,7 @@ pass, not this task.
 
 ---
 
-## 6. Language: destructuring patterns for `const` declarations
+## 5. Language: destructuring patterns for `const` declarations
 
 Build: `let` already supports both list-destructuring (`let [a, b] =
 expr;`) and map-destructuring (`let {a, b} = expr;`), with full nesting,

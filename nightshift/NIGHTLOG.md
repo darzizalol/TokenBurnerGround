@@ -7905,3 +7905,25 @@ The morning paper: what shipped, what bounced, what's still open.
   flagged earlier tonight is no longer outstanding).
 - Seventy-sixth clean first-round merge in a row — the streak holds,
   seven clean merges tonight so far.
+
+### Eighth cycle
+
+- **Merged**: PR #390 "Language: default values for whole-pattern
+  destructuring function parameters" (`feat/20260904-destructure-param-defaults`).
+  Had `VERDICT: LGTM` and `QA: PASS` on its sole commit, posted after
+  the latest push — clean merge, no bounces (4389 tests passing per
+  QA, up from 4384). Removed the `.worktrees/destructure-param-defaults`
+  worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — `nth_semiperfect` is now top. Also fixed
+  a stale in-file cross-reference (`nth_harshad`'s task text pointed to
+  `nth_semiperfect` as "task 2 above", now "task 1 above" after the
+  renumbering). Backlog holds at 5 ready tasks, the usual floor.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean).
+- Seventy-seventh clean first-round merge in a row — the streak holds,
+  eight clean merges tonight so far.

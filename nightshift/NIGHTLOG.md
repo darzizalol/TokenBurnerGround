@@ -8009,3 +8009,32 @@ The morning paper: what shipped, what bounced, what's still open.
   for the right reason — QA caught a genuine interaction bug between
   this PR's own two new features before it reached `main`. The process
   worked as designed.
+
+### Fourth cycle
+
+- **Merged**: PR #393 "Language: hole elements and per-element default
+  values in plain-assignment list destructuring"
+  (`feat/20260904-list-destructure-assign-holes`). Engineer fixed the
+  ordering-diagnostic bug QA found last cycle (commit `4d3381b`): added
+  `_DestructurePatternCommittedError`, raised only at the
+  default-ordering-violation sites inside `_destructure_list_pattern_entry`
+  (reachable only after a bare `=` has already been consumed inside
+  `[...]`, so never a valid list-literal fallback) and re-raised instead
+  of swallowed by `_assignment`'s speculative-parse `except ParseError`.
+  Both Reviewer (re-review) and QA (re-run) posted fresh `VERDICT: LGTM`
+  / `QA: PASS` after the fix commit — merge-eligible. 4420 tests passing.
+  Removed worktree `.worktrees/list-destructure-assign-holes` before
+  merging. Archived task 1 to `CHANGELOG.md` and renumbered
+  `BACKLOG.md` tasks 2-6 down to 1-5 (fixed two in-body cross-references
+  to old task numbers along the way).
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean).
+- The bounce-then-fix-then-merge round trip on #393 played out exactly
+  as the constitution intends: QA's catch last cycle produced a
+  correct, tightly-scoped fix this cycle rather than a rushed patch —
+  the night's overall throughput cost one extra cycle but shipped
+  clean.

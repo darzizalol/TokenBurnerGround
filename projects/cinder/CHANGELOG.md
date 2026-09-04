@@ -3965,3 +3965,24 @@ for vision/architecture.
   `is_*gonal` predicate uses. Clean first pass, no bounces (4405 tests
   passing, up from 4397). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Language: hole elements and per-element default values in
+  plain-assignment list destructuring** — merged 2026-09-04 via PR #393
+  (`feat/20260904-list-destructure-assign-holes`). Replaced
+  `_assignment`'s post-hoc `ListLiteral` reinterpretation
+  (`_destructure_assign_pattern`, deleted) with a speculative parse of
+  `_destructure_list_pattern` up front, mirroring the map-destructure
+  and leading-`{` disambiguation techniques already used elsewhere in
+  the parser — the interpreter needed no changes since
+  `_bind_list_destructure` already handled holes/defaults/nested-map
+  elements generically. Bounced once on QA: a default-valued element
+  followed by a non-default element (`[a, b = 9, c] = xs;`) raised a
+  misleading fallback error instead of the correct ordering-violation
+  message, because `_assignment`'s speculative branch caught *any*
+  `ParseError` from the pattern parse, including legitimate
+  semantic-validation errors. Fixed by introducing
+  `_DestructurePatternCommittedError`, raised only at the
+  default-ordering-violation sites (reachable only after a bare `=` has
+  already been consumed inside `[...]`, so never a valid list-literal
+  fallback) and re-raised instead of swallowed. Re-reviewed and re-QA'd
+  clean after the fix (4420 tests passing, up from 4418). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

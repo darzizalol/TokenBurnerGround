@@ -2440,6 +2440,27 @@ def _prime_factors(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _euler_totient(arguments: list, line: int, column: int) -> object:
+    _require_arity("euler_totient", arguments, 1, line, column)
+    value = _require_int("euler_totient", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "euler_totient() requires a positive integer, domain error", line, column
+        )
+    result = value
+    remaining = value
+    divisor = 2
+    while divisor * divisor <= remaining:
+        if remaining % divisor == 0:
+            while remaining % divisor == 0:
+                remaining //= divisor
+            result -= result // divisor
+        divisor += 1
+    if remaining > 1:
+        result -= result // remaining
+    return result
+
+
 def _is_smith_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_smith_number", arguments, 1, line, column)
     value = _require_int("is_smith_number", arguments[0], line, column)
@@ -4717,6 +4738,7 @@ _BUILTINS = {
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,
+    "euler_totient": _euler_totient,
     "is_smith_number": _is_smith_number,
     "is_carmichael_number": _is_carmichael_number,
     "is_vampire_number": _is_vampire_number,

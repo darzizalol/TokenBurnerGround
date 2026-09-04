@@ -378,7 +378,14 @@ while (i < 10) {
   use, including the same optional trailing rest element on either
   pattern kind and the same optional per-key rename on map patterns
   (`fn f({a: x, b}) { ... }`), combinable with default values and a
-  trailing rest parameter; calls to user-defined functions accept
+  trailing rest parameter; a destructuring parameter may also carry a
+  whole-pattern default (`fn f([a, b] = [1, 2]) { ... }`,
+  `fn f({a, b} = {"a": 1, "b": 2}) { ... }`), evaluated fresh per call
+  and bound in place of the whole argument when the caller omits it
+  entirely — distinct from a per-entry default *inside* the pattern
+  (`fn f([a, b = 10]) { ... }`, which already worked and still does,
+  and composes freely with a whole-pattern default on top); calls to
+  user-defined functions accept
   trailing keyword arguments matched by parameter name and
   order-independent (`f(a: 1, b: 2)`), Python-style, usable together
   with leading positional arguments but not before them; builtins stay
@@ -579,6 +586,10 @@ while (i < 10) {
   the digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending questions,
   `hamming_distance` to count differing positions between two equal-length strings,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
+  `is_refactorable` to test whether an integer's own divisor count divides back into it (a.k.a.
+  a tau number, e.g. `8` has 4 divisors and `8 % 4 == 0`), the same "count something about `n`,
+  then ask if it divides `n`" shape `is_harshad` already has for digit sum, applied to divisor
+  count instead,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
@@ -709,20 +720,20 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `is_refactorable`
-(PR #389, `is_refactorable(8)` is `true`), whether a number's own
-divisor count divides back into it (a.k.a. a tau number), the same
-"count something about n, then ask if it divides n" shape `is_harshad`
-already has for digit sum — and `nth_practical_number` (PR #388,
-`nth_practical_number(1)` is `1`), the value-returning sibling
-`is_practical_number` itself was missing, the same bounded sequential
-scan `nth_abundant`/`nth_deficient` already use. See
+Actively developed, nightly. Recently landed: default values for
+whole-pattern destructuring function parameters (PR #390,
+`fn f([a, b] = [1, 2]) { ... }` falls back to the whole default
+list/map when the argument is omitted entirely, not just per-entry
+inside the pattern the way `fn f([a, b = 10])` already could) —
+`is_refactorable` (PR #389, `is_refactorable(8)` is `true`), whether a
+number's own divisor count divides back into it (a.k.a. a tau number),
+the same "count something about n, then ask if it divides n" shape
+`is_harshad` already has for digit sum — and `nth_practical_number`
+(PR #388, `nth_practical_number(1)` is `1`), the value-returning
+sibling `is_practical_number` itself was missing, the same bounded
+sequential scan `nth_abundant`/`nth_deficient` already use. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): default values for
-whole-pattern destructuring function parameters (`fn f([a, b] = [1,
-2]) { ... }`, falling back to the whole default list/map when the
-argument is omitted entirely, not just per-entry inside the pattern
-the way `fn f([a, b = 10])` already can) — `nth_semiperfect`, the
+next (see [`BACKLOG.md`](BACKLOG.md)): `nth_semiperfect`, the
 value-returning sibling `is_semiperfect` itself was missing, the same
 bounded sequential scan `nth_practical_number`/`nth_deficient` already
 use — `is_decagonal`/`nth_decagonal`, the next member of the existing
@@ -734,11 +745,14 @@ expr;` falling back to a default when the source value is too short),
 closing the gap between that form and `let`-style list destructuring,
 which already supports both — `nth_harshad`, the value-returning
 sibling `is_harshad` itself was missing, the same bounded sequential
-scan `nth_abundant`/`nth_deficient` already use — and destructuring
+scan `nth_abundant`/`nth_deficient` already use — destructuring
 patterns for `const` declarations (`const [a, b] = expr;`, `const {a,
 b} = expr;`, every bound name frozen), closing the gap between `let`,
 which already supports both destructuring forms, and `const`, which
-today accepts only a bare identifier. (Guards in `match`
+today accepts only a bare identifier — and `nth_squarefree`, the
+value-returning sibling `is_squarefree` itself was missing, the same
+bounded sequential scan `nth_practical_number`/`nth_harshad` already
+use. (Guards in `match`
 arms, `n if n > 0 => "positive"`, were attempted but closed after
 three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

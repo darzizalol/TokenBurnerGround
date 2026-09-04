@@ -698,6 +698,98 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
+
+Build: `is_squarefree` (`cinder/builtins.py`, search `def
+_is_squarefree`: no prime factor of `value` appears with exponent 2 or
+more, checked by trial division for any `divisor` where
+`value % (divisor * divisor) == 0`) has no value-returning `nth_*`
+sibling, the same gap `nth_practical_number`/`nth_deficient`/
+`nth_harshad` (task 4 above) already close or are about to close for
+their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_squarefree(1));'
+# -> <eval>:1:7: undefined name 'nth_squarefree' (did you mean
+#    'is_squarefree'?)
+```
+
+Worked examples: the first ten squarefree numbers (OEIS A005117) are
+`1, 2, 3, 5, 6, 7, 10, 11, 13, 14` — `4, 8, 9, 12` are skipped (each
+divisible by a perfect square: `4 = 2^2`, `8 = 2^2 * 2`, `9 = 3^2`,
+`12 = 2^2 * 3`); the 20th is `31`.
+
+Add directly after `_is_squarefree` (search `def _is_squarefree`,
+immediately before `def _is_powerful_number`) — keeps the
+value-returning helper next to the predicate it mirrors, matching
+where `nth_deficient` itself sits right after `is_deficient`:
+```python
+def _nth_squarefree(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_squarefree", arguments, 1, line, column)
+    value = _require_int("nth_squarefree", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_squarefree() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_squarefree_candidate(candidate: int) -> bool:
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % (divisor * divisor) == 0:
+                return False
+        return True
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_squarefree_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_practical_number`/`_nth_harshad`, with the
+inner candidate check copied from `_is_squarefree`'s own body instead
+of calling `_is_squarefree` directly — the same "duplicate the tiny
+predicate body instead of a redundant `_require_arity`/`_require_int`
+round-trip per candidate" choice `_nth_harshad` already makes.) Also
+register the new dict entry (search `"is_squarefree":
+_is_squarefree,`, add `"nth_squarefree": _nth_squarefree,` directly
+after it, before `"is_powerful_number": _is_powerful_number,`).
+
+Acceptance criteria:
+- `nth_squarefree(1);` through `nth_squarefree(10);` are `1, 2, 3, 5,
+  6, 7, 10, 11, 13, 14` in order — the worked example above.
+- `nth_squarefree(20);` is `31` — a further worked example confirming
+  the scan scales past the first ten.
+- For every `position` in `1..50`, `is_squarefree(nth_squarefree(position))`
+  is `true` — the same self-consistency check `nth_practical_number`'s
+  own test suite already runs against `is_practical_number`.
+- `nth_squarefree(0);`, `nth_squarefree(-3);` both raise
+  `CinderRuntimeError` matching `"nth_squarefree\(\) requires a
+  positive integer, domain error"`, matching `nth_practical_number`'s
+  own non-positive-input convention.
+- `nth_squarefree(true);` raises `CinderRuntimeError` matching
+  `"nth_squarefree\(\) requires an int, got bool"`, since
+  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
+  `int` subclass (same guard every other int-only predicate in this
+  file already relies on).
+- `nth_squarefree("5");` raises `CinderRuntimeError` matching
+  `"nth_squarefree\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_squarefree`,
+search `def _is_squarefree`), `tests/test_builtins.py` (new `class
+TestNthSquarefree`, modeled on `class TestNthPracticalNumber`, search
+that name, for the test shapes above — place it near the existing
+`class TestIsSquarefree`, search that name). Once merged, `README.md`'s
+Builtins bullet needs `nth_squarefree` added near `is_squarefree`, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" section needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -5004,6 +5004,78 @@ class TestIsPracticalNumber(unittest.TestCase):
             run("is_practical_number();")
 
 
+class TestNthPracticalNumber(unittest.TestCase):
+    def test_nth_practical_number_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 2,
+            3: 4,
+            4: 6,
+            5: 8,
+            6: 12,
+            7: 16,
+            8: 18,
+            9: 20,
+            10: 24,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_practical_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_practical_number_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_practical_number(20);").get("result"), 60
+        )
+
+    def test_nth_practical_number_agrees_with_is_practical_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_practical_number(nth_practical_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_practical_number({position}) to be a practical number",
+            )
+
+    def test_nth_practical_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_practical_number(0);")
+        self.assertIn(
+            "nth_practical_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_practical_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_practical_number(-3);")
+        self.assertIn(
+            "nth_practical_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_practical_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_practical_number(true);")
+        self.assertIn(
+            "nth_practical_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_practical_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_practical_number("5");')
+        self.assertIn(
+            "nth_practical_number() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_practical_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_practical_number(1, 2);")
+
+
 class TestIsAbundant(unittest.TestCase):
     def test_is_abundant_of_12(self):
         self.assertEqual(run("let result = is_abundant(12);").get("result"), True)

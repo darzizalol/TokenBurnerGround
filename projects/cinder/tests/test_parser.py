@@ -1662,6 +1662,28 @@ class TestListsAndMaps(unittest.TestCase):
         )
         self.assertIsNone(expr.rest)
 
+    def test_list_destructure_assignment_element_without_default_after_defaulted_raises(self):
+        # Regression test: the speculative destructure-pattern parse in
+        # `_assignment` used to catch *any* ParseError from
+        # `_destructure_list_pattern` (including this ordering-violation
+        # error) and silently fall back to ordinary expression parsing,
+        # which then failed with an unrelated, confusing message pointing
+        # at `]`/`=` instead of naming the actual problem.
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in destructuring pattern",
+        ):
+            parse_stmts("[a, b = 9, c] = [1, 2, 3];")
+
+    def test_list_destructure_assignment_nested_element_without_default_after_defaulted_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in destructuring pattern",
+        ):
+            parse_stmts('[a, b = 9, {d}] = [1, 2, {"d": 3}];')
+
     def test_list_destructure_assignment_literal_element_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse_stmts("[1, 2] = [3, 4];")

@@ -2160,6 +2160,24 @@ def _is_weird_number(arguments: list, line: int, column: int) -> object:
     return value not in reachable
 
 
+def _is_semiperfect(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_semiperfect", arguments, 1, line, column)
+    value = _require_int("is_semiperfect", arguments[0], line, column)
+    if value < 2:
+        return False
+    divisors = [1]
+    for divisor in range(2, math.isqrt(value) + 1):
+        if value % divisor == 0:
+            divisors.append(divisor)
+            complement = value // divisor
+            if complement != divisor:
+                divisors.append(complement)
+    reachable = {0}
+    for divisor in divisors:
+        reachable |= {total + divisor for total in reachable if total + divisor <= value}
+    return value in reachable
+
+
 def _is_automorphic(arguments: list, line: int, column: int) -> object:
     _require_arity("is_automorphic", arguments, 1, line, column)
     value = _require_int("is_automorphic", arguments[0], line, column)
@@ -4682,6 +4700,7 @@ _BUILTINS = {
     "nth_deficient": _nth_deficient,
     "is_deficient": _is_deficient,
     "is_weird_number": _is_weird_number,
+    "is_semiperfect": _is_semiperfect,
     "is_automorphic": _is_automorphic,
     "is_trimorphic_number": _is_trimorphic_number,
     "is_keith_number": _is_keith_number,

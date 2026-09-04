@@ -5273,6 +5273,71 @@ class TestIsWeirdNumber(unittest.TestCase):
             run("is_weird_number();")
 
 
+class TestIsSemiperfect(unittest.TestCase):
+    def test_is_semiperfect_of_6_is_true(self):
+        self.assertEqual(run("let result = is_semiperfect(6);").get("result"), True)
+
+    def test_is_semiperfect_of_12_is_true(self):
+        self.assertEqual(run("let result = is_semiperfect(12);").get("result"), True)
+
+    def test_is_semiperfect_of_18_is_true(self):
+        self.assertEqual(run("let result = is_semiperfect(18);").get("result"), True)
+
+    def test_is_semiperfect_of_20_is_true(self):
+        self.assertEqual(run("let result = is_semiperfect(20);").get("result"), True)
+
+    def test_is_semiperfect_of_28_is_true(self):
+        self.assertEqual(run("let result = is_semiperfect(28);").get("result"), True)
+
+    def test_is_semiperfect_of_1_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(1);").get("result"), False)
+
+    def test_is_semiperfect_of_2_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(2);").get("result"), False)
+
+    def test_is_semiperfect_of_4_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(4);").get("result"), False)
+
+    def test_is_semiperfect_of_16_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(16);").get("result"), False)
+
+    def test_is_semiperfect_of_70_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(70);").get("result"), False)
+
+    def test_is_semiperfect_of_zero_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(0);").get("result"), False)
+
+    def test_is_semiperfect_of_negative_is_false(self):
+        self.assertEqual(run("let result = is_semiperfect(-6);").get("result"), False)
+
+    def test_is_semiperfect_matches_is_weird_number_cross_check(self):
+        for n in range(2, 201):
+            is_weird = run(f"let result = is_weird_number({n});").get("result")
+            is_abundant = run(f"let result = is_abundant({n});").get("result")
+            is_semiperfect = run(f"let result = is_semiperfect({n});").get("result")
+            self.assertEqual(
+                is_weird,
+                is_abundant and not is_semiperfect,
+                f"expected is_weird_number({n}) to equal is_abundant({n}) and not is_semiperfect({n})",
+            )
+
+    def test_is_semiperfect_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("is_semiperfect(true);")
+        self.assertIn("is_semiperfect", ctx.exception.message)
+        self.assertIn("bool", ctx.exception.message)
+
+    def test_is_semiperfect_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('is_semiperfect("6");')
+        self.assertIn("is_semiperfect", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_is_semiperfect_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_semiperfect();")
+
+
 class TestIsAutomorphic(unittest.TestCase):
     def test_is_automorphic_of_5(self):
         self.assertEqual(run("let result = is_automorphic(5);").get("result"), True)

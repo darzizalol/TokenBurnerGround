@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `euler_totient` — count of integers up to n coprime with n
+## 1. Standard library: `euler_totient` — count of integers up to n coprime with n [claimed 2026-09-04T14:28:26Z]
 
 Build: Cinder's number-theory builtins already include `prime_factors`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-division

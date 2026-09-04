@@ -6199,6 +6199,73 @@ class TestPrimeFactors(unittest.TestCase):
             run("prime_factors();")
 
 
+class TestEulerTotient(unittest.TestCase):
+    def test_euler_totient_of_1(self):
+        self.assertEqual(run("let result = euler_totient(1);").get("result"), 1)
+
+    def test_euler_totient_of_9(self):
+        self.assertEqual(run("let result = euler_totient(9);").get("result"), 6)
+
+    def test_euler_totient_of_primes(self):
+        expected = {2: 1, 3: 2, 13: 12}
+        for value, totient in expected.items():
+            self.assertEqual(
+                run(f"let result = euler_totient({value});").get("result"),
+                totient,
+                f"expected euler_totient({value}) to be {totient}",
+            )
+
+    def test_euler_totient_of_36(self):
+        self.assertEqual(run("let result = euler_totient(36);").get("result"), 12)
+
+    def test_euler_totient_of_100(self):
+        self.assertEqual(run("let result = euler_totient(100);").get("result"), 40)
+
+    def test_euler_totient_agrees_with_brute_force_coprime_count(self):
+        def gcd(a, b):
+            while b:
+                a, b = b, a % b
+            return a
+
+        for n in range(1, 101):
+            expected = sum(1 for m in range(1, n + 1) if gcd(m, n) == 1)
+            self.assertEqual(
+                run(f"let result = euler_totient({n});").get("result"),
+                expected,
+                f"expected euler_totient({n}) to be {expected}",
+            )
+
+    def test_euler_totient_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("euler_totient(0);")
+        self.assertIn(
+            "euler_totient() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_euler_totient_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("euler_totient(-9);")
+        self.assertIn(
+            "euler_totient() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_euler_totient_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("euler_totient(true);")
+        self.assertIn("euler_totient() requires an int, got bool", ctx.exception.message)
+
+    def test_euler_totient_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('euler_totient("9");')
+        self.assertIn("euler_totient() requires an int, got string", ctx.exception.message)
+
+    def test_euler_totient_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("euler_totient();")
+
+
 class TestIsSmithNumber(unittest.TestCase):
     def test_is_smith_number_of_4(self):
         self.assertTrue(run("let result = is_smith_number(4);").get("result"))

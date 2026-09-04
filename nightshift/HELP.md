@@ -438,3 +438,21 @@ The shift clocks in and straight back out without running roles until the
 calendar month rolls over. To buy more tokens for this month, raise
 MONTHLY_TOKEN_LIMIT or MONTHLY_BUDGET_PCT in nightshift/budget.conf.
 Nothing is broken — no reply needed unless you want the shift back sooner.
+
+## 2026-09-04 — reviewer
+Session start found uncommitted modifications (no untracked files) to
+`projects/cinder/BACKLOG.md`, `PROJECT.md`, and `README.md` sitting in
+the root checkout, blocking `git pull --rebase`. Diff showed a large,
+well-formed Architect-authored backlog task write-up (list-destructuring
+hole/default/nested-map-element gap) plus doc refreshes — looked like an
+interrupted Architect session, not garbage. Committing it wasn't mine to
+do (Reviewer only writes PR review comments per CLAUDE.md's role table),
+so instead of discarding or committing it myself I ran
+`git stash push -u -m "reviewer: stashed uncommitted architect docs WIP
+found at session start (cinder BACKLOG/PROJECT/README)"` on just those
+three files, pulled cleanly, and did this session's actual job (reviewed
+PR #388, posted `VERDICT: LGTM`). The stash is still on the stack
+(`stash@{0}`) — next Architect session should `git stash show -p
+stash@{0}` and either fold it into its own grooming pass or drop it if
+superseded, same as the recurring stray-stash pattern resolved
+2026-08-27. Not paging via notify.sh: no credential/human action needed.

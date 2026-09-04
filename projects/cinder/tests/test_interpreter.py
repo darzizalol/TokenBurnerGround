@@ -4497,6 +4497,52 @@ class TestKeywordCallArguments(unittest.TestCase):
         self.assertEqual(env.get("result"), 3)
 
 
+class TestKeywordOnlyParameters(unittest.TestCase):
+    def test_keyword_only_parameter_supplied_by_name(self):
+        env = run(
+            'fn greet(name, *, loud) { return loud ? name + "!" : name; } '
+            'let result = greet("Ada", loud: true);'
+        )
+        self.assertEqual(env.get("result"), "Ada!")
+
+    def test_keyword_only_parameter_cannot_be_passed_positionally(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run(
+                'fn greet(name, *, loud) { return loud ? name + "!" : name; } '
+                'greet("Ada", true);'
+            )
+        self.assertIn("greet() expects 1 argument(s), got 2", str(ctx.exception))
+
+    def test_keyword_only_parameter_default_applies_when_omitted(self):
+        env = run("fn f(a, *, b = 1) { return a + b; } let result = f(1);")
+        self.assertEqual(env.get("result"), 2)
+
+    def test_keyword_only_parameter_default_overridden_by_keyword(self):
+        env = run("fn f(a, *, b = 1) { return a + b; } let result = f(1, b: 5);")
+        self.assertEqual(env.get("result"), 6)
+
+    def test_defaulted_keyword_only_param_may_precede_required_one(self):
+        env = run("fn f(a, *, b = 1, c) { return a + c; } let result = f(1, c: 2);")
+        self.assertEqual(env.get("result"), 3)
+
+    def test_star_as_first_entry_makes_every_parameter_keyword_only(self):
+        env = run("fn f(*, a) { return a; } let result = f(a: 1);")
+        self.assertEqual(env.get("result"), 1)
+
+    def test_missing_required_keyword_only_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("fn f(a, *, b) { return a; } f(1);")
+        self.assertIn("f() missing required argument(s): 'b'", str(ctx.exception))
+
+    def test_ordinary_default_parameters_unaffected(self):
+        env = run("fn f(a, b = 1) { return a + b; } let result = f(1);")
+        self.assertEqual(env.get("result"), 2)
+
+    def test_ordinary_rest_parameter_unaffected(self):
+        env = run("fn f(a, ...rest) { return rest; } let result = f(1, 2, 3);")
+        self.assertEqual(env.get("result"), [2, 3])
+
+
 class TestMapSpreadCallArguments(unittest.TestCase):
     def test_map_spread_as_keyword_arguments(self):
         env = run(

@@ -3616,6 +3616,53 @@ class TestFunctions(unittest.TestCase):
             parse_stmts("fn f() { return 1; } return 2;")
 
 
+class TestKeywordOnlyParameters(unittest.TestCase):
+    def test_bare_trailing_star_raises(self):
+        with self.assertRaisesRegex(ParseError, r"named parameter required after '\*'"):
+            parse_stmts("fn f(a, *) { return a; }")
+
+    def test_bare_star_with_no_params_raises(self):
+        with self.assertRaisesRegex(ParseError, r"named parameter required after '\*'"):
+            parse_stmts("fn f(*) { return 1; }")
+
+    def test_duplicate_star_raises(self):
+        with self.assertRaisesRegex(ParseError, "duplicate '\\*' in parameter list"):
+            parse_stmts("fn f(*, a, *, b) { return a; }")
+
+    def test_star_before_rest_param_raises(self):
+        with self.assertRaisesRegex(
+            ParseError, "cannot combine keyword-only parameters with a rest parameter"
+        ):
+            parse_stmts("fn f(a, *, b, ...rest) { return a; }")
+
+    def test_rest_param_before_star_raises(self):
+        with self.assertRaisesRegex(
+            ParseError, "cannot combine keyword-only parameters with a rest parameter"
+        ):
+            parse_stmts("fn f(a, ...rest, *, b) { return a; }")
+
+    def test_list_destructuring_after_star_raises(self):
+        with self.assertRaisesRegex(
+            ParseError, "keyword-only parameter cannot use destructuring"
+        ):
+            parse_stmts("fn f(*, [a, b]) { return a; }")
+
+    def test_map_destructuring_after_star_raises(self):
+        with self.assertRaisesRegex(
+            ParseError, "keyword-only parameter cannot use destructuring"
+        ):
+            parse_stmts("fn f(*, {a, b}) { return a; }")
+
+    def test_star_marks_following_params_keyword_only(self):
+        [decl] = parse_stmts("fn f(a, *, b, c = 1) { return a; }")
+        self.assertEqual([p.keyword_only for p in decl.params], [False, True, True])
+        self.assertIsNone(decl.rest_param)
+
+    def test_leading_star_marks_every_param_keyword_only(self):
+        [decl] = parse_stmts("fn f(*, a, b) { return a; }")
+        self.assertEqual([p.keyword_only for p in decl.params], [True, True])
+
+
 class TestArrowFunctions(unittest.TestCase):
     def test_arrow_no_params(self):
         self.assertEqual(

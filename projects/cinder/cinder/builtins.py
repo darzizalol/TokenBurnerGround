@@ -2056,6 +2056,41 @@ def _is_practical_number(arguments: list, line: int, column: int) -> object:
     return all(target in reachable for target in range(1, value))
 
 
+def _nth_practical_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_practical_number", arguments, 1, line, column)
+    value = _require_int("nth_practical_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_practical_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_practical_candidate(candidate: int) -> bool:
+        if candidate == 1:
+            return True
+        divisors = [1]
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                divisors.append(divisor)
+                complement = candidate // divisor
+                if complement != divisor:
+                    divisors.append(complement)
+        reachable = {0}
+        for divisor in divisors:
+            reachable |= {
+                total + divisor for total in reachable if total + divisor <= candidate
+            }
+        return all(target in reachable for target in range(1, candidate))
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_practical_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_abundant(arguments: list, line: int, column: int) -> object:
     _require_arity("is_abundant", arguments, 1, line, column)
     value = _require_int("is_abundant", arguments[0], line, column)
@@ -4716,6 +4751,7 @@ _BUILTINS = {
     "is_leap_year": _is_leap_year,
     "is_perfect_number": _is_perfect_number,
     "is_practical_number": _is_practical_number,
+    "nth_practical_number": _nth_practical_number,
     "is_abundant": _is_abundant,
     "nth_abundant": _nth_abundant,
     "nth_deficient": _nth_deficient,

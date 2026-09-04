@@ -11,212 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `*` marker for keyword-only function parameters [claimed 2026-09-04T14:12:36Z]
-
-Build: Cinder function parameters (`cinder/parser.py`, search `def
-_fn_param_list`/`def _fn_param`) can already carry defaults (`fn f(a, b =
-1)`), a single trailing rest parameter (`fn f(a, ...rest)`), and
-destructuring shapes (`fn f([a, b])`/`fn f({a, b})`) — and every named
-parameter can already be passed either positionally or by name (`f(1, 2)`
-and `f(a: 1, b: 2)` both work via the existing keyword-argument machinery
-in `cinder/interpreter.py`'s `call_value`, search `def call_value`). There
-is no way to *force* a parameter to be passed by name only — a caller can
-always sneak a value in positionally even when the author intended a
-trailing flag/option-style parameter to always be self-documenting at the
-call site. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'fn f(a, *, b) { return a + b; } print(f(1, 2));'
-# -> currently PARSES (bare '*' is not recognized in a parameter list at
-#    all, so this fails elsewhere) - run this first to see today's error:
-python3 -m cinder.cli eval 'fn greet(name, *, loud) { return loud ? name + "!" : name; } print(greet("Ada", loud: true));'
-# -> <eval>:1:19: expected parameter name, found '*'
-```
-
-Worked examples: `fn greet(name, *, loud) { ... }` declares `name` as an
-ordinary positional-or-keyword parameter and `loud` as keyword-only — the
-bare `*` is not itself a parameter, it is a marker after which every
-parameter must be supplied by name. `greet("Ada", loud: true)` works;
-`greet("Ada", true)` must raise the same shape of arity error Cinder
-already raises for too many positional arguments, since `true` has no
-positional slot to land in. Keyword-only parameters may have defaults
-(`fn f(a, *, b = 1) { ... }`) and, unlike positional parameters, are not
-subject to the existing "no-default parameter cannot follow a
-default parameter" ordering rule — `fn f(a, *, b = 1, c) { ... }` is
-legal even though `c` (no default) comes after `b` (has one), because
-neither can be filled positionally, so ordering between them is
-irrelevant; call `f(1, c: 2)` and `b` falls back to its default. A bare
-trailing `*` with nothing keyword-only after it (`fn f(a, *) { ... }`) is
-a `ParseError`, mirroring Python's identical restriction on its own `*`
-marker.
-
-Add a `keyword_only: bool = False` field to `Param` (`cinder/ast_nodes.py`,
-search `class Param`, directly after the existing `is_map: bool = False`
-field) — the same "one more optional field on the shared dataclass"
-shape `is_map` itself already added for map-destructuring parameters.
-
-Rewrite `_fn_param_list` (`cinder/parser.py`, search `def
-_fn_param_list`) to recognize a bare `TokenType.STAR` (the existing
-multiplication-operator token — unambiguous here since expression syntax
-never appears at parameter-list position) as the keyword-only marker,
-restructured into one loop so the marker can appear before the first
-parameter too (`fn f(*, a) { ... }`):
-```python
-def _fn_param_list(self) -> tuple:
-    params = []
-    rest_param = None
-    seen_default = False
-    seen_star = False
-    star_token = None
-    if not self._check(TokenType.RPAREN):
-        while True:
-            if self._check(TokenType.STAR):
-                token = self._peek()
-                if seen_star:
-                    raise ParseError("duplicate '*' in parameter list", token.line, token.column)
-                if rest_param is not None:
-                    raise ParseError(
-                        "cannot combine keyword-only parameters with a rest parameter",
-                        token.line, token.column,
-                    )
-                star_token = self._advance()
-                seen_star = True
-                seen_default = False
-            elif self._check(TokenType.DOT_DOT_DOT):
-                token = self._peek()
-                if rest_param is not None:
-                    raise ParseError("rest parameter must be the last parameter", token.line, token.column)
-                if seen_star:
-                    raise ParseError(
-                        "cannot combine keyword-only parameters with a rest parameter",
-                        token.line, token.column,
-                    )
-                rest_param = self._fn_rest_param()
-            else:
-                if rest_param is not None:
-                    token = self._peek()
-                    raise ParseError("rest parameter must be the last parameter", token.line, token.column)
-                if seen_star and (self._check(TokenType.LBRACKET) or self._check(TokenType.LBRACE)):
-                    token = self._peek()
-                    raise ParseError(
-                        "keyword-only parameter cannot use destructuring", token.line, token.column
-                    )
-                param = self._fn_param(seen_default, keyword_only=seen_star)
-                params.append(param)
-                if not seen_star:
-                    seen_default = seen_default or param.default is not None
-            if self._check(TokenType.COMMA):
-                self._advance()
-                if self._check(TokenType.RPAREN):
-                    break
-                continue
-            break
-    if seen_star and not any(param.keyword_only for param in params):
-        raise ParseError("named parameter required after '*'", star_token.line, star_token.column)
-    return params, rest_param
-```
-(Preserves every existing error message verbatim — `"rest parameter must
-be the last parameter"` still fires in the same cases as today's
-while-loop version, just reached from the restructured single loop.)
-`_fn_param` (search `def _fn_param`) gains a `keyword_only: bool = False`
-parameter, threaded only into the final plain-identifier `return
-Param(name=name_token.lexeme, default=default, keyword_only=keyword_only)`
-— its internal `elif seen_default:` ordering check needs no change,
-since the caller above never sets `seen_default` while inside the
-keyword-only section, so that branch is simply never true there.
-
-Two small `cinder/interpreter.py` changes (both already exercise the
-exact same fields, just filtering out `keyword_only` params from the
-*positional* counts):
-```python
-@property
-def arity(self) -> int:
-    """Minimum arity: the count of required positional parameters
-    (no default, not keyword-only)."""
-    return sum(
-        1 for param in self.decl.params if not param.keyword_only and param.default is None
-    )
-```
-and in `call_value` (search `min_arity = callee.arity`), change
-`max_arity = None if callee.decl.rest_param else len(callee.decl.params)`
-to
-`max_arity = None if callee.decl.rest_param else sum(1 for p in callee.decl.params if not p.keyword_only)`,
-then immediately after the existing `if not keywords:` branch's
-arity-bound check (the block raising `"{name}() expects ... argument(s),
-got ..."`), add:
-```python
-missing_keyword_only = [
-    p.name for p in callee.decl.params if p.keyword_only and p.default is None
-]
-if missing_keyword_only:
-    names = ", ".join(repr(name) for name in missing_keyword_only)
-    raise CinderRuntimeError(
-        f"{callee.name}() missing required argument(s): {names}", line, column
-    )
-```
-No other change is needed: the `else` (keywords-present) branch's
-existing `missing`/`unexpected`/`multiple values` checks and the argument
--binding loop already do the right thing once `max_arity` excludes
-keyword-only params from the positional count — a keyword-only
-parameter's `index` can then never be `< len(arguments)` (since
-`len(arguments) <= max_arity <= index` for any keyword-only param, whose
-index always comes after every positional one), so it is always filled
-from `keywords` or its default, never positionally, with no extra
-bookkeeping.
-
-Acceptance criteria:
-- `fn greet(name, *, loud) { return loud ? name + "!" : name; }
-  greet("Ada", loud: true);` is `"Ada!"` — the worked example above.
-- `fn greet(name, *, loud) { return loud ? name + "!" : name; }
-  greet("Ada", true);` raises `CinderRuntimeError` matching
-  `"greet\(\) expects 1 argument\(s\), got 2"` — `loud` has no positional
-  slot, so the second positional argument overflows.
-- `fn f(a, *, b = 1) { return a + b; } f(1);` is `2` and `f(1, b: 5);` is
-  `6` — a keyword-only parameter's default still applies when omitted.
-- `fn f(a, *, b = 1, c) { return a + c; } f(1, c: 2);` is `3` — a
-  defaulted keyword-only parameter followed by a non-defaulted one is
-  legal (the existing default-ordering rule does not apply past `*`).
-- `fn f(*, a) { return a; } f(a: 1);` is `1` — `*` as the very first
-  entry in the parameter list, making every parameter keyword-only.
-- `fn f(a, *, b) { return a; } f(1);` raises `CinderRuntimeError` matching
-  `"f\(\) missing required argument\(s\): 'b'"` — a required keyword-only
-  parameter omitted with no other keyword arguments supplied at all
-  (exercises the `if not keywords:` branch's new check, not just the
-  keywords-present branch).
-- `fn f(a) { return a; } f(*);` and `fn f(a, *) { return a; } f(1);` both
-  raise `ParseError` matching `"named parameter required after '\*'"` at
-  parse time — a bare trailing `*` with nothing keyword-only after it.
-- `fn f(*, a, *, b) { return a; }` raises `ParseError` matching
-  `"duplicate '\*' in parameter list"`.
-- `fn f(a, ...rest, *, b) { return a; }` and `fn f(a, *, b, ...rest) {
-  return a; }` both raise `ParseError` matching `"cannot combine
-  keyword-only parameters with a rest parameter"` — in either order.
-- `fn f(*, [a, b]) { return a; }` raises `ParseError` matching
-  `"keyword-only parameter cannot use destructuring"`.
-- Regression: `fn f(a, b = 1) { return a + b; } f(1);` is `2` and
-  `fn f(a, ...rest) { return rest; } f(1, 2, 3);` is `[2, 3]` — ordinary
-  defaults and rest parameters (no `*` involved) are completely
-  unaffected.
-- Full test suite passes.
-
-Likely files: `cinder/ast_nodes.py` (`Param`, search `class Param`),
-`cinder/parser.py` (`_fn_param_list`/`_fn_param`, search `def
-_fn_param_list`), `cinder/interpreter.py` (`CinderFunction.arity` and
-`call_value`, search `def call_value`), `tests/test_parser.py` (new
-`class TestKeywordOnlyParameters` for the `ParseError` cases, modeled on
-existing rest-parameter parse-error tests — search `rest parameter must
-be the last parameter` there for the pattern), `tests/test_interpreter.py`
-(new `class TestKeywordOnlyParameters`, modeled on the existing keyword-
-argument test classes, search `class TestKeywordCallArguments`, for the
-runtime shapes above). Once merged, `README.md`'s function-parameters
-bullet needs a mention of `*` keyword-only parameters alongside the
-existing defaults/rest-parameter/destructuring text, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `euler_totient` — count of integers up to n coprime with n
+## 1. Standard library: `euler_totient` — count of integers up to n coprime with n
 
 Build: Cinder's number-theory builtins already include `prime_factors`
 (`cinder/builtins.py`, search `def _prime_factors`: trial-division
@@ -314,7 +109,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
+## 2. Standard library: `nth_practical_number` — practical number found at a 1-indexed position
 
 Build: Cinder's `is_practical_number` (`cinder/builtins.py`, search `def
 _is_practical_number`: proper-divisor list, then a bounded 0/1 subset-sum
@@ -417,7 +212,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `is_refactorable` — divisor count divides the number itself
+## 3. Standard library: `is_refactorable` — divisor count divides the number itself
 
 Build: Cinder's `num_divisors` (`cinder/builtins.py`, search `def
 _num_divisors`: counts divisors via a bounded `math.isqrt` sweep,
@@ -517,7 +312,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: default values for whole-pattern destructuring function parameters
+## 4. Language: default values for whole-pattern destructuring function parameters
 
 Build: Cinder function parameters can already be a list-destructuring
 pattern (`fn f([a, b])`) or a map-destructuring pattern (`fn f({a, b})`),
@@ -701,7 +496,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
+## 5. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position
 
 Build: `is_semiperfect` (`cinder/builtins.py`, search `def
 _is_semiperfect`: proper-divisor list, then a bounded 0/1 subset-sum

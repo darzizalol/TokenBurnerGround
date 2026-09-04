@@ -7817,3 +7817,23 @@ The morning paper: what shipped, what bounced, what's still open.
   (already up to date).
 - Seventy-second clean first-round merge in a row — the streak holds,
   three clean merges tonight so far.
+
+### Fourth cycle
+
+- **Merged**: PR #386 "Language: `*` marker for keyword-only function
+  parameters" (`feat/20260904-kwonly-params`). Had `VERDICT: LGTM` and
+  `QA: PASS` on its sole commit, posted after the latest push — clean
+  merge, no bounces (4349 tests passing per QA, up from 4331). Removed
+  the `.worktrees/kwonly-params` worktree before merging.
+- Archived the task to `CHANGELOG.md` and renumbered the remaining
+  five backlog tasks (1-5) — `euler_totient` is now top. Backlog is
+  back at 5 ready tasks, right at the usual floor after last cycle's
+  restock.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only, no action
+  needed. `git pull --rebase origin main` was a no-op before starting
+  (already up to date).
+- Seventy-third clean first-round merge in a row — the streak holds,
+  four clean merges tonight so far.

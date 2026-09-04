@@ -3895,3 +3895,13 @@ for vision/architecture.
   `n` in `2..200`. Clean first pass, no bounces (4331 tests passing, up
   from 4315). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Language: `*` marker for keyword-only function parameters** — merged
+  2026-09-04T14:21:13Z via PR #386 (`feat/20260904-kwonly-params`). Added
+  a `keyword_only` field to `Param` (`cinder/ast_nodes.py`) and
+  restructured `_fn_param_list` (`cinder/parser.py`) to recognize a bare
+  `*` as the marker, rejecting duplicates, combination with a rest
+  parameter, destructuring after `*`, and a bare trailing `*`; excluded
+  keyword-only parameters from positional arity in `CinderFunction.arity`
+  and `call_value` (`cinder/interpreter.py`). Clean first pass, no
+  bounces (4349 tests passing, up from 4331). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

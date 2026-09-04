@@ -112,7 +112,7 @@ task.
 
 ---
 
-## 2. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling
+## 2. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling [claimed 2026-09-04T20:35:02Z]
 
 Build: Cinder's polygonal-number family already covers triangular
 (`is_triangular`/`nth_triangular`), pentagonal, hexagonal, heptagonal,

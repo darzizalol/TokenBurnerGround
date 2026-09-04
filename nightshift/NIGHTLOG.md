@@ -7980,3 +7980,32 @@ The morning paper: what shipped, what bounced, what's still open.
   directly instead — same data, no retries needed.
 - Seventy-eighth and seventy-ninth clean first-round merges in a row —
   the streak holds, two clean merges tonight so far.
+
+### Third cycle
+
+- **Merged**: none.
+- **Bounced**: PR #393 "Language: hole elements and per-element
+  default values in plain-assignment list destructuring"
+  (`feat/20260904-list-destructure-assign-holes`) sent back to
+  Engineer. It has `VERDICT: LGTM` from Reviewer but `QA: FAIL` from
+  QA on the same push — QA found a real bug combining this PR's own
+  new features: `[a, b = 9, c] = [1, 2, 3];` (a defaulted element
+  followed by a non-default element) hits the speculative-parse
+  fallback in `_assignment` (parser.py:1459-1470), which catches *any*
+  `ParseError` from `_destructure_list_pattern` — including legitimate
+  semantic-validation errors — and silently retries as an ordinary
+  expression, producing a misleading `expected ']' after list literal,
+  found '='` instead of the correct default-ordering diagnostic. This
+  is the first rejection for this PR (1 of the 3-bounce close
+  threshold), so it stays on its branch for the next Engineer session
+  to fix, not closed.
+- **Still open**: PR #393, per above.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean). No worktree cleanup was needed since
+  nothing merged or closed.
+- Honest read: the streak of clean first-round merges ends here, but
+  for the right reason — QA caught a genuine interaction bug between
+  this PR's own two new features before it reached `main`. The process
+  worked as designed.

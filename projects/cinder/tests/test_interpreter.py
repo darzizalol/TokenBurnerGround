@@ -2094,9 +2094,10 @@ class TestDestructureListHoles(unittest.TestCase):
         with self.assertRaises(ParseError):
             run("let [] = [1];")
 
-    def test_plain_assignment_hole_unaffected(self):
-        with self.assertRaises(ParseError):
-            run("let a = 0; let c = 0; [a, , c] = [1, 2, 3];")
+    def test_plain_assignment_hole_now_supported(self):
+        env = run("let a = 0; let c = 0; [a, , c] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("c"), 3)
 
 
 class TestDestructureNestedListPattern(unittest.TestCase):
@@ -2213,9 +2214,10 @@ class TestDestructureMapPatternNestedInList(unittest.TestCase):
         )
         self.assertEqual(env.get("r"), [3, 7])
 
-    def test_plain_assignment_form_still_rejected(self):
-        with self.assertRaisesRegex(ParseError, r"invalid assignment target"):
-            run('let a = 0; let b = 0; [a, {b}] = [1, {"b": 2}];')
+    def test_plain_assignment_form_now_supported(self):
+        env = run('let a = 0; let b = 0; [a, {b}] = [1, {"b": 2}];')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
 
 
 class TestDestructureNestedMapPattern(unittest.TestCase):
@@ -2437,6 +2439,25 @@ class TestDestructureAssign(unittest.TestCase):
         self.assertEqual(env.get("a"), 1)
         self.assertEqual(env.get("b"), 2)
         self.assertEqual(env.get("rest"), [3, 4])
+
+    def test_hole_skips_element(self):
+        env = run("let a = 0; let c = 0; [a, , c] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_element_default_used_when_value_missing(self):
+        env = run("let a = 0; let b = 0; [a, b = 5] = [1];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 5)
+
+    def test_nested_map_element(self):
+        env = run(
+            'let a = 0; let b = 0; let c = 0; '
+            '[a, {b, c}] = [1, {"b": 2, "c": 3}];'
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
 
     def test_expression_returns_assigned_value(self):
         env = Environment()

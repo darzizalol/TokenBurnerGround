@@ -109,11 +109,11 @@ class DestructureAssign:
     with `is_map=True` the map-pattern form `{a, b} = expr;` (and its own
     rest-element form `{a, ...rest} = expr;`) — the
     assignment counterpart to `DestructureLetStmt`: `names`/`rest` must
-    already be bound (via `env.assign`, not `env.define`). Flat patterns
-    only, mirroring `DestructureLetStmt`'s own "no nesting" rule; unlike that
-    statement node this has no leading keyword to disambiguate at statement
-    level, so it is an `Expr` and slots into `_assignment`/`_brace_statement`
-    instead."""
+    already be bound (via `env.assign`, not `env.define`). Supports holes,
+    per-element defaults, and nested list/map patterns, same as
+    `DestructureLetStmt`; unlike that statement node this has no leading
+    keyword to disambiguate at statement level, so it is an `Expr` and slots
+    into `_assignment`/`_brace_statement` instead."""
 
     names: list
     rest: "str | None"

@@ -166,6 +166,25 @@ from cinder.errors import ParseError
 from cinder.lexer import Lexer
 from cinder.tokens import Token, TokenType
 
+
+class _DestructurePatternCommittedError(ParseError):
+    """A `ParseError` raised for a default-ordering violation inside a list
+    destructuring pattern (`[a, b = 1, c]`: a defaulted element followed by
+    one without a default), which can only happen after an earlier element's
+    default already consumed a bare `=` — something no ordinary list-literal
+    element (parsed via `_ternary`, which doesn't include `=`) can ever
+    produce. So unlike the other `ParseError`s `_destructure_list_pattern`
+    can raise (a stray token that just means "this isn't a destructuring
+    pattern, fall back to an ordinary expression"), this one means the `[`
+    is committed to being a pattern already invalid on the ordering rule
+    alone. `_assignment`'s speculative parse must let it propagate instead
+    of swallowing it and re-parsing as an ordinary expression, which
+    previously produced a confusing, unrelated error pointing at the wrong
+    token (e.g. `[a, b = 9, c] = xs;` failing with "expected ']' after list
+    literal, found '='" instead of naming the actual ordering problem).
+    """
+
+
 _COMPARISON = {
     TokenType.EQEQ,
     TokenType.BANGEQ,
@@ -403,7 +422,7 @@ class Parser:
         if self._check(TokenType.COMMA):
             if seen_default:
                 token = self._peek()
-                raise ParseError(
+                raise _DestructurePatternCommittedError(
                     "element without a default value follows an element with one "
                     "in destructuring pattern",
                     token.line,
@@ -419,7 +438,7 @@ class Parser:
                 return pattern, default
             if seen_default:
                 token = self._peek()
-                raise ParseError(
+                raise _DestructurePatternCommittedError(
                     "element without a default value follows an element with one "
                     "in destructuring pattern",
                     token.line,
@@ -435,7 +454,7 @@ class Parser:
                 return pattern, default
             if seen_default:
                 token = self._peek()
-                raise ParseError(
+                raise _DestructurePatternCommittedError(
                     "element without a default value follows an element with one "
                     "in destructuring pattern",
                     token.line,
@@ -448,7 +467,7 @@ class Parser:
             default = self._ternary()
             return name_token.lexeme, default
         if seen_default:
-            raise ParseError(
+            raise _DestructurePatternCommittedError(
                 "element without a default value follows an element with one "
                 "in destructuring pattern",
                 name_token.line,
@@ -483,42 +502,6 @@ class Parser:
                 names.append(self._destructure_list_pattern_entry(seen_default))
                 seen_default = seen_default or names[-1][1] is not None
         self._consume(TokenType.RBRACKET, "']' after destructuring pattern")
-        return names, rest
-
-    def _destructure_assign_pattern(
-        self, list_literal: ListLiteral, eq_token: Token
-    ) -> "tuple[list, str | None]":
-        """Validate a `ListLiteral` already parsed on the LHS of `=` as a flat
-        assignment-destructuring pattern (same shape `_destructure_list_pattern`
-        enforces for `let`: plain identifiers, optionally a trailing
-        `...identifier` rest). Any other shape is the existing invalid
-        assignment target error, reported at the `=` token like every other
-        invalid target."""
-
-        elements = list_literal.elements
-        if not elements:
-            raise ParseError(
-                "invalid assignment target", eq_token.line, eq_token.column
-            )
-        names = []
-        rest = None
-        for index, element in enumerate(elements):
-            is_last = index == len(elements) - 1
-            if isinstance(element, Spread):
-                if not is_last or not isinstance(element.expression, Identifier):
-                    raise ParseError(
-                        "invalid assignment target", eq_token.line, eq_token.column
-                    )
-                rest = element.expression.name
-            elif isinstance(element, Identifier):
-                names.append((element.name, None))
-            elif isinstance(element, ListLiteral):
-                nested_names, nested_rest = self._destructure_assign_pattern(element, eq_token)
-                names.append(((nested_names, nested_rest), None))
-            else:
-                raise ParseError(
-                    "invalid assignment target", eq_token.line, eq_token.column
-                )
         return names, rest
 
     def _destructure_rest_name(self) -> str:
@@ -1492,6 +1475,21 @@ class Parser:
         )
 
     def _assignment(self) -> Expr:
+        if self._check(TokenType.LBRACKET):
+            start = self.pos
+            try:
+                names, rest = self._destructure_list_pattern()
+                if self._check(TokenType.EQ):
+                    eq_token = self._advance()
+                    value = self._assignment()
+                    return DestructureAssign(
+                        names, rest, value, eq_token.line, eq_token.column
+                    )
+            except _DestructurePatternCommittedError:
+                raise
+            except ParseError:
+                pass
+            self.pos = start
         expr = self._ternary()
         if self._check(TokenType.EQ):
             eq_token = self._advance()
@@ -1506,11 +1504,6 @@ class Parser:
                 return SliceAssign(
                     expr.obj, expr.start, expr.end, expr.step, value,
                     eq_token.line, eq_token.column,
-                )
-            if isinstance(expr, ListLiteral):
-                names, rest = self._destructure_assign_pattern(expr, eq_token)
-                return DestructureAssign(
-                    names, rest, value, eq_token.line, eq_token.column
                 )
             raise ParseError(
                 "invalid assignment target", eq_token.line, eq_token.column

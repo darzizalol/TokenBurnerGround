@@ -1639,9 +1639,28 @@ class TestListsAndMaps(unittest.TestCase):
             ],
         )
 
-    def test_list_destructure_assignment_default_raises_parse_error(self):
-        with self.assertRaises(ParseError):
-            parse_stmts("[a, b = 5] = [1];")
+    def test_list_destructure_assignment_default(self):
+        expr = parse_stmts("[a, b = 5] = [1];")[0].expression
+        names = [(name, shape(default) if default is not None else None) for name, default in expr.names]
+        self.assertEqual(names, [("a", None), ("b", ("Literal", 5))])
+        self.assertIsNone(expr.rest)
+        self.assertEqual(shape(expr.value), ("ListLiteral", [("Literal", 1)]))
+
+    def test_list_destructure_assignment_hole(self):
+        expr = parse_stmts("[a, , c] = [1, 2, 3];")[0].expression
+        self.assertEqual(expr.names, [("a", None), (None, None), ("c", None)])
+        self.assertIsNone(expr.rest)
+
+    def test_list_destructure_assignment_nested_map_element_parses(self):
+        expr = parse_stmts('[a, {b, c}] = [1, {"b": 2, "c": 3}];')[0].expression
+        self.assertEqual(
+            expr.names,
+            [
+                ("a", None),
+                (([("b", "b", None), ("c", "c", None)], None, True), None),
+            ],
+        )
+        self.assertIsNone(expr.rest)
 
     def test_list_destructure_assignment_literal_element_raises_parse_error(self):
         with self.assertRaises(ParseError):

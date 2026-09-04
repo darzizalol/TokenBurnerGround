@@ -1545,6 +1545,17 @@ def _is_nonagonal(arguments: list, line: int, column: int) -> object:
     return root * root == candidate and (root + 5) % 14 == 0
 
 
+def _is_decagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_decagonal", arguments, 1, line, column)
+    value = _require_int("is_decagonal", arguments[0], line, column)
+    if value < 0:
+        return False
+
+    candidate = 16 * value + 9
+    root = math.isqrt(candidate)
+    return root * root == candidate and (root + 3) % 8 == 0
+
+
 def _nth_triangular(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_triangular", arguments, 1, line, column)
     value = _require_int("nth_triangular", arguments[0], line, column)
@@ -1603,6 +1614,16 @@ def _nth_nonagonal(arguments: list, line: int, column: int) -> object:
             "nth_nonagonal() requires a positive integer, domain error", line, column
         )
     return value * (7 * value - 5) // 2
+
+
+def _nth_decagonal(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_decagonal", arguments, 1, line, column)
+    value = _require_int("nth_decagonal", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_decagonal() requires a positive integer, domain error", line, column
+        )
+    return value * (4 * value - 3)
 
 
 def _is_prime(arguments: list, line: int, column: int) -> object:
@@ -4763,12 +4784,14 @@ _BUILTINS = {
     "is_heptagonal": _is_heptagonal,
     "is_octagonal": _is_octagonal,
     "is_nonagonal": _is_nonagonal,
+    "is_decagonal": _is_decagonal,
     "nth_triangular": _nth_triangular,
     "nth_pentagonal": _nth_pentagonal,
     "nth_hexagonal": _nth_hexagonal,
     "nth_heptagonal": _nth_heptagonal,
     "nth_octagonal": _nth_octagonal,
     "nth_nonagonal": _nth_nonagonal,
+    "nth_decagonal": _nth_decagonal,
     "is_prime": _is_prime,
     "nth_prime": _nth_prime,
     "is_composite": _is_composite,

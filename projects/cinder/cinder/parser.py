@@ -928,38 +928,43 @@ class Parser:
     def _fn_param(self, seen_default: bool, keyword_only: bool = False) -> Param:
         if self._check(TokenType.LBRACKET):
             bracket_token = self._peek()
-            if seen_default:
+            names, rest = self._destructure_list_pattern()
+            default = None
+            if self._check(TokenType.EQ):
+                self._advance()
+                default = self._ternary()
+            elif seen_default:
                 raise ParseError(
                     "destructuring parameter without a default value "
                     "follows a parameter with one",
                     bracket_token.line,
                     bracket_token.column,
                 )
-            names, rest = self._destructure_list_pattern()
-            if self._check(TokenType.EQ):
-                raise ParseError(
-                    "destructuring parameter cannot have a default value",
-                    bracket_token.line,
-                    bracket_token.column,
-                )
-            return Param(name=None, names=names, rest=rest)
+            return Param(
+                name=None, names=names, rest=rest, default=default, keyword_only=keyword_only
+            )
         if self._check(TokenType.LBRACE):
             brace_token = self._peek()
-            if seen_default:
+            names, rest = self._destructure_map_pattern()
+            default = None
+            if self._check(TokenType.EQ):
+                self._advance()
+                default = self._ternary()
+            elif seen_default:
                 raise ParseError(
                     "destructuring parameter without a default value "
                     "follows a parameter with one",
                     brace_token.line,
                     brace_token.column,
                 )
-            names, rest = self._destructure_map_pattern()
-            if self._check(TokenType.EQ):
-                raise ParseError(
-                    "destructuring parameter cannot have a default value",
-                    brace_token.line,
-                    brace_token.column,
-                )
-            return Param(name=None, names=names, rest=rest, is_map=True)
+            return Param(
+                name=None,
+                names=names,
+                rest=rest,
+                is_map=True,
+                default=default,
+                keyword_only=keyword_only,
+            )
         name_token = self._consume(TokenType.IDENTIFIER, "parameter name")
         if self._check(TokenType.EQ):
             self._advance()

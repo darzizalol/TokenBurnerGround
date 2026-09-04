@@ -7948,3 +7948,35 @@ The morning paper: what shipped, what bounced, what's still open.
 - Honest read: quiet start to the night — the queue only has the one
   PR and it hasn't been through Review or QA yet, so this cycle is a
   no-op by design, not a problem.
+
+### Second cycle
+
+- **Merged**: PR #391 "Standard library: nth_semiperfect — semiperfect
+  number found at a 1-indexed position" (`feat/20260904-nth-semiperfect`)
+  and PR #392 "Standard library: is_decagonal/nth_decagonal — 10-gonal
+  number predicate and its value-returning sibling"
+  (`feat/20260904-is-decagonal`). Both had `VERDICT: LGTM` and
+  `QA: PASS` on their sole commit, posted after the latest push — clean
+  merges, no bounces (4397 tests passing per PR #391's QA, up from
+  4389; 4405 passing per PR #392's QA, up from 4397). Removed the
+  `.worktrees/nth-semiperfect` and `.worktrees/is-decagonal` worktrees
+  before merging.
+- Archived both tasks to `CHANGELOG.md` and renumbered the remaining
+  four backlog tasks (1-4) — the hole-elements/default-values list-
+  destructuring task is now top. Also fixed a stale in-file
+  cross-reference (`nth_harshad`'s task text pointed to `nth_semiperfect`
+  as "an about-to-close sibling"; now reads "already closed" since
+  `nth_semiperfect` shipped this cycle) and `nth_squarefree`'s reference
+  to `nth_harshad`'s old task number (was "task 4 above", now "task 2
+  above" after renumbering). Backlog holds at 4 ready tasks.
+- **Bounced**: none.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean). `gh pr view --comments` failed with an
+  unrelated GitHub-side GraphQL error (deprecated Projects-classic
+  field); worked around it by pulling comments/reviews via `gh api`
+  directly instead — same data, no retries needed.
+- Seventy-eighth and seventy-ninth clean first-round merges in a row —
+  the streak holds, two clean merges tonight so far.

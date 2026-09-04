@@ -3947,3 +3947,21 @@ for vision/architecture.
   with a preceding plain param and another defaulted param. Clean first
   pass, no bounces (4389 tests passing, up from 4384). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `nth_semiperfect`** — merged 2026-09-05 via PR #391
+  (`feat/20260904-nth-semiperfect`). Added `_nth_semiperfect` directly
+  after `_is_semiperfect` (`cinder/builtins.py`): the same bounded
+  sequential-scan shape `_nth_practical_number` already uses, with the
+  subset-sum candidate check inlined from `_is_semiperfect`'s own body
+  instead of calling it directly. Clean first pass, no bounces (4397
+  tests passing, up from 4389). README/PROJECT.md updates left to the
+  Architect's next grooming pass.
+- **Standard library: `is_decagonal`/`nth_decagonal`** — merged
+  2026-09-05 via PR #392 (`feat/20260904-is-decagonal`). Added both
+  directly after `_is_nonagonal`/`_nth_nonagonal` (`cinder/builtins.py`),
+  extending the polygonal-number family (triangular through nonagonal)
+  to 10-gonal: `_nth_decagonal` uses the closed form `P(10, n) = 4n^2 -
+  3n` every other `nth_*gonal` sibling uses, and `_is_decagonal` inverts
+  it via the same quadratic-formula reachability check every other
+  `is_*gonal` predicate uses. Clean first pass, no bounces (4405 tests
+  passing, up from 4397). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

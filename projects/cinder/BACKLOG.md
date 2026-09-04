@@ -11,220 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_semiperfect` — semiperfect number found at a 1-indexed position [claimed 2026-09-04T15:57:46Z]
-
-Build: `is_semiperfect` (`cinder/builtins.py`, search `def
-_is_semiperfect`: proper-divisor list, then a bounded 0/1 subset-sum
-sweep checking whether `value` itself is reachable) landed as PR #385 —
-but, like `is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
-and `is_practical_number`/`nth_practical_number` before it, it has no
-value-returning `nth_*` sibling yet. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_semiperfect(5));'
-# -> <eval>:1:7: undefined name 'nth_semiperfect' (did you mean
-#    'is_semiperfect'?)
-```
-
-Worked examples: the first ten semiperfect numbers (OEIS A005835) are `6,
-12, 18, 20, 24, 28, 30, 36, 40, 42` — note `28` is perfect and so
-trivially semiperfect via its own full divisor set, same as `6`; the
-20th is `88`.
-
-Add directly after `_is_semiperfect` (search `def _is_semiperfect`,
-immediately before `def _is_automorphic`) — keeps the value-returning
-helper next to the predicate it mirrors, matching where `nth_deficient`
-itself sits right after `is_deficient`:
-```python
-def _nth_semiperfect(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_semiperfect", arguments, 1, line, column)
-    value = _require_int("nth_semiperfect", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_semiperfect() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_semiperfect_candidate(candidate: int) -> bool:
-        if candidate < 2:
-            return False
-        divisors = [1]
-        for divisor in range(2, math.isqrt(candidate) + 1):
-            if candidate % divisor == 0:
-                divisors.append(divisor)
-                complement = candidate // divisor
-                if complement != divisor:
-                    divisors.append(complement)
-        reachable = {0}
-        for divisor in divisors:
-            reachable |= {
-                total + divisor for total in reachable if total + divisor <= candidate
-            }
-        return candidate in reachable
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_semiperfect_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_practical_number`, with the inner candidate
-check copied from `_is_semiperfect`'s own body instead of
-`_is_practical_number`'s — semiperfect numbers have no closed form
-either, so the same bounded sequential scan applies.) Also register the
-new dict entry (search `"is_semiperfect": _is_semiperfect,`, add
-`"nth_semiperfect": _nth_semiperfect,` directly after it, before
-`"is_automorphic": _is_automorphic,`).
-
-Acceptance criteria:
-- `nth_semiperfect(1);` through `nth_semiperfect(10);` are `6, 12, 18,
-  20, 24, 28, 30, 36, 40, 42` in order — the worked example above.
-- `nth_semiperfect(20);` is `88` — a further worked example confirming
-  the scan scales past the first ten.
-- For every `position` in `1..50`, `is_semiperfect(nth_semiperfect(position))`
-  is `true` — the same self-consistency check `nth_practical_number`'s
-  own test suite already runs against `is_practical_number`.
-- `nth_semiperfect(0);`, `nth_semiperfect(-3);` both raise
-  `CinderRuntimeError` matching `"nth_semiperfect\(\) requires a
-  positive integer, domain error"`, matching `nth_practical_number`'s
-  own non-positive-input convention.
-- `nth_semiperfect(true);` raises `CinderRuntimeError` matching
-  `"nth_semiperfect\(\) requires an int, got bool"`, since
-  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
-  `int` subclass (same guard every other int-only predicate in this
-  file already relies on).
-- `nth_semiperfect("5");` raises `CinderRuntimeError` matching
-  `"nth_semiperfect\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_semiperfect`,
-search `def _is_semiperfect`), `tests/test_builtins.py` (new `class
-TestNthSemiperfect`, modeled on `class TestNthPracticalNumber`, search
-that name, for the test shapes above). Once merged, `README.md`'s
-Builtins bullet needs `nth_semiperfect` added near
-`is_semiperfect`/`nth_practical_number`, its "Status & roadmap" section
-needs updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `is_decagonal`/`nth_decagonal` — 10-gonal number predicate and its value-returning sibling [claimed 2026-09-04T20:35:02Z]
-
-Build: Cinder's polygonal-number family already covers triangular
-(`is_triangular`/`nth_triangular`), pentagonal, hexagonal, heptagonal,
-octagonal, and nonagonal (3- through 9-gonal, `cinder/builtins.py`,
-search `def _is_nonagonal`/`def _nth_nonagonal`, the last pair in the
-family) but stops one short of decagonal (10-gonal). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(is_decagonal(10));'
-# -> <eval>:1:7: undefined name 'is_decagonal' (did you mean 'is_octagonal'?)
-python3 -m cinder.cli eval 'print(nth_decagonal(5));'
-# -> <eval>:1:7: undefined name 'nth_decagonal' (did you mean 'nth_octagonal'?)
-```
-
-Worked examples: the first ten decagonal numbers (OEIS A001107) are `1,
-10, 27, 52, 85, 126, 175, 232, 297, 370` — the generalized polygonal
-formula for `s` sides is `P(s, n) = ((s - 2) * n^2 - (s - 4) * n) / 2`,
-which for `s = 10` simplifies to `P(10, n) = 4n^2 - 3n` (e.g. `n = 4`:
-`4 * 16 - 12 = 52`, matching the fourth term above). Every other family
-member already uses this same closed form (see `_nth_octagonal`'s
-`value * (3 * value - 2)`, `_nth_nonagonal`'s
-`value * (7 * value - 5) // 2`, both directly `P(s, n)` for their own
-`s`), and every `is_*gonal` predicate already inverts it via the
-quadratic formula, testing whether `8 * (s - 2) * x + (s - 4)^2` is a
-perfect square whose root satisfies a fixed modular condition — for
-`s = 10` that is `candidate = 16 * x + 9`, root must satisfy
-`(3 + root) % 8 == 0` (worked by hand from the same derivation
-`_is_octagonal`'s `3 * value + 1`/`(1 + root) % 3 == 0` and
-`_is_nonagonal`'s `56 * value + 25`/`(root + 5) % 14 == 0` already use
-for their own `s`).
-
-Add both directly after `_is_nonagonal`/`_nth_nonagonal` respectively
-(search `def _is_nonagonal`, immediately before `def _nth_triangular`;
-and search `def _nth_nonagonal`, immediately before `def _is_prime`) —
-keeps the new pair as the next member of the existing family, in the
-same triangular-through-nonagonal order:
-```python
-def _is_decagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("is_decagonal", arguments, 1, line, column)
-    value = _require_int("is_decagonal", arguments[0], line, column)
-    if value < 0:
-        return False
-
-    candidate = 16 * value + 9
-    root = math.isqrt(candidate)
-    return root * root == candidate and (root + 3) % 8 == 0
-```
-```python
-def _nth_decagonal(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_decagonal", arguments, 1, line, column)
-    value = _require_int("nth_decagonal", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_decagonal() requires a positive integer, domain error", line, column
-        )
-    return value * (4 * value - 3)
-```
-Also register both new dict entries (search `"is_nonagonal":
-_is_nonagonal,`, add `"is_decagonal": _is_decagonal,` directly after
-it, before `"nth_triangular": _nth_triangular,`; search `"nth_nonagonal":
-_nth_nonagonal,`, add `"nth_decagonal": _nth_decagonal,` directly after
-it, before `"is_prime": _is_prime,`).
-
-Acceptance criteria:
-- `is_decagonal(1);`, `is_decagonal(10);`, `is_decagonal(27);`,
-  `is_decagonal(52);`, `is_decagonal(85);` are all `true` — the worked
-  examples above.
-- `is_decagonal(0);`, `is_decagonal(2);`, `is_decagonal(11);` are all
-  `false` — non-members between/around the worked examples.
-- `is_decagonal(-1);` is `false` — negative input is false outright, no
-  domain error, matching `is_nonagonal`'s own negative-input convention
-  (this is a total predicate, not a `nth_*` scan).
-- For every `k` in `1..100`, `is_decagonal(4 * k * k - 3 * k)` is `true`
-  — the same direct-construction cross-check `is_nonagonal`'s own test
-  suite runs (`k * (7 * k - 5) // 2` there), confirming the predicate
-  accepts every value the formula actually produces.
-- `nth_decagonal(1);` through `nth_decagonal(10);` are `1, 10, 27, 52,
-  85, 126, 175, 232, 297, 370` in order — the worked example above.
-- For every `position` in `1..50`, `is_decagonal(nth_decagonal(position))`
-  is `true` — the same self-consistency check `nth_practical_number`'s
-  test suite runs against `is_practical_number`.
-- `nth_decagonal(0);`, `nth_decagonal(-3);` both raise
-  `CinderRuntimeError` matching `"nth_decagonal\(\) requires a positive
-  integer, domain error"`, matching `nth_triangular`'s own
-  non-positive-input convention (every other `nth_*gonal` sibling raises
-  rather than returning a sentinel).
-- `is_decagonal(true);` / `nth_decagonal(true);` raise
-  `CinderRuntimeError` matching `"is_decagonal\(\) requires an int, got
-  bool"` / `"nth_decagonal\(\) requires an int, got bool"`, since
-  `_require_int` rejects `bool` even though Cinder's `bool` is a Python
-  `int` subclass (same guard every other int-only predicate in this file
-  already relies on).
-- `is_decagonal(1.5);` / `nth_decagonal("5");` raise `CinderRuntimeError`
-  matching `"is_decagonal\(\) requires an int, got float"` /
-  `"nth_decagonal\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column, for both functions.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_nonagonal` and
-`_nth_nonagonal`, search either name), `tests/test_builtins.py` (new
-`class TestIsDecagonal` and `class TestNthDecagonal`, modeled on
-`class TestIsNonagonal`/`class TestNthNonagonal`, search either name,
-for the test shapes above). Once merged, `README.md`'s Builtins bullet
-needs `is_decagonal`/`nth_decagonal` added near
-`is_nonagonal`/`nth_nonagonal`, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 3. Language: hole elements and per-element default values in plain-assignment list destructuring
+## 1. Language: hole elements and per-element default values in plain-assignment list destructuring
 
 Build: `let [a, , c] = expr;` (a hole element, skipping a position) and
 `let [a, b = 5] = expr;` (a per-element default) both already work for
@@ -405,15 +192,15 @@ not this task.
 
 ---
 
-## 4. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
+## 2. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position
 
 Build: `is_harshad` (`cinder/builtins.py`, search `def _is_harshad`:
 whether `n` is divisible by its own digit sum, e.g. `18`'s digits sum
 to `9` and `18 % 9 == 0`) has no value-returning sibling that finds the
 Harshad number at a given 1-indexed position — the same gap
 `nth_abundant`/`nth_deficient` (search either name) already closed for
-`is_abundant`/`is_deficient`, and `nth_semiperfect` (task 1 above) is
-about to close for `is_semiperfect`. Verify the gap:
+`is_abundant`/`is_deficient`, and `nth_semiperfect` already closed for
+`is_semiperfect`. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_harshad(1));'
 # -> <eval>:1:7: undefined name 'nth_harshad'
@@ -488,7 +275,7 @@ pass, not this task.
 
 ---
 
-## 5. Language: destructuring patterns for `const` declarations
+## 3. Language: destructuring patterns for `const` declarations
 
 Build: `let` already supports both list-destructuring (`let [a, b] =
 expr;`) and map-destructuring (`let {a, b} = expr;`), with full nesting,
@@ -698,14 +485,14 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
+## 4. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
 
 Build: `is_squarefree` (`cinder/builtins.py`, search `def
 _is_squarefree`: no prime factor of `value` appears with exponent 2 or
 more, checked by trial division for any `divisor` where
 `value % (divisor * divisor) == 0`) has no value-returning `nth_*`
 sibling, the same gap `nth_practical_number`/`nth_deficient`/
-`nth_harshad` (task 4 above) already close or are about to close for
+`nth_harshad` (task 2 above) already close or are about to close for
 their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_squarefree(1));'

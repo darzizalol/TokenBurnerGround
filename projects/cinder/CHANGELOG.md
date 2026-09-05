@@ -4058,3 +4058,18 @@ for vision/architecture.
   `_is_sphenic`'s own body instead of calling it directly. Clean first
   pass, no bounces (4487 tests passing, up from 4478). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Language: destructuring patterns inside comma-separated `let`/`const`
+  sequences** — merged 2026-09-05T19:39:28Z via PR #401
+  (`feat/20260905-let-const-destructure-seq`). A comma-separated `let`/
+  `const` chain can now mix plain and destructuring declarators (e.g.
+  `let a = 1, [b, c] = [2, 3];`), which previously raised a `ParseError`.
+  Replaced `_let_statement`/`_const_statement`'s up-front bracket/brace
+  special-case with per-declarator dispatchers (`_one_let_declarator`/
+  `_one_const_declarator`, `cinder/parser.py`) called uniformly inside
+  the existing comma loop, and split `_destructure_let_statement` into
+  `_destructure_declarator` (no trailing `;` consumption, since the
+  sequence owns the terminator, not the individual item). No interpreter
+  changes needed — `DeclSeq.execute` was already generic over which
+  `Stmt` subclass each declarator produced. Clean first pass, no bounces
+  (4495 tests passing, up from 4487). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

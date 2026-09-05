@@ -11,150 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring patterns inside comma-separated `let`/`const` sequences [claimed 2026-09-05T19:31:52Z]
-
-Build: `let a = 1, b = 2;` (comma-separated multiple declarations, each
-with its own initializer, later ones seeing earlier-bound names — see
-the README's "Variables & scope" bullet) and `let [a, b] = expr;`
-(destructuring, now also on `const` per PR #395) each work fine on
-their own, but a comma sequence can't mix the two: putting a
-destructuring pattern anywhere in a `let`/`const` comma chain is a
-`ParseError`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let a = 1, [b, c] = [2, 3]; print(a); print(b); print(c);'
-# -> <eval>:1:12: expected identifier after 'let', found '['
-python3 -m cinder.cli eval 'let [a, b] = [1, 2], c = 3; print(a); print(b); print(c);'
-# -> <eval>:1:20: expected ';' after variable declaration, found ','
-python3 -m cinder.cli eval 'const a = 1, [b, c] = [2, 3]; print(a);'
-# -> <eval>:1:14: expected identifier after 'const', found '['
-python3 -m cinder.cli eval 'const [a, b] = [1, 2], c = 3; print(a);'
-# -> <eval>:1:22: expected ';' after variable declaration, found ','
-```
-
-Root cause: `_let_statement`/`_const_statement` (search either name,
-`cinder/parser.py`) each start with a single up-front check — `if
-self._check(TokenType.LBRACKET)`/`LBRACE`, delegate the *entire*
-statement (pattern, `=`, initializer, **and its own trailing `;`**) to
-`_destructure_let_statement`, and `return` immediately — before ever
-reaching the comma-chaining loop a few lines below
-(`while self._check(TokenType.COMMA): ... declarations.append(...)`),
-which itself only calls `_one_let_declaration`/`_one_const_declaration`
-(plain-identifier-only, via `self._consume(TokenType.IDENTIFIER, ...)`)
-per iteration. So a leading pattern short-circuits into the
-single-declaration destructure path and never sees the comma loop
-(second/fourth repro above: the destructure path's own `;` consume
-fails on the following `,`), and a leading plain name enters the comma
-loop but that loop's per-item helper has no pattern branch (first/third
-repro above: `_one_let_declaration` demands an `IDENTIFIER` unconditionally).
-
-Fix shape: make each comma-loop iteration dispatch on the next token the
-same way the statement-level check already does, instead of assuming
-`IDENTIFIER`. Split `_destructure_let_statement`'s body into a
-per-declarator piece with **no semicolon consumption** (the semicolon
-belongs to the whole sequence, not to one item), and route every
-declarator — plain or destructured — through the comma loop uniformly:
-```python
-def _let_statement(self) -> Stmt:
-    let_token = self._advance()
-    declarations = [self._one_let_declarator(let_token)]
-    while self._check(TokenType.COMMA):
-        self._advance()
-        declarations.append(self._one_let_declarator(let_token))
-    self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-    if len(declarations) == 1:
-        return declarations[0]
-    return DeclSeq(declarations, let_token.line, let_token.column)
-
-def _one_let_declarator(self, let_token: Token) -> Stmt:
-    if self._check(TokenType.LBRACKET):
-        return self._destructure_declarator(let_token, is_map=False, is_const=False)
-    if self._check(TokenType.LBRACE):
-        return self._destructure_declarator(let_token, is_map=True, is_const=False)
-    return self._one_let_declaration(let_token)
-```
-(`_const_statement`/`_one_const_declarator` mirror this exactly, calling
-`_one_const_declaration` in the fallback branch and passing
-`is_const=True`.) Replace `_destructure_let_statement` with a shared
-per-declarator helper used by both:
-```python
-def _destructure_declarator(self, let_token: Token, is_map: bool, is_const: bool) -> "DestructureLetStmt":
-    if is_map:
-        names, rest = self._destructure_map_pattern()
-    else:
-        names, rest = self._destructure_list_pattern()
-    self._consume(TokenType.EQ, "'=' after destructuring pattern")
-    initializer = self._assignment()
-    return DestructureLetStmt(
-        names, initializer, let_token.line, let_token.column,
-        is_map=is_map, rest=rest, is_const=is_const,
-    )
-```
-No changes needed anywhere else: `DeclSeq.execute` (search `isinstance(stmt,
-DeclSeq)`, `cinder/interpreter.py`) already just executes each
-declaration in `stmt.declarations` against the same `env` in order,
-generic over which `Stmt` subclass each one is — it doesn't know or
-care that this task makes that list able to mix `LetStmt`/`ConstStmt`
-and `DestructureLetStmt` for the first time, so "later declarator sees
-an earlier-bound name" and "declarations land in the caller's scope"
-both fall out for free, exactly as they already do for today's
-plain-only sequences. `shape()`'s existing `DestructureLetStmt` case
-(`tests/test_parser.py`, search `"DestructureLetStmt"`) also needs no
-change — it already renders any `DestructureLetStmt` node the same way
-regardless of whether it sits alone or inside a `DeclSeq`. The C-style
-`for (...)` init clause (search `init = self._let_statement()` in
-`_for_c_statement`) calls `_let_statement()` wholesale and therefore
-gains this too as a side effect — worth a quick manual check, not a
-required acceptance item below.
-
-Acceptance criteria:
-- `let a = 1, [b, c] = [2, 3]; print(a); print(b); print(c);` prints
-  `1`, `2`, `3` — the first repro above, now working.
-- `let [a, b] = [1, 2], c = 3; print(a); print(b); print(c);` prints
-  `1`, `2`, `3` — the second repro above, now working.
-- `const a = 1, [b, c] = [2, 3];` then reassigning `b` (`b = 9;`) raises
-  `CinderRuntimeError` for reassigning a `const` — the whole sequence
-  inherits `const`'s freeze semantics per declarator, matching how a
-  lone `const [b, c] = [2, 3];` already freezes `b`/`c` today.
-- `let a = 1, [b, c] = [a, a + 1]; print(b); print(c);` prints `2`, `3`
-  — a destructuring declarator's initializer sees an earlier plain
-  declarator's bound name, the same left-to-right visibility
-  `test_let_comma_separated_later_sees_earlier` already pins for two
-  plain declarators.
-- `let [a, b] = [1, 2], {c, d} = {"c": 3, "d": 4}; print(c); print(d);`
-  prints `3`, `4` — two destructuring declarators (list then map) chain
-  in one sequence.
-- Regression: every existing test in `TestStatements`
-  (`tests/test_interpreter.py`, search that name — the
-  `test_let_comma_separated_*` tests) and `TestConst`,
-  `TestDestructureLet`, `TestConstDestructure` (search each name) still
-  passes unmodified — this task only adds a new *combination*, it
-  changes no existing single-form behavior.
-- New tests in `tests/test_parser.py`: shape assertions for
-  `let a = 1, [b, c] = [2, 3];` and `let [a, b] = [1, 2], c = 3;`
-  parsing to a `DeclSeq` containing the expected mix of `LetStmt`/
-  `DestructureLetStmt` shapes (modeled on
-  `test_expr_statement_comma_separated_becomes_decl_seq`, search that
-  name), plus one asserting `is_const` directly on the
-  `DestructureLetStmt` node for a `const` sequence (same "assert the
-  field directly, don't extend the fixed-shape tuple" choice PR #395
-  made for `is_const`, since `shape()` doesn't carry it).
-- New tests in `tests/test_interpreter.py`: add to `TestStatements`
-  (search that name) covering every acceptance case above.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_let_statement`, `_const_statement`,
-`_destructure_let_statement` — search each name), `tests/test_parser.py`,
-`tests/test_interpreter.py` per the acceptance criteria above. Once
-merged, `README.md`'s "Variables & scope" bullet needs a clause noting
-that comma-separated `let`/`const` sequences may mix plain and
-destructuring declarators, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
+## 1. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
 
 Build: `is_powerful_number` (`cinder/builtins.py`, search `def
 _is_powerful_number`: whether every prime factor of `n` appears with
@@ -249,7 +106,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: map patterns nested inside `match` list-pattern elements
+## 2. Language: map patterns nested inside `match` list-pattern elements
 
 Build: `match`'s list patterns can already nest another *list* pattern as
 one of their elements (`[a, [b, c]]`), and map patterns can already nest
@@ -371,7 +228,7 @@ this task.
 
 ---
 
-## 4. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
+## 3. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
 
 Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
 whether `n` is a powerful number — every prime factor's exponent is 2 or
@@ -477,7 +334,7 @@ task.
 
 ---
 
-## 5. Language: whole-value `as` binding on literal and range `match` patterns
+## 4. Language: whole-value `as` binding on literal and range `match` patterns
 
 Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
 _ => nil }`) currently only exists on list-pattern and map-pattern match
@@ -643,7 +500,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+## 5. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`: a composite number whose decimal digit sum equals the

@@ -6206,6 +6206,76 @@ class TestIsSquarefree(unittest.TestCase):
             run("is_squarefree();")
 
 
+class TestNthSquarefree(unittest.TestCase):
+    def test_nth_squarefree_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 5,
+            5: 6,
+            6: 7,
+            7: 10,
+            8: 11,
+            9: 13,
+            10: 14,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_squarefree({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_squarefree_of_twenty(self):
+        self.assertEqual(run("let result = nth_squarefree(20);").get("result"), 31)
+
+    def test_nth_squarefree_agrees_with_is_squarefree(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_squarefree(nth_squarefree({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_squarefree({position}) to be squarefree",
+            )
+
+    def test_nth_squarefree_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_squarefree(0);")
+        self.assertIn(
+            "nth_squarefree() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_squarefree_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_squarefree(-3);")
+        self.assertIn(
+            "nth_squarefree() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_squarefree_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_squarefree(true);")
+        self.assertIn(
+            "nth_squarefree() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_squarefree_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_squarefree("5");')
+        self.assertIn(
+            "nth_squarefree() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_squarefree_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_squarefree(1, 2);")
+
+
 class TestIsPowerfulNumber(unittest.TestCase):
     def test_is_powerful_number_of_1(self):
         self.assertEqual(run("let result = is_powerful_number(1);").get("result"), True)

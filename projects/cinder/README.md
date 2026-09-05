@@ -608,6 +608,9 @@ while (i < 10) {
   a tau number, e.g. `8` has 4 divisors and `8 % 4 == 0`), the same "count something about `n`,
   then ask if it divides `n`" shape `is_harshad` already has for digit sum, applied to divisor
   count instead,
+  `nth_refactorable` to return the refactorable number found at a 1-indexed position via a bounded
+  sequential scan with the divisor-count check inlined from `is_refactorable`'s own body, the
+  value-returning sibling of `is_refactorable`'s membership test,
   `nth_semiperfect` to return the semiperfect number found at a 1-indexed position via a bounded
   sequential scan reusing `is_semiperfect`'s own subset-sum reachability check, the value-returning
   sibling `is_semiperfect` itself was missing,
@@ -719,7 +722,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (3000+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4400+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -745,28 +748,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: destructuring patterns for
-`try`/`catch` clauses (PR #397, `catch ([a, b]) { ... }`, `catch ({a,
-b}) { ... }`, pulling fields straight out of a thrown list/map the same
-way `let` already can), `nth_squarefree` (PR #396, the value-returning
-sibling `is_squarefree` itself was missing, the same bounded sequential
-scan `nth_practical_number`/`nth_harshad` already use), and destructuring
-patterns for `const` declarations (PR #395, `const [a, b] = expr;`,
-`const {a, b} = expr;`, every bound name frozen), closing the gap
-between `let`, which already supported both destructuring forms, and
-`const`, which previously accepted only a bare identifier. See
+Actively developed, nightly. Recently landed: `nth_refactorable` (PR
+#398, the value-returning sibling `is_refactorable` itself was missing,
+the same bounded sequential scan `nth_practical_number`/`nth_semiperfect`
+already use), destructuring patterns for `try`/`catch` clauses (PR #397,
+`catch ([a, b]) { ... }`, `catch ({a, b}) { ... }`, pulling fields
+straight out of a thrown list/map the same way `let` already can), and
+`nth_squarefree` (PR #396, the value-returning sibling `is_squarefree`
+itself was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_harshad` already use). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_refactorable`, the
-value-returning sibling `is_refactorable` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_semiperfect` already
-use — a bare hole-element spelling (`[a, , c]`) in `match` list
-patterns, matching the already-working `_` placeholder spelling (`[a,
-_, c]`) with the same effect, closing the gap between `match`'s list
-patterns and every other destructuring site in the language, which
-already accept the bare comma-comma spelling — `nth_sphenic`, the
-value-returning sibling `is_sphenic` itself was missing, the same
-bounded sequential scan `nth_semiprime` already uses for its own
-"product of exactly two distinct primes" sibling — letting a
+next (see [`BACKLOG.md`](BACKLOG.md)): a bare hole-element spelling
+(`[a, , c]`) in `match` list patterns, matching the already-working `_`
+placeholder spelling (`[a, _, c]`) with the same effect, closing the gap
+between `match`'s list patterns and every other destructuring site in
+the language, which already accept the bare comma-comma spelling —
+`nth_sphenic`, the value-returning sibling `is_sphenic` itself was
+missing, the same bounded sequential scan `nth_semiprime` already uses
+for its own "product of exactly two distinct primes" sibling — letting a
 destructuring pattern appear anywhere inside a comma-separated
 `let`/`const` sequence (`let a = 1, [b, c] = [2, 3];`, today a
 `ParseError` in either order even though a bare comma sequence and a

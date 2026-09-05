@@ -74,6 +74,9 @@ def shape_extra_clauses(extra_clauses):
 def _shape_list_pattern_raw_entry(entry):
     if isinstance(entry, Expr):
         return shape(entry)
+    if isinstance(entry, tuple) and len(entry) == 3:
+        nested_entries, nested_rest, marker = entry
+        return ([_shape_map_pattern_entry(e) for e in nested_entries], nested_rest, marker)
     if isinstance(entry, tuple):
         nested_entries, nested_rest = entry
         return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest)
@@ -5130,6 +5133,115 @@ class TestMatchExpression(unittest.TestCase):
                         [
                             ("a", None),
                             (([("b", None), ("c", None)], None), None),
+                        ],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_nested_map_element_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, {b}] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [
+                            ("a", None),
+                            (([("b", "b", None)], None, "map"), None),
+                        ],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_leading_nested_map_element_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [{a}, b] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [
+                            (([("a", "a", None)], None, "map"), None),
+                            ("b", None),
+                        ],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_nested_map_element_rename_and_rest_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, {x: renamed, ...rest}] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [
+                            ("a", None),
+                            (([("x", "renamed", None)], "rest", "map"), None),
+                        ],
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    (None, ("Literal", 0), None, None, None, None, None, None),
+                ],
+            ),
+        )
+
+    def test_match_list_pattern_nested_map_element_two_levels_deep_shape(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, [b, {z}]] => a, _ => 0 }')),
+            (
+                "MatchExpr",
+                ("Identifier", "x"),
+                [
+                    (
+                        None,
+                        ("Identifier", "a"),
+                        None,
+                        [
+                            ("a", None),
+                            (
+                                (
+                                    [
+                                        ("b", None),
+                                        (([("z", "z", None)], None, "map"), None),
+                                    ],
+                                    None,
+                                ),
+                                None,
+                            ),
                         ],
                         None,
                         None,

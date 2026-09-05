@@ -1268,6 +1268,9 @@ class Parser:
             return None, None
         if token.type == TokenType.LBRACKET:
             entry = self._match_list_pattern()
+        elif token.type == TokenType.LBRACE:
+            nested_entries, nested_rest = self._match_map_pattern()
+            entry = (nested_entries, nested_rest, "map")
         elif token.type == TokenType.IDENTIFIER:
             self._advance()
             entry = None if token.lexeme == "_" else token.lexeme

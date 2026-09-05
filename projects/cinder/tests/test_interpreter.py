@@ -6373,6 +6373,44 @@ class TestMatchExpression(unittest.TestCase):
         self.assertEqual(env.get("a"), 3)
         self.assertEqual(env.get("b"), [2, 3])
 
+    def test_nested_map_pattern_in_list_element_binds_inner_value(self):
+        env = run(
+            'let result = match ([1, {"b": 2}]) { [a, {b}] => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_nested_map_pattern_in_leading_list_element_binds_inner_value(self):
+        env = run(
+            'let result = match ([{"a": 1}, 2]) { [{a}, b] => a + b, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_nested_map_pattern_in_list_element_composes_with_rename_and_rest(self):
+        env = run(
+            'let result = match ([1, {"x": 2, "y": 3}]) '
+            '{ [a, {x: renamed, ...rest}] => a + renamed, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 3)
+
+    def test_nested_map_pattern_in_list_element_two_levels_deep(self):
+        env = run(
+            'let result = match ([1, [2, {"z": 3}]]) '
+            '{ [a, [b, {z}]] => a + b + z, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 6)
+
+    def test_nested_map_pattern_in_list_element_falls_through_on_missing_key(self):
+        env = run(
+            'let result = match ([1, {"a": 1}]) { [a, {b}] => 1, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), -1)
+
+    def test_nested_map_pattern_in_list_element_falls_through_on_non_map_subject(self):
+        env = run(
+            'let result = match ([1, "not a map"]) { [a, {b}] => 1, _ => -1 };'
+        )
+        self.assertEqual(env.get("result"), -1)
+
     def test_list_pattern_default_fires_when_subject_short(self):
         env = run('let result = match ([1]) { [a, b = 0] => a + b, _ => -1 };')
         self.assertEqual(env.get("result"), 1)

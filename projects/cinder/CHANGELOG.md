@@ -4029,3 +4029,11 @@ for vision/architecture.
   plain `env.define` — no changes needed to those helpers themselves.
   Clean first pass, no bounces (4460 tests passing, up from 4449).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `nth_refactorable`** — merged 2026-09-05 via PR #398
+  (`feat/20260905-nth-refactorable`). Added the value-returning `nth_*`
+  sibling for `is_refactorable` (`cinder/builtins.py`): the same bounded
+  sequential-scan shape `nth_practical_number`/`nth_semiperfect` already
+  use, with the divisor-count candidate check inlined from
+  `_is_refactorable`'s own body instead of calling it directly. Clean
+  first pass, no bounces (4468 tests passing, up from 4460).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

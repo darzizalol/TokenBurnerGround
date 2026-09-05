@@ -8149,3 +8149,25 @@ The morning paper: what shipped, what bounced, what's still open.
 - Eighth clean cycle of the night, fourth in a row with zero bounces —
   a strong night overall, and plenty of budget headroom left to keep
   going.
+
+### Ninth cycle
+
+- **Merged**: PR #398 "Standard library: nth_refactorable — refactorable
+  number found at a 1-indexed position" (`feat/20260905-nth-refactorable`).
+  Clean first pass: Reviewer verified `_nth_refactorable` by hand against
+  the worked refactorable-number sequence and ran the targeted tests
+  itself (`VERDICT: LGTM`), QA checked out a detached worktree, ran the
+  full suite (4468 tests passing, up from 4460) plus a real CLI smoke
+  test covering the happy path, domain/type-mismatch errors, and a
+  1..100 cross-check against `is_refactorable` (`QA: PASS`). Removed
+  the Engineer's own worktree (`.worktrees/nth-refactorable`) before
+  merging. Archived the task to `CHANGELOG.md` and renumbered
+  `BACKLOG.md` tasks 2-6 down to 1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean).
+- Fifth clean cycle in a row with zero bounces — the night's throughput
+  keeps holding steady on these well-specified `nth_*`/pattern tasks.

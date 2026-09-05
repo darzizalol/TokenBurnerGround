@@ -11,100 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position [claimed 2026-09-05T14:51:18Z]
-
-Build: `is_refactorable` (`cinder/builtins.py`, search `def
-_is_refactorable`: whether `n`'s own divisor count divides back into
-`n`, e.g. `8` has 4 divisors and `8 % 4 == 0`) has no value-returning
-`nth_*` sibling, the same gap `nth_practical_number`/`nth_semiperfect`
-already closed for their own predicates. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_refactorable(1));'
-# -> <eval>:1:7: undefined name 'nth_refactorable' (did you mean
-#    'is_refactorable'?)
-```
-
-Worked examples: the first ten refactorable numbers are `1, 2, 8, 9, 12,
-18, 24, 36, 40, 56` (`1` is trivially refactorable — `_is_refactorable`
-special-cases it to `True` — and `2` has 2 divisors, `2 % 2 == 0`), so
-`nth_refactorable(1)` is `1` and `nth_refactorable(10)` is `56`. The 20th
-is `132`.
-
-Add directly after `_is_refactorable` (search `def _is_refactorable`,
-immediately before `def _is_amicable`):
-```python
-def _nth_refactorable(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_refactorable", arguments, 1, line, column)
-    value = _require_int("nth_refactorable", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_refactorable() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_refactorable_candidate(candidate: int) -> bool:
-        if candidate == 1:
-            return True
-        count = 2
-        for divisor in range(2, math.isqrt(candidate) + 1):
-            if candidate % divisor == 0:
-                count += 1
-                complement = candidate // divisor
-                if complement != divisor:
-                    count += 1
-        return candidate % count == 0
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_refactorable_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_practical_number`/`_nth_semiperfect`, with the
-inner candidate check copied from `_is_refactorable`'s own body instead
-of calling `_is_refactorable` directly — the same "duplicate the tiny
-predicate body instead of a redundant `_require_arity`/`_require_int`
-round-trip per candidate" choice `_nth_harshad`/`_nth_squarefree`
-already make.) Register the new dict entry (search
-`"is_refactorable": _is_refactorable,`, add `"nth_refactorable":
-_nth_refactorable,` directly after it).
-
-Acceptance criteria:
-- `nth_refactorable(1);` through `nth_refactorable(10);` are `1, 2, 8, 9,
-  12, 18, 24, 36, 40, 56` in order — the worked example above.
-- `nth_refactorable(20);` is `132` — a further worked example confirming
-  the scan scales past the first ten.
-- For every `position` in `1..50`, `is_refactorable(nth_refactorable(position))`
-  is `true` — the same self-consistency check `nth_practical_number`/
-  `nth_semiperfect`'s own test suites already run against their
-  predicates.
-- `nth_refactorable(0);`, `nth_refactorable(-3);` both raise
-  `CinderRuntimeError` matching `"nth_refactorable\(\) requires a
-  positive integer, domain error"`.
-- `nth_refactorable(true);` raises `CinderRuntimeError` matching
-  `"nth_refactorable\(\) requires an int, got bool"`.
-- `nth_refactorable("5");` raises `CinderRuntimeError` matching
-  `"nth_refactorable\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_refactorable`,
-search `def _is_refactorable`), `tests/test_builtins.py` (new `class
-TestNthRefactorable`, modeled on `class TestNthPracticalNumber`/`class
-TestNthSemiperfect`, search either name, for the test shapes above —
-place it near the existing `class TestIsRefactorable`, search that
-name). Once merged, `README.md`'s Builtins bullet needs `nth_refactorable`
-added near `is_refactorable`, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
+## 1. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
 
 Build: `let`/`for`/function-param/comprehension list-destructuring patterns
 all accept a bare comma-comma hole to skip an unwanted position
@@ -210,7 +117,7 @@ this task.
 
 ---
 
-## 3. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
+## 2. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
 
 Build: `is_sphenic` (`cinder/builtins.py`, search `def _is_sphenic`:
 whether `n` is the product of exactly three distinct primes, e.g.
@@ -312,7 +219,7 @@ task.
 
 ---
 
-## 4. Language: destructuring patterns inside comma-separated `let`/`const` sequences
+## 3. Language: destructuring patterns inside comma-separated `let`/`const` sequences
 
 Build: `let a = 1, b = 2;` (comma-separated multiple declarations, each
 with its own initializer, later ones seeing earlier-bound names — see
@@ -455,7 +362,7 @@ task.
 
 ---
 
-## 5. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
+## 4. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
 
 Build: `is_powerful_number` (`cinder/builtins.py`, search `def
 _is_powerful_number`: whether every prime factor of `n` appears with
@@ -550,7 +457,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: map patterns nested inside `match` list-pattern elements
+## 5. Language: map patterns nested inside `match` list-pattern elements
 
 Build: `match`'s list patterns can already nest another *list* pattern as
 one of their elements (`[a, [b, c]]`), and map patterns can already nest

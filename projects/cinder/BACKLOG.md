@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring patterns inside comma-separated `let`/`const` sequences
+## 1. Language: destructuring patterns inside comma-separated `let`/`const` sequences [claimed 2026-09-05T19:31:52Z]
 
 Build: `let a = 1, b = 2;` (comma-separated multiple declarations, each
 with its own initializer, later ones seeing earlier-bound names — see

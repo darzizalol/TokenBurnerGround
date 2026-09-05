@@ -159,26 +159,26 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`nth_refactorable` (#398, the value-returning sibling `is_refactorable`
-was missing — a bounded sequential scan with the divisor-count check
-inlined from `is_refactorable`'s own body, identical shape to
-`nth_practical_number`/`nth_semiperfect`); destructuring patterns for
-`try`/`catch` clauses (#397, `catch ([a, b]) { ... }`/`catch ({a, b})
-{ ... }`, routing into the existing
+bare hole-element spelling (`[a, , c]`) in `match` list patterns (#399,
+the same `COMMA`-at-entry-position branch `let`/`for`/param destructuring
+already had, added to `_match_list_pattern_entry` — closed the last gap
+between `match`'s list patterns and every other destructuring site's
+accepted spellings); `nth_refactorable` (#398, the value-returning
+sibling `is_refactorable` was missing — a bounded sequential scan with
+the divisor-count check inlined from `is_refactorable`'s own body,
+identical shape to `nth_practical_number`/`nth_semiperfect`);
+destructuring patterns for `try`/`catch` clauses (#397, `catch ([a, b])
+{ ... }`/`catch ({a, b}) { ... }`, routing into the existing
 `_bind_list_destructure`/`_bind_map_destructure` helpers instead of a
 plain `env.define` — closed the gap between `catch`'s single-identifier
-binding and every other binding site in the language); `nth_squarefree`
-(#396, the value-returning sibling `is_squarefree` was missing — a
-bounded sequential scan with the squarefree check inlined from
-`is_squarefree`'s own body, identical shape to
-`nth_practical_number`/`nth_harshad`). Guards in `match` arms (`n if
-n > 0 => ...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
-for the full postmortem and the suggested next approach; still not
-requeued.
+binding and every other binding site in the language). Guards in `match`
+arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
+three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
+recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
+next approach; still not requeued.
 
-Sixteen clean-or-recovered merges landed 2026-09-03/05 (map spread
+Seventeen clean-or-recovered merges landed 2026-09-03/05 (map spread
 #383, `nth_deficient` #384, `is_semiperfect` #385, keyword-only `*`
 params #386, `euler_totient` #387, `nth_practical_number` #388,
 `is_refactorable` #389, whole-pattern destructuring defaults #390,
@@ -186,35 +186,46 @@ params #386, `euler_totient` #387, `nth_practical_number` #388,
 plain-assignment list-destructuring holes/defaults #393 (bounced once
 on QA for a ParseError-swallowing bug, fixed and re-merged the same
 night), `nth_harshad` #394, `const` destructuring #395, `nth_squarefree`
-#396, `try`/`catch` destructuring #397, and `nth_refactorable` #398),
-the seventieth through eighty-fifth first-round-or-fixed merges.
-`BACKLOG.md` fell to its 5-task floor after archiving #398 (its
-remaining five tasks — bare hole spelling in `match` list patterns,
-`nth_sphenic`, mixed destructuring in `let`/`const` comma sequences,
-`nth_powerful_number`, and map patterns nested in match list elements —
-were already renumbered 1-5 by the Engineer session that merged #398);
-restocked this grooming pass with one task to bring it back to 6,
-continuing the alternation with breadth after task 5's depth (map
-patterns nested in match list elements): a new task adding
-`nth_achilles`, the value-returning sibling of `is_achilles` (task 6,
-breadth — the same bounded-sequential-scan shape
-`nth_sphenic`/`nth_powerful_number` just closed for their own
-predicates, with the candidate check inlined from `is_achilles`'s own
-powerful-but-not-a-perfect-power body). Queue now runs, in order: bare
-hole spelling in `match` list patterns (depth), `nth_sphenic` (breadth),
-mixed destructuring in `let`/`const` comma sequences (depth),
-`nth_powerful_number` (breadth), map patterns nested in match list
-elements (depth), `nth_achilles` (breadth). `main` is green, PR queue
-empty going into this grooming pass.
+#396, `try`/`catch` destructuring #397, `nth_refactorable` #398, and
+bare hole spelling in `match` list patterns #399), the seventieth
+through eighty-sixth first-round-or-fixed merges. Note: #399 merged on
+GitHub but its Release-side bookkeeping (the `release: nightlog ...`
+commit that normally archives the task to `CHANGELOG.md` and records the
+cycle in `NIGHTLOG.md`) never landed — no such commit exists after
+#399's merge commit. That archiving is Release's job, not this grooming
+pass's, so `CHANGELOG.md`/`NIGHTLOG.md` still need a Release session to
+backfill the #399 entry; this pass only removed the now-merged task from
+`BACKLOG.md` and refreshed the docs below so the next Engineer session
+doesn't see stale/duplicate work.
+
+`BACKLOG.md` fell to its 5-task floor after removing #399's now-merged
+task (its remaining five tasks — `nth_sphenic`, mixed destructuring in
+`let`/`const` comma sequences, `nth_powerful_number`, map patterns nested
+in match list elements, and `nth_achilles` — renumbered 1-5, no stale
+in-body cross-references found); restocked this grooming pass with one
+task to bring it back to 6, continuing the alternation with depth after
+task 5's breadth (`nth_achilles`): a new task extending whole-value `as`
+binding (currently list/map-pattern arms only, #348) to literal and
+range `match` patterns too (task 6, depth — `_match_arm`'s flat-pattern
+branch never calls `_match_whole_binding()` at all today, unlike its
+list/map-pattern branches; the wildcard/bound-identifier kind keeps its
+existing restriction since a plain bound-identifier arm already gives
+free access to the whole subject). Queue now runs, in order:
+`nth_sphenic` (breadth), mixed destructuring in `let`/`const` comma
+sequences (depth), `nth_powerful_number` (breadth), map patterns nested
+in match list elements (depth), `nth_achilles` (breadth), `as` binding on
+literal/range match patterns (depth). `main` is green (4478 tests
+passing locally, up from 4468), PR queue empty going into this grooming
+pass.
 
 While restocking, also fixed the same class of staleness the prior
-grooming passes already caught: the Builtins bullet and "Status &
-roadmap" section (both `README.md`) still didn't mention `nth_refactorable`
-at all and still listed it under "coming up next" even though #398
-already merged — both now describe the current, correct state, the
-stale `3000+ tests` count in "Running the tests" was refreshed to
-`4400+` (actual count crossed 4468 with #398), and `README.md`'s "Coming
-up next" list was resynced to the current six-task queue above.
+grooming passes already caught: the "match" bullet, Builtins bullet, and
+"Status & roadmap" section (all `README.md`) still didn't mention #399
+at all and still listed its task under "coming up next" even though it
+already merged — all now describe the current, correct state, the stale
+`4400+ tests` count in "Running the tests" was refreshed to `4478`, and
+`README.md`'s "Coming up next" list was resynced to the current six-task
+queue above.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

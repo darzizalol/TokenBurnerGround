@@ -11,113 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns [claimed 2026-09-05T15:03:27Z]
-
-Build: `let`/`for`/function-param/comprehension list-destructuring patterns
-all accept a bare comma-comma hole to skip an unwanted position
-(`let [a, , c] = expr;` — see the README's "Variables & scope" bullet), but
-`match`'s own list patterns only offer the equivalent via an explicit `_`
-placeholder (`match ([1, 2, 3]) { [a, _, c] => a + c, _ => 0 }`, which
-already works today) — the bare comma spelling raises a `ParseError`
-instead of being treated the same way. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let r = match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }; print(r);'
-# -> <eval>:1:31: expected an identifier, '_', or a literal inside list pattern, found ','
-python3 -m cinder.cli eval 'let r = match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 }; print(r);'
-# -> <eval>:1:28: expected an identifier, '_', or a literal inside list pattern, found ','
-```
-
-Worked examples: `match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }` should
-evaluate to `4`, exactly like the already-working `[a, _, c]` spelling
-(confirmed: `match ([1, 2, 3]) { [a, _, c] => a + c, _ => 0 }` is already
-`4` today). `match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 }` (leading
-hole) should be `5`, exactly like `[_, b, c]` (confirmed already `5`
-today).
-
-Root cause and fix shape: `_match_list_pattern_entry` (search `def
-_match_list_pattern_entry`, `cinder/parser.py`) has no branch for a
-`COMMA` token — it falls straight to the final `else: raise ParseError`
-for anything that isn't an identifier/`_`/literal/nested pattern. The
-`let`-destructuring equivalent, `_destructure_list_pattern_entry` (search
-that name), already solves exactly this: its very first check is
-```python
-if self._check(TokenType.COMMA):
-    if seen_default:
-        raise _DestructurePatternCommittedError(...)
-    return None, None
-```
-— a comma at entry-parsing position, *without consuming it*, means "this
-slot is empty," and the caller's own comma-handling loop advances past it
-on the next iteration. Add the equivalent branch as the first check in
-`_match_list_pattern_entry`, right after its existing `token = self._peek()`
-line:
-```python
-if token.type == TokenType.COMMA:
-    if seen_default:
-        raise ParseError(
-            "element without a default value follows an element with "
-            "one in list pattern",
-            token.line,
-            token.column,
-        )
-    return None, None
-```
-Use plain `ParseError` here, not `_DestructurePatternCommittedError` —
-that marker class exists solely to survive `_assignment`'s speculative
-list-literal-vs-destructure-assign fallback (see PR #393's postmortem in
-`CHANGELOG.md`), and `_match_arm` (search `def _match_arm`) calls
-`_match_list_pattern` directly with no surrounding `try`/`except
-ParseError` to swallow it, so a plain `ParseError` already propagates
-uncaught — confirmed by every other error path already in this function
-(e.g. its own existing "element without a default value follows..." raise
-a few lines down) using plain `ParseError` too.
-
-No interpreter changes are needed at all: `_match_list_pattern_entry`'s
-`_` handling already produces the exact same `entry = None` value
-(search `entry = None if token.lexeme == "_" else token.lexeme`) that
-this task's hole branch also returns, so every consumer downstream
-(list-pattern binding, rest capture, nesting) already treats `None`
-generically as "match this position but bind nothing" — confirmed
-working today via `_` for wildcard-plus-rest (`match ([1,2,3,4]) { [a,
-_, ...rest] => rest, _ => 0 }` is already `[3, 4]`) and leading-wildcard
-(`match ([1,2,3]) { [_, b, c] => b + c, _ => 0 }` is already `5`).
-
-Acceptance criteria:
-- `match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }` is `4` — the first
-  worked example above.
-- `match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 }` is `5` — the leading
-  bare-hole worked example above.
-- `match ([1, 2, 3, 4]) { [a, , ...rest] => rest, _ => 0 }` is `[3, 4]`
-  — a bare hole composes with rest capture, mirroring the already-working
-  `_`-plus-rest case above.
-- `match ([1, [2, 3]]) { [a, [, c]] => a + c, _ => 0 }` is `4` — a bare
-  hole works inside a nested list pattern too.
-- `match ([1]) { [a = 1, ] => 0, _ => -1 }`-style ordering check:
-  `match ([1]) { [a = 1, , c] => 0, _ => -1 }` raises `ParseError`
-  matching `"element without a default value follows an element with one
-  in list pattern"` — a bare hole is "no default," so it still triggers
-  the existing ordering rule, exactly like a bare identifier would
-  (confirmed today: `[a = 1, _]` already raises the same message).
-- Regression: every existing `_`-wildcard test in
-  `tests/test_interpreter.py`/`tests/test_parser.py` (search `TestMatch`)
-  still passes unmodified — this task only adds a new accepted spelling,
-  it does not change `_`'s own behavior.
-- New tests in `tests/test_parser.py` and `tests/test_interpreter.py`
-  (search `class TestMatch` in each) covering every acceptance case
-  above, modeled on the existing `_`-wildcard match-pattern tests.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_list_pattern_entry`, search
-that name), `tests/test_parser.py`, `tests/test_interpreter.py` per the
-acceptance criteria above. Once merged, `README.md`'s `match` bullet
-needs a one-clause mention that list patterns also accept the bare hole
-spelling alongside `_`, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
+## 1. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
 
 Build: `is_sphenic` (`cinder/builtins.py`, search `def _is_sphenic`:
 whether `n` is the product of exactly three distinct primes, e.g.
@@ -219,7 +113,7 @@ task.
 
 ---
 
-## 3. Language: destructuring patterns inside comma-separated `let`/`const` sequences
+## 2. Language: destructuring patterns inside comma-separated `let`/`const` sequences
 
 Build: `let a = 1, b = 2;` (comma-separated multiple declarations, each
 with its own initializer, later ones seeing earlier-bound names — see
@@ -362,7 +256,7 @@ task.
 
 ---
 
-## 4. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
+## 3. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
 
 Build: `is_powerful_number` (`cinder/builtins.py`, search `def
 _is_powerful_number`: whether every prime factor of `n` appears with
@@ -457,7 +351,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: map patterns nested inside `match` list-pattern elements
+## 4. Language: map patterns nested inside `match` list-pattern elements
 
 Build: `match`'s list patterns can already nest another *list* pattern as
 one of their elements (`[a, [b, c]]`), and map patterns can already nest
@@ -579,7 +473,7 @@ this task.
 
 ---
 
-## 6. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
+## 5. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
 
 Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
 whether `n` is a powerful number — every prime factor's exponent is 2 or
@@ -682,6 +576,172 @@ TestIsAchilles`, search that name). Once merged, `README.md`'s existing
 updating, and `PROJECT.md`'s "Current frontier" section needs
 refreshing — leave both to the Architect's next grooming pass, not this
 task.
+
+---
+
+## 6. Language: whole-value `as` binding on literal and range `match` patterns
+
+Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
+_ => nil }`) currently only exists on list-pattern and map-pattern match
+arms (landed via PR #348) — a literal pattern, a multi-value literal
+pattern, or a range pattern cannot carry `as` at all, even though each of
+them has a real use for it that a plain bound-identifier arm can't
+replace: a range pattern's bound name is not the subject's actual value
+(you'd otherwise have no way to recover it inside the arm body), and a
+multi-value literal arm's body has no way to tell *which* of the several
+literals matched. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let r = match (5) { 1..10 as whole => whole, _ => nil }; print(r);'
+# -> <eval>:1:27: expected '=>' after match pattern, found 'as'
+python3 -m cinder.cli eval 'let r = match (2) { 1, 2 as whole => whole, _ => nil }; print(r);'
+# -> <eval>:1:26: expected '=>' after match pattern, found 'as'
+```
+
+Worked examples: `match (5) { 1..10 as whole => whole, _ => nil }` is `5`;
+`match (-5) { -10..0 as whole => whole, _ => 0 }` is `-5` (a negative
+range bound composes with `as`, same as range patterns already do without
+it); `match (2) { 1, 2 as whole => whole, _ => nil }` is `2`, and
+`match (1) { 1, 2 as whole => whole, _ => nil }` is `1` — the same arm
+answers correctly for either matched literal, which a single shared
+`MatchArm` per multi-value entry (see `_match_arm`'s
+`for pattern, binding, range_pattern in entries` below) already makes
+trivial since `whole_binding` binds to whichever `subject` reached that
+arm, not to the pattern literal itself; `match (5) { 5 as whole => whole,
+_ => nil }` is `5` — a single literal pattern may carry `as` too, for
+symmetry with the multi-value case even though it's less useful there.
+
+The wildcard/bound-identifier arm kind keeps its current restriction —
+`match (5) { n as whole => n, _ => 0 }` and `match (5) { _ as whole =>
+whole, _ => 0 }` both still raise `ParseError`, since a bound-identifier
+arm already binds the whole subject under its own name (`n`) with no
+`as` needed, and it would be redundant/confusing to let `_` (whose whole
+point is "bind nothing") also carry a name via `as` — the exact rationale
+`MatchArm`'s own docstring (search `class MatchArm`, `cinder/ast_nodes.py`)
+already gives for excluding it there; this task extends the *literal* and
+*range* pattern kinds only, not the wildcard/bound-identifier kind.
+
+Root cause: `_match_arm` (search `def _match_arm`, `cinder/parser.py`)
+has two branches that already call `_match_whole_binding()` (search that
+name) right after parsing their pattern — the `LBRACKET` (list-pattern)
+and `LBRACE` (map-pattern) branches — but its third branch, the flat
+literal/range/wildcard/bound-identifier path, goes straight from
+collecting `entries` to `self._consume(TokenType.FAT_ARROW, ...)` with no
+`as`-parsing step at all. On the interpreter side, `_evaluate_match`
+(search `def _evaluate_match`, `cinder/interpreter.py`) mirrors this: its
+`arm.range_pattern is not None` branch calls `self.evaluate(arm.body,
+env)` directly (plain `env`, no `arm_env`), and its final `if
+values_equal(subject, self.evaluate(arm.pattern, env))` branch does the
+same — neither ever looks at `arm.whole_binding`, unlike the
+list/map-pattern branches just above them which each build a fresh
+`arm_env` and `arm_env.define(arm.whole_binding, subject)` when it's set.
+
+Fix shape — in `_match_arm`'s flat-pattern branch, parse the optional
+`as` right after collecting `entries` (mirroring where the list/map
+branches call it relative to their own pattern), and reject it when
+combined with a wildcard/bound-identifier entry the same way the existing
+multi-value check already rejects *mixing* those kinds:
+```python
+first_token = self._peek()
+entries = [self._match_pattern()]
+while self._check(TokenType.COMMA):
+    self._advance()
+    entries.append(self._match_pattern())
+has_unconditional = any(
+    pattern is None and range_pattern is None
+    for pattern, _, range_pattern in entries
+)
+if len(entries) > 1 and has_unconditional:
+    raise ParseError(
+        "'_' or a bound identifier cannot be combined with other "
+        "patterns in a match arm",
+        first_token.line,
+        first_token.column,
+    )
+whole_binding = self._match_whole_binding()
+if whole_binding is not None and has_unconditional:
+    raise ParseError(
+        "'as' binding is not valid on a '_' or bound-identifier match "
+        "pattern",
+        first_token.line,
+        first_token.column,
+    )
+self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
+body = self._ternary()
+return [
+    MatchArm(pattern, body, binding, None, range_pattern, whole_binding=whole_binding)
+    for pattern, binding, range_pattern in entries
+]
+```
+(`_match_whole_binding` itself needs no change — it already just parses
+an optional `as NAME` and returns the name or `None`, agnostic to which
+arm kind calls it.) Then update `_evaluate_match`'s two flat-pattern
+branches to honor `whole_binding` the same way the list/map branches
+already do:
+```python
+if arm.range_pattern is not None:
+    values = self._evaluate_range(arm.range_pattern, env)
+    if contains_value(
+        values, subject, arm.range_pattern.line, arm.range_pattern.column
+    ):
+        arm_env = env
+        if arm.whole_binding is not None:
+            arm_env = Environment(env)
+            arm_env.define(arm.whole_binding, subject)
+        return self.evaluate(arm.body, arm_env)
+    continue
+```
+and, for the final literal-pattern branch:
+```python
+if values_equal(subject, self.evaluate(arm.pattern, env)):
+    arm_env = env
+    if arm.whole_binding is not None:
+        arm_env = Environment(env)
+        arm_env.define(arm.whole_binding, subject)
+    return self.evaluate(arm.body, arm_env)
+```
+No changes needed to the wildcard/bound-identifier branch (`arm.pattern
+is None`) — it keeps raising via the new parser-side check above, so it
+never reaches the interpreter with a non-`None` `whole_binding`.
+
+Acceptance criteria:
+- `match (5) { 1..10 as whole => whole, _ => nil }` is `5` — the first
+  worked example above.
+- `match (-5) { -10..0 as whole => whole, _ => 0 }` is `-5` — a negative
+  range bound composes with `as`.
+- `match (2) { 1, 2 as whole => whole, _ => nil }` is `2`, and
+  `match (1) { 1, 2 as whole => whole, _ => nil }` is `1` — the
+  multi-value literal pattern worked example above, both matched values.
+- `match (5) { 5 as whole => whole, _ => nil }` is `5` — a single literal
+  pattern with `as`.
+- `match (5) { n as whole => n, _ => 0 }` and `match (5) { _ as whole =>
+  whole, _ => 0 }` both raise `ParseError` matching `"'as' binding is not
+  valid on a '_' or bound-identifier match pattern"` — the
+  wildcard/bound-identifier kind keeps its current restriction.
+- Regression: every existing list-pattern/map-pattern `as`-binding test in
+  `tests/test_parser.py`/`tests/test_interpreter.py` (search `whole_binding`
+  in each) still passes unmodified — this task only adds `as` to two new
+  pattern kinds, it does not change the list/map-pattern behavior.
+- New tests in `tests/test_parser.py` (search `class TestMatch`, near the
+  existing `test_match_list_pattern_whole_binding`/
+  `test_match_map_pattern_whole_binding` tests) asserting `arms[0].whole_binding`
+  for a range-pattern arm and a multi-value literal-pattern arm, plus one
+  asserting the wildcard/bound-identifier `ParseError` above.
+- New tests in `tests/test_interpreter.py` (search `class TestMatch`, near
+  the existing `test_list_pattern_whole_binding_holds_original_subject`)
+  covering every acceptance case above.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_arm`, search that name),
+`cinder/interpreter.py` (`_evaluate_match`, search that name),
+`cinder/ast_nodes.py` (`MatchArm`'s docstring, search `class MatchArm` —
+its "Not valid on the wildcard/bound-identifier, literal, or
+range-pattern arm kinds" sentence needs updating to say only the
+wildcard/bound-identifier kind is excluded now), `tests/test_parser.py`,
+`tests/test_interpreter.py` per the acceptance criteria above. Once
+merged, `README.md`'s `match` bullet needs a clause noting that literal
+and range patterns also accept the whole-value `as` binding, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
 
 ---
 

@@ -192,7 +192,11 @@ while (i < 10) {
   child scope, falling through — not raising — on a non-list subject or
   a length mismatch, and each element may itself be a bare literal
   (`match ([1, 2]) { [1, b] => b, _ => 0 }`) instead of only a bound
-  identifier or `_`), an optional trailing rest capture in list patterns
+  identifier or `_`), a bare hole element to skip an unwanted position
+  (`match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 }`, exactly like the
+  `_` placeholder spelling, composing with rest capture and nesting the
+  same way `let`/`for`/param destructuring's own bare-comma hole does),
+  an optional trailing rest capture in list patterns
   (`match ([1, 2, 3]) { [a, ...rest] => rest, _ => [] }`, matching "at
   least N elements" instead of an exact length, mirroring `let`
   destructuring's own rest capture), range patterns (`match (5) { 1..10
@@ -722,7 +726,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4400+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4478+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -748,35 +752,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_refactorable` (PR
-#398, the value-returning sibling `is_refactorable` itself was missing,
-the same bounded sequential scan `nth_practical_number`/`nth_semiperfect`
-already use), destructuring patterns for `try`/`catch` clauses (PR #397,
+Actively developed, nightly. Recently landed: a bare hole-element
+spelling (`[a, , c]`) in `match` list patterns (PR #399, matching the
+already-working `_` placeholder spelling with the same effect, closing
+the gap between `match`'s list patterns and every other destructuring
+site in the language), `nth_refactorable` (PR #398, the value-returning
+sibling `is_refactorable` itself was missing, the same bounded sequential
+scan `nth_practical_number`/`nth_semiperfect` already use), and
+destructuring patterns for `try`/`catch` clauses (PR #397,
 `catch ([a, b]) { ... }`, `catch ({a, b}) { ... }`, pulling fields
-straight out of a thrown list/map the same way `let` already can), and
-`nth_squarefree` (PR #396, the value-returning sibling `is_squarefree`
-itself was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_harshad` already use). See
+straight out of a thrown list/map the same way `let` already can). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): a bare hole-element spelling
-(`[a, , c]`) in `match` list patterns, matching the already-working `_`
-placeholder spelling (`[a, _, c]`) with the same effect, closing the gap
-between `match`'s list patterns and every other destructuring site in
-the language, which already accept the bare comma-comma spelling —
-`nth_sphenic`, the value-returning sibling `is_sphenic` itself was
-missing, the same bounded sequential scan `nth_semiprime` already uses
-for its own "product of exactly two distinct primes" sibling — letting a
-destructuring pattern appear anywhere inside a comma-separated
-`let`/`const` sequence (`let a = 1, [b, c] = [2, 3];`, today a
-`ParseError` in either order even though a bare comma sequence and a
-lone destructuring pattern each already work on their own) —
-`nth_powerful_number`, the value-returning sibling `is_powerful_number`
+next (see [`BACKLOG.md`](BACKLOG.md)): `nth_sphenic`, the value-returning
+sibling `is_sphenic` itself was missing, the same bounded sequential scan
+`nth_semiprime` already uses for its own "product of exactly two
+distinct primes" sibling — letting a destructuring pattern appear
+anywhere inside a comma-separated `let`/`const` sequence (`let a = 1,
+[b, c] = [2, 3];`, today a `ParseError` in either order even though a
+bare comma sequence and a lone destructuring pattern each already work on
+their own) — `nth_powerful_number`, the value-returning sibling
+`is_powerful_number` itself was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_semiperfect` already use — letting `match`
+list patterns nest a map pattern as one of their elements (`[a, {b}]`,
+today a `ParseError` even though a list pattern can already nest another
+list pattern, and a map pattern can already nest either shape as one of
+its values) — `nth_achilles`, the value-returning sibling `is_achilles`
 itself was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_semiperfect` already use — and letting
-`match` list patterns nest a map pattern as one of their elements
-(`[a, {b}]`, today a `ParseError` even though a list pattern can already
-nest another list pattern, and a map pattern can already nest either
-shape as one of its values). (Guards in
+`nth_sphenic`/`nth_powerful_number` already use — and extending
+whole-value `as` binding (today list/map-pattern match arms only) to
+literal and range `match` patterns too (`match (5) { 1..10 as whole =>
+whole, _ => nil }`, today a `ParseError`, useful since a range pattern's
+bound name isn't the subject's actual value and a multi-value literal
+arm's body otherwise can't tell which literal matched). (Guards in
 `match` arms, `n if n > 0 => "positive"`, were attempted but closed
 after three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

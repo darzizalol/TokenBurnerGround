@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
+## 1. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position [claimed 2026-09-05T14:51:18Z]
 
 Build: `is_refactorable` (`cinder/builtins.py`, search `def
 _is_refactorable`: whether `n`'s own divisor count divides back into

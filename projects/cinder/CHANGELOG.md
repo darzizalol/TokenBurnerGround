@@ -4016,3 +4016,16 @@ for vision/architecture.
   `_is_squarefree`'s own body instead of calling it directly. Clean first
   pass, no bounces (4449 tests passing, up from 4441). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Language: destructuring patterns for `try`/`catch` clauses** — merged
+  2026-09-05 via PR #397 (`feat/20260905-catch-destructure`). `catch
+  (...)` now accepts the same list-/map-destructuring patterns
+  `let`/`for`/function params already supported (rest capture, per-key
+  rename, defaults, nesting). `TryStmt` (`cinder/ast_nodes.py`) gained
+  defaulted `catch_names`/`catch_rest`/`catch_is_map` fields,
+  `_try_statement` (`cinder/parser.py`) dispatches on a leading `[`/`{`
+  the same way `_let_statement`/`_for_statement` already do, and
+  `_execute_try` (`cinder/interpreter.py`) routes into the existing
+  `_bind_list_destructure`/`_bind_map_destructure` helpers instead of a
+  plain `env.define` — no changes needed to those helpers themselves.
+  Clean first pass, no bounces (4460 tests passing, up from 4449).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

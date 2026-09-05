@@ -11,161 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring patterns for `try`/`catch` clauses [claimed 2026-09-05T14:32:57Z]
-
-Build: `let`/`for`/function params/comprehension loop variables all accept
-list- and map-destructuring patterns (with rest, per-key rename, defaults,
-holes, and nesting — see the README's "Variables & scope" bullet), but
-`catch (...)` only ever accepts a single plain identifier or nothing at
-all. Since `throw` can raise any Cinder value, not just a string (`throw
-{"code": 404};`, `throw [1, 2];` — see the README's Control flow bullet),
-catch handlers that want to pull fields out of a thrown list/map today
-must bind the whole value under one name and manually index into it.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'try { throw [1, 2]; } catch ([a, b]) { print(a); print(b); }'
-# -> <eval>:1:29: expected identifier after 'catch (', found '['
-python3 -m cinder.cli eval 'try { throw {"a": 1, "b": 2}; } catch ({a, b}) { print(a); print(b); }'
-# -> <eval>:1:40: expected identifier after 'catch (', found '{'
-```
-
-Root cause: `_try_statement` (search `def _try_statement`,
-`cinder/parser.py`) only ever calls `self._consume(TokenType.IDENTIFIER,
-"identifier after 'catch ('")` inside the `catch (...)` branch — it never
-checks for a leading `[`/`{` the way `_let_statement`/`_for_statement`
-already do. The pattern-parsing machinery itself needs no changes:
-`_destructure_list_pattern`/`_destructure_map_pattern` (search either
-name) already produce the `(names, rest)` shape every other destructuring
-site consumes, and `_bind_list_destructure`/`_bind_map_destructure`
-(`cinder/interpreter.py`, search either name) already bind that shape
-into an `Environment` generically — they don't know or care that the
-value being destructured came from a caught error rather than a `let`
-initializer or a `for`-loop iterable.
-
-`TryStmt` (search `class TryStmt` in `cinder/ast_nodes.py`) needs three
-new fields, each defaulted so every existing plain-identifier/nameless
-`TryStmt` is unaffected:
-```python
-catch_names: "list | None" = None
-catch_rest: "str | None" = None
-catch_is_map: bool = False
-```
-Change the `catch (...)` branch of `_try_statement` (search `def
-_try_statement`) to try a pattern first:
-```python
-if self._check(TokenType.LPAREN):
-    self._advance()
-    if self._check(TokenType.LBRACKET):
-        catch_names, catch_rest = self._destructure_list_pattern()
-    elif self._check(TokenType.LBRACE):
-        catch_names, catch_rest = self._destructure_map_pattern()
-        catch_is_map = True
-    else:
-        name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
-        catch_name = name_token.lexeme
-    self._consume(TokenType.RPAREN, "')' after catch name")
-```
-(`catch_names = None`, `catch_rest = None`, `catch_is_map = False`,
-`catch_name = None` need declaring above this block, same as the
-existing `catch_name = None` initialization already does today — only
-the body of the `if self._check(TokenType.LPAREN):` branch changes.)
-Thread the three new fields into the `TryStmt(...)` construction at the
-bottom of the method alongside the existing `catch_name`.
-
-In `cinder/interpreter.py`, `_execute_try`'s catch branch (search `def
-_execute_try`) currently does:
-```python
-catch_env = Environment(env)
-if stmt.catch_name is not None:
-    catch_env.define(stmt.catch_name, error.value)
-```
-Extend it to check the pattern fields first:
-```python
-catch_env = Environment(env)
-if stmt.catch_names is not None:
-    if stmt.catch_is_map:
-        self._bind_map_destructure(
-            catch_env, stmt.catch_names, stmt.catch_rest, error.value,
-            stmt.line, stmt.column,
-        )
-    else:
-        self._bind_list_destructure(
-            catch_env, stmt.catch_names, stmt.catch_rest, error.value,
-            stmt.line, stmt.column,
-        )
-elif stmt.catch_name is not None:
-    catch_env.define(stmt.catch_name, error.value)
-```
-No change needed to `_bind_list_destructure`/`_bind_map_destructure`
-themselves — a non-list/non-map `error.value` against a destructuring
-catch pattern (e.g. `catch ([a]) { }` when the thrown value was an int)
-should raise `CinderRuntimeError` exactly the way it already does for a
-`let`/`for` mismatch (`"cannot destructure int as a list"`), and since
-that raise happens inside the same `except CinderRuntimeError as error:`
-block rather than a nested `try`, it propagates uncaught — consistent
-with the existing `test_error_raised_inside_catch_block_is_not_re_caught`
-precedent (an error while entering/running the catch handler is never
-silently re-caught by its own `try`).
-
-Acceptance criteria:
-- `try { throw [1, 2]; } catch ([a, b]) { print(a); print(b); }` prints
-  `1` then `2` — the list worked example above.
-- `try { throw {"a": 1, "b": 2}; } catch ({a, b}) { print(a); print(b); }`
-  prints `1` then `2` — the map worked example above.
-- `try { throw [1, 2, 3]; } catch ([a, ...rest]) { print(rest); }` prints
-  `[2, 3]` — rest capture works in a catch pattern.
-- `try { throw {"a": 1}; } catch ({a, b = 5}) { print(b); }` prints `5`
-  — per-key default works in a catch pattern.
-- `try { throw {"a": 1}; } catch ({a: x}) { print(x); }` prints `1` —
-  per-key rename works in a catch pattern.
-- `try { throw 5; } catch ([a]) { }` raises `CinderRuntimeError` matching
-  `"cannot destructure int as a list"`, uncaught by its own `try` —
-  regression coverage matching `test_error_raised_inside_catch_block_is_not_re_caught`'s
-  style, confirming a pattern/value mismatch during binding propagates
-  rather than being silently swallowed.
-- Regression: `try { let x = 1 / 0; } catch (e) { ... }` (plain
-  identifier) and `try { let x = 1 / 0; } catch { ... }` (nameless) both
-  still behave exactly as before — every existing test in
-  `TestTryCatch`/`TestTryFinally` (`tests/test_interpreter.py`) and
-  `TestTryCatch` (`tests/test_parser.py`) still passes unmodified.
-- Catch pattern bindings are scoped to the catch block only, same as a
-  plain catch name — `try { throw [1]; } catch ([a]) {} a;` raises
-  `CinderRuntimeError` (undefined name), matching
-  `test_catch_name_not_visible_after_try_catch`'s style.
-- New tests in `tests/test_interpreter.py`: add to `class TestTryCatch`
-  (search that name), covering every acceptance case above.
-- New tests in `tests/test_parser.py`: parse-shape tests for
-  `try {} catch ([a, b]) {}` and `try {} catch ({a, b}) {}` asserting
-  `catch_names`/`catch_rest`/`catch_is_map` directly on the parsed
-  `TryStmt` node, the same "assert the new field directly rather than
-  extending the fixed-shape tuple" choice PR #395's `const`-destructure
-  work already made for `DestructureLetStmt`'s `is_const` field — `shape()`'s
-  existing `TryStmt` tuple (search `"TryStmt"`) is a fixed 5-element shape
-  asserted by roughly six existing tests and only reads `catch_name`
-  (which stays `None` for a destructuring catch), so extending it is
-  unnecessary churn for fields this task can verify more narrowly.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_try_statement`, search `def
-_try_statement` — while there, the method's grammar-summary docstring
-comment near the top of the file, search `catch (IDENTIFIER)`, is worth
-a one-line fix too: it currently claims "the parenthesized catch name is
-required", which was already stale before this task since nameless
-`catch { ... }` has worked for a while — feel free to correct it in
-passing, but it's not this task's acceptance bar), `cinder/ast_nodes.py`
-(`class TryStmt`), `cinder/interpreter.py` (`_execute_try`, search that
-name — no changes needed to `_bind_list_destructure`/
-`_bind_map_destructure` themselves), `tests/test_parser.py`,
-`tests/test_interpreter.py` per the acceptance criteria above. Once
-merged, `README.md`'s Control flow bullet needs a mention that `catch`
-now accepts the same destructuring patterns as `let`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
+## 1. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
 
 Build: `is_refactorable` (`cinder/builtins.py`, search `def
 _is_refactorable`: whether `n`'s own divisor count divides back into
@@ -258,7 +104,7 @@ task.
 
 ---
 
-## 3. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
+## 2. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
 
 Build: `let`/`for`/function-param/comprehension list-destructuring patterns
 all accept a bare comma-comma hole to skip an unwanted position
@@ -364,7 +210,7 @@ this task.
 
 ---
 
-## 4. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
+## 3. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
 
 Build: `is_sphenic` (`cinder/builtins.py`, search `def _is_sphenic`:
 whether `n` is the product of exactly three distinct primes, e.g.
@@ -466,7 +312,7 @@ task.
 
 ---
 
-## 5. Language: destructuring patterns inside comma-separated `let`/`const` sequences
+## 4. Language: destructuring patterns inside comma-separated `let`/`const` sequences
 
 Build: `let a = 1, b = 2;` (comma-separated multiple declarations, each
 with its own initializer, later ones seeing earlier-bound names — see
@@ -609,7 +455,7 @@ task.
 
 ---
 
-## 6. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
+## 5. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
 
 Build: `is_powerful_number` (`cinder/builtins.py`, search `def
 _is_powerful_number`: whether every prime factor of `n` appears with

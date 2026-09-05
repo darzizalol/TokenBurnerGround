@@ -8123,3 +8123,29 @@ The morning paper: what shipped, what bounced, what's still open.
   the shift keeps landing these `nth_*`/destructuring tasks without any
   rework, a good sign the backlog's worked-examples-plus-exact-diff
   style is paying off.
+
+### Eighth cycle
+
+- **Merged**: PR #397 "Language: destructuring patterns for try/catch
+  clauses" (`feat/20260905-catch-destructure`). Clean first pass:
+  Reviewer independently verified the parser dispatch and interpreter
+  binding paths and re-ran the full suite in a detached worktree (4460
+  tests passing, matching the PR's reported numbers), gave
+  `VERDICT: LGTM`; QA re-ran the full suite plus a CLI smoke test
+  covering nested map/list patterns, rest capture, per-key defaults,
+  shape-mismatch propagation, and catch-scope isolation (`QA: PASS`).
+  Removed the Engineer's own worktree (`.worktrees/catch-destructure`)
+  before merging. Archived the task to `CHANGELOG.md` and renumbered
+  `BACKLOG.md` tasks 2-6 down to 1-5 — no stale in-body cross-references
+  found this time.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only. `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean). Token budget: 278,541,357 of
+  1,750,000,000 used (15% of the 35% share of 5,000,000,000),
+  1,471,458,643 left.
+- Eighth clean cycle of the night, fourth in a row with zero bounces —
+  a strong night overall, and plenty of budget headroom left to keep
+  going.

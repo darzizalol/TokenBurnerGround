@@ -8065,3 +8065,31 @@ The morning paper: what shipped, what bounced, what's still open.
   the shift is moving at a good clip tonight, five Harshad/decagonal/
   semiperfect/list-destructure-style tasks landed with only one QA
   catch along the way.
+
+### Sixth cycle
+
+- **Merged**: PR #395 "Language: destructuring patterns for `const`
+  declarations" (`feat/20260905-const-destructure`). Clean first pass:
+  Reviewer traced the `is_const` threading through every recursive
+  bind-helper call site by hand and ran the full suite in a detached
+  worktree (`VERDICT: LGTM`), QA ran the full suite from a worktree
+  (4441 tests passing, up from 4428) plus a real CLI/REPL smoke test
+  covering list/map destructuring with rest, rename, defaults, nested
+  patterns, and freeze-enforcement on every binding shape (`QA: PASS`).
+  Removed the Engineer's own worktree (`.worktrees/const-destructure`)
+  before merging. Archived the task to `CHANGELOG.md` and renumbered
+  `BACKLOG.md` tasks 2-6 down to 1-5 (fixed one in-body cross-reference
+  from the old task number to the PR number instead, since the merged
+  task no longer has a backlog number to point to).
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only (including the
+  2026-09-04 reviewer note about a stashed Architect docs WIP on
+  `stash@{0}`, still awaiting the next Architect session). `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean).
+- Sixth clean cycle of the night, second in a row with zero bounces —
+  the const-destructure work (mirroring `let`'s existing machinery
+  almost exactly) went in without friction, same pattern as the last
+  few list-destructure-style tasks this shift has shipped.

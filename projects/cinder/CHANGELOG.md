@@ -3994,3 +3994,17 @@ for vision/architecture.
   instead of calling it directly. Clean first pass, no bounces (4428
   tests passing, up from 4420). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Language: destructuring patterns for `const` declarations** — merged
+  2026-09-05 via PR #395 (`feat/20260905-const-destructure`). `const`
+  now accepts the same list-/map-destructuring patterns `let` already
+  supported (nesting, rest capture, per-key rename, per-entry defaults,
+  hole elements), with every bound name frozen. Reused the existing
+  `let`-destructure machinery: `DestructureLetStmt` (`cinder/ast_nodes.py`)
+  gained a defaulted `is_const: bool = False` field, `_const_statement`
+  (`cinder/parser.py`) now dispatches to `_destructure_let_statement`
+  with `is_const=True`, and the interpreter's
+  `_bind_list_destructure`/`_bind_map_destructure`/`_bind_destructure_name`
+  each gained a sibling `is_const` parameter threaded through every
+  recursive call site, calling `env.define_const` on the fresh-binding
+  path. Clean first pass, no bounces (4441 tests passing, up from 4428).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

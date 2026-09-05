@@ -11,217 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring patterns for `const` declarations [claimed 2026-09-05T14:04:58Z]
-
-Build: `let` already supports both list-destructuring (`let [a, b] =
-expr;`) and map-destructuring (`let {a, b} = expr;`), with full nesting,
-rest capture, per-key rename, per-entry defaults, and hole elements
-(see the README's "Variables & scope" bullet). `const` has none of this
-— only a single plain identifier is accepted after the keyword. Verify
-the gap:
-```sh
-python3 -m cinder.cli eval 'const [a, b] = [1, 2]; print(a); print(b);'
-# -> <eval>:1:7: expected identifier after 'const', found '['
-python3 -m cinder.cli eval 'const {a, b} = {"a": 1, "b": 2}; print(a); print(b);'
-# -> <eval>:1:7: expected identifier after 'const', found '{'
-```
-
-Worked examples: `const [a, b] = [1, 2]; print(a); print(b);` should
-print `1` then `2`, exactly like the `let` equivalent, but with every
-bound name frozen — `const [a, b] = [1, 2]; a = 3;` should raise the
-same `CinderRuntimeError` a plain `const a = 1; a = 2;` already raises
-today (`"cannot assign to const 'a'"`, see `TestConst
-.test_const_reassignment_raises`, search that name). Same shape for map
-patterns: `const {a, b} = {"a": 1, "b": 2};` binds both frozen.
-
-Root cause and fix shape: `cinder/parser.py`'s `_const_statement`
-(search `def _const_statement`) never checks for a leading `[`/`{`
-the way `_let_statement` (search `def _let_statement`) already does —
-it goes straight to `_one_const_declaration`, which demands a bare
-`IDENTIFIER`. The parsing machinery to fix this already exists and
-needs no changes of its own: `_destructure_let_statement` (search `def
-_destructure_let_statement`) already parses either pattern kind via
-`_destructure_list_pattern`/`_destructure_map_pattern` (search either
-name) and builds a `DestructureLetStmt` — the exact same node `let`
-produces — so it is a generic "parse a destructuring declaration"
-helper in practice, not really `let`-specific despite its name. Give it
-one new parameter and thread it through:
-```python
-def _destructure_let_statement(self, let_token: Token, is_map: bool, is_const: bool = False) -> Stmt:
-    if is_map:
-        names, rest = self._destructure_map_pattern()
-    else:
-        names, rest = self._destructure_list_pattern()
-    self._consume(TokenType.EQ, "'=' after destructuring pattern")
-    initializer = self._assignment()
-    self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-    return DestructureLetStmt(
-        names, initializer, let_token.line, let_token.column,
-        is_map=is_map, rest=rest, is_const=is_const,
-    )
-```
-and dispatch to it from `_const_statement` (search `def
-_const_statement`) exactly the way `_let_statement` already dispatches
-to it, with `is_const=True`:
-```python
-def _const_statement(self) -> Stmt:
-    const_token = self._advance()
-    if self._check(TokenType.LBRACKET):
-        return self._destructure_let_statement(const_token, is_map=False, is_const=True)
-    if self._check(TokenType.LBRACE):
-        return self._destructure_let_statement(const_token, is_map=True, is_const=True)
-    declarations = [self._one_const_declaration(const_token)]
-    while self._check(TokenType.COMMA):
-        self._advance()
-        declarations.append(self._one_const_declaration(const_token))
-    self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-    if len(declarations) == 1:
-        return declarations[0]
-    return DeclSeq(declarations, const_token.line, const_token.column)
-```
-(Only the first three lines are new; everything from
-`declarations = [...]` on is unchanged, included so the replacement is
-a drop-in for the whole function.) `DestructureLetStmt` (search `class
-DestructureLetStmt` in `cinder/ast_nodes.py`) needs one new field,
-defaulted so every existing `let`-produced instance is unaffected:
-`is_const: bool = False`.
-
-The interpreter needs `is_const` threaded from the statement down to
-wherever a name actually gets bound, since a nested pattern's bindings
-(`const [a, {b, c}] = ...;`) and rest/rename bindings must be frozen
-too, not just the top-level names. `execute`'s `DestructureLetStmt`
-branch (search `if isinstance(stmt, DestructureLetStmt):` in
-`cinder/interpreter.py`) already looks up `stmt.is_map` — pass
-`stmt.is_const` alongside it:
-```python
-if isinstance(stmt, DestructureLetStmt):
-    value = self.evaluate(stmt.initializer, env)
-    if stmt.is_map:
-        self._bind_map_destructure(
-            env, stmt.names, stmt.rest, value, stmt.line, stmt.column,
-            is_const=stmt.is_const,
-        )
-        return
-    self._bind_list_destructure(
-        env, stmt.names, stmt.rest, value, stmt.line, stmt.column,
-        is_const=stmt.is_const,
-    )
-    return
-```
-`_bind_list_destructure` and `_bind_map_destructure` (search either
-name) each already carry a `use_assign: bool = False` parameter for
-exactly this kind of mode-threading (they use it to pick `env.define`
-vs. `env.assign` for the plain-assignment destructuring form) — add a
-sibling `is_const: bool = False` parameter to both, and pass it through
-every recursive self-call inside their bodies (the nested-list and
-nested-map branches in each, plus every `_bind_destructure_name` call
-in each — six call sites total across the two functions, all of the
-shape `..., line, column, use_assign)` today; append `, is_const)` or
-`is_const=is_const` at each, whichever matches the surrounding call's
-style) exactly the same way `use_assign` is already threaded through
-those same six call sites. Do **not** add it to the two call sites in
-`_evaluate_destructure_assign` (search that name) — those are the
-plain-assignment form (`[a, b] = expr;`), which reassigns
-already-declared names and has no concept of freshly declaring a
-const, so they keep relying on the new parameter's default. Finally,
-`_bind_destructure_name` (search `def _bind_destructure_name`) gets the
-same new parameter, used only on the `not use_assign` (fresh-binding)
-path:
-```python
-def _bind_destructure_name(
-    self, env: Environment, name: str, item: object, line: int, column: int,
-    use_assign: bool, is_const: bool = False,
-) -> None:
-    if not use_assign:
-        if is_const:
-            env.define_const(name, item)
-        else:
-            env.define(name, item)
-        return
-    try:
-        env.assign(name, item)
-    except KeyError:
-        raise CinderRuntimeError(
-            self._undefined_name_message(name, env), line, column
-        ) from None
-    except _ConstAssignError:
-        raise CinderRuntimeError(
-            f"cannot assign to const {name!r}", line, column
-        ) from None
-```
-(Only the signature and the `if not use_assign:` branch change; the
-`use_assign` branch below is unchanged, included so the replacement is
-a drop-in for the whole function.) No other callers of any of these
-four functions (the `for`-loop destructuring, `match` list/map
-patterns, and destructuring function parameters) pass `is_const` at
-all, so they keep defaulting to `False` and are entirely unaffected —
-`const` destructuring is scoped to declarations only, matching plain
-`const`'s own scope (there is no `const` loop variable or `const`
-function parameter concept in Cinder today, and this task does not add
-one).
-
-Acceptance criteria:
-- `const [a, b] = [1, 2]; print(a); print(b);` prints `1` then `2` —
-  the worked example above.
-- `const {a, b} = {"a": 1, "b": 2}; print(a); print(b);` prints `1`
-  then `2` — the map worked example above.
-- `const [a, b] = [1, 2]; a = 3;` raises `CinderRuntimeError` matching
-  `"cannot assign to const 'a'"` — the top-level names are actually
-  frozen, not just freshly bound.
-- `const {a, b} = {"a": 1, "b": 2}; b = 3;` raises `CinderRuntimeError`
-  matching `"cannot assign to const 'b'"` — same for map patterns.
-- `const [a, {b, c}] = [1, {"b": 2, "c": 3}]; c = 9;` raises
-  `CinderRuntimeError` matching `"cannot assign to const 'c'"` — a
-  nested pattern's names are frozen too, confirming `is_const` threads
-  through the recursive nested-pattern branches, not just the
-  top-level loop.
-- `const [a, ...rest] = [1, 2, 3]; rest = [];` raises
-  `CinderRuntimeError` matching `"cannot assign to const 'rest'"` — a
-  rest-captured binding is frozen too.
-- `const {a: x} = {"a": 1}; x = 2;` raises `CinderRuntimeError`
-  matching `"cannot assign to const 'x'"` — a per-key-renamed binding
-  is frozen under its local name.
-- `const [a, b = 5] = [1]; print(b);` is `5` — per-element defaults
-  still work, unaffected by the new field.
-- `const [a, , c] = [1, 2, 3]; print(a); print(c);` prints `1` then
-  `3` — hole elements still work.
-- Regression: `let [a, b] = [1, 2]; a = 3; print(a);` still prints `3`
-  (a plain `let` destructure stays mutable — `DestructureLetStmt`'s new
-  `is_const` field defaults to `False` and `_let_statement`'s existing
-  calls never pass it) and every existing destructuring-`let`/nested/
-  rest/rename/default/hole test in `tests/test_interpreter.py` still
-  passes unmodified.
-- New tests in `tests/test_interpreter.py`: a `class
-  TestConstDestructure` (modeled on `TestDestructureLet`/
-  `TestDestructureLetMap`, search either name, for the binding shapes,
-  and on `TestConst.test_const_reassignment_raises`, search that name,
-  for the freeze-checking style) covering every acceptance case above.
-- New tests in `tests/test_parser.py`: parse-shape tests asserting
-  `isinstance(parsed, DestructureLetStmt) and parsed.is_const is True`
-  for both `const [a, b] = expr;` and `const {a, b} = expr;` — assert
-  the `is_const` attribute directly rather than extending the existing
-  `shape()` helper's `DestructureLetStmt` tuple (search `def shape` and
-  `"DestructureLetStmt"`), since that tuple is asserted as a fixed
-  4-element shape by roughly ten existing tests and extending it would
-  require touching all of them for a field this task can verify more
-  narrowly.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_const_statement`, search `def
-_const_statement`; `_destructure_let_statement`, search that name),
-`cinder/ast_nodes.py` (`class DestructureLetStmt`), `cinder/interpreter.py`
-(`execute`'s `DestructureLetStmt` branch, `_bind_list_destructure`,
-`_bind_map_destructure`, `_bind_destructure_name` — search any name),
-`tests/test_parser.py`, `tests/test_interpreter.py` per the acceptance
-criteria above. Once merged, `README.md`'s "Variables & scope" bullet
-needs a mention that `const` now supports the same destructuring forms
-as `let`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
+## 1. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
 
 Build: `is_squarefree` (`cinder/builtins.py`, search `def
 _is_squarefree`: no prime factor of `value` appears with exponent 2 or
@@ -313,7 +103,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Language: destructuring patterns for `try`/`catch` clauses
+## 2. Language: destructuring patterns for `try`/`catch` clauses
 
 Build: `let`/`for`/function params/comprehension loop variables all accept
 list- and map-destructuring patterns (with rest, per-key rename, defaults,
@@ -440,7 +230,7 @@ Acceptance criteria:
   `try {} catch ([a, b]) {}` and `try {} catch ({a, b}) {}` asserting
   `catch_names`/`catch_rest`/`catch_is_map` directly on the parsed
   `TryStmt` node, the same "assert the new field directly rather than
-  extending the fixed-shape tuple" choice task 1's `const`-destructure
+  extending the fixed-shape tuple" choice PR #395's `const`-destructure
   work already made for `DestructureLetStmt`'s `is_const` field — `shape()`'s
   existing `TryStmt` tuple (search `"TryStmt"`) is a fixed 5-element shape
   asserted by roughly six existing tests and only reads `catch_name`
@@ -467,7 +257,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
+## 3. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
 
 Build: `is_refactorable` (`cinder/builtins.py`, search `def
 _is_refactorable`: whether `n`'s own divisor count divides back into
@@ -560,7 +350,7 @@ task.
 
 ---
 
-## 5. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
+## 4. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
 
 Build: `let`/`for`/function-param/comprehension list-destructuring patterns
 all accept a bare comma-comma hole to skip an unwanted position
@@ -666,7 +456,7 @@ this task.
 
 ---
 
-## 6. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
+## 5. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
 
 Build: `is_sphenic` (`cinder/builtins.py`, search `def _is_sphenic`:
 whether `n` is the product of exactly three distinct primes, e.g.

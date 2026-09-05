@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring patterns for `const` declarations
+## 1. Language: destructuring patterns for `const` declarations [claimed 2026-09-05T14:04:58Z]
 
 Build: `let` already supports both list-destructuring (`let [a, b] =
 expr;`) and map-destructuring (`let {a, b} = expr;`), with full nesting,

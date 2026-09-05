@@ -1194,9 +1194,14 @@ class Interpreter:
         for index, (entry, default) in enumerate(entries):
             item = subject[index] if index < len(subject) else self.evaluate(default, env)
             if isinstance(entry, tuple):
-                nested_entries, nested_rest = entry
-                if not self._match_list_entries(nested_entries, nested_rest, item, env):
-                    return False
+                if len(entry) == 3:
+                    nested_entries, nested_rest, _ = entry
+                    if not self._match_map_entries(nested_entries, nested_rest, item, env):
+                        return False
+                else:
+                    nested_entries, nested_rest = entry
+                    if not self._match_list_entries(nested_entries, nested_rest, item, env):
+                        return False
                 continue
             if isinstance(entry, Literal):
                 if not values_equal(item, self.evaluate(entry, env)):

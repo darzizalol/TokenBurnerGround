@@ -2423,6 +2423,30 @@ def _is_squarefree(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _nth_squarefree(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_squarefree", arguments, 1, line, column)
+    value = _require_int("nth_squarefree", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_squarefree() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_squarefree_candidate(candidate: int) -> bool:
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % (divisor * divisor) == 0:
+                return False
+        return True
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_squarefree_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_powerful_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_powerful_number", arguments, 1, line, column)
     value = _require_int("is_powerful_number", arguments[0], line, column)
@@ -4866,6 +4890,7 @@ _BUILTINS = {
     "is_pronic": _is_pronic,
     "nth_pronic": _nth_pronic,
     "is_squarefree": _is_squarefree,
+    "nth_squarefree": _nth_squarefree,
     "is_powerful_number": _is_powerful_number,
     "is_achilles": _is_achilles,
     "is_perfect_power": _is_perfect_power,

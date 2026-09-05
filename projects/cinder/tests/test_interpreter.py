@@ -5611,6 +5611,53 @@ class TestTryCatch(unittest.TestCase):
         )
         self.assertEqual(env.get("result"), 1)
 
+    def test_catch_list_destructure_binds_elements(self):
+        env = run(
+            "let a = nil; let b = nil; "
+            "try { throw [1, 2]; } catch ([x, y]) { a = x; b = y; }"
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_catch_map_destructure_binds_keys(self):
+        env = run(
+            'let a = nil; let b = nil; '
+            'try { throw {"a": 1, "b": 2}; } catch ({a: x, b: y}) { a = x; b = y; }'
+        )
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_catch_list_destructure_rest_capture(self):
+        env = run(
+            "let r = nil; "
+            "try { throw [1, 2, 3]; } catch ([x, ...rest]) { r = rest; }"
+        )
+        self.assertEqual(env.get("r"), [2, 3])
+
+    def test_catch_map_destructure_default(self):
+        env = run(
+            'let r = nil; '
+            'try { throw {"a": 1}; } catch ({a, b = 5}) { r = b; }'
+        )
+        self.assertEqual(env.get("r"), 5)
+
+    def test_catch_map_destructure_rename(self):
+        env = run(
+            'let r = nil; '
+            'try { throw {"a": 1}; } catch ({a: x}) { r = x; }'
+        )
+        self.assertEqual(env.get("r"), 1)
+
+    def test_catch_list_destructure_mismatch_propagates_uncaught(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cannot destructure int as a list"
+        ):
+            run("try { throw 5; } catch ([a]) { }")
+
+    def test_catch_list_destructure_scope_not_visible_after(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("try { throw [1]; } catch ([a]) {} a;")
+
 
 class TestTryFinally(unittest.TestCase):
     def _run(self, source: str) -> Environment:

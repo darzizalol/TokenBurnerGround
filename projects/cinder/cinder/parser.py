@@ -53,8 +53,9 @@ disambiguated from the foreach form by peeking for `(` right after `for`;
 `init`/`cond`/`step` are each independently optional), `break;`/`continue;`
 (BreakStmt/ContinueStmt,
 only valid inside a loop), `try { <statement>* } catch (IDENTIFIER)
-{ <statement>* }` (TryStmt, both bodies always blocks, the parenthesized
-catch name is required), `switch (<expr>) { case <expr>: { ... } ...
+{ <statement>* }` (TryStmt, both bodies always blocks; the parenthesized
+catch clause is optional and, when present, may be a plain identifier or
+a list/map destructuring pattern), `switch (<expr>) { case <expr>: { ... } ...
 [default: { ... }] }` (SwitchStmt, each case/default body always a block; at
 most one `default`, checked at parse time), or a bare `<expr>;` (ExprStmt).
 
@@ -1040,14 +1041,23 @@ class Parser:
             )
         try_block = self._block()
         catch_name = None
+        catch_names = None
+        catch_rest = None
+        catch_is_map = False
         catch_block = None
         if self._check(TokenType.CATCH):
             self._advance()
             if self._check(TokenType.LPAREN):
                 self._advance()
-                name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
+                if self._check(TokenType.LBRACKET):
+                    catch_names, catch_rest = self._destructure_list_pattern()
+                elif self._check(TokenType.LBRACE):
+                    catch_names, catch_rest = self._destructure_map_pattern()
+                    catch_is_map = True
+                else:
+                    name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'catch ('")
+                    catch_name = name_token.lexeme
                 self._consume(TokenType.RPAREN, "')' after catch name")
-                catch_name = name_token.lexeme
             if not self._check(TokenType.LBRACE):
                 token = self._peek()
                 raise ParseError(
@@ -1081,6 +1091,9 @@ class Parser:
             finally_block,
             try_token.line,
             try_token.column,
+            catch_names=catch_names,
+            catch_rest=catch_rest,
+            catch_is_map=catch_is_map,
         )
 
     def _switch_statement(self) -> Stmt:

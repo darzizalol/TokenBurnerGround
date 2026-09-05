@@ -413,7 +413,18 @@ class Interpreter:
                 if stmt.catch_block is None:
                     raise
                 catch_env = Environment(env)
-                if stmt.catch_name is not None:
+                if stmt.catch_names is not None:
+                    if stmt.catch_is_map:
+                        self._bind_map_destructure(
+                            catch_env, stmt.catch_names, stmt.catch_rest, error.value,
+                            stmt.line, stmt.column,
+                        )
+                    else:
+                        self._bind_list_destructure(
+                            catch_env, stmt.catch_names, stmt.catch_rest, error.value,
+                            stmt.line, stmt.column,
+                        )
+                elif stmt.catch_name is not None:
                     catch_env.define(stmt.catch_name, error.value)
                 self.execute(stmt.catch_block, catch_env)
         finally:

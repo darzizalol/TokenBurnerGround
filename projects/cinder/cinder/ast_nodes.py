@@ -632,6 +632,9 @@ class TryStmt:
     finally_block: "Block | None"
     line: int
     column: int
+    catch_names: "list | None" = None
+    catch_rest: "str | None" = None
+    catch_is_map: bool = False
 
 
 @dataclass(frozen=True)

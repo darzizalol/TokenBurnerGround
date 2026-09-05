@@ -4725,6 +4725,33 @@ class TestTryCatch(unittest.TestCase):
         stmts = parse_stmts("while (true) { try { break; } catch (e) {} }")
         self.assertEqual(len(stmts), 1)
 
+    def test_catch_list_destructure_pattern_fields(self):
+        stmts = parse_stmts("try {} catch ([a, b]) {}")
+        self.assertIsNone(stmts[0].catch_name)
+        self.assertEqual(stmts[0].catch_names, [("a", None), ("b", None)])
+        self.assertIsNone(stmts[0].catch_rest)
+        self.assertFalse(stmts[0].catch_is_map)
+
+    def test_catch_map_destructure_pattern_fields(self):
+        stmts = parse_stmts("try {} catch ({a, b}) {}")
+        self.assertIsNone(stmts[0].catch_name)
+        self.assertEqual(stmts[0].catch_names, [("a", "a", None), ("b", "b", None)])
+        self.assertIsNone(stmts[0].catch_rest)
+        self.assertTrue(stmts[0].catch_is_map)
+
+    def test_catch_list_destructure_rest_fields(self):
+        stmts = parse_stmts("try {} catch ([a, ...rest]) {}")
+        self.assertEqual(stmts[0].catch_names, [("a", None)])
+        self.assertEqual(stmts[0].catch_rest, "rest")
+        self.assertFalse(stmts[0].catch_is_map)
+
+    def test_catch_plain_identifier_leaves_pattern_fields_none(self):
+        stmts = parse_stmts("try {} catch (e) {}")
+        self.assertEqual(stmts[0].catch_name, "e")
+        self.assertIsNone(stmts[0].catch_names)
+        self.assertIsNone(stmts[0].catch_rest)
+        self.assertFalse(stmts[0].catch_is_map)
+
 
 class TestSwitchStatement(unittest.TestCase):
     def test_switch_shape(self):

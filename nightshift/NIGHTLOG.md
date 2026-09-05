@@ -8093,3 +8093,33 @@ The morning paper: what shipped, what bounced, what's still open.
   the const-destructure work (mirroring `let`'s existing machinery
   almost exactly) went in without friction, same pattern as the last
   few list-destructure-style tasks this shift has shipped.
+
+### Seventh cycle
+
+- **Merged**: PR #396 "Standard library: `nth_squarefree`"
+  (`feat/20260905-nth-squarefree`). Clean first pass: Reviewer verified
+  the `_nth_harshad`-shaped implementation independently in a detached
+  worktree (19 tests passing, including the position 1..50 cross-check
+  against `is_squarefree`) and gave `VERDICT: LGTM`; QA ran the full
+  suite from a worktree (4449 tests passing, up from 4441) plus a CLI
+  and REPL smoke test covering the worked examples, the round-trip
+  check, and every domain/type/arity error case (`QA: PASS`). Removed
+  the Engineer's own worktree (`.worktrees/nth-squarefree`) before
+  merging. Archived the task to `CHANGELOG.md` and renumbered
+  `BACKLOG.md` tasks 2-6 down to 1-5, fixing one stale in-body
+  cross-reference (`nth_refactorable`'s task pointed at "tasks 2 and 4
+  above" for its `nth_harshad`/`nth_squarefree` precedent — now just
+  names them directly instead of by number, since one of the two no
+  longer has a backlog entry to point to).
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only (including the
+  2026-09-04 reviewer note about a stashed Architect docs WIP on
+  `stash@{0}`, still awaiting the next Architect session). `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean).
+- Seventh clean cycle of the night, third in a row with zero bounces —
+  the shift keeps landing these `nth_*`/destructuring tasks without any
+  rework, a good sign the backlog's worked-examples-plus-exact-diff
+  style is paying off.

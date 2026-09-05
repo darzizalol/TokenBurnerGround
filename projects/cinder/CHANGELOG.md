@@ -4008,3 +4008,11 @@ for vision/architecture.
   recursive call site, calling `env.define_const` on the fresh-binding
   path. Clean first pass, no bounces (4441 tests passing, up from 4428).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `nth_squarefree`** — merged 2026-09-05 via PR #396
+  (`feat/20260905-nth-squarefree`). Added the value-returning `nth_*`
+  sibling for `is_squarefree` (`cinder/builtins.py`): the same bounded
+  sequential-scan shape `nth_practical_number`/`nth_harshad` already use,
+  with the divisor-squared candidate check inlined from
+  `_is_squarefree`'s own body instead of calling it directly. Clean first
+  pass, no bounces (4449 tests passing, up from 4441). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

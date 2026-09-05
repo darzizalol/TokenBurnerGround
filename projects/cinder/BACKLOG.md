@@ -11,102 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position [claimed 2026-09-05T19:52:16Z]
-
-Build: `is_powerful_number` (`cinder/builtins.py`, search `def
-_is_powerful_number`: whether every prime factor of `n` appears with
-exponent `2` or more, e.g. `72 = 2^3 * 3^2`) has no value-returning
-`nth_*` sibling, the same gap `nth_practical_number`/`nth_semiperfect`
-already closed for their own predicates. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_powerful_number(1));'
-# -> <eval>:1:7: undefined name 'nth_powerful_number' (did you mean
-#    'is_powerful_number'?)
-```
-
-Worked examples: the first ten powerful numbers are `1, 4, 8, 9, 16, 25,
-27, 32, 36, 49` (`1` is trivially powerful — the loop below leaves
-`remaining == 1` without ever entering the `if count < 2` branch), so
-`nth_powerful_number(1)` is `1` and `nth_powerful_number(10)` is `49`.
-The 20th is `169`.
-
-Add directly after `_is_powerful_number` (search `def
-_is_powerful_number`, immediately before `def _is_achilles`):
-```python
-def _nth_powerful_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_powerful_number", arguments, 1, line, column)
-    value = _require_int("nth_powerful_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_powerful_number() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_powerful_candidate(candidate: int) -> bool:
-        remaining = candidate
-        divisor = 2
-        while divisor * divisor <= remaining:
-            if remaining % divisor == 0:
-                count = 0
-                while remaining % divisor == 0:
-                    remaining //= divisor
-                    count += 1
-                if count < 2:
-                    return False
-            divisor += 1
-        return remaining == 1
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_powerful_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_practical_number`/`_nth_semiperfect`/
-`_nth_refactorable`, with the inner candidate check copied from
-`_is_powerful_number`'s own body instead of calling
-`_is_powerful_number` directly — the same "duplicate the tiny predicate
-body instead of a redundant `_require_arity`/`_require_int` round-trip
-per candidate" choice every recent `nth_*` task already makes.) Register
-the new dict entry (search `"is_powerful_number": _is_powerful_number,`,
-add `"nth_powerful_number": _nth_powerful_number,` directly after it,
-before `"is_achilles": _is_achilles,`).
-
-Acceptance criteria:
-- `nth_powerful_number(1);` through `nth_powerful_number(10);` are `1,
-  4, 8, 9, 16, 25, 27, 32, 36, 49` in order — the worked example above.
-- `nth_powerful_number(20);` is `169` — a further worked example
-  confirming the scan scales past the first ten.
-- For every `position` in `1..50`,
-  `is_powerful_number(nth_powerful_number(position))` is `true` — the
-  same self-consistency check `nth_practical_number`/`nth_semiperfect`'s
-  own test suites already run against their predicates.
-- `nth_powerful_number(0);`, `nth_powerful_number(-3);` both raise
-  `CinderRuntimeError` matching `"nth_powerful_number\(\) requires a
-  positive integer, domain error"`.
-- `nth_powerful_number(true);` raises `CinderRuntimeError` matching
-  `"nth_powerful_number\(\) requires an int, got bool"`.
-- `nth_powerful_number("5");` raises `CinderRuntimeError` matching
-  `"nth_powerful_number\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_powerful_number`,
-search `def _is_powerful_number`), `tests/test_builtins.py` (new `class
-TestNthPowerfulNumber`, modeled on `class TestNthSemiperfect`, search
-that name, for the test shapes above — place it near the existing `class
-TestIsPowerfulNumber`, search that name). Once merged, `README.md`'s
-Builtins bullet needs `nth_powerful_number` added near
-`is_powerful_number`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: map patterns nested inside `match` list-pattern elements
+## 1. Language: map patterns nested inside `match` list-pattern elements
 
 Build: `match`'s list patterns can already nest another *list* pattern as
 one of their elements (`[a, [b, c]]`), and map patterns can already nest
@@ -228,7 +133,7 @@ this task.
 
 ---
 
-## 3. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
+## 2. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
 
 Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
 whether `n` is a powerful number — every prime factor's exponent is 2 or
@@ -334,7 +239,7 @@ task.
 
 ---
 
-## 4. Language: whole-value `as` binding on literal and range `match` patterns
+## 3. Language: whole-value `as` binding on literal and range `match` patterns
 
 Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
 _ => nil }`) currently only exists on list-pattern and map-pattern match
@@ -500,7 +405,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+## 4. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`: a composite number whose decimal digit sum equals the
@@ -606,7 +511,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: `as` binding on a nested list/map sub-pattern inside `match`
+## 5. Language: `as` binding on a nested list/map sub-pattern inside `match`
 
 Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
 entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>

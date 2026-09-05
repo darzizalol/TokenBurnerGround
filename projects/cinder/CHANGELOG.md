@@ -4073,3 +4073,12 @@ for vision/architecture.
   `Stmt` subclass each declarator produced. Clean first pass, no bounces
   (4495 tests passing, up from 4487). README/PROJECT.md updates left to
   the Architect's next grooming pass.
+- **Standard library: `nth_powerful_number`** — merged 2026-09-05T19:57:19Z
+  via PR #402 (`feat/20260905-nth-powerful-number`). Added the
+  value-returning `nth_*` sibling for `is_powerful_number`
+  (`cinder/builtins.py`): the same bounded sequential-scan shape
+  `nth_practical_number`/`nth_semiperfect` already use, with the
+  every-prime-factor-exponent-at-least-2 candidate check inlined from
+  `_is_powerful_number`'s own body instead of calling it directly. Clean
+  first pass, no bounces (4503 tests passing, up from 4495).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

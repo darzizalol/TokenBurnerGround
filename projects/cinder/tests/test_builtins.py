@@ -3851,6 +3851,71 @@ class TestIsSphenic(unittest.TestCase):
             run("is_sphenic();")
 
 
+class TestNthSphenic(unittest.TestCase):
+    def test_nth_sphenic_of_first_ten(self):
+        self.assertEqual(run("let result = nth_sphenic(1);").get("result"), 30)
+        self.assertEqual(run("let result = nth_sphenic(2);").get("result"), 42)
+        self.assertEqual(run("let result = nth_sphenic(3);").get("result"), 66)
+        self.assertEqual(run("let result = nth_sphenic(4);").get("result"), 70)
+        self.assertEqual(run("let result = nth_sphenic(5);").get("result"), 78)
+        self.assertEqual(run("let result = nth_sphenic(6);").get("result"), 102)
+        self.assertEqual(run("let result = nth_sphenic(7);").get("result"), 105)
+        self.assertEqual(run("let result = nth_sphenic(8);").get("result"), 110)
+        self.assertEqual(run("let result = nth_sphenic(9);").get("result"), 114)
+        self.assertEqual(run("let result = nth_sphenic(10);").get("result"), 130)
+
+    def test_nth_sphenic_of_twenty(self):
+        self.assertEqual(run("let result = nth_sphenic(20);").get("result"), 222)
+
+    def test_nth_sphenic_agrees_with_is_sphenic(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_sphenic(nth_sphenic({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_sphenic({position}) to be sphenic",
+            )
+
+    def test_nth_sphenic_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_sphenic(0);")
+        self.assertIn(
+            "nth_sphenic() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_sphenic_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_sphenic(-3);")
+        self.assertIn(
+            "nth_sphenic() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_sphenic_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_sphenic(true);")
+        self.assertIn(
+            "nth_sphenic() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_sphenic_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_sphenic("5");')
+        self.assertIn(
+            "nth_sphenic() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_sphenic_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_sphenic();")
+
+    def test_nth_sphenic_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_sphenic(1, 2);")
+
+
 class TestIsEmirp(unittest.TestCase):
     def test_is_emirp_of_classic_pairs(self):
         self.assertEqual(run("let result = is_emirp(13);").get("result"), True)

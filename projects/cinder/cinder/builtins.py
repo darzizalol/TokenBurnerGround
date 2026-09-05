@@ -1746,6 +1746,44 @@ def _is_sphenic(arguments: list, line: int, column: int) -> object:
     return distinct_count == 3
 
 
+def _nth_sphenic(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_sphenic", arguments, 1, line, column)
+    value = _require_int("nth_sphenic", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_sphenic() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_sphenic_candidate(candidate: int) -> bool:
+        remaining = candidate
+        distinct_count = 0
+        divisor = 2
+        while divisor * divisor <= remaining:
+            if remaining % divisor == 0:
+                count = 0
+                while remaining % divisor == 0:
+                    remaining //= divisor
+                    count += 1
+                if count != 1:
+                    return False
+                distinct_count += 1
+                if distinct_count > 3:
+                    return False
+            divisor += 1
+        if remaining > 1:
+            distinct_count += 1
+        return distinct_count == 3
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_sphenic_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_emirp(arguments: list, line: int, column: int) -> object:
     _require_arity("is_emirp", arguments, 1, line, column)
     value = _require_int("is_emirp", arguments[0], line, column)
@@ -4873,6 +4911,7 @@ _BUILTINS = {
     "is_semiprime": _is_semiprime,
     "nth_semiprime": _nth_semiprime,
     "is_sphenic": _is_sphenic,
+    "nth_sphenic": _nth_sphenic,
     "is_emirp": _is_emirp,
     "is_circular_prime": _is_circular_prime,
     "is_twin_prime": _is_twin_prime,

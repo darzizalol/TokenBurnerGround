@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
+## 1. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns [claimed 2026-09-05T15:03:27Z]
 
 Build: `let`/`for`/function-param/comprehension list-destructuring patterns
 all accept a bare comma-comma hole to skip an unwanted position

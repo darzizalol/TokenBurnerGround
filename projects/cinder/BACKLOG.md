@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
+## 1. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position [claimed 2026-09-05T14:21:26Z]
 
 Build: `is_squarefree` (`cinder/builtins.py`, search `def
 _is_squarefree`: no prime factor of `value` appears with exponent 2 or

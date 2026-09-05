@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: destructuring patterns for `try`/`catch` clauses
+## 1. Language: destructuring patterns for `try`/`catch` clauses [claimed 2026-09-05T14:32:57Z]
 
 Build: `let`/`for`/function params/comprehension loop variables all accept
 list- and map-destructuring patterns (with rest, per-key rename, defaults,

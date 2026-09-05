@@ -3096,6 +3096,55 @@ class TestStatements(unittest.TestCase):
         self.assertIsInstance(stmts[0], DestructureLetStmt)
         self.assertFalse(stmts[0].is_const)
 
+    def test_let_comma_separated_plain_then_destructure_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let a = 1, [b, c] = [2, 3];")],
+            [
+                (
+                    "DeclSeq",
+                    [
+                        ("LetStmt", "a", ("Literal", 1)),
+                        (
+                            "DestructureLetStmt",
+                            [("b", None), ("c", None)],
+                            ("ListLiteral", [("Literal", 2), ("Literal", 3)]),
+                            False,
+                            None,
+                        ),
+                    ],
+                )
+            ],
+        )
+
+    def test_let_comma_separated_destructure_then_plain_shape(self):
+        self.assertEqual(
+            [stmt_shape(s) for s in parse_stmts("let [a, b] = [1, 2], c = 3;")],
+            [
+                (
+                    "DeclSeq",
+                    [
+                        (
+                            "DestructureLetStmt",
+                            [("a", None), ("b", None)],
+                            ("ListLiteral", [("Literal", 1), ("Literal", 2)]),
+                            False,
+                            None,
+                        ),
+                        ("LetStmt", "c", ("Literal", 3)),
+                    ],
+                )
+            ],
+        )
+
+    def test_const_comma_separated_mixed_is_const_on_destructure_node(self):
+        stmts = parse_stmts("const a = 1, [b, c] = [2, 3];")
+        self.assertEqual(len(stmts), 1)
+        self.assertIsInstance(stmts[0], DeclSeq)
+        plain, destructure = stmts[0].declarations
+        self.assertIsInstance(plain, ConstStmt)
+        self.assertIsInstance(destructure, DestructureLetStmt)
+        self.assertTrue(destructure.is_const)
+
     def test_unclosed_block_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("{ let x = 1; ")

@@ -6394,6 +6394,78 @@ class TestIsPowerfulNumber(unittest.TestCase):
             run("is_powerful_number();")
 
 
+class TestNthPowerfulNumber(unittest.TestCase):
+    def test_nth_powerful_number_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 4,
+            3: 8,
+            4: 9,
+            5: 16,
+            6: 25,
+            7: 27,
+            8: 32,
+            9: 36,
+            10: 49,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_powerful_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_powerful_number_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_powerful_number(20);").get("result"), 169
+        )
+
+    def test_nth_powerful_number_agrees_with_is_powerful_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_powerful_number(nth_powerful_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_powerful_number({position}) to be a powerful number",
+            )
+
+    def test_nth_powerful_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_powerful_number(0);")
+        self.assertIn(
+            "nth_powerful_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_powerful_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_powerful_number(-3);")
+        self.assertIn(
+            "nth_powerful_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_powerful_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_powerful_number(true);")
+        self.assertIn(
+            "nth_powerful_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_powerful_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_powerful_number("5");')
+        self.assertIn(
+            "nth_powerful_number() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_powerful_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_powerful_number(1, 2);")
+
+
 class TestIsAchilles(unittest.TestCase):
     def test_is_achilles_of_72(self):
         self.assertEqual(run("let result = is_achilles(72);").get("result"), True)

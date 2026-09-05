@@ -322,18 +322,21 @@ class Parser:
 
     def _let_statement(self) -> Stmt:
         let_token = self._advance()
-        if self._check(TokenType.LBRACKET):
-            return self._destructure_let_statement(let_token, is_map=False)
-        if self._check(TokenType.LBRACE):
-            return self._destructure_let_statement(let_token, is_map=True)
-        declarations = [self._one_let_declaration(let_token)]
+        declarations = [self._one_let_declarator(let_token)]
         while self._check(TokenType.COMMA):
             self._advance()
-            declarations.append(self._one_let_declaration(let_token))
+            declarations.append(self._one_let_declarator(let_token))
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         if len(declarations) == 1:
             return declarations[0]
         return DeclSeq(declarations, let_token.line, let_token.column)
+
+    def _one_let_declarator(self, let_token: Token) -> Stmt:
+        if self._check(TokenType.LBRACKET):
+            return self._destructure_declarator(let_token, is_map=False, is_const=False)
+        if self._check(TokenType.LBRACE):
+            return self._destructure_declarator(let_token, is_map=True, is_const=False)
+        return self._one_let_declaration(let_token)
 
     def _one_let_declaration(self, let_token: Token) -> LetStmt:
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'let'")
@@ -346,18 +349,21 @@ class Parser:
 
     def _const_statement(self) -> Stmt:
         const_token = self._advance()
-        if self._check(TokenType.LBRACKET):
-            return self._destructure_let_statement(const_token, is_map=False, is_const=True)
-        if self._check(TokenType.LBRACE):
-            return self._destructure_let_statement(const_token, is_map=True, is_const=True)
-        declarations = [self._one_const_declaration(const_token)]
+        declarations = [self._one_const_declarator(const_token)]
         while self._check(TokenType.COMMA):
             self._advance()
-            declarations.append(self._one_const_declaration(const_token))
+            declarations.append(self._one_const_declarator(const_token))
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         if len(declarations) == 1:
             return declarations[0]
         return DeclSeq(declarations, const_token.line, const_token.column)
+
+    def _one_const_declarator(self, const_token: Token) -> Stmt:
+        if self._check(TokenType.LBRACKET):
+            return self._destructure_declarator(const_token, is_map=False, is_const=True)
+        if self._check(TokenType.LBRACE):
+            return self._destructure_declarator(const_token, is_map=True, is_const=True)
+        return self._one_const_declaration(const_token)
 
     def _one_const_declaration(self, const_token: Token) -> ConstStmt:
         name_token = self._consume(TokenType.IDENTIFIER, "identifier after 'const'")
@@ -365,14 +371,13 @@ class Parser:
         initializer = self._assignment()
         return ConstStmt(name_token.lexeme, initializer, name_token.line, name_token.column)
 
-    def _destructure_let_statement(self, let_token: Token, is_map: bool, is_const: bool = False) -> Stmt:
+    def _destructure_declarator(self, let_token: Token, is_map: bool, is_const: bool) -> "DestructureLetStmt":
         if is_map:
             names, rest = self._destructure_map_pattern()
         else:
             names, rest = self._destructure_list_pattern()
         self._consume(TokenType.EQ, "'=' after destructuring pattern")
         initializer = self._assignment()
-        self._consume(TokenType.SEMICOLON, "';' after variable declaration")
         return DestructureLetStmt(
             names, initializer, let_token.line, let_token.column,
             is_map=is_map, rest=rest, is_const=is_const,

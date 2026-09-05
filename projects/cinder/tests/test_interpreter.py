@@ -1742,6 +1742,32 @@ class TestStatements(unittest.TestCase):
         env = run("let x = 1 + 2;")
         self.assertEqual(env.get("x"), 3)
 
+    def test_let_comma_separated_plain_then_destructure(self):
+        env = run("let a = 1, [b, c] = [2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_let_comma_separated_destructure_then_plain(self):
+        env = run("let [a, b] = [1, 2], c = 3;")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_const_comma_separated_mixed_freezes_destructured_names(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cannot assign to const 'b'"):
+            run("const a = 1, [b, c] = [2, 3]; b = 9;")
+
+    def test_let_comma_separated_destructure_sees_earlier_plain_name(self):
+        env = run("let a = 1, [b, c] = [a, a + 1];")
+        self.assertEqual(env.get("b"), 1)
+        self.assertEqual(env.get("c"), 2)
+
+    def test_let_comma_separated_list_then_map_destructure(self):
+        env = run('let [a, b] = [1, 2], {c, d} = {"c": 3, "d": 4};')
+        self.assertEqual(env.get("c"), 3)
+        self.assertEqual(env.get("d"), 4)
+
 
 class TestExprStatementCommaSeparated(unittest.TestCase):
     def test_two_assignments_both_take_effect(self):

@@ -4974,6 +4974,38 @@ class TestMatchExpression(unittest.TestCase):
             ),
         )
 
+    def test_match_list_pattern_bare_hole_shape_matches_underscore(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, , c] => a, _ => 0 }')),
+            shape(parse('match (x) { [a, _, c] => a, _ => 0 }')),
+        )
+
+    def test_match_list_pattern_leading_bare_hole_shape_matches_underscore(self):
+        self.assertEqual(
+            shape(parse('match (x) { [, b, c] => b, _ => 0 }')),
+            shape(parse('match (x) { [_, b, c] => b, _ => 0 }')),
+        )
+
+    def test_match_list_pattern_bare_hole_composes_with_rest(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, , ...rest] => rest, _ => 0 }')),
+            shape(parse('match (x) { [a, _, ...rest] => rest, _ => 0 }')),
+        )
+
+    def test_match_list_pattern_bare_hole_nested(self):
+        self.assertEqual(
+            shape(parse('match (x) { [a, [, c]] => a, _ => 0 }')),
+            shape(parse('match (x) { [a, [_, c]] => a, _ => 0 }')),
+        )
+
+    def test_match_list_pattern_bare_hole_after_defaulted_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in list pattern",
+        ):
+            parse('match (x) { [a = 1, , c] => 0, _ => -1 }')
+
     def test_match_empty_list_pattern_shape(self):
         self.assertEqual(
             shape(parse('match (x) { [] => "empty", _ => "nonempty" }')),

@@ -6177,6 +6177,35 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match ([1, 2]) { [_, b] => b, _ => 0 };')
         self.assertEqual(env.get("result"), 2)
 
+    def test_list_pattern_bare_hole_discards_position(self):
+        env = run('let result = match ([1, 2, 3]) { [a, , c] => a + c, _ => 0 };')
+        self.assertEqual(env.get("result"), 4)
+
+    def test_list_pattern_leading_bare_hole_discards_position(self):
+        env = run('let result = match ([1, 2, 3]) { [, b, c] => b + c, _ => 0 };')
+        self.assertEqual(env.get("result"), 5)
+
+    def test_list_pattern_bare_hole_composes_with_rest_capture(self):
+        env = run(
+            'let result = match ([1, 2, 3, 4]) '
+            '{ [a, , ...rest] => rest, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), [3, 4])
+
+    def test_nested_list_pattern_bare_hole_discards(self):
+        env = run(
+            'let result = match ([1, [2, 3]]) { [a, [, c]] => a + c, _ => 0 };'
+        )
+        self.assertEqual(env.get("result"), 4)
+
+    def test_list_pattern_bare_hole_without_default_after_defaulted_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            r"element without a default value follows an element with one "
+            r"in list pattern",
+        ):
+            run('match ([1]) { [a = 1, , c] => 0, _ => -1 };')
+
     def test_empty_list_pattern_matches_only_empty_list(self):
         env = run('let result = match ([]) { [] => "empty", _ => "nonempty" };')
         self.assertEqual(env.get("result"), "empty")

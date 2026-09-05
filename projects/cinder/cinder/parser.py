@@ -1252,6 +1252,15 @@ class Parser:
         self, seen_default: bool
     ) -> "tuple[str | Expr | None | tuple[list, str | None], Expr | None]":
         token = self._peek()
+        if token.type == TokenType.COMMA:
+            if seen_default:
+                raise ParseError(
+                    "element without a default value follows an element with "
+                    "one in list pattern",
+                    token.line,
+                    token.column,
+                )
+            return None, None
         if token.type == TokenType.LBRACKET:
             entry = self._match_list_pattern()
         elif token.type == TokenType.IDENTIFIER:

@@ -345,6 +345,10 @@ class Parser:
 
     def _const_statement(self) -> Stmt:
         const_token = self._advance()
+        if self._check(TokenType.LBRACKET):
+            return self._destructure_let_statement(const_token, is_map=False, is_const=True)
+        if self._check(TokenType.LBRACE):
+            return self._destructure_let_statement(const_token, is_map=True, is_const=True)
         declarations = [self._one_const_declaration(const_token)]
         while self._check(TokenType.COMMA):
             self._advance()
@@ -360,7 +364,7 @@ class Parser:
         initializer = self._assignment()
         return ConstStmt(name_token.lexeme, initializer, name_token.line, name_token.column)
 
-    def _destructure_let_statement(self, let_token: Token, is_map: bool) -> Stmt:
+    def _destructure_let_statement(self, let_token: Token, is_map: bool, is_const: bool = False) -> Stmt:
         if is_map:
             names, rest = self._destructure_map_pattern()
         else:
@@ -368,7 +372,10 @@ class Parser:
         self._consume(TokenType.EQ, "'=' after destructuring pattern")
         initializer = self._assignment()
         self._consume(TokenType.SEMICOLON, "';' after variable declaration")
-        return DestructureLetStmt(names, initializer, let_token.line, let_token.column, is_map=is_map, rest=rest)
+        return DestructureLetStmt(
+            names, initializer, let_token.line, let_token.column,
+            is_map=is_map, rest=rest, is_const=is_const,
+        )
 
     def _destructure_map_pattern_entry(self) -> "tuple[str, object, Expr | None]":
         key = self._consume(TokenType.IDENTIFIER, "identifier in destructuring pattern").lexeme

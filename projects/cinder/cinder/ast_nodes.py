@@ -478,6 +478,7 @@ class DestructureLetStmt:
     column: int
     is_map: bool = False
     rest: "str | None" = None
+    is_const: bool = False
 
 
 @dataclass(frozen=True)

@@ -3077,6 +3077,25 @@ class TestStatements(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_stmts('let {a, b = {"a": 1, "b": 2};')
 
+    def test_destructure_const_list_statement(self):
+        stmts = parse_stmts("const [a, b] = [1, 2];")
+        self.assertEqual(len(stmts), 1)
+        self.assertIsInstance(stmts[0], DestructureLetStmt)
+        self.assertTrue(stmts[0].is_const)
+        self.assertFalse(stmts[0].is_map)
+
+    def test_destructure_const_map_statement(self):
+        stmts = parse_stmts('const {a, b} = {"a": 1, "b": 2};')
+        self.assertEqual(len(stmts), 1)
+        self.assertIsInstance(stmts[0], DestructureLetStmt)
+        self.assertTrue(stmts[0].is_const)
+        self.assertTrue(stmts[0].is_map)
+
+    def test_destructure_let_list_statement_is_const_false(self):
+        stmts = parse_stmts("let [a, b] = [1, 2];")
+        self.assertIsInstance(stmts[0], DestructureLetStmt)
+        self.assertFalse(stmts[0].is_const)
+
     def test_unclosed_block_raises(self):
         with self.assertRaises(ParseError):
             parse_stmts("{ let x = 1; ")

@@ -296,9 +296,15 @@ class Interpreter:
         if isinstance(stmt, DestructureLetStmt):
             value = self.evaluate(stmt.initializer, env)
             if stmt.is_map:
-                self._bind_map_destructure(env, stmt.names, stmt.rest, value, stmt.line, stmt.column)
+                self._bind_map_destructure(
+                    env, stmt.names, stmt.rest, value, stmt.line, stmt.column,
+                    is_const=stmt.is_const,
+                )
                 return
-            self._bind_list_destructure(env, stmt.names, stmt.rest, value, stmt.line, stmt.column)
+            self._bind_list_destructure(
+                env, stmt.names, stmt.rest, value, stmt.line, stmt.column,
+                is_const=stmt.is_const,
+            )
             return
         if isinstance(stmt, ExprStmt):
             self.evaluate(stmt.expression, env)
@@ -423,6 +429,7 @@ class Interpreter:
         line: int,
         column: int,
         use_assign: bool = False,
+        is_const: bool = False,
     ) -> None:
         """Binds `names`/`rest` from `value`. `use_assign` selects between
         `let`-style fresh bindings (`env.define`, the default) and
@@ -451,17 +458,17 @@ class Interpreter:
                 if isinstance(name, tuple) and len(name) == 3:
                     nested_names, nested_rest, _ = name
                     self._bind_map_destructure(
-                        env, nested_names, nested_rest, item, line, column, use_assign
+                        env, nested_names, nested_rest, item, line, column, use_assign, is_const
                     )
                 elif isinstance(name, tuple):
                     nested_names, nested_rest = name
                     self._bind_list_destructure(
-                        env, nested_names, nested_rest, item, line, column, use_assign
+                        env, nested_names, nested_rest, item, line, column, use_assign, is_const
                     )
                 elif name is not None:
-                    self._bind_destructure_name(env, name, item, line, column, use_assign)
+                    self._bind_destructure_name(env, name, item, line, column, use_assign, is_const)
             self._bind_destructure_name(
-                env, rest, list(value[len(names):]), line, column, use_assign
+                env, rest, list(value[len(names):]), line, column, use_assign, is_const
             )
             return
         if len(value) < required or len(value) > len(names):
@@ -482,15 +489,15 @@ class Interpreter:
             if isinstance(name, tuple) and len(name) == 3:
                 nested_names, nested_rest, _ = name
                 self._bind_map_destructure(
-                    env, nested_names, nested_rest, item, line, column, use_assign
+                    env, nested_names, nested_rest, item, line, column, use_assign, is_const
                 )
             elif isinstance(name, tuple):
                 nested_names, nested_rest = name
                 self._bind_list_destructure(
-                    env, nested_names, nested_rest, item, line, column, use_assign
+                    env, nested_names, nested_rest, item, line, column, use_assign, is_const
                 )
             elif name is not None:
-                self._bind_destructure_name(env, name, item, line, column, use_assign)
+                self._bind_destructure_name(env, name, item, line, column, use_assign, is_const)
 
     def _bind_destructure_name(
         self,
@@ -500,9 +507,13 @@ class Interpreter:
         line: int,
         column: int,
         use_assign: bool,
+        is_const: bool = False,
     ) -> None:
         if not use_assign:
-            env.define(name, item)
+            if is_const:
+                env.define_const(name, item)
+            else:
+                env.define(name, item)
             return
         try:
             env.assign(name, item)
@@ -524,6 +535,7 @@ class Interpreter:
         line: int,
         column: int,
         use_assign: bool = False,
+        is_const: bool = False,
     ) -> None:
         """Binds `names`/`rest` from `value`, the map-pattern counterpart to
         `_bind_list_destructure`. Same `use_assign` split: `let`-style fresh
@@ -553,18 +565,18 @@ class Interpreter:
             if isinstance(binding, tuple) and len(binding) == 3:
                 nested_names, nested_rest, _ = binding
                 self._bind_list_destructure(
-                    env, nested_names, nested_rest, item, line, column, use_assign
+                    env, nested_names, nested_rest, item, line, column, use_assign, is_const
                 )
             elif isinstance(binding, tuple):
                 nested_names, nested_rest = binding
                 self._bind_map_destructure(
-                    env, nested_names, nested_rest, item, line, column, use_assign
+                    env, nested_names, nested_rest, item, line, column, use_assign, is_const
                 )
             else:
-                self._bind_destructure_name(env, binding, item, line, column, use_assign)
+                self._bind_destructure_name(env, binding, item, line, column, use_assign, is_const)
         if rest is not None:
             remaining = {k: v for k, v in value.items() if k not in seen_keys}
-            self._bind_destructure_name(env, rest, remaining, line, column, use_assign)
+            self._bind_destructure_name(env, rest, remaining, line, column, use_assign, is_const)
 
     def _evaluate_destructure_assign(self, expr: DestructureAssign, env: Environment) -> object:
         value = self.evaluate(expr.value, env)

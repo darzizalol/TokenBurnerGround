@@ -2741,6 +2741,51 @@ class TestDestructureLetMap(unittest.TestCase):
         self.assertEqual(env.get("rest"), {"b": 2})
 
 
+class TestConstDestructure(unittest.TestCase):
+    def test_list_pattern_binds_two_names(self):
+        env = run("const [a, b] = [1, 2];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_map_pattern_binds_two_names(self):
+        env = run('const {a, b} = {"a": 1, "b": 2};')
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("b"), 2)
+
+    def test_list_pattern_name_is_frozen(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cannot assign to const 'a'"):
+            run("const [a, b] = [1, 2]; a = 3;")
+
+    def test_map_pattern_name_is_frozen(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cannot assign to const 'b'"):
+            run('const {a, b} = {"a": 1, "b": 2}; b = 3;')
+
+    def test_nested_pattern_name_is_frozen(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cannot assign to const 'c'"):
+            run('const [a, {b, c}] = [1, {"b": 2, "c": 3}]; c = 9;')
+
+    def test_rest_binding_is_frozen(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cannot assign to const 'rest'"):
+            run("const [a, ...rest] = [1, 2, 3]; rest = [];")
+
+    def test_renamed_key_binding_is_frozen(self):
+        with self.assertRaisesRegex(CinderRuntimeError, "cannot assign to const 'x'"):
+            run('const {a: x} = {"a": 1}; x = 2;')
+
+    def test_list_pattern_default_still_works(self):
+        env = run("const [a, b = 5] = [1];")
+        self.assertEqual(env.get("b"), 5)
+
+    def test_list_pattern_hole_still_works(self):
+        env = run("const [a, , c] = [1, 2, 3];")
+        self.assertEqual(env.get("a"), 1)
+        self.assertEqual(env.get("c"), 3)
+
+    def test_plain_let_destructure_stays_mutable(self):
+        env = run("let [a, b] = [1, 2]; a = 3;")
+        self.assertEqual(env.get("a"), 3)
+
+
 class TestAssignment(unittest.TestCase):
     def test_assignment_updates_existing_variable(self):
         env = run("let x = 1; x = 2;")

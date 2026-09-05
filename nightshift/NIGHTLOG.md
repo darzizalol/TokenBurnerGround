@@ -8274,3 +8274,34 @@ The morning paper: what shipped, what bounced, what's still open.
   1,435,794,935 left.
 - Thirteen cycles in and still spotless: every merged PR this shift has
   passed Review and QA on the first try, no rework, no bounces.
+
+## 2026-09-06
+
+### First cycle
+
+- **Merged**: PR #403 "Language: map patterns nested inside `match`
+  list-pattern elements" (`feat/20260905-nested-map-in-list-pattern`).
+  Clean first pass: Reviewer verified the new `TokenType.LBRACE` branch
+  in `_match_list_pattern_entry` and the tuple-length dispatch in
+  `_match_list_entries` against the spec's proposed fix shape, checked no
+  other call site assumed a 2-tuple list-pattern-entry shape, verified
+  all six acceptance-criteria examples directly via the CLI, and ran the
+  full suite (4513 tests, OK), gave `VERDICT: LGTM`; QA ran the full
+  suite in a detached worktree (4513 tests, OK), smoke-tested the six
+  acceptance examples plus extra edge cases (`...rest` inside a nested
+  map, two maps each with their own rest, two-levels-deep nesting), gave
+  `QA: PASS`. Removed the Engineer's own worktree
+  (`.worktrees/nested-map-in-list-pattern`) before merging. Archived the
+  task to `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to
+  1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved entries and the recurring stray-stash note
+  from the 2026-09-04 reviewer session, which is Architect's to pick up,
+  not Release's). `git pull --rebase origin main` was a no-op before
+  starting (already up to date, working tree clean). Token budget:
+  322,534,718 of 1,750,000,000 used (18% of the 35% share of
+  5,000,000,000), 1,427,465,282 left.
+- Fourteen cycles across two nights now, still zero bounces — a quiet,
+  steady shift.

@@ -11,129 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map patterns nested inside `match` list-pattern elements [claimed 2026-09-05T20:04:45Z]
-
-Build: `match`'s list patterns can already nest another *list* pattern as
-one of their elements (`[a, [b, c]]`), and map patterns can already nest
-either a list or a map pattern as one of their *values*
-(`{a: [x, y]}`, `{a: {c}}`) — but a list pattern cannot nest a *map*
-pattern as one of its elements. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let r = match ([1, {"b": 2}]) { [a, {b}] => a + b, _ => 0 }; print(r);'
-# -> <eval>:1:37: expected an identifier, '_', or a literal inside list
-#    pattern, found '{'
-python3 -m cinder.cli eval 'let r = match ([{"a": 1}, 2]) { [{a}, b] => a + b, _ => 0 }; print(r);'
-# -> <eval>:1:34: expected an identifier, '_', or a literal inside list
-#    pattern, found '{'
-```
-Meanwhile the symmetric cases already work today:
-```sh
-python3 -m cinder.cli eval 'let r = match ({"a": [1, 2]}) { {a: [x, y]} => x + y, _ => 0 }; print(r);'
-# -> 3
-python3 -m cinder.cli eval 'let r = match ([1, [2, 3]]) { [a, [b, c]] => a + b + c, _ => 0 }; print(r);'
-# -> 6
-```
-
-Worked examples (all currently `ParseError`, all should work after the
-fix): `match ([1, {"b": 2}]) { [a, {b}] => a + b, _ => 0 }` is `3`;
-`match ([{"a": 1}, 2]) { [{a}, b] => a + b, _ => 0 }` is `3`; a nested
-map element composes with rename and rest capture,
-`match ([1, {"x": 2, "y": 3}]) { [a, {x: renamed, ...rest}] => a +
-renamed, _ => 0 }` is `3`; and nesting goes two levels deep (map inside
-list inside list), `match ([1, [2, {"z": 3}]]) { [a, [b, {z}]] => a + b
-+ z, _ => 0 }` is `6`.
-
-Root cause: `_match_list_pattern_entry` (search `def
-_match_list_pattern_entry`, `cinder/parser.py`) has a branch for
-`TokenType.LBRACKET` (nested list pattern, `entry =
-self._match_list_pattern()`, a 2-tuple `(nested_entries, nested_rest)`)
-but none for `TokenType.LBRACE` — it falls through the `elif` chain to
-the final `else: raise ParseError` used for anything that isn't an
-identifier/`_`/literal/nested-list/nested-map. On the interpreter side,
-`_match_list_entries` (search `def _match_list_entries`,
-`cinder/interpreter.py`) already assumes any tuple entry is a nested
-*list*: `if isinstance(entry, tuple): nested_entries, nested_rest =
-entry; ... self._match_list_entries(...)` — it has no branch for a
-nested map.
-
-Fix shape, mirroring the marker convention `_match_map_pattern_entry`
-already uses to disambiguate a nested list from a nested map under a map
-key (search `def _match_map_pattern_entry`: a nested `[` there returns a
-3-tuple `(nested_entries, nested_rest, True)`, a nested `{` returns a
-plain 2-tuple, and `_match_map_entries` branches on `len(binding) == 3`
-to tell them apart). Add the equivalent branch to
-`_match_list_pattern_entry`, directly after its existing `if token.type
-== TokenType.LBRACKET:` branch:
-```python
-elif token.type == TokenType.LBRACE:
-    nested_entries, nested_rest = self._match_map_pattern()
-    entry = (nested_entries, nested_rest, "map")
-```
-(A 3-tuple here unambiguously means "nested map" — the *opposite* of what
-a 3-tuple means in `_match_map_pattern_entry`'s own convention, since
-there a 2-tuple is the map case and this function's existing nested-list
-case is already a bare 2-tuple; keep the two conventions independent
-rather than trying to unify them, they're read by two different
-functions.) Then update `_match_list_entries`'s existing tuple branch to
-dispatch on tuple length, the same way `_match_map_entries` already
-dispatches on `len(binding) == 3`:
-```python
-if isinstance(entry, tuple):
-    if len(entry) == 3:
-        nested_entries, nested_rest, _ = entry
-        if not self._match_map_entries(nested_entries, nested_rest, item, env):
-            return False
-    else:
-        nested_entries, nested_rest = entry
-        if not self._match_list_entries(nested_entries, nested_rest, item, env):
-            return False
-    continue
-```
-No other changes needed: `_match_map_pattern`/`_match_map_entries`
-already fully support rename, rest capture, defaults, and further
-nesting on their own — a map pattern nested inside a list element gets
-all of that for free, exactly as a map pattern nested inside another
-map's value already does today.
-
-Acceptance criteria:
-- `match ([1, {"b": 2}]) { [a, {b}] => a + b, _ => 0 }` is `3` — the
-  first worked example above.
-- `match ([{"a": 1}, 2]) { [{a}, b] => a + b, _ => 0 }` is `3` — a
-  leading nested-map element, not just a trailing one.
-- `match ([1, {"x": 2, "y": 3}]) { [a, {x: renamed, ...rest}] => a +
-  renamed, _ => 0 }` is `3` — a nested map element composes with per-key
-  rename and rest capture.
-- `match ([1, [2, {"z": 3}]]) { [a, [b, {z}]] => a + b + z, _ => 0 }` is
-  `6` — a nested map element works two levels deep, inside a nested list
-  element.
-- `match ([1, {"a": 1}]) { [a, {b}] => 1, _ => -1 }` is `-1` — a nested
-  map pattern falls through (not raises) when the map subject is missing
-  a required key, exactly like a top-level map pattern already does.
-- `match ([1, "not a map"]) { [a, {b}] => 1, _ => -1 }` is `-1` — falls
-  through (not raises) when the element isn't a map at all.
-- Regression: every existing nested-list-in-list and
-  nested-list/map-in-map-value test in `tests/test_parser.py`/
-  `tests/test_interpreter.py` (search `class TestMatch` in each) still
-  passes unmodified — this task only adds a new accepted nesting
-  combination, it changes no existing one.
-- New tests in `tests/test_parser.py` and `tests/test_interpreter.py`
-  (search `class TestMatch` in each) covering every acceptance case
-  above, modeled on the existing nested-list-pattern-in-list-element
-  tests.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_list_pattern_entry`, search
-that name), `cinder/interpreter.py` (`_match_list_entries`, search that
-name), `tests/test_parser.py`, `tests/test_interpreter.py` per the
-acceptance criteria above. Once merged, `README.md`'s `match` bullet
-needs a clause noting that list patterns also accept a nested map
-pattern as an element, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
+## 1. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
 
 Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
 whether `n` is a powerful number — every prime factor's exponent is 2 or
@@ -239,7 +117,7 @@ task.
 
 ---
 
-## 3. Language: whole-value `as` binding on literal and range `match` patterns
+## 2. Language: whole-value `as` binding on literal and range `match` patterns
 
 Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
 _ => nil }`) currently only exists on list-pattern and map-pattern match
@@ -405,7 +283,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+## 3. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`: a composite number whose decimal digit sum equals the
@@ -511,7 +389,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: `as` binding on a nested list/map sub-pattern inside `match`
+## 4. Language: `as` binding on a nested list/map sub-pattern inside `match`
 
 Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
 entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>
@@ -693,7 +571,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
+## 5. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
 
 Build: `is_carmichael_number` (`cinder/builtins.py`, search `def
 _is_carmichael_number`: a composite, squarefree number `n` where every

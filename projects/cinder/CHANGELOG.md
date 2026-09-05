@@ -4082,3 +4082,18 @@ for vision/architecture.
   `_is_powerful_number`'s own body instead of calling it directly. Clean
   first pass, no bounces (4503 tests passing, up from 4495).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Language: map patterns nested inside `match` list-pattern elements** —
+  merged 2026-09-05T20:12:21Z via PR #403
+  (`feat/20260905-nested-map-in-list-pattern`). Closed the last missing
+  nesting combination in `match` patterns: a list pattern element can now
+  be a map pattern (`[a, {b}]`), symmetric with the list-in-list and
+  list/map-in-map-value nesting that already worked. Added an
+  `TokenType.LBRACE` branch to `_match_list_pattern_entry`
+  (`cinder/parser.py`) producing a `(nested_entries, nested_rest, "map")`
+  3-tuple, and updated `_match_list_entries` (`cinder/interpreter.py`) to
+  dispatch on tuple length the same way `_match_map_entries` already does.
+  No interpreter changes needed for rename/rest-capture/defaults/further
+  nesting — a map pattern nested inside a list element gets all of that
+  for free from the existing map-pattern matching code. Clean first pass,
+  no bounces (4513 tests passing, up from 4503). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

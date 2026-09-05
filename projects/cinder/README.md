@@ -762,42 +762,38 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_powerful_number` (PR
-#402, the value-returning sibling `is_powerful_number` itself was
-missing, the same bounded sequential scan `nth_practical_number`/
-`nth_semiperfect` already use), mixing plain and destructuring
-declarators in one comma-separated `let`/`const` sequence (PR #401,
-`let a = 1, [b, c] = [2, 3];`, previously a `ParseError` in either order
-even though a bare comma sequence and a lone destructuring pattern each
-already worked on their own), and `nth_sphenic` (PR #400, the
-value-returning sibling `is_sphenic` itself was missing, the same bounded
-sequential scan `nth_semiprime`/`nth_refactorable` already use). See
+Actively developed, nightly. Recently landed: map patterns nested inside
+`match` list-pattern elements (PR #403, `[a, {b}]`, the last missing
+nesting combination — list-in-list and list/map-in-map-value already
+worked), `nth_powerful_number` (PR #402, the value-returning sibling
+`is_powerful_number` itself was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_semiperfect` already use), and mixing plain
+and destructuring declarators in one comma-separated `let`/`const`
+sequence (PR #401, `let a = 1, [b, c] = [2, 3];`, previously a
+`ParseError` in either order even though a bare comma sequence and a lone
+destructuring pattern each already worked on their own). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): letting `match` list patterns nest
-a map pattern as one of their elements (`[a, {b}]`, today a `ParseError`
-even though a list pattern can already nest another list pattern, and a
-map pattern can already nest either shape as one of its values) —
-`nth_achilles`, the value-returning sibling `is_achilles` itself was
-missing, the same bounded sequential scan `nth_sphenic`/
-`nth_powerful_number` already use — extending whole-value `as` binding
-(today list/map-pattern match arms only) to literal and range `match`
-patterns too (`match (5) { 1..10 as whole => whole, _ => nil }`, today a
-`ParseError`, useful since a range pattern's bound name isn't the
-subject's actual value and a multi-value literal arm's body otherwise
-can't tell which literal matched) — `nth_smith_number`, the
-value-returning sibling `is_smith_number` itself is missing, the same
-bounded sequential scan `nth_refactorable`/`nth_sphenic` already use —
-letting `as` bind a nested list/map sub-pattern's own value inside a
-larger `match` pattern (`[a, [b, c] as inner]`, today a `ParseError`;
-today `as` only captures the whole subject at the top of an arm, not an
-intermediate value reached partway through a nested pattern) — and
-`nth_carmichael_number`, the value-returning sibling
-`is_carmichael_number` itself is missing, the same bounded sequential
-scan `nth_smith_number`/`nth_achilles` already use. (Guards in `match`
-arms, `n if n > 0 => "positive"`, were attempted but closed after three
-failed review rounds over a recurring parser bug — see `BACKLOG.md`'s
-`## Graveyard` for the postmortem; they're a real gap but not back in the
-active queue yet.)
+next (see [`BACKLOG.md`](BACKLOG.md)): `nth_achilles`, the
+value-returning sibling `is_achilles` itself is missing, the same bounded
+sequential scan `nth_sphenic`/`nth_powerful_number` already use —
+extending whole-value `as` binding (today list/map-pattern match arms
+only) to literal and range `match` patterns too (`match (5) { 1..10 as
+whole => whole, _ => nil }`, today a `ParseError`, useful since a range
+pattern's bound name isn't the subject's actual value and a multi-value
+literal arm's body otherwise can't tell which literal matched) —
+`nth_smith_number`, the value-returning sibling `is_smith_number` itself
+is missing, the same bounded sequential scan `nth_refactorable`/
+`nth_sphenic` already use — letting `as` bind a nested list/map
+sub-pattern's own value inside a larger `match` pattern (`[a, [b, c] as
+inner]`, today a `ParseError`; today `as` only captures the whole subject
+at the top of an arm, not an intermediate value reached partway through a
+nested pattern) — and `nth_carmichael_number`, the value-returning
+sibling `is_carmichael_number` itself is missing, the same bounded
+sequential scan `nth_smith_number`/`nth_achilles` already use. (Guards in
+`match` arms, `n if n > 0 => "positive"`, were attempted but closed after
+three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but
+not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

@@ -55,7 +55,10 @@ while (i < 10) {
 - **Variables & scope**: `let` declarations, `const` declarations for
   immutable bindings (reassignment or `++`/`--`/compound-assignment on a
   `const` name raises a runtime error; a `let` may still be redeclared as
-  `const` and vice versa in the same scope), comma-separated multiple
+  `const` and vice versa in the same scope), `const` also accepts both
+  destructuring forms (`const [a, b] = expr;`, `const {a, b} = expr;`,
+  every bound name frozen, same shapes as `let`'s own list/map
+  destructuring described below), comma-separated multiple
   declarations in a single `let`/`const` statement (`let a = 1, b = 2;`,
   `const x = 1, y = 2;`, each with its own initializer, evaluated
   left-to-right so a later initializer can see an earlier declared name,
@@ -733,26 +736,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_harshad` (PR #394,
-the value-returning sibling `is_harshad` itself was missing, the same
-bounded sequential scan `nth_abundant`/`nth_deficient` already use) —
-and hole elements and per-element default values in plain-assignment
-list destructuring (PR #393, `[a, , c] = expr;` skipping a position,
-`[a, b = 5] = [1];` falling back to a default when the source value is
-too short), closing the gap between that form and `let`-style list
-destructuring, which already supported both. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): destructuring patterns for
-`const` declarations (`const [a, b] = expr;`, `const {a, b} = expr;`,
-every bound name frozen), closing the gap between `let`, which already
-supports both destructuring forms, and `const`, which today accepts
-only a bare identifier — `nth_squarefree`, the value-returning sibling
-`is_squarefree` itself was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_harshad` already use — destructuring
-patterns for `try`/`catch` clauses (`catch ([a, b]) { ... }`, `catch
-({a, b}) { ... }`, pulling fields straight out of a thrown list/map the
-same way `let` already can, since `throw` accepts any Cinder value, not
-just a string), closing the gap between `catch`'s
+Actively developed, nightly. Recently landed: destructuring patterns
+for `const` declarations (PR #395, `const [a, b] = expr;`, `const {a,
+b} = expr;`, every bound name frozen), closing the gap between `let`,
+which already supported both destructuring forms, and `const`, which
+previously accepted only a bare identifier — and `nth_harshad` (PR
+#394, the value-returning sibling `is_harshad` itself was missing, the
+same bounded sequential scan `nth_abundant`/`nth_deficient` already
+use). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_squarefree`, the
+value-returning sibling `is_squarefree` itself was missing, the same
+bounded sequential scan `nth_practical_number`/`nth_harshad` already
+use — destructuring patterns for `try`/`catch` clauses (`catch ([a, b])
+{ ... }`, `catch ({a, b}) { ... }`, pulling fields straight out of a
+thrown list/map the same way `let` already can, since `throw` accepts
+any Cinder value, not just a string), closing the gap between `catch`'s
 single-identifier-only binding and every other binding site in the
 language — `nth_refactorable`, the value-returning sibling
 `is_refactorable` itself was missing, the same bounded sequential scan
@@ -761,13 +759,17 @@ hole-element spelling (`[a, , c]`) in `match` list patterns, matching
 the already-working `_` placeholder spelling (`[a, _, c]`) with the
 same effect, closing the gap between `match`'s list patterns and every
 other destructuring site in the language, which already accept the bare
-comma-comma spelling — and `nth_sphenic`, the value-returning sibling
+comma-comma spelling — `nth_sphenic`, the value-returning sibling
 `is_sphenic` itself was missing, the same bounded sequential scan
 `nth_semiprime` already uses for its own "product of exactly two
-distinct primes" sibling. (Guards in `match` arms, `n if n > 0 =>
-"positive"`, were attempted but closed after three failed review rounds
-over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
-postmortem; they're a real gap but not back in the active queue yet.)
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+distinct primes" sibling — and letting a destructuring pattern appear
+anywhere inside a comma-separated `let`/`const` sequence (`let a = 1,
+[b, c] = [2, 3];`, today a `ParseError` in either order even though a
+bare comma sequence and a lone destructuring pattern each already work
+on their own). (Guards in `match` arms, `n if n > 0 => "positive"`, were
+attempted but closed after three failed review rounds over a recurring
+parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
+they're a real gap but not back in the active queue yet.) The backlog
+mixes language depth with stdlib breadth over time rather than running
+either in one long block. The full vision and non-goals live in
+[`PROJECT.md`](PROJECT.md).

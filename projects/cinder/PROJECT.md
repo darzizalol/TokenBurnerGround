@@ -159,62 +159,55 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`is_decagonal`/`nth_decagonal` (#392, extending the
-triangular-through-nonagonal figurate-number family to 10-gonal numbers,
-both closed-form like every other sibling — `_nth_decagonal` via
-`P(10, n) = 4n^2 - 3n`, `_is_decagonal` via the same quadratic-formula
-reachability check every other `is_*gonal` predicate uses);
-`nth_semiperfect` (#391, the value-returning sibling `is_semiperfect`
-was missing — a bounded sequential scan reusing `is_semiperfect`'s own
-subset-sum candidate check, identical shape to `nth_practical_number`);
-default values for whole-pattern destructuring function parameters
-(#390, `fn f([a, b] = [1, 2]) { ... }` falls back to the whole default
-list/map when the argument is omitted entirely — reused
-`_destructure_list_pattern`/`_destructure_map_pattern` parsing as-is,
-since `interpreter.py`'s `call_value`/`CinderFunction.arity` already
-handled a defaulted destructuring `Param` correctly and only the
-parser rejected the syntax); `is_refactorable` (#389, whether an
-integer's own divisor count divides back into it, a.k.a. a tau number
-— the same "count something about `n`, then ask if it divides `n`"
-shape `is_harshad` already has for digit sum). Guards in `match` arms
-(`n if n > 0 => ...`) were attempted (PR #314) but closed after three
-straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring
-bug in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
-`## Graveyard` for the full postmortem and the suggested next approach;
+`nth_harshad` (#394, the value-returning sibling `is_harshad` was
+missing — a bounded sequential scan with the digit-sum divisibility
+check inlined from `is_harshad`'s own body, identical shape to
+`nth_abundant`/`nth_deficient`); `is_decagonal`/`nth_decagonal` (#392,
+extending the triangular-through-nonagonal figurate-number family to
+10-gonal numbers, both closed-form like every other sibling —
+`_nth_decagonal` via `P(10, n) = 4n^2 - 3n`, `_is_decagonal` via the
+same quadratic-formula reachability check every other `is_*gonal`
+predicate uses); `nth_semiperfect` (#391, the value-returning sibling
+`is_semiperfect` was missing — a bounded sequential scan reusing
+`is_semiperfect`'s own subset-sum candidate check, identical shape to
+`nth_practical_number`). Guards in `match` arms (`n if n > 0 => ...`)
+were attempted (PR #314) but closed after three straight `VERDICT:
+CHANGES REQUESTED` rounds, all the same recurring bug in the
+bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `##
+Graveyard` for the full postmortem and the suggested next approach;
 still not requeued.
 
-Eleven clean-or-recovered merges landed 2026-09-03/05 (map spread #383,
+Twelve clean-or-recovered merges landed 2026-09-03/05 (map spread #383,
 `nth_deficient` #384, `is_semiperfect` #385, keyword-only `*` params
 #386, `euler_totient` #387, `nth_practical_number` #388,
 `is_refactorable` #389, whole-pattern destructuring defaults #390,
-`nth_semiperfect` #391, `is_decagonal`/`nth_decagonal` #392, and
-plain-assignment list-destructuring holes/defaults #393 — the last one
-bounced once on QA for a ParseError-swallowing bug, fixed and re-merged
-the same night), the seventieth through eightieth first-round-or-fixed
-merges. `BACKLOG.md` fell to its 5-task floor after archiving #393;
-restocked this grooming pass with one task to bring it back to 6,
-continuing the alternation with depth after task 5's breadth
-(`nth_refactorable`): a bare hole-element spelling (`[a, , c]`) in
-`match` list patterns (task 6, depth — every other destructuring site
-already accepts the bare comma-comma hole spelling; `match` list
-patterns only offer the equivalent via an explicit `_` placeholder,
-which already produces the identical `None` entry the bare spelling
-should too, so this is a parser-only change with zero interpreter-side
-risk — confirmed by checking `_` already composes correctly with rest
-capture and nesting before writing the task). Queue now runs, in
-order: `nth_harshad` (breadth), `const` destructuring (depth),
+`nth_semiperfect` #391, `is_decagonal`/`nth_decagonal` #392,
+plain-assignment list-destructuring holes/defaults #393 (bounced once
+on QA for a ParseError-swallowing bug, fixed and re-merged the same
+night), and `nth_harshad` #394), the seventieth through eighty-first
+first-round-or-fixed merges. `BACKLOG.md` fell to its 5-task floor
+after archiving #394; restocked this grooming pass with one task to
+bring it back to 6, continuing the alternation with breadth after task
+5's depth (bare hole spelling in `match` list patterns): `nth_sphenic`
+(task 6, breadth — `is_sphenic`'s "product of exactly three distinct
+primes" predicate has no value-returning sibling, the same gap
+`nth_semiprime` already closed for `is_semiprime`'s own "exactly two
+distinct primes" check; verified the sequential-scan shape and worked
+examples — `30, 42, 66, 70, 78, 102, 105, 110, 114, 130`, 20th is `222`
+— by running the candidate check directly before writing the task).
+Queue now runs, in order: `const` destructuring (depth),
 `nth_squarefree` (breadth), `try`/`catch` destructuring (depth),
 `nth_refactorable` (breadth), bare hole spelling in `match` list
-patterns (depth). `main` is green, PR queue empty going into this
-grooming pass.
+patterns (depth), `nth_sphenic` (breadth). `main` is green, PR queue
+empty going into this grooming pass.
 
-While restocking, also fixed three places where `README.md` had gone
-stale after PR #393 landed: the "Variables & scope" bullet still said
-hole elements and per-element defaults were "not" supported / "does not
-support" in the plain-assignment list-destructuring form, and "Status &
-roadmap" hadn't been updated to reflect #393 shipping — all three now
-describe the current, correct behavior. `README.md`'s "Coming up next"
-list was also resynced to the current six-task queue above.
+While restocking, also fixed the same class of staleness the two prior
+grooming passes already caught: the Builtins bullet was missing
+`nth_harshad` (added next to `is_harshad`), and "Status & roadmap" and
+this section still described `nth_harshad` as upcoming rather than
+shipped — both now describe the current, correct state. `README.md`'s
+"Coming up next" list was resynced to the current six-task queue
+above.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

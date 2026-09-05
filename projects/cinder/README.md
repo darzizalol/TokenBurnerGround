@@ -589,6 +589,9 @@ while (i < 10) {
   the digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending questions,
   `hamming_distance` to count differing positions between two equal-length strings,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
+  `nth_harshad` to return the Harshad number found at a 1-indexed position via the same bounded
+  sequential scan `nth_abundant`/`nth_deficient` already use, the value-returning sibling of
+  `is_harshad`'s membership test,
   `is_refactorable` to test whether an integer's own divisor count divides back into it (a.k.a.
   a tau number, e.g. `8` has 4 divisors and `8 % 4 == 0`), the same "count something about `n`,
   then ask if it divides `n`" shape `is_harshad` already has for digit sum, applied to divisor
@@ -730,42 +733,41 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: hole elements and
-per-element default values in plain-assignment list destructuring
-(PR #393, `[a, , c] = expr;` skipping a position, `[a, b = 5] = [1];`
-falling back to a default when the source value is too short), closing
-the gap between that form and `let`-style list destructuring, which
-already supported both — and `is_decagonal`/`nth_decagonal` (PR #392,
-`is_decagonal(10)` is `true`), extending the triangular-through-nonagonal
-figurate-number family to its next member, 10-gonal numbers, both
-closed-form like every other sibling in that family. See
+Actively developed, nightly. Recently landed: `nth_harshad` (PR #394,
+the value-returning sibling `is_harshad` itself was missing, the same
+bounded sequential scan `nth_abundant`/`nth_deficient` already use) —
+and hole elements and per-element default values in plain-assignment
+list destructuring (PR #393, `[a, , c] = expr;` skipping a position,
+`[a, b = 5] = [1];` falling back to a default when the source value is
+too short), closing the gap between that form and `let`-style list
+destructuring, which already supported both. See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_harshad`, the
-value-returning sibling `is_harshad` itself was missing, the same
-bounded sequential scan `nth_abundant`/`nth_deficient` already use —
-destructuring patterns for `const` declarations (`const [a, b] =
-expr;`, `const {a, b} = expr;`, every bound name frozen), closing the
-gap between `let`, which already supports both destructuring forms,
-and `const`, which today accepts only a bare identifier —
-`nth_squarefree`, the value-returning sibling `is_squarefree` itself
-was missing, the same bounded sequential scan `nth_practical_number`/
-`nth_harshad` already use — destructuring patterns for `try`/`catch`
-clauses (`catch ([a, b]) { ... }`, `catch ({a, b}) { ... }`, pulling
-fields straight out of a thrown list/map the same way `let` already
-can, since `throw` accepts any Cinder value, not just a string),
-closing the gap between `catch`'s single-identifier-only binding and
-every other binding site in the language — `nth_refactorable`, the
-value-returning sibling `is_refactorable` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_semiperfect`
-already use — and a bare hole-element spelling (`[a, , c]`) in `match`
-list patterns, matching the already-working `_` placeholder spelling
-(`[a, _, c]`) with the same effect, closing the gap between `match`'s
-list patterns and every other destructuring site in the language, which
-already accept the bare comma-comma spelling. (Guards in `match`
-arms, `n if n > 0 => "positive"`, were attempted but closed after
-three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
-but not back in the active queue yet.) The backlog mixes language
-depth with stdlib breadth over time rather than running either in one
-long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+next (see [`BACKLOG.md`](BACKLOG.md)): destructuring patterns for
+`const` declarations (`const [a, b] = expr;`, `const {a, b} = expr;`,
+every bound name frozen), closing the gap between `let`, which already
+supports both destructuring forms, and `const`, which today accepts
+only a bare identifier — `nth_squarefree`, the value-returning sibling
+`is_squarefree` itself was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_harshad` already use — destructuring
+patterns for `try`/`catch` clauses (`catch ([a, b]) { ... }`, `catch
+({a, b}) { ... }`, pulling fields straight out of a thrown list/map the
+same way `let` already can, since `throw` accepts any Cinder value, not
+just a string), closing the gap between `catch`'s
+single-identifier-only binding and every other binding site in the
+language — `nth_refactorable`, the value-returning sibling
+`is_refactorable` itself was missing, the same bounded sequential scan
+`nth_practical_number`/`nth_semiperfect` already use — a bare
+hole-element spelling (`[a, , c]`) in `match` list patterns, matching
+the already-working `_` placeholder spelling (`[a, _, c]`) with the
+same effect, closing the gap between `match`'s list patterns and every
+other destructuring site in the language, which already accept the bare
+comma-comma spelling — and `nth_sphenic`, the value-returning sibling
+`is_sphenic` itself was missing, the same bounded sequential scan
+`nth_semiprime` already uses for its own "product of exactly two
+distinct primes" sibling. (Guards in `match` arms, `n if n > 0 =>
+"positive"`, were attempted but closed after three failed review rounds
+over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+postmortem; they're a real gap but not back in the active queue yet.)
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

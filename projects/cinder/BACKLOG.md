@@ -693,6 +693,117 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
+
+Build: `is_carmichael_number` (`cinder/builtins.py`, search `def
+_is_carmichael_number`: a composite, squarefree number `n` where every
+prime factor `p` of `n` satisfies `(p - 1) | (n - 1)`, e.g. `561 = 3 *
+11 * 17`, and `560` is divisible by `2`, `10`, and `16`) has no
+value-returning `nth_*` sibling, the same gap `nth_smith_number`/
+`nth_achilles` already closed for their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_carmichael_number(1));'
+# -> <eval>:1:7: undefined name 'nth_carmichael_number' (did you mean
+#    'is_carmichael_number'?)
+```
+
+Worked examples: the first ten Carmichael numbers (OEIS A002997) are
+`561, 1105, 1729, 2465, 2821, 6601, 8911, 10585, 15841, 29341` (confirmed
+by scanning with `is_carmichael_number` directly), so
+`nth_carmichael_number(1)` is `561` and `nth_carmichael_number(10)` is
+`29341`. The 20th is `162401`.
+
+Add directly after `_is_carmichael_number` (search `def
+_is_carmichael_number`, immediately before `def _is_vampire_number`) —
+keeps the value-returning helper next to the predicate it mirrors,
+matching where `nth_smith_number` itself sits right after
+`is_smith_number`:
+```python
+def _nth_carmichael_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_carmichael_number", arguments, 1, line, column)
+    value = _require_int("nth_carmichael_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_carmichael_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_carmichael_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        factors = []
+        remaining = candidate
+        divisor = 2
+        while divisor * divisor <= remaining:
+            while remaining % divisor == 0:
+                factors.append(divisor)
+                remaining //= divisor
+            divisor += 1
+        if remaining > 1:
+            factors.append(remaining)
+        if len(factors) < 2:
+            return False  # prime, not composite
+        if len(factors) != len(set(factors)):
+            return False  # not squarefree
+        return all(
+            (prime - 1) != 0 and (candidate - 1) % (prime - 1) == 0
+            for prime in factors
+        )
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_carmichael_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_smith_number`/`_nth_achilles`, with the inner
+candidate check copied verbatim from `_is_carmichael_number`'s own body
+instead of calling `_is_carmichael_number` directly — the same "duplicate
+the tiny predicate body instead of a redundant `_require_arity`/
+`_require_int` round-trip per candidate" choice every recent `nth_*` task
+already makes.) Register the new dict entry (search `"is_carmichael_number":
+_is_carmichael_number,`, add `"nth_carmichael_number":
+_nth_carmichael_number,` directly after it, before `"is_vampire_number":
+_is_vampire_number,`).
+
+Acceptance criteria:
+- `nth_carmichael_number(1);` through `nth_carmichael_number(10);` are
+  `561, 1105, 1729, 2465, 2821, 6601, 8911, 10585, 15841, 29341` in
+  order — the worked example above.
+- `nth_carmichael_number(20);` is `162401` — a further worked example
+  confirming the scan scales past the first ten.
+- For every `position` in `1..15`,
+  `is_carmichael_number(nth_carmichael_number(position))` is `true` —
+  the same self-consistency check `nth_smith_number`/`nth_achilles`'s own
+  test suites already run against their predicates (capped at `15`
+  rather than the usual `50` since Carmichael numbers thin out fast
+  enough by the 20th that a `1..50` scan would run needlessly long for a
+  test suite).
+- `nth_carmichael_number(0);`, `nth_carmichael_number(-3);` both raise
+  `CinderRuntimeError` matching `"nth_carmichael_number\(\) requires a
+  positive integer, domain error"`.
+- `nth_carmichael_number(true);` raises `CinderRuntimeError` matching
+  `"nth_carmichael_number\(\) requires an int, got bool"`.
+- `nth_carmichael_number("5");` raises `CinderRuntimeError` matching
+  `"nth_carmichael_number\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_carmichael_number`,
+search `def _is_carmichael_number`), `tests/test_builtins.py` (new `class
+TestNthCarmichaelNumber`, modeled on `class TestNthSmithNumber`, search
+that name, for the test shapes above — place it near the existing `class
+TestIsCarmichaelNumber`, search that name). Once merged, `README.md`'s
+existing `is_carmichael_number` bullet needs `nth_carmichael_number`
+added right after it, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

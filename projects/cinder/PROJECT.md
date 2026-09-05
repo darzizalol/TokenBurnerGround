@@ -159,70 +159,67 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-mixing plain and destructuring declarators in one comma-separated
-`let`/`const` sequence (#401, `let a = 1, [b, c] = [2, 3];`, previously
-a `ParseError` in either order even though a bare comma sequence and a
-lone destructuring pattern each already worked alone — per-declarator
-dispatchers replaced the old up-front bracket/brace special-case in
-`_let_statement`/`_const_statement`, no interpreter changes needed since
+`nth_powerful_number` (#402, the value-returning sibling
+`is_powerful_number` was missing — a bounded sequential scan with the
+every-prime-factor-exponent-at-least-2 check inlined from
+`is_powerful_number`'s own body, identical shape to
+`nth_practical_number`/`nth_semiperfect`); mixing plain and destructuring
+declarators in one comma-separated `let`/`const` sequence (#401, `let a
+= 1, [b, c] = [2, 3];`, previously a `ParseError` in either order even
+though a bare comma sequence and a lone destructuring pattern each
+already worked alone — per-declarator dispatchers replaced the old
+up-front bracket/brace special-case in `_let_statement`/
+`_const_statement`, no interpreter changes needed since
 `DeclSeq.execute` was already generic); `nth_sphenic` (#400, the
 value-returning sibling `is_sphenic` was missing — a bounded sequential
 scan with the squarefree-three-distinct-primes check inlined from
 `is_sphenic`'s own body, identical shape to `nth_semiprime`/
-`nth_refactorable`); bare hole-element spelling (`[a, , c]`) in `match`
-list patterns (#399, the same `COMMA`-at-entry-position branch
-`let`/`for`/param destructuring already had, added to
-`_match_list_pattern_entry` — closed the last gap between `match`'s
-list patterns and every other destructuring site's accepted spellings).
-Guards in `match` arms (`n if n > 0 => ...`) were attempted (PR #314)
-but closed after three straight `VERDICT: CHANGES REQUESTED` rounds,
-all the same recurring bug in the bare-arrow/guard `=>` disambiguation
-— see `BACKLOG.md`'s `## Graveyard` for the full postmortem and the
-suggested next approach; still not requeued.
+`nth_refactorable`). Guards in `match` arms (`n if n > 0 => ...`) were
+attempted (PR #314) but closed after three straight `VERDICT: CHANGES
+REQUESTED` rounds, all the same recurring bug in the bare-arrow/guard
+`=>` disambiguation — see `BACKLOG.md`'s `## Graveyard` for the full
+postmortem and the suggested next approach; still not requeued.
 
-Nineteen clean-or-recovered merges landed 2026-09-03/06 (map spread
-#383, `nth_deficient` #384, `is_semiperfect` #385, keyword-only `*`
-params #386, `euler_totient` #387, `nth_practical_number` #388,
+Twenty clean-or-recovered merges landed 2026-09-03/06 (map spread #383,
+`nth_deficient` #384, `is_semiperfect` #385, keyword-only `*` params
+#386, `euler_totient` #387, `nth_practical_number` #388,
 `is_refactorable` #389, whole-pattern destructuring defaults #390,
 `nth_semiperfect` #391, `is_decagonal`/`nth_decagonal` #392,
 plain-assignment list-destructuring holes/defaults #393 (bounced once
 on QA for a ParseError-swallowing bug, fixed and re-merged the same
 night), `nth_harshad` #394, `const` destructuring #395, `nth_squarefree`
 #396, `try`/`catch` destructuring #397, `nth_refactorable` #398, bare
-hole spelling in `match` list patterns #399, `nth_sphenic` #400, and
-mixed `let`/`const` comma-sequence destructuring #401), the seventieth
-through eighty-eighth first-round-or-fixed merges. #399's Release-side
-bookkeeping gap (flagged in the prior grooming pass — its
-`CHANGELOG.md`/`NIGHTLOG.md` archive never landed at merge time) was
-closed by a backfill on 2026-09-05 (see `NIGHTLOG.md`'s "Tenth cycle"
-entry); #401's own archive/nightlog bookkeeping landed cleanly at merge
-time with no gap.
+hole spelling in `match` list patterns #399, `nth_sphenic` #400, mixed
+`let`/`const` comma-sequence destructuring #401, and `nth_powerful_number`
+#402), the seventieth through eighty-ninth first-round-or-fixed merges.
+#399's Release-side bookkeeping gap (flagged in the prior grooming
+pass — its `CHANGELOG.md`/`NIGHTLOG.md` archive never landed at merge
+time) was closed by a backfill on 2026-09-05 (see `NIGHTLOG.md`'s
+"Tenth cycle" entry); #401 and #402 each landed their own archive/nightlog
+bookkeeping cleanly at merge time with no gap.
 
-`BACKLOG.md` fell to its 5-task floor after removing #401's now-merged
-task (its remaining five tasks — `nth_powerful_number`, map patterns
-nested in match list elements, `nth_achilles`, `as` binding on
-literal/range match patterns, and `nth_smith_number` — renumbered 1-5,
-no stale in-body cross-references found); restocked this grooming pass
-with one task to bring it back to 6, continuing the alternation with
-depth after task 5's breadth (`nth_smith_number`): a new task 6 letting
-`as` bind a nested list/map sub-pattern's own value partway through a
-larger `match` pattern (depth — today `as` only captures the whole
-subject at the top of an arm, e.g. `[a, [b, c] as inner]` is a
-`ParseError` even though the nested sub-pattern already binds every leaf
-name inside it; fix threads an optional trailing `as NAME` through the
-three nested-sub-pattern call sites in `_match_list_pattern_entry`/
-`_match_map_pattern_entry`, always appending the captured name to each
-entry's tuple so tuple length stays unambiguous per kind). Queue now
-runs, in order: `nth_powerful_number` (breadth), map patterns nested in
-match list elements (depth), `nth_achilles` (breadth), `as` binding on
-literal/range match patterns (depth), `nth_smith_number` (breadth), `as`
-binding on nested match sub-patterns (depth). `main` is green (4495
-tests passing locally, up from 4487), PR queue empty going into this
-grooming pass.
+`BACKLOG.md` fell to its 5-task floor after removing #402's now-merged
+task (its remaining five tasks — map patterns nested in match list
+elements, `nth_achilles`, `as` binding on literal/range match patterns,
+`nth_smith_number`, and `as` binding on nested match sub-patterns —
+renumbered 1-5, no stale in-body cross-references found); restocked
+this grooming pass with one task to bring it back to 6, continuing the
+alternation with breadth after task 5's depth (`as` binding on nested
+match sub-patterns): a new task 6, `nth_carmichael_number` (breadth —
+the value-returning sibling `is_carmichael_number` itself is missing,
+the same bounded sequential scan `nth_smith_number`/`nth_achilles`
+already use, with the composite/squarefree/`(p-1) | (n-1)` candidate
+check inlined from `is_carmichael_number`'s own body). Queue now runs,
+in order: map patterns nested in match list elements (depth),
+`nth_achilles` (breadth), `as` binding on literal/range match patterns
+(depth), `nth_smith_number` (breadth), `as` binding on nested match
+sub-patterns (depth), `nth_carmichael_number` (breadth). `main` is green
+(4503 tests passing locally, up from 4495), PR queue empty going into
+this grooming pass.
 
 While restocking, also fixed the same class of staleness the prior
-grooming passes already caught: the "Variables & scope" bullet, Status
-& roadmap section (both `README.md`) still didn't mention #401 at all
+grooming passes already caught: the stdlib bullet list and Status &
+roadmap section (both `README.md`) still didn't mention `#402` at all
 and still listed its task under "coming up next" even though it already
 merged — both now describe the current, correct state, and
 `README.md`'s "Coming up next" list was resynced to the current

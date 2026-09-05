@@ -606,6 +606,188 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Language: `as` binding on a nested list/map sub-pattern inside `match`
+
+Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
+entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>
+nil }`), but only at the top of the arm's own pattern — there is no way
+to capture an *intermediate* value reached partway through a nested
+list/map pattern, even though the nested sub-pattern itself already
+binds every leaf name inside it. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let r = match ([1, [2, 3]]) { [a, [b, c] as inner] => inner, _ => 0 }; print(r);'
+# -> <eval>:1:38: expected ']' after list pattern, found 'as'
+python3 -m cinder.cli eval 'let r = match ({"a": {"b": 1}}) { {a: {b} as inner} => inner, _ => 0 }; print(r);'
+# -> <eval>:1:41: expected '}' after map pattern, found 'as'
+python3 -m cinder.cli eval 'let r = match ({"a": [1, 2]}) { {a: [x, y] as inner} => inner, _ => 0 }; print(r);'
+# -> <eval>:1:41: expected '}' after map pattern, found 'as'
+```
+Meanwhile the same nesting already works today without `as`:
+```sh
+python3 -m cinder.cli eval 'let r = match ([1, [2, 3]]) { [a, [b, c]] => [a, b, c], _ => 0 }; print(r);'
+# -> [1, 2, 3]
+python3 -m cinder.cli eval 'let r = match ({"a": {"b": 1}}) { {a: {b}} => b, _ => 0 }; print(r);'
+# -> 1
+```
+
+Worked examples (all currently `ParseError`, all should work after the
+fix): `match ([1, [2, 3]]) { [a, [b, c] as inner] => inner, _ => 0 }` is
+`[2, 3]` — a nested *list* pattern element captures its own sub-value;
+`match ({"a": {"b": 1}}) { {a: {b} as inner} => inner, _ => 0 }` is
+`{"b": 1}` — a nested *map* pattern value does too;
+`match ({"a": [1, 2]}) { {a: [x, y] as inner} => inner, _ => 0 }` is
+`[1, 2]` — and so does a nested *list* pattern used as a map value;
+composes with rest capture at the same nesting level, `match ([1, [2,
+3, 4]]) { [a, [b, ...rest] as inner] => [inner, rest], _ => 0 }` is
+`[[2, 3, 4], [3, 4]]`; and nests to arbitrary depth, each level with its
+own independent binding, `match ([1, [2, [3, 4]]]) { [a, [b, [c, d] as
+deep] as mid] => [mid, deep], _ => 0 }` is `[[2, [3, 4]], [3, 4]]`.
+
+The wildcard/bound-identifier, literal, and hole entry kinds keep their
+current restriction — `as` stays illegal directly on a plain identifier
+or literal list-pattern entry, e.g. `match ([1, 2]) { [a as x, b] => 1,
+_ => 0 }` still raises `ParseError` (unchanged, since the fix only adds
+`as`-parsing inside the nested-list/nested-map branches, never the
+identifier/literal branches) — this task only lets `as` follow a nested
+*sub-pattern*, mirroring exactly where the arm-level `as` already sits
+relative to the *whole* pattern.
+
+Root cause: three call sites accept a nested sub-pattern and none of
+them parse a trailing `as` today. In `cinder/parser.py`:
+`_match_list_pattern_entry`'s `TokenType.LBRACKET` branch (search `def
+_match_list_pattern_entry`) does `entry = self._match_list_pattern()`
+then falls straight into the shared `return entry, None`, with no
+`as`-parsing step; `_match_map_pattern_entry` (search `def
+_match_map_pattern_entry`) has the same gap in both its `LBRACKET` and
+`LBRACE` branches, each returning immediately after the nested
+`self._match_list_pattern()`/`self._match_map_pattern()` call. On the
+interpreter side, `_match_list_entries`'s tuple branch and
+`_match_map_entries`'s two tuple branches (search `def
+_match_list_entries`/`def _match_map_entries`, `cinder/interpreter.py`)
+recurse into the nested sub-match but never look at (or have anywhere
+to put) a captured name for the sub-value.
+
+Fix shape — parse the optional `as` right after each nested sub-pattern,
+reusing `_match_whole_binding()` (search that name; it already just
+parses an optional `as NAME` and returns the name or `None`, no changes
+needed there), and always append the captured name (possibly `None`) as
+the last element of that entry's tuple so every tuple has a fixed length
+per kind — no length-based ambiguity between "nested list" and "nested
+map" markers before and after this change:
+
+In `_match_list_pattern_entry`'s `LBRACKET` branch:
+```python
+if token.type == TokenType.LBRACKET:
+    nested_entries, nested_rest = self._match_list_pattern()
+    nested_as = self._match_whole_binding()
+    entry = (nested_entries, nested_rest, nested_as)
+```
+In `_match_map_pattern_entry`'s `LBRACKET` branch (currently returns a
+3-tuple marked with a trailing `True` to mean "nested list"; becomes a
+4-tuple, `True` stays the discriminator so nothing downstream that
+checks for it specifically needs to change how it finds it):
+```python
+if self._check(TokenType.LBRACKET):
+    nested_entries, nested_rest = self._match_list_pattern()
+    nested_as = self._match_whole_binding()
+    return key, (nested_entries, nested_rest, True, nested_as), None
+```
+And its `LBRACE` branch (currently a bare 2-tuple; becomes a 3-tuple):
+```python
+if self._check(TokenType.LBRACE):
+    nested_entries, nested_rest = self._match_map_pattern()
+    nested_as = self._match_whole_binding()
+    return key, (nested_entries, nested_rest, nested_as), None
+```
+
+Then, in `cinder/interpreter.py`, update all three tuple consumers to
+unpack the extra field and bind it (only once the nested match itself
+succeeds, mirroring how `_evaluate_match` already only defines the
+arm-level `whole_binding` after its own match succeeds). `_match_list_entries`'s
+tuple branch:
+```python
+if isinstance(entry, tuple):
+    nested_entries, nested_rest, nested_as = entry
+    if not self._match_list_entries(nested_entries, nested_rest, item, env):
+        return False
+    if nested_as is not None:
+        env.define(nested_as, item)
+    continue
+```
+`_match_map_entries`'s two tuple branches (discriminate on the `True`
+marker itself, not tuple length, since length alone no longer tells the
+two kinds apart now that both grew by one field):
+```python
+if isinstance(binding, tuple) and len(binding) == 4:
+    nested_entries, nested_rest, _, nested_as = binding
+    if not self._match_list_entries(nested_entries, nested_rest, item, env):
+        return False
+    if nested_as is not None:
+        env.define(nested_as, item)
+    continue
+if isinstance(binding, tuple):
+    nested_entries, nested_rest, nested_as = binding
+    if not self._match_map_entries(nested_entries, nested_rest, item, env):
+        return False
+    if nested_as is not None:
+        env.define(nested_as, item)
+    continue
+```
+No changes to `_match_whole_binding`, `MatchArm`, or the arm-level
+`whole_binding` handling in `_evaluate_match` — this task is entirely
+about names captured *inside* a pattern, a different binding from the
+arm's own `whole_binding` field, and the two compose freely (an arm can
+have both its own `as whole` and a nested `as inner` at the same time,
+since they're independent env entries).
+
+Acceptance criteria:
+- `match ([1, [2, 3]]) { [a, [b, c] as inner] => inner, _ => 0 }` is
+  `[2, 3]` — the first worked example above.
+- `match ({"a": {"b": 1}}) { {a: {b} as inner} => inner, _ => 0 }` is
+  `{"b": 1}` — a nested map-pattern value.
+- `match ({"a": [1, 2]}) { {a: [x, y] as inner} => inner, _ => 0 }` is
+  `[1, 2]` — a nested list-pattern value inside a map pattern.
+- `match ([1, [2, 3, 4]]) { [a, [b, ...rest] as inner] => [inner, rest],
+  _ => 0 }` is `[[2, 3, 4], [3, 4]]` — composes with rest capture at the
+  same nesting level.
+- `match ([1, [2, [3, 4]]]) { [a, [b, [c, d] as deep] as mid] => [mid,
+  deep], _ => 0 }` is `[[2, [3, 4]], [3, 4]]` — two independent `as`
+  bindings at two different nesting depths in the same arm.
+- `match ([1, "not a list"]) { [a, [b, c] as inner] => 1, _ => -1 }` is
+  `-1` — falls through (not raises) when the nested subject's shape
+  doesn't match, exactly like nested patterns without `as` already do.
+- `match ([1, 2]) { [a as x, b] => 1, _ => 0 }` still raises `ParseError`
+  — `as` stays illegal directly on a plain identifier entry, only a
+  nested sub-pattern may carry it.
+- Regression: every existing arm-level `as whole` test and every
+  existing nested-pattern-without-`as` test in `tests/test_parser.py`/
+  `tests/test_interpreter.py` (search `whole_binding` and `class
+  TestMatch` in each) still passes unmodified.
+- New tests in `tests/test_parser.py` (search `class TestMatch`, near
+  the existing `test_match_list_pattern_whole_binding`/
+  `test_match_map_pattern_whole_binding` tests) asserting the nested
+  entry tuple's trailing name field for each of the three nesting
+  kinds above, plus one confirming it's `None` when no nested `as` is
+  written.
+- New tests in `tests/test_interpreter.py` (search `class TestMatch`,
+  near the existing `test_list_pattern_whole_binding_holds_original_subject`)
+  covering every acceptance case above.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_match_list_pattern_entry`,
+`_match_map_pattern_entry`, search those names — their return-type
+string annotations at the top of `_match_list_pattern`/
+`_match_map_pattern`/`_match_list_pattern_entry`/`_match_map_pattern_entry`
+also need updating to reflect the new tuple shapes), `cinder/interpreter.py`
+(`_match_list_entries`, `_match_map_entries`, search those names),
+`tests/test_parser.py`, `tests/test_interpreter.py` per the acceptance
+criteria above. Once merged, `README.md`'s `match` bullet needs a clause
+noting that `as` can also bind a nested sub-pattern's value, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

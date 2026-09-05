@@ -62,7 +62,10 @@ while (i < 10) {
   declarations in a single `let`/`const` statement (`let a = 1, b = 2;`,
   `const x = 1, y = 2;`, each with its own initializer, evaluated
   left-to-right so a later initializer can see an earlier declared name,
-  e.g. `let a = 1, b = a + 1;` binds `b` to `2`), assignment, comma-separated
+  e.g. `let a = 1, b = a + 1;` binds `b` to `2`), and a comma-separated
+  chain may freely mix plain and destructuring declarators in any order
+  (`let a = 1, [b, c] = [2, 3];`, `const x = 1, {y, z} = {"y": 2, "z":
+  3};`), assignment, comma-separated
   multiple statements in expression-statement position for already-declared
   names or any other bare expression (`a = 1, b = 2;`, `f(), g();`, the
   same left-to-right evaluation and shared `DeclSeq` execution the `let`/
@@ -729,7 +732,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4487+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4495+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -755,38 +758,42 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_sphenic` (PR #400, the
+Actively developed, nightly. Recently landed: mixing plain and
+destructuring declarators in one comma-separated `let`/`const` sequence
+(PR #401, `let a = 1, [b, c] = [2, 3];`, previously a `ParseError` in
+either order even though a bare comma sequence and a lone destructuring
+pattern each already worked on their own), `nth_sphenic` (PR #400, the
 value-returning sibling `is_sphenic` itself was missing, the same bounded
-sequential scan `nth_semiprime`/`nth_refactorable` already use), a bare
-hole-element spelling (`[a, , c]`) in `match` list patterns (PR #399,
-matching the already-working `_` placeholder spelling with the same
-effect, closing the gap between `match`'s list patterns and every other
-destructuring site in the language), and `nth_refactorable` (PR #398, the
-value-returning sibling `is_refactorable` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_semiperfect` already
-use). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): letting a destructuring
-pattern appear anywhere inside a comma-separated `let`/`const` sequence
-(`let a = 1, [b, c] = [2, 3];`, today a `ParseError` in either order even
-though a bare comma sequence and a lone destructuring pattern each already
-work on their own) — `nth_powerful_number`, the value-returning sibling
-`is_powerful_number` itself was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_semiperfect` already use — letting `match`
-list patterns nest a map pattern as one of their elements (`[a, {b}]`,
-today a `ParseError` even though a list pattern can already nest another
-list pattern, and a map pattern can already nest either shape as one of
-its values) — `nth_achilles`, the value-returning sibling `is_achilles`
-itself was missing, the same bounded sequential scan
-`nth_sphenic`/`nth_powerful_number` already use — and extending
-whole-value `as` binding (today list/map-pattern match arms only) to
-literal and range `match` patterns too (`match (5) { 1..10 as whole =>
-whole, _ => nil }`, today a `ParseError`, useful since a range pattern's
-bound name isn't the subject's actual value and a multi-value literal
-arm's body otherwise can't tell which literal matched). (Guards in
-`match` arms, `n if n > 0 => "positive"`, were attempted but closed
-after three failed review rounds over a recurring parser bug — see
-`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
-but not back in the active queue yet.) The backlog mixes language
-depth with stdlib breadth over time rather than running
-either in one long block. The full vision and non-goals live in
-[`PROJECT.md`](PROJECT.md).
+sequential scan `nth_semiprime`/`nth_refactorable` already use), and a
+bare hole-element spelling (`[a, , c]`) in `match` list patterns (PR
+#399, matching the already-working `_` placeholder spelling with the
+same effect, closing the gap between `match`'s list patterns and every
+other destructuring site in the language). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `nth_powerful_number`, the
+value-returning sibling `is_powerful_number` itself was missing, the
+same bounded sequential scan `nth_practical_number`/`nth_semiperfect`
+already use — letting `match` list patterns nest a map pattern as one
+of their elements (`[a, {b}]`, today a `ParseError` even though a list
+pattern can already nest another list pattern, and a map pattern can
+already nest either shape as one of its values) — `nth_achilles`, the
+value-returning sibling `is_achilles` itself was missing, the same
+bounded sequential scan `nth_sphenic`/`nth_powerful_number` already use
+— extending whole-value `as` binding (today list/map-pattern match arms
+only) to literal and range `match` patterns too (`match (5) { 1..10 as
+whole => whole, _ => nil }`, today a `ParseError`, useful since a range
+pattern's bound name isn't the subject's actual value and a multi-value
+literal arm's body otherwise can't tell which literal matched) —
+`nth_smith_number`, the value-returning sibling `is_smith_number` itself
+is missing, the same bounded sequential scan `nth_refactorable`/
+`nth_sphenic` already use — and letting `as` bind a nested list/map
+sub-pattern's own value inside a larger `match` pattern (`[a, [b, c] as
+inner]`, today a `ParseError`; today `as` only captures the whole
+subject at the top of an arm, not an intermediate value reached partway
+through a nested pattern). (Guards in `match` arms, `n if n > 0 =>
+"positive"`, were attempted but closed after three failed review rounds
+over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+postmortem; they're a real gap but not back in the active queue yet.)
+The backlog mixes language depth with stdlib breadth over time rather
+than running either in one long block. The full vision and non-goals
+live in [`PROJECT.md`](PROJECT.md).

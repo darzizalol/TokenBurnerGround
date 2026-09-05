@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: map patterns nested inside `match` list-pattern elements
+## 1. Language: map patterns nested inside `match` list-pattern elements [claimed 2026-09-05T20:04:45Z]
 
 Build: `match`'s list patterns can already nest another *list* pattern as
 one of their elements (`[a, [b, c]]`), and map patterns can already nest

@@ -642,6 +642,9 @@ while (i < 10) {
   as the third popcount-based predicate, negative input raises the same domain error they do),
   `is_sphenic` to test whether an integer is the product of three distinct primes (e.g. `30 = 2 * 3 * 5`,
   the natural next member of the "product of primes" family alongside `is_semiprime`'s "product of exactly two"),
+  `nth_sphenic` to return the sphenic number found at a 1-indexed position via a bounded sequential
+  scan with the squarefree-three-distinct-primes check inlined from `is_sphenic`'s own body, the
+  value-returning sibling of `is_sphenic`'s membership test,
   `is_circular_prime` to test whether every rotation of an integer's decimal digits is also prime
   (e.g. `197`/`971`/`719`),
   `is_twin_prime` to test whether an integer is prime and has another prime exactly 2 away
@@ -726,7 +729,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4478+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4487+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -752,25 +755,21 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: a bare hole-element
-spelling (`[a, , c]`) in `match` list patterns (PR #399, matching the
-already-working `_` placeholder spelling with the same effect, closing
-the gap between `match`'s list patterns and every other destructuring
-site in the language), `nth_refactorable` (PR #398, the value-returning
-sibling `is_refactorable` itself was missing, the same bounded sequential
-scan `nth_practical_number`/`nth_semiperfect` already use), and
-destructuring patterns for `try`/`catch` clauses (PR #397,
-`catch ([a, b]) { ... }`, `catch ({a, b}) { ... }`, pulling fields
-straight out of a thrown list/map the same way `let` already can). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_sphenic`, the value-returning
-sibling `is_sphenic` itself was missing, the same bounded sequential scan
-`nth_semiprime` already uses for its own "product of exactly two
-distinct primes" sibling — letting a destructuring pattern appear
-anywhere inside a comma-separated `let`/`const` sequence (`let a = 1,
-[b, c] = [2, 3];`, today a `ParseError` in either order even though a
-bare comma sequence and a lone destructuring pattern each already work on
-their own) — `nth_powerful_number`, the value-returning sibling
+Actively developed, nightly. Recently landed: `nth_sphenic` (PR #400, the
+value-returning sibling `is_sphenic` itself was missing, the same bounded
+sequential scan `nth_semiprime`/`nth_refactorable` already use), a bare
+hole-element spelling (`[a, , c]`) in `match` list patterns (PR #399,
+matching the already-working `_` placeholder spelling with the same
+effect, closing the gap between `match`'s list patterns and every other
+destructuring site in the language), and `nth_refactorable` (PR #398, the
+value-returning sibling `is_refactorable` itself was missing, the same
+bounded sequential scan `nth_practical_number`/`nth_semiperfect` already
+use). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): letting a destructuring
+pattern appear anywhere inside a comma-separated `let`/`const` sequence
+(`let a = 1, [b, c] = [2, 3];`, today a `ParseError` in either order even
+though a bare comma sequence and a lone destructuring pattern each already
+work on their own) — `nth_powerful_number`, the value-returning sibling
 `is_powerful_number` itself was missing, the same bounded sequential scan
 `nth_practical_number`/`nth_semiperfect` already use — letting `match`
 list patterns nest a map pattern as one of their elements (`[a, {b}]`,

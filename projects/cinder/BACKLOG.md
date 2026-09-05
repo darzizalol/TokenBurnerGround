@@ -643,6 +643,112 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+
+Build: `is_smith_number` (`cinder/builtins.py`, search `def
+_is_smith_number`: a composite number whose decimal digit sum equals the
+digit sum of all its prime factors with multiplicity, e.g. `22 = 2 * 11`,
+digit sum `4`, factor digit sum `2 + 1 + 1 = 4`) has no value-returning
+`nth_*` sibling, the same gap `nth_refactorable`/`nth_sphenic` already
+closed for their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_smith_number(1));'
+# -> <eval>:1:7: undefined name 'nth_smith_number' (did you mean
+#    'is_smith_number'?)
+```
+
+Worked examples: the first ten Smith numbers are `4, 22, 27, 58, 85, 94,
+121, 166, 202, 265` (confirmed by scanning with `is_smith_number`
+directly), so `nth_smith_number(1)` is `4` and `nth_smith_number(10)` is
+`265`. The 20th is `483`.
+
+Add directly after `_is_smith_number` (search `def _is_smith_number`,
+immediately before `def _is_carmichael_number`) — keeps the
+value-returning helper next to the predicate it mirrors, matching where
+`nth_refactorable` itself sits right after `is_refactorable`:
+```python
+def _nth_smith_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_smith_number", arguments, 1, line, column)
+    value = _require_int("nth_smith_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_smith_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_smith_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                break
+        else:
+            return False  # prime, not composite
+        factors = []
+        remaining = candidate
+        divisor = 2
+        while divisor * divisor <= remaining:
+            while remaining % divisor == 0:
+                factors.append(divisor)
+                remaining //= divisor
+            divisor += 1
+        if remaining > 1:
+            factors.append(remaining)
+        digit_total = sum(int(digit) for digit in str(candidate))
+        factor_digit_total = sum(
+            sum(int(digit) for digit in str(factor)) for factor in factors
+        )
+        return digit_total == factor_digit_total
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_smith_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_refactorable`/`_nth_sphenic`, with the inner
+candidate check copied verbatim from `_is_smith_number`'s own body
+instead of calling `_is_smith_number` directly — the same "duplicate the
+tiny predicate body instead of a redundant `_require_arity`/`_require_int`
+round-trip per candidate" choice every recent `nth_*` task already makes.)
+Register the new dict entry (search `"is_smith_number":
+_is_smith_number,`, add `"nth_smith_number": _nth_smith_number,` directly
+after it, before `"is_carmichael_number": _is_carmichael_number,`).
+
+Acceptance criteria:
+- `nth_smith_number(1);` through `nth_smith_number(10);` are `4, 22, 27,
+  58, 85, 94, 121, 166, 202, 265` in order — the worked example above.
+- `nth_smith_number(20);` is `483` — a further worked example confirming
+  the scan scales past the first ten.
+- For every `position` in `1..50`,
+  `is_smith_number(nth_smith_number(position))` is `true` — the same
+  self-consistency check `nth_refactorable`/`nth_sphenic`'s own test
+  suites already run against their predicates.
+- `nth_smith_number(0);`, `nth_smith_number(-3);` both raise
+  `CinderRuntimeError` matching `"nth_smith_number\(\) requires a
+  positive integer, domain error"`.
+- `nth_smith_number(true);` raises `CinderRuntimeError` matching
+  `"nth_smith_number\(\) requires an int, got bool"`.
+- `nth_smith_number("5");` raises `CinderRuntimeError` matching
+  `"nth_smith_number\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_smith_number`,
+search `def _is_smith_number`), `tests/test_builtins.py` (new `class
+TestNthSmithNumber`, modeled on `class TestNthRefactorable`, search that
+name, for the test shapes above — place it near the existing `class
+TestIsSmithNumber`, search that name). Once merged, `README.md`'s
+existing `is_smith_number` bullet needs `nth_smith_number` added right
+after it, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

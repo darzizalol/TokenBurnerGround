@@ -486,6 +486,9 @@ while (i < 10) {
   `is_catalan` to test Catalan-number membership via a bounded iterative search rather than a closed form, the membership-test sibling of `nth_catalan`,
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
   `is_squarefree` to test whether an integer has no repeated prime factor,
+  `nth_squarefree` to return the squarefree integer found at a 1-indexed position via the same bounded
+  sequential scan `nth_practical_number`/`nth_harshad` already use, the value-returning sibling of
+  `is_squarefree`'s membership test,
   `is_powerful_number` to test whether every prime factor of an integer appears with exponent `2` or more,
   `is_achilles` to test whether an integer is powerful but not itself a perfect power
   (the gap between `is_powerful_number` and `is_perfect_power`, e.g. `72 = 2^3 * 3^2`),
@@ -736,19 +739,17 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: destructuring patterns
-for `const` declarations (PR #395, `const [a, b] = expr;`, `const {a,
-b} = expr;`, every bound name frozen), closing the gap between `let`,
-which already supported both destructuring forms, and `const`, which
-previously accepted only a bare identifier — and `nth_harshad` (PR
-#394, the value-returning sibling `is_harshad` itself was missing, the
-same bounded sequential scan `nth_abundant`/`nth_deficient` already
-use). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_squarefree`, the
-value-returning sibling `is_squarefree` itself was missing, the same
-bounded sequential scan `nth_practical_number`/`nth_harshad` already
-use — destructuring patterns for `try`/`catch` clauses (`catch ([a, b])
-{ ... }`, `catch ({a, b}) { ... }`, pulling fields straight out of a
+Actively developed, nightly. Recently landed: `nth_squarefree` (PR
+#396, the value-returning sibling `is_squarefree` itself was missing,
+the same bounded sequential scan `nth_practical_number`/`nth_harshad`
+already use) and destructuring patterns for `const` declarations (PR
+#395, `const [a, b] = expr;`, `const {a, b} = expr;`, every bound name
+frozen), closing the gap between `let`, which already supported both
+destructuring forms, and `const`, which previously accepted only a
+bare identifier. See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
+history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
+destructuring patterns for `try`/`catch` clauses (`catch ([a, b]) {
+... }`, `catch ({a, b}) { ... }`, pulling fields straight out of a
 thrown list/map the same way `let` already can, since `throw` accepts
 any Cinder value, not just a string), closing the gap between `catch`'s
 single-identifier-only binding and every other binding site in the
@@ -762,14 +763,17 @@ other destructuring site in the language, which already accept the bare
 comma-comma spelling — `nth_sphenic`, the value-returning sibling
 `is_sphenic` itself was missing, the same bounded sequential scan
 `nth_semiprime` already uses for its own "product of exactly two
-distinct primes" sibling — and letting a destructuring pattern appear
+distinct primes" sibling — letting a destructuring pattern appear
 anywhere inside a comma-separated `let`/`const` sequence (`let a = 1,
 [b, c] = [2, 3];`, today a `ParseError` in either order even though a
 bare comma sequence and a lone destructuring pattern each already work
-on their own). (Guards in `match` arms, `n if n > 0 => "positive"`, were
-attempted but closed after three failed review rounds over a recurring
-parser bug — see `BACKLOG.md`'s `## Graveyard` for the postmortem;
-they're a real gap but not back in the active queue yet.) The backlog
-mixes language depth with stdlib breadth over time rather than running
+on their own) — and `nth_powerful_number`, the value-returning sibling
+`is_powerful_number` itself was missing, the same bounded sequential
+scan `nth_practical_number`/`nth_semiperfect` already use. (Guards in
+`match` arms, `n if n > 0 => "positive"`, were attempted but closed
+after three failed review rounds over a recurring parser bug — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
+but not back in the active queue yet.) The backlog mixes language
+depth with stdlib breadth over time rather than running
 either in one long block. The full vision and non-goals live in
 [`PROJECT.md`](PROJECT.md).

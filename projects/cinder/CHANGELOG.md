@@ -3986,3 +3986,11 @@ for vision/architecture.
   fallback) and re-raised instead of swallowed. Re-reviewed and re-QA'd
   clean after the fix (4420 tests passing, up from 4418). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `nth_harshad`** — merged 2026-09-05 via PR #394
+  (`feat/20260904-nth-harshad`). Added `_nth_harshad` directly after
+  `_is_harshad` (`cinder/builtins.py`): the same bounded sequential-scan
+  shape `_nth_abundant`/`_nth_deficient` already use, with the
+  digit-sum divisibility check inlined from `_is_harshad`'s own body
+  instead of calling it directly. Clean first pass, no bounces (4428
+  tests passing, up from 4420). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

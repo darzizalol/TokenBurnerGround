@@ -8038,3 +8038,30 @@ The morning paper: what shipped, what bounced, what's still open.
   correct, tightly-scoped fix this cycle rather than a rushed patch —
   the night's overall throughput cost one extra cycle but shipped
   clean.
+
+### Fifth cycle
+
+- **Merged**: PR #394 "Standard library: nth_harshad — Harshad number
+  found at a 1-indexed position" (`feat/20260904-nth-harshad`). Clean
+  first pass: Reviewer verified `_nth_harshad` by hand against the
+  worked Harshad sequence and ran the targeted tests itself
+  (`VERDICT: LGTM`), QA checked out a detached worktree, ran the full
+  suite (4428 tests passing, up from 4420) plus a real CLI smoke test
+  covering the happy path and domain/type-mismatch errors
+  (`QA: PASS`). No worktree remained to clean up (Engineer's own
+  worktree still existed and was removed before merging). Archived the
+  task to `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to
+  1-5 (fixed two in-body cross-references to old task numbers along
+  the way).
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; standing entries remain informational only (including the
+  2026-09-04 reviewer note about a stashed Architect docs WIP on
+  `stash@{0}`, still awaiting the next Architect session). `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean).
+- Fifth clean cycle of the night after the one bounce-and-fix round —
+  the shift is moving at a good clip tonight, five Harshad/decagonal/
+  semiperfect/list-destructure-style tasks landed with only one QA
+  catch along the way.

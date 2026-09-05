@@ -11,90 +11,9 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_harshad` — Harshad number found at a 1-indexed position [claimed 2026-09-04T21:27:21Z]
-
-Build: `is_harshad` (`cinder/builtins.py`, search `def _is_harshad`:
-whether `n` is divisible by its own digit sum, e.g. `18`'s digits sum
-to `9` and `18 % 9 == 0`) has no value-returning sibling that finds the
-Harshad number at a given 1-indexed position — the same gap
-`nth_abundant`/`nth_deficient` (search either name) already closed for
-`is_abundant`/`is_deficient`, and `nth_semiperfect` already closed for
-`is_semiperfect`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_harshad(1));'
-# -> <eval>:1:7: undefined name 'nth_harshad'
-```
-
-Worked examples: the first ten Harshad numbers are `1, 2, 3, 4, 5, 6,
-7, 8, 9, 10` (every one-digit number is trivially divisible by its own
-digit sum), so `nth_harshad(1)` is `1` and `nth_harshad(10)` is `10`.
-The next ones are `12, 18, 20, 21, 24, 27, 30, 36, 40, 42` — `11` is
-skipped (`11 % (1+1) == 11 % 2 == 1`, not divisible), so `nth_harshad(20)`
-is `42`.
-
-Add to `cinder/builtins.py`, directly after `_is_harshad` (search `def
-_is_harshad`):
-```python
-def _nth_harshad(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_harshad", arguments, 1, line, column)
-    value = _require_int("nth_harshad", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_harshad() requires a positive integer, domain error", line, column
-        )
-
-    def _is_harshad_candidate(candidate: int) -> bool:
-        digit_total = sum(int(digit) for digit in str(candidate))
-        return candidate % digit_total == 0
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_harshad_candidate(candidate):
-            count += 1
-    return candidate
-```
-(The bounded sequential-scan shape mirrors `_nth_abundant`/`_nth_deficient`
-exactly — search either name for the precedent — just with `_is_harshad`'s
-own digit-sum divisibility check inlined instead of calling `_is_harshad`
-directly, the same "duplicate the tiny predicate body instead of a
-redundant `_require_arity`/`_require_int` round-trip per candidate"
-choice those two already made.) Register it in the builtins dict
-(search `"is_harshad": _is_harshad,`) right next to the existing entry:
-`"nth_harshad": _nth_harshad,`.
-
-Acceptance criteria:
-- `nth_harshad(1)` through `nth_harshad(10)` are `1` through `10` — the
-  first worked example above.
-- `nth_harshad(20)` is `42` — the second worked example above.
-- `is_harshad(nth_harshad(n))` is `true` for every `n` from `1` to `50`
-  — the value returned is always actually a Harshad number, mirroring
-  `test_nth_deficient_agrees_with_is_deficient`'s (search that name)
-  cross-check style.
-- `nth_harshad(0)` and `nth_harshad(-3)` raise `CinderRuntimeError`
-  matching `"nth_harshad() requires a positive integer, domain error"`.
-- `nth_harshad(true)` and `nth_harshad("3")` raise `CinderRuntimeError`
-  with the standard `_require_int` type-mismatch message, and
-  `nth_harshad(1, 2)` raises the standard arity error — regression
-  coverage matching `nth_deficient`'s own bool/string/arity tests
-  (search `test_nth_deficient_of_bool_raises`/
-  `test_nth_deficient_of_string_raises`/`test_nth_deficient_wrong_arity_raises`).
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_harshad`,
-search `def _is_harshad`), `tests/test_builtins.py` (new `class
-TestNthHarshad`, modeled on `class TestNthDeficient`, search that name,
-for the test shapes above — place it near the existing `class
-TestIsHarshad`, search that name). Once merged, `README.md`'s Builtins
-bullet needs `nth_harshad` added near `is_harshad`, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
 ---
 
-## 2. Language: destructuring patterns for `const` declarations
+## 1. Language: destructuring patterns for `const` declarations
 
 Build: `let` already supports both list-destructuring (`let [a, b] =
 expr;`) and map-destructuring (`let {a, b} = expr;`), with full nesting,
@@ -304,14 +223,14 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
+## 2. Standard library: `nth_squarefree` — squarefree number found at a 1-indexed position
 
 Build: `is_squarefree` (`cinder/builtins.py`, search `def
 _is_squarefree`: no prime factor of `value` appears with exponent 2 or
 more, checked by trial division for any `divisor` where
 `value % (divisor * divisor) == 0`) has no value-returning `nth_*`
 sibling, the same gap `nth_practical_number`/`nth_deficient`/
-`nth_harshad` (task 1 above) already close or are about to close for
+`nth_harshad` already close or are about to close for
 their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_squarefree(1));'
@@ -396,7 +315,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Language: destructuring patterns for `try`/`catch` clauses
+## 3. Language: destructuring patterns for `try`/`catch` clauses
 
 Build: `let`/`for`/function params/comprehension loop variables all accept
 list- and map-destructuring patterns (with rest, per-key rename, defaults,
@@ -523,7 +442,7 @@ Acceptance criteria:
   `try {} catch ([a, b]) {}` and `try {} catch ({a, b}) {}` asserting
   `catch_names`/`catch_rest`/`catch_is_map` directly on the parsed
   `TryStmt` node, the same "assert the new field directly rather than
-  extending the fixed-shape tuple" choice task 2's `const`-destructure
+  extending the fixed-shape tuple" choice task 1's `const`-destructure
   work already made for `DestructureLetStmt`'s `is_const` field — `shape()`'s
   existing `TryStmt` tuple (search `"TryStmt"`) is a fixed 5-element shape
   asserted by roughly six existing tests and only reads `catch_name`
@@ -550,7 +469,7 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
+## 4. Standard library: `nth_refactorable` — refactorable number found at a 1-indexed position
 
 Build: `is_refactorable` (`cinder/builtins.py`, search `def
 _is_refactorable`: whether `n`'s own divisor count divides back into
@@ -643,7 +562,7 @@ task.
 
 ---
 
-## 6. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
+## 5. Language: bare hole-element spelling (`[a, , c]`) in `match` list patterns
 
 Build: `let`/`for`/function-param/comprehension list-destructuring patterns
 all accept a bare comma-comma hole to skip an unwanted position

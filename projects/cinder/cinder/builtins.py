@@ -2708,6 +2708,36 @@ def _is_refactorable(arguments: list, line: int, column: int) -> object:
     return value % count == 0
 
 
+def _nth_refactorable(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_refactorable", arguments, 1, line, column)
+    value = _require_int("nth_refactorable", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_refactorable() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_refactorable_candidate(candidate: int) -> bool:
+        if candidate == 1:
+            return True
+        count = 2
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                count += 1
+                complement = candidate // divisor
+                if complement != divisor:
+                    count += 1
+        return candidate % count == 0
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_refactorable_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_amicable(arguments: list, line: int, column: int) -> object:
     _require_arity("is_amicable", arguments, 2, line, column)
     a = _require_int("is_amicable", arguments[0], line, column)
@@ -4903,6 +4933,7 @@ _BUILTINS = {
     "is_vampire_number": _is_vampire_number,
     "num_divisors": _num_divisors,
     "is_refactorable": _is_refactorable,
+    "nth_refactorable": _nth_refactorable,
     "is_amicable": _is_amicable,
     "min": _min,
     "max": _max,

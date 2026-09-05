@@ -6934,6 +6934,78 @@ class TestIsRefactorable(unittest.TestCase):
             run("is_refactorable();")
 
 
+class TestNthRefactorable(unittest.TestCase):
+    def test_nth_refactorable_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 2,
+            3: 8,
+            4: 9,
+            5: 12,
+            6: 18,
+            7: 24,
+            8: 36,
+            9: 40,
+            10: 56,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_refactorable({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_refactorable_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_refactorable(20);").get("result"), 132
+        )
+
+    def test_nth_refactorable_agrees_with_is_refactorable(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_refactorable(nth_refactorable({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_refactorable({position}) to be refactorable",
+            )
+
+    def test_nth_refactorable_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_refactorable(0);")
+        self.assertIn(
+            "nth_refactorable() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_refactorable_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_refactorable(-3);")
+        self.assertIn(
+            "nth_refactorable() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_refactorable_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_refactorable(true);")
+        self.assertIn(
+            "nth_refactorable() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_refactorable_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_refactorable("5");')
+        self.assertIn(
+            "nth_refactorable() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_refactorable_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_refactorable(1, 2);")
+
+
 class TestIsAmicable(unittest.TestCase):
     def test_is_amicable_smallest_pair(self):
         self.assertEqual(run("let result = is_amicable(220, 284);").get("result"), True)

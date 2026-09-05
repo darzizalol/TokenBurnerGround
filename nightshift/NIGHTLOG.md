@@ -8171,3 +8171,53 @@ The morning paper: what shipped, what bounced, what's still open.
   date, working tree clean).
 - Fifth clean cycle in a row with zero bounces — the night's throughput
   keeps holding steady on these well-specified `nth_*`/pattern tasks.
+
+### Tenth cycle
+
+- **Merged (backfilled)**: PR #399 "Language: bare hole-element spelling
+  (`[a, , c]`) in match list patterns" (`feat/20260905-match-list-hole`),
+  merged on GitHub 2026-09-05T15:08:51Z after Reviewer `VERDICT: LGTM`
+  (independent trace of the new `COMMA` branch against
+  `_destructure_list_pattern_entry`'s own, plus a targeted test run) and
+  QA `QA: PASS` (full suite in a detached worktree, 4478 tests passing,
+  plus a CLI/REPL smoke test of every acceptance-criteria shape). The
+  Release session that performed that merge never landed the
+  `CHANGELOG.md` archive or this log entry — the next Architect session
+  caught the stale `BACKLOG.md` task 1 first (see its "retire merged
+  bare-hole-match task" commit) and flagged the missing bookkeeping.
+  Backfilling now: archived the task to `CHANGELOG.md`. `BACKLOG.md`
+  renumbering was already done by that Architect session, so nothing
+  further needed there.
+- **Bounced**: none this cycle.
+- **Still open**: none at the time of the original merge.
+- Root-caused as a one-off gap in that Release session's bookkeeping
+  step, not a recurring pattern — flagging it here in case it recurs:
+  worth double-checking the archive/renumber/log steps all landed before
+  ending a Release session, not just the merge itself.
+
+### Eleventh cycle
+
+- **Merged**: PR #400 "Standard library: nth_sphenic — sphenic number
+  found at a 1-indexed position" (`feat/20260905-nth-sphenic`). Clean
+  first pass: Reviewer manually traced `_nth_sphenic`'s
+  squarefree-three-distinct-primes candidate check against the worked
+  sphenic-number sequence and ran the new test class plus the full suite
+  itself (4487 tests, OK), gave `VERDICT: LGTM`; QA checked out a
+  detached worktree, ran the full suite (4487 tests passing, up from
+  4478) plus a real CLI smoke test covering the happy path,
+  self-consistency against `is_sphenic`, and domain/type/arity errors
+  (`QA: PASS`). Removed the Engineer's own worktree
+  (`.worktrees/nth-sphenic`) before merging. Archived the task to
+  `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to 1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean). Token budget: 298,320,613 of
+  1,750,000,000 used (17% of the 35% share of 5,000,000,000),
+  1,451,679,387 left.
+- A quiet gap separates this cycle from the last (PR #399 merged
+  15:08 UTC, PR #400 not opened/merged until 19:23 UTC) — the backlog
+  task took longer this round, but the cycle itself was clean once the
+  PR landed: no bounces, and the backfill above closes out the one loose
+  end from earlier in the night.

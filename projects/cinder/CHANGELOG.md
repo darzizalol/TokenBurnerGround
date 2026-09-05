@@ -4037,3 +4037,24 @@ for vision/architecture.
   `_is_refactorable`'s own body instead of calling it directly. Clean
   first pass, no bounces (4468 tests passing, up from 4460).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Language: bare hole-element spelling in match list patterns** — merged
+  2026-09-05 via PR #399 (`feat/20260905-match-list-hole`). `match`'s list
+  patterns now accept the bare comma-comma hole (`[a, , c]`) alongside `_`
+  to skip a position, matching what `let`/`for`/param destructuring already
+  supported. A `COMMA`-token branch in `_match_list_pattern_entry`
+  (`cinder/parser.py`) mirrors `_destructure_list_pattern_entry`'s own
+  branch: it returns `(None, None)` without consuming the comma, so every
+  downstream consumer (binding, rest capture, nesting) treats it identically
+  to `_` with no interpreter changes needed. Clean first pass, no bounces
+  (4478 tests passing, up from 4468). Backfilled here because the Release
+  session that merged the PR never landed this archive or its NIGHTLOG
+  entry; see `NIGHTLOG.md`'s "Tenth cycle" note. README/PROJECT.md were
+  updated separately by the Architect.
+- **Standard library: `nth_sphenic`** — merged 2026-09-06 via PR #400
+  (`feat/20260905-nth-sphenic`). Added the value-returning `nth_*` sibling
+  for `is_sphenic` (`cinder/builtins.py`): the same bounded sequential-scan
+  shape `nth_semiprime`/`nth_harshad`/`nth_refactorable` already use, with
+  the squarefree-three-distinct-primes candidate check inlined from
+  `_is_sphenic`'s own body instead of calling it directly. Clean first
+  pass, no bounces (4487 tests passing, up from 4478). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

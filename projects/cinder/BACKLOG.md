@@ -11,109 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position [claimed 2026-09-05T19:18:11Z]
-
-Build: `is_sphenic` (`cinder/builtins.py`, search `def _is_sphenic`:
-whether `n` is the product of exactly three distinct primes, e.g.
-`30 = 2 * 3 * 5`) has no value-returning `nth_*` sibling, the same gap
-`nth_semiprime` already closed for `is_semiprime` (its own "product of
-exactly two distinct primes" sibling). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_sphenic(1));'
-# -> <eval>:1:7: undefined name 'nth_sphenic' (did you mean
-#    'is_sphenic'?)
-```
-
-Worked examples: the first ten sphenic numbers (OEIS A007304) are `30,
-42, 66, 70, 78, 102, 105, 110, 114, 130` (`60 = 2^2 * 3 * 5` is skipped
-— one prime factor appears with exponent 2, so only 2 *distinct* primes
-count even though 4 prime factors appear with multiplicity), so
-`nth_sphenic(1)` is `30` and `nth_sphenic(10)` is `130`. The 20th is
-`222`.
-
-Add directly after `_is_sphenic` (search `def _is_sphenic`, immediately
-before `def _is_emirp`) — keeps the value-returning helper next to the
-predicate it mirrors, matching where `nth_semiprime` itself sits right
-after `is_semiprime`:
-```python
-def _nth_sphenic(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_sphenic", arguments, 1, line, column)
-    value = _require_int("nth_sphenic", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_sphenic() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_sphenic_candidate(candidate: int) -> bool:
-        remaining = candidate
-        distinct_count = 0
-        divisor = 2
-        while divisor * divisor <= remaining:
-            if remaining % divisor == 0:
-                count = 0
-                while remaining % divisor == 0:
-                    remaining //= divisor
-                    count += 1
-                if count != 1:
-                    return False
-                distinct_count += 1
-                if distinct_count > 3:
-                    return False
-            divisor += 1
-        if remaining > 1:
-            distinct_count += 1
-        return distinct_count == 3
-
-    count = 0
-    candidate = 1
-    while count < value:
-        candidate += 1
-        if _is_sphenic_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_semiprime`, with the inner candidate check
-copied from `_is_sphenic`'s own body instead of calling `_is_sphenic`
-directly — the same "duplicate the tiny predicate body instead of a
-redundant `_require_arity`/`_require_int` round-trip per candidate"
-choice `_nth_semiprime`/`_nth_harshad`/`_nth_refactorable` already
-make.) Register the new dict entry (search `"is_sphenic": _is_sphenic,`,
-add `"nth_sphenic": _nth_sphenic,` directly after it, before `"is_emirp":
-_is_emirp,`).
-
-Acceptance criteria:
-- `nth_sphenic(1);` through `nth_sphenic(10);` are `30, 42, 66, 70, 78,
-  102, 105, 110, 114, 130` in order — the worked example above.
-- `nth_sphenic(20);` is `222` — a further worked example confirming the
-  scan scales past the first ten.
-- For every `position` in `1..50`, `is_sphenic(nth_sphenic(position))`
-  is `true` — the same self-consistency check `nth_semiprime`'s own
-  test suite already runs against `is_semiprime`.
-- `nth_sphenic(0);`, `nth_sphenic(-3);` both raise `CinderRuntimeError`
-  matching `"nth_sphenic\(\) requires a positive integer, domain
-  error"`.
-- `nth_sphenic(true);` raises `CinderRuntimeError` matching
-  `"nth_sphenic\(\) requires an int, got bool"`.
-- `nth_sphenic("5");` raises `CinderRuntimeError` matching
-  `"nth_sphenic\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_sphenic`, search
-`def _is_sphenic`), `tests/test_builtins.py` (new `class TestNthSphenic`,
-modeled on `class TestNthSemiprime`, search that name, for the test
-shapes above — place it near the existing `class TestIsSphenic`, search
-that name). Once merged, `README.md`'s Builtins bullet needs
-`nth_sphenic` added near `is_sphenic`, its "Status & roadmap" section
-needs updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: destructuring patterns inside comma-separated `let`/`const` sequences
+## 1. Language: destructuring patterns inside comma-separated `let`/`const` sequences
 
 Build: `let a = 1, b = 2;` (comma-separated multiple declarations, each
 with its own initializer, later ones seeing earlier-bound names — see
@@ -256,7 +154,7 @@ task.
 
 ---
 
-## 3. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
+## 2. Standard library: `nth_powerful_number` — powerful number found at a 1-indexed position
 
 Build: `is_powerful_number` (`cinder/builtins.py`, search `def
 _is_powerful_number`: whether every prime factor of `n` appears with
@@ -351,7 +249,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: map patterns nested inside `match` list-pattern elements
+## 3. Language: map patterns nested inside `match` list-pattern elements
 
 Build: `match`'s list patterns can already nest another *list* pattern as
 one of their elements (`[a, [b, c]]`), and map patterns can already nest
@@ -473,7 +371,7 @@ this task.
 
 ---
 
-## 5. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
+## 4. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
 
 Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
 whether `n` is a powerful number — every prime factor's exponent is 2 or
@@ -579,7 +477,7 @@ task.
 
 ---
 
-## 6. Language: whole-value `as` binding on literal and range `match` patterns
+## 5. Language: whole-value `as` binding on literal and range `match` patterns
 
 Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
 _ => nil }`) currently only exists on list-pattern and map-pattern match

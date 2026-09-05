@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position
+## 1. Standard library: `nth_sphenic` — sphenic number found at a 1-indexed position [claimed 2026-09-05T19:18:11Z]
 
 Build: `is_sphenic` (`cinder/builtins.py`, search `def _is_sphenic`:
 whether `n` is the product of exactly three distinct primes, e.g.

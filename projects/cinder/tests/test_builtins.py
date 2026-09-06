@@ -4053,6 +4053,76 @@ class TestIsTwinPrime(unittest.TestCase):
             run("is_twin_prime();")
 
 
+class TestNthTwinPrime(unittest.TestCase):
+    def test_nth_twin_prime_of_first_fifteen(self):
+        self.assertEqual(run("let result = nth_twin_prime(1);").get("result"), 3)
+        self.assertEqual(run("let result = nth_twin_prime(2);").get("result"), 5)
+        self.assertEqual(run("let result = nth_twin_prime(3);").get("result"), 7)
+        self.assertEqual(run("let result = nth_twin_prime(4);").get("result"), 11)
+        self.assertEqual(run("let result = nth_twin_prime(5);").get("result"), 13)
+        self.assertEqual(run("let result = nth_twin_prime(6);").get("result"), 17)
+        self.assertEqual(run("let result = nth_twin_prime(7);").get("result"), 19)
+        self.assertEqual(run("let result = nth_twin_prime(8);").get("result"), 29)
+        self.assertEqual(run("let result = nth_twin_prime(9);").get("result"), 31)
+        self.assertEqual(run("let result = nth_twin_prime(10);").get("result"), 41)
+        self.assertEqual(run("let result = nth_twin_prime(11);").get("result"), 43)
+        self.assertEqual(run("let result = nth_twin_prime(12);").get("result"), 59)
+        self.assertEqual(run("let result = nth_twin_prime(13);").get("result"), 61)
+        self.assertEqual(run("let result = nth_twin_prime(14);").get("result"), 71)
+        self.assertEqual(run("let result = nth_twin_prime(15);").get("result"), 73)
+
+    def test_nth_twin_prime_of_twenty(self):
+        self.assertEqual(run("let result = nth_twin_prime(20);").get("result"), 137)
+
+    def test_nth_twin_prime_agrees_with_is_twin_prime(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_twin_prime(nth_twin_prime({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_twin_prime({position}) to be a twin prime",
+            )
+
+    def test_nth_twin_prime_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_twin_prime(0);")
+        self.assertIn(
+            "nth_twin_prime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_twin_prime_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_twin_prime(-3);")
+        self.assertIn(
+            "nth_twin_prime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_twin_prime_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_twin_prime(true);")
+        self.assertIn(
+            "nth_twin_prime() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_twin_prime_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_twin_prime("5");')
+        self.assertIn(
+            "nth_twin_prime() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_twin_prime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_twin_prime();")
+
+    def test_nth_twin_prime_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_twin_prime(1, 2);")
+
+
 class TestIsPowerOfTwo(unittest.TestCase):
     def test_is_power_of_two_of_one(self):
         self.assertEqual(run("let result = is_power_of_two(1);").get("result"), True)

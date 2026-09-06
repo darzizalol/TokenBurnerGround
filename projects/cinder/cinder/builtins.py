@@ -2559,6 +2559,44 @@ def _is_achilles(arguments: list, line: int, column: int) -> object:
     return exponent_gcd == 1
 
 
+def _nth_achilles(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_achilles", arguments, 1, line, column)
+    value = _require_int("nth_achilles", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_achilles() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_achilles_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        remaining = candidate
+        divisor = 2
+        exponent_gcd = 0
+        while divisor * divisor <= remaining:
+            if remaining % divisor == 0:
+                count = 0
+                while remaining % divisor == 0:
+                    remaining //= divisor
+                    count += 1
+                if count < 2:
+                    return False
+                exponent_gcd = math.gcd(exponent_gcd, count)
+            divisor += 1
+        if remaining > 1:
+            return False
+        return exponent_gcd == 1
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_achilles_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _integer_kth_root(magnitude: int, k: int) -> int:
     if magnitude == 0:
         return 0
@@ -4995,6 +5033,7 @@ _BUILTINS = {
     "is_powerful_number": _is_powerful_number,
     "nth_powerful_number": _nth_powerful_number,
     "is_achilles": _is_achilles,
+    "nth_achilles": _nth_achilles,
     "is_perfect_power": _is_perfect_power,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,

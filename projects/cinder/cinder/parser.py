@@ -1186,20 +1186,29 @@ class Parser:
         while self._check(TokenType.COMMA):
             self._advance()
             entries.append(self._match_pattern())
-        if len(entries) > 1 and any(
+        has_unconditional = any(
             pattern is None and range_pattern is None
             for pattern, _, range_pattern in entries
-        ):
+        )
+        if len(entries) > 1 and has_unconditional:
             raise ParseError(
                 "'_' or a bound identifier cannot be combined with other "
                 "patterns in a match arm",
                 first_token.line,
                 first_token.column,
             )
+        whole_binding = self._match_whole_binding()
+        if whole_binding is not None and has_unconditional:
+            raise ParseError(
+                "'as' binding is not valid on a '_' or bound-identifier match "
+                "pattern",
+                first_token.line,
+                first_token.column,
+            )
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
         return [
-            MatchArm(pattern, body, binding, None, range_pattern)
+            MatchArm(pattern, body, binding, None, range_pattern, whole_binding=whole_binding)
             for pattern, binding, range_pattern in entries
         ]
 

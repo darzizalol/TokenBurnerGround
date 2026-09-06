@@ -2658,6 +2658,74 @@ class TestIsSelfNumber(unittest.TestCase):
             run("is_self_number(1, 2);")
 
 
+class TestNthSelfNumber(unittest.TestCase):
+    def test_nth_self_number_of_first_ten(self):
+        self.assertEqual(run("let result = nth_self_number(1);").get("result"), 0)
+        self.assertEqual(run("let result = nth_self_number(2);").get("result"), 1)
+        self.assertEqual(run("let result = nth_self_number(3);").get("result"), 3)
+        self.assertEqual(run("let result = nth_self_number(4);").get("result"), 5)
+        self.assertEqual(run("let result = nth_self_number(5);").get("result"), 7)
+        self.assertEqual(run("let result = nth_self_number(6);").get("result"), 9)
+        self.assertEqual(run("let result = nth_self_number(7);").get("result"), 20)
+        self.assertEqual(run("let result = nth_self_number(8);").get("result"), 31)
+        self.assertEqual(run("let result = nth_self_number(9);").get("result"), 42)
+        self.assertEqual(run("let result = nth_self_number(10);").get("result"), 53)
+
+    def test_nth_self_number_of_twenty(self):
+        self.assertEqual(run("let result = nth_self_number(20);").get("result"), 154)
+
+    def test_nth_self_number_of_fifty(self):
+        self.assertEqual(run("let result = nth_self_number(50);").get("result"), 457)
+
+    def test_nth_self_number_agrees_with_is_self_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_self_number(nth_self_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_self_number({position}) to be a self number",
+            )
+
+    def test_nth_self_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_self_number(0);")
+        self.assertIn(
+            "nth_self_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_self_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_self_number(-3);")
+        self.assertIn(
+            "nth_self_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_self_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_self_number(true);")
+        self.assertIn(
+            "nth_self_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_self_number_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_self_number("5");')
+        self.assertIn(
+            "nth_self_number() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_self_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_self_number();")
+
+    def test_nth_self_number_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_self_number(1, 2);")
+
+
 class TestCollatzLength(unittest.TestCase):
     def test_collatz_length_of_one_is_zero(self):
         self.assertEqual(run("let result = collatz_length(1);").get("result"), 0)

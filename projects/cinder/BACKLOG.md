@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
+## 1. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position [claimed 2026-09-06T19:53:22Z]
 
 Build: `is_twin_prime` (`cinder/builtins.py`, search `def
 _is_twin_prime`: prime `n` with a prime at `n - 2` or `n + 2`, e.g. `41` is

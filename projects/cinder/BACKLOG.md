@@ -11,105 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: multiple chained `if` filter clauses in list/map comprehensions [claimed 2026-09-06T19:34:07Z]
-
-Build: a list/map comprehension's `for` clause accepts at most one `if`
-filter today — a second `if` is a `ParseError`, even though chaining two
-independent filters (rather than combining them into one `&&`-style
-expression) is common and reads more naturally clause-by-clause, exactly
-how Python's own comprehensions allow it. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let r = [x for x in 1..20 if x % 2 == 0 if x % 3 == 0]; print(r);'
-# -> <eval>:1:41: expected ']' after list comprehension, found 'if'
-python3 -m cinder.cli eval 'let r = {x: x for x in 1..20 if x % 2 == 0 if x % 3 == 0}; print(r);'
-# -> <eval>:1:47: expected '}' after map comprehension, found 'if'
-```
-Meanwhile a single `if`, and multiple chained `for` clauses, already work:
-```sh
-python3 -m cinder.cli eval 'let r = [x for x in 1..20 if x % 2 == 0]; print(r);'
-# -> [2, 4, 6, 8, 10, 12, 14, 16, 18]
-python3 -m cinder.cli eval 'let r = [x + y for x in 1..3 for y in 1..3 if x != y]; print(r);'
-# -> [3, 4, 3, 5, 4, 5]
-```
-
-Worked examples: `[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]` is `[6,
-12, 18]` — equivalent to combining both conditions with `&&`/`and`;
-`{x: x * x for x in 1..20 if x % 2 == 0 if x % 3 == 0}` is `{6: 36, 12:
-144, 18: 324}` — the map-comprehension sibling; a third chained `if`
-composes too, `[x for x in 1..50 if x % 2 == 0 if x % 3 == 0 if x % 5 ==
-0]` is `[30]`; and chained `if`s compose with chained `for` clauses in
-either order, `[x + y for x in 1..5 if x % 2 == 0 for y in 1..5 if y %
-2 == 0]` is `[4, 6, 6, 8]` (`x` in `{2, 4}`, `y` in `{2, 4}`, every pair).
-
-Root cause: `_comprehension_clause` (search `def _comprehension_clause`,
-`cinder/parser.py`) parses at most one optional `if` — `if
-self._check(TokenType.IF): ... condition = self._ternary()` — with no
-loop, so a second `if` token is left unconsumed and the caller's
-`self._consume(TokenType.RBRACKET/RBRACE, ...)` right after rejects it.
-
-Fix shape — change the single `if self._check(...)` into a `while`, and
-AND-combine every chained condition into one `Logical` expression as they're
-parsed, reusing the exact `Logical`/`Token` construction the real `and`
-operator's own parsing (`_and`, search that name a few dozen lines above)
-already does — no AST node or interpreter change needed at all, since a
-chain of `if`s becomes indistinguishable from a single `if` with `&&`
-between them by the time parsing finishes:
-```python
-condition = None
-while self._check(TokenType.IF):
-    if_token = self._advance()
-    next_condition = self._ternary()
-    if condition is None:
-        condition = next_condition
-    else:
-        and_token = Token(TokenType.AND, "and", None, if_token.line, if_token.column)
-        condition = Logical(condition, and_token, next_condition)
-```
-(`Logical` and `Token` are both already imported in `cinder/parser.py` —
-`Logical` for `ast_nodes`, `Token` from `cinder.tokens` — so no new
-imports are needed.) This is the entire fix: `ComprehensionClause`,
-`ListComprehension`, `MapComprehension` (`cinder/ast_nodes.py`) keep
-their existing single `condition: Expr | None` field unchanged, and
-`_run_comprehension_clauses`/`_evaluate_list_comprehension`/
-`_evaluate_map_comprehension` (`cinder/interpreter.py`) need no changes
-either — they already just do `is_truthy(self.evaluate(clause.condition,
-iter_env))` on whatever single expression tree the parser hands them,
-and short-circuit evaluation of the resulting `Logical` AND-chain gives
-the same left-to-right stop-on-first-`false` behavior a real hand-written
-`if a if b if c` chain should have.
-
-Acceptance criteria:
-- `[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]` is `[6, 12, 18]` — the
-  first worked example above.
-- `{x: x * x for x in 1..20 if x % 2 == 0 if x % 3 == 0}` is `{6: 36, 12:
-  144, 18: 324}` — the map-comprehension sibling.
-- `[x for x in 1..50 if x % 2 == 0 if x % 3 == 0 if x % 5 == 0]` is
-  `[30]` — a third chained `if`.
-- `[x + y for x in 1..5 if x % 2 == 0 for y in 1..5 if y % 2 == 0]` is
-  `[4, 6, 6, 8]` — chained `if`s compose with chained `for` clauses.
-- Regression: every existing single-`if`/no-`if`/chained-`for` comprehension
-  test in `tests/test_parser.py`/`tests/test_interpreter.py` (search
-  `Comprehension` in each) still passes unmodified.
-- New tests in `tests/test_parser.py` (near `test_list_comprehension_with_filter`,
-  search that name) asserting the parsed `condition` field's `shape()` is a
-  `Logical`/`TokenType.AND` node for a chained-`if` list comprehension and
-  a chained-`if` map comprehension.
-- New tests in `tests/test_interpreter.py` (in `class TestListComprehension`/
-  `class TestMapComprehension`, search those names) covering every
-  acceptance case above.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_comprehension_clause`, search that
-name), `tests/test_parser.py`, `tests/test_interpreter.py` per the
-acceptance criteria above. Once merged, `README.md`'s comprehension
-bullets need a clause noting that multiple chained `if` filters are
-supported, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
+## 1. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
 
 Build: `is_twin_prime` (`cinder/builtins.py`, search `def
 _is_twin_prime`: prime `n` with a prime at `n - 2` or `n + 2`, e.g. `41` is
@@ -212,7 +114,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position
+## 2. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position
 
 Build: `is_self_number` (`cinder/builtins.py`, search `def
 _is_self_number`: a non-negative integer with no "generator" — no
@@ -320,7 +222,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_emirp` — emirp found at a 1-indexed position
+## 3. Standard library: `nth_emirp` — emirp found at a 1-indexed position
 
 Build: `is_emirp` (`cinder/builtins.py`, search `def _is_emirp`: a prime
 whose decimal-digit reversal is a *different* prime, e.g. `13` is an emirp
@@ -420,7 +322,7 @@ task.
 
 ---
 
-## 5. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position
+## 4. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position
 
 Build: `is_polydivisible` (`cinder/builtins.py`, search `def
 _is_polydivisible`: a non-negative integer whose every digit-prefix of
@@ -525,7 +427,7 @@ this task.
 
 ---
 
-## 6. Standard library: `nth_trimorphic_number` — trimorphic number found at a 1-indexed position
+## 5. Standard library: `nth_trimorphic_number` — trimorphic number found at a 1-indexed position
 
 Build: `is_trimorphic_number` (`cinder/builtins.py`, search `def
 _is_trimorphic_number`: a non-negative integer whose cube ends in the

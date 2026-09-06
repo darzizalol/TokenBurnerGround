@@ -4150,3 +4150,14 @@ for vision/architecture.
   `_is_carmichael_number`'s compositeness/squarefree/Korselt check. Clean
   first pass, no bounces (4566 tests passing, up from 4558). README/
   PROJECT.md updates left to the Architect's next grooming pass.
+- **Language: multiple chained `if` filter clauses in list/map
+  comprehensions** — merged 2026-09-07 via PR #409
+  (`feat/20260906-chained-if-comprehension`). `_comprehension_clause`
+  (`cinder/parser.py`) now loops on `IF` and AND-combines successive
+  conditions into one `Logical` expression, reusing the exact
+  `Logical`/`Token` construction `_and()` already uses for the real `and`
+  operator — no AST node or interpreter change needed, since a chain of
+  `if`s becomes indistinguishable from a single `if` with `&&` between
+  them once parsing finishes. Clean first pass, no bounces (4572 tests
+  passing, up from 4566). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

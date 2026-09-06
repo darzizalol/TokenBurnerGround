@@ -16,8 +16,8 @@ a later task while an earlier one is unclaimed/open.
 Build: `is_twin_prime` (`cinder/builtins.py`, search `def
 _is_twin_prime`: prime `n` with a prime at `n - 2` or `n + 2`, e.g. `41` is
 a twin prime via `43`) has no value-returning `nth_*` sibling, the same
-gap `nth_smith_number`/`nth_carmichael_number` (the latter task 2 above)
-already close for their own predicates. Verify the gap:
+gap `nth_smith_number`/`nth_carmichael_number` (both already merged,
+`#406`/`#408`) already close for their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_twin_prime(1));'
 # -> <eval>:1:7: undefined name 'nth_twin_prime' (did you mean
@@ -121,9 +121,9 @@ _is_self_number`: a non-negative integer with no "generator" — no
 `candidate` such that `candidate + digit_sum(candidate) == value` — e.g.
 `20` is a self number since no smaller number's digit-sum-added value
 reaches it) has no value-returning `nth_*` sibling, the same gap
-`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime` (the latter
-two tasks 2 and 4 above) already close for their own predicates. Verify
-the gap:
+`nth_smith_number`/`nth_carmichael_number` (both already merged,
+`#406`/`#408`) and `nth_twin_prime` (task 1 above) already close for
+their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_self_number(1));'
 # -> <eval>:1:7: undefined name 'nth_self_number' (did you mean
@@ -228,8 +228,9 @@ Build: `is_emirp` (`cinder/builtins.py`, search `def _is_emirp`: a prime
 whose decimal-digit reversal is a *different* prime, e.g. `13` is an emirp
 since `31` is prime and `31 != 13`, but a palindromic prime like `11` is
 not) has no value-returning `nth_*` sibling, the same gap
-`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`
-(tasks 2, 4, 5 above) already close for their own predicates. Verify the
+`nth_smith_number`/`nth_carmichael_number` (both already merged,
+`#406`/`#408`), `nth_twin_prime` (task 1 above), and `nth_self_number`
+(task 2 above) already close for their own predicates. Verify the
 gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_emirp(1));'
@@ -329,9 +330,10 @@ _is_polydivisible`: a non-negative integer whose every digit-prefix of
 length `i` is divisible by `i`, e.g. `1230` is polydivisible since `1 %
 1 == 0`, `12 % 2 == 0`, `123 % 3 == 0`, `1230 % 4 == 0`) has no
 value-returning `nth_*` sibling, the same gap `nth_smith_number`/
-`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`/`nth_emirp`
-(tasks 1, 3, 4, 5 above) already close for their own predicates. Verify
-the gap:
+`nth_carmichael_number` (both already merged, `#406`/`#408`),
+`nth_twin_prime` (task 1 above), `nth_self_number` (task 2 above), and
+`nth_emirp` (task 3 above) already close for their own predicates.
+Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_polydivisible(1));'
 # -> <eval>:1:7: undefined name 'nth_polydivisible' (did you mean
@@ -344,7 +346,7 @@ scanning with `is_polydivisible` directly) are `0, 1, 2, 3, 4, 5, 6, 7,
 is `0` and `nth_polydivisible(10)` is `9`. The 20th is `28`, the 50th is
 `88`.
 
-Like `nth_self_number` (task 4 above, not yet built as of this writing —
+Like `nth_self_number` (task 2 above, not yet built as of this writing —
 same quirk either way), position `1` maps to candidate `0`, not `1`:
 every single digit `0`-`9` is trivially polydivisible (`is_polydivisible`'s
 own `range(1, len(digits) + 1)` loop only ever checks prefix length `1`
@@ -433,9 +435,10 @@ Build: `is_trimorphic_number` (`cinder/builtins.py`, search `def
 _is_trimorphic_number`: a non-negative integer whose cube ends in the
 number itself, e.g. `24 ** 3 = 13824`, which ends in `24`) has no
 value-returning `nth_*` sibling, the same gap `nth_smith_number`/
-`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`/
-`nth_polydivisible` (tasks 2-5 above) already close for their own
-predicates. Verify the gap:
+`nth_carmichael_number` (both already merged, `#406`/`#408`),
+`nth_twin_prime` (task 1 above), `nth_self_number` (task 2 above),
+`nth_emirp` (task 3 above), and `nth_polydivisible` (task 4 above)
+already close for their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_trimorphic_number(1));'
 # -> <eval>:1:7: undefined name 'nth_trimorphic_number' (did you mean
@@ -448,7 +451,7 @@ scanning with `is_trimorphic_number` directly) are `0, 1, 4, 5, 6, 9,
 `nth_trimorphic_number(1)` is `0` and `nth_trimorphic_number(10)` is
 `51`. The 15th is `249`, the 20th is `501`, the 50th is `109376`.
 
-Like `nth_self_number`/`nth_polydivisible` (tasks 3 and 5 above),
+Like `nth_self_number`/`nth_polydivisible` (tasks 2 and 4 above),
 position `1` maps to candidate `0`, not `1`: `is_trimorphic_number(0)`
 is `true` (`str(0 ** 3)` is `"0"`, which trivially ends with `"0"`), and
 `0` is the smallest value `is_trimorphic_number` ever accepts (it
@@ -530,6 +533,129 @@ search that name). Once merged, `README.md`'s existing
 after it, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" section needs refreshing — leave both
 to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `nth_circular_prime` — circular prime found at a 1-indexed position
+
+Build: `is_circular_prime` (`cinder/builtins.py`, search `def
+_is_circular_prime`: a prime where every rotation of its decimal digits
+is also prime, e.g. `197` is circular since `197`, `971`, and `719` are
+all prime) has no value-returning `nth_*` sibling, the same gap
+`nth_smith_number`/`nth_carmichael_number` (both already merged,
+`#406`/`#408`), `nth_twin_prime` (task 1 above), `nth_self_number`
+(task 2 above), `nth_emirp` (task 3 above), and `nth_polydivisible`
+(task 4 above) already close for their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_circular_prime(1));'
+# -> <eval>:1:7: undefined name 'nth_circular_prime' (did you mean
+#    'is_circular_prime'?)
+```
+
+Worked examples: the first twenty circular primes (confirmed by
+scanning with `is_circular_prime` directly) are `2, 3, 5, 7, 11, 13,
+17, 31, 37, 71, 73, 79, 97, 113, 131, 197, 199, 311, 337, 373`, so
+`nth_circular_prime(1)` is `2` and `nth_circular_prime(10)` is `71`.
+The 15th is `131`, the 20th is `373`, the 50th is `919393`.
+
+Unlike the twin-prime/emirp scans, circular primes thin out fast once
+digit-count grows (every digit but `1` in a multi-digit circular prime
+must itself be a valid non-leading rotation digit, so the whole
+sequence effectively collapses to permutations of `1`, `3`, `7`, `9` — a
+known number-theoretic fact, not a bug to fix), so a single
+`nth_circular_prime(50)` call is measurably slower (~3 seconds observed
+locally) than the other `nth_*` builtins in this backlog. Keep the
+self-consistency acceptance check below at `1..15` rather than the
+`1..50` other recent `nth_*` tasks use — repeating the scan from
+scratch 50 times (as that check does) would multiply into an
+unacceptably slow test suite, the same tradeoff `nth_carmichael_number`
+(`#408`) already made for the same reason (its own test only checks
+`1..15`).
+
+Add directly after `_is_circular_prime` (search `def
+_is_circular_prime`, immediately before `def _is_twin_prime`) — keeps
+the value-returning helper next to the predicate it mirrors:
+```python
+def _nth_circular_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_circular_prime", arguments, 1, line, column)
+    value = _require_int("nth_circular_prime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_circular_prime() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _trial_division_is_prime(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return False
+        return True
+
+    def _is_circular_prime_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        digits = str(candidate)
+        for index in range(len(digits)):
+            rotated = int(digits[index:] + digits[:index])
+            if not _trial_division_is_prime(rotated):
+                return False
+        return True
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_circular_prime_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_twin_prime`/`_nth_emirp`, with the inner
+candidate check copied verbatim from `_is_circular_prime`'s own body
+instead of calling `_is_circular_prime` directly — the same "duplicate
+the tiny predicate body instead of a redundant
+`_require_arity`/`_require_int` round-trip per candidate" choice every
+recent `nth_*` task already makes.) Register the new dict entry (search
+`"is_circular_prime": _is_circular_prime,`, add `"nth_circular_prime":
+_nth_circular_prime,` directly after it, before `"is_twin_prime":
+_is_twin_prime,`).
+
+Acceptance criteria:
+- `nth_circular_prime(1);` through `nth_circular_prime(15);` are `2, 3,
+  5, 7, 11, 13, 17, 31, 37, 71, 73, 79, 97, 113, 131` in order — the
+  worked example above.
+- `nth_circular_prime(20);` is `373` and `nth_circular_prime(50);` is
+  `919393` — further worked examples confirming the scan scales past
+  the first fifteen (the `50` case is expected to take a few seconds —
+  see the performance note above, not a bug).
+- For every `position` in `1..15`,
+  `is_circular_prime(nth_circular_prime(position))` is `true` — a
+  reduced-range self-consistency check (see the performance note above
+  for why `1..15` and not `1..50` here), the same style
+  `nth_carmichael_number`'s own test suite already uses for the same
+  reason.
+- `nth_circular_prime(0);`, `nth_circular_prime(-3);` both raise
+  `CinderRuntimeError` matching `"nth_circular_prime\(\) requires a
+  positive integer, domain error"`.
+- `nth_circular_prime(true);` raises `CinderRuntimeError` matching
+  `"nth_circular_prime\(\) requires an int, got bool"`.
+- `nth_circular_prime("5");` raises `CinderRuntimeError` matching
+  `"nth_circular_prime\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_circular_prime`,
+search `def _is_circular_prime`), `tests/test_builtins.py` (new `class
+TestNthCircularPrime`, modeled on `class TestNthCarmichaelNumber`,
+search that name, for the test shapes and reduced-range self-consistency
+check above — place it near the existing `class TestIsCircularPrime`,
+search that name). Once merged, `README.md`'s existing
+`is_circular_prime` bullet needs `nth_circular_prime` added right after
+it, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
 
 ---
 

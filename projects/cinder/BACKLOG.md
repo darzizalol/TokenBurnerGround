@@ -11,113 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position [claimed 2026-09-06T14:02:24Z]
-
-Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
-whether `n` is a powerful number — every prime factor's exponent is 2 or
-more — whose exponents' gcd is exactly 1, i.e. `n` is not itself a perfect
-power, e.g. `72 = 2^3 * 3^2`, `gcd(3, 2) == 1`) has no value-returning
-`nth_*` sibling, the same gap `nth_powerful_number`/`nth_sphenic` already
-closed for their own predicates. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_achilles(1));'
-# -> <eval>:1:7: undefined name 'nth_achilles' (did you mean
-#    'is_achilles'?)
-```
-
-Worked examples: the first ten Achilles numbers (OEIS A052486) are `72,
-108, 200, 288, 392, 432, 500, 648, 675, 800` (confirmed by scanning with
-`is_achilles` directly: `4 = 2^2` is powerful but a perfect square, so
-it's excluded; `72 = 2^3 * 3^2` has exponent gcd `gcd(3, 2) == 1`, so
-it's the first), so `nth_achilles(1)` is `72` and `nth_achilles(10)` is
-`800`. The 20th is `1800`.
-
-Add directly after `_is_achilles` (search `def _is_achilles`, immediately
-before `def _integer_kth_root`) — keeps the value-returning helper next
-to the predicate it mirrors, matching where `nth_powerful_number` itself
-sits right after `is_powerful_number`:
-```python
-def _nth_achilles(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_achilles", arguments, 1, line, column)
-    value = _require_int("nth_achilles", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_achilles() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_achilles_candidate(candidate: int) -> bool:
-        if candidate < 2:
-            return False
-        remaining = candidate
-        divisor = 2
-        exponent_gcd = 0
-        while divisor * divisor <= remaining:
-            if remaining % divisor == 0:
-                count = 0
-                while remaining % divisor == 0:
-                    remaining //= divisor
-                    count += 1
-                if count < 2:
-                    return False
-                exponent_gcd = math.gcd(exponent_gcd, count)
-            divisor += 1
-        if remaining > 1:
-            return False
-        return exponent_gcd == 1
-
-    count = 0
-    candidate = 1
-    while count < value:
-        candidate += 1
-        if _is_achilles_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_sphenic`/`_nth_powerful_number`, with the inner
-candidate check copied from `_is_achilles`'s own body — including its
-`math.gcd` use, already imported at module scope since `_is_achilles`
-itself uses it — instead of calling `_is_achilles` directly, the same
-"duplicate the tiny predicate body instead of a redundant
-`_require_arity`/`_require_int` round-trip per candidate" choice every
-recent `nth_*` task already makes.) Register the new dict entry (search
-`"is_achilles": _is_achilles,`, add `"nth_achilles": _nth_achilles,`
-directly after it, before `"is_perfect_power": _is_perfect_power,`).
-
-Acceptance criteria:
-- `nth_achilles(1);` through `nth_achilles(10);` are `72, 108, 200, 288,
-  392, 432, 500, 648, 675, 800` in order — the worked example above.
-- `nth_achilles(20);` is `1800` — a further worked example confirming
-  the scan scales past the first ten.
-- For every `position` in `1..50`, `is_achilles(nth_achilles(position))`
-  is `true` — the same self-consistency check `nth_sphenic`/
-  `nth_powerful_number`'s own test suites already run against their
-  predicates.
-- `nth_achilles(0);`, `nth_achilles(-3);` both raise `CinderRuntimeError`
-  matching `"nth_achilles\(\) requires a positive integer, domain
-  error"`.
-- `nth_achilles(true);` raises `CinderRuntimeError` matching
-  `"nth_achilles\(\) requires an int, got bool"`.
-- `nth_achilles("5");` raises `CinderRuntimeError` matching
-  `"nth_achilles\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_achilles`, search
-`def _is_achilles`), `tests/test_builtins.py` (new `class
-TestNthAchilles`, modeled on `class TestNthPowerfulNumber`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsAchilles`, search that name). Once merged, `README.md`'s existing
-`is_achilles` bullet (search `` `is_achilles` to test``) needs
-`nth_achilles` added right after it, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not this
-task.
-
----
-
-## 2. Language: whole-value `as` binding on literal and range `match` patterns
+## 1. Language: whole-value `as` binding on literal and range `match` patterns
 
 Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
 _ => nil }`) currently only exists on list-pattern and map-pattern match
@@ -283,7 +177,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+## 2. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`: a composite number whose decimal digit sum equals the
@@ -389,7 +283,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: `as` binding on a nested list/map sub-pattern inside `match`
+## 3. Language: `as` binding on a nested list/map sub-pattern inside `match`
 
 Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
 entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>
@@ -611,7 +505,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
+## 4. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
 
 Build: `is_carmichael_number` (`cinder/builtins.py`, search `def
 _is_carmichael_number`: a composite, squarefree number `n` where every

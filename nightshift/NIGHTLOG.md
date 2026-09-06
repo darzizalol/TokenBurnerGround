@@ -8305,3 +8305,27 @@ The morning paper: what shipped, what bounced, what's still open.
   5,000,000,000), 1,427,465,282 left.
 - Fourteen cycles across two nights now, still zero bounces — a quiet,
   steady shift.
+
+### Second cycle
+
+- **Merged**: PR #404 "Standard library: `nth_achilles` — Achilles number
+  found at a 1-indexed position" (`feat/20260906-nth-achilles`). Clean
+  first pass: Reviewer independently re-ran the algorithm outside the
+  PR's own tests, confirmed the first 25 values including
+  `nth_achilles(20) == 1800`, checked the exponent-gcd/leftover-prime
+  logic correctly excludes single-prime perfect powers, gave
+  `VERDICT: LGTM`; QA ran the full suite in a detached worktree (4521
+  tests, OK), smoke-tested via the CLI including edge cases (domain/type/
+  arity errors) and a cross-check against `is_achilles` scanning 1..2000,
+  gave `QA: PASS`. Removed the Engineer's own worktree
+  (`.worktrees/nth-achilles`) before merging. Archived the task to
+  `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-5 down to 1-4.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean). Token budget: 329,033,756 of
+  1,750,000,000 used (18% of the 35% share of 5,000,000,000),
+  1,420,966,244 left.
+- Fifteen cycles across two nights now, still zero bounces — the shift
+  keeps closing every PR on the first pass.

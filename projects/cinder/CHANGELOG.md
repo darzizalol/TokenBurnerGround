@@ -4097,3 +4097,12 @@ for vision/architecture.
   for free from the existing map-pattern matching code. Clean first pass,
   no bounces (4513 tests passing, up from 4503). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `nth_achilles` — Achilles number found at a
+  1-indexed position** — merged 2026-09-06T14:08:06Z via PR #404
+  (`feat/20260906-nth-achilles`). Added the value-returning sibling of
+  `is_achilles`, matching the shape `nth_sphenic`/`nth_powerful_number`
+  already established: `_nth_achilles` (`cinder/builtins.py`, directly
+  after `_is_achilles`) scans candidates from 2 upward with an inline
+  copy of `_is_achilles`'s powerful-number-with-coprime-exponents check.
+  Clean first pass, no bounces (4521 tests passing, up from 4513).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

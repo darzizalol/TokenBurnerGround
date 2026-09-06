@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_emirp` — emirp found at a 1-indexed position
+## 1. Standard library: `nth_emirp` — emirp found at a 1-indexed position [claimed 2026-09-06T20:25:26Z]
 
 Build: `is_emirp` (`cinder/builtins.py`, search `def _is_emirp`: a prime
 whose decimal-digit reversal is a *different* prime, e.g. `13` is an emirp

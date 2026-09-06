@@ -6520,6 +6520,76 @@ class TestIsAchilles(unittest.TestCase):
             run("is_achilles();")
 
 
+class TestNthAchilles(unittest.TestCase):
+    def test_nth_achilles_of_first_ten_positions(self):
+        expected = {
+            1: 72,
+            2: 108,
+            3: 200,
+            4: 288,
+            5: 392,
+            6: 432,
+            7: 500,
+            8: 648,
+            9: 675,
+            10: 800,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_achilles({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_achilles_of_twenty(self):
+        self.assertEqual(run("let result = nth_achilles(20);").get("result"), 1800)
+
+    def test_nth_achilles_agrees_with_is_achilles(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(f"let result = is_achilles(nth_achilles({position}));").get(
+                    "result"
+                ),
+                True,
+                f"expected nth_achilles({position}) to be an Achilles number",
+            )
+
+    def test_nth_achilles_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_achilles(0);")
+        self.assertIn(
+            "nth_achilles() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_achilles_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_achilles(-3);")
+        self.assertIn(
+            "nth_achilles() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_achilles_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_achilles(true);")
+        self.assertIn(
+            "nth_achilles() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_achilles_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_achilles("5");')
+        self.assertIn(
+            "nth_achilles() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_achilles_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_achilles(1, 2);")
+
+
 class TestIsPerfectPower(unittest.TestCase):
     def test_is_perfect_power_of_0(self):
         self.assertEqual(run("let result = is_perfect_power(0);").get("result"), True)

@@ -4141,3 +4141,12 @@ for vision/architecture.
   against the raw subject sub-value once the nested sub-match succeeds.
   Clean first pass, no bounces (4558 tests passing, up from 4544).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `nth_carmichael_number`** — merged 2026-09-07 via
+  PR #408 (`feat/20260906-nth-carmichael`). Value-returning sibling of
+  `is_carmichael_number`, matching the shape `nth_smith_number`/
+  `nth_achilles` already established: `_nth_carmichael_number`
+  (`cinder/builtins.py`, directly after `_is_carmichael_number`) scans
+  candidates from 2 upward with an inline copy of
+  `_is_carmichael_number`'s compositeness/squarefree/Korselt check. Clean
+  first pass, no bounces (4566 tests passing, up from 4558). README/
+  PROJECT.md updates left to the Architect's next grooming pass.

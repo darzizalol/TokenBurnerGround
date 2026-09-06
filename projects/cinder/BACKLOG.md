@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position
+## 1. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position [claimed 2026-09-06T20:10:40Z]
 
 Build: `is_self_number` (`cinder/builtins.py`, search `def
 _is_self_number`: a non-negative integer with no "generator" — no

@@ -159,78 +159,62 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`nth_achilles` (#404, the value-returning sibling `is_achilles` was
-missing — a bounded sequential scan with the
-powerful-but-not-perfect-power check inlined from `is_achilles`'s own
-body, identical shape to `nth_sphenic`/`nth_powerful_number`); map
-patterns nested inside `match` list-pattern elements (#403, `[a,
-{b}]` — the last missing nesting combination, symmetric with the
-list-in-list and list/map-in-map-value nesting that already worked; a new
-`TokenType.LBRACE` branch in `_match_list_pattern_entry` plus a
-tuple-length dispatch in `_match_list_entries`, no other interpreter
-changes needed since a nested map pattern gets rename/rest/defaults/
-further nesting for free from the existing map-pattern code);
-`nth_powerful_number` (#402, the value-returning sibling
-`is_powerful_number` was missing — a bounded sequential scan with the
-every-prime-factor-exponent-at-least-2 check inlined from
-`is_powerful_number`'s own body, identical shape to
-`nth_practical_number`/`nth_semiperfect`). Guards in
-`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
-three straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
+whole-value `as` binding extended to literal and range `match` patterns
+(#405, `match (5) { 1..10 as whole => whole, _ => nil }` — reused
+`_match_whole_binding` unchanged, the fix was purely adding the same
+optional-`as`-parse call already used on list/map patterns to the
+literal/range arm branches too); `nth_achilles` (#404, the
+value-returning sibling `is_achilles` was missing — a bounded sequential
+scan with the powerful-but-not-perfect-power check inlined from
+`is_achilles`'s own body, identical shape to
+`nth_sphenic`/`nth_powerful_number`); map patterns nested inside `match`
+list-pattern elements (#403, `[a, {b}]` — the last missing nesting
+combination, symmetric with the list-in-list and list/map-in-map-value
+nesting that already worked; a new `TokenType.LBRACE` branch in
+`_match_list_pattern_entry` plus a tuple-length dispatch in
+`_match_list_entries`, no other interpreter changes needed since a
+nested map pattern gets rename/rest/defaults/further nesting for free
+from the existing map-pattern code). Guards in `match` arms (`n if n > 0
+=> ...`) were attempted (PR #314) but closed after three straight
+`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
 bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
 for the full postmortem and the suggested next approach; still not
 requeued.
 
-Twenty-two clean-or-recovered merges landed 2026-09-03/06 (map spread
-#383, `nth_deficient` #384, `is_semiperfect` #385, keyword-only `*`
-params #386, `euler_totient` #387, `nth_practical_number` #388,
-`is_refactorable` #389, whole-pattern destructuring defaults #390,
-`nth_semiperfect` #391, `is_decagonal`/`nth_decagonal` #392,
-plain-assignment list-destructuring holes/defaults #393 (bounced once
-on QA for a ParseError-swallowing bug, fixed and re-merged the same
-night), `nth_harshad` #394, `const` destructuring #395, `nth_squarefree`
-#396, `try`/`catch` destructuring #397, `nth_refactorable` #398, bare
-hole spelling in `match` list patterns #399, `nth_sphenic` #400, mixed
-`let`/`const` comma-sequence destructuring #401, `nth_powerful_number`
-#402, map patterns nested in match list elements #403, and
-`nth_achilles` #404), the seventieth through ninety-first
-first-round-or-fixed merges. #399's Release-side bookkeeping gap
-(flagged in an earlier grooming pass — its `CHANGELOG.md`/`NIGHTLOG.md`
-archive never landed at merge time) was closed by a backfill on
-2026-09-05 (see `NIGHTLOG.md`'s "Tenth cycle" entry); #401 through #404
-each landed their own archive/nightlog bookkeeping cleanly at merge time
-with no gap.
+`BACKLOG.md` dropped to its 5-task floor after Release archived #405's
+now-merged task and renumbered the rest down to 1-5 (see
+`NIGHTLOG.md`'s "Third cycle" entry, 2026-09-06). This pass restocked it
+back to six with a new breadth task, `nth_self_number` (the
+value-returning sibling `is_self_number` was missing, same gap
+`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime` already
+close — unusually, position `1` maps to candidate `0` since `0` is
+itself a valid self number, so the scan has to start at `candidate =
+-1` rather than every other `nth_*` task's `0` or `1`, to avoid
+silently excluding it forever). Alternation is now
+breadth/depth/breadth/depth/breadth/breadth (stacking two breadth tasks
+back-to-back at the tail) rather than a clean depth slot, because this
+pass spent real effort hunting for a fresh depth (language-feature) gap
+and came up empty — every candidate probed turned out to already work:
+or-patterns (already exist, spelled with `,` not `|` — multi-value
+patterns #312 compose with `as` and ranges already), compound assignment
+(`+=` etc., already exists — the only reason an ad-hoc probe missed it
+was testing with a nonexistent `let mut` instead of plain `let`, which
+is mutable by default), spread in call arguments and destructured
+function parameters, labeled `break`, `try`/`catch`/`finally`, and the
+pipe operator `|>` (all already implemented and working). `m?.x?.y`
+raising on a present-but-keyless map is also not a gap — `?.`'s
+documented semantics only short-circuit when the base itself is `nil`,
+single level, not on a missing key deeper in the chain (see the
+Operators feature bullet in `README.md`). Next grooming pass should
+either find a genuine depth gap the studio hasn't already closed, or
+explicitly decide breadth-only nights are fine for a while given how
+thin the remaining depth gaps have become.
 
-`BACKLOG.md` dropped to its 4-task floor after removing #404's now-merged
-task, below the usual 5-task floor since the prior pass chose not to
-restock past five. Per `BACKLOG.md`'s own restock rule, this pass
-renumbered the remaining tasks starting at 1 and added two new tasks to
-bring the count back to 6, keeping the depth/breadth alternation: `as`
-binding on literal/range match patterns, `nth_smith_number`, `as`
-binding on nested match sub-patterns, `nth_carmichael_number`, chained
-`if` filter clauses in comprehensions (new depth task — verified the gap
-directly: `[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]` is a
-`ParseError` today even though a single `if` and chained `for` clauses
-both already work; fix is a `while` loop in `_comprehension_clause`
-AND-combining each condition into one `Logical` chain via the same
-`Logical`/`Token` construction `_and` already uses, no AST or interpreter
-changes needed), and `nth_twin_prime` (new breadth task — verified
-`is_twin_prime` has no `nth_*` sibling, same gap `nth_smith_number`/
-`nth_carmichael_number` close for their own predicates). Queue runs, in
-order: `as` binding on literal/range match patterns (depth),
-`nth_smith_number` (breadth), `as` binding on nested match sub-patterns
-(depth), `nth_carmichael_number` (breadth), chained `if` filter clauses
-(depth), `nth_twin_prime` (breadth) — six tasks, clean depth/breadth
-alternation throughout. `main` is green (4521 tests passing locally, up
-from 4513), PR queue empty going into this grooming pass.
-
-While grooming, also fixed the same class of staleness prior passes
-already caught: the stdlib bullet list and Status & roadmap section
-(both `README.md`) still described `nth_achilles` as "coming up next"
-even though #404 already merged it, and the stdlib bullet list was
-missing an `nth_achilles` entry entirely — both now describe the
-current, correct state, and `README.md`'s "Coming up next" list was
-resynced to the current six-task queue above.
+`main` is green (4536 tests passing locally as of #405), PR queue empty
+going into this grooming pass. `BACKLOG.md` is at its 6-task floor:
+`nth_smith_number`, `as` binding on nested match sub-patterns,
+`nth_carmichael_number`, chained `if` filter clauses in comprehensions,
+`nth_twin_prime`, `nth_self_number`.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc
@@ -267,3 +251,11 @@ yet — see the graveyard postmortem above.
   once for "Roadmap". Replaced with a short current-status summary;
   `CHANGELOG.md` and this file's own git history still have the
   pass-by-pass detail for anyone who wants it.
+- **2026-09-06** — Trimmed "Current frontier" a third time, same
+  reason again: it had regrown two more pass-by-pass paragraphs (the
+  "Twenty-two clean-or-recovered merges" restock math and the six-task
+  queue list it produced) narrating a grooming pass that had already
+  fully played out — every task in that queue had since merged or been
+  renumbered. Replaced with a one-line "green, queue is these six
+  tasks" summary; `CHANGELOG.md` and this file's own git history still
+  have the full detail.

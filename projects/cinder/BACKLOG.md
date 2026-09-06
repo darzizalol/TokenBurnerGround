@@ -651,6 +651,113 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position
+
+Build: `is_self_number` (`cinder/builtins.py`, search `def
+_is_self_number`: a non-negative integer with no "generator" — no
+`candidate` such that `candidate + digit_sum(candidate) == value` — e.g.
+`20` is a self number since no smaller number's digit-sum-added value
+reaches it) has no value-returning `nth_*` sibling, the same gap
+`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime` (tasks 1, 3,
+5 above) already close for their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_self_number(1));'
+# -> <eval>:1:7: undefined name 'nth_self_number' (did you mean
+#    'is_self_number'?)
+```
+
+Worked examples: the first twenty self numbers (confirmed by scanning
+with `is_self_number` directly) are `0, 1, 3, 5, 7, 9, 20, 31, 42, 53,
+64, 75, 86, 97, 108, 110, 121, 132, 143, 154`, so `nth_self_number(1)` is
+`0` and `nth_self_number(10)` is `53`. The 20th is `154`, the 50th is
+`457`.
+
+Unlike every other `nth_*` in this backlog, position `1` maps to
+candidate `0`, not `1` — `is_self_number(0)` is `true` (`digit_count =
+1`, `lower_bound = max(0, 0 - 9) = 0`, the `range(0, 0)` scan is empty so
+nothing disproves it), and `0` is the smallest value `is_self_number`
+ever accepts (it returns `false` outright for negative input, per its
+own `if value < 0: return False` guard), so the scan must start
+*before* `0` (`candidate = -1`, incremented before the first check) to
+avoid silently excluding it from the sequence forever.
+
+Add directly after `_is_self_number` (search `def _is_self_number`,
+immediately before `def _nth_happy_number`) — keeps the value-returning
+helper next to the predicate it mirrors:
+```python
+def _nth_self_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_self_number", arguments, 1, line, column)
+    value = _require_int("nth_self_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_self_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_self_number_candidate(candidate: int) -> bool:
+        digit_count = len(str(candidate))
+        lower_bound = max(0, candidate - 9 * digit_count)
+        for lower_candidate in range(lower_bound, candidate):
+            if (
+                lower_candidate
+                + sum(int(digit) for digit in str(lower_candidate))
+                == candidate
+            ):
+                return False
+        return True
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_self_number_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Inner candidate check copied verbatim from `_is_self_number`'s own body
+minus its `value < 0` guard, since the scan never visits a negative
+candidate — the same "duplicate the tiny predicate body instead of a
+redundant `_require_arity`/`_require_int` round-trip per candidate"
+choice every recent `nth_*` task already makes.) Register the new dict
+entry (search `"is_self_number": _is_self_number,`, add
+`"nth_self_number": _nth_self_number,` directly after it, before
+`"nth_happy_number": _nth_happy_number,`).
+
+Acceptance criteria:
+- `nth_self_number(1);` through `nth_self_number(10);` are `0, 1, 3, 5,
+  7, 9, 20, 31, 42, 53` in order — the worked example above.
+- `nth_self_number(20);` is `154` and `nth_self_number(50);` is `457` —
+  further worked examples confirming the scan scales past the first ten.
+- For every `position` in `1..50`,
+  `is_self_number(nth_self_number(position))` is `true` — the same
+  self-consistency check `nth_smith_number`/`nth_carmichael_number`/
+  `nth_twin_prime`'s own test suites already run against their
+  predicates.
+- `nth_self_number(0);`, `nth_self_number(-3);` both raise
+  `CinderRuntimeError` matching `"nth_self_number\(\) requires a
+  positive integer, domain error"` — note this domain check is on the
+  *position* argument, unrelated to `0` being a valid *self number*
+  itself (`nth_self_number(1)` legitimately returns `0`).
+- `nth_self_number(true);` raises `CinderRuntimeError` matching
+  `"nth_self_number\(\) requires an int, got bool"`.
+- `nth_self_number("5");` raises `CinderRuntimeError` matching
+  `"nth_self_number\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_self_number`,
+search `def _is_self_number`), `tests/test_builtins.py` (new `class
+TestNthSelfNumber`, modeled on `class TestNthHappyNumber`, search that
+name, for the test shapes above — place it near the existing `class
+TestIsSelfNumber`, search that name). Once merged, `README.md`'s
+existing `is_self_number` bullet needs `nth_self_number` added right
+after it, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

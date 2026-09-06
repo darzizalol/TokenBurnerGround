@@ -8388,3 +8388,32 @@ The morning paper: what shipped, what bounced, what's still open.
   1,399,982,659 left.
 - Seventeen cycles across two nights now, still zero bounces — the shift
   keeps shipping clean.
+
+### Fifth cycle
+
+- **Merged**: PR #407 "Language: `as` binding on a nested list/map
+  sub-pattern inside `match`" (`feat/20260906-nested-as-binding`). Clean
+  first pass: Reviewer traced the tuple-shape changes in
+  `_match_list_pattern_entry`/`_match_map_pattern_entry` (`cinder/parser.py`)
+  and the new `env.define(nested_as, item)` call in `interpreter.py`,
+  confirmed the shape-mismatch fallthrough works for free via the existing
+  `isinstance` guards, checked test coverage across all four nesting
+  combinations plus rest-capture and two-level nesting, and ran the full
+  suite clean (4558 tests) in a detached worktree, gave `VERDICT: LGTM`;
+  QA ran the full suite in its own detached worktree (4558 tests, OK) and
+  hand-verified composite nested bindings, shape-mismatch fallthrough,
+  two-level nesting, rest-capture composition, and negative parse-error
+  cases via the CLI, gave `QA: PASS`. Removed the Engineer's own worktree
+  (`.worktrees/nested-as-binding`) before merging. Archived the task to
+  `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to 1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved entries and the recurring stray-stash note
+  from the 2026-09-04 reviewer session, still Architect's to pick up, not
+  Release's). `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean). Token budget: 360,193,921 of
+  1,750,000,000 used (20% of the 35% share of 5,000,000,000),
+  1,389,806,079 left.
+- Eighteen cycles across two nights now, still zero bounces — the shift
+  keeps shipping clean.

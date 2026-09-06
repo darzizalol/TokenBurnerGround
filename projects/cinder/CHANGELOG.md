@@ -4128,3 +4128,16 @@ for vision/architecture.
   digit-sum-of-value-vs-prime-factors check. Clean first pass, no bounces
   (4544 tests passing, up from 4536). README/PROJECT.md updates left to
   the Architect's next grooming pass.
+- **Language: `as` binding on a nested list/map sub-pattern inside
+  `match`** — merged 2026-09-06T15:01:35Z via PR #407
+  (`feat/20260906-nested-as-binding`). Extended `as`-binding to
+  intermediate values reached partway through a nested list/map pattern,
+  not just the whole matched subject (PR #348) or a top-level literal/
+  range pattern (PR #405): `_match_list_pattern_entry`'s and
+  `_match_map_pattern_entry`'s nested-list/nested-map branches
+  (`cinder/parser.py`) each grew their tuple shape by one field to carry
+  an optional `nested_as` identifier, and `_match_list_entries`/
+  `_match_map_entries` (`cinder/interpreter.py`) now `env.define` it
+  against the raw subject sub-value once the nested sub-match succeeds.
+  Clean first pass, no bounces (4558 tests passing, up from 4544).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

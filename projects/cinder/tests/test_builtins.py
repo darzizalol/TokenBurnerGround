@@ -7054,6 +7054,78 @@ class TestIsCarmichaelNumber(unittest.TestCase):
             run("is_carmichael_number();")
 
 
+class TestNthCarmichaelNumber(unittest.TestCase):
+    def test_nth_carmichael_number_of_first_ten_positions(self):
+        expected = {
+            1: 561,
+            2: 1105,
+            3: 1729,
+            4: 2465,
+            5: 2821,
+            6: 6601,
+            7: 8911,
+            8: 10585,
+            9: 15841,
+            10: 29341,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_carmichael_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_carmichael_number_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_carmichael_number(20);").get("result"), 162401
+        )
+
+    def test_nth_carmichael_number_agrees_with_is_carmichael_number(self):
+        for position in range(1, 16):
+            self.assertEqual(
+                run(
+                    f"let result = is_carmichael_number(nth_carmichael_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_carmichael_number({position}) to be a carmichael number",
+            )
+
+    def test_nth_carmichael_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_carmichael_number(0);")
+        self.assertIn(
+            "nth_carmichael_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_carmichael_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_carmichael_number(-3);")
+        self.assertIn(
+            "nth_carmichael_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_carmichael_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_carmichael_number(true);")
+        self.assertIn(
+            "nth_carmichael_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_carmichael_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_carmichael_number("5");')
+        self.assertIn(
+            "nth_carmichael_number() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_carmichael_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_carmichael_number(1, 2);")
+
+
 class TestIsVampireNumber(unittest.TestCase):
     def test_is_vampire_number_of_1260(self):
         self.assertTrue(run("let result = is_vampire_number(1260);").get("result"))

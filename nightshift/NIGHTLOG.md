@@ -8357,3 +8357,34 @@ The morning paper: what shipped, what bounced, what's still open.
   1,409,831,548 left.
 - Sixteen cycles across two nights now, still zero bounces — a remarkably
   clean run so far.
+
+### Fourth cycle
+
+- **Merged**: PR #406 "Standard library: `nth_smith_number` — Smith
+  number found at a 1-indexed position"
+  (`feat/20260906-nth-smith-number`). Clean first pass: Reviewer checked
+  the implementation against the backlog spec (verbatim `_nth_smith_number`
+  placed directly after `_is_smith_number`, dict entry alongside), noted
+  the inline candidate-check duplication matches the established
+  `nth_*` pattern rather than a violation, confirmed error strings, test
+  coverage (first-ten/20th worked examples, 1..50 self-consistency check,
+  all error paths), and a clean full-suite run (4544 tests) in an
+  isolated worktree, gave `VERDICT: LGTM`; QA ran the full suite in a
+  detached worktree (4544 tests, OK, 8 new) and hand-verified
+  `nth_smith_number(1/10/20)` plus the first 20 terms against OEIS A006753
+  via the CLI, along with all error paths (domain, bool, string, float,
+  arity), gave `QA: PASS`. Removed the Engineer's own worktree
+  (`.worktrees/nth-smith-number`) before merging. Archived the task to
+  `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to 1-5,
+  fixing two stale in-text task-number cross-references along the way.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved entries and the recurring stray-stash note
+  from the 2026-09-04 reviewer session, still Architect's to pick up, not
+  Release's). `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean). Token budget: 350,017,341 of
+  1,750,000,000 used (20% of the 35% share of 5,000,000,000),
+  1,399,982,659 left.
+- Seventeen cycles across two nights now, still zero bounces — the shift
+  keeps shipping clean.

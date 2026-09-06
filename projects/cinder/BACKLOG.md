@@ -11,113 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position [claimed 2026-09-06T14:36:58Z]
-
-Build: `is_smith_number` (`cinder/builtins.py`, search `def
-_is_smith_number`: a composite number whose decimal digit sum equals the
-digit sum of all its prime factors with multiplicity, e.g. `22 = 2 * 11`,
-digit sum `4`, factor digit sum `2 + 1 + 1 = 4`) has no value-returning
-`nth_*` sibling, the same gap `nth_refactorable`/`nth_sphenic` already
-closed for their own predicates. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_smith_number(1));'
-# -> <eval>:1:7: undefined name 'nth_smith_number' (did you mean
-#    'is_smith_number'?)
-```
-
-Worked examples: the first ten Smith numbers are `4, 22, 27, 58, 85, 94,
-121, 166, 202, 265` (confirmed by scanning with `is_smith_number`
-directly), so `nth_smith_number(1)` is `4` and `nth_smith_number(10)` is
-`265`. The 20th is `483`.
-
-Add directly after `_is_smith_number` (search `def _is_smith_number`,
-immediately before `def _is_carmichael_number`) — keeps the
-value-returning helper next to the predicate it mirrors, matching where
-`nth_refactorable` itself sits right after `is_refactorable`:
-```python
-def _nth_smith_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_smith_number", arguments, 1, line, column)
-    value = _require_int("nth_smith_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_smith_number() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_smith_candidate(candidate: int) -> bool:
-        if candidate < 2:
-            return False
-        for divisor in range(2, int(candidate ** 0.5) + 1):
-            if candidate % divisor == 0:
-                break
-        else:
-            return False  # prime, not composite
-        factors = []
-        remaining = candidate
-        divisor = 2
-        while divisor * divisor <= remaining:
-            while remaining % divisor == 0:
-                factors.append(divisor)
-                remaining //= divisor
-            divisor += 1
-        if remaining > 1:
-            factors.append(remaining)
-        digit_total = sum(int(digit) for digit in str(candidate))
-        factor_digit_total = sum(
-            sum(int(digit) for digit in str(factor)) for factor in factors
-        )
-        return digit_total == factor_digit_total
-
-    count = 0
-    candidate = 1
-    while count < value:
-        candidate += 1
-        if _is_smith_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Identical shape to `_nth_refactorable`/`_nth_sphenic`, with the inner
-candidate check copied verbatim from `_is_smith_number`'s own body
-instead of calling `_is_smith_number` directly — the same "duplicate the
-tiny predicate body instead of a redundant `_require_arity`/`_require_int`
-round-trip per candidate" choice every recent `nth_*` task already makes.)
-Register the new dict entry (search `"is_smith_number":
-_is_smith_number,`, add `"nth_smith_number": _nth_smith_number,` directly
-after it, before `"is_carmichael_number": _is_carmichael_number,`).
-
-Acceptance criteria:
-- `nth_smith_number(1);` through `nth_smith_number(10);` are `4, 22, 27,
-  58, 85, 94, 121, 166, 202, 265` in order — the worked example above.
-- `nth_smith_number(20);` is `483` — a further worked example confirming
-  the scan scales past the first ten.
-- For every `position` in `1..50`,
-  `is_smith_number(nth_smith_number(position))` is `true` — the same
-  self-consistency check `nth_refactorable`/`nth_sphenic`'s own test
-  suites already run against their predicates.
-- `nth_smith_number(0);`, `nth_smith_number(-3);` both raise
-  `CinderRuntimeError` matching `"nth_smith_number\(\) requires a
-  positive integer, domain error"`.
-- `nth_smith_number(true);` raises `CinderRuntimeError` matching
-  `"nth_smith_number\(\) requires an int, got bool"`.
-- `nth_smith_number("5");` raises `CinderRuntimeError` matching
-  `"nth_smith_number\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_smith_number`,
-search `def _is_smith_number`), `tests/test_builtins.py` (new `class
-TestNthSmithNumber`, modeled on `class TestNthRefactorable`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsSmithNumber`, search that name). Once merged, `README.md`'s
-existing `is_smith_number` bullet needs `nth_smith_number` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: `as` binding on a nested list/map sub-pattern inside `match`
+## 1. Language: `as` binding on a nested list/map sub-pattern inside `match`
 
 Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
 entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>
@@ -339,7 +233,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
+## 2. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
 
 Build: `is_carmichael_number` (`cinder/builtins.py`, search `def
 _is_carmichael_number`: a composite, squarefree number `n` where every
@@ -450,7 +344,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: multiple chained `if` filter clauses in list/map comprehensions
+## 3. Language: multiple chained `if` filter clauses in list/map comprehensions
 
 Build: a list/map comprehension's `for` clause accepts at most one `if`
 filter today — a second `if` is a `ParseError`, even though chaining two
@@ -548,12 +442,12 @@ task.
 
 ---
 
-## 5. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
+## 4. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
 
 Build: `is_twin_prime` (`cinder/builtins.py`, search `def
 _is_twin_prime`: prime `n` with a prime at `n - 2` or `n + 2`, e.g. `41` is
 a twin prime via `43`) has no value-returning `nth_*` sibling, the same
-gap `nth_smith_number`/`nth_carmichael_number` (tasks 1 and 3 above)
+gap `nth_smith_number`/`nth_carmichael_number` (the latter task 2 above)
 already close for their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_twin_prime(1));'
@@ -651,15 +545,16 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position
+## 5. Standard library: `nth_self_number` — self (Colombian) number found at a 1-indexed position
 
 Build: `is_self_number` (`cinder/builtins.py`, search `def
 _is_self_number`: a non-negative integer with no "generator" — no
 `candidate` such that `candidate + digit_sum(candidate) == value` — e.g.
 `20` is a self number since no smaller number's digit-sum-added value
 reaches it) has no value-returning `nth_*` sibling, the same gap
-`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime` (tasks 1, 3,
-5 above) already close for their own predicates. Verify the gap:
+`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime` (the latter
+two tasks 2 and 4 above) already close for their own predicates. Verify
+the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_self_number(1));'
 # -> <eval>:1:7: undefined name 'nth_self_number' (did you mean

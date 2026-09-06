@@ -4119,3 +4119,12 @@ for vision/architecture.
   existing list/map-pattern branches. Clean first pass, no bounces (4536
   tests passing, up from 4521). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `nth_smith_number`** — merged 2026-09-06T14:42:03Z
+  via PR #406 (`feat/20260906-nth-smith-number`). Added the
+  value-returning sibling of `is_smith_number`, matching the shape
+  `nth_refactorable`/`nth_sphenic` already established: `_nth_smith_number`
+  (`cinder/builtins.py`, directly after `_is_smith_number`) scans
+  candidates from 2 upward with an inline copy of `_is_smith_number`'s
+  digit-sum-of-value-vs-prime-factors check. Clean first pass, no bounces
+  (4544 tests passing, up from 4536). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

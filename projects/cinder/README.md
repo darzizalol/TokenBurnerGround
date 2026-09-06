@@ -601,6 +601,9 @@ while (i < 10) {
   criterion (`(p - 1) | (n - 1)` for every prime factor `p`, e.g. `561 = 3 * 11 * 17`), the
   composite-but-squarefree Fermat-pseudoprime cousin of `is_prime` built on the same
   trial-division factoring `prime_factors`/`is_smith_number` already use,
+  `nth_carmichael_number` to return the Carmichael number found at a 1-indexed position, the
+  value-returning sibling `is_carmichael_number` itself was missing, the same bounded sequential
+  scan `nth_smith_number` already uses,
   `is_vampire_number` to test whether an even-digit-count integer's decimal digits can be
   rearranged into two equal-length "fangs" that multiply back to it (e.g. `1260 = 21 * 60`),
   excluding the trivial case where both fangs are multiples of 10,
@@ -674,6 +677,9 @@ while (i < 10) {
   (e.g. `197`/`971`/`719`),
   `is_twin_prime` to test whether an integer is prime and has another prime exactly 2 away
   (e.g. `11`, since `13` is also prime),
+  `nth_twin_prime` to return the twin prime found at a 1-indexed position, the value-returning
+  sibling `is_twin_prime` itself was missing, the same bounded sequential scan `nth_smith_number`/
+  `nth_carmichael_number` already use,
   `nth_semiprime` to return the semiprime found at a 1-indexed position via a sequential candidate scan
   (semiprimes have no closed form), the value-returning sibling of `is_semiprime`'s membership test,
   `nth_pronic` to return the pronic number found at a 1-indexed position via the exact closed form
@@ -780,40 +786,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: chaining more than one
-`if` filter clause in a list/map comprehension (PR #409,
-`[x for x in xs if a if b]`, previously a `ParseError` after the first
-`if` even though Python-style chained filters read more naturally than
-folding everything into one `&&` expression), and `nth_carmichael_number`
-(PR #408, the value-returning sibling `is_carmichael_number` itself was
-missing, the same bounded sequential scan `nth_smith_number`/
-`nth_achilles` already use). See [`CHANGELOG.md`](CHANGELOG.md) for the
-full merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
-`nth_twin_prime`, the value-returning sibling `is_twin_prime` itself is
-missing, the same bounded sequential scan `nth_smith_number`/
-`nth_carmichael_number` already use — `nth_self_number`, the
-value-returning sibling `is_self_number` itself is missing, the same
-bounded sequential scan the other `nth_*` tasks above already use
-(unusually, position `1` maps to candidate `0` here, since `0` is
-itself a valid self number and every other `nth_*` in this backlog
-starts its scan at a candidate its own predicate always rejects) —
-`nth_emirp`, the value-returning sibling `is_emirp` itself is missing,
-the same bounded sequential scan the other `nth_*` tasks above already
-use — `nth_polydivisible`, the value-returning sibling
-`is_polydivisible` itself is missing, sharing `nth_self_number`'s own
-position-1-maps-to-candidate-0 quirk since `0` is trivially
-polydivisible too — `nth_trimorphic_number`, the value-returning
-sibling `is_trimorphic_number` itself is missing, sharing the same
-position-1-maps-to-candidate-0 quirk (`0 ** 3` ends in `0`) while only
-`{0, 1, 4, 5, 6, 9}` among single digits actually qualify — and
-`nth_circular_prime`, the value-returning sibling `is_circular_prime`
-itself is missing, the same bounded sequential scan the other prime-based
-`nth_*` tasks above already use (rarer than most, so its own
-self-consistency test checks only the first 15 positions rather than 50).
-(Guards in `match` arms, `n if n > 0 => "positive"`, were attempted but
-closed after three failed review rounds over a recurring parser bug —
-see `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap
-but not back in the active queue yet.)
+Actively developed, nightly. Recently landed: `nth_twin_prime` (PR #410),
+chaining more than one `if` filter clause in a list/map comprehension
+(PR #409, `[x for x in xs if a if b]`, previously a `ParseError` after
+the first `if` even though Python-style chained filters read more
+naturally than folding everything into one `&&` expression), and
+`nth_carmichael_number` (PR #408). See [`CHANGELOG.md`](CHANGELOG.md)
+for the full merge history. Coming up next (see
+[`BACKLOG.md`](BACKLOG.md)): six more value-returning `nth_*` siblings
+for predicates that already exist but can't yet be searched —
+`nth_self_number`, `nth_emirp`, `nth_polydivisible`,
+`nth_trimorphic_number`, `nth_circular_prime`, and `nth_sad_number` —
+each the same bounded sequential scan pattern the merged `nth_*`
+builtins above already use (some with a `0`-as-valid-candidate quirk,
+some slower due to natural rarity; see each task's own notes in
+`BACKLOG.md` for specifics). (Guards in `match` arms, `n if n > 0 =>
+"positive"`, were attempted but closed after three failed review rounds
+over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
+postmortem; they're a real gap but not back in the active queue yet.)
 The backlog mixes language depth with stdlib breadth over time rather
 than running either in one long block. The full vision and non-goals
 live in [`PROJECT.md`](PROJECT.md).

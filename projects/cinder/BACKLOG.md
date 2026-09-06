@@ -556,6 +556,112 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_sad_number` — sad number found at a 1-indexed position
+
+Build: `is_sad_number` (`cinder/builtins.py`, search `def _is_sad_number`:
+a non-negative integer that, under repeated replace-with-sum-of-squared-digits,
+never reaches `1` and instead cycles — the complement of `is_happy_number`,
+e.g. `2` is sad since its trajectory `2, 4, 16, 37, 58, 89, 145, 42, 20, 4,
+...` repeats `4` without ever hitting `1`) has no value-returning `nth_*`
+sibling, unlike its own opposite `is_happy_number` (`nth_happy_number`
+already exists, search `def _nth_happy_number`). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_sad_number(1));'
+# -> <eval>:1:7: undefined name 'nth_sad_number' (did you mean
+#    'is_sad_number'?)
+```
+
+Worked examples: the first ten sad numbers (confirmed by scanning with
+`is_sad_number` directly) are `0, 2, 3, 4, 5, 6, 8, 9, 11, 12`, so
+`nth_sad_number(1)` is `0` and `nth_sad_number(10)` is `12`. The 20th is
+`25`, the 50th is `60` — sad numbers are dense (happy numbers are the rare
+exception, not the rule), so unlike the prime-based or digit-quirk `nth_*`
+tasks elsewhere in this backlog, this scan is fast at every position.
+
+Like `nth_self_number`/`nth_polydivisible`/`nth_trimorphic_number`
+(already merged or above), position `1` maps to candidate `0`, not `1`:
+`is_sad_number(0)` is `true` (`0`'s trajectory is just `0, 0, 0, ...`,
+which cycles at `0` without ever reaching `1`), and `0` is the smallest
+value `is_sad_number` ever accepts (it returns `false` outright for
+negative input, per its own `if value < 0: return False` guard), so the
+scan must start *before* `0` (`candidate = -1`, incremented before the
+first check) to avoid silently excluding it from the sequence forever.
+
+Add directly after `_is_sad_number` (search `def _is_sad_number`,
+immediately before `def _is_self_number`) — keeps the value-returning
+helper next to the predicate it mirrors:
+```python
+def _nth_sad_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_sad_number", arguments, 1, line, column)
+    value = _require_int("nth_sad_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_sad_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_sad_number_candidate(candidate: int) -> bool:
+        seen = set()
+        while candidate != 1:
+            if candidate in seen:
+                return True
+            seen.add(candidate)
+            candidate = sum(int(digit) ** 2 for digit in str(candidate))
+        return False
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_sad_number_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Inner candidate check copied verbatim from `_is_sad_number`'s own body
+minus its `value < 0` guard, since the scan never visits a negative
+candidate — the same "duplicate the tiny predicate body instead of a
+redundant `_require_arity`/`_require_int` round-trip per candidate"
+choice every recent `nth_*` task already makes.) Register the new dict
+entry (search `"is_sad_number": _is_sad_number,`, add `"nth_sad_number":
+_nth_sad_number,` directly after it, before `"is_self_number":
+_is_self_number,`).
+
+Acceptance criteria:
+- `nth_sad_number(1);` through `nth_sad_number(10);` are `0, 2, 3, 4, 5,
+  6, 8, 9, 11, 12` in order — the worked example above.
+- `nth_sad_number(20);` is `25` and `nth_sad_number(50);` is `60` —
+  further worked examples confirming the scan scales past the first ten.
+- For every `position` in `1..50`,
+  `is_sad_number(nth_sad_number(position))` is `true` — the same
+  self-consistency check `nth_smith_number`/`nth_carmichael_number`/
+  `nth_twin_prime`/`nth_self_number`/`nth_emirp`/`nth_polydivisible`/
+  `nth_trimorphic_number`/`nth_circular_prime`'s own test suites already
+  run against their predicates.
+- `nth_sad_number(0);`, `nth_sad_number(-3);` both raise
+  `CinderRuntimeError` matching `"nth_sad_number\(\) requires a positive
+  integer, domain error"` — note this domain check is on the *position*
+  argument, unrelated to `0` being a valid *sad number* itself
+  (`nth_sad_number(1)` legitimately returns `0`).
+- `nth_sad_number(true);` raises `CinderRuntimeError` matching
+  `"nth_sad_number\(\) requires an int, got bool"`.
+- `nth_sad_number("5");` raises `CinderRuntimeError` matching
+  `"nth_sad_number\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_sad_number`,
+search `def _is_sad_number`), `tests/test_builtins.py` (new `class
+TestNthSadNumber`, modeled on `class TestNthHappyNumber`, search that
+name, for the test shapes above — place it near the existing `class
+TestIsSadNumber`, search that name). Once merged, `README.md`'s existing
+`is_sad_number` bullet needs `nth_sad_number` added right after it, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" section needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

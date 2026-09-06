@@ -149,33 +149,28 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4572 tests passing locally as of #409), PR queue
-empty going into this grooming pass. Most recently landed: `#409`
-chained `if` filter clauses in list/map comprehensions, `#408`
-`nth_carmichael_number` — see `CHANGELOG.md` for the full merge
-history, newest first.
+`main` is green (4581 tests passing locally as of #410), PR queue empty
+going into this grooming pass. Most recently landed: `#410`
+`nth_twin_prime`, `#409` chained `if` filter clauses in list/map
+comprehensions, `#408` `nth_carmichael_number` — see `CHANGELOG.md` for
+the full merge history, newest first.
 
-`BACKLOG.md` is back at its 6-task floor after #409 dropped it to 5:
-`nth_twin_prime`, `nth_self_number`, `nth_emirp`, `nth_polydivisible`,
-`nth_trimorphic_number` (all breadth, carried over unclaimed), and this
-pass's new addition `nth_circular_prime` (breadth again — the queue
-stays breadth-heavy since the standard depth-gap probe keeps finding
-nothing new and guards in `match` remain deliberately un-requeued, see
-below). `is_circular_prime` was chosen
-for the new task after confirming by direct timing that its 50th-term
-scan (~3s) is workable for a single acceptance-criteria call, unlike
-the previously-vetted-and-rejected `is_vampire_number` (50th-term scan
-2x slower again, discounted a second time) and `is_automorphic` (ruled
-out this pass: automorphic numbers thin out so fast — only ~2 per
-digit-length beyond the first ten — that a brute-force scan for the
-50th one doesn't finish in reasonable time at all, not just slower).
-The new task's self-consistency acceptance check uses a reduced `1..15`
-range rather than the `1..50` other recent `nth_*` tasks use, mirroring
-`nth_carmichael_number`'s own precedent, since circular primes are rare
-enough that repeating the scan from scratch 50 times would be slow.
-Guards in `match` arms (`n if n > 0 => ...`) remain a known depth gap
-but are deliberately not requeued — see `BACKLOG.md`'s `## Graveyard`
-for the postmortem from PR #314's three failed rounds.
+`BACKLOG.md` is back at its 6-task floor after #410 dropped it to 5:
+`nth_self_number`, `nth_emirp`, `nth_polydivisible`,
+`nth_trimorphic_number`, `nth_circular_prime` (all breadth, carried over
+unclaimed), and this pass's new addition `nth_sad_number` (breadth
+again — the queue stays breadth-heavy since the standard depth-gap
+probe keeps finding nothing new and guards in `match` remain
+deliberately un-requeued, see below). `is_sad_number` was chosen for
+the new task because it's dense (sad numbers are the overwhelming
+majority — happy numbers are the rare exception), so its scan stays
+fast at every position unlike the prime/rarity-bound `nth_*` tasks ahead
+of it in the queue; it also completes the `is_happy_number`/
+`is_sad_number` pair, since `nth_happy_number` has existed for a while
+with no `nth_sad_number` counterpart. Guards in `match` arms (`n if n >
+0 => ...`) remain a known depth gap but are deliberately not requeued —
+see `BACKLOG.md`'s `## Graveyard` for the postmortem from PR #314's
+three failed rounds.
 
 Pattern matching (`match`) has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list

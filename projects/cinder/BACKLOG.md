@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position
+## 1. Standard library: `nth_achilles` — Achilles number found at a 1-indexed position [claimed 2026-09-06T14:02:24Z]
 
 Build: `is_achilles` (`cinder/builtins.py`, search `def _is_achilles`:
 whether `n` is a powerful number — every prime factor's exponent is 2 or

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `as` binding on a nested list/map sub-pattern inside `match`
+## 1. Language: `as` binding on a nested list/map sub-pattern inside `match` [claimed 2026-09-06T14:51:52Z]
 
 Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
 entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>

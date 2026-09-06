@@ -2796,6 +2796,46 @@ def _is_carmichael_number(arguments: list, line: int, column: int) -> object:
     return all((prime - 1) != 0 and (value - 1) % (prime - 1) == 0 for prime in factors)
 
 
+def _nth_carmichael_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_carmichael_number", arguments, 1, line, column)
+    value = _require_int("nth_carmichael_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_carmichael_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_carmichael_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        factors = []
+        remaining = candidate
+        divisor = 2
+        while divisor * divisor <= remaining:
+            while remaining % divisor == 0:
+                factors.append(divisor)
+                remaining //= divisor
+            divisor += 1
+        if remaining > 1:
+            factors.append(remaining)
+        if len(factors) < 2:
+            return False  # prime, not composite
+        if len(factors) != len(set(factors)):
+            return False  # not squarefree
+        return all(
+            (prime - 1) != 0 and (candidate - 1) % (prime - 1) == 0
+            for prime in factors
+        )
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_carmichael_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_vampire_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_vampire_number", arguments, 1, line, column)
     value = _require_int("is_vampire_number", arguments[0], line, column)
@@ -5084,6 +5124,7 @@ _BUILTINS = {
     "is_smith_number": _is_smith_number,
     "nth_smith_number": _nth_smith_number,
     "is_carmichael_number": _is_carmichael_number,
+    "nth_carmichael_number": _nth_carmichael_number,
     "is_vampire_number": _is_vampire_number,
     "num_divisors": _num_divisors,
     "is_refactorable": _is_refactorable,

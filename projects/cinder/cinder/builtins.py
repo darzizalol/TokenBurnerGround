@@ -2732,6 +2732,48 @@ def _is_smith_number(arguments: list, line: int, column: int) -> object:
     return digit_total == factor_digit_total
 
 
+def _nth_smith_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_smith_number", arguments, 1, line, column)
+    value = _require_int("nth_smith_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_smith_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_smith_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                break
+        else:
+            return False  # prime, not composite
+        factors = []
+        remaining = candidate
+        divisor = 2
+        while divisor * divisor <= remaining:
+            while remaining % divisor == 0:
+                factors.append(divisor)
+                remaining //= divisor
+            divisor += 1
+        if remaining > 1:
+            factors.append(remaining)
+        digit_total = sum(int(digit) for digit in str(candidate))
+        factor_digit_total = sum(
+            sum(int(digit) for digit in str(factor)) for factor in factors
+        )
+        return digit_total == factor_digit_total
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_smith_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_carmichael_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_carmichael_number", arguments, 1, line, column)
     value = _require_int("is_carmichael_number", arguments[0], line, column)
@@ -5040,6 +5082,7 @@ _BUILTINS = {
     "prime_factors": _prime_factors,
     "euler_totient": _euler_totient,
     "is_smith_number": _is_smith_number,
+    "nth_smith_number": _nth_smith_number,
     "is_carmichael_number": _is_carmichael_number,
     "is_vampire_number": _is_vampire_number,
     "num_divisors": _num_divisors,

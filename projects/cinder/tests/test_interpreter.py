@@ -5126,6 +5126,28 @@ class TestListComprehension(unittest.TestCase):
     def test_single_clause_form_unchanged(self):
         self.assertEqual(evaluate("[x for x in [1, 2, 3]]"), [1, 2, 3])
 
+    def test_chained_if_filters(self):
+        self.assertEqual(
+            evaluate("[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]"),
+            [6, 12, 18],
+        )
+
+    def test_three_chained_if_filters(self):
+        self.assertEqual(
+            evaluate(
+                "[x for x in 1..50 if x % 2 == 0 if x % 3 == 0 if x % 5 == 0]"
+            ),
+            [30],
+        )
+
+    def test_chained_if_filters_compose_with_chained_for_clauses(self):
+        self.assertEqual(
+            evaluate(
+                "[x + y for x in 1..5 if x % 2 == 0 for y in 1..5 if y % 2 == 0]"
+            ),
+            [4, 6, 6, 8],
+        )
+
 
 class TestMapComprehension(unittest.TestCase):
     def test_basic_transform(self):
@@ -5246,6 +5268,12 @@ class TestMapComprehension(unittest.TestCase):
     def test_single_clause_form_unchanged(self):
         self.assertEqual(
             evaluate("{x: x * 2 for x in [1, 2]}"), {1: 2, 2: 4}
+        )
+
+    def test_chained_if_filters(self):
+        self.assertEqual(
+            evaluate("{x: x * x for x in 1..20 if x % 2 == 0 if x % 3 == 0}"),
+            {6: 36, 12: 144, 18: 324},
         )
 
 

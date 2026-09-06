@@ -1225,6 +1225,18 @@ class TestListsAndMaps(unittest.TestCase):
             ),
         )
 
+    def test_list_comprehension_with_chained_filters(self):
+        node = parse("[x for x in xs if x > 0 if x < 10]")
+        self.assertEqual(
+            shape(node.condition),
+            (
+                "Logical",
+                ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+                TokenType.AND,
+                ("Binary", ("Identifier", "x"), TokenType.LT, ("Literal", 10)),
+            ),
+        )
+
     def test_list_comprehension_spread_head_raises_parse_error(self):
         with self.assertRaises(ParseError):
             parse("[...[1, 2] for x in [1, 2]]")
@@ -1434,6 +1446,18 @@ class TestListsAndMaps(unittest.TestCase):
                 ("Identifier", "xs"),
                 ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
                 None,
+            ),
+        )
+
+    def test_map_comprehension_with_chained_filters(self):
+        node = parse("{x: x for x in xs if x > 0 if x < 10}")
+        self.assertEqual(
+            shape(node.condition),
+            (
+                "Logical",
+                ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)),
+                TokenType.AND,
+                ("Binary", ("Identifier", "x"), TokenType.LT, ("Literal", 10)),
             ),
         )
 

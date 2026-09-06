@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+## 1. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position [claimed 2026-09-06T14:36:58Z]
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`: a composite number whose decimal digit sum equals the

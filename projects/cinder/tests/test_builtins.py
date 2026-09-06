@@ -6929,6 +6929,78 @@ class TestIsSmithNumber(unittest.TestCase):
             run("is_smith_number();")
 
 
+class TestNthSmithNumber(unittest.TestCase):
+    def test_nth_smith_number_of_first_ten_positions(self):
+        expected = {
+            1: 4,
+            2: 22,
+            3: 27,
+            4: 58,
+            5: 85,
+            6: 94,
+            7: 121,
+            8: 166,
+            9: 202,
+            10: 265,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_smith_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_smith_number_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_smith_number(20);").get("result"), 483
+        )
+
+    def test_nth_smith_number_agrees_with_is_smith_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_smith_number(nth_smith_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_smith_number({position}) to be a smith number",
+            )
+
+    def test_nth_smith_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_smith_number(0);")
+        self.assertIn(
+            "nth_smith_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_smith_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_smith_number(-3);")
+        self.assertIn(
+            "nth_smith_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_smith_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_smith_number(true);")
+        self.assertIn(
+            "nth_smith_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_smith_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_smith_number("5");')
+        self.assertIn(
+            "nth_smith_number() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_smith_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_smith_number(1, 2);")
+
+
 class TestIsCarmichaelNumber(unittest.TestCase):
     def test_is_carmichael_number_of_561(self):
         self.assertTrue(run("let result = is_carmichael_number(561);").get("result"))

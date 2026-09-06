@@ -784,35 +784,34 @@ Actively developed, nightly. Recently landed: `as` binding on a nested
 list/map sub-pattern inside `match` (PR #407, `[a, [b, c] as inner]`,
 letting an arm bind an intermediate value reached partway through a
 larger pattern rather than only the whole subject or a whole
-literal/range arm), whole-value `as` binding extended to literal and
-range `match` patterns (PR #405, `match (5) { 1..10 as whole => whole,
-_ => nil }`, useful since a range pattern's bound name isn't the
-subject's actual value and a multi-value literal arm's body otherwise
-can't tell which literal matched), and `nth_smith_number` (PR #406, the
-value-returning sibling `is_smith_number` itself was missing, the same
-bounded sequential scan `nth_refactorable`/`nth_sphenic` already use).
-See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_carmichael_number`, the
-value-returning sibling `is_carmichael_number` itself is missing, the
-same bounded sequential scan `nth_smith_number`/`nth_achilles` already
-use — allowing a list/map comprehension to chain more than one `if`
-filter clause (`[x for x in xs if a if b]`, today a `ParseError` after
-the first `if`, even though Python-style chained filters read more
-naturally than folding everything into one `&&` expression) —
-`nth_twin_prime`, the value-returning sibling `is_twin_prime` itself is
-missing, the same bounded sequential scan `nth_smith_number`/
-`nth_carmichael_number` already use — `nth_self_number`, the
-value-returning sibling `is_self_number` itself is missing, the same
-bounded sequential scan the other `nth_*` tasks above already use
-(unusually, position `1` maps to candidate `0` here, since `0` is
-itself a valid self number and every other `nth_*` in this backlog
-starts its scan at a candidate its own predicate always rejects) —
-`nth_emirp`, the value-returning sibling `is_emirp` itself is missing,
-the same bounded sequential scan the other `nth_*` tasks above already
-use — and `nth_polydivisible`, the value-returning sibling
-`is_polydivisible` itself is missing, sharing `nth_self_number`'s own
-position-1-maps-to-candidate-0 quirk since `0` is trivially
-polydivisible too.
+literal/range arm), `nth_smith_number` (PR #406, the value-returning
+sibling `is_smith_number` itself was missing, the same bounded
+sequential scan `nth_refactorable`/`nth_sphenic` already use), and
+`nth_carmichael_number` (PR #408, the same gap for `is_carmichael_number`,
+the same bounded sequential scan `nth_smith_number`/`nth_achilles`
+already use). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge
+history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)): allowing a
+list/map comprehension to chain more than one `if` filter clause
+(`[x for x in xs if a if b]`, today a `ParseError` after the first `if`,
+even though Python-style chained filters read more naturally than
+folding everything into one `&&` expression) — `nth_twin_prime`, the
+value-returning sibling `is_twin_prime` itself is missing, the same
+bounded sequential scan `nth_smith_number`/`nth_carmichael_number`
+already use — `nth_self_number`, the value-returning sibling
+`is_self_number` itself is missing, the same bounded sequential scan
+the other `nth_*` tasks above already use (unusually, position `1`
+maps to candidate `0` here, since `0` is itself a valid self number and
+every other `nth_*` in this backlog starts its scan at a candidate its
+own predicate always rejects) — `nth_emirp`, the value-returning
+sibling `is_emirp` itself is missing, the same bounded sequential scan
+the other `nth_*` tasks above already use — `nth_polydivisible`, the
+value-returning sibling `is_polydivisible` itself is missing, sharing
+`nth_self_number`'s own position-1-maps-to-candidate-0 quirk since `0`
+is trivially polydivisible too — and `nth_trimorphic_number`, the
+value-returning sibling `is_trimorphic_number` itself is missing,
+sharing the same position-1-maps-to-candidate-0 quirk (`0 ** 3` ends in
+`0`) while only `{0, 1, 4, 5, 6, 9}` among single digits actually
+qualify.
 (Guards in `match` arms, `n if n > 0 => "positive"`, were attempted but
 closed after three failed review rounds over a recurring parser bug —
 see `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

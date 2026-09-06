@@ -149,85 +149,33 @@ bring the count back to 6.
 
 ### Current frontier
 
-This section stayed a rolling per-pass narration (twentieth through
-twenty-sixth passes) for long enough to repeat the exact growth pattern
-the old "Roadmap" section hit before its 2026-08-22 trim — see the
-History entry below for that precedent. Trimmed the same way here on
-2026-08-30 (twenty-seventh pass): the full pass-by-pass story is not
-lost, it is exactly what `CHANGELOG.md` (merge order) and this file's
-own git history already preserve; this section only needs to state
-where things stand right now.
+`main` is green (4566 tests passing locally as of #408), PR queue
+empty going into this grooming pass. Most recently landed: `#408
+nth_carmichael_number`, `#407` nested list/map `as` binding in `match`
+— see `CHANGELOG.md` for the full merge history, newest first.
 
-Recently landed (see `CHANGELOG.md` for the full list, newest first):
-`as` binding on a nested list/map sub-pattern inside `match` (#407, `[a,
-[b, c] as inner]` — extended the same tuple-shape/`env.define` machinery
-`_match_list_pattern_entry`/`_match_map_pattern_entry` already use for
-whole-pattern `as` down into individual list/map pattern elements, no
-new AST node needed); whole-value `as` binding extended to literal and
-range `match` patterns (#405, `match (5) { 1..10 as whole => whole, _ =>
-nil }` — reused `_match_whole_binding` unchanged, the fix was purely
-adding the same optional-`as`-parse call already used on list/map
-patterns to the literal/range arm branches too); `nth_smith_number`
-(#406, the value-returning sibling `is_smith_number` was missing — a
-bounded sequential scan with the digit-sum-equals-own-prime-factor-
-digit-sum check inlined from `is_smith_number`'s own body, identical
-shape to `nth_refactorable`/`nth_sphenic`). Guards in `match` arms (`n
-if n > 0 => ...`) were attempted (PR #314) but closed after three
-straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug
-in the bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s
-`## Graveyard` for the full postmortem and the suggested next approach;
-still not requeued.
+`BACKLOG.md` is back at its 6-task floor after #408 dropped it to 5:
+chained `if` filter clauses in comprehensions (depth), `nth_twin_prime`,
+`nth_self_number`, `nth_emirp`, `nth_polydivisible`, and this pass's new
+addition `nth_trimorphic_number` (all breadth). This pass re-ran the
+standard depth-gap probe (chained comparisons, string interpolation/raw/
+triple-quoted strings, spread call/rest-param args, `try`/`catch`/
+`finally`, bitwise ops, ternary chaining, keyword call arguments,
+`do`/`while`) and found nothing new — every one of those is already
+implemented and tested — so alternation stays breadth-heavy again.
+`is_trimorphic_number` was chosen over the other previously-vetted
+breadth candidate, `is_vampire_number` (its 50th-term scan is roughly
+2x slower), for the new task. Guards in `match` arms (`n if n > 0 =>
+...`) remain a known depth gap but are deliberately not requeued — see
+`BACKLOG.md`'s `## Graveyard` for the postmortem from PR #314's three
+failed rounds.
 
-`BACKLOG.md` dropped to its 5-task floor after Release archived #407's
-now-merged task and renumbered the rest down to 1-5 (see
-`NIGHTLOG.md`'s "Fifth cycle" entry, 2026-09-06). This pass restocked it
-back to six with a new breadth task, `nth_polydivisible` (the
-value-returning sibling `is_polydivisible` was missing, same gap
-`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime`/
-`nth_self_number`/`nth_emirp` already close). Before settling on it,
-this pass timed several other `is_*`-without-`nth_*` candidates through
-the interpreter and rejected the slow ones: `is_automorphic` hung
-outright scanning up from `1` (automorphic numbers grow by roughly a
-decimal digit each term — `9376`, `90625`, `890625`, ... — so a
-by-`1` scan for even the 15th term never finishes), `is_disarium` and
-`is_keith_number` both timed out at 30s reaching their 50th term. Kept
-as viable but not chosen this pass: `is_trimorphic_number` (50th term
-`218751`, ~1.5s) and `is_vampire_number` (50th term `163944`, ~3.2s) —
-either is a fine pick for a future breadth task if `nth_polydivisible`
-turns out to need bouncing. `is_polydivisible` itself reaches its 50th
-term (`88`) in well under a second since single-digit numbers are all
-trivially polydivisible and the density stays high, so it was the one
-to add — it shares `nth_self_number`'s own position-1-maps-to-
-candidate-0 quirk since `0` (a single "digit") is trivially
-polydivisible too. This pass also repeated a quick depth-gap probe
-(bitwise operators, `try`/`catch`/`finally`, ternary chaining, keyword
-call arguments, `do`/`while` loops — all already implemented and
-working) and found nothing new, so alternation stays breadth-heavy for
-now: breadth/depth/breadth/depth/breadth/breadth/breadth. Next grooming
-pass should either find a genuine depth gap the studio hasn't already
-closed, or keep leaning breadth given how thin the remaining depth gaps
-have become.
-
-`main` is green (4558 tests passing locally as of #407), PR queue empty
-going into this grooming pass. `BACKLOG.md` is at its 6-task floor:
-`nth_carmichael_number`, chained `if` filter clauses in comprehensions,
-`nth_twin_prime`, `nth_self_number`, `nth_emirp`, `nth_polydivisible`.
-
-With PR #304 landing, Cinder has a `match` expression with literal
-patterns and a `_` wildcard — the opening move of a pattern-matching arc
-distinct from destructuring. Bound-identifier patterns (#311), multi-value
-patterns (#312), flat list patterns (#316), range patterns (#318),
-negative literal patterns (#320), literal list-pattern elements (#322),
-rest capture in list patterns (#324), flat map patterns (#326), nested
-list patterns (#330), per-key rename in match map patterns (#332), rest
-capture in match map patterns (#335), nested patterns as map pattern
-values (#337), default values for trailing elements in match list
-patterns (#338), default values in match map patterns (#342),
-whole-value `as` binding (#348), `as` binding extended to literal/range
-patterns (#405), and `as` binding on a nested list/map sub-pattern
-(#407) are the follow-ups that have landed so far. Guards remain a real
-gap too, but are deliberately not requeued yet — see the graveyard
-postmortem above.
+Pattern matching (`match`) has, beyond its original literal-pattern/`_`
+wildcard base (#304): bound-identifier, multi-value, flat/nested list
+and map patterns, range and negative-literal patterns, rest capture,
+per-key rename, default values, and whole-value plus nested `as`
+binding (#311 through #407, full list in `CHANGELOG.md`). Guards are
+the one open follow-up, deliberately not requeued (see above).
 
 ## History
 
@@ -258,3 +206,11 @@ postmortem above.
   renumbered. Replaced with a one-line "green, queue is these six
   tasks" summary; `CHANGELOG.md` and this file's own git history still
   have the full detail.
+- **2026-09-07** — Trimmed "Current frontier" a fourth time, same
+  reason again: it had regrown a full pass-by-pass restock narration
+  (the `nth_polydivisible` candidate-timing writeup and the six-task
+  queue list it produced) for a grooming pass that had already fully
+  played out — `nth_carmichael_number`, the top task at the time, had
+  since merged as #408. Replaced with a short current-status summary;
+  `CHANGELOG.md` and this file's own git history still have the full
+  detail.

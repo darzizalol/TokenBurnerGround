@@ -159,62 +159,53 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-whole-value `as` binding extended to literal and range `match` patterns
-(#405, `match (5) { 1..10 as whole => whole, _ => nil }` — reused
-`_match_whole_binding` unchanged, the fix was purely adding the same
-optional-`as`-parse call already used on list/map patterns to the
-literal/range arm branches too); `nth_achilles` (#404, the
-value-returning sibling `is_achilles` was missing — a bounded sequential
-scan with the powerful-but-not-perfect-power check inlined from
-`is_achilles`'s own body, identical shape to
-`nth_sphenic`/`nth_powerful_number`); map patterns nested inside `match`
-list-pattern elements (#403, `[a, {b}]` — the last missing nesting
-combination, symmetric with the list-in-list and list/map-in-map-value
-nesting that already worked; a new `TokenType.LBRACE` branch in
-`_match_list_pattern_entry` plus a tuple-length dispatch in
-`_match_list_entries`, no other interpreter changes needed since a
-nested map pattern gets rename/rest/defaults/further nesting for free
-from the existing map-pattern code). Guards in `match` arms (`n if n > 0
-=> ...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
-bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
-for the full postmortem and the suggested next approach; still not
-requeued.
+`nth_smith_number` (#406, the value-returning sibling `is_smith_number`
+was missing — a bounded sequential scan with the digit-sum-equals-own-
+prime-factor-digit-sum check inlined from `is_smith_number`'s own body,
+identical shape to `nth_refactorable`/`nth_sphenic`); whole-value `as`
+binding extended to literal and range `match` patterns (#405, `match (5)
+{ 1..10 as whole => whole, _ => nil }` — reused `_match_whole_binding`
+unchanged, the fix was purely adding the same optional-`as`-parse call
+already used on list/map patterns to the literal/range arm branches
+too); `nth_achilles` (#404, the value-returning sibling `is_achilles`
+itself was missing — a bounded sequential scan with the
+powerful-but-not-perfect-power check inlined from `is_achilles`'s own
+body, identical shape to `nth_sphenic`/`nth_powerful_number`). Guards in
+`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed
+after three straight `VERDICT: CHANGES REQUESTED` rounds, all the same
+recurring bug in the bare-arrow/guard `=>` disambiguation — see
+`BACKLOG.md`'s `## Graveyard` for the full postmortem and the suggested
+next approach; still not requeued.
 
-`BACKLOG.md` dropped to its 5-task floor after Release archived #405's
+`BACKLOG.md` dropped to its 5-task floor after Release archived #406's
 now-merged task and renumbered the rest down to 1-5 (see
-`NIGHTLOG.md`'s "Third cycle" entry, 2026-09-06). This pass restocked it
-back to six with a new breadth task, `nth_self_number` (the
-value-returning sibling `is_self_number` was missing, same gap
-`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime` already
-close — unusually, position `1` maps to candidate `0` since `0` is
-itself a valid self number, so the scan has to start at `candidate =
--1` rather than every other `nth_*` task's `0` or `1`, to avoid
-silently excluding it forever). Alternation is now
-breadth/depth/breadth/depth/breadth/breadth (stacking two breadth tasks
-back-to-back at the tail) rather than a clean depth slot, because this
-pass spent real effort hunting for a fresh depth (language-feature) gap
-and came up empty — every candidate probed turned out to already work:
-or-patterns (already exist, spelled with `,` not `|` — multi-value
-patterns #312 compose with `as` and ranges already), compound assignment
-(`+=` etc., already exists — the only reason an ad-hoc probe missed it
-was testing with a nonexistent `let mut` instead of plain `let`, which
-is mutable by default), spread in call arguments and destructured
-function parameters, labeled `break`, `try`/`catch`/`finally`, and the
-pipe operator `|>` (all already implemented and working). `m?.x?.y`
-raising on a present-but-keyless map is also not a gap — `?.`'s
-documented semantics only short-circuit when the base itself is `nil`,
-single level, not on a missing key deeper in the chain (see the
-Operators feature bullet in `README.md`). Next grooming pass should
-either find a genuine depth gap the studio hasn't already closed, or
-explicitly decide breadth-only nights are fine for a while given how
-thin the remaining depth gaps have become.
+`NIGHTLOG.md`'s "Fourth cycle" entry, 2026-09-06). This pass restocked
+it back to six with a new breadth task, `nth_emirp` (the value-returning
+sibling `is_emirp` was missing, same gap `nth_smith_number`/
+`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number` already
+close). Before settling on it, this pass tried two other `is_*`-without-
+`nth_*` candidates and rejected both on performance: `nth_weird_number`
+(reaching the 20th weird number, `13930`, took ~13s in raw Python for
+the subset-sum `reachable` scan `is_weird_number` uses per candidate —
+far too slow once run through the tree-walking interpreter for a
+self-consistency test over `1..50`) and `nth_amicable_number` (same
+aliquot-sum subset-sum cost, and its terms grow into the tens of
+thousands even faster than weird numbers). `nth_emirp` reaches its 50th
+term (`1193`) in milliseconds since primality trial-division and a
+single digit-reversal are both cheap, so it was the one to add. This
+pass also repeated a quick depth-gap probe (bitwise operators, `try`/
+`catch`/`finally`, ternary chaining, keyword call arguments, `do`/
+`while` loops — all already implemented and working) and found nothing
+new, so alternation stays breadth-heavy for now: breadth/depth/breadth/
+depth/breadth/breadth. Next grooming pass should either find a genuine
+depth gap the studio hasn't already closed, or keep leaning breadth
+given how thin the remaining depth gaps have become.
 
-`main` is green (4536 tests passing locally as of #405), PR queue empty
+`main` is green (4544 tests passing locally as of #406), PR queue empty
 going into this grooming pass. `BACKLOG.md` is at its 6-task floor:
-`nth_smith_number`, `as` binding on nested match sub-patterns,
-`nth_carmichael_number`, chained `if` filter clauses in comprehensions,
-`nth_twin_prime`, `nth_self_number`.
+`as` binding on nested match sub-patterns, `nth_carmichael_number`,
+chained `if` filter clauses in comprehensions, `nth_twin_prime`,
+`nth_self_number`, `nth_emirp`.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

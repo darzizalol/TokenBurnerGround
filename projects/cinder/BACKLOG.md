@@ -653,6 +653,106 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_emirp` — emirp found at a 1-indexed position
+
+Build: `is_emirp` (`cinder/builtins.py`, search `def _is_emirp`: a prime
+whose decimal-digit reversal is a *different* prime, e.g. `13` is an emirp
+since `31` is prime and `31 != 13`, but a palindromic prime like `11` is
+not) has no value-returning `nth_*` sibling, the same gap
+`nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`
+(tasks 2, 4, 5 above) already close for their own predicates. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_emirp(1));'
+# -> <eval>:1:7: undefined name 'nth_emirp' (did you mean 'is_emirp'?)
+```
+
+Worked examples: the first twenty emirps (OEIS A006567, confirmed by
+scanning with `is_emirp` directly) are `13, 17, 31, 37, 71, 73, 79, 97,
+107, 113, 149, 157, 167, 179, 199, 311, 337, 347, 359, 389`, so
+`nth_emirp(1)` is `13` and `nth_emirp(10)` is `113`. The 50th is `1193`.
+
+Add directly after `_is_emirp` (search `def _is_emirp`, immediately
+before `def _is_circular_prime`) — keeps the value-returning helper next
+to the predicate it mirrors, matching where `nth_twin_prime` itself sits
+right after `is_twin_prime`:
+```python
+def _nth_emirp(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_emirp", arguments, 1, line, column)
+    value = _require_int("nth_emirp", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_emirp() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _trial_division_is_prime(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return False
+        return True
+
+    def _is_emirp_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        if not _trial_division_is_prime(candidate):
+            return False
+        reversed_candidate = int(str(candidate)[::-1])
+        if reversed_candidate == candidate:
+            return False
+        return _trial_division_is_prime(reversed_candidate)
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_emirp_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_twin_prime`/`_nth_carmichael_number`, with the
+inner candidate check copied verbatim from `_is_emirp`'s own body instead
+of calling `_is_emirp` directly — the same "duplicate the tiny predicate
+body instead of a redundant `_require_arity`/`_require_int` round-trip
+per candidate" choice every recent `nth_*` task already makes.) Register
+the new dict entry (search `"is_emirp": _is_emirp,`, add `"nth_emirp":
+_nth_emirp,` directly after it, before `"is_circular_prime":
+_is_circular_prime,`).
+
+Acceptance criteria:
+- `nth_emirp(1);` through `nth_emirp(15);` are `13, 17, 31, 37, 71, 73,
+  79, 97, 107, 113, 149, 157, 167, 179, 199` in order — the worked
+  example above.
+- `nth_emirp(20);` is `389` and `nth_emirp(50);` is `1193` — further
+  worked examples confirming the scan scales past the first twenty.
+- For every `position` in `1..50`, `is_emirp(nth_emirp(position))` is
+  `true` — the same self-consistency check `nth_smith_number`/
+  `nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`'s own test
+  suites already run against their predicates.
+- `nth_emirp(0);`, `nth_emirp(-3);` both raise `CinderRuntimeError`
+  matching `"nth_emirp\(\) requires a positive integer, domain error"`.
+- `nth_emirp(true);` raises `CinderRuntimeError` matching
+  `"nth_emirp\(\) requires an int, got bool"`.
+- `nth_emirp("5");` raises `CinderRuntimeError` matching
+  `"nth_emirp\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_emirp`, search
+`def _is_emirp`), `tests/test_builtins.py` (new `class TestNthEmirp`,
+modeled on `class TestNthTwinPrime`, search that name, for the test
+shapes above — place it near the existing `class TestIsEmirp`, search
+that name). Once merged, `README.md`'s existing `is_emirp` bullet needs
+`nth_emirp` added right after it, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

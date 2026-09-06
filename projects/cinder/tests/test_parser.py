@@ -74,12 +74,21 @@ def shape_extra_clauses(extra_clauses):
 def _shape_list_pattern_raw_entry(entry):
     if isinstance(entry, Expr):
         return shape(entry)
-    if isinstance(entry, tuple) and len(entry) == 3:
-        nested_entries, nested_rest, marker = entry
-        return ([_shape_map_pattern_entry(e) for e in nested_entries], nested_rest, marker)
+    if isinstance(entry, tuple) and len(entry) == 4:
+        nested_entries, nested_rest, marker, nested_as = entry
+        return (
+            [_shape_map_pattern_entry(e) for e in nested_entries],
+            nested_rest,
+            marker,
+            nested_as,
+        )
     if isinstance(entry, tuple):
-        nested_entries, nested_rest = entry
-        return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest)
+        nested_entries, nested_rest, nested_as = entry
+        return (
+            [_shape_list_pattern_entry(e) for e in nested_entries],
+            nested_rest,
+            nested_as,
+        )
     return entry
 
 
@@ -92,12 +101,21 @@ def _shape_list_pattern_entry(entry_and_default):
 
 
 def _shape_map_pattern_raw_binding(binding):
-    if isinstance(binding, tuple) and len(binding) == 3:
-        nested_entries, nested_rest, _ = binding
-        return ([_shape_list_pattern_entry(e) for e in nested_entries], nested_rest, True)
+    if isinstance(binding, tuple) and len(binding) == 4:
+        nested_entries, nested_rest, _, nested_as = binding
+        return (
+            [_shape_list_pattern_entry(e) for e in nested_entries],
+            nested_rest,
+            True,
+            nested_as,
+        )
     if isinstance(binding, tuple):
-        nested_entries, nested_rest = binding
-        return ([_shape_map_pattern_entry(e) for e in nested_entries], nested_rest)
+        nested_entries, nested_rest, nested_as = binding
+        return (
+            [_shape_map_pattern_entry(e) for e in nested_entries],
+            nested_rest,
+            nested_as,
+        )
     return binding
 
 
@@ -5132,7 +5150,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         [
                             ("a", None),
-                            (([("b", None), ("c", None)], None), None),
+                            (([("b", None), ("c", None)], None, None), None),
                         ],
                         None,
                         None,
@@ -5157,7 +5175,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         [
                             ("a", None),
-                            (([("b", "b", None)], None, "map"), None),
+                            (([("b", "b", None)], None, "map", None), None),
                         ],
                         None,
                         None,
@@ -5181,7 +5199,7 @@ class TestMatchExpression(unittest.TestCase):
                         ("Identifier", "a"),
                         None,
                         [
-                            (([("a", "a", None)], None, "map"), None),
+                            (([("a", "a", None)], None, "map", None), None),
                             ("b", None),
                         ],
                         None,
@@ -5207,7 +5225,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         [
                             ("a", None),
-                            (([("x", "renamed", None)], "rest", "map"), None),
+                            (([("x", "renamed", None)], "rest", "map", None), None),
                         ],
                         None,
                         None,
@@ -5236,8 +5254,9 @@ class TestMatchExpression(unittest.TestCase):
                                 (
                                     [
                                         ("b", None),
-                                        (([("z", "z", None)], None, "map"), None),
+                                        (([("z", "z", None)], None, "map", None), None),
                                     ],
+                                    None,
                                     None,
                                 ),
                                 None,
@@ -5252,6 +5271,59 @@ class TestMatchExpression(unittest.TestCase):
                 ],
             ),
         )
+
+    def test_match_list_pattern_nested_list_as_binding_shape(self):
+        arms = parse(
+            "match (x) { [a, [b, c] as inner] => inner, _ => 0 }"
+        ).arms
+        self.assertEqual(
+            arms[0].list_pattern,
+            [("a", None), (([("b", None), ("c", None)], None, "inner"), None)],
+        )
+
+    def test_match_list_pattern_nested_map_element_as_binding_shape(self):
+        arms = parse(
+            "match (x) { [a, {b} as inner] => inner, _ => 0 }"
+        ).arms
+        self.assertEqual(
+            arms[0].list_pattern,
+            [("a", None), (([("b", "b", None)], None, "map", "inner"), None)],
+        )
+
+    def test_match_map_pattern_nested_map_value_as_binding_shape(self):
+        arms = parse(
+            "match (x) { {a: {b} as inner} => inner, _ => 0 }"
+        ).arms
+        self.assertEqual(
+            arms[0].map_pattern,
+            [("a", ([("b", "b", None)], None, "inner"), None)],
+        )
+
+    def test_match_map_pattern_nested_list_value_as_binding_shape(self):
+        arms = parse(
+            "match (x) { {a: [x, y] as inner} => inner, _ => 0 }"
+        ).arms
+        self.assertEqual(
+            arms[0].map_pattern,
+            [("a", ([("x", None), ("y", None)], None, True, "inner"), None)],
+        )
+
+    def test_match_list_pattern_nested_as_binding_none_when_absent(self):
+        arms = parse("match (x) { [a, [b, c]] => a, _ => 0 }").arms
+        nested_entry, _ = arms[0].list_pattern[1]
+        self.assertIsNone(nested_entry[2])
+
+    def test_match_list_pattern_nested_as_binding_requires_identifier(self):
+        with self.assertRaisesRegex(
+            ParseError, "identifier after 'as' in match pattern"
+        ):
+            parse("match (x) { [a, [b, c] as 5] => a, _ => 0 }")
+
+    def test_match_list_pattern_identifier_entry_as_binding_raises(self):
+        with self.assertRaisesRegex(
+            ParseError, r"expected '\]' after list pattern, found 'as'"
+        ):
+            parse("match (x) { [a as x, b] => 1, _ => 0 }")
 
     def test_match_list_pattern_plain_shape_unaffected(self):
         self.assertEqual(
@@ -5737,7 +5809,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         None,
                         None,
-                        [("a", "a", None), ("b", ([("c", "c", None)], None), None)],
+                        [("a", "a", None), ("b", ([("c", "c", None)], None, None), None)],
                         None,
                     ),
                     (None, ("Literal", 0), None, None, None, None, None, None),
@@ -5759,7 +5831,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         None,
                         None,
-                        [("a", "a", None), ("b", ([("x", None), ("y", None)], None, True), None)],
+                        [("a", "a", None), ("b", ([("x", None), ("y", None)], None, True, None), None)],
                         None,
                     ),
                     (None, ("Literal", 0), None, None, None, None, None, None),
@@ -5781,7 +5853,7 @@ class TestMatchExpression(unittest.TestCase):
                         None,
                         None,
                         None,
-                        [("a", ([("b", ([("c", "c", None)], None), None)], None), None)],
+                        [("a", ([("b", ([("c", "c", None)], None, None), None)], None, None), None)],
                         None,
                     ),
                     (None, ("Literal", 0), None, None, None, None, None, None),

@@ -6850,6 +6850,55 @@ class TestMatchExpression(unittest.TestCase):
         )
         self.assertEqual(env.get("whole"), 1)
 
+    def test_nested_list_pattern_as_binding(self):
+        env = run(
+            'let r = match ([1, [2, 3]]) '
+            '{ [a, [b, c] as inner] => inner, _ => 0 };'
+        )
+        self.assertEqual(env.get("r"), [2, 3])
+
+    def test_nested_map_pattern_as_binding_inside_list(self):
+        env = run(
+            'let r = match ([1, {"b": 1}]) '
+            '{ [a, {b} as inner] => inner, _ => 0 };'
+        )
+        self.assertEqual(env.get("r"), {"b": 1})
+
+    def test_nested_map_pattern_as_binding_inside_map(self):
+        env = run(
+            'let r = match ({"a": {"b": 1}}) '
+            '{ {a: {b} as inner} => inner, _ => 0 };'
+        )
+        self.assertEqual(env.get("r"), {"b": 1})
+
+    def test_nested_list_pattern_as_binding_inside_map(self):
+        env = run(
+            'let r = match ({"a": [1, 2]}) '
+            '{ {a: [x, y] as inner} => inner, _ => 0 };'
+        )
+        self.assertEqual(env.get("r"), [1, 2])
+
+    def test_nested_list_pattern_as_binding_composes_with_rest(self):
+        env = run(
+            'let r = match ([1, [2, 3, 4]]) '
+            '{ [a, [b, ...rest] as inner] => [inner, rest], _ => 0 };'
+        )
+        self.assertEqual(env.get("r"), [[2, 3, 4], [3, 4]])
+
+    def test_nested_list_pattern_as_binding_two_levels_deep(self):
+        env = run(
+            'let r = match ([1, [2, [3, 4]]]) '
+            '{ [a, [b, [c, d] as deep] as mid] => [mid, deep], _ => 0 };'
+        )
+        self.assertEqual(env.get("r"), [[2, [3, 4]], [3, 4]])
+
+    def test_nested_list_pattern_as_binding_falls_through_on_shape_mismatch(self):
+        env = run(
+            'let r = match ([1, "not a list"]) '
+            '{ [a, [b, c] as inner] => 1, _ => -1 };'
+        )
+        self.assertEqual(env.get("r"), -1)
+
     def test_range_pattern_whole_binding(self):
         env = run('let result = match (5) { 1..10 as whole => whole, _ => nil };')
         self.assertEqual(env.get("result"), 5)

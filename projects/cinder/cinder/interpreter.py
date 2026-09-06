@@ -1194,14 +1194,16 @@ class Interpreter:
         for index, (entry, default) in enumerate(entries):
             item = subject[index] if index < len(subject) else self.evaluate(default, env)
             if isinstance(entry, tuple):
-                if len(entry) == 3:
-                    nested_entries, nested_rest, _ = entry
+                if len(entry) == 4:
+                    nested_entries, nested_rest, _, nested_as = entry
                     if not self._match_map_entries(nested_entries, nested_rest, item, env):
                         return False
                 else:
-                    nested_entries, nested_rest = entry
+                    nested_entries, nested_rest, nested_as = entry
                     if not self._match_list_entries(nested_entries, nested_rest, item, env):
                         return False
+                if nested_as is not None:
+                    env.define(nested_as, item)
                 continue
             if isinstance(entry, Literal):
                 if not values_equal(item, self.evaluate(entry, env)):
@@ -1224,15 +1226,19 @@ class Interpreter:
         for key, binding, default in entries:
             seen_keys.add(key)
             item = subject[key] if key in subject else self.evaluate(default, env)
-            if isinstance(binding, tuple) and len(binding) == 3:
-                nested_entries, nested_rest, _ = binding
+            if isinstance(binding, tuple) and len(binding) == 4:
+                nested_entries, nested_rest, _, nested_as = binding
                 if not self._match_list_entries(nested_entries, nested_rest, item, env):
                     return False
+                if nested_as is not None:
+                    env.define(nested_as, item)
                 continue
             if isinstance(binding, tuple):
-                nested_entries, nested_rest = binding
+                nested_entries, nested_rest, nested_as = binding
                 if not self._match_map_entries(nested_entries, nested_rest, item, env):
                     return False
+                if nested_as is not None:
+                    env.define(nested_as, item)
                 continue
             env.define(binding, item)
         if rest is not None and rest != "_":

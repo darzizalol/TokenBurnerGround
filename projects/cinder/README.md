@@ -697,6 +697,9 @@ while (i < 10) {
   `n` via `m + digit_sum(m)` (e.g. `20` is a self number, `21 = 15 + digit_sum(15)` is not) — via a
   bounded generator search, the plain-digit-sum sibling of `is_happy_number`/`is_sad_number`'s
   sum-of-squares cycle detection,
+  `nth_self_number` to return the self number found at a 1-indexed position (position `1` maps to
+  candidate `0`, the smallest self number), the value-returning sibling of `is_self_number`'s
+  membership test,
   `cartesian_product` to return every ordered combination of one element from each of N lists
   (an N-list generalization of `zip`, a thin wrapper over `itertools.product`),
   `power_set` to return every subset of a list across all sizes (a thin wrapper over
@@ -760,7 +763,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4521+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4591+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -786,24 +789,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_twin_prime` (PR #410),
-chaining more than one `if` filter clause in a list/map comprehension
-(PR #409, `[x for x in xs if a if b]`, previously a `ParseError` after
-the first `if` even though Python-style chained filters read more
-naturally than folding everything into one `&&` expression), and
-`nth_carmichael_number` (PR #408). See [`CHANGELOG.md`](CHANGELOG.md)
-for the full merge history. Coming up next (see
-[`BACKLOG.md`](BACKLOG.md)): six more value-returning `nth_*` siblings
-for predicates that already exist but can't yet be searched —
-`nth_self_number`, `nth_emirp`, `nth_polydivisible`,
-`nth_trimorphic_number`, `nth_circular_prime`, and `nth_sad_number` —
-each the same bounded sequential scan pattern the merged `nth_*`
-builtins above already use (some with a `0`-as-valid-candidate quirk,
-some slower due to natural rarity; see each task's own notes in
-`BACKLOG.md` for specifics). (Guards in `match` arms, `n if n > 0 =>
-"positive"`, were attempted but closed after three failed review rounds
-over a recurring parser bug — see `BACKLOG.md`'s `## Graveyard` for the
-postmortem; they're a real gap but not back in the active queue yet.)
-The backlog mixes language depth with stdlib breadth over time rather
-than running either in one long block. The full vision and non-goals
-live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `nth_self_number` (PR
+#411), `nth_twin_prime` (PR #410), chaining more than one `if` filter
+clause in a list/map comprehension (PR #409, `[x for x in xs if a if
+b]`, previously a `ParseError` after the first `if` even though
+Python-style chained filters read more naturally than folding
+everything into one `&&` expression), and `nth_carmichael_number` (PR
+#408). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): six more
+value-returning `nth_*` siblings for predicates that already exist but
+can't yet be searched — `nth_emirp`, `nth_polydivisible`,
+`nth_trimorphic_number`, `nth_circular_prime`, `nth_sad_number`, and
+`nth_vampire_number` — each the same bounded sequential scan pattern the
+merged `nth_*` builtins above already use (some with a
+`0`-as-valid-candidate quirk, some slower due to natural rarity; see
+each task's own notes in `BACKLOG.md` for specifics). (Guards in `match`
+arms, `n if n > 0 => "positive"`, were attempted but closed after three
+failed review rounds over a recurring parser bug — see `BACKLOG.md`'s
+`## Graveyard` for the postmortem; they're a real gap but not back in
+the active queue yet.) The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

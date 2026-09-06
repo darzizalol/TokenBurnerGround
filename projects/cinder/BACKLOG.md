@@ -553,6 +553,140 @@ grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_vampire_number` — vampire number found at a 1-indexed position
+
+Build: `is_vampire_number` (`cinder/builtins.py`, search `def
+_is_vampire_number`: an even-digit-count integer whose decimal digits
+can be rearranged into two equal-length "fangs" that multiply back to
+it, e.g. `1260 = 21 * 60` and `sorted("1260") == sorted("2160")`, with
+both-fangs-ending-in-zero pairs excluded as trivial) has no
+value-returning `nth_*` sibling, the same gap `nth_smith_number`/
+`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number` (all already
+merged, `#406`/`#408`/`#410`/`#411`), `nth_emirp` (task 1),
+`nth_polydivisible` (task 2), `nth_trimorphic_number` (task 3), and
+`nth_circular_prime` (task 4) already close for their own predicates.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_vampire_number(1));'
+# -> <eval>:1:7: undefined name 'nth_vampire_number' (did you mean
+#    'is_vampire_number'?)
+```
+
+Worked examples: the first twenty vampire numbers (confirmed by
+scanning with `is_vampire_number` directly) are `1260, 1395, 1435,
+1530, 1827, 2187, 6880, 102510, 104260, 105210, 105264, 105750, 108135,
+110758, 115672, 116725, 117067, 118440, 120600, 123354`, so
+`nth_vampire_number(1)` is `1260` and `nth_vampire_number(10)` is
+`105210`. The 15th is `115672`, the 20th is `123354`, the 50th is
+`163944`.
+
+Unlike `nth_self_number`/`nth_polydivisible`/`nth_trimorphic_number`,
+there is no `0`-as-valid-candidate quirk here — `is_vampire_number`
+rejects anything under 4 digits outright (`digit_count < 4` in its own
+body), so the scan can start at `candidate = 0` same as the
+prime-based `nth_*` tasks. But like `nth_circular_prime`
+(task 4), vampire numbers thin out: the fang-search inside
+`is_vampire_number` is itself an `O(10^(digits/2))` loop, so a single
+`nth_vampire_number(50)` call is measurably slower (~3 seconds observed
+locally) than the fast `nth_*` builtins in this backlog. Keep the
+self-consistency acceptance check below at `1..15` rather than the
+`1..50` other recent `nth_*` tasks use — repeating the scan from
+scratch 50 times (as that check does) would multiply into an
+unacceptably slow test suite, the same tradeoff `nth_carmichael_number`
+(`#408`) and `nth_circular_prime` (task 4) already made for the same
+reason.
+
+Add directly after `_is_vampire_number` (search `def
+_is_vampire_number`, immediately before `def _num_divisors`) — keeps
+the value-returning helper next to the predicate it mirrors:
+```python
+def _nth_vampire_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_vampire_number", arguments, 1, line, column)
+    value = _require_int("nth_vampire_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_vampire_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_vampire_number_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        digit_count = len(digits)
+        if digit_count % 2 != 0 or digit_count < 4:
+            return False
+        half = digit_count // 2
+        lower = 10 ** (half - 1)
+        upper = 10 ** half
+        target = sorted(digits)
+        for fang_a in range(lower, upper):
+            if candidate % fang_a != 0:
+                continue
+            fang_b = candidate // fang_a
+            if fang_b < lower or fang_b >= upper:
+                continue
+            if fang_a % 10 == 0 and fang_b % 10 == 0:
+                continue
+            if sorted(str(fang_a) + str(fang_b)) == target:
+                return True
+        return False
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_vampire_number_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_circular_prime`, with the inner candidate
+check copied verbatim from `_is_vampire_number`'s own body instead of
+calling `_is_vampire_number` directly — the same "duplicate the tiny
+predicate body instead of a redundant `_require_arity`/`_require_int`
+round-trip per candidate" choice every recent `nth_*` task already
+makes.) Register the new dict entry (search `"is_vampire_number":
+_is_vampire_number,`, add `"nth_vampire_number": _nth_vampire_number,`
+directly after it, before `"num_divisors": _num_divisors,`).
+
+Acceptance criteria:
+- `nth_vampire_number(1);` through `nth_vampire_number(10);` are `1260,
+  1395, 1435, 1530, 1827, 2187, 6880, 102510, 104260, 105210` in order
+  — the worked example above.
+- `nth_vampire_number(15);` is `115672`, `nth_vampire_number(20);` is
+  `123354`, and `nth_vampire_number(50);` is `163944` — further worked
+  examples confirming the scan scales past the first ten (the `50` case
+  is expected to take a few seconds — see the performance note above,
+  not a bug).
+- For every `position` in `1..15`,
+  `is_vampire_number(nth_vampire_number(position))` is `true` — a
+  reduced-range self-consistency check (see the performance note above
+  for why `1..15` and not `1..50` here), the same style
+  `nth_carmichael_number`/`nth_circular_prime`'s own test suites already
+  use for the same reason.
+- `nth_vampire_number(0);`, `nth_vampire_number(-3);` both raise
+  `CinderRuntimeError` matching `"nth_vampire_number\(\) requires a
+  positive integer, domain error"`.
+- `nth_vampire_number(true);` raises `CinderRuntimeError` matching
+  `"nth_vampire_number\(\) requires an int, got bool"`.
+- `nth_vampire_number("5");` raises `CinderRuntimeError` matching
+  `"nth_vampire_number\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after
+`_is_vampire_number`, search `def _is_vampire_number`),
+`tests/test_builtins.py` (new `class TestNthVampireNumber`, modeled on
+`class TestNthCircularPrime`, search that name, for the test shapes and
+reduced-range self-consistency check above — place it near the
+existing `class TestIsVampireNumber`, search that name). Once merged,
+`README.md`'s existing `is_vampire_number` bullet needs
+`nth_vampire_number` added right after it, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

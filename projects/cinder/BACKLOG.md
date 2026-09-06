@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: whole-value `as` binding on literal and range `match` patterns
+## 1. Language: whole-value `as` binding on literal and range `match` patterns [claimed 2026-09-06T14:16:13Z]
 
 Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
 _ => nil }`) currently only exists on list-pattern and map-pattern match

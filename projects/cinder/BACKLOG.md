@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
+## 1. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position [claimed 2026-09-06T15:12:48Z]
 
 Build: `is_carmichael_number` (`cinder/builtins.py`, search `def
 _is_carmichael_number`: a composite, squarefree number `n` where every

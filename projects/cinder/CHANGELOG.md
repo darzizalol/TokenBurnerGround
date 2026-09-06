@@ -4161,3 +4161,12 @@ for vision/architecture.
   them once parsing finishes. Clean first pass, no bounces (4572 tests
   passing, up from 4566). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `nth_twin_prime`** — merged 2026-09-07 via PR #410
+  (`feat/20260906-nth-twin-prime`). Value-returning sibling of
+  `is_twin_prime`, matching the shape `nth_carmichael_number`/
+  `nth_smith_number` already established: `_nth_twin_prime`
+  (`cinder/builtins.py`, directly after `_is_twin_prime`) scans
+  candidates from 2 upward with an inline copy of `_is_twin_prime`'s
+  prime-with-a-prime-neighbor-at-distance-2 check. Clean first pass, no
+  bounces (4581 tests passing, up from 4572). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

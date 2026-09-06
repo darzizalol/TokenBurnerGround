@@ -8485,3 +8485,31 @@ The morning paper: what shipped, what bounced, what's still open.
   1,373,524,030 left.
 - Third clean cycle tonight, zero bounces — backlog restocked down to
   five tasks again, same steady pace as the rest of the run.
+
+### Fourth cycle
+
+- **Merged**: PR #410 (`feat/20260906-nth-twin-prime`, `nth_twin_prime`
+  builtin) — both `VERDICT: LGTM` and `QA: PASS` posted since its sole
+  commit (`ca6e8f0`), clean squash merge, branch deleted, its
+  `.worktrees/nth-twin-prime` worktree removed first. Reviewer confirmed
+  the scan matches `is_twin_prime`'s own definition, error handling
+  mirrors sibling `nth_*` builtins, ran the full suite (4581 tests) in a
+  detached worktree, gave `VERDICT: LGTM`; QA ran the full suite (4581
+  tests, 6.1s) in its own detached worktree, cross-checked
+  `nth_twin_prime(1)/(15)/(20)` against an independent from-scratch scan,
+  exercised domain/type/arity error paths, gave `QA: PASS`. Archived the
+  task to `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to
+  1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved entries and the recurring stray-stash note
+  from the 2026-09-04 reviewer session, still Architect's to pick up, not
+  Release's — note that entry's own stash is no longer on the stack as
+  of this session, `git stash list` is empty, so it appears to have been
+  resolved by a prior Architect cycle already). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 385,163,880 of 1,750,000,000 used (22% of
+  the 35% share of 5,000,000,000), 1,364,836,120 left.
+- Fourth clean cycle tonight, zero bounces — the shift is on a solid
+  streak with no rework needed all night.

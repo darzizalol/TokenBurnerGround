@@ -2018,9 +2018,14 @@ class Parser:
         self._consume(TokenType.IN, "'in' after loop variable")
         iterable = self._ternary()
         condition = None
-        if self._check(TokenType.IF):
-            self._advance()
-            condition = self._ternary()
+        while self._check(TokenType.IF):
+            if_token = self._advance()
+            next_condition = self._ternary()
+            if condition is None:
+                condition = next_condition
+            else:
+                and_token = Token(TokenType.AND, "and", None, if_token.line, if_token.column)
+                condition = Logical(condition, and_token, next_condition)
         return ComprehensionClause(
             var_name, iterable, condition, self._previous().line, self._previous().column,
             names=names, rest=rest, is_map=is_map,

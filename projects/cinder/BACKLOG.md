@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: multiple chained `if` filter clauses in list/map comprehensions
+## 1. Language: multiple chained `if` filter clauses in list/map comprehensions [claimed 2026-09-06T19:34:07Z]
 
 Build: a list/map comprehension's `for` clause accepts at most one `if`
 filter today — a second `if` is a `ParseError`, even though chaining two

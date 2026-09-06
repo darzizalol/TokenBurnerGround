@@ -1221,9 +1221,9 @@ class Parser:
 
     def _match_list_pattern(
         self,
-    ) -> "tuple[list[tuple[str | Expr | None | tuple[list, str | None], Expr | None]], str | None]":
+    ) -> "tuple[list[tuple[str | Expr | None | tuple[list, str | None, str | None] | tuple[list, str | None, str, str | None], Expr | None]], str | None]":
         self._advance()  # consume '['
-        entries: "list[tuple[str | Expr | None | tuple[list, str | None], Expr | None]]" = []
+        entries: "list[tuple[str | Expr | None | tuple[list, str | None, str | None] | tuple[list, str | None, str, str | None], Expr | None]]" = []
         rest: "str | None" = None
         seen_default = False
         if not self._check(TokenType.RBRACKET):
@@ -1264,7 +1264,7 @@ class Parser:
 
     def _match_list_pattern_entry(
         self, seen_default: bool
-    ) -> "tuple[str | Expr | None | tuple[list, str | None], Expr | None]":
+    ) -> "tuple[str | Expr | None | tuple[list, str | None, str | None] | tuple[list, str | None, str, str | None], Expr | None]":
         token = self._peek()
         if token.type == TokenType.COMMA:
             if seen_default:
@@ -1276,10 +1276,13 @@ class Parser:
                 )
             return None, None
         if token.type == TokenType.LBRACKET:
-            entry = self._match_list_pattern()
+            nested_entries, nested_rest = self._match_list_pattern()
+            nested_as = self._match_whole_binding()
+            entry = (nested_entries, nested_rest, nested_as)
         elif token.type == TokenType.LBRACE:
             nested_entries, nested_rest = self._match_map_pattern()
-            entry = (nested_entries, nested_rest, "map")
+            nested_as = self._match_whole_binding()
+            entry = (nested_entries, nested_rest, "map", nested_as)
         elif token.type == TokenType.IDENTIFIER:
             self._advance()
             entry = None if token.lexeme == "_" else token.lexeme
@@ -1363,10 +1366,12 @@ class Parser:
             self._advance()
             if self._check(TokenType.LBRACKET):
                 nested_entries, nested_rest = self._match_list_pattern()
-                return key, (nested_entries, nested_rest, True), None
+                nested_as = self._match_whole_binding()
+                return key, (nested_entries, nested_rest, True, nested_as), None
             if self._check(TokenType.LBRACE):
                 nested_entries, nested_rest = self._match_map_pattern()
-                return key, (nested_entries, nested_rest), None
+                nested_as = self._match_whole_binding()
+                return key, (nested_entries, nested_rest, nested_as), None
             binding = self._consume(
                 TokenType.IDENTIFIER, "identifier after ':' in map pattern"
             ).lexeme

@@ -1256,7 +1256,11 @@ class Interpreter:
                 if contains_value(
                     values, subject, arm.range_pattern.line, arm.range_pattern.column
                 ):
-                    return self.evaluate(arm.body, env)
+                    arm_env = env
+                    if arm.whole_binding is not None:
+                        arm_env = Environment(env)
+                        arm_env.define(arm.whole_binding, subject)
+                    return self.evaluate(arm.body, arm_env)
                 continue
             if arm.map_pattern is not None:
                 arm_env = Environment(env)
@@ -1274,7 +1278,11 @@ class Interpreter:
                 arm_env.define(arm.binding, subject)
                 return self.evaluate(arm.body, arm_env)
             if values_equal(subject, self.evaluate(arm.pattern, env)):
-                return self.evaluate(arm.body, env)
+                arm_env = env
+                if arm.whole_binding is not None:
+                    arm_env = Environment(env)
+                    arm_env.define(arm.whole_binding, subject)
+                return self.evaluate(arm.body, arm_env)
         raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
 
     def _evaluate_binary(self, expr: Binary, env: Environment) -> object:

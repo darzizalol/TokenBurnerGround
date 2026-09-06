@@ -6850,6 +6850,59 @@ class TestMatchExpression(unittest.TestCase):
         )
         self.assertEqual(env.get("whole"), 1)
 
+    def test_range_pattern_whole_binding(self):
+        env = run('let result = match (5) { 1..10 as whole => whole, _ => nil };')
+        self.assertEqual(env.get("result"), 5)
+
+    def test_range_pattern_whole_binding_negative_bound(self):
+        env = run('let result = match (-5) { -10..0 as whole => whole, _ => 0 };')
+        self.assertEqual(env.get("result"), -5)
+
+    def test_multi_value_literal_pattern_whole_binding_first_value(self):
+        env = run('let result = match (1) { 1, 2 as whole => whole, _ => nil };')
+        self.assertEqual(env.get("result"), 1)
+
+    def test_multi_value_literal_pattern_whole_binding_second_value(self):
+        env = run('let result = match (2) { 1, 2 as whole => whole, _ => nil };')
+        self.assertEqual(env.get("result"), 2)
+
+    def test_single_literal_pattern_whole_binding(self):
+        env = run('let result = match (5) { 5 as whole => whole, _ => nil };')
+        self.assertEqual(env.get("result"), 5)
+
+    def test_range_pattern_whole_binding_not_defined_on_non_match(self):
+        env = run(
+            'let result = match (50) { 1..10 as whole => whole, _ => "no match" };'
+        )
+        self.assertEqual(env.get("result"), "no match")
+
+    def test_range_pattern_whole_binding_does_not_leak_into_enclosing_scope(self):
+        env = run(
+            'let whole = 1; '
+            'match (5) { 1..10 as whole => whole, _ => nil }; '
+        )
+        self.assertEqual(env.get("whole"), 1)
+
+    def test_bound_identifier_pattern_whole_binding_raises_parse_error(self):
+        from cinder.parser import ParseError
+
+        with self.assertRaisesRegex(
+            ParseError,
+            "'as' binding is not valid on a '_' or bound-identifier match "
+            "pattern",
+        ):
+            run('match (5) { n as whole => n, _ => 0 };')
+
+    def test_wildcard_pattern_whole_binding_raises_parse_error(self):
+        from cinder.parser import ParseError
+
+        with self.assertRaisesRegex(
+            ParseError,
+            "'as' binding is not valid on a '_' or bound-identifier match "
+            "pattern",
+        ):
+            run('match (5) { _ as whole => whole, _ => 0 };')
+
 
 if __name__ == "__main__":
     unittest.main()

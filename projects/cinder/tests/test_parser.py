@@ -5866,6 +5866,40 @@ class TestMatchExpression(unittest.TestCase):
         ):
             parse("match (x) { [a, b] as 5 => a, _ => 0 }")
 
+    def test_match_range_pattern_whole_binding(self):
+        arms = parse("match (x) { 1..10 as whole => whole, _ => 0 }").arms
+        self.assertEqual(arms[0].whole_binding, "whole")
+        self.assertIsNotNone(arms[0].range_pattern)
+
+    def test_match_multi_value_literal_pattern_whole_binding(self):
+        arms = parse("match (x) { 1, 2 as whole => whole, _ => 0 }").arms
+        self.assertEqual(arms[0].whole_binding, "whole")
+        self.assertEqual(arms[1].whole_binding, "whole")
+
+    def test_match_literal_pattern_whole_binding(self):
+        arms = parse("match (x) { 5 as whole => whole, _ => 0 }").arms
+        self.assertEqual(arms[0].whole_binding, "whole")
+
+    def test_match_literal_pattern_without_as_has_no_whole_binding(self):
+        arms = parse("match (x) { 5 => 0, _ => 0 }").arms
+        self.assertIsNone(arms[0].whole_binding)
+
+    def test_match_bound_identifier_pattern_whole_binding_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            "'as' binding is not valid on a '_' or bound-identifier match "
+            "pattern",
+        ):
+            parse("match (x) { n as whole => n, _ => 0 }")
+
+    def test_match_wildcard_pattern_whole_binding_raises(self):
+        with self.assertRaisesRegex(
+            ParseError,
+            "'as' binding is not valid on a '_' or bound-identifier match "
+            "pattern",
+        ):
+            parse("match (x) { _ as whole => whole, _ => 0 }")
+
 
 if __name__ == "__main__":
     unittest.main()

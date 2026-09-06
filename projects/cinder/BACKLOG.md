@@ -531,6 +531,111 @@ task.
 
 ---
 
+## 6. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position
+
+Build: `is_polydivisible` (`cinder/builtins.py`, search `def
+_is_polydivisible`: a non-negative integer whose every digit-prefix of
+length `i` is divisible by `i`, e.g. `1230` is polydivisible since `1 %
+1 == 0`, `12 % 2 == 0`, `123 % 3 == 0`, `1230 % 4 == 0`) has no
+value-returning `nth_*` sibling, the same gap `nth_smith_number`/
+`nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`/`nth_emirp`
+(tasks 1, 3, 4, 5 above) already close for their own predicates. Verify
+the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_polydivisible(1));'
+# -> <eval>:1:7: undefined name 'nth_polydivisible' (did you mean
+#    'is_polydivisible'?)
+```
+
+Worked examples: the first twenty polydivisible numbers (confirmed by
+scanning with `is_polydivisible` directly) are `0, 1, 2, 3, 4, 5, 6, 7,
+8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28`, so `nth_polydivisible(1)`
+is `0` and `nth_polydivisible(10)` is `9`. The 20th is `28`, the 50th is
+`88`.
+
+Like `nth_self_number` (task 4 above, not yet built as of this writing —
+same quirk either way), position `1` maps to candidate `0`, not `1`:
+every single digit `0`-`9` is trivially polydivisible (`is_polydivisible`'s
+own `range(1, len(digits) + 1)` loop only ever checks prefix length `1`
+for a one-digit number, and any integer mod `1` is `0`), and `0` is the
+smallest value `is_polydivisible` ever accepts (it returns `false`
+outright for negative input, per its own `if value < 0: return False`
+guard), so the scan must start *before* `0` (`candidate = -1`,
+incremented before the first check) to avoid silently excluding it from
+the sequence forever.
+
+Add directly after `_is_polydivisible` (search `def _is_polydivisible`,
+immediately before `def _is_pandigital`) — keeps the value-returning
+helper next to the predicate it mirrors:
+```python
+def _nth_polydivisible(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_polydivisible", arguments, 1, line, column)
+    value = _require_int("nth_polydivisible", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_polydivisible() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_polydivisible_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        return all(
+            int(digits[:i]) % i == 0 for i in range(1, len(digits) + 1)
+        )
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_polydivisible_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Inner candidate check copied verbatim from `_is_polydivisible`'s own
+body minus its `value < 0` guard, since the scan never visits a negative
+candidate — the same "duplicate the tiny predicate body instead of a
+redundant `_require_arity`/`_require_int` round-trip per candidate"
+choice every recent `nth_*` task already makes.) Register the new dict
+entry (search `"is_polydivisible": _is_polydivisible,`, add
+`"nth_polydivisible": _nth_polydivisible,` directly after it, before
+`"is_pandigital": _is_pandigital,`).
+
+Acceptance criteria:
+- `nth_polydivisible(1);` through `nth_polydivisible(10);` are `0, 1, 2,
+  3, 4, 5, 6, 7, 8, 9` in order — the worked example above.
+- `nth_polydivisible(20);` is `28` and `nth_polydivisible(50);` is `88`
+  — further worked examples confirming the scan scales past the first
+  ten.
+- For every `position` in `1..50`,
+  `is_polydivisible(nth_polydivisible(position))` is `true` — the same
+  self-consistency check `nth_smith_number`/`nth_carmichael_number`/
+  `nth_twin_prime`/`nth_self_number`/`nth_emirp`'s own test suites
+  already run against their predicates.
+- `nth_polydivisible(0);`, `nth_polydivisible(-3);` both raise
+  `CinderRuntimeError` matching `"nth_polydivisible\(\) requires a
+  positive integer, domain error"` — note this domain check is on the
+  *position* argument, unrelated to `0` being a valid *polydivisible
+  number* itself (`nth_polydivisible(1)` legitimately returns `0`).
+- `nth_polydivisible(true);` raises `CinderRuntimeError` matching
+  `"nth_polydivisible\(\) requires an int, got bool"`.
+- `nth_polydivisible("5");` raises `CinderRuntimeError` matching
+  `"nth_polydivisible\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_polydivisible`,
+search `def _is_polydivisible`), `tests/test_builtins.py` (new `class
+TestNthPolydivisible`, modeled on `class TestIsPolydivisible`, search
+that name, for the test shapes above — place it near that existing
+class). Once merged, `README.md`'s existing `is_polydivisible` bullet
+needs `nth_polydivisible` added right after it, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

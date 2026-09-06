@@ -244,9 +244,14 @@ while (i < 10) {
   nil }`, `match (2) { 1, 2, 3 as whole => whole, _ => 0 }`, useful since
   a range pattern's bound name isn't the subject's actual value and a
   multi-value literal arm's body otherwise can't tell which literal
-  matched) for now (no guards yet, and `as` still can't bind an
-  *intermediate* value reached partway through a nested list/map
-  sub-pattern — see `BACKLOG.md`)
+  matched), and `as` binding on a nested list/map sub-pattern
+  (`match ([1, [2, 3]]) { [a, [b, c] as inner] => inner, _ => nil }`,
+  `match ({"k": {"x": 1}}) { {k: {x} as inner} => inner, _ => nil }`,
+  binding an *intermediate* value reached partway through a larger
+  pattern rather than only the whole subject or a whole
+  literal/range arm — composes with rest capture, defaults, and
+  multi-level nesting) for now (no guards yet — see `BACKLOG.md`'s
+  `## Graveyard`)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -775,39 +780,39 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_smith_number` (PR
-#406, the value-returning sibling `is_smith_number` itself was missing,
-the same bounded sequential scan `nth_refactorable`/`nth_sphenic`
-already use), whole-value `as` binding extended to literal and range
-`match` patterns (PR #405, `match (5) { 1..10 as whole => whole, _ =>
-nil }`, useful since a range pattern's bound name isn't the subject's
-actual value and a multi-value literal arm's body otherwise can't tell
-which literal matched), and `nth_achilles` (PR #404, the value-returning
-sibling `is_achilles` itself was missing, the same bounded sequential
-scan `nth_sphenic`/`nth_powerful_number` already use). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): letting `as` bind a nested
-list/map sub-pattern's own value inside a larger `match` pattern (`[a,
-[b, c] as inner]`, today a `ParseError`; today `as` only captures the
-whole subject at the top of an arm, or (as of PR #405) a whole
-literal/range pattern, but never an intermediate value reached partway
-through a nested pattern) — `nth_carmichael_number`, the value-returning
-sibling `is_carmichael_number` itself is missing, the same bounded
-sequential scan `nth_smith_number`/`nth_achilles` already use — allowing
-a list/map comprehension to chain more than one `if` filter clause (`[x
-for x in xs if a if b]`, today a `ParseError` after the first `if`, even
-though Python-style chained filters read more naturally than folding
-everything into one `&&` expression) — `nth_twin_prime`, the
-value-returning sibling `is_twin_prime` itself is missing, the same
-bounded sequential scan `nth_smith_number`/`nth_carmichael_number`
-already use — `nth_self_number`, the value-returning sibling
-`is_self_number` itself is missing, the same bounded sequential scan the
-other `nth_*` tasks above already use (unusually, position `1` maps to
-candidate `0` here, since `0` is itself a valid self number and every
-other `nth_*` in this backlog starts its scan at a candidate its own
-predicate always rejects) — and `nth_emirp`, the value-returning sibling
-`is_emirp` itself is missing, the same bounded sequential scan the other
-`nth_*` tasks above already use.
+Actively developed, nightly. Recently landed: `as` binding on a nested
+list/map sub-pattern inside `match` (PR #407, `[a, [b, c] as inner]`,
+letting an arm bind an intermediate value reached partway through a
+larger pattern rather than only the whole subject or a whole
+literal/range arm), whole-value `as` binding extended to literal and
+range `match` patterns (PR #405, `match (5) { 1..10 as whole => whole,
+_ => nil }`, useful since a range pattern's bound name isn't the
+subject's actual value and a multi-value literal arm's body otherwise
+can't tell which literal matched), and `nth_smith_number` (PR #406, the
+value-returning sibling `is_smith_number` itself was missing, the same
+bounded sequential scan `nth_refactorable`/`nth_sphenic` already use).
+See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): `nth_carmichael_number`, the
+value-returning sibling `is_carmichael_number` itself is missing, the
+same bounded sequential scan `nth_smith_number`/`nth_achilles` already
+use — allowing a list/map comprehension to chain more than one `if`
+filter clause (`[x for x in xs if a if b]`, today a `ParseError` after
+the first `if`, even though Python-style chained filters read more
+naturally than folding everything into one `&&` expression) —
+`nth_twin_prime`, the value-returning sibling `is_twin_prime` itself is
+missing, the same bounded sequential scan `nth_smith_number`/
+`nth_carmichael_number` already use — `nth_self_number`, the
+value-returning sibling `is_self_number` itself is missing, the same
+bounded sequential scan the other `nth_*` tasks above already use
+(unusually, position `1` maps to candidate `0` here, since `0` is
+itself a valid self number and every other `nth_*` in this backlog
+starts its scan at a candidate its own predicate always rejects) —
+`nth_emirp`, the value-returning sibling `is_emirp` itself is missing,
+the same bounded sequential scan the other `nth_*` tasks above already
+use — and `nth_polydivisible`, the value-returning sibling
+`is_polydivisible` itself is missing, sharing `nth_self_number`'s own
+position-1-maps-to-candidate-0 quirk since `0` is trivially
+polydivisible too.
 (Guards in `match` arms, `n if n > 0 => "positive"`, were attempted but
 closed after three failed review rounds over a recurring parser bug —
 see `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap

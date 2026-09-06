@@ -4106,3 +4106,16 @@ for vision/architecture.
   copy of `_is_achilles`'s powerful-number-with-coprime-exponents check.
   Clean first pass, no bounces (4521 tests passing, up from 4513).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Language: whole-value `as` binding on literal and range `match`
+  patterns** — merged 2026-09-06T14:23:55Z via PR #405
+  (`feat/20260906-as-literal-range-match`). Extended the `as`-binding
+  support list/map patterns already had (PR #348) to literal, multi-value
+  literal, and range patterns: `_match_arm`'s flat-pattern branch
+  (`cinder/parser.py`) now calls `_match_whole_binding()` after collecting
+  entries and rejects it when combined with a wildcard/bound-identifier
+  entry, and `_evaluate_match`'s range-pattern and literal-pattern
+  branches (`cinder/interpreter.py`) now build a child `Environment` and
+  bind the matched subject when `whole_binding` is set, mirroring the
+  existing list/map-pattern branches. Clean first pass, no bounces (4536
+  tests passing, up from 4521). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

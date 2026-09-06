@@ -11,173 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: whole-value `as` binding on literal and range `match` patterns [claimed 2026-09-06T14:16:13Z]
-
-Build: whole-value `as` binding (`match ([1, 2]) { [a, b] as whole => whole,
-_ => nil }`) currently only exists on list-pattern and map-pattern match
-arms (landed via PR #348) — a literal pattern, a multi-value literal
-pattern, or a range pattern cannot carry `as` at all, even though each of
-them has a real use for it that a plain bound-identifier arm can't
-replace: a range pattern's bound name is not the subject's actual value
-(you'd otherwise have no way to recover it inside the arm body), and a
-multi-value literal arm's body has no way to tell *which* of the several
-literals matched. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'let r = match (5) { 1..10 as whole => whole, _ => nil }; print(r);'
-# -> <eval>:1:27: expected '=>' after match pattern, found 'as'
-python3 -m cinder.cli eval 'let r = match (2) { 1, 2 as whole => whole, _ => nil }; print(r);'
-# -> <eval>:1:26: expected '=>' after match pattern, found 'as'
-```
-
-Worked examples: `match (5) { 1..10 as whole => whole, _ => nil }` is `5`;
-`match (-5) { -10..0 as whole => whole, _ => 0 }` is `-5` (a negative
-range bound composes with `as`, same as range patterns already do without
-it); `match (2) { 1, 2 as whole => whole, _ => nil }` is `2`, and
-`match (1) { 1, 2 as whole => whole, _ => nil }` is `1` — the same arm
-answers correctly for either matched literal, which a single shared
-`MatchArm` per multi-value entry (see `_match_arm`'s
-`for pattern, binding, range_pattern in entries` below) already makes
-trivial since `whole_binding` binds to whichever `subject` reached that
-arm, not to the pattern literal itself; `match (5) { 5 as whole => whole,
-_ => nil }` is `5` — a single literal pattern may carry `as` too, for
-symmetry with the multi-value case even though it's less useful there.
-
-The wildcard/bound-identifier arm kind keeps its current restriction —
-`match (5) { n as whole => n, _ => 0 }` and `match (5) { _ as whole =>
-whole, _ => 0 }` both still raise `ParseError`, since a bound-identifier
-arm already binds the whole subject under its own name (`n`) with no
-`as` needed, and it would be redundant/confusing to let `_` (whose whole
-point is "bind nothing") also carry a name via `as` — the exact rationale
-`MatchArm`'s own docstring (search `class MatchArm`, `cinder/ast_nodes.py`)
-already gives for excluding it there; this task extends the *literal* and
-*range* pattern kinds only, not the wildcard/bound-identifier kind.
-
-Root cause: `_match_arm` (search `def _match_arm`, `cinder/parser.py`)
-has two branches that already call `_match_whole_binding()` (search that
-name) right after parsing their pattern — the `LBRACKET` (list-pattern)
-and `LBRACE` (map-pattern) branches — but its third branch, the flat
-literal/range/wildcard/bound-identifier path, goes straight from
-collecting `entries` to `self._consume(TokenType.FAT_ARROW, ...)` with no
-`as`-parsing step at all. On the interpreter side, `_evaluate_match`
-(search `def _evaluate_match`, `cinder/interpreter.py`) mirrors this: its
-`arm.range_pattern is not None` branch calls `self.evaluate(arm.body,
-env)` directly (plain `env`, no `arm_env`), and its final `if
-values_equal(subject, self.evaluate(arm.pattern, env))` branch does the
-same — neither ever looks at `arm.whole_binding`, unlike the
-list/map-pattern branches just above them which each build a fresh
-`arm_env` and `arm_env.define(arm.whole_binding, subject)` when it's set.
-
-Fix shape — in `_match_arm`'s flat-pattern branch, parse the optional
-`as` right after collecting `entries` (mirroring where the list/map
-branches call it relative to their own pattern), and reject it when
-combined with a wildcard/bound-identifier entry the same way the existing
-multi-value check already rejects *mixing* those kinds:
-```python
-first_token = self._peek()
-entries = [self._match_pattern()]
-while self._check(TokenType.COMMA):
-    self._advance()
-    entries.append(self._match_pattern())
-has_unconditional = any(
-    pattern is None and range_pattern is None
-    for pattern, _, range_pattern in entries
-)
-if len(entries) > 1 and has_unconditional:
-    raise ParseError(
-        "'_' or a bound identifier cannot be combined with other "
-        "patterns in a match arm",
-        first_token.line,
-        first_token.column,
-    )
-whole_binding = self._match_whole_binding()
-if whole_binding is not None and has_unconditional:
-    raise ParseError(
-        "'as' binding is not valid on a '_' or bound-identifier match "
-        "pattern",
-        first_token.line,
-        first_token.column,
-    )
-self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
-body = self._ternary()
-return [
-    MatchArm(pattern, body, binding, None, range_pattern, whole_binding=whole_binding)
-    for pattern, binding, range_pattern in entries
-]
-```
-(`_match_whole_binding` itself needs no change — it already just parses
-an optional `as NAME` and returns the name or `None`, agnostic to which
-arm kind calls it.) Then update `_evaluate_match`'s two flat-pattern
-branches to honor `whole_binding` the same way the list/map branches
-already do:
-```python
-if arm.range_pattern is not None:
-    values = self._evaluate_range(arm.range_pattern, env)
-    if contains_value(
-        values, subject, arm.range_pattern.line, arm.range_pattern.column
-    ):
-        arm_env = env
-        if arm.whole_binding is not None:
-            arm_env = Environment(env)
-            arm_env.define(arm.whole_binding, subject)
-        return self.evaluate(arm.body, arm_env)
-    continue
-```
-and, for the final literal-pattern branch:
-```python
-if values_equal(subject, self.evaluate(arm.pattern, env)):
-    arm_env = env
-    if arm.whole_binding is not None:
-        arm_env = Environment(env)
-        arm_env.define(arm.whole_binding, subject)
-    return self.evaluate(arm.body, arm_env)
-```
-No changes needed to the wildcard/bound-identifier branch (`arm.pattern
-is None`) — it keeps raising via the new parser-side check above, so it
-never reaches the interpreter with a non-`None` `whole_binding`.
-
-Acceptance criteria:
-- `match (5) { 1..10 as whole => whole, _ => nil }` is `5` — the first
-  worked example above.
-- `match (-5) { -10..0 as whole => whole, _ => 0 }` is `-5` — a negative
-  range bound composes with `as`.
-- `match (2) { 1, 2 as whole => whole, _ => nil }` is `2`, and
-  `match (1) { 1, 2 as whole => whole, _ => nil }` is `1` — the
-  multi-value literal pattern worked example above, both matched values.
-- `match (5) { 5 as whole => whole, _ => nil }` is `5` — a single literal
-  pattern with `as`.
-- `match (5) { n as whole => n, _ => 0 }` and `match (5) { _ as whole =>
-  whole, _ => 0 }` both raise `ParseError` matching `"'as' binding is not
-  valid on a '_' or bound-identifier match pattern"` — the
-  wildcard/bound-identifier kind keeps its current restriction.
-- Regression: every existing list-pattern/map-pattern `as`-binding test in
-  `tests/test_parser.py`/`tests/test_interpreter.py` (search `whole_binding`
-  in each) still passes unmodified — this task only adds `as` to two new
-  pattern kinds, it does not change the list/map-pattern behavior.
-- New tests in `tests/test_parser.py` (search `class TestMatch`, near the
-  existing `test_match_list_pattern_whole_binding`/
-  `test_match_map_pattern_whole_binding` tests) asserting `arms[0].whole_binding`
-  for a range-pattern arm and a multi-value literal-pattern arm, plus one
-  asserting the wildcard/bound-identifier `ParseError` above.
-- New tests in `tests/test_interpreter.py` (search `class TestMatch`, near
-  the existing `test_list_pattern_whole_binding_holds_original_subject`)
-  covering every acceptance case above.
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_arm`, search that name),
-`cinder/interpreter.py` (`_evaluate_match`, search that name),
-`cinder/ast_nodes.py` (`MatchArm`'s docstring, search `class MatchArm` —
-its "Not valid on the wildcard/bound-identifier, literal, or
-range-pattern arm kinds" sentence needs updating to say only the
-wildcard/bound-identifier kind is excluded now), `tests/test_parser.py`,
-`tests/test_interpreter.py` per the acceptance criteria above. Once
-merged, `README.md`'s `match` bullet needs a clause noting that literal
-and range patterns also accept the whole-value `as` binding, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
+## 1. Standard library: `nth_smith_number` — Smith number found at a 1-indexed position
 
 Build: `is_smith_number` (`cinder/builtins.py`, search `def
 _is_smith_number`: a composite number whose decimal digit sum equals the
@@ -283,7 +117,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: `as` binding on a nested list/map sub-pattern inside `match`
+## 2. Language: `as` binding on a nested list/map sub-pattern inside `match`
 
 Build: whole-value `as` binding (PR #348) lets a `match` arm capture the
 entire matched subject (`match ([1, 2]) { [a, b] as whole => whole, _ =>
@@ -505,7 +339,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
+## 3. Standard library: `nth_carmichael_number` — Carmichael number found at a 1-indexed position
 
 Build: `is_carmichael_number` (`cinder/builtins.py`, search `def
 _is_carmichael_number`: a composite, squarefree number `n` where every
@@ -616,7 +450,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Language: multiple chained `if` filter clauses in list/map comprehensions
+## 4. Language: multiple chained `if` filter clauses in list/map comprehensions
 
 Build: a list/map comprehension's `for` clause accepts at most one `if`
 filter today — a second `if` is a `ParseError`, even though chaining two
@@ -714,12 +548,12 @@ task.
 
 ---
 
-## 6. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
+## 5. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
 
 Build: `is_twin_prime` (`cinder/builtins.py`, search `def
 _is_twin_prime`: prime `n` with a prime at `n - 2` or `n + 2`, e.g. `41` is
 a twin prime via `43`) has no value-returning `nth_*` sibling, the same
-gap `nth_smith_number`/`nth_carmichael_number` (tasks 2 and 4 above)
+gap `nth_smith_number`/`nth_carmichael_number` (tasks 1 and 3 above)
 already close for their own predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_twin_prime(1));'

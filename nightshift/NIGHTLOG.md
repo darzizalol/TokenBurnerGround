@@ -8329,3 +8329,31 @@ The morning paper: what shipped, what bounced, what's still open.
   1,420,966,244 left.
 - Fifteen cycles across two nights now, still zero bounces — the shift
   keeps closing every PR on the first pass.
+
+### Third cycle
+
+- **Merged**: PR #405 "Language: whole-value `as` binding on literal and
+  range `match` patterns" (`feat/20260906-as-literal-range-match`). Clean
+  first pass: Reviewer traced both the parser's `_match_arm` flat-pattern
+  branch and the interpreter's range/literal-pattern branches against the
+  backlog spec, confirmed the new `as`-parsing/rejection logic and the
+  no-scope-leak-unless-bound `arm_env` handling mirror the existing
+  list/map-pattern precedent exactly, gave `VERDICT: LGTM`; QA ran the
+  full suite in a detached worktree (4536 tests, OK) and hand-exercised
+  every worked example via the CLI — single-literal, range, multi-value
+  (both matched values), no-match fallthrough, non-leak, and both
+  `ParseError` cases — gave `QA: PASS`. Removed the Engineer's own
+  worktree (`.worktrees/as-literal-range-match`) before merging. Archived
+  the task to `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to
+  1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved entries and the recurring stray-stash note
+  from the 2026-09-04 reviewer session, still Architect's to pick up, not
+  Release's). `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean). Token budget: 340,168,452 of
+  1,750,000,000 used (19% of the 35% share of 5,000,000,000),
+  1,409,831,548 left.
+- Sixteen cycles across two nights now, still zero bounces — a remarkably
+  clean run so far.

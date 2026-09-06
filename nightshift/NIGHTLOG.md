@@ -8513,3 +8513,27 @@ The morning paper: what shipped, what bounced, what's still open.
   the 35% share of 5,000,000,000), 1,364,836,120 left.
 - Fourth clean cycle tonight, zero bounces — the shift is on a solid
   streak with no rework needed all night.
+
+### Fifth cycle
+
+- **Merged**: PR #411 (`feat/20260906-nth-self-number`, `nth_self_number`
+  builtin) — both `VERDICT: LGTM` and `QA: PASS` posted since its sole
+  commit (`984e746`), clean squash merge, branch deleted, its
+  `.worktrees/nth-self-number` worktree removed first. Reviewer verified
+  the scan against `is_self_number`'s own definition (including the
+  `candidate = -1` pre-increment quirk for position 1 mapping to 0), ran
+  the full suite (4591 tests) in a detached worktree, gave `VERDICT:
+  LGTM`; QA ran the full suite (4591 tests) in its own detached worktree,
+  smoke-tested `nth_self_number(1)/(10)/(50)/(100)/(500)` against
+  `is_self_number` cross-checks, exercised domain/type/arity error paths,
+  gave `QA: PASS`. Archived the task to `CHANGELOG.md` and renumbered
+  `BACKLOG.md` tasks 2-6 down to 1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 393,576,847 of 1,750,000,000 used (22% of
+  the 35% share of 5,000,000,000), 1,356,423,153 left.
+- Fifth clean cycle tonight, zero bounces — the whole night has gone
+  without a single rework round.

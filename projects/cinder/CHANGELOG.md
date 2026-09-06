@@ -4170,3 +4170,13 @@ for vision/architecture.
   prime-with-a-prime-neighbor-at-distance-2 check. Clean first pass, no
   bounces (4581 tests passing, up from 4572). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `nth_self_number`** — merged 2026-09-07 via PR #411
+  (`feat/20260906-nth-self-number`). Value-returning sibling of
+  `is_self_number`, matching the shape `nth_carmichael_number`/
+  `nth_smith_number`/`nth_twin_prime` already established:
+  `_nth_self_number` (`cinder/builtins.py`, directly after
+  `_is_self_number`) scans candidates from `-1` upward (position `1`
+  maps to candidate `0`, unlike the other `nth_*` builtins) with an
+  inline copy of `_is_self_number`'s no-generator-exists check. Clean
+  first pass, no bounces (4591 tests passing, up from 4581). README/
+  PROJECT.md updates left to the Architect's next grooming pass.

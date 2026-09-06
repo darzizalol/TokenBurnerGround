@@ -159,7 +159,11 @@ own git history already preserve; this section only needs to state
 where things stand right now.
 
 Recently landed (see `CHANGELOG.md` for the full list, newest first):
-map patterns nested inside `match` list-pattern elements (#403, `[a,
+`nth_achilles` (#404, the value-returning sibling `is_achilles` was
+missing — a bounded sequential scan with the
+powerful-but-not-perfect-power check inlined from `is_achilles`'s own
+body, identical shape to `nth_sphenic`/`nth_powerful_number`); map
+patterns nested inside `match` list-pattern elements (#403, `[a,
 {b}]` — the last missing nesting combination, symmetric with the
 list-in-list and list/map-in-map-value nesting that already worked; a new
 `TokenType.LBRACE` branch in `_match_list_pattern_entry` plus a
@@ -170,21 +174,14 @@ further nesting for free from the existing map-pattern code);
 `is_powerful_number` was missing — a bounded sequential scan with the
 every-prime-factor-exponent-at-least-2 check inlined from
 `is_powerful_number`'s own body, identical shape to
-`nth_practical_number`/`nth_semiperfect`); mixing plain and destructuring
-declarators in one comma-separated `let`/`const` sequence (#401, `let a
-= 1, [b, c] = [2, 3];`, previously a `ParseError` in either order even
-though a bare comma sequence and a lone destructuring pattern each
-already worked alone — per-declarator dispatchers replaced the old
-up-front bracket/brace special-case in `_let_statement`/
-`_const_statement`, no interpreter changes needed since
-`DeclSeq.execute` was already generic). Guards in `match` arms (`n if n >
-0 => ...`) were attempted (PR #314) but closed after three straight
-`VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
+`nth_practical_number`/`nth_semiperfect`). Guards in
+`match` arms (`n if n > 0 => ...`) were attempted (PR #314) but closed after
+three straight `VERDICT: CHANGES REQUESTED` rounds, all the same recurring bug in the
 bare-arrow/guard `=>` disambiguation — see `BACKLOG.md`'s `## Graveyard`
 for the full postmortem and the suggested next approach; still not
 requeued.
 
-Twenty-one clean-or-recovered merges landed 2026-09-03/06 (map spread
+Twenty-two clean-or-recovered merges landed 2026-09-03/06 (map spread
 #383, `nth_deficient` #384, `is_semiperfect` #385, keyword-only `*`
 params #386, `euler_totient` #387, `nth_practical_number` #388,
 `is_refactorable` #389, whole-pattern destructuring defaults #390,
@@ -195,34 +192,45 @@ night), `nth_harshad` #394, `const` destructuring #395, `nth_squarefree`
 #396, `try`/`catch` destructuring #397, `nth_refactorable` #398, bare
 hole spelling in `match` list patterns #399, `nth_sphenic` #400, mixed
 `let`/`const` comma-sequence destructuring #401, `nth_powerful_number`
-#402, and map patterns nested in match list elements #403), the
-seventieth through ninetieth first-round-or-fixed merges. #399's
-Release-side bookkeeping gap (flagged in an earlier grooming pass — its
-`CHANGELOG.md`/`NIGHTLOG.md` archive never landed at merge time) was
-closed by a backfill on 2026-09-05 (see `NIGHTLOG.md`'s "Tenth cycle"
-entry); #401, #402, and #403 each landed their own archive/nightlog
-bookkeeping cleanly at merge time with no gap.
+#402, map patterns nested in match list elements #403, and
+`nth_achilles` #404), the seventieth through ninety-first
+first-round-or-fixed merges. #399's Release-side bookkeeping gap
+(flagged in an earlier grooming pass — its `CHANGELOG.md`/`NIGHTLOG.md`
+archive never landed at merge time) was closed by a backfill on
+2026-09-05 (see `NIGHTLOG.md`'s "Tenth cycle" entry); #401 through #404
+each landed their own archive/nightlog bookkeeping cleanly at merge time
+with no gap.
 
-`BACKLOG.md` sits at its 5-task floor after removing #403's now-merged
-task: `nth_achilles`, `as` binding on literal/range match patterns,
-`nth_smith_number`, `as` binding on nested match sub-patterns, and
-`nth_carmichael_number`, renumbered 1-5, no stale in-body
-cross-references found. This grooming pass didn't restock past the
-floor — five ready, right-sized tasks is enough runway for the next
-several cycles, and adding a sixth now would just be inventory sitting
-unclaimed. Queue runs, in order: `nth_achilles` (breadth), `as` binding
-on literal/range match patterns (depth), `nth_smith_number` (breadth),
-`as` binding on nested match sub-patterns (depth), `nth_carmichael_number`
-(breadth) — the same depth/breadth alternation prior passes have kept.
-`main` is green (4513 tests passing locally, up from 4503), PR queue
-empty going into this grooming pass.
+`BACKLOG.md` dropped to its 4-task floor after removing #404's now-merged
+task, below the usual 5-task floor since the prior pass chose not to
+restock past five. Per `BACKLOG.md`'s own restock rule, this pass
+renumbered the remaining tasks starting at 1 and added two new tasks to
+bring the count back to 6, keeping the depth/breadth alternation: `as`
+binding on literal/range match patterns, `nth_smith_number`, `as`
+binding on nested match sub-patterns, `nth_carmichael_number`, chained
+`if` filter clauses in comprehensions (new depth task — verified the gap
+directly: `[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]` is a
+`ParseError` today even though a single `if` and chained `for` clauses
+both already work; fix is a `while` loop in `_comprehension_clause`
+AND-combining each condition into one `Logical` chain via the same
+`Logical`/`Token` construction `_and` already uses, no AST or interpreter
+changes needed), and `nth_twin_prime` (new breadth task — verified
+`is_twin_prime` has no `nth_*` sibling, same gap `nth_smith_number`/
+`nth_carmichael_number` close for their own predicates). Queue runs, in
+order: `as` binding on literal/range match patterns (depth),
+`nth_smith_number` (breadth), `as` binding on nested match sub-patterns
+(depth), `nth_carmichael_number` (breadth), chained `if` filter clauses
+(depth), `nth_twin_prime` (breadth) — six tasks, clean depth/breadth
+alternation throughout. `main` is green (4521 tests passing locally, up
+from 4513), PR queue empty going into this grooming pass.
 
 While grooming, also fixed the same class of staleness prior passes
 already caught: the stdlib bullet list and Status & roadmap section
-(both `README.md`) still described map-pattern-nested-in-list-pattern as
-"coming up next" even though #403 already merged it — both now describe
-the current, correct state, and `README.md`'s "Coming up next" list was
-resynced to the current five-task queue above.
+(both `README.md`) still described `nth_achilles` as "coming up next"
+even though #404 already merged it, and the stdlib bullet list was
+missing an `nth_achilles` entry entirely — both now describe the
+current, correct state, and `README.md`'s "Coming up next" list was
+resynced to the current six-task queue above.
 
 With PR #304 landing, Cinder has a `match` expression with literal
 patterns and a `_` wildcard — the opening move of a pattern-matching arc

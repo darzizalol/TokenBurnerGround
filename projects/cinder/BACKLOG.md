@@ -616,6 +616,207 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Language: multiple chained `if` filter clauses in list/map comprehensions
+
+Build: a list/map comprehension's `for` clause accepts at most one `if`
+filter today — a second `if` is a `ParseError`, even though chaining two
+independent filters (rather than combining them into one `&&`-style
+expression) is common and reads more naturally clause-by-clause, exactly
+how Python's own comprehensions allow it. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'let r = [x for x in 1..20 if x % 2 == 0 if x % 3 == 0]; print(r);'
+# -> <eval>:1:41: expected ']' after list comprehension, found 'if'
+python3 -m cinder.cli eval 'let r = {x: x for x in 1..20 if x % 2 == 0 if x % 3 == 0}; print(r);'
+# -> <eval>:1:47: expected '}' after map comprehension, found 'if'
+```
+Meanwhile a single `if`, and multiple chained `for` clauses, already work:
+```sh
+python3 -m cinder.cli eval 'let r = [x for x in 1..20 if x % 2 == 0]; print(r);'
+# -> [2, 4, 6, 8, 10, 12, 14, 16, 18]
+python3 -m cinder.cli eval 'let r = [x + y for x in 1..3 for y in 1..3 if x != y]; print(r);'
+# -> [3, 4, 3, 5, 4, 5]
+```
+
+Worked examples: `[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]` is `[6,
+12, 18]` — equivalent to combining both conditions with `&&`/`and`;
+`{x: x * x for x in 1..20 if x % 2 == 0 if x % 3 == 0}` is `{6: 36, 12:
+144, 18: 324}` — the map-comprehension sibling; a third chained `if`
+composes too, `[x for x in 1..50 if x % 2 == 0 if x % 3 == 0 if x % 5 ==
+0]` is `[30]`; and chained `if`s compose with chained `for` clauses in
+either order, `[x + y for x in 1..5 if x % 2 == 0 for y in 1..5 if y %
+2 == 0]` is `[4, 6, 6, 8]` (`x` in `{2, 4}`, `y` in `{2, 4}`, every pair).
+
+Root cause: `_comprehension_clause` (search `def _comprehension_clause`,
+`cinder/parser.py`) parses at most one optional `if` — `if
+self._check(TokenType.IF): ... condition = self._ternary()` — with no
+loop, so a second `if` token is left unconsumed and the caller's
+`self._consume(TokenType.RBRACKET/RBRACE, ...)` right after rejects it.
+
+Fix shape — change the single `if self._check(...)` into a `while`, and
+AND-combine every chained condition into one `Logical` expression as they're
+parsed, reusing the exact `Logical`/`Token` construction the real `and`
+operator's own parsing (`_and`, search that name a few dozen lines above)
+already does — no AST node or interpreter change needed at all, since a
+chain of `if`s becomes indistinguishable from a single `if` with `&&`
+between them by the time parsing finishes:
+```python
+condition = None
+while self._check(TokenType.IF):
+    if_token = self._advance()
+    next_condition = self._ternary()
+    if condition is None:
+        condition = next_condition
+    else:
+        and_token = Token(TokenType.AND, "and", None, if_token.line, if_token.column)
+        condition = Logical(condition, and_token, next_condition)
+```
+(`Logical` and `Token` are both already imported in `cinder/parser.py` —
+`Logical` for `ast_nodes`, `Token` from `cinder.tokens` — so no new
+imports are needed.) This is the entire fix: `ComprehensionClause`,
+`ListComprehension`, `MapComprehension` (`cinder/ast_nodes.py`) keep
+their existing single `condition: Expr | None` field unchanged, and
+`_run_comprehension_clauses`/`_evaluate_list_comprehension`/
+`_evaluate_map_comprehension` (`cinder/interpreter.py`) need no changes
+either — they already just do `is_truthy(self.evaluate(clause.condition,
+iter_env))` on whatever single expression tree the parser hands them,
+and short-circuit evaluation of the resulting `Logical` AND-chain gives
+the same left-to-right stop-on-first-`false` behavior a real hand-written
+`if a if b if c` chain should have.
+
+Acceptance criteria:
+- `[x for x in 1..20 if x % 2 == 0 if x % 3 == 0]` is `[6, 12, 18]` — the
+  first worked example above.
+- `{x: x * x for x in 1..20 if x % 2 == 0 if x % 3 == 0}` is `{6: 36, 12:
+  144, 18: 324}` — the map-comprehension sibling.
+- `[x for x in 1..50 if x % 2 == 0 if x % 3 == 0 if x % 5 == 0]` is
+  `[30]` — a third chained `if`.
+- `[x + y for x in 1..5 if x % 2 == 0 for y in 1..5 if y % 2 == 0]` is
+  `[4, 6, 6, 8]` — chained `if`s compose with chained `for` clauses.
+- Regression: every existing single-`if`/no-`if`/chained-`for` comprehension
+  test in `tests/test_parser.py`/`tests/test_interpreter.py` (search
+  `Comprehension` in each) still passes unmodified.
+- New tests in `tests/test_parser.py` (near `test_list_comprehension_with_filter`,
+  search that name) asserting the parsed `condition` field's `shape()` is a
+  `Logical`/`TokenType.AND` node for a chained-`if` list comprehension and
+  a chained-`if` map comprehension.
+- New tests in `tests/test_interpreter.py` (in `class TestListComprehension`/
+  `class TestMapComprehension`, search those names) covering every
+  acceptance case above.
+- Full test suite passes.
+
+Likely files: `cinder/parser.py` (`_comprehension_clause`, search that
+name), `tests/test_parser.py`, `tests/test_interpreter.py` per the
+acceptance criteria above. Once merged, `README.md`'s comprehension
+bullets need a clause noting that multiple chained `if` filters are
+supported, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
+## 6. Standard library: `nth_twin_prime` — twin prime found at a 1-indexed position
+
+Build: `is_twin_prime` (`cinder/builtins.py`, search `def
+_is_twin_prime`: prime `n` with a prime at `n - 2` or `n + 2`, e.g. `41` is
+a twin prime via `43`) has no value-returning `nth_*` sibling, the same
+gap `nth_smith_number`/`nth_carmichael_number` (tasks 2 and 4 above)
+already close for their own predicates. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_twin_prime(1));'
+# -> <eval>:1:7: undefined name 'nth_twin_prime' (did you mean
+#    'is_twin_prime'?)
+```
+
+Worked examples: the first fifteen twin primes by `is_twin_prime`'s own
+membership definition (every prime with a prime neighbor at distance 2 —
+not one entry per pair, so both `3` and `5` count separately even though
+they're the same pair) are `3, 5, 7, 11, 13, 17, 19, 29, 31, 41, 43, 59,
+61, 71, 73` (confirmed by scanning with `is_twin_prime` directly), so
+`nth_twin_prime(1)` is `3` and `nth_twin_prime(15)` is `73`. The 20th is
+`137`.
+
+Add directly after `_is_twin_prime` (search `def _is_twin_prime`,
+immediately before `def _is_power_of_two`) — keeps the value-returning
+helper next to the predicate it mirrors, matching where
+`nth_carmichael_number` itself sits right after `is_carmichael_number`:
+```python
+def _nth_twin_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_twin_prime", arguments, 1, line, column)
+    value = _require_int("nth_twin_prime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_twin_prime() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _trial_division_is_prime(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return False
+        return True
+
+    def _is_twin_prime_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        if not _trial_division_is_prime(candidate):
+            return False
+        return (
+            _trial_division_is_prime(candidate - 2)
+            or _trial_division_is_prime(candidate + 2)
+        )
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_twin_prime_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Identical shape to `_nth_smith_number`/`_nth_carmichael_number`, with the
+inner candidate check copied verbatim from `_is_twin_prime`'s own body
+instead of calling `_is_twin_prime` directly — the same "duplicate the
+tiny predicate body instead of a redundant `_require_arity`/`_require_int`
+round-trip per candidate" choice every recent `nth_*` task already makes.)
+Register the new dict entry (search `"is_twin_prime": _is_twin_prime,`,
+add `"nth_twin_prime": _nth_twin_prime,` directly after it, before
+`"is_power_of_two": _is_power_of_two,`).
+
+Acceptance criteria:
+- `nth_twin_prime(1);` through `nth_twin_prime(15);` are `3, 5, 7, 11,
+  13, 17, 19, 29, 31, 41, 43, 59, 61, 71, 73` in order — the worked
+  example above.
+- `nth_twin_prime(20);` is `137` — a further worked example confirming
+  the scan scales past the first fifteen.
+- For every `position` in `1..50`, `is_twin_prime(nth_twin_prime(position))`
+  is `true` — the same self-consistency check `nth_smith_number`/
+  `nth_carmichael_number`'s own test suites already run against their
+  predicates.
+- `nth_twin_prime(0);`, `nth_twin_prime(-3);` both raise
+  `CinderRuntimeError` matching `"nth_twin_prime\(\) requires a positive
+  integer, domain error"`.
+- `nth_twin_prime(true);` raises `CinderRuntimeError` matching
+  `"nth_twin_prime\(\) requires an int, got bool"`.
+- `nth_twin_prime("5");` raises `CinderRuntimeError` matching
+  `"nth_twin_prime\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_twin_prime`,
+search `def _is_twin_prime`), `tests/test_builtins.py` (new `class
+TestNthTwinPrime`, modeled on `class TestNthSphenic`, search that name,
+for the test shapes above — place it near the existing `class
+TestIsTwinPrime`, search that name). Once merged, `README.md`'s existing
+`is_twin_prime` bullet needs `nth_twin_prime` added right after it, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" section needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -509,6 +509,9 @@ while (i < 10) {
   test,
   `is_achilles` to test whether an integer is powerful but not itself a perfect power
   (the gap between `is_powerful_number` and `is_perfect_power`, e.g. `72 = 2^3 * 3^2`),
+  `nth_achilles` to return the Achilles number found at a 1-indexed position via a bounded
+  sequential scan with the powerful-but-not-perfect-power check inlined from `is_achilles`'s own
+  body, the value-returning sibling of `is_achilles`'s membership test,
   `is_perfect_power` to test whether an integer equals `m ** k` for some integer base `m` and exponent `k >= 2`
   (the general closure of `is_perfect_square`/`is_perfect_cube`/`is_powerful_number`, negative input admitted only
   through odd exponents),
@@ -736,7 +739,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4503+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4521+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -762,20 +765,16 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: map patterns nested inside
-`match` list-pattern elements (PR #403, `[a, {b}]`, the last missing
-nesting combination — list-in-list and list/map-in-map-value already
-worked), `nth_powerful_number` (PR #402, the value-returning sibling
-`is_powerful_number` itself was missing, the same bounded sequential scan
-`nth_practical_number`/`nth_semiperfect` already use), and mixing plain
-and destructuring declarators in one comma-separated `let`/`const`
-sequence (PR #401, `let a = 1, [b, c] = [2, 3];`, previously a
-`ParseError` in either order even though a bare comma sequence and a lone
-destructuring pattern each already worked on their own). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): `nth_achilles`, the
-value-returning sibling `is_achilles` itself is missing, the same bounded
-sequential scan `nth_sphenic`/`nth_powerful_number` already use —
+Actively developed, nightly. Recently landed: `nth_achilles` (PR #404,
+the value-returning sibling `is_achilles` itself was missing, the same
+bounded sequential scan `nth_sphenic`/`nth_powerful_number` already use),
+map patterns nested inside `match` list-pattern elements (PR #403, `[a,
+{b}]`, the last missing nesting combination — list-in-list and
+list/map-in-map-value already worked), and `nth_powerful_number` (PR
+#402, the value-returning sibling `is_powerful_number` itself was
+missing, the same bounded sequential scan `nth_practical_number`/
+`nth_semiperfect` already use). See [`CHANGELOG.md`](CHANGELOG.md) for
+the full merge history. Coming up next (see [`BACKLOG.md`](BACKLOG.md)):
 extending whole-value `as` binding (today list/map-pattern match arms
 only) to literal and range `match` patterns too (`match (5) { 1..10 as
 whole => whole, _ => nil }`, today a `ParseError`, useful since a range
@@ -787,9 +786,15 @@ is missing, the same bounded sequential scan `nth_refactorable`/
 sub-pattern's own value inside a larger `match` pattern (`[a, [b, c] as
 inner]`, today a `ParseError`; today `as` only captures the whole subject
 at the top of an arm, not an intermediate value reached partway through a
-nested pattern) — and `nth_carmichael_number`, the value-returning
-sibling `is_carmichael_number` itself is missing, the same bounded
-sequential scan `nth_smith_number`/`nth_achilles` already use. (Guards in
+nested pattern) — `nth_carmichael_number`, the value-returning sibling
+`is_carmichael_number` itself is missing, the same bounded sequential
+scan `nth_smith_number`/`nth_achilles` already use — allowing a list/map
+comprehension to chain more than one `if` filter clause (`[x for x in xs
+if a if b]`, today a `ParseError` after the first `if`, even though
+Python-style chained filters read more naturally than folding everything
+into one `&&` expression) — and `nth_twin_prime`, the value-returning
+sibling `is_twin_prime` itself is missing, the same bounded sequential
+scan `nth_smith_number`/`nth_carmichael_number` already use. (Guards in
 `match` arms, `n if n > 0 => "positive"`, were attempted but closed after
 three failed review rounds over a recurring parser bug — see
 `BACKLOG.md`'s `## Graveyard` for the postmortem; they're a real gap but

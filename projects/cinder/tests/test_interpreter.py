@@ -6980,6 +6980,72 @@ class TestMatchExpression(unittest.TestCase):
         ):
             run('match (5) { _ as whole => whole, _ => 0 };')
 
+    def test_guard_selects_among_bound_identifier_arms(self):
+        env = run(
+            'let a = match (5) { n if n > 0 => "positive", n if n < 0 => "negative", _ => "zero" }; '
+            'let b = match (-3) { n if n > 0 => "positive", n if n < 0 => "negative", _ => "zero" }; '
+            'let c = match (0) { n if n > 0 => "positive", n if n < 0 => "negative", _ => "zero" };'
+        )
+        self.assertEqual(env.get("a"), "positive")
+        self.assertEqual(env.get("b"), "negative")
+        self.assertEqual(env.get("c"), "zero")
+
+    def test_guard_sees_list_pattern_bindings(self):
+        env = run(
+            'let asc = match ([1, 2]) { [a, b] if a < b => "asc", [a, b] => "other" }; '
+            'let other = match ([2, 1]) { [a, b] if a < b => "asc", [a, b] => "other" };'
+        )
+        self.assertEqual(env.get("asc"), "asc")
+        self.assertEqual(env.get("other"), "other")
+
+    def test_guard_composes_with_as_whole_binding(self):
+        env = run(
+            'let result = match ([1, 2]) { '
+            '[a, b] as pair if a + b > 2 => pair, _ => nil };'
+        )
+        self.assertEqual(env.get("result"), [1, 2])
+
+    def test_guard_composes_with_range_pattern_whole_binding(self):
+        env = run(
+            'let big = match (5) { 1..10 as n if n > 3 => "big", 1..10 => "small", _ => "other" }; '
+            'let small = match (2) { 1..10 as n if n > 3 => "big", 1..10 => "small", _ => "other" };'
+        )
+        self.assertEqual(env.get("big"), "big")
+        self.assertEqual(env.get("small"), "small")
+
+    def test_guard_applies_to_every_multi_value_entry(self):
+        env = run(
+            'let flag = true; '
+            'let cond = match (2) { 1, 2 if flag => "small-cond", 1, 2 => "small", _ => "large" };'
+        )
+        self.assertEqual(env.get("cond"), "small-cond")
+        env2 = run(
+            'let flag = false; '
+            'let plain = match (2) { 1, 2 if flag => "small-cond", 1, 2 => "small", _ => "large" };'
+        )
+        self.assertEqual(env2.get("plain"), "small")
+
+    def test_guard_only_evaluated_after_pattern_matches(self):
+        env = run(
+            "let seen = []; "
+            'fn track() { seen = seen + [1]; return true; } '
+            'let result = match (5) { 1 if track() => "one", _ => "other" };'
+        )
+        self.assertEqual(env.get("seen"), [])
+        self.assertEqual(env.get("result"), "other")
+
+    def test_all_guards_false_and_no_fallback_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('match (5) { n if n > 10 => "big" };')
+
+    def test_all_guards_false_falls_through_to_wildcard(self):
+        env = run('let result = match (5) { 6 if true => "no", _ => "yes" };')
+        self.assertEqual(env.get("result"), "yes")
+
+    def test_match_without_guards_unaffected(self):
+        env = run('let result = match (2) { 1 => "one", 2 => "two", _ => "other" };')
+        self.assertEqual(env.get("result"), "two")
+
 
 if __name__ == "__main__":
     unittest.main()

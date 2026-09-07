@@ -5996,6 +5996,70 @@ class TestMatchExpression(unittest.TestCase):
         ):
             parse("match (x) { _ as whole => whole, _ => 0 }")
 
+    def test_match_bound_identifier_pattern_guard(self):
+        arms = parse('match (x) { n if n > 0 => "pos", _ => "other" }').arms
+        self.assertEqual(
+            shape(arms[0].guard), ("Binary", ("Identifier", "n"), TokenType.GT, ("Literal", 0))
+        )
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_wildcard_pattern_guard(self):
+        arms = parse('match (x) { _ if true => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Literal", True))
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_literal_pattern_guard(self):
+        arms = parse('match (1) { 5 if flag => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "flag"))
+
+    def test_match_multi_value_literal_pattern_guard_shared(self):
+        arms = parse('match (2) { 1, 2 if flag => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "flag"))
+        self.assertEqual(shape(arms[1].guard), ("Identifier", "flag"))
+
+    def test_match_pattern_without_if_has_no_guard(self):
+        arms = parse('match (1) { 5 => "a", _ => "b" }').arms
+        self.assertIsNone(arms[0].guard)
+
+    def test_match_range_pattern_guard(self):
+        arms = parse('match (5) { 1..10 if flag => "a", 1..10 => "b", _ => "c" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "flag"))
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_list_pattern_guard(self):
+        arms = parse('match (x) { [a, b] if a < b => "asc", [a, b] => "other" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            ("Binary", ("Identifier", "a"), TokenType.LT, ("Identifier", "b")),
+        )
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_map_pattern_guard(self):
+        arms = parse('match (x) { {a} if a > 0 => "a", {a} => "b" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            ("Binary", ("Identifier", "a"), TokenType.GT, ("Literal", 0)),
+        )
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_guard_composes_with_whole_binding(self):
+        arms = parse('match (x) { [a, b] as pair if a < b => pair, _ => 0 }').arms
+        self.assertEqual(arms[0].whole_binding, "pair")
+        self.assertEqual(
+            shape(arms[0].guard),
+            ("Binary", ("Identifier", "a"), TokenType.LT, ("Identifier", "b")),
+        )
+
+    def test_match_guard_bare_identifier_before_arrow_is_not_arrow_function(self):
+        arms = parse('match (x) { n if n => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "n"))
+        self.assertEqual(shape(arms[0].body), ("Literal", "a"))
+
+    def test_match_guard_parenthesized_before_arrow_is_not_arrow_function(self):
+        arms = parse('match (x) { n if (n) => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Grouping", ("Identifier", "n")))
+        self.assertEqual(shape(arms[0].body), ("Literal", "a"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -346,7 +346,10 @@ class MatchArm:
     the subject actually matched. Not valid on the wildcard/
     bound-identifier arm kind, since that kind already binds the whole
     subject under its own name (or is `_`, which binds nothing by
-    design)."""
+    design). `guard` is `None` unless the arm has an `if EXPR` clause,
+    in which case the arm only fires when `EXPR` evaluates truthy in an
+    environment that already has the pattern's own bindings — and any
+    `whole_binding` — in scope."""
 
     pattern: "Expr | None"
     body: "Expr"
@@ -357,6 +360,7 @@ class MatchArm:
     map_pattern: "list[tuple[str, object, Expr | None]] | None" = None
     map_rest: "str | None" = None
     whole_binding: "str | None" = None
+    guard: "Expr | None" = None
 
 
 @dataclass(frozen=True)

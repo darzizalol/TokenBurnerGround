@@ -265,6 +265,7 @@ class Parser:
         self.pos = 0
         self._fn_depth = 0
         self._loop_labels: list = []
+        self._suppress_arrow_shorthand = False
 
     def parse_expression(self) -> Expr:
         expr = self._assignment()
@@ -785,7 +786,13 @@ class Parser:
         the interpreter needs no changes at all. Returns `None` on any
         shape mismatch, leaving `self.pos` restored to before the `(` for
         the caller's grouping fallback — matching the backtracking pattern
-        `_brace_statement` uses for its own `{`-disambiguation problem."""
+        `_brace_statement` uses for its own `{`-disambiguation problem.
+        Also returns `None` unconditionally while
+        `self._suppress_arrow_shorthand` is set (see `_match_guard`), so a
+        parenthesized guard subexpression can never be mistaken for an
+        arrow function whose `=>` actually belongs to the match arm."""
+        if self._suppress_arrow_shorthand:
+            return None
         start = self.pos
         try:
             lparen = self._advance()  # consume '('
@@ -1164,21 +1171,25 @@ class Parser:
         if self._check(TokenType.LBRACKET):
             list_pattern, list_rest = self._match_list_pattern()
             whole_binding = self._match_whole_binding()
+            guard = self._match_guard()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
             return [
                 MatchArm(
-                    None, body, None, list_pattern, None, list_rest, None, None, whole_binding
+                    None, body, None, list_pattern, None, list_rest, None, None,
+                    whole_binding, guard
                 )
             ]
         if self._check(TokenType.LBRACE):
             map_pattern, map_rest = self._match_map_pattern()
             whole_binding = self._match_whole_binding()
+            guard = self._match_guard()
             self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
             body = self._ternary()
             return [
                 MatchArm(
-                    None, body, None, None, None, None, map_pattern, map_rest, whole_binding
+                    None, body, None, None, None, None, map_pattern, map_rest,
+                    whole_binding, guard
                 )
             ]
         first_token = self._peek()
@@ -1205,10 +1216,14 @@ class Parser:
                 first_token.line,
                 first_token.column,
             )
+        guard = self._match_guard()
         self._consume(TokenType.FAT_ARROW, "'=>' after match pattern")
         body = self._ternary()
         return [
-            MatchArm(pattern, body, binding, None, range_pattern, whole_binding=whole_binding)
+            MatchArm(
+                pattern, body, binding, None, range_pattern,
+                whole_binding=whole_binding, guard=guard
+            )
             for pattern, binding, range_pattern in entries
         ]
 
@@ -1218,6 +1233,22 @@ class Parser:
         self._advance()  # consume 'as'
         token = self._consume(TokenType.IDENTIFIER, "identifier after 'as' in match pattern")
         return token.lexeme
+
+    def _match_guard(self) -> "Expr | None":
+        if not self._check(TokenType.IF):
+            return None
+        self._advance()  # consume 'if'
+        # A bare `x => ...` or `(x) => ...` inside the guard would otherwise
+        # be ambiguous with the guard's own terminating `=>` (both are valid
+        # continuations of the expression grammar at that point), so arrow
+        # function shorthand is disabled for the guard's whole expression —
+        # `fn(x) { ... }` still works inside a guard, just not the shorthand.
+        outer = self._suppress_arrow_shorthand
+        self._suppress_arrow_shorthand = True
+        try:
+            return self._ternary()
+        finally:
+            self._suppress_arrow_shorthand = outer
 
     def _match_list_pattern(
         self,
@@ -1950,7 +1981,10 @@ class Parser:
             self._advance()
             return Literal(None, token.line, token.column)
         if token.type == TokenType.IDENTIFIER:
-            if self._peek_next().type == TokenType.FAT_ARROW:
+            if (
+                self._peek_next().type == TokenType.FAT_ARROW
+                and not self._suppress_arrow_shorthand
+            ):
                 self._advance()  # consume the identifier
                 self._consume(TokenType.FAT_ARROW, "'=>' after arrow function parameter")
                 body = self._arrow_body(token.line, token.column)

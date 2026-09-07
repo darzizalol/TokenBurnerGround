@@ -4028,6 +4028,71 @@ class TestIsEmirp(unittest.TestCase):
             run("is_emirp();")
 
 
+class TestNthEmirp(unittest.TestCase):
+    def test_nth_emirp_of_first_fifteen(self):
+        self.assertEqual(run("let result = nth_emirp(1);").get("result"), 13)
+        self.assertEqual(run("let result = nth_emirp(2);").get("result"), 17)
+        self.assertEqual(run("let result = nth_emirp(3);").get("result"), 31)
+        self.assertEqual(run("let result = nth_emirp(4);").get("result"), 37)
+        self.assertEqual(run("let result = nth_emirp(5);").get("result"), 71)
+        self.assertEqual(run("let result = nth_emirp(6);").get("result"), 73)
+        self.assertEqual(run("let result = nth_emirp(7);").get("result"), 79)
+        self.assertEqual(run("let result = nth_emirp(8);").get("result"), 97)
+        self.assertEqual(run("let result = nth_emirp(9);").get("result"), 107)
+        self.assertEqual(run("let result = nth_emirp(10);").get("result"), 113)
+        self.assertEqual(run("let result = nth_emirp(11);").get("result"), 149)
+        self.assertEqual(run("let result = nth_emirp(12);").get("result"), 157)
+        self.assertEqual(run("let result = nth_emirp(13);").get("result"), 167)
+        self.assertEqual(run("let result = nth_emirp(14);").get("result"), 179)
+        self.assertEqual(run("let result = nth_emirp(15);").get("result"), 199)
+
+    def test_nth_emirp_of_twenty_and_fifty(self):
+        self.assertEqual(run("let result = nth_emirp(20);").get("result"), 389)
+        self.assertEqual(run("let result = nth_emirp(50);").get("result"), 1193)
+
+    def test_nth_emirp_agrees_with_is_emirp(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(f"let result = is_emirp(nth_emirp({position}));").get("result"),
+                True,
+                f"expected nth_emirp({position}) to be an emirp",
+            )
+
+    def test_nth_emirp_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_emirp(0);")
+        self.assertIn(
+            "nth_emirp() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_emirp_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_emirp(-3);")
+        self.assertIn(
+            "nth_emirp() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_emirp_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_emirp(true);")
+        self.assertIn(
+            "nth_emirp() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_emirp_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_emirp("5");')
+        self.assertIn(
+            "nth_emirp() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_emirp_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_emirp();")
+
+
 class TestIsCircularPrime(unittest.TestCase):
     def test_is_circular_prime_of_single_digit(self):
         self.assertEqual(run("let result = is_circular_prime(2);").get("result"), True)

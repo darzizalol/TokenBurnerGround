@@ -1832,6 +1832,42 @@ def _is_emirp(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _nth_emirp(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_emirp", arguments, 1, line, column)
+    value = _require_int("nth_emirp", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_emirp() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _trial_division_is_prime(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return False
+        return True
+
+    def _is_emirp_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        if not _trial_division_is_prime(candidate):
+            return False
+        reversed_candidate = int(str(candidate)[::-1])
+        if reversed_candidate == candidate:
+            return False
+        return _trial_division_is_prime(reversed_candidate)
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_emirp_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_circular_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_circular_prime", arguments, 1, line, column)
     value = _require_int("is_circular_prime", arguments[0], line, column)
@@ -5132,6 +5168,7 @@ _BUILTINS = {
     "is_sphenic": _is_sphenic,
     "nth_sphenic": _nth_sphenic,
     "is_emirp": _is_emirp,
+    "nth_emirp": _nth_emirp,
     "is_circular_prime": _is_circular_prime,
     "is_twin_prime": _is_twin_prime,
     "nth_twin_prime": _nth_twin_prime,

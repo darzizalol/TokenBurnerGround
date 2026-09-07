@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position
+## 1. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position [claimed 2026-09-07T20:06:57Z]
 
 Build: `is_polydivisible` (`cinder/builtins.py`, search `def
 _is_polydivisible`: a non-negative integer whose every digit-prefix of

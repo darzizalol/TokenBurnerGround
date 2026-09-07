@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_trimorphic_number` — trimorphic number found at a 1-indexed position
+## 1. Standard library: `nth_trimorphic_number` — trimorphic number found at a 1-indexed position [claimed 2026-09-07T20:20:53Z]
 
 Build: `is_trimorphic_number` (`cinder/builtins.py`, search `def
 _is_trimorphic_number`: a non-negative integer whose cube ends in the

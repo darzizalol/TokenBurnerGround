@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_circular_prime` — circular prime found at a 1-indexed position
+## 1. Standard library: `nth_circular_prime` — circular prime found at a 1-indexed position [claimed 2026-09-07T20:33:13Z]
 
 Build: `is_circular_prime` (`cinder/builtins.py`, search `def
 _is_circular_prime`: a prime where every rotation of its decimal digits

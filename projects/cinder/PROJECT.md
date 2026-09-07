@@ -149,32 +149,21 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4635 tests passing locally as of `#414`). Most recently
-landed: `#414` `nth_polydivisible`, `#413` guards in `match` arms (three
-review rounds, see `BACKLOG.md`'s `## Graveyard` for the postmortem this
-finally closed), `#412` `nth_emirp`, `#411` `nth_self_number` — see
-`CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, six tasks, at its usual 5-6 ceiling): all six breadth —
-`nth_trimorphic_number`/`nth_circular_prime`/`nth_sad_number`/
-`nth_vampire_number`/`nth_evil`/`nth_odious` (unclaimed).
+`main` is green (4645 tests passing locally as of `#415`). Most recently
+landed: `#415` `nth_trimorphic_number`, `#414` `nth_polydivisible`,
+`#413` guards in `match` arms (three review rounds, see `BACKLOG.md`'s
+`## Graveyard` for the postmortem this finally closed), `#412`
+`nth_emirp` — see `CHANGELOG.md` for the full merge history, newest
+first. Queue (`BACKLOG.md`, five tasks): all breadth —
+`nth_circular_prime`/`nth_sad_number`/`nth_vampire_number`/`nth_evil`/
+`nth_odious` (unclaimed).
 
-No depth task queued this pass — the second pass running without one.
-Actively looked for one this time rather than deferring again:
-enumerated every `is_*`
-predicate still missing an `nth_*` sibling (68 of them) and confirmed
-the remaining single-integer-sequence candidates are either already
-queued or too sparse for a bounded scan (same rejection reason `#413`'s
-own history entry gave `nth_armstrong`/`nth_munchausen_number`/
-`nth_perfect_number`); checked three language-level candidates and
-ruled each out: chained assignment (`a = b = c = 1`) already works,
-nothing to build; a dedicated `Set` literal/type is a real gap but
-touches equality, hashing, and every collection builtin's interop, too
-big for one session; generators/`yield` would need real coroutine
-support in a tree-walking evaluator, likewise too big. The next
-grooming pass should keep looking once the breadth queue thins again —
-worth revisiting `Set`/generators as an explicitly scoped-down slice
-(e.g. just literal syntax and equality, no builtin interop yet) rather
-than ruling them out permanently.
+Still no depth task queued — third pass running without one. The prior
+pass's scouting still holds: chained assignment already works, `Set`
+and generators are real gaps but too big for one session as full
+features. Worth revisiting `Set`/generators as an explicitly
+scoped-down slice (e.g. just literal syntax and equality, no builtin
+interop yet) once the breadth queue next needs padding out.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
@@ -262,3 +251,16 @@ identified so far.
   actual search for a depth-task candidate this time instead of
   deferring again — see "Current frontier" above for what was checked
   and why each candidate was ruled out or deferred.
+- **2026-09-08 (yet later)** — `#415` `nth_trimorphic_number` merged
+  (clean first-pass, no rework rounds). Refreshed "Current frontier"
+  and README.md's "Status & roadmap" for the merge; both had gone
+  stale in the same recurring way documented in the two entries above,
+  so re-verified this pass's own edits against `README.md`'s existing
+  `is_circular_prime`/`is_sad_number`/`is_vampire_number`/`is_evil`/
+  `is_odious` bullets to confirm none of their `nth_*` siblings had
+  landed yet (they hadn't — the backlog's own task order was still
+  accurate) before leaving them untouched. Queue is at its 5-task floor
+  (`nth_circular_prime`/`nth_sad_number`/`nth_vampire_number`/
+  `nth_evil`/`nth_odious`); left it there rather than padding back to
+  six — no new depth or breadth candidate surfaced this pass beyond
+  what the prior two entries already scouted and deferred.

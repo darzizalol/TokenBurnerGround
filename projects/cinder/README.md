@@ -806,18 +806,18 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_polydivisible` (PR
-#414), guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an
-optional `if <expr>` on any arm — attempted once before and closed
-after three failed review rounds over a recurring parser bug, this
-time parsing the guard via the parser's ordinary `_ternary()` entry
-point instead of a hand-rolled bracket/token scan, sidestepping that
-whole bug class; see `BACKLOG.md`'s `## Graveyard` for the postmortem),
-`nth_emirp` (PR #412), and `nth_self_number` (PR #411). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): six more value-returning `nth_*`
-siblings for predicates that already exist but can't yet be searched:
-`nth_trimorphic_number`, `nth_circular_prime`, `nth_sad_number`,
+Actively developed, nightly. Recently landed: `nth_trimorphic_number`
+(PR #415), `nth_polydivisible` (PR #414), guards in `match` arms (PR
+#413, `n if n > 0 => "positive"`, an optional `if <expr>` on any arm —
+attempted once before and closed after three failed review rounds over
+a recurring parser bug, this time parsing the guard via the parser's
+ordinary `_ternary()` entry point instead of a hand-rolled
+bracket/token scan, sidestepping that whole bug class; see
+`BACKLOG.md`'s `## Graveyard` for the postmortem), and `nth_emirp` (PR
+#412). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): five more
+value-returning `nth_*` siblings for predicates that already exist but
+can't yet be searched: `nth_circular_prime`, `nth_sad_number`,
 `nth_vampire_number`, `nth_evil`, and `nth_odious` (each the same
 bounded sequential scan pattern the merged `nth_*` builtins above
 already use; see each task's own notes in `BACKLOG.md` for specifics).

@@ -6054,6 +6054,88 @@ class TestIsTrimorphicNumber(unittest.TestCase):
             run("is_trimorphic_number();")
 
 
+class TestNthTrimorphicNumber(unittest.TestCase):
+    def test_nth_trimorphic_number_of_first_ten_positions(self):
+        expected = {
+            1: 0,
+            2: 1,
+            3: 4,
+            4: 5,
+            5: 6,
+            6: 9,
+            7: 24,
+            8: 25,
+            9: 49,
+            10: 51,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_trimorphic_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_trimorphic_number_of_15(self):
+        self.assertEqual(
+            run("let result = nth_trimorphic_number(15);").get("result"), 249
+        )
+
+    def test_nth_trimorphic_number_of_20(self):
+        self.assertEqual(
+            run("let result = nth_trimorphic_number(20);").get("result"), 501
+        )
+
+    def test_nth_trimorphic_number_of_50(self):
+        self.assertEqual(
+            run("let result = nth_trimorphic_number(50);").get("result"), 109376
+        )
+
+    def test_nth_trimorphic_number_agrees_with_is_trimorphic_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_trimorphic_number(nth_trimorphic_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_trimorphic_number({position}) to be a trimorphic number",
+            )
+
+    def test_nth_trimorphic_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_trimorphic_number(0);")
+        self.assertIn(
+            "nth_trimorphic_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_trimorphic_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_trimorphic_number(-3);")
+        self.assertIn(
+            "nth_trimorphic_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_trimorphic_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_trimorphic_number(true);")
+        self.assertIn(
+            "nth_trimorphic_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_trimorphic_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_trimorphic_number("5");')
+        self.assertIn(
+            "nth_trimorphic_number() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_trimorphic_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_trimorphic_number(1, 2);")
+
+
 class TestIsKeithNumber(unittest.TestCase):
     def test_is_keith_number_of_14(self):
         self.assertEqual(run("let result = is_keith_number(14);").get("result"), True)

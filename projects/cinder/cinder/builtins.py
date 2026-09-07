@@ -2449,6 +2449,27 @@ def _is_trimorphic_number(arguments: list, line: int, column: int) -> object:
     return str(value ** 3).endswith(str(value))
 
 
+def _nth_trimorphic_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_trimorphic_number", arguments, 1, line, column)
+    value = _require_int("nth_trimorphic_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_trimorphic_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_trimorphic_number_candidate(candidate: int) -> bool:
+        return str(candidate ** 3).endswith(str(candidate))
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_trimorphic_number_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_keith_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_keith_number", arguments, 1, line, column)
     value = _require_int("is_keith_number", arguments[0], line, column)
@@ -5232,6 +5253,7 @@ _BUILTINS = {
     "nth_semiperfect": _nth_semiperfect,
     "is_automorphic": _is_automorphic,
     "is_trimorphic_number": _is_trimorphic_number,
+    "nth_trimorphic_number": _nth_trimorphic_number,
     "is_keith_number": _is_keith_number,
     "is_kaprekar": _is_kaprekar,
     "nth_kaprekar": _nth_kaprekar,

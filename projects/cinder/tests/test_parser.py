@@ -5996,6 +5996,214 @@ class TestMatchExpression(unittest.TestCase):
         ):
             parse("match (x) { _ as whole => whole, _ => 0 }")
 
+    def test_match_bound_identifier_pattern_guard(self):
+        arms = parse('match (x) { n if n > 0 => "pos", _ => "other" }').arms
+        self.assertEqual(
+            shape(arms[0].guard), ("Binary", ("Identifier", "n"), TokenType.GT, ("Literal", 0))
+        )
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_wildcard_pattern_guard(self):
+        arms = parse('match (x) { _ if true => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Literal", True))
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_literal_pattern_guard(self):
+        arms = parse('match (1) { 5 if flag => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "flag"))
+
+    def test_match_multi_value_literal_pattern_guard_shared(self):
+        arms = parse('match (2) { 1, 2 if flag => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "flag"))
+        self.assertEqual(shape(arms[1].guard), ("Identifier", "flag"))
+
+    def test_match_pattern_without_if_has_no_guard(self):
+        arms = parse('match (1) { 5 => "a", _ => "b" }').arms
+        self.assertIsNone(arms[0].guard)
+
+    def test_match_range_pattern_guard(self):
+        arms = parse('match (5) { 1..10 if flag => "a", 1..10 => "b", _ => "c" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "flag"))
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_list_pattern_guard(self):
+        arms = parse('match (x) { [a, b] if a < b => "asc", [a, b] => "other" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            ("Binary", ("Identifier", "a"), TokenType.LT, ("Identifier", "b")),
+        )
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_map_pattern_guard(self):
+        arms = parse('match (x) { {a} if a > 0 => "a", {a} => "b" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            ("Binary", ("Identifier", "a"), TokenType.GT, ("Literal", 0)),
+        )
+        self.assertIsNone(arms[1].guard)
+
+    def test_match_guard_composes_with_whole_binding(self):
+        arms = parse('match (x) { [a, b] as pair if a < b => pair, _ => 0 }').arms
+        self.assertEqual(arms[0].whole_binding, "pair")
+        self.assertEqual(
+            shape(arms[0].guard),
+            ("Binary", ("Identifier", "a"), TokenType.LT, ("Identifier", "b")),
+        )
+
+    def test_match_guard_bare_identifier_before_arrow_is_not_arrow_function(self):
+        arms = parse('match (x) { n if n => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Identifier", "n"))
+        self.assertEqual(shape(arms[0].body), ("Literal", "a"))
+
+    def test_match_guard_parenthesized_before_arrow_is_not_arrow_function(self):
+        arms = parse('match (x) { n if (n) => "a", _ => "b" }').arms
+        self.assertEqual(shape(arms[0].guard), ("Grouping", ("Identifier", "n")))
+        self.assertEqual(shape(arms[0].body), ("Literal", "a"))
+
+    def _arrow_fn_shape(self, param, body_shape):
+        return (
+            "FnExpr",
+            [(param, None)],
+            None,
+            ("Block", [("ReturnStmt", body_shape)]),
+            None,
+        )
+
+    def test_match_guard_call_argument_arrow_shorthand_allowed(self):
+        # Arrow-shorthand suppression must not leak into a call argument
+        # nested inside the guard — only the guard's own top-level `=>`
+        # is ambiguous, not one inside an already-delimited argument list.
+        arms = parse(
+            'match ([1, 2, 3]) { n if length(map(n, x => x * 2)) > 0 => "yes", _ => "no" }'
+        ).arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Call",
+                    ("Identifier", "length"),
+                    [
+                        (
+                            "Call",
+                            ("Identifier", "map"),
+                            [
+                                ("Identifier", "n"),
+                                self._arrow_fn_shape(
+                                    "x",
+                                    ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                                ),
+                            ],
+                        )
+                    ],
+                ),
+                TokenType.GT,
+                ("Literal", 0),
+            ),
+        )
+
+    def test_match_guard_index_of_call_arrow_shorthand_allowed(self):
+        arms = parse(
+            'match (5) { n if filter([1, 2, 3], x => x > n)[0] == 2 => "yes", _ => "no" }'
+        ).arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Index",
+                    (
+                        "Call",
+                        ("Identifier", "filter"),
+                        [
+                            ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+                            self._arrow_fn_shape(
+                                "x", ("Binary", ("Identifier", "x"), TokenType.GT, ("Identifier", "n"))
+                            ),
+                        ],
+                    ),
+                    ("Literal", 0),
+                ),
+                TokenType.EQEQ,
+                ("Literal", 2),
+            ),
+        )
+
+    def test_match_guard_list_literal_element_arrow_shorthand_allowed(self):
+        arms = parse('match (x) { n if [x => x, n][0](n) > 0 => "a", _ => "b" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Call",
+                    (
+                        "Index",
+                        (
+                            "ListLiteral",
+                            [self._arrow_fn_shape("x", ("Identifier", "x")), ("Identifier", "n")],
+                        ),
+                        ("Literal", 0),
+                    ),
+                    [("Identifier", "n")],
+                ),
+                TokenType.GT,
+                ("Literal", 0),
+            ),
+        )
+
+    def test_match_guard_grouping_arrow_shorthand_allowed(self):
+        arms = parse('match (x) { n if (x => x > 0)(n) => "a", _ => "b" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Call",
+                ("Grouping", self._arrow_fn_shape("x", ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)))),
+                [("Identifier", "n")],
+            ),
+        )
+
+    def test_match_guard_nested_match_arm_body_arrow_shorthand_allowed(self):
+        # A nested `match` inside a guard owns its own arm-terminating `=>`
+        # (and closing `}`), so it must not inherit the outer guard's
+        # arrow-shorthand suppression: a bare arrow-shorthand arm body like
+        # `m => x => x + 1` is otherwise indistinguishable from the guard's
+        # own trailing `=>` until the nested match's own `}` is reached.
+        arms = parse(
+            'match (5) { n if match(n) { m => x => x + 1 }(1) == 2 => "pos", _ => "other" }'
+        ).arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Call",
+                    (
+                        "MatchExpr",
+                        ("Identifier", "n"),
+                        [
+                            (
+                                None,
+                                self._arrow_fn_shape(
+                                    "x",
+                                    ("Binary", ("Identifier", "x"), TokenType.PLUS, ("Literal", 1)),
+                                ),
+                                "m",
+                                None,
+                                None,
+                                None,
+                                None,
+                                None,
+                            )
+                        ],
+                    ),
+                    [("Literal", 1)],
+                ),
+                TokenType.EQEQ,
+                ("Literal", 2),
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

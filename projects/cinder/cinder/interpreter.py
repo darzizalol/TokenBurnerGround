@@ -1256,6 +1256,8 @@ class Interpreter:
                     continue
                 if arm.whole_binding is not None:
                     arm_env.define(arm.whole_binding, subject)
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                    continue
                 return self.evaluate(arm.body, arm_env)
             if arm.range_pattern is not None:
                 values = self._evaluate_range(arm.range_pattern, env)
@@ -1266,6 +1268,8 @@ class Interpreter:
                     if arm.whole_binding is not None:
                         arm_env = Environment(env)
                         arm_env.define(arm.whole_binding, subject)
+                    if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                        continue
                     return self.evaluate(arm.body, arm_env)
                 continue
             if arm.map_pattern is not None:
@@ -1276,18 +1280,26 @@ class Interpreter:
                     continue
                 if arm.whole_binding is not None:
                     arm_env.define(arm.whole_binding, subject)
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                    continue
                 return self.evaluate(arm.body, arm_env)
             if arm.pattern is None:
                 if arm.binding is None:
+                    if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
+                        continue
                     return self.evaluate(arm.body, env)
                 arm_env = Environment(env)
                 arm_env.define(arm.binding, subject)
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                    continue
                 return self.evaluate(arm.body, arm_env)
             if values_equal(subject, self.evaluate(arm.pattern, env)):
                 arm_env = env
                 if arm.whole_binding is not None:
                     arm_env = Environment(env)
                     arm_env.define(arm.whole_binding, subject)
+                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
+                    continue
                 return self.evaluate(arm.body, arm_env)
         raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
 

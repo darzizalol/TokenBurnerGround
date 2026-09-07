@@ -11,210 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: guards in `match` arms — requeued with a different parsing strategy [claimed 2026-09-07T14:24:36Z]
-
-Build: an optional conditional filter on a `match` arm
-(`n if n > 0 => "positive"`), supplementing the pattern with an ordinary
-boolean expression that must also hold for the arm to fire — a guard
-that fails skips to the next arm exactly like a pattern/shape mismatch
-already does. This was attempted once before (PR #314, closed
-2026-08-25 after three straight `VERDICT: CHANGES REQUESTED` rounds —
-see this file's `## Graveyard` entry below for the full postmortem)
-using a hand-rolled `_bracket_depth` counter to forward-scan the token
-stream for the guard-ending `=>`, which needed enumerating by hand every
-construct that opens a paren/bracket/brace scope and kept missing one
-each round (call/list/map arguments, then nested `match` expressions,
-then nested `fn` expressions, with a fourth gap flagged in the final
-review but never confirmed either way). **Do not repeat that approach —
-see the fix strategy below, which sidesteps the whole class of bug.**
-Verify the gap is still open:
-```sh
-python3 -m cinder.cli eval 'print(match (5) { n if n > 0 => "positive", _ => "other" });'
-# -> <eval>:1:21: expected '=>' after match pattern, found 'if'
-```
-
-The fix this time: parse the guard condition with the parser's ordinary
-recursive-descent expression entry point, `self._ternary()` — the exact
-same call already used two lines later to parse the arm's own `body`
-(search `def _match_arm`, `cinder/parser.py`). A hand-rolled forward
-token-scan for the next `=>` has to know in advance about every
-construct that can itself contain a `=>` (nested `match`, arrow
-functions, calls/lists/maps containing either) so it doesn't stop
-early — that enumeration is exactly what PR #314 kept failing to
-complete. Ordinary recursive descent has no such problem by
-construction: each nested construct's own parse method consumes its own
-delimiters, including any `=>` it owns, before returning control to its
-caller, so `_ternary()` parsing the guard will never see — let alone
-misinterpret — a `=>` that belongs to something nested inside the guard
-expression. This is the exact strategy PR #314's own closing postmortem
-suggested trying instead ("resolving the bare-arrow/guard ambiguity by
-lookahead at the `=>` site instead of a suppression-depth counter"), and
-it works because `=>` (`FAT_ARROW`) is not a valid continuation token
-anywhere in the expression grammar `_ternary()` walks — confirmed by
-reading `cinder/parser.py`'s `_ternary`/`_pipe` chain, neither checks
-for `FAT_ARROW` — so `_ternary()` naturally stops exactly at the guard's
-own top-level `=>` with zero depth-tracking of any kind needed.
-
-Grammar: `if` is optional, comes after any `as NAME` whole-binding and
-after all pattern entries, immediately before `=>`:
-`PATTERN [as NAME] [if EXPR] => BODY`. Valid on every arm kind,
-including the bound-identifier/wildcard kind (`n if n > 0 => ...`,
-`_ if some_check() => ...`) — unlike `as` binding, which is rejected on
-that kind because it already binds the whole subject (see
-`_match_arm`'s existing `whole_binding is not None and has_unconditional`
-check), a guard is an independent filter with nothing redundant about
-it and composes freely with every pattern kind including that one; also
-valid combined with multi-value literal/range entries
-(`1, 2 if extra => ...`), where every `MatchArm` generated for the
-multi-value entry shares the same guard expression, mirroring how they
-already share `whole_binding`.
-
-Add a new `_match_guard` helper right after `_match_whole_binding`
-(search `def _match_whole_binding`, `cinder/parser.py`):
-```python
-def _match_guard(self) -> "Expr | None":
-    if not self._check(TokenType.IF):
-        return None
-    self._advance()  # consume 'if'
-    return self._ternary()
-```
-Call it from all three branches of `_match_arm` (search `def
-_match_arm`), right after each branch's existing
-`whole_binding = self._match_whole_binding()` call and before that
-branch's existing `self._consume(TokenType.FAT_ARROW, ...)` call, then
-thread the result into that branch's `MatchArm(...)` construction as a
-new trailing `guard` argument (positional for the list-/map-pattern
-branches matching their existing positional style, `guard=guard` for
-the literal/range branch matching its existing keyword style) — i.e.
-three one-line insertions plus three one-argument constructor edits, no
-other control flow in `_match_arm` changes.
-
-Add the field to `MatchArm` itself (search `class MatchArm`,
-`cinder/ast_nodes.py`), appended after the existing `whole_binding`
-field so every existing positional/keyword construction elsewhere stays
-valid:
-```python
-    whole_binding: "str | None" = None
-    guard: "Expr | None" = None
-```
-(Add one sentence to the class docstring noting `guard` is `None`
-unless the arm has an `if EXPR` clause, in which case the arm only
-fires when `EXPR` evaluates truthy in an environment that already has
-the pattern's own bindings — and any `whole_binding` — in scope.)
-
-Wire evaluation into `_evaluate_match` (search `def _evaluate_match`,
-`cinder/interpreter.py`) — every one of its five existing match-success
-branches must check the guard, in the branch's own `arm_env` (so a
-guard can see any names the pattern itself bound, e.g. `n` in
-`n if n > 0 => ...` or `a`/`b` in `[a, b] if a < b => ...`), and
-`continue` to the next arm instead of returning when the guard is
-present and falsy — the same "keep trying arms" behavior a pattern
-mismatch already gets, using the existing `is_truthy` helper (module
-level in `cinder/interpreter.py`) for the falsy check:
-```python
-def _evaluate_match(self, expr: MatchExpr, env: Environment) -> object:
-    subject = self.evaluate(expr.subject, env)
-    for arm in expr.arms:
-        if arm.list_pattern is not None:
-            arm_env = Environment(env)
-            if not self._match_list_entries(
-                arm.list_pattern, arm.list_rest, subject, arm_env
-            ):
-                continue
-            if arm.whole_binding is not None:
-                arm_env.define(arm.whole_binding, subject)
-            if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
-                continue
-            return self.evaluate(arm.body, arm_env)
-        if arm.range_pattern is not None:
-            values = self._evaluate_range(arm.range_pattern, env)
-            if contains_value(
-                values, subject, arm.range_pattern.line, arm.range_pattern.column
-            ):
-                arm_env = env
-                if arm.whole_binding is not None:
-                    arm_env = Environment(env)
-                    arm_env.define(arm.whole_binding, subject)
-                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
-                    continue
-                return self.evaluate(arm.body, arm_env)
-            continue
-        if arm.map_pattern is not None:
-            arm_env = Environment(env)
-            if not self._match_map_entries(
-                arm.map_pattern, arm.map_rest, subject, arm_env
-            ):
-                continue
-            if arm.whole_binding is not None:
-                arm_env.define(arm.whole_binding, subject)
-            if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
-                continue
-            return self.evaluate(arm.body, arm_env)
-        if arm.pattern is None:
-            if arm.binding is None:
-                if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, env)):
-                    continue
-                return self.evaluate(arm.body, env)
-            arm_env = Environment(env)
-            arm_env.define(arm.binding, subject)
-            if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
-                continue
-            return self.evaluate(arm.body, arm_env)
-        if values_equal(subject, self.evaluate(arm.pattern, env)):
-            arm_env = env
-            if arm.whole_binding is not None:
-                arm_env = Environment(env)
-                arm_env.define(arm.whole_binding, subject)
-            if arm.guard is not None and not is_truthy(self.evaluate(arm.guard, arm_env)):
-                continue
-            return self.evaluate(arm.body, arm_env)
-    raise CinderRuntimeError("no match arm matched value", expr.line, expr.column)
-```
-
-Acceptance criteria:
-- `match (5) { n if n > 0 => "positive", n if n < 0 => "negative", _ => "zero" }` is `"positive"`;
-  `match (-3) { ... same arms ... }` is `"negative"`; `match (0) { ... same arms ... }`
-  is `"zero"` — falls through both guarded arms to the wildcard.
-- A guard sees the pattern's own bindings: `match ([1, 2]) { [a, b] if a < b => "asc", [a, b] => "other" }`
-  is `"asc"`; `match ([2, 1]) { [a, b] if a < b => "asc", [a, b] => "other" }` is `"other"`.
-- A guard composes with `as`: `match ([1, 2]) { [a, b] as pair if a + b > 2 => pair, _ => nil }`
-  is `[1, 2]`.
-- A guard composes with a range pattern's `as` binding (a range pattern binds
-  no name of its own):`match (5) { 1..10 as n if n > 3 => "big", 1..10 => "small", _ => "other" }`
-  is `"big"`; `match (2) { ... same arms ... }` is `"small"`.
-- A guard applies identically to every entry of a multi-value literal arm:
-  with `let flag = true;` in scope, `match (2) { 1, 2 if flag => "small-cond", 1, 2 => "small", _ => "large" }`
-  is `"small-cond"`; with `let flag = false;`, the same expression is `"small"`.
-- A guard is only evaluated after its pattern already matched, never before —
-  e.g. with a mutable counter list, a guard on an arm whose pattern doesn't
-  match the subject must not run at all (assert the counter stays empty),
-  confirming short-circuit order rather than guard-then-pattern.
-- If every arm's pattern matches but every guard fails (or there is no
-  unconditional/wildcard arm to fall back on),
-  `CinderRuntimeError` matching `"no match arm matched value"` is raised,
-  same message an ordinary all-arms-mismatch already produces.
-- A `match` with no guards anywhere is unaffected (full regression pass on
-  `tests/test_parser.py`'s and `tests/test_interpreter.py`'s existing
-  `TestMatchExpression` classes).
-- Full test suite passes.
-
-Likely files: `cinder/parser.py` (`_match_arm`, new `_match_guard`
-helper, search `def _match_whole_binding`), `cinder/ast_nodes.py`
-(`MatchArm`, search `class MatchArm`), `cinder/interpreter.py`
-(`_evaluate_match`), `tests/test_parser.py` (extend the existing `class
-TestMatchExpression`, search that name, with guard AST-shape assertions),
-`tests/test_interpreter.py` (extend the existing `class
-TestMatchExpression`, search that name, with the evaluation-semantics
-acceptance criteria above). Once merged, `README.md`'s "Status &
-roadmap" section and its `match` feature bullet need updating (drop the
-"attempted but closed... not back in the active queue yet" aside, since
-it will no longer be true), and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position
+## 1. Standard library: `nth_polydivisible` — polydivisible number found at a 1-indexed position
 
 Build: `is_polydivisible` (`cinder/builtins.py`, search `def
 _is_polydivisible`: a non-negative integer whose every digit-prefix of
@@ -318,7 +115,7 @@ this task.
 
 ---
 
-## 3. Standard library: `nth_trimorphic_number` — trimorphic number found at a 1-indexed position
+## 2. Standard library: `nth_trimorphic_number` — trimorphic number found at a 1-indexed position
 
 Build: `is_trimorphic_number` (`cinder/builtins.py`, search `def
 _is_trimorphic_number`: a non-negative integer whose cube ends in the
@@ -425,7 +222,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_circular_prime` — circular prime found at a 1-indexed position
+## 3. Standard library: `nth_circular_prime` — circular prime found at a 1-indexed position
 
 Build: `is_circular_prime` (`cinder/builtins.py`, search `def
 _is_circular_prime`: a prime where every rotation of its decimal digits
@@ -548,7 +345,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_sad_number` — sad number found at a 1-indexed position
+## 4. Standard library: `nth_sad_number` — sad number found at a 1-indexed position
 
 Build: `is_sad_number` (`cinder/builtins.py`, search `def _is_sad_number`:
 a non-negative integer that, under repeated replace-with-sum-of-squared-digits,
@@ -654,7 +451,7 @@ grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_vampire_number` — vampire number found at a 1-indexed position
+## 5. Standard library: `nth_vampire_number` — vampire number found at a 1-indexed position
 
 Build: `is_vampire_number` (`cinder/builtins.py`, search `def
 _is_vampire_number`: an even-digit-count, non-negative integer that

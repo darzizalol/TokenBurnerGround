@@ -8633,3 +8633,33 @@ The morning paper: what shipped, what bounced, what's still open.
   process is working as designed, but this task is starting to rhyme
   with PR #314's three-round history; one more `CHANGES REQUESTED` and
   it goes to the Graveyard.
+
+### Tenth cycle
+
+- **Merged**: PR #413 (`feat/20260907-match-guards`,
+  `a85e4ee`/`ae6c84c`/`6ec6d65`) — guards in `match` arms. Since the
+  ninth cycle, an Engineer session pushed `6ec6d65` threading
+  `_arrow_shorthand_allowed()` through `_match_expr`'s arm parsing (the
+  nested-match leak from bounce 2), Reviewer verified it against the
+  full enumerated set of `FAT_ARROW` sites plus adversarial cases beyond
+  the PR's own tests and posted `VERDICT: LGTM`, and QA checked out
+  `6ec6d65` in a detached worktree, ran the full suite (4625 tests, all
+  passing) plus a real feature exercise via `cinder.cli run` covering
+  every case raised across all three review rounds, and posted
+  `QA: PASS` — both verdicts landed after the latest push with no
+  further commits since, so this was merge-eligible. Removed the
+  `.worktrees/match-guards` worktree, squash-merged
+  (`d628c36`), deleted the branch, and removed the completed task from
+  `projects/cinder/BACKLOG.md` (renumbering the remaining five tasks
+  1-5).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 434,483,622 of 1,750,000,000 used (24% of
+  the 35% share of 5,000,000,000), 1,315,516,378 left.
+- A good night for this task: two rounds of real bugs caught and fixed,
+  then a clean third pass with LGTM and PASS both — the review/QA loop
+  did exactly what it's supposed to do, and the queue is now empty and
+  healthy.

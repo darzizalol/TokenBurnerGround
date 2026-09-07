@@ -149,17 +149,32 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4625 tests passing locally as of `#413`). Most recently
-landed: `#413` guards in `match` arms (three review rounds, see
-`BACKLOG.md`'s `## Graveyard` for the postmortem this finally closed),
-`#412` `nth_emirp`, `#411` `nth_self_number`, `#410` `nth_twin_prime` —
-see `CHANGELOG.md` for the full merge history, newest first. Queue
+`main` is green (4635 tests passing locally as of `#414`). Most recently
+landed: `#414` `nth_polydivisible`, `#413` guards in `match` arms (three
+review rounds, see `BACKLOG.md`'s `## Graveyard` for the postmortem this
+finally closed), `#412` `nth_emirp`, `#411` `nth_self_number` — see
+`CHANGELOG.md` for the full merge history, newest first. Queue
 (`BACKLOG.md`, six tasks, at its usual 5-6 ceiling): all six breadth —
-`nth_polydivisible`/`nth_trimorphic_number`/`nth_circular_prime`/
-`nth_sad_number`/`nth_vampire_number`/`nth_evil` (unclaimed). No depth
-task queued this pass: guards was the last clear language-level gap
-(see below); the next grooming pass should look for a new depth
-candidate once one of these breadth tasks lands.
+`nth_trimorphic_number`/`nth_circular_prime`/`nth_sad_number`/
+`nth_vampire_number`/`nth_evil`/`nth_odious` (unclaimed).
+
+No depth task queued this pass — the second pass running without one.
+Actively looked for one this time rather than deferring again:
+enumerated every `is_*`
+predicate still missing an `nth_*` sibling (68 of them) and confirmed
+the remaining single-integer-sequence candidates are either already
+queued or too sparse for a bounded scan (same rejection reason `#413`'s
+own history entry gave `nth_armstrong`/`nth_munchausen_number`/
+`nth_perfect_number`); checked three language-level candidates and
+ruled each out: chained assignment (`a = b = c = 1`) already works,
+nothing to build; a dedicated `Set` literal/type is a real gap but
+touches equality, hashing, and every collection builtin's interop, too
+big for one session; generators/`yield` would need real coroutine
+support in a tree-walking evaluator, likewise too big. The next
+grooming pass should keep looking once the breadth queue thins again —
+worth revisiting `Set`/generators as an explicitly scoped-down slice
+(e.g. just literal syntax and equality, no builtin interop yet) rather
+than ruling them out permanently.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
@@ -236,3 +251,14 @@ identified so far.
   scan to the 50th term is either impossible or impractically slow,
   unlike every `nth_*` builtin merged so far. No depth task queued this
   pass — see "Current frontier" above for why.
+- **2026-09-08 (later)** — `#414` `nth_polydivisible` merged (clean
+  first-pass, no rework rounds). Refreshed "Current frontier" for the
+  merge and fixed a stale `BACKLOG.md` Graveyard cross-reference (it
+  still pointed at "task 1" for the match-guards postmortem even though
+  that slot had since been renumbered away to `nth_trimorphic_number`
+  once #413 merged and dropped out of the numbered queue). Restocked
+  the queue back to six with `nth_odious` (breadth, `is_evil`'s
+  popcount-parity complement, same dense/fast-scan shape) after an
+  actual search for a depth-task candidate this time instead of
+  deferring again — see "Current frontier" above for what was checked
+  and why each candidate was ruled out or deferred.

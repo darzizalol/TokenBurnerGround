@@ -590,6 +590,102 @@ task.
 
 ---
 
+## 6. Standard library: `nth_odious` — odious number found at a 1-indexed position
+
+Build: `is_odious` (`cinder/builtins.py`, search `def _is_odious`: a
+non-negative integer whose binary representation has an *odd* number of
+`1` bits — the complement of `is_evil`, which requires an even count)
+has no value-returning `nth_*` sibling, the same gap `nth_evil` (task 5
+above, not yet merged) closes for its own opposite predicate. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_odious(1));'
+# -> <eval>:1:7: undefined name 'nth_odious' (did you mean 'is_odious'?)
+```
+
+Worked examples: the first ten odious numbers (confirmed by scanning
+with `is_odious` directly) are `1, 2, 4, 7, 8, 11, 13, 14, 16, 19`, so
+`nth_odious(1)` is `1` and `nth_odious(10)` is `19`. The 15th is `28`,
+the 20th is `38`, the 50th is `98`. Like `is_evil`, odious numbers are
+exactly half of all non-negative integers by construction (popcount
+parity), so the scan stays fast at every position — no performance
+caveat needed here.
+
+Unlike `nth_evil`/`nth_self_number`/`nth_polydivisible`/
+`nth_trimorphic_number`/`nth_sad_number` (task 5 above and already
+merged siblings), position `1` maps to candidate `1`, not `0`:
+`is_odious(0)` is `false` (`bin(0)` is `"0b0"`, zero set bits, which is
+even, not odd), so `0` is never itself an odious number. The scan can
+still start from `candidate = -1` (incremented before the first check,
+the same shape `nth_evil` uses) — it will simply check and reject `0`
+before finding `1`, which is harmless and keeps the two sibling
+implementations structurally identical for anyone reading them side by
+side.
+
+Add directly after `_is_odious` (search `def _is_odious`, immediately
+before `def _is_pernicious`) — keeps the value-returning helper next to
+the predicate it mirrors:
+```python
+def _nth_odious(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_odious", arguments, 1, line, column)
+    value = _require_int("nth_odious", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_odious() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_odious_candidate(candidate: int) -> bool:
+        return bin(candidate).count("1") % 2 == 1
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_odious_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Inner candidate check copied verbatim from `_is_odious`'s own body
+minus its `value < 0` guard, since the scan never visits a negative
+candidate — the same "duplicate the tiny predicate body instead of a
+redundant `_require_arity`/`_require_int` round-trip per candidate"
+choice every recent `nth_*` task already makes.) Register the new dict
+entry (search `"is_odious": _is_odious,`, add `"nth_odious":
+_nth_odious,` directly after it, before `"is_pernicious":
+_is_pernicious,`).
+
+Acceptance criteria:
+- `nth_odious(1);` through `nth_odious(10);` are `1, 2, 4, 7, 8, 11, 13,
+  14, 16, 19` in order — the worked example above.
+- `nth_odious(15);` is `28`, `nth_odious(20);` is `38`, and
+  `nth_odious(50);` is `98` — further worked examples confirming the
+  scan scales well past the first ten.
+- For every `position` in `1..50`, `is_odious(nth_odious(position))` is
+  `true` — the same self-consistency check every recent `nth_*` task's
+  own test suite already runs against its predicate.
+- `nth_odious(0);`, `nth_odious(-3);` both raise `CinderRuntimeError`
+  matching `"nth_odious\(\) requires a positive integer, domain error"`.
+- `nth_odious(true);` raises `CinderRuntimeError` matching
+  `"nth_odious\(\) requires an int, got bool"`.
+- `nth_odious("5");` raises `CinderRuntimeError` matching
+  `"nth_odious\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_odious`, search
+`def _is_odious`), `tests/test_builtins.py` (new `class TestNthOdious`,
+modeled on `class TestNthSmithNumber`, search that name, for the test
+shapes above — place it near the existing `class TestIsEvilIsOdious`,
+search that name). Once merged, `README.md`'s existing `is_odious`
+bullet needs `nth_odious` added right after it, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not
@@ -616,9 +712,11 @@ different fix that doesn't need per-construct threading at all (e.g.
 resolving the bare-arrow/guard ambiguity by lookahead at the `=>` site
 instead of a suppression-depth counter).
 
-**Requeued 2026-09-07 as task 1** (renumbered down from task 2 after
-`#412` `nth_emirp` merged and consumed the old task 1 slot) with exactly
-that alternative strategy (parse the guard via the parser's ordinary
-`_ternary()` entry point instead of any hand-rolled bracket/token scan)
-— see `## 1.` above for the full task and the reasoning for why that
-sidesteps this postmortem's whole bug class.
+**Resolved 2026-09-08, merged as `#413`.** Requeued 2026-09-07 with
+exactly the alternative strategy this postmortem called for (parse the
+guard via the parser's ordinary `_ternary()` entry point instead of any
+hand-rolled bracket/token scan) — that fix took two more review rounds
+(a call/list/index/grouping leak, then a nested-`match` leak) before
+landing clean, but never regressed to the original `_bracket_depth`
+bug class this postmortem was about. See `CHANGELOG.md` for the full
+three-round history.

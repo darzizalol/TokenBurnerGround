@@ -577,6 +577,9 @@ while (i < 10) {
   `is_disarium` as its digit-position sibling, each digit raised to its own 1-indexed position instead of one shared exponent (`89 = 8^1 + 9^2`),
   `is_pandigital` to test whether an integer's decimal digits are exactly the ten digits `0`-`9` each appearing once (e.g. `1023456789`),
   `is_polydivisible` to test whether every length-`i` prefix of an integer's decimal digits is divisible by `i` (e.g. `381654729`, the classic pandigital polydivisible example), the prefix-checksum sibling of `is_disarium`'s own digit-position math,
+  `nth_polydivisible` to return the polydivisible number found at a 1-indexed position (position `1` maps to
+  candidate `0`, the smallest polydivisible number), the value-returning sibling of `is_polydivisible`'s
+  membership test,
   `is_strong_number` to test whether an integer equals the sum of its own digits' factorials,
   `is_munchausen_number` as its digit-to-its-own-power sibling (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`),
   `is_leap_year` to test the Gregorian leap-year rule,
@@ -777,7 +780,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4591+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4635+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -803,25 +806,27 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: guards in `match` arms
-(PR #413, `n if n > 0 => "positive"`, an optional `if <expr>` on any
-arm — attempted once before and closed after three failed review
-rounds over a recurring parser bug, this time parsing the guard via the
-parser's ordinary `_ternary()` entry point instead of a hand-rolled
-bracket/token scan, sidestepping that whole bug class; see
-`BACKLOG.md`'s `## Graveyard` for the postmortem), `nth_emirp` (PR
-#412), `nth_self_number` (PR #411), `nth_twin_prime` (PR #410), and
-chaining more than one `if` filter clause in a list/map comprehension
-(PR #409, `[x for x in xs if a if b]`, previously a `ParseError` after
-the first `if` even though Python-style chained filters read more
-naturally than folding everything into one `&&` expression). See
+Actively developed, nightly. Recently landed: `nth_polydivisible` (PR
+#414), guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an
+optional `if <expr>` on any arm — attempted once before and closed
+after three failed review rounds over a recurring parser bug, this
+time parsing the guard via the parser's ordinary `_ternary()` entry
+point instead of a hand-rolled bracket/token scan, sidestepping that
+whole bug class; see `BACKLOG.md`'s `## Graveyard` for the postmortem),
+`nth_emirp` (PR #412), and `nth_self_number` (PR #411). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
 next (see [`BACKLOG.md`](BACKLOG.md)): six more value-returning `nth_*`
 siblings for predicates that already exist but can't yet be searched:
-`nth_polydivisible`, `nth_trimorphic_number`, `nth_circular_prime`,
-`nth_sad_number`, `nth_vampire_number`, and `nth_evil` (each the same
+`nth_trimorphic_number`, `nth_circular_prime`, `nth_sad_number`,
+`nth_vampire_number`, `nth_evil`, and `nth_odious` (each the same
 bounded sequential scan pattern the merged `nth_*` builtins above
 already use; see each task's own notes in `BACKLOG.md` for specifics).
-The backlog mixes language depth with stdlib breadth over
-time rather than running either in one long block. The full vision and
-non-goals live in [`PROJECT.md`](PROJECT.md).
+No language-depth task is queued this pass — the language is deep
+enough by now (try/catch/finally, `switch`, full pattern-matching with
+guards, safe navigation, nil-coalescing, spread, labeled
+break/continue, chained assignment, keyword arguments, and more) that
+finding a new depth gap worth one focused session takes real
+scouting; see `PROJECT.md`'s "Current frontier" for what was checked
+and ruled out this pass. The backlog mixes language depth with stdlib
+breadth over time rather than running either in one long block. The
+full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

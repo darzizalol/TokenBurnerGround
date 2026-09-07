@@ -250,8 +250,18 @@ while (i < 10) {
   binding an *intermediate* value reached partway through a larger
   pattern rather than only the whole subject or a whole
   literal/range arm — composes with rest capture, defaults, and
-  multi-level nesting) for now (no guards yet — see `BACKLOG.md`'s
-  `## Graveyard`)
+  multi-level nesting), and guards on any arm (`match (n) { n if n > 0 =>
+  "positive", _ => "other" }`, an optional `if <expr>` evaluated in the
+  arm's own environment — including any bindings the arm's own pattern
+  just introduced — after a structural match succeeds but before the arm
+  is chosen; a guard that evaluates falsy falls through to the next arm
+  exactly like a structural mismatch does, composing with every pattern
+  form above including bound-identifier, list/map destructuring, rest
+  capture, and `as` binding). The guard's own condition expression parses
+  via the parser's ordinary `_ternary()` entry point rather than a
+  hand-rolled bracket-depth scan, sidestepping the bare-arrow/guard `=>`
+  ambiguity that sank three earlier attempts (see `BACKLOG.md`'s
+  `## Graveyard` for that postmortem)
 - **Operators**: full arithmetic/comparison/logical set, unary `+`
   (`+expr`, numbers only, alongside unary `-`/`not`/`~`; `++5` parses
   as nested unary plus, same doubled-token re-split `--5` already has),
@@ -454,7 +464,8 @@ while (i < 10) {
   literals accept spread elements
   (`[...list1, x, ...list2]`), splicing each spread list's elements in place;
   list comprehensions `[expr for x in iterable]` and `[expr for x in
-  iterable if cond]` (one optional filter clause; a fresh per-iteration
+  iterable if cond]` (one or more chained `if` filter clauses,
+  AND-combined, e.g. `[x for x in xs if a if b]`; a fresh per-iteration
   scope so closures built inside the comprehension capture their own
   iteration's binding), including a
   list-destructuring loop variable (`[k + v for [k, v] in items(m)]`,
@@ -475,8 +486,8 @@ while (i < 10) {
   mixable with explicit `key: value` entries, spread, and trailing commas
   in the same literal; map
   comprehensions `{k: v for x in iterable}` and `{k: v for x in iterable
-  if cond}` (same shape as list comprehensions — one optional filter
-  clause, no nesting, fresh per-iteration scope, and the same
+  if cond}` (same shape as list comprehensions — one or more chained
+  `if` filter clauses, no nesting, fresh per-iteration scope, and the same
   list-destructuring and map-destructuring loop variable support;
   colliding keys collapse to the last write, same as a plain map
   literal); dot access
@@ -510,6 +521,9 @@ while (i < 10) {
   `nth_catalan` to return the Catalan number found at a 1-indexed position, a thin composition of `binomial` (`C(k) = binomial(2k, k) / (k + 1)`, `k` the 0-indexed Catalan index),
   `is_catalan` to test Catalan-number membership via a bounded iterative search rather than a closed form, the membership-test sibling of `nth_catalan`,
   `is_emirp` to test whether a prime's decimal-digit reversal is a different prime,
+  `nth_emirp` to return the emirp found at a 1-indexed position, the value-returning
+  sibling of `is_emirp`'s membership test, the same bounded sequential scan `nth_smith_number`/
+  `nth_carmichael_number`/`nth_twin_prime` already use,
   `is_squarefree` to test whether an integer has no repeated prime factor,
   `nth_squarefree` to return the squarefree integer found at a 1-indexed position via the same bounded
   sequential scan `nth_practical_number`/`nth_harshad` already use, the value-returning sibling of
@@ -789,23 +803,25 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_emirp` (PR #412),
-`nth_self_number` (PR #411), `nth_twin_prime` (PR #410), and chaining
-more than one `if` filter clause in a list/map comprehension (PR #409,
-`[x for x in xs if a if b]`, previously a `ParseError` after the first
-`if` even though Python-style chained filters read more naturally than
-folding everything into one `&&` expression). See
+Actively developed, nightly. Recently landed: guards in `match` arms
+(PR #413, `n if n > 0 => "positive"`, an optional `if <expr>` on any
+arm — attempted once before and closed after three failed review
+rounds over a recurring parser bug, this time parsing the guard via the
+parser's ordinary `_ternary()` entry point instead of a hand-rolled
+bracket/token scan, sidestepping that whole bug class; see
+`BACKLOG.md`'s `## Graveyard` for the postmortem), `nth_emirp` (PR
+#412), `nth_self_number` (PR #411), `nth_twin_prime` (PR #410), and
+chaining more than one `if` filter clause in a list/map comprehension
+(PR #409, `[x for x in xs if a if b]`, previously a `ParseError` after
+the first `if` even though Python-style chained filters read more
+naturally than folding everything into one `&&` expression). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
-next (see [`BACKLOG.md`](BACKLOG.md)): guards in `match` arms (`n if n
-> 0 => "positive"`) — attempted once before and closed after three
-failed review rounds over a recurring parser bug (see `BACKLOG.md`'s
-`## Graveyard` for that postmortem), now requeued with a different
-parsing strategy that avoids the bug entirely — followed by five more
-value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_polydivisible`, `nth_trimorphic_number`,
-`nth_circular_prime`, `nth_sad_number`, and `nth_vampire_number` (each
-the same bounded sequential scan pattern the merged `nth_*` builtins
-above already use; see each task's own notes in `BACKLOG.md` for
-specifics). The backlog mixes language depth with stdlib breadth over
+next (see [`BACKLOG.md`](BACKLOG.md)): six more value-returning `nth_*`
+siblings for predicates that already exist but can't yet be searched:
+`nth_polydivisible`, `nth_trimorphic_number`, `nth_circular_prime`,
+`nth_sad_number`, `nth_vampire_number`, and `nth_evil` (each the same
+bounded sequential scan pattern the merged `nth_*` builtins above
+already use; see each task's own notes in `BACKLOG.md` for specifics).
+The backlog mixes language depth with stdlib breadth over
 time rather than running either in one long block. The full vision and
 non-goals live in [`PROJECT.md`](PROJECT.md).

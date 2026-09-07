@@ -149,24 +149,25 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4599 tests passing locally as of `#412`). Most recently
-landed: `#412` `nth_emirp`, `#411` `nth_self_number`, `#410`
-`nth_twin_prime`, `#409` chained `if` filter clauses in list/map
-comprehensions — see `CHANGELOG.md` for the full merge history, newest
-first. Queue (`BACKLOG.md`, six tasks, at its usual 5-6 floor): task 1
-guards in `match` arms (depth — requeued after PR #314's three failed
-rounds, this time parsing the guard via the parser's ordinary
-`_ternary()` entry point instead of a hand-rolled bracket/token scan,
-sidestepping that postmortem's whole bug class), tasks 2-6
+`main` is green (4625 tests passing locally as of `#413`). Most recently
+landed: `#413` guards in `match` arms (three review rounds, see
+`BACKLOG.md`'s `## Graveyard` for the postmortem this finally closed),
+`#412` `nth_emirp`, `#411` `nth_self_number`, `#410` `nth_twin_prime` —
+see `CHANGELOG.md` for the full merge history, newest first. Queue
+(`BACKLOG.md`, six tasks, at its usual 5-6 ceiling): all six breadth —
 `nth_polydivisible`/`nth_trimorphic_number`/`nth_circular_prime`/
-`nth_sad_number`/`nth_vampire_number` (breadth, unclaimed).
+`nth_sad_number`/`nth_vampire_number`/`nth_evil` (unclaimed). No depth
+task queued this pass: guards was the last clear language-level gap
+(see below); the next grooming pass should look for a new depth
+candidate once one of these breadth tasks lands.
 
-Pattern matching (`match`) has, beyond its original literal-pattern/`_`
+Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
 and map patterns, range and negative-literal patterns, rest capture,
-per-key rename, default values, and whole-value plus nested `as`
-binding (#311 through #407, full list in `CHANGELOG.md`). Guards are
-the one open follow-up, queued as task 1 above.
+per-key rename, default values, whole-value plus nested `as` binding,
+and guards (#311 through #413, full list in `CHANGELOG.md`) — the
+pattern-matching feature area is now feature-complete against every gap
+identified so far.
 
 ## History
 
@@ -215,3 +216,23 @@ the one open follow-up, queued as task 1 above.
   into the queue as task 6 (breadth), per the deferred-not-dead note
   the prior pass left for it, bringing the queue back to its usual
   6-task ceiling from the 5-task floor `#412`'s merge had dropped it to.
+- **2026-09-08** — `#413` guards in `match` arms merged (three review
+  rounds), closing the postmortem this section had been tracking since
+  the original PR #314 attempt. Refreshed "Current frontier" for the
+  merge and caught up README.md's own drift, which had accumulated
+  across several prior grooming passes that (correctly, per their own
+  scope) deferred doc updates to "the Architect's next pass": added the
+  missing `nth_emirp` bullet (predicate existed, sibling bullet never
+  landed after `#412`), reworded the two "one optional filter clause"
+  comprehension bullets to reflect `#409`'s chained-`if` support, and
+  replaced the stale "no guards yet" match-features note with a full
+  description of the new guard syntax. Restocked the queue back to six
+  with `nth_evil` (breadth) after auditing the `is_*`-without-`nth_*`
+  gap list for a candidate whose sequence stays dense at every position
+  — several tempting candidates (`nth_armstrong`, `nth_munchausen_number`,
+  `nth_perfect_number`) were rejected because their underlying sequences
+  are so sparse (Armstrong numbers: only 88 exist in base 10 at all;
+  perfect numbers: 51 known, doubling gaps) that a bounded sequential
+  scan to the 50th term is either impossible or impractically slow,
+  unlike every `nth_*` builtin merged so far. No depth task queued this
+  pass — see "Current frontier" above for why.

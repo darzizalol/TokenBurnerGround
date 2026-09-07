@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: guards in `match` arms — requeued with a different parsing strategy
+## 1. Language: guards in `match` arms — requeued with a different parsing strategy [claimed 2026-09-07T14:24:36Z]
 
 Build: an optional conditional filter on a `match` arm
 (`n if n > 0 => "positive"`), supplementing the pattern with an ordinary

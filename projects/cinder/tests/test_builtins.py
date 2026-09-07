@@ -4140,6 +4140,88 @@ class TestIsCircularPrime(unittest.TestCase):
             run("is_circular_prime();")
 
 
+class TestNthCircularPrime(unittest.TestCase):
+    def test_nth_circular_prime_of_first_fifteen(self):
+        expected = {
+            1: 2,
+            2: 3,
+            3: 5,
+            4: 7,
+            5: 11,
+            6: 13,
+            7: 17,
+            8: 31,
+            9: 37,
+            10: 71,
+            11: 73,
+            12: 79,
+            13: 97,
+            14: 113,
+            15: 131,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_circular_prime({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_circular_prime_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_circular_prime(20);").get("result"), 373
+        )
+
+    def test_nth_circular_prime_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_circular_prime(50);").get("result"), 919393
+        )
+
+    def test_nth_circular_prime_agrees_with_is_circular_prime(self):
+        for position in range(1, 16):
+            self.assertEqual(
+                run(
+                    f"let result = is_circular_prime(nth_circular_prime({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_circular_prime({position}) to be a circular prime",
+            )
+
+    def test_nth_circular_prime_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_circular_prime(0);")
+        self.assertIn(
+            "nth_circular_prime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_circular_prime_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_circular_prime(-3);")
+        self.assertIn(
+            "nth_circular_prime() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_circular_prime_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_circular_prime(true);")
+        self.assertIn(
+            "nth_circular_prime() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_circular_prime_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_circular_prime("5");')
+        self.assertIn(
+            "nth_circular_prime() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_circular_prime_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_circular_prime(1, 2);")
+
+
 class TestIsTwinPrime(unittest.TestCase):
     def test_is_twin_prime_of_lower_twin(self):
         self.assertEqual(run("let result = is_twin_prime(3);").get("result"), True)

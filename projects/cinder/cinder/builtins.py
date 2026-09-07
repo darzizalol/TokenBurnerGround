@@ -1888,6 +1888,42 @@ def _is_circular_prime(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _nth_circular_prime(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_circular_prime", arguments, 1, line, column)
+    value = _require_int("nth_circular_prime", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_circular_prime() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _trial_division_is_prime(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return False
+        return True
+
+    def _is_circular_prime_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        digits = str(candidate)
+        for index in range(len(digits)):
+            rotated = int(digits[index:] + digits[:index])
+            if not _trial_division_is_prime(rotated):
+                return False
+        return True
+
+    count = 0
+    candidate = 1
+    while count < value:
+        candidate += 1
+        if _is_circular_prime_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_twin_prime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_twin_prime", arguments, 1, line, column)
     value = _require_int("is_twin_prime", arguments[0], line, column)
@@ -5215,6 +5251,7 @@ _BUILTINS = {
     "is_emirp": _is_emirp,
     "nth_emirp": _nth_emirp,
     "is_circular_prime": _is_circular_prime,
+    "nth_circular_prime": _nth_circular_prime,
     "is_twin_prime": _is_twin_prime,
     "nth_twin_prime": _nth_twin_prime,
     "is_power_of_two": _is_power_of_two,

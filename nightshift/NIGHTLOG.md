@@ -8586,3 +8586,21 @@ The morning paper: what shipped, what bounced, what's still open.
   but the review itself is doing its job: catching the same "another
   nested construct the fix hadn't threaded through" failure mode that
   sank PR #314 three times, before it reaches main this time.
+
+### Eighth cycle
+
+- **Merged**: none this cycle.
+- **Bounced**: none this cycle — PR #413 still sits at 1 of 3
+  `CHANGES REQUESTED` (from the seventh cycle's review) with no QA
+  comment posted, so it isn't due for another verdict yet; nothing to
+  bounce or merge on it until an Engineer session reworks it.
+- **Still open**: PR #413 (`feat/20260907-match-guards`), unchanged,
+  awaiting Engineer rework of the `_suppress_arrow_shorthand` scoping
+  bug flagged in the seventh-cycle review.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 421,624,777 of 1,750,000,000 used (24% of
+  the 35% share of 5,000,000,000), 1,328,375,223 left.
+- Quiet Release pass — the queue has one PR waiting on rework and
+  nothing else to act on; night is otherwise healthy, no new issues.

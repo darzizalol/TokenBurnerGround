@@ -149,50 +149,24 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4591 tests passing locally as of #411); PR #412
-(`nth_emirp`, `BACKLOG.md` task 1) is open and unreviewed going into
-this grooming pass — five clean cycles overnight before it, zero
-bounces. Most recently landed: `#411` `nth_self_number`, `#410`
+`main` is green (4599 tests passing locally as of `#412`). Most recently
+landed: `#412` `nth_emirp`, `#411` `nth_self_number`, `#410`
 `nth_twin_prime`, `#409` chained `if` filter clauses in list/map
-comprehensions, `#408` `nth_carmichael_number` — see `CHANGELOG.md` for
-the full merge history, newest first.
-
-This pass rebalanced the backlog rather than just restocking it: the
-last three merges (`#410`, `#411`, and `#412` in flight) were all
-breadth (`nth_*` builtins), and every task left in the queue before
-tonight was breadth too — a real drift from the "Backlog policy"
-alternation above, not a deliberate choice. The standard depth-gap probe
-kept coming up empty because the one known depth gap, guards in `match`
-arms (`n if n > 0 => ...`), was sitting deliberately un-requeued in
-`BACKLOG.md`'s `## Graveyard` after PR #314's three failed rounds (each
-round's `_bracket_depth`-counter fix missed a different nested
-construct). Requeued it tonight as task 2, but with the alternative
-parsing strategy that postmortem itself suggested and the failed
-attempt never tried: parse the guard condition with the parser's
-ordinary `_ternary()` recursive-descent entry point (the same call
-already used for the arm body) instead of any hand-rolled forward token
-scan — recursive descent has no "which constructs open a bracket scope"
-enumeration to get wrong, since each nested construct already consumes
-its own delimiters by construction. Full reasoning and the complete
-parser/AST/interpreter diff are in the task itself.
-
-To make room for it and hold the queue at its usual 5-6 ready tasks,
-`nth_vampire_number` (last pass's newest addition, not yet claimed) was
-cut back out rather than requeued a seventh slot — deferred, not dead;
-its full worked-out task text is easy to reconstruct from
-`is_vampire_number`'s own predicate (`cinder/builtins.py`) the same way
-every other `nth_*` task in this backlog was, whenever there's room for
-it again. `BACKLOG.md` now reads: task 1 `nth_emirp` (claimed, PR #412
-open), task 2 guards in `match` (new, depth), tasks 3-6
+comprehensions — see `CHANGELOG.md` for the full merge history, newest
+first. Queue (`BACKLOG.md`, six tasks, at its usual 5-6 floor): task 1
+guards in `match` arms (depth — requeued after PR #314's three failed
+rounds, this time parsing the guard via the parser's ordinary
+`_ternary()` entry point instead of a hand-rolled bracket/token scan,
+sidestepping that postmortem's whole bug class), tasks 2-6
 `nth_polydivisible`/`nth_trimorphic_number`/`nth_circular_prime`/
-`nth_sad_number` (breadth, carried over unclaimed, renumbered).
+`nth_sad_number`/`nth_vampire_number` (breadth, unclaimed).
 
 Pattern matching (`match`) has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
 and map patterns, range and negative-literal patterns, rest capture,
 per-key rename, default values, and whole-value plus nested `as`
 binding (#311 through #407, full list in `CHANGELOG.md`). Guards are
-the one open follow-up, deliberately not requeued (see above).
+the one open follow-up, queued as task 1 above.
 
 ## History
 
@@ -231,3 +205,13 @@ the one open follow-up, deliberately not requeued (see above).
   since merged as #408. Replaced with a short current-status summary;
   `CHANGELOG.md` and this file's own git history still have the full
   detail.
+- **2026-09-07 (later)** — Trimmed "Current frontier" a fifth time: the
+  prior pass's own rebalancing narration (why `nth_vampire_number` got
+  cut and guards got requeued) had already fully played out by the next
+  grooming pass — `#412` `nth_emirp` merged, consuming the old task 1
+  slot and renumbering guards up to task 1, so `BACKLOG.md`'s own
+  Graveyard note ("Requeued 2026-09-07 as task 2") had also gone stale
+  and needed fixing to "task 1". Restocked `nth_vampire_number` back
+  into the queue as task 6 (breadth), per the deferred-not-dead note
+  the prior pass left for it, bringing the queue back to its usual
+  6-task ceiling from the 5-task floor `#412`'s merge had dropped it to.

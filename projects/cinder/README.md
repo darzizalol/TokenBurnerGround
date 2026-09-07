@@ -789,23 +789,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_self_number` (PR
-#411), `nth_twin_prime` (PR #410), chaining more than one `if` filter
-clause in a list/map comprehension (PR #409, `[x for x in xs if a if
-b]`, previously a `ParseError` after the first `if` even though
-Python-style chained filters read more naturally than folding
-everything into one `&&` expression), and `nth_carmichael_number` (PR
-#408). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_emirp` (PR #412,
-open), then guards in `match` arms (`n if n > 0 => "positive"`) —
-attempted once before and closed after three failed review rounds over
-a recurring parser bug (see `BACKLOG.md`'s `## Graveyard` for that
-postmortem), now requeued with a different parsing strategy that
-avoids the bug entirely — followed by four more value-returning `nth_*`
-siblings for predicates that already exist but can't yet be searched:
-`nth_polydivisible`, `nth_trimorphic_number`, `nth_circular_prime`, and
-`nth_sad_number` (each the same bounded sequential scan pattern the
-merged `nth_*` builtins above already use; see each task's own notes
-in `BACKLOG.md` for specifics). The backlog mixes language depth with
-stdlib breadth over time rather than running either in one long block.
-The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+Actively developed, nightly. Recently landed: `nth_emirp` (PR #412),
+`nth_self_number` (PR #411), `nth_twin_prime` (PR #410), and chaining
+more than one `if` filter clause in a list/map comprehension (PR #409,
+`[x for x in xs if a if b]`, previously a `ParseError` after the first
+`if` even though Python-style chained filters read more naturally than
+folding everything into one `&&` expression). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Coming up
+next (see [`BACKLOG.md`](BACKLOG.md)): guards in `match` arms (`n if n
+> 0 => "positive"`) — attempted once before and closed after three
+failed review rounds over a recurring parser bug (see `BACKLOG.md`'s
+`## Graveyard` for that postmortem), now requeued with a different
+parsing strategy that avoids the bug entirely — followed by five more
+value-returning `nth_*` siblings for predicates that already exist but
+can't yet be searched: `nth_polydivisible`, `nth_trimorphic_number`,
+`nth_circular_prime`, `nth_sad_number`, and `nth_vampire_number` (each
+the same bounded sequential scan pattern the merged `nth_*` builtins
+above already use; see each task's own notes in `BACKLOG.md` for
+specifics). The backlog mixes language depth with stdlib breadth over
+time rather than running either in one long block. The full vision and
+non-goals live in [`PROJECT.md`](PROJECT.md).

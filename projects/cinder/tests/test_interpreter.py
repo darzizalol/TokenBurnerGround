@@ -7046,6 +7046,16 @@ class TestMatchExpression(unittest.TestCase):
         env = run('let result = match (2) { 1 => "one", 2 => "two", _ => "other" };')
         self.assertEqual(env.get("result"), "two")
 
+    def test_guard_nested_match_arm_body_arrow_shorthand_allowed(self):
+        # A nested match's own arm body is delimited by its own '}', so a
+        # bare arrow-shorthand body there (`m => x => x + 1`) must not be
+        # swallowed by the outer guard's arrow-shorthand suppression.
+        env = run(
+            'let result = match (5) { '
+            'n if match(n) { m => x => x + 1 }(1) == 2 => "pos", _ => "other" };'
+        )
+        self.assertEqual(env.get("result"), "pos")
+
 
 if __name__ == "__main__":
     unittest.main()

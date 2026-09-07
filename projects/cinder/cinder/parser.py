@@ -1157,17 +1157,26 @@ class Parser:
 
     def _match_expr(self) -> Expr:
         match_token = self._advance()  # consume 'match'
-        self._consume(TokenType.LPAREN, "'(' after 'match'")
-        subject = self._assignment()
-        self._consume(TokenType.RPAREN, "')' after match subject")
-        self._consume(TokenType.LBRACE, "'{' after match subject")
-        arms = list(self._match_arm())
-        while self._check(TokenType.COMMA):
-            self._advance()
-            if self._check(TokenType.RBRACE):
-                break
-            arms.extend(self._match_arm())
-        self._consume(TokenType.RBRACE, "'}' after match arms")
+        # A whole `match (...) { ... }` owns its own closing '}', so — like
+        # `_fn_params_and_body` — it re-enables arrow-function shorthand for
+        # its entire contents (subject, patterns, and arm bodies) even when
+        # parsed from within an outer match guard's suppressed context. This
+        # matters for bare (unparenthesized) arrow-shorthand arm bodies of a
+        # nested match, e.g. `match(n) { m => x => x + 1 }` used inside a
+        # guard: without this, the nested arm's own '=>' would be mistaken
+        # for the outer guard's terminating '=>'.
+        with self._arrow_shorthand_allowed():
+            self._consume(TokenType.LPAREN, "'(' after 'match'")
+            subject = self._assignment()
+            self._consume(TokenType.RPAREN, "')' after match subject")
+            self._consume(TokenType.LBRACE, "'{' after match subject")
+            arms = list(self._match_arm())
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if self._check(TokenType.RBRACE):
+                    break
+                arms.extend(self._match_arm())
+            self._consume(TokenType.RBRACE, "'}' after match arms")
         return MatchExpr(subject, arms, match_token.line, match_token.column)
 
     def _match_arm(self) -> "list[MatchArm]":

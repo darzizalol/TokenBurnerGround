@@ -6163,6 +6163,47 @@ class TestMatchExpression(unittest.TestCase):
             ),
         )
 
+    def test_match_guard_nested_match_arm_body_arrow_shorthand_allowed(self):
+        # A nested `match` inside a guard owns its own arm-terminating `=>`
+        # (and closing `}`), so it must not inherit the outer guard's
+        # arrow-shorthand suppression: a bare arrow-shorthand arm body like
+        # `m => x => x + 1` is otherwise indistinguishable from the guard's
+        # own trailing `=>` until the nested match's own `}` is reached.
+        arms = parse(
+            'match (5) { n if match(n) { m => x => x + 1 }(1) == 2 => "pos", _ => "other" }'
+        ).arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Call",
+                    (
+                        "MatchExpr",
+                        ("Identifier", "n"),
+                        [
+                            (
+                                None,
+                                self._arrow_fn_shape(
+                                    "x",
+                                    ("Binary", ("Identifier", "x"), TokenType.PLUS, ("Literal", 1)),
+                                ),
+                                "m",
+                                None,
+                                None,
+                                None,
+                                None,
+                                None,
+                            )
+                        ],
+                    ),
+                    [("Literal", 1)],
+                ),
+                TokenType.EQEQ,
+                ("Literal", 2),
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

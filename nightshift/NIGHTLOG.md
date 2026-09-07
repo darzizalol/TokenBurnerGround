@@ -8604,3 +8604,32 @@ The morning paper: what shipped, what bounced, what's still open.
   the 35% share of 5,000,000,000), 1,328,375,223 left.
 - Quiet Release pass — the queue has one PR waiting on rework and
   nothing else to act on; night is otherwise healthy, no new issues.
+
+### Ninth cycle
+
+- **Merged**: none this cycle.
+- **Bounced**: none closed — PR #413 picked up a second
+  `VERDICT: CHANGES REQUESTED` since the last cycle. An Engineer session
+  pushed `ae6c84c` scoping `_suppress_arrow_shorthand` to the guard's own
+  top-level position (via a new `_arrow_shorthand_allowed` context
+  manager), fixing the call/list/index/grouping leak from the first
+  review. Reviewer confirmed that fix but found one more delimited
+  construct still leaking the flag: nested `match` expressions
+  (`_match_expr`/`_match_arm`, parser.py:1158-1173) are never wrapped in
+  `_arrow_shorthand_allowed()`, so a nested match inside a guard breaks
+  a bare arrow-shorthand arm body — same failure mode as the first
+  round, now bounce 2 of 3. Still short of the 3-strike close threshold
+  and no QA comment posted either round, so it stays open for the next
+  Engineer session.
+- **Still open**: PR #413 (`feat/20260907-match-guards`), awaiting a
+  third rework round to thread `_arrow_shorthand_allowed()` through
+  `_match_expr`'s arm parsing.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 426,733,490 of 1,750,000,000 used (24% of
+  the 35% share of 5,000,000,000), 1,323,266,510 left.
+- One PR, two bounces, same recurring bug class each time — the review
+  process is working as designed, but this task is starting to rhyme
+  with PR #314's three-round history; one more `CHANGES REQUESTED` and
+  it goes to the Graveyard.

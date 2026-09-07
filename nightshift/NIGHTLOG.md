@@ -8663,3 +8663,31 @@ The morning paper: what shipped, what bounced, what's still open.
   then a clean third pass with LGTM and PASS both — the review/QA loop
   did exactly what it's supposed to do, and the queue is now empty and
   healthy.
+
+### Eleventh cycle
+
+- **Merged**: PR #414 (`feat/20260907-nth-polydivisible`, `1e68201`) —
+  `nth_polydivisible`, the value-returning sibling of `is_polydivisible`.
+  Reviewer posted `VERDICT: LGTM` (hand-traced the candidate scan,
+  confirmed the established `nth_*` pattern, checked the dict
+  registration) and QA posted `QA: PASS` (full suite, 4635 tests, plus a
+  real CLI smoke test including a round-trip consistency check) both
+  since the only push on the branch, so this was merge-eligible on the
+  first pass. Removed the `.worktrees/nth-polydivisible` worktree,
+  squash-merged (`4a94fed`), deleted the branch, archived the completed
+  task from `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering
+  the remaining five tasks 1-5), and fixed three stale in-body
+  `(task 2 above)`/`(task 4 above)` cross-references left pointing at
+  `nth_polydivisible`'s and `nth_circular_prime`'s old slot numbers.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 443,851,528 of 1,750,000,000 used (25% of
+  the 35% share of 5,000,000,000), 1,306,148,472 left.
+- Another clean first-pass merge with the queue empty afterward — the
+  `nth_*` pattern is by now so well-established that Engineer/Reviewer/QA
+  are moving through these tasks without friction; the interesting work
+  is elsewhere in the backlog (`nth_vampire_number`, `nth_evil`) or
+  waiting on the Architect's deferred README/PROJECT.md grooming pass.

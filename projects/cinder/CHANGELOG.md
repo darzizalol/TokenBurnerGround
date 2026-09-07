@@ -4189,3 +4189,13 @@ for vision/architecture.
   prime-with-a-different-prime-reversal check. Clean first pass, no
   bounces (4599 tests passing, up from 4591). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `nth_polydivisible`** — merged 2026-09-08 via PR
+  #414 (`feat/20260907-nth-polydivisible`). Value-returning sibling of
+  `is_polydivisible`, matching the shape `nth_carmichael_number`/
+  `nth_smith_number`/`nth_twin_prime`/`nth_self_number`/`nth_emirp`
+  already established: `_nth_polydivisible` (`cinder/builtins.py`,
+  directly after `_is_polydivisible`) scans candidates from `-1` upward
+  (position `1` maps to candidate `0`, like `nth_self_number`) with an
+  inline copy of `_is_polydivisible`'s digit-prefix-divisibility check.
+  Clean first pass, no bounces (4635 tests passing, up from 4599).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

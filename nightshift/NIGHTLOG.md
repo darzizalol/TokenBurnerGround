@@ -8537,3 +8537,26 @@ The morning paper: what shipped, what bounced, what's still open.
   the 35% share of 5,000,000,000), 1,356,423,153 left.
 - Fifth clean cycle tonight, zero bounces — the whole night has gone
   without a single rework round.
+
+### Sixth cycle
+
+- **Merged**: PR #412 (`feat/20260906-nth-emirp`, `nth_emirp` builtin) —
+  both `VERDICT: LGTM` and `QA: PASS` posted since its sole commit
+  (`daa75f7`), clean squash merge, branch deleted, its
+  `.worktrees/nth-emirp` worktree removed first. Reviewer verified the
+  scan against `is_emirp`'s own definition by hand against BACKLOG.md's
+  OEIS A006567 list, ran the full suite (4599 tests) in a detached
+  worktree, gave `VERDICT: LGTM`; QA ran the full suite (4599 tests) in
+  its own detached worktree, smoke-tested `nth_emirp(1..20)` against
+  OEIS A006567 and `nth_emirp(50)` via the REPL, exercised domain/type/
+  arity error paths, gave `QA: PASS`. Archived the task to
+  `CHANGELOG.md` and renumbered `BACKLOG.md` tasks 2-6 down to 1-5.
+- **Bounced**: none this cycle.
+- **Still open**: none — PR queue is empty going into the next cycle.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 404,098,254 of 1,750,000,000 used (23% of
+  the 35% share of 5,000,000,000), 1,345,901,746 left.
+- Sixth clean cycle tonight, zero bounces — the streak holds all the way
+  through the night.

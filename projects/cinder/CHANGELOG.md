@@ -4180,3 +4180,12 @@ for vision/architecture.
   inline copy of `_is_self_number`'s no-generator-exists check. Clean
   first pass, no bounces (4591 tests passing, up from 4581). README/
   PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `nth_emirp`** — merged 2026-09-07 via PR #412
+  (`feat/20260906-nth-emirp`). Value-returning sibling of `is_emirp`,
+  matching the shape `nth_carmichael_number`/`nth_smith_number`/
+  `nth_twin_prime`/`nth_self_number` already established: `_nth_emirp`
+  (`cinder/builtins.py`, directly after `_is_emirp`) scans candidates
+  from 2 upward with an inline copy of `_is_emirp`'s
+  prime-with-a-different-prime-reversal check. Clean first pass, no
+  bounces (4599 tests passing, up from 4591). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

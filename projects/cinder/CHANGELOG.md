@@ -4199,3 +4199,13 @@ for vision/architecture.
   inline copy of `_is_polydivisible`'s digit-prefix-divisibility check.
   Clean first pass, no bounces (4635 tests passing, up from 4599).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `nth_trimorphic_number`** — merged 2026-09-07 via PR
+  #415 (`feat/20260907-nth-trimorphic`). Value-returning sibling of
+  `is_trimorphic_number`, matching the shape `nth_self_number`/
+  `nth_polydivisible` already established: `_nth_trimorphic_number`
+  (`cinder/builtins.py`, directly after `_is_trimorphic_number`) scans
+  candidates from `-1` upward (position `1` maps to candidate `0`, like
+  `nth_self_number`/`nth_polydivisible`) with an inline copy of
+  `_is_trimorphic_number`'s cube-suffix check. Clean first pass, no
+  bounces (4645 tests passing, up from 4635). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

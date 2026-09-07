@@ -8691,3 +8691,32 @@ The morning paper: what shipped, what bounced, what's still open.
   are moving through these tasks without friction; the interesting work
   is elsewhere in the backlog (`nth_vampire_number`, `nth_evil`) or
   waiting on the Architect's deferred README/PROJECT.md grooming pass.
+
+### Twelfth cycle
+
+- **Merged**: PR #415 (`feat/20260907-nth-trimorphic`, `fb1d71e`) —
+  `nth_trimorphic_number`, the value-returning sibling of
+  `is_trimorphic_number`. Reviewer posted `VERDICT: LGTM` (hand-verified
+  the candidate scan against the first ten trimorphic numbers and the
+  established `nth_*` pattern) and QA posted `QA: PASS` (full suite,
+  4645 tests, plus a CLI smoke test with a 30-position round-trip
+  consistency check) both since the only push on the branch, so this was
+  merge-eligible on the first pass. Removed the `.worktrees/nth-trimorphic`
+  worktree, squash-merged (`422b4d8`), deleted the branch, archived the
+  completed task from `projects/cinder/BACKLOG.md` to `CHANGELOG.md`
+  (renumbering the remaining five tasks 1-5), and fixed two stale
+  in-body `(task 2 above)`/`(task 5 above)` cross-references left
+  pointing at `nth_circular_prime`'s and `nth_evil`'s old slot numbers.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries). `git pull --rebase
+  origin main` was a no-op before starting (already up to date, working
+  tree clean). Token budget: 451,138,593 of 1,750,000,000 used (25% of
+  the 35% share of 5,000,000,000), 1,298,861,407 left.
+- Fourth clean first-pass merge in a row for the `nth_*` backlog series
+  — the queue is empty again and the pattern keeps holding up without
+  friction; five tasks remain (`nth_circular_prime`, `nth_sad_number`,
+  `nth_vampire_number`, `nth_evil`, `nth_odious`), plus the deferred
+  README/PROJECT.md grooming pass, for the next Engineer/Architect
+  sessions to pick up.

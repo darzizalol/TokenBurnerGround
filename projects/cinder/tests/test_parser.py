@@ -6060,6 +6060,109 @@ class TestMatchExpression(unittest.TestCase):
         self.assertEqual(shape(arms[0].guard), ("Grouping", ("Identifier", "n")))
         self.assertEqual(shape(arms[0].body), ("Literal", "a"))
 
+    def _arrow_fn_shape(self, param, body_shape):
+        return (
+            "FnExpr",
+            [(param, None)],
+            None,
+            ("Block", [("ReturnStmt", body_shape)]),
+            None,
+        )
+
+    def test_match_guard_call_argument_arrow_shorthand_allowed(self):
+        # Arrow-shorthand suppression must not leak into a call argument
+        # nested inside the guard — only the guard's own top-level `=>`
+        # is ambiguous, not one inside an already-delimited argument list.
+        arms = parse(
+            'match ([1, 2, 3]) { n if length(map(n, x => x * 2)) > 0 => "yes", _ => "no" }'
+        ).arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Call",
+                    ("Identifier", "length"),
+                    [
+                        (
+                            "Call",
+                            ("Identifier", "map"),
+                            [
+                                ("Identifier", "n"),
+                                self._arrow_fn_shape(
+                                    "x",
+                                    ("Binary", ("Identifier", "x"), TokenType.STAR, ("Literal", 2)),
+                                ),
+                            ],
+                        )
+                    ],
+                ),
+                TokenType.GT,
+                ("Literal", 0),
+            ),
+        )
+
+    def test_match_guard_index_of_call_arrow_shorthand_allowed(self):
+        arms = parse(
+            'match (5) { n if filter([1, 2, 3], x => x > n)[0] == 2 => "yes", _ => "no" }'
+        ).arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Index",
+                    (
+                        "Call",
+                        ("Identifier", "filter"),
+                        [
+                            ("ListLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+                            self._arrow_fn_shape(
+                                "x", ("Binary", ("Identifier", "x"), TokenType.GT, ("Identifier", "n"))
+                            ),
+                        ],
+                    ),
+                    ("Literal", 0),
+                ),
+                TokenType.EQEQ,
+                ("Literal", 2),
+            ),
+        )
+
+    def test_match_guard_list_literal_element_arrow_shorthand_allowed(self):
+        arms = parse('match (x) { n if [x => x, n][0](n) > 0 => "a", _ => "b" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Binary",
+                (
+                    "Call",
+                    (
+                        "Index",
+                        (
+                            "ListLiteral",
+                            [self._arrow_fn_shape("x", ("Identifier", "x")), ("Identifier", "n")],
+                        ),
+                        ("Literal", 0),
+                    ),
+                    [("Identifier", "n")],
+                ),
+                TokenType.GT,
+                ("Literal", 0),
+            ),
+        )
+
+    def test_match_guard_grouping_arrow_shorthand_allowed(self):
+        arms = parse('match (x) { n if (x => x > 0)(n) => "a", _ => "b" }').arms
+        self.assertEqual(
+            shape(arms[0].guard),
+            (
+                "Call",
+                ("Grouping", self._arrow_fn_shape("x", ("Binary", ("Identifier", "x"), TokenType.GT, ("Literal", 0)))),
+                [("Identifier", "n")],
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

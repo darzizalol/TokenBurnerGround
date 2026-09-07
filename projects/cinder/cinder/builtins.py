@@ -2147,6 +2147,30 @@ def _is_polydivisible(arguments: list, line: int, column: int) -> object:
     return all(int(digits[:i]) % i == 0 for i in range(1, len(digits) + 1))
 
 
+def _nth_polydivisible(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_polydivisible", arguments, 1, line, column)
+    value = _require_int("nth_polydivisible", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_polydivisible() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_polydivisible_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        return all(
+            int(digits[:i]) % i == 0 for i in range(1, len(digits) + 1)
+        )
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_polydivisible_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_pandigital(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pandigital", arguments, 1, line, column)
     value = _require_int("is_pandigital", arguments[0], line, column)
@@ -5191,6 +5215,7 @@ _BUILTINS = {
     "is_armstrong": _is_armstrong,
     "is_disarium": _is_disarium,
     "is_polydivisible": _is_polydivisible,
+    "nth_polydivisible": _nth_polydivisible,
     "is_pandigital": _is_pandigital,
     "is_strong_number": _is_strong_number,
     "is_munchausen_number": _is_munchausen_number,

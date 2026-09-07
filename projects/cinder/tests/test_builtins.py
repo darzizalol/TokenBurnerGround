@@ -5107,6 +5107,74 @@ class TestIsPolydivisible(unittest.TestCase):
             run("is_polydivisible();")
 
 
+class TestNthPolydivisible(unittest.TestCase):
+    def test_nth_polydivisible_of_first_ten(self):
+        self.assertEqual(run("let result = nth_polydivisible(1);").get("result"), 0)
+        self.assertEqual(run("let result = nth_polydivisible(2);").get("result"), 1)
+        self.assertEqual(run("let result = nth_polydivisible(3);").get("result"), 2)
+        self.assertEqual(run("let result = nth_polydivisible(4);").get("result"), 3)
+        self.assertEqual(run("let result = nth_polydivisible(5);").get("result"), 4)
+        self.assertEqual(run("let result = nth_polydivisible(6);").get("result"), 5)
+        self.assertEqual(run("let result = nth_polydivisible(7);").get("result"), 6)
+        self.assertEqual(run("let result = nth_polydivisible(8);").get("result"), 7)
+        self.assertEqual(run("let result = nth_polydivisible(9);").get("result"), 8)
+        self.assertEqual(run("let result = nth_polydivisible(10);").get("result"), 9)
+
+    def test_nth_polydivisible_of_twenty(self):
+        self.assertEqual(run("let result = nth_polydivisible(20);").get("result"), 28)
+
+    def test_nth_polydivisible_of_fifty(self):
+        self.assertEqual(run("let result = nth_polydivisible(50);").get("result"), 88)
+
+    def test_nth_polydivisible_agrees_with_is_polydivisible(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_polydivisible(nth_polydivisible({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_polydivisible({position}) to be polydivisible",
+            )
+
+    def test_nth_polydivisible_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_polydivisible(0);")
+        self.assertIn(
+            "nth_polydivisible() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_polydivisible_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_polydivisible(-3);")
+        self.assertIn(
+            "nth_polydivisible() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_polydivisible_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_polydivisible(true);")
+        self.assertIn(
+            "nth_polydivisible() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_polydivisible_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_polydivisible("5");')
+        self.assertIn(
+            "nth_polydivisible() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_polydivisible_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_polydivisible();")
+
+    def test_nth_polydivisible_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_polydivisible(1, 2);")
+
+
 class TestIsPandigital(unittest.TestCase):
     def test_is_pandigital_of_smallest(self):
         self.assertEqual(

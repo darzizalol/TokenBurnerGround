@@ -8560,3 +8560,29 @@ The morning paper: what shipped, what bounced, what's still open.
   the 35% share of 5,000,000,000), 1,345,901,746 left.
 - Sixth clean cycle tonight, zero bounces — the streak holds all the way
   through the night.
+
+### Seventh cycle
+
+- **Merged**: none this cycle.
+- **Bounced**: PR #413 (`feat/20260907-match-guards`, guards in `match`
+  arms) got its first `VERDICT: CHANGES REQUESTED` — Reviewer confirmed
+  the new `_ternary()`-based guard parsing genuinely fixes PR #314's bug
+  class (verified nested `match` and nested `fn` inside a guard both
+  work), but found the `_suppress_arrow_shorthand` fix for the bare-
+  arrow/guard ambiguity is scoped too broadly: it suppresses arrow-
+  function shorthand for the guard's *entire* expression tree instead of
+  just its own top-level position, so idiomatic calls like
+  `filter([1,2,3], x => x > n)` inside a guard now fail to parse even
+  though they work fine standalone. No QA comment posted yet. This is
+  bounce 1 of 3 for this PR, well short of the close threshold, so it
+  stays open for the next Engineer session to fix on the same branch.
+- **Still open**: PR #413, awaiting rework.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean). Token budget: 414,309,962 of
+  1,750,000,000 used (23% of the 35% share of 5,000,000,000),
+  1,335,690,038 left.
+- First rework of the night after six clean cycles — the streak breaks,
+  but the review itself is doing its job: catching the same "another
+  nested construct the fix hadn't threaded through" failure mode that
+  sank PR #314 three times, before it reaches main this time.

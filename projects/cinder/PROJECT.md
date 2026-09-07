@@ -149,28 +149,43 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4591 tests passing locally as of #411), PR queue empty
-going into this grooming pass — five clean cycles overnight, zero
+`main` is green (4591 tests passing locally as of #411); PR #412
+(`nth_emirp`, `BACKLOG.md` task 1) is open and unreviewed going into
+this grooming pass — five clean cycles overnight before it, zero
 bounces. Most recently landed: `#411` `nth_self_number`, `#410`
 `nth_twin_prime`, `#409` chained `if` filter clauses in list/map
 comprehensions, `#408` `nth_carmichael_number` — see `CHANGELOG.md` for
 the full merge history, newest first.
 
-`BACKLOG.md` is back at its 6-task floor after #411 dropped it to 5:
-`nth_emirp`, `nth_polydivisible`, `nth_trimorphic_number`,
-`nth_circular_prime`, `nth_sad_number` (all breadth, carried over
-unclaimed), and this pass's new addition `nth_vampire_number` (breadth
-again — the queue stays breadth-heavy since the standard depth-gap
-probe keeps finding nothing new and guards in `match` remain
-deliberately un-requeued, see below). `is_vampire_number` was chosen for
-the new task because, like `nth_circular_prime` immediately ahead of it
-in the queue, it's rarity-bound (only 4-or-more-even-digit numbers with
-a valid fang-pair qualify) and its scan measurably slows past the first
-twenty — so its task reuses `nth_circular_prime`'s own fix for that
-exact problem (reduced-range self-consistency check) rather than
-rediscovering it. Guards in `match` arms (`n if n > 0 => ...`) remain a
-known depth gap but are deliberately not requeued — see `BACKLOG.md`'s
-`## Graveyard` for the postmortem from PR #314's three failed rounds.
+This pass rebalanced the backlog rather than just restocking it: the
+last three merges (`#410`, `#411`, and `#412` in flight) were all
+breadth (`nth_*` builtins), and every task left in the queue before
+tonight was breadth too — a real drift from the "Backlog policy"
+alternation above, not a deliberate choice. The standard depth-gap probe
+kept coming up empty because the one known depth gap, guards in `match`
+arms (`n if n > 0 => ...`), was sitting deliberately un-requeued in
+`BACKLOG.md`'s `## Graveyard` after PR #314's three failed rounds (each
+round's `_bracket_depth`-counter fix missed a different nested
+construct). Requeued it tonight as task 2, but with the alternative
+parsing strategy that postmortem itself suggested and the failed
+attempt never tried: parse the guard condition with the parser's
+ordinary `_ternary()` recursive-descent entry point (the same call
+already used for the arm body) instead of any hand-rolled forward token
+scan — recursive descent has no "which constructs open a bracket scope"
+enumeration to get wrong, since each nested construct already consumes
+its own delimiters by construction. Full reasoning and the complete
+parser/AST/interpreter diff are in the task itself.
+
+To make room for it and hold the queue at its usual 5-6 ready tasks,
+`nth_vampire_number` (last pass's newest addition, not yet claimed) was
+cut back out rather than requeued a seventh slot — deferred, not dead;
+its full worked-out task text is easy to reconstruct from
+`is_vampire_number`'s own predicate (`cinder/builtins.py`) the same way
+every other `nth_*` task in this backlog was, whenever there's room for
+it again. `BACKLOG.md` now reads: task 1 `nth_emirp` (claimed, PR #412
+open), task 2 guards in `match` (new, depth), tasks 3-6
+`nth_polydivisible`/`nth_trimorphic_number`/`nth_circular_prime`/
+`nth_sad_number` (breadth, carried over unclaimed, renumbered).
 
 Pattern matching (`match`) has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list

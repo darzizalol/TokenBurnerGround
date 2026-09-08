@@ -149,14 +149,13 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4664 tests passing locally as of `#417`). Most recently
-landed: `#417` `nth_sad_number`, `#416` `nth_circular_prime`, `#415`
-`nth_trimorphic_number`, `#414` `nth_polydivisible`, `#413` guards in
-`match` arms (three review rounds, see `BACKLOG.md`'s `## Graveyard`
-for the postmortem this finally closed) — see `CHANGELOG.md` for the
-full merge history, newest first. Queue (`BACKLOG.md`, six tasks): all
-breadth — `nth_vampire_number`/`nth_evil`/`nth_odious`/`nth_composite`/
-`nth_power_of_two`/`nth_pernicious` (unclaimed).
+`main` is green (4675 tests passing locally as of `#418`). Most recently
+landed: `#418` `nth_vampire_number`, `#417` `nth_sad_number`, `#416`
+`nth_circular_prime`, `#415` `nth_trimorphic_number`, `#414`
+`nth_polydivisible` — see `CHANGELOG.md` for the full merge history,
+newest first. Queue (`BACKLOG.md`, six tasks): all breadth —
+`nth_evil`/`nth_odious`/`nth_composite`/`nth_power_of_two`/
+`nth_pernicious`/`nth_perfect_square` (unclaimed).
 
 Still no depth task queued — third pass running without one. The prior
 pass's scouting still holds: chained assignment already works, `Set`
@@ -326,3 +325,21 @@ identified so far.
   arguments (a pair), not the single-candidate shape every `nth_*`
   builtin here scans over. No depth task queued this pass — same
   scouting gap as the three passes above, still holds.
+- **2026-09-08 (still yet later)** — `#418` `nth_vampire_number` merged
+  (clean first-pass, no rework rounds). No stray uncommitted state or
+  HELP.md escalation at session start this time — straightforward
+  catch-up. Refreshed "Current frontier" and README.md's "Status &
+  roadmap"/test count (4675, up from 4664) for the merge, and added the
+  `nth_vampire_number` bullet README.md's builtins list had been
+  missing, same recurring drift the last several entries have each
+  fixed for their own merges. Queue was back at its 5-task floor;
+  restocked to six with `nth_perfect_square` (breadth, closed form like
+  `nth_power_of_two`/`nth_pronic`/`nth_octagonal`, `(k - 1) ** 2`,
+  verified against `is_perfect_square` before writing the task) —
+  `is_perfect_cube` and `is_perfect_power` were both considered as
+  alternatives but re-deferred for the same reason the entry above
+  already gave: too similar in shape to already-queued
+  `nth_power_of_two` (closed form) to add real variety before that task
+  itself has even merged; revisit both once `nth_power_of_two` lands.
+  No depth task queued this pass — same scouting gap as the four passes
+  above, still holds.

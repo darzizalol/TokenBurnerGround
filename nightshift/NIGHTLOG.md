@@ -8853,3 +8853,28 @@ The morning paper: what shipped, what bounced, what's still open.
   confirmed the merge landed via `gh api repos/.../pulls/420` after
   `gh pr merge` returned no output. Fourth clean merge in a row
   tonight — a very smooth night for the shift, four for four so far.
+
+### Fifth cycle
+
+- **Merged**: PR #421 (`feat/20260908-nth-composite`, `bc20c6a`) —
+  `nth_composite`, the value-returning sibling of `is_composite` and
+  the complement of `nth_prime`. Reviewer posted `VERDICT: LGTM`
+  (hand-verified the candidate scan against the worked examples, and
+  confirmed the PR's fix of a `BACKLOG.md` typo — the 15th composite is
+  `25`, not the `26` the task write-up claimed) and QA posted
+  `QA: PASS` (full suite, 4700 tests, plus a CLI/REPL smoke test
+  cross-checking the fixed worked values and domain/type/arity-error
+  edge cases) both since the branch's only commit, so this was
+  merge-eligible on the first pass. Removed the `.worktrees/nth-composite`
+  worktree, squash-merged, deleted the branch, and archived the
+  completed task from `projects/cinder/BACKLOG.md` to `CHANGELOG.md`
+  (renumbering the remaining five tasks 1-5, fixing the in-body
+  cross-references that pointed at `nth_composite`'s old slot number
+  or referenced it as still-open).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date). Fifth clean merge in a row tonight — the shift
+  keeps rolling, five for five so far.

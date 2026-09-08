@@ -4263,3 +4263,13 @@ for vision/architecture.
   reusing `is_odious`'s popcount-parity predicate verbatim. Clean first
   pass, no bounces (4691 tests passing, up from 4683). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `nth_composite`** — merged 2026-09-09 via PR #421
+  (`feat/20260908-nth-composite`). Value-returning sibling of
+  `is_composite`, the complement of `nth_prime`: `_nth_composite`
+  (`cinder/builtins.py`, directly after `_is_composite`) scans
+  candidates from `3` upward (position `1` maps to candidate `4`),
+  reusing `is_composite`'s divisor-loop predicate verbatim. Along the
+  way corrected a `BACKLOG.md` worked-example typo (15th composite is
+  `25`, not `26`). Clean first pass, no bounces (4700 tests passing, up
+  from 4691). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

@@ -11,107 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_composite` — composite number found at a 1-indexed position [claimed 2026-09-08T19:40:24Z]
-
-Build: `is_composite` (`cinder/builtins.py`, search `def _is_composite`:
-a non-negative integer with a divisor strictly between `1` and itself —
-the complement of `is_prime`, `value < 4` returns `false` outright since
-`0`/`1`/`2`/`3` are never composite) has no value-returning `nth_*`
-sibling, unlike its own opposite `is_prime` (`nth_prime` already exists,
-search `def _nth_prime`, sitting directly above `_is_composite` in the
-file). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_composite(1));'
-# -> <eval>:1:7: undefined name 'nth_composite' (did you mean
-#    'is_composite'?)
-```
-
-Worked examples: the first twenty composite numbers (confirmed by
-scanning with `is_composite` directly) are `4, 6, 8, 9, 10, 12, 14, 15,
-16, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 32`, so `nth_composite(1)`
-is `4` and `nth_composite(10)` is `18`. The 15th is `26`, the 20th is
-`32`, the 50th is `70`. Composites are dense — every integer that isn't
-`0`, `1`, or prime — so unlike the digit-quirk or prime-rotation `nth_*`
-tasks elsewhere in this backlog, this scan stays fast at every position
-(confirmed locally: `nth_composite(50)` via `python3 -m cinder.cli eval`
-returns in well under a second), no performance caveat needed.
-
-Like `nth_prime` (same file, directly above `_is_composite`), position
-`1` maps to candidate `4`, not `0` or `1`: `is_composite` rejects every
-value under `4` outright, so the scan can start at `candidate = 3`
-(incremented before the first check) with no off-by-one risk.
-
-Add directly after `_is_composite` (search `def _is_composite`,
-immediately before `def _is_semiprime`) — keeps the value-returning
-helper next to the predicate it mirrors:
-```python
-def _nth_composite(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_composite", arguments, 1, line, column)
-    value = _require_int("nth_composite", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_composite() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_composite_candidate(candidate: int) -> bool:
-        if candidate < 4:
-            return False
-        for divisor in range(2, int(candidate ** 0.5) + 1):
-            if candidate % divisor == 0:
-                return True
-        return False
-
-    count = 0
-    candidate = 3
-    while count < value:
-        candidate += 1
-        if _is_composite_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check copied verbatim from `_is_composite`'s own body,
-the same "duplicate the tiny predicate body instead of a redundant
-`_require_arity`/`_require_int` round-trip per candidate" choice every
-recent `nth_*` task already makes.) Register the new dict entry (search
-`"is_composite": _is_composite,`, add `"nth_composite":
-_nth_composite,` directly after it, before `"is_semiprime":
-_is_semiprime,`).
-
-Acceptance criteria:
-- `nth_composite(1);` through `nth_composite(10);` are `4, 6, 8, 9, 10,
-  12, 14, 15, 16, 18` in order — the worked example above.
-- `nth_composite(15);` is `26`, `nth_composite(20);` is `32`, and
-  `nth_composite(50);` is `70` — further worked examples confirming the
-  scan scales well past the first ten.
-- For every `position` in `1..50`,
-  `is_composite(nth_composite(position))` is `true` — the same
-  self-consistency check every recent `nth_*` task's own test suite
-  already runs against its predicate.
-- `nth_composite(0);`, `nth_composite(-3);` both raise
-  `CinderRuntimeError` matching `"nth_composite\(\) requires a positive
-  integer, domain error"`.
-- `nth_composite(true);` raises `CinderRuntimeError` matching
-  `"nth_composite\(\) requires an int, got bool"`.
-- `nth_composite("5");` raises `CinderRuntimeError` matching
-  `"nth_composite\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_composite`,
-search `def _is_composite`), `tests/test_builtins.py` (new `class
-TestNthComposite`, modeled on `class TestNthPrime`, search that name,
-for the test shapes above — place it near the existing `class
-TestIsComposite`, search that name). Once merged, `README.md`'s existing
-`is_composite` bullet needs `nth_composite` added right after it, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" section needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
+## 1. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
 
 Build: `is_power_of_two` (`cinder/builtins.py`, search `def
 _is_power_of_two`: a positive integer with exactly one set bit, tested
@@ -189,7 +89,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
+## 2. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
 
 Build: `is_pernicious` (`cinder/builtins.py`, search `def
 _is_pernicious`: a non-negative integer whose popcount (number of set
@@ -299,13 +199,13 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
+## 3. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
 
 Build: `is_perfect_square` (`cinder/builtins.py`, search `def
 _is_perfect_square`: a non-negative integer whose integer square root,
 squared, equals it back — `math.isqrt(value) ** 2 == value`, negative
 input returns `false` outright) has no value-returning `nth_*` sibling,
-the same gap `nth_power_of_two` (task 2 above) and `nth_pronic`/
+the same gap `nth_power_of_two` (task 1 above) and `nth_pronic`/
 `nth_decagonal` (already-merged siblings) already close for their own
 closed-form sequences. Verify the gap:
 ```sh
@@ -314,8 +214,8 @@ python3 -m cinder.cli eval 'print(nth_perfect_square(1));'
 #    'is_perfect_square'?)
 ```
 
-Unlike `nth_evil`/`nth_odious` (both merged), `nth_composite`/
-`nth_pernicious` (tasks 1 and 3 above, both sequential scans), perfect
+Unlike `nth_evil`/`nth_odious`/`nth_composite` (all merged), `nth_pernicious`
+(task 2 above, a sequential scan), perfect
 squares have an exact closed form — position `k` is `(k - 1) ** 2`, the
 same shape `nth_power_of_two`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
 `nth_decagonal` (search `def _nth_pronic` for the pattern to copy, it's
@@ -381,7 +281,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
+## 4. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
 
 Build: `is_palindrome_number` (`cinder/builtins.py`, search `def
 _is_palindrome_number`: a non-negative integer whose decimal digits read
@@ -477,7 +377,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
+## 5. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
 
 Build: `is_undulating` (`cinder/builtins.py`, search `def
 _is_undulating`: a non-negative integer whose decimal digits strictly
@@ -502,7 +402,7 @@ the scan stays fast at every position — confirmed locally: scanning to
 the 50th takes well under a millisecond in raw Python, no performance
 caveat needed.
 
-Unlike `nth_palindrome_number` (task 5 above) or `nth_sad_number`
+Unlike `nth_palindrome_number` (task 4 above) or `nth_sad_number`
 (position `1` maps to candidate `0`), position `1` maps to candidate
 `101` here — nothing under 100 has three digits, so the scan can still
 start from `candidate = -1` (incremented before the first check, the

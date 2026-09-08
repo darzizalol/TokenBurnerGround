@@ -149,17 +149,18 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4710 tests passing locally as of `#422`). Most recently
-landed: `#422` `nth_power_of_two`, `#421` `nth_composite`, `#420`
-`nth_odious`, `#419` `nth_evil`, `#418` `nth_vampire_number` — see
+`main` is green (4718 tests passing locally as of `#423`). Most recently
+landed: `#423` `nth_pernicious`, `#422` `nth_power_of_two`, `#421`
+`nth_composite`, `#420` `nth_odious`, `#419` `nth_evil` — see
 `CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, six tasks, restocked this pass): five breadth —
-`nth_pernicious`/`nth_perfect_square`/`nth_palindrome_number`/
-`nth_undulating`/`nth_perfect_cube` — plus one depth task at the back
-of the queue: `Set` literal syntax and equality only (no builtin
-interop, no comprehension/spread, single-element sets deliberately
-out of scope — see task 6's own notes for the `{x}`-shorthand
-ambiguity that rules that case out).
+(`BACKLOG.md`, six tasks, restocked this pass): four breadth —
+`nth_perfect_square`/`nth_palindrome_number`/`nth_undulating`/
+`nth_perfect_cube` — then one depth task, `Set` literal syntax and
+equality only (no builtin interop, no comprehension/spread,
+single-element sets deliberately out of scope — see task 5's own notes
+for the `{x}`-shorthand ambiguity that rules that case out) — plus one
+more breadth task at the back of the queue: `nth_leap_year` (task 6,
+same bounded-scan shape as `nth_palindrome_number`/`nth_undulating`).
 
 First depth task queued in five passes — scoped down exactly as the
 prior passes' scouting recommended: literal syntax and equality only,
@@ -402,3 +403,32 @@ identified so far.
   terms — too slow for a bounded scan builtin without real algorithmic
   work, out of scope for one session. No depth task queued this pass —
   same scouting gap as the six passes above, still holds.
+- **2026-09-09 (later)** — `#422` `nth_power_of_two`'s merge had already
+  been folded into "Current frontier"'s prose by the prior pass (commit
+  `9e28263`) but never got its own dated History bullet — backfilled
+  here for continuity rather than left as a silent gap, and folded in
+  `#423` `nth_pernicious`'s merge (clean first-pass, no rework rounds)
+  from the cycle since. Refreshed "Current frontier" and README.md's
+  "Status & roadmap"/test count (4718, up from 4700) for both merges,
+  added the `nth_pernicious` bullet README.md's builtins list had been
+  missing (same recurring drift the last several entries have each
+  fixed for their own merges), and fixed a stale README.md
+  cross-reference: the `Set`-literal task's "see `BACKLOG.md` task 6"
+  pointer had gone stale to "task 5" once `#423`'s removal dropped the
+  queue to five tasks without renumbering `Set` itself (it was already
+  the last item) — corrected the number. Queue was back at its 5-task
+  floor; restocked to six with `nth_leap_year` (breadth, `is_leap_year`'s
+  Gregorian-rule predicate — scan starts at candidate `0` since
+  `is_leap_year` has no lower bound and `0` is itself a leap year under
+  the proleptic rule, already covered by that predicate's own test
+  suite — dense at roughly one in four, verified first 50 terms scan
+  instantly). Audited the `is_*`-without-`nth_*` gap list again before
+  picking it: `is_strong_number` was tried and rejected as far too
+  sparse (only four strong numbers exist in base 10 at all: `1`, `2`,
+  `145`, `40585`); `is_lucas_number` turned out not to be a real gap —
+  its value-returning sibling already exists under the name `nth_lucas`
+  rather than `nth_lucas_number`, just not cross-referenced by matching
+  name in the gap search. No depth task queued this pass — same
+  scouting gap as the seven passes above, still holds; the language
+  remains deep enough that finding a new gap worth one focused session
+  keeps taking real scouting rather than being obvious.

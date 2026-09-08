@@ -700,6 +700,9 @@ while (i < 10) {
   `is_undulating` to test whether an integer's decimal digits strictly alternate between exactly two distinct values,
   `is_pernicious` to test whether an integer's binary popcount is itself prime (sits next to `is_evil`/`is_odious`
   as the third popcount-based predicate, negative input raises the same domain error they do),
+  `nth_pernicious` to return the pernicious number found at a 1-indexed position via a sequential
+  candidate scan (position `1` maps to candidate `3`, the smallest pernicious number), the
+  value-returning sibling of `is_pernicious`'s membership test,
   `is_sphenic` to test whether an integer is the product of three distinct primes (e.g. `30 = 2 * 3 * 5`,
   the natural next member of the "product of primes" family alongside `is_semiprime`'s "product of exactly two"),
   `nth_sphenic` to return the sphenic number found at a 1-indexed position via a bounded sequential
@@ -798,7 +801,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4700+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4718+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -824,9 +827,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_power_of_two`
-(PR #422), `nth_composite` (PR #421), `nth_odious` (PR #420),
-`nth_evil` (PR #419), `nth_vampire_number` (PR #418), and guards in
+Actively developed, nightly. Recently landed: `nth_pernicious`
+(PR #423), `nth_power_of_two` (PR #422), `nth_composite` (PR #421),
+`nth_odious` (PR #420), `nth_evil` (PR #419), and guards in
 `match` arms (PR #413, `n if n > 0 => "positive"`, an optional `if
 <expr>` on any arm — attempted once before and closed after three
 failed review rounds over a recurring parser bug, this time parsing
@@ -834,18 +837,20 @@ the guard via the parser's ordinary `_ternary()` entry point instead
 of a hand-rolled bracket/token scan, sidestepping that whole bug
 class; see `BACKLOG.md`'s `## Graveyard` for the postmortem). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): five more
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): four more
 value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_pernicious`, `nth_palindrome_number`, and
-`nth_undulating` via the same bounded sequential scan pattern the
-merged `nth_*` builtins above already use, plus `nth_perfect_square`
-and `nth_perfect_cube` via an exact closed form
+can't yet be searched: `nth_palindrome_number` and `nth_undulating`
+via the same bounded sequential scan pattern the merged `nth_*`
+builtins above already use, plus `nth_perfect_square` and
+`nth_perfect_cube` via an exact closed form
 like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/`nth_pronic` (see
 each task's own notes in `BACKLOG.md` for specifics), and — first
 language-depth task in five passes — `Set` literal syntax and equality
 (`{1, 2, 3}`, no builtin interop yet, single-element sets deliberately
-out of scope this round; see `BACKLOG.md` task 6 for the design
-notes).
+out of scope this round; see `BACKLOG.md` task 5 for the design
+notes); and, at the back of the queue, one more breadth task,
+`nth_leap_year` (task 6, same bounded scan pattern, `is_leap_year`'s
+Gregorian-rule predicate).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

@@ -504,6 +504,94 @@ this task.
 
 ---
 
+## 6. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
+
+Build: `is_leap_year` (`cinder/builtins.py`, search `def _is_leap_year`: the
+Gregorian rule, `value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)`,
+with no lower bound — any integer, including `0` and negatives, is a valid
+input) has no value-returning `nth_*` sibling. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_leap_year(1));'
+# -> <eval>:1:7: undefined name 'nth_leap_year' (did you mean
+#    'is_leap_year'?)
+```
+
+Worked examples: the first ten leap years under the proleptic Gregorian rule
+(confirmed by scanning with `is_leap_year` directly) are `0, 4, 8, 12, 16,
+20, 24, 28, 32, 36` — year `0` is itself a leap year (`0 % 100 == 0` and
+`0 % 400 == 0`, same as `is_leap_year`'s own existing test coverage already
+confirms via `test_is_leap_year_of_zero`), so `nth_leap_year(1)` is `0` and
+`nth_leap_year(10)` is `36`. The 15th is `56`, the 20th is `76`, the 50th is
+`204`. Leap years are dense (roughly one in four integers), so the scan
+stays fast at every position — confirmed locally: scanning to the 50th
+takes well under a millisecond in raw Python, no performance caveat needed.
+
+Like `nth_palindrome_number` and `nth_sad_number` (both merged, both map
+position `1` to candidate `0`), the scan starts at `candidate = -1`
+(incremented before the first check) — `0` itself is the first leap year,
+so there's no off-by-one risk skipping it.
+
+Add directly after `_is_leap_year` (search `def _is_leap_year`, immediately
+before `def _is_perfect_number`) — keeps the value-returning helper next to
+the predicate it mirrors:
+```python
+def _nth_leap_year(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_leap_year", arguments, 1, line, column)
+    value = _require_int("nth_leap_year", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_leap_year() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_leap_year_candidate(candidate: int) -> bool:
+        return candidate % 4 == 0 and (candidate % 100 != 0 or candidate % 400 == 0)
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_leap_year_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Inner candidate check copied verbatim from `_is_leap_year`'s own body,
+since — unlike most other `nth_*` siblings here — `is_leap_year` has no
+negative-input guard to strip; the scan just never needs to visit a
+candidate below `0`.) Register the new dict entry (search `"is_leap_year":
+_is_leap_year,`, add `"nth_leap_year": _nth_leap_year,` directly after it,
+before `"is_perfect_number": _is_perfect_number,`).
+
+Acceptance criteria:
+- `nth_leap_year(1);` through `nth_leap_year(10);` are `0, 4, 8, 12, 16, 20,
+  24, 28, 32, 36` in order — the worked example above.
+- `nth_leap_year(15);` is `56`, `nth_leap_year(20);` is `76`, and
+  `nth_leap_year(50);` is `204` — further worked examples confirming the
+  scan scales well past the first ten.
+- For every `position` in `1..50`, `is_leap_year(nth_leap_year(position))`
+  is `true` — the same self-consistency check every recent `nth_*` task's
+  own test suite already runs against its predicate.
+- `nth_leap_year(0);`, `nth_leap_year(-3);` both raise `CinderRuntimeError`
+  matching `"nth_leap_year\(\) requires a positive integer, domain error"`.
+- `nth_leap_year(true);` raises `CinderRuntimeError` matching
+  `"nth_leap_year\(\) requires an int, got bool"`.
+- `nth_leap_year("5");` raises `CinderRuntimeError` matching
+  `"nth_leap_year\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_leap_year`, search
+`def _is_leap_year`), `tests/test_builtins.py` (new `class TestNthLeapYear`,
+modeled on `class TestNthUndulating`, search that name, for the test shapes
+above — place it near the existing `class TestIsLeapYear`, search that
+name). Once merged, `README.md`'s existing `is_leap_year` bullet needs
+`nth_leap_year` added right after it, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs refreshing —
+leave both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

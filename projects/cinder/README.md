@@ -515,6 +515,7 @@ while (i < 10) {
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
   `euler_totient` to count the integers up to `n` coprime with `n` (Euler's totient function), the aggregate counterpart to `is_coprime`, via the same trial-division factoring `prime_factors` already uses,
   `nth_prime` to return the prime found at a 1-indexed position, the complementary "which prime" question to `is_prime`/`prime_factors`,
+  `nth_composite` to return the composite number found at a 1-indexed position via a bounded sequential scan, the value-returning sibling of `is_composite`'s membership test and the complement of `nth_prime`,
   `nth_fibonacci` to return the Fibonacci number found at a 1-indexed position, the value-returning sibling of `is_fibonacci`'s membership test,
   `nth_lucas` to return the Lucas number found at a 1-indexed position, the same question for the Lucas sequence, the value-returning sibling of `is_lucas_number`'s membership test,
   `binomial` to compute the binomial coefficient (`n` choose `k`), the combinatorics question built on top of `factorial`,
@@ -794,7 +795,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4691+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4700+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -820,9 +821,9 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_odious` (PR #420),
-`nth_evil` (PR #419), `nth_vampire_number` (PR #418), `nth_sad_number`
-(PR #417), `nth_circular_prime` (PR #416), and guards in `match` arms
+Actively developed, nightly. Recently landed: `nth_composite` (PR #421),
+`nth_odious` (PR #420), `nth_evil` (PR #419), `nth_vampire_number`
+(PR #418), `nth_sad_number` (PR #417), and guards in `match` arms
 (PR #413, `n if n > 0 => "positive"`, an optional `if <expr>` on any
 arm — attempted once before and closed after three failed review rounds
 over a recurring parser bug, this time parsing the guard via the
@@ -832,12 +833,12 @@ bracket/token scan, sidestepping that whole bug class; see
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
 Coming up next (see [`BACKLOG.md`](BACKLOG.md)): six more
 value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_composite`, `nth_pernicious`,
-`nth_palindrome_number`, and `nth_undulating` via the same bounded
-sequential scan pattern the merged `nth_*` builtins above already use,
-plus `nth_power_of_two` and `nth_perfect_square` via an exact closed
-form like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/`nth_pronic`
-(see each task's own notes in `BACKLOG.md` for specifics).
+can't yet be searched: `nth_pernicious`, `nth_palindrome_number`, and
+`nth_undulating` via the same bounded sequential scan pattern the
+merged `nth_*` builtins above already use, plus `nth_power_of_two`,
+`nth_perfect_square`, and `nth_perfect_cube` via an exact closed form
+like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/`nth_pronic` (see
+each task's own notes in `BACKLOG.md` for specifics).
 No language-depth task is queued this pass — the language is deep
 enough by now (try/catch/finally, `switch`, full pattern-matching with
 guards, safe navigation, nil-coalescing, spread, labeled

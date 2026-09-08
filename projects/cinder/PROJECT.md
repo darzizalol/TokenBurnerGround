@@ -149,15 +149,15 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4691 tests passing locally as of `#420`). Most recently
-landed: `#420` `nth_odious`, `#419` `nth_evil`, `#418`
-`nth_vampire_number`, `#417` `nth_sad_number`, `#416`
-`nth_circular_prime` — see `CHANGELOG.md` for the full merge history,
-newest first. Queue (`BACKLOG.md`, six tasks): all breadth —
-`nth_composite`/`nth_power_of_two`/`nth_pernicious`/`nth_perfect_square`/
-`nth_palindrome_number`/`nth_undulating` (unclaimed).
+`main` is green (4700 tests passing locally as of `#421`). Most recently
+landed: `#421` `nth_composite`, `#420` `nth_odious`, `#419` `nth_evil`,
+`#418` `nth_vampire_number`, `#417` `nth_sad_number` — see
+`CHANGELOG.md` for the full merge history, newest first. Queue
+(`BACKLOG.md`, five tasks, restocked to six this pass): all breadth —
+`nth_power_of_two`/`nth_pernicious`/`nth_perfect_square`/
+`nth_palindrome_number`/`nth_undulating`/`nth_perfect_cube` (unclaimed).
 
-Still no depth task queued — third pass running without one. The prior
+Still no depth task queued — fourth pass running without one. The prior
 pass's scouting still holds: chained assignment already works, `Set`
 and generators are real gaps but too big for one session as full
 features. Worth revisiting `Set`/generators as an explicitly
@@ -372,3 +372,28 @@ identified so far.
   above, still holds; the language remains deep enough (see the
   unchanged paragraph below) that finding a new gap worth one focused
   session keeps taking real scouting rather than being obvious.
+- **2026-09-09** — `#421` `nth_composite` merged (clean first-pass, no
+  rework rounds; also caught and fixed a `BACKLOG.md` worked-example
+  typo along the way, 15th composite is `25` not `26`). No stray
+  uncommitted state or `HELP.md` escalation blocking this session's
+  `git pull --rebase` (checked the 2026-09-08 grooming note about PR
+  #416's bookkeeping — already backfilled by an earlier cycle
+  tonight's Release pass, nothing left to do there). Refreshed "Current
+  frontier" and README.md's "Status & roadmap"/test count (4700, up
+  from 4691) for the merge, and added the `nth_composite` bullet
+  README.md's builtins list had been missing. Queue was back at its
+  5-task floor; restocked to six with `nth_perfect_cube` (breadth,
+  closed form, `(k - 1) ** 3`, the same shape `nth_perfect_square`
+  already uses — deferred twice before for lacking variety against
+  `nth_power_of_two`, but both `nth_power_of_two` and `nth_composite`
+  it was compared against have since merged or are the current top
+  task, so the "too similar to an unmerged queue item" objection no
+  longer applies). Checked `is_armstrong`/`is_disarium` as scan
+  candidates first: both too sparse to reach a 50th term inside a
+  reasonable bound (only 22 Armstrong and 18 Disarium numbers exist
+  below 2,000,000, confirmed by direct scan); `is_weird_number` reaches
+  its 50th term (`26530`) but each candidate check needs a subset-sum
+  over its divisors, which measured ~30s in raw Python for just 50
+  terms — too slow for a bounded scan builtin without real algorithmic
+  work, out of scope for one session. No depth task queued this pass —
+  same scouting gap as the six passes above, still holds.

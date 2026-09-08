@@ -11,85 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position [claimed 2026-09-08T19:53:41Z]
-
-Build: `is_power_of_two` (`cinder/builtins.py`, search `def
-_is_power_of_two`: a positive integer with exactly one set bit, tested
-via the classic `value & (value - 1) == 0` trick, `value < 1` returns
-`false` outright) has no value-returning `nth_*` sibling. Verify the
-gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_power_of_two(1));'
-# -> <eval>:1:7: undefined name 'nth_power_of_two' (did you mean
-#    'is_power_of_two'?)
-```
-
-Unlike every sequential-scan `nth_*` task elsewhere in this backlog,
-powers of two have an exact closed form — position `k` is `2 ** (k -
-1)` — the same shape `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`
-(search `def _nth_octagonal` for the pattern to copy) already use for
-their own closed-form sequences, so there is no candidate scan and no
-performance caveat: `nth_power_of_two(1)` is `1`, `nth_power_of_two(5)`
-is `16`, `nth_power_of_two(10)` is `512`, `nth_power_of_two(20)` is
-`524288`, and `nth_power_of_two(50)` is `562949953421312` (all four
-confirmed by direct computation of `2 ** (k - 1)`; Python's arbitrary-
-precision integers make even the 50th position instant, no overflow
-concern the way a fixed-width language would have).
-
-Add directly after `_is_power_of_two` (search `def _is_power_of_two`,
-immediately before `def _is_evil`) — keeps the value-returning helper
-next to the predicate it mirrors:
-```python
-def _nth_power_of_two(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_power_of_two", arguments, 1, line, column)
-    value = _require_int("nth_power_of_two", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_power_of_two() requires a positive integer, domain error",
-            line, column,
-        )
-    return 2 ** (value - 1)
-```
-(Same shape as `_nth_octagonal`/`_nth_nonagonal`/`_nth_decagonal` — a
-direct closed-form return, no loop, no inner candidate-check helper,
-since there's nothing to scan.) Register the new dict entry (search
-`"is_power_of_two": _is_power_of_two,`, add `"nth_power_of_two":
-_nth_power_of_two,` directly after it, before `"is_evil": _is_evil,`).
-
-Acceptance criteria:
-- `nth_power_of_two(1);` through `nth_power_of_two(5);` are `1, 2, 4, 8,
-  16` in order — the closed-form doubling sequence.
-- `nth_power_of_two(10);` is `512`, `nth_power_of_two(20);` is `524288`,
-  and `nth_power_of_two(50);` is `562949953421312` — further worked
-  examples confirming the closed form holds at larger positions.
-- For every `position` in `1..50`,
-  `is_power_of_two(nth_power_of_two(position))` is `true` — the same
-  self-consistency check every recent `nth_*` task's own test suite
-  already runs against its predicate.
-- `nth_power_of_two(0);`, `nth_power_of_two(-3);` both raise
-  `CinderRuntimeError` matching `"nth_power_of_two\(\) requires a
-  positive integer, domain error"`.
-- `nth_power_of_two(true);` raises `CinderRuntimeError` matching
-  `"nth_power_of_two\(\) requires an int, got bool"`.
-- `nth_power_of_two("5");` raises `CinderRuntimeError` matching
-  `"nth_power_of_two\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_power_of_two`,
-search `def _is_power_of_two`), `tests/test_builtins.py` (new `class
-TestNthPowerOfTwo`, modeled on `class TestNthOctagonal`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsPowerOfTwo`, search that name). Once merged, `README.md`'s
-existing `is_power_of_two` bullet needs `nth_power_of_two` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
+## 1. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
 
 Build: `is_pernicious` (`cinder/builtins.py`, search `def
 _is_pernicious`: a non-negative integer whose popcount (number of set
@@ -199,13 +121,13 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
+## 2. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
 
 Build: `is_perfect_square` (`cinder/builtins.py`, search `def
 _is_perfect_square`: a non-negative integer whose integer square root,
 squared, equals it back — `math.isqrt(value) ** 2 == value`, negative
 input returns `false` outright) has no value-returning `nth_*` sibling,
-the same gap `nth_power_of_two` (task 1 above) and `nth_pronic`/
+the same gap `nth_power_of_two`/`nth_pronic`/
 `nth_decagonal` (already-merged siblings) already close for their own
 closed-form sequences. Verify the gap:
 ```sh
@@ -215,7 +137,7 @@ python3 -m cinder.cli eval 'print(nth_perfect_square(1));'
 ```
 
 Unlike `nth_evil`/`nth_odious`/`nth_composite` (all merged), `nth_pernicious`
-(task 2 above, a sequential scan), perfect
+(task 1 above, a sequential scan), perfect
 squares have an exact closed form — position `k` is `(k - 1) ** 2`, the
 same shape `nth_power_of_two`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
 `nth_decagonal` (search `def _nth_pronic` for the pattern to copy, it's
@@ -281,7 +203,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
+## 3. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
 
 Build: `is_palindrome_number` (`cinder/builtins.py`, search `def
 _is_palindrome_number`: a non-negative integer whose decimal digits read
@@ -377,7 +299,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
+## 4. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
 
 Build: `is_undulating` (`cinder/builtins.py`, search `def
 _is_undulating`: a non-negative integer whose decimal digits strictly
@@ -402,7 +324,7 @@ the scan stays fast at every position — confirmed locally: scanning to
 the 50th takes well under a millisecond in raw Python, no performance
 caveat needed.
 
-Unlike `nth_palindrome_number` (task 4 above) or `nth_sad_number`
+Unlike `nth_palindrome_number` (task 3 above) or `nth_sad_number`
 (position `1` maps to candidate `0`), position `1` maps to candidate
 `101` here — nothing under 100 has three digits, so the scan can still
 start from `candidate = -1` (incremented before the first check, the
@@ -481,15 +403,15 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
+## 5. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
 
 Build: `is_perfect_cube` (`cinder/builtins.py`, search `def
 _is_perfect_cube`: a non-negative integer whose integer cube root,
 cubed, equals it back — `root = _integer_cube_root(magnitude); root **
 3 == magnitude`) has no value-returning `nth_*` sibling, the same gap
-`nth_power_of_two` (task 1 above) and `nth_perfect_square` (task 3
-above) already close for their own closed-form sequences. Verify the
-gap:
+`nth_power_of_two` (already-merged sibling) and `nth_perfect_square`
+(task 2 above) already close for their own closed-form sequences.
+Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_perfect_cube(1));'
 # -> <eval>:1:7: undefined name 'nth_perfect_cube' (did you mean

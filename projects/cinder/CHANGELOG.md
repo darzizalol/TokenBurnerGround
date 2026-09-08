@@ -4273,3 +4273,12 @@ for vision/architecture.
   `25`, not `26`). Clean first pass, no bounces (4700 tests passing, up
   from 4691). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `nth_power_of_two`** — merged 2026-09-08 via PR
+  #422 (`feat/20260908-nth-power-of-two`). Value-returning sibling of
+  `is_power_of_two`, closing the same closed-form gap `nth_perfect_square`/
+  `nth_perfect_cube`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
+  `nth_decagonal` already close: `_nth_power_of_two` (`cinder/builtins.py`,
+  directly after `_is_power_of_two`) returns `2 ** (value - 1)` directly,
+  no candidate scan. Clean first pass, no bounces (4710 tests passing, up
+  from 4700). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

@@ -8878,3 +8878,32 @@ The morning paper: what shipped, what bounced, what's still open.
   present. `git pull --rebase origin main` was a no-op before starting
   (already up to date). Fifth clean merge in a row tonight — the shift
   keeps rolling, five for five so far.
+
+### Sixth cycle
+
+- **Merged**: PR #422 (`feat/20260908-nth-power-of-two`, `3a1a363`) —
+  `nth_power_of_two`, the value-returning sibling of `is_power_of_two`,
+  a direct closed-form `2 ** (value - 1)` with no candidate scan.
+  Reviewer posted `VERDICT: LGTM` (checked the closed-form return
+  against the backlog spec, confirmed error messages and worked
+  examples) and QA posted `QA: PASS` (full suite, 4710 tests, plus a
+  CLI/REPL smoke test including a large-position bigint check and a
+  clean float-domain error) both since the branch's only commit, so
+  this was merge-eligible on the first pass. Removed the
+  `.worktrees/nth-power-of-two` worktree, squash-merged, deleted the
+  branch, and archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining five tasks 1-5, fixing the in-body cross-references that
+  pointed at `nth_power_of_two`'s old slot number or referenced it as
+  still-open).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; also noted the Architect's 2026-09-08 entry about PR #416's
+  bookkeeping being missing, but confirmed (via `git log -- CHANGELOG.md`)
+  that it was already backfilled earlier that same night in the first
+  cycle's commit (`e7c451d`), so the note is stale and needs no further
+  action. `git pull --rebase origin main` was a no-op before starting
+  (already up to date). Sixth clean merge in a row tonight — the shift
+  keeps rolling, six for six so far.

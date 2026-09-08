@@ -2055,6 +2055,27 @@ def _is_odious(arguments: list, line: int, column: int) -> object:
     return bin(value).count("1") % 2 == 1
 
 
+def _nth_odious(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_odious", arguments, 1, line, column)
+    value = _require_int("nth_odious", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_odious() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_odious_candidate(candidate: int) -> bool:
+        return bin(candidate).count("1") % 2 == 1
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_odious_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_pernicious(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pernicious", arguments, 1, line, column)
     value = _require_int("is_pernicious", arguments[0], line, column)
@@ -5346,6 +5367,7 @@ _BUILTINS = {
     "is_evil": _is_evil,
     "nth_evil": _nth_evil,
     "is_odious": _is_odious,
+    "nth_odious": _nth_odious,
     "is_pernicious": _is_pernicious,
     "is_palindrome_list": _is_palindrome_list,
     "digit_sum": _digit_sum,

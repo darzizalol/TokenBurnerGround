@@ -4581,6 +4581,76 @@ class TestNthEvil(unittest.TestCase):
             run("nth_evil(1, 2);")
 
 
+class TestNthOdious(unittest.TestCase):
+    def test_nth_odious_of_first_ten_positions(self):
+        expected = {
+            1: 1,
+            2: 2,
+            3: 4,
+            4: 7,
+            5: 8,
+            6: 11,
+            7: 13,
+            8: 14,
+            9: 16,
+            10: 19,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_odious({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_odious_of_fifteen_twenty_and_fifty(self):
+        self.assertEqual(run("let result = nth_odious(15);").get("result"), 28)
+        self.assertEqual(run("let result = nth_odious(20);").get("result"), 38)
+        self.assertEqual(run("let result = nth_odious(50);").get("result"), 98)
+
+    def test_nth_odious_agrees_with_is_odious(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(f"let result = is_odious(nth_odious({position}));").get("result"),
+                True,
+                f"expected nth_odious({position}) to be odious",
+            )
+
+    def test_nth_odious_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_odious(0);")
+        self.assertIn(
+            "nth_odious() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_odious_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_odious(-3);")
+        self.assertIn(
+            "nth_odious() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_odious_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_odious(true);")
+        self.assertIn(
+            "nth_odious() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_odious_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_odious("5");')
+        self.assertIn(
+            "nth_odious() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_odious_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_odious(1, 2);")
+
+
 class TestIsPernicious(unittest.TestCase):
     def test_is_pernicious_true_cases(self):
         self.assertEqual(run("let result = is_pernicious(3);").get("result"), True)

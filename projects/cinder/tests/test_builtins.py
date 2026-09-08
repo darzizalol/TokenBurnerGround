@@ -4837,6 +4837,78 @@ class TestIsPernicious(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestNthPernicious(unittest.TestCase):
+    def test_nth_pernicious_of_first_ten_positions(self):
+        expected = {
+            1: 3,
+            2: 5,
+            3: 6,
+            4: 7,
+            5: 9,
+            6: 10,
+            7: 11,
+            8: 12,
+            9: 13,
+            10: 14,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_pernicious({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_pernicious_of_fifteen_twenty_fifty(self):
+        self.assertEqual(run("let result = nth_pernicious(15);").get("result"), 21)
+        self.assertEqual(run("let result = nth_pernicious(20);").get("result"), 28)
+        self.assertEqual(run("let result = nth_pernicious(50);").get("result"), 74)
+
+    def test_nth_pernicious_agrees_with_is_pernicious(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_pernicious(nth_pernicious({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_pernicious({position}) to be pernicious",
+            )
+
+    def test_nth_pernicious_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pernicious(0);")
+        self.assertIn(
+            "nth_pernicious() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_pernicious_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pernicious(-3);")
+        self.assertIn(
+            "nth_pernicious() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_pernicious_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_pernicious(true);")
+        self.assertIn(
+            "nth_pernicious() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_pernicious_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_pernicious("5");')
+        self.assertIn(
+            "nth_pernicious() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_pernicious_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_pernicious(1, 2);")
+
+
 class TestIsPalindromeList(unittest.TestCase):
     def test_is_palindrome_list_true(self):
         self.assertIs(

@@ -2131,6 +2131,33 @@ def _is_pernicious(arguments: list, line: int, column: int) -> object:
     return True
 
 
+def _nth_pernicious(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_pernicious", arguments, 1, line, column)
+    value = _require_int("nth_pernicious", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_pernicious() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_pernicious_candidate(candidate: int) -> bool:
+        popcount = bin(candidate).count("1")
+        if popcount < 2:
+            return False
+        for divisor in range(2, int(popcount ** 0.5) + 1):
+            if popcount % divisor == 0:
+                return False
+        return True
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_pernicious_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_palindrome_list(arguments: list, line: int, column: int) -> object:
     _require_arity("is_palindrome_list", arguments, 1, line, column)
     value = arguments[0]
@@ -5408,6 +5435,7 @@ _BUILTINS = {
     "is_odious": _is_odious,
     "nth_odious": _nth_odious,
     "is_pernicious": _is_pernicious,
+    "nth_pernicious": _nth_pernicious,
     "is_palindrome_list": _is_palindrome_list,
     "digit_sum": _digit_sum,
     "digit_product": _digit_product,

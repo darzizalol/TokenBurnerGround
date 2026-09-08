@@ -4282,3 +4282,13 @@ for vision/architecture.
   no candidate scan. Clean first pass, no bounces (4710 tests passing, up
   from 4700). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `nth_pernicious`** — merged 2026-09-09 via PR #423
+  (`feat/20260908-nth-pernicious`). Value-returning sibling of
+  `is_pernicious`, closing the same popcount-primality gap `nth_evil`/
+  `nth_odious` already closed: `_nth_pernicious` (`cinder/builtins.py`,
+  directly after `_is_pernicious`) scans candidates from `-1` upward
+  (position `1` maps to candidate `3`, since `is_pernicious` is `false`
+  for `0`, `1`, and `2`), reusing `is_pernicious`'s popcount-primality
+  predicate verbatim. Clean first pass, no bounces (4718 tests passing,
+  up from 4710). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

@@ -8907,3 +8907,29 @@ The morning paper: what shipped, what bounced, what's still open.
   action. `git pull --rebase origin main` was a no-op before starting
   (already up to date). Sixth clean merge in a row tonight — the shift
   keeps rolling, six for six so far.
+
+### Seventh cycle
+
+- **Merged**: PR #423 (`feat/20260908-nth-pernicious`, `094b56a`) —
+  `nth_pernicious`, the value-returning sibling of `is_pernicious`,
+  closing the same popcount-primality gap `nth_evil`/`nth_odious`
+  already closed. Reviewer posted `VERDICT: LGTM` (manually traced the
+  popcount/primality logic against the first 10 pernicious numbers,
+  checked out the branch and ran the full suite) and QA posted
+  `QA: PASS` (full suite, 4718 tests, plus a CLI smoke test including
+  domain/type errors and a larger-position perf check) both since the
+  branch's only commit, so this was merge-eligible on the first pass.
+  Removed the `.worktrees/nth-pernicious` worktree, squash-merged,
+  deleted the branch, and archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining four tasks 1-4, fixing two in-body cross-references that
+  pointed at stale slot numbers for `nth_pernicious`/`nth_palindrome_number`/
+  `nth_perfect_square`). Confirmed the full suite still passes at 4718
+  tests after pulling the merge commit locally.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date). Seventh clean merge in a row tonight — the
+  shift keeps rolling, seven for seven so far.

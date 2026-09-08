@@ -11,117 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position [claimed 2026-09-08T20:09:58Z]
-
-Build: `is_pernicious` (`cinder/builtins.py`, search `def
-_is_pernicious`: a non-negative integer whose popcount (number of set
-bits) is itself prime, e.g. `3` is `0b11`, popcount `2`, which is
-prime, so it's pernicious) has no value-returning `nth_*` sibling, the
-same gap `nth_evil` (merged 2026-09-08 via PR #419) and `nth_odious`
-(merged 2026-09-08 via PR #420) close for their own popcount-based
-predicates. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_pernicious(1));'
-# -> <eval>:1:7: undefined name 'nth_pernicious' (did you mean
-#    'is_pernicious'?)
-```
-
-Worked examples: the first twenty pernicious numbers (confirmed by
-scanning with `is_pernicious` directly) are `3, 5, 6, 7, 9, 10, 11, 12,
-13, 14, 17, 18, 19, 20, 21, 22, 24, 25, 26, 28`, so `nth_pernicious(1)`
-is `3` and `nth_pernicious(10)` is `14`. The 15th is `21`, the 20th is
-`28`, the 50th is `74`. Like `nth_evil`/`nth_odious`, pernicious numbers
-are dense (roughly half of all integers below any given bound have a
-prime popcount, since popcount grows with bit-length and small primes
-like `2`/`3`/`5`/`7` cover most practical popcounts), so the scan stays
-fast at every position — confirmed locally: scanning to the 50th
-pernicious number takes well under a millisecond in raw Python, no
-performance caveat needed.
-
-Unlike `nth_evil` (position `1` maps to candidate `0`) or `nth_odious`
-(position `1` maps to candidate `1`), position `1` maps to candidate
-`3` here: `is_pernicious(0)` is `false` (popcount `0`, not prime),
-`is_pernicious(1)` is `false` (popcount `1`, not prime — `1` is never
-prime), and `is_pernicious(2)` is `false` (popcount `1`, same reason).
-The scan can still start from `candidate = -1` (incremented before the
-first check, the same shape `nth_evil`/`nth_odious` use) — it will
-simply check and reject `0`, `1`, and `2` before finding `3`, which is
-harmless and keeps all three sibling implementations structurally
-identical for anyone reading them side by side.
-
-Add directly after `_is_pernicious` (search `def _is_pernicious`,
-immediately before `def _is_palindrome_list`) — keeps the
-value-returning helper next to the predicate it mirrors:
-```python
-def _nth_pernicious(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_pernicious", arguments, 1, line, column)
-    value = _require_int("nth_pernicious", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_pernicious() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_pernicious_candidate(candidate: int) -> bool:
-        popcount = bin(candidate).count("1")
-        if popcount < 2:
-            return False
-        for divisor in range(2, int(popcount ** 0.5) + 1):
-            if popcount % divisor == 0:
-                return False
-        return True
-
-    count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_pernicious_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check copied verbatim from `_is_pernicious`'s own body
-minus its `value < 0` guard, since the scan never visits a negative
-candidate — the same "duplicate the tiny predicate body instead of a
-redundant `_require_arity`/`_require_int` round-trip per candidate"
-choice every recent `nth_*` task already makes.) Register the new dict
-entry (search `"is_pernicious": _is_pernicious,`, add `"nth_pernicious":
-_nth_pernicious,` directly after it, before `"is_palindrome_list":
-_is_palindrome_list,`).
-
-Acceptance criteria:
-- `nth_pernicious(1);` through `nth_pernicious(10);` are `3, 5, 6, 7, 9,
-  10, 11, 12, 13, 14` in order — the worked example above.
-- `nth_pernicious(15);` is `21`, `nth_pernicious(20);` is `28`, and
-  `nth_pernicious(50);` is `74` — further worked examples confirming
-  the scan scales well past the first ten.
-- For every `position` in `1..50`,
-  `is_pernicious(nth_pernicious(position))` is `true` — the same
-  self-consistency check every recent `nth_*` task's own test suite
-  already runs against its predicate.
-- `nth_pernicious(0);`, `nth_pernicious(-3);` both raise
-  `CinderRuntimeError` matching `"nth_pernicious\(\) requires a
-  positive integer, domain error"`.
-- `nth_pernicious(true);` raises `CinderRuntimeError` matching
-  `"nth_pernicious\(\) requires an int, got bool"`.
-- `nth_pernicious("5");` raises `CinderRuntimeError` matching
-  `"nth_pernicious\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_pernicious`,
-search `def _is_pernicious`), `tests/test_builtins.py` (new `class
-TestNthPernicious`, modeled on `class TestNthSmithNumber`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsPernicious`, search that name). Once merged, `README.md`'s
-existing `is_pernicious` bullet needs `nth_pernicious` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
+## 1. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
 
 Build: `is_perfect_square` (`cinder/builtins.py`, search `def
 _is_perfect_square`: a non-negative integer whose integer square root,
@@ -136,8 +26,8 @@ python3 -m cinder.cli eval 'print(nth_perfect_square(1));'
 #    'is_perfect_square'?)
 ```
 
-Unlike `nth_evil`/`nth_odious`/`nth_composite` (all merged), `nth_pernicious`
-(task 1 above, a sequential scan), perfect
+Unlike `nth_evil`/`nth_odious`/`nth_composite`/`nth_pernicious` (all merged,
+all sequential scans), perfect
 squares have an exact closed form — position `k` is `(k - 1) ** 2`, the
 same shape `nth_power_of_two`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
 `nth_decagonal` (search `def _nth_pronic` for the pattern to copy, it's
@@ -203,7 +93,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
+## 2. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
 
 Build: `is_palindrome_number` (`cinder/builtins.py`, search `def
 _is_palindrome_number`: a non-negative integer whose decimal digits read
@@ -299,7 +189,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
+## 3. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
 
 Build: `is_undulating` (`cinder/builtins.py`, search `def
 _is_undulating`: a non-negative integer whose decimal digits strictly
@@ -324,7 +214,7 @@ the scan stays fast at every position — confirmed locally: scanning to
 the 50th takes well under a millisecond in raw Python, no performance
 caveat needed.
 
-Unlike `nth_palindrome_number` (task 3 above) or `nth_sad_number`
+Unlike `nth_palindrome_number` (task 2 above) or `nth_sad_number`
 (position `1` maps to candidate `0`), position `1` maps to candidate
 `101` here — nothing under 100 has three digits, so the scan can still
 start from `candidate = -1` (incremented before the first check, the
@@ -403,14 +293,14 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
+## 4. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
 
 Build: `is_perfect_cube` (`cinder/builtins.py`, search `def
 _is_perfect_cube`: a non-negative integer whose integer cube root,
 cubed, equals it back — `root = _integer_cube_root(magnitude); root **
 3 == magnitude`) has no value-returning `nth_*` sibling, the same gap
 `nth_power_of_two` (already-merged sibling) and `nth_perfect_square`
-(task 2 above) already close for their own closed-form sequences.
+(task 1 above) already close for their own closed-form sequences.
 Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_perfect_cube(1));'
@@ -483,7 +373,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Language: `Set` literal syntax and equality (no builtin interop yet)
+## 5. Language: `Set` literal syntax and equality (no builtin interop yet)
 
 Build the first slice of `Set` — a genuinely new collection type, not
 another `nth_*`/`is_*` builtin. Scope is deliberately narrow: **literal

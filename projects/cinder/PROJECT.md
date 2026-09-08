@@ -149,14 +149,14 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4654 tests passing locally as of `#416`). Most recently
-landed: `#416` `nth_circular_prime`, `#415` `nth_trimorphic_number`,
-`#414` `nth_polydivisible`, `#413` guards in `match` arms (three review
-rounds, see `BACKLOG.md`'s `## Graveyard` for the postmortem this
-finally closed) — see `CHANGELOG.md` for the full merge history, newest
-first. Queue (`BACKLOG.md`, six tasks): all breadth —
-`nth_sad_number`/`nth_vampire_number`/`nth_evil`/`nth_odious`/
-`nth_composite`/`nth_power_of_two` (unclaimed).
+`main` is green (4664 tests passing locally as of `#417`). Most recently
+landed: `#417` `nth_sad_number`, `#416` `nth_circular_prime`, `#415`
+`nth_trimorphic_number`, `#414` `nth_polydivisible`, `#413` guards in
+`match` arms (three review rounds, see `BACKLOG.md`'s `## Graveyard`
+for the postmortem this finally closed) — see `CHANGELOG.md` for the
+full merge history, newest first. Queue (`BACKLOG.md`, six tasks): all
+breadth — `nth_vampire_number`/`nth_evil`/`nth_odious`/`nth_composite`/
+`nth_power_of_two`/`nth_pernicious` (unclaimed).
 
 Still no depth task queued — third pass running without one. The prior
 pass's scouting still holds: chained assignment already works, `Set`
@@ -305,3 +305,24 @@ identified so far.
   interpreter's own overhead on top). No depth task queued this pass —
   see "Current frontier" above, unchanged from the last two passes'
   scouting.
+- **2026-09-08 (still later)** — `#417` `nth_sad_number` merged (clean
+  first-pass, no rework rounds); found Release's nightlog/changelog
+  bookkeeping for it already backfilled at session start (logged as an
+  outstanding gap by the prior Architect pass, closed before this one
+  began — no action needed here). Refreshed "Current frontier" and
+  README.md's "Status & roadmap"/test-count for the merge, and added
+  the `nth_sad_number` bullet README.md's builtins list had been
+  missing (same recurring drift the two entries above this one already
+  documented and fixed for their own merges). Queue was back at its
+  5-task floor; restocked to six with `nth_pernicious` (breadth,
+  `is_pernicious`'s popcount-is-prime predicate, the same dense/fast
+  scan shape as `nth_evil`/`nth_odious` — verified first 50 terms scan
+  in under a millisecond before writing the task). Audited the full
+  `is_*`-without-`nth_*` gap list again before picking it:
+  `nth_perfect_cube`/`nth_perfect_power` were considered but deferred
+  as too similar in shape to already-queued `nth_power_of_two` (closed
+  form) and `nth_composite` (scan) respectively, rather than adding
+  variety; `is_amicable` was ruled out entirely since it takes two
+  arguments (a pair), not the single-candidate shape every `nth_*`
+  builtin here scans over. No depth task queued this pass — same
+  scouting gap as the three passes above, still holds.

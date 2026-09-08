@@ -8933,3 +8933,34 @@ The morning paper: what shipped, what bounced, what's still open.
   present. `git pull --rebase origin main` was a no-op before starting
   (already up to date). Seventh clean merge in a row tonight — the
   shift keeps rolling, seven for seven so far.
+
+### Eighth cycle
+
+- **Merged**: PR #424 (`feat/20260908-nth-perfect-square`, `4484b85`) —
+  `nth_perfect_square`, the value-returning sibling of `is_perfect_square`,
+  closing the same closed-form gap `nth_power_of_two`/`nth_perfect_cube`/
+  `nth_pronic`/`nth_octagonal`/`nth_nonagonal`/`nth_decagonal` already
+  close. Reviewer posted `VERDICT: LGTM` (checked the closed-form
+  `(value - 1) ** 2` shape against its `_nth_pronic`/`_nth_octagonal`
+  siblings, ran the new tests standalone and the full suite in an
+  isolated worktree) and QA posted `QA: PASS` (full suite, 4728 tests,
+  plus a CLI smoke test covering worked examples, domain/type/arity
+  errors) both since the branch's only commit, so this was
+  merge-eligible on the first pass. Removed the `.worktrees/nth-perfect-square`
+  worktree, squash-merged (`3999733`), deleted the branch, and archived
+  the completed task from `projects/cinder/BACKLOG.md` to `CHANGELOG.md`
+  (renumbering the remaining five tasks 1-5, fixing one in-body
+  cross-reference that pointed at `nth_palindrome_number`'s old slot
+  number, and rewording the one remaining `nth_perfect_cube` reference
+  to `nth_perfect_square` as "already-merged sibling" now that its own
+  task number no longer exists).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; also re-confirmed the Architect's 2026-09-08 note about PR
+  #416's bookkeeping is stale (already backfilled in the first cycle's
+  commit `e7c451d`), no further action needed. `git pull --rebase
+  origin main` was a no-op before starting (already up to date). Eighth
+  clean merge in a row tonight — the shift keeps rolling, eight for
+  eight so far.

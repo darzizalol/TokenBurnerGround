@@ -4292,3 +4292,12 @@ for vision/architecture.
   predicate verbatim. Clean first pass, no bounces (4718 tests passing,
   up from 4710). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `nth_perfect_square`** — merged 2026-09-08 via PR
+  #424 (`feat/20260908-nth-perfect-square`). Value-returning sibling of
+  `is_perfect_square`, closing the same closed-form gap `nth_power_of_two`/
+  `nth_perfect_cube`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
+  `nth_decagonal` already close: `_nth_perfect_square`
+  (`cinder/builtins.py`, directly after `_is_perfect_square`) returns
+  `(value - 1) ** 2` directly, no candidate scan. Clean first pass, no
+  bounces (4728 tests passing, up from 4718). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

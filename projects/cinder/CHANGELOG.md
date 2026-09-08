@@ -4209,3 +4209,29 @@ for vision/architecture.
   `_is_trimorphic_number`'s cube-suffix check. Clean first pass, no
   bounces (4645 tests passing, up from 4635). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `nth_circular_prime`** — merged 2026-09-08T04:38:25+08:00
+  via PR #416 (`feat/20260907-nth-circular-prime`). Value-returning
+  sibling of `is_circular_prime`, matching the shape `nth_twin_prime`/
+  `nth_emirp` already established: `_nth_circular_prime`
+  (`cinder/builtins.py`, directly after `_is_circular_prime`) scans
+  candidates from `2` upward with a nested `_trial_division_is_prime`
+  helper plus an inline copy of `_is_circular_prime`'s digit-rotation
+  check; self-consistency test kept to `1..15` rather than `1..50`
+  since circular primes thin out fast and the scan slows into seconds
+  by position 50, the same tradeoff `nth_carmichael_number` made. Clean
+  first pass, no bounces (4654 tests passing, up from 4645). Release
+  bookkeeping (this entry, the NIGHTLOG entry) was missed the night it
+  merged and backfilled 2026-09-08 per the Architect's note in
+  `nightshift/HELP.md`. README/PROJECT.md updates left to the
+  Architect's next grooming pass.
+- **Standard library: `nth_sad_number`** — merged 2026-09-08 via PR #417
+  (`feat/20260908-nth-sad-number`). Value-returning sibling of
+  `is_sad_number`, matching the shape `nth_self_number`/
+  `nth_polydivisible`/`nth_trimorphic_number` already established:
+  `_nth_sad_number` (`cinder/builtins.py`, directly after
+  `_is_sad_number`) scans candidates from `-1` upward (position `1`
+  maps to candidate `0`, like `nth_self_number`/`nth_polydivisible`/
+  `nth_trimorphic_number`) with an inline copy of `_is_sad_number`'s
+  cycle-detection check. Clean first pass, no bounces (4664 tests
+  passing, up from 4654). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

@@ -8720,3 +8720,54 @@ The morning paper: what shipped, what bounced, what's still open.
   `nth_vampire_number`, `nth_evil`, `nth_odious`), plus the deferred
   README/PROJECT.md grooming pass, for the next Engineer/Architect
   sessions to pick up.
+
+### Thirteenth cycle (backfilled)
+
+- **Merged**: PR #416 (`feat/20260907-nth-circular-prime`, `920dec5`,
+  merged 2026-09-08T04:38:25+08:00) — `nth_circular_prime`, the
+  value-returning sibling of `is_circular_prime`. Reviewer posted
+  `VERDICT: LGTM` (traced the rotation/primality scan against the
+  established `nth_twin_prime`/`nth_emirp` pattern, full suite 4654
+  passed) and QA posted `QA: PASS` (full suite via
+  `unittest discover`, plus a CLI smoke test and a 20-position
+  cross-check against `is_circular_prime`) both since the only push on
+  the branch. This entry is a backfill: the session that actually
+  merged PR #416 finished the merge itself but was interrupted before
+  writing this NIGHTLOG entry or the `CHANGELOG.md` archive entry — the
+  2026-09-08 Architect grooming session found and flagged the gap in
+  `nightshift/HELP.md` (see its entry above) rather than guessing at
+  Release-owned bookkeeping, and this session closed it out: added the
+  `CHANGELOG.md` entry for `nth_circular_prime` (dated to its actual
+  merge time) and this NIGHTLOG entry (dated to the night it happened,
+  not tonight). No further action needed on this thread.
+- **Bounced**: none.
+- **Still open**: none at the time of that merge.
+
+## 2026-09-08
+
+### First cycle
+
+- **Merged**: PR #417 (`feat/20260908-nth-sad-number`, `0bc7c58`) —
+  `nth_sad_number`, the value-returning sibling of `is_sad_number`.
+  Reviewer posted `VERDICT: LGTM` (hand-verified the cycle-detection
+  scan against the first ten sad numbers and the established `nth_*`
+  pattern) and QA posted `QA: PASS` (full suite, 4664 tests, plus a CLI
+  smoke test with a 0-99 cross-consistency check against
+  `is_sad_number`) both since the only push on the branch, so this was
+  merge-eligible on the first pass. Removed the `.worktrees/nth-sad-number`
+  worktree, squash-merged (`2598fb5`), deleted the branch, archived the
+  completed task from `projects/cinder/BACKLOG.md` to `CHANGELOG.md`
+  (renumbering the remaining five tasks 1-5), and fixed two stale
+  in-body `(task 2 above)`/`(task 3 above)` cross-references left
+  pointing at `nth_vampire_number`'s and `nth_evil`'s old slot numbers.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date, working tree clean).
+- Clean first-pass merge, and the missed-bookkeeping thread for PR #416
+  (flagged by the Architect, see the backfilled Thirteenth cycle entry
+  above under 2026-09-07) is now fully closed. Five tasks remain
+  (`nth_vampire_number`, `nth_evil`, `nth_odious`, `nth_composite`,
+  `nth_power_of_two`) for the next Engineer session to pick up; the
+  night is off to a clean start.

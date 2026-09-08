@@ -2285,6 +2285,17 @@ def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     return root * root == value
 
 
+def _nth_perfect_square(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_perfect_square", arguments, 1, line, column)
+    value = _require_int("nth_perfect_square", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_perfect_square() requires a positive integer, domain error",
+            line, column,
+        )
+    return (value - 1) ** 2
+
+
 def _is_armstrong(arguments: list, line: int, column: int) -> object:
     _require_arity("is_armstrong", arguments, 1, line, column)
     value = _require_int("is_armstrong", arguments[0], line, column)
@@ -5448,6 +5459,7 @@ _BUILTINS = {
     "nth_repdigit": _nth_repdigit,
     "is_undulating": _is_undulating,
     "is_perfect_square": _is_perfect_square,
+    "nth_perfect_square": _nth_perfect_square,
     "is_armstrong": _is_armstrong,
     "is_disarium": _is_disarium,
     "is_polydivisible": _is_polydivisible,

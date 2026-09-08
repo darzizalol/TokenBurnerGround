@@ -5465,6 +5465,74 @@ class TestIsPerfectSquare(unittest.TestCase):
             run("is_perfect_square();")
 
 
+class TestNthPerfectSquare(unittest.TestCase):
+    def test_nth_perfect_square_of_first_five_positions(self):
+        expected = {1: 0, 2: 1, 3: 4, 4: 9, 5: 16}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_perfect_square({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_perfect_square_of_ten(self):
+        self.assertEqual(run("let result = nth_perfect_square(10);").get("result"), 81)
+
+    def test_nth_perfect_square_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_perfect_square(20);").get("result"), 361
+        )
+
+    def test_nth_perfect_square_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_perfect_square(50);").get("result"), 2401
+        )
+
+    def test_nth_perfect_square_agrees_with_is_perfect_square(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_perfect_square(nth_perfect_square({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_perfect_square({position}) to be a perfect square",
+            )
+
+    def test_nth_perfect_square_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_square(0);")
+        self.assertIn(
+            "nth_perfect_square() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_square_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_square(-3);")
+        self.assertIn(
+            "nth_perfect_square() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_square_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_square(true);")
+        self.assertIn(
+            "nth_perfect_square() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_perfect_square_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_perfect_square("5");')
+        self.assertIn(
+            "nth_perfect_square() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_perfect_square_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_perfect_square(1, 2);")
+
+
 class TestIsArmstrong(unittest.TestCase):
     def test_is_armstrong_of_zero(self):
         self.assertEqual(run("let result = is_armstrong(0);").get("result"), True)

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_odious` — odious number found at a 1-indexed position
+## 1. Standard library: `nth_odious` — odious number found at a 1-indexed position [claimed 2026-09-08T19:26:43Z]
 
 Build: `is_odious` (`cinder/builtins.py`, search `def _is_odious`: a
 non-negative integer whose binary representation has an *odd* number of

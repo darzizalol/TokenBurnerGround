@@ -7674,6 +7674,90 @@ class TestIsVampireNumber(unittest.TestCase):
             run("is_vampire_number();")
 
 
+class TestNthVampireNumber(unittest.TestCase):
+    def test_nth_vampire_number_of_first_seven_positions(self):
+        expected = {
+            1: 1260,
+            2: 1395,
+            3: 1435,
+            4: 1530,
+            5: 1827,
+            6: 2187,
+            7: 6880,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_vampire_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_vampire_number_of_ten(self):
+        self.assertEqual(
+            run("let result = nth_vampire_number(10);").get("result"), 105210
+        )
+
+    def test_nth_vampire_number_of_fifteen(self):
+        self.assertEqual(
+            run("let result = nth_vampire_number(15);").get("result"), 115672
+        )
+
+    def test_nth_vampire_number_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_vampire_number(20);").get("result"), 123354
+        )
+
+    def test_nth_vampire_number_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_vampire_number(50);").get("result"), 163944
+        )
+
+    def test_nth_vampire_number_agrees_with_is_vampire_number(self):
+        for position in range(1, 16):
+            self.assertEqual(
+                run(
+                    f"let result = is_vampire_number(nth_vampire_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_vampire_number({position}) to be a vampire number",
+            )
+
+    def test_nth_vampire_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_vampire_number(0);")
+        self.assertIn(
+            "nth_vampire_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_vampire_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_vampire_number(-3);")
+        self.assertIn(
+            "nth_vampire_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_vampire_number_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_vampire_number(true);")
+        self.assertIn(
+            "nth_vampire_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_vampire_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_vampire_number("5");')
+        self.assertIn(
+            "nth_vampire_number() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_vampire_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_vampire_number(1, 2);")
+
+
 class TestNumDivisors(unittest.TestCase):
     def test_num_divisors_of_1(self):
         self.assertEqual(run("let result = num_divisors(1);").get("result"), 1)

@@ -483,6 +483,137 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Language: `Set` literal syntax and equality (no builtin interop yet)
+
+Build the first slice of `Set` — a genuinely new collection type, not
+another `nth_*`/`is_*` builtin. Scope is deliberately narrow: **literal
+syntax and `==`/`!=` equality only.** Out of scope for this task (do
+not implement): `is_set`/`to_set` or any other builtin, `for`
+iteration over a set, comprehensions, spread (`...`) inside a set
+literal, and any mutation (no add/remove). Those are follow-up tasks
+once this slice lands. Verify the gap first:
+```sh
+python3 -m cinder.cli eval 'print({1, 2, 3});'
+# -> <eval>:1:8: ':' after map key   (bare-value `{...}` is a hard
+#    parse error today — confirmed by reading `_map_pair` in
+#    cinder/parser.py, which unconditionally consumes a `:` after the
+#    first expression inside `{...}`)
+```
+
+**Why braces, and the one real ambiguity to resolve.** `{` is already
+heavily overloaded: `cinder/parser.py`'s `_brace_statement` (search
+`def _brace_statement`) treats a bare `{}` as always an empty `Block`
+(never a literal), and `_map_entry` (search `def _map_entry`) has an
+existing shorthand where a single bare *identifier* immediately
+followed by `,` or `}` — e.g. `{x}` — parses as the map shorthand
+`{x: x}`, not a one-element anything-else. Both of those are
+already-shipped, tested behavior and must not change. The consequence:
+**a Set literal with a single bare-identifier element (`{x}`) cannot
+be added in this pass** — it's unrecoverably claimed by the map
+shorthand. Resolve this the simple way, not by chasing the ambiguity:
+require Set literals to have **two or more elements** in this slice
+(`{1, 2}`, `{1, 2, 3}`, ...). A trailing comma is not required to force
+disambiguation and single-element/empty Set literals are explicitly
+out of scope — document this as a known, deliberate limitation in
+`README.md`/`PROJECT.md` when done, not as a bug. (This mirrors why
+the `match`-guard task in `## Graveyard` below bounced three times:
+chasing one bracket-depth edge case at a time. Don't do that here —
+the two-or-more-elements rule sidesteps the single ambiguous case
+entirely instead of trying to disambiguate it.)
+
+**Parser disambiguation algorithm.** Everything currently funnels
+through `_map_pair` (search `def _map_pair` in `cinder/parser.py`),
+which does `key = self._or()` then unconditionally consumes a `:`.
+Change the first-entry parse (only — not the identifier-shorthand
+branch in `_map_entry`, which stays untouched) to *peek* instead of
+consume-or-throw: parse the key expression via `self._or()`, then
+check whether the next token is `COLON` or not. If `COLON`: this
+brace is a Map, proceed exactly as `_map_literal` does today (existing
+behavior, zero regressions). If not `COLON` (i.e. `COMMA` or `RBRACE`):
+this brace is a Set, and it must stay a Set — every subsequent entry
+in the same `{...}` should be parsed as a bare element, and hitting a
+`:` partway through (e.g. `{1, "a": 2}`) is a real `ParseError`
+("mixed set/map literal" or similar), not a silent fallback. Symmetric
+rule: once a brace has committed to Map (first entry had a `:` or was
+the identifier shorthand), a later bare element with no `:` is also a
+`ParseError`. This keeps the two literal kinds structurally
+distinguishable from their very first entry, so there's no
+backtracking or lookahead-N needed beyond the one-token peek after the
+first key expression.
+
+**AST + runtime.** Add `SetLiteral(elements: list, line: int, column:
+int)` to `cinder/ast_nodes.py` next to `MapLiteral` (search `class
+MapLiteral`). Dispatch it in `cinder/interpreter.py`'s `evaluate()`
+next to the existing `isinstance(expr, MapLiteral)` branch (search
+`if isinstance(expr, MapLiteral)`), calling a new
+`_evaluate_set_literal`. For the runtime value backing a `Set`,
+**use a `class CinderSet(dict)` wrapper** (elements become dict keys,
+values unused/ignored) rather than a Python `set` — this gets you
+three things for free that a raw `set` would not: (1) insertion-order
+iteration/stringify, since Python `dict` preserves insertion order but
+`set` does not, so output is deterministic and matches literal source
+order; (2) order-insensitive equality *and* automatic de-duplication,
+both via inherited `dict.__eq__`/construction semantics; (3) correct
+interaction with the existing `values_equal` (`cinder/interpreter.py`,
+search `def values_equal`) with no changes needed there — it already
+does `type(left) is not type(right)` before comparing, so a
+`CinderSet` correctly never equals a plain Map `dict` with the same
+elements-as-keys, and two `CinderSet`s compare correctly via the
+inherited `==`. Elements must be hashable exactly like map keys: reuse
+`_is_valid_key` (search `def _is_valid_key`) and raise the same shape
+of `CinderRuntimeError` as `_evaluate_map_literal` does for an invalid
+key (search `is not a valid map key`), adapted to say "is not a valid
+set element". Building the `CinderSet` naturally de-duplicates (`{1,
+1, 2}` becomes a two-element set) — that's correct, expected behavior,
+not a bug to guard against.
+
+**`type_name`/`stringify`.** Both (`cinder/interpreter.py`, search `def
+type_name` and `def stringify`) currently do `isinstance(value,
+dict)` to detect maps — since `CinderSet` subclasses `dict`, that
+check will wrongly catch it too unless you add an `isinstance(value,
+CinderSet)` branch **before** the existing `dict` branch in both
+functions. `type_name` should return `"set"`. `stringify` should
+render as `{1, 2, 3}` (bare elements, comma-separated, no colons —
+mirror the existing list-rendering line, not the map-rendering line).
+
+Acceptance criteria:
+- `{1, 2};`, `{1, 2, 3};`, `{"a", "b"};` parse and evaluate without
+  error; `print({1, 2, 3});` outputs `{1, 2, 3}`.
+- `{1, 2} == {2, 1};` is `true` (order-insensitive equality) and
+  `{1, 1, 2} == {1, 2};` is `true` (de-dup on construction).
+- `{1, 2} == {1, 2, 3};` is `false`; `{1, 2} != {1, 3};` is `true`.
+- A Set and a Map with matching elements-as-keys are never equal:
+  `{1, 2} == {1: true, 2: true};` is `false`.
+- Existing behavior is unchanged (regression checks): `{}` is still an
+  empty `Block` statement, not a literal; `{x}` for a bound identifier
+  `x` is still the map shorthand `{x: x}`; `{"a": 1}` is still an
+  ordinary map literal; `{1, "a": 2}` and `{"a": 1, 2}` (mixed
+  set/map-shaped entries in one literal) both raise `ParseError`.
+- Elements must be hashable: `{1, [1, 2]};` and `{1, {"a": 1}};` both
+  raise `CinderRuntimeError` matching something like `"is not a valid
+  set element"`.
+- `type({1, 2});` (or however the language exposes `type_name`, check
+  existing `type()`-builtin tests for the calling convention) is
+  `"set"`.
+- Full test suite passes.
+
+Likely files: `cinder/ast_nodes.py` (new `SetLiteral`, next to
+`MapLiteral`), `cinder/parser.py` (`_map_pair`/`_map_entry`/
+`_map_literal`, search those names — the peek-based disambiguation
+described above), `cinder/interpreter.py` (`evaluate()` dispatch,
+new `_evaluate_set_literal`, new `CinderSet(dict)` class, `type_name`,
+`stringify`, all searched above), `tests/test_parser.py` and
+`tests/test_interpreter.py` (new test classes for parsing and
+evaluating Set literals, modeled on the existing `MapLiteral` test
+classes — search `TestMapLiteral` or similar for the shape). Once
+merged, `README.md` needs a new `Set` entry in its features list and
+`PROJECT.md`'s "Current frontier" needs refreshing, including a note
+that the single-element-Set gap is a deliberate, documented limitation
+of this slice — leave both to the Architect's next grooming pass, not
+this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

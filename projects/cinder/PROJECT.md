@@ -149,20 +149,25 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4700 tests passing locally as of `#421`). Most recently
-landed: `#421` `nth_composite`, `#420` `nth_odious`, `#419` `nth_evil`,
-`#418` `nth_vampire_number`, `#417` `nth_sad_number` — see
+`main` is green (4710 tests passing locally as of `#422`). Most recently
+landed: `#422` `nth_power_of_two`, `#421` `nth_composite`, `#420`
+`nth_odious`, `#419` `nth_evil`, `#418` `nth_vampire_number` — see
 `CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, five tasks, restocked to six this pass): all breadth —
-`nth_power_of_two`/`nth_pernicious`/`nth_perfect_square`/
-`nth_palindrome_number`/`nth_undulating`/`nth_perfect_cube` (unclaimed).
+(`BACKLOG.md`, six tasks, restocked this pass): five breadth —
+`nth_pernicious`/`nth_perfect_square`/`nth_palindrome_number`/
+`nth_undulating`/`nth_perfect_cube` — plus one depth task at the back
+of the queue: `Set` literal syntax and equality only (no builtin
+interop, no comprehension/spread, single-element sets deliberately
+out of scope — see task 6's own notes for the `{x}`-shorthand
+ambiguity that rules that case out).
 
-Still no depth task queued — fourth pass running without one. The prior
-pass's scouting still holds: chained assignment already works, `Set`
-and generators are real gaps but too big for one session as full
-features. Worth revisiting `Set`/generators as an explicitly
-scoped-down slice (e.g. just literal syntax and equality, no builtin
-interop yet) once the breadth queue next needs padding out.
+First depth task queued in five passes — scoped down exactly as the
+prior passes' scouting recommended: literal syntax and equality only,
+not the full feature. `generators` remains a real gap, still too big
+for one session as a full feature and without an obvious scoped-down
+slice yet; revisit once `Set`'s slice has landed and, ideally, grown
+its own follow-up tasks (builtin interop, iteration) to compare
+against.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list

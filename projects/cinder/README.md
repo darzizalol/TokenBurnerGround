@@ -563,6 +563,9 @@ while (i < 10) {
   `nth_nonagonal` to return the nonagonal number found at a 1-indexed position via the exact closed form `k(7k - 5)/2`, the figurate-number cluster's sixth and final `nth_*` member, completing the triangular..nonagonal `nth_*`/`is_*` pairing,
   `is_power_of_two` to test whether an integer is a power of two
   via the `n & (n - 1) == 0` bit trick,
+  `nth_power_of_two` to return the power of two found at a 1-indexed
+  position via the exact closed form `2 ** (k - 1)`, the value-returning
+  sibling of `is_power_of_two`'s membership test,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
   (even/odd count of `1` bits, negative input raises a domain error),
   `nth_evil` and `nth_odious` to return the evil/odious number found at a
@@ -821,30 +824,33 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_composite` (PR #421),
-`nth_odious` (PR #420), `nth_evil` (PR #419), `nth_vampire_number`
-(PR #418), `nth_sad_number` (PR #417), and guards in `match` arms
-(PR #413, `n if n > 0 => "positive"`, an optional `if <expr>` on any
-arm — attempted once before and closed after three failed review rounds
-over a recurring parser bug, this time parsing the guard via the
-parser's ordinary `_ternary()` entry point instead of a hand-rolled
-bracket/token scan, sidestepping that whole bug class; see
-`BACKLOG.md`'s `## Graveyard` for the postmortem). See
+Actively developed, nightly. Recently landed: `nth_power_of_two`
+(PR #422), `nth_composite` (PR #421), `nth_odious` (PR #420),
+`nth_evil` (PR #419), `nth_vampire_number` (PR #418), and guards in
+`match` arms (PR #413, `n if n > 0 => "positive"`, an optional `if
+<expr>` on any arm — attempted once before and closed after three
+failed review rounds over a recurring parser bug, this time parsing
+the guard via the parser's ordinary `_ternary()` entry point instead
+of a hand-rolled bracket/token scan, sidestepping that whole bug
+class; see `BACKLOG.md`'s `## Graveyard` for the postmortem). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): six more
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): five more
 value-returning `nth_*` siblings for predicates that already exist but
 can't yet be searched: `nth_pernicious`, `nth_palindrome_number`, and
 `nth_undulating` via the same bounded sequential scan pattern the
-merged `nth_*` builtins above already use, plus `nth_power_of_two`,
-`nth_perfect_square`, and `nth_perfect_cube` via an exact closed form
+merged `nth_*` builtins above already use, plus `nth_perfect_square`
+and `nth_perfect_cube` via an exact closed form
 like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/`nth_pronic` (see
-each task's own notes in `BACKLOG.md` for specifics).
-No language-depth task is queued this pass — the language is deep
-enough by now (try/catch/finally, `switch`, full pattern-matching with
-guards, safe navigation, nil-coalescing, spread, labeled
-break/continue, chained assignment, keyword arguments, and more) that
-finding a new depth gap worth one focused session takes real
-scouting; see `PROJECT.md`'s "Current frontier" for what was checked
-and ruled out this pass. The backlog mixes language depth with stdlib
-breadth over time rather than running either in one long block. The
-full vision and non-goals live in [`PROJECT.md`](PROJECT.md).
+each task's own notes in `BACKLOG.md` for specifics), and — first
+language-depth task in five passes — `Set` literal syntax and equality
+(`{1, 2, 3}`, no builtin interop yet, single-element sets deliberately
+out of scope this round; see `BACKLOG.md` task 6 for the design
+notes).
+The language is otherwise deep by now (try/catch/finally, `switch`,
+full pattern-matching with guards, safe navigation, nil-coalescing,
+spread, labeled break/continue, chained assignment, keyword arguments,
+and more) — finding a new depth gap worth one focused session takes
+real scouting; see `PROJECT.md`'s "Current frontier" for what was
+checked and scoped down this pass. The backlog mixes language depth
+with stdlib breadth over time rather than running either in one long
+block. The full vision and non-goals live in [`PROJECT.md`](PROJECT.md).

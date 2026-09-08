@@ -3815,6 +3815,82 @@ class TestIsComposite(unittest.TestCase):
             run("is_composite();")
 
 
+class TestNthComposite(unittest.TestCase):
+    def test_nth_composite_of_first_ten_positions(self):
+        expected = {
+            1: 4,
+            2: 6,
+            3: 8,
+            4: 9,
+            5: 10,
+            6: 12,
+            7: 14,
+            8: 15,
+            9: 16,
+            10: 18,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_composite({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_composite_of_fifteen_twenty_and_fifty(self):
+        self.assertEqual(run("let result = nth_composite(15);").get("result"), 25)
+        self.assertEqual(run("let result = nth_composite(20);").get("result"), 32)
+        self.assertEqual(run("let result = nth_composite(50);").get("result"), 70)
+
+    def test_nth_composite_agrees_with_is_composite(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_composite(nth_composite({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_composite({position}) to be composite",
+            )
+
+    def test_nth_composite_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_composite(0);")
+        self.assertIn(
+            "nth_composite() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_composite_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_composite(-3);")
+        self.assertIn(
+            "nth_composite() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_composite_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_composite(true);")
+        self.assertIn(
+            "nth_composite() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_composite_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_composite("5");')
+        self.assertIn(
+            "nth_composite() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_composite_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_composite(1, 2);")
+
+    def test_nth_composite_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_composite(1, 2, 3);")
+
+
 class TestIsSemiprime(unittest.TestCase):
     def test_is_semiprime_of_square_of_smallest_prime(self):
         self.assertEqual(run("let result = is_semiprime(4);").get("result"), True)

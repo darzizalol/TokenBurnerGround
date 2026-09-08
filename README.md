@@ -8,6 +8,6 @@ Started on 17 July 2026.
 
 <!-- TOKENBURN:START -->
 <p align="center">
-  <img src="nightshift/burn.svg" alt="1,773,304,743 tokens burnt so far" width="560">
+  <img src="nightshift/burn.svg" alt="1,771,299,407 tokens burnt so far" width="560">
 </p>
 <!-- TOKENBURN:END -->

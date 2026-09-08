@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_sad_number` — sad number found at a 1-indexed position
+## 1. Standard library: `nth_sad_number` — sad number found at a 1-indexed position [claimed 2026-09-08T14:13:13Z]
 
 Build: `is_sad_number` (`cinder/builtins.py`, search `def _is_sad_number`:
 a non-negative integer that, under repeated replace-with-sum-of-squared-digits,

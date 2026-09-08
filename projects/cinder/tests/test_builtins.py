@@ -4521,6 +4521,75 @@ class TestIsPowerOfTwo(unittest.TestCase):
             run("is_power_of_two();")
 
 
+class TestNthPowerOfTwo(unittest.TestCase):
+    def test_nth_power_of_two_of_first_five_positions(self):
+        expected = {1: 1, 2: 2, 3: 4, 4: 8, 5: 16}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_power_of_two({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_power_of_two_of_ten(self):
+        self.assertEqual(run("let result = nth_power_of_two(10);").get("result"), 512)
+
+    def test_nth_power_of_two_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_power_of_two(20);").get("result"), 524288
+        )
+
+    def test_nth_power_of_two_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_power_of_two(50);").get("result"),
+            562949953421312,
+        )
+
+    def test_nth_power_of_two_agrees_with_is_power_of_two(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_power_of_two(nth_power_of_two({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_power_of_two({position}) to be a power of two",
+            )
+
+    def test_nth_power_of_two_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_power_of_two(0);")
+        self.assertIn(
+            "nth_power_of_two() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_power_of_two_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_power_of_two(-3);")
+        self.assertIn(
+            "nth_power_of_two() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_power_of_two_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_power_of_two(true);")
+        self.assertIn(
+            "nth_power_of_two() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_power_of_two_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_power_of_two("5");')
+        self.assertIn(
+            "nth_power_of_two() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_power_of_two_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_power_of_two(1, 2);")
+
+
 class TestIsEvilIsOdious(unittest.TestCase):
     def test_is_evil_of_zero(self):
         self.assertEqual(run("let result = is_evil(0);").get("result"), True)

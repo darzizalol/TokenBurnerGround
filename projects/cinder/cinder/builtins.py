@@ -2040,6 +2040,17 @@ def _is_power_of_two(arguments: list, line: int, column: int) -> object:
     return (value & (value - 1)) == 0
 
 
+def _nth_power_of_two(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_power_of_two", arguments, 1, line, column)
+    value = _require_int("nth_power_of_two", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_power_of_two() requires a positive integer, domain error",
+            line, column,
+        )
+    return 2 ** (value - 1)
+
+
 def _is_evil(arguments: list, line: int, column: int) -> object:
     _require_arity("is_evil", arguments, 1, line, column)
     value = _require_int("is_evil", arguments[0], line, column)
@@ -5391,6 +5402,7 @@ _BUILTINS = {
     "is_twin_prime": _is_twin_prime,
     "nth_twin_prime": _nth_twin_prime,
     "is_power_of_two": _is_power_of_two,
+    "nth_power_of_two": _nth_power_of_two,
     "is_evil": _is_evil,
     "nth_evil": _nth_evil,
     "is_odious": _is_odious,

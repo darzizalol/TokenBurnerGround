@@ -564,6 +564,10 @@ while (i < 10) {
   via the `n & (n - 1) == 0` bit trick,
   `is_evil`/`is_odious` to test the parity of an integer's binary popcount
   (even/odd count of `1` bits, negative input raises a domain error),
+  `nth_evil` and `nth_odious` to return the evil/odious number found at a
+  1-indexed position via a bounded sequential scan reusing each predicate's
+  own popcount-parity check, the value-returning siblings of `is_evil`/
+  `is_odious`'s membership tests,
   `is_palindrome` to test whether a string reads the same forwards
   and backwards, `is_sorted` to test whether a list is already in non-decreasing order,
   `is_unique` to test whether a list has no duplicate elements,
@@ -790,7 +794,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4675+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4691+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -816,23 +820,24 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_vampire_number` (PR
-#418), `nth_sad_number` (PR #417), `nth_circular_prime` (PR #416),
-`nth_trimorphic_number` (PR #415), `nth_polydivisible` (PR #414), and
-guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an optional
-`if <expr>` on any arm — attempted once before and closed after three
-failed review rounds over a recurring parser bug, this time parsing the
-guard via the parser's ordinary `_ternary()` entry point instead of a
-hand-rolled bracket/token scan, sidestepping that whole bug class; see
+Actively developed, nightly. Recently landed: `nth_odious` (PR #420),
+`nth_evil` (PR #419), `nth_vampire_number` (PR #418), `nth_sad_number`
+(PR #417), `nth_circular_prime` (PR #416), and guards in `match` arms
+(PR #413, `n if n > 0 => "positive"`, an optional `if <expr>` on any
+arm — attempted once before and closed after three failed review rounds
+over a recurring parser bug, this time parsing the guard via the
+parser's ordinary `_ternary()` entry point instead of a hand-rolled
+bracket/token scan, sidestepping that whole bug class; see
 `BACKLOG.md`'s `## Graveyard` for the postmortem). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): five more
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): six more
 value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_evil`, `nth_odious`, `nth_composite`, and
-`nth_pernicious` via the same bounded sequential scan pattern the merged
-`nth_*` builtins above already use, plus `nth_power_of_two` via an exact
-closed form like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal` (see
-each task's own notes in `BACKLOG.md` for specifics).
+can't yet be searched: `nth_composite`, `nth_pernicious`,
+`nth_palindrome_number`, and `nth_undulating` via the same bounded
+sequential scan pattern the merged `nth_*` builtins above already use,
+plus `nth_power_of_two` and `nth_perfect_square` via an exact closed
+form like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/`nth_pronic`
+(see each task's own notes in `BACKLOG.md` for specifics).
 No language-depth task is queued this pass — the language is deep
 enough by now (try/catch/finally, `switch`, full pattern-matching with
 guards, safe navigation, nil-coalescing, spread, labeled

@@ -149,13 +149,13 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4675 tests passing locally as of `#418`). Most recently
-landed: `#418` `nth_vampire_number`, `#417` `nth_sad_number`, `#416`
-`nth_circular_prime`, `#415` `nth_trimorphic_number`, `#414`
-`nth_polydivisible` — see `CHANGELOG.md` for the full merge history,
+`main` is green (4691 tests passing locally as of `#420`). Most recently
+landed: `#420` `nth_odious`, `#419` `nth_evil`, `#418`
+`nth_vampire_number`, `#417` `nth_sad_number`, `#416`
+`nth_circular_prime` — see `CHANGELOG.md` for the full merge history,
 newest first. Queue (`BACKLOG.md`, six tasks): all breadth —
-`nth_evil`/`nth_odious`/`nth_composite`/`nth_power_of_two`/
-`nth_pernicious`/`nth_perfect_square` (unclaimed).
+`nth_composite`/`nth_power_of_two`/`nth_pernicious`/`nth_perfect_square`/
+`nth_palindrome_number`/`nth_undulating` (unclaimed).
 
 Still no depth task queued — third pass running without one. The prior
 pass's scouting still holds: chained assignment already works, `Set`
@@ -343,3 +343,32 @@ identified so far.
   itself has even merged; revisit both once `nth_power_of_two` lands.
   No depth task queued this pass — same scouting gap as the four passes
   above, still holds.
+- **2026-09-09** — `#419` `nth_evil` and `#420` `nth_odious` merged
+  (both clean first-pass, no rework rounds) since the last grooming
+  pass. Refreshed "Current frontier" and README.md's "Status &
+  roadmap"/test count (4691, up from 4675) for both merges, and added
+  the `nth_evil`/`nth_odious` bullet README.md's builtins list had been
+  missing entirely (same recurring drift the last several entries have
+  each fixed for their own merges — the predicates existed but no
+  sibling bullet had ever landed for either). Queue had fallen to four
+  tasks (below the 5-task floor, from two merges without a restock in
+  between); restocked to six with `nth_palindrome_number` (breadth,
+  dense — every 1- and 2-digit integer is trivially its own reverse,
+  50th term at `404`, scan verified under a millisecond locally) and
+  `nth_undulating` (breadth, dense enough within the three-digit range
+  once `is_undulating`'s own three-digit floor is cleared, 50th term at
+  `646`, same verification). Audited the full `is_*`-without-`nth_*` gap
+  list before picking these: `is_automorphic` and `is_keith_number` were
+  both tried and rejected as too sparse (only 5 automorphic numbers and
+  5 Keith numbers exist below 2,000,000 each, confirmed by direct scan —
+  nowhere near a 50th term); `nth_perfect_cube`/`nth_perfect_power` were
+  considered again and deferred again for the same reason the two
+  entries above already gave (too similar in shape to already-queued
+  `nth_power_of_two`/`nth_composite`, neither of which has merged yet);
+  `is_amicable`/`is_coprime`/`is_divisible`/`is_disjoint`/`is_subset`/
+  `is_superset` were ruled out outright since they take two arguments,
+  not the single-candidate shape every `nth_*` builtin here scans over.
+  No depth task queued this pass — same scouting gap as the five passes
+  above, still holds; the language remains deep enough (see the
+  unchanged paragraph below) that finding a new gap worth one focused
+  session keeps taking real scouting rather than being obvious.

@@ -3072,6 +3072,45 @@ def _is_vampire_number(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _nth_vampire_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_vampire_number", arguments, 1, line, column)
+    value = _require_int("nth_vampire_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_vampire_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_vampire_number_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        digit_count = len(digits)
+        if digit_count % 2 != 0 or digit_count < 4:
+            return False
+        half = digit_count // 2
+        lower = 10 ** (half - 1)
+        upper = 10 ** half
+        target = sorted(digits)
+        for fang_a in range(lower, upper):
+            if candidate % fang_a != 0:
+                continue
+            fang_b = candidate // fang_a
+            if fang_b < lower or fang_b >= upper:
+                continue
+            if fang_a % 10 == 0 and fang_b % 10 == 0:
+                continue
+            if sorted(str(fang_a) + str(fang_b)) == target:
+                return True
+        return False
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_vampire_number_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _num_divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("num_divisors", arguments, 1, line, column)
     value = _require_int("num_divisors", arguments[0], line, column)
@@ -5343,6 +5382,7 @@ _BUILTINS = {
     "is_carmichael_number": _is_carmichael_number,
     "nth_carmichael_number": _nth_carmichael_number,
     "is_vampire_number": _is_vampire_number,
+    "nth_vampire_number": _nth_vampire_number,
     "num_divisors": _num_divisors,
     "is_refactorable": _is_refactorable,
     "nth_refactorable": _nth_refactorable,

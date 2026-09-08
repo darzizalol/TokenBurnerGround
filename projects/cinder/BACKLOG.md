@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
+## 1. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position [claimed 2026-09-08T20:24:56Z]
 
 Build: `is_perfect_square` (`cinder/builtins.py`, search `def
 _is_perfect_square`: a non-negative integer whose integer square root,

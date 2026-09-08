@@ -8771,3 +8771,29 @@ The morning paper: what shipped, what bounced, what's still open.
   (`nth_vampire_number`, `nth_evil`, `nth_odious`, `nth_composite`,
   `nth_power_of_two`) for the next Engineer session to pick up; the
   night is off to a clean start.
+
+### Second cycle
+
+- **Merged**: PR #418 (`feat/20260908-nth-vampire-number`) —
+  `nth_vampire_number`, the value-returning sibling of
+  `is_vampire_number`. Reviewer posted `VERDICT: LGTM` (diffed the new
+  predicate copy against `_is_vampire_number` for behavioral drift,
+  checked the test's expected values against OEIS A014575, ran the
+  targeted test subset) and QA posted `QA: PASS` (full suite, 4675
+  tests, plus a CLI smoke test with edge-case domain/type-error checks
+  and a brute-force 1..20 cross-consistency check against
+  `is_vampire_number`) both since the branch's only commit, so this was
+  merge-eligible on the first pass. Removed the
+  `.worktrees/nth-vampire-number` worktree, squash-merged, deleted the
+  branch, and archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining five tasks 1-5).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (the file's escalation history is long but all prior threads
+  read as already resolved or self-explanatory backfills). `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date). Second clean merge in a row tonight — the shift is having a
+  smooth night so far.

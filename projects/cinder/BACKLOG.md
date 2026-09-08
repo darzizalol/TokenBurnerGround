@@ -11,147 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_vampire_number` — vampire number found at a 1-indexed position [claimed 2026-09-08T14:28:24Z]
-
-Build: `is_vampire_number` (`cinder/builtins.py`, search `def
-_is_vampire_number`: an even-digit-count, non-negative integer that
-splits into two equal-half "fangs" whose digits, put back together and
-sorted, reproduce the original number's own sorted digits — e.g. `1260
-= 21 * 60`, and `sorted("1260") == sorted("21" + "60")` — excluding the
-trivial case where both fangs end in `0`) has no value-returning
-`nth_*` sibling, the same gap `nth_smith_number`/`nth_carmichael_number`/
-`nth_twin_prime`/`nth_self_number`/`nth_emirp` (all already merged,
-`#406`/`#408`/`#410`/`#411`/`#412`) already close for their own
-predicates. This task was scoped once before (2026-09-06 grooming pass)
-then deliberately dropped back out unclaimed the following night to hold
-the queue at 5 tasks while requeuing the higher-priority `match`-guards
-depth task above — it was deferred, not dead, and is reconstructed here
-from scratch against current `main`. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_vampire_number(1));'
-# -> <eval>:1:7: undefined name 'nth_vampire_number' (did you mean
-#    'is_vampire_number'?)
-```
-
-Worked examples: the first twenty vampire numbers (confirmed by scanning
-with `is_vampire_number` directly) are `1260, 1395, 1435, 1530, 1827,
-2187, 6880, 102510, 104260, 105210, 105264, 105750, 108135, 110758,
-115672, 116725, 117067, 118440, 120600, 123354`, so
-`nth_vampire_number(1)` is `1260` and `nth_vampire_number(10)` is
-`105210`. The 15th is `115672`, the 20th is `123354`, the 50th is
-`163944`.
-
-Unlike the digit-quirk `nth_*` tasks (`nth_self_number`,
-`nth_polydivisible`, `nth_trimorphic_number`, `nth_sad_number`), no
-candidate below `1000` is ever vampiric (`is_vampire_number`'s own
-`digit_count % 2 != 0 or digit_count < 4` guard rejects every value
-under four digits outright), so the scan starts at `candidate = 0`
-exactly like `nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime`
-already do — there is no off-by-one "position 1 maps to candidate 0"
-quirk here. Also like `nth_circular_prime` (already merged), the
-per-candidate check itself
-(a fang search over every value in `[10**(half-1), 10**half)`) gets more
-expensive as candidates grow into six digits, so a full
-`nth_vampire_number(50)` scan is measurably slower (~2-3 seconds
-observed locally) than the digit-quirk `nth_*` builtins — keep the
-self-consistency acceptance check below at `1..15` rather than `1..50`,
-the same tradeoff `nth_carmichael_number`/`nth_circular_prime` already
-made for the same reason.
-
-Add directly after `_is_vampire_number` (search `def
-_is_vampire_number`, immediately before `def _num_divisors`) — keeps
-the value-returning helper next to the predicate it mirrors:
-```python
-def _nth_vampire_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_vampire_number", arguments, 1, line, column)
-    value = _require_int("nth_vampire_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_vampire_number() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_vampire_number_candidate(candidate: int) -> bool:
-        digits = str(candidate)
-        digit_count = len(digits)
-        if digit_count % 2 != 0 or digit_count < 4:
-            return False
-        half = digit_count // 2
-        lower = 10 ** (half - 1)
-        upper = 10 ** half
-        target = sorted(digits)
-        for fang_a in range(lower, upper):
-            if candidate % fang_a != 0:
-                continue
-            fang_b = candidate // fang_a
-            if fang_b < lower or fang_b >= upper:
-                continue
-            if fang_a % 10 == 0 and fang_b % 10 == 0:
-                continue
-            if sorted(str(fang_a) + str(fang_b)) == target:
-                return True
-        return False
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_vampire_number_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check copied verbatim from `_is_vampire_number`'s own
-body, minus its `value < 0` early return, since the scan never visits a
-negative candidate — the same "duplicate the tiny predicate body
-instead of a redundant `_require_arity`/`_require_int` round-trip per
-candidate" choice every recent `nth_*` task already makes.) Register
-the new dict entry (search `"is_vampire_number": _is_vampire_number,`,
-add `"nth_vampire_number": _nth_vampire_number,` directly after it,
-before `"num_divisors": _num_divisors,`).
-
-Acceptance criteria:
-- `nth_vampire_number(1);` through `nth_vampire_number(7);` are `1260,
-  1395, 1435, 1530, 1827, 2187, 6880` in order — the four-digit prefix
-  of the worked example above.
-- `nth_vampire_number(10);` is `105210`, `nth_vampire_number(15);` is
-  `115672`, and `nth_vampire_number(20);` is `123354` — further worked
-  examples confirming the scan crosses the four-digit-to-six-digit
-  boundary correctly (there are no five-digit vampire numbers at all;
-  digit-count must be even).
-- `nth_vampire_number(50);` is `163944` — a worked example confirming
-  the scan scales well past the first twenty (expected to take a few
-  seconds — see the performance note above, not a bug).
-- For every `position` in `1..15`,
-  `is_vampire_number(nth_vampire_number(position))` is `true` — a
-  reduced-range self-consistency check (see the performance note above
-  for why `1..15` and not `1..50` here), the same style
-  `nth_carmichael_number`'s and `nth_circular_prime`'s own test suites
-  already use for the same reason.
-- `nth_vampire_number(0);`, `nth_vampire_number(-3);` both raise
-  `CinderRuntimeError` matching `"nth_vampire_number\(\) requires a
-  positive integer, domain error"`.
-- `nth_vampire_number(true);` raises `CinderRuntimeError` matching
-  `"nth_vampire_number\(\) requires an int, got bool"`.
-- `nth_vampire_number("5");` raises `CinderRuntimeError` matching
-  `"nth_vampire_number\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_vampire_number`,
-search `def _is_vampire_number`), `tests/test_builtins.py` (new `class
-TestNthVampireNumber`, modeled on `class TestNthCarmichaelNumber`,
-search that name, for the test shapes and reduced-range self-consistency
-check above — place it near the existing `class TestIsVampireNumber`,
-search that name). Once merged, `README.md`'s existing
-`is_vampire_number` bullet needs `nth_vampire_number` added right after
-it, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" section needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_evil` — evil number found at a 1-indexed position
+## 1. Standard library: `nth_evil` — evil number found at a 1-indexed position
 
 Build: `is_evil` (`cinder/builtins.py`, search `def _is_evil`: a
 non-negative integer whose binary representation has an even number of
@@ -254,7 +114,7 @@ task.
 
 ---
 
-## 3. Standard library: `nth_odious` — odious number found at a 1-indexed position
+## 2. Standard library: `nth_odious` — odious number found at a 1-indexed position
 
 Build: `is_odious` (`cinder/builtins.py`, search `def _is_odious`: a
 non-negative integer whose binary representation has an *odd* number of
@@ -350,7 +210,7 @@ this task.
 
 ---
 
-## 4. Standard library: `nth_composite` — composite number found at a 1-indexed position
+## 3. Standard library: `nth_composite` — composite number found at a 1-indexed position
 
 Build: `is_composite` (`cinder/builtins.py`, search `def _is_composite`:
 a non-negative integer with a divisor strictly between `1` and itself —
@@ -450,7 +310,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
+## 4. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
 
 Build: `is_power_of_two` (`cinder/builtins.py`, search `def
 _is_power_of_two`: a positive integer with exactly one set bit, tested
@@ -528,7 +388,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
+## 5. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
 
 Build: `is_pernicious` (`cinder/builtins.py`, search `def
 _is_pernicious`: a non-negative integer whose popcount (number of set

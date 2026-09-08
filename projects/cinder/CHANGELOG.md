@@ -4235,3 +4235,12 @@ for vision/architecture.
   cycle-detection check. Clean first pass, no bounces (4664 tests
   passing, up from 4654). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `nth_vampire_number`** — merged 2026-09-08 via PR
+  #418 (`feat/20260908-nth-vampire-number`). Value-returning sibling of
+  `is_vampire_number`, closing the same gap already closed for
+  `nth_smith_number`/`nth_carmichael_number`/`nth_twin_prime`/
+  `nth_self_number`/`nth_emirp`: `_nth_vampire_number` (`cinder/builtins.py`,
+  directly after `_is_vampire_number`) scans candidates from 0, reusing
+  `is_vampire_number`'s fang-search predicate verbatim. Clean first
+  pass, no bounces (4675 tests passing, up from 4664). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

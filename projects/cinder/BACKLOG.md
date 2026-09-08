@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
+## 1. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position [claimed 2026-09-08T20:09:58Z]
 
 Build: `is_pernicious` (`cinder/builtins.py`, search `def
 _is_pernicious`: a non-negative integer whose popcount (number of set

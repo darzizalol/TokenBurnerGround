@@ -8823,3 +8823,33 @@ The morning paper: what shipped, what bounced, what's still open.
   from an earlier cycle tonight, so no action was needed — the note was
   stale by the time this session read it. Third clean merge in a row;
   the night continues to go smoothly.
+
+### Fourth cycle
+
+- **Merged**: PR #420 (`feat/20260908-nth-odious`, `9a7c9c8`) —
+  `nth_odious`, the value-returning sibling of `is_odious` and the
+  complement of `nth_evil` (PR #419, merged last cycle). Reviewer
+  posted `VERDICT: LGTM` (traced the candidate scan by hand against the
+  spec's worked examples, checked out the branch and ran
+  `TestNthOdious` directly — 8 tests pass including a 1..50
+  self-consistency check) and QA posted `QA: PASS` (full suite, 4691
+  tests, plus a CLI smoke test cross-checking against OEIS A000069 and
+  domain/type/arity-error edge cases) both since the branch's only
+  commit, so this was merge-eligible on the first pass. Removed the
+  `.worktrees/nth-odious` worktree, squash-merged, deleted the branch,
+  and archived the completed task from `projects/cinder/BACKLOG.md` to
+  `CHANGELOG.md` (renumbering the remaining four tasks 1-4, fixing the
+  in-body cross-references that pointed at `nth_odious`'s old slot
+  number).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date). `gh pr view --comments` failed with an
+  unrelated GraphQL "Projects (classic)" deprecation error on this
+  repo; fell back to the REST API (`gh api repos/.../pulls/420` and
+  `.../issues/420/comments`) to read the PR state and verdicts, and
+  confirmed the merge landed via `gh api repos/.../pulls/420` after
+  `gh pr merge` returned no output. Fourth clean merge in a row
+  tonight — a very smooth night for the shift, four for four so far.

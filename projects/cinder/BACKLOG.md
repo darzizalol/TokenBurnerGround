@@ -11,103 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_odious` — odious number found at a 1-indexed position [claimed 2026-09-08T19:26:43Z]
-
-Build: `is_odious` (`cinder/builtins.py`, search `def _is_odious`: a
-non-negative integer whose binary representation has an *odd* number of
-`1` bits — the complement of `is_evil`, which requires an even count)
-has no value-returning `nth_*` sibling, the same gap `nth_evil` (merged
-2026-09-08 via PR #419) already closes for its own opposite predicate.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_odious(1));'
-# -> <eval>:1:7: undefined name 'nth_odious' (did you mean 'is_odious'?)
-```
-
-Worked examples: the first ten odious numbers (confirmed by scanning
-with `is_odious` directly) are `1, 2, 4, 7, 8, 11, 13, 14, 16, 19`, so
-`nth_odious(1)` is `1` and `nth_odious(10)` is `19`. The 15th is `28`,
-the 20th is `38`, the 50th is `98`. Like `is_evil`, odious numbers are
-exactly half of all non-negative integers by construction (popcount
-parity), so the scan stays fast at every position — no performance
-caveat needed here.
-
-Unlike `nth_evil`/`nth_self_number`/`nth_polydivisible`/
-`nth_trimorphic_number`/`nth_sad_number` (all already-merged siblings),
-position `1` maps to candidate `1`, not `0`:
-`is_odious(0)` is `false` (`bin(0)` is `"0b0"`, zero set bits, which is
-even, not odd), so `0` is never itself an odious number. The scan can
-still start from `candidate = -1` (incremented before the first check,
-the same shape `nth_evil` uses) — it will simply check and reject `0`
-before finding `1`, which is harmless and keeps the two sibling
-implementations structurally identical for anyone reading them side by
-side.
-
-Add directly after `_is_odious` (search `def _is_odious`, immediately
-before `def _is_pernicious`) — keeps the value-returning helper next to
-the predicate it mirrors:
-```python
-def _nth_odious(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_odious", arguments, 1, line, column)
-    value = _require_int("nth_odious", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_odious() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_odious_candidate(candidate: int) -> bool:
-        return bin(candidate).count("1") % 2 == 1
-
-    count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_odious_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check copied verbatim from `_is_odious`'s own body
-minus its `value < 0` guard, since the scan never visits a negative
-candidate — the same "duplicate the tiny predicate body instead of a
-redundant `_require_arity`/`_require_int` round-trip per candidate"
-choice every recent `nth_*` task already makes.) Register the new dict
-entry (search `"is_odious": _is_odious,`, add `"nth_odious":
-_nth_odious,` directly after it, before `"is_pernicious":
-_is_pernicious,`).
-
-Acceptance criteria:
-- `nth_odious(1);` through `nth_odious(10);` are `1, 2, 4, 7, 8, 11, 13,
-  14, 16, 19` in order — the worked example above.
-- `nth_odious(15);` is `28`, `nth_odious(20);` is `38`, and
-  `nth_odious(50);` is `98` — further worked examples confirming the
-  scan scales well past the first ten.
-- For every `position` in `1..50`, `is_odious(nth_odious(position))` is
-  `true` — the same self-consistency check every recent `nth_*` task's
-  own test suite already runs against its predicate.
-- `nth_odious(0);`, `nth_odious(-3);` both raise `CinderRuntimeError`
-  matching `"nth_odious\(\) requires a positive integer, domain error"`.
-- `nth_odious(true);` raises `CinderRuntimeError` matching
-  `"nth_odious\(\) requires an int, got bool"`.
-- `nth_odious("5");` raises `CinderRuntimeError` matching
-  `"nth_odious\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_odious`, search
-`def _is_odious`), `tests/test_builtins.py` (new `class TestNthOdious`,
-modeled on `class TestNthSmithNumber`, search that name, for the test
-shapes above — place it near the existing `class TestIsEvilIsOdious`,
-search that name). Once merged, `README.md`'s existing `is_odious`
-bullet needs `nth_odious` added right after it, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `nth_composite` — composite number found at a 1-indexed position
+## 1. Standard library: `nth_composite` — composite number found at a 1-indexed position
 
 Build: `is_composite` (`cinder/builtins.py`, search `def _is_composite`:
 a non-negative integer with a divisor strictly between `1` and itself —
@@ -207,7 +111,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
+## 2. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
 
 Build: `is_power_of_two` (`cinder/builtins.py`, search `def
 _is_power_of_two`: a positive integer with exactly one set bit, tested
@@ -285,14 +189,14 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
+## 3. Standard library: `nth_pernicious` — pernicious number found at a 1-indexed position
 
 Build: `is_pernicious` (`cinder/builtins.py`, search `def
 _is_pernicious`: a non-negative integer whose popcount (number of set
 bits) is itself prime, e.g. `3` is `0b11`, popcount `2`, which is
 prime, so it's pernicious) has no value-returning `nth_*` sibling, the
 same gap `nth_evil` (merged 2026-09-08 via PR #419) and `nth_odious`
-(task 1 above, not yet merged) close for their own popcount-based
+(merged 2026-09-08 via PR #420) close for their own popcount-based
 predicates. Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(nth_pernicious(1));'
@@ -395,13 +299,13 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
+## 4. Standard library: `nth_perfect_square` — perfect square found at a 1-indexed position
 
 Build: `is_perfect_square` (`cinder/builtins.py`, search `def
 _is_perfect_square`: a non-negative integer whose integer square root,
 squared, equals it back — `math.isqrt(value) ** 2 == value`, negative
 input returns `false` outright) has no value-returning `nth_*` sibling,
-the same gap `nth_power_of_two` (task 3 above) and `nth_pronic`/
+the same gap `nth_power_of_two` (task 2 above) and `nth_pronic`/
 `nth_decagonal` (already-merged siblings) already close for their own
 closed-form sequences. Verify the gap:
 ```sh
@@ -410,10 +314,10 @@ python3 -m cinder.cli eval 'print(nth_perfect_square(1));'
 #    'is_perfect_square'?)
 ```
 
-Unlike `nth_evil` (merged), `nth_odious`/`nth_composite`/`nth_pernicious`
-(tasks 1-2 and 4 above, all sequential scans), perfect squares have an
-exact closed form — position `k` is `(k - 1) ** 2`, the same shape
-`nth_power_of_two`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
+Unlike `nth_evil`/`nth_odious` (both merged), `nth_composite`/
+`nth_pernicious` (tasks 1 and 3 above, both sequential scans), perfect
+squares have an exact closed form — position `k` is `(k - 1) ** 2`, the
+same shape `nth_power_of_two`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
 `nth_decagonal` (search `def _nth_pronic` for the pattern to copy, it's
 the closest sibling: also a "closed form starting at candidate 0"
 figurate-adjacent sequence) already use for their own closed-form

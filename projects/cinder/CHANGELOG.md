@@ -4254,3 +4254,12 @@ for vision/architecture.
   popcount-parity predicate verbatim. Clean first pass, no bounces
   (4683 tests passing, up from 4675). README/PROJECT.md updates left to
   the Architect's next grooming pass.
+- **Standard library: `nth_odious`** — merged 2026-09-08 via PR #420
+  (`feat/20260908-nth-odious`). Value-returning sibling of `is_odious`,
+  the complement of `nth_evil` (PR #419 above): `_nth_odious`
+  (`cinder/builtins.py`, directly after `_is_odious`) scans candidates
+  from `-1` upward (position `1` maps to candidate `1`, since
+  `is_odious(0)` is `false`, unlike `nth_evil`'s candidate `0` start),
+  reusing `is_odious`'s popcount-parity predicate verbatim. Clean first
+  pass, no bounces (4691 tests passing, up from 4683). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

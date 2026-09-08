@@ -1726,6 +1726,32 @@ def _is_composite(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _nth_composite(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_composite", arguments, 1, line, column)
+    value = _require_int("nth_composite", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_composite() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_composite_candidate(candidate: int) -> bool:
+        if candidate < 4:
+            return False
+        for divisor in range(2, int(candidate ** 0.5) + 1):
+            if candidate % divisor == 0:
+                return True
+        return False
+
+    count = 0
+    candidate = 3
+    while count < value:
+        candidate += 1
+        if _is_composite_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_semiprime(arguments: list, line: int, column: int) -> object:
     _require_arity("is_semiprime", arguments, 1, line, column)
     value = _require_int("is_semiprime", arguments[0], line, column)
@@ -5353,6 +5379,7 @@ _BUILTINS = {
     "is_prime": _is_prime,
     "nth_prime": _nth_prime,
     "is_composite": _is_composite,
+    "nth_composite": _nth_composite,
     "is_semiprime": _is_semiprime,
     "nth_semiprime": _nth_semiprime,
     "is_sphenic": _is_sphenic,

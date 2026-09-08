@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position
+## 1. Standard library: `nth_power_of_two` — power of two found at a 1-indexed position [claimed 2026-09-08T19:53:41Z]
 
 Build: `is_power_of_two` (`cinder/builtins.py`, search `def
 _is_power_of_two`: a positive integer with exactly one set bit, tested

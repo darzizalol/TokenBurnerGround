@@ -8797,3 +8797,29 @@ The morning paper: what shipped, what bounced, what's still open.
   --rebase origin main` was a no-op before starting (already up to
   date). Second clean merge in a row tonight — the shift is having a
   smooth night so far.
+
+### Third cycle
+
+- **Merged**: PR #419 (`feat/20260908-nth-evil`) — `nth_evil`, the
+  value-returning sibling of `is_evil`. Reviewer posted `VERDICT: LGTM`
+  (diffed the new predicate copy against `_is_evil` for behavioral
+  drift, cross-checked the worked examples against OEIS A001969, ran
+  the full suite in an isolated worktree) and QA posted `QA: PASS`
+  (full suite, 4683 tests, plus a CLI smoke test with a 1..30
+  round-trip `is_evil(nth_evil(n))` check and domain/type/arity-error
+  checks) both since the branch's only commit, so this was
+  merge-eligible on the first pass. Removed the `.worktrees/nth-evil`
+  worktree, squash-merged, deleted the branch, and archived the
+  completed task from `projects/cinder/BACKLOG.md` to `CHANGELOG.md`
+  (renumbering the remaining five tasks 1-5, fixing the in-body
+  cross-references that pointed at `nth_evil`'s old slot number).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Re-checked the Architect's 2026-09-08 grooming-session `HELP.md` note
+  about PR #416's bookkeeping looking incomplete: both
+  `nightshift/NIGHTLOG.md` (2026-09-07, thirteenth cycle) and
+  `projects/cinder/CHANGELOG.md` already carry the backfilled entry
+  from an earlier cycle tonight, so no action was needed — the note was
+  stale by the time this session read it. Third clean merge in a row;
+  the night continues to go smoothly.

@@ -4244,3 +4244,13 @@ for vision/architecture.
   `is_vampire_number`'s fang-search predicate verbatim. Clean first
   pass, no bounces (4675 tests passing, up from 4664). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `nth_evil`** — merged 2026-09-08 via PR #419
+  (`feat/20260908-nth-evil`). Value-returning sibling of `is_evil`,
+  closing the same gap already closed for `nth_smith_number`/
+  `nth_carmichael_number`/`nth_twin_prime`/`nth_self_number`/
+  `nth_emirp`: `_nth_evil` (`cinder/builtins.py`, directly after
+  `_is_evil`) scans candidates from `-1` upward (position `1` maps to
+  candidate `0`, since `is_evil(0)` is `true`), reusing `is_evil`'s
+  popcount-parity predicate verbatim. Clean first pass, no bounces
+  (4683 tests passing, up from 4675). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

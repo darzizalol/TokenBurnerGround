@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_vampire_number` — vampire number found at a 1-indexed position
+## 1. Standard library: `nth_vampire_number` — vampire number found at a 1-indexed position [claimed 2026-09-08T14:28:24Z]
 
 Build: `is_vampire_number` (`cinder/builtins.py`, search `def
 _is_vampire_number`: an even-digit-count, non-negative integer that

@@ -2592,6 +2592,70 @@ class TestIsSadNumber(unittest.TestCase):
             run("is_sad_number(1, 2);")
 
 
+class TestNthSadNumber(unittest.TestCase):
+    def test_nth_sad_number_of_first_ten(self):
+        expected = [0, 2, 3, 4, 5, 6, 8, 9, 11, 12]
+        for position, value in enumerate(expected, start=1):
+            self.assertEqual(
+                run(f"let result = nth_sad_number({position});").get("result"),
+                value,
+            )
+
+    def test_nth_sad_number_of_twenty(self):
+        self.assertEqual(run("let result = nth_sad_number(20);").get("result"), 25)
+
+    def test_nth_sad_number_of_fifty(self):
+        self.assertEqual(run("let result = nth_sad_number(50);").get("result"), 60)
+
+    def test_nth_sad_number_agrees_with_is_sad_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_sad_number(nth_sad_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_sad_number({position}) to be a sad number",
+            )
+
+    def test_nth_sad_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_sad_number(0);")
+        self.assertIn(
+            "nth_sad_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_sad_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_sad_number(-3);")
+        self.assertIn(
+            "nth_sad_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_sad_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_sad_number(true);")
+        self.assertIn(
+            "nth_sad_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_sad_number_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_sad_number("5");')
+        self.assertIn(
+            "nth_sad_number() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_sad_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_sad_number();")
+
+    def test_nth_sad_number_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_sad_number(1, 2);")
+
+
 class TestIsSelfNumber(unittest.TestCase):
     def test_is_self_number_smallest_two_digit(self):
         self.assertEqual(run("let result = is_self_number(20);").get("result"), True)

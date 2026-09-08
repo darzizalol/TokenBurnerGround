@@ -149,14 +149,14 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4645 tests passing locally as of `#415`). Most recently
-landed: `#415` `nth_trimorphic_number`, `#414` `nth_polydivisible`,
-`#413` guards in `match` arms (three review rounds, see `BACKLOG.md`'s
-`## Graveyard` for the postmortem this finally closed), `#412`
-`nth_emirp` — see `CHANGELOG.md` for the full merge history, newest
-first. Queue (`BACKLOG.md`, five tasks): all breadth —
-`nth_circular_prime`/`nth_sad_number`/`nth_vampire_number`/`nth_evil`/
-`nth_odious` (unclaimed).
+`main` is green (4654 tests passing locally as of `#416`). Most recently
+landed: `#416` `nth_circular_prime`, `#415` `nth_trimorphic_number`,
+`#414` `nth_polydivisible`, `#413` guards in `match` arms (three review
+rounds, see `BACKLOG.md`'s `## Graveyard` for the postmortem this
+finally closed) — see `CHANGELOG.md` for the full merge history, newest
+first. Queue (`BACKLOG.md`, six tasks): all breadth —
+`nth_sad_number`/`nth_vampire_number`/`nth_evil`/`nth_odious`/
+`nth_composite`/`nth_power_of_two` (unclaimed).
 
 Still no depth task queued — third pass running without one. The prior
 pass's scouting still holds: chained assignment already works, `Set`
@@ -264,3 +264,44 @@ identified so far.
   `nth_evil`/`nth_odious`); left it there rather than padding back to
   six — no new depth or breadth candidate surfaced this pass beyond
   what the prior two entries already scouted and deferred.
+- **2026-09-08 (even later)** — `#416` `nth_circular_prime` merged
+  2026-09-07 (clean first-pass, no rework rounds). Session start found
+  `BACKLOG.md` already carrying an uncommitted, correctly-done removal
+  of the merged task and renumbering of the rest (1-4) — sat uncommitted
+  from an interrupted prior session, kept and built on rather than
+  redone from scratch. That renumbering had left two stale in-body
+  cross-references in the `nth_odious` task text ("task 4 above" for
+  `nth_evil`, which had shifted to task 3) — fixed both — and one
+  reference to `nth_circular_prime` as still "above" in the backlog
+  inside the `nth_evil` task, which no longer holds now that task is
+  merged and gone — reworded. Also found `README.md`'s builtins list
+  was still missing the `nth_trimorphic_number` bullet entirely (the
+  prior pass's entry above says it refreshed "Status & roadmap" but
+  that only touched the prose recap, not the full bullet list) —
+  added it, plus the new `nth_circular_prime` bullet, updated the
+  "Recently landed"/"Coming up next" prose and the test count (4654,
+  up from 4645) in both `README.md` and here. Queue had fallen to four
+  tasks (one below the stated 5-task floor, from the skipped restock
+  after the #416 merge) — restocked to six per the steady-state target:
+  `nth_composite` (breadth, `is_prime`'s dense complement, already had
+  an `nth_prime` sibling to mirror, verified fast — under a second for
+  the first 50 — by running the scan through `cinder.cli eval` before
+  writing the task) and `nth_power_of_two` (breadth, closed-form like
+  `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`, no scan needed at
+  all). Two rejected candidates worth recording so a future pass
+  doesn't re-scope them: `nth_armstrong` and `nth_disarium` both looked
+  like natural next breadth tasks (siblings of already-merged
+  `is_armstrong`/`is_disarium`) but are digit-power sequences that are
+  extremely sparse or provably finite in base 10 (confirmed by direct
+  scan: only 22 Armstrong numbers exist below 2,000,000, and only 19
+  Disarium numbers below 3,000,000) — a sequential "position N" scan
+  either never terminates in reasonable time or runs out of terms
+  before reaching typical worked-example positions like 50, unlike
+  every `nth_*` builtin merged so far. `nth_weird_number` was also
+  tried and rejected for a different reason: `is_weird_number`'s
+  subset-sum reachability check is dense enough to reach position 50
+  but far too slow per-candidate (measured ~75s in raw Python for just
+  the first 50, before even accounting for the tree-walking
+  interpreter's own overhead on top). No depth task queued this pass —
+  see "Current frontier" above, unchanged from the last two passes'
+  scouting.

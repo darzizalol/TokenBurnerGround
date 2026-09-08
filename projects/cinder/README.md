@@ -645,6 +645,9 @@ while (i < 10) {
   insertions/deletions/substitutions to turn one string into another),
   `is_automorphic` to test whether an integer's square ends with the integer itself in decimal,
   `is_trimorphic_number` as its cube-ending sibling (e.g. `24 ** 3 = 13824`, which ends in `24`),
+  `nth_trimorphic_number` to return the trimorphic number found at a 1-indexed position (position
+  `1` maps to candidate `0`, the smallest trimorphic number), the value-returning sibling of
+  `is_trimorphic_number`'s membership test,
   `is_keith_number` to test whether an integer reappears in the digit-count-wide Fibonacci-style
   recurrence seeded by its own decimal digits (e.g. `197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`),
   the digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending questions,
@@ -692,6 +695,9 @@ while (i < 10) {
   value-returning sibling of `is_sphenic`'s membership test,
   `is_circular_prime` to test whether every rotation of an integer's decimal digits is also prime
   (e.g. `197`/`971`/`719`),
+  `nth_circular_prime` to return the circular prime found at a 1-indexed position via a bounded
+  sequential scan with the rotation-primality check inlined from `is_circular_prime`'s own body,
+  the value-returning sibling of `is_circular_prime`'s membership test,
   `is_twin_prime` to test whether an integer is prime and has another prime exactly 2 away
   (e.g. `11`, since `13` is also prime),
   `nth_twin_prime` to return the twin prime found at a 1-indexed position, the value-returning
@@ -780,7 +786,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4635+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4654+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -806,21 +812,23 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_trimorphic_number`
-(PR #415), `nth_polydivisible` (PR #414), guards in `match` arms (PR
-#413, `n if n > 0 => "positive"`, an optional `if <expr>` on any arm —
-attempted once before and closed after three failed review rounds over
-a recurring parser bug, this time parsing the guard via the parser's
-ordinary `_ternary()` entry point instead of a hand-rolled
-bracket/token scan, sidestepping that whole bug class; see
-`BACKLOG.md`'s `## Graveyard` for the postmortem), and `nth_emirp` (PR
-#412). See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): five more
+Actively developed, nightly. Recently landed: `nth_circular_prime` (PR
+#416), `nth_trimorphic_number` (PR #415), `nth_polydivisible` (PR #414),
+and guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an
+optional `if <expr>` on any arm — attempted once before and closed after
+three failed review rounds over a recurring parser bug, this time
+parsing the guard via the parser's ordinary `_ternary()` entry point
+instead of a hand-rolled bracket/token scan, sidestepping that whole bug
+class; see `BACKLOG.md`'s `## Graveyard` for the postmortem). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): six more
 value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_circular_prime`, `nth_sad_number`,
-`nth_vampire_number`, `nth_evil`, and `nth_odious` (each the same
-bounded sequential scan pattern the merged `nth_*` builtins above
-already use; see each task's own notes in `BACKLOG.md` for specifics).
+can't yet be searched: `nth_sad_number`, `nth_vampire_number`,
+`nth_evil`, `nth_odious`, and `nth_composite` via the same bounded
+sequential scan pattern the merged `nth_*` builtins above already use,
+plus `nth_power_of_two` via an exact closed form like
+`nth_octagonal`/`nth_nonagonal`/`nth_decagonal` (see each task's own
+notes in `BACKLOG.md` for specifics).
 No language-depth task is queued this pass — the language is deep
 enough by now (try/catch/finally, `switch`, full pattern-matching with
 guards, safe navigation, nil-coalescing, spread, labeled

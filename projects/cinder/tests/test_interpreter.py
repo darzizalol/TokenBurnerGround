@@ -5008,6 +5008,28 @@ class TestSetLiteral(unittest.TestCase):
         with self.assertRaises(ParseError):
             evaluate('{1, "a": 2}')
 
+    def test_set_index_assign_raises_cinder_error(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let s = {1, 2}; s[1] = false;")
+        self.assertIn("does not support item assignment", str(ctx.exception))
+
+    def test_set_index_compound_assign_raises_cinder_error(self):
+        # Never reaches the _index_set guard itself: the read side of += first
+        # applies the operator to the element's `True` sentinel value, which
+        # already fails arithmetic's bool-excluded numeric check. Asserting
+        # this still raises (rather than silently corrupting the Set) is the
+        # point of the test, not the exact message.
+        with self.assertRaises(CinderRuntimeError):
+            run("let s = {1, 2}; s[1] += 1;")
+
+    def test_set_index_nil_coalesce_assign_raises_cinder_error(self):
+        # Existing elements never reach the guard either: their sentinel is
+        # always `True` (never nil), so ??= short-circuits before writing.
+        # Use an absent key to force the write path that the guard blocks.
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("let s = {1, 2}; s[5] ??= true;")
+        self.assertIn("does not support item assignment", str(ctx.exception))
+
     def test_mixed_map_then_set_shape_raises_parse_error(self):
         with self.assertRaises(ParseError):
             evaluate('{"a": 1, 2}')

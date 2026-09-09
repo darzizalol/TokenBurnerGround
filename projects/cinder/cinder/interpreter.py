@@ -1102,6 +1102,12 @@ class Interpreter:
                 )
             obj[normalized] = value
             return
+        if isinstance(obj, CinderSet):
+            raise CinderRuntimeError(
+                f"{type_name(obj)} does not support item assignment",
+                line,
+                column,
+            )
         if isinstance(obj, dict):
             if not _is_valid_key(index):
                 raise CinderRuntimeError(

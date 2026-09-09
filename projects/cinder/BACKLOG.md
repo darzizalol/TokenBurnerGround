@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
+## 1. Standard library: `nth_undulating` — undulating number found at a 1-indexed position [claimed 2026-09-09T14:27:18Z]
 
 Build: `is_undulating` (`cinder/builtins.py`, search `def
 _is_undulating`: a non-negative integer whose decimal digits strictly

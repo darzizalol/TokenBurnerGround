@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
+## 1. Standard library: `nth_leap_year` — leap year found at a 1-indexed position [claimed 2026-09-09T20:18:54Z]
 
 Build: `is_leap_year` (`cinder/builtins.py`, search `def _is_leap_year`: the
 Gregorian rule, `value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)`,

@@ -2297,6 +2297,30 @@ def _is_undulating(arguments: list, line: int, column: int) -> object:
     return all(digit == digits[i % 2] for i, digit in enumerate(digits))
 
 
+def _nth_undulating(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_undulating", arguments, 1, line, column)
+    value = _require_int("nth_undulating", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_undulating() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_undulating_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        if len(digits) < 3 or digits[0] == digits[1]:
+            return False
+        return all(digit == digits[i % 2] for i, digit in enumerate(digits))
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_undulating_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_perfect_square(arguments: list, line: int, column: int) -> object:
     _require_arity("is_perfect_square", arguments, 1, line, column)
     value = _require_int("is_perfect_square", arguments[0], line, column)
@@ -5480,6 +5504,7 @@ _BUILTINS = {
     "is_repdigit": _is_repdigit,
     "nth_repdigit": _nth_repdigit,
     "is_undulating": _is_undulating,
+    "nth_undulating": _nth_undulating,
     "is_perfect_square": _is_perfect_square,
     "nth_perfect_square": _nth_perfect_square,
     "is_armstrong": _is_armstrong,

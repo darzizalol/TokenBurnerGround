@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: `Set` literal syntax and equality (no builtin interop yet)
+## 1. Language: `Set` literal syntax and equality (no builtin interop yet) [claimed 2026-09-09T19:34:10Z]
 
 Build the first slice of `Set` — a genuinely new collection type, not
 another `nth_*`/`is_*` builtin. Scope is deliberately narrow: **literal

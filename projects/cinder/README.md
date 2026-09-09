@@ -582,6 +582,9 @@ while (i < 10) {
   `digit_sum` to sum an integer's decimal digits (sign ignored),
   `digit_product` to multiply an integer's decimal digits together (sign ignored, any `0` digit collapses the result to `0`),
   `is_perfect_square` to test whether an integer is a perfect square,
+  `nth_perfect_square` to return the perfect square found at a 1-indexed
+  position via the exact closed form `(k - 1) ** 2`, the value-returning
+  sibling of `is_perfect_square`'s membership test,
   `is_armstrong` to test whether an integer equals the sum of its own digits each raised to the digit count,
   `is_disarium` as its digit-position sibling, each digit raised to its own 1-indexed position instead of one shared exponent (`89 = 8^1 + 9^2`),
   `is_pandigital` to test whether an integer's decimal digits are exactly the ten digits `0`-`9` each appearing once (e.g. `1023456789`),
@@ -827,30 +830,29 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_pernicious`
-(PR #423), `nth_power_of_two` (PR #422), `nth_composite` (PR #421),
-`nth_odious` (PR #420), `nth_evil` (PR #419), and guards in
-`match` arms (PR #413, `n if n > 0 => "positive"`, an optional `if
-<expr>` on any arm — attempted once before and closed after three
-failed review rounds over a recurring parser bug, this time parsing
-the guard via the parser's ordinary `_ternary()` entry point instead
-of a hand-rolled bracket/token scan, sidestepping that whole bug
-class; see `BACKLOG.md`'s `## Graveyard` for the postmortem). See
-[`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): four more
+Actively developed, nightly. Recently landed: `nth_perfect_square`
+(PR #424), `nth_pernicious` (PR #423), `nth_power_of_two` (PR #422),
+`nth_composite` (PR #421), `nth_odious` (PR #420), `nth_evil` (PR #419),
+and guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an
+optional `if <expr>` on any arm — attempted once before and closed
+after three failed review rounds over a recurring parser bug, this
+time parsing the guard via the parser's ordinary `_ternary()` entry
+point instead of a hand-rolled bracket/token scan, sidestepping that
+whole bug class; see `BACKLOG.md`'s `## Graveyard` for the postmortem).
+See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): three more
 value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_palindrome_number` and `nth_undulating`
-via the same bounded sequential scan pattern the merged `nth_*`
-builtins above already use, plus `nth_perfect_square` and
-`nth_perfect_cube` via an exact closed form
-like `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/`nth_pronic` (see
-each task's own notes in `BACKLOG.md` for specifics), and — first
-language-depth task in five passes — `Set` literal syntax and equality
-(`{1, 2, 3}`, no builtin interop yet, single-element sets deliberately
-out of scope this round; see `BACKLOG.md` task 5 for the design
-notes); and, at the back of the queue, one more breadth task,
-`nth_leap_year` (task 6, same bounded scan pattern, `is_leap_year`'s
-Gregorian-rule predicate).
+can't yet be searched: `nth_palindrome_number` and `nth_undulating` via
+the same bounded sequential scan pattern the merged `nth_*` builtins
+above already use, plus `nth_perfect_cube` via an exact closed form
+like `nth_perfect_square`/`nth_octagonal`/`nth_nonagonal`/
+`nth_decagonal`/`nth_pronic` (see each task's own notes in
+`BACKLOG.md` for specifics); then — first language-depth task in five
+passes — `Set` literal syntax and equality (`{1, 2, 3}`, no builtin
+interop yet, single-element sets deliberately out of scope this round;
+see `BACKLOG.md` task 4 for the design notes); and, at the back of the
+queue, one more breadth task, `nth_leap_year` (task 5, same bounded
+scan pattern, `is_leap_year`'s Gregorian-rule predicate).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

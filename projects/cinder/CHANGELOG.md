@@ -4355,3 +4355,12 @@ for vision/architecture.
   write. 4788 tests passing, up from 4785. README/PROJECT.md updates,
   including documenting the single-element-Set gap as a deliberate
   limitation, left to the Architect's next grooming pass.
+- **Standard library: `nth_leap_year`** — merged 2026-09-09 via PR #429
+  (`feat/20260909-nth-leap-year`). Value-returning sibling of
+  `is_leap_year`, scanning candidates from `0` upward (position `1` maps
+  to candidate `0`, same convention as `nth_palindrome_number`/
+  `nth_sad_number`) until the value-th leap year under the proleptic
+  Gregorian rule is found; inner candidate check copied verbatim from
+  `_is_leap_year`'s own body. Clean first pass, no bounces (4797 tests
+  passing, up from 4788). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

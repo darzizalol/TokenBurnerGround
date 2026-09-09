@@ -9123,3 +9123,30 @@ The morning paper: what shipped, what bounced, what's still open.
   this shift has needed two review rounds to land — the process worked
   as designed: Reviewer caught a real bug, Engineer fixed it on the
   same branch, second review passed clean. Good night.
+
+### Fourth cycle
+
+- **Merged**: PR #429 (`feat/20260909-nth-leap-year`, "Standard
+  library: `nth_leap_year` — leap year found at a 1-indexed position")
+  — Reviewer posted `VERDICT: LGTM` (2026-09-09T20:22:06Z) and QA
+  posted `QA: PASS` (2026-09-09T20:23:35Z), both after the sole commit
+  (`bf09f6b`), a clean first-pass implementation with no rework needed.
+  Removed the `.worktrees/nth-leap-year` worktree, squash-merged,
+  deleted the branch, and archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining five tasks 1-5 and fixing the two in-body cross-references
+  that named old slot numbers — `nth_perfect_power`'s "queued above"
+  note about `nth_leap_year`, now correctly "already-merged", and
+  `from_roman`'s references to `to_roman`'s and its own new slot
+  numbers).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only the same recurring, already-resolved note about
+  uncommitted Architect docs WIP, which a later Architect session this
+  same date already folded in as `4b15010`). `git pull --rebase origin
+  main` was a no-op before starting (already up to date, working tree
+  clean). Tenth clean merge overall, second one-shot clean pass in a
+  row after last cycle's two-round bug fix — the shift is running
+  smoothly tonight.

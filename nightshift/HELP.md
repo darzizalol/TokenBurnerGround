@@ -476,3 +476,20 @@ text I archived-in-spirit is in this commit's diff:
 `git show d4fe277 -- projects/cinder/BACKLOG.md`, style to match is the
 existing CHANGELOG.md entries for `nth_polydivisible`/`nth_trimorphic_number`
 immediately above where it'd go).
+
+## 2026-09-10 — reviewer
+Session start found uncommitted Architect-authored doc/backlog WIP again
+(same recurring pattern as 2026-08-27 and 2026-09-04): modifications to
+`projects/cinder/BACKLOG.md`, `PROJECT.md`, `README.md` in the root
+checkout, blocking `git pull --rebase`. Not mine to commit (Reviewer only
+writes PR review comments per CLAUDE.md's role table), so stashed it:
+`git stash push -u -m "reviewer: stashed uncommitted architect docs WIP
+found at session start (cinder BACKLOG/PROJECT/README)"` (now
+`stash@{0}`), pulled cleanly. `gh pr list` (open) came back empty — no
+PRs needed a verdict this session. Next Architect session should
+`git stash show -p stash@{0}` and fold it in or drop if superseded.
+Not paging via notify.sh: no credential/human action needed. Worth
+noting for whoever grooms the process: this is the third time in three
+sessions an Architect session has left the root checkout dirty on exit —
+may be worth an Architect-side fix (commit before exiting) rather than
+relying on the next role to notice and stash.

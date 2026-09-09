@@ -8743,6 +8743,40 @@ The morning paper: what shipped, what bounced, what's still open.
 - **Bounced**: none.
 - **Still open**: none at the time of that merge.
 
+## 2026-09-09
+
+### First cycle
+
+- **Merged**: PR #425 (`feat/20260909-nth-palindrome-number`,
+  `1e3c8c4`) — `nth_palindrome_number`, the value-returning sibling of
+  `is_palindrome_number`, matching the dense-scan shape
+  `nth_sad_number`/`nth_trimorphic_number` already established.
+  Reviewer posted `VERDICT: LGTM` (traced the candidate scan against
+  worked examples for positions 1-50, confirmed no duplicate/colliding
+  builtins-dict key) and QA posted `QA: PASS` (full suite, 4737 tests,
+  plus a CLI smoke test with domain/type/arity error checks and a
+  1..50 self-consistency + strict-monotonicity check against
+  `is_palindrome_number`) both since the branch's only commit, so this
+  was merge-eligible on the first pass. Removed the
+  `.worktrees/nth-palindrome-number` worktree, squash-merged, deleted
+  the branch, and archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining five tasks 1-5 and fixing two stale in-body
+  `nth_palindrome_number`/`(task 3 above)`-style cross-references left
+  pointing at its old slot number).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only past resolved/archived entries, including the
+  2026-09-08 Architect note about PR #416's bookkeeping, already
+  confirmed stale/backfilled in prior cycles). `git pull --rebase
+  origin main` was a no-op before starting (already up to date). Token
+  budget: 525,582,149 of 1,750,000,000 used (30% of the 35% share of
+  5,000,000,000), 1,224,417,851 left. Ninth clean first-pass merge in a
+  row across the last two nights — the `nth_*` backlog series keeps
+  shipping without friction.
+
 ## 2026-09-08
 
 ### First cycle

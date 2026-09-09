@@ -4301,3 +4301,14 @@ for vision/architecture.
   `(value - 1) ** 2` directly, no candidate scan. Clean first pass, no
   bounces (4728 tests passing, up from 4718). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `nth_palindrome_number`** — merged 2026-09-09 via
+  PR #425 (`feat/20260909-nth-palindrome-number`). Value-returning
+  sibling of `is_palindrome_number`, matching the dense-scan shape
+  `nth_sad_number`/`nth_trimorphic_number` already established:
+  `_nth_palindrome_number` (`cinder/builtins.py`, directly after
+  `_is_palindrome_number`) scans candidates from `-1` upward (position
+  `1` maps to candidate `0`, since `0` is itself the first numeric
+  palindrome), reusing `is_palindrome_number`'s digit-reversal predicate
+  verbatim. Clean first pass, no bounces (4737 tests passing, up from
+  4728). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

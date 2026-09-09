@@ -11,103 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position [claimed 2026-09-09T14:07:45Z]
-
-Build: `is_palindrome_number` (`cinder/builtins.py`, search `def
-_is_palindrome_number`: a non-negative integer whose decimal digits read
-the same forwards and backwards, `str(value) == str(value)[::-1]`,
-negative input returns `false` outright) has no value-returning `nth_*`
-sibling. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_palindrome_number(1));'
-# -> <eval>:1:7: undefined name 'nth_palindrome_number' (did you mean
-#    'is_palindrome_number'?)
-```
-
-Worked examples: the first ten numeric palindromes (confirmed by
-scanning with `is_palindrome_number` directly) are `0, 1, 2, 3, 4, 5, 6,
-7, 8, 9` — every single digit is trivially its own reverse — so
-`nth_palindrome_number(1)` is `0` and `nth_palindrome_number(10)` is
-`9`. The 15th is `55`, the 20th is `101`, the 50th is `404`. Numeric
-palindromes are dense (every 1- and 2-digit number, one in ten 3-digit
-numbers, etc.), so the scan stays fast at every position — confirmed
-locally: scanning to the 50th takes well under a millisecond in raw
-Python, no performance caveat needed.
-
-Like `nth_sad_number` and `nth_trimorphic_number` (both merged, both
-map position `1` to candidate `0`), the scan starts at `candidate = -1`
-(incremented before the first check) — `0` itself is the very first
-palindrome, so there's no off-by-one risk skipping it.
-
-Add directly after `_is_palindrome_number` (search `def
-_is_palindrome_number`, immediately before `def _is_repdigit`) — keeps
-the value-returning helper next to the predicate it mirrors:
-```python
-def _nth_palindrome_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_palindrome_number", arguments, 1, line, column)
-    value = _require_int("nth_palindrome_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_palindrome_number() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_palindrome_number_candidate(candidate: int) -> bool:
-        return str(candidate) == str(candidate)[::-1]
-
-    count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_palindrome_number_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check copied verbatim from `_is_palindrome_number`'s
-own body minus its `value < 0` guard, since the scan never visits a
-negative candidate — the same "duplicate the tiny predicate body
-instead of a redundant `_require_arity`/`_require_int` round-trip per
-candidate" choice every recent `nth_*` task already makes.) Register
-the new dict entry (search `"is_palindrome_number":
-_is_palindrome_number,`, add `"nth_palindrome_number":
-_nth_palindrome_number,` directly after it, before `"is_repdigit":
-_is_repdigit,`).
-
-Acceptance criteria:
-- `nth_palindrome_number(1);` through `nth_palindrome_number(10);` are
-  `0, 1, 2, 3, 4, 5, 6, 7, 8, 9` in order — the worked example above.
-- `nth_palindrome_number(15);` is `55`, `nth_palindrome_number(20);` is
-  `101`, and `nth_palindrome_number(50);` is `404` — further worked
-  examples confirming the scan scales well past the first ten.
-- For every `position` in `1..50`,
-  `is_palindrome_number(nth_palindrome_number(position))` is `true` —
-  the same self-consistency check every recent `nth_*` task's own test
-  suite already runs against its predicate.
-- `nth_palindrome_number(0);`, `nth_palindrome_number(-3);` both raise
-  `CinderRuntimeError` matching `"nth_palindrome_number\(\) requires a
-  positive integer, domain error"`.
-- `nth_palindrome_number(true);` raises `CinderRuntimeError` matching
-  `"nth_palindrome_number\(\) requires an int, got bool"`.
-- `nth_palindrome_number("5");` raises `CinderRuntimeError` matching
-  `"nth_palindrome_number\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after
-`_is_palindrome_number`, search `def _is_palindrome_number`),
-`tests/test_builtins.py` (new `class TestNthPalindromeNumber`, modeled
-on `class TestNthRepdigit`, search that name, for the test shapes
-above — place it near the existing `class TestIsPalindromeNumber`,
-search that name). Once merged, `README.md`'s existing
-`is_palindrome_number` bullet needs `nth_palindrome_number` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
+## 1. Standard library: `nth_undulating` — undulating number found at a 1-indexed position
 
 Build: `is_undulating` (`cinder/builtins.py`, search `def
 _is_undulating`: a non-negative integer whose decimal digits strictly
@@ -132,7 +36,7 @@ the scan stays fast at every position — confirmed locally: scanning to
 the 50th takes well under a millisecond in raw Python, no performance
 caveat needed.
 
-Unlike `nth_palindrome_number` (task 1 above) or `nth_sad_number`
+Unlike `nth_palindrome_number` (already-merged sibling) or `nth_sad_number`
 (position `1` maps to candidate `0`), position `1` maps to candidate
 `101` here — nothing under 100 has three digits, so the scan can still
 start from `candidate = -1` (incremented before the first check, the
@@ -211,7 +115,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
+## 2. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
 
 Build: `is_perfect_cube` (`cinder/builtins.py`, search `def
 _is_perfect_cube`: a non-negative integer whose integer cube root,
@@ -291,7 +195,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Language: `Set` literal syntax and equality (no builtin interop yet)
+## 3. Language: `Set` literal syntax and equality (no builtin interop yet)
 
 Build the first slice of `Set` — a genuinely new collection type, not
 another `nth_*`/`is_*` builtin. Scope is deliberately narrow: **literal
@@ -422,7 +326,7 @@ this task.
 
 ---
 
-## 5. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
+## 4. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
 
 Build: `is_leap_year` (`cinder/builtins.py`, search `def _is_leap_year`: the
 Gregorian rule, `value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)`,
@@ -510,7 +414,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
+## 5. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
 
 Build: `is_perfect_power` (`cinder/builtins.py`, search `def
 _is_perfect_power`: true for `-1`, `0`, and `1` outright, otherwise true
@@ -545,15 +449,16 @@ the 50th is `1444`. Perfect powers get sparser as they grow (unlike the
 dense `nth_*` sequences merged so far), but still dense enough to reach
 the 50th term well under a millisecond in raw Python — confirmed
 locally, no performance caveat needed. Unlike `nth_power_of_two`,
-`nth_perfect_square`, and `nth_perfect_cube` (queued as task 3 above),
+`nth_perfect_square`, and `nth_perfect_cube` (queued as task 2 above),
 which are each a single sequence with an exact closed form, perfect
 powers are the *union* of every `k >= 2` power sequence with no single
 closed form — this task needs an actual bounded scan against the
 existing predicate, the same shape as `nth_composite`/`nth_evil`, not a
 closed-form task.
 
-Like `nth_palindrome_number` and `nth_leap_year` (queued above, both
-map position `1` to candidate `0`), the scan starts at `candidate = -1`
+Like `nth_palindrome_number` (already-merged sibling) and `nth_leap_year`
+(queued above, both map position `1` to candidate `0`), the scan starts
+at `candidate = -1`
 (incremented before the first check) — `0` itself is the very first
 perfect power, so there's no off-by-one risk skipping it.
 

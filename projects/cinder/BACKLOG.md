@@ -11,87 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position [claimed 2026-09-09T14:43:47Z]
-
-Build: `is_perfect_cube` (`cinder/builtins.py`, search `def
-_is_perfect_cube`: a non-negative integer whose integer cube root,
-cubed, equals it back — `root = _integer_cube_root(magnitude); root **
-3 == magnitude`) has no value-returning `nth_*` sibling, the same gap
-`nth_power_of_two`/`nth_perfect_square` (already-merged siblings)
-already close for their own closed-form sequences.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_perfect_cube(1));'
-# -> <eval>:1:7: undefined name 'nth_perfect_cube' (did you mean
-#    'is_perfect_cube'?)
-```
-
-Perfect cubes have an exact closed form — position `k` is `(k - 1) **
-3`, the same shape `nth_perfect_square` (search `def
-_nth_perfect_square` for the pattern to copy, it's the closest
-sibling: same "closed form starting at candidate 0" cube-vs-square
-pairing) already uses for its own closed-form sequence, so there is no
-candidate scan and no performance caveat: `nth_perfect_cube(1)` is `0`,
-`nth_perfect_cube(2)` is `1`, `nth_perfect_cube(5)` is `64`,
-`nth_perfect_cube(10)` is `729`, `nth_perfect_cube(20)` is `6859`, and
-`nth_perfect_cube(50)` is `117649` (all six confirmed by direct
-computation of `(k - 1) ** 3`).
-
-Add directly after `_is_perfect_cube` (search `def _is_perfect_cube`,
-immediately before `def _is_pronic`) — keeps the value-returning
-helper next to the predicate it mirrors:
-```python
-def _nth_perfect_cube(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_perfect_cube", arguments, 1, line, column)
-    value = _require_int("nth_perfect_cube", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_perfect_cube() requires a positive integer, domain error",
-            line, column,
-        )
-    return (value - 1) ** 3
-```
-(Same shape as `_nth_perfect_square`/`_nth_pronic`/`_nth_octagonal` — a
-direct closed-form return, no loop, no inner candidate-check helper,
-since there's nothing to scan.) Register the new dict entry (search
-`"is_perfect_cube": _is_perfect_cube,`, add `"nth_perfect_cube":
-_nth_perfect_cube,` directly after it, before `"is_pronic":
-_is_pronic,`).
-
-Acceptance criteria:
-- `nth_perfect_cube(1);` through `nth_perfect_cube(5);` are `0, 1, 8,
-  27, 64` in order — the closed-form cubing sequence.
-- `nth_perfect_cube(10);` is `729`, `nth_perfect_cube(20);` is `6859`,
-  and `nth_perfect_cube(50);` is `117649` — further worked examples
-  confirming the closed form holds at larger positions.
-- For every `position` in `1..50`,
-  `is_perfect_cube(nth_perfect_cube(position))` is `true` — the same
-  self-consistency check every recent `nth_*` task's own test suite
-  already runs against its predicate.
-- `nth_perfect_cube(0);`, `nth_perfect_cube(-3);` both raise
-  `CinderRuntimeError` matching `"nth_perfect_cube\(\) requires a
-  positive integer, domain error"`.
-- `nth_perfect_cube(true);` raises `CinderRuntimeError` matching
-  `"nth_perfect_cube\(\) requires an int, got bool"`.
-- `nth_perfect_cube("5");` raises `CinderRuntimeError` matching
-  `"nth_perfect_cube\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_perfect_cube`,
-search `def _is_perfect_cube`), `tests/test_builtins.py` (new `class
-TestNthPerfectCube`, modeled on `class TestNthPronic`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsPerfectCube`, search that name). Once merged, `README.md`'s
-existing `is_perfect_cube` bullet needs `nth_perfect_cube` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Language: `Set` literal syntax and equality (no builtin interop yet)
+## 1. Language: `Set` literal syntax and equality (no builtin interop yet)
 
 Build the first slice of `Set` — a genuinely new collection type, not
 another `nth_*`/`is_*` builtin. Scope is deliberately narrow: **literal
@@ -222,7 +142,7 @@ this task.
 
 ---
 
-## 3. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
+## 2. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
 
 Build: `is_leap_year` (`cinder/builtins.py`, search `def _is_leap_year`: the
 Gregorian rule, `value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)`,
@@ -310,7 +230,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
+## 3. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
 
 Build: `is_perfect_power` (`cinder/builtins.py`, search `def
 _is_perfect_power`: true for `-1`, `0`, and `1` outright, otherwise true
@@ -345,7 +265,7 @@ the 50th is `1444`. Perfect powers get sparser as they grow (unlike the
 dense `nth_*` sequences merged so far), but still dense enough to reach
 the 50th term well under a millisecond in raw Python — confirmed
 locally, no performance caveat needed. Unlike `nth_power_of_two`,
-`nth_perfect_square`, and `nth_perfect_cube` (queued as task 1 above),
+`nth_perfect_square`, and `nth_perfect_cube` (already-merged siblings),
 which are each a single sequence with an exact closed form, perfect
 powers are the *union* of every `k >= 2` power sequence with no single
 closed form — this task needs an actual bounded scan against the
@@ -429,7 +349,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `rot13` — the classic Caesar-cipher string transform
+## 4. Standard library: `rot13` — the classic Caesar-cipher string transform
 
 Add a standalone string builtin, not another `is_*`/`nth_*` pair — the
 `is_*`-without-`nth_*` gap list is nearly exhausted for now (see this

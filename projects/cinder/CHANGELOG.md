@@ -4322,3 +4322,12 @@ for vision/architecture.
   verbatim. Clean first pass, no bounces (4746 tests passing, up from
   4737). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `nth_perfect_cube`** — merged 2026-09-09 via PR
+  #427 (`feat/20260909-nth-perfect-cube`). Value-returning sibling of
+  `is_perfect_cube`, closing the same closed-form gap `nth_power_of_two`/
+  `nth_perfect_square`/`nth_pronic`/`nth_octagonal`/`nth_nonagonal`/
+  `nth_decagonal` already close: `_nth_perfect_cube`
+  (`cinder/builtins.py`, directly after `_is_perfect_cube`) returns
+  `(value - 1) ** 3` directly, no candidate scan. Clean first pass, no
+  bounces (4756 tests passing, up from 4746). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

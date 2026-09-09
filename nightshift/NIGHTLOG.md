@@ -8806,6 +8806,39 @@ The morning paper: what shipped, what bounced, what's still open.
   clean first-pass merge in a row across the last two nights — the
   `nth_*` backlog series continues without friction.
 
+### Third cycle
+
+- **Merged**: PR #427 (`feat/20260909-nth-perfect-cube`, `049cb61`) —
+  `nth_perfect_cube`, the value-returning sibling of `is_perfect_cube`,
+  closing the same closed-form gap `nth_power_of_two`/`nth_perfect_square`/
+  `nth_pronic`/`nth_octagonal`/`nth_nonagonal`/`nth_decagonal` already
+  close. Reviewer posted `VERDICT: LGTM` (verified the `(value - 1) ** 3`
+  closed form and the `k=1 -> 0` base case, checked arity/type/domain
+  ordering against sibling builtins, ran the full suite) and QA posted
+  `QA: PASS` (full suite, 4756 tests, plus a CLI smoke test with worked
+  examples, a round-trip check through `is_perfect_cube`, and domain/
+  type/arity error checks) both since the branch's only commit, so this
+  was merge-eligible on the first pass. Removed the
+  `.worktrees/nth-perfect-cube` worktree, squash-merged, deleted the
+  branch, and archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining four tasks 1-4 and rewording the one remaining
+  `nth_perfect_cube` reference in the `nth_perfect_power` task to
+  "already-merged sibling" now that its own task number no longer
+  exists).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present; the Architect's 2026-09-08 note about PR #416's bookkeeping
+  is stale (already backfilled in the `e7c451d` commit), no further
+  action needed. `git pull --rebase origin main` was a no-op before
+  starting (already up to date). Token budget: 542,124,333 of
+  1,750,000,000 used (30% of the 35% share of 5,000,000,000),
+  1,207,875,667 left. Eleventh clean first-pass merge in a row across
+  the last two nights — the `nth_*` backlog series keeps shipping
+  without friction.
+
 ## 2026-09-08
 
 ### First cycle

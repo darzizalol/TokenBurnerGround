@@ -5245,6 +5245,70 @@ class TestIsPalindromeNumber(unittest.TestCase):
             run("is_palindrome_number();")
 
 
+class TestNthPalindromeNumber(unittest.TestCase):
+    def test_nth_palindrome_number_of_first_ten_positions(self):
+        expected = {1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_palindrome_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_palindrome_number_at_fifteen_and_twenty(self):
+        self.assertEqual(run("let result = nth_palindrome_number(15);").get("result"), 55)
+        self.assertEqual(run("let result = nth_palindrome_number(20);").get("result"), 101)
+
+    def test_nth_palindrome_number_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_palindrome_number(50);").get("result"), 404
+        )
+
+    def test_nth_palindrome_number_agrees_with_is_palindrome_number(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_palindrome_number(nth_palindrome_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_palindrome_number({position}) to be a palindrome",
+            )
+
+    def test_nth_palindrome_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_palindrome_number(0);")
+        self.assertIn(
+            "nth_palindrome_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_palindrome_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_palindrome_number(-3);")
+        self.assertIn(
+            "nth_palindrome_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_palindrome_number_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_palindrome_number(true);")
+        self.assertIn(
+            "nth_palindrome_number() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_palindrome_number_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_palindrome_number("5");')
+        self.assertIn(
+            "nth_palindrome_number() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_palindrome_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_palindrome_number();")
+
+
 class TestIsRepdigit(unittest.TestCase):
     def test_is_repdigit_of_zero(self):
         self.assertEqual(run("let result = is_repdigit(0);").get("result"), True)

@@ -2237,6 +2237,27 @@ def _is_palindrome_number(arguments: list, line: int, column: int) -> object:
     return str(value) == str(value)[::-1]
 
 
+def _nth_palindrome_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_palindrome_number", arguments, 1, line, column)
+    value = _require_int("nth_palindrome_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_palindrome_number() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_palindrome_number_candidate(candidate: int) -> bool:
+        return str(candidate) == str(candidate)[::-1]
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_palindrome_number_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_repdigit(arguments: list, line: int, column: int) -> object:
     _require_arity("is_repdigit", arguments, 1, line, column)
     value = _require_int("is_repdigit", arguments[0], line, column)
@@ -5455,6 +5476,7 @@ _BUILTINS = {
     "reverse_int": _reverse_int,
     "digital_root": _digital_root,
     "is_palindrome_number": _is_palindrome_number,
+    "nth_palindrome_number": _nth_palindrome_number,
     "is_repdigit": _is_repdigit,
     "nth_repdigit": _nth_repdigit,
     "is_undulating": _is_undulating,

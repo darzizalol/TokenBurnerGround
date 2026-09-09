@@ -510,6 +510,124 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
+
+Build: `is_perfect_power` (`cinder/builtins.py`, search `def
+_is_perfect_power`: true for `-1`, `0`, and `1` outright, otherwise true
+when `abs(value)` is `root ** k` for some integer `root` and some `k >=
+2`, with negative values only counted when the matching `k` is odd, e.g.
+`-8 == -2 ** 3`) has no value-returning `nth_*` sibling. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_perfect_power(1));'
+# -> <eval>:1:7: undefined name 'nth_perfect_power' (did you mean
+#    'is_perfect_power'?)
+```
+
+**Scope: non-negative candidates only.** Unlike every other `nth_*`
+builtin in this codebase, `is_perfect_power` accepts negative input
+(`-8`, `-27`, ... are perfect powers via odd `k`). A single monotonic
+1-indexed position scan can't sensibly interleave negative and
+non-negative results in one ordering, and every existing `nth_*`
+builtin here already scans non-negative candidates only — so this task
+keeps that convention and scans `candidate >= 0` exclusively.
+`is_perfect_power`'s negative-domain support stays a predicate-only
+feature; document this as a deliberate scope limit in `README.md` when
+done, not a bug (mirrors the two-or-more-elements limit already
+documented for the `Set`-literal task above).
+
+Worked examples: the first ten non-negative perfect powers (confirmed
+by scanning with `is_perfect_power` directly) are `0, 1, 4, 8, 9, 16,
+25, 27, 32, 36` — `0` and `1` both satisfy the predicate's `abs(value)
+<= 1` shortcut, so both are trivially perfect powers before the
+square/cube/... scan ever runs. `nth_perfect_power(1)` is `0` and
+`nth_perfect_power(10)` is `36`. The 15th is `121`, the 20th is `196`,
+the 50th is `1444`. Perfect powers get sparser as they grow (unlike the
+dense `nth_*` sequences merged so far), but still dense enough to reach
+the 50th term well under a millisecond in raw Python — confirmed
+locally, no performance caveat needed. Unlike `nth_power_of_two`,
+`nth_perfect_square`, and `nth_perfect_cube` (queued as task 3 above),
+which are each a single sequence with an exact closed form, perfect
+powers are the *union* of every `k >= 2` power sequence with no single
+closed form — this task needs an actual bounded scan against the
+existing predicate, the same shape as `nth_composite`/`nth_evil`, not a
+closed-form task.
+
+Like `nth_palindrome_number` and `nth_leap_year` (queued above, both
+map position `1` to candidate `0`), the scan starts at `candidate = -1`
+(incremented before the first check) — `0` itself is the very first
+perfect power, so there's no off-by-one risk skipping it.
+
+Add directly after `_is_perfect_power` (search `def
+_is_perfect_power`, immediately before `def _divisors`) — keeps the
+value-returning helper next to the predicate it mirrors:
+```python
+def _nth_perfect_power(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_perfect_power", arguments, 1, line, column)
+    value = _require_int("nth_perfect_power", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_perfect_power() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_perfect_power_candidate(candidate: int) -> bool:
+        if candidate <= 1:
+            return True
+        for k in range(2, candidate.bit_length() + 1):
+            root = _integer_kth_root(candidate, k)
+            if root ** k == candidate:
+                return True
+        return False
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_perfect_power_candidate(candidate):
+            count += 1
+    return candidate
+```
+(Inner candidate check reuses the module-level `_integer_kth_root`
+helper directly — same function `_is_perfect_power` itself calls, no
+duplication — but drops the sign branch entirely since the scan never
+visits a negative candidate.) Register the new dict entry (search
+`"is_perfect_power": _is_perfect_power,`, add `"nth_perfect_power":
+_nth_perfect_power,` directly after it, before `"divisors":
+_divisors,`).
+
+Acceptance criteria:
+- `nth_perfect_power(1);` through `nth_perfect_power(10);` are `0, 1,
+  4, 8, 9, 16, 25, 27, 32, 36` in order — the worked example above.
+- `nth_perfect_power(15);` is `121`, `nth_perfect_power(20);` is `196`,
+  and `nth_perfect_power(50);` is `1444` — further worked examples
+  confirming the scan scales well past the first ten.
+- For every `position` in `1..50`,
+  `is_perfect_power(nth_perfect_power(position))` is `true` — the same
+  self-consistency check every recent `nth_*` task's own test suite
+  already runs against its predicate.
+- `nth_perfect_power(0);`, `nth_perfect_power(-3);` both raise
+  `CinderRuntimeError` matching `"nth_perfect_power\(\) requires a
+  positive integer, domain error"`.
+- `nth_perfect_power(true);` raises `CinderRuntimeError` matching
+  `"nth_perfect_power\(\) requires an int, got bool"`.
+- `nth_perfect_power("5");` raises `CinderRuntimeError` matching
+  `"nth_perfect_power\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_perfect_power`,
+search `def _is_perfect_power`), `tests/test_builtins.py` (new `class
+TestNthPerfectPower`, modeled on `class TestNthComposite`, search that
+name, for the test shapes above — place it near the existing `class
+TestIsPerfectPower`, search that name). Once merged, `README.md`'s
+existing `is_perfect_power` bullet needs `nth_perfect_power` added
+right after it, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

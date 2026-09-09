@@ -804,7 +804,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4718+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4728+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -851,8 +851,11 @@ like `nth_perfect_square`/`nth_octagonal`/`nth_nonagonal`/
 passes — `Set` literal syntax and equality (`{1, 2, 3}`, no builtin
 interop yet, single-element sets deliberately out of scope this round;
 see `BACKLOG.md` task 4 for the design notes); and, at the back of the
-queue, one more breadth task, `nth_leap_year` (task 5, same bounded
-scan pattern, `is_leap_year`'s Gregorian-rule predicate).
+queue, two more breadth tasks: `nth_leap_year` (task 5, same bounded
+scan pattern, `is_leap_year`'s Gregorian-rule predicate) and
+`nth_perfect_power` (task 6, a bounded scan rather than a closed form
+since perfect powers are a union of every `k >= 2` power sequence with
+no single closed form, unlike its closed-form `nth_*` neighbors above).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

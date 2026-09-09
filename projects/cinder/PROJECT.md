@@ -149,18 +149,22 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4718 tests passing locally as of `#423`). Most recently
-landed: `#423` `nth_pernicious`, `#422` `nth_power_of_two`, `#421`
-`nth_composite`, `#420` `nth_odious`, `#419` `nth_evil` — see
+`main` is green (4728 tests passing locally as of `#424`). Most recently
+landed: `#424` `nth_perfect_square`, `#423` `nth_pernicious`, `#422`
+`nth_power_of_two`, `#421` `nth_composite`, `#420` `nth_odious` — see
 `CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, six tasks, restocked this pass): four breadth —
-`nth_perfect_square`/`nth_palindrome_number`/`nth_undulating`/
-`nth_perfect_cube` — then one depth task, `Set` literal syntax and
-equality only (no builtin interop, no comprehension/spread,
-single-element sets deliberately out of scope — see task 5's own notes
-for the `{x}`-shorthand ambiguity that rules that case out) — plus one
-more breadth task at the back of the queue: `nth_leap_year` (task 6,
-same bounded-scan shape as `nth_palindrome_number`/`nth_undulating`).
+(`BACKLOG.md`, six tasks, restocked this pass): three breadth —
+`nth_palindrome_number`/`nth_undulating`/`nth_perfect_cube` — then one
+depth task, `Set` literal syntax and equality only (no builtin
+interop, no comprehension/spread, single-element sets deliberately out
+of scope — see task 4's own notes for the `{x}`-shorthand ambiguity
+that rules that case out) — plus two more breadth tasks at the back of
+the queue: `nth_leap_year` (task 5, same bounded-scan shape as
+`nth_palindrome_number`/`nth_undulating`) and `nth_perfect_power`
+(task 6, also a bounded scan rather than a closed form, since perfect
+powers are a union of every `k >= 2` power sequence with no single
+closed form — unlike `nth_power_of_two`/`nth_perfect_square`/
+`nth_perfect_cube` alongside it in this queue).
 
 First depth task queued in five passes — scoped down exactly as the
 prior passes' scouting recommended: literal syntax and equality only,
@@ -432,3 +436,24 @@ identified so far.
   scouting gap as the seven passes above, still holds; the language
   remains deep enough that finding a new gap worth one focused session
   keeps taking real scouting rather than being obvious.
+- **2026-09-09 (grooming)** — `#424` `nth_perfect_square` merged (clean
+  first-pass, no rework rounds). Also found and committed a leftover
+  uncommitted `README.md` edit from an interrupted prior session
+  (correct, already matched `BACKLOG.md`'s post-merge task numbering —
+  just never got committed) before this pass's own work. Refreshed
+  "Current frontier" and README.md's "Status & roadmap"/test count
+  (4728, up from 4718) for the merge. Queue was back at its 5-task
+  floor; restocked to six with `nth_perfect_power` (breadth,
+  `is_perfect_power`'s union-of-power-sequences predicate — scoped to
+  non-negative candidates only, since `is_perfect_power` uniquely among
+  this codebase's scanned predicates accepts negative input and a
+  single monotonic position scan can't sensibly interleave the two
+  signs; verified worked examples against the real `_is_perfect_power`
+  implementation directly rather than reimplementing its logic by hand,
+  first 50 terms scan instantly). Audited the `is_*`-without-`nth_*` gap
+  list before picking it: `is_disarium` was tried and rejected as too
+  sparse (only 18 disarium numbers exist below 2,000,000, confirmed by
+  direct scan — consistent with the `#421` pass's note on the same
+  family of digit-power predicates). No depth task queued this pass —
+  same scouting gap as the eight passes above, still holds; `Set`
+  (task 4) remains the only depth task in the queue, unclaimed.

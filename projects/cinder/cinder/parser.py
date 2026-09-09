@@ -81,10 +81,17 @@ to be the last parameter — a `,` after it (another parameter or a second
 `...rest`) raises `ParseError`. It may follow default parameters.
 
 A leading `{` is ambiguous between a Block and a statement-level expression
-rooted in a MapLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`). `_brace_statement`
-disambiguates by attempting a speculative full-expression parse first (so
-postfix indexing/calls and binary operators on the leading map literal are
-captured too); empty `{}` is always an (empty) Block.
+rooted in a MapLiteral or SetLiteral (e.g. `{"a": 1};`, `{"a": 1}["a"];`,
+`{1, 2};`). `_brace_statement` disambiguates by attempting a speculative
+full-expression parse first (so postfix indexing/calls and binary operators
+on the leading literal are captured too); empty `{}` is always an (empty)
+Block. Map vs. Set is decided per-entry inside `_map_or_set_entry`: an
+entry's key expression followed by `:` is a Map pair, anything else (`,` or
+`}`) is a Set element — once a brace commits to one kind (via its first
+entry), every later entry must match or it's a `ParseError` ("mixed
+set/map literal"). A Set literal needs 2+ elements, since a single bare
+identifier (`{x}`) is unrecoverably claimed by the existing map shorthand
+`{x} -> {x: x}` — see `_set_literal`.
 
 `_loop_labels` tracks loop nesting the same way `_fn_depth` tracks function
 nesting for `return`: `break`/`continue` outside any loop is a `ParseError`.
@@ -153,6 +160,7 @@ from cinder.ast_nodes import (
     Param,
     RangeExpr,
     ReturnStmt,
+    SetLiteral,
     SliceAssign,
     SliceExpr,
     Spread,
@@ -551,8 +559,12 @@ class Parser:
         followed by `;`) and before falling back to `_block()`. Returns
         `None` — leaving `self.pos` untouched for the caller to reset — on
         any shape mismatch (a non-identifier pattern element, or no `=`
-        after the closing `}`), so `{1, 2};` and the like keep failing
-        exactly as before via the `_block()` fallback.
+        after the closing `}`), so `{1; 2}` (a two-statement block) and the
+        like keep failing exactly as before via the `_block()` fallback.
+        (`{1, 2};` no longer reaches this function at all — it's now a
+        valid Set-literal expression statement, caught by the
+        map-literal-expression attempt in `_brace_statement` before this
+        function is ever tried.)
 
         A rest element that isn't last is a real syntax error, not a shape
         mismatch: it's raised eagerly, as soon as the second element after
@@ -2133,26 +2145,61 @@ class Parser:
 
     def _map_literal(self) -> Expr:
         brace = self._advance()  # consume '{'
-        pairs = []
         with self._arrow_shorthand_allowed():
-            if not self._check(TokenType.RBRACE):
-                entry = self._map_entry()
-                if self._check(TokenType.FOR):
-                    if isinstance(entry, Spread):
-                        raise ParseError(
-                            "spread not allowed in map comprehension",
-                            brace.line,
-                            brace.column,
-                        )
-                    return self._map_comprehension(brace, entry)
-                pairs.append(entry)
-                while self._check(TokenType.COMMA):
-                    self._advance()
-                    if self._check(TokenType.RBRACE):
-                        break
-                    pairs.append(self._map_entry())
+            if self._check(TokenType.RBRACE):
+                self._advance()
+                return MapLiteral([], brace.line, brace.column)
+
+            is_set, first = self._map_or_set_entry()
+            if is_set:
+                return self._set_literal(brace, first)
+
+            pairs = [first]
+            if self._check(TokenType.FOR):
+                if isinstance(first, Spread):
+                    raise ParseError(
+                        "spread not allowed in map comprehension",
+                        brace.line,
+                        brace.column,
+                    )
+                return self._map_comprehension(brace, first)
+            while self._check(TokenType.COMMA):
+                self._advance()
+                if self._check(TokenType.RBRACE):
+                    break
+                pairs.append(self._map_entry())
             self._consume(TokenType.RBRACE, "'}' after map literal")
         return MapLiteral(pairs, brace.line, brace.column)
+
+    def _set_literal(self, brace: Token, first: Expr) -> Expr:
+        elements = [first]
+        while self._check(TokenType.COMMA):
+            self._advance()
+            if self._check(TokenType.RBRACE):
+                break
+            elements.append(self._set_element(brace))
+        self._consume(TokenType.RBRACE, "'}' after set literal")
+        if len(elements) < 2:
+            raise ParseError(
+                "set literal requires two or more elements",
+                brace.line,
+                brace.column,
+            )
+        return SetLiteral(elements, brace.line, brace.column)
+
+    def _set_element(self, brace: Token) -> Expr:
+        """Parses one Set element *after* the brace has already committed to
+        Set — unlike `_map_or_set_entry` (used only for the first entry),
+        this never treats a bare identifier as the Map shorthand, since that
+        convention doesn't exist for Sets."""
+        element = self._or()
+        if self._check(TokenType.COLON):
+            raise ParseError(
+                "mixed set/map literal: unexpected ':' in set literal",
+                brace.line,
+                brace.column,
+            )
+        return element
 
     def _map_comprehension(self, brace: Token, entry: tuple) -> Expr:
         key, value = entry
@@ -2177,7 +2224,42 @@ class Parser:
             extra_clauses=extra_clauses or None,
         )
 
+    def _map_or_set_entry(self):
+        """Determines whether the *first* entry inside `{...}` is a bare Set
+        element (`(True, element_expr)`) or a Map entry — a `(key, value)`
+        pair or a `Spread` — as `(False, entry)`. A `:` after the entry's key
+        expression means Map; anything else (`,` or `}`) means Set — see the
+        module-level parser docs for the full disambiguation rationale. The
+        identifier-shorthand (`{x}` -> `{x: x}`) and spread (`{...m}`)
+        branches are always Map and never even reach the peek. Only used for
+        the first entry: once a brace has committed to a kind, subsequent
+        entries go through `_map_entry` (Map) or `_set_element` (Set)
+        instead, which don't re-derive the kind."""
+        if self._check(TokenType.DOT_DOT_DOT):
+            dots = self._advance()
+            return False, Spread(self._ternary(), dots.line, dots.column)
+        if self._check(TokenType.IDENTIFIER) and self._peek_next().type in (
+            TokenType.COMMA,
+            TokenType.RBRACE,
+        ):
+            name = self._advance()
+            key = Literal(name.lexeme, name.line, name.column)
+            value = Identifier(name.lexeme, name.line, name.column)
+            return False, (key, value)
+        key_or_element = self._or()
+        if self._check(TokenType.COLON):
+            self._advance()
+            value = self._ternary()
+            return False, (key_or_element, value)
+        return True, key_or_element
+
     def _map_entry(self):
+        """Parses one Map entry after the first (the first goes through
+        `_map_or_set_entry`, which also determines the brace's kind).
+        Identical shape to a pre-Set-literal `_map_entry`: spread,
+        identifier-shorthand, or a `key: value` pair — a missing `:` here
+        means this entry doesn't fit an already-Map brace (a mixed
+        set/map literal like `{"a": 1, 2}`), so it's a `ParseError`."""
         if self._check(TokenType.DOT_DOT_DOT):
             dots = self._advance()
             return Spread(self._ternary(), dots.line, dots.column)

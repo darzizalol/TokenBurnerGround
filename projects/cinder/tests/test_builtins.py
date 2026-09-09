@@ -102,6 +102,7 @@ class TestType(unittest.TestCase):
             "nil": "nil",
             "[1]": "list",
             '{"a": 1}': "map",
+            "{1, 2}": "set",
         }
         for expr, expected in cases.items():
             with self.subTest(expr=expr):
@@ -127,6 +128,9 @@ class TestStr(unittest.TestCase):
 
     def test_str_of_string_is_identity(self):
         self.assertEqual(run('let result = str("hi");').get("result"), "hi")
+
+    def test_str_of_set(self):
+        self.assertEqual(run("let result = str({1, 2, 3});").get("result"), "{1, 2, 3}")
 
     def test_str_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):

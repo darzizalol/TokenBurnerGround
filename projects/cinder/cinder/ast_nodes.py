@@ -174,6 +174,13 @@ class MapLiteral:
 
 
 @dataclass(frozen=True)
+class SetLiteral:
+    elements: list  # list of Expr; parser enforces 2+ elements (see cinder/parser.py)
+    line: int
+    column: int
+
+
+@dataclass(frozen=True)
 class MapComprehension:
     key: "Expr"
     value: "Expr"

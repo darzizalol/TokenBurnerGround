@@ -41,6 +41,7 @@ from cinder.ast_nodes import (
     OptionalIndex,
     RangeExpr,
     ReturnStmt,
+    SetLiteral,
     SliceAssign,
     SliceExpr,
     Spread,
@@ -177,6 +178,8 @@ def shape(node):
                 for entry in node.pairs
             ],
         )
+    if isinstance(node, SetLiteral):
+        return ("SetLiteral", [shape(e) for e in node.elements])
     if isinstance(node, MapComprehension):
         return (
             "MapComprehension",
@@ -2210,6 +2213,79 @@ class TestListsAndMaps(unittest.TestCase):
                 ),
             ),
         )
+
+
+class TestSetLiteral(unittest.TestCase):
+    def test_set_literal_two_elements(self):
+        self.assertEqual(
+            shape(parse("{1, 2}")),
+            ("SetLiteral", [("Literal", 1), ("Literal", 2)]),
+        )
+
+    def test_set_literal_three_elements(self):
+        self.assertEqual(
+            shape(parse("{1, 2, 3}")),
+            ("SetLiteral", [("Literal", 1), ("Literal", 2), ("Literal", 3)]),
+        )
+
+    def test_set_literal_string_elements(self):
+        self.assertEqual(
+            shape(parse('{"a", "b"}')),
+            ("SetLiteral", [("Literal", "a"), ("Literal", "b")]),
+        )
+
+    def test_set_literal_with_trailing_comma(self):
+        self.assertEqual(
+            shape(parse("{1, 2,}")),
+            ("SetLiteral", [("Literal", 1), ("Literal", 2)]),
+        )
+
+    def test_set_literal_non_literal_elements(self):
+        self.assertEqual(
+            shape(parse("{a + 1, b}")),
+            (
+                "SetLiteral",
+                [
+                    ("Binary", ("Identifier", "a"), TokenType.PLUS, ("Literal", 1)),
+                    ("Identifier", "b"),
+                ],
+            ),
+        )
+
+    def test_empty_braces_still_an_empty_map_not_a_set(self):
+        self.assertEqual(shape(parse("{}")), ("MapLiteral", []))
+
+    def test_single_bound_identifier_still_map_shorthand(self):
+        self.assertEqual(
+            shape(parse("{x}")),
+            ("MapLiteral", [(("Literal", "x"), ("Identifier", "x"))]),
+        )
+
+    def test_ordinary_map_literal_unaffected(self):
+        self.assertEqual(
+            shape(parse('{"a": 1}')),
+            ("MapLiteral", [(("Literal", "a"), ("Literal", 1))]),
+        )
+
+    def test_single_element_set_literal_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("{1}")
+
+    def test_single_element_set_literal_with_trailing_comma_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse("{1,}")
+
+    def test_mixed_set_then_map_shape_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse('{1, "a": 2}')
+
+    def test_mixed_map_then_set_shape_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            parse('{"a": 1, 2}')
+
+    def test_set_literal_does_not_allow_spread(self):
+        with self.assertRaises(ParseError):
+            parse("{...[1, 2], 3}")
 
 
 class TestStringInterpolation(unittest.TestCase):

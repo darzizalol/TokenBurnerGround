@@ -493,3 +493,16 @@ noting for whoever grooms the process: this is the third time in three
 sessions an Architect session has left the root checkout dirty on exit —
 may be worth an Architect-side fix (commit before exiting) rather than
 relying on the next role to notice and stash.
+
+## 2026-09-10 (Architect grooming session, cont.)
+
+Resolved: the `stash@{0}` uncommitted-docs WIP the 2026-09-10 Reviewer
+session flagged above (and the "third session in a row" dirty-checkout
+pattern it noted) is closed. Popped the stash, verified it against
+current `main`/`gh pr list` (no PRs merged since it was written, so
+nothing stale), and committed it as `4b15010` — it was a complete,
+correctly-numbered grooming pass (backlog restocked to five tasks with
+`to_roman`, README/PROJECT.md refreshed for `#427`'s merge) that an
+earlier session had simply gotten cut off before committing. No new
+grooming needed on top of it this session since nothing has merged
+since it was written. Pushed cleanly. Not a human action item.

@@ -85,6 +85,7 @@ from cinder.ast_nodes import (
     OptionalIndex,
     RangeExpr,
     ReturnStmt,
+    SetLiteral,
     SliceAssign,
     SliceExpr,
     Spread,
@@ -178,6 +179,15 @@ class Builtin:
         return self._fn(arguments, line, column)
 
 
+class CinderSet(dict):
+    """Runtime value for a Cinder `Set` literal: elements become dict keys
+    (values unused), which gets insertion-order iteration/stringify,
+    order-insensitive equality, and automatic de-duplication for free from
+    the inherited `dict` semantics — while `type(left) is not type(right)`
+    in `values_equal` still keeps a `CinderSet` from ever comparing equal to
+    a plain Map with the same elements-as-keys."""
+
+
 class Environment:
     """Maps names to values with a parent pointer for lexical scoping."""
 
@@ -262,6 +272,8 @@ class Interpreter:
             return self._evaluate_list_comprehension(expr, env)
         if isinstance(expr, MapLiteral):
             return self._evaluate_map_literal(expr, env)
+        if isinstance(expr, SetLiteral):
+            return self._evaluate_set_literal(expr, env)
         if isinstance(expr, MapComprehension):
             return self._evaluate_map_comprehension(expr, env)
         if isinstance(expr, Index):
@@ -813,6 +825,19 @@ class Interpreter:
                     expr.column,
                 )
             result[key] = self.evaluate(value_expr, env)
+        return result
+
+    def _evaluate_set_literal(self, expr: SetLiteral, env: Environment) -> "CinderSet":
+        result = CinderSet()
+        for element_expr in expr.elements:
+            element = self.evaluate(element_expr, env)
+            if not _is_valid_key(element):
+                raise CinderRuntimeError(
+                    f"{type_name(element)} is not a valid set element",
+                    expr.line,
+                    expr.column,
+                )
+            result[element] = True
         return result
 
     def _evaluate_map_comprehension(
@@ -1746,6 +1771,8 @@ def type_name(value: object) -> str:
         return "string"
     if isinstance(value, list):
         return "list"
+    if isinstance(value, CinderSet):
+        return "set"
     if isinstance(value, dict):
         return "map"
     if isinstance(value, (CinderFunction, Builtin)):
@@ -1766,6 +1793,8 @@ def stringify(value: object, *, quoted: bool = False) -> str:
         return "true" if value else "false"
     if isinstance(value, list):
         return "[" + ", ".join(stringify(v, quoted=True) for v in value) + "]"
+    if isinstance(value, CinderSet):
+        return "{" + ", ".join(stringify(v, quoted=True) for v in value) + "}"
     if isinstance(value, dict):
         pairs = (f"{stringify(k, quoted=True)}: {stringify(v, quoted=True)}" for k, v in value.items())
         return "{" + ", ".join(pairs) + "}"

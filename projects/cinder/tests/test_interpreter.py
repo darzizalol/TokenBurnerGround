@@ -4961,6 +4961,62 @@ class TestListsAndMaps(unittest.TestCase):
             run('let s = "hi"; s[0] = "y";')
 
 
+class TestSetLiteral(unittest.TestCase):
+    def test_set_literal_evaluates_to_its_elements(self):
+        self.assertEqual(dict(evaluate("{1, 2, 3}")), {1: True, 2: True, 3: True})
+
+    def test_set_literal_string_elements(self):
+        self.assertEqual(dict(evaluate('{"a", "b"}')), {"a": True, "b": True})
+
+    def test_set_equality_is_order_insensitive(self):
+        self.assertEqual(evaluate("{1, 2} == {2, 1}"), True)
+
+    def test_set_construction_deduplicates(self):
+        self.assertEqual(evaluate("{1, 1, 2} == {1, 2}"), True)
+        self.assertEqual(dict(evaluate("{1, 1, 2}")), {1: True, 2: True})
+
+    def test_set_equality_false_for_different_elements(self):
+        self.assertEqual(evaluate("{1, 2} == {1, 2, 3}"), False)
+
+    def test_set_inequality_true_for_different_elements(self):
+        self.assertEqual(evaluate("{1, 2} != {1, 3}"), True)
+
+    def test_set_never_equals_map_with_same_elements_as_keys(self):
+        self.assertEqual(evaluate("{1, 2} == {1: true, 2: true}"), False)
+
+    def test_set_literal_invalid_element_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{1, [1, 2]}")
+        self.assertIn("is not a valid set element", str(ctx.exception))
+
+    def test_set_literal_invalid_element_map_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate('{1, {"a": 1}}')
+        self.assertIn("is not a valid set element", str(ctx.exception))
+
+    def test_empty_braces_still_an_empty_map(self):
+        self.assertEqual(evaluate("{}"), {})
+
+    def test_bound_identifier_single_element_still_map_shorthand(self):
+        env = run("let x = 5; let m = {x};")
+        self.assertEqual(env.get("m"), {"x": 5})
+
+    def test_ordinary_map_literal_still_works(self):
+        self.assertEqual(evaluate('{"a": 1}'), {"a": 1})
+
+    def test_mixed_set_then_map_shape_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            evaluate('{1, "a": 2}')
+
+    def test_mixed_map_then_set_shape_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            evaluate('{"a": 1, 2}')
+
+    def test_single_element_set_literal_raises_parse_error(self):
+        with self.assertRaises(ParseError):
+            evaluate("{1}")
+
+
 class TestListComprehension(unittest.TestCase):
     def test_basic_transform(self):
         self.assertEqual(evaluate("[x * 2 for x in [1, 2, 3]]"), [2, 4, 6])

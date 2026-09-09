@@ -6064,6 +6064,71 @@ class TestIsLeapYear(unittest.TestCase):
             run("is_leap_year();")
 
 
+class TestNthLeapYear(unittest.TestCase):
+    def test_nth_leap_year_of_first_ten_positions(self):
+        expected = {
+            1: 0, 2: 4, 3: 8, 4: 12, 5: 16,
+            6: 20, 7: 24, 8: 28, 9: 32, 10: 36,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_leap_year({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_leap_year_of_fifteen_and_twenty(self):
+        self.assertEqual(run("let result = nth_leap_year(15);").get("result"), 56)
+        self.assertEqual(run("let result = nth_leap_year(20);").get("result"), 76)
+
+    def test_nth_leap_year_of_fifty(self):
+        self.assertEqual(run("let result = nth_leap_year(50);").get("result"), 204)
+
+    def test_nth_leap_year_agrees_with_is_leap_year(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_leap_year(nth_leap_year({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_leap_year({position}) to be a leap year",
+            )
+
+    def test_nth_leap_year_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_leap_year(0);")
+        self.assertIn(
+            "nth_leap_year() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_leap_year_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_leap_year(-3);")
+        self.assertIn(
+            "nth_leap_year() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_leap_year_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_leap_year(true);")
+        self.assertIn(
+            "nth_leap_year() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_leap_year_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_leap_year("5");')
+        self.assertIn(
+            "nth_leap_year() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_leap_year_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_leap_year(1, 2);")
+
+
 class TestIsPerfectNumber(unittest.TestCase):
     def test_is_perfect_number_of_6(self):
         self.assertEqual(run("let result = is_perfect_number(6);").get("result"), True)

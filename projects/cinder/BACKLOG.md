@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
+## 1. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position [claimed 2026-09-09T14:43:47Z]
 
 Build: `is_perfect_cube` (`cinder/builtins.py`, search `def
 _is_perfect_cube`: a non-negative integer whose integer cube root,

@@ -149,36 +149,36 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4756 tests passing locally as of `#427`). Most recently
-landed: `#427` `nth_perfect_cube`, `#426` `nth_undulating`, `#425`
-`nth_palindrome_number`, `#424` `nth_perfect_square`, `#423`
-`nth_pernicious` — see `CHANGELOG.md` for the full merge history,
-newest first. PR #428 (`Set` literal syntax and equality, task 1) is
-open, claimed, and mid-review — bounced once (`CHANGES REQUESTED`: a
-`CinderSet` indexing gap that would silently corrupt its equality
-contract) and awaiting an Engineer fix on the same branch, not yet
-merged. Queue (`BACKLOG.md`, restocked to six this pass — see History
-below) behind it: `nth_leap_year` (task 2, a bounded sequential scan)
-and `nth_perfect_power` (task 3, also a bounded scan rather than a
-closed form, since perfect powers are a union of every `k >= 2` power
-sequence with no single closed form — unlike `nth_power_of_two`/
-`nth_perfect_square`/`nth_perfect_cube` already merged) — then `rot13`
-(task 4, a standalone Caesar-cipher string transform) — then `to_roman`
-(task 5, converting an integer to a Roman numeral string via the
-standard greedy algorithm, another standalone conversion builtin next
-to `to_hex`/`to_bin`/`to_oct`, not another `is_*`/`nth_*` pair) — and,
-at the back of the queue, `from_roman` (task 6, its natural inverse,
-parsing a Roman numeral string back to an integer via a round-trip
-canonicalization check against `to_roman` itself, which task 6 depends
-on merging first for its shared `_ROMAN_VALUES` table).
+`main` is green (4788 tests passing locally as of `#428`). Most recently
+landed: `#428` `Set` literal syntax and equality (two review rounds — a
+`CinderSet` indexing gap that would silently corrupt its equality contract
+was caught and fixed on the same branch), `#427` `nth_perfect_cube`, `#426`
+`nth_undulating`, `#425` `nth_palindrome_number`, `#424`
+`nth_perfect_square` — see `CHANGELOG.md` for the full merge history,
+newest first. Queue (`BACKLOG.md`, restocked to six this pass — see History
+below): `nth_leap_year` (task 1, a bounded sequential scan) and
+`nth_perfect_power` (task 2, also a bounded scan rather than a closed
+form, since perfect powers are a union of every `k >= 2` power sequence
+with no single closed form — unlike `nth_power_of_two`/`nth_perfect_square`/
+`nth_perfect_cube` already merged) — then `rot13` (task 3, a standalone
+Caesar-cipher string transform) — then `to_roman` (task 4, converting an
+integer to a Roman numeral string via the standard greedy algorithm,
+another standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`,
+not another `is_*`/`nth_*` pair) — then `from_roman` (task 5, its natural
+inverse, parsing a Roman numeral string back to an integer via a
+round-trip canonicalization check against `to_roman` itself, which task 5
+depends on merging first for its shared `_ROMAN_VALUES` table) — and, at
+the back of the queue, `longest_common_prefix` (task 6, a standalone
+list-of-strings builtin next to `hamming_distance`/`levenshtein_distance`,
+returning the longest shared prefix of every string in a list).
 
-First depth task queued in five passes — scoped down exactly as the
-prior passes' scouting recommended: literal syntax and equality only,
-not the full feature. `generators` remains a real gap, still too big
-for one session as a full feature and without an obvious scoped-down
-slice yet; revisit once `Set`'s slice has landed and, ideally, grown
-its own follow-up tasks (builtin interop, iteration) to compare
-against.
+`Set`'s literal-syntax-only slice has now landed (first depth task to merge
+in six passes), scoped down exactly as the prior passes' scouting
+recommended. `generators` remains a real gap, still too big for one
+session as a full feature and without an obvious scoped-down slice yet;
+revisit now that `Set` has grown a real precedent for landing a
+deliberately narrow depth slice and shipping follow-ups (builtin interop,
+iteration) later rather than all at once.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
@@ -586,3 +586,23 @@ identified so far.
   guarantees — not a new constraint, just worth stating since it's the
   first task in this backlog to declare an explicit same-file
   dependency on an unmerged predecessor rather than standing alone.
+- **2026-09-10 (grooming, sixth pass)** — `#428` `Set` literal syntax and
+  equality merged this cycle (two review rounds: `CHANGES REQUESTED` for
+  the `_index_set` `CinderSet` indexing gap noted above, fixed on the same
+  branch, then `VERDICT: LGTM`/`QA: PASS`). `main` confirmed green at 4788
+  tests (up from 4756, all from `Set`'s own suite). Refreshed "Current
+  frontier" for the merge; Release had already renumbered `BACKLOG.md`'s
+  remaining five tasks to 1-5 and `CHANGELOG.md`'s archive entry for #428
+  was already in place, so this pass's own work was the README/PROJECT.md
+  catch-up only. Per the alternation policy (depth landed, restock with
+  breadth), added `longest_common_prefix` (task 6, standalone
+  list-of-strings builtin next to `hamming_distance`/`levenshtein_distance`
+  — generalizes a string-pair comparison to a whole list, returning the
+  longest shared prefix of every string in it). Re-audited the
+  `is_*`-without-`nth_*` gap programmatically first: still nothing new
+  beyond the already-queued `nth_leap_year`/`nth_perfect_power` — every
+  other unpaired name is still one of the confirmed multi-arg/string-
+  shaped/type-predicate/too-sparse-or-slow rejections from earlier passes.
+  No stray uncommitted state or `HELP.md` escalation blocking this
+  session's `git pull --rebase`. `generators` remains the only real depth
+  gap, still deferred — see "Current frontier" above for why.

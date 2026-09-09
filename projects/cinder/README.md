@@ -494,7 +494,16 @@ while (i < 10) {
   sugar for map string keys (`m.key` as sugar for `m["key"]`, including as
   an assignment/`++`/`--`/compound-assign target (arithmetic and
   bitwise/shift alike, e.g. `m.key += 1`); only identifier-shaped keys
-  work, so `m.if` is a `ParseError`)
+  work, so `m.if` is a `ParseError`); Set literals `{1, 2, 3}` (bare
+  values, no `key: value` pairs — disambiguated from map literals by
+  peeking for a `:` after the first entry's expression), requiring two or
+  more elements (a single bare identifier `{x}` is unrecoverably claimed
+  by the existing map shorthand); runtime value is a `CinderSet` with
+  insertion-order iteration/stringify, order-insensitive `==`/`!=`
+  equality, and automatic de-duplication, kept distinct from a plain Map
+  even when both would stringify the same way; scope is deliberately
+  narrow for now — no `is_set`/`to_set` builtin, no `for`-iteration, no
+  comprehensions, no spread, no mutation (all natural follow-ups)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -812,7 +821,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4737+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4788+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -838,34 +847,34 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_perfect_cube`
-(PR #427), `nth_undulating` (PR #426), `nth_palindrome_number`
-(PR #425), `nth_perfect_square` (PR #424), `nth_pernicious` (PR #423),
-`nth_power_of_two` (PR #422), and guards in `match` arms (PR #413, `n
-if n > 0 => "positive"`, an optional `if <expr>` on any arm — attempted
-once before and closed after three failed review rounds over a
-recurring parser bug, this time parsing the guard via the parser's
-ordinary `_ternary()` entry point instead of a hand-rolled
-bracket/token scan, sidestepping that whole bug class; see
-`BACKLOG.md`'s `## Graveyard` for the postmortem).
+Actively developed, nightly. Recently landed: `Set` literal syntax and
+equality (PR #428, `{1, 2, 3}`, no builtin interop yet, single-element
+sets deliberately out of scope this round — two review rounds, the first
+catching a `CinderSet` indexing gap that would have silently corrupted
+its own equality contract), `nth_perfect_cube` (PR #427), `nth_undulating`
+(PR #426), `nth_palindrome_number` (PR #425), `nth_perfect_square`
+(PR #424), and guards in `match` arms (PR #413, `n if n > 0 =>
+"positive"`, an optional `if <expr>` on any arm — attempted once before
+and closed after three failed review rounds over a recurring parser bug,
+this time parsing the guard via the parser's ordinary `_ternary()` entry
+point instead of a hand-rolled bracket/token scan, sidestepping that whole
+bug class; see `BACKLOG.md`'s `## Graveyard` for the postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-`Set` literal syntax and equality (task 1, `{1, 2, 3}`, no builtin
-interop yet, single-element sets deliberately out of scope this round;
-see `BACKLOG.md` task 1 for the design notes) is open as PR #428,
-claimed, and mid-review (bounced once for a `CinderSet` indexing gap,
-awaiting an Engineer fix on the same branch). Queued behind it (see
-[`BACKLOG.md`](BACKLOG.md)): `nth_leap_year` (task 2, a bounded
-sequential scan, `is_leap_year`'s Gregorian-rule predicate),
-`nth_perfect_power` (task 3, a bounded scan rather than a closed form
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `nth_leap_year` (task 1, a
+bounded sequential scan, `is_leap_year`'s Gregorian-rule predicate),
+`nth_perfect_power` (task 2, a bounded scan rather than a closed form
 since perfect powers are a union of every `k >= 2` power sequence with
 no single closed form, unlike its closed-form `nth_*` neighbors above),
-`rot13` (task 4, a standalone Caesar-cipher string transform),
-`to_roman` (task 5, converting an integer to a Roman numeral string,
+`rot13` (task 3, a standalone Caesar-cipher string transform),
+`to_roman` (task 4, converting an integer to a Roman numeral string,
 another standalone conversion builtin rather than another
 `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list is nearly
-exhausted for now), and, at the back of the queue, `from_roman` (task
-6, `to_roman`'s natural inverse, parsing a Roman numeral string back to
-an integer via a round-trip canonicalization check).
+exhausted for now), `from_roman` (task 5, `to_roman`'s natural inverse,
+parsing a Roman numeral string back to an integer via a round-trip
+canonicalization check), and, at the back of the queue,
+`longest_common_prefix` (task 6, a standalone list-of-strings builtin
+next to `hamming_distance`/`levenshtein_distance`, returning the longest
+shared prefix of every string in a list).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

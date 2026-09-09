@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
+## 1. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position [claimed 2026-09-09T20:30:20Z]
 
 Build: `is_perfect_power` (`cinder/builtins.py`, search `def
 _is_perfect_power`: true for `-1`, `0`, and `1` outright, otherwise true

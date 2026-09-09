@@ -689,6 +689,9 @@ while (i < 10) {
   10-gonal number found at a 1-indexed position via the closed form `P(10, n) = 4n^2 - 3n`, together
   extending the triangular-through-nonagonal figurate-number cluster to its next member,
   `is_perfect_cube` to test whether an integer is a perfect cube (negative inputs allowed),
+  `nth_perfect_cube` to return the perfect cube found at a 1-indexed
+  position via the exact closed form `(k - 1) ** 3`, the value-returning
+  sibling of `is_perfect_cube`'s membership test,
   `is_pronic` to test whether an integer is expressible as `k * (k + 1)`,
   `collatz_length` to count the steps the Collatz (3n+1) recurrence takes to reach `1`,
   `collatz_max` to return the peak value that same recurrence reaches before collapsing to `1`,
@@ -835,30 +838,29 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_undulating`
-(PR #426), `nth_palindrome_number` (PR #425), `nth_perfect_square`
-(PR #424), `nth_pernicious` (PR #423), `nth_power_of_two` (PR #422),
-`nth_composite` (PR #421), and guards in `match` arms (PR #413, `n if
-n > 0 => "positive"`, an optional `if <expr>` on any arm — attempted
+Actively developed, nightly. Recently landed: `nth_perfect_cube`
+(PR #427), `nth_undulating` (PR #426), `nth_palindrome_number`
+(PR #425), `nth_perfect_square` (PR #424), `nth_pernicious` (PR #423),
+`nth_power_of_two` (PR #422), and guards in `match` arms (PR #413, `n
+if n > 0 => "positive"`, an optional `if <expr>` on any arm — attempted
 once before and closed after three failed review rounds over a
 recurring parser bug, this time parsing the guard via the parser's
 ordinary `_ternary()` entry point instead of a hand-rolled
 bracket/token scan, sidestepping that whole bug class; see
 `BACKLOG.md`'s `## Graveyard` for the postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_perfect_cube`
-(task 1, an exact closed form like
-`nth_perfect_square`/`nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/
-`nth_pronic`); then — first language-depth task in seven passes —
-`Set` literal syntax and equality (task 2, `{1, 2, 3}`, no builtin
-interop yet, single-element sets deliberately out of scope this round;
-see `BACKLOG.md` task 2 for the design notes); and, at the back of the
-queue, three more breadth tasks: `nth_leap_year` (task 3, a bounded
-sequential scan, `is_leap_year`'s Gregorian-rule predicate),
-`nth_perfect_power` (task 4, a bounded scan rather than a closed form
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)) — first language-depth
+task in eight passes — `Set` literal syntax and equality (task 1,
+`{1, 2, 3}`, no builtin interop yet, single-element sets deliberately
+out of scope this round; see `BACKLOG.md` task 1 for the design
+notes); then three more breadth tasks: `nth_leap_year` (task 2, a
+bounded sequential scan, `is_leap_year`'s Gregorian-rule predicate),
+`nth_perfect_power` (task 3, a bounded scan rather than a closed form
 since perfect powers are a union of every `k >= 2` power sequence with
 no single closed form, unlike its closed-form `nth_*` neighbors above),
-and `rot13` (task 5, a standalone Caesar-cipher string transform rather
+`rot13` (task 4, a standalone Caesar-cipher string transform), and, at
+the back of the queue, `to_roman` (task 5, converting an integer to a
+Roman numeral string, another standalone conversion builtin rather
 than another `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list
 is nearly exhausted for now; see task 5's own notes for what was
 scouted and rejected this pass).

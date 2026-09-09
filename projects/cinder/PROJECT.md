@@ -149,24 +149,25 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4746 tests passing locally as of `#426`). Most recently
-landed: `#426` `nth_undulating`, `#425` `nth_palindrome_number`, `#424`
-`nth_perfect_square`, `#423` `nth_pernicious`, `#422`
-`nth_power_of_two` — see `CHANGELOG.md` for the full merge history,
-newest first. Queue (`BACKLOG.md`, five tasks — at the floor; this
-pass scouted for a sixth and found nothing worth queuing, see History
-below): one breadth task, `nth_perfect_cube` (task 1, an exact closed
-form) — then one depth task, `Set` literal syntax and equality only
-(task 2, no builtin interop, no comprehension/spread, single-element sets
-deliberately out of scope — see task 2's own notes for the
-`{x}`-shorthand ambiguity that rules that case out) — then two more
-breadth tasks, `nth_leap_year` (task 3, a bounded sequential scan) and
-`nth_perfect_power` (task 4, also a bounded scan rather than a closed
+`main` is green (4756 tests passing locally as of `#427`). Most recently
+landed: `#427` `nth_perfect_cube`, `#426` `nth_undulating`, `#425`
+`nth_palindrome_number`, `#424` `nth_perfect_square`, `#423`
+`nth_pernicious` — see `CHANGELOG.md` for the full merge history,
+newest first. Queue (`BACKLOG.md`, restocked to five this pass — see
+History below): one depth task, `Set` literal syntax and equality only
+(task 1, no builtin interop, no comprehension/spread, single-element sets
+deliberately out of scope — see task 1's own notes for the
+`{x}`-shorthand ambiguity that rules that case out) — then two breadth
+tasks, `nth_leap_year` (task 2, a bounded sequential scan) and
+`nth_perfect_power` (task 3, also a bounded scan rather than a closed
 form, since perfect powers are a union of every `k >= 2` power
 sequence with no single closed form — unlike `nth_power_of_two`/
-`nth_perfect_square`/`nth_perfect_cube` alongside it in this queue) —
-and, at the back of the queue, `rot13` (task 5, a standalone
-Caesar-cipher string transform, not another `is_*`/`nth_*` pair).
+`nth_perfect_square`/`nth_perfect_cube` already merged) — then `rot13`
+(task 4, a standalone Caesar-cipher string transform) — and, at the
+back of the queue, `to_roman` (task 5, converting an integer to a
+Roman numeral string via the standard greedy algorithm, another
+standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`, not
+another `is_*`/`nth_*` pair).
 
 First depth task queued in five passes — scoped down exactly as the
 prior passes' scouting recommended: literal syntax and equality only,
@@ -528,3 +529,33 @@ identified so far.
   queue, unclaimed. Next grooming pass should keep scouting for a sixth;
   this pass's rejected list (`is_pandigital`/`is_munchausen_number`/
   `is_perfect_number`) doesn't need re-checking.
+- **2026-09-09 (grooming, fourth pass)** — `#427` `nth_perfect_cube`
+  merged (clean first-pass, no rework rounds) since the prior grooming
+  pass; `main` confirmed green at 4756 tests (up from 4746). Refreshed
+  "Current frontier" (task numbering shifted down by one now that
+  `nth_perfect_cube` is off the queue) and README.md's "Status &
+  roadmap" for the merge, and added the `nth_perfect_cube` bullet
+  README.md's builtins list had been missing entirely (same recurring
+  drift several prior entries have each fixed for their own merges —
+  `CHANGELOG.md`'s archive entry for `#427` was already correct, this
+  was purely the README/PROJECT.md side). Queue was at its 5-task floor
+  after the removal; restocked to five (not six — see below) with
+  `to_roman` (breadth, standalone conversion builtin next to
+  `to_hex`/`to_bin`/`to_oct`, greedy-algorithm integer-to-Roman-numeral
+  conversion bounded to the standard 1-3999 domain). Re-audited the
+  full `is_*`-without-`nth_*` gap programmatically before picking a
+  standalone builtin instead: every unpaired name is still one of the
+  categories already ruled out across the last several passes
+  (multi-arg, string/list-shaped with no integer ordering, a type
+  predicate, or previously confirmed too-sparse-or-slow) except
+  `is_leap_year`/`is_perfect_power`, which aren't actually gaps — their
+  `nth_*` siblings are already queued as this same backlog's tasks 2
+  and 3, just unmerged. Nothing new to add to the rejected list this
+  pass. `Set` has been climbing the queue by ordinary FIFO since it was
+  first added several passes ago (it was task 6 at its lowest, per the
+  cross-reference fix logged in this History section's `#423` entry)
+  and only reaches task 1 — the actual top, `BACKLOG.md`'s "next
+  Engineer's job" slot — with this pass's removal of `#427`. Not a
+  skipped-task pattern, just the first time it's been at the front;
+  worth watching next pass to confirm it gets claimed now that it
+  genuinely is top, but no escalation warranted yet.

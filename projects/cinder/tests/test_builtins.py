@@ -5481,6 +5481,71 @@ class TestIsUndulating(unittest.TestCase):
             run("is_undulating();")
 
 
+class TestNthUndulating(unittest.TestCase):
+    def test_nth_undulating_of_first_ten_positions(self):
+        expected = {
+            1: 101, 2: 121, 3: 131, 4: 141, 5: 151,
+            6: 161, 7: 171, 8: 181, 9: 191, 10: 202,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_undulating({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_undulating_of_fifteen_and_twenty(self):
+        self.assertEqual(run("let result = nth_undulating(15);").get("result"), 262)
+        self.assertEqual(run("let result = nth_undulating(20);").get("result"), 313)
+
+    def test_nth_undulating_of_fifty(self):
+        self.assertEqual(run("let result = nth_undulating(50);").get("result"), 646)
+
+    def test_nth_undulating_agrees_with_is_undulating(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_undulating(nth_undulating({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_undulating({position}) to be undulating",
+            )
+
+    def test_nth_undulating_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_undulating(0);")
+        self.assertIn(
+            "nth_undulating() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_undulating_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_undulating(-3);")
+        self.assertIn(
+            "nth_undulating() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_undulating_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_undulating(true);")
+        self.assertIn(
+            "nth_undulating() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_undulating_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_undulating("5");')
+        self.assertIn(
+            "nth_undulating() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_undulating_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_undulating(1, 2);")
+
+
 class TestIsPerfectSquare(unittest.TestCase):
     def test_is_perfect_square_of_zero(self):
         self.assertEqual(run("let result = is_perfect_square(0);").get("result"), True)

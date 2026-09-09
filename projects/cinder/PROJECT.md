@@ -149,23 +149,24 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4737 tests passing locally as of `#425`). Most recently
-landed: `#425` `nth_palindrome_number`, `#424` `nth_perfect_square`,
-`#423` `nth_pernicious`, `#422` `nth_power_of_two`, `#421`
-`nth_composite` — see `CHANGELOG.md` for the full merge history,
-newest first. Queue (`BACKLOG.md`, six tasks, restocked this pass): two
-breadth — `nth_undulating`/`nth_perfect_cube` — then one depth task,
-`Set` literal syntax and equality only (no builtin interop, no
-comprehension/spread, single-element sets deliberately out of scope —
-see task 3's own notes for the `{x}`-shorthand ambiguity that rules
-that case out) — then two more breadth tasks, `nth_leap_year` (task 4,
-same bounded-scan shape as `nth_undulating`) and `nth_perfect_power`
-(task 5, also a bounded scan rather than a closed form, since perfect
-powers are a union of every `k >= 2` power sequence with no single
-closed form — unlike `nth_power_of_two`/`nth_perfect_square`/
-`nth_perfect_cube` alongside it in this queue) — and, at the back of
-the queue, `rot13` (task 6, a standalone Caesar-cipher string
-transform, not another `is_*`/`nth_*` pair).
+`main` is green (4746 tests passing locally as of `#426`). Most recently
+landed: `#426` `nth_undulating`, `#425` `nth_palindrome_number`, `#424`
+`nth_perfect_square`, `#423` `nth_pernicious`, `#422`
+`nth_power_of_two` — see `CHANGELOG.md` for the full merge history,
+newest first. Queue (`BACKLOG.md`, five tasks — at the floor; this
+pass scouted for a sixth and found nothing worth queuing, see History
+below): one breadth task, `nth_perfect_cube` (task 1, an exact closed
+form) — then one depth task, `Set` literal syntax and equality only
+(task 2, no builtin interop, no comprehension/spread, single-element sets
+deliberately out of scope — see task 2's own notes for the
+`{x}`-shorthand ambiguity that rules that case out) — then two more
+breadth tasks, `nth_leap_year` (task 3, a bounded sequential scan) and
+`nth_perfect_power` (task 4, also a bounded scan rather than a closed
+form, since perfect powers are a union of every `k >= 2` power
+sequence with no single closed form — unlike `nth_power_of_two`/
+`nth_perfect_square`/`nth_perfect_cube` alongside it in this queue) —
+and, at the back of the queue, `rot13` (task 5, a standalone
+Caesar-cipher string transform, not another `is_*`/`nth_*` pair).
 
 First depth task queued in five passes — scoped down exactly as the
 prior passes' scouting recommended: literal syntax and equality only,
@@ -496,3 +497,34 @@ identified so far.
   before it) rather than continuing to search for `nth_*` pairings.
   `Set` (task 3 after renumbering) remains the only depth task in the
   queue, unclaimed.
+- **2026-09-09 (grooming, third pass)** — `#426` `nth_undulating` merged
+  (clean first-pass, no rework rounds) since the prior grooming pass;
+  "Current frontier" and README.md's "Status & roadmap"/builtins-list
+  bullet and test count (4746, up from 4737) had not yet been refreshed
+  for that merge, so this pass caught both up. Verified `main` is green
+  (4746 tests) and spot-checked all five queued gaps still don't exist
+  in the interpreter (each still raises "undefined name"). Queue was at
+  its 5-task floor; tried to restock to six before settling for five.
+  Checked the remaining `is_*`-without-`nth_*` gap programmatically
+  (diffed the full `is_*`/`nth_*` key sets in `builtins.py` directly
+  rather than eyeballing) — every unpaired name left is one of the
+  categories already ruled out in earlier passes (multi-arg, string/list-
+  shaped with no integer ordering, or a type predicate) except three
+  worth checking fresh: `is_pandigital` (rejected — empirically timed a
+  naive `candidate = 0, 1, 2, ...` scan against the real predicate and
+  it did not reach even the 1st term inside two minutes, since 10-digit
+  pandigitals only start around `1,023,456,789`; a smarter
+  digit-permutation generator would dodge this but that's a
+  meaningfully bigger task than this backlog's usual `nth_*` shape, not
+  a one-session bounded scan), `is_munchausen_number` (rejected — only
+  four exist in base 10 at all, `0`, `1`, `3435`, `438579072`, nowhere
+  near enough for a 50-term worked-example set), and `is_perfect_number`
+  (rejected — only five are known below `10^9`, `6`/`28`/`496`/`8128`/
+  `33550336`, the same "too sparse" shape as `is_strong_number` rejected
+  earlier). No standalone-builtin idea passed the bar either on a quick
+  pass. Left the queue at five rather than force a weak task — five is
+  within the stated 5-6 range, and CLAUDE.md's floor is "at least 5
+  ready tasks," not exactly 6. `Set` remains the only depth task in the
+  queue, unclaimed. Next grooming pass should keep scouting for a sixth;
+  this pass's rejected list (`is_pandigital`/`is_munchausen_number`/
+  `is_perfect_number`) doesn't need re-checking.

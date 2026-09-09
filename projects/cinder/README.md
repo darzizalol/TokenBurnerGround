@@ -704,6 +704,8 @@ while (i < 10) {
   candidate scan (repdigits are far sparser than semiprimes/abundant numbers — only 9
   exist per digit-length), the value-returning sibling of `is_repdigit`'s membership test,
   `is_undulating` to test whether an integer's decimal digits strictly alternate between exactly two distinct values,
+  `nth_undulating` to return the undulating number found at a 1-indexed position via a sequential
+  candidate scan, the value-returning sibling of `is_undulating`'s membership test,
   `is_pernicious` to test whether an integer's binary popcount is itself prime (sits next to `is_evil`/`is_odious`
   as the third popcount-based predicate, negative input raises the same domain error they do),
   `nth_pernicious` to return the pernicious number found at a 1-indexed position via a sequential
@@ -833,35 +835,32 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_palindrome_number`
-(PR #425), `nth_perfect_square` (PR #424), `nth_pernicious` (PR #423),
-`nth_power_of_two` (PR #422), `nth_composite` (PR #421), `nth_odious`
-(PR #420), and guards in `match` arms (PR #413, `n if n > 0 =>
-"positive"`, an optional `if <expr>` on any arm — attempted once before
-and closed after three failed review rounds over a recurring parser
-bug, this time parsing the guard via the parser's ordinary
-`_ternary()` entry point instead of a hand-rolled bracket/token scan,
-sidestepping that whole bug class; see `BACKLOG.md`'s `## Graveyard`
-for the postmortem).
+Actively developed, nightly. Recently landed: `nth_undulating`
+(PR #426), `nth_palindrome_number` (PR #425), `nth_perfect_square`
+(PR #424), `nth_pernicious` (PR #423), `nth_power_of_two` (PR #422),
+`nth_composite` (PR #421), and guards in `match` arms (PR #413, `n if
+n > 0 => "positive"`, an optional `if <expr>` on any arm — attempted
+once before and closed after three failed review rounds over a
+recurring parser bug, this time parsing the guard via the parser's
+ordinary `_ternary()` entry point instead of a hand-rolled
+bracket/token scan, sidestepping that whole bug class; see
+`BACKLOG.md`'s `## Graveyard` for the postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): two more
-value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched, `nth_undulating` (task 1, a bounded sequential
-scan, the same shape the merged `nth_*` builtins above already use) and
-`nth_perfect_cube` (task 2, an exact closed form like
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): `nth_perfect_cube`
+(task 1, an exact closed form like
 `nth_perfect_square`/`nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/
-`nth_pronic`); then — first language-depth task in six passes — `Set`
-literal syntax and equality (task 3, `{1, 2, 3}`, no builtin interop
-yet, single-element sets deliberately out of scope this round; see
-`BACKLOG.md` task 3 for the design notes); and, at the back of the
-queue, three more breadth tasks: `nth_leap_year` (task 4, same bounded
-scan pattern, `is_leap_year`'s Gregorian-rule predicate),
-`nth_perfect_power` (task 5, a bounded scan rather than a closed form
+`nth_pronic`); then — first language-depth task in seven passes —
+`Set` literal syntax and equality (task 2, `{1, 2, 3}`, no builtin
+interop yet, single-element sets deliberately out of scope this round;
+see `BACKLOG.md` task 2 for the design notes); and, at the back of the
+queue, three more breadth tasks: `nth_leap_year` (task 3, a bounded
+sequential scan, `is_leap_year`'s Gregorian-rule predicate),
+`nth_perfect_power` (task 4, a bounded scan rather than a closed form
 since perfect powers are a union of every `k >= 2` power sequence with
 no single closed form, unlike its closed-form `nth_*` neighbors above),
-and `rot13` (task 6, a standalone Caesar-cipher string transform rather
+and `rot13` (task 5, a standalone Caesar-cipher string transform rather
 than another `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list
-is nearly exhausted for now; see task 6's own notes for what was
+is nearly exhausted for now; see task 5's own notes for what was
 scouted and rejected this pass).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,

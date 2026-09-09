@@ -2803,6 +2803,17 @@ def _is_perfect_cube(arguments: list, line: int, column: int) -> object:
     return root ** 3 == magnitude
 
 
+def _nth_perfect_cube(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_perfect_cube", arguments, 1, line, column)
+    value = _require_int("nth_perfect_cube", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_perfect_cube() requires a positive integer, domain error",
+            line, column,
+        )
+    return (value - 1) ** 3
+
+
 def _is_pronic(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pronic", arguments, 1, line, column)
     value = _require_int("is_pronic", arguments[0], line, column)
@@ -5534,6 +5545,7 @@ _BUILTINS = {
     "is_harshad": _is_harshad,
     "nth_harshad": _nth_harshad,
     "is_perfect_cube": _is_perfect_cube,
+    "nth_perfect_cube": _nth_perfect_cube,
     "is_pronic": _is_pronic,
     "nth_pronic": _nth_pronic,
     "is_squarefree": _is_squarefree,

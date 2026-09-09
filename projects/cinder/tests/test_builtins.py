@@ -7170,6 +7170,74 @@ class TestIsPerfectCube(unittest.TestCase):
             run("is_perfect_cube();")
 
 
+class TestNthPerfectCube(unittest.TestCase):
+    def test_nth_perfect_cube_of_first_five_positions(self):
+        expected = {1: 0, 2: 1, 3: 8, 4: 27, 5: 64}
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_perfect_cube({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_perfect_cube_of_ten(self):
+        self.assertEqual(run("let result = nth_perfect_cube(10);").get("result"), 729)
+
+    def test_nth_perfect_cube_of_twenty(self):
+        self.assertEqual(
+            run("let result = nth_perfect_cube(20);").get("result"), 6859
+        )
+
+    def test_nth_perfect_cube_of_fifty(self):
+        self.assertEqual(
+            run("let result = nth_perfect_cube(50);").get("result"), 117649
+        )
+
+    def test_nth_perfect_cube_agrees_with_is_perfect_cube(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_perfect_cube(nth_perfect_cube({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_perfect_cube({position}) to be a perfect cube",
+            )
+
+    def test_nth_perfect_cube_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_cube(0);")
+        self.assertIn(
+            "nth_perfect_cube() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_cube_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_cube(-3);")
+        self.assertIn(
+            "nth_perfect_cube() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_cube_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_cube(true);")
+        self.assertIn(
+            "nth_perfect_cube() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_perfect_cube_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_perfect_cube("5");')
+        self.assertIn(
+            "nth_perfect_cube() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_perfect_cube_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_perfect_cube(1, 2);")
+
+
 class TestIsPronic(unittest.TestCase):
     def test_is_pronic_of_0(self):
         self.assertEqual(run("let result = is_pronic(0);").get("result"), True)

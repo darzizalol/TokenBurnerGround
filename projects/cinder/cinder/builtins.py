@@ -2431,6 +2431,27 @@ def _is_leap_year(arguments: list, line: int, column: int) -> object:
     return value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)
 
 
+def _nth_leap_year(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_leap_year", arguments, 1, line, column)
+    value = _require_int("nth_leap_year", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_leap_year() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_leap_year_candidate(candidate: int) -> bool:
+        return candidate % 4 == 0 and (candidate % 100 != 0 or candidate % 400 == 0)
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_leap_year_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_perfect_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_perfect_number", arguments, 1, line, column)
     value = _require_int("is_perfect_number", arguments[0], line, column)
@@ -5526,6 +5547,7 @@ _BUILTINS = {
     "is_strong_number": _is_strong_number,
     "is_munchausen_number": _is_munchausen_number,
     "is_leap_year": _is_leap_year,
+    "nth_leap_year": _nth_leap_year,
     "is_perfect_number": _is_perfect_number,
     "is_practical_number": _is_practical_number,
     "nth_practical_number": _nth_practical_number,

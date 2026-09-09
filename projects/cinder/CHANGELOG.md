@@ -4331,3 +4331,27 @@ for vision/architecture.
   `(value - 1) ** 3` directly, no candidate scan. Clean first pass, no
   bounces (4756 tests passing, up from 4746). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Language: `Set` literal syntax and equality** — merged 2026-09-09 via
+  PR #428 (`feat/20260909-set-literal`). First genuinely new collection
+  type (not another `nth_*`/`is_*` builtin): `{1, 2, 3}`-style bare-value
+  literals, disambiguated from Map literals by peeking for a `:` after
+  each entry's first key expression (`_map_pair` in `cinder/parser.py`);
+  two-or-more-elements required, since a single bare identifier `{x}` is
+  unrecoverably claimed by the existing map shorthand. Runtime value is
+  `CinderSet(dict)` (elements as keys) for insertion-order
+  iteration/stringify, order-insensitive equality, and automatic
+  de-duplication for free, kept distinct from a plain Map via
+  `values_equal`'s existing `type(a) is not type(b)` check. Scope is
+  deliberately narrow: literal syntax and `==`/`!=` equality only — no
+  `is_set`/`to_set` builtin, no `for`-iteration, no comprehensions, no
+  spread, no mutation (follow-up tasks). Bounced once on review: `_index_set`
+  fell through to the generic dict path for `CinderSet` (a dict subclass),
+  so `s[1] = false` silently corrupted an element's sentinel and broke the
+  equality contract this PR exists to deliver, while membership checks
+  still reported the element present; fixed with a `CinderSet` isinstance
+  guard in `_index_set` (checked before the generic dict branch) raising
+  `CinderRuntimeError`, which also covers `IndexCompoundAssign`/
+  `IndexNilCoalesceAssign` since both route through `_index_set` for the
+  write. 4788 tests passing, up from 4785. README/PROJECT.md updates,
+  including documenting the single-element-Set gap as a deliberate
+  limitation, left to the Architect's next grooming pass.

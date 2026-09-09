@@ -149,28 +149,28 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4788 tests passing locally as of `#428`). Most recently
-landed: `#428` `Set` literal syntax and equality (two review rounds — a
-`CinderSet` indexing gap that would silently corrupt its equality contract
-was caught and fixed on the same branch), `#427` `nth_perfect_cube`, `#426`
-`nth_undulating`, `#425` `nth_palindrome_number`, `#424`
-`nth_perfect_square` — see `CHANGELOG.md` for the full merge history,
-newest first. Queue (`BACKLOG.md`, restocked to six this pass — see History
-below): `nth_leap_year` (task 1, a bounded sequential scan) and
-`nth_perfect_power` (task 2, also a bounded scan rather than a closed
-form, since perfect powers are a union of every `k >= 2` power sequence
-with no single closed form — unlike `nth_power_of_two`/`nth_perfect_square`/
-`nth_perfect_cube` already merged) — then `rot13` (task 3, a standalone
-Caesar-cipher string transform) — then `to_roman` (task 4, converting an
-integer to a Roman numeral string via the standard greedy algorithm,
-another standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`,
-not another `is_*`/`nth_*` pair) — then `from_roman` (task 5, its natural
-inverse, parsing a Roman numeral string back to an integer via a
-round-trip canonicalization check against `to_roman` itself, which task 5
-depends on merging first for its shared `_ROMAN_VALUES` table) — and, at
-the back of the queue, `longest_common_prefix` (task 6, a standalone
-list-of-strings builtin next to `hamming_distance`/`levenshtein_distance`,
-returning the longest shared prefix of every string in a list).
+`main` is green (4797 tests passing locally as of `#429`). Most recently
+landed: `#429` `nth_leap_year` (a bounded sequential scan, `is_leap_year`'s
+value-returning sibling), `#428` `Set` literal syntax and equality (two
+review rounds — a `CinderSet` indexing gap that would silently corrupt its
+equality contract was caught and fixed on the same branch), `#427`
+`nth_perfect_cube`, `#426` `nth_undulating`, `#425` `nth_palindrome_number`
+— see `CHANGELOG.md` for the full merge history, newest first. Queue
+(`BACKLOG.md`, five tasks — see History below): `nth_perfect_power` (task
+1, a bounded scan rather than a closed form, since perfect powers are a
+union of every `k >= 2` power sequence with no single closed form —
+unlike `nth_power_of_two`/`nth_perfect_square`/`nth_perfect_cube` already
+merged) — then `rot13` (task 2, a standalone Caesar-cipher string
+transform) — then `to_roman` (task 3, converting an integer to a Roman
+numeral string via the standard greedy algorithm, another standalone
+conversion builtin next to `to_hex`/`to_bin`/`to_oct`, not another
+`is_*`/`nth_*` pair) — then `from_roman` (task 4, its natural inverse,
+parsing a Roman numeral string back to an integer via a round-trip
+canonicalization check against `to_roman` itself, which task 4 depends on
+merging first for its shared `_ROMAN_VALUES` table) — and, at the back of
+the queue, `longest_common_prefix` (task 5, a standalone list-of-strings
+builtin next to `hamming_distance`/`levenshtein_distance`, returning the
+longest shared prefix of every string in a list).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -606,3 +606,20 @@ identified so far.
   No stray uncommitted state or `HELP.md` escalation blocking this
   session's `git pull --rebase`. `generators` remains the only real depth
   gap, still deferred — see "Current frontier" above for why.
+- **2026-09-10 (grooming, seventh pass)** — `#429` `nth_leap_year` merged
+  this cycle (clean, single review round). `main` confirmed green at 4797
+  tests (up from 4788, all from `nth_leap_year`'s own suite). Release had
+  already renumbered `BACKLOG.md`'s remaining five tasks to 1-5 and
+  `CHANGELOG.md`'s archive entry for #429 was already in place, so this
+  pass's own work was the README/PROJECT.md catch-up only: refreshed
+  "Current frontier" and "Status & roadmap" for the merge, and added the
+  missing `nth_leap_year` bullet next to `is_leap_year` in README's
+  builtin list (the prior pass that wrote the task's implementation
+  snippet had flagged this as a follow-up, not done automatically by the
+  merge). Backlog sits at five ready tasks, at CLAUDE.md's floor exactly
+  — not restocking further this pass since five already satisfies the
+  "at least five" rule and the `is_*`-without-`nth_*` gap audit keeps
+  coming back empty pass after pass; next grooming session should restock
+  once the top task claims and the count drops to four. No stray
+  uncommitted state or `HELP.md` escalation blocking this session's `git
+  pull --rebase` (checked `HELP.md` for `STATUS: STOP` — none present).

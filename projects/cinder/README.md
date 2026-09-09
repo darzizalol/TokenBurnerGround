@@ -604,6 +604,9 @@ while (i < 10) {
   `is_strong_number` to test whether an integer equals the sum of its own digits' factorials,
   `is_munchausen_number` as its digit-to-its-own-power sibling (e.g. `3435 = 3^3 + 4^4 + 3^3 + 5^5`),
   `is_leap_year` to test the Gregorian leap-year rule,
+  `nth_leap_year` to return the leap year found at a 1-indexed position
+  (position `1` maps to `0`), the value-returning sibling of
+  `is_leap_year`'s membership test,
   `reverse_int` to reverse an integer's decimal digits (sign preserved),
   `divisors` to list an integer's positive divisors in sorted order,
   `aliquot_sum` to sum an integer's own proper divisors (the value-returning counterpart to
@@ -847,34 +850,35 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `Set` literal syntax and
-equality (PR #428, `{1, 2, 3}`, no builtin interop yet, single-element
-sets deliberately out of scope this round — two review rounds, the first
-catching a `CinderSet` indexing gap that would have silently corrupted
-its own equality contract), `nth_perfect_cube` (PR #427), `nth_undulating`
-(PR #426), `nth_palindrome_number` (PR #425), `nth_perfect_square`
-(PR #424), and guards in `match` arms (PR #413, `n if n > 0 =>
-"positive"`, an optional `if <expr>` on any arm — attempted once before
-and closed after three failed review rounds over a recurring parser bug,
-this time parsing the guard via the parser's ordinary `_ternary()` entry
-point instead of a hand-rolled bracket/token scan, sidestepping that whole
-bug class; see `BACKLOG.md`'s `## Graveyard` for the postmortem).
+Actively developed, nightly. Recently landed: `nth_leap_year` (PR #429,
+leap year found at a 1-indexed position, `is_leap_year`'s Gregorian-rule
+predicate), `Set` literal syntax and equality (PR #428, `{1, 2, 3}`, no
+builtin interop yet, single-element sets deliberately out of scope this
+round — two review rounds, the first catching a `CinderSet` indexing gap
+that would have silently corrupted its own equality contract),
+`nth_perfect_cube` (PR #427), `nth_undulating` (PR #426),
+`nth_palindrome_number` (PR #425), and guards in `match` arms (PR #413,
+`n if n > 0 => "positive"`, an optional `if <expr>` on any arm —
+attempted once before and closed after three failed review rounds over a
+recurring parser bug, this time parsing the guard via the parser's
+ordinary `_ternary()` entry point instead of a hand-rolled bracket/token
+scan, sidestepping that whole bug class; see `BACKLOG.md`'s
+`## Graveyard` for the postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `nth_leap_year` (task 1, a
-bounded sequential scan, `is_leap_year`'s Gregorian-rule predicate),
-`nth_perfect_power` (task 2, a bounded scan rather than a closed form
-since perfect powers are a union of every `k >= 2` power sequence with
-no single closed form, unlike its closed-form `nth_*` neighbors above),
-`rot13` (task 3, a standalone Caesar-cipher string transform),
-`to_roman` (task 4, converting an integer to a Roman numeral string,
-another standalone conversion builtin rather than another
-`is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list is nearly
-exhausted for now), `from_roman` (task 5, `to_roman`'s natural inverse,
-parsing a Roman numeral string back to an integer via a round-trip
-canonicalization check), and, at the back of the queue,
-`longest_common_prefix` (task 6, a standalone list-of-strings builtin
-next to `hamming_distance`/`levenshtein_distance`, returning the longest
-shared prefix of every string in a list).
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `nth_perfect_power`
+(task 1, a bounded scan rather than a closed form since perfect powers
+are a union of every `k >= 2` power sequence with no single closed form,
+unlike its closed-form `nth_*` neighbors above), `rot13` (task 2, a
+standalone Caesar-cipher string transform), `to_roman` (task 3,
+converting an integer to a Roman numeral string, another standalone
+conversion builtin rather than another `is_*`/`nth_*` pair — the
+`is_*`-without-`nth_*` gap list is nearly exhausted for now),
+`from_roman` (task 4, `to_roman`'s natural inverse, parsing a Roman
+numeral string back to an integer via a round-trip canonicalization
+check), and, at the back of the queue, `longest_common_prefix` (task 5,
+a standalone list-of-strings builtin next to
+`hamming_distance`/`levenshtein_distance`, returning the longest shared
+prefix of every string in a list).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

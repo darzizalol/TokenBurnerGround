@@ -849,21 +849,23 @@ ordinary `_ternary()` entry point instead of a hand-rolled
 bracket/token scan, sidestepping that whole bug class; see
 `BACKLOG.md`'s `## Graveyard` for the postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)) — first language-depth
-task in eight passes — `Set` literal syntax and equality (task 1,
-`{1, 2, 3}`, no builtin interop yet, single-element sets deliberately
-out of scope this round; see `BACKLOG.md` task 1 for the design
-notes); then three more breadth tasks: `nth_leap_year` (task 2, a
-bounded sequential scan, `is_leap_year`'s Gregorian-rule predicate),
+`Set` literal syntax and equality (task 1, `{1, 2, 3}`, no builtin
+interop yet, single-element sets deliberately out of scope this round;
+see `BACKLOG.md` task 1 for the design notes) is open as PR #428,
+claimed, and mid-review (bounced once for a `CinderSet` indexing gap,
+awaiting an Engineer fix on the same branch). Queued behind it (see
+[`BACKLOG.md`](BACKLOG.md)): `nth_leap_year` (task 2, a bounded
+sequential scan, `is_leap_year`'s Gregorian-rule predicate),
 `nth_perfect_power` (task 3, a bounded scan rather than a closed form
 since perfect powers are a union of every `k >= 2` power sequence with
 no single closed form, unlike its closed-form `nth_*` neighbors above),
-`rot13` (task 4, a standalone Caesar-cipher string transform), and, at
-the back of the queue, `to_roman` (task 5, converting an integer to a
-Roman numeral string, another standalone conversion builtin rather
-than another `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list
-is nearly exhausted for now; see task 5's own notes for what was
-scouted and rejected this pass).
+`rot13` (task 4, a standalone Caesar-cipher string transform),
+`to_roman` (task 5, converting an integer to a Roman numeral string,
+another standalone conversion builtin rather than another
+`is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list is nearly
+exhausted for now), and, at the back of the queue, `from_roman` (task
+6, `to_roman`'s natural inverse, parsing a Roman numeral string back to
+an integer via a round-trip canonicalization check).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

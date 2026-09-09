@@ -153,21 +153,24 @@ bring the count back to 6.
 landed: `#427` `nth_perfect_cube`, `#426` `nth_undulating`, `#425`
 `nth_palindrome_number`, `#424` `nth_perfect_square`, `#423`
 `nth_pernicious` — see `CHANGELOG.md` for the full merge history,
-newest first. Queue (`BACKLOG.md`, restocked to five this pass — see
-History below): one depth task, `Set` literal syntax and equality only
-(task 1, no builtin interop, no comprehension/spread, single-element sets
-deliberately out of scope — see task 1's own notes for the
-`{x}`-shorthand ambiguity that rules that case out) — then two breadth
-tasks, `nth_leap_year` (task 2, a bounded sequential scan) and
-`nth_perfect_power` (task 3, also a bounded scan rather than a closed
-form, since perfect powers are a union of every `k >= 2` power
+newest first. PR #428 (`Set` literal syntax and equality, task 1) is
+open, claimed, and mid-review — bounced once (`CHANGES REQUESTED`: a
+`CinderSet` indexing gap that would silently corrupt its equality
+contract) and awaiting an Engineer fix on the same branch, not yet
+merged. Queue (`BACKLOG.md`, restocked to six this pass — see History
+below) behind it: `nth_leap_year` (task 2, a bounded sequential scan)
+and `nth_perfect_power` (task 3, also a bounded scan rather than a
+closed form, since perfect powers are a union of every `k >= 2` power
 sequence with no single closed form — unlike `nth_power_of_two`/
 `nth_perfect_square`/`nth_perfect_cube` already merged) — then `rot13`
-(task 4, a standalone Caesar-cipher string transform) — and, at the
-back of the queue, `to_roman` (task 5, converting an integer to a
-Roman numeral string via the standard greedy algorithm, another
-standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`, not
-another `is_*`/`nth_*` pair).
+(task 4, a standalone Caesar-cipher string transform) — then `to_roman`
+(task 5, converting an integer to a Roman numeral string via the
+standard greedy algorithm, another standalone conversion builtin next
+to `to_hex`/`to_bin`/`to_oct`, not another `is_*`/`nth_*` pair) — and,
+at the back of the queue, `from_roman` (task 6, its natural inverse,
+parsing a Roman numeral string back to an integer via a round-trip
+canonicalization check against `to_roman` itself, which task 6 depends
+on merging first for its shared `_ROMAN_VALUES` table).
 
 First depth task queued in five passes — scoped down exactly as the
 prior passes' scouting recommended: literal syntax and equality only,
@@ -559,3 +562,27 @@ identified so far.
   skipped-task pattern, just the first time it's been at the front;
   worth watching next pass to confirm it gets claimed now that it
   genuinely is top, but no escalation warranted yet.
+- **2026-09-10 (grooming, fifth pass)** — no PR merged since the prior
+  pass; `main` still green at 4756 tests. `Set` (task 1) is confirmed
+  claimed and no longer just "at the front" — PR #428 is open, and a
+  Reviewer session already bounced it once (`CHANGES REQUESTED`: an
+  unguarded `CinderSet` index-assignment path that would silently
+  corrupt the type's equality contract), so it's mid-flight, not
+  unclaimed. That leaves only tasks 2-5 ready/unclaimed — one below
+  CLAUDE.md's 5-ready floor — so this pass restocked to six rather than
+  leaving it at four. Re-scouted the `is_*`-without-`nth_*` gap
+  programmatically first (same audit as the fourth pass, extended to
+  the full builtin list this time): confirmed empty again, nothing new
+  beyond the already-queued `nth_leap_year`/`nth_perfect_power`. Added
+  `from_roman` (task 6, breadth) instead — the natural inverse of
+  `to_roman` (task 5, not yet merged), parsing a Roman numeral string
+  back to an integer via a round-trip check (decode greedily, re-encode
+  with `_to_roman`, require exact match) that rejects non-canonical
+  input (`"IIII"`, `"VX"`) for free without a separate validation pass.
+  Verified every worked example and a full `1..3999` round-trip
+  programmatically before writing the task. Task 6 explicitly depends
+  on task 5 merging first (shares `_ROMAN_VALUES`), which the strict
+  top-to-bottom claiming order in `BACKLOG.md`'s header already
+  guarantees — not a new constraint, just worth stating since it's the
+  first task in this backlog to declare an explicit same-file
+  dependency on an unmerged predecessor rather than standing alone.

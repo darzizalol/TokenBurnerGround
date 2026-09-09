@@ -7847,6 +7847,82 @@ class TestIsPerfectPower(unittest.TestCase):
             run("is_perfect_power();")
 
 
+class TestNthPerfectPower(unittest.TestCase):
+    def test_nth_perfect_power_of_first_ten_positions(self):
+        expected = {
+            1: 0,
+            2: 1,
+            3: 4,
+            4: 8,
+            5: 9,
+            6: 16,
+            7: 25,
+            8: 27,
+            9: 32,
+            10: 36,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_perfect_power({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_perfect_power_of_fifteen_twenty_and_fifty(self):
+        self.assertEqual(run("let result = nth_perfect_power(15);").get("result"), 121)
+        self.assertEqual(run("let result = nth_perfect_power(20);").get("result"), 196)
+        self.assertEqual(run("let result = nth_perfect_power(50);").get("result"), 1444)
+
+    def test_nth_perfect_power_agrees_with_is_perfect_power(self):
+        for position in range(1, 51):
+            self.assertEqual(
+                run(
+                    f"let result = is_perfect_power(nth_perfect_power({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_perfect_power({position}) to be a perfect power",
+            )
+
+    def test_nth_perfect_power_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_power(0);")
+        self.assertIn(
+            "nth_perfect_power() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_power_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_power(-3);")
+        self.assertIn(
+            "nth_perfect_power() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_power_of_bool_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_power(true);")
+        self.assertIn(
+            "nth_perfect_power() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_nth_perfect_power_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_perfect_power("5");')
+        self.assertIn(
+            "nth_perfect_power() requires an int, got string",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_power_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_perfect_power(1, 2);")
+
+    def test_nth_perfect_power_wrong_arity_too_many_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_perfect_power(1, 2, 3);")
+
+
 class TestDivisors(unittest.TestCase):
     def test_divisors_of_6(self):
         self.assertEqual(run("let result = divisors(6);").get("result"), [1, 2, 3, 6])

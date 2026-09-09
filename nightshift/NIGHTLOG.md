@@ -8777,6 +8777,35 @@ The morning paper: what shipped, what bounced, what's still open.
   row across the last two nights — the `nth_*` backlog series keeps
   shipping without friction.
 
+### Second cycle
+
+- **Merged**: PR #426 (`feat/20260909-nth-undulating`, `e69c9eb`) —
+  `nth_undulating`, the value-returning sibling of `is_undulating`,
+  matching the dense-scan shape every recent `nth_*` task already
+  established. Reviewer posted `VERDICT: LGTM` (diffed the new
+  candidate predicate against `_is_undulating` for behavioral drift,
+  hand-verified the first ten undulating numbers and the 15th/20th/50th
+  worked examples, ran the full suite in an isolated worktree — 4746
+  tests) and QA posted `QA: PASS` (full suite, 4746 tests, plus a CLI
+  smoke test with a 1..20 sequence eyeball check, a `nth_undulating(50)`
+  round-trip through `is_undulating`, and domain/type-error checks)
+  both since the branch's only commit, so this was merge-eligible on
+  the first pass. Removed the `.worktrees/nth-undulating` worktree,
+  squash-merged, deleted the branch, and archived the completed task
+  from `projects/cinder/BACKLOG.md` to `CHANGELOG.md` (renumbering the
+  remaining five tasks 1-5 and fixing the one in-body cross-reference
+  that pointed at its old slot number, `(queued as task 2 above)` →
+  `(queued as task 1 above)`).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present. `git pull --rebase origin main` was a no-op before starting
+  (already up to date). Token budget: 534,897,622 of 1,750,000,000 used
+  (30% of the 35% share of 5,000,000,000), 1,215,102,378 left. Tenth
+  clean first-pass merge in a row across the last two nights — the
+  `nth_*` backlog series continues without friction.
+
 ## 2026-09-08
 
 ### First cycle

@@ -11,111 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_undulating` — undulating number found at a 1-indexed position [claimed 2026-09-09T14:27:18Z]
-
-Build: `is_undulating` (`cinder/builtins.py`, search `def
-_is_undulating`: a non-negative integer whose decimal digits strictly
-alternate between exactly two distinct values across at least three
-digits — `len(digits) >= 3`, `digits[0] != digits[1]`, and every digit
-matches the one two positions back — negative input, and anything under
-three digits or with equal first two digits, returns `false`) has no
-value-returning `nth_*` sibling. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_undulating(1));'
-# -> <eval>:1:7: undefined name 'nth_undulating' (did you mean
-#    'is_undulating'?)
-```
-
-Worked examples: the first ten undulating numbers (confirmed by
-scanning with `is_undulating` directly) are `101, 121, 131, 141, 151,
-161, 171, 181, 191, 202`, so `nth_undulating(1)` is `101` and
-`nth_undulating(10)` is `202`. The 15th is `262`, the 20th is `313`,
-the 50th is `646`. Undulating numbers are dense enough within the
-three-digit range (every `aba` pattern with `a != b` qualifies) that
-the scan stays fast at every position — confirmed locally: scanning to
-the 50th takes well under a millisecond in raw Python, no performance
-caveat needed.
-
-Unlike `nth_palindrome_number` (already-merged sibling) or `nth_sad_number`
-(position `1` maps to candidate `0`), position `1` maps to candidate
-`101` here — nothing under 100 has three digits, so the scan can still
-start from `candidate = -1` (incremented before the first check, the
-same shape every other dense-scan `nth_*` task uses) — it will simply
-reject every candidate under `101` before finding it, which is harmless
-and keeps this implementation structurally identical to its siblings
-for anyone reading them side by side.
-
-Add directly after `_is_undulating` (search `def _is_undulating`,
-immediately before `def _is_perfect_square`) — keeps the
-value-returning helper next to the predicate it mirrors:
-```python
-def _nth_undulating(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_undulating", arguments, 1, line, column)
-    value = _require_int("nth_undulating", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_undulating() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_undulating_candidate(candidate: int) -> bool:
-        digits = str(candidate)
-        if len(digits) < 3 or digits[0] == digits[1]:
-            return False
-        return all(digit == digits[i % 2] for i, digit in enumerate(digits))
-
-    count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_undulating_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check copied verbatim from `_is_undulating`'s own body
-minus its `value < 0` guard, since the scan never visits a negative
-candidate — the same "duplicate the tiny predicate body instead of a
-redundant `_require_arity`/`_require_int` round-trip per candidate"
-choice every recent `nth_*` task already makes.) Register the new dict
-entry (search `"is_undulating": _is_undulating,`, add `"nth_undulating":
-_nth_undulating,` directly after it, before `"is_perfect_square":
-_is_perfect_square,`).
-
-Acceptance criteria:
-- `nth_undulating(1);` through `nth_undulating(10);` are `101, 121,
-  131, 141, 151, 161, 171, 181, 191, 202` in order — the worked example
-  above.
-- `nth_undulating(15);` is `262`, `nth_undulating(20);` is `313`, and
-  `nth_undulating(50);` is `646` — further worked examples confirming
-  the scan scales well past the first ten.
-- For every `position` in `1..50`,
-  `is_undulating(nth_undulating(position))` is `true` — the same
-  self-consistency check every recent `nth_*` task's own test suite
-  already runs against its predicate.
-- `nth_undulating(0);`, `nth_undulating(-3);` both raise
-  `CinderRuntimeError` matching `"nth_undulating\(\) requires a
-  positive integer, domain error"`.
-- `nth_undulating(true);` raises `CinderRuntimeError` matching
-  `"nth_undulating\(\) requires an int, got bool"`.
-- `nth_undulating("5");` raises `CinderRuntimeError` matching
-  `"nth_undulating\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_undulating`,
-search `def _is_undulating`), `tests/test_builtins.py` (new `class
-TestNthUndulating`, modeled on `class TestNthRepdigit`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsUndulating`, search that name). Once merged, `README.md`'s
-existing `is_undulating` bullet needs `nth_undulating` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
+## 1. Standard library: `nth_perfect_cube` — perfect cube found at a 1-indexed position
 
 Build: `is_perfect_cube` (`cinder/builtins.py`, search `def
 _is_perfect_cube`: a non-negative integer whose integer cube root,
@@ -195,7 +91,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Language: `Set` literal syntax and equality (no builtin interop yet)
+## 2. Language: `Set` literal syntax and equality (no builtin interop yet)
 
 Build the first slice of `Set` — a genuinely new collection type, not
 another `nth_*`/`is_*` builtin. Scope is deliberately narrow: **literal
@@ -326,7 +222,7 @@ this task.
 
 ---
 
-## 4. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
+## 3. Standard library: `nth_leap_year` — leap year found at a 1-indexed position
 
 Build: `is_leap_year` (`cinder/builtins.py`, search `def _is_leap_year`: the
 Gregorian rule, `value % 4 == 0 and (value % 100 != 0 or value % 400 == 0)`,
@@ -414,7 +310,7 @@ leave both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
+## 4. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position
 
 Build: `is_perfect_power` (`cinder/builtins.py`, search `def
 _is_perfect_power`: true for `-1`, `0`, and `1` outright, otherwise true
@@ -449,7 +345,7 @@ the 50th is `1444`. Perfect powers get sparser as they grow (unlike the
 dense `nth_*` sequences merged so far), but still dense enough to reach
 the 50th term well under a millisecond in raw Python — confirmed
 locally, no performance caveat needed. Unlike `nth_power_of_two`,
-`nth_perfect_square`, and `nth_perfect_cube` (queued as task 2 above),
+`nth_perfect_square`, and `nth_perfect_cube` (queued as task 1 above),
 which are each a single sequence with an exact closed form, perfect
 powers are the *union* of every `k >= 2` power sequence with no single
 closed form — this task needs an actual bounded scan against the
@@ -533,7 +429,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `rot13` — the classic Caesar-cipher string transform
+## 5. Standard library: `rot13` — the classic Caesar-cipher string transform
 
 Add a standalone string builtin, not another `is_*`/`nth_*` pair — the
 `is_*`-without-`nth_*` gap list is nearly exhausted for now (see this

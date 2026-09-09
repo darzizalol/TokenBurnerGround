@@ -4312,3 +4312,13 @@ for vision/architecture.
   verbatim. Clean first pass, no bounces (4737 tests passing, up from
   4728). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `nth_undulating`** — merged 2026-09-09 via PR #426
+  (`feat/20260909-nth-undulating`). Value-returning sibling of
+  `is_undulating`, matching the dense-scan shape every recent `nth_*`
+  task already established: `_nth_undulating` (`cinder/builtins.py`,
+  directly after `_is_undulating`) scans candidates from `-1` upward
+  (position `1` maps to candidate `101`, the first three-digit `aba`
+  pattern), reusing `is_undulating`'s alternating-digit predicate
+  verbatim. Clean first pass, no bounces (4746 tests passing, up from
+  4737). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

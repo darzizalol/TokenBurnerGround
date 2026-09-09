@@ -640,6 +640,9 @@ while (i < 10) {
   sequential scan reusing `is_vampire_number`'s own fang-search predicate, the value-returning
   sibling of `is_vampire_number`'s membership test,
   `is_palindrome_number` to test whether an integer's decimal digits read the same forwards and backwards,
+  `nth_palindrome_number` to return the numeric palindrome found at a 1-indexed position via a
+  sequential candidate scan (position `1` maps to candidate `0`, itself a palindrome), the
+  value-returning sibling of `is_palindrome_number`'s membership test,
   `digital_root` to reduce an integer to a single digit via repeated digit-summing,
   `multiplicative_persistence` to count how many times an integer's digits must be repeatedly multiplied together before the result drops to a single digit,
   `additive_persistence` as its digit-summing sibling, counting how many repeated digit-sum steps reduce an integer to a single digit,
@@ -804,7 +807,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4728+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4737+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -830,32 +833,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_perfect_square`
-(PR #424), `nth_pernicious` (PR #423), `nth_power_of_two` (PR #422),
-`nth_composite` (PR #421), `nth_odious` (PR #420), `nth_evil` (PR #419),
-and guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an
-optional `if <expr>` on any arm — attempted once before and closed
-after three failed review rounds over a recurring parser bug, this
-time parsing the guard via the parser's ordinary `_ternary()` entry
-point instead of a hand-rolled bracket/token scan, sidestepping that
-whole bug class; see `BACKLOG.md`'s `## Graveyard` for the postmortem).
+Actively developed, nightly. Recently landed: `nth_palindrome_number`
+(PR #425), `nth_perfect_square` (PR #424), `nth_pernicious` (PR #423),
+`nth_power_of_two` (PR #422), `nth_composite` (PR #421), `nth_odious`
+(PR #420), and guards in `match` arms (PR #413, `n if n > 0 =>
+"positive"`, an optional `if <expr>` on any arm — attempted once before
+and closed after three failed review rounds over a recurring parser
+bug, this time parsing the guard via the parser's ordinary
+`_ternary()` entry point instead of a hand-rolled bracket/token scan,
+sidestepping that whole bug class; see `BACKLOG.md`'s `## Graveyard`
+for the postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Coming up next (see [`BACKLOG.md`](BACKLOG.md)): three more
+Coming up next (see [`BACKLOG.md`](BACKLOG.md)): two more
 value-returning `nth_*` siblings for predicates that already exist but
-can't yet be searched: `nth_palindrome_number` and `nth_undulating` via
-the same bounded sequential scan pattern the merged `nth_*` builtins
-above already use, plus `nth_perfect_cube` via an exact closed form
-like `nth_perfect_square`/`nth_octagonal`/`nth_nonagonal`/
-`nth_decagonal`/`nth_pronic` (see each task's own notes in
-`BACKLOG.md` for specifics); then — first language-depth task in five
-passes — `Set` literal syntax and equality (`{1, 2, 3}`, no builtin
-interop yet, single-element sets deliberately out of scope this round;
-see `BACKLOG.md` task 4 for the design notes); and, at the back of the
-queue, two more breadth tasks: `nth_leap_year` (task 5, same bounded
-scan pattern, `is_leap_year`'s Gregorian-rule predicate) and
-`nth_perfect_power` (task 6, a bounded scan rather than a closed form
+can't yet be searched, `nth_undulating` (task 1, a bounded sequential
+scan, the same shape the merged `nth_*` builtins above already use) and
+`nth_perfect_cube` (task 2, an exact closed form like
+`nth_perfect_square`/`nth_octagonal`/`nth_nonagonal`/`nth_decagonal`/
+`nth_pronic`); then — first language-depth task in six passes — `Set`
+literal syntax and equality (task 3, `{1, 2, 3}`, no builtin interop
+yet, single-element sets deliberately out of scope this round; see
+`BACKLOG.md` task 3 for the design notes); and, at the back of the
+queue, three more breadth tasks: `nth_leap_year` (task 4, same bounded
+scan pattern, `is_leap_year`'s Gregorian-rule predicate),
+`nth_perfect_power` (task 5, a bounded scan rather than a closed form
 since perfect powers are a union of every `k >= 2` power sequence with
-no single closed form, unlike its closed-form `nth_*` neighbors above).
+no single closed form, unlike its closed-form `nth_*` neighbors above),
+and `rot13` (task 6, a standalone Caesar-cipher string transform rather
+than another `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list
+is nearly exhausted for now; see task 6's own notes for what was
+scouted and rejected this pass).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

@@ -149,22 +149,23 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4728 tests passing locally as of `#424`). Most recently
-landed: `#424` `nth_perfect_square`, `#423` `nth_pernicious`, `#422`
-`nth_power_of_two`, `#421` `nth_composite`, `#420` `nth_odious` — see
-`CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, six tasks, restocked this pass): three breadth —
-`nth_palindrome_number`/`nth_undulating`/`nth_perfect_cube` — then one
-depth task, `Set` literal syntax and equality only (no builtin
-interop, no comprehension/spread, single-element sets deliberately out
-of scope — see task 4's own notes for the `{x}`-shorthand ambiguity
-that rules that case out) — plus two more breadth tasks at the back of
-the queue: `nth_leap_year` (task 5, same bounded-scan shape as
-`nth_palindrome_number`/`nth_undulating`) and `nth_perfect_power`
-(task 6, also a bounded scan rather than a closed form, since perfect
+`main` is green (4737 tests passing locally as of `#425`). Most recently
+landed: `#425` `nth_palindrome_number`, `#424` `nth_perfect_square`,
+`#423` `nth_pernicious`, `#422` `nth_power_of_two`, `#421`
+`nth_composite` — see `CHANGELOG.md` for the full merge history,
+newest first. Queue (`BACKLOG.md`, six tasks, restocked this pass): two
+breadth — `nth_undulating`/`nth_perfect_cube` — then one depth task,
+`Set` literal syntax and equality only (no builtin interop, no
+comprehension/spread, single-element sets deliberately out of scope —
+see task 3's own notes for the `{x}`-shorthand ambiguity that rules
+that case out) — then two more breadth tasks, `nth_leap_year` (task 4,
+same bounded-scan shape as `nth_undulating`) and `nth_perfect_power`
+(task 5, also a bounded scan rather than a closed form, since perfect
 powers are a union of every `k >= 2` power sequence with no single
 closed form — unlike `nth_power_of_two`/`nth_perfect_square`/
-`nth_perfect_cube` alongside it in this queue).
+`nth_perfect_cube` alongside it in this queue) — and, at the back of
+the queue, `rot13` (task 6, a standalone Caesar-cipher string
+transform, not another `is_*`/`nth_*` pair).
 
 First depth task queued in five passes — scoped down exactly as the
 prior passes' scouting recommended: literal syntax and equality only,
@@ -457,3 +458,41 @@ identified so far.
   family of digit-power predicates). No depth task queued this pass —
   same scouting gap as the eight passes above, still holds; `Set`
   (task 4) remains the only depth task in the queue, unclaimed.
+- **2026-09-09 (grooming, second pass)** — `#425` `nth_palindrome_number`
+  merged (clean first-pass, no rework rounds). Refreshed "Current
+  frontier" and README.md's "Status & roadmap"/test count (4737, up
+  from 4728) for the merge, and added the `nth_palindrome_number`
+  bullet README.md's builtins list had been missing entirely (only a
+  negative "can't yet be searched" mention in the roadmap prose, no
+  positive bullet next to `is_palindrome_number` — same recurring drift
+  several prior entries have each fixed for their own merges). Queue
+  was back at its 5-task floor; renumbering already done by the prior
+  Release session, so this pass restocked to six with `rot13` (breadth,
+  standalone Caesar-cipher string transform, sits next to `swap_case`).
+  Chose a standalone builtin rather than another `is_*`/`nth_*` pair
+  because that gap list is now close to exhausted: audited
+  `is_automorphic` (rejected — only 12 automorphic numbers exist below
+  2,000,000, and each successive digit-length contributes roughly two
+  more, so later terms need candidates with dozens of digits, far
+  beyond what a sequential scan can reach), `is_keith_number` (rejected
+  — confirmed by direct timed scan that reaching even the 50th term
+  runs well past two minutes in raw Python, too slow for a bounded-scan
+  builtin), and a derived single-arg `is_amicable_number` built from the
+  existing two-arg `is_amicable`/`aliquot_sum` (rejected — reaching the
+  50th amicable number requires scanning past 389,924 with an
+  isqrt-optimized divisor-sum check per candidate, ~10s in raw Python
+  for the predicate alone and roughly double that once `nth_*` calls it
+  twice per candidate, in the same "too slow for one session's bounded
+  scan" territory as `is_weird_number`/`is_strong_number` rejected
+  earlier). These three join `is_armstrong`/`is_disarium`/
+  `is_weird_number`/`is_strong_number` from earlier passes as the
+  confirmed-too-sparse-or-slow list; the remaining unpaired `is_*`
+  predicates are either multi-argument (`is_amicable`, `is_anagram`,
+  `is_rotation`, ...), string/list-shaped with no natural 1-indexed
+  integer ordering (`is_balanced`, `is_isogram`, `is_sorted`, ...), or
+  type predicates — none of them fit the `nth_*` pattern at all. Future
+  breadth passes should default to standalone builtins (like `rot13`
+  here, or `hamming_distance`/`levenshtein_distance`/`cartesian_product`
+  before it) rather than continuing to search for `nth_*` pairings.
+  `Set` (task 3 after renumbering) remains the only depth task in the
+  queue, unclaimed.

@@ -3030,6 +3030,33 @@ def _is_perfect_power(arguments: list, line: int, column: int) -> object:
     return False
 
 
+def _nth_perfect_power(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_perfect_power", arguments, 1, line, column)
+    value = _require_int("nth_perfect_power", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_perfect_power() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_perfect_power_candidate(candidate: int) -> bool:
+        if candidate <= 1:
+            return True
+        for k in range(2, candidate.bit_length() + 1):
+            root = _integer_kth_root(candidate, k)
+            if root ** k == candidate:
+                return True
+        return False
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_perfect_power_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _divisors(arguments: list, line: int, column: int) -> object:
     _require_arity("divisors", arguments, 1, line, column)
     value = _require_int("divisors", arguments[0], line, column)
@@ -5577,6 +5604,7 @@ _BUILTINS = {
     "is_achilles": _is_achilles,
     "nth_achilles": _nth_achilles,
     "is_perfect_power": _is_perfect_power,
+    "nth_perfect_power": _nth_perfect_power,
     "divisors": _divisors,
     "aliquot_sum": _aliquot_sum,
     "prime_factors": _prime_factors,

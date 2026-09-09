@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position
+## 1. Standard library: `nth_palindrome_number` — numeric palindrome found at a 1-indexed position [claimed 2026-09-09T14:07:45Z]
 
 Build: `is_palindrome_number` (`cinder/builtins.py`, search `def
 _is_palindrome_number`: a non-negative integer whose decimal digits read

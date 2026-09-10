@@ -270,6 +270,53 @@ class TestToOct(unittest.TestCase):
             run("to_oct();")
 
 
+class TestToRoman(unittest.TestCase):
+    def test_to_roman_of_worked_examples(self):
+        cases = {
+            1: "I", 4: "IV", 9: "IX",
+            14: "XIV", 40: "XL", 49: "XLIX", 90: "XC",
+            444: "CDXLIV", 499: "CDXCIX", 900: "CM", 944: "CMXLIV",
+            1994: "MCMXCIV", 2026: "MMXXVI", 3999: "MMMCMXCIX",
+        }
+        for value, expected in cases.items():
+            with self.subTest(value=value):
+                self.assertEqual(
+                    run(f"let result = to_roman({value});").get("result"), expected
+                )
+
+    def test_to_roman_of_lower_bound(self):
+        self.assertEqual(run("let result = to_roman(1);").get("result"), "I")
+
+    def test_to_roman_of_upper_bound(self):
+        self.assertEqual(
+            run("let result = to_roman(3999);").get("result"), "MMMCMXCIX"
+        )
+
+    def test_to_roman_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_roman(0);")
+
+    def test_to_roman_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_roman(-1);")
+
+    def test_to_roman_above_domain_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_roman(4000);")
+
+    def test_to_roman_of_non_int_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_roman(1.5);")
+
+    def test_to_roman_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('to_roman("5");')
+
+    def test_to_roman_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_roman();")
+
+
 class TestPush(unittest.TestCase):
     def test_push_appends_and_returns_the_list(self):
         env = run("let xs = [1, 2]; let result = push(xs, 3);")

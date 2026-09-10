@@ -11,109 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `dot_product` — dot product of two equal-length numeric lists [claimed 2026-09-10T19:44:34Z]
-
-Add a standalone two-list-argument builtin, not another `is_*`/`nth_*`
-pair — that gap list stayed exhausted this pass too (re-audited
-programmatically: every unpaired `is_*` name is still one of the
-already-rejected categories — multi-arg, string/list-shaped with no
-integer ordering, a type predicate, or one of the confirmed-too-sparse-
-or-slow names from earlier passes' History entries). `dot_product` sits
-next to `mean`/`geometric_mean`/`harmonic_mean`/`median`/`variance`/
-`std_dev` (`cinder/builtins.py`, search `def _std_dev`) as another
-numeric-list statistic, but two-argument like `hamming_distance` (search
-`def _hamming_distance`) rather than one — mirror that function's
-equal-length validation shape (its own `len(string1) != len(string2)`
-check) since `dot_product` has the identical failure mode for
-mismatched-length inputs. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(dot_product([1, 2, 3], [4, 5, 6]));'
-# -> <eval>:1:7: undefined name 'dot_product'
-```
-
-**What it does.** Given two lists of numbers of equal length, return the
-sum of the pairwise products of their elements — the standard dot
-(scalar) product: `a[0]*b[0] + a[1]*b[1] + ... + a[n-1]*b[n-1]`.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `dot_product([1, 2, 3], [4, 5, 6])` is `32` (`1*4 + 2*5 + 3*6`).
-- `dot_product([1, 0], [0, 1])` is `0` — orthogonal unit vectors.
-- `dot_product([], [])` is `0` — two empty lists have no terms to sum,
-  vacuously zero.
-- `dot_product([-1, 2], [3, -4])` is `-11` (`-1*3 + 2*-4`).
-- `dot_product([2, 2, 2], [3, 3, 3])` is `18`.
-- `dot_product([1.5, 2.5], [2, 4])` is `13.0` (mixed int/float elements,
-  ordinary numeric promotion — same as every other numeric-list builtin
-  here).
-
-Add directly after `_std_dev` (search `def _std_dev`, immediately before
-`def _mode`) — keeps the new numeric-list statistic next to its closest
-siblings:
-```python
-def _dot_product(arguments: list, line: int, column: int) -> object:
-    _require_arity("dot_product", arguments, 2, line, column)
-    first, second = arguments
-    if not isinstance(first, list):
-        raise CinderRuntimeError(
-            f"dot_product() requires a list as its first argument, got {type_name(first)}",
-            line, column,
-        )
-    if not isinstance(second, list):
-        raise CinderRuntimeError(
-            f"dot_product() requires a list as its second argument, got {type_name(second)}",
-            line, column,
-        )
-    for element in first + second:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"dot_product() requires lists of numbers, got {type_name(element)}",
-                line, column,
-            )
-    if len(first) != len(second):
-        raise CinderRuntimeError(
-            f"dot_product() requires lists of equal length, got lengths {len(first)} and {len(second)}",
-            line, column,
-        )
-    total = 0
-    for a, b in zip(first, second):
-        total = total + a * b
-    return total
-```
-Register the new dict entry (search `"std_dev": _std_dev,`, add
-`"dot_product": _dot_product,` directly after it, before `"mode":
-_mode,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `dot_product([1, 2, 3], [4, 5, 6])` is `32` and
-  `dot_product([1.5, 2.5], [2, 4])` is `13.0`.
-- `dot_product([], []);` is `0` — the empty-list case.
-- `dot_product(123, [1]);` raises `CinderRuntimeError` matching
-  `"dot_product\(\) requires a list as its first argument, got int"`.
-- `dot_product([1], "x");` raises `CinderRuntimeError` matching
-  `"dot_product\(\) requires a list as its second argument, got string"`.
-- `dot_product([1, "a"], [1, 2]);` raises `CinderRuntimeError` matching
-  `"dot_product\(\) requires lists of numbers, got string"`.
-- `dot_product([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` matching
-  `"dot_product\(\) requires lists of equal length, got lengths 2 and 3"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_std_dev`, search
-`def _std_dev`), `tests/test_builtins.py` (new `class TestDotProduct`,
-modeled on `class TestHammingDistance`, search that name, for the
-two-argument/equal-length test shapes above — place it near the existing
-`class TestStdDev`/`class TestMode`). Once merged, `README.md`'s
-existing `std_dev` bullet needs `dot_product` added right after it, its
-"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
-frontier" section needs refreshing — leave both to the Architect's next
-grooming pass, not this task.
-
----
-
-## 2. Standard library: `cumsum` — cumulative (running) sum of a numeric list
+## 1. Standard library: `cumsum` — cumulative (running) sum of a numeric list
 
 Add a standalone list-transform builtin sitting directly next to `sum`/
 `product` (`cinder/builtins.py`, search `def _sum`, immediately before
@@ -197,7 +95,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
+## 2. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
 
 Add a standalone two-argument string builtin directly after `_rot13`
 (`cinder/builtins.py`, search `def _rot13`, immediately before `def
@@ -303,13 +201,13 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `cumprod` — cumulative (running) product of a numeric list
+## 3. Standard library: `cumprod` — cumulative (running) product of a numeric list
 
 Add a standalone list-transform builtin directly after `_product`
 (`cinder/builtins.py`, search `def _product`, immediately before `def
-_mean`) — the multiplicative sibling of task 2's `cumsum`, the same
+_mean`) — the multiplicative sibling of task 1's `cumsum`, the same
 scalar-to-running-list shape shift applied to `product` instead of
-`sum`. (If task 2 has already merged by the time this is picked up,
+`sum`. (If task 1 has already merged by the time this is picked up,
 `_cumsum` will sit between `_sum` and `_product`; this task's anchor is
 `_product` itself, so the insertion point is unaffected either way.)
 Verify the gap:
@@ -393,12 +291,12 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `cummax` — cumulative (running) maximum of a numeric list
+## 4. Standard library: `cummax` — cumulative (running) maximum of a numeric list
 
 Add a standalone list-transform builtin directly after `_max`
 (`cinder/builtins.py`, search `def _max`, immediately before `def
 _clamp`) — the running counterpart to `max`, the same scalar-to-
-running-list shape shift task 2's `cumsum` applies to `sum` (`max`
+running-list shape shift task 1's `cumsum` applies to `sum` (`max`
 itself stays variadic/multi-argument; `cummax` takes a single list,
 same signature shape as `cumsum`/`cumprod`, not `max`'s own). Verify the
 gap:
@@ -480,13 +378,13 @@ pass, not this task.
 
 ---
 
-## 6. Standard library: `cummin` — cumulative (running) minimum of a numeric list
+## 5. Standard library: `cummin` — cumulative (running) minimum of a numeric list
 
 Add a standalone list-transform builtin directly after `cummax` once
-task 5 lands (`cinder/builtins.py`, search `def _cummax`, immediately
-before `def _clamp`) — if task 5 hasn't landed yet, anchor on `_min`
+task 4 lands (`cinder/builtins.py`, search `def _cummax`, immediately
+before `def _clamp`) — if task 4 hasn't landed yet, anchor on `_min`
 instead (search `def _min`, immediately before `def _max`) and place it
-there; either way it is the minimizing sibling of task 5's `cummax`,
+there; either way it is the minimizing sibling of task 4's `cummax`,
 the same running-aggregate shape applied to `min` instead of `max`.
 Verify the gap:
 ```sh
@@ -512,7 +410,7 @@ below):
   ordinary numeric comparison — same as `min`/`max`).
 - `cummin([3, 3, 3])` is `[3, 3, 3]`.
 
-Add directly after `_cummax` if task 5 has landed (search `def
+Add directly after `_cummax` if task 4 has landed (search `def
 _cummax`), otherwise directly after `_min` (search `def _min`,
 immediately before `def _max`):
 ```python

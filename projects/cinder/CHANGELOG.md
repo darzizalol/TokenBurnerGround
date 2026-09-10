@@ -4426,3 +4426,11 @@ for vision/architecture.
   or a power of two). Clean first pass, no bounces (4855 tests passing,
   up from 4843). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `dot_product`** — merged 2026-09-10T19:49:47Z via
+  PR #436 (`feat/20260910-dot-product`, squashed as `57d9bb0`).
+  Two-list-argument builtin sitting next to `mean`/`variance`/
+  `std_dev`, mirroring `hamming_distance`'s equal-length validation
+  shape: returns the sum of pairwise products of two equal-length
+  numeric lists (`0` for two empty lists). Clean first pass, no bounces
+  (4866 tests passing, up from 4855). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

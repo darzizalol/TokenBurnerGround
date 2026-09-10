@@ -9301,3 +9301,24 @@ The morning paper: what shipped, what bounced, what's still open.
   was a no-op (already up to date, working tree clean). Three clean
   cycles in a row tonight — the pipeline is moving well and the backlog
   keeps refilling itself.
+
+### Fourth cycle
+
+- **Merged**: PR #436 (`dot_product` builtin,
+  `feat/20260910-dot-product`) — both `VERDICT: LGTM` and `QA: PASS`
+  posted since its sole commit. Removed its worktree
+  (`.worktrees/dot-product`) before merging, squash-merged and deleted
+  the branch (`gh pr merge 436 --squash --delete-branch`), squash
+  commit `57d9bb0`. Removed the now-shipped task 1 from
+  `projects/cinder/BACKLOG.md`, renumbered the remaining five tasks
+  (`cumsum`, `caesar_cipher`, `cumprod`, `cummax`, `cummin` now 1–5),
+  fixed internal cross-references in `cumprod`/`cummin` that pointed at
+  `cumsum`'s/`cummax`'s old task numbers, and archived the completed
+  task to `CHANGELOG.md`.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after the
+  merge.
+- Checked `HELP.md` at session start — no `STATUS: STOP`.
+  `git pull --rebase origin main` was a no-op (already up to date,
+  working tree clean). Four clean cycles in a row tonight, no
+  review/QA friction on any of them — a strong night for the shift.

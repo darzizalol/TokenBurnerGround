@@ -490,6 +490,96 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `diff` — successive differences of a numeric list
+
+Add a standalone list-transform builtin directly after `_cumsum`
+(`cinder/builtins.py`, search `def _cumsum`, immediately before `def
+_product`) — the inverse-shaped sibling of `cumsum`: where `cumsum`
+turns a list into its running totals, `diff` turns a list into the
+gaps between consecutive elements (`cumsum(diff(list))[i] + list[0]`
+reconstructs `list[i + 1]` for every `i`, though the task itself only
+needs the forward computation below, not that identity). Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(diff([1, 3, 6, 10]));'
+# -> <eval>:1:7: undefined name 'diff'
+```
+
+**What it does.** Given a list of numbers, return a new list one
+element shorter where each element is the difference between a pair of
+consecutive elements in the input — `result[i] = list[i + 1] -
+list[i]`. A list with fewer than two elements (empty or single-element)
+has no consecutive pair to difference, so it returns `[]`.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `diff([1, 3, 6, 10])` is `[2, 3, 4]`.
+- `diff([])` is `[]` — no elements, no consecutive pair.
+- `diff([5])` is `[]` — one element, still no consecutive pair.
+- `diff([5, 5, 5])` is `[0, 0]` — a constant list differences to all
+  zeros.
+- `diff([10, 7, 3])` is `[-3, -4]` — a decreasing sequence differences
+  to negative values.
+- `diff([1.5, 3, 4.5])` is `[1.5, 1.5]` (mixed int/float elements,
+  ordinary numeric subtraction — same as `cumsum`/`sum`).
+- `diff([1, -2, 3])` is `[-3, 5]` — negative elements subtract as
+  usual.
+
+Add directly after `_cumsum` (search `def _cumsum`, immediately before
+`def _product`) — keeps the new differencing builtin next to the
+running-total sibling it inverts:
+```python
+def _diff(arguments: list, line: int, column: int) -> object:
+    _require_arity("diff", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"diff() requires a list, got {type_name(value)}", line, column
+        )
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"diff() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    result = []
+    for i in range(len(value) - 1):
+        result.append(value[i + 1] - value[i])
+    return result
+```
+(Same validate-then-walk shape as `_cumsum` — search `def _cumsum` —
+just subtracting each element from its successor instead of
+accumulating a running total, and producing one fewer element than the
+input instead of the same count.) Register the new dict entry (search
+`"cumsum": _cumsum,`, add `"diff": _diff,` directly after it, before
+`"product": _product,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `diff([1, 3, 6, 10])` is `[2, 3, 4]` and `diff([1.5, 3, 4.5])` is
+  `[1.5, 1.5]`.
+- `diff([]);` is `[]` and `diff([5]);` is `[]` — the empty-list and
+  single-element cases.
+- `diff([10, 7, 3]);` is `[-3, -4]` — the decreasing-sequence case.
+- `diff(123);` raises `CinderRuntimeError` matching `"diff\(\) requires
+  a list, got int"`.
+- `diff([1, "a"]);` raises `CinderRuntimeError` matching `"diff\(\)
+  requires a list of numbers, got string"` (mirror `cumsum`'s own
+  non-numeric-element test for the exact message shape).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_cumsum`, search
+`def _cumsum`), `tests/test_builtins.py` (new `class TestDiff`, modeled
+on `class TestCumsum`, search that name, for the test shapes above —
+place it near the existing `class TestCumsum`). Once merged,
+`README.md`'s existing `cumsum` bullet needs `diff` added right after
+it, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

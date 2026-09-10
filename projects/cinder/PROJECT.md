@@ -149,8 +149,10 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4866 tests passing locally as of `#436`). Most recently
-landed: `#436` `dot_product` (a two-list-argument numeric statistic
+`main` is green (4875 tests passing locally as of `#437`). Most recently
+landed: `#437` `cumsum` (the cumulative running sum of a numeric list,
+a list-returning generalization sitting directly next to `sum`),
+`#436` `dot_product` (a two-list-argument numeric statistic
 next to `mean`/`median`/`variance`/`std_dev`, mirroring
 `hamming_distance`'s equal-length validation shape, returning the sum
 of pairwise products of two equal-length numeric lists), `#435`
@@ -162,21 +164,20 @@ kata, a standalone conversion builtin next to `to_bin`), `#434`
 shared prefix of every string in a list), `#433` `from_roman` (parsing
 a Roman numeral string back to an integer via a round-trip
 canonicalization check against `to_roman`, rejecting non-canonical
-forms like `IIII`), `#432` `to_roman` (a standalone conversion builtin
-next to `to_hex`/`to_bin`/`to_oct`, bounded to the traditional 1-3999
-domain) — see `CHANGELOG.md` for the full merge history, newest first.
-Queue (`BACKLOG.md`, six tasks — see History below): `cumsum` (task 1,
-the cumulative running sum of a numeric list, a list-returning
-generalization sitting directly next to `sum`) — then `caesar_cipher`
-(task 2, generalizing `rot13`'s fixed 13-place shift to an arbitrary
-integer shift, next to `_rot13`) — then `cumprod` (task 3, the
+forms like `IIII`) — see `CHANGELOG.md` for the full merge history,
+newest first.
+Queue (`BACKLOG.md`, six tasks — see History below): `caesar_cipher`
+(task 1, generalizing `rot13`'s fixed 13-place shift to an arbitrary
+integer shift, next to `_rot13`) — then `cumprod` (task 2, the
 multiplicative sibling of `cumsum`, a list-returning generalization
-sitting directly next to `product`) — then `cummax` (task 4, the
+sitting directly next to `product`) — then `cummax` (task 3, the
 running-maximum sibling of `cumsum`/`cumprod`, sitting next to `max`)
-— then `cummin` (task 5, the minimizing sibling of `cummax`, sitting
-next to `min`) — and, at the back of the queue, `longest_common_suffix`
-(task 6, the suffix-side mirror of `longest_common_prefix`, restocked
-this pass since `dot_product`'s merge had dropped the queue to five).
+— then `cummin` (task 4, the minimizing sibling of `cummax`, sitting
+next to `min`) — then `longest_common_suffix` (task 5, the suffix-side
+mirror of `longest_common_prefix`) — and, at the back of the queue,
+`diff` (task 6, the inverse-shaped sibling of `cumsum` — successive
+differences of a numeric list, restocked this pass since `cumsum`'s
+merge had dropped the queue to five).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -831,4 +832,35 @@ identified so far.
   session start (`git pull --rebase` a no-op, no stash) and this
   session commits its own docs/backlog changes before exiting, per the
   dirty-checkout pattern `HELP.md` has flagged repeatedly since
+  2026-08-27.
+
+- **2026-09-11 (grooming, fifth pass)** — `#437` `cumsum` merged since
+  the last pass (clean, single review round, per its `CHANGELOG.md`
+  entry — 4875 tests, up from 4866; Release had already archived it
+  there and removed/renumbered the task from `BACKLOG.md` down to five,
+  but had not yet updated README.md/this file). Added the missing
+  `cumsum` bullet next to `sum`/`sum_by` in README's builtin list, and
+  moved it from "Queued next" into "Recently landed" in both README's
+  "Status & roadmap" and this section's "Current frontier", refreshing
+  the test count and task numbering in both places. That left the
+  backlog at five tasks, right at CLAUDE.md's floor, so this pass
+  restocked it with one new breadth task: `diff` (task 6), the
+  inverse-shaped sibling of `cumsum` — successive differences of a
+  numeric list, sitting right after it in `builtins.py` (a real gap —
+  probed with `python3 -m cinder.cli eval`, confirmed absent, same as
+  every other stdlib task in this backlog) — bringing the queue to six,
+  matching this project's usual restock target. Scouted a handful of
+  other candidate names first (`longest_common_subsequence`, `pairwise`,
+  `moving_average`) but picked `diff` since it pairs directly with the
+  just-landed `cumsum` and needs no new validation shape beyond what
+  `cumsum` already established. Six breadth tasks have now stacked in a
+  row since `Set`'s literal-syntax slice (the alternation policy allows
+  this when no depth slice is ready); `generators` remains the only
+  real depth gap, still too large without a scoped-down slice — see
+  "Current frontier" above for why. No `STATUS: STOP` in `HELP.md`; root
+  checkout was clean at session start (`git pull --rebase` a no-op, no
+  stash — the `stash@{0}` a 2026-09-11 Reviewer session had flagged was
+  already folded into `main` as `c918aff` before this session started)
+  and this session commits its own docs/backlog changes before exiting,
+  per the dirty-checkout pattern `HELP.md` has flagged repeatedly since
   2026-08-27.

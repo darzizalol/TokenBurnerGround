@@ -3992,6 +3992,36 @@ def _std_dev(arguments: list, line: int, column: int) -> object:
     return math.sqrt(_population_variance(value))
 
 
+def _dot_product(arguments: list, line: int, column: int) -> object:
+    _require_arity("dot_product", arguments, 2, line, column)
+    first, second = arguments
+    if not isinstance(first, list):
+        raise CinderRuntimeError(
+            f"dot_product() requires a list as its first argument, got {type_name(first)}",
+            line, column,
+        )
+    if not isinstance(second, list):
+        raise CinderRuntimeError(
+            f"dot_product() requires a list as its second argument, got {type_name(second)}",
+            line, column,
+        )
+    for element in first + second:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"dot_product() requires lists of numbers, got {type_name(element)}",
+                line, column,
+            )
+    if len(first) != len(second):
+        raise CinderRuntimeError(
+            f"dot_product() requires lists of equal length, got lengths {len(first)} and {len(second)}",
+            line, column,
+        )
+    total = 0
+    for a, b in zip(first, second):
+        total = total + a * b
+    return total
+
+
 def _mode(arguments: list, line: int, column: int) -> object:
     _require_arity("mode", arguments, 1, line, column)
     value = arguments[0]
@@ -5760,6 +5790,7 @@ _BUILTINS = {
     "median": _median,
     "variance": _variance,
     "std_dev": _std_dev,
+    "dot_product": _dot_product,
     "mode": _mode,
     "any": _any,
     "all": _all,

@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `rot13` — the classic Caesar-cipher string transform
+## 1. Standard library: `rot13` — the classic Caesar-cipher string transform [claimed 2026-09-10T14:06:46Z]
 
 Add a standalone string builtin, not another `is_*`/`nth_*` pair — the
 `is_*`-without-`nth_*` gap list is nearly exhausted for now (see this

@@ -204,6 +204,33 @@ def _to_roman(arguments: list, line: int, column: int) -> object:
     return "".join(result)
 
 
+def _from_roman(arguments: list, line: int, column: int) -> object:
+    _require_arity("from_roman", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"from_roman() requires a string, got {type_name(value)}", line, column
+        )
+    remaining = value
+    total = 0
+    for amount, symbol in _ROMAN_VALUES:
+        while remaining.startswith(symbol):
+            total += amount
+            remaining = remaining[len(symbol):]
+    valid = (
+        not remaining
+        and 1 <= total <= 3999
+        and _to_roman([total], line, column) == value
+    )
+    if not valid:
+        raise CinderRuntimeError(
+            f"from_roman() '{value}' is not a valid canonical Roman numeral, "
+            "domain error",
+            line, column,
+        )
+    return total
+
+
 def _push(arguments: list, line: int, column: int) -> object:
     _require_arity("push", arguments, 2, line, column)
     target, value = arguments
@@ -5491,6 +5518,7 @@ _BUILTINS = {
     "to_bin": _to_bin,
     "to_oct": _to_oct,
     "to_roman": _to_roman,
+    "from_roman": _from_roman,
     "push": _push,
     "pop": _pop,
     "insert": _insert,

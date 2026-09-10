@@ -251,6 +251,63 @@ class TestToBin(unittest.TestCase):
             run("to_bin();")
 
 
+class TestBinaryGap(unittest.TestCase):
+    def test_binary_gap_of_nine(self):
+        self.assertEqual(run("let result = binary_gap(9);").get("result"), 2)
+
+    def test_binary_gap_of_five_two_nine(self):
+        self.assertEqual(run("let result = binary_gap(529);").get("result"), 4)
+
+    def test_binary_gap_of_twenty(self):
+        self.assertEqual(run("let result = binary_gap(20);").get("result"), 1)
+
+    def test_binary_gap_of_fifteen_is_zero(self):
+        self.assertEqual(run("let result = binary_gap(15);").get("result"), 0)
+
+    def test_binary_gap_of_power_of_two_is_zero(self):
+        self.assertEqual(run("let result = binary_gap(32);").get("result"), 0)
+
+    def test_binary_gap_of_one_is_zero(self):
+        self.assertEqual(run("let result = binary_gap(1);").get("result"), 0)
+
+    def test_binary_gap_of_one_thousand_forty_one(self):
+        self.assertEqual(run("let result = binary_gap(1041);").get("result"), 5)
+
+    def test_binary_gap_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("binary_gap(0);")
+        self.assertIn(
+            "binary_gap() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_binary_gap_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("binary_gap(-5);")
+        self.assertIn(
+            "binary_gap() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_binary_gap_bool_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("binary_gap(true);")
+        self.assertIn(
+            "binary_gap() requires an int, got bool", ctx.exception.message
+        )
+
+    def test_binary_gap_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('binary_gap("9");')
+        self.assertIn(
+            "binary_gap() requires an int, got string", ctx.exception.message
+        )
+
+    def test_binary_gap_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("binary_gap(9, 1);")
+
+
 class TestToOct(unittest.TestCase):
     def test_to_oct_of_positive_int(self):
         self.assertEqual(run("let result = to_oct(8);").get("result"), "10")

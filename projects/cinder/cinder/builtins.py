@@ -823,6 +823,31 @@ def _hamming_distance(arguments: list, line: int, column: int) -> object:
     return sum(1 for c1, c2 in zip(string1, string2) if c1 != c2)
 
 
+def _longest_common_prefix(arguments: list, line: int, column: int) -> object:
+    _require_arity("longest_common_prefix", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"longest_common_prefix() requires a list, got {type_name(items)}",
+            line, column,
+        )
+    for item in items:
+        if not isinstance(item, str):
+            raise CinderRuntimeError(
+                f"longest_common_prefix() requires a list of strings, got {type_name(item)}",
+                line, column,
+            )
+    if not items:
+        return ""
+    prefix = items[0]
+    for candidate in items[1:]:
+        while not candidate.startswith(prefix):
+            prefix = prefix[:-1]
+            if not prefix:
+                return ""
+    return prefix
+
+
 def _is_pangram(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pangram", arguments, 1, line, column)
     value = arguments[0]
@@ -5815,6 +5840,7 @@ _BUILTINS = {
     "is_permutation": _is_permutation,
     "levenshtein_distance": _levenshtein_distance,
     "hamming_distance": _hamming_distance,
+    "longest_common_prefix": _longest_common_prefix,
     "is_pangram": _is_pangram,
     "is_balanced": _is_balanced,
     "is_upper": _is_upper,

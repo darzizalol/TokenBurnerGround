@@ -174,6 +174,19 @@ def _to_bin(arguments: list, line: int, column: int) -> object:
     return format(value, "b")
 
 
+def _binary_gap(arguments: list, line: int, column: int) -> object:
+    _require_arity("binary_gap", arguments, 1, line, column)
+    value = _require_int("binary_gap", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "binary_gap() requires a positive integer, domain error",
+            line, column,
+        )
+    segments = format(value, "b").split("1")
+    interior = segments[1:-1]
+    return max((len(segment) for segment in interior), default=0)
+
+
 def _to_oct(arguments: list, line: int, column: int) -> object:
     _require_arity("to_oct", arguments, 1, line, column)
     value = _require_int("to_oct", arguments[0], line, column)
@@ -5541,6 +5554,7 @@ _BUILTINS = {
     "chr": _chr,
     "to_hex": _to_hex,
     "to_bin": _to_bin,
+    "binary_gap": _binary_gap,
     "to_oct": _to_oct,
     "to_roman": _to_roman,
     "from_roman": _from_roman,

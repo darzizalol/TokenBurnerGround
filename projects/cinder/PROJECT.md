@@ -149,33 +149,34 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4823 tests passing locally as of `#432`). Most recently
-landed: `#432` `to_roman` (a standalone conversion builtin next to
-`to_hex`/`to_bin`/`to_oct`, bounded to the traditional 1-3999 domain),
-`#431` `rot13` (a self-inverse Caesar-cipher string transform next to
-`swap_case`), `#430` `nth_perfect_power` (a bounded scan rather than a
-closed form, scoped to non-negative candidates only), `#429`
-`nth_leap_year` (a bounded sequential scan, `is_leap_year`'s
-value-returning sibling), `#428` `Set` literal syntax and equality (two
-review rounds — a `CinderSet` indexing gap that would silently corrupt
-its equality contract was caught and fixed on the same branch) — see
-`CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, five tasks — see History below): `from_roman` (task 1,
-`to_roman`'s natural inverse, parsing a Roman numeral string back to an
-integer via a round-trip canonicalization check against `to_roman`
-itself, now already merged) — then `longest_common_prefix` (task 2, a
-standalone list-of-strings builtin next to
+`main` is green (4833 tests passing locally as of `#433`). Most recently
+landed: `#433` `from_roman` (parsing a Roman numeral string back to an
+integer via a round-trip canonicalization check against `to_roman`,
+rejecting non-canonical forms like `IIII`), `#432` `to_roman` (a
+standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`,
+bounded to the traditional 1-3999 domain), `#431` `rot13` (a
+self-inverse Caesar-cipher string transform next to `swap_case`),
+`#430` `nth_perfect_power` (a bounded scan rather than a closed form,
+scoped to non-negative candidates only), `#429` `nth_leap_year` (a
+bounded sequential scan, `is_leap_year`'s value-returning sibling) —
+see `CHANGELOG.md` for the full merge history, newest first. Queue
+(`BACKLOG.md`, six tasks — see History below): `longest_common_prefix`
+(task 1, a standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list) — then `binary_gap` (task 3, the
+prefix of every string in a list) — then `binary_gap` (task 2, the
 longest run of zeros bounded by two ones in an integer's binary
 representation, the classic Codility "BinaryGap" kata, sitting next to
 `to_bin`/`collatz_length`, never previously implemented here) — then
-`dot_product` (task 4, the dot product of two equal-length numeric
+`dot_product` (task 3, the dot product of two equal-length numeric
 lists, a two-argument numeric-list statistic next to
 `mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
-equal-length validation shape) — and, at the back of the queue,
-`cumsum` (task 5, the cumulative running sum of a numeric list, a
-list-returning generalization sitting directly next to `sum`).
+equal-length validation shape) — then `cumsum` (task 4, the cumulative
+running sum of a numeric list, a list-returning generalization sitting
+directly next to `sum`) — then `caesar_cipher` (task 5, generalizing
+`rot13`'s fixed 13-place shift to an arbitrary integer shift, next to
+`_rot13`) — and, at the back of the queue, `cumprod` (task 6, the
+multiplicative sibling of `cumsum`, a list-returning generalization
+sitting directly next to `product`).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -730,3 +731,29 @@ identified so far.
   `STATUS: STOP` — none present; only prior sessions' already-resolved
   notes). `generators` remains the only real depth gap, still deferred —
   see "Current frontier" above for why.
+- **2026-09-11 (grooming)** — `#433` `from_roman` merged since the last
+  pass (clean, single review round; ran the local suite to confirm —
+  4833 tests, up from 4823). Release had already archived the completed
+  task from `BACKLOG.md` to `CHANGELOG.md` and renumbered the remaining
+  four tasks (`longest_common_prefix`/`binary_gap`/`dot_product`/
+  `cumsum`) down to 1-4 — so this pass's own work was the README/
+  PROJECT.md catch-up (added the missing `from_roman` bullet next to
+  `to_roman` in README's builtin list, moved it from "Queued next" into
+  "Recently landed" in both README's "Status & roadmap" and this
+  section, refreshed the test count in both places). Session start also
+  found a same-day (2026-09-11) Reviewer-stashed WIP still sitting on
+  `main` (`stash@{0}`, two well-formed task write-ups — `caesar_cipher`
+  and `cumprod` — that an earlier Architect session had written but not
+  committed before its session ended, per `HELP.md`'s note). Verified it
+  against current state first (no PR merged since it was written that
+  would conflict, `caesar_cipher`/`cumprod` both still undefined in
+  `builtins.py`) then popped and committed it as this pass's restock:
+  `caesar_cipher` (task 5, generalizing `rot13`'s fixed 13-place shift
+  to an arbitrary integer shift, next to `_rot13`) and `cumprod` (task
+  6, the multiplicative sibling of `cumsum`, next to `_product`) —
+  brings the queue to six, one above the floor, which is fine per
+  CLAUDE.md's "at least five" rule. This closes out the fifth occurrence
+  of the recurring dirty-root-checkout pattern `HELP.md` has been
+  flagging since 2026-08-27 (this session commits and pushes before
+  exiting, per that same flag). `generators` remains the only real depth
+  gap, still deferred — see "Current frontier" above for why.

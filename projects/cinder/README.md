@@ -521,7 +521,9 @@ while (i < 10) {
   result instead of raising), `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
   conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `to_roman` for integer-to-Roman-numeral
-  conversion (bounded to the traditional 1-3999 domain), `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
+  conversion (bounded to the traditional 1-3999 domain), `from_roman` to parse a Roman numeral string back to an
+  integer via a round-trip canonicalization check against `to_roman` (rejects any non-canonical form, e.g. `IIII`),
+  `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
   `euler_totient` to count the integers up to `n` coprime with `n` (Euler's totient function), the aggregate counterpart to `is_coprime`, via the same trial-division factoring `prime_factors` already uses,
   `nth_prime` to return the prime found at a 1-indexed position, the complementary "which prime" question to `is_prime`/`prime_factors`,
@@ -828,7 +830,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4823+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4833+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -854,7 +856,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `to_roman` (PR #432,
+Actively developed, nightly. Recently landed: `from_roman` (PR #433,
+parsing a Roman numeral string back to an integer via a round-trip
+canonicalization check against `to_roman` — rejects any non-canonical
+form such as `IIII`), `to_roman` (PR #432,
 converting an integer to a Roman numeral string via the standard
 greedy algorithm, bounded to the traditional 1-3999 domain, a
 standalone conversion builtin sitting next to `to_hex`/`to_bin`/
@@ -862,27 +867,25 @@ standalone conversion builtin sitting next to `to_hex`/`to_bin`/
 transform sitting next to `swap_case`), `nth_perfect_power` (PR #430,
 perfect power found at a 1-indexed position, scoped to non-negative
 candidates only since `is_perfect_power` uniquely among this
-codebase's scanned predicates admits negative input), `nth_leap_year`
+codebase's scanned predicates admits negative input), and `nth_leap_year`
 (PR #429, leap year found at a 1-indexed position, `is_leap_year`'s
-Gregorian-rule predicate), and `Set` literal syntax and equality (PR
-#428, `{1, 2, 3}`, no builtin interop yet, single-element sets
-deliberately out of scope this round — two review rounds, the first
-catching a `CinderSet` indexing gap that would have silently corrupted
-its own equality contract).
+Gregorian-rule predicate).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `from_roman` (task 1,
-`to_roman`'s natural inverse, parsing a Roman numeral string back to an
-integer via a round-trip canonicalization check), `longest_common_prefix`
-(task 2, a standalone list-of-strings builtin next to
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `longest_common_prefix`
+(task 1, a standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list), `binary_gap` (task 3, the longest
+prefix of every string in a list), `binary_gap` (task 2, the longest
 run of zeros bounded by two ones in an integer's binary representation,
 the classic Codility kata, sitting next to `to_bin`/`collatz_length`),
-`dot_product` (task 4, the dot product of two equal-length numeric
+`dot_product` (task 3, the dot product of two equal-length numeric
 lists, a two-argument numeric-list statistic next to
-`mean`/`median`/`variance`/`std_dev`), and, at the back of the queue,
-`cumsum` (task 5, the cumulative running sum of a numeric list, a
-list-returning generalization of `sum` sitting right next to it).
+`mean`/`median`/`variance`/`std_dev`), `cumsum` (task 4, the
+cumulative running sum of a numeric list, a list-returning
+generalization of `sum` sitting right next to it), `caesar_cipher`
+(task 5, generalizing `rot13`'s fixed 13-place shift to an arbitrary
+integer shift), and, at the back of the queue, `cumprod` (task 6, the
+multiplicative sibling of `cumsum`, a list-returning generalization of
+`product`).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

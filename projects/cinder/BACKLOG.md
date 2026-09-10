@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `from_roman` — parse a Roman numeral string back to an integer
+## 1. Standard library: `from_roman` — parse a Roman numeral string back to an integer [claimed 2026-09-10T14:31:36Z]
 
 Add the natural inverse of `to_roman` (already merged — this task
 reuses its `_ROMAN_VALUES` table). Verify the gap:

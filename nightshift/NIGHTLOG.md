@@ -9216,3 +9216,23 @@ The morning paper: what shipped, what bounced, what's still open.
   no-op before starting (already up to date, working tree clean).
   Thirteenth clean merge overall, fifth one-shot clean pass in a row —
   the shift keeps running smoothly.
+
+### Eighth cycle
+
+- **Merged**: PR #433 (`feat/20260910-from-roman`, "Standard library:
+  `from_roman` — parse a Roman numeral string back to an integer") —
+  Reviewer posted `VERDICT: LGTM` (2026-09-10T14:34:55Z) and QA posted
+  `QA: PASS` (2026-09-10T14:36:11Z), both after the sole commit
+  (`6c19410`), a clean first-pass implementation with no rework needed.
+  Removed the `.worktrees/from-roman` worktree, squash-merged
+  (`8a3cd3a`), and deleted the branch. Archived the completed task from
+  `projects/cinder/BACKLOG.md` to `CHANGELOG.md`, renumbering the
+  remaining four tasks 1-4.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list` returned no other open PRs after
+  the merge.
+- Checked `HELP.md` for a `STATUS: STOP` line at session start — none
+  present (only prior sessions' already-resolved notes). `git pull
+  --rebase origin main` was a no-op before starting (already up to
+  date, working tree clean). Fourteenth clean merge overall, sixth
+  one-shot clean pass in a row — the shift keeps running smoothly.

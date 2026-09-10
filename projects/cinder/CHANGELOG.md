@@ -4396,3 +4396,14 @@ for vision/architecture.
   (`from_roman`) is queued as the next backlog task. Clean first pass,
   no bounces (4823 tests passing, up from 4814). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `from_roman`** — merged 2026-09-10T14:36:53Z via
+  PR #433 (`feat/20260910-from-roman`). Natural inverse of `to_roman`,
+  reusing its `_ROMAN_VALUES` table: greedily strips the largest
+  matching symbol/pair from the front of the string, then enforces
+  canonicality with a round-trip check (re-encode the decoded total
+  with `_to_roman` and require it to equal the original input
+  verbatim), which catches out-of-order symbols, non-canonical
+  repetition, lowercase input, and empty input all for free without a
+  separate validation pass. Clean first pass, no bounces (4833 tests
+  passing, up from 4823). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

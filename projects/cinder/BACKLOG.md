@@ -11,110 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `from_roman` — parse a Roman numeral string back to an integer [claimed 2026-09-10T14:31:36Z]
-
-Add the natural inverse of `to_roman` (already merged — this task
-reuses its `_ROMAN_VALUES` table). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(from_roman("MMXXVI"));'
-# -> <eval>:1:7: undefined name 'from_roman'
-```
-
-**What it does.** Greedily strip the largest matching symbol/pair from
-the front of the string (same `_ROMAN_VALUES` list `to_roman` walks,
-search `_ROMAN_VALUES`), accumulating its value, until the string is
-exhausted or nothing more matches. **Canonical numerals only**: reject
-anything that isn't exactly what `to_roman` itself would have produced.
-The simplest correct way to enforce that is a round-trip check —
-after decoding, re-encode the total with `_to_roman` and require it to
-equal the original input verbatim — rather than writing a separate
-validation pass. This single check catches every malformed case for
-free: leftover unconsumed characters (out-of-order symbols like `"VX"`
-or `"IC"`), non-canonical repetition (`"IIII"` decodes to `4` but
-re-encodes to `"IV"`, not `"IIII"`), lowercase input, and empty input
-(decodes to `0`, outside the `1..3999` domain).
-
-Worked examples (inverse of `to_roman`'s own worked examples, confirmed
-by direct computation of the algorithm below, including a full
-round-trip check of every integer `1..3999` through `to_roman` then
-back through `from_roman`):
-- `from_roman("I")` is `1`, `from_roman("IV")` is `4`, `from_roman("IX")`
-  is `9`.
-- `from_roman("XIV")` is `14`, `from_roman("XL")` is `40`,
-  `from_roman("XLIX")` is `49`, `from_roman("XC")` is `90`.
-- `from_roman("CDXLIV")` is `444`, `from_roman("CDXCIX")` is `499`,
-  `from_roman("CM")` is `900`, `from_roman("CMXLIV")` is `944`.
-- `from_roman("MCMXCIV")` is `1994`, `from_roman("MMXXVI")` is `2026`,
-  `from_roman("MMMCMXCIX")` is `3999`.
-- `from_roman(to_roman(n))` equals `n` for every `n` in `1..3999`.
-
-Add directly after `_to_roman` (search `def _to_roman`, immediately
-before `def _push`) — keeps the inverse next to its sibling:
-```python
-def _from_roman(arguments: list, line: int, column: int) -> object:
-    _require_arity("from_roman", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, str):
-        raise CinderRuntimeError(
-            f"from_roman() requires a string, got {type_name(value)}", line, column
-        )
-    remaining = value
-    total = 0
-    for amount, symbol in _ROMAN_VALUES:
-        while remaining.startswith(symbol):
-            total += amount
-            remaining = remaining[len(symbol):]
-    valid = (
-        not remaining
-        and 1 <= total <= 3999
-        and _to_roman([total], line, column) == value
-    )
-    if not valid:
-        raise CinderRuntimeError(
-            f"from_roman() '{value}' is not a valid canonical Roman numeral, "
-            "domain error",
-            line, column,
-        )
-    return total
-```
-(The `and`-chain short-circuits, so `_to_roman([total], ...)` — which
-itself raises outside the `1..3999` domain — is only called once
-`total` is already known to be in range.) Register the new dict entry
-(search `"to_roman": _to_roman,`, add `"from_roman": _from_roman,`
-directly after it, before `"push": _push,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `from_roman("MCMXCIV")` is `1994` and `from_roman("MMXXVI")` is `2026`.
-- `from_roman("I");` is `1` and `from_roman("MMMCMXCIX");` is `3999` —
-  the domain's two boundary values.
-- `from_roman(to_roman(n));` equals `n` for at least a representative
-  spread of `n` (e.g. `1, 4, 9, 40, 49, 90, 444, 900, 1994, 2026, 3999`)
-  — the round-trip property.
-- Non-canonical strings that a naive symbol-sum would wrongly accept
-  all raise `CinderRuntimeError` matching `"from_roman\(\) '.*' is not
-  a valid canonical Roman numeral, domain error"`: `from_roman("IIII")`
-  (non-canonical `4`), `from_roman("VX")` and `from_roman("IC")`
-  (out-of-order symbols), `from_roman("");` (empty).
-- `from_roman("mmxxvi");` (lowercase) also raises the same domain error.
-- `from_roman(2026);` raises `CinderRuntimeError` matching
-  `"from_roman\(\) requires a string, got int"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_to_roman`, search
-`def _to_roman`), `tests/test_builtins.py` (new `class TestFromRoman`,
-modeled on `class TestToRoman`, search that name, for the test shapes
-above — place it near the existing `class TestToRoman`). Once merged,
-`README.md`'s existing `to_roman` bullet needs `from_roman` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
+## 1. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
 
 Add a standalone list-of-strings builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited programmatically:
@@ -219,7 +116,7 @@ this task.
 
 ---
 
-## 3. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
+## 2. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
 
 Add a standalone integer-property builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited
@@ -317,7 +214,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `dot_product` — dot product of two equal-length numeric lists
+## 3. Standard library: `dot_product` — dot product of two equal-length numeric lists
 
 Add a standalone two-list-argument builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited
@@ -419,7 +316,7 @@ grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `cumsum` — cumulative (running) sum of a numeric list
+## 4. Standard library: `cumsum` — cumulative (running) sum of a numeric list
 
 Add a standalone list-transform builtin sitting directly next to `sum`/
 `product` (`cinder/builtins.py`, search `def _sum`, immediately before

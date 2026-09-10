@@ -4441,3 +4441,12 @@ for vision/architecture.
   (`[]` for an empty list). Clean first pass, no bounces (4875 tests
   passing, up from 4866). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `caesar_cipher`** — merged 2026-09-11T~20:14Z via
+  PR #438 (`feat/20260910-caesar-cipher`, squashed as `ada246a`).
+  Two-argument string builtin sitting next to `rot13`: generalizes
+  `rot13`'s fixed 13-position shift to an arbitrary integer shift,
+  reduced modulo 26 up front so zero, negative, and >26 shifts all work
+  without special-casing (`rot13(s)` is exactly `caesar_cipher(s, 13)`
+  for every `s`). Clean first pass, no bounces (4888 tests passing, up
+  from 4875). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

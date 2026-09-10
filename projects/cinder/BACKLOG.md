@@ -11,113 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift [claimed 2026-09-10T20:08:16Z]
-
-Add a standalone two-argument string builtin directly after `_rot13`
-(`cinder/builtins.py`, search `def _rot13`, immediately before `def
-_is_palindrome`) — `rot13` is the fixed-shift-of-13 special case of the
-classic Caesar cipher; this generalizes it to any integer shift, the
-same "generalize a fixed-parameter builtin into a parameterized sibling"
-move `to_roman`/`from_roman` and `cumsum`/`sum` already made elsewhere in
-this codebase. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(caesar_cipher("abc", 3));'
-# -> <eval>:1:7: undefined name 'caesar_cipher'
-```
-
-**What it does.** Given a string and an integer shift, rotate every
-ASCII letter forward through its own case's alphabet by `shift`
-positions, wrapping around at the end (`z` shifted by `1` becomes `a`);
-non-letter characters (digits, punctuation, whitespace) pass through
-unchanged. The shift may be zero, negative, or larger than 26 — always
-reduce it modulo 26 first (Python's `%` already returns a non-negative
-result for a negative left operand, so no extra sign-handling is
-needed). `rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `caesar_cipher("abc", 3)` is `"def"`.
-- `caesar_cipher("xyz", 3)` is `"abc"` — wraps around past `z`.
-- `caesar_cipher("ABC", 3)` is `"DEF"` — case preserved.
-- `caesar_cipher("Hello, World!", 5)` is `"Mjqqt, Btwqi!"` — mixed case,
-  punctuation, and a space all pass through correctly.
-- `caesar_cipher("abc", 0)` is `"abc"` — a zero shift is the identity.
-- `caesar_cipher("abc", 29)` is `"def"` — same as shift `3`, since `29 %
-  26 == 3`.
-- `caesar_cipher("abc", -1)` is `"zab"` — a negative shift rotates
-  backward, wrapping past `a`.
-- `caesar_cipher("rot13 test", 13)` is `"ebg13 grfg"`, identical to
-  `rot13("rot13 test")` — confirms the `rot13`-is-a-special-case
-  relationship above.
-- `caesar_cipher("", 5)` is `""` — the empty string has no letters to
-  shift.
-
-Add directly after `_rot13` (search `def _rot13`, immediately before
-`def _is_palindrome`) — keeps the new parameterized cipher next to the
-fixed-shift sibling it generalizes:
-```python
-def _caesar_cipher(arguments: list, line: int, column: int) -> object:
-    _require_arity("caesar_cipher", arguments, 2, line, column)
-    value, shift = arguments
-    if not isinstance(value, str):
-        raise CinderRuntimeError(
-            f"caesar_cipher() requires a string, got {type_name(value)}", line, column
-        )
-    if not isinstance(shift, int) or isinstance(shift, bool):
-        raise CinderRuntimeError(
-            f"caesar_cipher() requires an int, got {type_name(shift)}", line, column
-        )
-    shift = shift % 26
-    result = []
-    for ch in value:
-        if "a" <= ch <= "z":
-            result.append(chr((ord(ch) - ord("a") + shift) % 26 + ord("a")))
-        elif "A" <= ch <= "Z":
-            result.append(chr((ord(ch) - ord("A") + shift) % 26 + ord("A")))
-        else:
-            result.append(ch)
-    return "".join(result)
-```
-(Same per-character case-branch shape as `_rot13` itself — search `def
-_rot13` — just with `shift` substituted for the hardcoded `13`, reduced
-modulo 26 once up front so the per-character arithmetic never has to
-think about out-of-range or negative shifts.) Register the new dict
-entry (search `"rot13": _rot13,`, add `"caesar_cipher":
-_caesar_cipher,` directly after it, before `"is_palindrome":
-_is_palindrome,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `caesar_cipher("Hello, World!", 5)` is `"Mjqqt, Btwqi!"` and
-  `caesar_cipher("abc", 29)` is `"def"`.
-- `caesar_cipher("abc", -1);` is `"zab"` and `caesar_cipher("abc", 0);`
-  is `"abc"` — the negative-shift and zero-shift cases.
-- For at least one non-trivial string `s`, `caesar_cipher(s, 13)` equals
-  `rot13(s)` — the relationship the spec above depends on.
-- `caesar_cipher(123, 3);` raises `CinderRuntimeError` matching
-  `"caesar_cipher\(\) requires a string, got int"`.
-- `caesar_cipher("abc", "x");` raises `CinderRuntimeError` matching
-  `"caesar_cipher\(\) requires an int, got string"`.
-- `caesar_cipher("abc", true);` raises `CinderRuntimeError` matching
-  `"caesar_cipher\(\) requires an int, got bool"` (mirror the codebase's
-  standard bool-is-not-an-int convention, same as `rotate`'s own second
-  argument).
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_rot13`, search `def
-_rot13`), `tests/test_builtins.py` (new `class TestCaesarCipher`,
-modeled on `class TestRot13`, search that name, for the test shapes
-above — place it near the existing `class TestRot13`). Once merged,
-`README.md`'s existing `rot13` bullet needs `caesar_cipher` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `cumprod` — cumulative (running) product of a numeric list
+## 1. Standard library: `cumprod` — cumulative (running) product of a numeric list
 
 Add a standalone list-transform builtin directly after `_product`
 (`cinder/builtins.py`, search `def _product`, immediately before `def
@@ -206,7 +100,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `cummax` — cumulative (running) maximum of a numeric list
+## 2. Standard library: `cummax` — cumulative (running) maximum of a numeric list
 
 Add a standalone list-transform builtin directly after `_max`
 (`cinder/builtins.py`, search `def _max`, immediately before `def
@@ -293,7 +187,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `cummin` — cumulative (running) minimum of a numeric list
+## 3. Standard library: `cummin` — cumulative (running) minimum of a numeric list
 
 Add a standalone list-transform builtin directly after `cummax` once
 task 3 lands (`cinder/builtins.py`, search `def _cummax`, immediately
@@ -384,7 +278,7 @@ task.
 
 ---
 
-## 5. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+## 4. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
 
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def
@@ -490,7 +384,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `diff` — successive differences of a numeric list
+## 5. Standard library: `diff` — successive differences of a numeric list
 
 Add a standalone list-transform builtin directly after `_cumsum`
 (`cinder/builtins.py`, search `def _cumsum`, immediately before `def

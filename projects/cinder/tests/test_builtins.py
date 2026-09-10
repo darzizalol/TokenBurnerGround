@@ -317,6 +317,66 @@ class TestToRoman(unittest.TestCase):
             run("to_roman();")
 
 
+class TestFromRoman(unittest.TestCase):
+    def test_from_roman_of_worked_examples(self):
+        cases = {
+            "I": 1, "IV": 4, "IX": 9,
+            "XIV": 14, "XL": 40, "XLIX": 49, "XC": 90,
+            "CDXLIV": 444, "CDXCIX": 499, "CM": 900, "CMXLIV": 944,
+            "MCMXCIV": 1994, "MMXXVI": 2026, "MMMCMXCIX": 3999,
+        }
+        for value, expected in cases.items():
+            with self.subTest(value=value):
+                self.assertEqual(
+                    run(f'let result = from_roman("{value}");').get("result"),
+                    expected,
+                )
+
+    def test_from_roman_of_lower_bound(self):
+        self.assertEqual(run('let result = from_roman("I");').get("result"), 1)
+
+    def test_from_roman_of_upper_bound(self):
+        self.assertEqual(
+            run('let result = from_roman("MMMCMXCIX");').get("result"), 3999
+        )
+
+    def test_from_roman_round_trips_with_to_roman(self):
+        for value in (1, 4, 9, 40, 49, 90, 444, 900, 1994, 2026, 3999):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    run(
+                        f"let result = from_roman(to_roman({value}));"
+                    ).get("result"),
+                    value,
+                )
+
+    def test_from_roman_of_non_canonical_repetition_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('from_roman("IIII");')
+
+    def test_from_roman_of_out_of_order_symbols_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('from_roman("VX");')
+        with self.assertRaises(CinderRuntimeError):
+            run('from_roman("IC");')
+
+    def test_from_roman_of_empty_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('from_roman("");')
+
+    def test_from_roman_of_lowercase_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('from_roman("mmxxvi");')
+
+    def test_from_roman_of_non_string_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("from_roman(2026);")
+
+    def test_from_roman_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("from_roman();")
+
+
 class TestPush(unittest.TestCase):
     def test_push_appends_and_returns_the_list(self):
         env = run("let xs = [1, 2]; let result = push(xs, 3);")

@@ -4377,3 +4377,10 @@ for vision/architecture.
   negative candidate. Clean first pass, no bounces (4806 tests passing,
   up from 4797). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `rot13`** — merged 2026-09-10 via PR #431
+  (`feat/20260910-rot13`). String transform sitting next to
+  `swap_case`, rotating every ASCII letter 13 places through its own
+  case's alphabet (wrapping `z`->`m`, `Z`->`M`) and leaving non-letter
+  characters untouched; self-inverse (`rot13(rot13(s)) == s`). Clean
+  first pass, no bounces (4814 tests passing, up from 4806).
+  README/PROJECT.md updates left to the Architect's next grooming pass.

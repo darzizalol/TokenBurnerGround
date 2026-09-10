@@ -11,96 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `rot13` — the classic Caesar-cipher string transform [claimed 2026-09-10T14:06:46Z]
-
-Add a standalone string builtin, not another `is_*`/`nth_*` pair — the
-`is_*`-without-`nth_*` gap list is nearly exhausted for now (see this
-pass's `PROJECT.md` "Current frontier" note: `is_automorphic`,
-`is_keith_number`, and a derived single-arg `is_amicable_number` were
-all scouted and rejected this session as too sparse/slow for a bounded
-scan, joining `is_armstrong`/`is_disarium`/`is_weird_number`/
-`is_strong_number` rejected in earlier passes). `rot13` sits next to
-`swap_case` (`cinder/builtins.py`, search `def _swap_case`) as another
-simple, total, single-string-argument transform with no domain errors
-possible once the type check passes — the same shape `reverse_int`/
-`swap_case` themselves already are. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(rot13("hello"));'
-# -> <eval>:1:7: undefined name 'rot13'
-```
-
-**What it does.** Rotate every ASCII letter 13 places through its own
-case's alphabet, wrapping `z`->`m`, `Z`->`M`; leave every non-letter
-character (digits, punctuation, spaces, non-ASCII) untouched. Applying
-`rot13` twice always returns the original string — it is its own
-inverse, since shifting by 13 twice is a shift by 26, a full wrap of a
-26-letter alphabet.
-
-Worked examples (confirmed via Python's own `codecs.encode(s, "rot13")`):
-- `rot13("hello")` is `"uryyb"`.
-- `rot13("Hello, World!")` is `"Uryyb, Jbeyq!"` (case preserved per
-  letter, punctuation/space/comma untouched).
-- `rot13("")` is `""`.
-- `rot13("abcXYZ")` is `"nopKLM"`.
-- `rot13("The Quick Brown Fox")` is `"Gur Dhvpx Oebja Sbk"`.
-- `rot13(rot13("Hello, World!"))` is `"Hello, World!"` — the
-  self-inverse property.
-
-Add directly after `_swap_case` (search `def _swap_case`, immediately
-before `def _is_palindrome`) — keeps the new string transform next to
-its closest sibling:
-```python
-def _rot13(arguments: list, line: int, column: int) -> object:
-    _require_arity("rot13", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, str):
-        raise CinderRuntimeError(
-            f"rot13() requires a string, got {type_name(value)}", line, column
-        )
-    result = []
-    for ch in value:
-        if "a" <= ch <= "z":
-            result.append(chr((ord(ch) - ord("a") + 13) % 26 + ord("a")))
-        elif "A" <= ch <= "Z":
-            result.append(chr((ord(ch) - ord("A") + 13) % 26 + ord("A")))
-        else:
-            result.append(ch)
-    return "".join(result)
-```
-(Same shape as `_swap_case`/`_is_palindrome` — arity check, a single
-`isinstance(value, str)` type check with no domain/length restriction,
-then a total transform.) Register the new dict entry (search
-`"swap_case": _swap_case,`, add `"rot13": _rot13,` directly after it,
-before `"trim": _trim,`).
-
-Acceptance criteria:
-- `rot13("hello");` is `"uryyb"`, `rot13("abcXYZ");` is `"nopKLM"` — the
-  worked examples above.
-- `rot13("Hello, World!");` is `"Uryyb, Jbeyq!"` and
-  `rot13("The Quick Brown Fox");` is `"Gur Dhvpx Oebja Sbk"` — case and
-  non-letter characters both handled correctly in the same string.
-- `rot13("");` is `""`.
-- For every string in a small worked-example set (at least the five
-  above), `rot13(rot13(s))` equals `s` — the self-inverse property.
-- `rot13(123);` raises `CinderRuntimeError` matching `"rot13\(\)
-  requires a string, got int"` (mirror `swap_case`'s own non-string
-  test for the exact message shape).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_swap_case`, search
-`def _swap_case`), `tests/test_builtins.py` (new `class TestRot13`,
-modeled on `class TestSwapCase`, search that name, for the test shapes
-above — place it near the existing `class TestSwapCase`). Once merged,
-`README.md`'s existing `swap_case` bullet needs `rot13` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `to_roman` — convert an integer to a Roman numeral string
+## 1. Standard library: `to_roman` — convert an integer to a Roman numeral string
 
 Add a standalone conversion builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited the full
@@ -209,7 +120,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `from_roman` — parse a Roman numeral string back to an integer
+## 2. Standard library: `from_roman` — parse a Roman numeral string back to an integer
 
 Add the natural inverse of `to_roman` (task 2 above, must merge first —
 this task reuses its `_ROMAN_VALUES` table). Verify the gap:
@@ -312,7 +223,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
+## 3. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
 
 Add a standalone list-of-strings builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited programmatically:
@@ -417,7 +328,7 @@ this task.
 
 ---
 
-## 5. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
+## 4. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
 
 Add a standalone integer-property builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited

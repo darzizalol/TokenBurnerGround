@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
+## 1. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation [claimed 2026-09-10T19:31:31Z]
 
 Add a standalone integer-property builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited

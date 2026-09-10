@@ -419,6 +419,90 @@ grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `cumsum` — cumulative (running) sum of a numeric list
+
+Add a standalone list-transform builtin sitting directly next to `sum`/
+`product` (`cinder/builtins.py`, search `def _sum`, immediately before
+`def _product`) — a numeric-list builtin that returns a list rather than
+a scalar, the same shape shift `run_length_encode`/`run_length_decode`
+already have from a single value to a structured list. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(cumsum([1, 2, 3]));'
+# -> <eval>:1:7: undefined name 'cumsum' (did you mean 'sum'?)
+```
+
+**What it does.** Given a list of numbers, return a new list of the same
+length where each element is the running total of every element up to
+and including that position — `result[i] = list[0] + list[1] + ... +
+list[i]`. An empty list returns an empty list.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `cumsum([1, 2, 3])` is `[1, 3, 6]`.
+- `cumsum([])` is `[]` — the empty list has no running total to build,
+  vacuously empty.
+- `cumsum([5])` is `[5]` — a single-element list returns that element's
+  own running total, itself.
+- `cumsum([1, -2, 3, -4])` is `[1, -1, 2, -2]` — negative elements
+  shrink the running total.
+- `cumsum([1.5, 2.5, 1])` is `[1.5, 4.0, 5.0]` (mixed int/float
+  elements, ordinary numeric promotion — same as `sum`/`product`).
+- `cumsum([0, 0, 0])` is `[0, 0, 0]`.
+
+Add directly after `_sum` (search `def _sum`, immediately before `def
+_product`) — keeps the new running-total builtin next to the plain
+total it generalizes:
+```python
+def _cumsum(arguments: list, line: int, column: int) -> object:
+    _require_arity("cumsum", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"cumsum() requires a list, got {type_name(value)}", line, column
+        )
+    total = 0
+    result = []
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"cumsum() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        total = total + element
+        result.append(total)
+    return result
+```
+(Same validation shape as `_sum` itself — search `def _sum` — just
+appending each running total to a result list instead of discarding
+everything but the final one.) Register the new dict entry (search
+`"sum": _sum,`, add `"cumsum": _cumsum,` directly after it, before
+`"product": _product,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `cumsum([1, 2, 3])` is `[1, 3, 6]` and `cumsum([1.5, 2.5, 1])` is
+  `[1.5, 4.0, 5.0]`.
+- `cumsum([]);` is `[]` and `cumsum([5]);` is `[5]` — the empty-list and
+  single-element cases.
+- `cumsum(123);` raises `CinderRuntimeError` matching
+  `"cumsum\(\) requires a list, got int"`.
+- `cumsum([1, "a"]);` raises `CinderRuntimeError` matching
+  `"cumsum\(\) requires a list of numbers, got string"` (mirror `sum`'s
+  own non-numeric-element test for the exact message shape).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_sum`, search `def
+_sum`), `tests/test_builtins.py` (new `class TestCumsum`, modeled on
+`class TestSum`, search that name, for the test shapes above — place it
+near the existing `class TestSum`/`class TestProduct`). Once merged,
+`README.md`'s existing `sum` bullet needs `cumsum` added right after it,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

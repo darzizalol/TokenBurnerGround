@@ -520,7 +520,8 @@ while (i < 10) {
   `ceil`, `pow`, `sqrt`, `cbrt` (real cube root, domain-unrestricted unlike `sqrt` — negative input returns a negative
   result instead of raising), `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `to_roman` for integer-to-Roman-numeral
+  conversion (bounded to the traditional 1-3999 domain), `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
   `euler_totient` to count the integers up to `n` coprime with `n` (Euler's totient function), the aggregate counterpart to `is_coprime`, via the same trial-division factoring `prime_factors` already uses,
   `nth_prime` to return the prime found at a 1-indexed position, the complementary "which prime" question to `is_prime`/`prime_factors`,
@@ -827,7 +828,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4788+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4823+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -853,40 +854,35 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `rot13` (PR #431, a
-self-inverse Caesar-cipher string transform sitting next to
-`swap_case`), `nth_perfect_power` (PR #430, perfect power found at a
-1-indexed position, scoped to non-negative candidates only since
-`is_perfect_power` uniquely among this codebase's scanned predicates
-admits negative input), `nth_leap_year` (PR #429, leap year found at a
-1-indexed position, `is_leap_year`'s Gregorian-rule predicate), `Set`
-literal syntax and equality (PR #428, `{1, 2, 3}`, no builtin interop
-yet, single-element sets deliberately out of scope this round — two
-review rounds, the first catching a `CinderSet` indexing gap that would
-have silently corrupted its own equality contract), `nth_perfect_cube`
-(PR #427), and guards in `match` arms (PR #413, `n if n > 0 =>
-"positive"`, an optional `if <expr>` on any arm — attempted once before
-and closed after three failed review rounds over a recurring parser
-bug, this time parsing the guard via the parser's ordinary `_ternary()`
-entry point instead of a hand-rolled bracket/token scan, sidestepping
-that whole bug class; see `BACKLOG.md`'s `## Graveyard` for the
-postmortem).
+Actively developed, nightly. Recently landed: `to_roman` (PR #432,
+converting an integer to a Roman numeral string via the standard
+greedy algorithm, bounded to the traditional 1-3999 domain, a
+standalone conversion builtin sitting next to `to_hex`/`to_bin`/
+`to_oct`), `rot13` (PR #431, a self-inverse Caesar-cipher string
+transform sitting next to `swap_case`), `nth_perfect_power` (PR #430,
+perfect power found at a 1-indexed position, scoped to non-negative
+candidates only since `is_perfect_power` uniquely among this
+codebase's scanned predicates admits negative input), `nth_leap_year`
+(PR #429, leap year found at a 1-indexed position, `is_leap_year`'s
+Gregorian-rule predicate), and `Set` literal syntax and equality (PR
+#428, `{1, 2, 3}`, no builtin interop yet, single-element sets
+deliberately out of scope this round — two review rounds, the first
+catching a `CinderSet` indexing gap that would have silently corrupted
+its own equality contract).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `to_roman` (task 1,
-converting an integer to a Roman numeral string, a standalone
-conversion builtin next to `to_hex`/`to_bin`/`to_oct` rather than
-another `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list is
-nearly exhausted for now), `from_roman` (task 2, `to_roman`'s natural
-inverse, parsing a Roman numeral string back to an integer via a
-round-trip canonicalization check), `longest_common_prefix` (task 3, a
-standalone list-of-strings builtin next to
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `from_roman` (task 1,
+`to_roman`'s natural inverse, parsing a Roman numeral string back to an
+integer via a round-trip canonicalization check), `longest_common_prefix`
+(task 2, a standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list), `binary_gap` (task 4, the longest
+prefix of every string in a list), `binary_gap` (task 3, the longest
 run of zeros bounded by two ones in an integer's binary representation,
 the classic Codility kata, sitting next to `to_bin`/`collatz_length`),
-and, at the back of the queue, `dot_product` (task 5, the dot product
-of two equal-length numeric lists, a two-argument numeric-list
-statistic next to `mean`/`median`/`variance`/`std_dev`).
+`dot_product` (task 4, the dot product of two equal-length numeric
+lists, a two-argument numeric-list statistic next to
+`mean`/`median`/`variance`/`std_dev`), and, at the back of the queue,
+`cumsum` (task 5, the cumulative running sum of a numeric list, a
+list-returning generalization of `sum` sitting right next to it).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

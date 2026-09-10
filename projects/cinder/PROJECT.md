@@ -149,33 +149,33 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4814 tests passing locally as of `#431`). Most recently
-landed: `#431` `rot13` (a self-inverse Caesar-cipher string transform
-next to `swap_case`), `#430` `nth_perfect_power` (a bounded scan rather
-than a closed form, scoped to non-negative candidates only), `#429`
+`main` is green (4823 tests passing locally as of `#432`). Most recently
+landed: `#432` `to_roman` (a standalone conversion builtin next to
+`to_hex`/`to_bin`/`to_oct`, bounded to the traditional 1-3999 domain),
+`#431` `rot13` (a self-inverse Caesar-cipher string transform next to
+`swap_case`), `#430` `nth_perfect_power` (a bounded scan rather than a
+closed form, scoped to non-negative candidates only), `#429`
 `nth_leap_year` (a bounded sequential scan, `is_leap_year`'s
 value-returning sibling), `#428` `Set` literal syntax and equality (two
 review rounds — a `CinderSet` indexing gap that would silently corrupt
-its equality contract was caught and fixed on the same branch), `#427`
-`nth_perfect_cube` — see `CHANGELOG.md` for the full merge history,
-newest first. Queue (`BACKLOG.md`, five tasks — see History below):
-`to_roman` (task 1, converting an integer to a Roman numeral string via
-the standard greedy algorithm, a standalone conversion builtin next to
-`to_hex`/`to_bin`/`to_oct`, not another `is_*`/`nth_*` pair) — then
-`from_roman` (task 2, its natural inverse, parsing a Roman numeral string
-back to an integer via a round-trip canonicalization check against
-`to_roman` itself, which task 2 depends on merging first for its shared
-`_ROMAN_VALUES` table) — then `longest_common_prefix` (task 3, a
+its equality contract was caught and fixed on the same branch) — see
+`CHANGELOG.md` for the full merge history, newest first. Queue
+(`BACKLOG.md`, five tasks — see History below): `from_roman` (task 1,
+`to_roman`'s natural inverse, parsing a Roman numeral string back to an
+integer via a round-trip canonicalization check against `to_roman`
+itself, now already merged) — then `longest_common_prefix` (task 2, a
 standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list) — then `binary_gap` (task 4, the
+prefix of every string in a list) — then `binary_gap` (task 3, the
 longest run of zeros bounded by two ones in an integer's binary
 representation, the classic Codility "BinaryGap" kata, sitting next to
-`to_bin`/`collatz_length`, never previously implemented here) — and, at
-the back of the queue, `dot_product` (task 5, the dot product of two
-equal-length numeric lists, a two-argument numeric-list statistic next
-to `mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
-equal-length validation shape).
+`to_bin`/`collatz_length`, never previously implemented here) — then
+`dot_product` (task 4, the dot product of two equal-length numeric
+lists, a two-argument numeric-list statistic next to
+`mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
+equal-length validation shape) — and, at the back of the queue,
+`cumsum` (task 5, the cumulative running sum of a numeric list, a
+list-returning generalization sitting directly next to `sum`).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -693,3 +693,40 @@ identified so far.
   notes, including today's now-superseded reviewer/architect stash
   exchange). `generators` remains the only real depth gap, still
   deferred — see "Current frontier" above for why.
+- **2026-09-10 (grooming, tenth pass)** — `#432` `to_roman` merged this
+  cycle (clean, single review round; ran the local suite to confirm —
+  4823 tests, up from 4814). Release had already archived the completed
+  task from `BACKLOG.md` to `CHANGELOG.md` and renumbered the remaining
+  four tasks (`from_roman`/`longest_common_prefix`/`binary_gap`/
+  `dot_product`) down to 1-4, including rewording `from_roman`'s stale
+  "depends on task 1 merging first" cross-reference to reflect that
+  `to_roman` is already merged — so this pass's own work was the
+  README/PROJECT.md catch-up (added the missing `to_roman` bullet next
+  to `to_hex`/`to_bin`/`to_oct` in README's builtin list, moved it from
+  "Queued next" into "Recently landed" in both README's "Status &
+  roadmap" and this section, refreshed the test count in both places,
+  trimmed the recently-landed rundown back down to five items per the
+  established trim policy) plus restocking. Queue was at its four-task
+  floor (one below CLAUDE.md's five-task minimum) so restocked to five
+  with `cumsum` (task 5, breadth — the cumulative running sum of a
+  numeric list, a list-returning generalization sitting directly next to
+  `sum`/`product`, the same scalar-to-list shape shift
+  `run_length_encode`/`run_length_decode` already have). Verified the
+  gap first (`cumsum` is undefined, `sum` is the closest match per the
+  interpreter's own suggestion), then every worked example by direct
+  computation in Python, including the empty-list, single-element, and
+  mixed-int/float cases. Chose a standalone builtin over another
+  `is_*`/`nth_*` pair since that gap list is still exhausted — re-checked
+  every unpaired `is_*` name against the confirmed rejection set from
+  prior passes' History entries (multi-arg, string/list-shaped with no
+  integer ordering, a type predicate, or one of the already-rejected
+  too-sparse-or-slow names like `is_weird_number`/`is_strong_number`/
+  `is_automorphic`/`is_keith_number`/`is_amicable`/`is_pandigital`/
+  `is_munchausen_number`) — nothing new. Left the backlog at five rather
+  than six — five already satisfies the "at least five ready" rule, and
+  every unclaimed task right now is genuinely ready (no in-flight claim
+  to work around). No stray uncommitted state or `HELP.md` escalation
+  blocking this session's `git pull --rebase` (checked `HELP.md` for
+  `STATUS: STOP` — none present; only prior sessions' already-resolved
+  notes). `generators` remains the only real depth gap, still deferred —
+  see "Current frontier" above for why.

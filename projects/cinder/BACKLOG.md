@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cumsum` — cumulative (running) sum of a numeric list
+## 1. Standard library: `cumsum` — cumulative (running) sum of a numeric list [claimed 2026-09-10T19:57:02Z]
 
 Add a standalone list-transform builtin sitting directly next to `sum`/
 `product` (`cinder/builtins.py`, search `def _sum`, immediately before

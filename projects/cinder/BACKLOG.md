@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
+## 1. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings [claimed 2026-09-10T19:21:03Z]
 
 Add a standalone list-of-strings builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited programmatically:

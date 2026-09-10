@@ -3900,6 +3900,25 @@ def _product(arguments: list, line: int, column: int) -> object:
     return total
 
 
+def _cumprod(arguments: list, line: int, column: int) -> object:
+    _require_arity("cumprod", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"cumprod() requires a list, got {type_name(value)}", line, column
+        )
+    total = 1
+    result = []
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"cumprod() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        total = total * element
+        result.append(total)
+    return result
+
+
 def _mean(arguments: list, line: int, column: int) -> object:
     _require_arity("mean", arguments, 1, line, column)
     value = arguments[0]
@@ -5828,6 +5847,7 @@ _BUILTINS = {
     "cumsum": _cumsum,
     "sum_by": _sum_by,
     "product": _product,
+    "cumprod": _cumprod,
     "mean": _mean,
     "geometric_mean": _geometric_mean,
     "harmonic_mean": _harmonic_mean,

@@ -512,7 +512,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `product`, `mean`, `median`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -861,33 +861,34 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `binary_gap` (PR #435,
-the longest run of zeros bounded by two ones in an integer's binary
-representation, the classic Codility kata, a standalone conversion
-builtin sitting next to `to_bin`), `longest_common_prefix`
-(PR #434, a standalone list-of-strings builtin next to
-`hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list), `from_roman` (PR #433,
-parsing a Roman numeral string back to an integer via a round-trip
-canonicalization check against `to_roman` — rejects any non-canonical
-form such as `IIII`), `to_roman` (PR #432,
-converting an integer to a Roman numeral string via the standard
-greedy algorithm, bounded to the traditional 1-3999 domain, a
-standalone conversion builtin sitting next to `to_hex`/`to_bin`/
-`to_oct`), and `rot13` (PR #431, a self-inverse Caesar-cipher string
-transform sitting next to `swap_case`).
+Actively developed, nightly. Recently landed: `dot_product` (PR #436,
+a two-list-argument builtin sitting next to `mean`/`variance`/
+`std_dev`, mirroring `hamming_distance`'s equal-length validation shape
+to return the sum of pairwise products of two equal-length numeric
+lists), `binary_gap` (PR #435, the longest run of zeros bounded by two
+ones in an integer's binary representation, the classic Codility kata,
+a standalone conversion builtin sitting next to `to_bin`),
+`longest_common_prefix` (PR #434, a standalone list-of-strings builtin
+next to `hamming_distance`/`levenshtein_distance`, returning the
+longest shared prefix of every string in a list), `from_roman`
+(PR #433, parsing a Roman numeral string back to an integer via a
+round-trip canonicalization check against `to_roman` — rejects any
+non-canonical form such as `IIII`), and `to_roman` (PR #432, converting
+an integer to a Roman numeral string via the standard greedy
+algorithm, bounded to the traditional 1-3999 domain, a standalone
+conversion builtin sitting next to `to_hex`/`to_bin`/`to_oct`).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `dot_product` (task 1,
-the dot product of two equal-length numeric lists, a two-argument
-numeric-list statistic next to `mean`/`median`/`variance`/`std_dev`),
-`cumsum` (task 2, the cumulative running sum of a numeric list, a
-list-returning generalization of `sum` sitting right next to it),
-`caesar_cipher` (task 3, generalizing `rot13`'s fixed 13-place shift to
-an arbitrary integer shift), `cumprod` (task 4, the multiplicative
-sibling of `cumsum`, a list-returning generalization of `product`),
-`cummax` (task 5, the running-maximum sibling of `cumsum`/`cumprod`
-sitting next to `max`), and, at the back of the queue, `cummin` (task
-6, the minimizing sibling of `cummax`, sitting next to `min`).
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `cumsum` (task 1,
+the cumulative running sum of a numeric list, a list-returning
+generalization of `sum` sitting right next to it), `caesar_cipher`
+(task 2, generalizing `rot13`'s fixed 13-place shift to an arbitrary
+integer shift), `cumprod` (task 3, the multiplicative sibling of
+`cumsum`, a list-returning generalization of `product`), `cummax`
+(task 4, the running-maximum sibling of `cumsum`/`cumprod` sitting
+next to `max`), `cummin` (task 5, the minimizing sibling of `cummax`,
+sitting next to `min`), and, at the back of the queue,
+`longest_common_suffix` (task 6, the suffix-side mirror of
+`longest_common_prefix`).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

@@ -469,6 +469,112 @@ task.
 
 ---
 
+## 6. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+
+Add a standalone list-of-strings builtin directly after
+`_longest_common_prefix` (`cinder/builtins.py`, search `def
+_longest_common_prefix`, immediately before `def _is_pangram`) — the
+suffix-side mirror of `longest_common_prefix` (task-1 pattern of
+generalizing a fixed-parameter builtin into a directional sibling,
+same move `to_roman`/`from_roman` and `rot13`/`caesar_cipher` already
+made). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(longest_common_suffix(["flower", "power", "shower"]));'
+# -> <eval>:1:7: undefined name 'longest_common_suffix'
+```
+
+**What it does.** Given a list of strings, return the longest string
+that is a suffix of every string in the list — the same walk
+`longest_common_prefix` does, just comparing from the end of each
+string instead of the start. An empty list, or a list containing any
+empty string, returns `""`.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `longest_common_suffix(["flower", "power", "shower"])` is `"ower"`.
+- `longest_common_suffix(["dog", "racecar", "car"])` is `""` — no
+  shared suffix.
+- `longest_common_suffix(["testing", "resting", "nesting"])` is
+  `"esting"`.
+- `longest_common_suffix(["throne"])` is `"throne"` — a single-element
+  list returns that element's own suffix, itself.
+- `longest_common_suffix(["throne", "throne"])` is `"throne"` —
+  identical strings share their whole length.
+- `longest_common_suffix([])` is `""` — the empty list has no strings
+  to compare.
+- `longest_common_suffix(["cat", ""])` is `""` — any empty string in
+  the list forces an empty result, since nothing is a suffix of `""`
+  except `""` itself.
+
+Add directly after `_longest_common_prefix` (search `def
+_longest_common_prefix`, immediately before `def _is_pangram`) — keeps
+the new suffix builtin next to the prefix sibling it mirrors:
+```python
+def _longest_common_suffix(arguments: list, line: int, column: int) -> object:
+    _require_arity("longest_common_suffix", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"longest_common_suffix() requires a list, got {type_name(items)}",
+            line, column,
+        )
+    for item in items:
+        if not isinstance(item, str):
+            raise CinderRuntimeError(
+                f"longest_common_suffix() requires a list of strings, got {type_name(item)}",
+                line, column,
+            )
+    if not items:
+        return ""
+    suffix = items[0]
+    for candidate in items[1:]:
+        while not candidate.endswith(suffix):
+            suffix = suffix[1:]
+            if not suffix:
+                return ""
+    return suffix
+```
+(Same shrink-until-it-fits loop as `_longest_common_prefix` — search
+`def _longest_common_prefix` — just trimming from the front of the
+running `suffix` and matching with `endswith` instead of trimming from
+the back and matching with `startswith`.) Register the new dict entry
+(search `"longest_common_prefix": _longest_common_prefix,`, add
+`"longest_common_suffix": _longest_common_suffix,` directly after it,
+before `"is_pangram": _is_pangram,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `longest_common_suffix(["flower", "power", "shower"])` is `"ower"`
+  and `longest_common_suffix(["testing", "resting", "nesting"])` is
+  `"esting"`.
+- `longest_common_suffix([]);` is `""` and
+  `longest_common_suffix(["throne"]);` is `"throne"` — the empty-list
+  and single-element cases.
+- `longest_common_suffix(["cat", ""]);` is `""` — the empty-string-in-
+  list case.
+- `longest_common_suffix(123);` raises `CinderRuntimeError` matching
+  `"longest_common_suffix\(\) requires a list, got int"`.
+- `longest_common_suffix([1, 2]);` raises `CinderRuntimeError` matching
+  `"longest_common_suffix\(\) requires a list of strings, got int"`
+  (mirror `longest_common_prefix`'s own non-string-element test for the
+  exact message shape).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after
+`_longest_common_prefix`, search `def _longest_common_prefix`),
+`tests/test_builtins.py` (new `class TestLongestCommonSuffix`, modeled
+on `class TestLongestCommonPrefix`, search that name, for the test
+shapes above — place it near the existing `class
+TestLongestCommonPrefix`). Once merged, `README.md`'s existing
+`longest_common_prefix` bullet needs `longest_common_suffix` added
+right after it, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

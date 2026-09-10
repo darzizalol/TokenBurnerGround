@@ -3841,6 +3841,25 @@ def _sum(arguments: list, line: int, column: int) -> object:
     return total
 
 
+def _cumsum(arguments: list, line: int, column: int) -> object:
+    _require_arity("cumsum", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"cumsum() requires a list, got {type_name(value)}", line, column
+        )
+    total = 0
+    result = []
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"cumsum() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        total = total + element
+        result.append(total)
+    return result
+
+
 def _product(arguments: list, line: int, column: int) -> object:
     _require_arity("product", arguments, 1, line, column)
     value = arguments[0]
@@ -5782,6 +5801,7 @@ _BUILTINS = {
     "nth_catalan": _nth_catalan,
     "is_catalan": _is_catalan,
     "sum": _sum,
+    "cumsum": _cumsum,
     "sum_by": _sum_by,
     "product": _product,
     "mean": _mean,

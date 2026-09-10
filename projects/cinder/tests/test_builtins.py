@@ -9628,6 +9628,49 @@ class TestSum(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestCumsum(unittest.TestCase):
+    def test_cumsum_of_ints(self):
+        result = run("let result = cumsum([1, 2, 3]);").get("result")
+        self.assertEqual(result, [1, 3, 6])
+
+    def test_cumsum_of_empty_list(self):
+        result = run("let result = cumsum([]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_cumsum_of_single_element(self):
+        result = run("let result = cumsum([5]);").get("result")
+        self.assertEqual(result, [5])
+
+    def test_cumsum_with_negative_elements(self):
+        result = run("let result = cumsum([1, -2, 3, -4]);").get("result")
+        self.assertEqual(result, [1, -1, 2, -2])
+
+    def test_cumsum_with_a_float_promotes(self):
+        result = run("let result = cumsum([1.5, 2.5, 1]);").get("result")
+        self.assertEqual(result, [1.5, 4.0, 5.0])
+
+    def test_cumsum_of_zeros(self):
+        result = run("let result = cumsum([0, 0, 0]);").get("result")
+        self.assertEqual(result, [0, 0, 0])
+
+    def test_cumsum_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cumsum\(\) requires a list, got int"
+        ):
+            run("cumsum(123);")
+
+    def test_cumsum_of_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cumsum\(\) requires a list of numbers, got string"
+        ):
+            run('cumsum([1, "a"]);')
+
+    def test_cumsum_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("cumsum([1, 2], 3);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestSumBy(unittest.TestCase):
     def test_sum_by_doubles_and_sums(self):
         result = run("let result = sum_by([1, 2, 3], fn(n) { return n * 2; });").get("result")

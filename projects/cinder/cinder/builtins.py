@@ -180,6 +180,30 @@ def _to_oct(arguments: list, line: int, column: int) -> object:
     return format(value, "o")
 
 
+_ROMAN_VALUES = [
+    (1000, "M"), (900, "CM"), (500, "D"), (400, "CD"),
+    (100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
+    (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
+]
+
+
+def _to_roman(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_roman", arguments, 1, line, column)
+    value = _require_int("to_roman", arguments[0], line, column)
+    if value < 1 or value > 3999:
+        raise CinderRuntimeError(
+            "to_roman() requires an integer between 1 and 3999, domain error",
+            line, column,
+        )
+    result = []
+    remaining = value
+    for amount, symbol in _ROMAN_VALUES:
+        while remaining >= amount:
+            result.append(symbol)
+            remaining -= amount
+    return "".join(result)
+
+
 def _push(arguments: list, line: int, column: int) -> object:
     _require_arity("push", arguments, 2, line, column)
     target, value = arguments
@@ -5466,6 +5490,7 @@ _BUILTINS = {
     "to_hex": _to_hex,
     "to_bin": _to_bin,
     "to_oct": _to_oct,
+    "to_roman": _to_roman,
     "push": _push,
     "pop": _pop,
     "insert": _insert,

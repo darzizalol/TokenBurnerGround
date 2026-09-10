@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_roman` — convert an integer to a Roman numeral string
+## 1. Standard library: `to_roman` — convert an integer to a Roman numeral string [claimed 2026-09-10T14:19:08Z]
 
 Add a standalone conversion builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited the full

@@ -9953,6 +9953,65 @@ class TestStdDev(unittest.TestCase):
             run("std_dev();")
 
 
+class TestDotProduct(unittest.TestCase):
+    def test_dot_product_of_simple_vectors(self):
+        result = run("let result = dot_product([1, 2, 3], [4, 5, 6]);").get("result")
+        self.assertEqual(result, 32)
+
+    def test_dot_product_of_orthogonal_unit_vectors(self):
+        result = run("let result = dot_product([1, 0], [0, 1]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_dot_product_of_empty_lists_is_zero(self):
+        result = run("let result = dot_product([], []);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_dot_product_with_negative_elements(self):
+        result = run("let result = dot_product([-1, 2], [3, -4]);").get("result")
+        self.assertEqual(result, -11)
+
+    def test_dot_product_of_uniform_vectors(self):
+        result = run("let result = dot_product([2, 2, 2], [3, 3, 3]);").get("result")
+        self.assertEqual(result, 18)
+
+    def test_dot_product_with_mixed_int_and_float(self):
+        result = run("let result = dot_product([1.5, 2.5], [2, 4]);").get("result")
+        self.assertEqual(result, 13.0)
+
+    def test_dot_product_first_argument_not_a_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"dot_product\(\) requires a list as its first argument, got int",
+        ):
+            run("dot_product(123, [1]);")
+
+    def test_dot_product_second_argument_not_a_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"dot_product\(\) requires a list as its second argument, got string",
+        ):
+            run('dot_product([1], "x");')
+
+    def test_dot_product_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"dot_product\(\) requires lists of numbers, got string",
+        ):
+            run('dot_product([1, "a"], [1, 2]);')
+
+    def test_dot_product_unequal_length_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"dot_product\(\) requires lists of equal length, got lengths 2 and 3",
+        ):
+            run("dot_product([1, 2], [1, 2, 3]);")
+
+    def test_dot_product_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("dot_product([1]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestMode(unittest.TestCase):
     def test_mode_of_clear_winner(self):
         result = run("let result = mode([1, 2, 2, 3]);").get("result")

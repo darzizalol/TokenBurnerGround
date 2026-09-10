@@ -393,6 +393,184 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `cummax` — cumulative (running) maximum of a numeric list
+
+Add a standalone list-transform builtin directly after `_max`
+(`cinder/builtins.py`, search `def _max`, immediately before `def
+_clamp`) — the running counterpart to `max`, the same scalar-to-
+running-list shape shift task 2's `cumsum` applies to `sum` (`max`
+itself stays variadic/multi-argument; `cummax` takes a single list,
+same signature shape as `cumsum`/`cumprod`, not `max`'s own). Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(cummax([1, 3, 2, 5, 4]));'
+# -> <eval>:1:7: undefined name 'cummax' (did you mean 'max'?)
+```
+
+**What it does.** Given a list of numbers, return a new list of the same
+length where each element is the running maximum of every element up to
+and including that position — `result[i] = max(list[0], list[1], ...,
+list[i])`. An empty list returns an empty list.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `cummax([1, 3, 2, 5, 4])` is `[1, 3, 3, 5, 5]`.
+- `cummax([])` is `[]` — the empty list has no running maximum to
+  build, vacuously empty.
+- `cummax([5])` is `[5]` — a single-element list returns that element's
+  own running maximum, itself.
+- `cummax([-1, -2, -3])` is `[-1, -1, -1]` — an already-descending list
+  plateaus at its first (largest) element.
+- `cummax([1.5, 1, 3])` is `[1.5, 1.5, 3]` (mixed int/float elements,
+  ordinary numeric comparison — same as `min`/`max`).
+- `cummax([3, 3, 3])` is `[3, 3, 3]`.
+
+Add directly after `_max` (search `def _max`, immediately before `def
+_clamp`) — keeps the new running-maximum builtin next to the aggregate
+it generalizes:
+```python
+def _cummax(arguments: list, line: int, column: int) -> object:
+    _require_arity("cummax", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"cummax() requires a list, got {type_name(value)}", line, column
+        )
+    result = []
+    running = None
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"cummax() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        running = element if running is None else max(running, element)
+        result.append(running)
+    return result
+```
+(Same list-in/list-out shape as `_cumsum`/`_cumprod` — search either, if
+already merged — just tracking a running maximum instead of a running
+sum or product.) Register the new dict entry (search `"max": _max,`,
+add `"cummax": _cummax,` directly after it, before `"clamp": _clamp,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `cummax([1, 3, 2, 5, 4])` is `[1, 3, 3, 5, 5]` and `cummax([1.5, 1,
+  3])` is `[1.5, 1.5, 3]`.
+- `cummax([]);` is `[]` and `cummax([5]);` is `[5]` — the empty-list and
+  single-element cases.
+- `cummax([-1, -2, -3]);` is `[-1, -1, -1]` — the already-descending
+  case.
+- `cummax(123);` raises `CinderRuntimeError` matching
+  `"cummax\(\) requires a list, got int"`.
+- `cummax([1, "a"]);` raises `CinderRuntimeError` matching
+  `"cummax\(\) requires a list of numbers, got string"` (mirror `max`'s
+  own non-numeric-element test for the exact message shape).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_max`, search `def
+_max`), `tests/test_builtins.py` (new `class TestCummax`, modeled on
+`class TestMax`, search that name, for the test shapes above — place it
+near the existing `class TestMax`). Once merged, `README.md`'s existing
+`max` bullet needs `cummax` added right after it, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
+## 6. Standard library: `cummin` — cumulative (running) minimum of a numeric list
+
+Add a standalone list-transform builtin directly after `cummax` once
+task 5 lands (`cinder/builtins.py`, search `def _cummax`, immediately
+before `def _clamp`) — if task 5 hasn't landed yet, anchor on `_min`
+instead (search `def _min`, immediately before `def _max`) and place it
+there; either way it is the minimizing sibling of task 5's `cummax`,
+the same running-aggregate shape applied to `min` instead of `max`.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(cummin([5, 3, 4, 1, 2]));'
+# -> <eval>:1:7: undefined name 'cummin' (did you mean 'min'?)
+```
+
+**What it does.** Given a list of numbers, return a new list of the same
+length where each element is the running minimum of every element up to
+and including that position — `result[i] = min(list[0], list[1], ...,
+list[i])`. An empty list returns an empty list.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `cummin([5, 3, 4, 1, 2])` is `[5, 3, 3, 1, 1]`.
+- `cummin([])` is `[]` — the empty list has no running minimum to
+  build, vacuously empty.
+- `cummin([5])` is `[5]` — a single-element list returns that element's
+  own running minimum, itself.
+- `cummin([-1, -2, -3])` is `[-1, -2, -3]` — an already-descending list
+  keeps dropping.
+- `cummin([3, 2.5, 4])` is `[3, 2.5, 2.5]` (mixed int/float elements,
+  ordinary numeric comparison — same as `min`/`max`).
+- `cummin([3, 3, 3])` is `[3, 3, 3]`.
+
+Add directly after `_cummax` if task 5 has landed (search `def
+_cummax`), otherwise directly after `_min` (search `def _min`,
+immediately before `def _max`):
+```python
+def _cummin(arguments: list, line: int, column: int) -> object:
+    _require_arity("cummin", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"cummin() requires a list, got {type_name(value)}", line, column
+        )
+    result = []
+    running = None
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"cummin() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        running = element if running is None else min(running, element)
+        result.append(running)
+    return result
+```
+(Same list-in/list-out shape as `_cummax` — search `def _cummax` if
+merged, else `_cumsum`/`_cumprod` — just tracking a running minimum
+instead.) Register the new dict entry (search `"min": _min,`, add
+`"cummin": _cummin,` directly after it if `cummax` hasn't been
+registered yet, or after `"cummax": _cummax,` if it has — either
+position is fine, both sit between `min` and `max`'s entries and
+`clamp`'s).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `cummin([5, 3, 4, 1, 2])` is `[5, 3, 3, 1, 1]` and `cummin([3, 2.5,
+  4])` is `[3, 2.5, 2.5]`.
+- `cummin([]);` is `[]` and `cummin([5]);` is `[5]` — the empty-list and
+  single-element cases.
+- `cummin([-1, -2, -3]);` is `[-1, -2, -3]` — the already-descending
+  case.
+- `cummin(123);` raises `CinderRuntimeError` matching
+  `"cummin\(\) requires a list, got int"`.
+- `cummin([1, "a"]);` raises `CinderRuntimeError` matching
+  `"cummin\(\) requires a list of numbers, got string"` (mirror `min`'s
+  own non-numeric-element test for the exact message shape).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_cummax`/`_min`,
+see anchor note above), `tests/test_builtins.py` (new `class
+TestCummin`, modeled on `class TestMin`, search that name, for the test
+shapes above — place it near the existing `class TestMin`/`class
+TestCummax`). Once merged, `README.md`'s existing `min` bullet needs
+`cummin` added right after it, its "Status & roadmap" section needs
+updating, and `PROJECT.md`'s "Current frontier" section needs
+refreshing — leave both to the Architect's next grooming pass, not this
+task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -149,8 +149,11 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4843 tests passing locally as of `#434`). Most recently
-landed: `#434` `longest_common_prefix` (a standalone list-of-strings
+`main` is green (4855 tests passing locally as of `#435`). Most recently
+landed: `#435` `binary_gap` (the longest run of zeros bounded by two
+ones in an integer's binary representation, the classic Codility
+"BinaryGap" kata, a standalone conversion builtin next to `to_bin`),
+`#434` `longest_common_prefix` (a standalone list-of-strings
 builtin next to `hamming_distance`/`levenshtein_distance`, returning
 the longest shared prefix of every string in a list), `#433`
 `from_roman` (parsing a Roman numeral string back to an
@@ -158,24 +161,22 @@ integer via a round-trip canonicalization check against `to_roman`,
 rejecting non-canonical forms like `IIII`), `#432` `to_roman` (a
 standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`,
 bounded to the traditional 1-3999 domain), `#431` `rot13` (a
-self-inverse Caesar-cipher string transform next to `swap_case`),
-`#430` `nth_perfect_power` (a bounded scan rather than a closed form,
-scoped to non-negative candidates only) —
+self-inverse Caesar-cipher string transform next to `swap_case`) —
 see `CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, five tasks — see History below): `binary_gap` (task 1,
-the longest run of zeros bounded by two ones in an integer's binary
-representation, the classic Codility "BinaryGap" kata, sitting next to
-`to_bin`/`collatz_length`, never previously implemented here) — then
-`dot_product` (task 2, the dot product of two equal-length numeric
-lists, a two-argument numeric-list statistic next to
-`mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
-equal-length validation shape) — then `cumsum` (task 3, the cumulative
-running sum of a numeric list, a list-returning generalization sitting
-directly next to `sum`) — then `caesar_cipher` (task 4, generalizing
-`rot13`'s fixed 13-place shift to an arbitrary integer shift, next to
-`_rot13`) — and, at the back of the queue, `cumprod` (task 5, the
-multiplicative sibling of `cumsum`, a list-returning generalization
-sitting directly next to `product`).
+(`BACKLOG.md`, six tasks — see History below): `dot_product` (task 1,
+the dot product of two equal-length numeric lists, a two-argument
+numeric-list statistic next to `mean`/`median`/`variance`/`std_dev`,
+mirroring `hamming_distance`'s equal-length validation shape) — then
+`cumsum` (task 2, the cumulative running sum of a numeric list, a
+list-returning generalization sitting directly next to `sum`) — then
+`caesar_cipher` (task 3, generalizing `rot13`'s fixed 13-place shift to
+an arbitrary integer shift, next to `_rot13`) — then `cumprod` (task 4,
+the multiplicative sibling of `cumsum`, a list-returning generalization
+sitting directly next to `product`) — then `cummax` (task 5, the
+running-maximum sibling of `cumsum`/`cumprod`, sitting next to `max`,
+restocked this pass since the queue had dropped to four) — and, at the
+back of the queue, `cummin` (task 6, the minimizing sibling of
+`cummax`, sitting next to `min`).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -777,3 +778,29 @@ identified so far.
   recur this time. Backlog holds steady at five ready tasks, at the
   CLAUDE.md floor. `generators` remains the only real depth gap, still
   deferred — see "Current frontier" above for why.
+
+- **2026-09-11 (grooming, third pass)** — `#435` `binary_gap` merged
+  since the last pass (clean, single review round; ran the local suite
+  to confirm — 4855 tests, up from 4843). Release had already removed
+  the completed task from `BACKLOG.md`, renumbered the remaining four
+  tasks (`dot_product`/`cumsum`/`caesar_cipher`/`cumprod` down to 1-4),
+  and archived it to `CHANGELOG.md`, but had not yet updated
+  README.md/this file — so this pass added the missing `binary_gap`
+  bullet next to `to_bin` in README's builtin list, and moved it from
+  "Queued next" into "Recently landed" in both README's "Status &
+  roadmap" and this section's "Current frontier", refreshing the test
+  count in both places. That left the backlog at four tasks, one below
+  CLAUDE.md's five-task floor, so this pass also restocked it with two
+  new breadth tasks: `cummax` (task 5) and `cummin` (task 6), the
+  running-maximum and running-minimum siblings of `cumsum`/`cumprod`
+  (tasks 2 and 4, still unclaimed) — same list-in/list-out cumulative
+  shape, sitting next to `max`/`min` instead of `sum`/`product`, a gap
+  confirmed with the same `python3 -m cinder.cli eval` probe every
+  other stdlib task in this backlog uses. Brings the queue to six, one
+  above the floor, matching this project's usual restock target.
+  `generators` remains the only real depth gap, still deferred — see
+  "Current frontier" above for why. No `STATUS: STOP` in `HELP.md`;
+  root checkout was clean at session start (`git pull --rebase` a
+  no-op) and this session commits its own docs/backlog changes before
+  exiting, per the dirty-checkout pattern `HELP.md` has flagged
+  repeatedly since 2026-08-27.

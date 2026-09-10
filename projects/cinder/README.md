@@ -520,9 +520,11 @@ while (i < 10) {
   `ceil`, `pow`, `sqrt`, `cbrt` (real cube root, domain-unrestricted unlike `sqrt` — negative input returns a negative
   result instead of raising), `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `factorial`, `clamp`, `lerp`, `random_int`, `random_choice`,
   `ord`/`chr` for character/code-point
-  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `to_roman` for integer-to-Roman-numeral
-  conversion (bounded to the traditional 1-3999 domain), `from_roman` to parse a Roman numeral string back to an
-  integer via a round-trip canonicalization check against `to_roman` (rejects any non-canonical form, e.g. `IIII`),
+  conversion, `to_hex`/`to_bin`/`to_oct` for integer-to-string base conversion, `binary_gap` to return the longest
+  run of zeros bounded by two ones in an integer's binary representation (the classic Codility kata), `to_roman` for
+  integer-to-Roman-numeral conversion (bounded to the traditional 1-3999 domain), `from_roman` to parse a Roman
+  numeral string back to an integer via a round-trip canonicalization check against `to_roman` (rejects any
+  non-canonical form, e.g. `IIII`),
   `is_even`/`is_odd`/`is_divisible`/`is_prime`/`is_composite`/`is_semiprime`/`is_coprime`
   integer parity/divisibility/primality/coprimality predicates (`is_semiprime` testing whether an integer is the product of exactly two primes counted with multiplicity),
   `euler_totient` to count the integers up to `n` coprime with `n` (Euler's totient function), the aggregate counterpart to `is_coprime`, via the same trial-division factoring `prime_factors` already uses,
@@ -833,7 +835,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4833+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4855+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -859,7 +861,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `longest_common_prefix`
+Actively developed, nightly. Recently landed: `binary_gap` (PR #435,
+the longest run of zeros bounded by two ones in an integer's binary
+representation, the classic Codility kata, a standalone conversion
+builtin sitting next to `to_bin`), `longest_common_prefix`
 (PR #434, a standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest shared
 prefix of every string in a list), `from_roman` (PR #433,
@@ -869,24 +874,20 @@ form such as `IIII`), `to_roman` (PR #432,
 converting an integer to a Roman numeral string via the standard
 greedy algorithm, bounded to the traditional 1-3999 domain, a
 standalone conversion builtin sitting next to `to_hex`/`to_bin`/
-`to_oct`), `rot13` (PR #431, a self-inverse Caesar-cipher string
-transform sitting next to `swap_case`), and `nth_perfect_power` (PR #430,
-perfect power found at a 1-indexed position, scoped to non-negative
-candidates only since `is_perfect_power` uniquely among this
-codebase's scanned predicates admits negative input).
+`to_oct`), and `rot13` (PR #431, a self-inverse Caesar-cipher string
+transform sitting next to `swap_case`).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `binary_gap` (task 1, the
-longest run of zeros bounded by two ones in an integer's binary
-representation, the classic Codility kata, sitting next to
-`to_bin`/`collatz_length`), `dot_product` (task 2, the dot product of
-two equal-length numeric lists, a two-argument numeric-list statistic
-next to `mean`/`median`/`variance`/`std_dev`), `cumsum` (task 3, the
-cumulative running sum of a numeric list, a list-returning
-generalization of `sum` sitting right next to it), `caesar_cipher`
-(task 4, generalizing `rot13`'s fixed 13-place shift to an arbitrary
-integer shift), and, at the back of the queue, `cumprod` (task 5, the
-multiplicative sibling of `cumsum`, a list-returning generalization of
-`product`).
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `dot_product` (task 1,
+the dot product of two equal-length numeric lists, a two-argument
+numeric-list statistic next to `mean`/`median`/`variance`/`std_dev`),
+`cumsum` (task 2, the cumulative running sum of a numeric list, a
+list-returning generalization of `sum` sitting right next to it),
+`caesar_cipher` (task 3, generalizing `rot13`'s fixed 13-place shift to
+an arbitrary integer shift), `cumprod` (task 4, the multiplicative
+sibling of `cumsum`, a list-returning generalization of `product`),
+`cummax` (task 5, the running-maximum sibling of `cumsum`/`cumprod`
+sitting next to `max`), and, at the back of the queue, `cummin` (task
+6, the minimizing sibling of `cummax`, sitting next to `min`).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

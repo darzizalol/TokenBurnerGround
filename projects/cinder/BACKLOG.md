@@ -11,112 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings [claimed 2026-09-10T19:21:03Z]
-
-Add a standalone list-of-strings builtin, not another `is_*`/`nth_*` pair —
-that gap list stayed exhausted this pass too (re-audited programmatically:
-every unpaired `is_*` name is still one of the already-rejected categories —
-multi-arg, string/list-shaped with no integer ordering, a type predicate, or
-one of the confirmed-too-sparse-or-slow names from earlier passes' History
-entries). `longest_common_prefix` sits next to `hamming_distance`/
-`levenshtein_distance` (`cinder/builtins.py`, search `def
-_hamming_distance`) as another string-comparison utility, but generalized
-from a pair to a whole list. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(longest_common_prefix(["flower", "flow", "flight"]));'
-# -> <eval>:1:7: undefined name 'longest_common_prefix'
-```
-
-**What it does.** Given a list of strings, return the longest string that is
-a prefix of every string in the list. Compare character by character across
-all strings simultaneously (or equivalently, shrink a running prefix
-candidate from the first string until every remaining string starts with
-it); stop at the first mismatching position or the shortest string's end,
-whichever comes first.
-
-Worked examples (confirmed via direct computation of the algorithm below):
-- `longest_common_prefix(["flower", "flow", "flight"])` is `"fl"`.
-- `longest_common_prefix(["dog", "racecar", "car"])` is `""` (no common
-  prefix at all).
-- `longest_common_prefix(["interspecies", "interstellar", "interstate"])` is
-  `"inters"`.
-- `longest_common_prefix(["throne"])` is `"throne"` — a single-element list
-  returns that element verbatim.
-- `longest_common_prefix(["throne", "throne"])` is `"throne"` — identical
-  strings share their whole length.
-- `longest_common_prefix([])` is `""` — the empty list has no strings to
-  disagree, so the shared prefix is vacuously empty.
-- `longest_common_prefix(["", "abc"])` is `""` and
-  `longest_common_prefix(["abc", ""])` is `""` — any empty string in the
-  list forces an empty result.
-
-Add directly after `_hamming_distance` (search `def _hamming_distance`,
-immediately before `def _is_pangram`) — keeps the new multi-string
-comparison utility next to its closest siblings:
-```python
-def _longest_common_prefix(arguments: list, line: int, column: int) -> object:
-    _require_arity("longest_common_prefix", arguments, 1, line, column)
-    items = arguments[0]
-    if not isinstance(items, list):
-        raise CinderRuntimeError(
-            f"longest_common_prefix() requires a list, got {type_name(items)}",
-            line, column,
-        )
-    for item in items:
-        if not isinstance(item, str):
-            raise CinderRuntimeError(
-                f"longest_common_prefix() requires a list of strings, got {type_name(item)}",
-                line, column,
-            )
-    if not items:
-        return ""
-    prefix = items[0]
-    for candidate in items[1:]:
-        while not candidate.startswith(prefix):
-            prefix = prefix[:-1]
-            if not prefix:
-                return ""
-    return prefix
-```
-(Same validation shape as `_join` — search `def _join` — which already
-requires a list of strings for its first argument; the shrink-from-the-left
-loop is the standard longest-common-prefix algorithm, correct because
-`prefix` only ever shrinks, so once it becomes `""` every subsequent
-`candidate.startswith("")` would trivially be `True` — the early `return ""`
-inside the loop just short-circuits that dead work.) Register the new dict
-entry (search `"hamming_distance": _hamming_distance,`, add
-`"longest_common_prefix": _longest_common_prefix,` directly after it,
-before `"is_pangram": _is_pangram,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including the empty-list and
-  single-element-list cases.
-- `longest_common_prefix(["flower", "flow", "flight"]);` is `"fl"` and
-  `longest_common_prefix(["dog", "racecar", "car"]);` is `""` — the two
-  headline worked examples.
-- `longest_common_prefix(123);` raises `CinderRuntimeError` matching
-  `"longest_common_prefix\(\) requires a list, got int"`.
-- `longest_common_prefix([1, "a"]);` raises `CinderRuntimeError` matching
-  `"longest_common_prefix\(\) requires a list of strings, got int"` (mirror
-  `join`'s own non-string-element test for the exact message shape).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_hamming_distance`,
-search `def _hamming_distance`), `tests/test_builtins.py` (new `class
-TestLongestCommonPrefix`, modeled on `class TestHammingDistance`, search
-that name, for the test shapes above — place it near the existing `class
-TestHammingDistance`/`class TestLevenshteinDistance`). Once merged,
-`README.md`'s existing `hamming_distance` bullet needs
-`longest_common_prefix` added right after it, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
+## 1. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
 
 Add a standalone integer-property builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited
@@ -214,7 +109,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `dot_product` — dot product of two equal-length numeric lists
+## 2. Standard library: `dot_product` — dot product of two equal-length numeric lists
 
 Add a standalone two-list-argument builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited
@@ -316,7 +211,7 @@ grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `cumsum` — cumulative (running) sum of a numeric list
+## 3. Standard library: `cumsum` — cumulative (running) sum of a numeric list
 
 Add a standalone list-transform builtin sitting directly next to `sum`/
 `product` (`cinder/builtins.py`, search `def _sum`, immediately before
@@ -400,7 +295,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
+## 4. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
 
 Add a standalone two-argument string builtin directly after `_rot13`
 (`cinder/builtins.py`, search `def _rot13`, immediately before `def
@@ -506,13 +401,13 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `cumprod` — cumulative (running) product of a numeric list
+## 5. Standard library: `cumprod` — cumulative (running) product of a numeric list
 
 Add a standalone list-transform builtin directly after `_product`
 (`cinder/builtins.py`, search `def _product`, immediately before `def
-_mean`) — the multiplicative sibling of task 4's `cumsum`, the same
+_mean`) — the multiplicative sibling of task 3's `cumsum`, the same
 scalar-to-running-list shape shift applied to `product` instead of
-`sum`. (If task 4 has already merged by the time this is picked up,
+`sum`. (If task 3 has already merged by the time this is picked up,
 `_cumsum` will sit between `_sum` and `_product`; this task's anchor is
 `_product` itself, so the insertion point is unaffected either way.)
 Verify the gap:

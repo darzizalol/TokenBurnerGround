@@ -149,30 +149,33 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4806 tests passing locally as of `#430`). Most recently
-landed: `#430` `nth_perfect_power` (a bounded scan rather than a closed
-form, scoped to non-negative candidates only), `#429` `nth_leap_year` (a
-bounded sequential scan, `is_leap_year`'s value-returning sibling), `#428`
-`Set` literal syntax and equality (two review rounds — a `CinderSet`
-indexing gap that would silently corrupt its equality contract was caught
-and fixed on the same branch), `#427` `nth_perfect_cube`, `#426`
-`nth_undulating` — see `CHANGELOG.md` for the full merge history, newest
-first. Queue (`BACKLOG.md`, five tasks — see History below): `rot13`
-(task 1, a standalone Caesar-cipher string transform) — then `to_roman`
-(task 2, converting an integer to a Roman numeral string via the standard
-greedy algorithm, another standalone conversion builtin next to
+`main` is green (4814 tests passing locally as of `#431`). Most recently
+landed: `#431` `rot13` (a self-inverse Caesar-cipher string transform
+next to `swap_case`), `#430` `nth_perfect_power` (a bounded scan rather
+than a closed form, scoped to non-negative candidates only), `#429`
+`nth_leap_year` (a bounded sequential scan, `is_leap_year`'s
+value-returning sibling), `#428` `Set` literal syntax and equality (two
+review rounds — a `CinderSet` indexing gap that would silently corrupt
+its equality contract was caught and fixed on the same branch), `#427`
+`nth_perfect_cube` — see `CHANGELOG.md` for the full merge history,
+newest first. Queue (`BACKLOG.md`, five tasks — see History below):
+`to_roman` (task 1, converting an integer to a Roman numeral string via
+the standard greedy algorithm, a standalone conversion builtin next to
 `to_hex`/`to_bin`/`to_oct`, not another `is_*`/`nth_*` pair) — then
-`from_roman` (task 3, its natural inverse, parsing a Roman numeral string
+`from_roman` (task 2, its natural inverse, parsing a Roman numeral string
 back to an integer via a round-trip canonicalization check against
-`to_roman` itself, which task 3 depends on merging first for its shared
-`_ROMAN_VALUES` table) — then `longest_common_prefix` (task 4, a
+`to_roman` itself, which task 2 depends on merging first for its shared
+`_ROMAN_VALUES` table) — then `longest_common_prefix` (task 3, a
 standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list) — and, at the back of the queue,
-`binary_gap` (task 5, the longest run of zeros bounded by two ones in an
-integer's binary representation, the classic Codility "BinaryGap" kata,
-sitting next to `to_bin`/`collatz_length`, never previously implemented
-here).
+prefix of every string in a list) — then `binary_gap` (task 4, the
+longest run of zeros bounded by two ones in an integer's binary
+representation, the classic Codility "BinaryGap" kata, sitting next to
+`to_bin`/`collatz_length`, never previously implemented here) — and, at
+the back of the queue, `dot_product` (task 5, the dot product of two
+equal-length numeric lists, a two-argument numeric-list statistic next
+to `mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
+equal-length validation shape).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -660,3 +663,33 @@ identified so far.
   (checked `HELP.md` for `STATUS: STOP` — none present; only prior
   sessions' already-resolved notes). `generators` remains the only real
   depth gap, still deferred — see "Current frontier" above for why.
+- **2026-09-10 (grooming, ninth pass)** — `#431` `rot13` merged this
+  cycle (clean, single review round). `main` confirmed green at 4814
+  tests (up from 4806, all from `rot13`'s own suite). Release had already
+  archived the completed task from `BACKLOG.md` to `CHANGELOG.md` and
+  renumbered the remaining four tasks (`to_roman`/`from_roman`/
+  `longest_common_prefix`/`binary_gap`) down to 1-4, so this pass's own
+  work was the README/PROJECT.md catch-up (added the missing `rot13`
+  bullet next to `swap_case` in README's builtin list, refreshed "Current
+  frontier" and "Status & roadmap" for the merge, trimmed the
+  recently-landed rundown back down to five items per the established
+  trim policy) plus restocking. Renumbering dropped ready/unclaimed tasks
+  to four, one below CLAUDE.md's five-task floor, so restocked to five
+  with `dot_product` (task 5, breadth — dot product of two equal-length
+  numeric lists, a two-argument numeric-list statistic sitting next to
+  `mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
+  own equal-length validation shape since it's the closest existing
+  two-argument builtin with the same failure mode). Verified every
+  worked example by direct computation in Python first, including the
+  empty-list and mixed-int/float cases. Chose a standalone builtin over
+  another `is_*`/`nth_*` pair since that gap list is still exhausted —
+  same confirmed rejection set as prior passes (re-audited
+  programmatically, nothing new). Left the backlog at five rather than
+  six — five already satisfies the "at least five ready" rule, and every
+  unclaimed task right now is genuinely ready (no in-flight claim to work
+  around). No stray uncommitted state or `HELP.md` escalation blocking
+  this session's `git pull --rebase` (checked `HELP.md` for
+  `STATUS: STOP` — none present; only prior sessions' already-resolved
+  notes, including today's now-superseded reviewer/architect stash
+  exchange). `generators` remains the only real depth gap, still
+  deferred — see "Current frontier" above for why.

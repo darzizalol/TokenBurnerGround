@@ -714,6 +714,8 @@ while (i < 10) {
   repdigits or abundant numbers — the 30th is already 318,682), the value-returning sibling
   of `is_kaprekar`'s membership test,
   `swap_case` to flip each character's case,
+  `rot13` to rotate every ASCII letter 13 places through its own case's alphabet, a
+  self-inverse Caesar-cipher transform leaving non-letter characters untouched,
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
   `is_repdigit` to test whether every decimal digit of an integer is the same,
   `nth_repdigit` to return the repdigit found at a 1-indexed position via a sequential
@@ -851,36 +853,40 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_perfect_power` (PR
-#430, perfect power found at a 1-indexed position, scoped to
-non-negative candidates only since `is_perfect_power` uniquely among
-this codebase's scanned predicates admits negative input), `nth_leap_year`
-(PR #429, leap year found at a 1-indexed position, `is_leap_year`'s
-Gregorian-rule predicate), `Set` literal syntax and equality (PR #428,
-`{1, 2, 3}`, no builtin interop yet, single-element sets deliberately out
-of scope this round — two review rounds, the first catching a `CinderSet`
-indexing gap that would have silently corrupted its own equality
-contract), `nth_perfect_cube` (PR #427), `nth_undulating` (PR #426), and
-guards in `match` arms (PR #413, `n if n > 0 => "positive"`, an optional
-`if <expr>` on any arm — attempted once before and closed after three
-failed review rounds over a recurring parser bug, this time parsing the
-guard via the parser's ordinary `_ternary()` entry point instead of a
-hand-rolled bracket/token scan, sidestepping that whole bug class; see
-`BACKLOG.md`'s `## Graveyard` for the postmortem).
+Actively developed, nightly. Recently landed: `rot13` (PR #431, a
+self-inverse Caesar-cipher string transform sitting next to
+`swap_case`), `nth_perfect_power` (PR #430, perfect power found at a
+1-indexed position, scoped to non-negative candidates only since
+`is_perfect_power` uniquely among this codebase's scanned predicates
+admits negative input), `nth_leap_year` (PR #429, leap year found at a
+1-indexed position, `is_leap_year`'s Gregorian-rule predicate), `Set`
+literal syntax and equality (PR #428, `{1, 2, 3}`, no builtin interop
+yet, single-element sets deliberately out of scope this round — two
+review rounds, the first catching a `CinderSet` indexing gap that would
+have silently corrupted its own equality contract), `nth_perfect_cube`
+(PR #427), and guards in `match` arms (PR #413, `n if n > 0 =>
+"positive"`, an optional `if <expr>` on any arm — attempted once before
+and closed after three failed review rounds over a recurring parser
+bug, this time parsing the guard via the parser's ordinary `_ternary()`
+entry point instead of a hand-rolled bracket/token scan, sidestepping
+that whole bug class; see `BACKLOG.md`'s `## Graveyard` for the
+postmortem).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `rot13` (task 1, a
-standalone Caesar-cipher string transform), `to_roman` (task 2,
-converting an integer to a Roman numeral string, another standalone
-conversion builtin rather than another `is_*`/`nth_*` pair — the
-`is_*`-without-`nth_*` gap list is nearly exhausted for now),
-`from_roman` (task 3, `to_roman`'s natural inverse, parsing a Roman
-numeral string back to an integer via a round-trip canonicalization
-check), `longest_common_prefix` (task 4, a standalone list-of-strings
-builtin next to `hamming_distance`/`levenshtein_distance`, returning the
-longest shared prefix of every string in a list), and, at the back of
-the queue, `binary_gap` (task 5, the longest run of zeros bounded by two
-ones in an integer's binary representation, the classic Codility kata,
-sitting next to `to_bin`/`collatz_length`).
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `to_roman` (task 1,
+converting an integer to a Roman numeral string, a standalone
+conversion builtin next to `to_hex`/`to_bin`/`to_oct` rather than
+another `is_*`/`nth_*` pair — the `is_*`-without-`nth_*` gap list is
+nearly exhausted for now), `from_roman` (task 2, `to_roman`'s natural
+inverse, parsing a Roman numeral string back to an integer via a
+round-trip canonicalization check), `longest_common_prefix` (task 3, a
+standalone list-of-strings builtin next to
+`hamming_distance`/`levenshtein_distance`, returning the longest shared
+prefix of every string in a list), `binary_gap` (task 4, the longest
+run of zeros bounded by two ones in an integer's binary representation,
+the classic Codility kata, sitting next to `to_bin`/`collatz_length`),
+and, at the back of the queue, `dot_product` (task 5, the dot product
+of two equal-length numeric lists, a two-argument numeric-list
+statistic next to `mean`/`median`/`variance`/`std_dev`).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

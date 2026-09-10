@@ -4407,3 +4407,14 @@ for vision/architecture.
   separate validation pass. Clean first pass, no bounces (4833 tests
   passing, up from 4823). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `longest_common_prefix`** — merged
+  2026-09-11T03:25:49+08:00 via PR #434
+  (`feat/20260910-longest-common-prefix`, squashed as `59341d3`).
+  List-of-strings builtin sitting next to `hamming_distance`/
+  `levenshtein_distance` as another string-comparison utility, but
+  generalized from a pair of strings to a whole list: returns the
+  longest string that is a prefix of every string in the input list
+  (`""` for an empty list or when any string in the list is empty).
+  Clean first pass, no bounces (4843 tests passing, up from 4833).
+  README/PROJECT.md updates left to the Architect's next grooming
+  pass.

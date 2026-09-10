@@ -686,6 +686,9 @@ while (i < 10) {
   recurrence seeded by its own decimal digits (e.g. `197`: seed `1, 9, 7`, then `17, 33, 57, 107, 197`),
   the digit-recurrence sibling of `is_automorphic`/`is_trimorphic_number`'s digit-ending questions,
   `hamming_distance` to count differing positions between two equal-length strings,
+  `longest_common_prefix` to return the longest string that is a prefix of every string in a
+  list, the list-generalized sibling of `hamming_distance`/`levenshtein_distance`'s pairwise
+  string comparisons (`""` for an empty list or when any string in the list is empty),
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `nth_harshad` to return the Harshad number found at a 1-indexed position via the same bounded
   sequential scan `nth_abundant`/`nth_deficient` already use, the value-returning sibling of
@@ -856,7 +859,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `from_roman` (PR #433,
+Actively developed, nightly. Recently landed: `longest_common_prefix`
+(PR #434, a standalone list-of-strings builtin next to
+`hamming_distance`/`levenshtein_distance`, returning the longest shared
+prefix of every string in a list), `from_roman` (PR #433,
 parsing a Roman numeral string back to an integer via a round-trip
 canonicalization check against `to_roman` — rejects any non-canonical
 form such as `IIII`), `to_roman` (PR #432,
@@ -864,26 +870,21 @@ converting an integer to a Roman numeral string via the standard
 greedy algorithm, bounded to the traditional 1-3999 domain, a
 standalone conversion builtin sitting next to `to_hex`/`to_bin`/
 `to_oct`), `rot13` (PR #431, a self-inverse Caesar-cipher string
-transform sitting next to `swap_case`), `nth_perfect_power` (PR #430,
+transform sitting next to `swap_case`), and `nth_perfect_power` (PR #430,
 perfect power found at a 1-indexed position, scoped to non-negative
 candidates only since `is_perfect_power` uniquely among this
-codebase's scanned predicates admits negative input), and `nth_leap_year`
-(PR #429, leap year found at a 1-indexed position, `is_leap_year`'s
-Gregorian-rule predicate).
+codebase's scanned predicates admits negative input).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `longest_common_prefix`
-(task 1, a standalone list-of-strings builtin next to
-`hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list), `binary_gap` (task 2, the longest
-run of zeros bounded by two ones in an integer's binary representation,
-the classic Codility kata, sitting next to `to_bin`/`collatz_length`),
-`dot_product` (task 3, the dot product of two equal-length numeric
-lists, a two-argument numeric-list statistic next to
-`mean`/`median`/`variance`/`std_dev`), `cumsum` (task 4, the
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `binary_gap` (task 1, the
+longest run of zeros bounded by two ones in an integer's binary
+representation, the classic Codility kata, sitting next to
+`to_bin`/`collatz_length`), `dot_product` (task 2, the dot product of
+two equal-length numeric lists, a two-argument numeric-list statistic
+next to `mean`/`median`/`variance`/`std_dev`), `cumsum` (task 3, the
 cumulative running sum of a numeric list, a list-returning
 generalization of `sum` sitting right next to it), `caesar_cipher`
-(task 5, generalizing `rot13`'s fixed 13-place shift to an arbitrary
-integer shift), and, at the back of the queue, `cumprod` (task 6, the
+(task 4, generalizing `rot13`'s fixed 13-place shift to an arbitrary
+integer shift), and, at the back of the queue, `cumprod` (task 5, the
 multiplicative sibling of `cumsum`, a list-returning generalization of
 `product`).
 The language is otherwise deep by now (try/catch/finally, `switch`,

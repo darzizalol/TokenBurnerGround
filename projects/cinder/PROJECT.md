@@ -149,32 +149,31 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4833 tests passing locally as of `#433`). Most recently
-landed: `#433` `from_roman` (parsing a Roman numeral string back to an
+`main` is green (4843 tests passing locally as of `#434`). Most recently
+landed: `#434` `longest_common_prefix` (a standalone list-of-strings
+builtin next to `hamming_distance`/`levenshtein_distance`, returning
+the longest shared prefix of every string in a list), `#433`
+`from_roman` (parsing a Roman numeral string back to an
 integer via a round-trip canonicalization check against `to_roman`,
 rejecting non-canonical forms like `IIII`), `#432` `to_roman` (a
 standalone conversion builtin next to `to_hex`/`to_bin`/`to_oct`,
 bounded to the traditional 1-3999 domain), `#431` `rot13` (a
 self-inverse Caesar-cipher string transform next to `swap_case`),
 `#430` `nth_perfect_power` (a bounded scan rather than a closed form,
-scoped to non-negative candidates only), `#429` `nth_leap_year` (a
-bounded sequential scan, `is_leap_year`'s value-returning sibling) —
+scoped to non-negative candidates only) —
 see `CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, six tasks — see History below): `longest_common_prefix`
-(task 1, a standalone list-of-strings builtin next to
-`hamming_distance`/`levenshtein_distance`, returning the longest shared
-prefix of every string in a list) — then `binary_gap` (task 2, the
-longest run of zeros bounded by two ones in an integer's binary
+(`BACKLOG.md`, five tasks — see History below): `binary_gap` (task 1,
+the longest run of zeros bounded by two ones in an integer's binary
 representation, the classic Codility "BinaryGap" kata, sitting next to
 `to_bin`/`collatz_length`, never previously implemented here) — then
-`dot_product` (task 3, the dot product of two equal-length numeric
+`dot_product` (task 2, the dot product of two equal-length numeric
 lists, a two-argument numeric-list statistic next to
 `mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
-equal-length validation shape) — then `cumsum` (task 4, the cumulative
+equal-length validation shape) — then `cumsum` (task 3, the cumulative
 running sum of a numeric list, a list-returning generalization sitting
-directly next to `sum`) — then `caesar_cipher` (task 5, generalizing
+directly next to `sum`) — then `caesar_cipher` (task 4, generalizing
 `rot13`'s fixed 13-place shift to an arbitrary integer shift, next to
-`_rot13`) — and, at the back of the queue, `cumprod` (task 6, the
+`_rot13`) — and, at the back of the queue, `cumprod` (task 5, the
 multiplicative sibling of `cumsum`, a list-returning generalization
 sitting directly next to `product`).
 
@@ -757,3 +756,24 @@ identified so far.
   flagging since 2026-08-27 (this session commits and pushes before
   exiting, per that same flag). `generators` remains the only real depth
   gap, still deferred — see "Current frontier" above for why.
+
+- **2026-09-11 (grooming, second pass)** — `#434` `longest_common_prefix`
+  merged since the last pass (clean, single review round; test count in
+  its own PR body reports 4843, up from 4833 — confirmed against
+  `builtins.py`/`test_builtins.py`, both already have it). Release had
+  already removed the completed task from `BACKLOG.md` and renumbered
+  the remaining five tasks (`binary_gap`/`dot_product`/`cumsum`/
+  `caesar_cipher`/`cumprod` down to 1-5) but had *not* archived it to
+  `CHANGELOG.md` (a first — every prior merge this project has had a
+  matching `CHANGELOG.md` entry same-night) nor updated README.md/this
+  file, so this pass did all three: added the `CHANGELOG.md` entry,
+  added the missing `longest_common_prefix` bullet next to
+  `hamming_distance`/`levenshtein_distance` in README's builtin list,
+  and moved it from "Queued next" into "Recently landed" in both
+  README's "Status & roadmap" and this section, refreshing the test
+  count and task numbering in both places. Root checkout was clean at
+  session start (`git pull --rebase` a no-op, no stash) — the
+  dirty-checkout pattern flagged repeatedly since 2026-08-27 did not
+  recur this time. Backlog holds steady at five ready tasks, at the
+  CLAUDE.md floor. `generators` remains the only real depth gap, still
+  deferred — see "Current frontier" above for why.

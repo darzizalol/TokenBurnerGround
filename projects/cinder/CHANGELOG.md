@@ -4434,3 +4434,10 @@ for vision/architecture.
   numeric lists (`0` for two empty lists). Clean first pass, no bounces
   (4866 tests passing, up from 4855). README/PROJECT.md updates left to
   the Architect's next grooming pass.
+- **Standard library: `cumsum`** — merged 2026-09-10T20:01:16Z via PR
+  #437 (`feat/20260910-cumsum`, squashed as `0ae8012`). List-transform
+  builtin sitting next to `sum`/`product`: returns a new list where each
+  element is the running total up to and including that position
+  (`[]` for an empty list). Clean first pass, no bounces (4875 tests
+  passing, up from 4866). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

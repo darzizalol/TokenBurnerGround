@@ -11,119 +11,10 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_roman` — convert an integer to a Roman numeral string [claimed 2026-09-10T14:19:08Z]
+## 1. Standard library: `from_roman` — parse a Roman numeral string back to an integer
 
-Add a standalone conversion builtin, not another `is_*`/`nth_*` pair —
-that gap list stayed exhausted this pass too (re-audited the full
-`is_*`-without-`nth_*` diff programmatically: every unpaired name is
-still one of the already-rejected categories — multi-arg, string/list-
-shaped with no integer ordering, a type predicate, or one of the
-confirmed-too-sparse-or-slow names from earlier passes' History
-entries — nothing new). `to_roman` sits next to `to_hex`/`to_bin`/
-`to_oct` (`cinder/builtins.py`, search `def _to_oct`) as another
-base-conversion-flavored single-int-argument transform, but with a
-bounded domain (traditional Roman numerals only cover 1-3999) instead
-of those three's unbounded one. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(to_roman(2026));'
-# -> <eval>:1:7: undefined name 'to_roman'
-```
-
-**What it does.** Greedily subtract the largest Roman value/symbol
-pair (including the six subtractive pairs `CM`, `CD`, `XC`, `XL`,
-`IX`, `IV`) that still fits, appending its symbol each time, until the
-input reaches zero — the standard greedy algorithm, which is optimal
-for the fixed set of Roman symbols (always produces the canonical
-minimal-length numeral, no backtracking needed). No reverse direction
-(`from_roman`) in this task — mirrors `rot13`/`to_hex`/`to_bin`/`to_oct`,
-which are all one-directional too; a `from_roman` parser is a natural
-follow-up once this lands, left for a future pass.
-
-**Scope: 1 to 3999 inclusive.** Roman numerals have no symbol for zero
-or negative numbers, and the standard 7-symbol system (`I V X L C D M`)
-cannot represent 4000 or above without inventing a non-standard
-extension (e.g. overline/vinculum notation) — out of scope. `0`,
-negative integers, and any integer `>= 4000` are all domain errors.
-
-Worked examples (confirmed via direct computation of the greedy
-algorithm below):
-- `to_roman(1)` is `"I"`, `to_roman(4)` is `"IV"`, `to_roman(9)` is
-  `"IX"`.
-- `to_roman(14)` is `"XIV"`, `to_roman(40)` is `"XL"`, `to_roman(49)`
-  is `"XLIX"`, `to_roman(90)` is `"XC"`.
-- `to_roman(444)` is `"CDXLIV"`, `to_roman(499)` is `"CDXCIX"`,
-  `to_roman(900)` is `"CM"`, `to_roman(944)` is `"CMXLIV"`.
-- `to_roman(1994)` is `"MCMXCIV"` (the canonical "year" example every
-  Roman-numeral kata uses).
-- `to_roman(2026)` is `"MMXXVI"` (this project's current year, a nice
-  sanity check).
-- `to_roman(3999)` is `"MMMCMXCIX"` — the largest representable value.
-
-Add directly after `_to_oct` (search `def _to_oct`, immediately before
-`def _push`) — keeps the new conversion builtin next to its closest
-siblings:
-```python
-_ROMAN_VALUES = [
-    (1000, "M"), (900, "CM"), (500, "D"), (400, "CD"),
-    (100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
-    (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
-]
-
-
-def _to_roman(arguments: list, line: int, column: int) -> object:
-    _require_arity("to_roman", arguments, 1, line, column)
-    value = _require_int("to_roman", arguments[0], line, column)
-    if value < 1 or value > 3999:
-        raise CinderRuntimeError(
-            "to_roman() requires an integer between 1 and 3999, domain error",
-            line, column,
-        )
-    result = []
-    remaining = value
-    for amount, symbol in _ROMAN_VALUES:
-        while remaining >= amount:
-            result.append(symbol)
-            remaining -= amount
-    return "".join(result)
-```
-Register the new dict entry (search `"to_oct": _to_oct,`, add
-`"to_roman": _to_roman,` directly after it, before `"push": _push,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including `to_roman(1994)`
-  is `"MCMXCIV"` and `to_roman(2026)` is `"MMXXVI"`.
-- `to_roman(1);` is `"I"` and `to_roman(3999);` is `"MMMCMXCIX"` — the
-  domain's two boundary values.
-- All six subtractive pairs appear correctly across the worked
-  examples: `IV`, `IX`, `XL`, `XC`, `CD`, `CM`.
-- `to_roman(0);`, `to_roman(-1);`, and `to_roman(4000);` all raise
-  `CinderRuntimeError` matching `"to_roman\(\) requires an integer
-  between 1 and 3999, domain error"`.
-- `to_roman(1.5);` raises `CinderRuntimeError` matching `"to_roman\(\)
-  requires an int, got float"` (mirror `to_hex`'s own non-int test for
-  the exact message shape).
-- `to_roman("5");` raises `CinderRuntimeError` matching `"to_roman\(\)
-  requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_to_oct`, search
-`def _to_oct`), `tests/test_builtins.py` (new `class TestToRoman`,
-modeled on `class TestToHex`, search that name, for the test shapes
-above — place it near the existing `class TestToHex`/`class
-TestToBin`/`class TestToOct`). Once merged, `README.md`'s existing
-`to_oct` bullet needs `to_roman` added right after it, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `from_roman` — parse a Roman numeral string back to an integer
-
-Add the natural inverse of `to_roman` (task 2 above, must merge first —
-this task reuses its `_ROMAN_VALUES` table). Verify the gap:
+Add the natural inverse of `to_roman` (already merged — this task
+reuses its `_ROMAN_VALUES` table). Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(from_roman("MMXXVI"));'
 # -> <eval>:1:7: undefined name 'from_roman'
@@ -223,7 +114,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
+## 2. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
 
 Add a standalone list-of-strings builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited programmatically:
@@ -328,7 +219,7 @@ this task.
 
 ---
 
-## 4. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
+## 3. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
 
 Add a standalone integer-property builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited
@@ -426,7 +317,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `dot_product` — dot product of two equal-length numeric lists
+## 4. Standard library: `dot_product` — dot product of two equal-length numeric lists
 
 Add a standalone two-list-argument builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited

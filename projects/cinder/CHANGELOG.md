@@ -4384,3 +4384,15 @@ for vision/architecture.
   characters untouched; self-inverse (`rot13(rot13(s)) == s`). Clean
   first pass, no bounces (4814 tests passing, up from 4806).
   README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `to_roman`** — merged 2026-09-10 via PR #432
+  (`feat/20260910-to-roman`). Base-conversion-flavored builtin sitting
+  next to `to_hex`/`to_bin`/`to_oct`, but with a bounded domain
+  (1-3999, the traditional Roman numeral range): `_to_roman`
+  (`cinder/builtins.py`, directly after `_to_oct`) greedily subtracts
+  the largest Roman value/symbol pair (including all six subtractive
+  pairs `CM`/`CD`/`XC`/`XL`/`IX`/`IV`) that still fits, appending its
+  symbol each time, until the input reaches zero. One-directional only,
+  mirroring `rot13`/`to_hex`/`to_bin`/`to_oct`; the inverse
+  (`from_roman`) is queued as the next backlog task. Clean first pass,
+  no bounces (4823 tests passing, up from 4814). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

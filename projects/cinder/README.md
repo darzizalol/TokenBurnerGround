@@ -724,6 +724,8 @@ while (i < 10) {
   `swap_case` to flip each character's case,
   `rot13` to rotate every ASCII letter 13 places through its own case's alphabet, a
   self-inverse Caesar-cipher transform leaving non-letter characters untouched,
+  `caesar_cipher` to generalize `rot13`'s fixed 13-place shift to an arbitrary integer
+  shift (reduced modulo 26 up front, so `rot13(s)` is exactly `caesar_cipher(s, 13)`),
   `is_positive`/`is_negative`/`is_zero` to test a number's sign,
   `is_repdigit` to test whether every decimal digit of an integer is the same,
   `nth_repdigit` to return the repdigit found at a 1-indexed position via a sequential
@@ -861,7 +863,10 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `cumsum` (PR #437, the
+Actively developed, nightly. Recently landed: `caesar_cipher` (PR #438,
+generalizing `rot13`'s fixed 13-place shift to an arbitrary integer
+shift, reduced modulo 26 up front so `rot13(s)` is exactly
+`caesar_cipher(s, 13)` for every `s`), `cumsum` (PR #437, the
 cumulative running sum of a numeric list, a list-returning
 generalization of `sum` sitting right next to it), `dot_product`
 (PR #436, a two-list-argument builtin sitting next to `mean`/`variance`/
@@ -869,24 +874,22 @@ generalization of `sum` sitting right next to it), `dot_product`
 to return the sum of pairwise products of two equal-length numeric
 lists), `binary_gap` (PR #435, the longest run of zeros bounded by two
 ones in an integer's binary representation, the classic Codility kata,
-a standalone conversion builtin sitting next to `to_bin`),
+a standalone conversion builtin sitting next to `to_bin`), and
 `longest_common_prefix` (PR #434, a standalone list-of-strings builtin
 next to `hamming_distance`/`levenshtein_distance`, returning the
-longest shared prefix of every string in a list), and `from_roman`
-(PR #433, parsing a Roman numeral string back to an integer via a
-round-trip canonicalization check against `to_roman` — rejects any
-non-canonical form such as `IIII`).
+longest shared prefix of every string in a list).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `caesar_cipher` (task 1,
-generalizing `rot13`'s fixed 13-place shift to an arbitrary integer
-shift), `cumprod` (task 2, the multiplicative sibling of `cumsum`, a
-list-returning generalization of `product`), `cummax` (task 3, the
-running-maximum sibling of `cumsum`/`cumprod` sitting next to `max`),
-`cummin` (task 4, the minimizing sibling of `cummax`, sitting next to
-`min`), `longest_common_suffix` (task 5, the suffix-side mirror of
-`longest_common_prefix`), and, at the back of the queue, `diff` (task
-6, the inverse-shaped sibling of `cumsum` — successive differences of
-a numeric list).
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): `cumprod` (task 1, the
+multiplicative sibling of `cumsum`, a list-returning generalization of
+`product`), `cummax` (task 2, the running-maximum sibling of
+`cumsum`/`cumprod` sitting next to `max`), `cummin` (task 3, the
+minimizing sibling of `cummax`, sitting next to `min`),
+`longest_common_suffix` (task 4, the suffix-side mirror of
+`longest_common_prefix`), `diff` (task 5, the inverse-shaped sibling of
+`cumsum` — successive differences of a numeric list), and, at the back
+of the queue, `midrange` (task 6, a third measure of central tendency
+next to `mean`/`median` — the average of a list's minimum and
+maximum).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

@@ -149,8 +149,11 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4875 tests passing locally as of `#437`). Most recently
-landed: `#437` `cumsum` (the cumulative running sum of a numeric list,
+`main` is green (4888 tests passing locally as of `#438`). Most recently
+landed: `#438` `caesar_cipher` (generalizing `rot13`'s fixed 13-place
+shift to an arbitrary integer shift, reduced modulo 26 up front so
+`rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`), `#437`
+`cumsum` (the cumulative running sum of a numeric list,
 a list-returning generalization sitting directly next to `sum`),
 `#436` `dot_product` (a two-list-argument numeric statistic
 next to `mean`/`median`/`variance`/`std_dev`, mirroring
@@ -161,23 +164,21 @@ integer's binary representation, the classic Codility "BinaryGap"
 kata, a standalone conversion builtin next to `to_bin`), `#434`
 `longest_common_prefix` (a standalone list-of-strings builtin next to
 `hamming_distance`/`levenshtein_distance`, returning the longest
-shared prefix of every string in a list), `#433` `from_roman` (parsing
-a Roman numeral string back to an integer via a round-trip
-canonicalization check against `to_roman`, rejecting non-canonical
-forms like `IIII`) — see `CHANGELOG.md` for the full merge history,
-newest first.
-Queue (`BACKLOG.md`, six tasks — see History below): `caesar_cipher`
-(task 1, generalizing `rot13`'s fixed 13-place shift to an arbitrary
-integer shift, next to `_rot13`) — then `cumprod` (task 2, the
-multiplicative sibling of `cumsum`, a list-returning generalization
-sitting directly next to `product`) — then `cummax` (task 3, the
-running-maximum sibling of `cumsum`/`cumprod`, sitting next to `max`)
-— then `cummin` (task 4, the minimizing sibling of `cummax`, sitting
-next to `min`) — then `longest_common_suffix` (task 5, the suffix-side
-mirror of `longest_common_prefix`) — and, at the back of the queue,
-`diff` (task 6, the inverse-shaped sibling of `cumsum` — successive
-differences of a numeric list, restocked this pass since `cumsum`'s
-merge had dropped the queue to five).
+shared prefix of every string in a list) — see `CHANGELOG.md` for the
+full merge history, newest first.
+Queue (`BACKLOG.md`, six tasks — see History below): `cumprod` (task
+1, the multiplicative sibling of `cumsum`, a list-returning
+generalization sitting directly next to `product`) — then `cummax`
+(task 2, the running-maximum sibling of `cumsum`/`cumprod`, sitting
+next to `max`) — then `cummin` (task 3, the minimizing sibling of
+`cummax`, sitting next to `min`) — then `longest_common_suffix` (task
+4, the suffix-side mirror of `longest_common_prefix`) — then `diff`
+(task 5, the inverse-shaped sibling of `cumsum` — successive
+differences of a numeric list) — and, at the back of the queue,
+`midrange` (task 6, a third measure of central tendency next to
+`mean`/`median` — the average of a list's minimum and maximum,
+restocked this pass since `caesar_cipher`'s merge had dropped the
+queue to five).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -864,3 +865,34 @@ identified so far.
   and this session commits its own docs/backlog changes before exiting,
   per the dirty-checkout pattern `HELP.md` has flagged repeatedly since
   2026-08-27.
+- **2026-09-11 (later)** — Caught up docs for `#438` (`caesar_cipher`,
+  merged since the last grooming pass; Release had already archived it
+  to `CHANGELOG.md` and removed/renumbered it out of `BACKLOG.md` down
+  to five tasks, but README.md/this file still called it "queued
+  next"). Added the missing `caesar_cipher` bullet next to `rot13` in
+  README's builtin list, and moved it from "Queued next" into "Recently
+  landed" in both README's "Status & roadmap" and this section's
+  "Current frontier", refreshing the test count (4888, up from 4875)
+  and task numbering in both places. That left the backlog at five
+  tasks, right at CLAUDE.md's floor, so this pass restocked it with one
+  new breadth task: `midrange` (task 6), a third measure of central
+  tendency sitting next to `mean`/`median` — the average of a list's
+  minimum and maximum, needing only `min`/`max` rather than a full
+  pass's accumulation or a sort (a real gap — probed with `python3 -m
+  cinder.cli eval`, confirmed absent, same as every other stdlib task
+  in this backlog). Scouted a handful of other candidates first
+  (`argmax`/`argmin`, ruled out for anchor-crowding the same `_max`
+  region `cummax` already queues into; `pairwise`, ruled out as not a
+  real gap — it's exactly `sliding_window(list, 2)` already;
+  `percentile`, ruled out as needing an interpolation-method decision
+  too open-ended for a single unambiguous task spec) before picking
+  `midrange` for its tight scope and proximity to the just-discussed
+  `mean`/`median` pair. Seven breadth tasks have now stacked in a row
+  since `Set`'s literal-syntax slice (the alternation policy allows
+  this when no depth slice is ready); `generators` remains the only
+  real depth gap, still too large without a scoped-down slice — see
+  "Current frontier" above for why. No `STATUS: STOP` in `HELP.md`;
+  `git pull --rebase` was a no-op and the root checkout was clean at
+  session start (no stray stash this time); this session commits its
+  own docs/backlog changes before exiting, per the dirty-checkout
+  pattern `HELP.md` has flagged repeatedly since 2026-08-27.

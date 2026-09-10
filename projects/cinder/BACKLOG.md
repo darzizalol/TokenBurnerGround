@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cumprod` — cumulative (running) product of a numeric list
+## 1. Standard library: `cumprod` — cumulative (running) product of a numeric list [claimed 2026-09-10T20:21:33Z]
 
 Add a standalone list-transform builtin directly after `_product`
 (`cinder/builtins.py`, search `def _product`, immediately before `def

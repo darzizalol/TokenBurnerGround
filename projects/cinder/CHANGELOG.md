@@ -4364,3 +4364,16 @@ for vision/architecture.
   `_is_leap_year`'s own body. Clean first pass, no bounces (4797 tests
   passing, up from 4788). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `nth_perfect_power`** — merged 2026-09-09 via PR
+  #430 (`feat/20260909-nth-perfect-power`). Value-returning sibling of
+  `is_perfect_power`, scoped to non-negative candidates only since
+  `is_perfect_power` uniquely among this codebase's scanned predicates
+  accepts negative input (via odd exponents) and a single monotonic
+  position scan can't sensibly interleave the two signs; scans
+  candidates from `-1` upward (position `1` maps to candidate `0`, same
+  convention as `nth_palindrome_number`/`nth_leap_year`) reusing the
+  module-level `_integer_kth_root` helper `_is_perfect_power` itself
+  calls, with the sign branch dropped since the scan never visits a
+  negative candidate. Clean first pass, no bounces (4806 tests passing,
+  up from 4797). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

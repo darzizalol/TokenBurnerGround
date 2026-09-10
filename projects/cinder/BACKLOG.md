@@ -11,126 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_perfect_power` — perfect power found at a 1-indexed position [claimed 2026-09-09T20:30:20Z]
-
-Build: `is_perfect_power` (`cinder/builtins.py`, search `def
-_is_perfect_power`: true for `-1`, `0`, and `1` outright, otherwise true
-when `abs(value)` is `root ** k` for some integer `root` and some `k >=
-2`, with negative values only counted when the matching `k` is odd, e.g.
-`-8 == -2 ** 3`) has no value-returning `nth_*` sibling. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_perfect_power(1));'
-# -> <eval>:1:7: undefined name 'nth_perfect_power' (did you mean
-#    'is_perfect_power'?)
-```
-
-**Scope: non-negative candidates only.** Unlike every other `nth_*`
-builtin in this codebase, `is_perfect_power` accepts negative input
-(`-8`, `-27`, ... are perfect powers via odd `k`). A single monotonic
-1-indexed position scan can't sensibly interleave negative and
-non-negative results in one ordering, and every existing `nth_*`
-builtin here already scans non-negative candidates only — so this task
-keeps that convention and scans `candidate >= 0` exclusively.
-`is_perfect_power`'s negative-domain support stays a predicate-only
-feature; document this as a deliberate scope limit in `README.md` when
-done, not a bug (mirrors the two-or-more-elements limit already
-documented for the `Set`-literal task above).
-
-Worked examples: the first ten non-negative perfect powers (confirmed
-by scanning with `is_perfect_power` directly) are `0, 1, 4, 8, 9, 16,
-25, 27, 32, 36` — `0` and `1` both satisfy the predicate's `abs(value)
-<= 1` shortcut, so both are trivially perfect powers before the
-square/cube/... scan ever runs. `nth_perfect_power(1)` is `0` and
-`nth_perfect_power(10)` is `36`. The 15th is `121`, the 20th is `196`,
-the 50th is `1444`. Perfect powers get sparser as they grow (unlike the
-dense `nth_*` sequences merged so far), but still dense enough to reach
-the 50th term well under a millisecond in raw Python — confirmed
-locally, no performance caveat needed. Unlike `nth_power_of_two`,
-`nth_perfect_square`, and `nth_perfect_cube` (already-merged siblings),
-which are each a single sequence with an exact closed form, perfect
-powers are the *union* of every `k >= 2` power sequence with no single
-closed form — this task needs an actual bounded scan against the
-existing predicate, the same shape as `nth_composite`/`nth_evil`, not a
-closed-form task.
-
-Like `nth_palindrome_number` and `nth_leap_year` (both already-merged
-siblings, both map position `1` to candidate `0`), the scan starts
-at `candidate = -1`
-(incremented before the first check) — `0` itself is the very first
-perfect power, so there's no off-by-one risk skipping it.
-
-Add directly after `_is_perfect_power` (search `def
-_is_perfect_power`, immediately before `def _divisors`) — keeps the
-value-returning helper next to the predicate it mirrors:
-```python
-def _nth_perfect_power(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_perfect_power", arguments, 1, line, column)
-    value = _require_int("nth_perfect_power", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_perfect_power() requires a positive integer, domain error",
-            line, column,
-        )
-
-    def _is_perfect_power_candidate(candidate: int) -> bool:
-        if candidate <= 1:
-            return True
-        for k in range(2, candidate.bit_length() + 1):
-            root = _integer_kth_root(candidate, k)
-            if root ** k == candidate:
-                return True
-        return False
-
-    count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_perfect_power_candidate(candidate):
-            count += 1
-    return candidate
-```
-(Inner candidate check reuses the module-level `_integer_kth_root`
-helper directly — same function `_is_perfect_power` itself calls, no
-duplication — but drops the sign branch entirely since the scan never
-visits a negative candidate.) Register the new dict entry (search
-`"is_perfect_power": _is_perfect_power,`, add `"nth_perfect_power":
-_nth_perfect_power,` directly after it, before `"divisors":
-_divisors,`).
-
-Acceptance criteria:
-- `nth_perfect_power(1);` through `nth_perfect_power(10);` are `0, 1,
-  4, 8, 9, 16, 25, 27, 32, 36` in order — the worked example above.
-- `nth_perfect_power(15);` is `121`, `nth_perfect_power(20);` is `196`,
-  and `nth_perfect_power(50);` is `1444` — further worked examples
-  confirming the scan scales well past the first ten.
-- For every `position` in `1..50`,
-  `is_perfect_power(nth_perfect_power(position))` is `true` — the same
-  self-consistency check every recent `nth_*` task's own test suite
-  already runs against its predicate.
-- `nth_perfect_power(0);`, `nth_perfect_power(-3);` both raise
-  `CinderRuntimeError` matching `"nth_perfect_power\(\) requires a
-  positive integer, domain error"`.
-- `nth_perfect_power(true);` raises `CinderRuntimeError` matching
-  `"nth_perfect_power\(\) requires an int, got bool"`.
-- `nth_perfect_power("5");` raises `CinderRuntimeError` matching
-  `"nth_perfect_power\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_perfect_power`,
-search `def _is_perfect_power`), `tests/test_builtins.py` (new `class
-TestNthPerfectPower`, modeled on `class TestNthComposite`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsPerfectPower`, search that name). Once merged, `README.md`'s
-existing `is_perfect_power` bullet needs `nth_perfect_power` added
-right after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `rot13` — the classic Caesar-cipher string transform
+## 1. Standard library: `rot13` — the classic Caesar-cipher string transform
 
 Add a standalone string builtin, not another `is_*`/`nth_*` pair — the
 `is_*`-without-`nth_*` gap list is nearly exhausted for now (see this
@@ -219,7 +100,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `to_roman` — convert an integer to a Roman numeral string
+## 2. Standard library: `to_roman` — convert an integer to a Roman numeral string
 
 Add a standalone conversion builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited the full
@@ -328,11 +209,10 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `from_roman` — parse a Roman numeral string back to an integer
+## 3. Standard library: `from_roman` — parse a Roman numeral string back to an integer
 
-Add the natural inverse of `to_roman` (task 3 above, must merge first —
-this task reuses its `_ROMAN_VALUES` table). Verify the gap once task 4
-has landed:
+Add the natural inverse of `to_roman` (task 2 above, must merge first —
+this task reuses its `_ROMAN_VALUES` table). Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(from_roman("MMXXVI"));'
 # -> <eval>:1:7: undefined name 'from_roman'
@@ -432,7 +312,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
+## 4. Standard library: `longest_common_prefix` — longest shared prefix of a list of strings
 
 Add a standalone list-of-strings builtin, not another `is_*`/`nth_*` pair —
 that gap list stayed exhausted this pass too (re-audited programmatically:
@@ -534,6 +414,104 @@ TestHammingDistance`/`class TestLevenshteinDistance`). Once merged,
 section needs updating, and `PROJECT.md`'s "Current frontier" section
 needs refreshing — leave both to the Architect's next grooming pass, not
 this task.
+
+---
+
+## 5. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation
+
+Add a standalone integer-property builtin, not another `is_*`/`nth_*`
+pair — that gap list stayed exhausted this pass too (re-audited
+programmatically: every unpaired `is_*` name is still one of the
+already-rejected categories — multi-arg, string/list-shaped with no
+integer ordering, a type predicate, or one of the confirmed-too-sparse-
+or-slow names from earlier passes' History entries). `binary_gap` sits
+next to `to_bin` (`cinder/builtins.py`, search `def _to_bin`, right
+before `def _to_oct`) as another single-int-argument builtin derived
+from an integer's binary representation, and next to `collatz_length`/
+`collatz_max` (search `def _collatz_length`) as another "compute one
+property of an integer" builtin with the same positive-integer-domain
+shape. This is a classic algorithm exercise (the Codility "BinaryGap"
+kata) that has never been implemented here. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(binary_gap(9));'
+# -> <eval>:1:7: undefined name 'binary_gap'
+```
+
+**What it does.** A binary gap is a maximal run of consecutive `0`s
+that is bounded on both sides by a `1` in the integer's binary
+representation — trailing zeros after the last `1` don't count, since
+there's no closing `1` to bound them. Return the length of the longest
+such gap, or `0` if none exists (including for any power of two, and
+for `1` itself, which has only a single bit set).
+
+Worked examples (confirmed by direct computation of the algorithm
+below, matching the classic kata's own reference values):
+- `binary_gap(9)` is `2` — `9` is `1001` in binary, one gap of two
+  zeros between the two `1`s.
+- `binary_gap(529)` is `4` — `529` is `1000010001` in binary, gaps of
+  four and three zeros; the longest is four.
+- `binary_gap(20)` is `1` — `20` is `10100` in binary, a single gap of
+  one zero.
+- `binary_gap(15)` is `0` — `15` is `1111` in binary, no zeros at all.
+- `binary_gap(32)` is `0` — `32` is `100000` in binary, a single `1`
+  followed only by trailing zeros with no closing `1`, so there is no
+  bounded gap.
+- `binary_gap(1)` is `0` — `1` is `1` in binary, only one bit set.
+- `binary_gap(1041)` is `5` — `1041` is `10000010001` in binary, gaps
+  of five and three zeros; the longest is five (the kata's own
+  headline example).
+
+Add directly after `_to_bin` (search `def _to_bin`, immediately before
+`def _to_oct`) — keeps the new binary-representation builtin next to
+the conversion it's derived from:
+```python
+def _binary_gap(arguments: list, line: int, column: int) -> object:
+    _require_arity("binary_gap", arguments, 1, line, column)
+    value = _require_int("binary_gap", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "binary_gap() requires a positive integer, domain error",
+            line, column,
+        )
+    segments = format(value, "b").split("1")
+    interior = segments[1:-1]
+    return max((len(segment) for segment in interior), default=0)
+```
+(`format(value, "b")` always starts with `1` — no leading-zero edge
+case to handle — so splitting on `"1"` always yields an empty first
+segment; `segments[1:-1]` keeps only the zero-runs strictly between two
+`1`s, dropping both that leading empty segment and the trailing
+segment after the final `1` (unbounded trailing zeros, per the spec
+above); `max(..., default=0)` handles the case where `interior` is
+empty, e.g. `1` or any power of two.) Register the new dict entry
+(search `"to_bin": _to_bin,`, add `"binary_gap": _binary_gap,` directly
+after it, before `"to_oct": _to_oct,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including `binary_gap(529)`
+  is `4` and `binary_gap(1041)` is `5`.
+- `binary_gap(1);`, `binary_gap(15);`, and `binary_gap(32);` are all
+  `0` — the three no-gap shapes (single bit, all-ones, power of two)
+  above.
+- `binary_gap(0);` and `binary_gap(-5);` both raise
+  `CinderRuntimeError` matching `"binary_gap\(\) requires a positive
+  integer, domain error"`.
+- `binary_gap(true);` raises `CinderRuntimeError` matching
+  `"binary_gap\(\) requires an int, got bool"`.
+- `binary_gap("9");` raises `CinderRuntimeError` matching
+  `"binary_gap\(\) requires an int, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_to_bin`, search
+`def _to_bin`), `tests/test_builtins.py` (new `class TestBinaryGap`,
+modeled on `class TestCollatzLength`, search that name, for the test
+shapes above — place it near the existing `class TestToBin`). Once
+merged, `README.md`'s existing `to_bin` bullet needs `binary_gap` added
+right after it, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
 
 ---
 

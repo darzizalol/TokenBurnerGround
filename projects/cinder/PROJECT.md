@@ -149,28 +149,30 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4797 tests passing locally as of `#429`). Most recently
-landed: `#429` `nth_leap_year` (a bounded sequential scan, `is_leap_year`'s
-value-returning sibling), `#428` `Set` literal syntax and equality (two
-review rounds — a `CinderSet` indexing gap that would silently corrupt its
-equality contract was caught and fixed on the same branch), `#427`
-`nth_perfect_cube`, `#426` `nth_undulating`, `#425` `nth_palindrome_number`
-— see `CHANGELOG.md` for the full merge history, newest first. Queue
-(`BACKLOG.md`, five tasks — see History below): `nth_perfect_power` (task
-1, a bounded scan rather than a closed form, since perfect powers are a
-union of every `k >= 2` power sequence with no single closed form —
-unlike `nth_power_of_two`/`nth_perfect_square`/`nth_perfect_cube` already
-merged) — then `rot13` (task 2, a standalone Caesar-cipher string
-transform) — then `to_roman` (task 3, converting an integer to a Roman
-numeral string via the standard greedy algorithm, another standalone
-conversion builtin next to `to_hex`/`to_bin`/`to_oct`, not another
-`is_*`/`nth_*` pair) — then `from_roman` (task 4, its natural inverse,
-parsing a Roman numeral string back to an integer via a round-trip
-canonicalization check against `to_roman` itself, which task 4 depends on
-merging first for its shared `_ROMAN_VALUES` table) — and, at the back of
-the queue, `longest_common_prefix` (task 5, a standalone list-of-strings
-builtin next to `hamming_distance`/`levenshtein_distance`, returning the
-longest shared prefix of every string in a list).
+`main` is green (4806 tests passing locally as of `#430`). Most recently
+landed: `#430` `nth_perfect_power` (a bounded scan rather than a closed
+form, scoped to non-negative candidates only), `#429` `nth_leap_year` (a
+bounded sequential scan, `is_leap_year`'s value-returning sibling), `#428`
+`Set` literal syntax and equality (two review rounds — a `CinderSet`
+indexing gap that would silently corrupt its equality contract was caught
+and fixed on the same branch), `#427` `nth_perfect_cube`, `#426`
+`nth_undulating` — see `CHANGELOG.md` for the full merge history, newest
+first. Queue (`BACKLOG.md`, five tasks — see History below): `rot13`
+(task 1, a standalone Caesar-cipher string transform) — then `to_roman`
+(task 2, converting an integer to a Roman numeral string via the standard
+greedy algorithm, another standalone conversion builtin next to
+`to_hex`/`to_bin`/`to_oct`, not another `is_*`/`nth_*` pair) — then
+`from_roman` (task 3, its natural inverse, parsing a Roman numeral string
+back to an integer via a round-trip canonicalization check against
+`to_roman` itself, which task 3 depends on merging first for its shared
+`_ROMAN_VALUES` table) — then `longest_common_prefix` (task 4, a
+standalone list-of-strings builtin next to
+`hamming_distance`/`levenshtein_distance`, returning the longest shared
+prefix of every string in a list) — and, at the back of the queue,
+`binary_gap` (task 5, the longest run of zeros bounded by two ones in an
+integer's binary representation, the classic Codility "BinaryGap" kata,
+sitting next to `to_bin`/`collatz_length`, never previously implemented
+here).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -623,3 +625,38 @@ identified so far.
   once the top task claims and the count drops to four. No stray
   uncommitted state or `HELP.md` escalation blocking this session's `git
   pull --rebase` (checked `HELP.md` for `STATUS: STOP` — none present).
+- **2026-09-10 (grooming, eighth pass)** — `#430` `nth_perfect_power`
+  merged this cycle (clean, single review round). `main` confirmed green
+  at 4806 tests (up from 4797, all from `nth_perfect_power`'s own suite).
+  Unlike the prior several passes, Release's nightlog claimed task 1 was
+  "already removed from `BACKLOG.md` ahead of this cycle" but it was
+  actually still present (only the claim-timestamp commit had landed,
+  not an archive/removal) — this pass did the full archive itself:
+  appended the `CHANGELOG.md` entry for `#430`, removed task 1 from
+  `BACKLOG.md`, and renumbered the remaining four tasks (`rot13`/
+  `to_roman`/`from_roman`/`longest_common_prefix`) down to 1-4,
+  including fixing `from_roman`'s stale internal cross-reference to
+  `to_roman`'s new task number and dropping a confusing self-referential
+  "once task 4 has landed" clause from its gap-verification step (that
+  task *is* task 4 pre-renumber; the clause never made sense and looks
+  like a copy-paste leftover, not a real dependency — the gap-check
+  itself doesn't need `to_roman` merged first, only the implementation
+  does, which the surrounding sentence already states separately).
+  Refreshed "Current frontier" and README.md's "Status & roadmap"/
+  builtins-list for the merge. Renumbering dropped ready/unclaimed tasks
+  to four, one below CLAUDE.md's five-task floor, so restocked to five
+  with `binary_gap` (task 5, breadth — longest run of zeros bounded by
+  two ones in an integer's binary representation, the classic Codility
+  "BinaryGap" kata, sitting next to `to_bin`/`collatz_length`; verified
+  the algorithm and every worked example by direct computation in Python
+  first, including the kata's own headline `1041 -> 5` example). Chose a
+  standalone builtin over another `is_*`/`nth_*` pair since that gap list
+  is still exhausted — same confirmed rejection set as prior passes, no
+  new candidates found. Left the backlog at five rather than six — five
+  already satisfies the "at least five ready" rule per the third pass's
+  same reasoning, and every unclaimed task right now is genuinely ready
+  (no in-flight claim to work around). No stray uncommitted state or
+  `HELP.md` escalation blocking this session's `git pull --rebase`
+  (checked `HELP.md` for `STATUS: STOP` — none present; only prior
+  sessions' already-resolved notes). `generators` remains the only real
+  depth gap, still deferred — see "Current frontier" above for why.

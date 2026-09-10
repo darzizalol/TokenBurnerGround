@@ -13511,6 +13511,83 @@ class TestHammingDistance(unittest.TestCase):
             run('hamming_distance("a", "b", "c");')
 
 
+class TestLongestCommonPrefix(unittest.TestCase):
+    def test_longest_common_prefix_flower_flow_flight(self):
+        self.assertEqual(
+            run(
+                'let result = longest_common_prefix(["flower", "flow", "flight"]);'
+            ).get("result"),
+            "fl",
+        )
+
+    def test_longest_common_prefix_no_common_prefix(self):
+        self.assertEqual(
+            run(
+                'let result = longest_common_prefix(["dog", "racecar", "car"]);'
+            ).get("result"),
+            "",
+        )
+
+    def test_longest_common_prefix_multi_character_shared_prefix(self):
+        self.assertEqual(
+            run(
+                'let result = longest_common_prefix(["interspecies", "interstellar", "interstate"]);'
+            ).get("result"),
+            "inters",
+        )
+
+    def test_longest_common_prefix_single_element_list(self):
+        self.assertEqual(
+            run('let result = longest_common_prefix(["throne"]);').get("result"),
+            "throne",
+        )
+
+    def test_longest_common_prefix_identical_strings(self):
+        self.assertEqual(
+            run('let result = longest_common_prefix(["throne", "throne"]);').get(
+                "result"
+            ),
+            "throne",
+        )
+
+    def test_longest_common_prefix_empty_list(self):
+        self.assertEqual(
+            run("let result = longest_common_prefix([]);").get("result"), ""
+        )
+
+    def test_longest_common_prefix_empty_string_in_list_forces_empty_result(self):
+        self.assertEqual(
+            run('let result = longest_common_prefix(["", "abc"]);').get("result"),
+            "",
+        )
+        self.assertEqual(
+            run('let result = longest_common_prefix(["abc", ""]);').get("result"),
+            "",
+        )
+
+    def test_longest_common_prefix_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("longest_common_prefix(123);")
+        self.assertIn(
+            "longest_common_prefix() requires a list, got int",
+            ctx.exception.message,
+        )
+
+    def test_longest_common_prefix_on_list_with_non_string_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('longest_common_prefix([1, "a"]);')
+        self.assertIn(
+            "longest_common_prefix() requires a list of strings, got int",
+            ctx.exception.message,
+        )
+
+    def test_longest_common_prefix_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("longest_common_prefix();")
+        with self.assertRaises(CinderRuntimeError):
+            run('longest_common_prefix(["a"], ["b"]);')
+
+
 class TestIsPangram(unittest.TestCase):
     def test_is_pangram_canonical_true(self):
         self.assertIs(

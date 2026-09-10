@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
+## 1. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift [claimed 2026-09-10T20:08:16Z]
 
 Add a standalone two-argument string builtin directly after `_rot13`
 (`cinder/builtins.py`, search `def _rot13`, immediately before `def

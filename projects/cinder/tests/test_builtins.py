@@ -1160,6 +1160,46 @@ class TestSwapCase(unittest.TestCase):
             run('swap_case("a", "b");')
 
 
+class TestRot13(unittest.TestCase):
+    def test_rot13_lowercase(self):
+        self.assertEqual(run('let result = rot13("hello");').get("result"), "uryyb")
+
+    def test_rot13_mixed_case_and_punctuation(self):
+        self.assertEqual(
+            run('let result = rot13("Hello, World!");').get("result"),
+            "Uryyb, Jbeyq!",
+        )
+
+    def test_rot13_empty_string(self):
+        self.assertEqual(run('let result = rot13("");').get("result"), "")
+
+    def test_rot13_wraps_alphabet(self):
+        self.assertEqual(run('let result = rot13("abcXYZ");').get("result"), "nopKLM")
+
+    def test_rot13_sentence(self):
+        self.assertEqual(
+            run('let result = rot13("The Quick Brown Fox");').get("result"),
+            "Gur Dhvpx Oebja Sbk",
+        )
+
+    def test_rot13_is_self_inverse(self):
+        for value in ["hello", "Hello, World!", "", "abcXYZ", "The Quick Brown Fox"]:
+            source = f'let result = rot13(rot13("{value}"));'
+            self.assertEqual(run(source).get("result"), value)
+
+    def test_rot13_of_non_string_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"rot13\(\) requires a string, got int"
+        ):
+            run("rot13(123);")
+
+    def test_rot13_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("rot13();")
+        with self.assertRaises(CinderRuntimeError):
+            run('rot13("a", "b");')
+
+
 class TestTrim(unittest.TestCase):
     def test_trim_strips_leading_and_trailing_whitespace(self):
         self.assertEqual(run('let result = trim("  hi  ");').get("result"), "hi")

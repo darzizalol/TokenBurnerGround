@@ -619,6 +619,24 @@ def _swap_case(arguments: list, line: int, column: int) -> object:
     return value.swapcase()
 
 
+def _rot13(arguments: list, line: int, column: int) -> object:
+    _require_arity("rot13", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"rot13() requires a string, got {type_name(value)}", line, column
+        )
+    result = []
+    for ch in value:
+        if "a" <= ch <= "z":
+            result.append(chr((ord(ch) - ord("a") + 13) % 26 + ord("a")))
+        elif "A" <= ch <= "Z":
+            result.append(chr((ord(ch) - ord("A") + 13) % 26 + ord("A")))
+        else:
+            result.append(ch)
+    return "".join(result)
+
+
 def _is_palindrome(arguments: list, line: int, column: int) -> object:
     _require_arity("is_palindrome", arguments, 1, line, column)
     value = arguments[0]
@@ -5474,6 +5492,7 @@ _BUILTINS = {
     "capitalize": _capitalize,
     "title": _title,
     "swap_case": _swap_case,
+    "rot13": _rot13,
     "trim": _trim,
     "trim_start": _trim_start,
     "trim_end": _trim_end,

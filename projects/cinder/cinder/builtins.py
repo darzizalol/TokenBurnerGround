@@ -701,6 +701,29 @@ def _rot13(arguments: list, line: int, column: int) -> object:
     return "".join(result)
 
 
+def _caesar_cipher(arguments: list, line: int, column: int) -> object:
+    _require_arity("caesar_cipher", arguments, 2, line, column)
+    value, shift = arguments
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"caesar_cipher() requires a string, got {type_name(value)}", line, column
+        )
+    if not isinstance(shift, int) or isinstance(shift, bool):
+        raise CinderRuntimeError(
+            f"caesar_cipher() requires an int, got {type_name(shift)}", line, column
+        )
+    shift = shift % 26
+    result = []
+    for ch in value:
+        if "a" <= ch <= "z":
+            result.append(chr((ord(ch) - ord("a") + shift) % 26 + ord("a")))
+        elif "A" <= ch <= "Z":
+            result.append(chr((ord(ch) - ord("A") + shift) % 26 + ord("A")))
+        else:
+            result.append(ch)
+    return "".join(result)
+
+
 def _is_palindrome(arguments: list, line: int, column: int) -> object:
     _require_arity("is_palindrome", arguments, 1, line, column)
     value = arguments[0]
@@ -5634,6 +5657,7 @@ _BUILTINS = {
     "title": _title,
     "swap_case": _swap_case,
     "rot13": _rot13,
+    "caesar_cipher": _caesar_cipher,
     "trim": _trim,
     "trim_start": _trim_start,
     "trim_end": _trim_end,

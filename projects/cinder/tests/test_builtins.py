@@ -1364,6 +1364,69 @@ class TestRot13(unittest.TestCase):
             run('rot13("a", "b");')
 
 
+class TestCaesarCipher(unittest.TestCase):
+    def test_caesar_cipher_lowercase(self):
+        self.assertEqual(run('let result = caesar_cipher("abc", 3);').get("result"), "def")
+
+    def test_caesar_cipher_wraps_alphabet(self):
+        self.assertEqual(run('let result = caesar_cipher("xyz", 3);').get("result"), "abc")
+
+    def test_caesar_cipher_preserves_case(self):
+        self.assertEqual(run('let result = caesar_cipher("ABC", 3);').get("result"), "DEF")
+
+    def test_caesar_cipher_mixed_case_and_punctuation(self):
+        self.assertEqual(
+            run('let result = caesar_cipher("Hello, World!", 5);').get("result"),
+            "Mjqqt, Btwqi!",
+        )
+
+    def test_caesar_cipher_zero_shift_is_identity(self):
+        self.assertEqual(run('let result = caesar_cipher("abc", 0);').get("result"), "abc")
+
+    def test_caesar_cipher_shift_larger_than_26_wraps(self):
+        self.assertEqual(run('let result = caesar_cipher("abc", 29);').get("result"), "def")
+
+    def test_caesar_cipher_negative_shift_wraps_backward(self):
+        self.assertEqual(run('let result = caesar_cipher("abc", -1);').get("result"), "zab")
+
+    def test_caesar_cipher_empty_string(self):
+        self.assertEqual(run('let result = caesar_cipher("", 5);').get("result"), "")
+
+    def test_caesar_cipher_shift_13_matches_rot13(self):
+        self.assertEqual(
+            run('let result = caesar_cipher("rot13 test", 13);').get("result"),
+            "ebg13 grfg",
+        )
+        self.assertEqual(
+            run('let result = caesar_cipher("rot13 test", 13);').get("result"),
+            run('let result = rot13("rot13 test");').get("result"),
+        )
+
+    def test_caesar_cipher_of_non_string_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"caesar_cipher\(\) requires a string, got int"
+        ):
+            run("caesar_cipher(123, 3);")
+
+    def test_caesar_cipher_of_non_int_shift_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"caesar_cipher\(\) requires an int, got string"
+        ):
+            run('caesar_cipher("abc", "x");')
+
+    def test_caesar_cipher_of_bool_shift_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"caesar_cipher\(\) requires an int, got bool"
+        ):
+            run('caesar_cipher("abc", true);')
+
+    def test_caesar_cipher_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('caesar_cipher("a");')
+        with self.assertRaises(CinderRuntimeError):
+            run('caesar_cipher("a", 1, 2);')
+
+
 class TestTrim(unittest.TestCase):
     def test_trim_strips_leading_and_trailing_whitespace(self):
         self.assertEqual(run('let result = trim("  hi  ");').get("result"), "hi")

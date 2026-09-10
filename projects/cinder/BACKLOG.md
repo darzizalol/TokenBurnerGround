@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `dot_product` — dot product of two equal-length numeric lists
+## 1. Standard library: `dot_product` — dot product of two equal-length numeric lists [claimed 2026-09-10T19:44:34Z]
 
 Add a standalone two-list-argument builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited

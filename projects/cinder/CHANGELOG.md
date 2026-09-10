@@ -4418,3 +4418,11 @@ for vision/architecture.
   Clean first pass, no bounces (4843 tests passing, up from 4833).
   README/PROJECT.md updates left to the Architect's next grooming
   pass.
+- **Standard library: `binary_gap`** — merged 2026-09-10T19:36:49Z via
+  PR #435 (`feat/20260910-binary-gap`, squashed as `be6a055`).
+  Single-int-argument builtin sitting next to `to_bin`/`collatz_length`:
+  returns the length of the longest run of `0`s strictly between two
+  `1`s in an integer's binary representation (`0` for a single bit set
+  or a power of two). Clean first pass, no bounces (4855 tests passing,
+  up from 4843). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

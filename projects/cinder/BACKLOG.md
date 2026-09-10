@@ -11,105 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `binary_gap` — longest run of zeros between two ones in an integer's binary representation [claimed 2026-09-10T19:31:31Z]
-
-Add a standalone integer-property builtin, not another `is_*`/`nth_*`
-pair — that gap list stayed exhausted this pass too (re-audited
-programmatically: every unpaired `is_*` name is still one of the
-already-rejected categories — multi-arg, string/list-shaped with no
-integer ordering, a type predicate, or one of the confirmed-too-sparse-
-or-slow names from earlier passes' History entries). `binary_gap` sits
-next to `to_bin` (`cinder/builtins.py`, search `def _to_bin`, right
-before `def _to_oct`) as another single-int-argument builtin derived
-from an integer's binary representation, and next to `collatz_length`/
-`collatz_max` (search `def _collatz_length`) as another "compute one
-property of an integer" builtin with the same positive-integer-domain
-shape. This is a classic algorithm exercise (the Codility "BinaryGap"
-kata) that has never been implemented here. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(binary_gap(9));'
-# -> <eval>:1:7: undefined name 'binary_gap'
-```
-
-**What it does.** A binary gap is a maximal run of consecutive `0`s
-that is bounded on both sides by a `1` in the integer's binary
-representation — trailing zeros after the last `1` don't count, since
-there's no closing `1` to bound them. Return the length of the longest
-such gap, or `0` if none exists (including for any power of two, and
-for `1` itself, which has only a single bit set).
-
-Worked examples (confirmed by direct computation of the algorithm
-below, matching the classic kata's own reference values):
-- `binary_gap(9)` is `2` — `9` is `1001` in binary, one gap of two
-  zeros between the two `1`s.
-- `binary_gap(529)` is `4` — `529` is `1000010001` in binary, gaps of
-  four and three zeros; the longest is four.
-- `binary_gap(20)` is `1` — `20` is `10100` in binary, a single gap of
-  one zero.
-- `binary_gap(15)` is `0` — `15` is `1111` in binary, no zeros at all.
-- `binary_gap(32)` is `0` — `32` is `100000` in binary, a single `1`
-  followed only by trailing zeros with no closing `1`, so there is no
-  bounded gap.
-- `binary_gap(1)` is `0` — `1` is `1` in binary, only one bit set.
-- `binary_gap(1041)` is `5` — `1041` is `10000010001` in binary, gaps
-  of five and three zeros; the longest is five (the kata's own
-  headline example).
-
-Add directly after `_to_bin` (search `def _to_bin`, immediately before
-`def _to_oct`) — keeps the new binary-representation builtin next to
-the conversion it's derived from:
-```python
-def _binary_gap(arguments: list, line: int, column: int) -> object:
-    _require_arity("binary_gap", arguments, 1, line, column)
-    value = _require_int("binary_gap", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "binary_gap() requires a positive integer, domain error",
-            line, column,
-        )
-    segments = format(value, "b").split("1")
-    interior = segments[1:-1]
-    return max((len(segment) for segment in interior), default=0)
-```
-(`format(value, "b")` always starts with `1` — no leading-zero edge
-case to handle — so splitting on `"1"` always yields an empty first
-segment; `segments[1:-1]` keeps only the zero-runs strictly between two
-`1`s, dropping both that leading empty segment and the trailing
-segment after the final `1` (unbounded trailing zeros, per the spec
-above); `max(..., default=0)` handles the case where `interior` is
-empty, e.g. `1` or any power of two.) Register the new dict entry
-(search `"to_bin": _to_bin,`, add `"binary_gap": _binary_gap,` directly
-after it, before `"to_oct": _to_oct,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including `binary_gap(529)`
-  is `4` and `binary_gap(1041)` is `5`.
-- `binary_gap(1);`, `binary_gap(15);`, and `binary_gap(32);` are all
-  `0` — the three no-gap shapes (single bit, all-ones, power of two)
-  above.
-- `binary_gap(0);` and `binary_gap(-5);` both raise
-  `CinderRuntimeError` matching `"binary_gap\(\) requires a positive
-  integer, domain error"`.
-- `binary_gap(true);` raises `CinderRuntimeError` matching
-  `"binary_gap\(\) requires an int, got bool"`.
-- `binary_gap("9");` raises `CinderRuntimeError` matching
-  `"binary_gap\(\) requires an int, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_to_bin`, search
-`def _to_bin`), `tests/test_builtins.py` (new `class TestBinaryGap`,
-modeled on `class TestCollatzLength`, search that name, for the test
-shapes above — place it near the existing `class TestToBin`). Once
-merged, `README.md`'s existing `to_bin` bullet needs `binary_gap` added
-right after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `dot_product` — dot product of two equal-length numeric lists
+## 1. Standard library: `dot_product` — dot product of two equal-length numeric lists
 
 Add a standalone two-list-argument builtin, not another `is_*`/`nth_*`
 pair — that gap list stayed exhausted this pass too (re-audited
@@ -211,7 +113,7 @@ grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `cumsum` — cumulative (running) sum of a numeric list
+## 2. Standard library: `cumsum` — cumulative (running) sum of a numeric list
 
 Add a standalone list-transform builtin sitting directly next to `sum`/
 `product` (`cinder/builtins.py`, search `def _sum`, immediately before
@@ -295,7 +197,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
+## 3. Standard library: `caesar_cipher` — generalize `rot13` to an arbitrary integer shift
 
 Add a standalone two-argument string builtin directly after `_rot13`
 (`cinder/builtins.py`, search `def _rot13`, immediately before `def
@@ -401,13 +303,13 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `cumprod` — cumulative (running) product of a numeric list
+## 4. Standard library: `cumprod` — cumulative (running) product of a numeric list
 
 Add a standalone list-transform builtin directly after `_product`
 (`cinder/builtins.py`, search `def _product`, immediately before `def
-_mean`) — the multiplicative sibling of task 3's `cumsum`, the same
+_mean`) — the multiplicative sibling of task 2's `cumsum`, the same
 scalar-to-running-list shape shift applied to `product` instead of
-`sum`. (If task 3 has already merged by the time this is picked up,
+`sum`. (If task 2 has already merged by the time this is picked up,
 `_cumsum` will sit between `_sum` and `_product`; this task's anchor is
 `_product` itself, so the insertion point is unaffected either way.)
 Verify the gap:

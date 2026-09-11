@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: spread a `Set` positionally in list literals and function calls; reject it cleanly in map literals
+## 1. Language: spread a `Set` positionally in list literals and function calls; reject it cleanly in map literals [claimed 2026-09-11T14:23:15Z]
 
 `CinderSet` (`cinder/interpreter.py`, search `class CinderSet(dict)`) is
 implemented as a `dict` subclass with elements as keys, which gives it

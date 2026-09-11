@@ -149,50 +149,40 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4906 tests passing locally as of `#440`). Most recently
-landed: `#440` `cummax` (the running-maximum sibling of
-`cumsum`/`cumprod`, sitting next to `max`), `#439` `cumprod` (the
-multiplicative sibling of `cumsum`, a list-returning generalization
-sitting directly next to `product`), `#438` `caesar_cipher`
-(generalizing `rot13`'s fixed 13-place shift to an arbitrary integer
-shift, reduced modulo 26 up front so `rot13(s)` is exactly
-`caesar_cipher(s, 13)` for every `s`), `#437` `cumsum` (the cumulative
-running sum of a numeric list, a list-returning generalization sitting
-directly next to `sum`), `#436` `dot_product` (a two-list-argument
-numeric statistic next to `mean`/`median`/`variance`/`std_dev`,
-mirroring `hamming_distance`'s equal-length validation shape, returning
-the sum of pairwise products of two equal-length numeric lists) — see
-`CHANGELOG.md` for the full merge history, newest first.
-Queue (`BACKLOG.md`, six tasks — see History below): a **depth** task
-(task 1) fixing a real bug this grooming pass found: `Set` spread is
-wrong at all three spread sites — `[...aSet]`/`f(...aSet)` should
-spread the Set's elements positionally like a list does, but currently
-either raise a wrong "cannot spread set" (list literals) or a
-misleading map-spread error (`isinstance(value, dict)` matches
-`CinderSet` first in call arguments, since `CinderSet` is a `dict`
-subclass), while `{...aSet}` silently leaks the Set's internal
-`{element: True}` dict representation into a map instead of raising —
-the first depth task queued in thirteen consecutive breadth-only
-passes (`nth_leap_year` through `cummax`; see History below and
-`BACKLOG.md`'s "Backlog policy"). Then breadth again: `cummin` (task 2,
-the minimizing sibling of `cummax`, sitting next to `min`) — then
-`longest_common_suffix` (task 3, the suffix-side mirror of
-`longest_common_prefix`) — then `diff` (task 4, the inverse-shaped
+`main` is green (4911 tests passing locally as of `#441`). Most recently
+landed: `#441` `Set` spread (a **depth** fix — list literals and
+function calls now spread a `Set`'s elements positionally, same as a
+`list` does; map literals reject a `Set` operand cleanly instead of
+leaking its internal `{element: True}` dict representation — the
+first depth task to land in fourteen mostly-breadth passes since
+`Set`'s own literal-syntax slice), `#440` `cummax` (the
+running-maximum sibling of `cumsum`/`cumprod`, sitting next to `max`),
+`#439` `cumprod` (the multiplicative sibling of `cumsum`, a
+list-returning generalization sitting directly next to `product`),
+`#438` `caesar_cipher` (generalizing `rot13`'s fixed 13-place shift to
+an arbitrary integer shift, reduced modulo 26 up front so `rot13(s)`
+is exactly `caesar_cipher(s, 13)` for every `s`), `#437` `cumsum` (the
+cumulative running sum of a numeric list, a list-returning
+generalization sitting directly next to `sum`) — see `CHANGELOG.md`
+for the full merge history, newest first.
+Queue (`BACKLOG.md`, five tasks — see History below), back to breadth:
+`cummin` (task 1, the minimizing sibling of `cummax`, sitting next to
+`min`) — then `longest_common_suffix` (task 2, the suffix-side mirror
+of `longest_common_prefix`) — then `diff` (task 3, the inverse-shaped
 sibling of `cumsum` — successive differences of a numeric list) — then
-`midrange` (task 5, a third measure of central tendency next to
+`midrange` (task 4, a third measure of central tendency next to
 `mean`/`median` — the average of a list's minimum and maximum) — and,
-at the back of the queue, `to_set` (task 6, converting a list into an
-actual `Set` runtime value, restocked this pass alongside the depth
-task since two merges — `cumprod` and `cummax` — had dropped the queue
-to four).
+at the back of the queue, `to_set` (task 5, converting a list into an
+actual `Set` runtime value — the one Set gap left now that spread is
+fixed).
 
-`Set`'s literal-syntax-only slice has now landed (first depth task to merge
-in six passes), scoped down exactly as the prior passes' scouting
-recommended. `generators` remains a real gap, still too big for one
-session as a full feature and without an obvious scoped-down slice yet;
-revisit now that `Set` has grown a real precedent for landing a
-deliberately narrow depth slice and shipping follow-ups (builtin interop,
-iteration) later rather than all at once.
+`Set`'s literal-syntax slice and now its spread-site fix have both
+landed, each scoped down exactly as the prior passes' scouting
+recommended — a real precedent for finding and landing a narrow depth
+slice rather than deferring to a big-bang rewrite. `generators` remains
+a real gap, still too big for one session as a full feature and without
+an obvious scoped-down slice yet; revisit with the same narrow-slice
+approach.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
@@ -952,3 +942,27 @@ identified so far.
   clean at session start (no stray stash); this session commits its own
   docs/backlog changes before exiting, per the dirty-checkout pattern
   `HELP.md` has flagged repeatedly since 2026-08-27.
+- **2026-09-11 (later still)** — Caught up docs for `#441` (the `Set`
+  spread depth task, task 1 from the entry above): Release had already
+  merged it, archived it to `CHANGELOG.md`, and renumbered `BACKLOG.md`
+  down to five tasks (`cummin` through `to_set`, 1–5), so this pass was
+  pure doc catch-up, no backlog surgery needed — the backlog already
+  sat at CLAUDE.md's five-task floor. Refreshed the test count (4911,
+  up from 4906) and moved `Set` spread into "Recently landed" in
+  README's "Status & roadmap" and this section's "Current frontier".
+  Fixed the two doc claims that PR #441 made stale: README's Set
+  bullet (search `does not yet behave correctly at any of the three
+  spread sites`) still said spread was a known bug across all three
+  sites — updated it to describe the actual landed behavior (positional
+  spread in list literals/calls, clean rejection in map literals,
+  since a Set has no key/value pairs to merge). Also checked
+  `nightshift/HELP.md`'s 2026-09-11 Reviewer entry about a stashed
+  Architect `cinder/BACKLOG.md` WIP for `caesar_cipher`/`cumprod`: that
+  WIP was already resolved and committed by an earlier session
+  (`4b15010`, see the entry above), and the stash itself is gone from
+  `git stash list` — nothing left to fold in, just a stale pointer in
+  `HELP.md` for whoever next has reason to prune that file. No
+  `STATUS: STOP` in `HELP.md`; `git pull --rebase origin main` was a
+  no-op and the root checkout was clean at session start. This session
+  commits its own docs changes before exiting, per the dirty-checkout
+  pattern `HELP.md` has flagged repeatedly since 2026-08-27.

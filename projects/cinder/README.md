@@ -505,10 +505,13 @@ while (i < 10) {
   (`for x in {1, 2, 3} { ... }`), comprehension iteration
   (`[x * 2 for x in {1, 2, 3}]`), and `in`/`not in` membership already
   work for free from the underlying `dict` representation; spreading a
-  Set (`[...{1, 2, 3}]`, `f(...{1, 2, 3})`, `{...{1, 2, 3}}`) does not
-  yet behave correctly at any of the three spread sites — a known bug,
-  queued to fix in `BACKLOG.md`; scope is otherwise deliberately narrow
-  — no `is_set` builtin, no mutation (both natural follow-ups)
+  Set (`[...{1, 2, 3}]`, `f(...{1, 2, 3})`) spreads its elements
+  positionally in list literals and call arguments, same as a `list`
+  spread does; spreading one into a map literal (`{...{1, 2, 3}}`)
+  raises a clean error instead of leaking the Set's internal
+  `{element: True}` dict representation, since a Set has no
+  key/value pairs to merge; scope is otherwise deliberately narrow —
+  no `is_set` builtin, no mutation (both natural follow-ups)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -868,35 +871,29 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `cummax` (PR #440, the
-running-maximum sibling of `cumsum`/`cumprod` sitting next to `max`),
-`cumprod` (PR #439, the multiplicative sibling of `cumsum`, a
-list-returning generalization of `product`), `caesar_cipher` (PR #438,
-generalizing `rot13`'s fixed 13-place shift to an arbitrary integer
-shift, reduced modulo 26 up front so `rot13(s)` is exactly
-`caesar_cipher(s, 13)` for every `s`), `cumsum` (PR #437, the
-cumulative running sum of a numeric list, a list-returning
-generalization of `sum` sitting right next to it), and `dot_product`
-(PR #436, a two-list-argument builtin sitting next to `mean`/`variance`/
-`std_dev`, mirroring `hamming_distance`'s equal-length validation shape
-to return the sum of pairwise products of two equal-length numeric
-lists).
+Actively developed, nightly. Recently landed: `Set` spread (PR #441, a
+depth fix — list literals and function calls now spread a `Set`'s
+elements positionally, same as a `list` does, and map literals reject
+a `Set` operand cleanly instead of leaking its internal representation
+— the first depth task to land in fourteen mostly-breadth passes),
+`cummax` (PR #440, the running-maximum sibling of `cumsum`/`cumprod`
+sitting next to `max`), `cumprod` (PR #439, the multiplicative sibling
+of `cumsum`, a list-returning generalization of `product`),
+`caesar_cipher` (PR #438, generalizing `rot13`'s fixed 13-place shift
+to an arbitrary integer shift, reduced modulo 26 up front so
+`rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`), and
+`cumsum` (PR #437, the cumulative running sum of a numeric list, a
+list-returning generalization of `sum` sitting right next to it).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): a depth task fixing `Set`
-spread at all three spread sites (task 1 — list literals and function
-calls should spread a `Set`'s elements positionally, same as a `list`
-does, and map literals should reject a `Set` operand cleanly instead of
-leaking its internal representation; the first depth task queued in
-thirteen breadth-only passes), then back to breadth: `cummin` (task 2,
-the minimizing sibling of `cummax`, sitting next to `min`),
-`longest_common_suffix` (task 3, the suffix-side mirror of
-`longest_common_prefix`), `diff` (task 4, the inverse-shaped sibling of
+Queued next (see [`BACKLOG.md`](BACKLOG.md)), back to breadth:
+`cummin` (task 1, the minimizing sibling of `cummax`, sitting next to
+`min`), `longest_common_suffix` (task 2, the suffix-side mirror of
+`longest_common_prefix`), `diff` (task 3, the inverse-shaped sibling of
 `cumsum` — successive differences of a numeric list), `midrange`
-(task 5, a third measure of central tendency next to `mean`/`median` —
-the average of a list's minimum and maximum), and, at the back of the
-queue, `to_set` (task 6, converting a list into an actual `Set` runtime
-value — the one gap left in the note above once this pass's Set-spread
-fix lands).
+(task 4, a third measure of central tendency next to `mean`/`median` —
+the average of a list's minimum and maximum), and `to_set` (task 5,
+converting a list into an actual `Set` runtime value — the one gap
+left in the Set bullet above now that spread is fixed).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

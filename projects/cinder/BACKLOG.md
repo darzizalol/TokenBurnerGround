@@ -401,6 +401,106 @@ this task.
 
 ---
 
+## 5. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
+
+Add a standalone list-transform builtin directly after `_std_dev`
+(`cinder/builtins.py`, search `def _std_dev`, immediately before `def
+_dot_product`) — the transform-shaped sibling of `mean`/`std_dev`:
+where those two reduce a list to a single summary number, `zscore`
+reuses the same `_population_variance` helper to turn every element
+into how many standard deviations it sits from the list's mean.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(zscore([1, 2, 3]));'
+# -> <eval>:1:7: undefined name 'zscore' (did you mean 'is_coprime'?)
+```
+
+**What it does.** Given a non-empty list of numbers, return a new list
+of the same length where `result[i] = (list[i] - mean(list)) /
+std_dev(list)` — each element's population z-score. `std_dev` of a
+single-element or constant list is `0` (verified: `std_dev([5])` is
+`0`, `std_dev([4, 4, 4])` is `0`), which would divide by zero, so
+those two shapes raise instead of computing.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `zscore([2, 4, 4, 4, 5, 5, 7, 9])` is `[-1.5, -0.5, -0.5, -0.5, 0.0,
+  0.0, 1.0, 2.0]` — the same textbook list `std_dev`'s own test uses
+  (`tests/test_builtins.py`, `test_std_dev_of_textbook_example`, mean
+  `5`, `std_dev` exactly `2`), so every element divides out evenly.
+- `zscore([1, 2, 3])` is `[-1.224744871391589, 0.0, 1.224744871391589]`
+  — mean `2`, `std_dev` `sqrt(2/3)`.
+- `zscore([5])` raises `CinderRuntimeError` — single-element list,
+  `std_dev` is `0`.
+- `zscore([4, 4, 4])` raises `CinderRuntimeError` — constant list,
+  `std_dev` is `0`.
+- `zscore([])` raises `CinderRuntimeError` — empty list, no mean to
+  compute (same reason `mean`/`std_dev` reject it).
+
+Add directly after `_std_dev` (search `def _std_dev`, immediately
+before `def _dot_product`):
+```python
+def _zscore(arguments: list, line: int, column: int) -> object:
+    _require_arity("zscore", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"zscore() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("zscore() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"zscore() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    total = 0
+    for element in value:
+        total = total + element
+    mean = total / len(value)
+    standard_deviation = math.sqrt(_population_variance(value))
+    if standard_deviation == 0:
+        raise CinderRuntimeError(
+            "zscore() requires a list with non-zero standard deviation", line, column
+        )
+    return [(element - mean) / standard_deviation for element in value]
+```
+(Reuses `_population_variance` — search `def _population_variance` —
+the same private helper `_variance`/`_std_dev` already share, so the
+mean/variance math can't drift between the three.) Register the new
+dict entry (search `"std_dev": _std_dev,`, add `"zscore": _zscore,`
+directly after it, before `"dot_product": _dot_product,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `zscore([2, 4, 4, 4, 5, 5, 7, 9])` is `[-1.5, -0.5, -0.5, -0.5, 0.0,
+  0.0, 1.0, 2.0]` and `zscore([1, 2, 3])` is
+  `[-1.224744871391589, 0.0, 1.224744871391589]`.
+- `zscore([5]);` and `zscore([4, 4, 4]);` both raise
+  `CinderRuntimeError` matching `"zscore\(\) requires a list with
+  non-zero standard deviation"`.
+- `zscore([]);` raises `CinderRuntimeError` matching `"zscore\(\)
+  requires a non-empty list"`.
+- `zscore(123);` raises `CinderRuntimeError` matching `"zscore\(\)
+  requires a list, got int"`.
+- `zscore([1, "a"]);` raises `CinderRuntimeError` matching
+  `"zscore\(\) requires a list of numbers, got string"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_std_dev`, search
+`def _std_dev`), `tests/test_builtins.py` (new `class TestZscore`,
+modeled on `class TestStdDev`/`class TestMean`, search either name,
+for the test shapes above — place it near the existing `class
+TestStdDev`). Once merged, `README.md`'s builtins quick-reference list
+(search `std_dev`) needs `zscore` added right after it, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next grooming
+pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

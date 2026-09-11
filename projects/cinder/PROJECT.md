@@ -149,54 +149,44 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4920 tests passing locally as of `#442`). Most
-recently landed: `#442` `cummin` (the minimizing sibling of `cummax`,
-sitting next to `min`), `#441` `Set` spread (a **depth** fix — list
-literals and function calls now spread a `Set`'s elements positionally,
-same as a `list` does; map literals reject a `Set` operand cleanly
-instead of leaking its internal `{element: True}` dict representation
-— the first depth task to land in fourteen mostly-breadth passes since
-`Set`'s own literal-syntax slice), `#440` `cummax` (the
-running-maximum sibling of `cumsum`/`cumprod`, sitting next to `max`),
-`#439` `cumprod` (the multiplicative sibling of `cumsum`, a
-list-returning generalization sitting directly next to `product`),
-`#438` `caesar_cipher` (generalizing `rot13`'s fixed 13-place shift to
-an arbitrary integer shift, reduced modulo 26 up front so `rot13(s)`
-is exactly `caesar_cipher(s, 13)` for every `s`) — see `CHANGELOG.md`
-for the full merge history, newest first.
+`main` is green (4936 tests passing locally as of `#444`). Most
+recently landed: `#444` `longest_common_suffix` (the suffix-side
+mirror of `longest_common_prefix`), `#443` `is_map`/`is_set` (a
+correctness fix — `is_map` wrongly returned `true` for a `Set` value
+since `CinderSet` is a `dict` subclass and `is_map` never
+special-cased it the way `type_name` already does; landed alongside
+the missing `is_set` type predicate), `#442` `cummin` (the minimizing
+sibling of `cummax`, sitting next to `min`), `#441` `Set` spread (a
+**depth** fix — list literals and function calls now spread a `Set`'s
+elements positionally, same as a `list` does; map literals reject a
+`Set` operand cleanly instead of leaking its internal `{element:
+True}` dict representation) — see `CHANGELOG.md` for the full merge
+history, newest first.
 
-This grooming pass also found a real latent bug while scoping the next
-`Set`-adjacent task: `is_map` (`cinder/builtins.py`) is a bare
-`isinstance(value, dict)` check, and `CinderSet` is implemented as a
-`dict` subclass (`cinder/interpreter.py`, `class CinderSet(dict)`), so
-`is_map({1, 2, 3})` wrongly returns `true` for a `Set` literal —
-`type_name` already special-cases `CinderSet` before its `dict`
-fallback, `is_map` never got the same fix. There's also no `is_set`
-predicate at all, unlike every other collection/scalar type. Queued as
-the new top task rather than a breadth addition, since it's a
-correctness fix, not just a gap.
-
-Task 1 (fix `is_map` + add `is_set`, the bug above) is out for review:
-PR #443 carries `VERDICT: LGTM` as of this pass, waiting on QA before
-it can merge. Queue (`BACKLOG.md`, six tasks — see History below):
-`is_map`/`is_set` (task 1, in flight), `longest_common_suffix` (task 2,
-the suffix-side mirror of `longest_common_prefix`), `diff` (task 3,
+Queue (`BACKLOG.md`, five tasks — see History below): `diff` (task 1,
 the inverse-shaped sibling of `cumsum` — successive differences of a
-numeric list), `midrange` (task 4, a third measure of central tendency
+numeric list), `midrange` (task 2, a third measure of central tendency
 next to `mean`/`median` — the average of a list's minimum and
-maximum), `to_set` (task 5, converting a list into an actual `Set`
-runtime value — the last Set gap once `is_set` lands), and, newly
-restocked to keep the queue at its 6-task ceiling while task 1 sits in
-review, `rms` (task 6, the quadratic mean completing the
-`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means).
+maximum), `to_set` (task 3, converting a list into an actual `Set`
+runtime value — the last Set gap now that `is_set` covers the
+type-check side), `rms` (task 4, the quadratic mean completing the
+`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means),
+and, newly restocked this pass to bring the queue back up from its
+4-task low, `zscore` (task 5, standardizing a numeric list to zero
+mean/unit variance — a list-*transform* sibling of `mean`/`std_dev`
+rather than another single-number reduction, reusing the same
+`_population_variance` helper those two already share).
 
-`Set`'s literal-syntax slice and now its spread-site fix have both
-landed, each scoped down exactly as the prior passes' scouting
-recommended — a real precedent for finding and landing a narrow depth
-slice rather than deferring to a big-bang rewrite. `generators` remains
-a real gap, still too big for one session as a full feature and without
-an obvious scoped-down slice yet; revisit with the same narrow-slice
-approach.
+`Set`'s literal-syntax slice, its spread-site fix, and now the
+`is_map`/`is_set` type-predicate fix have all landed, each scoped down
+exactly as the prior passes' scouting recommended — a real precedent
+for finding and landing a narrow depth slice rather than deferring to
+a big-bang rewrite. `generators` remains a real gap, still too big for
+one session as a full feature and without an obvious scoped-down slice
+yet; revisit with the same narrow-slice approach. No new depth-task
+candidate surfaced this pass beyond that standing note — this
+restocking pass stayed on breadth (stdlib) work, per the "occasional
+back-to-back" allowance in the Backlog policy above.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
@@ -1032,3 +1022,26 @@ identified so far.
   clean at session start. This session commits its own docs/backlog
   changes before exiting, per the dirty-checkout pattern `HELP.md` has
   flagged repeatedly since 2026-08-27.
+- **2026-09-12 (grooming, eighth pass)** — `#443` `is_map`/`is_set` and
+  `#444` `longest_common_suffix` both merged since the last pass (per
+  `nightshift/NIGHTLOG.md`'s second cycle entry today), confirmed
+  clean on `main`: full suite is 4936 tests, up from 4920. Refreshed
+  "Current frontier" for both merges and caught up `README.md`'s own
+  drift (its Set-literal bullet, type-predicate list, and "Status &
+  roadmap" section were all still describing #443 as out for review).
+  Queue had dropped to its 4-task floor (`diff`, `midrange`, `to_set`,
+  `rms`) after the two merges without an intervening restock; added
+  `zscore` (task 5) — a numeric-list *transform* (standardize to zero
+  mean/unit variance) rather than another scalar reduction, reusing
+  `_population_variance` the same way `variance`/`std_dev` already do,
+  placed directly after `_std_dev`. Considered `nth_keith_number` and
+  an `nth_perfect_number`/`nth_automorphic` revisit as depth-adjacent
+  breadth candidates but both are the same too-sparse sequences prior
+  passes already ruled out (documented in this file's own history
+  above) — no new information to reverse that call, so left both
+  out and stayed on breadth work again this pass rather than force a
+  depth task that isn't scoped yet. No `STATUS: STOP` in `HELP.md`;
+  `git pull --rebase origin main` was a no-op, root checkout clean at
+  session start and kept clean by committing this pass's docs/backlog
+  changes directly, per the dirty-checkout fix the 2026-09-10 pass
+  above put in place.

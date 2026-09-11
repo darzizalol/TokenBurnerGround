@@ -510,8 +510,10 @@ while (i < 10) {
   spread does; spreading one into a map literal (`{...{1, 2, 3}}`)
   raises a clean error instead of leaking the Set's internal
   `{element: True}` dict representation, since a Set has no
-  key/value pairs to merge; scope is otherwise deliberately narrow —
-  no `is_set` builtin, no mutation (both natural follow-ups)
+  key/value pairs to merge; `is_set` type predicate and no mutation
+  (the latter a natural follow-up); `is_map` correctly returns `false`
+  for a `Set` value despite `CinderSet` being a `dict` subclass
+  internally (a bug fixed alongside `is_set`'s own addition)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -699,6 +701,8 @@ while (i < 10) {
   `longest_common_prefix` to return the longest string that is a prefix of every string in a
   list, the list-generalized sibling of `hamming_distance`/`levenshtein_distance`'s pairwise
   string comparisons (`""` for an empty list or when any string in the list is empty),
+  `longest_common_suffix` as its suffix-side mirror, the same generalization applied from the
+  other end of each string,
   `is_harshad` to test whether an integer is divisible by the sum of its own decimal digits,
   `nth_harshad` to return the Harshad number found at a 1-indexed position via the same bounded
   sequential scan `nth_abundant`/`nth_deficient` already use, the value-returning sibling of
@@ -794,7 +798,7 @@ while (i < 10) {
   (a thin wrapper over `itertools.combinations_with_replacement`, the third and last member of the
   permutations/combinations family, sitting directly next to `combinations`), and
   type predicates `is_list`, `is_map`, `is_string`, `is_number`, `is_bool`, `is_nil`,
-  `is_function`, `is_int`, `is_float`
+  `is_function`, `is_int`, `is_float`, `is_set`
 - **Errors**: parse and runtime errors carry line/column info — no raw Python
   tracebacks; runtime errors raised inside nested function calls also report
   the full call stack (`  at name (line:col)` per frame, innermost first);
@@ -845,7 +849,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4855+ tests) covers every layer — lexer, parser, interpreter,
+The suite (4936+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -871,34 +875,28 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `cummin` (PR #442, the
-minimizing sibling of `cummax`, sitting next to `min`), `Set` spread
-(PR #441, a depth fix — list literals and function calls now spread a
-`Set`'s elements positionally, same as a `list` does, and map literals
-reject a `Set` operand cleanly instead of leaking its internal
-representation — the first depth task to land in fourteen
-mostly-breadth passes), `cummax` (PR #440, the running-maximum sibling
-of `cumsum`/`cumprod` sitting next to `max`), `cumprod` (PR #439, the
-multiplicative sibling of `cumsum`, a list-returning generalization of
-`product`), and `caesar_cipher` (PR #438, generalizing `rot13`'s fixed
-13-place shift to an arbitrary integer shift, reduced modulo 26 up
-front so `rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`).
-See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-A bug fix (task 1) — `is_map` wrongly returns `true` for a `Set` value,
-since `CinderSet` is a `dict` subclass and `is_map` never
-special-cased it the way `type_name` already does; fixing that lands
-`is_set` alongside it as the missing type-predicate sibling of
-`is_list`/`is_map` — is out for review as PR #443 (`VERDICT: LGTM`,
-waiting on QA). Queued next (see [`BACKLOG.md`](BACKLOG.md)), back to
-breadth: `longest_common_suffix` (task 2, the suffix-side mirror of
-`longest_common_prefix`), `diff` (task 3, the inverse-shaped sibling of
-`cumsum` — successive differences of a numeric list), `midrange`
-(task 4, a third measure of central tendency next to `mean`/`median` —
-the average of a list's minimum and maximum), `to_set` (task 5,
-converting a list into an actual `Set` runtime value — the last Set
-gap now that spread is fixed and `is_set` covers the type-check side),
-and `rms` (task 6, the quadratic mean completing the
-`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means).
+Actively developed, nightly. Recently landed: `longest_common_suffix`
+(PR #444, the suffix-side mirror of `longest_common_prefix`),
+`is_map`/`is_set` (PR #443, a correctness fix — `is_map` wrongly
+returned `true` for a `Set` value since `CinderSet` is a `dict`
+subclass and `is_map` never special-cased it the way `type_name`
+already does; landed alongside the missing `is_set` type predicate),
+`cummin` (PR #442, the minimizing sibling of `cummax`, sitting next to
+`min`), and `Set` spread (PR #441, a depth fix — list literals and
+function calls now spread a `Set`'s elements positionally, same as a
+`list` does, and map literals reject a `Set` operand cleanly instead
+of leaking its internal representation). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Queued next
+(see [`BACKLOG.md`](BACKLOG.md)), all breadth: `diff` (task 1, the
+inverse-shaped sibling of `cumsum` — successive differences of a
+numeric list), `midrange` (task 2, a third measure of central tendency
+next to `mean`/`median` — the average of a list's minimum and
+maximum), `to_set` (task 3, converting a list into an actual `Set`
+runtime value — the last Set gap now that `is_set` covers the
+type-check side), `rms` (task 4, the quadratic mean completing the
+`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means),
+and `zscore` (task 5, standardizing a numeric list to zero mean/unit
+variance — a list-transform sibling of `mean`/`std_dev`).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

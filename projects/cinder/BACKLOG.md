@@ -11,105 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `rms` — quadratic mean (root mean square) of a numeric list [claimed 2026-09-11T20:27:26Z]
-
-Add a standalone list-statistic builtin directly after `_harmonic_mean`
-(`cinder/builtins.py`, search `def _harmonic_mean`, immediately before
-`def _median`) — the fourth classical Pythagorean mean, sitting next to
-`mean`/`geometric_mean`/`harmonic_mean`: the square root of the average
-of the squared elements. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(rms([1, 2, 3]));'
-# -> <eval>:1:7: undefined name 'rms'
-```
-
-**What it does.** Given a non-empty list of numbers, return
-`sqrt(sum(x^2 for x in list) / len(list))`. Unlike `geometric_mean`/
-`harmonic_mean`, squaring makes every element non-negative before the
-average, so `rms` places **no positivity restriction** on its input —
-negative elements are fine, only the empty list is rejected (same
-reason `mean`/`median`/`std_dev` reject it: no elements to average).
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `rms([1, 2, 3])` is `2.160246899469287` — `sqrt((1 + 4 + 9) / 3)`.
-- `rms([3, 4])` is `3.5355339059327378` — `sqrt((9 + 16) / 2)`.
-- `rms([5])` is `5.0` — a single-element list's rms is that element's
-  absolute value (as a float).
-- `rms([-3, 3])` is `3.0` — negative elements are squared away, so this
-  does *not* raise (the positivity check `geometric_mean`/
-  `harmonic_mean` both have does not apply here).
-- `rms([0, 0, 0])` is `0.0`.
-- `rms([1, 2, 4])` is greater than or equal to `mean([1, 2, 4])` —
-  the QM-AM inequality, the same kind of cross-check
-  `test_harmonic_mean_am_gm_hm_inequality` (search that name in
-  `tests/test_builtins.py`) already makes for the other three means.
-- `rms([]);` raises `CinderRuntimeError` — no elements to average.
-
-Add directly after `_harmonic_mean` (search `def _harmonic_mean`,
-immediately before `def _median`) — keeps the new quadratic mean next
-to the other three Pythagorean means it completes:
-```python
-def _rms(arguments: list, line: int, column: int) -> object:
-    _require_arity("rms", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"rms() requires a list, got {type_name(value)}", line, column
-        )
-    if not value:
-        raise CinderRuntimeError("rms() requires a non-empty list", line, column)
-    squared_total = 0
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"rms() requires a list of numbers, got {type_name(element)}", line, column
-            )
-        squared_total = squared_total + element ** 2
-    return math.sqrt(squared_total / len(value))
-```
-(Same validate-then-reduce shape as `_mean`/`_harmonic_mean` — search
-either — just averaging squares instead of raw values or reciprocals,
-and square-rooting the result; `math` is already imported in this
-module for `_std_dev`.) Register the new dict entry (search
-`"harmonic_mean": _harmonic_mean,`, add `"rms": _rms,` directly after
-it, before `"median": _median,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including `rms([1, 2,
-  3])` is `2.160246899469287` and `rms([3, 4])` is
-  `3.5355339059327378`.
-- `rms([5]);` is `5.0` and `rms([0, 0, 0]);` is `0.0` — the
-  single-element and all-zero cases.
-- `rms([-3, 3]);` is `3.0` and does not raise — negative elements are
-  accepted, unlike `geometric_mean`/`harmonic_mean`.
-- `rms([1, 2, 4])` is greater than or equal to `mean([1, 2, 4])` — the
-  QM-AM inequality cross-check, mirroring
-  `test_harmonic_mean_am_gm_hm_inequality`'s style.
-- `rms([]);` raises `CinderRuntimeError` matching `"rms\(\) requires a
-  non-empty list"`.
-- `rms(123);` raises `CinderRuntimeError` matching `"rms\(\) requires a
-  list, got int"`.
-- `rms([1, "a"]);` raises `CinderRuntimeError` matching `"rms\(\)
-  requires a list of numbers, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_harmonic_mean`,
-search `def _harmonic_mean`), `tests/test_builtins.py` (new `class
-TestRms`, modeled on `class TestHarmonicMean`/`class
-TestGeometricMean`, search either name, for the test shapes above —
-place it near the existing `class TestHarmonicMean`). Once merged,
-`README.md`'s builtins quick-reference list (search `harmonic_mean`)
-needs `rms` added right after it, its "Status & roadmap" section needs
-updating, and `PROJECT.md`'s "Current frontier" section needs
-refreshing — leave both to the Architect's next grooming pass, not
-this task.
-
----
-
-## 2. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
+## 1. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
 
 Add a standalone list-transform builtin directly after `_std_dev`
 (`cinder/builtins.py`, search `def _std_dev`, immediately before `def
@@ -209,7 +111,7 @@ pass, not this task.
 
 ---
 
-## 3. Standard library: `covariance` — population covariance of two equal-length numeric lists
+## 2. Standard library: `covariance` — population covariance of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_dot_product` (`cinder/builtins.py`, search `def _dot_product`,
@@ -330,10 +232,10 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
+## 3. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
-`_covariance` (`cinder/builtins.py`, once task 3 lands `_covariance`
+`_covariance` (`cinder/builtins.py`, once task 2 lands `_covariance`
 will sit directly after `_dot_product`, immediately before `_mode` —
 add `_correlation` directly after `_covariance`, still before `_mode`)
 — the normalized sibling of `covariance`: dividing covariance by the
@@ -346,7 +248,7 @@ python3 -m cinder.cli eval 'print(correlation([1, 2, 3], [4, 5, 6]));'
 
 **What it does.** Given two non-empty numeric lists of equal length,
 return `covariance(x, y) / (std_dev(x) * std_dev(y))` — the Pearson
-correlation coefficient (reusing `_covariance` from task 3 and the
+correlation coefficient (reusing `_covariance` from task 2 and the
 existing `_population_variance`/`math.sqrt` shape `_std_dev` already
 uses for the denominator). `std_dev` of a single-element or constant
 list is `0` (same fact `zscore`'s task writeup above relied on), which
@@ -376,7 +278,7 @@ below):
 - `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` —
   unequal lengths, mirroring `covariance`'s own length check.
 
-Add directly after `_covariance` (once task 3 lands; search `def
+Add directly after `_covariance` (once task 2 lands; search `def
 _covariance`, add `_correlation` immediately after it, still before
 `def _mode`):
 ```python
@@ -447,19 +349,19 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (directly after `_covariance`, once
-task 3 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
+task 2 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
 modeled on `class TestDotProduct`/the eventual `class TestCovariance`
-from task 3, search either name, for the test shapes above — place it
+from task 2, search either name, for the test shapes above — place it
 near the existing `class TestDotProduct`). Once merged, `README.md`'s
 builtins quick-reference list (search `dot_product`, `covariance` will
-sit right after it once task 3 lands) needs `correlation` added right
+sit right after it once task 2 lands) needs `correlation` added right
 after `covariance`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" section needs refreshing — leave both
 to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
+## 4. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
 
 Add a standalone two-list builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before
@@ -520,7 +422,7 @@ def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
 (Calls `_union`/`_intersection` directly rather than re-deriving
 `_dedupe`/`_contains_value` logic, so the three builtins' notion of
 "distinct element" and "shared element" can't drift apart — same
-reuse-the-sibling-builtin shape `_correlation` in task 4 above uses
+reuse-the-sibling-builtin shape `_correlation` in task 3 above uses
 for `_covariance`.) Register the new dict entry (search `"is_disjoint":
 _is_disjoint,`, add `"jaccard_similarity": _jaccard_similarity,`
 directly after it, before `"to_set": _to_set,`).

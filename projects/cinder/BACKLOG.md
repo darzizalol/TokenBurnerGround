@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cummin` — cumulative (running) minimum of a numeric list
+## 1. Standard library: `cummin` — cumulative (running) minimum of a numeric list [claimed 2026-09-11T14:35:15Z]
 
 Add a standalone list-transform builtin directly after `_cummax`
 (`cinder/builtins.py`, search `def _cummax`, immediately before `def

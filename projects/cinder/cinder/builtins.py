@@ -885,6 +885,31 @@ def _longest_common_prefix(arguments: list, line: int, column: int) -> object:
     return prefix
 
 
+def _longest_common_suffix(arguments: list, line: int, column: int) -> object:
+    _require_arity("longest_common_suffix", arguments, 1, line, column)
+    items = arguments[0]
+    if not isinstance(items, list):
+        raise CinderRuntimeError(
+            f"longest_common_suffix() requires a list, got {type_name(items)}",
+            line, column,
+        )
+    for item in items:
+        if not isinstance(item, str):
+            raise CinderRuntimeError(
+                f"longest_common_suffix() requires a list of strings, got {type_name(item)}",
+                line, column,
+            )
+    if not items:
+        return ""
+    suffix = items[0]
+    for candidate in items[1:]:
+        while not candidate.endswith(suffix):
+            suffix = suffix[1:]
+            if not suffix:
+                return ""
+    return suffix
+
+
 def _is_pangram(arguments: list, line: int, column: int) -> object:
     _require_arity("is_pangram", arguments, 1, line, column)
     value = arguments[0]
@@ -5998,6 +6023,7 @@ _BUILTINS = {
     "levenshtein_distance": _levenshtein_distance,
     "hamming_distance": _hamming_distance,
     "longest_common_prefix": _longest_common_prefix,
+    "longest_common_suffix": _longest_common_suffix,
     "is_pangram": _is_pangram,
     "is_balanced": _is_balanced,
     "is_upper": _is_upper,

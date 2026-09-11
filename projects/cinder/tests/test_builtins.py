@@ -13962,6 +13962,83 @@ class TestLongestCommonPrefix(unittest.TestCase):
             run('longest_common_prefix(["a"], ["b"]);')
 
 
+class TestLongestCommonSuffix(unittest.TestCase):
+    def test_longest_common_suffix_flower_power_shower(self):
+        self.assertEqual(
+            run(
+                'let result = longest_common_suffix(["flower", "power", "shower"]);'
+            ).get("result"),
+            "ower",
+        )
+
+    def test_longest_common_suffix_no_common_suffix(self):
+        self.assertEqual(
+            run(
+                'let result = longest_common_suffix(["dog", "racecar", "car"]);'
+            ).get("result"),
+            "",
+        )
+
+    def test_longest_common_suffix_multi_character_shared_suffix(self):
+        self.assertEqual(
+            run(
+                'let result = longest_common_suffix(["testing", "resting", "nesting"]);'
+            ).get("result"),
+            "esting",
+        )
+
+    def test_longest_common_suffix_single_element_list(self):
+        self.assertEqual(
+            run('let result = longest_common_suffix(["throne"]);').get("result"),
+            "throne",
+        )
+
+    def test_longest_common_suffix_identical_strings(self):
+        self.assertEqual(
+            run('let result = longest_common_suffix(["throne", "throne"]);').get(
+                "result"
+            ),
+            "throne",
+        )
+
+    def test_longest_common_suffix_empty_list(self):
+        self.assertEqual(
+            run("let result = longest_common_suffix([]);").get("result"), ""
+        )
+
+    def test_longest_common_suffix_empty_string_in_list_forces_empty_result(self):
+        self.assertEqual(
+            run('let result = longest_common_suffix(["cat", ""]);').get("result"),
+            "",
+        )
+        self.assertEqual(
+            run('let result = longest_common_suffix(["", "cat"]);').get("result"),
+            "",
+        )
+
+    def test_longest_common_suffix_on_non_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("longest_common_suffix(123);")
+        self.assertIn(
+            "longest_common_suffix() requires a list, got int",
+            ctx.exception.message,
+        )
+
+    def test_longest_common_suffix_on_list_with_non_string_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('longest_common_suffix([1, "a"]);')
+        self.assertIn(
+            "longest_common_suffix() requires a list of strings, got int",
+            ctx.exception.message,
+        )
+
+    def test_longest_common_suffix_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("longest_common_suffix();")
+        with self.assertRaises(CinderRuntimeError):
+            run('longest_common_suffix(["a"], ["b"]);')
+
+
 class TestIsPangram(unittest.TestCase):
     def test_is_pangram_canonical_true(self):
         self.assertIs(

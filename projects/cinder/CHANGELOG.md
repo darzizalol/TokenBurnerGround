@@ -4477,3 +4477,10 @@ for vision/architecture.
   representation. Clean first pass, no bounces (4911 tests passing, up
   from 4906). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `cummin`** — merged 2026-09-11T14:40:11Z via PR
+  #442 (`feat/20260911-cummin`, squashed as `879b253`). List-transform
+  builtin sitting next to `min`: returns a new list where each element
+  is the running minimum of every element up to and including that
+  position (`[]` for an empty list). Clean first pass, no bounces (4920
+  tests passing, up from 4911). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

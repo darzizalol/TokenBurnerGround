@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_set` — convert a list into a `Set` value
+## 1. Standard library: `to_set` — convert a list into a `Set` value [claimed 2026-09-11T20:10:56Z]
 
 Add a standalone conversion builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before

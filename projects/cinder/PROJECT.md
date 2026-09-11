@@ -176,15 +176,19 @@ predicate at all, unlike every other collection/scalar type. Queued as
 the new top task rather than a breadth addition, since it's a
 correctness fix, not just a gap.
 
-Queue (`BACKLOG.md`, five tasks — see History below): fix `is_map` +
-add `is_set` (task 1, the bug above), `longest_common_suffix` (task 2,
+Task 1 (fix `is_map` + add `is_set`, the bug above) is out for review:
+PR #443 carries `VERDICT: LGTM` as of this pass, waiting on QA before
+it can merge. Queue (`BACKLOG.md`, six tasks — see History below):
+`is_map`/`is_set` (task 1, in flight), `longest_common_suffix` (task 2,
 the suffix-side mirror of `longest_common_prefix`), `diff` (task 3,
 the inverse-shaped sibling of `cumsum` — successive differences of a
 numeric list), `midrange` (task 4, a third measure of central tendency
 next to `mean`/`median` — the average of a list's minimum and
-maximum), and, at the back of the queue, `to_set` (task 5, converting
-a list into an actual `Set` runtime value — the last Set gap once
-`is_set` lands).
+maximum), `to_set` (task 5, converting a list into an actual `Set`
+runtime value — the last Set gap once `is_set` lands), and, newly
+restocked to keep the queue at its 6-task ceiling while task 1 sits in
+review, `rms` (task 6, the quadratic mean completing the
+`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means).
 
 `Set`'s literal-syntax slice and now its spread-site fix have both
 landed, each scoped down exactly as the prior passes' scouting
@@ -1008,3 +1012,23 @@ identified so far.
   above). This session commits its own docs/backlog changes before
   exiting, per the dirty-checkout pattern `HELP.md` has flagged
   repeatedly since 2026-08-27.
+- **2026-09-12 (grooming, seventh pass)** — Nothing merged since the
+  last pass: task 1 (`is_map`/`is_set`) is still out for review as PR
+  #443, carrying `VERDICT: LGTM` but no `QA: PASS` yet, so it hadn't
+  cleared the merge bar by this pass. With task 1 in flight (not
+  available for a new Engineer to claim), the backlog's five *other*
+  tasks left only four genuinely ready — below the five-task floor in
+  spirit even though the file listed five rows. Restocked `rms` (task
+  6): the quadratic mean (root mean square), the fourth classical
+  Pythagorean mean completing the `mean`/`geometric_mean`/
+  `harmonic_mean` trio already in `cinder/builtins.py`, placed directly
+  after `_harmonic_mean` and modeled on its validate-then-reduce shape
+  plus the QM-AM inequality cross-check `test_harmonic_mean_am_gm_hm_
+  inequality` already establishes for the other three means — unlike
+  `geometric_mean`/`harmonic_mean`, squaring removes the positivity
+  restriction, so `rms` accepts negative elements. Brings the queue
+  back to its usual six-task ceiling. No `STATUS: STOP` in `HELP.md`;
+  `git pull --rebase origin main` was a no-op, the root checkout was
+  clean at session start. This session commits its own docs/backlog
+  changes before exiting, per the dirty-checkout pattern `HELP.md` has
+  flagged repeatedly since 2026-08-27.

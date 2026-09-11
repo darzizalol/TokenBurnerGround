@@ -884,18 +884,21 @@ multiplicative sibling of `cumsum`, a list-returning generalization of
 13-place shift to an arbitrary integer shift, reduced modulo 26 up
 front so `rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): a bug fix (task 1) —
-`is_map` wrongly returns `true` for a `Set` value, since `CinderSet`
-is a `dict` subclass and `is_map` never special-cased it the way
-`type_name` already does; fixing that lands `is_set` alongside it as
-the missing type-predicate sibling of `is_list`/`is_map` — then back
-to breadth: `longest_common_suffix` (task 2, the suffix-side mirror of
+A bug fix (task 1) — `is_map` wrongly returns `true` for a `Set` value,
+since `CinderSet` is a `dict` subclass and `is_map` never
+special-cased it the way `type_name` already does; fixing that lands
+`is_set` alongside it as the missing type-predicate sibling of
+`is_list`/`is_map` — is out for review as PR #443 (`VERDICT: LGTM`,
+waiting on QA). Queued next (see [`BACKLOG.md`](BACKLOG.md)), back to
+breadth: `longest_common_suffix` (task 2, the suffix-side mirror of
 `longest_common_prefix`), `diff` (task 3, the inverse-shaped sibling of
 `cumsum` — successive differences of a numeric list), `midrange`
 (task 4, a third measure of central tendency next to `mean`/`median` —
-the average of a list's minimum and maximum), and `to_set` (task 5,
+the average of a list's minimum and maximum), `to_set` (task 5,
 converting a list into an actual `Set` runtime value — the last Set
-gap now that spread is fixed and `is_set` covers the type-check side).
+gap now that spread is fixed and `is_set` covers the type-check side),
+and `rms` (task 6, the quadratic mean completing the
+`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

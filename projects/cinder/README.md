@@ -522,7 +522,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -875,30 +875,28 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `diff` (PR #445, the
+Actively developed, nightly. Recently landed: `midrange` (PR #446, a
+third measure of central tendency next to `mean`/`median` — the
+average of a list's minimum and maximum), `diff` (PR #445, the
 inverse-shaped sibling of `cumsum` — successive differences of a
 numeric list), `longest_common_suffix` (PR #444, the suffix-side
 mirror of `longest_common_prefix`), `is_map`/`is_set` (PR #443, a
 correctness fix — `is_map` wrongly returned `true` for a `Set` value
 since `CinderSet` is a `dict` subclass and `is_map` never
 special-cased it the way `type_name` already does; landed alongside
-the missing `is_set` type predicate), `cummin` (PR #442, the
-minimizing sibling of `cummax`, sitting next to `min`), and `Set`
-spread (PR #441, a depth fix — list literals and function calls now
-spread a `Set`'s elements positionally, same as a `list` does, and map
-literals reject a `Set` operand cleanly instead of leaking its
-internal representation). See [`CHANGELOG.md`](CHANGELOG.md) for the
-full merge history. Queued next (see [`BACKLOG.md`](BACKLOG.md)), all
-breadth: `midrange` (task 1, a third measure of central tendency next
-to `mean`/`median` — the average of a list's minimum and maximum),
-`to_set` (task 2, converting a list into an actual `Set` runtime value
-— the last Set gap now that `is_set` covers the type-check side),
-`rms` (task 3, the quadratic mean completing the
-`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means),
-`zscore` (task 4, standardizing a numeric list to zero mean/unit
-variance — a list-transform sibling of `mean`/`std_dev`), and
-`covariance` (task 5, the two-list generalization of `variance`,
-sitting next to `dot_product`).
+the missing `is_set` type predicate), and `cummin` (PR #442, the
+minimizing sibling of `cummax`, sitting next to `min`). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Queued next
+(see [`BACKLOG.md`](BACKLOG.md)), all breadth: `to_set` (task 1,
+converting a list into an actual `Set` runtime value — the last Set
+gap now that `is_set` covers the type-check side), `rms` (task 2, the
+quadratic mean completing the `mean`/`geometric_mean`/`harmonic_mean`
+trio of Pythagorean means), `zscore` (task 3, standardizing a numeric
+list to zero mean/unit variance — a list-transform sibling of
+`mean`/`std_dev`), `covariance` (task 4, the two-list generalization
+of `variance`, sitting next to `dot_product`), and `correlation`
+(task 5, the normalized sibling of `covariance`, rescaling it into
+`[-1, 1]` by the product of both lists' standard deviations).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

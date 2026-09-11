@@ -443,6 +443,135 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
+
+Add a standalone two-list numeric-statistic builtin directly after
+`_covariance` (`cinder/builtins.py`, once task 4 lands `_covariance`
+will sit directly after `_dot_product`, immediately before `_mode` —
+add `_correlation` directly after `_covariance`, still before `_mode`)
+— the normalized sibling of `covariance`: dividing covariance by the
+product of both lists' standard deviations rescales it to always fall
+in `[-1, 1]`, independent of the lists' units. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(correlation([1, 2, 3], [4, 5, 6]));'
+# -> <eval>:1:7: undefined name 'correlation' (did you mean 'covariance'?)
+```
+
+**What it does.** Given two non-empty numeric lists of equal length,
+return `covariance(x, y) / (std_dev(x) * std_dev(y))` — the Pearson
+correlation coefficient (reusing `_covariance` from task 4 and the
+existing `_population_variance`/`math.sqrt` shape `_std_dev` already
+uses for the denominator). `std_dev` of a single-element or constant
+list is `0` (same fact `zscore`'s task writeup above relied on), which
+would divide by zero, so those two shapes raise instead of computing —
+exactly the same guard `zscore` already added for the same underlying
+reason.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `correlation([1, 2, 3], [4, 5, 6])` is `1.0` — one list is an exact
+  increasing linear function of the other, perfect positive
+  correlation.
+- `correlation([1, 2, 3], [6, 5, 4])` is `-1.0` — an exact decreasing
+  linear function, perfect negative correlation.
+- `correlation([1, 2, 3], [1, 2, 3])` is `1.0` — a list is always
+  perfectly correlated with itself.
+- `correlation([1, 2, 3, 4], [2, 4, 5, 4])` is `0.7181848464596078` —
+  a non-perfect case: covariance `0.875`, `std_dev` of the two lists
+  `1.118033988749895` and `1.0897247358851685`.
+- `correlation([1, 2, 3, 4], [10, 10, 10, 10]);` raises
+  `CinderRuntimeError` — the second list is constant, `std_dev` is
+  `0`, correlation is undefined (division by zero).
+- `correlation([5], [5]);` raises `CinderRuntimeError` — single-element
+  lists, `std_dev` is `0` on both sides.
+- `correlation([], []);` raises `CinderRuntimeError` — empty lists, no
+  elements to average (same reason `covariance` rejects them).
+- `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` —
+  unequal lengths, mirroring `covariance`'s own length check.
+
+Add directly after `_covariance` (once task 4 lands; search `def
+_covariance`, add `_correlation` immediately after it, still before
+`def _mode`):
+```python
+def _correlation(arguments: list, line: int, column: int) -> object:
+    _require_arity("correlation", arguments, 2, line, column)
+    first, second = arguments
+    if not isinstance(first, list):
+        raise CinderRuntimeError(
+            f"correlation() requires a list as its first argument, got {type_name(first)}",
+            line, column,
+        )
+    if not isinstance(second, list):
+        raise CinderRuntimeError(
+            f"correlation() requires a list as its second argument, got {type_name(second)}",
+            line, column,
+        )
+    for element in first + second:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"correlation() requires lists of numbers, got {type_name(element)}",
+                line, column,
+            )
+    if len(first) != len(second):
+        raise CinderRuntimeError(
+            f"correlation() requires lists of equal length, got lengths {len(first)} and {len(second)}",
+            line, column,
+        )
+    if not first:
+        raise CinderRuntimeError("correlation() requires non-empty lists", line, column)
+    first_deviation = math.sqrt(_population_variance(first))
+    second_deviation = math.sqrt(_population_variance(second))
+    if first_deviation == 0 or second_deviation == 0:
+        raise CinderRuntimeError(
+            "correlation() requires lists with non-zero standard deviation", line, column
+        )
+    covariance_value = _covariance(arguments, line, column)
+    return covariance_value / (first_deviation * second_deviation)
+```
+(Calls `_covariance` directly rather than re-deriving the mean-of-products
+sum, so the two builtins' arithmetic can't drift apart; reuses
+`_population_variance` — search `def _population_variance` — the same
+private helper `variance`/`std_dev`/`zscore` already share.) Register
+the new dict entry (search `"covariance": _covariance,`, add
+`"correlation": _correlation,` directly after it, before `"mode":
+_mode,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `correlation([1, 2, 3], [4, 5, 6])` is `1.0`,
+  `correlation([1, 2, 3], [6, 5, 4])` is `-1.0`, and
+  `correlation([1, 2, 3, 4], [2, 4, 5, 4])` is `0.7181848464596078`.
+- `correlation([1, 2, 3], [1, 2, 3])` is `1.0`.
+- `correlation([1, 2, 3, 4], [10, 10, 10, 10]);` and
+  `correlation([5], [5]);` both raise `CinderRuntimeError` matching
+  `"correlation\(\) requires lists with non-zero standard deviation"`.
+- `correlation([], []);` raises `CinderRuntimeError` matching
+  `"correlation\(\) requires non-empty lists"`.
+- `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` matching
+  `"correlation\(\) requires lists of equal length, got lengths 2 and
+  3"`.
+- `correlation(5, [1, 2]);` raises `CinderRuntimeError` matching
+  `"correlation\(\) requires a list as its first argument, got int"`
+  (and the mirrored message for a bad second argument).
+- `correlation([1, "a"], [1, 2]);` raises `CinderRuntimeError` matching
+  `"correlation\(\) requires lists of numbers, got string"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_covariance`, once
+task 4 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
+modeled on `class TestDotProduct`/the eventual `class TestCovariance`
+from task 4, search either name, for the test shapes above — place it
+near the existing `class TestDotProduct`). Once merged, `README.md`'s
+builtins quick-reference list (search `dot_product`, `covariance` will
+sit right after it once task 4 lands) needs `correlation` added right
+after `covariance`, its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
+to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

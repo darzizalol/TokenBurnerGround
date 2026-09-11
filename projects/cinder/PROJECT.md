@@ -149,37 +149,36 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4946 tests passing locally as of `#445`). Most
-recently landed: `#445` `diff` (the inverse-shaped sibling of
-`cumsum`, successive differences of a numeric list), `#444`
+`main` is green (4955 tests passing locally as of `#446`). Most
+recently landed: `#446` `midrange` (a third measure of central
+tendency next to `mean`/`median` — the average of a list's minimum
+and maximum), `#445` `diff` (the inverse-shaped sibling of `cumsum`,
+successive differences of a numeric list), `#444`
 `longest_common_suffix` (the suffix-side mirror of
 `longest_common_prefix`), `#443` `is_map`/`is_set` (a correctness fix
 — `is_map` wrongly returned `true` for a `Set` value since
 `CinderSet` is a `dict` subclass and `is_map` never special-cased it
 the way `type_name` already does; landed alongside the missing
 `is_set` type predicate), `#442` `cummin` (the minimizing sibling of
-`cummax`, sitting next to `min`), `#441` `Set` spread (a **depth**
-fix — list literals and function calls now spread a `Set`'s elements
-positionally, same as a `list` does; map literals reject a `Set`
-operand cleanly instead of leaking its internal `{element: True}`
-dict representation) — see `CHANGELOG.md` for the full merge history,
-newest first.
+`cummax`, sitting next to `min`) — see `CHANGELOG.md` for the full
+merge history, newest first.
 
-Queue (`BACKLOG.md`, five tasks — see History below): `midrange` (task
-1, a third measure of central tendency next to `mean`/`median` — the
-average of a list's minimum and maximum), `to_set` (task 2, converting
-a list into an actual `Set` runtime value — the last Set gap now that
-`is_set` covers the type-check side), `rms` (task 3, the quadratic
-mean completing the `mean`/`geometric_mean`/`harmonic_mean` trio of
-Pythagorean means), `zscore` (task 4, standardizing a numeric list to
-zero mean/unit variance — a list-*transform* sibling of
+Queue (`BACKLOG.md`, five tasks — see History below): `to_set` (task
+1, converting a list into an actual `Set` runtime value — the last Set
+gap now that `is_set` covers the type-check side), `rms` (task 2, the
+quadratic mean completing the `mean`/`geometric_mean`/`harmonic_mean`
+trio of Pythagorean means), `zscore` (task 3, standardizing a numeric
+list to zero mean/unit variance — a list-*transform* sibling of
 `mean`/`std_dev` rather than another single-number reduction, reusing
-the same `_population_variance` helper those two already share), and,
-newly restocked this pass to bring the queue back up from its 4-task
-low, `covariance` (task 5, the two-list generalization of `variance` —
+the same `_population_variance` helper those two already share),
+`covariance` (task 4, the two-list generalization of `variance` —
 combines `dot_product`'s equal-length two-list validation with
 `variance`'s non-empty-list requirement, sitting next to
-`dot_product`).
+`dot_product`), and, newly added this pass, `correlation` (task 5,
+the normalized sibling of `covariance` — divides it by the product of
+both lists' standard deviations to rescale into `[-1, 1]`, reusing
+`_covariance` from task 4 directly so the two builtins' arithmetic
+can't drift apart).
 
 `Set`'s literal-syntax slice, its spread-site fix, and the
 `is_map`/`is_set` type-predicate fix have all landed, each scoped down
@@ -189,8 +188,13 @@ a big-bang rewrite. `generators` remains a real gap, still too big for
 one session as a full feature and without an obvious scoped-down slice
 yet; revisit with the same narrow-slice approach. No new depth-task
 candidate surfaced this pass beyond that standing note — this
-restocking pass stayed on breadth (stdlib) work, per the "occasional
-back-to-back" allowance in the Backlog policy above.
+restocking pass stayed on breadth (stdlib) work again, per the
+"occasional back-to-back" allowance in the Backlog policy above: the
+queue is now four small-numeric-stats tasks (`rms`/`zscore`/
+`covariance`/`correlation`) plus one Set-completion task (`to_set`),
+which is more breadth stacking than usual — the next grooming pass
+should prioritize finding a scoped-down depth slice to break up the
+run, even if it means shipping fewer breadth tasks that night.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list

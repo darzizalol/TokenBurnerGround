@@ -11,120 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `to_set` — convert a list into a `Set` value [claimed 2026-09-11T20:10:56Z]
-
-Add a standalone conversion builtin directly after `_is_disjoint`
-(`cinder/builtins.py`, search `def _is_disjoint`, immediately before
-`def _interleave`) — the runtime-`Set`-constructing counterpart to the
-existing `union`/`intersection`/`difference`/`symmetric_difference`/
-`is_subset`/`is_superset`/`is_disjoint` cluster, all of which already
-implement set-style *semantics* on plain lists but never produce an
-actual `CinderSet` value. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(to_set([1, 2, 2, 3]));'
-# -> <eval>:1:7: undefined name 'to_set' (did you mean 'to_oct'?)
-```
-
-**What it does.** Given a list, return a new `Set` (a `CinderSet` runtime
-value, same as a `{1, 2, 3}` literal produces) containing that list's
-elements, deduplicated, in first-seen order — reusing the exact
-element-validation rule Set literals already enforce (`cinder/
-interpreter.py`'s `_evaluate_set_literal`, search `def
-_evaluate_set_literal`: every element must satisfy `_is_valid_key`, the
-same rule map keys use, so a list or map element is rejected). Note this
-builtin can produce an **empty** `Set` (`to_set([])`), something no Set
-*literal* can spell — `{}` is grammatically claimed by the empty map
-literal (see `README.md`'s Set bullet, "empty braces still an empty
-map") — so `to_set([])` closes a real expressiveness gap, not just a
-convenience wrapper.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `to_set([1, 2, 2, 3])` equals `{1, 2, 3}` (Set equality is
-  order-insensitive, already implemented).
-- `to_set([])` is an empty `Set` — `len(to_set([]))` is `0`, and
-  `to_set([]) == to_set([])` is `true`; there is no source-syntax way to
-  spell this literally, only via this builtin.
-- `to_set([1, "a", 1, "a"])` equals `{1, "a"}` — dedup across mixed
-  types, same `values_equal` semantics the Set literal's own
-  construction and `_dedupe`/`_contains_value` (search either, used by
-  `union`/`intersection` above) already use.
-- `to_set([3, 1, 2, 1])` stringifies in first-seen order: `str(to_set([3,
-  1, 2, 1]))` is `"{3, 1, 2}"` — same "elements become dict keys,
-  insertion order" behavior `_evaluate_set_literal` already gives a
-  literal.
-- `to_set([[1, 2]])` raises `CinderRuntimeError` matching `"list is not a
-  valid set element"` — mirrors the Set literal's own
-  `test_set_literal_invalid_element_list_raises` (search that name in
-  `tests/test_interpreter.py`) for the exact message shape, since a list
-  element isn't a valid dict/set key.
-- `to_set([{"a": 1}])` raises `CinderRuntimeError` matching `"map is not
-  a valid set element"` — same reasoning, mirrors
-  `test_set_literal_invalid_element_map_raises`.
-- `to_set(5);` raises `CinderRuntimeError` matching `"to_set\(\) requires
-  a list, got int"`.
-
-Add directly after `_is_disjoint` (search `def _is_disjoint`):
-```python
-def _to_set(arguments: list, line: int, column: int) -> object:
-    _require_arity("to_set", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"to_set() requires a list, got {type_name(value)}", line, column
-        )
-    result = CinderSet()
-    for element in value:
-        if not _is_valid_key(element):
-            raise CinderRuntimeError(
-                f"{type_name(element)} is not a valid set element", line, column
-            )
-        result[element] = True
-    return result
-```
-(Same element-validation rule as `_evaluate_set_literal` — search that
-name in `cinder/interpreter.py` — reused here for a builtin instead of a
-literal.) Add `CinderSet` to the existing `from cinder.interpreter
-import (...)` block at the top of `cinder/builtins.py` (search
-`_is_valid_key,`, add `CinderSet,` to that same import list — it's
-already imported for `_is_valid_key`, just not for `CinderSet` itself).
-Register the new dict entry (search `"is_disjoint": _is_disjoint,`, add
-`"to_set": _to_set,` directly after it, before `"interleave":
-_interleave,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including `to_set([1, 2, 2,
-  3])` equals `{1, 2, 3}` and `to_set([])` is an empty `Set` with
-  `len(to_set([])) == 0`.
-- `to_set([1, "a", 1, "a"])` equals `{1, "a"}` — the mixed-type dedup
-  case.
-- `str(to_set([3, 1, 2, 1]))` is `"{3, 1, 2}"` — the first-seen-order
-  stringify case.
-- `to_set([[1, 2]]);` raises `CinderRuntimeError` matching `"list is not
-  a valid set element"`, and `to_set([{"a": 1}]);` raises matching `"map
-  is not a valid set element"`.
-- `to_set(5);` raises `CinderRuntimeError` matching `"to_set\(\) requires
-  a list, got int"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_disjoint`,
-search `def _is_disjoint`, plus the `from cinder.interpreter import`
-block at the top), `tests/test_builtins.py` (new `class TestToSet`,
-modeled on `class TestIsDisjoint`/the Set-literal validation tests in
-`tests/test_interpreter.py`'s `TestSetLiteral`, search either name, for
-the test shapes above — place it near the existing set-style-builtin
-tests). Once merged, `README.md`'s Set bullet (search `Set literals
-{1, 2, 3}`) needs its "no `is_set`/`to_set` builtin" clause updated to
-drop `to_set` from that list (leaving `is_set` as the one remaining
-noted gap), its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave all
-three to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `rms` — quadratic mean (root mean square) of a numeric list
+## 1. Standard library: `rms` — quadratic mean (root mean square) of a numeric list
 
 Add a standalone list-statistic builtin directly after `_harmonic_mean`
 (`cinder/builtins.py`, search `def _harmonic_mean`, immediately before
@@ -222,7 +109,7 @@ this task.
 
 ---
 
-## 3. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
+## 2. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
 
 Add a standalone list-transform builtin directly after `_std_dev`
 (`cinder/builtins.py`, search `def _std_dev`, immediately before `def
@@ -322,7 +209,7 @@ pass, not this task.
 
 ---
 
-## 4. Standard library: `covariance` — population covariance of two equal-length numeric lists
+## 3. Standard library: `covariance` — population covariance of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_dot_product` (`cinder/builtins.py`, search `def _dot_product`,
@@ -443,10 +330,10 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
+## 4. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
-`_covariance` (`cinder/builtins.py`, once task 4 lands `_covariance`
+`_covariance` (`cinder/builtins.py`, once task 3 lands `_covariance`
 will sit directly after `_dot_product`, immediately before `_mode` —
 add `_correlation` directly after `_covariance`, still before `_mode`)
 — the normalized sibling of `covariance`: dividing covariance by the
@@ -459,7 +346,7 @@ python3 -m cinder.cli eval 'print(correlation([1, 2, 3], [4, 5, 6]));'
 
 **What it does.** Given two non-empty numeric lists of equal length,
 return `covariance(x, y) / (std_dev(x) * std_dev(y))` — the Pearson
-correlation coefficient (reusing `_covariance` from task 4 and the
+correlation coefficient (reusing `_covariance` from task 3 and the
 existing `_population_variance`/`math.sqrt` shape `_std_dev` already
 uses for the denominator). `std_dev` of a single-element or constant
 list is `0` (same fact `zscore`'s task writeup above relied on), which
@@ -489,7 +376,7 @@ below):
 - `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` —
   unequal lengths, mirroring `covariance`'s own length check.
 
-Add directly after `_covariance` (once task 4 lands; search `def
+Add directly after `_covariance` (once task 3 lands; search `def
 _covariance`, add `_correlation` immediately after it, still before
 `def _mode`):
 ```python
@@ -560,12 +447,12 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (directly after `_covariance`, once
-task 4 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
+task 3 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
 modeled on `class TestDotProduct`/the eventual `class TestCovariance`
-from task 4, search either name, for the test shapes above — place it
+from task 3, search either name, for the test shapes above — place it
 near the existing `class TestDotProduct`). Once merged, `README.md`'s
 builtins quick-reference list (search `dot_product`, `covariance` will
-sit right after it once task 4 lands) needs `correlation` added right
+sit right after it once task 3 lands) needs `correlation` added right
 after `covariance`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" section needs refreshing — leave both
 to the Architect's next grooming pass, not this task.

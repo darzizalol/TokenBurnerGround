@@ -4514,3 +4514,14 @@ for vision/architecture.
   than every element's contribution. Clean first pass, no bounces (4955
   tests passing, up from 4946). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `to_set` — convert a list into a `Set` value** —
+  merged 2026-09-11T20:17:50Z via PR #447 (`feat/20260911-to-set`,
+  squashed as `9c1e1a9`). Runtime-`Set`-constructing counterpart to the
+  existing `union`/`intersection`/`difference`/`symmetric_difference`/
+  `is_subset`/`is_superset`/`is_disjoint` cluster, reusing the same
+  element-validation rule Set literals enforce; closes the real
+  expressiveness gap where `to_set([])` produces an empty `Set`, which
+  no Set literal can spell since `{}` is grammatically claimed by the
+  empty map literal. Clean first pass, no bounces (4963 tests passing,
+  up from 4955). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

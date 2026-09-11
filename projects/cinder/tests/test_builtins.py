@@ -9092,6 +9092,49 @@ class TestCummax(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestCummin(unittest.TestCase):
+    def test_cummin_of_ints(self):
+        result = run("let result = cummin([5, 3, 4, 1, 2]);").get("result")
+        self.assertEqual(result, [5, 3, 3, 1, 1])
+
+    def test_cummin_of_empty_list(self):
+        result = run("let result = cummin([]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_cummin_of_single_element(self):
+        result = run("let result = cummin([5]);").get("result")
+        self.assertEqual(result, [5])
+
+    def test_cummin_of_descending_list(self):
+        result = run("let result = cummin([-1, -2, -3]);").get("result")
+        self.assertEqual(result, [-1, -2, -3])
+
+    def test_cummin_with_a_float_promotes(self):
+        result = run("let result = cummin([3, 2.5, 4]);").get("result")
+        self.assertEqual(result, [3, 2.5, 2.5])
+
+    def test_cummin_of_constant_list(self):
+        result = run("let result = cummin([3, 3, 3]);").get("result")
+        self.assertEqual(result, [3, 3, 3])
+
+    def test_cummin_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cummin\(\) requires a list, got int"
+        ):
+            run("cummin(123);")
+
+    def test_cummin_of_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cummin\(\) requires a list of numbers, got string"
+        ):
+            run('cummin([1, "a"]);')
+
+    def test_cummin_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("cummin([1, 2], 3);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestClamp(unittest.TestCase):
     def test_clamp_already_in_range(self):
         self.assertEqual(run("let result = clamp(5, 0, 10);").get("result"), 5)

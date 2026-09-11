@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `diff` — successive differences of a numeric list
+## 1. Standard library: `diff` — successive differences of a numeric list [claimed 2026-09-11T19:44:59Z]
 
 Add a standalone list-transform builtin directly after `_cumsum`
 (`cinder/builtins.py`, search `def _cumsum`, immediately before `def

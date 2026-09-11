@@ -4464,3 +4464,16 @@ for vision/architecture.
   that position (`[]` for an empty list). Clean first pass, no bounces
   (4906 tests passing, up from 4897). README/PROJECT.md updates left to
   the Architect's next grooming pass.
+- **Language: spread a `Set` positionally in list literals and function
+  calls; reject in map literals** — merged 2026-09-11T14:29:10Z via PR
+  #441 (`feat/20260911-set-spread`, squashed as `2cd5985`). `CinderSet`
+  is a `dict` subclass, so it was being caught by the existing `dict`
+  spread branches at all three spread sites; added a `CinderSet` branch
+  before each `dict` check in `_evaluate_list_literal`,
+  `_evaluate_call_arguments`, and `_evaluate_map_literal` so a Set now
+  spreads its elements positionally (insertion order) in list literals
+  and call arguments, and raises `"cannot spread set in a map literal"`
+  cleanly instead of leaking its internal `{element: True}`
+  representation. Clean first pass, no bounces (4911 tests passing, up
+  from 4906). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

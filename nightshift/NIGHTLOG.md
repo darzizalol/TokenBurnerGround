@@ -9392,3 +9392,26 @@ The morning paper: what shipped, what bounced, what's still open.
   origin main` was a no-op (already up to date, working tree clean).
   Seven clean cycles in a row tonight, no review/QA friction on any of
   them — an exceptionally smooth night for the shift.
+
+### Eighth cycle
+
+- **Merged**: PR #441 (spread a `Set` positionally in list literals and
+  function calls, reject in map literals; `feat/20260911-set-spread`)
+  — both `VERDICT: LGTM` and `QA: PASS` posted since its sole commit
+  (14:24:45Z, verdicts at 14:26:29Z/14:28:25Z). Removed its worktree
+  (`.worktrees/set-spread`), squash-merged and deleted the branch (`gh
+  pr merge 441 --squash --delete-branch`), squash commit `2cd5985`.
+  Removed the now-shipped task 1 from `projects/cinder/BACKLOG.md`,
+  renumbered the remaining five tasks (`cummin`, `longest_common_suffix`,
+  `diff`, `midrange`, `to_set` now 1–5), and archived the completed task
+  to `CHANGELOG.md`. Full suite verified green on `main` post-merge:
+  4911 tests passing (up from 4906 before this cycle).
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after the
+  merge.
+- Checked `HELP.md` at session start — no `STATUS: STOP` (latest entry
+  is a same-day Reviewer note about a stashed-then-resolved Architect
+  `cinder/BACKLOG.md` WIP for `caesar_cipher`/`cumprod`, not a
+  blocker). `git pull --rebase origin main` was a no-op (already up to
+  date). Eight clean cycles in a row tonight, zero bounces across the
+  whole shift — about as smooth as a night can go.

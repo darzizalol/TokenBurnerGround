@@ -11,163 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Language: spread a `Set` positionally in list literals and function calls; reject it cleanly in map literals [claimed 2026-09-11T14:23:15Z]
-
-`CinderSet` (`cinder/interpreter.py`, search `class CinderSet(dict)`) is
-implemented as a `dict` subclass with elements as keys, which gives it
-insertion-order `for`-in iteration, comprehension iteration, and `in`
-membership for free — those three already work correctly today despite
-`README.md` still (incorrectly) claiming they don't; this task does not
-touch them. But that same `dict`-subclass trick makes the three spread
-sites (`cinder/interpreter.py`) actively **wrong** for a `Set` operand,
-in three different ways. Verify all three gaps:
-```sh
-python3 -m cinder.cli eval 'print([...{1, 2, 3}]);'
-# -> <eval>:1:8: cannot spread set in a list literal
-# (wrong: a Set is a natural source for a list literal, same as ...[1,2,3])
-
-python3 -m cinder.cli eval 'fn f(a,b,c) { print(a+b+c); } f(...{1, 2, 3});'
-# -> <eval>:1:33: cannot spread map with non-string key 1 as keyword arguments
-# (wrong AND confusing: this treats the Set as a map-spread purely because
-# `isinstance(value, dict)` matches it first, producing an error about
-# "keyword arguments" for code that never mentioned any)
-
-python3 -m cinder.cli eval 'print({...{1, 2, 3}});'
-# -> {1: true, 2: true, 3: true}
-# (wrong: silently "succeeds" by leaking the Set's internal dict
-# representation — {element: True} for every element — into a map,
-# instead of raising; nothing about a Set has key:value pairs to spread)
-```
-
-**What each fix does.**
-- List literals (`[...expr]`): a `Set` operand should spread its elements
-  positionally, in insertion order, exactly like spreading a `list` does.
-  `[...{1, 2, 3}]` should be `[1, 2, 3]`; `[0, ...{1, 2}, 3]` should be
-  `[0, 1, 2, 3]`.
-- Function calls (`f(...expr)`): a `Set` operand should spread its
-  elements as positional arguments, exactly like spreading a `list` does
-  — not as a keyword-argument map-spread. `f(...{1, 2, 3})` (with `f`
-  defined to take three positional parameters) should return the same
-  result as `f(...[1, 2, 3])`.
-- Map literals (`{...expr}`): a `Set` operand has no key:value pairs to
-  contribute and must raise a clean `CinderRuntimeError`, exactly like
-  spreading a `list` or a number already does, not silently succeed by
-  leaking `CinderSet`'s internal `{element: True}` dict representation.
-
-Worked examples (confirmed via direct trace of the fixes below):
-- `[...{1, 2, 3}]` is `[1, 2, 3]` — insertion order preserved.
-- `[0, ...{1, 2}, 3, ...{4, 5}]` is `[0, 1, 2, 3, 4, 5]` — composes with
-  other elements and multiple spreads, mirroring the existing
-  `test_list_literal_multiple_spreads` list-spread test.
-- Given `fn f(a, b, c) { return a + b + c; }`, `f(...{1, 2, 3})` is `6`
-  — Set elements become positional arguments, in insertion order.
-- `{...{1, 2, 3}};` raises `CinderRuntimeError` matching `"cannot spread
-  set in a map literal"`.
-- `[...{1, 2}]` composed with a plain list spread still works
-  unaffected: `[...{1, 2}, ...[3, 4]]` is `[1, 2, 3, 4]`.
-- Plain `list`/`map`/other-type spread behavior at all three sites is
-  completely unchanged — this task only adds a new, previously-missing
-  branch for `CinderSet`, it doesn't touch the existing `list`/`dict`
-  branches' logic.
-
-Fix all three sites in `cinder/interpreter.py`:
-
-1. `_evaluate_list_literal` (search `def _evaluate_list_literal`) — add a
-   `CinderSet` branch before the existing `list` check (order doesn't
-   matter here since `list` and `CinderSet` are disjoint types, but
-   matching the call-argument fix's ordering keeps the two consistent):
-   ```python
-   if isinstance(element, Spread):
-       value = self.evaluate(element.expression, env)
-       if isinstance(value, CinderSet):
-           result.extend(value.keys())
-       elif isinstance(value, list):
-           result.extend(value)
-       else:
-           raise CinderRuntimeError(
-               f"cannot spread {type_name(value)} in a list literal",
-               element.line,
-               element.column,
-           )
-   ```
-
-2. `_evaluate_call_arguments` (search `def _evaluate_call_arguments`) —
-   add a `CinderSet` branch **before** the existing `isinstance(value,
-   dict)` branch; ordering matters here since `CinderSet` is a `dict`
-   subclass, so the existing `dict` check would otherwise keep
-   intercepting it first:
-   ```python
-   elif isinstance(arg, Spread):
-       value = self.evaluate(arg.expression, env)
-       if isinstance(value, CinderSet):
-           positional.extend(value.keys())
-       elif isinstance(value, dict):
-           for key, entry_value in value.items():
-               ...  # unchanged
-       elif isinstance(value, list):
-           positional.extend(value)
-       else:
-           raise CinderRuntimeError(
-               f"cannot spread {type_name(value)} in a function call",
-               arg.line,
-               arg.column,
-           )
-   ```
-
-3. `_evaluate_map_literal` (search `def _evaluate_map_literal`) — add a
-   `CinderSet` check **before** the existing `isinstance(value, dict)`
-   check, for the same subclass-ordering reason as above:
-   ```python
-   if isinstance(entry, Spread):
-       value = self.evaluate(entry.expression, env)
-       if isinstance(value, CinderSet):
-           raise CinderRuntimeError(
-               "cannot spread set in a map literal",
-               entry.line,
-               entry.column,
-           )
-       if not isinstance(value, dict):
-           raise CinderRuntimeError(
-               f"cannot spread {type_name(value)} in a map literal",
-               entry.line,
-               entry.column,
-           )
-       ...  # unchanged
-   ```
-
-Acceptance criteria:
-- Every worked example above holds exactly, including `[...{1, 2, 3}]`
-  is `[1, 2, 3]` and `f(...{1, 2, 3})` is `6` for a three-positional-arg
-  `f`.
-- `{...{1, 2, 3}};` raises `CinderRuntimeError` matching `"cannot spread
-  set in a map literal"`.
-- Spreading a plain `list` or `map` (non-`Set`) at all three sites still
-  behaves exactly as before — every existing spread test in
-  `tests/test_interpreter.py` (`TestListsAndMaps`,
-  `TestSpreadCallArguments`, `TestMapSpreadCallArguments`) still passes
-  unmodified.
-- Wrong-type spreads (e.g. `[...5]`, `{...5}`, `f(...5)`) still raise
-  their existing `"cannot spread <type> in a ..."` messages unchanged.
-- Full test suite passes.
-
-Likely files: `cinder/interpreter.py` (the three sites named above:
-`_evaluate_list_literal`, `_evaluate_call_arguments`,
-`_evaluate_map_literal`), `tests/test_interpreter.py` (new test methods
-in the existing `TestListsAndMaps` class for the list-literal and
-map-literal cases, and in `TestSpreadCallArguments` for the call-argument
-case — search those class names — modeled on the existing
-`test_list_literal_with_spread`/`test_map_literal_spreading_non_map_raises`
-tests). Once merged, `README.md`'s Set bullet (search `Set literals
-{1, 2, 3}`) needs its stale "no spread" clause replaced with a note that
-list-literal and call-argument spread now work (and map-literal spread
-raises cleanly), `PROJECT.md`'s "Current frontier" section needs
-refreshing, and `BACKLOG.md`'s own "Backlog policy" alternation is
-satisfied by this landing as the depth task — leave all three to the
-Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `cummin` — cumulative (running) minimum of a numeric list
+## 1. Standard library: `cummin` — cumulative (running) minimum of a numeric list
 
 Add a standalone list-transform builtin directly after `_cummax`
 (`cinder/builtins.py`, search `def _cummax`, immediately before `def
@@ -251,7 +95,7 @@ task.
 
 ---
 
-## 3. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+## 2. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
 
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def
@@ -356,7 +200,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `diff` — successive differences of a numeric list
+## 3. Standard library: `diff` — successive differences of a numeric list
 
 Add a standalone list-transform builtin directly after `_cumsum`
 (`cinder/builtins.py`, search `def _cumsum`, immediately before `def
@@ -446,7 +290,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `midrange` — average of a numeric list's minimum and maximum
+## 4. Standard library: `midrange` — average of a numeric list's minimum and maximum
 
 Add a standalone list-statistic builtin directly after `_median`
 (`cinder/builtins.py`, search `def _median`, immediately before `def
@@ -535,7 +379,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `to_set` — convert a list into a `Set` value
+## 5. Standard library: `to_set` — convert a list into a `Set` value
 
 Add a standalone conversion builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before

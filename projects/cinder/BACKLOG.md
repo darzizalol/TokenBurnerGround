@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `rms` — quadratic mean (root mean square) of a numeric list
+## 1. Standard library: `rms` — quadratic mean (root mean square) of a numeric list [claimed 2026-09-11T20:27:26Z]
 
 Add a standalone list-statistic builtin directly after `_harmonic_mean`
 (`cinder/builtins.py`, search `def _harmonic_mean`, immediately before

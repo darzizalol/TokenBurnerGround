@@ -13366,11 +13366,34 @@ class TestIsMap(unittest.TestCase):
     def test_is_map_false_for_list(self):
         self.assertIs(run("let result = is_map([1]);").get("result"), False)
 
+    def test_is_map_false_for_set(self):
+        self.assertIs(run("let result = is_map({1, 2, 3});").get("result"), False)
+
     def test_is_map_wrong_arity_raises(self):
         with self.assertRaises(CinderRuntimeError):
             run("is_map();")
         with self.assertRaises(CinderRuntimeError):
             run('is_map({"a": 1}, {"b": 2});')
+
+
+class TestIsSet(unittest.TestCase):
+    def test_is_set_true_for_set(self):
+        self.assertIs(run("let result = is_set({1, 2, 3});").get("result"), True)
+
+    def test_is_set_false_for_map(self):
+        self.assertIs(run('let result = is_set({"a": 1});').get("result"), False)
+
+    def test_is_set_false_for_list(self):
+        self.assertIs(run("let result = is_set([1, 2, 3]);").get("result"), False)
+
+    def test_is_set_false_for_number(self):
+        self.assertIs(run("let result = is_set(5);").get("result"), False)
+
+    def test_is_set_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("is_set();")
+        with self.assertRaises(CinderRuntimeError):
+            run("is_set({1, 2}, {3, 4});")
 
 
 class TestIsString(unittest.TestCase):

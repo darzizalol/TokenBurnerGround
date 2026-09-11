@@ -9859,6 +9859,49 @@ class TestProduct(unittest.TestCase):
         self.assertIn("string", str(ctx.exception))
 
 
+class TestCumprod(unittest.TestCase):
+    def test_cumprod_of_ints(self):
+        result = run("let result = cumprod([1, 2, 3]);").get("result")
+        self.assertEqual(result, [1, 2, 6])
+
+    def test_cumprod_of_empty_list(self):
+        result = run("let result = cumprod([]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_cumprod_of_single_element(self):
+        result = run("let result = cumprod([5]);").get("result")
+        self.assertEqual(result, [5])
+
+    def test_cumprod_with_negative_elements(self):
+        result = run("let result = cumprod([1, -2, 3, -4]);").get("result")
+        self.assertEqual(result, [1, -2, -6, 24])
+
+    def test_cumprod_with_a_float_promotes(self):
+        result = run("let result = cumprod([1.5, 2, 2]);").get("result")
+        self.assertEqual(result, [1.5, 3.0, 6.0])
+
+    def test_cumprod_with_a_zero_element_zeroes_the_rest(self):
+        result = run("let result = cumprod([2, 0, 3]);").get("result")
+        self.assertEqual(result, [2, 0, 0])
+
+    def test_cumprod_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cumprod\(\) requires a list, got int"
+        ):
+            run("cumprod(123);")
+
+    def test_cumprod_of_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cumprod\(\) requires a list of numbers, got string"
+        ):
+            run('cumprod([1, "a"]);')
+
+    def test_cumprod_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("cumprod([1, 2], 3);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestMean(unittest.TestCase):
     def test_mean_of_ints_is_float(self):
         result = run("let result = mean([1, 2, 3]);").get("result")

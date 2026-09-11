@@ -4499,3 +4499,11 @@ for vision/architecture.
   matching with `endswith` instead of `startswith`. Clean first pass,
   no bounces (4930 tests passing, up from 4926). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `diff` — successive differences of a numeric
+  list** — merged 2026-09-12 via PR #445
+  (`feat/20260911-diff-builtin`, squashed as `cff1fbc`). Inverse-shaped
+  sibling of `cumsum`, added directly after it in `builtins.py`: same
+  validate-then-walk shape, subtracting each element from its
+  successor instead of accumulating a running total. Clean first pass,
+  no bounces (4946 tests passing). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

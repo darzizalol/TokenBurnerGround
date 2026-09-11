@@ -4090,6 +4090,23 @@ def _median(arguments: list, line: int, column: int) -> object:
     return (ordered[middle - 1] + ordered[middle]) / 2
 
 
+def _midrange(arguments: list, line: int, column: int) -> object:
+    _require_arity("midrange", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"midrange() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("midrange() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"midrange() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    return (min(value) + max(value)) / 2
+
+
 def _population_variance(value: list) -> object:
     total = 0
     for element in value:
@@ -5943,6 +5960,7 @@ _BUILTINS = {
     "geometric_mean": _geometric_mean,
     "harmonic_mean": _harmonic_mean,
     "median": _median,
+    "midrange": _midrange,
     "variance": _variance,
     "std_dev": _std_dev,
     "dot_product": _dot_product,

@@ -10177,6 +10177,52 @@ class TestMedian(unittest.TestCase):
             run("median();")
 
 
+class TestMidrange(unittest.TestCase):
+    def test_midrange_of_list(self):
+        result = run("let result = midrange([1, 2, 10]);").get("result")
+        self.assertEqual(result, 5.5)
+
+    def test_midrange_of_single_element_list(self):
+        result = run("let result = midrange([5]);").get("result")
+        self.assertEqual(result, 5.0)
+        self.assertIsInstance(result, float)
+
+    def test_midrange_of_constant_list(self):
+        result = run("let result = midrange([4, 4, 4]);").get("result")
+        self.assertEqual(result, 4.0)
+
+    def test_midrange_with_negative_elements(self):
+        result = run("let result = midrange([-3, 7]);").get("result")
+        self.assertEqual(result, 2.0)
+
+    def test_midrange_with_mixed_int_and_float(self):
+        result = run("let result = midrange([1.5, 2, 8.5]);").get("result")
+        self.assertEqual(result, 5.0)
+
+    def test_midrange_of_empty_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"midrange\(\) requires a non-empty list"
+        ):
+            run("midrange([]);")
+
+    def test_midrange_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"midrange\(\) requires a list, got int"
+        ):
+            run("midrange(123);")
+
+    def test_midrange_of_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"midrange\(\) requires a list of numbers, got string"
+        ):
+            run('midrange([1, "a"]);')
+
+    def test_midrange_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("midrange();")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestVariance(unittest.TestCase):
     def test_variance_of_textbook_example(self):
         result = run("let result = variance([2, 4, 4, 4, 5, 5, 7, 9]);").get("result")

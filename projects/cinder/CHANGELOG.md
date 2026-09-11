@@ -4507,3 +4507,10 @@ for vision/architecture.
   successor instead of accumulating a running total. Clean first pass,
   no bounces (4946 tests passing). README/PROJECT.md updates left to
   the Architect's next grooming pass.
+- **Standard library: `midrange`** — merged 2026-09-11T20:03:27Z via PR
+  #446 (`feat/20260911-midrange`, squashed as `9ac6da6`). Third measure
+  of central tendency sitting next to `mean`/`median`: the average of a
+  list's minimum and maximum, needing only the list's extremes rather
+  than every element's contribution. Clean first pass, no bounces (4955
+  tests passing, up from 4946). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

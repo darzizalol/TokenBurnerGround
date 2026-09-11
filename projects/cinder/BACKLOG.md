@@ -11,96 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `midrange` — average of a numeric list's minimum and maximum [claimed 2026-09-11T19:58:35Z]
-
-Add a standalone list-statistic builtin directly after `_median`
-(`cinder/builtins.py`, search `def _median`, immediately before `def
-_population_variance`) — a third measure of central tendency sitting
-next to `mean`/`median`, simpler than either: the average of a list's
-smallest and largest values. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(midrange([1, 2, 10]));'
-# -> <eval>:1:7: undefined name 'midrange'
-```
-
-**What it does.** Given a non-empty list of numbers, return
-`(min(list) + max(list)) / 2` — the point halfway between the list's
-smallest and largest elements. Unlike `mean`/`median`, a single pass
-over the list only needs its extremes, not every element's
-contribution. An empty list has no minimum or maximum, so it raises,
-same as `mean`/`median` do for the same reason.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `midrange([1, 2, 10])` is `5.5` — halfway between `1` and `10`.
-- `midrange([5])` is `5.0` — a single-element list's min and max are
-  both itself, so the midrange is that element (as a float, dividing by
-  2).
-- `midrange([4, 4, 4])` is `4.0` — a constant list's min and max are
-  equal, so the midrange is that constant.
-- `midrange([-3, 7])` is `2.0` — negative elements participate in
-  min/max normally.
-- `midrange([1.5, 2, 8.5])` is `5.0` (mixed int/float elements,
-  ordinary numeric comparison and division — same as `mean`/`median`).
-- `midrange([]);` raises `CinderRuntimeError` — no elements, no
-  minimum or maximum to average.
-
-Add directly after `_median` (search `def _median`, immediately before
-`def _population_variance`) — keeps the new midpoint statistic next to
-the central-tendency builtins it sits alongside:
-```python
-def _midrange(arguments: list, line: int, column: int) -> object:
-    _require_arity("midrange", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"midrange() requires a list, got {type_name(value)}", line, column
-        )
-    if not value:
-        raise CinderRuntimeError("midrange() requires a non-empty list", line, column)
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"midrange() requires a list of numbers, got {type_name(element)}", line, column
-            )
-    return (min(value) + max(value)) / 2
-```
-(Same validate-then-reduce shape as `_mean`/`_median` — search either —
-just averaging the extremes instead of summing every element or
-sorting.) Register the new dict entry (search `"median": _median,`,
-add `"midrange": _midrange,` directly after it, before `"variance":
-_variance,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `midrange([1, 2, 10])` is `5.5` and `midrange([1.5, 2, 8.5])` is
-  `5.0`.
-- `midrange([5]);` is `5.0` and `midrange([4, 4, 4]);` is `4.0` — the
-  single-element and constant-list cases.
-- `midrange([-3, 7]);` is `2.0` — the negative-element case.
-- `midrange([]);` raises `CinderRuntimeError` matching
-  `"midrange\(\) requires a non-empty list"` (mirror `mean`'s/
-  `median`'s own empty-list test for the exact message shape).
-- `midrange(123);` raises `CinderRuntimeError` matching
-  `"midrange\(\) requires a list, got int"`.
-- `midrange([1, "a"]);` raises `CinderRuntimeError` matching
-  `"midrange\(\) requires a list of numbers, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_median`, search
-`def _median`), `tests/test_builtins.py` (new `class TestMidrange`,
-modeled on `class TestMean`/`class TestMedian`, search either name, for
-the test shapes above — place it near the existing `class TestMedian`).
-Once merged, `README.md`'s existing `median` bullet needs `midrange`
-added right after it, its "Status & roadmap" section needs updating,
-and `PROJECT.md`'s "Current frontier" section needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `to_set` — convert a list into a `Set` value
+## 1. Standard library: `to_set` — convert a list into a `Set` value
 
 Add a standalone conversion builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before
@@ -213,7 +124,7 @@ three to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `rms` — quadratic mean (root mean square) of a numeric list
+## 2. Standard library: `rms` — quadratic mean (root mean square) of a numeric list
 
 Add a standalone list-statistic builtin directly after `_harmonic_mean`
 (`cinder/builtins.py`, search `def _harmonic_mean`, immediately before
@@ -311,7 +222,7 @@ this task.
 
 ---
 
-## 4. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
+## 3. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
 
 Add a standalone list-transform builtin directly after `_std_dev`
 (`cinder/builtins.py`, search `def _std_dev`, immediately before `def
@@ -411,7 +322,7 @@ pass, not this task.
 
 ---
 
-## 5. Standard library: `covariance` — population covariance of two equal-length numeric lists
+## 4. Standard library: `covariance` — population covariance of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_dot_product` (`cinder/builtins.py`, search `def _dot_product`,

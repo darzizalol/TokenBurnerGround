@@ -95,7 +95,7 @@ grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+## 2. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end [claimed 2026-09-11T19:30:47Z]
 
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def

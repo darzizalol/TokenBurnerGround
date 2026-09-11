@@ -7,7 +7,7 @@
 `ceil`, `pow`, `sqrt`, `sin`, `cos`, `tan`, `log`, `gcd`, `lcm`, `sum`, `mean`, `median`,
 `any`, `all`, `contains`, `copy`, `unique`, `reverse`, `sort`, `sort_by`, `range`, `map`,
 `filter`, `reduce`, `slice`, `concat`, `flatten`, `zip`, `assert`, `format`, `pick_by`, `omit_by`, `is_list`, `is_map`,
-`is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
+`is_set`, `is_string`, `is_number`, `is_bool`, `is_nil`, and `is_function` already
 defined. CLI entrypoints and the REPL should build their global scope with
 this instead of a bare `Environment()` so `.cin` scripts can actually produce
 output.
@@ -22,6 +22,7 @@ from cinder.errors import CinderRuntimeError
 from cinder.interpreter import (
     Builtin,
     CinderFunction,
+    CinderSet,
     Environment,
     _is_valid_key,
     _normalize_slice_bound,
@@ -5632,7 +5633,13 @@ def _is_list(arguments: list, line: int, column: int) -> object:
 
 def _is_map(arguments: list, line: int, column: int) -> object:
     _require_arity("is_map", arguments, 1, line, column)
-    return isinstance(arguments[0], dict)
+    value = arguments[0]
+    return isinstance(value, dict) and not isinstance(value, CinderSet)
+
+
+def _is_set(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_set", arguments, 1, line, column)
+    return isinstance(arguments[0], CinderSet)
 
 
 def _is_string(arguments: list, line: int, column: int) -> object:
@@ -5980,6 +5987,7 @@ _BUILTINS = {
     "format": _format,
     "is_list": _is_list,
     "is_map": _is_map,
+    "is_set": _is_set,
     "is_string": _is_string,
     "is_palindrome": _is_palindrome,
     "is_anagram": _is_anagram,

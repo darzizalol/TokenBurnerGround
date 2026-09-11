@@ -190,10 +190,10 @@ pass, not this task.
 ## 3. Standard library: `cummin` — cumulative (running) minimum of a numeric list
 
 Add a standalone list-transform builtin directly after `cummax` once
-task 3 lands (`cinder/builtins.py`, search `def _cummax`, immediately
-before `def _clamp`) — if task 3 hasn't landed yet, anchor on `_min`
+task 2 lands (`cinder/builtins.py`, search `def _cummax`, immediately
+before `def _clamp`) — if task 2 hasn't landed yet, anchor on `_min`
 instead (search `def _min`, immediately before `def _max`) and place it
-there; either way it is the minimizing sibling of task 3's `cummax`,
+there; either way it is the minimizing sibling of task 2's `cummax`,
 the same running-aggregate shape applied to `min` instead of `max`.
 Verify the gap:
 ```sh
@@ -219,7 +219,7 @@ below):
   ordinary numeric comparison — same as `min`/`max`).
 - `cummin([3, 3, 3])` is `[3, 3, 3]`.
 
-Add directly after `_cummax` if task 3 has landed (search `def
+Add directly after `_cummax` if task 2 has landed (search `def
 _cummax`), otherwise directly after `_min` (search `def _min`,
 immediately before `def _max`):
 ```python
@@ -283,10 +283,9 @@ task.
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def
 _longest_common_prefix`, immediately before `def _is_pangram`) — the
-suffix-side mirror of `longest_common_prefix` (task-1 pattern of
-generalizing a fixed-parameter builtin into a directional sibling,
-same move `to_roman`/`from_roman` and `rot13`/`caesar_cipher` already
-made). Verify the gap:
+suffix-side mirror of `longest_common_prefix` (the same
+directional-generalization move `to_roman`/`from_roman` and
+`rot13`/`caesar_cipher` already made). Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(longest_common_suffix(["flower", "power", "shower"]));'
 # -> <eval>:1:7: undefined name 'longest_common_suffix'

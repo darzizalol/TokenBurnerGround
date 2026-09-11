@@ -149,36 +149,42 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4888 tests passing locally as of `#438`). Most recently
-landed: `#438` `caesar_cipher` (generalizing `rot13`'s fixed 13-place
-shift to an arbitrary integer shift, reduced modulo 26 up front so
-`rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`), `#437`
-`cumsum` (the cumulative running sum of a numeric list,
-a list-returning generalization sitting directly next to `sum`),
-`#436` `dot_product` (a two-list-argument numeric statistic
-next to `mean`/`median`/`variance`/`std_dev`, mirroring
-`hamming_distance`'s equal-length validation shape, returning the sum
-of pairwise products of two equal-length numeric lists), `#435`
-`binary_gap` (the longest run of zeros bounded by two ones in an
-integer's binary representation, the classic Codility "BinaryGap"
-kata, a standalone conversion builtin next to `to_bin`), `#434`
-`longest_common_prefix` (a standalone list-of-strings builtin next to
-`hamming_distance`/`levenshtein_distance`, returning the longest
-shared prefix of every string in a list) — see `CHANGELOG.md` for the
-full merge history, newest first.
-Queue (`BACKLOG.md`, six tasks — see History below): `cumprod` (task
-1, the multiplicative sibling of `cumsum`, a list-returning
-generalization sitting directly next to `product`) — then `cummax`
-(task 2, the running-maximum sibling of `cumsum`/`cumprod`, sitting
-next to `max`) — then `cummin` (task 3, the minimizing sibling of
-`cummax`, sitting next to `min`) — then `longest_common_suffix` (task
-4, the suffix-side mirror of `longest_common_prefix`) — then `diff`
-(task 5, the inverse-shaped sibling of `cumsum` — successive
-differences of a numeric list) — and, at the back of the queue,
-`midrange` (task 6, a third measure of central tendency next to
-`mean`/`median` — the average of a list's minimum and maximum,
-restocked this pass since `caesar_cipher`'s merge had dropped the
-queue to five).
+`main` is green (4906 tests passing locally as of `#440`). Most recently
+landed: `#440` `cummax` (the running-maximum sibling of
+`cumsum`/`cumprod`, sitting next to `max`), `#439` `cumprod` (the
+multiplicative sibling of `cumsum`, a list-returning generalization
+sitting directly next to `product`), `#438` `caesar_cipher`
+(generalizing `rot13`'s fixed 13-place shift to an arbitrary integer
+shift, reduced modulo 26 up front so `rot13(s)` is exactly
+`caesar_cipher(s, 13)` for every `s`), `#437` `cumsum` (the cumulative
+running sum of a numeric list, a list-returning generalization sitting
+directly next to `sum`), `#436` `dot_product` (a two-list-argument
+numeric statistic next to `mean`/`median`/`variance`/`std_dev`,
+mirroring `hamming_distance`'s equal-length validation shape, returning
+the sum of pairwise products of two equal-length numeric lists) — see
+`CHANGELOG.md` for the full merge history, newest first.
+Queue (`BACKLOG.md`, six tasks — see History below): a **depth** task
+(task 1) fixing a real bug this grooming pass found: `Set` spread is
+wrong at all three spread sites — `[...aSet]`/`f(...aSet)` should
+spread the Set's elements positionally like a list does, but currently
+either raise a wrong "cannot spread set" (list literals) or a
+misleading map-spread error (`isinstance(value, dict)` matches
+`CinderSet` first in call arguments, since `CinderSet` is a `dict`
+subclass), while `{...aSet}` silently leaks the Set's internal
+`{element: True}` dict representation into a map instead of raising —
+the first depth task queued in thirteen consecutive breadth-only
+passes (`nth_leap_year` through `cummax`; see History below and
+`BACKLOG.md`'s "Backlog policy"). Then breadth again: `cummin` (task 2,
+the minimizing sibling of `cummax`, sitting next to `min`) — then
+`longest_common_suffix` (task 3, the suffix-side mirror of
+`longest_common_prefix`) — then `diff` (task 4, the inverse-shaped
+sibling of `cumsum` — successive differences of a numeric list) — then
+`midrange` (task 5, a third measure of central tendency next to
+`mean`/`median` — the average of a list's minimum and maximum) — and,
+at the back of the queue, `to_set` (task 6, converting a list into an
+actual `Set` runtime value, restocked this pass alongside the depth
+task since two merges — `cumprod` and `cummax` — had dropped the queue
+to four).
 
 `Set`'s literal-syntax-only slice has now landed (first depth task to merge
 in six passes), scoped down exactly as the prior passes' scouting
@@ -896,3 +902,53 @@ identified so far.
   session start (no stray stash this time); this session commits its
   own docs/backlog changes before exiting, per the dirty-checkout
   pattern `HELP.md` has flagged repeatedly since 2026-08-27.
+- **2026-09-11 (later still)** — Caught up docs for `#439` `cumprod` and
+  `#440` `cummax`, both merged since the last grooming pass in one
+  cycle; Release had already archived both to `CHANGELOG.md` and
+  renumbered `BACKLOG.md` down to four tasks. Refreshed the test count
+  (4906, up from 4888) and moved both into "Recently landed" in
+  README's "Status & roadmap" and this section's "Current frontier",
+  and added `cumprod`/`cummax` to README's master builtin
+  quick-reference list (`cumsum` was there already but its two new
+  siblings had been missing from that specific list since they merged
+  — a gap only in the flat list, not in either builtin's own detailed
+  prose bullet elsewhere in the file). That left the backlog at four
+  tasks, one below CLAUDE.md's five-task floor, so this pass restocked
+  two: with thirteen breadth-only passes stacked in a row since `Set`'s
+  literal-syntax slice (`nth_leap_year` through `cummax` — see the
+  entries above), a depth task was overdue, and this pass found a real
+  one instead of inventing a speculative one. While re-verifying the
+  Set bullet's "no `for`-iteration, no comprehensions, no spread"
+  claim (routine grooming hygiene — checking a stale-sounding claim
+  against actual behavior before trusting it), discovered the claim
+  was **wrong** for two-thirds of it: `for x in {1, 2, 3} { ... }`,
+  comprehension iteration, and `in`/`not in` membership already work
+  correctly, for free, because `CinderSet` is a `dict` subclass and
+  `_execute_for`/`_comprehension_items` already special-case `dict`.
+  But that same subclass trick makes the three *spread* sites actively
+  wrong for a `Set` operand: `[...aSet]` raises "cannot spread set in a
+  list literal" (should spread positionally, like a list spread does);
+  `f(...aSet)` raises a misleading "cannot spread map with non-string
+  key ... as keyword arguments" (`_evaluate_call_arguments` checks
+  `isinstance(value, dict)` before `list`, so a `Set` is wrongly routed
+  through the keyword-spread branch instead of erroring cleanly or
+  spreading positionally); `{...aSet}` doesn't raise at all — it
+  silently leaks the `CinderSet`'s internal `{element: True}` dict
+  representation into the resulting map. Fixed the doc claim
+  immediately (a same-session correction, not a task) and queued
+  fixing the three actual bugs as task 1 — narrow, three-site, and
+  entirely within `cinder/interpreter.py`, in the same spirit as
+  `Set`'s own literal-syntax-only slice that first broke the
+  breadth-only streak six passes ago. Restocked the second slot with a
+  breadth task, `to_set` (task 6): converts a list into a real `Set`
+  runtime value, the counterpart to the existing
+  `union`/`intersection`/`difference`/`symmetric_difference`/
+  `is_subset`/`is_superset`/`is_disjoint` cluster (all of which already
+  implement set-style semantics on plain lists but never construct an
+  actual `Set`), and notable for being able to produce an *empty* Set
+  (`to_set([])`), which no Set literal can spell since `{}` is
+  grammatically claimed by the empty map literal. No `STATUS: STOP` in
+  `HELP.md`; `git pull --rebase` was a no-op and the root checkout was
+  clean at session start (no stray stash); this session commits its own
+  docs/backlog changes before exiting, per the dirty-checkout pattern
+  `HELP.md` has flagged repeatedly since 2026-08-27.

@@ -501,9 +501,14 @@ while (i < 10) {
   by the existing map shorthand); runtime value is a `CinderSet` with
   insertion-order iteration/stringify, order-insensitive `==`/`!=`
   equality, and automatic de-duplication, kept distinct from a plain Map
-  even when both would stringify the same way; scope is deliberately
-  narrow for now — no `is_set`/`to_set` builtin, no `for`-iteration, no
-  comprehensions, no spread, no mutation (all natural follow-ups)
+  even when both would stringify the same way; `for`-in iteration
+  (`for x in {1, 2, 3} { ... }`), comprehension iteration
+  (`[x * 2 for x in {1, 2, 3}]`), and `in`/`not in` membership already
+  work for free from the underlying `dict` representation; spreading a
+  Set (`[...{1, 2, 3}]`, `f(...{1, 2, 3})`, `{...{1, 2, 3}}`) does not
+  yet behave correctly at any of the three spread sites — a known bug,
+  queued to fix in `BACKLOG.md`; scope is otherwise deliberately narrow
+  — no `is_set` builtin, no mutation (both natural follow-ups)
 - **Builtins**: `print`, `len`, `is_empty`, `type`, conversions, `push`, `pop`, `insert`,
   `remove_at`, `first`, `last`, `take`, `drop`, `take_while`, `drop_while`, `take_right`, `drop_right`, `keys`, `values`, `items`,
   `from_entries`, `enumerate`, `merge`, `invert`, `get`, `remove` (by key for maps, by value for lists),
@@ -512,7 +517,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `product`, `mean`, `median`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `product`, `mean`, `median`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -863,33 +868,35 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `caesar_cipher` (PR #438,
+Actively developed, nightly. Recently landed: `cummax` (PR #440, the
+running-maximum sibling of `cumsum`/`cumprod` sitting next to `max`),
+`cumprod` (PR #439, the multiplicative sibling of `cumsum`, a
+list-returning generalization of `product`), `caesar_cipher` (PR #438,
 generalizing `rot13`'s fixed 13-place shift to an arbitrary integer
 shift, reduced modulo 26 up front so `rot13(s)` is exactly
 `caesar_cipher(s, 13)` for every `s`), `cumsum` (PR #437, the
 cumulative running sum of a numeric list, a list-returning
-generalization of `sum` sitting right next to it), `dot_product`
+generalization of `sum` sitting right next to it), and `dot_product`
 (PR #436, a two-list-argument builtin sitting next to `mean`/`variance`/
 `std_dev`, mirroring `hamming_distance`'s equal-length validation shape
 to return the sum of pairwise products of two equal-length numeric
-lists), `binary_gap` (PR #435, the longest run of zeros bounded by two
-ones in an integer's binary representation, the classic Codility kata,
-a standalone conversion builtin sitting next to `to_bin`), and
-`longest_common_prefix` (PR #434, a standalone list-of-strings builtin
-next to `hamming_distance`/`levenshtein_distance`, returning the
-longest shared prefix of every string in a list).
+lists).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)): `cumprod` (task 1, the
-multiplicative sibling of `cumsum`, a list-returning generalization of
-`product`), `cummax` (task 2, the running-maximum sibling of
-`cumsum`/`cumprod` sitting next to `max`), `cummin` (task 3, the
-minimizing sibling of `cummax`, sitting next to `min`),
-`longest_common_suffix` (task 4, the suffix-side mirror of
-`longest_common_prefix`), `diff` (task 5, the inverse-shaped sibling of
-`cumsum` — successive differences of a numeric list), and, at the back
-of the queue, `midrange` (task 6, a third measure of central tendency
-next to `mean`/`median` — the average of a list's minimum and
-maximum).
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): a depth task fixing `Set`
+spread at all three spread sites (task 1 — list literals and function
+calls should spread a `Set`'s elements positionally, same as a `list`
+does, and map literals should reject a `Set` operand cleanly instead of
+leaking its internal representation; the first depth task queued in
+thirteen breadth-only passes), then back to breadth: `cummin` (task 2,
+the minimizing sibling of `cummax`, sitting next to `min`),
+`longest_common_suffix` (task 3, the suffix-side mirror of
+`longest_common_prefix`), `diff` (task 4, the inverse-shaped sibling of
+`cumsum` — successive differences of a numeric list), `midrange`
+(task 5, a third measure of central tendency next to `mean`/`median` —
+the average of a list's minimum and maximum), and, at the back of the
+queue, `to_set` (task 6, converting a list into an actual `Set` runtime
+value — the one gap left in the note above once this pass's Set-spread
+fix lands).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

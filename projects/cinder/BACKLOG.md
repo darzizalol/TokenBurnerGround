@@ -11,7 +11,163 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cummin` — cumulative (running) minimum of a numeric list
+## 1. Language: spread a `Set` positionally in list literals and function calls; reject it cleanly in map literals
+
+`CinderSet` (`cinder/interpreter.py`, search `class CinderSet(dict)`) is
+implemented as a `dict` subclass with elements as keys, which gives it
+insertion-order `for`-in iteration, comprehension iteration, and `in`
+membership for free — those three already work correctly today despite
+`README.md` still (incorrectly) claiming they don't; this task does not
+touch them. But that same `dict`-subclass trick makes the three spread
+sites (`cinder/interpreter.py`) actively **wrong** for a `Set` operand,
+in three different ways. Verify all three gaps:
+```sh
+python3 -m cinder.cli eval 'print([...{1, 2, 3}]);'
+# -> <eval>:1:8: cannot spread set in a list literal
+# (wrong: a Set is a natural source for a list literal, same as ...[1,2,3])
+
+python3 -m cinder.cli eval 'fn f(a,b,c) { print(a+b+c); } f(...{1, 2, 3});'
+# -> <eval>:1:33: cannot spread map with non-string key 1 as keyword arguments
+# (wrong AND confusing: this treats the Set as a map-spread purely because
+# `isinstance(value, dict)` matches it first, producing an error about
+# "keyword arguments" for code that never mentioned any)
+
+python3 -m cinder.cli eval 'print({...{1, 2, 3}});'
+# -> {1: true, 2: true, 3: true}
+# (wrong: silently "succeeds" by leaking the Set's internal dict
+# representation — {element: True} for every element — into a map,
+# instead of raising; nothing about a Set has key:value pairs to spread)
+```
+
+**What each fix does.**
+- List literals (`[...expr]`): a `Set` operand should spread its elements
+  positionally, in insertion order, exactly like spreading a `list` does.
+  `[...{1, 2, 3}]` should be `[1, 2, 3]`; `[0, ...{1, 2}, 3]` should be
+  `[0, 1, 2, 3]`.
+- Function calls (`f(...expr)`): a `Set` operand should spread its
+  elements as positional arguments, exactly like spreading a `list` does
+  — not as a keyword-argument map-spread. `f(...{1, 2, 3})` (with `f`
+  defined to take three positional parameters) should return the same
+  result as `f(...[1, 2, 3])`.
+- Map literals (`{...expr}`): a `Set` operand has no key:value pairs to
+  contribute and must raise a clean `CinderRuntimeError`, exactly like
+  spreading a `list` or a number already does, not silently succeed by
+  leaking `CinderSet`'s internal `{element: True}` dict representation.
+
+Worked examples (confirmed via direct trace of the fixes below):
+- `[...{1, 2, 3}]` is `[1, 2, 3]` — insertion order preserved.
+- `[0, ...{1, 2}, 3, ...{4, 5}]` is `[0, 1, 2, 3, 4, 5]` — composes with
+  other elements and multiple spreads, mirroring the existing
+  `test_list_literal_multiple_spreads` list-spread test.
+- Given `fn f(a, b, c) { return a + b + c; }`, `f(...{1, 2, 3})` is `6`
+  — Set elements become positional arguments, in insertion order.
+- `{...{1, 2, 3}};` raises `CinderRuntimeError` matching `"cannot spread
+  set in a map literal"`.
+- `[...{1, 2}]` composed with a plain list spread still works
+  unaffected: `[...{1, 2}, ...[3, 4]]` is `[1, 2, 3, 4]`.
+- Plain `list`/`map`/other-type spread behavior at all three sites is
+  completely unchanged — this task only adds a new, previously-missing
+  branch for `CinderSet`, it doesn't touch the existing `list`/`dict`
+  branches' logic.
+
+Fix all three sites in `cinder/interpreter.py`:
+
+1. `_evaluate_list_literal` (search `def _evaluate_list_literal`) — add a
+   `CinderSet` branch before the existing `list` check (order doesn't
+   matter here since `list` and `CinderSet` are disjoint types, but
+   matching the call-argument fix's ordering keeps the two consistent):
+   ```python
+   if isinstance(element, Spread):
+       value = self.evaluate(element.expression, env)
+       if isinstance(value, CinderSet):
+           result.extend(value.keys())
+       elif isinstance(value, list):
+           result.extend(value)
+       else:
+           raise CinderRuntimeError(
+               f"cannot spread {type_name(value)} in a list literal",
+               element.line,
+               element.column,
+           )
+   ```
+
+2. `_evaluate_call_arguments` (search `def _evaluate_call_arguments`) —
+   add a `CinderSet` branch **before** the existing `isinstance(value,
+   dict)` branch; ordering matters here since `CinderSet` is a `dict`
+   subclass, so the existing `dict` check would otherwise keep
+   intercepting it first:
+   ```python
+   elif isinstance(arg, Spread):
+       value = self.evaluate(arg.expression, env)
+       if isinstance(value, CinderSet):
+           positional.extend(value.keys())
+       elif isinstance(value, dict):
+           for key, entry_value in value.items():
+               ...  # unchanged
+       elif isinstance(value, list):
+           positional.extend(value)
+       else:
+           raise CinderRuntimeError(
+               f"cannot spread {type_name(value)} in a function call",
+               arg.line,
+               arg.column,
+           )
+   ```
+
+3. `_evaluate_map_literal` (search `def _evaluate_map_literal`) — add a
+   `CinderSet` check **before** the existing `isinstance(value, dict)`
+   check, for the same subclass-ordering reason as above:
+   ```python
+   if isinstance(entry, Spread):
+       value = self.evaluate(entry.expression, env)
+       if isinstance(value, CinderSet):
+           raise CinderRuntimeError(
+               "cannot spread set in a map literal",
+               entry.line,
+               entry.column,
+           )
+       if not isinstance(value, dict):
+           raise CinderRuntimeError(
+               f"cannot spread {type_name(value)} in a map literal",
+               entry.line,
+               entry.column,
+           )
+       ...  # unchanged
+   ```
+
+Acceptance criteria:
+- Every worked example above holds exactly, including `[...{1, 2, 3}]`
+  is `[1, 2, 3]` and `f(...{1, 2, 3})` is `6` for a three-positional-arg
+  `f`.
+- `{...{1, 2, 3}};` raises `CinderRuntimeError` matching `"cannot spread
+  set in a map literal"`.
+- Spreading a plain `list` or `map` (non-`Set`) at all three sites still
+  behaves exactly as before — every existing spread test in
+  `tests/test_interpreter.py` (`TestListsAndMaps`,
+  `TestSpreadCallArguments`, `TestMapSpreadCallArguments`) still passes
+  unmodified.
+- Wrong-type spreads (e.g. `[...5]`, `{...5}`, `f(...5)`) still raise
+  their existing `"cannot spread <type> in a ..."` messages unchanged.
+- Full test suite passes.
+
+Likely files: `cinder/interpreter.py` (the three sites named above:
+`_evaluate_list_literal`, `_evaluate_call_arguments`,
+`_evaluate_map_literal`), `tests/test_interpreter.py` (new test methods
+in the existing `TestListsAndMaps` class for the list-literal and
+map-literal cases, and in `TestSpreadCallArguments` for the call-argument
+case — search those class names — modeled on the existing
+`test_list_literal_with_spread`/`test_map_literal_spreading_non_map_raises`
+tests). Once merged, `README.md`'s Set bullet (search `Set literals
+{1, 2, 3}`) needs its stale "no spread" clause replaced with a note that
+list-literal and call-argument spread now work (and map-literal spread
+raises cleanly), `PROJECT.md`'s "Current frontier" section needs
+refreshing, and `BACKLOG.md`'s own "Backlog policy" alternation is
+satisfied by this landing as the depth task — leave all three to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 2. Standard library: `cummin` — cumulative (running) minimum of a numeric list
 
 Add a standalone list-transform builtin directly after `_cummax`
 (`cinder/builtins.py`, search `def _cummax`, immediately before `def
@@ -95,7 +251,7 @@ task.
 
 ---
 
-## 2. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+## 3. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
 
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def
@@ -200,7 +356,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `diff` — successive differences of a numeric list
+## 4. Standard library: `diff` — successive differences of a numeric list
 
 Add a standalone list-transform builtin directly after `_cumsum`
 (`cinder/builtins.py`, search `def _cumsum`, immediately before `def
@@ -290,7 +446,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `midrange` — average of a numeric list's minimum and maximum
+## 5. Standard library: `midrange` — average of a numeric list's minimum and maximum
 
 Add a standalone list-statistic builtin directly after `_median`
 (`cinder/builtins.py`, search `def _median`, immediately before `def
@@ -376,6 +532,119 @@ Once merged, `README.md`'s existing `median` bullet needs `midrange`
 added right after it, its "Status & roadmap" section needs updating,
 and `PROJECT.md`'s "Current frontier" section needs refreshing — leave
 both to the Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `to_set` — convert a list into a `Set` value
+
+Add a standalone conversion builtin directly after `_is_disjoint`
+(`cinder/builtins.py`, search `def _is_disjoint`, immediately before
+`def _interleave`) — the runtime-`Set`-constructing counterpart to the
+existing `union`/`intersection`/`difference`/`symmetric_difference`/
+`is_subset`/`is_superset`/`is_disjoint` cluster, all of which already
+implement set-style *semantics* on plain lists but never produce an
+actual `CinderSet` value. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(to_set([1, 2, 2, 3]));'
+# -> <eval>:1:7: undefined name 'to_set' (did you mean 'to_oct'?)
+```
+
+**What it does.** Given a list, return a new `Set` (a `CinderSet` runtime
+value, same as a `{1, 2, 3}` literal produces) containing that list's
+elements, deduplicated, in first-seen order — reusing the exact
+element-validation rule Set literals already enforce (`cinder/
+interpreter.py`'s `_evaluate_set_literal`, search `def
+_evaluate_set_literal`: every element must satisfy `_is_valid_key`, the
+same rule map keys use, so a list or map element is rejected). Note this
+builtin can produce an **empty** `Set` (`to_set([])`), something no Set
+*literal* can spell — `{}` is grammatically claimed by the empty map
+literal (see `README.md`'s Set bullet, "empty braces still an empty
+map") — so `to_set([])` closes a real expressiveness gap, not just a
+convenience wrapper.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `to_set([1, 2, 2, 3])` equals `{1, 2, 3}` (Set equality is
+  order-insensitive, already implemented).
+- `to_set([])` is an empty `Set` — `len(to_set([]))` is `0`, and
+  `to_set([]) == to_set([])` is `true`; there is no source-syntax way to
+  spell this literally, only via this builtin.
+- `to_set([1, "a", 1, "a"])` equals `{1, "a"}` — dedup across mixed
+  types, same `values_equal` semantics the Set literal's own
+  construction and `_dedupe`/`_contains_value` (search either, used by
+  `union`/`intersection` above) already use.
+- `to_set([3, 1, 2, 1])` stringifies in first-seen order: `str(to_set([3,
+  1, 2, 1]))` is `"{3, 1, 2}"` — same "elements become dict keys,
+  insertion order" behavior `_evaluate_set_literal` already gives a
+  literal.
+- `to_set([[1, 2]])` raises `CinderRuntimeError` matching `"list is not a
+  valid set element"` — mirrors the Set literal's own
+  `test_set_literal_invalid_element_list_raises` (search that name in
+  `tests/test_interpreter.py`) for the exact message shape, since a list
+  element isn't a valid dict/set key.
+- `to_set([{"a": 1}])` raises `CinderRuntimeError` matching `"map is not
+  a valid set element"` — same reasoning, mirrors
+  `test_set_literal_invalid_element_map_raises`.
+- `to_set(5);` raises `CinderRuntimeError` matching `"to_set\(\) requires
+  a list, got int"`.
+
+Add directly after `_is_disjoint` (search `def _is_disjoint`):
+```python
+def _to_set(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_set", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"to_set() requires a list, got {type_name(value)}", line, column
+        )
+    result = CinderSet()
+    for element in value:
+        if not _is_valid_key(element):
+            raise CinderRuntimeError(
+                f"{type_name(element)} is not a valid set element", line, column
+            )
+        result[element] = True
+    return result
+```
+(Same element-validation rule as `_evaluate_set_literal` — search that
+name in `cinder/interpreter.py` — reused here for a builtin instead of a
+literal.) Add `CinderSet` to the existing `from cinder.interpreter
+import (...)` block at the top of `cinder/builtins.py` (search
+`_is_valid_key,`, add `CinderSet,` to that same import list — it's
+already imported for `_is_valid_key`, just not for `CinderSet` itself).
+Register the new dict entry (search `"is_disjoint": _is_disjoint,`, add
+`"to_set": _to_set,` directly after it, before `"interleave":
+_interleave,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including `to_set([1, 2, 2,
+  3])` equals `{1, 2, 3}` and `to_set([])` is an empty `Set` with
+  `len(to_set([])) == 0`.
+- `to_set([1, "a", 1, "a"])` equals `{1, "a"}` — the mixed-type dedup
+  case.
+- `str(to_set([3, 1, 2, 1]))` is `"{3, 1, 2}"` — the first-seen-order
+  stringify case.
+- `to_set([[1, 2]]);` raises `CinderRuntimeError` matching `"list is not
+  a valid set element"`, and `to_set([{"a": 1}]);` raises matching `"map
+  is not a valid set element"`.
+- `to_set(5);` raises `CinderRuntimeError` matching `"to_set\(\) requires
+  a list, got int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_disjoint`,
+search `def _is_disjoint`, plus the `from cinder.interpreter import`
+block at the top), `tests/test_builtins.py` (new `class TestToSet`,
+modeled on `class TestIsDisjoint`/the Set-literal validation tests in
+`tests/test_interpreter.py`'s `TestSetLiteral`, search either name, for
+the test shapes above — place it near the existing set-style-builtin
+tests). Once merged, `README.md`'s Set bullet (search `Set literals
+{1, 2, 3}`) needs its "no `is_set`/`to_set` builtin" clause updated to
+drop `to_set` from that list (leaving `is_set` as the one remaining
+noted gap), its "Status & roadmap" section needs updating, and
+`PROJECT.md`'s "Current frontier" section needs refreshing — leave all
+three to the Architect's next grooming pass, not this task.
 
 ---
 

@@ -3947,6 +3947,24 @@ def _cumsum(arguments: list, line: int, column: int) -> object:
     return result
 
 
+def _diff(arguments: list, line: int, column: int) -> object:
+    _require_arity("diff", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"diff() requires a list, got {type_name(value)}", line, column
+        )
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"diff() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    result = []
+    for i in range(len(value) - 1):
+        result.append(value[i + 1] - value[i])
+    return result
+
+
 def _product(arguments: list, line: int, column: int) -> object:
     _require_arity("product", arguments, 1, line, column)
     value = arguments[0]
@@ -5917,6 +5935,7 @@ _BUILTINS = {
     "is_catalan": _is_catalan,
     "sum": _sum,
     "cumsum": _cumsum,
+    "diff": _diff,
     "sum_by": _sum_by,
     "product": _product,
     "cumprod": _cumprod,

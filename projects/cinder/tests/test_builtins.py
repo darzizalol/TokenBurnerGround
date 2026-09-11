@@ -9820,6 +9820,53 @@ class TestCumsum(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestDiff(unittest.TestCase):
+    def test_diff_of_ints(self):
+        result = run("let result = diff([1, 3, 6, 10]);").get("result")
+        self.assertEqual(result, [2, 3, 4])
+
+    def test_diff_of_empty_list(self):
+        result = run("let result = diff([]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_diff_of_single_element(self):
+        result = run("let result = diff([5]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_diff_of_constant_list(self):
+        result = run("let result = diff([5, 5, 5]);").get("result")
+        self.assertEqual(result, [0, 0])
+
+    def test_diff_of_decreasing_sequence(self):
+        result = run("let result = diff([10, 7, 3]);").get("result")
+        self.assertEqual(result, [-3, -4])
+
+    def test_diff_with_a_float_promotes(self):
+        result = run("let result = diff([1.5, 3, 4.5]);").get("result")
+        self.assertEqual(result, [1.5, 1.5])
+
+    def test_diff_with_negative_elements(self):
+        result = run("let result = diff([1, -2, 3]);").get("result")
+        self.assertEqual(result, [-3, 5])
+
+    def test_diff_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"diff\(\) requires a list, got int"
+        ):
+            run("diff(123);")
+
+    def test_diff_of_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"diff\(\) requires a list of numbers, got string"
+        ):
+            run('diff([1, "a"]);')
+
+    def test_diff_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("diff([1, 2], 3);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestSumBy(unittest.TestCase):
     def test_sum_by_doubles_and_sums(self):
         result = run("let result = sum_by([1, 2, 3], fn(n) { return n * 2; });").get("result")

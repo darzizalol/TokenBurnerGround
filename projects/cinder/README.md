@@ -520,7 +520,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `product`, `mean`, `median`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `product`, `mean`, `median`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -871,29 +871,31 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `Set` spread (PR #441, a
-depth fix — list literals and function calls now spread a `Set`'s
-elements positionally, same as a `list` does, and map literals reject
-a `Set` operand cleanly instead of leaking its internal representation
-— the first depth task to land in fourteen mostly-breadth passes),
-`cummax` (PR #440, the running-maximum sibling of `cumsum`/`cumprod`
-sitting next to `max`), `cumprod` (PR #439, the multiplicative sibling
-of `cumsum`, a list-returning generalization of `product`),
-`caesar_cipher` (PR #438, generalizing `rot13`'s fixed 13-place shift
-to an arbitrary integer shift, reduced modulo 26 up front so
-`rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`), and
-`cumsum` (PR #437, the cumulative running sum of a numeric list, a
-list-returning generalization of `sum` sitting right next to it).
+Actively developed, nightly. Recently landed: `cummin` (PR #442, the
+minimizing sibling of `cummax`, sitting next to `min`), `Set` spread
+(PR #441, a depth fix — list literals and function calls now spread a
+`Set`'s elements positionally, same as a `list` does, and map literals
+reject a `Set` operand cleanly instead of leaking its internal
+representation — the first depth task to land in fourteen
+mostly-breadth passes), `cummax` (PR #440, the running-maximum sibling
+of `cumsum`/`cumprod` sitting next to `max`), `cumprod` (PR #439, the
+multiplicative sibling of `cumsum`, a list-returning generalization of
+`product`), and `caesar_cipher` (PR #438, generalizing `rot13`'s fixed
+13-place shift to an arbitrary integer shift, reduced modulo 26 up
+front so `rot13(s)` is exactly `caesar_cipher(s, 13)` for every `s`).
 See [`CHANGELOG.md`](CHANGELOG.md) for the full merge history.
-Queued next (see [`BACKLOG.md`](BACKLOG.md)), back to breadth:
-`cummin` (task 1, the minimizing sibling of `cummax`, sitting next to
-`min`), `longest_common_suffix` (task 2, the suffix-side mirror of
+Queued next (see [`BACKLOG.md`](BACKLOG.md)): a bug fix (task 1) —
+`is_map` wrongly returns `true` for a `Set` value, since `CinderSet`
+is a `dict` subclass and `is_map` never special-cased it the way
+`type_name` already does; fixing that lands `is_set` alongside it as
+the missing type-predicate sibling of `is_list`/`is_map` — then back
+to breadth: `longest_common_suffix` (task 2, the suffix-side mirror of
 `longest_common_prefix`), `diff` (task 3, the inverse-shaped sibling of
 `cumsum` — successive differences of a numeric list), `midrange`
 (task 4, a third measure of central tendency next to `mean`/`median` —
 the average of a list's minimum and maximum), and `to_set` (task 5,
-converting a list into an actual `Set` runtime value — the one gap
-left in the Set bullet above now that spread is fixed).
+converting a list into an actual `Set` runtime value — the last Set
+gap now that spread is fixed and `is_set` covers the type-check side).
 The language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

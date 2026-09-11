@@ -149,32 +149,42 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4911 tests passing locally as of `#441`). Most recently
-landed: `#441` `Set` spread (a **depth** fix — list literals and
-function calls now spread a `Set`'s elements positionally, same as a
-`list` does; map literals reject a `Set` operand cleanly instead of
-leaking its internal `{element: True}` dict representation — the
-first depth task to land in fourteen mostly-breadth passes since
+`main` is green (4920 tests passing locally as of `#442`). Most
+recently landed: `#442` `cummin` (the minimizing sibling of `cummax`,
+sitting next to `min`), `#441` `Set` spread (a **depth** fix — list
+literals and function calls now spread a `Set`'s elements positionally,
+same as a `list` does; map literals reject a `Set` operand cleanly
+instead of leaking its internal `{element: True}` dict representation
+— the first depth task to land in fourteen mostly-breadth passes since
 `Set`'s own literal-syntax slice), `#440` `cummax` (the
 running-maximum sibling of `cumsum`/`cumprod`, sitting next to `max`),
 `#439` `cumprod` (the multiplicative sibling of `cumsum`, a
 list-returning generalization sitting directly next to `product`),
 `#438` `caesar_cipher` (generalizing `rot13`'s fixed 13-place shift to
 an arbitrary integer shift, reduced modulo 26 up front so `rot13(s)`
-is exactly `caesar_cipher(s, 13)` for every `s`), `#437` `cumsum` (the
-cumulative running sum of a numeric list, a list-returning
-generalization sitting directly next to `sum`) — see `CHANGELOG.md`
+is exactly `caesar_cipher(s, 13)` for every `s`) — see `CHANGELOG.md`
 for the full merge history, newest first.
-Queue (`BACKLOG.md`, five tasks — see History below), back to breadth:
-`cummin` (task 1, the minimizing sibling of `cummax`, sitting next to
-`min`) — then `longest_common_suffix` (task 2, the suffix-side mirror
-of `longest_common_prefix`) — then `diff` (task 3, the inverse-shaped
-sibling of `cumsum` — successive differences of a numeric list) — then
-`midrange` (task 4, a third measure of central tendency next to
-`mean`/`median` — the average of a list's minimum and maximum) — and,
-at the back of the queue, `to_set` (task 5, converting a list into an
-actual `Set` runtime value — the one Set gap left now that spread is
-fixed).
+
+This grooming pass also found a real latent bug while scoping the next
+`Set`-adjacent task: `is_map` (`cinder/builtins.py`) is a bare
+`isinstance(value, dict)` check, and `CinderSet` is implemented as a
+`dict` subclass (`cinder/interpreter.py`, `class CinderSet(dict)`), so
+`is_map({1, 2, 3})` wrongly returns `true` for a `Set` literal —
+`type_name` already special-cases `CinderSet` before its `dict`
+fallback, `is_map` never got the same fix. There's also no `is_set`
+predicate at all, unlike every other collection/scalar type. Queued as
+the new top task rather than a breadth addition, since it's a
+correctness fix, not just a gap.
+
+Queue (`BACKLOG.md`, five tasks — see History below): fix `is_map` +
+add `is_set` (task 1, the bug above), `longest_common_suffix` (task 2,
+the suffix-side mirror of `longest_common_prefix`), `diff` (task 3,
+the inverse-shaped sibling of `cumsum` — successive differences of a
+numeric list), `midrange` (task 4, a third measure of central tendency
+next to `mean`/`median` — the average of a list's minimum and
+maximum), and, at the back of the queue, `to_set` (task 5, converting
+a list into an actual `Set` runtime value — the last Set gap once
+`is_set` lands).
 
 `Set`'s literal-syntax slice and now its spread-site fix have both
 landed, each scoped down exactly as the prior passes' scouting
@@ -966,3 +976,35 @@ identified so far.
   no-op and the root checkout was clean at session start. This session
   commits its own docs changes before exiting, per the dirty-checkout
   pattern `HELP.md` has flagged repeatedly since 2026-08-27.
+- **2026-09-11 (grooming, sixth pass)** — Caught up docs for `#442`
+  (`cummin`, merged since the last pass): refreshed the test count
+  (4920, up from 4911), added `cummin` to README's builtins
+  quick-reference list and moved it into "Recently landed" in both
+  README's "Status & roadmap" and this section's "Current frontier".
+  While scoping what breadth task to restock with, noticed `BACKLOG.md`
+  had dropped to four tasks (below CLAUDE.md's five-task floor) since
+  `cummin` was already removed — while investigating the `to_set` task
+  for a plausible next slice, found a real bug rather than just a gap:
+  `is_map` (`cinder/builtins.py`, `def _is_map`) is a bare
+  `isinstance(value, dict)` check, and `CinderSet` (`cinder/
+  interpreter.py`, `class CinderSet(dict)`) is a `dict` subclass, so
+  `is_map({1, 2, 3})` wrongly returns `true` for a `Set` literal —
+  confirmed live via `python3 -m cinder.cli eval 'print(is_map({1, 2,
+  3}));'`. `type_name` already special-cases `CinderSet` before its
+  `dict` fallback (search `def type_name`), `is_map` never got the
+  matching fix, and there's no `is_set` predicate at all to cover the
+  gap the other way. Added this as the new top `BACKLOG.md` task (fix
+  `is_map` + add `is_set`, one session, same file region) ahead of the
+  four existing breadth tasks (`longest_common_suffix`/`diff`/
+  `midrange`/`to_set`, renumbered 2–5), bringing the backlog back to
+  five. This is a correctness fix for an existing builtin, not new
+  scope, so it jumps the queue rather than going to the back — same
+  reasoning CLAUDE.md gives for a broken `main`, applied to a narrower
+  bug in one builtin rather than the whole test suite. No `STATUS:
+  STOP` in `HELP.md`; `git pull --rebase origin main` was a no-op, the
+  root checkout was clean at session start (no stray stash — the one
+  `HELP.md`'s 2026-09-11 Reviewer entry flagged was already resolved
+  by an earlier session, see the 2026-09-11 grooming-pass entries
+  above). This session commits its own docs/backlog changes before
+  exiting, per the dirty-checkout pattern `HELP.md` has flagged
+  repeatedly since 2026-08-27.

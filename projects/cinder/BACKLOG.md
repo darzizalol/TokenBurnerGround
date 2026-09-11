@@ -11,7 +11,91 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+## 1. Bug fix: `is_map` misclassifies `Set` values — plus add the missing `is_set` predicate
+
+`CinderSet` (`cinder/interpreter.py`, search `class CinderSet(dict)`) is
+implemented as a `dict` subclass, so every `dict`-based check that
+doesn't explicitly exclude it also matches a `Set`. `type_name`
+(`cinder/interpreter.py`, search `def type_name`) already gets this
+right — it checks `isinstance(value, CinderSet)` before falling
+through to the `dict` branch, so `type({1, 2, 3})` correctly prints
+`"set"`. But the `is_map` builtin (`cinder/builtins.py`, search `def
+_is_map`) never got the same treatment: it's a bare `isinstance(value,
+dict)`, so it wrongly reports `true` for a `Set`. There is also no
+`is_set` builtin at all — `is_list`/`is_map`/`is_string`/etc. all have
+a type-predicate sibling, `Set` doesn't. Verify both gaps:
+```sh
+python3 -m cinder.cli eval 'print(is_map({1, 2, 3}));'
+# -> true   (wrong — {1, 2, 3} is a Set, not a map)
+python3 -m cinder.cli eval 'print(is_set({1, 2, 3}));'
+# -> <eval>:1:7: undefined name 'is_set'
+```
+
+**What to do.** Fix `_is_map` to exclude `CinderSet`, and add `_is_set`
+as its counterpart, both in `cinder/builtins.py`.
+
+Worked examples (confirmed via direct reasoning about the fix below):
+- `is_map({1, 2, 3})` is `false` — a `Set` literal is not a map (the
+  bug this task fixes).
+- `is_map({"a": 1})` is `true` — an actual map literal is unaffected.
+- `is_map([1, 2, 3])` is `false` — a list is unaffected (already
+  correct, `isinstance([...], dict)` is `false`).
+- `is_set({1, 2, 3})` is `true` — a `Set` literal.
+- `is_set([1, 2, 3])` is `false` — a list is not a set.
+- `is_set({"a": 1})` is `false` — a map is not a set (the whole point
+  of the `is_map` fix above: the two predicates must be
+  mutually exclusive for anything that's one or the other).
+- `is_set(5)` is `false` — a non-collection value.
+
+In `cinder/builtins.py`, search `def _is_map` and replace its body:
+```python
+def _is_map(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_map", arguments, 1, line, column)
+    value = arguments[0]
+    return isinstance(value, dict) and not isinstance(value, CinderSet)
+```
+Add `_is_set` directly after it:
+```python
+def _is_set(arguments: list, line: int, column: int) -> object:
+    _require_arity("is_set", arguments, 1, line, column)
+    return isinstance(arguments[0], CinderSet)
+```
+Add `CinderSet` to the existing `from cinder.interpreter import (...)`
+block at the top of `cinder/builtins.py` (search `_is_valid_key,`, add
+`CinderSet,` to that same import list — it isn't imported there yet).
+Register the new dict entry (search `"is_map": _is_map,`, add
+`"is_set": _is_set,` directly after it, before `"is_string":
+_is_string,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including `is_map({1, 2,
+  3})` is now `false` and `is_set({1, 2, 3})` is `true`.
+- `is_map({"a": 1})` stays `true` and `is_map([1, 2, 3])` stays
+  `false` — the fix doesn't regress the existing correct cases.
+- `is_set({"a": 1})` is `false` and `is_set([1, 2, 3])` is `false` —
+  a map and a list are each rejected by `is_set`.
+- `is_set(5);` is `false` (not an error — same "any value in, bool
+  out" shape as `is_list`/`is_map`, no type restriction on the
+  argument).
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError`
+  with line/column for both `is_map` and `is_set`.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (search `def _is_map`, plus the
+`from cinder.interpreter import` block at the top), `tests/
+test_builtins.py` (a new `is_map`-with-`Set` regression case in the
+existing `is_map` test class, search `class TestIsMap` — and a new
+`class TestIsSet` modeled on `class TestIsList`/`class TestIsMap`,
+search either name, for the test shapes above). Once merged,
+`README.md`'s builtins quick-reference list (search `is_list`,
+`is_map`) needs `is_set` added right after `is_map`, its "Status &
+roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
+section needs refreshing — leave both to the Architect's next
+grooming pass, not this task.
+
+---
+
+## 2. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
 
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def
@@ -116,7 +200,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `diff` — successive differences of a numeric list
+## 3. Standard library: `diff` — successive differences of a numeric list
 
 Add a standalone list-transform builtin directly after `_cumsum`
 (`cinder/builtins.py`, search `def _cumsum`, immediately before `def
@@ -206,7 +290,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `midrange` — average of a numeric list's minimum and maximum
+## 4. Standard library: `midrange` — average of a numeric list's minimum and maximum
 
 Add a standalone list-statistic builtin directly after `_median`
 (`cinder/builtins.py`, search `def _median`, immediately before `def
@@ -295,7 +379,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `to_set` — convert a list into a `Set` value
+## 5. Standard library: `to_set` — convert a list into a `Set` value
 
 Add a standalone conversion builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before

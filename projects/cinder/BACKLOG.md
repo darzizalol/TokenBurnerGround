@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Bug fix: `is_map` misclassifies `Set` values — plus add the missing `is_set` predicate
+## 1. Bug fix: `is_map` misclassifies `Set` values — plus add the missing `is_set` predicate [claimed 2026-09-11T14:48:30Z]
 
 `CinderSet` (`cinder/interpreter.py`, search `class CinderSet(dict)`) is
 implemented as a `dict` subclass, so every `dict`-based check that

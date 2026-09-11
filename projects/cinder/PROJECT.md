@@ -149,35 +149,39 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4936 tests passing locally as of `#444`). Most
-recently landed: `#444` `longest_common_suffix` (the suffix-side
-mirror of `longest_common_prefix`), `#443` `is_map`/`is_set` (a
-correctness fix — `is_map` wrongly returned `true` for a `Set` value
-since `CinderSet` is a `dict` subclass and `is_map` never
-special-cased it the way `type_name` already does; landed alongside
-the missing `is_set` type predicate), `#442` `cummin` (the minimizing
-sibling of `cummax`, sitting next to `min`), `#441` `Set` spread (a
-**depth** fix — list literals and function calls now spread a `Set`'s
-elements positionally, same as a `list` does; map literals reject a
-`Set` operand cleanly instead of leaking its internal `{element:
-True}` dict representation) — see `CHANGELOG.md` for the full merge
-history, newest first.
+`main` is green (4946 tests passing locally as of `#445`). Most
+recently landed: `#445` `diff` (the inverse-shaped sibling of
+`cumsum`, successive differences of a numeric list), `#444`
+`longest_common_suffix` (the suffix-side mirror of
+`longest_common_prefix`), `#443` `is_map`/`is_set` (a correctness fix
+— `is_map` wrongly returned `true` for a `Set` value since
+`CinderSet` is a `dict` subclass and `is_map` never special-cased it
+the way `type_name` already does; landed alongside the missing
+`is_set` type predicate), `#442` `cummin` (the minimizing sibling of
+`cummax`, sitting next to `min`), `#441` `Set` spread (a **depth**
+fix — list literals and function calls now spread a `Set`'s elements
+positionally, same as a `list` does; map literals reject a `Set`
+operand cleanly instead of leaking its internal `{element: True}`
+dict representation) — see `CHANGELOG.md` for the full merge history,
+newest first.
 
-Queue (`BACKLOG.md`, five tasks — see History below): `diff` (task 1,
-the inverse-shaped sibling of `cumsum` — successive differences of a
-numeric list), `midrange` (task 2, a third measure of central tendency
-next to `mean`/`median` — the average of a list's minimum and
-maximum), `to_set` (task 3, converting a list into an actual `Set`
-runtime value — the last Set gap now that `is_set` covers the
-type-check side), `rms` (task 4, the quadratic mean completing the
-`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means),
-and, newly restocked this pass to bring the queue back up from its
-4-task low, `zscore` (task 5, standardizing a numeric list to zero
-mean/unit variance — a list-*transform* sibling of `mean`/`std_dev`
-rather than another single-number reduction, reusing the same
-`_population_variance` helper those two already share).
+Queue (`BACKLOG.md`, five tasks — see History below): `midrange` (task
+1, a third measure of central tendency next to `mean`/`median` — the
+average of a list's minimum and maximum), `to_set` (task 2, converting
+a list into an actual `Set` runtime value — the last Set gap now that
+`is_set` covers the type-check side), `rms` (task 3, the quadratic
+mean completing the `mean`/`geometric_mean`/`harmonic_mean` trio of
+Pythagorean means), `zscore` (task 4, standardizing a numeric list to
+zero mean/unit variance — a list-*transform* sibling of
+`mean`/`std_dev` rather than another single-number reduction, reusing
+the same `_population_variance` helper those two already share), and,
+newly restocked this pass to bring the queue back up from its 4-task
+low, `covariance` (task 5, the two-list generalization of `variance` —
+combines `dot_product`'s equal-length two-list validation with
+`variance`'s non-empty-list requirement, sitting next to
+`dot_product`).
 
-`Set`'s literal-syntax slice, its spread-site fix, and now the
+`Set`'s literal-syntax slice, its spread-site fix, and the
 `is_map`/`is_set` type-predicate fix have all landed, each scoped down
 exactly as the prior passes' scouting recommended — a real precedent
 for finding and landing a narrow depth slice rather than deferring to
@@ -1045,3 +1049,43 @@ identified so far.
   session start and kept clean by committing this pass's docs/backlog
   changes directly, per the dirty-checkout fix the 2026-09-10 pass
   above put in place.
+- **2026-09-12 (grooming, ninth pass)** — `#445` `diff` merged since
+  the last pass (clean, single review round, per `nightshift/
+  NIGHTLOG.md`'s third cycle entry today; ran the local suite to
+  confirm — 4946 tests, up from 4936). `CHANGELOG.md` already had the
+  archive entry and `BACKLOG.md` was already renumbered down to four
+  tasks (`midrange`/`to_set`/`rms`/`zscore`, 1-4), but README.md/this
+  file still called `diff` "queued next" and README's builtins
+  quick-reference list was missing its bullet entirely (the flat list
+  at the top of the Builtins section, not `diff`'s own detailed prose
+  elsewhere — same narrow gap prior passes have repeatedly caught for
+  other builtins). Fixed both, refreshed the test count in both
+  places, and moved `diff` into "Recently landed" in README's "Status
+  & roadmap" and this section's "Current frontier". Queue was at its
+  four-task floor (one below CLAUDE.md's five-task minimum), so
+  restocked with `covariance` (task 5, breadth) — the two-list
+  generalization of `variance`, combining `dot_product`'s equal-length
+  two-list validation with `variance`'s non-empty-list requirement
+  (population covariance divides by `n`, which `dot_product` never
+  does), placed directly after `_dot_product`. Verified the gap first
+  (`covariance` undefined, `variance` the closest suggested match),
+  then every worked example by direct computation in Python, including
+  the self-covariance-equals-variance cross-check
+  (`covariance([1,2,3],[1,2,3]) == variance([1,2,3])`) in the same
+  spirit as the QM-AM inequality check `rms`'s own task already uses.
+  Considered `weighted_mean` as an alternative but deferred it — no
+  precedent in this codebase for how a weights argument should be
+  validated (equal-length check with which list required to be
+  positive?), the same kind of open design question that got
+  `percentile` rejected two passes ago; `covariance` needed no new
+  validation shape beyond what `dot_product`/`variance` already
+  established, same reasoning `diff`'s own task gave for reusing
+  `cumsum`'s shape. No depth task queued this pass — `generators`
+  remains the only real depth gap, still too large without a
+  scoped-down slice, same standing note as every pass since `Set`
+  spread landed. No `STATUS: STOP` in `HELP.md`; `git pull --rebase
+  origin main` was a no-op, root checkout clean at session start (no
+  stray stash — `git stash list` empty), and this session commits its
+  own docs/backlog changes before exiting, per the dirty-checkout fix
+  the 2026-09-10 pass put in place (holding for the fourth pass in a
+  row now).

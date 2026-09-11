@@ -459,6 +459,103 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
+
+Add a standalone two-list builtin directly after `_is_disjoint`
+(`cinder/builtins.py`, search `def _is_disjoint`, immediately before
+`def _to_set`) — completes the lists-treated-as-unordered-sets family
+(`union`/`intersection`/`difference`/`symmetric_difference`/
+`is_subset`/`is_superset`/`is_disjoint`, all built on the same
+`_dedupe`/`_contains_value` helpers) with the one member that turns
+`intersection`/`union` into a single similarity number instead of
+another list. Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(jaccard_similarity([1, 2, 3], [2, 3, 4]));'
+# -> <eval>:1:7: undefined name 'jaccard_similarity'
+```
+
+**What it does.** Given two lists (any element type, treated as
+unordered sets the same way `union`/`intersection` already do — value
+equality via `values_equal`, duplicates within a list ignored), return
+`len(intersection(list1, list2)) / len(union(list1, list2))`: the
+fraction of the combined distinct elements the two lists share, `0.0`
+for disjoint lists, `1.0` for lists with the same distinct elements
+(regardless of order or duplicate counts). Two empty lists have no
+elements to disagree on, so by convention (matching how `union`/
+`intersection` of two empty lists both come out empty rather than
+raising) this returns `1.0` rather than dividing zero by zero.
+
+Worked examples (confirmed via direct computation of the algorithm
+below, reusing `_union`/`_intersection`'s own logic):
+- `jaccard_similarity([1, 2, 3], [2, 3, 4])` is `0.5` — intersection
+  `{2, 3}` (size 2), union `{1, 2, 3, 4}` (size 4).
+- `jaccard_similarity([1, 2, 3], [1, 2, 3])` is `1.0` — identical
+  distinct-element sets.
+- `jaccard_similarity([1, 2], [3, 4])` is `0.0` — disjoint, no shared
+  elements.
+- `jaccard_similarity([1, 1, 2], [2, 3])` is `0.3333333333333333` —
+  duplicates within a list don't count twice: distinct elements are
+  `{1, 2}` and `{2, 3}`, intersection `{2}` (size 1), union
+  `{1, 2, 3}` (size 3).
+- `jaccard_similarity([], [])` is `1.0` — both empty, defined as
+  maximally similar by convention rather than raising or returning
+  `nan`.
+- `jaccard_similarity([], [1, 2])` is `0.0` — one empty, one not:
+  intersection is empty, union is `{1, 2}` (size 2), so `0 / 2`.
+- `jaccard_similarity(["a", "b"], ["b", "c"])` is `0.3333333333333333`
+  — works for any element type `values_equal` supports, not just
+  numbers, same as `union`/`intersection`.
+
+Add directly after `_is_disjoint` (search `def _is_disjoint`,
+immediately before `def _to_set`):
+```python
+def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("jaccard_similarity", arguments, line, column)
+    union_size = len(_union(arguments, line, column))
+    if union_size == 0:
+        return 1.0
+    intersection_size = len(_intersection(arguments, line, column))
+    return intersection_size / union_size
+```
+(Calls `_union`/`_intersection` directly rather than re-deriving
+`_dedupe`/`_contains_value` logic, so the three builtins' notion of
+"distinct element" and "shared element" can't drift apart — same
+reuse-the-sibling-builtin shape `_correlation` in task 4 above uses
+for `_covariance`.) Register the new dict entry (search `"is_disjoint":
+_is_disjoint,`, add `"jaccard_similarity": _jaccard_similarity,`
+directly after it, before `"to_set": _to_set,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `jaccard_similarity([1, 2, 3], [2, 3, 4])` is `0.5` and
+  `jaccard_similarity([1, 1, 2], [2, 3])` is `0.3333333333333333`.
+- `jaccard_similarity([1, 2, 3], [1, 2, 3])` is `1.0` and
+  `jaccard_similarity([1, 2], [3, 4])` is `0.0`.
+- `jaccard_similarity([], [])` is `1.0` and `jaccard_similarity([], [1,
+  2])` is `0.0` — the empty-list edge cases, neither raises.
+- `jaccard_similarity(["a", "b"], ["b", "c"])` is
+  `0.3333333333333333` — non-numeric elements work.
+- `jaccard_similarity(5, [1, 2]);` raises `CinderRuntimeError` matching
+  `"jaccard_similarity\(\) requires a list as its first argument, got
+  int"` (and the mirrored message for a bad second argument, reusing
+  `_require_two_lists`'s existing messages).
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_disjoint`,
+search `def _is_disjoint`), `tests/test_builtins.py` (new `class
+TestJaccardSimilarity`, modeled on `class
+TestUnionIntersectionDifference`, search that name, for the test
+shapes above — place it near that class). Once merged, `README.md`'s
+builtins quick-reference list (search `is_disjoint`) needs
+`jaccard_similarity` added right after it, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -149,52 +149,62 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4955 tests passing locally as of `#446`). Most
-recently landed: `#446` `midrange` (a third measure of central
-tendency next to `mean`/`median` — the average of a list's minimum
-and maximum), `#445` `diff` (the inverse-shaped sibling of `cumsum`,
-successive differences of a numeric list), `#444`
+`main` is green (4963 tests passing locally as of `#447`). Most
+recently landed: `#447` `to_set` (converting a list into an actual
+`Set` runtime value — the last Set-completion gap now that `is_set`
+covers the type-check side), `#446` `midrange` (a third measure of
+central tendency next to `mean`/`median` — the average of a list's
+minimum and maximum), `#445` `diff` (the inverse-shaped sibling of
+`cumsum`, successive differences of a numeric list), `#444`
 `longest_common_suffix` (the suffix-side mirror of
 `longest_common_prefix`), `#443` `is_map`/`is_set` (a correctness fix
 — `is_map` wrongly returned `true` for a `Set` value since
 `CinderSet` is a `dict` subclass and `is_map` never special-cased it
 the way `type_name` already does; landed alongside the missing
-`is_set` type predicate), `#442` `cummin` (the minimizing sibling of
-`cummax`, sitting next to `min`) — see `CHANGELOG.md` for the full
-merge history, newest first.
+`is_set` type predicate) — see `CHANGELOG.md` for the full merge
+history, newest first.
 
-Queue (`BACKLOG.md`, five tasks — see History below): `to_set` (task
-1, converting a list into an actual `Set` runtime value — the last Set
-gap now that `is_set` covers the type-check side), `rms` (task 2, the
-quadratic mean completing the `mean`/`geometric_mean`/`harmonic_mean`
-trio of Pythagorean means), `zscore` (task 3, standardizing a numeric
-list to zero mean/unit variance — a list-*transform* sibling of
-`mean`/`std_dev` rather than another single-number reduction, reusing
-the same `_population_variance` helper those two already share),
-`covariance` (task 4, the two-list generalization of `variance` —
+Queue (`BACKLOG.md`, five tasks): `rms` (task 1, the quadratic mean
+completing the `mean`/`geometric_mean`/`harmonic_mean` trio of
+Pythagorean means), `zscore` (task 2, standardizing a numeric list to
+zero mean/unit variance — a list-*transform* sibling of `mean`/
+`std_dev` rather than another single-number reduction, reusing the
+same `_population_variance` helper those two already share),
+`covariance` (task 3, the two-list generalization of `variance` —
 combines `dot_product`'s equal-length two-list validation with
 `variance`'s non-empty-list requirement, sitting next to
-`dot_product`), and, newly added this pass, `correlation` (task 5,
-the normalized sibling of `covariance` — divides it by the product of
-both lists' standard deviations to rescale into `[-1, 1]`, reusing
-`_covariance` from task 4 directly so the two builtins' arithmetic
-can't drift apart).
+`dot_product`), `correlation` (task 4, the normalized sibling of
+`covariance` — divides it by the product of both lists' standard
+deviations to rescale into `[-1, 1]`, reusing `_covariance` from task
+3 directly so the two builtins' arithmetic can't drift apart), and,
+newly added this pass, `jaccard_similarity` (task 5, the one member
+missing from the lists-as-sets family — `union`/`intersection`/
+`difference`/`symmetric_difference`/`is_subset`/`is_superset`/
+`is_disjoint` — that reduces two lists to a single similarity ratio
+instead of another list, reusing `_union`/`_intersection` directly).
 
-`Set`'s literal-syntax slice, its spread-site fix, and the
-`is_map`/`is_set` type-predicate fix have all landed, each scoped down
-exactly as the prior passes' scouting recommended — a real precedent
-for finding and landing a narrow depth slice rather than deferring to
-a big-bang rewrite. `generators` remains a real gap, still too big for
-one session as a full feature and without an obvious scoped-down slice
-yet; revisit with the same narrow-slice approach. No new depth-task
-candidate surfaced this pass beyond that standing note — this
-restocking pass stayed on breadth (stdlib) work again, per the
-"occasional back-to-back" allowance in the Backlog policy above: the
-queue is now four small-numeric-stats tasks (`rms`/`zscore`/
-`covariance`/`correlation`) plus one Set-completion task (`to_set`),
-which is more breadth stacking than usual — the next grooming pass
-should prioritize finding a scoped-down depth slice to break up the
-run, even if it means shipping fewer breadth tasks that night.
+`Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
+`is_set` type-predicate fix, and `to_set` have all landed, each
+scoped down exactly as the prior passes' scouting recommended — the
+Set-completion arc that started several passes back is now fully
+closed. `generators` remains a real gap, still too big for one
+session as a full feature and without an obvious scoped-down slice.
+This pass tried harder than usual to find a landable depth slice
+given the last several passes' standing note about breadth stacking:
+checked hex/octal/binary integer literals and `_`-digit-separators
+(both already implemented, `cinder/lexer.py`'s `_number`/
+`_prefixed_int`), string interpolation (already implemented, `"${expr}"`),
+chained comparisons (`a < b < c`, already implemented), the `??=`
+nil-coalescing compound-assign operator (already implemented), and
+list/map ordering comparisons and concatenation (already implemented)
+— all came back "already shipped", not gaps. No new depth-task
+candidate surfaced. Rather than force a marginal one, this pass
+restocked with one more breadth task (`jaccard_similarity`, task 5)
+to hold the queue at its 5-task floor instead of piling on a second,
+keeping the breadth run to five rather than six. The next grooming
+pass should keep scouting for a depth slice with fresh eyes — the
+list of "already implemented" candidates above is meant to save it
+from re-checking the same ground.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list
@@ -1093,3 +1103,36 @@ identified so far.
   own docs/backlog changes before exiting, per the dirty-checkout fix
   the 2026-09-10 pass put in place (holding for the fourth pass in a
   row now).
+- **2026-09-12 (Architect grooming, catching up on `#446`/`#447`)** —
+  `git pull --rebase origin main` was a no-op, root checkout clean at
+  session start (no `STATUS: STOP` in `HELP.md`, no stray stash).
+  `main` green (4963 tests, up from 4955). Two merges since the last
+  grooming pass had gone undocumented: `#446` `midrange` and `#447`
+  `to_set`, both already reflected in `BACKLOG.md`/`CHANGELOG.md` by
+  Engineer/Release but not yet in this file's "Current frontier" or
+  README's "Status & roadmap" — refreshed both, and added `to_set` to
+  README's builtins quick-reference and its Set-literal feature bullet
+  (it had been merged without a docs follow-up task, since `to_set`'s
+  own task write-up left that to "the Architect's next grooming pass"
+  same as every other stdlib task does). Queue had dropped to four
+  tasks (`rms`/`zscore`/`covariance`/`correlation`) after `to_set`
+  shipped, one below the five-task floor, and the last two passes'
+  "Current frontier" note had explicitly asked this pass to prioritize
+  finding a scoped-down depth slice before adding more breadth. Spent
+  real effort on that: checked hex/octal/binary integer literals and
+  `_` digit separators, string interpolation, chained comparisons,
+  `??=`, and list/map ordering comparisons/concatenation against the
+  actual lexer/parser/README — all already implemented, none a gap.
+  `generators` remains the only known real depth gap and still has no
+  scoped-down slice. Rather than force a weak depth task or leave the
+  queue short, restocked with one breadth task, `jaccard_similarity`
+  (task 5) — the missing "reduce to a single number" member of the
+  `union`/`intersection`/`difference`/`symmetric_difference`/
+  `is_subset`/`is_superset`/`is_disjoint` lists-as-sets family, built
+  by calling `_union`/`_intersection` directly so it can't drift from
+  their notion of "distinct"/"shared" element. Verified every worked
+  example (including the `jaccard_similarity([], [])` is `1.0`
+  by-convention edge case) by running `_union`/`_intersection`
+  directly in Python before writing the task. This keeps the breadth
+  run at five rather than growing it to six; the next grooming pass
+  should keep scouting for a depth slice with fresh eyes.

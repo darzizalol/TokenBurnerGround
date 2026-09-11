@@ -4450,3 +4450,17 @@ for vision/architecture.
   for every `s`). Clean first pass, no bounces (4888 tests passing, up
   from 4875). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `cummax`** — merged 2026-09-11T14:09:12Z via PR
+  #440 (`feat/20260911-cummax`, squashed as `f27db2d`). List-transform
+  builtin sitting next to `max`: returns a new list where each element
+  is the running maximum of every element up to and including that
+  position (`[]` for an empty list). Clean first pass, no bounces (4897
+  tests passing, up from 4888). README/PROJECT.md updates left to the
+  Architect's next grooming pass.
+- **Standard library: `cumprod`** — merged 2026-09-11T14:09:16Z via PR
+  #439 (`feat/20260910-cumprod`, squashed as `e779fac`). List-transform
+  builtin sitting next to `product`: returns a new list where each
+  element is the running product of every element up to and including
+  that position (`[]` for an empty list). Clean first pass, no bounces
+  (4906 tests passing, up from 4897). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

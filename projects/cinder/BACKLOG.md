@@ -11,190 +11,12 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `cumprod` — cumulative (running) product of a numeric list [claimed 2026-09-10T20:21:33Z]
+## 1. Standard library: `cummin` — cumulative (running) minimum of a numeric list
 
-Add a standalone list-transform builtin directly after `_product`
-(`cinder/builtins.py`, search `def _product`, immediately before `def
-_mean`) — the multiplicative sibling of the already-merged `cumsum`,
-the same scalar-to-running-list shape shift applied to `product`
-instead of `sum`. `_cumsum` sits between `_sum` and `_product`; this
-task's anchor is `_product` itself, so the insertion point is
-unaffected. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(cumprod([1, 2, 3]));'
-# -> <eval>:1:7: undefined name 'cumprod'
-```
-
-**What it does.** Given a list of numbers, return a new list of the same
-length where each element is the running product of every element up to
-and including that position — `result[i] = list[0] * list[1] * ... *
-list[i]`. An empty list returns an empty list.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `cumprod([1, 2, 3])` is `[1, 2, 6]`.
-- `cumprod([])` is `[]` — the empty list has no running product to
-  build, vacuously empty.
-- `cumprod([5])` is `[5]` — a single-element list returns that element's
-  own running product, itself.
-- `cumprod([1, -2, 3, -4])` is `[1, -2, -6, 24]` — negative elements
-  flip the running product's sign.
-- `cumprod([1.5, 2, 2])` is `[1.5, 3.0, 6.0]` (mixed int/float elements,
-  ordinary numeric promotion — same as `sum`/`product`/`cumsum`).
-- `cumprod([2, 0, 3])` is `[2, 0, 0]` — a zero permanently zeroes out
-  every running product after it.
-
-Add directly after `_product` (search `def _product`, immediately
-before `def _mean`) — keeps the new running-product builtin next to the
-plain total it generalizes:
-```python
-def _cumprod(arguments: list, line: int, column: int) -> object:
-    _require_arity("cumprod", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"cumprod() requires a list, got {type_name(value)}", line, column
-        )
-    total = 1
-    result = []
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"cumprod() requires a list of numbers, got {type_name(element)}", line, column
-            )
-        total = total * element
-        result.append(total)
-    return result
-```
-(Same validation shape as `_product` itself — search `def _product` —
-just appending each running product to a result list instead of
-discarding everything but the final one, mirroring `_cumsum`'s own
-relationship to `_sum`.) Register the new dict entry (search
-`"product": _product,`, add `"cumprod": _cumprod,` directly after it,
-before `"mean": _mean,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `cumprod([1, 2, 3])` is `[1, 2, 6]` and `cumprod([1.5, 2, 2])` is
-  `[1.5, 3.0, 6.0]`.
-- `cumprod([]);` is `[]` and `cumprod([5]);` is `[5]` — the empty-list
-  and single-element cases.
-- `cumprod([2, 0, 3]);` is `[2, 0, 0]` — the zero-propagation case.
-- `cumprod(123);` raises `CinderRuntimeError` matching
-  `"cumprod\(\) requires a list, got int"`.
-- `cumprod([1, "a"]);` raises `CinderRuntimeError` matching
-  `"cumprod\(\) requires a list of numbers, got string"` (mirror
-  `product`'s own non-numeric-element test for the exact message shape).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_product`, search
-`def _product`), `tests/test_builtins.py` (new `class TestCumprod`,
-modeled on `class TestProduct`, search that name, for the test shapes
-above — place it near the existing `class TestProduct`). Once merged,
-`README.md`'s existing `product` bullet needs `cumprod` added right
-after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `cummax` — cumulative (running) maximum of a numeric list [claimed 2026-09-11T14:03:27Z]
-
-Add a standalone list-transform builtin directly after `_max`
-(`cinder/builtins.py`, search `def _max`, immediately before `def
-_clamp`) — the running counterpart to `max`, the same scalar-to-
-running-list shape shift the already-merged `cumsum` applies to `sum`
-(`max` itself stays variadic/multi-argument; `cummax` takes a single
-list, same signature shape as `cumsum`/`cumprod`, not `max`'s own).
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(cummax([1, 3, 2, 5, 4]));'
-# -> <eval>:1:7: undefined name 'cummax' (did you mean 'max'?)
-```
-
-**What it does.** Given a list of numbers, return a new list of the same
-length where each element is the running maximum of every element up to
-and including that position — `result[i] = max(list[0], list[1], ...,
-list[i])`. An empty list returns an empty list.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `cummax([1, 3, 2, 5, 4])` is `[1, 3, 3, 5, 5]`.
-- `cummax([])` is `[]` — the empty list has no running maximum to
-  build, vacuously empty.
-- `cummax([5])` is `[5]` — a single-element list returns that element's
-  own running maximum, itself.
-- `cummax([-1, -2, -3])` is `[-1, -1, -1]` — an already-descending list
-  plateaus at its first (largest) element.
-- `cummax([1.5, 1, 3])` is `[1.5, 1.5, 3]` (mixed int/float elements,
-  ordinary numeric comparison — same as `min`/`max`).
-- `cummax([3, 3, 3])` is `[3, 3, 3]`.
-
-Add directly after `_max` (search `def _max`, immediately before `def
-_clamp`) — keeps the new running-maximum builtin next to the aggregate
-it generalizes:
-```python
-def _cummax(arguments: list, line: int, column: int) -> object:
-    _require_arity("cummax", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"cummax() requires a list, got {type_name(value)}", line, column
-        )
-    result = []
-    running = None
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"cummax() requires a list of numbers, got {type_name(element)}", line, column
-            )
-        running = element if running is None else max(running, element)
-        result.append(running)
-    return result
-```
-(Same list-in/list-out shape as `_cumsum`/`_cumprod` — search either, if
-already merged — just tracking a running maximum instead of a running
-sum or product.) Register the new dict entry (search `"max": _max,`,
-add `"cummax": _cummax,` directly after it, before `"clamp": _clamp,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `cummax([1, 3, 2, 5, 4])` is `[1, 3, 3, 5, 5]` and `cummax([1.5, 1,
-  3])` is `[1.5, 1.5, 3]`.
-- `cummax([]);` is `[]` and `cummax([5]);` is `[5]` — the empty-list and
-  single-element cases.
-- `cummax([-1, -2, -3]);` is `[-1, -1, -1]` — the already-descending
-  case.
-- `cummax(123);` raises `CinderRuntimeError` matching
-  `"cummax\(\) requires a list, got int"`.
-- `cummax([1, "a"]);` raises `CinderRuntimeError` matching
-  `"cummax\(\) requires a list of numbers, got string"` (mirror `max`'s
-  own non-numeric-element test for the exact message shape).
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_max`, search `def
-_max`), `tests/test_builtins.py` (new `class TestCummax`, modeled on
-`class TestMax`, search that name, for the test shapes above — place it
-near the existing `class TestMax`). Once merged, `README.md`'s existing
-`max` bullet needs `cummax` added right after it, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 3. Standard library: `cummin` — cumulative (running) minimum of a numeric list
-
-Add a standalone list-transform builtin directly after `cummax` once
-task 2 lands (`cinder/builtins.py`, search `def _cummax`, immediately
-before `def _clamp`) — if task 2 hasn't landed yet, anchor on `_min`
-instead (search `def _min`, immediately before `def _max`) and place it
-there; either way it is the minimizing sibling of task 2's `cummax`,
-the same running-aggregate shape applied to `min` instead of `max`.
+Add a standalone list-transform builtin directly after `_cummax`
+(`cinder/builtins.py`, search `def _cummax`, immediately before `def
+_clamp`) — the minimizing sibling of the already-merged `cummax`, the
+same running-aggregate shape applied to `min` instead of `max`.
 Verify the gap:
 ```sh
 python3 -m cinder.cli eval 'print(cummin([5, 3, 4, 1, 2]));'
@@ -219,9 +41,7 @@ below):
   ordinary numeric comparison — same as `min`/`max`).
 - `cummin([3, 3, 3])` is `[3, 3, 3]`.
 
-Add directly after `_cummax` if task 2 has landed (search `def
-_cummax`), otherwise directly after `_min` (search `def _min`,
-immediately before `def _max`):
+Add directly after `_cummax` (search `def _cummax`):
 ```python
 def _cummin(arguments: list, line: int, column: int) -> object:
     _require_arity("cummin", arguments, 1, line, column)
@@ -241,13 +61,10 @@ def _cummin(arguments: list, line: int, column: int) -> object:
         result.append(running)
     return result
 ```
-(Same list-in/list-out shape as `_cummax` — search `def _cummax` if
-merged, else `_cumsum`/`_cumprod` — just tracking a running minimum
-instead.) Register the new dict entry (search `"min": _min,`, add
-`"cummin": _cummin,` directly after it if `cummax` hasn't been
-registered yet, or after `"cummax": _cummax,` if it has — either
-position is fine, both sit between `min` and `max`'s entries and
-`clamp`'s).
+(Same list-in/list-out shape as `_cummax` — search `def _cummax` —
+just tracking a running minimum instead.) Register the new dict entry
+(search `"cummax": _cummax,`, add `"cummin": _cummin,` directly after
+it, before `"clamp": _clamp,`).
 
 Acceptance criteria:
 - Every worked example above holds exactly, including
@@ -266,8 +83,8 @@ Acceptance criteria:
   line/column.
 - Full test suite passes.
 
-Likely files: `cinder/builtins.py` (directly after `_cummax`/`_min`,
-see anchor note above), `tests/test_builtins.py` (new `class
+Likely files: `cinder/builtins.py` (directly after `_cummax`, search
+`def _cummax`), `tests/test_builtins.py` (new `class
 TestCummin`, modeled on `class TestMin`, search that name, for the test
 shapes above — place it near the existing `class TestMin`/`class
 TestCummax`). Once merged, `README.md`'s existing `min` bullet needs
@@ -278,7 +95,7 @@ task.
 
 ---
 
-## 4. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
+## 2. Standard library: `longest_common_suffix` — mirror `longest_common_prefix` from the other end
 
 Add a standalone list-of-strings builtin directly after
 `_longest_common_prefix` (`cinder/builtins.py`, search `def
@@ -383,7 +200,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `diff` — successive differences of a numeric list
+## 3. Standard library: `diff` — successive differences of a numeric list
 
 Add a standalone list-transform builtin directly after `_cumsum`
 (`cinder/builtins.py`, search `def _cumsum`, immediately before `def
@@ -473,7 +290,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `midrange` — average of a numeric list's minimum and maximum
+## 4. Standard library: `midrange` — average of a numeric list's minimum and maximum
 
 Add a standalone list-statistic builtin directly after `_median`
 (`cinder/builtins.py`, search `def _median`, immediately before `def

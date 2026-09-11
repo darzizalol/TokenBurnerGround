@@ -10145,6 +10145,56 @@ class TestHarmonicMean(unittest.TestCase):
             run("harmonic_mean();")
 
 
+class TestRms(unittest.TestCase):
+    def test_rms_of_one_two_three(self):
+        result = run("let result = rms([1, 2, 3]);").get("result")
+        self.assertAlmostEqual(result, 2.160246899469287)
+
+    def test_rms_of_three_four(self):
+        result = run("let result = rms([3, 4]);").get("result")
+        self.assertAlmostEqual(result, 3.5355339059327378)
+
+    def test_rms_of_single_element_list(self):
+        result = run("let result = rms([5]);").get("result")
+        self.assertEqual(result, 5.0)
+
+    def test_rms_of_all_zero_list(self):
+        result = run("let result = rms([0, 0, 0]);").get("result")
+        self.assertEqual(result, 0.0)
+
+    def test_rms_of_negative_elements_does_not_raise(self):
+        result = run("let result = rms([-3, 3]);").get("result")
+        self.assertEqual(result, 3.0)
+
+    def test_rms_qm_am_inequality(self):
+        results = run(
+            "let r = rms([1, 2, 4]);"
+            "let m = mean([1, 2, 4]);"
+        )
+        self.assertGreaterEqual(results.get("r"), results.get("m"))
+
+    def test_rms_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("rms([]);")
+        self.assertIn("rms() requires a non-empty list", ctx.exception.message)
+
+    def test_rms_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('rms([1, "a"]);')
+        self.assertIn(
+            "rms() requires a list of numbers, got string", ctx.exception.message
+        )
+
+    def test_rms_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("rms(123);")
+        self.assertIn("rms() requires a list, got int", ctx.exception.message)
+
+    def test_rms_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("rms();")
+
+
 class TestMedian(unittest.TestCase):
     def test_median_of_odd_length_list(self):
         result = run("let result = median([1, 3, 2]);").get("result")

@@ -14,7 +14,7 @@ from contextlib import redirect_stdout
 
 from cinder.builtins import create_global_environment
 from cinder.errors import CinderRuntimeError
-from cinder.interpreter import Environment, Interpreter
+from cinder.interpreter import CinderSet, Environment, Interpreter
 from cinder.lexer import tokenize
 from cinder.parser import parse_program
 
@@ -10911,6 +10911,53 @@ class TestIsSubsetIsSuperset(unittest.TestCase):
             run("is_disjoint([1]);")
         with self.assertRaises(CinderRuntimeError):
             run("is_disjoint([1], [2], [3]);")
+
+
+class TestToSet(unittest.TestCase):
+    def test_to_set_dedupes_elements(self):
+        result = run("let result = to_set([1, 2, 2, 3]);").get("result")
+        self.assertIsInstance(result, CinderSet)
+        self.assertEqual(dict(result), {1: True, 2: True, 3: True})
+
+    def test_to_set_empty_list_is_empty_set(self):
+        result = run("let result = to_set([]);").get("result")
+        self.assertIsInstance(result, CinderSet)
+        self.assertEqual(dict(result), {})
+        self.assertEqual(run("let result = len(to_set([]));").get("result"), 0)
+        self.assertIs(
+            run("let result = to_set([]) == to_set([]);").get("result"), True
+        )
+
+    def test_to_set_mixed_type_dedup(self):
+        result = run('let result = to_set([1, "a", 1, "a"]);').get("result")
+        self.assertEqual(dict(result), {1: True, "a": True})
+
+    def test_to_set_stringifies_in_first_seen_order(self):
+        self.assertEqual(
+            run("let result = str(to_set([3, 1, 2, 1]));").get("result"),
+            "{3, 1, 2}",
+        )
+
+    def test_to_set_invalid_list_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("to_set([[1, 2]]);")
+        self.assertIn("list is not a valid set element", ctx.exception.message)
+
+    def test_to_set_invalid_map_element_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('to_set([{"a": 1}]);')
+        self.assertIn("map is not a valid set element", ctx.exception.message)
+
+    def test_to_set_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("to_set(5);")
+        self.assertIn("to_set() requires a list, got int", ctx.exception.message)
+
+    def test_to_set_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("to_set();")
+        with self.assertRaises(CinderRuntimeError):
+            run("to_set([1], [2]);")
 
 
 class TestInterleave(unittest.TestCase):

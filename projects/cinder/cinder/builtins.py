@@ -4426,6 +4426,23 @@ def _is_disjoint(arguments: list, line: int, column: int) -> object:
     return not any(_contains_value(list2, element) for element in list1)
 
 
+def _to_set(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_set", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"to_set() requires a list, got {type_name(value)}", line, column
+        )
+    result = CinderSet()
+    for element in value:
+        if not _is_valid_key(element):
+            raise CinderRuntimeError(
+                f"{type_name(element)} is not a valid set element", line, column
+            )
+        result[element] = True
+    return result
+
+
 def _interleave(arguments: list, line: int, column: int) -> object:
     list1, list2 = _require_two_lists("interleave", arguments, line, column)
     result = []
@@ -5985,6 +6002,7 @@ _BUILTINS = {
     "is_subset": _is_subset,
     "is_superset": _is_superset,
     "is_disjoint": _is_disjoint,
+    "to_set": _to_set,
     "interleave": _interleave,
     "interpose": _interpose,
     "reverse": _reverse,

@@ -705,7 +705,9 @@ class Interpreter:
                 keywords[arg.name] = self.evaluate(arg.value, env)
             elif isinstance(arg, Spread):
                 value = self.evaluate(arg.expression, env)
-                if isinstance(value, dict):
+                if isinstance(value, CinderSet):
+                    positional.extend(value.keys())
+                elif isinstance(value, dict):
                     for key, entry_value in value.items():
                         if not isinstance(key, str):
                             raise CinderRuntimeError(
@@ -744,13 +746,16 @@ class Interpreter:
         for element in expr.elements:
             if isinstance(element, Spread):
                 value = self.evaluate(element.expression, env)
-                if not isinstance(value, list):
+                if isinstance(value, CinderSet):
+                    result.extend(value.keys())
+                elif isinstance(value, list):
+                    result.extend(value)
+                else:
                     raise CinderRuntimeError(
                         f"cannot spread {type_name(value)} in a list literal",
                         element.line,
                         element.column,
                     )
-                result.extend(value)
             else:
                 result.append(self.evaluate(element, env))
         return result
@@ -808,6 +813,12 @@ class Interpreter:
         for entry in expr.pairs:
             if isinstance(entry, Spread):
                 value = self.evaluate(entry.expression, env)
+                if isinstance(value, CinderSet):
+                    raise CinderRuntimeError(
+                        "cannot spread set in a map literal",
+                        entry.line,
+                        entry.column,
+                    )
                 if not isinstance(value, dict):
                     raise CinderRuntimeError(
                         f"cannot spread {type_name(value)} in a map literal",

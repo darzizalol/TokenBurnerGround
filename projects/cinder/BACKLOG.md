@@ -100,7 +100,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `cummax` — cumulative (running) maximum of a numeric list
+## 2. Standard library: `cummax` — cumulative (running) maximum of a numeric list [claimed 2026-09-11T14:03:27Z]
 
 Add a standalone list-transform builtin directly after `_max`
 (`cinder/builtins.py`, search `def _max`, immediately before `def

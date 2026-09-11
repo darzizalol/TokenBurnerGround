@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `midrange` — average of a numeric list's minimum and maximum
+## 1. Standard library: `midrange` — average of a numeric list's minimum and maximum [claimed 2026-09-11T19:58:35Z]
 
 Add a standalone list-statistic builtin directly after `_median`
 (`cinder/builtins.py`, search `def _median`, immediately before `def

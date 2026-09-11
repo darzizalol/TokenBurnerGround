@@ -3572,6 +3572,25 @@ def _max(arguments: list, line: int, column: int) -> object:
     return max(arguments)
 
 
+def _cummax(arguments: list, line: int, column: int) -> object:
+    _require_arity("cummax", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"cummax() requires a list, got {type_name(value)}", line, column
+        )
+    result = []
+    running = None
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"cummax() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        running = element if running is None else max(running, element)
+        result.append(running)
+    return result
+
+
 def _clamp(arguments: list, line: int, column: int) -> object:
     _require_arity("clamp", arguments, 3, line, column)
     n, lo, hi = arguments
@@ -5805,6 +5824,7 @@ _BUILTINS = {
     "is_amicable": _is_amicable,
     "min": _min,
     "max": _max,
+    "cummax": _cummax,
     "clamp": _clamp,
     "lerp": _lerp,
     "round": _round,

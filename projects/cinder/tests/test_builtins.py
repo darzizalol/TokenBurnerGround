@@ -9049,6 +9049,49 @@ class TestMax(unittest.TestCase):
         self.assertEqual(run("let result = max(...[3, 1, 2]);").get("result"), 3)
 
 
+class TestCummax(unittest.TestCase):
+    def test_cummax_of_ints(self):
+        result = run("let result = cummax([1, 3, 2, 5, 4]);").get("result")
+        self.assertEqual(result, [1, 3, 3, 5, 5])
+
+    def test_cummax_of_empty_list(self):
+        result = run("let result = cummax([]);").get("result")
+        self.assertEqual(result, [])
+
+    def test_cummax_of_single_element(self):
+        result = run("let result = cummax([5]);").get("result")
+        self.assertEqual(result, [5])
+
+    def test_cummax_of_descending_list(self):
+        result = run("let result = cummax([-1, -2, -3]);").get("result")
+        self.assertEqual(result, [-1, -1, -1])
+
+    def test_cummax_with_a_float_promotes(self):
+        result = run("let result = cummax([1.5, 1, 3]);").get("result")
+        self.assertEqual(result, [1.5, 1.5, 3])
+
+    def test_cummax_of_constant_list(self):
+        result = run("let result = cummax([3, 3, 3]);").get("result")
+        self.assertEqual(result, [3, 3, 3])
+
+    def test_cummax_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cummax\(\) requires a list, got int"
+        ):
+            run("cummax(123);")
+
+    def test_cummax_of_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError, r"cummax\(\) requires a list of numbers, got string"
+        ):
+            run('cummax([1, "a"]);')
+
+    def test_cummax_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("cummax([1, 2], 3);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestClamp(unittest.TestCase):
     def test_clamp_already_in_range(self):
         self.assertEqual(run("let result = clamp(5, 0, 10);").get("result"), 5)

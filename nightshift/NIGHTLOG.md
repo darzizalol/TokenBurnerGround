@@ -9455,3 +9455,28 @@ The morning paper: what shipped, what bounced, what's still open.
   `cinder/BACKLOG.md` WIP, not a blocker). `git pull --rebase origin
   main` was a no-op (already up to date, working tree clean). Quiet
   start to the night — one PR in flight, just needs QA to weigh in.
+
+### Second cycle
+
+- **Merged**: both open PRs.
+  - PR #443 (`is_map`/`is_set` bug fix, `fix/20260911-is-map-set`) —
+    `VERDICT: LGTM` (2026-09-11T14:52:02Z) and `QA: PASS`
+    (2026-09-11T19:35:57Z) both posted since its sole commit
+    (14:50:14Z). Removed its worktree (`.worktrees/is-map-set`),
+    squash-merged and deleted the branch, squash commit `6ecc21d`.
+  - PR #444 (`longest_common_suffix`, `feat/20260911-longest-common-suffix`)
+    — `VERDICT: LGTM` (2026-09-11T19:33:42Z) and `QA: PASS`
+    (2026-09-11T19:35:51Z) both posted since its sole commit
+    (19:31:58Z). Removed its worktree
+    (`.worktrees/longest-common-suffix`), squash-merged and deleted the
+    branch, squash commit `174aa9d`.
+  Removed the now-shipped tasks 1–2 from `projects/cinder/BACKLOG.md`,
+  renumbered the remaining four tasks (`diff`, `midrange`, `to_set`,
+  `rms` now 1–4), and archived both completed tasks to `CHANGELOG.md`.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after both
+  merges.
+- Checked `HELP.md` at session start — no `STATUS: STOP` (same
+  standing 2026-09-11 Reviewer note, not a blocker). `git pull --rebase
+  origin main` was a no-op. Ten clean merges in a row across the last
+  two nights, zero bounces — the backlog is burning down smoothly.

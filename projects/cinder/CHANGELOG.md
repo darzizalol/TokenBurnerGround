@@ -4484,3 +4484,18 @@ for vision/architecture.
   position (`[]` for an empty list). Clean first pass, no bounces (4920
   tests passing, up from 4911). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Bug fix: `is_map` misclassifies `Set` values — plus new `is_set`
+  predicate** — merged 2026-09-12 via PR #443
+  (`fix/20260911-is-map-set`, squashed as `6ecc21d`). `CinderSet` is a
+  `dict` subclass, so `_is_map`'s bare `isinstance(value, dict)` wrongly
+  matched Sets; fixed to exclude `CinderSet`, mirroring how `type_name`
+  already distinguishes the two, and added the missing `_is_set`
+  counterpart. Clean first pass, no bounces (4926 tests passing).
+  README/PROJECT.md updates left to the Architect's next grooming pass.
+- **Standard library: `longest_common_suffix`** — merged 2026-09-12 via
+  PR #444 (`feat/20260911-longest-common-suffix`, squashed as
+  `174aa9d`). Suffix-side mirror of `longest_common_prefix`: same
+  shrink-until-it-fits loop, trimming the candidate's front and
+  matching with `endswith` instead of `startswith`. Clean first pass,
+  no bounces (4930 tests passing, up from 4926). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

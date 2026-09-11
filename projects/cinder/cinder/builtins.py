@@ -4068,6 +4068,25 @@ def _harmonic_mean(arguments: list, line: int, column: int) -> object:
     return len(value) / reciprocal_sum
 
 
+def _rms(arguments: list, line: int, column: int) -> object:
+    _require_arity("rms", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"rms() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("rms() requires a non-empty list", line, column)
+    squared_total = 0
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"rms() requires a list of numbers, got {type_name(element)}", line, column
+            )
+        squared_total = squared_total + element ** 2
+    return math.sqrt(squared_total / len(value))
+
+
 def _median(arguments: list, line: int, column: int) -> object:
     _require_arity("median", arguments, 1, line, column)
     value = arguments[0]
@@ -5976,6 +5995,7 @@ _BUILTINS = {
     "mean": _mean,
     "geometric_mean": _geometric_mean,
     "harmonic_mean": _harmonic_mean,
+    "rms": _rms,
     "median": _median,
     "midrange": _midrange,
     "variance": _variance,

@@ -4549,6 +4549,13 @@ class TestSpreadCallArguments(unittest.TestCase):
         self.assertIn("cannot spread", str(ctx.exception))
         self.assertIn("a function call", str(ctx.exception))
 
+    def test_spread_set_as_positional_arguments(self):
+        env = run(
+            "fn f(a, b, c) { return a + b + c; } "
+            "let result = f(...{1, 2, 3});"
+        )
+        self.assertEqual(env.get("result"), 6)
+
     def test_spread_wrong_argument_count_hits_arity_check(self):
         with self.assertRaises(CinderRuntimeError) as ctx:
             run("fn f(a, b, c) { return a + b + c; } f(...[1]);")
@@ -4758,6 +4765,15 @@ class TestListsAndMaps(unittest.TestCase):
     def test_spread_of_empty_list(self):
         self.assertEqual(evaluate("[...[]]"), [])
 
+    def test_list_literal_with_set_spread(self):
+        self.assertEqual(evaluate("[...{1, 2, 3}]"), [1, 2, 3])
+
+    def test_list_literal_multiple_set_spreads_compose_with_other_elements(self):
+        self.assertEqual(evaluate("[0, ...{1, 2}, 3, ...{4, 5}]"), [0, 1, 2, 3, 4, 5])
+
+    def test_list_literal_set_spread_composes_with_list_spread(self):
+        self.assertEqual(evaluate("[...{1, 2}, ...[3, 4]]"), [1, 2, 3, 4])
+
     def test_spreading_non_list_raises(self):
         with self.assertRaises(CinderRuntimeError) as ctx:
             evaluate("[...5]")
@@ -4795,6 +4811,11 @@ class TestListsAndMaps(unittest.TestCase):
         with self.assertRaises(CinderRuntimeError) as ctx:
             evaluate("{...5}")
         self.assertIn("cannot spread", str(ctx.exception))
+
+    def test_map_literal_spreading_set_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            evaluate("{...{1, 2, 3}}")
+        self.assertIn("cannot spread set in a map literal", str(ctx.exception))
 
     def test_map_literal_mixed_spreads_and_keys_strict_last_write_wins(self):
         self.assertEqual(

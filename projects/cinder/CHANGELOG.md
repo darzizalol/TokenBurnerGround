@@ -4551,3 +4551,13 @@ for vision/architecture.
   its own variance. Clean first pass, no bounces (4992 tests passing,
   up from 4981). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `correlation` — Pearson correlation coefficient
+  of two equal-length numeric lists** — merged 2026-09-12T14:44:19Z via
+  PR #451 (`feat/20260912-correlation`, squashed as `57af271`).
+  Normalized sibling of `covariance`: divides covariance by the product
+  of both lists' standard deviations, reusing `_covariance` and
+  `_population_variance` directly so the arithmetic can't drift apart.
+  Zero standard deviation on either side raises, same as `covariance`'s
+  other guards. Clean first pass, no bounces (5004 tests passing, up
+  from 4992). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

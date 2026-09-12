@@ -11,135 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists [claimed 2026-09-12T14:39:23Z]
-
-Add a standalone two-list numeric-statistic builtin directly after
-`_covariance` (`cinder/builtins.py` — `_covariance` landed via PR #450
-and sits directly after `_dot_product`, immediately before `_mode`;
-add `_correlation` directly after `_covariance`, still before `_mode`)
-— the normalized sibling of `covariance`: dividing covariance by the
-product of both lists' standard deviations rescales it to always fall
-in `[-1, 1]`, independent of the lists' units. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(correlation([1, 2, 3], [4, 5, 6]));'
-# -> <eval>:1:7: undefined name 'correlation' (did you mean 'covariance'?)
-```
-
-**What it does.** Given two non-empty numeric lists of equal length,
-return `covariance(x, y) / (std_dev(x) * std_dev(y))` — the Pearson
-correlation coefficient (reusing `_covariance` from task 1 and the
-existing `_population_variance`/`math.sqrt` shape `_std_dev` already
-uses for the denominator). `std_dev` of a single-element or constant
-list is `0` (same fact `zscore`'s task writeup above relied on), which
-would divide by zero, so those two shapes raise instead of computing —
-exactly the same guard `zscore` already added for the same underlying
-reason.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `correlation([1, 2, 3], [4, 5, 6])` is `1.0` — one list is an exact
-  increasing linear function of the other, perfect positive
-  correlation.
-- `correlation([1, 2, 3], [6, 5, 4])` is `-1.0` — an exact decreasing
-  linear function, perfect negative correlation.
-- `correlation([1, 2, 3], [1, 2, 3])` is `1.0` — a list is always
-  perfectly correlated with itself.
-- `correlation([1, 2, 3, 4], [2, 4, 5, 4])` is `0.7181848464596078` —
-  a non-perfect case: covariance `0.875`, `std_dev` of the two lists
-  `1.118033988749895` and `1.0897247358851685`.
-- `correlation([1, 2, 3, 4], [10, 10, 10, 10]);` raises
-  `CinderRuntimeError` — the second list is constant, `std_dev` is
-  `0`, correlation is undefined (division by zero).
-- `correlation([5], [5]);` raises `CinderRuntimeError` — single-element
-  lists, `std_dev` is `0` on both sides.
-- `correlation([], []);` raises `CinderRuntimeError` — empty lists, no
-  elements to average (same reason `covariance` rejects them).
-- `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` —
-  unequal lengths, mirroring `covariance`'s own length check.
-
-Add directly after `_covariance` (search `def _covariance`, add
-`_correlation` immediately after it, still before `def _mode`):
-```python
-def _correlation(arguments: list, line: int, column: int) -> object:
-    _require_arity("correlation", arguments, 2, line, column)
-    first, second = arguments
-    if not isinstance(first, list):
-        raise CinderRuntimeError(
-            f"correlation() requires a list as its first argument, got {type_name(first)}",
-            line, column,
-        )
-    if not isinstance(second, list):
-        raise CinderRuntimeError(
-            f"correlation() requires a list as its second argument, got {type_name(second)}",
-            line, column,
-        )
-    for element in first + second:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"correlation() requires lists of numbers, got {type_name(element)}",
-                line, column,
-            )
-    if len(first) != len(second):
-        raise CinderRuntimeError(
-            f"correlation() requires lists of equal length, got lengths {len(first)} and {len(second)}",
-            line, column,
-        )
-    if not first:
-        raise CinderRuntimeError("correlation() requires non-empty lists", line, column)
-    first_deviation = math.sqrt(_population_variance(first))
-    second_deviation = math.sqrt(_population_variance(second))
-    if first_deviation == 0 or second_deviation == 0:
-        raise CinderRuntimeError(
-            "correlation() requires lists with non-zero standard deviation", line, column
-        )
-    covariance_value = _covariance(arguments, line, column)
-    return covariance_value / (first_deviation * second_deviation)
-```
-(Calls `_covariance` directly rather than re-deriving the mean-of-products
-sum, so the two builtins' arithmetic can't drift apart; reuses
-`_population_variance` — search `def _population_variance` — the same
-private helper `variance`/`std_dev`/`zscore` already share.) Register
-the new dict entry (search `"covariance": _covariance,`, add
-`"correlation": _correlation,` directly after it, before `"mode":
-_mode,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `correlation([1, 2, 3], [4, 5, 6])` is `1.0`,
-  `correlation([1, 2, 3], [6, 5, 4])` is `-1.0`, and
-  `correlation([1, 2, 3, 4], [2, 4, 5, 4])` is `0.7181848464596078`.
-- `correlation([1, 2, 3], [1, 2, 3])` is `1.0`.
-- `correlation([1, 2, 3, 4], [10, 10, 10, 10]);` and
-  `correlation([5], [5]);` both raise `CinderRuntimeError` matching
-  `"correlation\(\) requires lists with non-zero standard deviation"`.
-- `correlation([], []);` raises `CinderRuntimeError` matching
-  `"correlation\(\) requires non-empty lists"`.
-- `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` matching
-  `"correlation\(\) requires lists of equal length, got lengths 2 and
-  3"`.
-- `correlation(5, [1, 2]);` raises `CinderRuntimeError` matching
-  `"correlation\(\) requires a list as its first argument, got int"`
-  (and the mirrored message for a bad second argument).
-- `correlation([1, "a"], [1, 2]);` raises `CinderRuntimeError` matching
-  `"correlation\(\) requires lists of numbers, got string"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_covariance`, once
-task 1 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
-modeled on `class TestDotProduct`/the eventual `class TestCovariance`
-from task 1, search either name, for the test shapes above — place it
-near the existing `class TestDotProduct`). Once merged, `README.md`'s
-builtins quick-reference list (search `dot_product`, `covariance` will
-sit right after it once task 1 lands) needs `correlation` added right
-after `covariance`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
+## 1. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
 
 Add a standalone two-list builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before
@@ -236,7 +108,7 @@ not this task.
 
 ---
 
-## 3. Standard library: `median_absolute_deviation` — median-based measure of dispersion
+## 2. Standard library: `median_absolute_deviation` — median-based measure of dispersion
 
 Add a standalone list-transform-shaped statistic builtin directly
 after `_median` (`cinder/builtins.py`, search `def _median`,
@@ -344,7 +216,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_perfect_number` — the k-th perfect number
+## 3. Standard library: `nth_perfect_number` — the k-th perfect number
 
 Add directly after `_is_perfect_number` (`cinder/builtins.py`, search
 `def _is_perfect_number`, immediately before `def
@@ -461,11 +333,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_weird_number` — the k-th weird number
+## 4. Standard library: `nth_weird_number` — the k-th weird number
 
 Add directly after `_is_weird_number` (`cinder/builtins.py`, search
 `def _is_weird_number`, immediately before `def _is_semiperfect`) —
-the same value-returning-sibling gap task 4 above closes for
+the same value-returning-sibling gap task 3 above closes for
 `is_perfect_number`, here for `is_weird_number` (abundant but not
 semiperfect — no subset of its proper divisors sums to it exactly).
 Verify the gap:
@@ -479,7 +351,7 @@ weird number (1-indexed) — a positive integer whose proper divisors
 sum to more than itself (abundant) but no subset of them sums to it
 exactly (not semiperfect) — the same condition `_is_weird_number`
 already checks, applied here as a sequential scan exactly like
-`_nth_semiperfect` already does for its own predicate. Unlike task 4's
+`_nth_semiperfect` already does for its own predicate. Unlike task 3's
 perfect numbers, weird numbers are dense enough close to their start
 for a sequential scan to stay fast well past `k = 6` — the first six
 are `70`, `836`, `4030`, `5830`, `7192`, `7912`, all comfortably small.
@@ -539,7 +411,7 @@ def _nth_weird_number(arguments: list, line: int, column: int) -> object:
 (`_is_weird_candidate` mirrors `_is_weird_number`'s own
 divisor-collection-then-subset-sum-reachability logic exactly, so the
 two functions' notion of "weird" can't silently drift apart — same
-reuse-the-sibling-predicate's-exact-logic discipline task 4 above uses
+reuse-the-sibling-predicate's-exact-logic discipline task 3 above uses
 for `_is_perfect_number`.) Register the new dict entry (search
 `"is_weird_number": _is_weird_number,`, add `"nth_weird_number":
 _nth_weird_number,` directly after it, before `"is_semiperfect":
@@ -572,11 +444,11 @@ not this task.
 
 ---
 
-## 6. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
+## 5. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same
-value-returning-sibling gap tasks 4 and 5 above close for
+value-returning-sibling gap tasks 3 and 4 above close for
 `is_perfect_number`/`is_weird_number`, here for `is_armstrong`: a
 positive integer equal to the sum of its own digits each raised to the
 power of the digit count (`153 = 1^3 + 5^3 + 3^3`). Verify the gap:
@@ -589,7 +461,7 @@ python3 -m cinder.cli eval 'print(nth_armstrong(1));'
 Armstrong number (1-indexed, starting from `0`) — the same condition
 `_is_armstrong` already checks, applied here as a sequential scan
 exactly like `_nth_perfect_number`/`_nth_weird_number` already do for
-their own predicates. Unlike task 4's perfect numbers, Armstrong
+their own predicates. Unlike task 3's perfect numbers, Armstrong
 numbers are cheap to test (a digit-sum-of-powers check, not trial
 division) and stay dense enough through this task's range for a plain
 scan to finish instantly — the single-digit numbers `0`-`9` are all
@@ -642,7 +514,7 @@ def _nth_armstrong(arguments: list, line: int, column: int) -> object:
 check exactly — including counting `0` as the first Armstrong number,
 same as `_is_armstrong(0)` already returns `True` — so the two
 functions' notion of "Armstrong" can't silently drift apart; same
-reuse-the-sibling-predicate's-exact-logic discipline tasks 4/5 above
+reuse-the-sibling-predicate's-exact-logic discipline tasks 3/4 above
 use for `_is_perfect_number`/`_is_weird_number`. Starts `candidate` at
 `-1`, one below `_is_perfect_number`/`_is_weird_number`'s starting
 point of `0`, since `0` itself is a valid Armstrong number here and
@@ -668,7 +540,7 @@ Acceptance criteria:
 Likely files: `cinder/builtins.py` (directly after `_is_armstrong`,
 search `def _is_armstrong`), `tests/test_builtins.py` (new `class
 TestNthArmstrong`, modeled on `class TestNthPerfectNumber`/`class
-TestNthWeirdNumber` from tasks 4/5 above, search either name, for the
+TestNthWeirdNumber` from tasks 3/4 above, search either name, for the
 test shapes above — place it near the existing `class
 TestIsArmstrong`). Once merged, `README.md`'s builtins quick-reference
 list (search `is_armstrong`) needs `nth_armstrong` added right after

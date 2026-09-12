@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number [claimed 2026-09-12T19:56:19Z]
+## 1. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number [claimed 2026-09-12T19:56:19Z, bounced once on QA — see note below]
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same
@@ -24,6 +24,29 @@ power of the digit count (`153 = 1^3 + 5^3 + 3^3`). Verify the gap:
 python3 -m cinder.cli eval 'print(nth_armstrong(1));'
 # -> <eval>:1:7: undefined name 'nth_armstrong' (did you mean 'is_armstrong'?)
 ```
+
+**QA finding on PR #456 (open, one bounce so far):** the straightforward
+linear-scan implementation originally suggested below (still shown
+first, for context) passed review and the tested worked examples
+(`k <= 15`) but got `QA: FAIL` — Armstrong numbers thin out fast per
+digit length (most digit-lengths have zero of them), so incrementing
+candidate-by-candidate degrades badly once `k` grows: `nth_armstrong(25)`
+took 11.6s and `nth_armstrong(30)` didn't finish in a 15s timeout, well
+within the function's documented domain of "any positive integer, no
+upper bound." The fix below (verified directly in Python against the
+QA-reported values) generates candidates per digit-length from digit
+*multisets* (`itertools.combinations_with_replacement`, already imported
+in this module) instead of scanning every integer — this shrinks the
+search from "every integer up to the answer" to "every combination of
+`length` digits," which is astronomically smaller (e.g. length 8 is
+`C(17, 9) = 24310` combinations, not `10^8` integers) while still
+reusing `_is_armstrong_candidate` as the authoritative check, so the two
+functions' notion of "Armstrong" still can't drift apart. Confirmed:
+`nth_armstrong(25)` still returns `9926315` (matching QA's own number,
+now in well under a second) and `nth_armstrong(30)` returns
+`472335975` in ~0.2s instead of timing out. The next Engineer session
+reworking PR #456 should replace the implementation with this one
+rather than patching the linear scan.
 
 **What it does.** Given a positive integer `k`, return the `k`-th
 Armstrong number (1-indexed, starting from `0`) — the same condition
@@ -55,7 +78,9 @@ below):
 - `nth_armstrong("a");` raises `CinderRuntimeError` — not an int.
 
 Add directly after `_is_armstrong` (search `def _is_armstrong`,
-immediately before `def _is_disarium`):
+immediately before `def _is_disarium`) — this is the fixed version; see
+the QA note above for why the original plain-scan version (kept out of
+this spec now) isn't good enough:
 ```python
 def _nth_armstrong(arguments: list, line: int, column: int) -> object:
     _require_arity("nth_armstrong", arguments, 1, line, column)
@@ -70,13 +95,24 @@ def _nth_armstrong(arguments: list, line: int, column: int) -> object:
         power = len(digits)
         return sum(int(digit) ** power for digit in digits) == candidate
 
+    def _armstrong_numbers_with_digit_count(length: int) -> list:
+        lower = 0 if length == 1 else 10 ** (length - 1)
+        upper = 10 ** length - 1
+        found = set()
+        for combo in itertools.combinations_with_replacement(range(10), length):
+            power_sum = sum(digit ** length for digit in combo)
+            if lower <= power_sum <= upper and _is_armstrong_candidate(power_sum):
+                found.add(power_sum)
+        return sorted(found)
+
     count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_armstrong_candidate(candidate):
+    length = 1
+    while True:
+        for candidate in _armstrong_numbers_with_digit_count(length):
             count += 1
-    return candidate
+            if count == value:
+                return candidate
+        length += 1
 ```
 (`_is_armstrong_candidate` mirrors `_is_armstrong`'s own digit-power-sum
 check exactly — including counting `0` as the first Armstrong number,
@@ -84,11 +120,14 @@ same as `_is_armstrong(0)` already returns `True` — so the two
 functions' notion of "Armstrong" can't silently drift apart; same
 reuse-the-sibling-predicate's-exact-logic discipline `_nth_perfect_number`
 and `_nth_weird_number` (both shipped) use for
-`_is_perfect_number`/`_is_weird_number`. Starts `candidate` at
-`-1`, one below `_is_perfect_number`/`_is_weird_number`'s starting
-point of `0`, since `0` itself is a valid Armstrong number here and
-must be reachable as `nth_armstrong(1)`.) Register the new dict entry
-(search `"is_armstrong": _is_armstrong,`, add `"nth_armstrong":
+`_is_perfect_number`/`_is_weird_number`. Every candidate this generates
+is still verified through `_is_armstrong_candidate` before being
+counted — the multiset generation only changes *which integers get
+tested*, not the definition of "Armstrong" itself, and the `set()`
+guards against the same power sum theoretically being reachable from
+more than one digit combination. `itertools` is already imported at the
+top of this module, used by other builtins.) Register the new dict
+entry (search `"is_armstrong": _is_armstrong,`, add `"nth_armstrong":
 _nth_armstrong,` directly after it, before `"is_disarium":
 _is_disarium,`).
 
@@ -104,6 +143,13 @@ Acceptance criteria:
   got (float|string)"`.
 - Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
   line/column.
+- **Performance (added after PR #456's QA bounce):** `nth_armstrong(30)`
+  must return `472335975` in well under a second, and `nth_armstrong(25)`
+  must return `9926315` — both trivial for the digit-multiset
+  implementation above, both the exact cases that timed out (`30`) or
+  took 11.6s (`25`) under the original plain-scan version. Add a test
+  asserting `nth_armstrong(30)` specifically, so a future regression
+  back to a linear scan gets caught by the test suite, not QA.
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (directly after `_is_armstrong`,

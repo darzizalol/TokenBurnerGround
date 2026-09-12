@@ -2623,6 +2623,35 @@ def _is_perfect_number(arguments: list, line: int, column: int) -> object:
     return total == value
 
 
+def _nth_perfect_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_perfect_number", arguments, 1, line, column)
+    value = _require_int("nth_perfect_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_perfect_number() requires a positive integer, domain error", line, column
+        )
+
+    def _is_perfect_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        total = 1
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                total += divisor
+                complement = candidate // divisor
+                if complement != divisor and complement != candidate:
+                    total += complement
+        return total == candidate
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_perfect_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_practical_number(arguments: list, line: int, column: int) -> object:
     _require_arity("is_practical_number", arguments, 1, line, column)
     value = _require_int("is_practical_number", arguments[0], line, column)
@@ -6048,6 +6077,7 @@ _BUILTINS = {
     "is_leap_year": _is_leap_year,
     "nth_leap_year": _nth_leap_year,
     "is_perfect_number": _is_perfect_number,
+    "nth_perfect_number": _nth_perfect_number,
     "is_practical_number": _is_practical_number,
     "nth_practical_number": _nth_practical_number,
     "is_abundant": _is_abundant,

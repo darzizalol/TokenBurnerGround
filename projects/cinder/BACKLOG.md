@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance
+## 1. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance [claimed 2026-09-12T14:04:52Z]
 
 Add a standalone list-transform builtin directly after `_std_dev`
 (`cinder/builtins.py`, search `def _std_dev`, immediately before `def

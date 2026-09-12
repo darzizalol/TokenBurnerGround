@@ -119,7 +119,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 2. Standard library: `nth_perfect_number` — the k-th perfect number
+## 2. Standard library: `nth_perfect_number` — the k-th perfect number [claimed 2026-09-12T19:16:17Z]
 
 Add directly after `_is_perfect_number` (`cinder/builtins.py`, search
 `def _is_perfect_number`, immediately before `def

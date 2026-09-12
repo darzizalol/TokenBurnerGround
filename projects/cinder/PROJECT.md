@@ -149,8 +149,13 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4992 tests passing locally as of `#450`). Most
-recently landed: `#450` `covariance` (the two-list generalization of
+`main` is green (5004 tests passing locally as of `#451`). Most
+recently landed: `#451` `correlation` (the normalized sibling of
+`covariance` — divides it by the product of both lists' standard
+deviations to rescale into `[-1, 1]`, reusing `_covariance` and
+`_population_variance` directly so the arithmetic can't drift apart;
+zero standard deviation on either side raises, same as `covariance`'s
+other guards), `#450` `covariance` (the two-list generalization of
 `variance` — combines `dot_product`'s equal-length two-list validation
 with `variance`'s non-empty-list requirement, sitting next to
 `dot_product`; covariance of a list with itself equals its own
@@ -161,49 +166,45 @@ rather than another single-number reduction, reusing the same
 (the quadratic mean completing the `mean`/`geometric_mean`/
 `harmonic_mean` trio of Pythagorean means), `#447` `to_set` (converting
 a list into an actual `Set` runtime value — the last Set-completion
-gap now that `is_set` covers the type-check side), `#446` `midrange`
-(a third measure of central tendency next to `mean`/`median` — the
-average of a list's minimum and maximum) — see `CHANGELOG.md` for the
-full merge history, newest first.
+gap now that `is_set` covers the type-check side) — see `CHANGELOG.md`
+for the full merge history, newest first.
 
-Queue (`BACKLOG.md`, six tasks): `correlation` (task 1, the normalized
-sibling of `covariance` — divides it by the product of both lists'
-standard deviations to rescale into `[-1, 1]`, reusing `_covariance`
-directly so the two builtins' arithmetic can't drift apart),
-`jaccard_similarity` (task 2, the one member missing from the
-lists-as-sets family — `union`/`intersection`/`difference`/
-`symmetric_difference`/`is_subset`/`is_superset`/`is_disjoint` — that
-reduces two lists to a single similarity ratio instead of another
-list, reusing `_union`/`_intersection` directly), `median_absolute_deviation`
-(task 3, the median-based dispersion measure sitting next to
-`median`/`midrange` — reuses `_median` for both the center and the
-final reduction over absolute deviations, and unlike `variance`/
-`std_dev` is robust to outliers since it never squares anything),
-`nth_perfect_number` (task 4, the value-returning sibling every other
-divisor-sum classification predicate already has — `is_abundant`/
-`nth_abundant`, `is_deficient`/`nth_deficient`, `is_practical_number`/
-`nth_practical_number`, `is_semiperfect`/`nth_semiperfect` — the one
-gap being that perfect numbers get sparse fast, so the task caps
-tests at `k <= 4`, the fifth already being `33550336`), `nth_weird_number`
-(task 5, the same value-returning-sibling gap for `is_weird_number`,
-dense enough near its start — `70`, `836`, `4030`, `5830`, `7192`,
-`7912` — to stay test-friendly well past `k = 6`), and, newly added
-this pass, `nth_armstrong` (task 6, the same value-returning-sibling
+Queue (`BACKLOG.md`, five tasks): `jaccard_similarity` (task 1, the one
+member missing from the lists-as-sets family — `union`/`intersection`/
+`difference`/`symmetric_difference`/`is_subset`/`is_superset`/
+`is_disjoint` — that reduces two lists to a single similarity ratio
+instead of another list, reusing `_union`/`_intersection` directly),
+`median_absolute_deviation` (task 2, the median-based dispersion
+measure sitting next to `median`/`midrange` — reuses `_median` for
+both the center and the final reduction over absolute deviations, and
+unlike `variance`/`std_dev` is robust to outliers since it never
+squares anything), `nth_perfect_number` (task 3, the value-returning
+sibling every other divisor-sum classification predicate already has —
+`is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
+`is_practical_number`/`nth_practical_number`, `is_semiperfect`/
+`nth_semiperfect` — the one gap being that perfect numbers get sparse
+fast, so the task caps tests at `k <= 4`, the fifth already being
+`33550336`), `nth_weird_number` (task 4, the same value-returning-sibling
+gap for `is_weird_number`, dense enough near its start — `70`, `836`,
+`4030`, `5830`, `7192`, `7912` — to stay test-friendly well past
+`k = 6`), and `nth_armstrong` (task 5, the same value-returning-sibling
 gap again, this time for `is_armstrong` — cheap to test since each
 candidate check is a digit-power-sum, not trial division, and the
-sequence stays dense enough to cap tests at `k <= 15`, `1634`, rather
-than `k <= 4`/`6` like the two `nth_X` tasks before it).
+sequence stays dense enough to cap tests at `k <= 15`, `1634`).
 
-This pass's depth scouting (confirmed bitwise `&`/`|`/`^`/`<<`/`>>`
-and their compound-assignment forms are already implemented) again
-came back "already shipped" — same standing note as prior passes. No
-new depth-task candidate surfaced, so this pass restocked with one
-more breadth task (`nth_armstrong`, task 6) to bring the queue back up
-from its 5-task floor to six, per this file's own restocking
-convention. This is the third `nth_X`-sibling breadth task in a row
-(after `nth_perfect_number`/`nth_weird_number` last pass) — the next
-grooming pass should treat finding an actual depth slice as the
-priority rather than reaching for a fourth.
+This pass's depth scouting again turned up nothing landable — same
+standing note as prior passes (bitwise operators, chained comparisons,
+`??=`, list/map ordering, `<=>`, right-associative `**`, `in`/`not in`,
+negative/slice indexing all already shipped). No new depth-task
+candidate surfaced, and the queue sits at its 5-task floor with no
+merge yet forcing a restock — this pass's grooming was limited to
+catching up `README.md`/`PROJECT.md` for `#451`'s merge and fixing a
+stale self-reference in `BACKLOG.md`'s `jaccard_similarity` writeup
+(it cited "`_correlation` in task 1 above", left over from when
+`correlation` was still queued; `correlation` shipped as `#451` so the
+reference no longer resolves to a task). The next grooming pass should
+keep treating an actual depth slice as the priority over reaching for
+a fourth `nth_X`-sibling breadth task.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
 `is_set` type-predicate fix, and `to_set` have all landed — the
@@ -1245,3 +1246,14 @@ identified so far.
   flagged explicitly in "Current frontier" above that the next grooming
   pass should prioritize finding an actual depth slice over reaching
   for a fourth.
+- **2026-09-12** — `#451` `correlation` merged clean first-pass (5004
+  tests, up from 4992). Refreshed "Current frontier" and README.md's
+  "Status & roadmap"/builtins list for the merge, renumbered the
+  backlog's five remaining tasks back to 1-5, and fixed a stale
+  self-reference in `BACKLOG.md`'s `jaccard_similarity` writeup that
+  cited "`_correlation` in task 1 above" — left over from when
+  `correlation` itself was queued as task 1; now that it's shipped and
+  no longer a backlog entry, the aside just names `_correlation`
+  directly. Depth scouting again came back empty (same standing note);
+  no merge forced a restock this pass, so the queue stays at its
+  5-task floor rather than being padded to six.

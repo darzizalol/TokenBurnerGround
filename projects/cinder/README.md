@@ -524,7 +524,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `dot_product`, `covariance`, `mode`, `geometric_mean`, `harmonic_mean`, `rms`, `to_set`, `zscore`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `dot_product`, `covariance`, `correlation`, `mode`, `geometric_mean`, `harmonic_mean`, `rms`, `to_set`, `zscore`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -851,7 +851,7 @@ cd projects/cinder
 python3 -m unittest discover -s tests -v
 ```
 
-The suite (4946+ tests) covers every layer — lexer, parser, interpreter,
+The suite (5004+ tests) covers every layer — lexer, parser, interpreter,
 builtins, CLI, REPL — and `main` is kept green at all times.
 
 ## Project layout
@@ -877,32 +877,31 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `covariance` (PR #450,
-the two-list generalization of `variance` — population covariance of
-two equal-length numeric lists, sitting next to `dot_product`),
-`zscore` (PR #449, standardizing a numeric list to zero mean/unit
-variance — a list-transform sibling of `mean`/`std_dev`), `rms` (PR
-#448, the quadratic mean completing the `mean`/`geometric_mean`/
-`harmonic_mean` trio of Pythagorean means), `to_set` (PR #447,
-converting a list into an actual `Set` runtime value — the last
-Set-completion gap now that `is_set` covers the type-check side), and
-`midrange` (PR #446, a third measure of central tendency next to
-`mean`/`median` — the average of a list's minimum and maximum). See
+Actively developed, nightly. Recently landed: `correlation` (PR #451,
+the normalized sibling of `covariance` — divides it by the product of
+both lists' standard deviations to rescale into `[-1, 1]`, reusing
+`_covariance` directly), `covariance` (PR #450, the two-list
+generalization of `variance` — population covariance of two
+equal-length numeric lists, sitting next to `dot_product`), `zscore`
+(PR #449, standardizing a numeric list to zero mean/unit variance — a
+list-transform sibling of `mean`/`std_dev`), `rms` (PR #448, the
+quadratic mean completing the `mean`/`geometric_mean`/`harmonic_mean`
+trio of Pythagorean means), and `to_set` (PR #447, converting a list
+into an actual `Set` runtime value — the last Set-completion gap now
+that `is_set` covers the type-check side). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Queued next
-(see [`BACKLOG.md`](BACKLOG.md)), all breadth: `correlation` (task 1,
-the normalized sibling of `covariance`, rescaling it into `[-1, 1]` by
-the product of both lists' standard deviations), `jaccard_similarity`
-(task 2, the similarity-ratio member of the `union`/`intersection`/
+(see [`BACKLOG.md`](BACKLOG.md)), all breadth: `jaccard_similarity`
+(task 1, the similarity-ratio member of the `union`/`intersection`/
 `is_subset`/`is_disjoint` lists-as-sets family that reduces two lists
 to a single number instead of another list), `median_absolute_deviation`
-(task 3, the median-based dispersion measure sitting next to `median`/
+(task 2, the median-based dispersion measure sitting next to `median`/
 `midrange` — robust to outliers where `variance`/`std_dev` are not),
-`nth_perfect_number` (task 4, the value-returning sibling
+`nth_perfect_number` (task 3, the value-returning sibling
 `is_perfect_number` was still missing, alongside `is_abundant`/
 `nth_abundant` and kin — capped at `k <= 4` since perfect numbers get
-sparse fast), `nth_weird_number` (task 5, the same gap for
+sparse fast), `nth_weird_number` (task 4, the same gap for
 `is_weird_number`, dense enough to test well past `k = 6`), and
-`nth_armstrong` (task 6, the same value-returning-sibling gap for
+`nth_armstrong` (task 5, the same value-returning-sibling gap for
 `is_armstrong`, dense enough to test well past `k = 15`). The
 language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,

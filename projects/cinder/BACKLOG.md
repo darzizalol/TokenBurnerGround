@@ -71,9 +71,9 @@ def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
 ```
 (Calls `_union`/`_intersection` directly rather than re-deriving
 `_dedupe`/`_contains_value` logic, so the three builtins' notion of
-"distinct element" and "shared element" can't drift apart — same
-reuse-the-sibling-builtin shape `_correlation` in task 1 above uses
-for `_covariance`.) Register the new dict entry (search `"is_disjoint":
+"distinct element" and "shared element" can't drift apart — the same
+reuse-the-sibling-builtin shape `_correlation` uses for `_covariance`.)
+Register the new dict entry (search `"is_disjoint":
 _is_disjoint,`, add `"jaccard_similarity": _jaccard_similarity,`
 directly after it, before `"to_set": _to_set,`).
 

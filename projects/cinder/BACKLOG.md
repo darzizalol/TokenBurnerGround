@@ -11,119 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_weird_number` — the k-th weird number [claimed 2026-09-12T19:39:55Z]
-
-Add directly after `_is_weird_number` (`cinder/builtins.py`, search
-`def _is_weird_number`, immediately before `def _is_semiperfect`) —
-the same value-returning-sibling gap `nth_perfect_number` (shipped)
-already closed for `is_perfect_number`, here for `is_weird_number`
-(abundant but not semiperfect — no subset of its proper divisors sums
-to it exactly).
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_weird_number(1));'
-# -> <eval>:1:7: undefined name 'nth_weird_number' (did you mean 'is_weird_number'?)
-```
-
-**What it does.** Given a positive integer `k`, return the `k`-th
-weird number (1-indexed) — a positive integer whose proper divisors
-sum to more than itself (abundant) but no subset of them sums to it
-exactly (not semiperfect) — the same condition `_is_weird_number`
-already checks, applied here as a sequential scan exactly like
-`_nth_semiperfect` already does for its own predicate. Unlike
-`nth_perfect_number`'s perfect numbers, weird numbers are dense enough close to their start
-for a sequential scan to stay fast well past `k = 6` — the first six
-are `70`, `836`, `4030`, `5830`, `7192`, `7912`, all comfortably small.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `nth_weird_number(1)` is `70` — the smallest weird number.
-- `nth_weird_number(2)` is `836`.
-- `nth_weird_number(3)` is `4030`.
-- `nth_weird_number(4)` is `5830`.
-- `nth_weird_number(5)` is `7192`.
-- `nth_weird_number(6)` is `7912`.
-- `nth_weird_number(0);` raises `CinderRuntimeError` — domain error,
-  same convention `nth_semiperfect(0)` already uses.
-- `nth_weird_number(-1);` raises `CinderRuntimeError` — domain error.
-- `nth_weird_number(1.5);` raises `CinderRuntimeError` — not an int.
-- `nth_weird_number("a");` raises `CinderRuntimeError` — not an int.
-
-Add directly after `_is_weird_number` (search `def _is_weird_number`,
-immediately before `def _is_semiperfect`):
-```python
-def _nth_weird_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_weird_number", arguments, 1, line, column)
-    value = _require_int("nth_weird_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_weird_number() requires a positive integer, domain error", line, column
-        )
-
-    def _is_weird_candidate(candidate: int) -> bool:
-        if candidate < 2:
-            return False
-        divisors = [1]
-        for divisor in range(2, math.isqrt(candidate) + 1):
-            if candidate % divisor == 0:
-                divisors.append(divisor)
-                complement = candidate // divisor
-                if complement != divisor:
-                    divisors.append(complement)
-        if sum(divisors) <= candidate:
-            return False
-        reachable = {0}
-        for divisor in divisors:
-            reachable |= {
-                total + divisor for total in reachable if total + divisor <= candidate
-            }
-        return candidate not in reachable
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_weird_candidate(candidate):
-            count += 1
-    return candidate
-```
-(`_is_weird_candidate` mirrors `_is_weird_number`'s own
-divisor-collection-then-subset-sum-reachability logic exactly, so the
-two functions' notion of "weird" can't silently drift apart — same
-reuse-the-sibling-predicate's-exact-logic discipline `_nth_perfect_number`
-already uses for `_is_perfect_number`.) Register the new dict entry (search
-`"is_weird_number": _is_weird_number,`, add `"nth_weird_number":
-_nth_weird_number,` directly after it, before `"is_semiperfect":
-_is_semiperfect,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `nth_weird_number(1)` is `70` through `nth_weird_number(6)` is
-  `7912`.
-- `nth_weird_number(0);` and `nth_weird_number(-1);` both raise
-  `CinderRuntimeError` matching `"nth_weird_number\(\) requires a
-  positive integer, domain error"`.
-- `nth_weird_number(1.5);` and `nth_weird_number("a");` both raise
-  `CinderRuntimeError` matching `"nth_weird_number\(\) requires an
-  int, got (float|string)"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_weird_number`,
-search `def _is_weird_number`), `tests/test_builtins.py` (new `class
-TestNthWeirdNumber`, modeled on `class TestNthSemiperfect`, search that
-name, for the test shapes above — place it near the existing `class
-TestIsWeirdNumber`). Once merged, `README.md`'s builtins
-quick-reference list (search `is_weird_number`) needs
-`nth_weird_number` added right after it, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
+## 1. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same
@@ -231,7 +119,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `percentile` — p-th percentile of a numeric list (linear interpolation)
+## 2. Standard library: `percentile` — p-th percentile of a numeric list (linear interpolation)
 
 Add directly after `_midrange` (`cinder/builtins.py`, search `def
 _midrange`, immediately before `def _population_variance`) — a real
@@ -353,7 +241,7 @@ next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_automorphic` — the k-th automorphic number
+## 3. Standard library: `nth_automorphic` — the k-th automorphic number
 
 Add directly after `_is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`, immediately before `def _is_trimorphic_number`) — the
@@ -458,7 +346,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `to_snake_case` — convert a string to `snake_case`
+## 4. Standard library: `to_snake_case` — convert a string to `snake_case`
 
 Add directly after `_caesar_cipher` (`cinder/builtins.py`, search `def
 _caesar_cipher`, immediately before `def _is_palindrome`) — a real gap
@@ -549,7 +437,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `to_camel_case` — convert a string to `camelCase`
+## 5. Standard library: `to_camel_case` — convert a string to `camelCase`
 
 Depends on task 5 (`to_snake_case`) merging first — reuses its private
 `_split_case_words` helper directly, the same same-file-dependency

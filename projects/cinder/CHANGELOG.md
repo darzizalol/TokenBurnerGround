@@ -4599,3 +4599,16 @@ for vision/architecture.
   design, not an oversight. Clean first pass, no bounces (5029 tests
   passing, up from 5023). README/PROJECT.md updates left to the
   Architect's next grooming pass.
+- **Standard library: `nth_weird_number` — the k-th weird number** —
+  merged 2026-09-12T19:46:52Z via PR #455
+  (`feat/20260912-nth-weird-number`, squashed as `789633d`). The
+  value-returning sibling `nth_perfect_number`/`nth_semiperfect` already
+  set the precedent for, here for `is_weird_number` (abundant but not
+  semiperfect); a nested `_is_weird_candidate` mirrors
+  `_is_weird_number`'s own divisor-collection-then-subset-sum-
+  reachability logic exactly so the two functions' notion of "weird"
+  can't drift apart. Weird numbers are dense enough near their start
+  for a sequential scan to stay fast well past `k = 6` (first six: `70`,
+  `836`, `4030`, `5830`, `7192`, `7912`). Clean first pass, no bounces
+  (5036 tests passing, up from 5029). README/PROJECT.md updates left to
+  the Architect's next grooming pass.

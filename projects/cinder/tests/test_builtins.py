@@ -11141,6 +11141,75 @@ class TestIsSubsetIsSuperset(unittest.TestCase):
             run("is_disjoint([1], [2], [3]);")
 
 
+class TestJaccardSimilarity(unittest.TestCase):
+    def test_jaccard_similarity_partial_overlap(self):
+        self.assertEqual(
+            run(
+                "let result = jaccard_similarity([1, 2, 3], [2, 3, 4]);"
+            ).get("result"),
+            0.5,
+        )
+
+    def test_jaccard_similarity_identical_lists_is_one(self):
+        self.assertEqual(
+            run(
+                "let result = jaccard_similarity([1, 2, 3], [1, 2, 3]);"
+            ).get("result"),
+            1.0,
+        )
+
+    def test_jaccard_similarity_disjoint_lists_is_zero(self):
+        self.assertEqual(
+            run("let result = jaccard_similarity([1, 2], [3, 4]);").get("result"),
+            0.0,
+        )
+
+    def test_jaccard_similarity_dedupes_within_each_input(self):
+        self.assertEqual(
+            run(
+                "let result = jaccard_similarity([1, 1, 2], [2, 3]);"
+            ).get("result"),
+            1 / 3,
+        )
+
+    def test_jaccard_similarity_both_empty_is_one(self):
+        self.assertEqual(
+            run("let result = jaccard_similarity([], []);").get("result"), 1.0
+        )
+
+    def test_jaccard_similarity_one_empty_is_zero(self):
+        self.assertEqual(
+            run("let result = jaccard_similarity([], [1, 2]);").get("result"),
+            0.0,
+        )
+
+    def test_jaccard_similarity_works_with_non_numeric_elements(self):
+        self.assertEqual(
+            run(
+                'let result = jaccard_similarity(["a", "b"], ["b", "c"]);'
+            ).get("result"),
+            1 / 3,
+        )
+
+    def test_jaccard_similarity_non_list_first_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("jaccard_similarity(5, [1, 2]);")
+        self.assertIn("jaccard_similarity", ctx.exception.message)
+        self.assertIn("first", ctx.exception.message)
+
+    def test_jaccard_similarity_non_list_second_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("jaccard_similarity([1, 2], 5);")
+        self.assertIn("jaccard_similarity", ctx.exception.message)
+        self.assertIn("second", ctx.exception.message)
+
+    def test_jaccard_similarity_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("jaccard_similarity([1]);")
+        with self.assertRaises(CinderRuntimeError):
+            run("jaccard_similarity([1], [2], [3]);")
+
+
 class TestToSet(unittest.TestCase):
     def test_to_set_dedupes_elements(self):
         result = run("let result = to_set([1, 2, 2, 3]);").get("result")

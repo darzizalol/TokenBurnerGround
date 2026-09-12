@@ -14,8 +14,8 @@ a later task while an earlier one is unclaimed/open.
 ## 1. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
-`_covariance` (`cinder/builtins.py`, once task 1 lands `_covariance`
-will sit directly after `_dot_product`, immediately before `_mode` —
+`_covariance` (`cinder/builtins.py` — `_covariance` landed via PR #450
+and sits directly after `_dot_product`, immediately before `_mode`;
 add `_correlation` directly after `_covariance`, still before `_mode`)
 — the normalized sibling of `covariance`: dividing covariance by the
 product of both lists' standard deviations rescales it to always fall
@@ -57,9 +57,8 @@ below):
 - `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` —
   unequal lengths, mirroring `covariance`'s own length check.
 
-Add directly after `_covariance` (once task 1 lands; search `def
-_covariance`, add `_correlation` immediately after it, still before
-`def _mode`):
+Add directly after `_covariance` (search `def _covariance`, add
+`_correlation` immediately after it, still before `def _mode`):
 ```python
 def _correlation(arguments: list, line: int, column: int) -> object:
     _require_arity("correlation", arguments, 2, line, column)
@@ -570,6 +569,112 @@ quick-reference list (search `is_weird_number`) needs
 section needs updating, and `PROJECT.md`'s "Current frontier" section
 needs refreshing — leave both to the Architect's next grooming pass,
 not this task.
+
+---
+
+## 6. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
+
+Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
+_is_armstrong`, immediately before `def _is_disarium`) — the same
+value-returning-sibling gap tasks 4 and 5 above close for
+`is_perfect_number`/`is_weird_number`, here for `is_armstrong`: a
+positive integer equal to the sum of its own digits each raised to the
+power of the digit count (`153 = 1^3 + 5^3 + 3^3`). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_armstrong(1));'
+# -> <eval>:1:7: undefined name 'nth_armstrong' (did you mean 'is_armstrong'?)
+```
+
+**What it does.** Given a positive integer `k`, return the `k`-th
+Armstrong number (1-indexed, starting from `0`) — the same condition
+`_is_armstrong` already checks, applied here as a sequential scan
+exactly like `_nth_perfect_number`/`_nth_weird_number` already do for
+their own predicates. Unlike task 4's perfect numbers, Armstrong
+numbers are cheap to test (a digit-sum-of-powers check, not trial
+division) and stay dense enough through this task's range for a plain
+scan to finish instantly — the single-digit numbers `0`-`9` are all
+trivially Armstrong numbers (any one digit raised to the power `1` is
+itself), then the next one doesn't appear until `153`.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `nth_armstrong(1)` is `0`.
+- `nth_armstrong(2)` is `1`.
+- `nth_armstrong(10)` is `9` — the last of the ten trivial single-digit
+  Armstrong numbers.
+- `nth_armstrong(11)` is `153` — the first multi-digit Armstrong
+  number.
+- `nth_armstrong(12)` is `370`.
+- `nth_armstrong(13)` is `371`.
+- `nth_armstrong(14)` is `407`.
+- `nth_armstrong(15)` is `1634`.
+- `nth_armstrong(0);` raises `CinderRuntimeError` — domain error, same
+  convention `nth_perfect_number(0)`/`nth_weird_number(0)` already use.
+- `nth_armstrong(-1);` raises `CinderRuntimeError` — domain error.
+- `nth_armstrong(1.5);` raises `CinderRuntimeError` — not an int.
+- `nth_armstrong("a");` raises `CinderRuntimeError` — not an int.
+
+Add directly after `_is_armstrong` (search `def _is_armstrong`,
+immediately before `def _is_disarium`):
+```python
+def _nth_armstrong(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_armstrong", arguments, 1, line, column)
+    value = _require_int("nth_armstrong", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_armstrong() requires a positive integer, domain error", line, column
+        )
+
+    def _is_armstrong_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        power = len(digits)
+        return sum(int(digit) ** power for digit in digits) == candidate
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_armstrong_candidate(candidate):
+            count += 1
+    return candidate
+```
+(`_is_armstrong_candidate` mirrors `_is_armstrong`'s own digit-power-sum
+check exactly — including counting `0` as the first Armstrong number,
+same as `_is_armstrong(0)` already returns `True` — so the two
+functions' notion of "Armstrong" can't silently drift apart; same
+reuse-the-sibling-predicate's-exact-logic discipline tasks 4/5 above
+use for `_is_perfect_number`/`_is_weird_number`. Starts `candidate` at
+`-1`, one below `_is_perfect_number`/`_is_weird_number`'s starting
+point of `0`, since `0` itself is a valid Armstrong number here and
+must be reachable as `nth_armstrong(1)`.) Register the new dict entry
+(search `"is_armstrong": _is_armstrong,`, add `"nth_armstrong":
+_nth_armstrong,` directly after it, before `"is_disarium":
+_is_disarium,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `nth_armstrong(1)` is `0`, `nth_armstrong(10)` is `9`, and
+  `nth_armstrong(15)` is `1634`.
+- `nth_armstrong(0);` and `nth_armstrong(-1);` both raise
+  `CinderRuntimeError` matching `"nth_armstrong\(\) requires a
+  positive integer, domain error"`.
+- `nth_armstrong(1.5);` and `nth_armstrong("a");` both raise
+  `CinderRuntimeError` matching `"nth_armstrong\(\) requires an int,
+  got (float|string)"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_armstrong`,
+search `def _is_armstrong`), `tests/test_builtins.py` (new `class
+TestNthArmstrong`, modeled on `class TestNthPerfectNumber`/`class
+TestNthWeirdNumber` from tasks 4/5 above, search either name, for the
+test shapes above — place it near the existing `class
+TestIsArmstrong`). Once merged, `README.md`'s builtins quick-reference
+list (search `is_armstrong`) needs `nth_armstrong` added right after
+it, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
 
 ---
 

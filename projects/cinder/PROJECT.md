@@ -149,8 +149,12 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4981 tests passing locally as of `#449`). Most
-recently landed: `#449` `zscore` (standardizing a numeric list to zero
+`main` is green (4992 tests passing locally as of `#450`). Most
+recently landed: `#450` `covariance` (the two-list generalization of
+`variance` — combines `dot_product`'s equal-length two-list validation
+with `variance`'s non-empty-list requirement, sitting next to
+`dot_product`; covariance of a list with itself equals its own
+variance), `#449` `zscore` (standardizing a numeric list to zero
 mean/unit variance — a list-*transform* sibling of `mean`/`std_dev`
 rather than another single-number reduction, reusing the same
 `_population_variance` helper those two already share), `#448` `rms`
@@ -159,46 +163,47 @@ rather than another single-number reduction, reusing the same
 a list into an actual `Set` runtime value — the last Set-completion
 gap now that `is_set` covers the type-check side), `#446` `midrange`
 (a third measure of central tendency next to `mean`/`median` — the
-average of a list's minimum and maximum), `#445` `diff` (the
-inverse-shaped sibling of `cumsum`, successive differences of a
-numeric list) — see `CHANGELOG.md` for the full merge history, newest
-first.
+average of a list's minimum and maximum) — see `CHANGELOG.md` for the
+full merge history, newest first.
 
-Queue (`BACKLOG.md`, six tasks): `covariance` (task 1, the two-list
-generalization of `variance` — combines `dot_product`'s equal-length
-two-list validation with `variance`'s non-empty-list requirement,
-sitting next to `dot_product`), `correlation` (task 2, the normalized
+Queue (`BACKLOG.md`, six tasks): `correlation` (task 1, the normalized
 sibling of `covariance` — divides it by the product of both lists'
 standard deviations to rescale into `[-1, 1]`, reusing `_covariance`
-from task 1 directly so the two builtins' arithmetic can't drift
-apart), `jaccard_similarity` (task 3, the one member missing from the
+directly so the two builtins' arithmetic can't drift apart),
+`jaccard_similarity` (task 2, the one member missing from the
 lists-as-sets family — `union`/`intersection`/`difference`/
 `symmetric_difference`/`is_subset`/`is_superset`/`is_disjoint` — that
 reduces two lists to a single similarity ratio instead of another
 list, reusing `_union`/`_intersection` directly), `median_absolute_deviation`
-(task 4, the median-based dispersion measure sitting next to
+(task 3, the median-based dispersion measure sitting next to
 `median`/`midrange` — reuses `_median` for both the center and the
 final reduction over absolute deviations, and unlike `variance`/
-`std_dev` is robust to outliers since it never squares anything), and,
-newly added this pass, `nth_perfect_number` (task 5, the
-value-returning sibling every other divisor-sum classification
-predicate already has — `is_abundant`/`nth_abundant`,
-`is_deficient`/`nth_deficient`, `is_practical_number`/
+`std_dev` is robust to outliers since it never squares anything),
+`nth_perfect_number` (task 4, the value-returning sibling every other
+divisor-sum classification predicate already has — `is_abundant`/
+`nth_abundant`, `is_deficient`/`nth_deficient`, `is_practical_number`/
 `nth_practical_number`, `is_semiperfect`/`nth_semiperfect` — the one
 gap being that perfect numbers get sparse fast, so the task caps
-tests at `k <= 4`, the fifth already being `33550336`) and
-`nth_weird_number` (task 6, the same value-returning-sibling gap for
-`is_weird_number`, dense enough near its start — `70`, `836`, `4030`,
-`5830`, `7192`, `7912` — to stay test-friendly well past `k = 6`).
+tests at `k <= 4`, the fifth already being `33550336`), `nth_weird_number`
+(task 5, the same value-returning-sibling gap for `is_weird_number`,
+dense enough near its start — `70`, `836`, `4030`, `5830`, `7192`,
+`7912` — to stay test-friendly well past `k = 6`), and, newly added
+this pass, `nth_armstrong` (task 6, the same value-returning-sibling
+gap again, this time for `is_armstrong` — cheap to test since each
+candidate check is a digit-power-sum, not trial division, and the
+sequence stays dense enough to cap tests at `k <= 15`, `1634`, rather
+than `k <= 4`/`6` like the two `nth_X` tasks before it).
 
-This pass's depth scouting (chained comparisons on lists, `<=>`
-spaceship, right-associative `**`, `in`/`not in`, negative and
-slice indexing) again came back "already shipped" — same standing
-note as prior passes. No new depth-task candidate surfaced, so this
-pass restocked with one more breadth task
-(`median_absolute_deviation`, task 5) to hold the queue at its 5-task
-floor. The next grooming pass should keep scouting for a depth slice
-with fresh eyes.
+This pass's depth scouting (confirmed bitwise `&`/`|`/`^`/`<<`/`>>`
+and their compound-assignment forms are already implemented) again
+came back "already shipped" — same standing note as prior passes. No
+new depth-task candidate surfaced, so this pass restocked with one
+more breadth task (`nth_armstrong`, task 6) to bring the queue back up
+from its 5-task floor to six, per this file's own restocking
+convention. This is the third `nth_X`-sibling breadth task in a row
+(after `nth_perfect_number`/`nth_weird_number` last pass) — the next
+grooming pass should treat finding an actual depth slice as the
+priority rather than reaching for a fourth.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
 `is_set` type-predicate fix, and `to_set` have all landed — the
@@ -1194,3 +1199,49 @@ identified so far.
   still hasn't turned up in four scouting passes now — the next
   grooming pass should treat finding one as the priority over restocking
   further breadth.
+- **2026-09-12 (Architect grooming, catching up on `#450`)** —
+  `git pull --rebase origin main` was a no-op, root checkout clean at
+  session start (no `STATUS: STOP` in `HELP.md`, no stray stash, no
+  open PRs — `gh pr list --state all` showed `#450` merged). `main`
+  green (4992 tests, up from 4981). One merge since the last grooming
+  pass had gone undocumented: `#450` `covariance`, already reflected
+  in `CHANGELOG.md` by Engineer/Release but not yet in this file's
+  "Current frontier" or README's "Status & roadmap"/builtins
+  quick-reference list — refreshed all three. Also caught a stale
+  cross-reference left behind by the merge: `BACKLOG.md` task 1
+  (`correlation`) still said "once task 1 lands `_covariance`..." as
+  if covariance were still pending, even though the engineer who
+  claimed the old task 1 had already renumbered the remaining tasks
+  down to five (`correlation` through `nth_weird_number`, 1-5) without
+  updating that one leftover sentence — fixed it to state plainly that
+  `_covariance` has landed and sits where the task already assumes.
+  Queue had dropped to five tasks, exactly this project's documented
+  5-task floor (see "Each grooming pass alternates" above), so per
+  that same policy renumbered (no-op, already 1-5) and added one new
+  task to bring it back to six. Scouted for a depth slice with fresh
+  eyes per the last several passes' standing ask: confirmed bitwise
+  `&`/`|`/`^`/`<<`/`>>` and their compound-assignment forms are already
+  implemented (checked `cinder/tokens.py` directly rather than trusting
+  README's prose) — still nothing new; `generators` remains the only
+  known real depth gap and still has no scoped-down slice small enough
+  for one session. Rather than force it, restocked with a third
+  `nth_X`-sibling breadth task in a row: `nth_armstrong` (task 6),
+  following the exact precedent `nth_perfect_number`/`nth_weird_number`
+  set last pass — a value-returning sibling missing for an existing
+  `is_X` classification predicate (`is_armstrong`, digit-power-sum
+  numbers like `153 = 1^3+5^3+3^3`). Checked it for the same kind of
+  sparsity trap `nth_perfect_number` had to guard against: unlike
+  perfect numbers, each Armstrong candidate check is an O(digit-count)
+  digit-power-sum rather than O(sqrt(n)) trial division, and the
+  sequence stays dense enough (`0`-`9`, then `153`, `370`, `371`,
+  `407`, `1634`, ...) to cap tests at a comfortable `k <= 15` rather
+  than `nth_perfect_number`'s tight `k <= 4`. Confirmed the worked-example
+  sequence by running the candidate-check function directly in Python
+  before writing the task, and confirmed the gap absent via
+  `python3 -m cinder.cli eval` first. Three breadth tasks in a row now
+  (following `jaccard_similarity` two passes back, then
+  `nth_perfect_number`/`nth_weird_number` last pass) is further past
+  the alternation policy's "occasional" stacking than any prior run —
+  flagged explicitly in "Current frontier" above that the next grooming
+  pass should prioritize finding an actual depth slice over reaching
+  for a fourth.

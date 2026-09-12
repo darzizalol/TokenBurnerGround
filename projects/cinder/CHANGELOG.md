@@ -4533,3 +4533,12 @@ for vision/architecture.
   non-negative before averaging, so it places no positivity restriction
   on input — only the empty list is rejected. Clean first pass, no
   bounces (4973 tests passing, up from 4963).
+- **Standard library: `zscore` — standardize a numeric list to zero
+  mean, unit variance** — merged 2026-09-12T~14:10Z via PR #449
+  (`feat/20260912-zscore`, squashed as `1ff45f1`). Transform-shaped
+  sibling of `mean`/`std_dev`: reuses `_population_variance` to turn
+  every element into how many standard deviations it sits from the
+  list's mean. Single-element/constant lists raise instead of dividing
+  by zero, same as `std_dev`'s downstream consumers. Clean first pass,
+  no bounces (4981 tests passing, up from 4973). README/PROJECT.md
+  updates left to the Architect's next grooming pass.

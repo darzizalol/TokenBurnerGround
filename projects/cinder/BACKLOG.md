@@ -11,107 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `zscore` — standardize a numeric list to zero mean, unit variance [claimed 2026-09-12T14:04:52Z]
-
-Add a standalone list-transform builtin directly after `_std_dev`
-(`cinder/builtins.py`, search `def _std_dev`, immediately before `def
-_dot_product`) — the transform-shaped sibling of `mean`/`std_dev`:
-where those two reduce a list to a single summary number, `zscore`
-reuses the same `_population_variance` helper to turn every element
-into how many standard deviations it sits from the list's mean.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(zscore([1, 2, 3]));'
-# -> <eval>:1:7: undefined name 'zscore' (did you mean 'is_coprime'?)
-```
-
-**What it does.** Given a non-empty list of numbers, return a new list
-of the same length where `result[i] = (list[i] - mean(list)) /
-std_dev(list)` — each element's population z-score. `std_dev` of a
-single-element or constant list is `0` (verified: `std_dev([5])` is
-`0`, `std_dev([4, 4, 4])` is `0`), which would divide by zero, so
-those two shapes raise instead of computing.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `zscore([2, 4, 4, 4, 5, 5, 7, 9])` is `[-1.5, -0.5, -0.5, -0.5, 0.0,
-  0.0, 1.0, 2.0]` — the same textbook list `std_dev`'s own test uses
-  (`tests/test_builtins.py`, `test_std_dev_of_textbook_example`, mean
-  `5`, `std_dev` exactly `2`), so every element divides out evenly.
-- `zscore([1, 2, 3])` is `[-1.224744871391589, 0.0, 1.224744871391589]`
-  — mean `2`, `std_dev` `sqrt(2/3)`.
-- `zscore([5])` raises `CinderRuntimeError` — single-element list,
-  `std_dev` is `0`.
-- `zscore([4, 4, 4])` raises `CinderRuntimeError` — constant list,
-  `std_dev` is `0`.
-- `zscore([])` raises `CinderRuntimeError` — empty list, no mean to
-  compute (same reason `mean`/`std_dev` reject it).
-
-Add directly after `_std_dev` (search `def _std_dev`, immediately
-before `def _dot_product`):
-```python
-def _zscore(arguments: list, line: int, column: int) -> object:
-    _require_arity("zscore", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"zscore() requires a list, got {type_name(value)}", line, column
-        )
-    if not value:
-        raise CinderRuntimeError("zscore() requires a non-empty list", line, column)
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"zscore() requires a list of numbers, got {type_name(element)}", line, column
-            )
-    total = 0
-    for element in value:
-        total = total + element
-    mean = total / len(value)
-    standard_deviation = math.sqrt(_population_variance(value))
-    if standard_deviation == 0:
-        raise CinderRuntimeError(
-            "zscore() requires a list with non-zero standard deviation", line, column
-        )
-    return [(element - mean) / standard_deviation for element in value]
-```
-(Reuses `_population_variance` — search `def _population_variance` —
-the same private helper `_variance`/`_std_dev` already share, so the
-mean/variance math can't drift between the three.) Register the new
-dict entry (search `"std_dev": _std_dev,`, add `"zscore": _zscore,`
-directly after it, before `"dot_product": _dot_product,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `zscore([2, 4, 4, 4, 5, 5, 7, 9])` is `[-1.5, -0.5, -0.5, -0.5, 0.0,
-  0.0, 1.0, 2.0]` and `zscore([1, 2, 3])` is
-  `[-1.224744871391589, 0.0, 1.224744871391589]`.
-- `zscore([5]);` and `zscore([4, 4, 4]);` both raise
-  `CinderRuntimeError` matching `"zscore\(\) requires a list with
-  non-zero standard deviation"`.
-- `zscore([]);` raises `CinderRuntimeError` matching `"zscore\(\)
-  requires a non-empty list"`.
-- `zscore(123);` raises `CinderRuntimeError` matching `"zscore\(\)
-  requires a list, got int"`.
-- `zscore([1, "a"]);` raises `CinderRuntimeError` matching
-  `"zscore\(\) requires a list of numbers, got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_std_dev`, search
-`def _std_dev`), `tests/test_builtins.py` (new `class TestZscore`,
-modeled on `class TestStdDev`/`class TestMean`, search either name,
-for the test shapes above — place it near the existing `class
-TestStdDev`). Once merged, `README.md`'s builtins quick-reference list
-(search `std_dev`) needs `zscore` added right after it, its "Status &
-roadmap" section needs updating, and `PROJECT.md`'s "Current frontier"
-section needs refreshing — leave both to the Architect's next grooming
-pass, not this task.
-
----
-
-## 2. Standard library: `covariance` — population covariance of two equal-length numeric lists
+## 1. Standard library: `covariance` — population covariance of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_dot_product` (`cinder/builtins.py`, search `def _dot_product`,
@@ -232,10 +132,10 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
+## 2. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
-`_covariance` (`cinder/builtins.py`, once task 2 lands `_covariance`
+`_covariance` (`cinder/builtins.py`, once task 1 lands `_covariance`
 will sit directly after `_dot_product`, immediately before `_mode` —
 add `_correlation` directly after `_covariance`, still before `_mode`)
 — the normalized sibling of `covariance`: dividing covariance by the
@@ -248,7 +148,7 @@ python3 -m cinder.cli eval 'print(correlation([1, 2, 3], [4, 5, 6]));'
 
 **What it does.** Given two non-empty numeric lists of equal length,
 return `covariance(x, y) / (std_dev(x) * std_dev(y))` — the Pearson
-correlation coefficient (reusing `_covariance` from task 2 and the
+correlation coefficient (reusing `_covariance` from task 1 and the
 existing `_population_variance`/`math.sqrt` shape `_std_dev` already
 uses for the denominator). `std_dev` of a single-element or constant
 list is `0` (same fact `zscore`'s task writeup above relied on), which
@@ -278,7 +178,7 @@ below):
 - `correlation([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` —
   unequal lengths, mirroring `covariance`'s own length check.
 
-Add directly after `_covariance` (once task 2 lands; search `def
+Add directly after `_covariance` (once task 1 lands; search `def
 _covariance`, add `_correlation` immediately after it, still before
 `def _mode`):
 ```python
@@ -349,19 +249,19 @@ Acceptance criteria:
 - Full test suite passes.
 
 Likely files: `cinder/builtins.py` (directly after `_covariance`, once
-task 2 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
+task 1 lands), `tests/test_builtins.py` (new `class TestCorrelation`,
 modeled on `class TestDotProduct`/the eventual `class TestCovariance`
-from task 2, search either name, for the test shapes above — place it
+from task 1, search either name, for the test shapes above — place it
 near the existing `class TestDotProduct`). Once merged, `README.md`'s
 builtins quick-reference list (search `dot_product`, `covariance` will
-sit right after it once task 2 lands) needs `correlation` added right
+sit right after it once task 1 lands) needs `correlation` added right
 after `covariance`, its "Status & roadmap" section needs updating, and
 `PROJECT.md`'s "Current frontier" section needs refreshing — leave both
 to the Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
+## 3. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
 
 Add a standalone two-list builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before
@@ -422,7 +322,7 @@ def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
 (Calls `_union`/`_intersection` directly rather than re-deriving
 `_dedupe`/`_contains_value` logic, so the three builtins' notion of
 "distinct element" and "shared element" can't drift apart — same
-reuse-the-sibling-builtin shape `_correlation` in task 3 above uses
+reuse-the-sibling-builtin shape `_correlation` in task 2 above uses
 for `_covariance`.) Register the new dict entry (search `"is_disjoint":
 _is_disjoint,`, add `"jaccard_similarity": _jaccard_similarity,`
 directly after it, before `"to_set": _to_set,`).
@@ -458,7 +358,7 @@ not this task.
 
 ---
 
-## 5. Standard library: `median_absolute_deviation` — median-based measure of dispersion
+## 4. Standard library: `median_absolute_deviation` — median-based measure of dispersion
 
 Add a standalone list-transform-shaped statistic builtin directly
 after `_median` (`cinder/builtins.py`, search `def _median`,

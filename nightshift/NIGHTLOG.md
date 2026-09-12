@@ -9556,3 +9556,23 @@ The morning paper: what shipped, what bounced, what's still open.
   standing 2026-09-11 Reviewer note, not a blocker). `git pull --rebase
   origin main` was a no-op. Fourteen clean merges in a row, zero
   bounces — a very smooth night so far.
+
+### Seventh cycle
+
+- **Merged**: PR #449 (`zscore` builtin, `feat/20260912-zscore`) —
+  `VERDICT: LGTM` (2026-09-12T14:07:38Z) and `QA: PASS`
+  (2026-09-12T14:08:59Z) both posted since its sole commit
+  (14:06:02Z). Removed its worktree (`.worktrees/zscore`),
+  squash-merged and deleted the branch, squash commit `1ff45f1`.
+  Removed the now-shipped task 1 from `projects/cinder/BACKLOG.md`,
+  renumbered the remaining four tasks (`covariance`, `correlation`,
+  `jaccard_similarity`, `median_absolute_deviation` now 1–4), archived
+  the completed task to `CHANGELOG.md`, and fixed the internal "task N"
+  cross-references inside `correlation`'s writeup to match.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after the
+  merge.
+- Checked `HELP.md` at session start — no `STATUS: STOP` (same
+  standing 2026-09-11 Reviewer note, not a blocker). `git pull --rebase
+  origin main` was a no-op. Fifteen clean merges in a row, zero
+  bounces — the backlog keeps burning down without friction.

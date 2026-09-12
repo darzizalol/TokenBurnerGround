@@ -4261,6 +4261,42 @@ def _covariance(arguments: list, line: int, column: int) -> object:
     return total / len(first)
 
 
+def _correlation(arguments: list, line: int, column: int) -> object:
+    _require_arity("correlation", arguments, 2, line, column)
+    first, second = arguments
+    if not isinstance(first, list):
+        raise CinderRuntimeError(
+            f"correlation() requires a list as its first argument, got {type_name(first)}",
+            line, column,
+        )
+    if not isinstance(second, list):
+        raise CinderRuntimeError(
+            f"correlation() requires a list as its second argument, got {type_name(second)}",
+            line, column,
+        )
+    for element in first + second:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"correlation() requires lists of numbers, got {type_name(element)}",
+                line, column,
+            )
+    if len(first) != len(second):
+        raise CinderRuntimeError(
+            f"correlation() requires lists of equal length, got lengths {len(first)} and {len(second)}",
+            line, column,
+        )
+    if not first:
+        raise CinderRuntimeError("correlation() requires non-empty lists", line, column)
+    first_deviation = math.sqrt(_population_variance(first))
+    second_deviation = math.sqrt(_population_variance(second))
+    if first_deviation == 0 or second_deviation == 0:
+        raise CinderRuntimeError(
+            "correlation() requires lists with non-zero standard deviation", line, column
+        )
+    covariance_value = _covariance(arguments, line, column)
+    return covariance_value / (first_deviation * second_deviation)
+
+
 def _mode(arguments: list, line: int, column: int) -> object:
     _require_arity("mode", arguments, 1, line, column)
     value = arguments[0]
@@ -6063,6 +6099,7 @@ _BUILTINS = {
     "zscore": _zscore,
     "dot_product": _dot_product,
     "covariance": _covariance,
+    "correlation": _correlation,
     "mode": _mode,
     "any": _any,
     "all": _all,

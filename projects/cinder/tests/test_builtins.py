@@ -6004,6 +6004,19 @@ class TestNthArmstrong(unittest.TestCase):
                 f"expected nth_armstrong({position}) to be an armstrong number",
             )
 
+    def test_nth_armstrong_of_large_position_is_fast(self):
+        # Regression test for PR #456's QA bounce: a plain incrementing scan
+        # times out well past k=20 since Armstrong numbers thin out fast per
+        # digit length. Guards against regressing back to that approach.
+        self.assertEqual(
+            run("let result = nth_armstrong(30);").get("result"),
+            472335975,
+        )
+        self.assertEqual(
+            run("let result = nth_armstrong(25);").get("result"),
+            9926315,
+        )
+
     def test_nth_armstrong_of_zero_raises(self):
         with self.assertRaises(CinderRuntimeError) as ctx:
             run("nth_armstrong(0);")

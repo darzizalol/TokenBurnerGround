@@ -2520,13 +2520,24 @@ def _nth_armstrong(arguments: list, line: int, column: int) -> object:
         power = len(digits)
         return sum(int(digit) ** power for digit in digits) == candidate
 
+    def _armstrong_numbers_with_digit_count(length: int) -> list:
+        lower = 0 if length == 1 else 10 ** (length - 1)
+        upper = 10 ** length - 1
+        found = set()
+        for combo in itertools.combinations_with_replacement(range(10), length):
+            power_sum = sum(digit ** length for digit in combo)
+            if lower <= power_sum <= upper and _is_armstrong_candidate(power_sum):
+                found.add(power_sum)
+        return sorted(found)
+
     count = 0
-    candidate = -1
-    while count < value:
-        candidate += 1
-        if _is_armstrong_candidate(candidate):
+    length = 1
+    while True:
+        for candidate in _armstrong_numbers_with_digit_count(length):
             count += 1
-    return candidate
+            if count == value:
+                return candidate
+        length += 1
 
 
 def _is_disarium(arguments: list, line: int, column: int) -> object:

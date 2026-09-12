@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
+## 1. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists [claimed 2026-09-12T14:39:23Z]
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_covariance` (`cinder/builtins.py` — `_covariance` landed via PR #450

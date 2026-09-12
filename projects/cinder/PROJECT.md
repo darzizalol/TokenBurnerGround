@@ -149,8 +149,14 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (5029 tests passing locally as of `#454`). Most
-recently landed: `#454` `nth_perfect_number` (the value-returning
+`main` is green (5036 tests passing locally as of `#455`). Most
+recently landed: `#455` `nth_weird_number` (the value-returning sibling
+`nth_perfect_number`/`nth_semiperfect` already set the precedent for,
+here for `is_weird_number` — a nested `_is_weird_candidate` mirrors its
+own divisor-collection-then-subset-sum-reachability logic exactly, and
+stays dense enough near its start — `70`, `836`, `4030`, `5830`,
+`7192`, `7912` — for a sequential scan to stay fast well past `k = 6`),
+`#454` `nth_perfect_number` (the value-returning
 sibling every other divisor-sum classification predicate already
 had — `is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
 `is_practical_number`/`nth_practical_number`, `is_semiperfect`/
@@ -169,67 +175,67 @@ family — `union`/`intersection`/`difference`/`symmetric_difference`/
 `|intersection| / |union|` instead of another list, reusing `_union`/
 `_intersection` directly so the family's notion of "distinct"/"shared"
 element can't drift apart; two empty lists return `1.0` by convention
-rather than dividing zero by zero), `#451` `correlation` (the
+rather than dividing zero by zero), and `#451` `correlation` (the
 normalized sibling of `covariance` — divides it by the product of both
 lists' standard deviations to rescale into `[-1, 1]`, reusing
-`_covariance` and `_population_variance` directly), and `#450`
-`covariance` (the two-list generalization of `variance`, sitting next
-to `dot_product`) — see `CHANGELOG.md` for the full merge history,
-newest first.
+`_covariance` and `_population_variance` directly) — see
+`CHANGELOG.md` for the full merge history, newest first.
 
-Queue (`BACKLOG.md`, six tasks, restocked this pass): `nth_weird_number`
-(task 1, the same value-returning-sibling gap for `is_weird_number`,
-dense enough near its start — `70`, `836`, `4030`, `5830`, `7192`,
-`7912` — to stay test-friendly well past `k = 6`), `nth_armstrong`
-(task 2, the same gap again for `is_armstrong` — cheap to test since
-each candidate check is a digit-power-sum, not trial division, dense
-enough to cap tests at `k <= 15`, `1634`), `percentile` (task 3, the
-p-th percentile of a numeric list via linear interpolation between the
-two nearest ranks, the one real gap left in the `mean`/`median`/
+Queue (`BACKLOG.md`, six tasks, restocked this pass): `nth_armstrong`
+(task 1, the same value-returning-sibling gap `nth_weird_number` just
+closed for `is_weird_number`, here for `is_armstrong` — cheap to test
+since each candidate check is a digit-power-sum, not trial division,
+dense enough to cap tests at `k <= 15`, `1634`), `percentile` (task 2,
+the p-th percentile of a numeric list via linear interpolation between
+the two nearest ranks, the one real gap left in the `mean`/`median`/
 `midrange`/`variance`/`std_dev`/`mode` statistics cluster —
 `percentile(list, 50)` is defined to always equal `median(list)`
 exactly, a built-in cross-check for its own tests), `nth_automorphic`
-(task 4, the value-returning sibling of `is_automorphic` —
+(task 3, the value-returning sibling of `is_automorphic` —
 `is_trimorphic_number` right below it in `builtins.py` already got this
 treatment as `nth_trimorphic_number`, same `value * value`-vs-
 `value ** 3` shape, so `is_automorphic` was the one member of that pair
 still missing it; cheap to test indefinitely, no sparse-sequence scope
-cap needed), `to_snake_case` (task 5, restocked this pass: tokenizes a
+cap needed), `to_snake_case` (task 4: tokenizes a
 string into words on whitespace/hyphen/underscore runs plus camelCase/
 acronym boundaries and rejoins them lowercased with underscores — a
 real gap in the `capitalize`/`title`/`swap_case` case-conversion
-cluster, none of which re-tokenize into words), and `to_camel_case`
-(task 6, restocked this pass: the same word-tokenizer rejoined as
+cluster, none of which re-tokenize into words), `to_camel_case`
+(task 5: the same word-tokenizer rejoined as
 lowerCamelCase instead, sharing `to_snake_case`'s private
 `_split_case_words` helper so the two builtins' notion of "word" can't
-drift apart — depends on task 5 merging first, same shape `from_roman`
-already has on `to_roman`'s `_ROMAN_VALUES`).
+drift apart — depends on task 4 merging first, same shape `from_roman`
+already has on `to_roman`'s `_ROMAN_VALUES`), and `to_kebab_case`
+(task 6, restocked this pass: the third member of the same
+tokenize-and-rejoin trio, sharing `_split_case_words` again and joining
+with hyphens instead of underscores/camelCase — depends on task 4
+merging first, same dependency shape task 5 has on it).
 
-This pass's depth scouting again turned up nothing landable — re-ran
-the standing checks (ternary, string multiplication/list repetition,
-range syntax, destructuring declaration, spaceship `<=>`, default
-arguments, right-associative `**`, compound `**=`, string
-interpolation, negative indexing, slice indexing with step) directly
-against the interpreter via `cinder.cli eval` rather than trusting
-prior passes' notes, and every one already works. `generators` remains
-the only known real depth gap and still has no scoped-down slice small
-enough for one session. Rather than force it, restocked breadth: the
-`is_*`-without-`nth_*` gap audit (diffing the full `is_*`/`nth_*` key
-sets in `builtins.py` programmatically) came back with nothing new
-beyond the three already-queued number-theory tasks above and the long
-confirmed-rejected list from prior passes (multi-arg, string/list-
-shaped with no integer ordering, a type predicate, or previously
-confirmed too-sparse-or-slow), so this pass picked two standalone
-builtins instead — `to_snake_case`/`to_camel_case` — following the
-established precedent of defaulting to standalone builtins
-(`to_roman`/`from_roman`, `rot13`/`caesar_cipher`, `cumsum`/`cumprod`)
-once the `nth_*`-pairing gap list runs dry. Both algorithms and every
-worked example were verified by direct computation in Python (the
-regex-based word-boundary rules) before writing the tasks. `median_absolute_deviation`
-and `nth_perfect_number` both merged clean first-pass since the last
-grooming pass; two merges without an intervening restock had dropped
-the queue to four tasks, one below the five-task floor, so this pass
-restocked by two to bring it back to six rather than the usual one.
+This pass's depth scouting again turned up nothing landable — the
+standing checks (ternary, string multiplication/list repetition, range
+syntax, destructuring declaration, spaceship `<=>`, default arguments,
+right-associative `**`, compound `**=`, string interpolation, negative
+indexing, slice indexing with step) have been re-verified against the
+interpreter directly across several consecutive passes now and every
+one already works. `generators` remains the only known real depth gap
+and still has no scoped-down slice small enough for one session.
+Rather than force it, restocked breadth again: the `is_*`-without-
+`nth_*` gap audit (diffing the full `is_*`/`nth_*` key sets in
+`builtins.py` programmatically) came back with nothing new beyond the
+already-queued number-theory task above and the long confirmed-rejected
+list from prior passes (multi-arg, string/list-shaped with no integer
+ordering, a type predicate, or previously confirmed too-sparse-or-slow),
+so this pass picked a third standalone case-conversion builtin instead —
+`to_kebab_case`, riding the same `_split_case_words` helper
+`to_snake_case`/`to_camel_case` (queued last pass) already share —
+following the established precedent of defaulting to standalone
+builtins (`to_roman`/`from_roman`, `rot13`/`caesar_cipher`,
+`cumsum`/`cumprod`) once the `nth_*`-pairing gap list runs dry. Its
+algorithm and every worked example were verified by direct computation
+in Python (the shared regex-based word-boundary rules) before writing
+the task. `nth_weird_number` merged clean first-pass since the last
+grooming pass, dropping the queue from six tasks to five, one above
+the five-task floor; restocked by one to bring it back to six.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
 `is_set` type-predicate fix, and `to_set` have all landed — the

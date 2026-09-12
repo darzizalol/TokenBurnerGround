@@ -15,8 +15,8 @@ a later task while an earlier one is unclaimed/open.
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same
-value-returning-sibling gap task 1 above closes for `is_weird_number`
-(and `nth_perfect_number`, shipped, already closed for
+value-returning-sibling gap `nth_weird_number` (shipped) closed for
+`is_weird_number` (and `nth_perfect_number`, shipped, already closed for
 `is_perfect_number`), here for `is_armstrong`: a
 positive integer equal to the sum of its own digits each raised to the
 power of the digit count (`153 = 1^3 + 5^3 + 3^3`). Verify the gap:
@@ -28,8 +28,8 @@ python3 -m cinder.cli eval 'print(nth_armstrong(1));'
 **What it does.** Given a positive integer `k`, return the `k`-th
 Armstrong number (1-indexed, starting from `0`) — the same condition
 `_is_armstrong` already checks, applied here as a sequential scan
-exactly like `_nth_perfect_number` (shipped) already does, and like
-task 1's `_nth_weird_number` will, for their own predicates. Unlike
+exactly like `_nth_perfect_number` and `_nth_weird_number` (both
+shipped) already do, for their own predicates. Unlike
 `nth_perfect_number`'s perfect numbers, Armstrong numbers are cheap to test (a digit-sum-of-powers check, not trial
 division) and stay dense enough through this task's range for a plain
 scan to finish instantly — the single-digit numbers `0`-`9` are all
@@ -83,7 +83,7 @@ check exactly — including counting `0` as the first Armstrong number,
 same as `_is_armstrong(0)` already returns `True` — so the two
 functions' notion of "Armstrong" can't silently drift apart; same
 reuse-the-sibling-predicate's-exact-logic discipline `_nth_perfect_number`
-(shipped) and task 1's `_nth_weird_number` use for
+and `_nth_weird_number` (both shipped) use for
 `_is_perfect_number`/`_is_weird_number`. Starts `candidate` at
 `-1`, one below `_is_perfect_number`/`_is_weird_number`'s starting
 point of `0`, since `0` itself is a valid Armstrong number here and
@@ -108,8 +108,8 @@ Acceptance criteria:
 
 Likely files: `cinder/builtins.py` (directly after `_is_armstrong`,
 search `def _is_armstrong`), `tests/test_builtins.py` (new `class
-TestNthArmstrong`, modeled on `class TestNthPerfectNumber` (shipped)/
-`class TestNthWeirdNumber` from task 1 above, search either name, for the
+TestNthArmstrong`, modeled on `class TestNthPerfectNumber`/`class
+TestNthWeirdNumber` (both shipped), search either name, for the
 test shapes above — place it near the existing `class
 TestIsArmstrong`). Once merged, `README.md`'s builtins quick-reference
 list (search `is_armstrong`) needs `nth_armstrong` added right after
@@ -245,9 +245,10 @@ next grooming pass, not this task.
 
 Add directly after `_is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`, immediately before `def _is_trimorphic_number`) — the
-same value-returning-sibling gap `nth_perfect_number` (shipped) and
-tasks 1/2 above close (or will close) for
-`is_perfect_number`/`is_weird_number`/`is_armstrong`, here for
+same value-returning-sibling gap `nth_perfect_number` and
+`nth_weird_number` (both shipped) close for
+`is_perfect_number`/`is_weird_number`, and task 1 above
+(`nth_armstrong`) will close for `is_armstrong`, here for
 `is_automorphic`, the one member of the automorphic/trimorphic pair
 still missing it (`is_trimorphic_number` already has
 `nth_trimorphic_number`, immediately below `_is_automorphic` in the
@@ -312,8 +313,9 @@ def _nth_automorphic(arguments: list, line: int, column: int) -> object:
 (`_is_automorphic_candidate` mirrors `_is_automorphic`'s own
 square-and-check-suffix logic exactly, so the two functions' notion of
 "automorphic" can't silently drift apart — same
-reuse-the-sibling-predicate's-exact-logic discipline `_nth_perfect_number`
-(shipped) and tasks 1/2 use, and the same `candidate` starting at `-1`
+reuse-the-sibling-predicate's-exact-logic discipline `_nth_perfect_number`/
+`_nth_weird_number` (both shipped) and task 1's `_nth_armstrong` use,
+and the same `candidate` starting at `-1`
 that `_nth_trimorphic_number`
 already uses, since `0` itself is a valid automorphic number here and
 must be reachable as `nth_automorphic(1)`.) Register the new dict
@@ -407,8 +409,8 @@ def _to_snake_case(arguments: list, line: int, column: int) -> object:
     return "_".join(_split_case_words(value))
 ```
 (`_split_case_words` is a private module-level helper, not registered
-in the builtins dict — it exists so `to_camel_case`, task 6 below,
-can reuse the exact same word-boundary logic instead of
+in the builtins dict — it exists so `to_camel_case` and `to_kebab_case`
+(tasks 5 and 6 below) can reuse the exact same word-boundary logic instead of
 reimplementing it, the same shared-helper discipline `_ROMAN_VALUES`
 already uses for `to_roman`/`from_roman`.) Register the new dict entry
 (search `"caesar_cipher": _caesar_cipher,`, add `"to_snake_case":
@@ -439,11 +441,11 @@ Architect's next grooming pass, not this task.
 
 ## 5. Standard library: `to_camel_case` — convert a string to `camelCase`
 
-Depends on task 5 (`to_snake_case`) merging first — reuses its private
+Depends on task 4 (`to_snake_case`) merging first — reuses its private
 `_split_case_words` helper directly, the same same-file-dependency
 shape `from_roman` already has on `to_roman`'s `_ROMAN_VALUES`. The
 strict top-to-bottom claiming order this file's header already
-enforces guarantees task 5 lands first. Add directly after
+enforces guarantees task 4 lands first. Add directly after
 `_to_snake_case` (`cinder/builtins.py`, search `def _to_snake_case`,
 immediately before `def _is_palindrome`) — the other standard case-
 conversion target `to_snake_case` doesn't cover. Verify the gap:
@@ -502,10 +504,85 @@ Acceptance criteria:
 
 Likely files: `cinder/builtins.py` (directly after `_to_snake_case`,
 search `def _to_snake_case`), `tests/test_builtins.py` (new `class
-TestToCamelCase`, modeled on `class TestToSnakeCase` from task 5 above,
+TestToCamelCase`, modeled on `class TestToSnakeCase` from task 4 above,
 for the test shapes above — place it near the existing `class
 TestToSnakeCase`). Once merged, `README.md`'s builtins quick-reference
 list (search `to_snake_case`) needs `to_camel_case` added right after
+it, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `to_kebab_case` — convert a string to `kebab-case`
+
+Depends on task 4 (`to_snake_case`) merging first — reuses its private
+`_split_case_words` helper directly, the same same-file-dependency
+shape `to_camel_case` (task 5) already has on it too. The strict
+top-to-bottom claiming order this file's header already enforces
+guarantees task 4 lands first. Add directly after `_to_camel_case`
+(`cinder/builtins.py`, search `def _to_camel_case`, immediately before
+`def _is_palindrome`) — the third standard case-conversion target,
+completing the trio `to_snake_case`/`to_camel_case` start. Verify the
+gap:
+```sh
+python3 -m cinder.cli eval 'print(to_kebab_case("helloWorld"));'
+# -> <eval>:1:7: undefined name 'to_kebab_case' (did you mean 'to_camel_case'?)
+```
+
+**What it does.** Given a string, split it into words with the exact
+same `_split_case_words` boundary rules `to_snake_case`/`to_camel_case`
+use (so all three builtins' notion of "word" can't drift apart), then
+lowercase every word and join them with single hyphens instead of
+underscores — the same output `to_snake_case` produces with `-` in
+place of `_`.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `to_kebab_case("hello world")` is `"hello-world"`.
+- `to_kebab_case("helloWorld")` is `"hello-world"`.
+- `to_kebab_case("HelloWorld")` is `"hello-world"`.
+- `to_kebab_case("HTTPServer")` is `"http-server"` — same acronym
+  boundary `to_snake_case("HTTPServer")` uses.
+- `to_kebab_case("already_snake")` is `"already-snake"`.
+- `to_kebab_case("kebab-case-str")` is `"kebab-case-str"` — idempotent.
+- `to_kebab_case("  extra   spaces  ")` is `"extra-spaces"`.
+- `to_kebab_case("")` is `""`.
+- `to_kebab_case("A")` is `"a"` and `to_kebab_case("a")` is `"a"`.
+- `to_kebab_case(123);` raises `CinderRuntimeError` — not a string.
+
+Add directly after `_to_camel_case` (search `def _to_camel_case`,
+immediately before `def _is_palindrome`):
+```python
+def _to_kebab_case(arguments: list, line: int, column: int) -> object:
+    _require_arity("to_kebab_case", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, str):
+        raise CinderRuntimeError(
+            f"to_kebab_case() requires a string, got {type_name(value)}", line, column
+        )
+    return "-".join(_split_case_words(value))
+```
+Register the new dict entry (search `"to_camel_case": _to_camel_case,`,
+add `"to_kebab_case": _to_kebab_case,` directly after it, before
+`"is_palindrome": _is_palindrome,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `to_kebab_case("HTTPServer")` is `"http-server"` and
+  `to_kebab_case("kebab-case-str")` is `"kebab-case-str"`.
+- `to_kebab_case(123);` raises `CinderRuntimeError` matching
+  `"to_kebab_case\(\) requires a string, got int"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_to_camel_case`,
+search `def _to_camel_case`), `tests/test_builtins.py` (new `class
+TestToKebabCase`, modeled on `class TestToCamelCase` from task 5
+above, for the test shapes above — place it near the existing `class
+TestToCamelCase`). Once merged, `README.md`'s builtins quick-reference
+list (search `to_camel_case`) needs `to_kebab_case` added right after
 it, its "Status & roadmap" section needs updating, and `PROJECT.md`'s
 "Current frontier" section needs refreshing — leave both to the
 Architect's next grooming pass, not this task.

@@ -645,6 +645,13 @@ while (i < 10) {
   `is_weird_number` to test whether an integer is abundant but not semiperfect (no subset of its
   own proper divisors sums to it, e.g. `70`), one step further into the family than
   `is_abundant`/`is_deficient`'s simple sum comparison via a bounded 0/1 subset-sum sweep,
+  `nth_weird_number` to return the weird number found at a 1-indexed
+  position via a sequential scan mirroring `is_weird_number`'s own
+  divisor-collection-then-subset-sum-reachability check, the
+  value-returning sibling of `is_weird_number`'s membership test (weird
+  numbers are dense enough near their start — `70`, `836`, `4030`,
+  `5830`, `7192`, `7912` — for a plain scan to stay practical well
+  past small positions),
   `is_semiperfect` to test whether an integer equals a sum of some subset of its own proper
   divisors (e.g. `12`, via `{2, 4, 6}`), the standalone pseudoperfect question `is_weird_number`
   already computed internally but never exposed on its own — every perfect number is trivially
@@ -883,7 +890,12 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `nth_perfect_number` (PR
+Actively developed, nightly. Recently landed: `nth_weird_number` (PR
+#455, the value-returning sibling of `is_weird_number` — a nested
+`_is_weird_candidate` mirrors its own divisor-collection-then-subset-
+sum-reachability logic exactly, dense enough near its start — `70`,
+`836`, `4030`, `5830`, `7192`, `7912` — for a plain scan to stay fast
+well past `k = 6`), `nth_perfect_number` (PR
 #454, the value-returning sibling every other divisor-sum
 classification predicate already had — `is_abundant`/`nth_abundant`,
 `is_deficient`/`nth_deficient`, `is_practical_number`/
@@ -896,23 +908,24 @@ for both passes), `jaccard_similarity` (PR #452, the similarity-ratio
 member of the `union`/`intersection`/`is_subset`/`is_disjoint`
 lists-as-sets family — reduces two lists to a single number via
 `|intersection| / |union|` instead of another list, reusing `_union`/
-`_intersection` directly), `correlation` (PR #451, the normalized
+`_intersection` directly), and `correlation` (PR #451, the normalized
 sibling of `covariance` — divides it by the product of both lists'
 standard deviations to rescale into `[-1, 1]`, reusing `_covariance`
-directly), and `covariance` (PR #450, the two-list generalization of
-`variance` — population covariance of two equal-length numeric lists,
-sitting next to `dot_product`). See
+directly). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Queued next
-(see [`BACKLOG.md`](BACKLOG.md)): `nth_weird_number` (task 1, the same
-value-returning-sibling gap for `is_weird_number`, dense enough to test
-well past `k = 6`), `nth_armstrong` (task 2, the same gap for
-`is_armstrong`, dense enough to test well past `k = 15`), `percentile`
-(task 3, the p-th percentile of a numeric list via linear
+(see [`BACKLOG.md`](BACKLOG.md)): `nth_armstrong` (task 1, the same
+value-returning-sibling gap for `is_armstrong`, dense enough to test
+well past `k = 15`), `percentile`
+(task 2, the p-th percentile of a numeric list via linear
 interpolation — the one real gap left in the `mean`/`median`/
-`midrange`/`variance`/`std_dev`/`mode` statistics cluster), and
-`nth_automorphic` (task 4, the value-returning sibling of
+`midrange`/`variance`/`std_dev`/`mode` statistics cluster),
+`nth_automorphic` (task 3, the value-returning sibling of
 `is_automorphic` — `is_trimorphic_number` already has this treatment as
-`nth_trimorphic_number`, same shape). The
+`nth_trimorphic_number`, same shape), `to_snake_case`/`to_camel_case`/
+`to_kebab_case` (tasks 4-6, a shared-helper trio tokenizing a string
+into words on whitespace/hyphen/underscore runs plus camelCase/acronym
+boundaries and rejoining them as `snake_case`, `camelCase`, and
+`kebab-case` respectively). The
 language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

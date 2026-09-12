@@ -524,7 +524,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `dot_product`, `covariance`, `correlation`, `jaccard_similarity`, `mode`, `geometric_mean`, `harmonic_mean`, `rms`, `to_set`, `zscore`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `median_absolute_deviation`, `dot_product`, `covariance`, `correlation`, `jaccard_similarity`, `mode`, `geometric_mean`, `harmonic_mean`, `rms`, `to_set`, `zscore`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -634,6 +634,12 @@ while (i < 10) {
   `prime_factors` to list an integer's prime factors with multiplicity in
   ascending order,
   `is_perfect_number` to test whether an integer equals the sum of its own proper divisors,
+  `nth_perfect_number` to return the perfect number found at a 1-indexed
+  position via a bounded sequential scan mirroring `is_perfect_number`'s
+  own divisor-sum check, the value-returning sibling of
+  `is_perfect_number`'s membership test (perfect numbers are
+  extraordinarily sparse — the fifth is `33550336` — so this stays
+  practical only for small positions),
   `is_abundant` to test whether an integer's proper divisors sum to more than itself,
   `is_deficient` to test whether an integer's proper divisors sum to less than itself,
   `is_weird_number` to test whether an integer is abundant but not semiperfect (no subset of its
@@ -877,34 +883,36 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `jaccard_similarity` (PR
-#452, the similarity-ratio member of the `union`/`intersection`/
-`is_subset`/`is_disjoint` lists-as-sets family — reduces two lists to a
-single number via `|intersection| / |union|` instead of another list,
-reusing `_union`/`_intersection` directly), `correlation` (PR #451,
-the normalized sibling of `covariance` — divides it by the product of
-both lists' standard deviations to rescale into `[-1, 1]`, reusing
-`_covariance` directly), `covariance` (PR #450, the two-list
-generalization of `variance` — population covariance of two
-equal-length numeric lists, sitting next to `dot_product`), `zscore`
-(PR #449, standardizing a numeric list to zero mean/unit variance — a
-list-transform sibling of `mean`/`std_dev`), and `rms` (PR #448, the
-quadratic mean completing the `mean`/`geometric_mean`/`harmonic_mean`
-trio of Pythagorean means). See
+Actively developed, nightly. Recently landed: `nth_perfect_number` (PR
+#454, the value-returning sibling every other divisor-sum
+classification predicate already had — `is_abundant`/`nth_abundant`,
+`is_deficient`/`nth_deficient`, `is_practical_number`/
+`nth_practical_number`, `is_semiperfect`/`nth_semiperfect` — capped at
+`k <= 4` since perfect numbers get sparse fast, the fifth already being
+`33550336`), `median_absolute_deviation` (PR #453, the median-based
+dispersion measure sitting next to `median`/`midrange` — robust to
+outliers where `variance`/`std_dev` are not, reusing `_median` directly
+for both passes), `jaccard_similarity` (PR #452, the similarity-ratio
+member of the `union`/`intersection`/`is_subset`/`is_disjoint`
+lists-as-sets family — reduces two lists to a single number via
+`|intersection| / |union|` instead of another list, reusing `_union`/
+`_intersection` directly), `correlation` (PR #451, the normalized
+sibling of `covariance` — divides it by the product of both lists'
+standard deviations to rescale into `[-1, 1]`, reusing `_covariance`
+directly), and `covariance` (PR #450, the two-list generalization of
+`variance` — population covariance of two equal-length numeric lists,
+sitting next to `dot_product`). See
 [`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Queued next
-(see [`BACKLOG.md`](BACKLOG.md)): `median_absolute_deviation`
-(task 1, the median-based dispersion measure sitting next to `median`/
-`midrange` — robust to outliers where `variance`/`std_dev` are not),
-`nth_perfect_number` (task 2, the value-returning sibling
-`is_perfect_number` was still missing, alongside `is_abundant`/
-`nth_abundant` and kin — capped at `k <= 4` since perfect numbers get
-sparse fast), `nth_weird_number` (task 3, the same gap for
-`is_weird_number`, dense enough to test well past `k = 6`),
-`nth_armstrong` (task 4, the same value-returning-sibling gap for
-`is_armstrong`, dense enough to test well past `k = 15`), and
-`percentile` (task 5, the p-th percentile of a numeric list via linear
+(see [`BACKLOG.md`](BACKLOG.md)): `nth_weird_number` (task 1, the same
+value-returning-sibling gap for `is_weird_number`, dense enough to test
+well past `k = 6`), `nth_armstrong` (task 2, the same gap for
+`is_armstrong`, dense enough to test well past `k = 15`), `percentile`
+(task 3, the p-th percentile of a numeric list via linear
 interpolation — the one real gap left in the `mean`/`median`/
-`midrange`/`variance`/`std_dev`/`mode` statistics cluster). The
+`midrange`/`variance`/`std_dev`/`mode` statistics cluster), and
+`nth_automorphic` (task 4, the value-returning sibling of
+`is_automorphic` — `is_trimorphic_number` already has this treatment as
+`nth_trimorphic_number`, same shape). The
 language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,

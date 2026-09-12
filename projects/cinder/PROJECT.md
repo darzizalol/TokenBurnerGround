@@ -149,79 +149,87 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (5014 tests passing locally as of `#452`). PR #453
-(`median_absolute_deviation`, task 1) is open awaiting Reviewer/QA
-verdicts — no merge since `#452`, so nothing new to report there. Most
-recently landed: `#452` `jaccard_similarity` (the similarity-ratio
-member of the lists-as-sets family — `union`/`intersection`/
-`difference`/`symmetric_difference`/`is_subset`/`is_superset`/
-`is_disjoint` — reducing two lists to `|intersection| / |union|`
-instead of another list, reusing `_union`/`_intersection` directly so
-the family's notion of "distinct"/"shared" element can't drift apart;
-two empty lists return `1.0` by convention rather than dividing zero by
-zero), `#451` `correlation` (the normalized sibling of `covariance` —
-divides it by the product of both lists' standard deviations to
-rescale into `[-1, 1]`, reusing `_covariance` and
-`_population_variance` directly so the arithmetic can't drift apart;
-zero standard deviation on either side raises, same as `covariance`'s
-other guards), `#450` `covariance` (the two-list generalization of
-`variance` — combines `dot_product`'s equal-length two-list validation
-with `variance`'s non-empty-list requirement, sitting next to
-`dot_product`; covariance of a list with itself equals its own
-variance), `#449` `zscore` (standardizing a numeric list to zero
-mean/unit variance — a list-*transform* sibling of `mean`/`std_dev`
-rather than another single-number reduction, reusing the same
-`_population_variance` helper those two already share), and `#448`
-`rms` (the quadratic mean completing the `mean`/`geometric_mean`/
-`harmonic_mean` trio of Pythagorean means) — see `CHANGELOG.md` for the
-full merge history, newest first.
+`main` is green (5029 tests passing locally as of `#454`). Most
+recently landed: `#454` `nth_perfect_number` (the value-returning
+sibling every other divisor-sum classification predicate already
+had — `is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
+`is_practical_number`/`nth_practical_number`, `is_semiperfect`/
+`nth_semiperfect` — mirrors `_is_perfect_number`'s own divisor-sum loop
+exactly; capped at `k <= 4` in its own tests since perfect numbers get
+sparse fast, the fifth already being `33550336`), `#453`
+`median_absolute_deviation` (the median-based dispersion measure
+sitting next to `median`/`midrange` — reuses `_median` for both the
+center and the final reduction over absolute deviations, and unlike
+`variance`/`std_dev` is robust to outliers since it never squares
+anything; a constant or single-element list returns `0` rather than
+raising, since there's no division to guard), `#452`
+`jaccard_similarity` (the similarity-ratio member of the lists-as-sets
+family — `union`/`intersection`/`difference`/`symmetric_difference`/
+`is_subset`/`is_superset`/`is_disjoint` — reducing two lists to
+`|intersection| / |union|` instead of another list, reusing `_union`/
+`_intersection` directly so the family's notion of "distinct"/"shared"
+element can't drift apart; two empty lists return `1.0` by convention
+rather than dividing zero by zero), `#451` `correlation` (the
+normalized sibling of `covariance` — divides it by the product of both
+lists' standard deviations to rescale into `[-1, 1]`, reusing
+`_covariance` and `_population_variance` directly), and `#450`
+`covariance` (the two-list generalization of `variance`, sitting next
+to `dot_product`) — see `CHANGELOG.md` for the full merge history,
+newest first.
 
-Queue (`BACKLOG.md`, six tasks): `median_absolute_deviation` (task 1,
-the median-based dispersion measure sitting next to `median`/
-`midrange` — reuses `_median` for both the center and the final
-reduction over absolute deviations, and unlike `variance`/`std_dev` is
-robust to outliers since it never squares anything), `nth_perfect_number`
-(task 2, the value-returning sibling every other divisor-sum
-classification predicate already has — `is_abundant`/`nth_abundant`,
-`is_deficient`/`nth_deficient`, `is_practical_number`/
-`nth_practical_number`, `is_semiperfect`/`nth_semiperfect` — the one
-gap being that perfect numbers get sparse fast, so the task caps tests
-at `k <= 4`, the fifth already being `33550336`), `nth_weird_number`
-(task 3, the same value-returning-sibling gap for `is_weird_number`,
+Queue (`BACKLOG.md`, six tasks, restocked this pass): `nth_weird_number`
+(task 1, the same value-returning-sibling gap for `is_weird_number`,
 dense enough near its start — `70`, `836`, `4030`, `5830`, `7192`,
 `7912` — to stay test-friendly well past `k = 6`), `nth_armstrong`
-(task 4, the same value-returning-sibling gap again, this time for
-`is_armstrong` — cheap to test since each candidate check is a
-digit-power-sum, not trial division, and the sequence stays dense
-enough to cap tests at `k <= 15`, `1634`), and `percentile` (task 5,
-restocked this pass: the p-th percentile of a numeric list via linear
-interpolation between the two nearest ranks, the one real gap left in
-the `mean`/`median`/`midrange`/`variance`/`std_dev`/`mode` statistics
-cluster — `percentile(list, 50)` is defined to always equal
-`median(list)` exactly, a built-in cross-check for its own tests), and
-`nth_automorphic` (task 6, restocked this pass: the value-returning
-sibling of `is_automorphic` — `is_trimorphic_number` right below it in
-`builtins.py` already got this treatment as `nth_trimorphic_number`,
-same `value * value`-vs-`value ** 3` shape, so `is_automorphic` was
-the one member of that pair still missing it; cheap to test
-indefinitely since checking a candidate is one squaring plus a
-string-suffix check, no trial division and no sparse-sequence scope
-cap like task 2's perfect numbers).
+(task 2, the same gap again for `is_armstrong` — cheap to test since
+each candidate check is a digit-power-sum, not trial division, dense
+enough to cap tests at `k <= 15`, `1634`), `percentile` (task 3, the
+p-th percentile of a numeric list via linear interpolation between the
+two nearest ranks, the one real gap left in the `mean`/`median`/
+`midrange`/`variance`/`std_dev`/`mode` statistics cluster —
+`percentile(list, 50)` is defined to always equal `median(list)`
+exactly, a built-in cross-check for its own tests), `nth_automorphic`
+(task 4, the value-returning sibling of `is_automorphic` —
+`is_trimorphic_number` right below it in `builtins.py` already got this
+treatment as `nth_trimorphic_number`, same `value * value`-vs-
+`value ** 3` shape, so `is_automorphic` was the one member of that pair
+still missing it; cheap to test indefinitely, no sparse-sequence scope
+cap needed), `to_snake_case` (task 5, restocked this pass: tokenizes a
+string into words on whitespace/hyphen/underscore runs plus camelCase/
+acronym boundaries and rejoins them lowercased with underscores — a
+real gap in the `capitalize`/`title`/`swap_case` case-conversion
+cluster, none of which re-tokenize into words), and `to_camel_case`
+(task 6, restocked this pass: the same word-tokenizer rejoined as
+lowerCamelCase instead, sharing `to_snake_case`'s private
+`_split_case_words` helper so the two builtins' notion of "word" can't
+drift apart — depends on task 5 merging first, same shape `from_roman`
+already has on `to_roman`'s `_ROMAN_VALUES`).
 
-This pass's depth scouting again turned up nothing landable — same
-standing note as prior passes (bitwise operators, chained comparisons,
-`??=`, list/map ordering, `<=>`, right-associative `**`, `in`/`not in`,
-negative/slice indexing all already shipped; this pass also checked
-for class/struct/module/import/generator syntax and found none of
-those started, but `generators` stays the known too-big gap it's
-always been and no scoped-down slice of it surfaced). No new
-depth-task candidate surfaced, so this pass restocked breadth again
-(`nth_automorphic`, task 6 above) since task 1 (`median_absolute_deviation`)
-is still tied up in open PR #453 rather than merged, leaving only four
-unclaimed tasks (2 through 5) before this restock. The next grooming
-pass should keep treating an actual depth slice as the priority over
-reaching for another number-theory-predicate breadth task — this
-backlog has now restocked breadth twice in a row.
+This pass's depth scouting again turned up nothing landable — re-ran
+the standing checks (ternary, string multiplication/list repetition,
+range syntax, destructuring declaration, spaceship `<=>`, default
+arguments, right-associative `**`, compound `**=`, string
+interpolation, negative indexing, slice indexing with step) directly
+against the interpreter via `cinder.cli eval` rather than trusting
+prior passes' notes, and every one already works. `generators` remains
+the only known real depth gap and still has no scoped-down slice small
+enough for one session. Rather than force it, restocked breadth: the
+`is_*`-without-`nth_*` gap audit (diffing the full `is_*`/`nth_*` key
+sets in `builtins.py` programmatically) came back with nothing new
+beyond the three already-queued number-theory tasks above and the long
+confirmed-rejected list from prior passes (multi-arg, string/list-
+shaped with no integer ordering, a type predicate, or previously
+confirmed too-sparse-or-slow), so this pass picked two standalone
+builtins instead — `to_snake_case`/`to_camel_case` — following the
+established precedent of defaulting to standalone builtins
+(`to_roman`/`from_roman`, `rot13`/`caesar_cipher`, `cumsum`/`cumprod`)
+once the `nth_*`-pairing gap list runs dry. Both algorithms and every
+worked example were verified by direct computation in Python (the
+regex-based word-boundary rules) before writing the tasks. `median_absolute_deviation`
+and `nth_perfect_number` both merged clean first-pass since the last
+grooming pass; two merges without an intervening restock had dropped
+the queue to four tasks, one below the five-task floor, so this pass
+restocked by two to bring it back to six rather than the usual one.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
 `is_set` type-predicate fix, and `to_set` have all landed — the
@@ -295,496 +303,25 @@ identified so far.
   into the queue as task 6 (breadth), per the deferred-not-dead note
   the prior pass left for it, bringing the queue back to its usual
   6-task ceiling from the 5-task floor `#412`'s merge had dropped it to.
-- **2026-09-08** — `#413` guards in `match` arms merged (three review
-  rounds), closing the postmortem this section had been tracking since
-  the original PR #314 attempt. Refreshed "Current frontier" for the
-  merge and caught up README.md's own drift, which had accumulated
-  across several prior grooming passes that (correctly, per their own
-  scope) deferred doc updates to "the Architect's next pass": added the
-  missing `nth_emirp` bullet (predicate existed, sibling bullet never
-  landed after `#412`), reworded the two "one optional filter clause"
-  comprehension bullets to reflect `#409`'s chained-`if` support, and
-  replaced the stale "no guards yet" match-features note with a full
-  description of the new guard syntax. Restocked the queue back to six
-  with `nth_evil` (breadth) after auditing the `is_*`-without-`nth_*`
-  gap list for a candidate whose sequence stays dense at every position
-  — several tempting candidates (`nth_armstrong`, `nth_munchausen_number`,
-  `nth_perfect_number`) were rejected because their underlying sequences
-  are so sparse (Armstrong numbers: only 88 exist in base 10 at all;
-  perfect numbers: 51 known, doubling gaps) that a bounded sequential
-  scan to the 50th term is either impossible or impractically slow,
-  unlike every `nth_*` builtin merged so far. No depth task queued this
-  pass — see "Current frontier" above for why.
-- **2026-09-08 (later)** — `#414` `nth_polydivisible` merged (clean
-  first-pass, no rework rounds). Refreshed "Current frontier" for the
-  merge and fixed a stale `BACKLOG.md` Graveyard cross-reference (it
-  still pointed at "task 1" for the match-guards postmortem even though
-  that slot had since been renumbered away to `nth_trimorphic_number`
-  once #413 merged and dropped out of the numbered queue). Restocked
-  the queue back to six with `nth_odious` (breadth, `is_evil`'s
-  popcount-parity complement, same dense/fast-scan shape) after an
-  actual search for a depth-task candidate this time instead of
-  deferring again — see "Current frontier" above for what was checked
-  and why each candidate was ruled out or deferred.
-- **2026-09-08 (yet later)** — `#415` `nth_trimorphic_number` merged
-  (clean first-pass, no rework rounds). Refreshed "Current frontier"
-  and README.md's "Status & roadmap" for the merge; both had gone
-  stale in the same recurring way documented in the two entries above,
-  so re-verified this pass's own edits against `README.md`'s existing
-  `is_circular_prime`/`is_sad_number`/`is_vampire_number`/`is_evil`/
-  `is_odious` bullets to confirm none of their `nth_*` siblings had
-  landed yet (they hadn't — the backlog's own task order was still
-  accurate) before leaving them untouched. Queue is at its 5-task floor
-  (`nth_circular_prime`/`nth_sad_number`/`nth_vampire_number`/
-  `nth_evil`/`nth_odious`); left it there rather than padding back to
-  six — no new depth or breadth candidate surfaced this pass beyond
-  what the prior two entries already scouted and deferred.
-- **2026-09-08 (even later)** — `#416` `nth_circular_prime` merged
-  2026-09-07 (clean first-pass, no rework rounds). Session start found
-  `BACKLOG.md` already carrying an uncommitted, correctly-done removal
-  of the merged task and renumbering of the rest (1-4) — sat uncommitted
-  from an interrupted prior session, kept and built on rather than
-  redone from scratch. That renumbering had left two stale in-body
-  cross-references in the `nth_odious` task text ("task 4 above" for
-  `nth_evil`, which had shifted to task 3) — fixed both — and one
-  reference to `nth_circular_prime` as still "above" in the backlog
-  inside the `nth_evil` task, which no longer holds now that task is
-  merged and gone — reworded. Also found `README.md`'s builtins list
-  was still missing the `nth_trimorphic_number` bullet entirely (the
-  prior pass's entry above says it refreshed "Status & roadmap" but
-  that only touched the prose recap, not the full bullet list) —
-  added it, plus the new `nth_circular_prime` bullet, updated the
-  "Recently landed"/"Coming up next" prose and the test count (4654,
-  up from 4645) in both `README.md` and here. Queue had fallen to four
-  tasks (one below the stated 5-task floor, from the skipped restock
-  after the #416 merge) — restocked to six per the steady-state target:
-  `nth_composite` (breadth, `is_prime`'s dense complement, already had
-  an `nth_prime` sibling to mirror, verified fast — under a second for
-  the first 50 — by running the scan through `cinder.cli eval` before
-  writing the task) and `nth_power_of_two` (breadth, closed-form like
-  `nth_octagonal`/`nth_nonagonal`/`nth_decagonal`, no scan needed at
-  all). Two rejected candidates worth recording so a future pass
-  doesn't re-scope them: `nth_armstrong` and `nth_disarium` both looked
-  like natural next breadth tasks (siblings of already-merged
-  `is_armstrong`/`is_disarium`) but are digit-power sequences that are
-  extremely sparse or provably finite in base 10 (confirmed by direct
-  scan: only 22 Armstrong numbers exist below 2,000,000, and only 19
-  Disarium numbers below 3,000,000) — a sequential "position N" scan
-  either never terminates in reasonable time or runs out of terms
-  before reaching typical worked-example positions like 50, unlike
-  every `nth_*` builtin merged so far. `nth_weird_number` was also
-  tried and rejected for a different reason: `is_weird_number`'s
-  subset-sum reachability check is dense enough to reach position 50
-  but far too slow per-candidate (measured ~75s in raw Python for just
-  the first 50, before even accounting for the tree-walking
-  interpreter's own overhead on top). No depth task queued this pass —
-  see "Current frontier" above, unchanged from the last two passes'
-  scouting.
-- **2026-09-08 (still later)** — `#417` `nth_sad_number` merged (clean
-  first-pass, no rework rounds); found Release's nightlog/changelog
-  bookkeeping for it already backfilled at session start (logged as an
-  outstanding gap by the prior Architect pass, closed before this one
-  began — no action needed here). Refreshed "Current frontier" and
-  README.md's "Status & roadmap"/test-count for the merge, and added
-  the `nth_sad_number` bullet README.md's builtins list had been
-  missing (same recurring drift the two entries above this one already
-  documented and fixed for their own merges). Queue was back at its
-  5-task floor; restocked to six with `nth_pernicious` (breadth,
-  `is_pernicious`'s popcount-is-prime predicate, the same dense/fast
-  scan shape as `nth_evil`/`nth_odious` — verified first 50 terms scan
-  in under a millisecond before writing the task). Audited the full
-  `is_*`-without-`nth_*` gap list again before picking it:
-  `nth_perfect_cube`/`nth_perfect_power` were considered but deferred
-  as too similar in shape to already-queued `nth_power_of_two` (closed
-  form) and `nth_composite` (scan) respectively, rather than adding
-  variety; `is_amicable` was ruled out entirely since it takes two
-  arguments (a pair), not the single-candidate shape every `nth_*`
-  builtin here scans over. No depth task queued this pass — same
-  scouting gap as the three passes above, still holds.
-- **2026-09-08 (still yet later)** — `#418` `nth_vampire_number` merged
-  (clean first-pass, no rework rounds). No stray uncommitted state or
-  HELP.md escalation at session start this time — straightforward
-  catch-up. Refreshed "Current frontier" and README.md's "Status &
-  roadmap"/test count (4675, up from 4664) for the merge, and added the
-  `nth_vampire_number` bullet README.md's builtins list had been
-  missing, same recurring drift the last several entries have each
-  fixed for their own merges. Queue was back at its 5-task floor;
-  restocked to six with `nth_perfect_square` (breadth, closed form like
-  `nth_power_of_two`/`nth_pronic`/`nth_octagonal`, `(k - 1) ** 2`,
-  verified against `is_perfect_square` before writing the task) —
-  `is_perfect_cube` and `is_perfect_power` were both considered as
-  alternatives but re-deferred for the same reason the entry above
-  already gave: too similar in shape to already-queued
-  `nth_power_of_two` (closed form) to add real variety before that task
-  itself has even merged; revisit both once `nth_power_of_two` lands.
-  No depth task queued this pass — same scouting gap as the four passes
-  above, still holds.
-- **2026-09-09** — `#419` `nth_evil` and `#420` `nth_odious` merged
-  (both clean first-pass, no rework rounds) since the last grooming
-  pass. Refreshed "Current frontier" and README.md's "Status &
-  roadmap"/test count (4691, up from 4675) for both merges, and added
-  the `nth_evil`/`nth_odious` bullet README.md's builtins list had been
-  missing entirely (same recurring drift the last several entries have
-  each fixed for their own merges — the predicates existed but no
-  sibling bullet had ever landed for either). Queue had fallen to four
-  tasks (below the 5-task floor, from two merges without a restock in
-  between); restocked to six with `nth_palindrome_number` (breadth,
-  dense — every 1- and 2-digit integer is trivially its own reverse,
-  50th term at `404`, scan verified under a millisecond locally) and
-  `nth_undulating` (breadth, dense enough within the three-digit range
-  once `is_undulating`'s own three-digit floor is cleared, 50th term at
-  `646`, same verification). Audited the full `is_*`-without-`nth_*` gap
-  list before picking these: `is_automorphic` and `is_keith_number` were
-  both tried and rejected as too sparse (only 5 automorphic numbers and
-  5 Keith numbers exist below 2,000,000 each, confirmed by direct scan —
-  nowhere near a 50th term); `nth_perfect_cube`/`nth_perfect_power` were
-  considered again and deferred again for the same reason the two
-  entries above already gave (too similar in shape to already-queued
-  `nth_power_of_two`/`nth_composite`, neither of which has merged yet);
-  `is_amicable`/`is_coprime`/`is_divisible`/`is_disjoint`/`is_subset`/
-  `is_superset` were ruled out outright since they take two arguments,
-  not the single-candidate shape every `nth_*` builtin here scans over.
-  No depth task queued this pass — same scouting gap as the five passes
-  above, still holds; the language remains deep enough (see the
-  unchanged paragraph below) that finding a new gap worth one focused
-  session keeps taking real scouting rather than being obvious.
-- **2026-09-09** — `#421` `nth_composite` merged (clean first-pass, no
-  rework rounds; also caught and fixed a `BACKLOG.md` worked-example
-  typo along the way, 15th composite is `25` not `26`). No stray
-  uncommitted state or `HELP.md` escalation blocking this session's
-  `git pull --rebase` (checked the 2026-09-08 grooming note about PR
-  #416's bookkeeping — already backfilled by an earlier cycle
-  tonight's Release pass, nothing left to do there). Refreshed "Current
-  frontier" and README.md's "Status & roadmap"/test count (4700, up
-  from 4691) for the merge, and added the `nth_composite` bullet
-  README.md's builtins list had been missing. Queue was back at its
-  5-task floor; restocked to six with `nth_perfect_cube` (breadth,
-  closed form, `(k - 1) ** 3`, the same shape `nth_perfect_square`
-  already uses — deferred twice before for lacking variety against
-  `nth_power_of_two`, but both `nth_power_of_two` and `nth_composite`
-  it was compared against have since merged or are the current top
-  task, so the "too similar to an unmerged queue item" objection no
-  longer applies). Checked `is_armstrong`/`is_disarium` as scan
-  candidates first: both too sparse to reach a 50th term inside a
-  reasonable bound (only 22 Armstrong and 18 Disarium numbers exist
-  below 2,000,000, confirmed by direct scan); `is_weird_number` reaches
-  its 50th term (`26530`) but each candidate check needs a subset-sum
-  over its divisors, which measured ~30s in raw Python for just 50
-  terms — too slow for a bounded scan builtin without real algorithmic
-  work, out of scope for one session. No depth task queued this pass —
-  same scouting gap as the six passes above, still holds.
-- **2026-09-09 (later)** — `#422` `nth_power_of_two`'s merge had already
-  been folded into "Current frontier"'s prose by the prior pass (commit
-  `9e28263`) but never got its own dated History bullet — backfilled
-  here for continuity rather than left as a silent gap, and folded in
-  `#423` `nth_pernicious`'s merge (clean first-pass, no rework rounds)
-  from the cycle since. Refreshed "Current frontier" and README.md's
-  "Status & roadmap"/test count (4718, up from 4700) for both merges,
-  added the `nth_pernicious` bullet README.md's builtins list had been
-  missing (same recurring drift the last several entries have each
-  fixed for their own merges), and fixed a stale README.md
-  cross-reference: the `Set`-literal task's "see `BACKLOG.md` task 6"
-  pointer had gone stale to "task 5" once `#423`'s removal dropped the
-  queue to five tasks without renumbering `Set` itself (it was already
-  the last item) — corrected the number. Queue was back at its 5-task
-  floor; restocked to six with `nth_leap_year` (breadth, `is_leap_year`'s
-  Gregorian-rule predicate — scan starts at candidate `0` since
-  `is_leap_year` has no lower bound and `0` is itself a leap year under
-  the proleptic rule, already covered by that predicate's own test
-  suite — dense at roughly one in four, verified first 50 terms scan
-  instantly). Audited the `is_*`-without-`nth_*` gap list again before
-  picking it: `is_strong_number` was tried and rejected as far too
-  sparse (only four strong numbers exist in base 10 at all: `1`, `2`,
-  `145`, `40585`); `is_lucas_number` turned out not to be a real gap —
-  its value-returning sibling already exists under the name `nth_lucas`
-  rather than `nth_lucas_number`, just not cross-referenced by matching
-  name in the gap search. No depth task queued this pass — same
-  scouting gap as the seven passes above, still holds; the language
-  remains deep enough that finding a new gap worth one focused session
-  keeps taking real scouting rather than being obvious.
-- **2026-09-09 (grooming)** — `#424` `nth_perfect_square` merged (clean
-  first-pass, no rework rounds). Also found and committed a leftover
-  uncommitted `README.md` edit from an interrupted prior session
-  (correct, already matched `BACKLOG.md`'s post-merge task numbering —
-  just never got committed) before this pass's own work. Refreshed
-  "Current frontier" and README.md's "Status & roadmap"/test count
-  (4728, up from 4718) for the merge. Queue was back at its 5-task
-  floor; restocked to six with `nth_perfect_power` (breadth,
-  `is_perfect_power`'s union-of-power-sequences predicate — scoped to
-  non-negative candidates only, since `is_perfect_power` uniquely among
-  this codebase's scanned predicates accepts negative input and a
-  single monotonic position scan can't sensibly interleave the two
-  signs; verified worked examples against the real `_is_perfect_power`
-  implementation directly rather than reimplementing its logic by hand,
-  first 50 terms scan instantly). Audited the `is_*`-without-`nth_*` gap
-  list before picking it: `is_disarium` was tried and rejected as too
-  sparse (only 18 disarium numbers exist below 2,000,000, confirmed by
-  direct scan — consistent with the `#421` pass's note on the same
-  family of digit-power predicates). No depth task queued this pass —
-  same scouting gap as the eight passes above, still holds; `Set`
-  (task 4) remains the only depth task in the queue, unclaimed.
-- **2026-09-09 (grooming, second pass)** — `#425` `nth_palindrome_number`
-  merged (clean first-pass, no rework rounds). Refreshed "Current
-  frontier" and README.md's "Status & roadmap"/test count (4737, up
-  from 4728) for the merge, and added the `nth_palindrome_number`
-  bullet README.md's builtins list had been missing entirely (only a
-  negative "can't yet be searched" mention in the roadmap prose, no
-  positive bullet next to `is_palindrome_number` — same recurring drift
-  several prior entries have each fixed for their own merges). Queue
-  was back at its 5-task floor; renumbering already done by the prior
-  Release session, so this pass restocked to six with `rot13` (breadth,
-  standalone Caesar-cipher string transform, sits next to `swap_case`).
-  Chose a standalone builtin rather than another `is_*`/`nth_*` pair
-  because that gap list is now close to exhausted: audited
-  `is_automorphic` (rejected — only 12 automorphic numbers exist below
-  2,000,000, and each successive digit-length contributes roughly two
-  more, so later terms need candidates with dozens of digits, far
-  beyond what a sequential scan can reach), `is_keith_number` (rejected
-  — confirmed by direct timed scan that reaching even the 50th term
-  runs well past two minutes in raw Python, too slow for a bounded-scan
-  builtin), and a derived single-arg `is_amicable_number` built from the
-  existing two-arg `is_amicable`/`aliquot_sum` (rejected — reaching the
-  50th amicable number requires scanning past 389,924 with an
-  isqrt-optimized divisor-sum check per candidate, ~10s in raw Python
-  for the predicate alone and roughly double that once `nth_*` calls it
-  twice per candidate, in the same "too slow for one session's bounded
-  scan" territory as `is_weird_number`/`is_strong_number` rejected
-  earlier). These three join `is_armstrong`/`is_disarium`/
-  `is_weird_number`/`is_strong_number` from earlier passes as the
-  confirmed-too-sparse-or-slow list; the remaining unpaired `is_*`
-  predicates are either multi-argument (`is_amicable`, `is_anagram`,
-  `is_rotation`, ...), string/list-shaped with no natural 1-indexed
-  integer ordering (`is_balanced`, `is_isogram`, `is_sorted`, ...), or
-  type predicates — none of them fit the `nth_*` pattern at all. Future
-  breadth passes should default to standalone builtins (like `rot13`
-  here, or `hamming_distance`/`levenshtein_distance`/`cartesian_product`
-  before it) rather than continuing to search for `nth_*` pairings.
-  `Set` (task 3 after renumbering) remains the only depth task in the
-  queue, unclaimed.
-- **2026-09-09 (grooming, third pass)** — `#426` `nth_undulating` merged
-  (clean first-pass, no rework rounds) since the prior grooming pass;
-  "Current frontier" and README.md's "Status & roadmap"/builtins-list
-  bullet and test count (4746, up from 4737) had not yet been refreshed
-  for that merge, so this pass caught both up. Verified `main` is green
-  (4746 tests) and spot-checked all five queued gaps still don't exist
-  in the interpreter (each still raises "undefined name"). Queue was at
-  its 5-task floor; tried to restock to six before settling for five.
-  Checked the remaining `is_*`-without-`nth_*` gap programmatically
-  (diffed the full `is_*`/`nth_*` key sets in `builtins.py` directly
-  rather than eyeballing) — every unpaired name left is one of the
-  categories already ruled out in earlier passes (multi-arg, string/list-
-  shaped with no integer ordering, or a type predicate) except three
-  worth checking fresh: `is_pandigital` (rejected — empirically timed a
-  naive `candidate = 0, 1, 2, ...` scan against the real predicate and
-  it did not reach even the 1st term inside two minutes, since 10-digit
-  pandigitals only start around `1,023,456,789`; a smarter
-  digit-permutation generator would dodge this but that's a
-  meaningfully bigger task than this backlog's usual `nth_*` shape, not
-  a one-session bounded scan), `is_munchausen_number` (rejected — only
-  four exist in base 10 at all, `0`, `1`, `3435`, `438579072`, nowhere
-  near enough for a 50-term worked-example set), and `is_perfect_number`
-  (rejected — only five are known below `10^9`, `6`/`28`/`496`/`8128`/
-  `33550336`, the same "too sparse" shape as `is_strong_number` rejected
-  earlier). No standalone-builtin idea passed the bar either on a quick
-  pass. Left the queue at five rather than force a weak task — five is
-  within the stated 5-6 range, and CLAUDE.md's floor is "at least 5
-  ready tasks," not exactly 6. `Set` remains the only depth task in the
-  queue, unclaimed. Next grooming pass should keep scouting for a sixth;
-  this pass's rejected list (`is_pandigital`/`is_munchausen_number`/
-  `is_perfect_number`) doesn't need re-checking.
-- **2026-09-09 (grooming, fourth pass)** — `#427` `nth_perfect_cube`
-  merged (clean first-pass, no rework rounds) since the prior grooming
-  pass; `main` confirmed green at 4756 tests (up from 4746). Refreshed
-  "Current frontier" (task numbering shifted down by one now that
-  `nth_perfect_cube` is off the queue) and README.md's "Status &
-  roadmap" for the merge, and added the `nth_perfect_cube` bullet
-  README.md's builtins list had been missing entirely (same recurring
-  drift several prior entries have each fixed for their own merges —
-  `CHANGELOG.md`'s archive entry for `#427` was already correct, this
-  was purely the README/PROJECT.md side). Queue was at its 5-task floor
-  after the removal; restocked to five (not six — see below) with
-  `to_roman` (breadth, standalone conversion builtin next to
-  `to_hex`/`to_bin`/`to_oct`, greedy-algorithm integer-to-Roman-numeral
-  conversion bounded to the standard 1-3999 domain). Re-audited the
-  full `is_*`-without-`nth_*` gap programmatically before picking a
-  standalone builtin instead: every unpaired name is still one of the
-  categories already ruled out across the last several passes
-  (multi-arg, string/list-shaped with no integer ordering, a type
-  predicate, or previously confirmed too-sparse-or-slow) except
-  `is_leap_year`/`is_perfect_power`, which aren't actually gaps — their
-  `nth_*` siblings are already queued as this same backlog's tasks 2
-  and 3, just unmerged. Nothing new to add to the rejected list this
-  pass. `Set` has been climbing the queue by ordinary FIFO since it was
-  first added several passes ago (it was task 6 at its lowest, per the
-  cross-reference fix logged in this History section's `#423` entry)
-  and only reaches task 1 — the actual top, `BACKLOG.md`'s "next
-  Engineer's job" slot — with this pass's removal of `#427`. Not a
-  skipped-task pattern, just the first time it's been at the front;
-  worth watching next pass to confirm it gets claimed now that it
-  genuinely is top, but no escalation warranted yet.
-- **2026-09-10 (grooming, fifth pass)** — no PR merged since the prior
-  pass; `main` still green at 4756 tests. `Set` (task 1) is confirmed
-  claimed and no longer just "at the front" — PR #428 is open, and a
-  Reviewer session already bounced it once (`CHANGES REQUESTED`: an
-  unguarded `CinderSet` index-assignment path that would silently
-  corrupt the type's equality contract), so it's mid-flight, not
-  unclaimed. That leaves only tasks 2-5 ready/unclaimed — one below
-  CLAUDE.md's 5-ready floor — so this pass restocked to six rather than
-  leaving it at four. Re-scouted the `is_*`-without-`nth_*` gap
-  programmatically first (same audit as the fourth pass, extended to
-  the full builtin list this time): confirmed empty again, nothing new
-  beyond the already-queued `nth_leap_year`/`nth_perfect_power`. Added
-  `from_roman` (task 6, breadth) instead — the natural inverse of
-  `to_roman` (task 5, not yet merged), parsing a Roman numeral string
-  back to an integer via a round-trip check (decode greedily, re-encode
-  with `_to_roman`, require exact match) that rejects non-canonical
-  input (`"IIII"`, `"VX"`) for free without a separate validation pass.
-  Verified every worked example and a full `1..3999` round-trip
-  programmatically before writing the task. Task 6 explicitly depends
-  on task 5 merging first (shares `_ROMAN_VALUES`), which the strict
-  top-to-bottom claiming order in `BACKLOG.md`'s header already
-  guarantees — not a new constraint, just worth stating since it's the
-  first task in this backlog to declare an explicit same-file
-  dependency on an unmerged predecessor rather than standing alone.
-- **2026-09-10 (grooming, sixth pass)** — `#428` `Set` literal syntax and
-  equality merged this cycle (two review rounds: `CHANGES REQUESTED` for
-  the `_index_set` `CinderSet` indexing gap noted above, fixed on the same
-  branch, then `VERDICT: LGTM`/`QA: PASS`). `main` confirmed green at 4788
-  tests (up from 4756, all from `Set`'s own suite). Refreshed "Current
-  frontier" for the merge; Release had already renumbered `BACKLOG.md`'s
-  remaining five tasks to 1-5 and `CHANGELOG.md`'s archive entry for #428
-  was already in place, so this pass's own work was the README/PROJECT.md
-  catch-up only. Per the alternation policy (depth landed, restock with
-  breadth), added `longest_common_prefix` (task 6, standalone
-  list-of-strings builtin next to `hamming_distance`/`levenshtein_distance`
-  — generalizes a string-pair comparison to a whole list, returning the
-  longest shared prefix of every string in it). Re-audited the
-  `is_*`-without-`nth_*` gap programmatically first: still nothing new
-  beyond the already-queued `nth_leap_year`/`nth_perfect_power` — every
-  other unpaired name is still one of the confirmed multi-arg/string-
-  shaped/type-predicate/too-sparse-or-slow rejections from earlier passes.
-  No stray uncommitted state or `HELP.md` escalation blocking this
-  session's `git pull --rebase`. `generators` remains the only real depth
-  gap, still deferred — see "Current frontier" above for why.
-- **2026-09-10 (grooming, seventh pass)** — `#429` `nth_leap_year` merged
-  this cycle (clean, single review round). `main` confirmed green at 4797
-  tests (up from 4788, all from `nth_leap_year`'s own suite). Release had
-  already renumbered `BACKLOG.md`'s remaining five tasks to 1-5 and
-  `CHANGELOG.md`'s archive entry for #429 was already in place, so this
-  pass's own work was the README/PROJECT.md catch-up only: refreshed
-  "Current frontier" and "Status & roadmap" for the merge, and added the
-  missing `nth_leap_year` bullet next to `is_leap_year` in README's
-  builtin list (the prior pass that wrote the task's implementation
-  snippet had flagged this as a follow-up, not done automatically by the
-  merge). Backlog sits at five ready tasks, at CLAUDE.md's floor exactly
-  — not restocking further this pass since five already satisfies the
-  "at least five" rule and the `is_*`-without-`nth_*` gap audit keeps
-  coming back empty pass after pass; next grooming session should restock
-  once the top task claims and the count drops to four. No stray
-  uncommitted state or `HELP.md` escalation blocking this session's `git
-  pull --rebase` (checked `HELP.md` for `STATUS: STOP` — none present).
-- **2026-09-10 (grooming, eighth pass)** — `#430` `nth_perfect_power`
-  merged this cycle (clean, single review round). `main` confirmed green
-  at 4806 tests (up from 4797, all from `nth_perfect_power`'s own suite).
-  Unlike the prior several passes, Release's nightlog claimed task 1 was
-  "already removed from `BACKLOG.md` ahead of this cycle" but it was
-  actually still present (only the claim-timestamp commit had landed,
-  not an archive/removal) — this pass did the full archive itself:
-  appended the `CHANGELOG.md` entry for `#430`, removed task 1 from
-  `BACKLOG.md`, and renumbered the remaining four tasks (`rot13`/
-  `to_roman`/`from_roman`/`longest_common_prefix`) down to 1-4,
-  including fixing `from_roman`'s stale internal cross-reference to
-  `to_roman`'s new task number and dropping a confusing self-referential
-  "once task 4 has landed" clause from its gap-verification step (that
-  task *is* task 4 pre-renumber; the clause never made sense and looks
-  like a copy-paste leftover, not a real dependency — the gap-check
-  itself doesn't need `to_roman` merged first, only the implementation
-  does, which the surrounding sentence already states separately).
-  Refreshed "Current frontier" and README.md's "Status & roadmap"/
-  builtins-list for the merge. Renumbering dropped ready/unclaimed tasks
-  to four, one below CLAUDE.md's five-task floor, so restocked to five
-  with `binary_gap` (task 5, breadth — longest run of zeros bounded by
-  two ones in an integer's binary representation, the classic Codility
-  "BinaryGap" kata, sitting next to `to_bin`/`collatz_length`; verified
-  the algorithm and every worked example by direct computation in Python
-  first, including the kata's own headline `1041 -> 5` example). Chose a
-  standalone builtin over another `is_*`/`nth_*` pair since that gap list
-  is still exhausted — same confirmed rejection set as prior passes, no
-  new candidates found. Left the backlog at five rather than six — five
-  already satisfies the "at least five ready" rule per the third pass's
-  same reasoning, and every unclaimed task right now is genuinely ready
-  (no in-flight claim to work around). No stray uncommitted state or
-  `HELP.md` escalation blocking this session's `git pull --rebase`
-  (checked `HELP.md` for `STATUS: STOP` — none present; only prior
-  sessions' already-resolved notes). `generators` remains the only real
-  depth gap, still deferred — see "Current frontier" above for why.
-- **2026-09-10 (grooming, ninth pass)** — `#431` `rot13` merged this
-  cycle (clean, single review round). `main` confirmed green at 4814
-  tests (up from 4806, all from `rot13`'s own suite). Release had already
-  archived the completed task from `BACKLOG.md` to `CHANGELOG.md` and
-  renumbered the remaining four tasks (`to_roman`/`from_roman`/
-  `longest_common_prefix`/`binary_gap`) down to 1-4, so this pass's own
-  work was the README/PROJECT.md catch-up (added the missing `rot13`
-  bullet next to `swap_case` in README's builtin list, refreshed "Current
-  frontier" and "Status & roadmap" for the merge, trimmed the
-  recently-landed rundown back down to five items per the established
-  trim policy) plus restocking. Renumbering dropped ready/unclaimed tasks
-  to four, one below CLAUDE.md's five-task floor, so restocked to five
-  with `dot_product` (task 5, breadth — dot product of two equal-length
-  numeric lists, a two-argument numeric-list statistic sitting next to
-  `mean`/`median`/`variance`/`std_dev`, mirroring `hamming_distance`'s
-  own equal-length validation shape since it's the closest existing
-  two-argument builtin with the same failure mode). Verified every
-  worked example by direct computation in Python first, including the
-  empty-list and mixed-int/float cases. Chose a standalone builtin over
-  another `is_*`/`nth_*` pair since that gap list is still exhausted —
-  same confirmed rejection set as prior passes (re-audited
-  programmatically, nothing new). Left the backlog at five rather than
-  six — five already satisfies the "at least five ready" rule, and every
-  unclaimed task right now is genuinely ready (no in-flight claim to work
-  around). No stray uncommitted state or `HELP.md` escalation blocking
-  this session's `git pull --rebase` (checked `HELP.md` for
-  `STATUS: STOP` — none present; only prior sessions' already-resolved
-  notes, including today's now-superseded reviewer/architect stash
-  exchange). `generators` remains the only real depth gap, still
-  deferred — see "Current frontier" above for why.
-- **2026-09-10 (grooming, tenth pass)** — `#432` `to_roman` merged this
-  cycle (clean, single review round; ran the local suite to confirm —
-  4823 tests, up from 4814). Release had already archived the completed
-  task from `BACKLOG.md` to `CHANGELOG.md` and renumbered the remaining
-  four tasks (`from_roman`/`longest_common_prefix`/`binary_gap`/
-  `dot_product`) down to 1-4, including rewording `from_roman`'s stale
-  "depends on task 1 merging first" cross-reference to reflect that
-  `to_roman` is already merged — so this pass's own work was the
-  README/PROJECT.md catch-up (added the missing `to_roman` bullet next
-  to `to_hex`/`to_bin`/`to_oct` in README's builtin list, moved it from
-  "Queued next" into "Recently landed" in both README's "Status &
-  roadmap" and this section, refreshed the test count in both places,
-  trimmed the recently-landed rundown back down to five items per the
-  established trim policy) plus restocking. Queue was at its four-task
-  floor (one below CLAUDE.md's five-task minimum) so restocked to five
-  with `cumsum` (task 5, breadth — the cumulative running sum of a
-  numeric list, a list-returning generalization sitting directly next to
-  `sum`/`product`, the same scalar-to-list shape shift
-  `run_length_encode`/`run_length_decode` already have). Verified the
-  gap first (`cumsum` is undefined, `sum` is the closest match per the
-  interpreter's own suggestion), then every worked example by direct
-  computation in Python, including the empty-list, single-element, and
-  mixed-int/float cases. Chose a standalone builtin over another
-  `is_*`/`nth_*` pair since that gap list is still exhausted — re-checked
-  every unpaired `is_*` name against the confirmed rejection set from
-  prior passes' History entries (multi-arg, string/list-shaped with no
-  integer ordering, a type predicate, or one of the already-rejected
-  too-sparse-or-slow names like `is_weird_number`/`is_strong_number`/
-  `is_automorphic`/`is_keith_number`/`is_amicable`/`is_pandigital`/
-  `is_munchausen_number`) — nothing new. Left the backlog at five rather
-  than six — five already satisfies the "at least five ready" rule, and
-  every unclaimed task right now is genuinely ready (no in-flight claim
-  to work around). No stray uncommitted state or `HELP.md` escalation
-  blocking this session's `git pull --rebase` (checked `HELP.md` for
-  `STATUS: STOP` — none present; only prior sessions' already-resolved
-  notes). `generators` remains the only real depth gap, still deferred —
-  see "Current frontier" above for why.
+- **2026-09-08 through 2026-09-10** — Twenty-two PRs merged across these
+  three nights (`#413` guards in `match` arms through `#432` `to_roman`),
+  each night's grooming pass refreshing "Current frontier"/README.md and
+  restocking the backlog in turn; only one bounce in the whole span
+  (`Set`'s `#428`, one `CHANGES REQUESTED` round for an unguarded
+  `CinderSet` index-assignment path, fixed same-branch). Depth scouting
+  came up empty pass after pass (bitwise operators, chained comparisons,
+  `??=`, list/map ordering, `<=>`, right-associative `**`, `in`/`not in`,
+  negative/slice indexing all already shipped by this point) except for
+  `Set` literal syntax itself (`#428`), the one depth task to land in
+  this span; every other merge was a breadth (`nth_*`/`is_*` sibling or
+  standalone builtin) task. Full pass-by-pass detail (each PR's own
+  rationale, every rejected `nth_*` candidate and why, every stale
+  cross-reference caught and fixed) lived here as twenty-some individual
+  dated entries; trimmed to this one paragraph for the same reason the
+  five trims above already gave — nobody should have to read a wall of
+  finished, fully-played-out history to find current vision/scope.
+  `CHANGELOG.md` and this file's own git history still have the complete
+  detail for anyone who wants it.
 - **2026-09-11 (grooming)** — `#433` `from_roman` merged since the last
   pass (clean, single review round; ran the local suite to confirm —
   4833 tests, up from 4823). Release had already archived the completed
@@ -1289,3 +826,35 @@ identified so far.
   `nightshift/HELP.md`) — this session commits its own docs work
   directly rather than leaving it for the next session to notice and
   stash.
+- **2026-09-13 (grooming)** — `#453` `median_absolute_deviation` and
+  `#454` `nth_perfect_number` both merged clean first-pass since the
+  last grooming pass (5029 tests, up from 5014). Refreshed "Current
+  frontier" and README.md's "Status & roadmap"/builtins quick-reference
+  list for both merges (added the `median_absolute_deviation` and
+  `nth_perfect_number` bullets README's list was missing). Two merges
+  without an intervening restock had dropped `BACKLOG.md` to four tasks
+  (`nth_weird_number`/`nth_armstrong`/`percentile`/`nth_automorphic`),
+  one below the five-task floor — renumbered them to 1-4 and fixed the
+  stale in-body cross-references each one had accumulated (`"task 2
+  above"`-style references to `nth_perfect_number`, now shipped and no
+  longer a numbered backlog entry; `nth_armstrong`'s aside on
+  `nth_weird_number` also needed updating since that's task 1, not yet
+  merged). Depth scouting came back empty again — re-ran the standing
+  checks directly against the interpreter rather than trusting prior
+  notes (ternary, string/list repetition, range syntax, destructuring,
+  `<=>`, default arguments, `**=`, string interpolation, negative/slice
+  indexing all confirmed still working); `generators` remains the only
+  real gap. Restocked breadth by two instead of the usual one: audited
+  the `is_*`-without-`nth_*` gap programmatically (still nothing new
+  beyond the three already-queued number-theory tasks and the long
+  confirmed-rejected list), so picked two standalone builtins instead —
+  `to_snake_case` (task 5) and `to_camel_case` (task 6, sharing
+  `to_snake_case`'s private `_split_case_words` helper, same
+  same-file-dependency shape `from_roman` has on `to_roman`) — verifying
+  both algorithms and every worked example by direct computation in
+  Python first. Also trimmed this section's `2026-09-08` through
+  `2026-09-10` span (twenty-two individual dated entries) down to one
+  paragraph, same rationale as the five earlier trims recorded above:
+  `main` was green and `HELP.md` had no `STATUS: STOP` and no stray
+  uncommitted state at session start, `git pull --rebase origin main`
+  a no-op.

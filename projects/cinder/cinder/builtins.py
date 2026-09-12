@@ -4171,6 +4171,32 @@ def _std_dev(arguments: list, line: int, column: int) -> object:
     return math.sqrt(_population_variance(value))
 
 
+def _zscore(arguments: list, line: int, column: int) -> object:
+    _require_arity("zscore", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"zscore() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("zscore() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"zscore() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    total = 0
+    for element in value:
+        total = total + element
+    mean = total / len(value)
+    standard_deviation = math.sqrt(_population_variance(value))
+    if standard_deviation == 0:
+        raise CinderRuntimeError(
+            "zscore() requires a list with non-zero standard deviation", line, column
+        )
+    return [(element - mean) / standard_deviation for element in value]
+
+
 def _dot_product(arguments: list, line: int, column: int) -> object:
     _require_arity("dot_product", arguments, 2, line, column)
     first, second = arguments
@@ -6000,6 +6026,7 @@ _BUILTINS = {
     "midrange": _midrange,
     "variance": _variance,
     "std_dev": _std_dev,
+    "zscore": _zscore,
     "dot_product": _dot_product,
     "mode": _mode,
     "any": _any,

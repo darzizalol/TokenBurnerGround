@@ -10331,6 +10331,43 @@ class TestStdDev(unittest.TestCase):
             run("std_dev();")
 
 
+class TestZscore(unittest.TestCase):
+    def test_zscore_of_textbook_example(self):
+        result = run("let result = zscore([2, 4, 4, 4, 5, 5, 7, 9]);").get("result")
+        self.assertEqual(result, [-1.5, -0.5, -0.5, -0.5, 0.0, 0.0, 1.0, 2.0])
+
+    def test_zscore_of_uneven_list(self):
+        result = run("let result = zscore([1, 2, 3]);").get("result")
+        self.assertEqual(
+            result, [-1.224744871391589, 0.0, 1.224744871391589]
+        )
+
+    def test_zscore_of_single_element_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zscore([5]);")
+
+    def test_zscore_of_identical_elements_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zscore([4, 4, 4]);")
+
+    def test_zscore_of_empty_list_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zscore([]);")
+
+    def test_zscore_of_non_numeric_element_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run('zscore([1, "a"]);')
+
+    def test_zscore_non_list_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("zscore(123);")
+        self.assertEqual(ctx.exception.line, 1)
+
+    def test_zscore_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("zscore();")
+
+
 class TestDotProduct(unittest.TestCase):
     def test_dot_product_of_simple_vectors(self):
         result = run("let result = dot_product([1, 2, 3], [4, 5, 6]);").get("result")

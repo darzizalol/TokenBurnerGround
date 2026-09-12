@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
+## 1. Standard library: `jaccard_similarity` — set-similarity ratio of two lists [claimed 2026-09-12T14:51:43Z]
 
 Add a standalone two-list builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before

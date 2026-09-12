@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `median_absolute_deviation` — median-based measure of dispersion
+## 1. Standard library: `median_absolute_deviation` — median-based measure of dispersion [claimed 2026-09-12T15:06:11Z]
 
 Add a standalone list-transform-shaped statistic builtin directly
 after `_median` (`cinder/builtins.py`, search `def _median`,

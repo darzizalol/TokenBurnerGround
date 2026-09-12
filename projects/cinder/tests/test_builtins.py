@@ -10227,6 +10227,61 @@ class TestMedian(unittest.TestCase):
             run("median();")
 
 
+class TestMedianAbsoluteDeviation(unittest.TestCase):
+    def test_odd_length_list(self):
+        result = run(
+            "let result = median_absolute_deviation([1, 2, 3, 4, 5]);"
+        ).get("result")
+        self.assertEqual(result, 1)
+
+    def test_larger_odd_length_list(self):
+        result = run(
+            "let result = median_absolute_deviation([1, 2, 3, 4, 5, 6, 7, 8, 9]);"
+        ).get("result")
+        self.assertEqual(result, 2)
+
+    def test_even_length_list_is_float(self):
+        result = run(
+            "let result = median_absolute_deviation([1, 3, 5, 7, 9, 11]);"
+        ).get("result")
+        self.assertEqual(result, 3.0)
+        self.assertIsInstance(result, float)
+
+    def test_constant_list_is_zero(self):
+        result = run("let result = median_absolute_deviation([4, 4, 4]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_single_element_list_is_zero(self):
+        result = run("let result = median_absolute_deviation([5]);").get("result")
+        self.assertEqual(result, 0)
+
+    def test_empty_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"median_absolute_deviation\(\) requires a non-empty list",
+        ):
+            run("median_absolute_deviation([]);")
+
+    def test_non_list_argument_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"median_absolute_deviation\(\) requires a list, got int",
+        ):
+            run("median_absolute_deviation(123);")
+
+    def test_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"median_absolute_deviation\(\) requires a list of numbers, got string",
+        ):
+            run('median_absolute_deviation([1, "a"]);')
+
+    def test_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("median_absolute_deviation();")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestMidrange(unittest.TestCase):
     def test_midrange_of_list(self):
         result = run("let result = midrange([1, 2, 10]);").get("result")

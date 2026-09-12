@@ -4109,6 +4109,29 @@ def _median(arguments: list, line: int, column: int) -> object:
     return (ordered[middle - 1] + ordered[middle]) / 2
 
 
+def _median_absolute_deviation(arguments: list, line: int, column: int) -> object:
+    _require_arity("median_absolute_deviation", arguments, 1, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"median_absolute_deviation() requires a list, got {type_name(value)}",
+            line, column,
+        )
+    if not value:
+        raise CinderRuntimeError(
+            "median_absolute_deviation() requires a non-empty list", line, column
+        )
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"median_absolute_deviation() requires a list of numbers, got {type_name(element)}",
+                line, column,
+            )
+    center = _median(arguments, line, column)
+    deviations = [abs(element - center) for element in value]
+    return _median([deviations], line, column)
+
+
 def _midrange(arguments: list, line: int, column: int) -> object:
     _require_arity("midrange", arguments, 1, line, column)
     value = arguments[0]
@@ -6102,6 +6125,7 @@ _BUILTINS = {
     "harmonic_mean": _harmonic_mean,
     "rms": _rms,
     "median": _median,
+    "median_absolute_deviation": _median_absolute_deviation,
     "midrange": _midrange,
     "variance": _variance,
     "std_dev": _std_dev,

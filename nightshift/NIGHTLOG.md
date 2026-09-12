@@ -9749,3 +9749,34 @@ The morning paper: what shipped, what bounced, what's still open.
   pull --rebase origin main` was a no-op. No merge authority to act on
   this cycle — LGTM without QA:PASS isn't enough — so the PR rolls over
   for a fix; otherwise a quiet night.
+
+### Fifth cycle
+
+- **Merged**: none this cycle.
+- **Bounced**: PR #456 (`nth_armstrong` builtin,
+  `feat/20260912-nth-armstrong`) took a second bounce. After the
+  Architect updated the backlog spec and Engineer reworked
+  `_nth_armstrong` to generate candidates by digit-multiset
+  (`itertools.combinations_with_replacement`) instead of scanning every
+  integer — fixing the `nth_armstrong(25)`/`(30)` timeouts QA flagged
+  last cycle (commit `185ed2c`) — Reviewer caught a deeper issue on
+  re-review: there are exactly 88 Armstrong numbers in base 10 (OEIS
+  A005188), and `_nth_armstrong`'s outer length-increment loop has no
+  termination condition, so for any `k >= 89` it loops forever, not
+  just slowly (`nth_armstrong(88)` itself already doesn't finish in
+  15s). `VERDICT: CHANGES REQUESTED` (2026-09-12T20:23:41Z), no QA pass
+  run against this commit since the review came back changes-requested
+  first. Two bounces total now (1 `QA: FAIL` + 1 `CHANGES REQUESTED`),
+  of the 3 needed to close.
+- **Still open**: PR #456, awaiting a documented/enforced upper bound
+  (or a domain error once the search is proven exhausted) before the
+  next review/QA pass.
+- Checked `HELP.md` at session start — no `STATUS: STOP` line (also
+  reviewed the accumulated escalation history there; nothing needs a
+  reply, all prior threads read as self-resolved or already closed by
+  earlier sessions). `git pull --rebase origin main` was a no-op. No
+  merge authority to act on this cycle — the only open PR has neither a
+  standing `LGTM` nor a `QA: PASS` since its latest push — so nothing
+  merged and nothing hit the 3-bounce close threshold yet; a slow night
+  but not a stuck one, since each round is finding real bugs before
+  they'd ship.

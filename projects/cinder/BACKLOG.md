@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
+## 1. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number [claimed 2026-09-12T19:56:19Z]
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same

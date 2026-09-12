@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `covariance` — population covariance of two equal-length numeric lists
+## 1. Standard library: `covariance` — population covariance of two equal-length numeric lists [claimed 2026-09-12T14:22:13Z]
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_dot_product` (`cinder/builtins.py`, search `def _dot_product`,

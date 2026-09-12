@@ -524,7 +524,7 @@ while (i < 10) {
   `pluck`, `pick`, `omit`, `pick_by`, `omit_by`,
   `flat_map`, `chunk`, `sliding_window`, `group_consecutive`, `run_length_encode`, `run_length_decode`, `reverse`, `rotate`, `shuffle`, `sample`, `sort`, `sort_by`, `group_by`, `key_by`, `count_by`, `partition`, `range`, `repeat`, `map`,
   `deep_merge`,
-  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `rms`, `to_set`, `frequencies`, `compact`,
+  `map_values`, `map_keys`, `filter`, `reject`, `reduce`, `pipe`, `compose`, `curry`, `memoize`, `slice`, `split_at`, `concat`, `zip`, `zip_longest`, `unzip`, `zip_with`, `transpose`, `min_by`, `max_by`, `assert`, `format`, `sum`, `sum_by`, `cumsum`, `cumprod`, `cummax`, `cummin`, `diff`, `product`, `mean`, `median`, `midrange`, `variance`, `std_dev`, `dot_product`, `mode`, `geometric_mean`, `harmonic_mean`, `rms`, `to_set`, `zscore`, `frequencies`, `compact`,
   `any`, `all`, `none`, string methods `upper`, `lower`, `capitalize`, `title`,
   `trim`, `trim_start`, `trim_end`, `split`, `join`, `find`, `find_last`, `starts_with`, `ends_with`, `replace`, `replace_first`,
   `strip_prefix`, `strip_suffix`, `lines`, `words`, `chars`,
@@ -877,29 +877,33 @@ projects/cinder/
 
 ## Status & roadmap
 
-Actively developed, nightly. Recently landed: `rms` (PR #448, the
+Actively developed, nightly. Recently landed: `zscore` (PR #449,
+standardizing a numeric list to zero mean/unit variance — a
+list-transform sibling of `mean`/`std_dev`), `rms` (PR #448, the
 quadratic mean completing the `mean`/`geometric_mean`/`harmonic_mean`
 trio of Pythagorean means), `to_set` (PR #447, converting a list into
 an actual `Set` runtime value — the last Set-completion gap now that
 `is_set` covers the type-check side), `midrange` (PR #446, a third
 measure of central tendency next to `mean`/`median` — the average of
-a list's minimum and maximum), `diff` (PR #445, the inverse-shaped
-sibling of `cumsum` — successive differences of a numeric list), and
-`longest_common_suffix` (PR #444, the suffix-side mirror of
-`longest_common_prefix`). See [`CHANGELOG.md`](CHANGELOG.md) for the
-full merge history. Queued next (see [`BACKLOG.md`](BACKLOG.md)), all
-breadth: `zscore` (task 1, standardizing a numeric list to zero
-mean/unit variance — a list-transform sibling of `mean`/`std_dev`),
-`covariance` (task 2, the two-list generalization of `variance`,
-sitting next to `dot_product`), `correlation` (task 3, the normalized
-sibling of `covariance`, rescaling it into `[-1, 1]` by the product of
-both lists' standard deviations), `jaccard_similarity` (task 4, the
+a list's minimum and maximum), and `diff` (PR #445, the inverse-shaped
+sibling of `cumsum` — successive differences of a numeric list). See
+[`CHANGELOG.md`](CHANGELOG.md) for the full merge history. Queued next
+(see [`BACKLOG.md`](BACKLOG.md)), all breadth: `covariance` (task 1,
+the two-list generalization of `variance`, sitting next to
+`dot_product`), `correlation` (task 2, the normalized sibling of
+`covariance`, rescaling it into `[-1, 1]` by the product of both
+lists' standard deviations), `jaccard_similarity` (task 3, the
 similarity-ratio member of the `union`/`intersection`/`is_subset`/
 `is_disjoint` lists-as-sets family that reduces two lists to a single
-number instead of another list), and `median_absolute_deviation` (task
-5, the median-based dispersion measure sitting next to `median`/
-`midrange` — robust to outliers where `variance`/`std_dev` are not).
-The language is otherwise deep by now (try/catch/finally, `switch`,
+number instead of another list), `median_absolute_deviation` (task 4,
+the median-based dispersion measure sitting next to `median`/
+`midrange` — robust to outliers where `variance`/`std_dev` are not),
+`nth_perfect_number` (task 5, the value-returning sibling
+`is_perfect_number` was still missing, alongside `is_abundant`/
+`nth_abundant` and kin — capped at `k <= 4` since perfect numbers get
+sparse fast), and `nth_weird_number` (task 6, the same gap for
+`is_weird_number`, dense enough to test well past `k = 6`). The
+language is otherwise deep by now (try/catch/finally, `switch`,
 full pattern-matching with guards, safe navigation, nil-coalescing,
 spread, labeled break/continue, chained assignment, keyword arguments,
 and more) — finding a new depth gap worth one focused session takes

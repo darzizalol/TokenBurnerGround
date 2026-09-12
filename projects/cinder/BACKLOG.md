@@ -466,6 +466,234 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `nth_perfect_number` — the k-th perfect number
+
+Add directly after `_is_perfect_number` (`cinder/builtins.py`, search
+`def _is_perfect_number`, immediately before `def
+_is_practical_number`) — the value-returning sibling every other
+divisor-sum classification predicate in this family already has
+(`is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
+`is_practical_number`/`nth_practical_number`,
+`is_semiperfect`/`nth_semiperfect`), the one member still missing it.
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_perfect_number(1));'
+# -> <eval>:1:7: undefined name 'nth_perfect_number' (did you mean 'nth_perfect_cube'?)
+```
+
+**What it does.** Given a positive integer `k`, return the `k`-th
+perfect number (1-indexed) — a positive integer equal to the sum of
+its own proper divisors, the same condition `_is_perfect_number`
+already checks, applied here as a sequential scan exactly like
+`_nth_abundant`/`_nth_deficient` already do for their own predicates.
+
+**Performance note — read before implementing or writing tests.**
+Perfect numbers are extraordinarily sparse: the first four are `6`,
+`28`, `496`, `8128`, but the fifth is `33550336`. A sequential
+trial-division scan (the same `O(sqrt(candidate))`-per-candidate
+approach `nth_abundant`/`nth_deficient` already use) checking every
+candidate up to that point is computationally infeasible to run in a
+test — millions of candidates, each requiring a trial-division pass.
+Cap every test and worked example at `k <= 4` (candidate `8128`, a few
+thousand fast candidate checks); do **not** write or document a test
+for `nth_perfect_number(5)` or any larger `k` — that is a known,
+intentional scope boundary of this task, not an oversight to "complete."
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `nth_perfect_number(1)` is `6`.
+- `nth_perfect_number(2)` is `28`.
+- `nth_perfect_number(3)` is `496`.
+- `nth_perfect_number(4)` is `8128`.
+- `nth_perfect_number(0);` raises `CinderRuntimeError` — domain error,
+  same convention `nth_abundant(0)`/`nth_deficient(0)` already use.
+- `nth_perfect_number(-1);` raises `CinderRuntimeError` — domain error.
+- `nth_perfect_number(1.5);` raises `CinderRuntimeError` — not an int.
+- `nth_perfect_number("a");` raises `CinderRuntimeError` — not an int.
+
+Add directly after `_is_perfect_number` (search `def
+_is_perfect_number`, immediately before `def _is_practical_number`):
+```python
+def _nth_perfect_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_perfect_number", arguments, 1, line, column)
+    value = _require_int("nth_perfect_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_perfect_number() requires a positive integer, domain error", line, column
+        )
+
+    def _is_perfect_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        total = 1
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                total += divisor
+                complement = candidate // divisor
+                if complement != divisor and complement != candidate:
+                    total += complement
+        return total == candidate
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_perfect_candidate(candidate):
+            count += 1
+    return candidate
+```
+(`_is_perfect_candidate` mirrors `_is_perfect_number`'s own divisor-sum
+loop exactly — including the `complement != candidate` guard, dead in
+practice since `divisor` never reaches `1`, but kept for the same
+reason `_is_perfect_number` has it: so the two functions' notion of
+"perfect" can't silently drift apart — rather than the slightly
+different loop shape `_nth_abundant`/`_nth_deficient` use.) Register
+the new dict entry (search `"is_perfect_number": _is_perfect_number,`,
+add `"nth_perfect_number": _nth_perfect_number,` directly after it,
+before `"is_practical_number": _is_practical_number,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `nth_perfect_number(1)` is `6` through `nth_perfect_number(4)` is
+  `8128`.
+- `nth_perfect_number(0);` and `nth_perfect_number(-1);` both raise
+  `CinderRuntimeError` matching `"nth_perfect_number\(\) requires a
+  positive integer, domain error"`.
+- `nth_perfect_number(1.5);` and `nth_perfect_number("a");` both raise
+  `CinderRuntimeError` matching `"nth_perfect_number\(\) requires an
+  int, got (float|string)"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- No test calls `nth_perfect_number(5)` or higher — see the performance
+  note above.
+- Full test suite passes (and finishes in normal time — a test that
+  hangs or takes unusually long past this task's change is a sign the
+  `k <= 4` cap above was violated).
+
+Likely files: `cinder/builtins.py` (directly after `_is_perfect_number`,
+search `def _is_perfect_number`), `tests/test_builtins.py` (new `class
+TestNthPerfectNumber`, modeled on `class TestNthAbundant`/`class
+TestNthDeficient`, search either name, for the test shapes above —
+place it near the existing `class TestIsPerfectNumber`). Once merged,
+`README.md`'s builtins quick-reference list (search
+`is_perfect_number`) needs `nth_perfect_number` added right after it,
+its "Status & roadmap" section needs updating, and `PROJECT.md`'s
+"Current frontier" section needs refreshing — leave both to the
+Architect's next grooming pass, not this task.
+
+---
+
+## 6. Standard library: `nth_weird_number` — the k-th weird number
+
+Add directly after `_is_weird_number` (`cinder/builtins.py`, search
+`def _is_weird_number`, immediately before `def _is_semiperfect`) —
+the same value-returning-sibling gap task 5 above closes for
+`is_perfect_number`, here for `is_weird_number` (abundant but not
+semiperfect — no subset of its proper divisors sums to it exactly).
+Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_weird_number(1));'
+# -> <eval>:1:7: undefined name 'nth_weird_number' (did you mean 'is_weird_number'?)
+```
+
+**What it does.** Given a positive integer `k`, return the `k`-th
+weird number (1-indexed) — a positive integer whose proper divisors
+sum to more than itself (abundant) but no subset of them sums to it
+exactly (not semiperfect) — the same condition `_is_weird_number`
+already checks, applied here as a sequential scan exactly like
+`_nth_semiperfect` already does for its own predicate. Unlike task 5's
+perfect numbers, weird numbers are dense enough close to their start
+for a sequential scan to stay fast well past `k = 6` — the first six
+are `70`, `836`, `4030`, `5830`, `7192`, `7912`, all comfortably small.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `nth_weird_number(1)` is `70` — the smallest weird number.
+- `nth_weird_number(2)` is `836`.
+- `nth_weird_number(3)` is `4030`.
+- `nth_weird_number(4)` is `5830`.
+- `nth_weird_number(5)` is `7192`.
+- `nth_weird_number(6)` is `7912`.
+- `nth_weird_number(0);` raises `CinderRuntimeError` — domain error,
+  same convention `nth_semiperfect(0)` already uses.
+- `nth_weird_number(-1);` raises `CinderRuntimeError` — domain error.
+- `nth_weird_number(1.5);` raises `CinderRuntimeError` — not an int.
+- `nth_weird_number("a");` raises `CinderRuntimeError` — not an int.
+
+Add directly after `_is_weird_number` (search `def _is_weird_number`,
+immediately before `def _is_semiperfect`):
+```python
+def _nth_weird_number(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_weird_number", arguments, 1, line, column)
+    value = _require_int("nth_weird_number", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_weird_number() requires a positive integer, domain error", line, column
+        )
+
+    def _is_weird_candidate(candidate: int) -> bool:
+        if candidate < 2:
+            return False
+        divisors = [1]
+        for divisor in range(2, math.isqrt(candidate) + 1):
+            if candidate % divisor == 0:
+                divisors.append(divisor)
+                complement = candidate // divisor
+                if complement != divisor:
+                    divisors.append(complement)
+        if sum(divisors) <= candidate:
+            return False
+        reachable = {0}
+        for divisor in divisors:
+            reachable |= {
+                total + divisor for total in reachable if total + divisor <= candidate
+            }
+        return candidate not in reachable
+
+    count = 0
+    candidate = 0
+    while count < value:
+        candidate += 1
+        if _is_weird_candidate(candidate):
+            count += 1
+    return candidate
+```
+(`_is_weird_candidate` mirrors `_is_weird_number`'s own
+divisor-collection-then-subset-sum-reachability logic exactly, so the
+two functions' notion of "weird" can't silently drift apart — same
+reuse-the-sibling-predicate's-exact-logic discipline task 5 above uses
+for `_is_perfect_number`.) Register the new dict entry (search
+`"is_weird_number": _is_weird_number,`, add `"nth_weird_number":
+_nth_weird_number,` directly after it, before `"is_semiperfect":
+_is_semiperfect,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `nth_weird_number(1)` is `70` through `nth_weird_number(6)` is
+  `7912`.
+- `nth_weird_number(0);` and `nth_weird_number(-1);` both raise
+  `CinderRuntimeError` matching `"nth_weird_number\(\) requires a
+  positive integer, domain error"`.
+- `nth_weird_number(1.5);` and `nth_weird_number("a");` both raise
+  `CinderRuntimeError` matching `"nth_weird_number\(\) requires an
+  int, got (float|string)"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_weird_number`,
+search `def _is_weird_number`), `tests/test_builtins.py` (new `class
+TestNthWeirdNumber`, modeled on `class TestNthSemiperfect`, search that
+name, for the test shapes above — place it near the existing `class
+TestIsWeirdNumber`). Once merged, `README.md`'s builtins
+quick-reference list (search `is_weird_number`) needs
+`nth_weird_number` added right after it, its "Status & roadmap"
+section needs updating, and `PROJECT.md`'s "Current frontier" section
+needs refreshing — leave both to the Architect's next grooming pass,
+not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

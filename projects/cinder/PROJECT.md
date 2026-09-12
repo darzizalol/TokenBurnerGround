@@ -149,39 +149,47 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4973 tests passing locally as of `#448`). Most
-recently landed: `#448` `rms` (the quadratic mean completing the
-`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means),
-`#447` `to_set` (converting a list into an actual `Set` runtime value
-— the last Set-completion gap now that `is_set` covers the type-check
-side), `#446` `midrange` (a third measure of central tendency next to
-`mean`/`median` — the average of a list's minimum and maximum), `#445`
-`diff` (the inverse-shaped sibling of `cumsum`, successive differences
-of a numeric list), `#444` `longest_common_suffix` (the suffix-side
-mirror of `longest_common_prefix`) — see `CHANGELOG.md` for the full
-merge history, newest first.
+`main` is green (4981 tests passing locally as of `#449`). Most
+recently landed: `#449` `zscore` (standardizing a numeric list to zero
+mean/unit variance — a list-*transform* sibling of `mean`/`std_dev`
+rather than another single-number reduction, reusing the same
+`_population_variance` helper those two already share), `#448` `rms`
+(the quadratic mean completing the `mean`/`geometric_mean`/
+`harmonic_mean` trio of Pythagorean means), `#447` `to_set` (converting
+a list into an actual `Set` runtime value — the last Set-completion
+gap now that `is_set` covers the type-check side), `#446` `midrange`
+(a third measure of central tendency next to `mean`/`median` — the
+average of a list's minimum and maximum), `#445` `diff` (the
+inverse-shaped sibling of `cumsum`, successive differences of a
+numeric list) — see `CHANGELOG.md` for the full merge history, newest
+first.
 
-Queue (`BACKLOG.md`, five tasks): `zscore` (task 1, standardizing a
-numeric list to zero mean/unit variance — a list-*transform* sibling
-of `mean`/`std_dev` rather than another single-number reduction,
-reusing the same `_population_variance` helper those two already
-share), `covariance` (task 2, the two-list generalization of
-`variance` — combines `dot_product`'s equal-length two-list validation
-with `variance`'s non-empty-list requirement, sitting next to
-`dot_product`), `correlation` (task 3, the normalized sibling of
-`covariance` — divides it by the product of both lists' standard
-deviations to rescale into `[-1, 1]`, reusing `_covariance` from task
-2 directly so the two builtins' arithmetic can't drift apart),
-`jaccard_similarity` (task 4, the one member missing from the
+Queue (`BACKLOG.md`, six tasks): `covariance` (task 1, the two-list
+generalization of `variance` — combines `dot_product`'s equal-length
+two-list validation with `variance`'s non-empty-list requirement,
+sitting next to `dot_product`), `correlation` (task 2, the normalized
+sibling of `covariance` — divides it by the product of both lists'
+standard deviations to rescale into `[-1, 1]`, reusing `_covariance`
+from task 1 directly so the two builtins' arithmetic can't drift
+apart), `jaccard_similarity` (task 3, the one member missing from the
 lists-as-sets family — `union`/`intersection`/`difference`/
 `symmetric_difference`/`is_subset`/`is_superset`/`is_disjoint` — that
 reduces two lists to a single similarity ratio instead of another
-list, reusing `_union`/`_intersection` directly), and, newly added
-this pass, `median_absolute_deviation` (task 5, the median-based
-dispersion measure sitting next to `median`/`midrange` — reuses
-`_median` for both the center and the final reduction over absolute
-deviations, and unlike `variance`/`std_dev` is robust to outliers
-since it never squares anything).
+list, reusing `_union`/`_intersection` directly), `median_absolute_deviation`
+(task 4, the median-based dispersion measure sitting next to
+`median`/`midrange` — reuses `_median` for both the center and the
+final reduction over absolute deviations, and unlike `variance`/
+`std_dev` is robust to outliers since it never squares anything), and,
+newly added this pass, `nth_perfect_number` (task 5, the
+value-returning sibling every other divisor-sum classification
+predicate already has — `is_abundant`/`nth_abundant`,
+`is_deficient`/`nth_deficient`, `is_practical_number`/
+`nth_practical_number`, `is_semiperfect`/`nth_semiperfect` — the one
+gap being that perfect numbers get sparse fast, so the task caps
+tests at `k <= 4`, the fifth already being `33550336`) and
+`nth_weird_number` (task 6, the same value-returning-sibling gap for
+`is_weird_number`, dense enough near its start — `70`, `836`, `4030`,
+`5830`, `7192`, `7912` — to stay test-friendly well past `k = 6`).
 
 This pass's depth scouting (chained comparisons on lists, `<=>`
 spaceship, right-associative `**`, `in`/`not in`, negative and
@@ -1139,3 +1147,50 @@ identified so far.
   directly in Python before writing the task. This keeps the breadth
   run at five rather than growing it to six; the next grooming pass
   should keep scouting for a depth slice with fresh eyes.
+- **2026-09-12 (Architect grooming, catching up on `#449`)** —
+  `git pull --rebase origin main` was a no-op, root checkout clean at
+  session start (no `STATUS: STOP` in `HELP.md`, no stray stash, no
+  open PRs). `main` green (4981 tests, up from 4963). One merge since
+  the last grooming pass had gone undocumented: `#449` `zscore`,
+  already reflected in `BACKLOG.md`/`CHANGELOG.md` by Engineer/Release
+  but not yet in this file's "Current frontier" or README's "Status &
+  roadmap" — refreshed both, and added `zscore` to README's builtins
+  quick-reference list. Queue had dropped to four tasks
+  (`covariance`/`correlation`/`jaccard_similarity`/
+  `median_absolute_deviation`), one below the five-task floor and two
+  below the usual six. Scouted for a depth slice again with fresh eyes
+  per the last two passes' standing ask: re-checked the operator table
+  and `match`/`switch`/loop features actually implemented against
+  README line-by-line for gaps (spaceship `<=>`, list/map ordering
+  comparisons, every `?.`/`??`/pipe/rest/keyword-argument corner) —
+  still nothing; `generators` remains the only known real depth gap and
+  still has no scoped-down slice small enough for one session.  Rather
+  than force it, restocked with two more breadth tasks to bring the
+  queue back to six: `nth_perfect_number` (task 5) and
+  `nth_weird_number` (task 6), both closing the same kind of gap
+  `jaccard_similarity` closed last pass — a value-returning `nth_X`
+  sibling missing for an existing `is_X` classification predicate,
+  following the exact precedent of `is_abundant`/`nth_abundant`,
+  `is_deficient`/`nth_deficient`, `is_practical_number`/
+  `nth_practical_number`, and `is_semiperfect`/`nth_semiperfect`.
+  Deliberately did *not* revive `percentile` (rejected twice already
+  for an open interpolation-method design question) or `weighted_mean`
+  (rejected once for an open weight-validation question) a third time
+  without a genuinely new angle on either open question. Checked
+  `nth_perfect_number` for a performance trap before queuing it — perfect
+  numbers are extremely sparse (the 5th is `33550336`) unlike every
+  other `nth_X` predicate in this family, so its task write-up caps
+  tests at `k <= 4` and explicitly tells the Engineer not to test
+  `k = 5`, the same way `_nth_abundant`'s own O(sqrt(n))-per-candidate
+  scan would need the domain restricted if abundant numbers were ever
+  this sparse. `nth_weird_number` has no such trap (`70`, `836`,
+  `4030`, `5830`, `7192`, `7912` all comfortably reachable). Both
+  worked-example sequences confirmed by running each candidate function
+  directly in Python before writing the tasks, and both gaps confirmed
+  absent via `python3 -m cinder.cli eval` before that. Two breadth
+  tasks in a row (following `jaccard_similarity`/
+  `median_absolute_deviation` last pass) is more than the "occasional"
+  stacking the alternation policy anticipates, but a real depth gap
+  still hasn't turned up in four scouting passes now — the next
+  grooming pass should treat finding one as the priority over restocking
+  further breadth.

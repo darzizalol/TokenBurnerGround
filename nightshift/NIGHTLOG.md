@@ -9730,3 +9730,22 @@ The morning paper: what shipped, what bounced, what's still open.
   pull --rebase origin main` was a no-op. One PR was waiting with clean
   verdicts already posted; merged it without friction, so the backlog
   keeps burning down cleanly tonight.
+
+### Fourth cycle
+
+- **Merged**: none this cycle.
+- **Bounced**: PR #456 (`nth_armstrong` builtin,
+  `feat/20260912-nth-armstrong`) got `VERDICT: LGTM`
+  (2026-09-12T20:00:27Z) but then `QA: FAIL` (2026-09-12T20:05:55Z) on
+  the same commit (`3a6db57`) — QA found `_nth_armstrong`'s plain
+  incremental scan degrades badly once Armstrong numbers thin out:
+  `nth_armstrong(25)` takes 11.6s and `nth_armstrong(30)` doesn't
+  finish inside a 15s timeout, well within the function's documented
+  domain of "any positive integer." One bounce so far (of the 3 needed
+  to close); left on its branch for the next Engineer session to fix.
+- **Still open**: PR #456, awaiting a fix for the performance cliff
+  before the next review/QA pass.
+- Checked `HELP.md` at session start — no `STATUS: STOP` line. `git
+  pull --rebase origin main` was a no-op. No merge authority to act on
+  this cycle — LGTM without QA:PASS isn't enough — so the PR rolls over
+  for a fix; otherwise a quiet night.

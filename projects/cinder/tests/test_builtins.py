@@ -6884,6 +6884,66 @@ class TestIsWeirdNumber(unittest.TestCase):
             run("is_weird_number();")
 
 
+class TestNthWeirdNumber(unittest.TestCase):
+    def test_nth_weird_number_of_first_six_positions(self):
+        expected = {
+            1: 70,
+            2: 836,
+            3: 4030,
+            4: 5830,
+            5: 7192,
+            6: 7912,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_weird_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_weird_number_agrees_with_is_weird_number(self):
+        for position in range(1, 7):
+            self.assertEqual(
+                run(
+                    f"let result = is_weird_number(nth_weird_number({position}));"
+                ).get("result"),
+                True,
+                f"expected nth_weird_number({position}) to be a weird number",
+            )
+
+    def test_nth_weird_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_weird_number(0);")
+        self.assertIn(
+            "nth_weird_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_weird_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_weird_number(-1);")
+        self.assertIn(
+            "nth_weird_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_weird_number_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_weird_number(1.5);")
+        self.assertIn("nth_weird_number", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_nth_weird_number_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_weird_number("a");')
+        self.assertIn("nth_weird_number", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_nth_weird_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_weird_number();")
+
+
 class TestIsSemiperfect(unittest.TestCase):
     def test_is_semiperfect_of_6_is_true(self):
         self.assertEqual(run("let result = is_semiperfect(6);").get("result"), True)

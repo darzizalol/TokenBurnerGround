@@ -4525,3 +4525,11 @@ for vision/architecture.
   empty map literal. Clean first pass, no bounces (4963 tests passing,
   up from 4955). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `rms` — quadratic mean (root mean square)** —
+  merged 2026-09-11T20:29:07Z via PR #448 (`feat/20260911-rms`,
+  squashed as `ad6bd70`). Fourth classical Pythagorean mean, completing
+  `mean`/`geometric_mean`/`harmonic_mean`: `sqrt(sum(x^2) / len(list))`.
+  Unlike `geometric_mean`/`harmonic_mean`, squaring makes every element
+  non-negative before averaging, so it places no positivity restriction
+  on input — only the empty list is rejected. Clean first pass, no
+  bounces (4973 tests passing, up from 4963).

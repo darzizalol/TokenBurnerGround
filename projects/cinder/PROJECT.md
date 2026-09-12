@@ -149,62 +149,65 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (4963 tests passing locally as of `#447`). Most
-recently landed: `#447` `to_set` (converting a list into an actual
-`Set` runtime value — the last Set-completion gap now that `is_set`
-covers the type-check side), `#446` `midrange` (a third measure of
-central tendency next to `mean`/`median` — the average of a list's
-minimum and maximum), `#445` `diff` (the inverse-shaped sibling of
-`cumsum`, successive differences of a numeric list), `#444`
-`longest_common_suffix` (the suffix-side mirror of
-`longest_common_prefix`), `#443` `is_map`/`is_set` (a correctness fix
-— `is_map` wrongly returned `true` for a `Set` value since
-`CinderSet` is a `dict` subclass and `is_map` never special-cased it
-the way `type_name` already does; landed alongside the missing
-`is_set` type predicate) — see `CHANGELOG.md` for the full merge
-history, newest first.
+`main` is green (4973 tests passing locally as of `#448`). Most
+recently landed: `#448` `rms` (the quadratic mean completing the
+`mean`/`geometric_mean`/`harmonic_mean` trio of Pythagorean means),
+`#447` `to_set` (converting a list into an actual `Set` runtime value
+— the last Set-completion gap now that `is_set` covers the type-check
+side), `#446` `midrange` (a third measure of central tendency next to
+`mean`/`median` — the average of a list's minimum and maximum), `#445`
+`diff` (the inverse-shaped sibling of `cumsum`, successive differences
+of a numeric list), `#444` `longest_common_suffix` (the suffix-side
+mirror of `longest_common_prefix`) — see `CHANGELOG.md` for the full
+merge history, newest first.
 
-Queue (`BACKLOG.md`, five tasks): `rms` (task 1, the quadratic mean
-completing the `mean`/`geometric_mean`/`harmonic_mean` trio of
-Pythagorean means), `zscore` (task 2, standardizing a numeric list to
-zero mean/unit variance — a list-*transform* sibling of `mean`/
-`std_dev` rather than another single-number reduction, reusing the
-same `_population_variance` helper those two already share),
-`covariance` (task 3, the two-list generalization of `variance` —
-combines `dot_product`'s equal-length two-list validation with
-`variance`'s non-empty-list requirement, sitting next to
-`dot_product`), `correlation` (task 4, the normalized sibling of
+Queue (`BACKLOG.md`, five tasks): `zscore` (task 1, standardizing a
+numeric list to zero mean/unit variance — a list-*transform* sibling
+of `mean`/`std_dev` rather than another single-number reduction,
+reusing the same `_population_variance` helper those two already
+share), `covariance` (task 2, the two-list generalization of
+`variance` — combines `dot_product`'s equal-length two-list validation
+with `variance`'s non-empty-list requirement, sitting next to
+`dot_product`), `correlation` (task 3, the normalized sibling of
 `covariance` — divides it by the product of both lists' standard
 deviations to rescale into `[-1, 1]`, reusing `_covariance` from task
-3 directly so the two builtins' arithmetic can't drift apart), and,
-newly added this pass, `jaccard_similarity` (task 5, the one member
-missing from the lists-as-sets family — `union`/`intersection`/
-`difference`/`symmetric_difference`/`is_subset`/`is_superset`/
-`is_disjoint` — that reduces two lists to a single similarity ratio
-instead of another list, reusing `_union`/`_intersection` directly).
+2 directly so the two builtins' arithmetic can't drift apart),
+`jaccard_similarity` (task 4, the one member missing from the
+lists-as-sets family — `union`/`intersection`/`difference`/
+`symmetric_difference`/`is_subset`/`is_superset`/`is_disjoint` — that
+reduces two lists to a single similarity ratio instead of another
+list, reusing `_union`/`_intersection` directly), and, newly added
+this pass, `median_absolute_deviation` (task 5, the median-based
+dispersion measure sitting next to `median`/`midrange` — reuses
+`_median` for both the center and the final reduction over absolute
+deviations, and unlike `variance`/`std_dev` is robust to outliers
+since it never squares anything).
+
+This pass's depth scouting (chained comparisons on lists, `<=>`
+spaceship, right-associative `**`, `in`/`not in`, negative and
+slice indexing) again came back "already shipped" — same standing
+note as prior passes. No new depth-task candidate surfaced, so this
+pass restocked with one more breadth task
+(`median_absolute_deviation`, task 5) to hold the queue at its 5-task
+floor. The next grooming pass should keep scouting for a depth slice
+with fresh eyes.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
-`is_set` type-predicate fix, and `to_set` have all landed, each
-scoped down exactly as the prior passes' scouting recommended — the
+`is_set` type-predicate fix, and `to_set` have all landed — the
 Set-completion arc that started several passes back is now fully
 closed. `generators` remains a real gap, still too big for one
 session as a full feature and without an obvious scoped-down slice.
-This pass tried harder than usual to find a landable depth slice
-given the last several passes' standing note about breadth stacking:
-checked hex/octal/binary integer literals and `_`-digit-separators
-(both already implemented, `cinder/lexer.py`'s `_number`/
-`_prefixed_int`), string interpolation (already implemented, `"${expr}"`),
-chained comparisons (`a < b < c`, already implemented), the `??=`
-nil-coalescing compound-assign operator (already implemented), and
-list/map ordering comparisons and concatenation (already implemented)
-— all came back "already shipped", not gaps. No new depth-task
-candidate surfaced. Rather than force a marginal one, this pass
-restocked with one more breadth task (`jaccard_similarity`, task 5)
-to hold the queue at its 5-task floor instead of piling on a second,
-keeping the breadth run to five rather than six. The next grooming
-pass should keep scouting for a depth slice with fresh eyes — the
-list of "already implemented" candidates above is meant to save it
-from re-checking the same ground.
+Depth-slice scouting across several consecutive passes (hex/octal/
+binary integer literals and `_`-digit-separators, string
+interpolation, chained comparisons, `??=`, list/map ordering
+comparisons and concatenation, `<=>` spaceship, right-associative
+`**`, `in`/`not in`, negative and slice indexing) has repeatedly come
+back "already shipped" rather than turning up a gap — the language is
+deep enough now that finding a landable depth slice takes real
+searching, not a quick check. The queue has correspondingly run
+breadth-only for several passes in a row; the next grooming pass
+should keep scouting for a depth slice with fresh eyes so breadth
+doesn't stack indefinitely.
 
 Pattern matching (`match`) now has, beyond its original literal-pattern/`_`
 wildcard base (#304): bound-identifier, multi-value, flat/nested list

@@ -10494,6 +10494,80 @@ class TestCovariance(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestCorrelation(unittest.TestCase):
+    def test_correlation_of_perfectly_increasing_lists_is_one(self):
+        result = run("let result = correlation([1, 2, 3], [4, 5, 6]);").get("result")
+        self.assertEqual(result, 1.0)
+
+    def test_correlation_of_perfectly_decreasing_lists_is_negative_one(self):
+        result = run("let result = correlation([1, 2, 3], [6, 5, 4]);").get("result")
+        self.assertEqual(result, -1.0)
+
+    def test_correlation_of_list_with_itself_is_one(self):
+        result = run("let result = correlation([1, 2, 3], [1, 2, 3]);").get("result")
+        self.assertEqual(result, 1.0)
+
+    def test_correlation_of_non_perfect_lists(self):
+        result = run(
+            "let result = correlation([1, 2, 3, 4], [2, 4, 5, 4]);"
+        ).get("result")
+        self.assertEqual(result, 0.7181848464596078)
+
+    def test_correlation_with_constant_second_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires lists with non-zero standard deviation",
+        ):
+            run("correlation([1, 2, 3, 4], [10, 10, 10, 10]);")
+
+    def test_correlation_of_single_element_lists_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires lists with non-zero standard deviation",
+        ):
+            run("correlation([5], [5]);")
+
+    def test_correlation_of_empty_lists_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires non-empty lists",
+        ):
+            run("correlation([], []);")
+
+    def test_correlation_unequal_length_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires lists of equal length, got lengths 2 and 3",
+        ):
+            run("correlation([1, 2], [1, 2, 3]);")
+
+    def test_correlation_first_argument_not_a_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires a list as its first argument, got int",
+        ):
+            run("correlation(5, [1, 2]);")
+
+    def test_correlation_second_argument_not_a_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires a list as its second argument, got int",
+        ):
+            run("correlation([1, 2], 5);")
+
+    def test_correlation_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"correlation\(\) requires lists of numbers, got string",
+        ):
+            run('correlation([1, "a"], [1, 2]);')
+
+    def test_correlation_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("correlation([1]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestMode(unittest.TestCase):
     def test_mode_of_clear_winner(self):
         result = run("let result = mode([1, 2, 2, 3]);").get("result")

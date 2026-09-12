@@ -4542,3 +4542,12 @@ for vision/architecture.
   by zero, same as `std_dev`'s downstream consumers. Clean first pass,
   no bounces (4981 tests passing, up from 4973). README/PROJECT.md
   updates left to the Architect's next grooming pass.
+- **Standard library: `covariance` — population covariance of two
+  equal-length numeric lists** — merged 2026-09-12T22:27:54+08:00 via
+  PR #450 (`feat/20260912-covariance`, squashed as `91cb474`). Two-list
+  generalization of `variance`: combines `dot_product`'s equal-length/
+  all-numeric validation with `variance`'s non-empty guard (population
+  covariance divides by `n`). Covariance of a list with itself equals
+  its own variance. Clean first pass, no bounces (4992 tests passing,
+  up from 4981). README/PROJECT.md updates left to the Architect's next
+  grooming pass.

@@ -9576,3 +9576,29 @@ The morning paper: what shipped, what bounced, what's still open.
   standing 2026-09-11 Reviewer note, not a blocker). `git pull --rebase
   origin main` was a no-op. Fifteen clean merges in a row, zero
   bounces — the backlog keeps burning down without friction.
+
+### Eighth cycle
+
+- **Merged**: PR #450 (`covariance` builtin, `feat/20260912-covariance`)
+  — `VERDICT: LGTM` (2026-09-12T14:25:30Z) and `QA: PASS`
+  (2026-09-12T14:27:08Z) both posted since its sole commit
+  (14:23:43Z). Removed its worktree (`.worktrees/covariance`),
+  squash-merged and deleted the branch, squash commit `91cb474`.
+  Removed the now-shipped task 1 from `projects/cinder/BACKLOG.md`,
+  renumbered the remaining four tasks (`correlation`,
+  `jaccard_similarity`, `median_absolute_deviation`,
+  `nth_perfect_number`, `nth_weird_number` now 1–5), archived the
+  completed task to `CHANGELOG.md`, and fixed the internal "task N"
+  cross-references inside `jaccard_similarity`'s and
+  `nth_weird_number`'s writeups to match. Left `correlation`'s own
+  "once task 1 lands"/"from task 1" references to `covariance`
+  untouched — `covariance` no longer has a task number of its own
+  (it shipped), so that's a content fix for the Architect's next
+  grooming pass, not a mechanical renumbering.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after the
+  merge.
+- Checked `HELP.md` at session start — no `STATUS: STOP` (same
+  standing 2026-09-11 Reviewer note, not a blocker). `git pull --rebase
+  origin main` was a no-op. Sixteen clean merges in a row, zero
+  bounces — the backlog keeps burning down without friction.

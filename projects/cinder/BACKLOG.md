@@ -11,128 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `covariance` — population covariance of two equal-length numeric lists [claimed 2026-09-12T14:22:13Z]
-
-Add a standalone two-list numeric-statistic builtin directly after
-`_dot_product` (`cinder/builtins.py`, search `def _dot_product`,
-immediately before `def _mode`) — combines `dot_product`'s two-list
-validation shape (equal length, both all-numeric) with `variance`'s
-non-empty requirement (population covariance divides by `n`, same
-division-by-zero reason `variance`/`std_dev` reject an empty list) to
-give the two-list generalization of `variance`: how two lists vary
-together instead of how one varies alone. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(covariance([1, 2, 3], [4, 5, 6]));'
-# -> <eval>:1:7: undefined name 'covariance' (did you mean 'variance'?)
-```
-
-**What it does.** Given two non-empty numeric lists of equal length,
-return `mean((x[i] - mean(x)) * (y[i] - mean(y)) for i in range(n))` —
-the population covariance (divide by `n`, not `n - 1`, same convention
-`_population_variance` already uses). Positive when the two lists tend
-to move together, negative when they move oppositely, `0` when one
-list is constant or the two are uncorrelated.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `covariance([1, 2, 3], [4, 5, 6])` is `0.6666666666666666` — both
-  lists increase together.
-- `covariance([1, 2, 3], [6, 5, 4])` is `-0.6666666666666666` — the
-  same lists, second one reversed, flips the sign.
-- `covariance([1, 2, 3], [1, 2, 3])` equals `variance([1, 2, 3])`
-  (`0.6666666666666666`) — a list's covariance with itself is its own
-  variance, a cross-check in the same spirit as
-  `test_harmonic_mean_am_gm_hm_inequality` (search that name in
-  `tests/test_builtins.py`) for the Pythagorean means.
-- `covariance([1, 2, 3, 4], [10, 10, 10, 10])` is `0.0` — a constant
-  second list has no variation to covary with, regardless of the
-  first.
-- `covariance([5], [5])` is `0.0` — a single-element pair.
-- `covariance([], []);` raises `CinderRuntimeError` — empty lists, no
-  elements to average (same reason `variance`/`std_dev` reject an
-  empty list; unlike `dot_product`, which tolerates empty lists since
-  it never divides by `n`).
-- `covariance([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` — unequal
-  lengths, mirroring `dot_product`'s own length check.
-
-Add directly after `_dot_product` (search `def _dot_product`,
-immediately before `def _mode`):
-```python
-def _covariance(arguments: list, line: int, column: int) -> object:
-    _require_arity("covariance", arguments, 2, line, column)
-    first, second = arguments
-    if not isinstance(first, list):
-        raise CinderRuntimeError(
-            f"covariance() requires a list as its first argument, got {type_name(first)}",
-            line, column,
-        )
-    if not isinstance(second, list):
-        raise CinderRuntimeError(
-            f"covariance() requires a list as its second argument, got {type_name(second)}",
-            line, column,
-        )
-    for element in first + second:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"covariance() requires lists of numbers, got {type_name(element)}",
-                line, column,
-            )
-    if len(first) != len(second):
-        raise CinderRuntimeError(
-            f"covariance() requires lists of equal length, got lengths {len(first)} and {len(second)}",
-            line, column,
-        )
-    if not first:
-        raise CinderRuntimeError("covariance() requires non-empty lists", line, column)
-    first_mean = sum(first) / len(first)
-    second_mean = sum(second) / len(second)
-    total = 0
-    for x, y in zip(first, second):
-        total = total + (x - first_mean) * (y - second_mean)
-    return total / len(first)
-```
-(Same equal-length/all-numeric validation as `_dot_product` — search
-`def _dot_product` — plus the same non-empty guard `_variance`/
-`_std_dev` use, since this divides by `len(first)` where
-`_dot_product` never divides at all.) Register the new dict entry
-(search `"dot_product": _dot_product,`, add `"covariance":
-_covariance,` directly after it, before `"mode": _mode,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `covariance([1, 2, 3], [4, 5, 6])` is `0.6666666666666666` and
-  `covariance([1, 2, 3], [6, 5, 4])` is `-0.6666666666666666`.
-- `covariance([1, 2, 3], [1, 2, 3])` equals `variance([1, 2, 3])`
-  exactly.
-- `covariance([1, 2, 3, 4], [10, 10, 10, 10])` is `0.0` and
-  `covariance([5], [5])` is `0.0`.
-- `covariance([], []);` raises `CinderRuntimeError` matching
-  `"covariance\(\) requires non-empty lists"`.
-- `covariance([1, 2], [1, 2, 3]);` raises `CinderRuntimeError` matching
-  `"covariance\(\) requires lists of equal length, got lengths 2 and
-  3"`.
-- `covariance(5, [1, 2]);` raises `CinderRuntimeError` matching
-  `"covariance\(\) requires a list as its first argument, got int"`
-  (and the mirrored message for a bad second argument).
-- `covariance([1, "a"], [1, 2]);` raises `CinderRuntimeError` matching
-  `"covariance\(\) requires lists of numbers, got string"`.
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_dot_product`,
-search `def _dot_product`), `tests/test_builtins.py` (new `class
-TestCovariance`, modeled on `class TestDotProduct`/`class TestVariance`,
-search either name, for the test shapes above — place it near the
-existing `class TestDotProduct`). Once merged, `README.md`'s builtins
-quick-reference list (search `dot_product`) needs `covariance` added
-right after it, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave both
-to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
+## 1. Standard library: `correlation` — Pearson correlation coefficient of two equal-length numeric lists
 
 Add a standalone two-list numeric-statistic builtin directly after
 `_covariance` (`cinder/builtins.py`, once task 1 lands `_covariance`
@@ -261,7 +140,7 @@ to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
+## 2. Standard library: `jaccard_similarity` — set-similarity ratio of two lists
 
 Add a standalone two-list builtin directly after `_is_disjoint`
 (`cinder/builtins.py`, search `def _is_disjoint`, immediately before
@@ -322,7 +201,7 @@ def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
 (Calls `_union`/`_intersection` directly rather than re-deriving
 `_dedupe`/`_contains_value` logic, so the three builtins' notion of
 "distinct element" and "shared element" can't drift apart — same
-reuse-the-sibling-builtin shape `_correlation` in task 2 above uses
+reuse-the-sibling-builtin shape `_correlation` in task 1 above uses
 for `_covariance`.) Register the new dict entry (search `"is_disjoint":
 _is_disjoint,`, add `"jaccard_similarity": _jaccard_similarity,`
 directly after it, before `"to_set": _to_set,`).
@@ -358,7 +237,7 @@ not this task.
 
 ---
 
-## 4. Standard library: `median_absolute_deviation` — median-based measure of dispersion
+## 3. Standard library: `median_absolute_deviation` — median-based measure of dispersion
 
 Add a standalone list-transform-shaped statistic builtin directly
 after `_median` (`cinder/builtins.py`, search `def _median`,
@@ -466,7 +345,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `nth_perfect_number` — the k-th perfect number
+## 4. Standard library: `nth_perfect_number` — the k-th perfect number
 
 Add directly after `_is_perfect_number` (`cinder/builtins.py`, search
 `def _is_perfect_number`, immediately before `def
@@ -583,11 +462,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_weird_number` — the k-th weird number
+## 5. Standard library: `nth_weird_number` — the k-th weird number
 
 Add directly after `_is_weird_number` (`cinder/builtins.py`, search
 `def _is_weird_number`, immediately before `def _is_semiperfect`) —
-the same value-returning-sibling gap task 5 above closes for
+the same value-returning-sibling gap task 4 above closes for
 `is_perfect_number`, here for `is_weird_number` (abundant but not
 semiperfect — no subset of its proper divisors sums to it exactly).
 Verify the gap:
@@ -601,7 +480,7 @@ weird number (1-indexed) — a positive integer whose proper divisors
 sum to more than itself (abundant) but no subset of them sums to it
 exactly (not semiperfect) — the same condition `_is_weird_number`
 already checks, applied here as a sequential scan exactly like
-`_nth_semiperfect` already does for its own predicate. Unlike task 5's
+`_nth_semiperfect` already does for its own predicate. Unlike task 4's
 perfect numbers, weird numbers are dense enough close to their start
 for a sequential scan to stay fast well past `k = 6` — the first six
 are `70`, `836`, `4030`, `5830`, `7192`, `7912`, all comfortably small.
@@ -661,7 +540,7 @@ def _nth_weird_number(arguments: list, line: int, column: int) -> object:
 (`_is_weird_candidate` mirrors `_is_weird_number`'s own
 divisor-collection-then-subset-sum-reachability logic exactly, so the
 two functions' notion of "weird" can't silently drift apart — same
-reuse-the-sibling-predicate's-exact-logic discipline task 5 above uses
+reuse-the-sibling-predicate's-exact-logic discipline task 4 above uses
 for `_is_perfect_number`.) Register the new dict entry (search
 `"is_weird_number": _is_weird_number,`, add `"nth_weird_number":
 _nth_weird_number,` directly after it, before `"is_semiperfect":

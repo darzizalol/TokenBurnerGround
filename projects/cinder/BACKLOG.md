@@ -11,104 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `jaccard_similarity` — set-similarity ratio of two lists [claimed 2026-09-12T14:51:43Z]
-
-Add a standalone two-list builtin directly after `_is_disjoint`
-(`cinder/builtins.py`, search `def _is_disjoint`, immediately before
-`def _to_set`) — completes the lists-treated-as-unordered-sets family
-(`union`/`intersection`/`difference`/`symmetric_difference`/
-`is_subset`/`is_superset`/`is_disjoint`, all built on the same
-`_dedupe`/`_contains_value` helpers) with the one member that turns
-`intersection`/`union` into a single similarity number instead of
-another list. Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(jaccard_similarity([1, 2, 3], [2, 3, 4]));'
-# -> <eval>:1:7: undefined name 'jaccard_similarity'
-```
-
-**What it does.** Given two lists (any element type, treated as
-unordered sets the same way `union`/`intersection` already do — value
-equality via `values_equal`, duplicates within a list ignored), return
-`len(intersection(list1, list2)) / len(union(list1, list2))`: the
-fraction of the combined distinct elements the two lists share, `0.0`
-for disjoint lists, `1.0` for lists with the same distinct elements
-(regardless of order or duplicate counts). Two empty lists have no
-elements to disagree on, so by convention (matching how `union`/
-`intersection` of two empty lists both come out empty rather than
-raising) this returns `1.0` rather than dividing zero by zero.
-
-Worked examples (confirmed via direct computation of the algorithm
-below, reusing `_union`/`_intersection`'s own logic):
-- `jaccard_similarity([1, 2, 3], [2, 3, 4])` is `0.5` — intersection
-  `{2, 3}` (size 2), union `{1, 2, 3, 4}` (size 4).
-- `jaccard_similarity([1, 2, 3], [1, 2, 3])` is `1.0` — identical
-  distinct-element sets.
-- `jaccard_similarity([1, 2], [3, 4])` is `0.0` — disjoint, no shared
-  elements.
-- `jaccard_similarity([1, 1, 2], [2, 3])` is `0.3333333333333333` —
-  duplicates within a list don't count twice: distinct elements are
-  `{1, 2}` and `{2, 3}`, intersection `{2}` (size 1), union
-  `{1, 2, 3}` (size 3).
-- `jaccard_similarity([], [])` is `1.0` — both empty, defined as
-  maximally similar by convention rather than raising or returning
-  `nan`.
-- `jaccard_similarity([], [1, 2])` is `0.0` — one empty, one not:
-  intersection is empty, union is `{1, 2}` (size 2), so `0 / 2`.
-- `jaccard_similarity(["a", "b"], ["b", "c"])` is `0.3333333333333333`
-  — works for any element type `values_equal` supports, not just
-  numbers, same as `union`/`intersection`.
-
-Add directly after `_is_disjoint` (search `def _is_disjoint`,
-immediately before `def _to_set`):
-```python
-def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
-    list1, list2 = _require_two_lists("jaccard_similarity", arguments, line, column)
-    union_size = len(_union(arguments, line, column))
-    if union_size == 0:
-        return 1.0
-    intersection_size = len(_intersection(arguments, line, column))
-    return intersection_size / union_size
-```
-(Calls `_union`/`_intersection` directly rather than re-deriving
-`_dedupe`/`_contains_value` logic, so the three builtins' notion of
-"distinct element" and "shared element" can't drift apart — the same
-reuse-the-sibling-builtin shape `_correlation` uses for `_covariance`.)
-Register the new dict entry (search `"is_disjoint":
-_is_disjoint,`, add `"jaccard_similarity": _jaccard_similarity,`
-directly after it, before `"to_set": _to_set,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `jaccard_similarity([1, 2, 3], [2, 3, 4])` is `0.5` and
-  `jaccard_similarity([1, 1, 2], [2, 3])` is `0.3333333333333333`.
-- `jaccard_similarity([1, 2, 3], [1, 2, 3])` is `1.0` and
-  `jaccard_similarity([1, 2], [3, 4])` is `0.0`.
-- `jaccard_similarity([], [])` is `1.0` and `jaccard_similarity([], [1,
-  2])` is `0.0` — the empty-list edge cases, neither raises.
-- `jaccard_similarity(["a", "b"], ["b", "c"])` is
-  `0.3333333333333333` — non-numeric elements work.
-- `jaccard_similarity(5, [1, 2]);` raises `CinderRuntimeError` matching
-  `"jaccard_similarity\(\) requires a list as its first argument, got
-  int"` (and the mirrored message for a bad second argument, reusing
-  `_require_two_lists`'s existing messages).
-- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
-  with line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_is_disjoint`,
-search `def _is_disjoint`), `tests/test_builtins.py` (new `class
-TestJaccardSimilarity`, modeled on `class
-TestUnionIntersectionDifference`, search that name, for the test
-shapes above — place it near that class). Once merged, `README.md`'s
-builtins quick-reference list (search `is_disjoint`) needs
-`jaccard_similarity` added right after it, its "Status & roadmap"
-section needs updating, and `PROJECT.md`'s "Current frontier" section
-needs refreshing — leave both to the Architect's next grooming pass,
-not this task.
-
----
-
-## 2. Standard library: `median_absolute_deviation` — median-based measure of dispersion
+## 1. Standard library: `median_absolute_deviation` — median-based measure of dispersion
 
 Add a standalone list-transform-shaped statistic builtin directly
 after `_median` (`cinder/builtins.py`, search `def _median`,
@@ -216,7 +119,7 @@ both to the Architect's next grooming pass, not this task.
 
 ---
 
-## 3. Standard library: `nth_perfect_number` — the k-th perfect number
+## 2. Standard library: `nth_perfect_number` — the k-th perfect number
 
 Add directly after `_is_perfect_number` (`cinder/builtins.py`, search
 `def _is_perfect_number`, immediately before `def
@@ -333,11 +236,11 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 4. Standard library: `nth_weird_number` — the k-th weird number
+## 3. Standard library: `nth_weird_number` — the k-th weird number
 
 Add directly after `_is_weird_number` (`cinder/builtins.py`, search
 `def _is_weird_number`, immediately before `def _is_semiperfect`) —
-the same value-returning-sibling gap task 3 above closes for
+the same value-returning-sibling gap task 2 above closes for
 `is_perfect_number`, here for `is_weird_number` (abundant but not
 semiperfect — no subset of its proper divisors sums to it exactly).
 Verify the gap:
@@ -351,7 +254,7 @@ weird number (1-indexed) — a positive integer whose proper divisors
 sum to more than itself (abundant) but no subset of them sums to it
 exactly (not semiperfect) — the same condition `_is_weird_number`
 already checks, applied here as a sequential scan exactly like
-`_nth_semiperfect` already does for its own predicate. Unlike task 3's
+`_nth_semiperfect` already does for its own predicate. Unlike task 2's
 perfect numbers, weird numbers are dense enough close to their start
 for a sequential scan to stay fast well past `k = 6` — the first six
 are `70`, `836`, `4030`, `5830`, `7192`, `7912`, all comfortably small.
@@ -411,7 +314,7 @@ def _nth_weird_number(arguments: list, line: int, column: int) -> object:
 (`_is_weird_candidate` mirrors `_is_weird_number`'s own
 divisor-collection-then-subset-sum-reachability logic exactly, so the
 two functions' notion of "weird" can't silently drift apart — same
-reuse-the-sibling-predicate's-exact-logic discipline task 3 above uses
+reuse-the-sibling-predicate's-exact-logic discipline task 2 above uses
 for `_is_perfect_number`.) Register the new dict entry (search
 `"is_weird_number": _is_weird_number,`, add `"nth_weird_number":
 _nth_weird_number,` directly after it, before `"is_semiperfect":
@@ -444,11 +347,11 @@ not this task.
 
 ---
 
-## 5. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
+## 4. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same
-value-returning-sibling gap tasks 3 and 4 above close for
+value-returning-sibling gap tasks 2 and 3 above close for
 `is_perfect_number`/`is_weird_number`, here for `is_armstrong`: a
 positive integer equal to the sum of its own digits each raised to the
 power of the digit count (`153 = 1^3 + 5^3 + 3^3`). Verify the gap:
@@ -461,7 +364,7 @@ python3 -m cinder.cli eval 'print(nth_armstrong(1));'
 Armstrong number (1-indexed, starting from `0`) — the same condition
 `_is_armstrong` already checks, applied here as a sequential scan
 exactly like `_nth_perfect_number`/`_nth_weird_number` already do for
-their own predicates. Unlike task 3's perfect numbers, Armstrong
+their own predicates. Unlike task 2's perfect numbers, Armstrong
 numbers are cheap to test (a digit-sum-of-powers check, not trial
 division) and stay dense enough through this task's range for a plain
 scan to finish instantly — the single-digit numbers `0`-`9` are all
@@ -514,7 +417,7 @@ def _nth_armstrong(arguments: list, line: int, column: int) -> object:
 check exactly — including counting `0` as the first Armstrong number,
 same as `_is_armstrong(0)` already returns `True` — so the two
 functions' notion of "Armstrong" can't silently drift apart; same
-reuse-the-sibling-predicate's-exact-logic discipline tasks 3/4 above
+reuse-the-sibling-predicate's-exact-logic discipline tasks 2/3 above
 use for `_is_perfect_number`/`_is_weird_number`. Starts `candidate` at
 `-1`, one below `_is_perfect_number`/`_is_weird_number`'s starting
 point of `0`, since `0` itself is a valid Armstrong number here and
@@ -540,7 +443,7 @@ Acceptance criteria:
 Likely files: `cinder/builtins.py` (directly after `_is_armstrong`,
 search `def _is_armstrong`), `tests/test_builtins.py` (new `class
 TestNthArmstrong`, modeled on `class TestNthPerfectNumber`/`class
-TestNthWeirdNumber` from tasks 3/4 above, search either name, for the
+TestNthWeirdNumber` from tasks 2/3 above, search either name, for the
 test shapes above — place it near the existing `class
 TestIsArmstrong`). Once merged, `README.md`'s builtins quick-reference
 list (search `is_armstrong`) needs `nth_armstrong` added right after

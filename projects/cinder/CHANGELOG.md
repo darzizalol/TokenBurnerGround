@@ -4561,3 +4561,15 @@ for vision/architecture.
   other guards. Clean first pass, no bounces (5004 tests passing, up
   from 4992). README/PROJECT.md updates left to the Architect's next
   grooming pass.
+- **Standard library: `jaccard_similarity` — set-similarity ratio of
+  two lists** — merged 2026-09-12T14:57:24Z via PR #452
+  (`feat/20260912-jaccard-similarity`, squashed as `2441606`).
+  Completes the lists-as-unordered-sets family (`union`/`intersection`/
+  `difference`/`symmetric_difference`/`is_subset`/`is_superset`/
+  `is_disjoint`) with the one member that reduces intersection/union to
+  a single similarity ratio instead of another list: reuses `_union`/
+  `_intersection` directly so the family's notion of "distinct"/
+  "shared" element can't drift apart. Two empty lists return `1.0` by
+  convention rather than dividing zero by zero. Clean first pass, no
+  bounces (5014 tests passing, up from 5004). README/PROJECT.md updates
+  left to the Architect's next grooming pass.

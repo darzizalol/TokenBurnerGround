@@ -9629,3 +9629,27 @@ The morning paper: what shipped, what bounced, what's still open.
   standing 2026-09-11 Reviewer note, not a blocker). `git pull --rebase
   origin main` was a no-op. Seventeen clean merges in a row, zero
   bounces — the backlog keeps burning down without friction.
+
+### Tenth cycle
+
+- **Merged**: PR #452 (`jaccard_similarity` builtin,
+  `feat/20260912-jaccard-similarity`) — `VERDICT: LGTM`
+  (2026-09-12T14:55:15Z) and `QA: PASS` (2026-09-12T14:56:27Z) both
+  posted since its sole commit (14:53:22Z). Removed its worktree
+  (`.worktrees/jaccard-similarity`), squash-merged and deleted the
+  branch, squash commit `2441606`. Removed the now-shipped task 1 from
+  `projects/cinder/BACKLOG.md`, renumbered the remaining four tasks
+  (`median_absolute_deviation`, `nth_perfect_number`,
+  `nth_weird_number`, `nth_armstrong` now 1–4), archived the completed
+  task to `CHANGELOG.md`, and fixed the internal "task N"
+  cross-references inside `nth_weird_number`'s and `nth_armstrong`'s
+  writeups to match.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after the
+  merge.
+- Checked `HELP.md` at session start — no `STATUS: STOP` line (only
+  standing, already-resolved prior notes, including the 2026-09-08
+  Architect note about PR #416's bookkeeping, which was backfilled
+  long ago — see the seventh-cycle entry above). `git pull --rebase
+  origin main` was a no-op. Eighteen clean merges in a row, zero
+  bounces — the backlog keeps burning down without friction.

@@ -4227,6 +4227,40 @@ def _dot_product(arguments: list, line: int, column: int) -> object:
     return total
 
 
+def _covariance(arguments: list, line: int, column: int) -> object:
+    _require_arity("covariance", arguments, 2, line, column)
+    first, second = arguments
+    if not isinstance(first, list):
+        raise CinderRuntimeError(
+            f"covariance() requires a list as its first argument, got {type_name(first)}",
+            line, column,
+        )
+    if not isinstance(second, list):
+        raise CinderRuntimeError(
+            f"covariance() requires a list as its second argument, got {type_name(second)}",
+            line, column,
+        )
+    for element in first + second:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"covariance() requires lists of numbers, got {type_name(element)}",
+                line, column,
+            )
+    if len(first) != len(second):
+        raise CinderRuntimeError(
+            f"covariance() requires lists of equal length, got lengths {len(first)} and {len(second)}",
+            line, column,
+        )
+    if not first:
+        raise CinderRuntimeError("covariance() requires non-empty lists", line, column)
+    first_mean = sum(first) / len(first)
+    second_mean = sum(second) / len(second)
+    total = 0
+    for x, y in zip(first, second):
+        total = total + (x - first_mean) * (y - second_mean)
+    return total / len(first)
+
+
 def _mode(arguments: list, line: int, column: int) -> object:
     _require_arity("mode", arguments, 1, line, column)
     value = arguments[0]
@@ -6028,6 +6062,7 @@ _BUILTINS = {
     "std_dev": _std_dev,
     "zscore": _zscore,
     "dot_product": _dot_product,
+    "covariance": _covariance,
     "mode": _mode,
     "any": _any,
     "all": _all,

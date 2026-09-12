@@ -10427,6 +10427,73 @@ class TestDotProduct(unittest.TestCase):
         self.assertEqual(ctx.exception.line, 1)
 
 
+class TestCovariance(unittest.TestCase):
+    def test_covariance_of_increasing_lists(self):
+        result = run("let result = covariance([1, 2, 3], [4, 5, 6]);").get("result")
+        self.assertEqual(result, 0.6666666666666666)
+
+    def test_covariance_of_oppositely_moving_lists(self):
+        result = run("let result = covariance([1, 2, 3], [6, 5, 4]);").get("result")
+        self.assertEqual(result, -0.6666666666666666)
+
+    def test_covariance_of_list_with_itself_equals_variance(self):
+        covariance_result = run(
+            "let result = covariance([1, 2, 3], [1, 2, 3]);"
+        ).get("result")
+        variance_result = run("let result = variance([1, 2, 3]);").get("result")
+        self.assertEqual(covariance_result, variance_result)
+
+    def test_covariance_with_constant_second_list_is_zero(self):
+        result = run(
+            "let result = covariance([1, 2, 3, 4], [10, 10, 10, 10]);"
+        ).get("result")
+        self.assertEqual(result, 0.0)
+
+    def test_covariance_of_single_element_pair_is_zero(self):
+        result = run("let result = covariance([5], [5]);").get("result")
+        self.assertEqual(result, 0.0)
+
+    def test_covariance_of_empty_lists_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"covariance\(\) requires non-empty lists",
+        ):
+            run("covariance([], []);")
+
+    def test_covariance_unequal_length_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"covariance\(\) requires lists of equal length, got lengths 2 and 3",
+        ):
+            run("covariance([1, 2], [1, 2, 3]);")
+
+    def test_covariance_first_argument_not_a_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"covariance\(\) requires a list as its first argument, got int",
+        ):
+            run("covariance(5, [1, 2]);")
+
+    def test_covariance_second_argument_not_a_list_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"covariance\(\) requires a list as its second argument, got int",
+        ):
+            run("covariance([1, 2], 5);")
+
+    def test_covariance_non_numeric_element_raises(self):
+        with self.assertRaisesRegex(
+            CinderRuntimeError,
+            r"covariance\(\) requires lists of numbers, got string",
+        ):
+            run('covariance([1, "a"], [1, 2]);')
+
+    def test_covariance_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("covariance([1]);")
+        self.assertEqual(ctx.exception.line, 1)
+
+
 class TestMode(unittest.TestCase):
     def test_mode_of_clear_winner(self):
         result = run("let result = mode([1, 2, 2, 3]);").get("result")

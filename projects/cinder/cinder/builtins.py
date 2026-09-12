@@ -4541,6 +4541,15 @@ def _is_disjoint(arguments: list, line: int, column: int) -> object:
     return not any(_contains_value(list2, element) for element in list1)
 
 
+def _jaccard_similarity(arguments: list, line: int, column: int) -> object:
+    list1, list2 = _require_two_lists("jaccard_similarity", arguments, line, column)
+    union_size = len(_union(arguments, line, column))
+    if union_size == 0:
+        return 1.0
+    intersection_size = len(_intersection(arguments, line, column))
+    return intersection_size / union_size
+
+
 def _to_set(arguments: list, line: int, column: int) -> object:
     _require_arity("to_set", arguments, 1, line, column)
     value = arguments[0]
@@ -6121,6 +6130,7 @@ _BUILTINS = {
     "is_subset": _is_subset,
     "is_superset": _is_superset,
     "is_disjoint": _is_disjoint,
+    "jaccard_similarity": _jaccard_similarity,
     "to_set": _to_set,
     "interleave": _interleave,
     "interpose": _interpose,

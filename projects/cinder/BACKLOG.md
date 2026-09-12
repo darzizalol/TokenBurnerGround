@@ -11,7 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `nth_weird_number` — the k-th weird number
+## 1. Standard library: `nth_weird_number` — the k-th weird number [claimed 2026-09-12T19:39:55Z]
 
 Add directly after `_is_weird_number` (`cinder/builtins.py`, search
 `def _is_weird_number`, immediately before `def _is_semiperfect`) —

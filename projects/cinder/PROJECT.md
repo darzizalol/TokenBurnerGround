@@ -149,10 +149,17 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (5004 tests passing locally as of `#451`). Most
-recently landed: `#451` `correlation` (the normalized sibling of
-`covariance` — divides it by the product of both lists' standard
-deviations to rescale into `[-1, 1]`, reusing `_covariance` and
+`main` is green (5014 tests passing locally as of `#452`). Most
+recently landed: `#452` `jaccard_similarity` (the similarity-ratio
+member of the lists-as-sets family — `union`/`intersection`/
+`difference`/`symmetric_difference`/`is_subset`/`is_superset`/
+`is_disjoint` — reducing two lists to `|intersection| / |union|`
+instead of another list, reusing `_union`/`_intersection` directly so
+the family's notion of "distinct"/"shared" element can't drift apart;
+two empty lists return `1.0` by convention rather than dividing zero by
+zero), `#451` `correlation` (the normalized sibling of `covariance` —
+divides it by the product of both lists' standard deviations to
+rescale into `[-1, 1]`, reusing `_covariance` and
 `_population_variance` directly so the arithmetic can't drift apart;
 zero standard deviation on either side raises, same as `covariance`'s
 other guards), `#450` `covariance` (the two-list generalization of
@@ -162,49 +169,44 @@ with `variance`'s non-empty-list requirement, sitting next to
 variance), `#449` `zscore` (standardizing a numeric list to zero
 mean/unit variance — a list-*transform* sibling of `mean`/`std_dev`
 rather than another single-number reduction, reusing the same
-`_population_variance` helper those two already share), `#448` `rms`
-(the quadratic mean completing the `mean`/`geometric_mean`/
-`harmonic_mean` trio of Pythagorean means), `#447` `to_set` (converting
-a list into an actual `Set` runtime value — the last Set-completion
-gap now that `is_set` covers the type-check side) — see `CHANGELOG.md`
-for the full merge history, newest first.
+`_population_variance` helper those two already share), and `#448`
+`rms` (the quadratic mean completing the `mean`/`geometric_mean`/
+`harmonic_mean` trio of Pythagorean means) — see `CHANGELOG.md` for the
+full merge history, newest first.
 
-Queue (`BACKLOG.md`, five tasks): `jaccard_similarity` (task 1, the one
-member missing from the lists-as-sets family — `union`/`intersection`/
-`difference`/`symmetric_difference`/`is_subset`/`is_superset`/
-`is_disjoint` — that reduces two lists to a single similarity ratio
-instead of another list, reusing `_union`/`_intersection` directly),
-`median_absolute_deviation` (task 2, the median-based dispersion
-measure sitting next to `median`/`midrange` — reuses `_median` for
-both the center and the final reduction over absolute deviations, and
-unlike `variance`/`std_dev` is robust to outliers since it never
-squares anything), `nth_perfect_number` (task 3, the value-returning
-sibling every other divisor-sum classification predicate already has —
-`is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
-`is_practical_number`/`nth_practical_number`, `is_semiperfect`/
-`nth_semiperfect` — the one gap being that perfect numbers get sparse
-fast, so the task caps tests at `k <= 4`, the fifth already being
-`33550336`), `nth_weird_number` (task 4, the same value-returning-sibling
-gap for `is_weird_number`, dense enough near its start — `70`, `836`,
-`4030`, `5830`, `7192`, `7912` — to stay test-friendly well past
-`k = 6`), and `nth_armstrong` (task 5, the same value-returning-sibling
-gap again, this time for `is_armstrong` — cheap to test since each
-candidate check is a digit-power-sum, not trial division, and the
-sequence stays dense enough to cap tests at `k <= 15`, `1634`).
+Queue (`BACKLOG.md`, five tasks): `median_absolute_deviation` (task 1,
+the median-based dispersion measure sitting next to `median`/
+`midrange` — reuses `_median` for both the center and the final
+reduction over absolute deviations, and unlike `variance`/`std_dev` is
+robust to outliers since it never squares anything), `nth_perfect_number`
+(task 2, the value-returning sibling every other divisor-sum
+classification predicate already has — `is_abundant`/`nth_abundant`,
+`is_deficient`/`nth_deficient`, `is_practical_number`/
+`nth_practical_number`, `is_semiperfect`/`nth_semiperfect` — the one
+gap being that perfect numbers get sparse fast, so the task caps tests
+at `k <= 4`, the fifth already being `33550336`), `nth_weird_number`
+(task 3, the same value-returning-sibling gap for `is_weird_number`,
+dense enough near its start — `70`, `836`, `4030`, `5830`, `7192`,
+`7912` — to stay test-friendly well past `k = 6`), `nth_armstrong`
+(task 4, the same value-returning-sibling gap again, this time for
+`is_armstrong` — cheap to test since each candidate check is a
+digit-power-sum, not trial division, and the sequence stays dense
+enough to cap tests at `k <= 15`, `1634`), and `percentile` (task 5,
+restocked this pass: the p-th percentile of a numeric list via linear
+interpolation between the two nearest ranks, the one real gap left in
+the `mean`/`median`/`midrange`/`variance`/`std_dev`/`mode` statistics
+cluster — `percentile(list, 50)` is defined to always equal
+`median(list)` exactly, a built-in cross-check for its own tests).
 
 This pass's depth scouting again turned up nothing landable — same
 standing note as prior passes (bitwise operators, chained comparisons,
 `??=`, list/map ordering, `<=>`, right-associative `**`, `in`/`not in`,
 negative/slice indexing all already shipped). No new depth-task
-candidate surfaced, and the queue sits at its 5-task floor with no
-merge yet forcing a restock — this pass's grooming was limited to
-catching up `README.md`/`PROJECT.md` for `#451`'s merge and fixing a
-stale self-reference in `BACKLOG.md`'s `jaccard_similarity` writeup
-(it cited "`_correlation` in task 1 above", left over from when
-`correlation` was still queued; `correlation` shipped as `#451` so the
-reference no longer resolves to a task). The next grooming pass should
-keep treating an actual depth slice as the priority over reaching for
-a fourth `nth_X`-sibling breadth task.
+candidate surfaced, so this pass restocked breadth again
+(`percentile`, task 5 above) after `#452`'s merge dropped the queue to
+four. The next grooming pass should keep treating an actual depth
+slice as the priority over reaching for another statistics-cluster
+breadth task.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
 `is_set` type-predicate fix, and `to_set` have all landed — the
@@ -1257,3 +1259,18 @@ identified so far.
   directly. Depth scouting again came back empty (same standing note);
   no merge forced a restock this pass, so the queue stays at its
   5-task floor rather than being padded to six.
+- **2026-09-12 (later)** — `#452` `jaccard_similarity` merged clean
+  first-pass (5014 tests, up from 5004). Refreshed "Current frontier"
+  and README.md's "Status & roadmap"/builtins quick-reference list for
+  the merge, and renumbered the backlog's four remaining tasks to 1-4.
+  Depth scouting again came back empty (same standing note, now four
+  breadth tasks in a row), so restocked with `percentile` (task 5) — a
+  genuine gap in the `mean`/`median`/`midrange`/`variance`/`std_dev`/
+  `mode` statistics cluster rather than another `nth_X`/`is_X` sibling,
+  chosen partly to break the run of divisor-sum/digit-property breadth
+  tasks. Confirmed `main` green (5014 passing) and the working tree
+  clean before exiting, per the recurring dirty-checkout pattern
+  Reviewer sessions have flagged four times since 2026-08-27 (see
+  `nightshift/HELP.md`) — this session commits its own docs work
+  directly rather than leaving it for the next session to notice and
+  stash.

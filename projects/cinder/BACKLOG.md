@@ -453,6 +453,128 @@ Architect's next grooming pass, not this task.
 
 ---
 
+## 5. Standard library: `percentile` — p-th percentile of a numeric list (linear interpolation)
+
+Add directly after `_midrange` (`cinder/builtins.py`, search `def
+_midrange`, immediately before `def _population_variance`) — a real
+gap in the `mean`/`median`/`midrange`/`variance`/`std_dev`/`mode`
+statistics cluster: none of those existing builtins let a caller ask
+for an arbitrary rank between minimum and maximum, only the fixed 0th/
+50th/100th-percentile-shaped ones (`min`/`max` from elsewhere,
+`median`). Verify the gap:
+```sh
+python3 -m cinder.cli eval 'print(percentile([1, 2, 3, 4, 5], 50));'
+# -> <eval>:1:7: undefined name 'percentile' (did you mean 'midrange'?)
+```
+
+**What it does.** Given a non-empty list of numbers and a rank `p` in
+`[0, 100]`, return the `p`-th percentile using linear interpolation
+between the two nearest ranks (the same method `numpy.percentile`
+calls `"linear"`, its default): sort the list, compute `index = (p /
+100) * (n - 1)` (0-indexed, `n` = list length), then if `index` lands
+exactly on an element return it directly, otherwise linearly
+interpolate between `ordered[floor(index)]` and `ordered[ceil(index)]`
+by the fractional part of `index`. This makes `percentile(list, 50)`
+always exactly equal `median(list)`, for both odd- and even-length
+lists — a useful cross-check when testing.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `percentile([1, 2, 3, 4, 5], 50)` is `3` — `index = 2`, lands exactly
+  on `ordered[2]`.
+- `percentile([1, 2, 3, 4, 5], 25)` is `2` — `index = 1`.
+- `percentile([1, 2, 3, 4, 5], 75)` is `4` — `index = 3`.
+- `percentile([1, 2, 3, 4, 5], 0)` is `1` and `percentile([1, 2, 3, 4,
+  5], 100)` is `5` — the endpoints.
+- `percentile([1, 2, 3, 4], 50)` is `2.5` — `index = 1.5`, interpolates
+  halfway between `ordered[1] = 2` and `ordered[2] = 3`; matches
+  `median([1, 2, 3, 4])` exactly, as the cross-check above predicts.
+- `percentile([5], 37)` is `5` — single-element list, every percentile
+  returns the one element; not a division-by-zero case (`n - 1 = 0`
+  makes `index` always `0` regardless of `p`).
+- `percentile([], 50);` raises `CinderRuntimeError` — no elements.
+- `percentile([1, 2, 3], 150);` and `percentile([1, 2, 3], -5);` both
+  raise `CinderRuntimeError` — `p` outside `[0, 100]` is a domain
+  error, not clamped.
+
+Add directly after `_midrange` (search `def _midrange`, immediately
+before `def _population_variance`):
+```python
+def _percentile(arguments: list, line: int, column: int) -> object:
+    _require_arity("percentile", arguments, 2, line, column)
+    value = arguments[0]
+    if not isinstance(value, list):
+        raise CinderRuntimeError(
+            f"percentile() requires a list, got {type_name(value)}", line, column
+        )
+    if not value:
+        raise CinderRuntimeError("percentile() requires a non-empty list", line, column)
+    for element in value:
+        if not _is_numeric(element):
+            raise CinderRuntimeError(
+                f"percentile() requires a list of numbers, got {type_name(element)}", line, column
+            )
+    rank = arguments[1]
+    if not _is_numeric(rank):
+        raise CinderRuntimeError(
+            f"percentile() requires a number for its second argument, got {type_name(rank)}",
+            line, column,
+        )
+    if rank < 0 or rank > 100:
+        raise CinderRuntimeError(
+            "percentile() requires a number between 0 and 100 for its second argument, domain error",
+            line, column,
+        )
+    ordered = sorted(value)
+    index = (rank / 100) * (len(ordered) - 1)
+    lower = math.floor(index)
+    upper = math.ceil(index)
+    if lower == upper:
+        return ordered[int(index)]
+    fraction = index - lower
+    return ordered[lower] + (ordered[upper] - ordered[lower]) * fraction
+```
+(Reuses `_is_numeric`/`type_name`/`_require_arity` the same way every
+sibling statistics builtin does; `math.floor`/`math.ceil` are already
+imported in this module for `nth_perfect_number`/`nth_weird_number`.)
+Register the new dict entry (search `"midrange": _midrange,`, add
+`"percentile": _percentile,` directly after it, before `"variance":
+_variance,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `percentile([1, 2, 3, 4], 50)` is `2.5` and `percentile([5], 37)` is
+  `5`.
+- `percentile(list, 50)` equals `median(list)` exactly for at least one
+  odd-length and one even-length list (the cross-check above).
+- `percentile([]` , `50);` raises `CinderRuntimeError` matching
+  `"percentile\(\) requires a non-empty list"`.
+- `percentile(123, 50);` raises `CinderRuntimeError` matching
+  `"percentile\(\) requires a list, got int"`.
+- `percentile([1, "a"], 50);` raises `CinderRuntimeError` matching
+  `"percentile\(\) requires a list of numbers, got string"`.
+- `percentile([1, 2, 3], "a");` raises `CinderRuntimeError` matching
+  `"percentile\(\) requires a number for its second argument, got
+  string"`.
+- `percentile([1, 2, 3], 150);` and `percentile([1, 2, 3], -5);` both
+  raise `CinderRuntimeError` matching `"percentile\(\) requires a
+  number between 0 and 100.*domain error"`.
+- Wrong arity (not exactly 2 arguments) raises `CinderRuntimeError`
+  with line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_midrange`, search
+`def _midrange`), `tests/test_builtins.py` (new `class TestPercentile`,
+modeled on `class TestMedian`/`class TestMidrange`, search either name,
+for the test shapes above — place it near the existing `class
+TestMidrange`). Once merged, `README.md`'s builtins quick-reference
+list (search `midrange`) needs `percentile` added right after it, its
+"Status & roadmap" section needs updating, and `PROJECT.md`'s "Current
+frontier" section needs refreshing — leave both to the Architect's
+next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

@@ -575,6 +575,109 @@ next grooming pass, not this task.
 
 ---
 
+## 6. Standard library: `nth_automorphic` — the k-th automorphic number
+
+Add directly after `_is_automorphic` (`cinder/builtins.py`, search `def
+_is_automorphic`, immediately before `def _is_trimorphic_number`) — the
+same value-returning-sibling gap tasks 2/3/4 above closed for
+`is_perfect_number`/`is_weird_number`/`is_armstrong`, here for
+`is_automorphic`, the one member of the automorphic/trimorphic pair
+still missing it (`is_trimorphic_number` already has
+`nth_trimorphic_number`, immediately below `_is_automorphic` in the
+file — same shape, `value * value` instead of `value ** 3`). Verify
+the gap:
+```sh
+python3 -m cinder.cli eval 'print(nth_automorphic(1));'
+# -> <eval>:1:7: undefined name 'nth_automorphic' (did you mean 'is_automorphic'?)
+```
+
+**What it does.** Given a positive integer `k`, return the `k`-th
+automorphic number (1-indexed, starting from `0`) — a non-negative
+integer whose square ends with the integer itself in decimal (e.g.
+`25` is automorphic since `25 ** 2 == 625`, which ends with `25`) —
+the same condition `_is_automorphic` already checks, applied here as a
+sequential scan exactly like `_nth_trimorphic_number` already does for
+its own predicate. Checking a candidate is a single squaring plus a
+string-suffix check (no trial division), so unlike task 2's perfect
+numbers this stays cheap indefinitely — no test-scope cap is needed.
+
+Worked examples (confirmed via direct computation of the algorithm
+below):
+- `nth_automorphic(1)` is `0`.
+- `nth_automorphic(2)` is `1`.
+- `nth_automorphic(3)` is `5`.
+- `nth_automorphic(4)` is `6`.
+- `nth_automorphic(5)` is `25`.
+- `nth_automorphic(6)` is `76`.
+- `nth_automorphic(7)` is `376`.
+- `nth_automorphic(8)` is `625`.
+- `nth_automorphic(9)` is `9376`.
+- `nth_automorphic(10)` is `90625`.
+- `nth_automorphic(0);` raises `CinderRuntimeError` — domain error, same
+  convention `nth_trimorphic_number(0)` already uses.
+- `nth_automorphic(-1);` raises `CinderRuntimeError` — domain error.
+- `nth_automorphic(1.5);` raises `CinderRuntimeError` — not an int.
+- `nth_automorphic("a");` raises `CinderRuntimeError` — not an int.
+
+Add directly after `_is_automorphic` (search `def _is_automorphic`,
+immediately before `def _is_trimorphic_number`):
+```python
+def _nth_automorphic(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_automorphic", arguments, 1, line, column)
+    value = _require_int("nth_automorphic", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_automorphic() requires a positive integer, domain error",
+            line, column,
+        )
+
+    def _is_automorphic_candidate(candidate: int) -> bool:
+        return str(candidate * candidate).endswith(str(candidate))
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_automorphic_candidate(candidate):
+            count += 1
+    return candidate
+```
+(`_is_automorphic_candidate` mirrors `_is_automorphic`'s own
+square-and-check-suffix logic exactly, so the two functions' notion of
+"automorphic" can't silently drift apart — same
+reuse-the-sibling-predicate's-exact-logic discipline tasks 2/3/4 use,
+and the same `candidate` starting at `-1` that `_nth_trimorphic_number`
+already uses, since `0` itself is a valid automorphic number here and
+must be reachable as `nth_automorphic(1)`.) Register the new dict
+entry (search `"is_automorphic": _is_automorphic,`, add
+`"nth_automorphic": _nth_automorphic,` directly after it, before
+`"is_trimorphic_number": _is_trimorphic_number,`).
+
+Acceptance criteria:
+- Every worked example above holds exactly, including
+  `nth_automorphic(1)` is `0` through `nth_automorphic(10)` is `90625`.
+- `nth_automorphic(0);` and `nth_automorphic(-1);` both raise
+  `CinderRuntimeError` matching `"nth_automorphic\(\) requires a
+  positive integer, domain error"`.
+- `nth_automorphic(1.5);` and `nth_automorphic("a");` both raise
+  `CinderRuntimeError` matching `"nth_automorphic\(\) requires an int,
+  got (float|string)"`.
+- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
+  line/column.
+- Full test suite passes.
+
+Likely files: `cinder/builtins.py` (directly after `_is_automorphic`,
+search `def _is_automorphic`), `tests/test_builtins.py` (new `class
+TestNthAutomorphic`, modeled on `class TestNthTrimorphicNumber`, search
+that name, for the test shapes above — place it near the existing
+`class TestIsAutomorphic`). Once merged, `README.md`'s builtins
+quick-reference list (search `is_automorphic`) needs `nth_automorphic`
+added right after it, its "Status & roadmap" section needs updating,
+and `PROJECT.md`'s "Current frontier" section needs refreshing — leave
+both to the Architect's next grooming pass, not this task.
+
+---
+
 ## Done
 
 Completed tasks are archived in [`CHANGELOG.md`](CHANGELOG.md), not

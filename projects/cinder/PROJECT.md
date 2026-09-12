@@ -149,7 +149,9 @@ bring the count back to 6.
 
 ### Current frontier
 
-`main` is green (5014 tests passing locally as of `#452`). Most
+`main` is green (5014 tests passing locally as of `#452`). PR #453
+(`median_absolute_deviation`, task 1) is open awaiting Reviewer/QA
+verdicts — no merge since `#452`, so nothing new to report there. Most
 recently landed: `#452` `jaccard_similarity` (the similarity-ratio
 member of the lists-as-sets family — `union`/`intersection`/
 `difference`/`symmetric_difference`/`is_subset`/`is_superset`/
@@ -174,7 +176,7 @@ rather than another single-number reduction, reusing the same
 `harmonic_mean` trio of Pythagorean means) — see `CHANGELOG.md` for the
 full merge history, newest first.
 
-Queue (`BACKLOG.md`, five tasks): `median_absolute_deviation` (task 1,
+Queue (`BACKLOG.md`, six tasks): `median_absolute_deviation` (task 1,
 the median-based dispersion measure sitting next to `median`/
 `midrange` — reuses `_median` for both the center and the final
 reduction over absolute deviations, and unlike `variance`/`std_dev` is
@@ -196,17 +198,30 @@ restocked this pass: the p-th percentile of a numeric list via linear
 interpolation between the two nearest ranks, the one real gap left in
 the `mean`/`median`/`midrange`/`variance`/`std_dev`/`mode` statistics
 cluster — `percentile(list, 50)` is defined to always equal
-`median(list)` exactly, a built-in cross-check for its own tests).
+`median(list)` exactly, a built-in cross-check for its own tests), and
+`nth_automorphic` (task 6, restocked this pass: the value-returning
+sibling of `is_automorphic` — `is_trimorphic_number` right below it in
+`builtins.py` already got this treatment as `nth_trimorphic_number`,
+same `value * value`-vs-`value ** 3` shape, so `is_automorphic` was
+the one member of that pair still missing it; cheap to test
+indefinitely since checking a candidate is one squaring plus a
+string-suffix check, no trial division and no sparse-sequence scope
+cap like task 2's perfect numbers).
 
 This pass's depth scouting again turned up nothing landable — same
 standing note as prior passes (bitwise operators, chained comparisons,
 `??=`, list/map ordering, `<=>`, right-associative `**`, `in`/`not in`,
-negative/slice indexing all already shipped). No new depth-task
-candidate surfaced, so this pass restocked breadth again
-(`percentile`, task 5 above) after `#452`'s merge dropped the queue to
-four. The next grooming pass should keep treating an actual depth
-slice as the priority over reaching for another statistics-cluster
-breadth task.
+negative/slice indexing all already shipped; this pass also checked
+for class/struct/module/import/generator syntax and found none of
+those started, but `generators` stays the known too-big gap it's
+always been and no scoped-down slice of it surfaced). No new
+depth-task candidate surfaced, so this pass restocked breadth again
+(`nth_automorphic`, task 6 above) since task 1 (`median_absolute_deviation`)
+is still tied up in open PR #453 rather than merged, leaving only four
+unclaimed tasks (2 through 5) before this restock. The next grooming
+pass should keep treating an actual depth slice as the priority over
+reaching for another number-theory-predicate breadth task — this
+backlog has now restocked breadth twice in a row.
 
 `Set`'s literal-syntax slice, its spread-site fix, the `is_map`/
 `is_set` type-predicate fix, and `to_set` have all landed — the

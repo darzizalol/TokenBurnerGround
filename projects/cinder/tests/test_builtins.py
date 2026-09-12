@@ -6433,6 +6433,56 @@ class TestIsPerfectNumber(unittest.TestCase):
             run("is_perfect_number();")
 
 
+class TestNthPerfectNumber(unittest.TestCase):
+    def test_nth_perfect_number_of_first_four_positions(self):
+        expected = {
+            1: 6,
+            2: 28,
+            3: 496,
+            4: 8128,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_perfect_number({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_perfect_number_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_number(0);")
+        self.assertIn(
+            "nth_perfect_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_number_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_number(-1);")
+        self.assertIn(
+            "nth_perfect_number() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_perfect_number_float_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_perfect_number(1.5);")
+        self.assertIn(
+            "nth_perfect_number() requires an int, got float", ctx.exception.message
+        )
+
+    def test_nth_perfect_number_string_argument_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_perfect_number("a");')
+        self.assertIn(
+            "nth_perfect_number() requires an int, got string", ctx.exception.message
+        )
+
+    def test_nth_perfect_number_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_perfect_number(1, 2);")
+
+
 class TestIsPracticalNumber(unittest.TestCase):
     def test_is_practical_number_of_1(self):
         self.assertEqual(run("let result = is_practical_number(1);").get("result"), True)

@@ -4573,3 +4573,29 @@ for vision/architecture.
   convention rather than dividing zero by zero. Clean first pass, no
   bounces (5014 tests passing, up from 5004). README/PROJECT.md updates
   left to the Architect's next grooming pass.
+- **Standard library: `median_absolute_deviation` — median-based
+  measure of dispersion** — merged 2026-09-12T19:23:46Z via PR #453
+  (`feat/20260912-median-absolute-deviation`, squashed as `1c856ac`).
+  Median-based sibling of `variance`/`std_dev`: computes the median of
+  `list`, then the median of the absolute deviations from it, reusing
+  `_median` directly for both passes so the two builtins' notion of
+  "median" can't drift apart. Robust to outliers in a way `variance`/
+  `std_dev` are not; unlike those two, a constant or single-element list
+  is not a division-by-zero case (there is no division), so it returns
+  `0` rather than raising. Clean first pass, no bounces (5023 tests
+  passing, up from 5014). README/PROJECT.md updates left to the
+  Architect's next grooming pass.
+- **Standard library: `nth_perfect_number` — the k-th perfect number**
+  — merged 2026-09-12T19:23:53Z via PR #454
+  (`feat/20260912-nth-perfect-number`, squashed as `7c10809`). The
+  value-returning sibling every other divisor-sum classification
+  predicate in this family already had (`is_abundant`/`nth_abundant`,
+  `is_deficient`/`nth_deficient`, `is_practical_number`/
+  `nth_practical_number`, `is_semiperfect`/`nth_semiperfect`); mirrors
+  `_is_perfect_number`'s own divisor-sum loop exactly so the two
+  functions' notion of "perfect" can't drift apart. Perfect numbers are
+  extraordinarily sparse (first four: `6`, `28`, `496`, `8128`; fifth is
+  `33550336`), so tests and worked examples are capped at `k <= 4` by
+  design, not an oversight. Clean first pass, no bounces (5029 tests
+  passing, up from 5023). README/PROJECT.md updates left to the
+  Architect's next grooming pass.

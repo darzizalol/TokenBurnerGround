@@ -11,232 +11,7 @@ a later task while an earlier one is unclaimed/open.
 
 ---
 
-## 1. Standard library: `median_absolute_deviation` — median-based measure of dispersion [claimed 2026-09-12T15:06:11Z]
-
-Add a standalone list-transform-shaped statistic builtin directly
-after `_median` (`cinder/builtins.py`, search `def _median`,
-immediately before `def _midrange`) — the median-based sibling of
-`variance`/`std_dev`: where those two measure dispersion around the
-*mean* by squaring deviations, `median_absolute_deviation` measures
-dispersion around the *median* by taking absolute deviations and
-reducing with `median` again instead of squaring and averaging, which
-makes it robust to outliers in a way `variance`/`std_dev` are not (one
-huge value skews a mean-based measure far more than a median-based
-one). Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(median_absolute_deviation([1, 2, 3, 4, 5]));'
-# -> <eval>:1:7: undefined name 'median_absolute_deviation' (did you mean 'median'?)
-```
-
-**What it does.** Given a non-empty list of numbers, compute `m =
-median(list)`, then return `median([abs(x - m) for x in list])` — the
-median of the absolute deviations from the list's own median. Unlike
-`variance`/`std_dev`, a constant or single-element list is not a
-division-by-zero case here (there is no division at all), so those
-shapes return `0` rather than raising.
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `median_absolute_deviation([1, 2, 3, 4, 5])` is `1` — median `3`,
-  absolute deviations `[2, 1, 0, 1, 2]`, median of those (sorted `[0,
-  1, 1, 2, 2]`) is `1`.
-- `median_absolute_deviation([1, 2, 3, 4, 5, 6, 7, 8, 9])` is `2` —
-  median `5`, absolute deviations sorted `[0, 1, 1, 2, 2, 3, 3, 4,
-  4]`, median `2`.
-- `median_absolute_deviation([1, 3, 5, 7, 9, 11])` is `3.0` — median
-  `6.0` (even-length list, averages the two middle elements, same as
-  `median` itself), absolute deviations sorted `[1, 1, 3, 3, 5, 5]`,
-  median `(3 + 3) / 2 = 3.0`.
-- `median_absolute_deviation([4, 4, 4])` is `0` — constant list, no
-  raise (unlike `std_dev`, which raises further downstream builtins
-  like `zscore`/`correlation` that divide by it).
-- `median_absolute_deviation([5])` is `0` — single-element list.
-- `median_absolute_deviation([]);` raises `CinderRuntimeError` — no
-  elements to find a median of (same reason `median`/`midrange`
-  reject an empty list).
-
-Add directly after `_median` (search `def _median`, immediately before
-`def _midrange`):
-```python
-def _median_absolute_deviation(arguments: list, line: int, column: int) -> object:
-    _require_arity("median_absolute_deviation", arguments, 1, line, column)
-    value = arguments[0]
-    if not isinstance(value, list):
-        raise CinderRuntimeError(
-            f"median_absolute_deviation() requires a list, got {type_name(value)}",
-            line, column,
-        )
-    if not value:
-        raise CinderRuntimeError(
-            "median_absolute_deviation() requires a non-empty list", line, column
-        )
-    for element in value:
-        if not _is_numeric(element):
-            raise CinderRuntimeError(
-                f"median_absolute_deviation() requires a list of numbers, got {type_name(element)}",
-                line, column,
-            )
-    center = _median(arguments, line, column)
-    deviations = [abs(element - center) for element in value]
-    return _median([deviations], line, column)
-```
-(Calls `_median` directly, twice — once for the center, once for the
-final reduction over deviations — rather than re-deriving the
-sort-and-average-the-middle logic, so the two builtins' notion of
-"median" can't drift apart; same reuse-the-sibling-builtin shape
-`_correlation` uses for `_covariance`.) Register the new dict entry
-(search `"median": _median,`, add `"median_absolute_deviation":
-_median_absolute_deviation,` directly after it, before `"midrange":
-_midrange,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `median_absolute_deviation([1, 2, 3, 4, 5])` is `1` and
-  `median_absolute_deviation([1, 3, 5, 7, 9, 11])` is `3.0`.
-- `median_absolute_deviation([4, 4, 4])` is `0` and
-  `median_absolute_deviation([5])` is `0` — neither raises.
-- `median_absolute_deviation([]);` raises `CinderRuntimeError` matching
-  `"median_absolute_deviation\(\) requires a non-empty list"`.
-- `median_absolute_deviation(123);` raises `CinderRuntimeError`
-  matching `"median_absolute_deviation\(\) requires a list, got int"`.
-- `median_absolute_deviation([1, "a"]);` raises `CinderRuntimeError`
-  matching `"median_absolute_deviation\(\) requires a list of numbers,
-  got string"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- Full test suite passes.
-
-Likely files: `cinder/builtins.py` (directly after `_median`, search
-`def _median`), `tests/test_builtins.py` (new `class
-TestMedianAbsoluteDeviation`, modeled on `class TestMedian`/`class
-TestStdDev`, search either name, for the test shapes above — place it
-near the existing `class TestMedian`). Once merged, `README.md`'s
-builtins quick-reference list (search `median`, `midrange` sits right
-after it) needs `median_absolute_deviation` added right after
-`median`, its "Status & roadmap" section needs updating, and
-`PROJECT.md`'s "Current frontier" section needs refreshing — leave
-both to the Architect's next grooming pass, not this task.
-
----
-
-## 2. Standard library: `nth_perfect_number` — the k-th perfect number [claimed 2026-09-12T19:16:17Z]
-
-Add directly after `_is_perfect_number` (`cinder/builtins.py`, search
-`def _is_perfect_number`, immediately before `def
-_is_practical_number`) — the value-returning sibling every other
-divisor-sum classification predicate in this family already has
-(`is_abundant`/`nth_abundant`, `is_deficient`/`nth_deficient`,
-`is_practical_number`/`nth_practical_number`,
-`is_semiperfect`/`nth_semiperfect`), the one member still missing it.
-Verify the gap:
-```sh
-python3 -m cinder.cli eval 'print(nth_perfect_number(1));'
-# -> <eval>:1:7: undefined name 'nth_perfect_number' (did you mean 'nth_perfect_cube'?)
-```
-
-**What it does.** Given a positive integer `k`, return the `k`-th
-perfect number (1-indexed) — a positive integer equal to the sum of
-its own proper divisors, the same condition `_is_perfect_number`
-already checks, applied here as a sequential scan exactly like
-`_nth_abundant`/`_nth_deficient` already do for their own predicates.
-
-**Performance note — read before implementing or writing tests.**
-Perfect numbers are extraordinarily sparse: the first four are `6`,
-`28`, `496`, `8128`, but the fifth is `33550336`. A sequential
-trial-division scan (the same `O(sqrt(candidate))`-per-candidate
-approach `nth_abundant`/`nth_deficient` already use) checking every
-candidate up to that point is computationally infeasible to run in a
-test — millions of candidates, each requiring a trial-division pass.
-Cap every test and worked example at `k <= 4` (candidate `8128`, a few
-thousand fast candidate checks); do **not** write or document a test
-for `nth_perfect_number(5)` or any larger `k` — that is a known,
-intentional scope boundary of this task, not an oversight to "complete."
-
-Worked examples (confirmed via direct computation of the algorithm
-below):
-- `nth_perfect_number(1)` is `6`.
-- `nth_perfect_number(2)` is `28`.
-- `nth_perfect_number(3)` is `496`.
-- `nth_perfect_number(4)` is `8128`.
-- `nth_perfect_number(0);` raises `CinderRuntimeError` — domain error,
-  same convention `nth_abundant(0)`/`nth_deficient(0)` already use.
-- `nth_perfect_number(-1);` raises `CinderRuntimeError` — domain error.
-- `nth_perfect_number(1.5);` raises `CinderRuntimeError` — not an int.
-- `nth_perfect_number("a");` raises `CinderRuntimeError` — not an int.
-
-Add directly after `_is_perfect_number` (search `def
-_is_perfect_number`, immediately before `def _is_practical_number`):
-```python
-def _nth_perfect_number(arguments: list, line: int, column: int) -> object:
-    _require_arity("nth_perfect_number", arguments, 1, line, column)
-    value = _require_int("nth_perfect_number", arguments[0], line, column)
-    if value < 1:
-        raise CinderRuntimeError(
-            "nth_perfect_number() requires a positive integer, domain error", line, column
-        )
-
-    def _is_perfect_candidate(candidate: int) -> bool:
-        if candidate < 2:
-            return False
-        total = 1
-        for divisor in range(2, math.isqrt(candidate) + 1):
-            if candidate % divisor == 0:
-                total += divisor
-                complement = candidate // divisor
-                if complement != divisor and complement != candidate:
-                    total += complement
-        return total == candidate
-
-    count = 0
-    candidate = 0
-    while count < value:
-        candidate += 1
-        if _is_perfect_candidate(candidate):
-            count += 1
-    return candidate
-```
-(`_is_perfect_candidate` mirrors `_is_perfect_number`'s own divisor-sum
-loop exactly — including the `complement != candidate` guard, dead in
-practice since `divisor` never reaches `1`, but kept for the same
-reason `_is_perfect_number` has it: so the two functions' notion of
-"perfect" can't silently drift apart — rather than the slightly
-different loop shape `_nth_abundant`/`_nth_deficient` use.) Register
-the new dict entry (search `"is_perfect_number": _is_perfect_number,`,
-add `"nth_perfect_number": _nth_perfect_number,` directly after it,
-before `"is_practical_number": _is_practical_number,`).
-
-Acceptance criteria:
-- Every worked example above holds exactly, including
-  `nth_perfect_number(1)` is `6` through `nth_perfect_number(4)` is
-  `8128`.
-- `nth_perfect_number(0);` and `nth_perfect_number(-1);` both raise
-  `CinderRuntimeError` matching `"nth_perfect_number\(\) requires a
-  positive integer, domain error"`.
-- `nth_perfect_number(1.5);` and `nth_perfect_number("a");` both raise
-  `CinderRuntimeError` matching `"nth_perfect_number\(\) requires an
-  int, got (float|string)"`.
-- Wrong arity (not exactly 1 argument) raises `CinderRuntimeError` with
-  line/column.
-- No test calls `nth_perfect_number(5)` or higher — see the performance
-  note above.
-- Full test suite passes (and finishes in normal time — a test that
-  hangs or takes unusually long past this task's change is a sign the
-  `k <= 4` cap above was violated).
-
-Likely files: `cinder/builtins.py` (directly after `_is_perfect_number`,
-search `def _is_perfect_number`), `tests/test_builtins.py` (new `class
-TestNthPerfectNumber`, modeled on `class TestNthAbundant`/`class
-TestNthDeficient`, search either name, for the test shapes above —
-place it near the existing `class TestIsPerfectNumber`). Once merged,
-`README.md`'s builtins quick-reference list (search
-`is_perfect_number`) needs `nth_perfect_number` added right after it,
-its "Status & roadmap" section needs updating, and `PROJECT.md`'s
-"Current frontier" section needs refreshing — leave both to the
-Architect's next grooming pass, not this task.
-
----
-
-## 3. Standard library: `nth_weird_number` — the k-th weird number
+## 1. Standard library: `nth_weird_number` — the k-th weird number
 
 Add directly after `_is_weird_number` (`cinder/builtins.py`, search
 `def _is_weird_number`, immediately before `def _is_semiperfect`) —
@@ -347,7 +122,7 @@ not this task.
 
 ---
 
-## 4. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
+## 2. Standard library: `nth_armstrong` — the k-th Armstrong (narcissistic) number
 
 Add directly after `_is_armstrong` (`cinder/builtins.py`, search `def
 _is_armstrong`, immediately before `def _is_disarium`) — the same
@@ -453,7 +228,7 @@ Architect's next grooming pass, not this task.
 
 ---
 
-## 5. Standard library: `percentile` — p-th percentile of a numeric list (linear interpolation)
+## 3. Standard library: `percentile` — p-th percentile of a numeric list (linear interpolation)
 
 Add directly after `_midrange` (`cinder/builtins.py`, search `def
 _midrange`, immediately before `def _population_variance`) — a real
@@ -575,7 +350,7 @@ next grooming pass, not this task.
 
 ---
 
-## 6. Standard library: `nth_automorphic` — the k-th automorphic number
+## 4. Standard library: `nth_automorphic` — the k-th automorphic number
 
 Add directly after `_is_automorphic` (`cinder/builtins.py`, search `def
 _is_automorphic`, immediately before `def _is_trimorphic_number`) — the

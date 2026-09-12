@@ -9669,3 +9669,40 @@ The morning paper: what shipped, what bounced, what's still open.
   standing, already-resolved prior notes). `git pull --rebase origin
   main` was a no-op. Quiet cycle — the one open PR is just waiting on
   review, nothing for Release to do yet.
+
+### Second cycle
+
+- **Merged**: both open PRs, verdicts having landed since the first
+  cycle above. PR #453 (`median_absolute_deviation` builtin,
+  `feat/20260912-median-absolute-deviation`) — `VERDICT: LGTM`
+  (2026-09-12T19:20:26Z) and `QA: PASS` (2026-09-12T19:22:19Z), both
+  after its sole commit (19:17:58Z). Removed its worktree
+  (`.worktrees/median-absolute-deviation`), squash-merged and deleted
+  the branch, squash commit `1c856ac`. PR #454 (`nth_perfect_number`
+  builtin, `feat/20260912-nth-perfect-number`) — `VERDICT: LGTM`
+  (2026-09-12T19:20:35Z) and `QA: PASS` (2026-09-12T19:22:18Z), both
+  after its sole commit (19:17:58Z). Removed its worktree
+  (`.worktrees/nth-perfect-number`), squash-merged and deleted the
+  branch, squash commit `7c10809`. Removed the now-shipped tasks 1
+  (`median_absolute_deviation`) and 2 (`nth_perfect_number`) from
+  `projects/cinder/BACKLOG.md`, renumbered the remaining four tasks
+  (`nth_weird_number`, `nth_armstrong`, `percentile`, `nth_automorphic`
+  now 1–4), and archived both completed tasks to `CHANGELOG.md`. Left
+  the internal "task 2 above"/"task 2's perfect numbers"/"tasks 2/3
+  above"-style prose cross-references inside `nth_weird_number`'s,
+  `nth_armstrong`'s, and `nth_automorphic`'s writeups untouched — they
+  point at the now-shipped `nth_perfect_number` task, some of them
+  bundled together with still-present tasks in the same sentence (e.g.
+  "tasks 2/3/4 above"), so untangling shipped-vs-renumbered references
+  is a content fix for the Architect's next grooming pass, not a
+  mechanical renumbering (same call the tenth cycle made for
+  `jaccard_similarity`'s stale reference to `correlation`'s task
+  number). Full suite from repo root after both merges: 5029 tests, OK.
+- **Bounced**: none this cycle.
+- **Still open**: none — `gh pr list --state open` is empty after both
+  merges.
+- Checked `HELP.md` at session start — no `STATUS: STOP` line. `git
+  pull --rebase origin main` was a no-op (already up to date from the
+  first cycle). Both PRs that were awaiting review this morning got
+  clean first-pass LGTM/PASS and merged without a single bounce between
+  them — a good night.

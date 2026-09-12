@@ -2507,6 +2507,28 @@ def _is_armstrong(arguments: list, line: int, column: int) -> object:
     return sum(int(digit) ** power for digit in digits) == value
 
 
+def _nth_armstrong(arguments: list, line: int, column: int) -> object:
+    _require_arity("nth_armstrong", arguments, 1, line, column)
+    value = _require_int("nth_armstrong", arguments[0], line, column)
+    if value < 1:
+        raise CinderRuntimeError(
+            "nth_armstrong() requires a positive integer, domain error", line, column
+        )
+
+    def _is_armstrong_candidate(candidate: int) -> bool:
+        digits = str(candidate)
+        power = len(digits)
+        return sum(int(digit) ** power for digit in digits) == candidate
+
+    count = 0
+    candidate = -1
+    while count < value:
+        candidate += 1
+        if _is_armstrong_candidate(candidate):
+            count += 1
+    return candidate
+
+
 def _is_disarium(arguments: list, line: int, column: int) -> object:
     _require_arity("is_disarium", arguments, 1, line, column)
     value = _require_int("is_disarium", arguments[0], line, column)
@@ -6104,6 +6126,7 @@ _BUILTINS = {
     "is_perfect_square": _is_perfect_square,
     "nth_perfect_square": _nth_perfect_square,
     "is_armstrong": _is_armstrong,
+    "nth_armstrong": _nth_armstrong,
     "is_disarium": _is_disarium,
     "is_polydivisible": _is_polydivisible,
     "nth_polydivisible": _nth_polydivisible,

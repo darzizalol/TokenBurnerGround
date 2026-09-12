@@ -5975,6 +5975,68 @@ class TestIsArmstrong(unittest.TestCase):
             run("is_armstrong();")
 
 
+class TestNthArmstrong(unittest.TestCase):
+    def test_nth_armstrong_of_first_fifteen_positions(self):
+        expected = {
+            1: 0,
+            2: 1,
+            10: 9,
+            11: 153,
+            12: 370,
+            13: 371,
+            14: 407,
+            15: 1634,
+        }
+        for position, value in expected.items():
+            self.assertEqual(
+                run(f"let result = nth_armstrong({position});").get("result"),
+                value,
+                f"expected position {position} to be {value}",
+            )
+
+    def test_nth_armstrong_agrees_with_is_armstrong(self):
+        for position in range(1, 16):
+            self.assertEqual(
+                run(f"let result = is_armstrong(nth_armstrong({position}));").get(
+                    "result"
+                ),
+                True,
+                f"expected nth_armstrong({position}) to be an armstrong number",
+            )
+
+    def test_nth_armstrong_of_zero_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_armstrong(0);")
+        self.assertIn(
+            "nth_armstrong() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_armstrong_of_negative_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_armstrong(-1);")
+        self.assertIn(
+            "nth_armstrong() requires a positive integer, domain error",
+            ctx.exception.message,
+        )
+
+    def test_nth_armstrong_of_float_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run("nth_armstrong(1.5);")
+        self.assertIn("nth_armstrong", ctx.exception.message)
+        self.assertIn("float", ctx.exception.message)
+
+    def test_nth_armstrong_of_string_raises(self):
+        with self.assertRaises(CinderRuntimeError) as ctx:
+            run('nth_armstrong("a");')
+        self.assertIn("nth_armstrong", ctx.exception.message)
+        self.assertIn("string", ctx.exception.message)
+
+    def test_nth_armstrong_wrong_arity_raises(self):
+        with self.assertRaises(CinderRuntimeError):
+            run("nth_armstrong();")
+
+
 class TestIsDisarium(unittest.TestCase):
     def test_is_disarium_of_89(self):
         self.assertEqual(run("let result = is_disarium(89);").get("result"), True)
